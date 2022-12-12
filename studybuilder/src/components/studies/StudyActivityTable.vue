@@ -5,13 +5,15 @@
     :headers="headers"
     :items="studyActivities"
     :server-items-length="total"
-    item-key="studyActivityUid"
+    item-key="study_activity_uid"
     export-object-label="StudyActivities"
     :export-data-url="exportDataUrl"
     :options.sync="options"
     @filter="getStudyActivities"
     has-api
-    :column-data-resource="`study/${selectedStudy.uid}/study-activities`"
+    :column-data-resource="`studies/${selectedStudy.uid}/study-activities`"
+    :history-data-fetcher="fetchActivitiesHistory"
+    :history-title="$t('StudyActivityTable.global_history_title')"
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -49,8 +51,8 @@
         </v-icon>
       </v-btn>
     </template>
-    <template v-slot:item.startDate="{ item }">
-      {{ item.startDate|date }}
+    <template v-slot:item.start_date="{ item }">
+      {{ item.start_date|date }}
     </template>
     <template v-slot:item.actions="{ item }">
       <actions-menu
@@ -70,7 +72,7 @@
           >
           <td v-if="props.showSelectBoxes">
             <v-checkbox
-              :value="item.studyActivityUid"
+              :value="item.study_activity_uid"
               hide-details
               @change="props.select(!props.isSelected(item))"
               />
@@ -90,13 +92,13 @@
             </v-icon>
             {{ item.order }}
           </td>
-          <td>{{ item.flowchartGroup.sponsorPreferredName }}</td>
+          <td>{{ item.flowchart_group.sponsor_preferred_name }}</td>
           <td>{{ getActivityGroup(item) }}</td>
           <td>{{ getActivitySubGroup(item) }}</td>
           <td>{{ item.activity.name }}</td>
           <td>{{ item.note }}</td>
-          <td>{{ item.startDate|date }}</td>
-          <td>{{ item.userInitials }}</td>
+          <td>{{ item.start_date|date }}</td>
+          <td>{{ item.user_initials }}</td>
         </tr>
       </draggable>
     </template>
@@ -130,10 +132,10 @@
             persistent
             max-width="1200px">
     <history-table
+      :title="activityHistoryTitle"
       @close="closeHistory"
-      type="studyActivity"
-      :item="selectedStudyActivity"
-      title-label="Study Activity"
+      :headers="headers"
+      :items="activityHistoryItems"
       />
   </v-dialog>
   <study-activity-batch-edit-form
@@ -154,7 +156,7 @@ import study from '@/api/study'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import filteringParameters from '@/utils/filteringParameters'
-import HistoryTable from '@/components/library/HistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable'
 import NNTable from '@/components/tools/NNTable'
 import StudyActivityBatchEditForm from './StudyActivityBatchEditForm'
 import StudyActivityEditForm from './StudyActivityEditForm'
@@ -177,7 +179,15 @@ export default {
       selectedStudy: 'studiesGeneral/selectedStudy'
     }),
     exportDataUrl () {
-      return `study/${this.selectedStudy.uid}/study-activities`
+      return `studies/${this.selectedStudy.uid}/study-activities`
+    },
+    activityHistoryTitle () {
+      if (this.selectedStudyActivity) {
+        return this.$t(
+          'StudyActivityTable.study_activity_history_title',
+          { studyActivityUid: this.selectedStudyActivity.study_activity_uid })
+      }
+      return ''
     }
   },
   data () {
@@ -201,6 +211,7 @@ export default {
           click: this.openHistory
         }
       ],
+      activityHistoryItems: [],
       currentSelection: [],
       selectedStudyActivity: null,
       showActivityEditForm: false,
@@ -210,13 +221,13 @@ export default {
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: '#', value: 'order', width: '5%' },
-        { text: this.$t('StudyActivity.flowchart_group'), value: 'flowchartGroup.sponsorPreferredName' },
-        { text: this.$t('StudyActivity.activity_group'), value: 'activity.activityGroup.name' },
-        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity.activitySubGroup.name' },
+        { text: this.$t('StudyActivity.flowchart_group'), value: 'flowchart_group.sponsor_preferred_name' },
+        { text: this.$t('StudyActivity.activity_group'), value: 'activity.activity_group.name' },
+        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity.activity_subgroup.name' },
         { text: this.$t('StudyActivity.activity'), value: 'activity.name' },
         { text: this.$t('StudyActivity.footnote'), value: 'note' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
-        { text: this.$t('_global.modified_by'), value: 'userInitials' }
+        { text: this.$t('_global.modified'), value: 'start_date' },
+        { text: this.$t('_global.modified_by'), value: 'user_initials' }
       ],
       sortMode: false,
       options: {},
@@ -234,11 +245,11 @@ export default {
     async deleteStudyActivity (sa) {
       const options = { type: 'warning' }
       const activity = sa.activity.name
-      const msg = (!sa.showActivityGroupInProtocolFlowchart || !sa.showActivitySubGroupInProtocolFlowchart)
+      const msg = (!sa.show_activity_group_in_protocol_flowchart || !sa.show_activity_subgroup_in_protocol_flowchart)
         ? this.$t('StudyActivityTable.confirm_delete_side_effect')
         : this.$t('StudyActivityTable.confirm_delete', { activity })
       if (await this.$refs.confirm.open(msg, options)) {
-        study.deleteStudyActivity(this.selectedStudy.uid, sa.studyActivityUid).then(resp => {
+        study.deleteStudyActivity(this.selectedStudy.uid, sa.study_activity_uid).then(resp => {
           this.getStudyActivities()
           bus.$emit('notification', { type: 'success', msg: this.$t('StudyActivityTable.delete_success') })
         })
@@ -248,8 +259,10 @@ export default {
       this.selectedStudyActivity = sa
       this.showActivityEditForm = true
     },
-    openHistory (sa) {
+    async openHistory (sa) {
       this.selectedStudyActivity = sa
+      const resp = await study.getStudyActivityAuditTrail(this.selectedStudy.uid, sa.study_activity_uid)
+      this.activityHistoryItems = resp.data
       this.showHistory = true
     },
     closeHistory () {
@@ -279,7 +292,7 @@ export default {
     onOrderChange (event) {
       const studyActivity = event.moved.element
       const replacedStudyActivity = this.studyActivities[event.moved.newIndex]
-      study.updateStudyActivityOrder(studyActivity.studyUid, studyActivity.studyActivityUid, replacedStudyActivity.order).then(resp => {
+      study.updateStudyActivityOrder(studyActivity.study_uid, studyActivity.study_activity_uid, replacedStudyActivity.order).then(resp => {
         this.getStudyActivities()
       })
     },
@@ -287,7 +300,11 @@ export default {
       this.getStudyActivities()
     },
     unselectItem (item) {
-      this.currentSelection = this.currentSelection.filter(sa => sa.studyActivityUid !== item.studyActivityUid)
+      this.currentSelection = this.currentSelection.filter(sa => sa.study_activity_uid !== item.study_activity_uid)
+    },
+    async fetchActivitiesHistory () {
+      const resp = await study.getStudyActivitiesAuditTrail(this.selectedStudy.uid)
+      return resp.data
     }
   },
   mounted () {

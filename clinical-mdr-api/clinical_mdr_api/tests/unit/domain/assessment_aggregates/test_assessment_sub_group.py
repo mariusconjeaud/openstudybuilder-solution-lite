@@ -12,35 +12,35 @@ from clinical_mdr_api.domain.versioned_object_aggregate import (
 from clinical_mdr_api.tests.unit.domain.utils import random_str
 
 
-def create_random_activity_sub_group_vo() -> ActivitySubGroupVO:
-    random_activity_sub_group_vo = ActivitySubGroupVO.from_repository_values(
+def create_random_activity_subgroup_vo() -> ActivitySubGroupVO:
+    random_activity_subgroup_vo = ActivitySubGroupVO.from_repository_values(
         name=random_str(),
         name_sentence_case=random_str(),
         definition=random_str(),
         abbreviation=random_str(),
         activity_group=random_str(),
     )
-    return random_activity_sub_group_vo
+    return random_activity_subgroup_vo
 
 
-def create_random_activity_sub_group_ar(
+def create_random_activity_subgroup_ar(
     # pylint:disable=unnecessary-lambda
     generate_uid_callback: Callable[[], str] = lambda: random_str(),
     library: str = "Library",
     is_editable: bool = True,
 ) -> ActivitySubGroupAR:
-    random_activity_sub_group_ar = ActivitySubGroupAR.from_input_values(
+    random_activity_subgroup_ar = ActivitySubGroupAR.from_input_values(
         generate_uid_callback=generate_uid_callback,
-        concept_vo=create_random_activity_sub_group_vo(),
+        concept_vo=create_random_activity_subgroup_vo(),
         library=LibraryVO.from_repository_values(
             library_name=library, is_editable=is_editable
         ),
         author="TODO Initials",
-        activity_sub_group_exists_by_name_callback=lambda _: False,
+        activity_subgroup_exists_by_name_callback=lambda _: False,
         activity_group_exists=lambda _: True,
     )
 
-    return random_activity_sub_group_ar
+    return random_activity_subgroup_ar
 
 
 class TestActivitySubGroup(unittest.TestCase):
@@ -48,26 +48,26 @@ class TestActivitySubGroup(unittest.TestCase):
         # given
 
         # when
-        activity_sub_group_ar = create_random_activity_sub_group_ar()
+        activity_subgroup_ar = create_random_activity_subgroup_ar()
 
         # then
-        self.assertIsNone(activity_sub_group_ar.item_metadata._end_date)
-        self.assertIsNotNone(activity_sub_group_ar.item_metadata._start_date)
-        self.assertEqual(activity_sub_group_ar.item_metadata.version, "0.1")
+        self.assertIsNone(activity_subgroup_ar.item_metadata._end_date)
+        self.assertIsNotNone(activity_subgroup_ar.item_metadata._start_date)
+        self.assertEqual(activity_subgroup_ar.item_metadata.version, "0.1")
         self.assertEqual(
-            activity_sub_group_ar.item_metadata.status, LibraryItemStatus.DRAFT
+            activity_subgroup_ar.item_metadata.status, LibraryItemStatus.DRAFT
         )
 
     def test__edit_draft_version__version_created(self):
         # given
-        activity_sub_group_ar = create_random_activity_sub_group_ar()
+        activity_subgroup_ar = create_random_activity_subgroup_ar()
 
-        activity_sub_group_ar.approve(author="Test")
-        activity_sub_group_ar.create_new_version(author="TODO")
+        activity_subgroup_ar.approve(author="Test")
+        activity_subgroup_ar.create_new_version(author="TODO")
 
         # when
-        activity_vo = create_random_activity_sub_group_vo()
-        activity_sub_group_ar.edit_draft(
+        activity_vo = create_random_activity_subgroup_vo()
+        activity_subgroup_ar.edit_draft(
             author="TODO",
             change_description="Test",
             concept_vo=activity_vo,
@@ -76,96 +76,96 @@ class TestActivitySubGroup(unittest.TestCase):
         )
 
         # then
-        self.assertIsNone(activity_sub_group_ar.item_metadata.end_date)
-        self.assertIsNotNone(activity_sub_group_ar.item_metadata.start_date)
-        self.assertEqual(activity_sub_group_ar.item_metadata.version, "1.2")
+        self.assertIsNone(activity_subgroup_ar.item_metadata.end_date)
+        self.assertIsNotNone(activity_subgroup_ar.item_metadata.start_date)
+        self.assertEqual(activity_subgroup_ar.item_metadata.version, "1.2")
         self.assertEqual(
-            activity_sub_group_ar.item_metadata.status, LibraryItemStatus.DRAFT
+            activity_subgroup_ar.item_metadata.status, LibraryItemStatus.DRAFT
         )
-        self.assertEqual(activity_sub_group_ar.item_metadata.user_initials, "TODO")
-        self.assertEqual(activity_sub_group_ar.item_metadata.change_description, "Test")
-        self.assertEqual(activity_sub_group_ar.name, activity_vo.name)
+        self.assertEqual(activity_subgroup_ar.item_metadata.user_initials, "TODO")
+        self.assertEqual(activity_subgroup_ar.item_metadata.change_description, "Test")
+        self.assertEqual(activity_subgroup_ar.name, activity_vo.name)
         self.assertEqual(
-            activity_sub_group_ar.concept_vo.name_sentence_case,
+            activity_subgroup_ar.concept_vo.name_sentence_case,
             activity_vo.name_sentence_case,
         )
         self.assertEqual(
-            activity_sub_group_ar.concept_vo.definition, activity_vo.definition
+            activity_subgroup_ar.concept_vo.definition, activity_vo.definition
         )
         self.assertIn(
-            activity_vo.activity_group, activity_sub_group_ar.concept_vo.activity_group
+            activity_vo.activity_group, activity_subgroup_ar.concept_vo.activity_group
         )
 
     def test__approve__version_created(self):
         # given
-        activity_sub_group_ar = create_random_activity_sub_group_ar()
+        activity_subgroup_ar = create_random_activity_subgroup_ar()
 
         # when
-        activity_sub_group_ar.approve(author="TODO")
+        activity_subgroup_ar.approve(author="TODO")
 
         # then
-        self.assertIsNone(activity_sub_group_ar.item_metadata._end_date)
-        self.assertIsNotNone(activity_sub_group_ar.item_metadata._start_date)
-        self.assertEqual(activity_sub_group_ar.item_metadata.version, "1.0")
+        self.assertIsNone(activity_subgroup_ar.item_metadata._end_date)
+        self.assertIsNotNone(activity_subgroup_ar.item_metadata._start_date)
+        self.assertEqual(activity_subgroup_ar.item_metadata.version, "1.0")
         self.assertEqual(
-            activity_sub_group_ar.item_metadata.status, LibraryItemStatus.FINAL
+            activity_subgroup_ar.item_metadata.status, LibraryItemStatus.FINAL
         )
 
     def test__create_new_version__version_created(self):
         # given
-        activity_sub_group_ar = create_random_activity_sub_group_ar()
-        activity_sub_group_ar.approve(author="TODO")
+        activity_subgroup_ar = create_random_activity_subgroup_ar()
+        activity_subgroup_ar.approve(author="TODO")
 
         # when
-        activity_sub_group_ar.create_new_version(author="TODO")
+        activity_subgroup_ar.create_new_version(author="TODO")
 
         # then
-        self.assertIsNone(activity_sub_group_ar.item_metadata._end_date)
-        self.assertIsNotNone(activity_sub_group_ar.item_metadata._start_date)
-        self.assertEqual(activity_sub_group_ar.item_metadata.version, "1.1")
+        self.assertIsNone(activity_subgroup_ar.item_metadata._end_date)
+        self.assertIsNotNone(activity_subgroup_ar.item_metadata._start_date)
+        self.assertEqual(activity_subgroup_ar.item_metadata.version, "1.1")
         self.assertEqual(
-            activity_sub_group_ar.item_metadata.status, LibraryItemStatus.DRAFT
+            activity_subgroup_ar.item_metadata.status, LibraryItemStatus.DRAFT
         )
 
     def test__inactivate_final__version_created(self):
         # given
-        activity_sub_group_ar = create_random_activity_sub_group_ar()
-        activity_sub_group_ar.approve(author="TODO")
+        activity_subgroup_ar = create_random_activity_subgroup_ar()
+        activity_subgroup_ar.approve(author="TODO")
 
         # when
-        activity_sub_group_ar.inactivate(author="TODO")
+        activity_subgroup_ar.inactivate(author="TODO")
 
         # then
-        self.assertIsNone(activity_sub_group_ar.item_metadata._end_date)
-        self.assertIsNotNone(activity_sub_group_ar.item_metadata._start_date)
-        self.assertEqual(activity_sub_group_ar.item_metadata.version, "1.0")
+        self.assertIsNone(activity_subgroup_ar.item_metadata._end_date)
+        self.assertIsNotNone(activity_subgroup_ar.item_metadata._start_date)
+        self.assertEqual(activity_subgroup_ar.item_metadata.version, "1.0")
         self.assertEqual(
-            activity_sub_group_ar.item_metadata.status, LibraryItemStatus.RETIRED
+            activity_subgroup_ar.item_metadata.status, LibraryItemStatus.RETIRED
         )
 
     def test__reactivate_retired__version_created(self):
         # given
-        activity_sub_group_ar = create_random_activity_sub_group_ar()
-        activity_sub_group_ar.approve(author="TODO")
-        activity_sub_group_ar.inactivate(author="TODO")
+        activity_subgroup_ar = create_random_activity_subgroup_ar()
+        activity_subgroup_ar.approve(author="TODO")
+        activity_subgroup_ar.inactivate(author="TODO")
 
         # when
-        activity_sub_group_ar.reactivate(author="TODO")
+        activity_subgroup_ar.reactivate(author="TODO")
 
         # then
-        self.assertIsNone(activity_sub_group_ar.item_metadata._end_date)
-        self.assertIsNotNone(activity_sub_group_ar.item_metadata._start_date)
-        self.assertEqual(activity_sub_group_ar.item_metadata.version, "1.0")
+        self.assertIsNone(activity_subgroup_ar.item_metadata._end_date)
+        self.assertIsNotNone(activity_subgroup_ar.item_metadata._start_date)
+        self.assertEqual(activity_subgroup_ar.item_metadata.version, "1.0")
         self.assertEqual(
-            activity_sub_group_ar.item_metadata.status, LibraryItemStatus.FINAL
+            activity_subgroup_ar.item_metadata.status, LibraryItemStatus.FINAL
         )
 
     def test__delete_draft__object_deleted(self):
         # given
-        activity_sub_group_ar = create_random_activity_sub_group_ar()
+        activity_subgroup_ar = create_random_activity_subgroup_ar()
 
         # when
-        activity_sub_group_ar.soft_delete()
+        activity_subgroup_ar.soft_delete()
 
         # then
-        self.assertTrue(activity_sub_group_ar.is_deleted)
+        self.assertTrue(activity_subgroup_ar.is_deleted)

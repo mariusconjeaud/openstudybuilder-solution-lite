@@ -6,7 +6,7 @@ from fastapi import APIRouter, Body, Depends, Path, Query, Response
 from fastapi import status as fast_api_status
 from pydantic.types import Json
 
-from clinical_mdr_api import models
+from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id
@@ -40,18 +40,20 @@ def get_terms(
     package: Optional[str] = Query(
         None, description="If specified, only terms from given package are returned."
     ),
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -62,15 +64,15 @@ def get_terms(
         codelist_name=codelist_name,
         library=library,
         package=package,
-        sort_by=sortBy,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -103,8 +105,8 @@ def get_distinct_values_for_header(
     package: Optional[str] = Query(
         None, description="If specified, only terms from given package are returned."
     ),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -113,7 +115,7 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
@@ -123,24 +125,24 @@ def get_distinct_values_for_header(
         codelist_name=codelist_name,
         library=library,
         package=package,
-        field_name=fieldName,
-        search_string=searchString,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
 @router.get(
-    "/terms/{termuid}/attributes",
-    summary="Returns the latest/newest version of a specific ct term identified by 'termuid'",
+    "/terms/{term_uid}/attributes",
+    summary="Returns the latest/newest version of a specific ct term identified by 'term_uid'",
     response_model=models.CTTermAttributes,
     status_code=200,
     responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
 )
 def get_term_attributes(
-    termuid: str = CTTermUID,
-    atSpecifiedDateTime: Optional[datetime] = Query(
+    term_uid: str = CTTermUID,
+    at_specified_date_time: Optional[datetime] = Query(
         None,
         description="If specified then the latest/newest representation of the "
         "CTTermAttributesValue at this point in time is returned.\n"
@@ -151,7 +153,7 @@ def get_term_attributes(
     status: Optional[str] = Query(
         None,
         description="If specified then the representation of the CTTermAttributesValue "
-        "in that status is returned (if existent).\nThis is useful if the"
+        "in that status is returned (if existent).\n_this is useful if the"
         " CTTermAttributesValue has a status 'Draft' and a status 'Final'.",
     ),
     version: Optional[str] = Query(
@@ -165,41 +167,41 @@ def get_term_attributes(
 ):
     ct_term_attribute_service = CTTermAttributesService(user=current_user_id)
     return ct_term_attribute_service.get_by_uid(
-        term_uid=termuid,
-        at_specific_date=atSpecifiedDateTime,
+        term_uid=term_uid,
+        at_specific_date=at_specified_date_time,
         status=status,
         version=version,
     )
 
 
 @router.get(
-    "/terms/{termuid}/attributes/versions",
-    summary="Returns the version history of a specific CTTermAttributes identified by 'termuid'.",
+    "/terms/{term_uid}/attributes/versions",
+    summary="Returns the version history of a specific CTTermAttributes identified by 'term_uid'.",
     description="The returned versions are ordered by\n"
-    "0. startDate descending (newest entries first)",
+    "0. start_date descending (newest entries first)",
     response_model=List[models.CTTermAttributesVersion],
     status_code=200,
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The codelist with the specified 'codelistuid' wasn't found.",
+            "description": "Not Found - The codelist with the specified 'codelist_uid' wasn't found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def get_versions(
-    termuid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
+    term_uid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
 ):
     ct_term_attribute_service = CTTermAttributesService(user=current_user_id)
-    return ct_term_attribute_service.get_version_history(term_uid=termuid)
+    return ct_term_attribute_service.get_version_history(term_uid=term_uid)
 
 
 @router.patch(
-    "/terms/{termuid}/attributes",
-    summary="Updates the term identified by 'termuid'.",
+    "/terms/{term_uid}/attributes",
+    summary="Updates the term identified by 'term_uid'.",
     description="""This request is only valid if the term
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true). 
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
 
 If the request succeeds:
 * The 'version' property will be increased automatically by +0.1.
@@ -218,13 +220,13 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The term with the specified 'termuid' wasn't found.",
+            "description": "Not Found - The term with the specified 'term_uid' wasn't found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def edit(
-    termuid: str = CTTermUID,
+    term_uid: str = CTTermUID,
     term_input: models.CTTermAttributesEditInput = Body(
         None,
         description="The new parameter values for the term including the change description.",
@@ -232,19 +234,21 @@ def edit(
     current_user_id: str = Depends(get_current_user_id),
 ):
     ct_term_attribute_service = CTTermAttributesService(user=current_user_id)
-    return ct_term_attribute_service.edit_draft(term_uid=termuid, term_input=term_input)
+    return ct_term_attribute_service.edit_draft(
+        term_uid=term_uid, term_input=term_input
+    )
 
 
 @router.post(
-    "/terms/{termuid}/attributes/new-version",
+    "/terms/{term_uid}/attributes/versions",
     summary="Creates a new term in 'Draft' status.",
     description="""This request is only valid if
 * the specified term is in 'Final' status and
-* the specified library allows creating term (the 'isEditable' property of the library needs to be true).
+* the specified library allows creating term (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The status will be automatically set to 'Draft'.
-* The 'changeDescription' property will be set automatically to 'new-version'.
+* The 'change_description' property will be set automatically to 'new-version'.
 * The 'version' property will be increased by '0.1'.
 """,
     response_model=models.CTTermAttributes,
@@ -260,28 +264,28 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The term is not in final status.\n"
-            "- The term with the specified 'codelistuid' could not be found.",
+            "- The term with the specified 'codelist_uid' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def create(
-    termuid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
+    term_uid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
 ):
     ct_term_attribute_service = CTTermAttributesService(user=current_user_id)
-    return ct_term_attribute_service.create_new_version(term_uid=termuid)
+    return ct_term_attribute_service.create_new_version(term_uid=term_uid)
 
 
 @router.post(
-    "/terms/{termuid}/attributes/approve",
-    summary="Approves the term identified by 'termuid'.",
+    "/terms/{term_uid}/attributes/approve",
+    summary="Approves the term identified by 'term_uid'.",
     description="""This request is only valid if the term
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically to 'Approved version'.
+* The 'change_description' property will be set automatically to 'Approved version'.
 * The 'version' property will be increased automatically to the next major version.
     """,
     response_model=models.CTTermAttributes,
@@ -296,27 +300,27 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The term with the specified 'termuid' wasn't found.",
+            "description": "Not Found - The term with the specified 'term_uid' wasn't found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def approve(
-    termuid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
+    term_uid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
 ):
     ct_term_attribute_service = CTTermAttributesService(user=current_user_id)
-    return ct_term_attribute_service.approve(term_uid=termuid)
+    return ct_term_attribute_service.approve(term_uid=term_uid)
 
 
 @router.post(
-    "/terms/{termuid}/attributes/inactivate",
-    summary="Inactivates/deactivates the term identified by 'termuid'.",
+    "/terms/{term_uid}/attributes/inactivate",
+    summary="Inactivates/deactivates the term identified by 'term_uid'.",
     description="""This request is only valid if the term
 * is in 'Final' status only (so no latest 'Draft' status exists).
 
 If the request succeeds:
 * The status will be automatically set to 'Retired'.
-* The 'changeDescription' property will be set automatically. 
+* The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
     response_model=models.CTTermAttributes,
@@ -330,27 +334,27 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The term with the specified 'termuid' could not be found.",
+            "description": "Not Found - The term with the specified 'term_uid' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def inactivate(
-    termuid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
+    term_uid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
 ):
     ct_term_attribute_service = CTTermAttributesService(user=current_user_id)
-    return ct_term_attribute_service.inactivate_final(term_uid=termuid)
+    return ct_term_attribute_service.inactivate_final(term_uid=term_uid)
 
 
 @router.post(
-    "/terms/{termuid}/attributes/reactivate",
-    summary="Reactivates the term identified by 'termuid'.",
+    "/terms/{term_uid}/attributes/reactivate",
+    summary="Reactivates the term identified by 'term_uid'.",
     description="""This request is only valid if the term
 * is in 'Retired' status only (so no latest 'Draft' status exists).
 
 If the request succeeds:
 * The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically. 
+* The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
     response_model=models.CTTermAttributes,
@@ -364,25 +368,25 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The term with the specified 'termuid' could not be found.",
+            "description": "Not Found - The term with the specified 'term_uid' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def reactivate(
-    termuid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
+    term_uid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
 ):
     ct_term_attribute_service = CTTermAttributesService(user=current_user_id)
-    return ct_term_attribute_service.reactivate_retired(term_uid=termuid)
+    return ct_term_attribute_service.reactivate_retired(term_uid=term_uid)
 
 
 @router.delete(
-    "/terms/{termuid}/attributes",
-    summary="Deletes the term identified by 'termuid'.",
+    "/terms/{term_uid}/attributes",
+    summary="Deletes the term identified by 'term_uid'.",
     description="""This request is only valid if \n
 * the term is in 'Draft' status and
 * the term has never been in 'Final' status and
-* the term belongs to a library that allows deleting (the 'isEditable' property of the library needs to be true).""",
+* the term belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
     response_model=None,
     status_code=204,
     responses={
@@ -396,14 +400,14 @@ def reactivate(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - An term with the specified 'termuid' could not be found.",
+            "description": "Not Found - An term with the specified 'term_uid' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def delete_ct_term(
-    termuid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
+    term_uid: str = CTTermUID, current_user_id: str = Depends(get_current_user_id)
 ):
     ct_term_attribute_service = CTTermAttributesService(user=current_user_id)
-    ct_term_attribute_service.soft_delete(term_uid=termuid)
+    ct_term_attribute_service.soft_delete(term_uid=term_uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)

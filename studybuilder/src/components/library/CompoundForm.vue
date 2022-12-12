@@ -19,7 +19,7 @@
             rules="required"
             >
             <yes-no-field
-              v-model="form.isSponsorCompound"
+              v-model="form.is_sponsor_compound"
               :label="$t('CompoundForm.sponsor_compound')"
               row
               :error-messages="errors"
@@ -34,7 +34,7 @@
             rules=""
             >
             <v-text-field
-              v-model="form.analyteNumber"
+              v-model="form.analyte_number"
               :label="$t('CompoundForm.analyte_number')"
               dense
               :error-messages="errors"
@@ -47,7 +47,7 @@
             rules=""
             >
             <v-text-field
-              v-model="form.nncLongNumber"
+              v-model="form.nnc_long_number"
               :label="$t('CompoundForm.long_number')"
               dense
               :error-messages="errors"
@@ -60,7 +60,7 @@
             rules=""
             >
             <v-text-field
-              v-model="form.nncShortNumber"
+              v-model="form.nnc_short_number"
               :label="$t('CompoundForm.short_number')"
               dense
               :error-messages="errors"
@@ -84,7 +84,7 @@
         </v-col>
         <v-col cols="6">
            <yes-no-field
-             v-model="form.isNameInn"
+             v-model="form.is_name_inn"
              :label="$t('CompoundForm.is_inn')"
              row
              />
@@ -169,13 +169,13 @@
                 <v-icon>mdi-plus</v-icon>
             </v-btn>
             <v-card-text>
-              <v-card v-for="(doseValue, index) in form.doseValues" :key="index" class="sub-v-card">
+              <v-card v-for="(doseValue, index) in form.dose_values" :key="index" class="sub-v-card">
                 <v-card-text style="position: relative">
                   <numeric-value-with-unit-field
-                    v-model="form.doseValues[index]"
+                    v-model="form.dose_values[index]"
                     :label="$t('CompoundForm.dose')"
                     subset="Dose Unit"
-                    :initial-value="form.doseValues[index]"
+                    :initial-value="form.dose_values[index]"
                     />
                 </v-card-text>
                 <v-btn
@@ -210,13 +210,13 @@
                 <v-icon>mdi-plus</v-icon>
             </v-btn>
             <v-card-text>
-              <v-card v-for="(strengthValue, index) in form.strengthValues" :key="index" class="sub-v-card">
+              <v-card v-for="(strengthValue, index) in form.strength_values" :key="index" class="sub-v-card">
                 <v-card-text style="position: relative">
                   <numeric-value-with-unit-field
-                    v-model="form.strengthValues[index]"
+                    v-model="form.strength_values[index]"
                     :label="$t('CompoundForm.strength')"
                     subset="Strength Unit"
-                    :initial-value="form.strengthValues[index]"
+                    :initial-value="form.strength_values[index]"
                     />
                 </v-card-text>
                 <v-btn
@@ -238,55 +238,55 @@
       <v-row>
         <v-col cols="12">
           <multiple-select
-            v-model="form.doseFrequencyUids"
+            v-model="form.dose_frequency_uids"
             :label="$t('CompoundForm.dosing_frequency')"
             :items="frequencies"
-            item-text="sponsorPreferredName"
-            item-value="termUid"
+            item-text="sponsor_preferred_name"
+            item-value="term_uid"
             />
         </v-col>
       </v-row>
       <v-row>
         <v-col cols="12">
           <multiple-select
-            v-model="form.routeOfAdministrationUids"
+            v-model="form.route_of_administration_uids"
             :label="$t('CompoundForm.route_of_administration')"
             :items="routesOfAdmin"
-            item-text="sponsorPreferredName"
-            item-value="termUid"
+            item-text="sponsor_preferred_name"
+            item-value="term_uid"
             />
         </v-col>
       </v-row>
       <v-row>
         <v-col cols="12">
           <multiple-select
-            v-model="form.dosageFormUids"
+            v-model="form.dosage_form_uids"
             :label="$t('CompoundForm.dosage_form')"
             :items="dosageForms"
-            item-text="sponsorPreferredName"
-            item-value="termUid"
+            item-text="sponsor_preferred_name"
+            item-value="term_uid"
             />
         </v-col>
       </v-row>
       <v-row>
         <v-col cols="12">
           <multiple-select
-            v-model="form.dispensersUids"
+            v-model="form.dispensers_uids"
             :label="$t('CompoundForm.dispensed_in')"
             :items="dispensers"
-            item-text="sponsorPreferredName"
-            item-value="termUid"
+            item-text="sponsor_preferred_name"
+            item-value="term_uid"
             />
         </v-col>
       </v-row>
       <v-row>
         <v-col cols="12">
           <multiple-select
-            v-model="form.deliveryDevicesUids"
+            v-model="form.delivery_devices_uids"
             :label="$t('CompoundForm.device')"
             :items="devices"
-            item-text="sponsorPreferredName"
-            item-value="termUid"
+            item-text="sponsor_preferred_name"
+            item-value="term_uid"
             />
         </v-col>
       </v-row>
@@ -297,10 +297,10 @@
       <v-row>
         <v-col cols="12">
           <numeric-value-with-unit-field
-            v-model="form.halfLife"
+            v-model="form.half_life"
             :label="$t('CompoundForm.half_life')"
             subset="Time Unit"
-            :initial-value="form.halfLife"
+            :initial-value="form.half_life"
             />
         </v-col>
       </v-row>
@@ -320,26 +320,26 @@
           <v-icon>mdi-plus</v-icon>
         </v-btn>
         <v-card-text>
-          <v-card v-for="(lagTime, index) in form.lagTimes" :key="index" class="sub-v-card">
+          <v-card v-for="(lag_time, index) in form.lag_times" :key="index" class="sub-v-card">
             <v-card-text style="position: relative;">
               <v-row>
                 <v-col cols="6">
                   <v-autocomplete
-                    v-model="form.sdtmDomains[index].uid"
+                    v-model="form.sdtm_domains[index].uid"
                     :label="$t('CompoundForm.sdtm_domain')"
                     :items="adverseEvents"
-                    item-text="sponsorPreferredName"
-                    item-value="termUid"
+                    item-text="sponsor_preferred_name"
+                    item-value="term_uid"
                     dense
                     clearable
                     />
                 </v-col>
                 <v-col cols="6">
                   <numeric-value-with-unit-field
-                    v-model="form.lagTimes[index]"
+                    v-model="form.lag_times[index]"
                     :label="$t('CompoundForm.lag_time')"
                     subset="Time Unit"
-                    :initial-value="form.lagTimes[index]"
+                    :initial-value="form.lag_times[index]"
                     />
                 </v-col>
               </v-row>
@@ -370,7 +370,7 @@
               rules="required"
               >
               <v-text-field
-                v-model="form.aliasName"
+                v-model="form.alias_name"
                 :label="$t('CompoundAliasForm.name')"
                 dense
                 clearable
@@ -386,7 +386,7 @@
               rules="required"
               >
               <v-text-field
-                v-model="form.aliasNameSentenceCase"
+                v-model="form.alias_name_sentence_case"
                 :label="$t('CompoundAliasForm.sentence_case_name')"
                 dense
                 clearable
@@ -538,24 +538,24 @@ export default {
   },
   methods: {
     addDoseValue () {
-      this.form.doseValues.push({})
+      this.form.dose_values.push({})
     },
     removeDoseValue (index) {
-      this.form.doseValues.splice(index, 1)
+      this.form.dose_values.splice(index, 1)
     },
     addLagTime () {
-      this.form.lagTimes.push({})
-      this.form.sdtmDomains.push({})
+      this.form.lag_times.push({})
+      this.form.sdtm_domains.push({})
     },
     removeLagTime (index) {
-      this.form.lagTimes.splice(index, 1)
-      this.form.sdtmDomains.splice(index, 1)
+      this.form.lag_times.splice(index, 1)
+      this.form.sdtm_domains.splice(index, 1)
     },
     addStrengthValue () {
-      this.form.strengthValues.push({})
+      this.form.strength_values.push({})
     },
     removeStrengthValue (index) {
-      this.form.strengthValues.splice(index, 1)
+      this.form.strength_values.splice(index, 1)
     },
     addSubstance () {
       this.form.substances.push({})
@@ -571,12 +571,12 @@ export default {
     },
     getInitialForm () {
       return {
-        isSponsorCompound: true,
-        doseValues: [{}],
-        halfLife: {},
-        lagTimes: [{}],
-        sdtmDomains: [{}],
-        strengthValues: [{}],
+        is_sponsor_compound: true,
+        dose_values: [{}],
+        half_life: {},
+        lag_times: [{}],
+        sdtm_domains: [{}],
+        strength_values: [{}],
         substances: [{}],
         alias: {}
       }
@@ -585,16 +585,16 @@ export default {
       return this.$refs[`observer_${step}`]
     },
     async addCompound (data) {
-      data.libraryName = libConstants.LIBRARY_SPONSOR
+      data.library_name = libConstants.LIBRARY_SPONSOR
       const createdCompound = await compounds.create(data)
 
       try {
         // Add alias
-        data.alias.compoundUid = createdCompound.data.uid
-        data.alias.name = data.aliasName
-        data.alias.nameSentenceCase = data.aliasNameSentenceCase
-        data.alias.isPreferredSynonym = data.aliasIsPreferredSynonym
-        data.alias.libraryName = data.libraryName
+        data.alias.compound_uid = createdCompound.data.uid
+        data.alias.name = data.alias_name
+        data.alias.name_sentence_case = data.alias_name_sentence_case
+        data.alias.isPreferredSynonym = data.alias_is_preferred_ynonym
+        data.alias.library_name = data.library_name
         data.alias.abbreviation = null
         await compoundAliases.create(data.alias)
       } catch (error) {
@@ -607,27 +607,27 @@ export default {
       bus.$emit('notification', { msg: this.$t('CompoundForm.add_success'), type: 'success' })
     },
     async updateCompound (data) {
-      data.changeDescription = this.$t('_global.work_in_progress')
+      data.change_description = this.$t('_global.work_in_progress')
       await compounds.update(this.compound.uid, data)
       this.$emit('updated')
       bus.$emit('notification', { msg: this.$t('CompoundForm.update_success'), type: 'success' })
     },
     async createNumericValue (item) {
-      item.libraryName = libConstants.LIBRARY_SPONSOR
+      item.library_name = libConstants.LIBRARY_SPONSOR
       const resp = await numericValuesWithUnit.create(item)
       return resp.data.uid
     },
     async createNumericValues (items) {
       const result = []
       for (const item of items) {
-        if (item.value && item.unitDefinitionUid) {
+        if (item.value && item.unit_definition_uid) {
           result.push(await this.createNumericValue(item))
         }
       }
       return result
     },
     async createLagTime (item) {
-      item.libraryName = libConstants.LIBRARY_SPONSOR
+      item.library_name = libConstants.LIBRARY_SPONSOR
       const resp = await lagTimes.create(item)
       return resp.data.uid
     },
@@ -638,34 +638,34 @@ export default {
         return
       }
       const data = { ...this.form }
-      data.nameSentenceCase = data.name.toLowerCase()
-      data.substanceTermsUids = []
+      data.name_sentence_case = data.name.toLowerCase()
+      data.substance_terms_uids = []
       for (const substance of data.substances) {
-        if (substance && substance.termUid) {
-          data.substanceTermsUids.push(substance.termUid)
+        if (substance && substance.term_uid) {
+          data.substance_terms_uids.push(substance.term_uid)
         }
       }
       delete data.substances
-      data.doseValuesUids = await this.createNumericValues(data.doseValues)
-      delete data.doseValues
-      data.strengthValuesUids = await this.createNumericValues(data.strengthValues)
-      delete data.strengthValues
-      if (data.halfLife) {
-        if (data.halfLife.value && data.halfLife.unitDefinitionUid) {
-          data.halfLifeUid = await this.createNumericValue(data.halfLife)
+      data.dose_values_uids = await this.createNumericValues(data.dose_values)
+      delete data.dose_values
+      data.strength_values_uids = await this.createNumericValues(data.strength_values)
+      delete data.strength_values
+      if (data.half_life) {
+        if (data.half_life.value && data.half_life.unit_definition_uid) {
+          data.half_life_uid = await this.createNumericValue(data.half_life)
         }
-        delete data.halfLife
+        delete data.half_life
       }
-      data.lagTimesUids = []
-      for (const [index, item] of data.lagTimes.entries()) {
-        if (item.value && item.unitDefinitionUid && this.form.sdtmDomains[index].uid) {
-          item.sdtmDomainUid = this.form.sdtmDomains[index].uid
-          data.lagTimesUids.push(await this.createLagTime(item))
+      data.lag_times_uids = []
+      for (const [index, item] of data.lag_times.entries()) {
+        if (item.value && item.unit_definition_uid && this.form.sdtm_domains[index].uid) {
+          item.sdtm_domain_uid = this.form.sdtm_domains[index].uid
+          data.lag_times_uids.push(await this.createLagTime(item))
         }
       }
-      delete data.lagTimes
+      delete data.lag_times
       if (data.brands) {
-        data.brandsUids = data.brands.map(item => item.uid)
+        data.brands_uids = data.brands.map(item => item.uid)
         delete data.brands
       }
       try {
@@ -681,7 +681,7 @@ export default {
     },
     transformSubstances () {
       this.$set(this.form, 'substances', this.form.substances.map(substance => {
-        return this.substances.find(item => item.termUid === substance.substanceTermUid)
+        return this.substances.find(item => item.term_uid === substance.substance_term_uid)
       }))
     }
   },
@@ -730,23 +730,23 @@ export default {
       handler: function (value) {
         if (value) {
           this.form = { ...value }
-          this.form.dosageFormUids = this.form.dosageForms.map(item => item.termUid)
-          this.form.doseFrequencyUids = this.form.doseFrequencies.map(item => item.termUid)
-          this.form.routeOfAdministrationUids = this.form.routesOfAdministration.map(item => item.termUid)
-          this.form.dispensersUids = this.form.dispensers.map(item => item.termUid)
-          this.form.deliveryDevicesUids = this.form.deliveryDevices.map(item => item.termUid)
-          for (const field of ['doseValues', 'strengthValues', 'lagTimes']) {
+          this.form.dosage_form_uids = this.form.dosage_forms.map(item => item.term_uid)
+          this.form.dose_frequency_uids = this.form.dose_frequencies.map(item => item.term_uid)
+          this.form.route_of_administration_uids = this.form.routes_of_administration.map(item => item.term_uid)
+          this.form.dispensers_uids = this.form.dispensers.map(item => item.term_uid)
+          this.form.delivery_devices_uids = this.form.delivery_devices.map(item => item.term_uid)
+          for (const field of ['dose_values', 'strength_values', 'lag_times']) {
             if (!this.form[field].length) {
               this.form[field] = [{}]
             }
           }
-          this.form.sdtmDomains = []
-          if (this.form.lagTimes.length) {
-            for (const lagTime of this.form.lagTimes) {
-              this.form.sdtmDomains.push({ uid: lagTime.sdtmDomainUid })
+          this.form.sdtm_domains = []
+          if (this.form.lag_times.length) {
+            for (const lagTime of this.form.lag_times) {
+              this.form.sdtm_domains.push({ uid: lagTime.sdtm_domain_uid })
             }
           } else {
-            this.form.sdtmDomains.push({})
+            this.form.sdtm_domains.push({})
           }
           if (!this.form.substances || !this.form.substances.length) {
             this.$set(this.form, 'substances', [{}])
@@ -757,7 +757,7 @@ export default {
 
           const params = {
             filters: {
-              compoundUid: { v: [value.uid] }
+              compound_uid: { v: [value.uid] }
             }
           }
           compoundAliases.getFiltered(params).then(resp => {
@@ -769,12 +769,12 @@ export default {
     },
     'form.name' (value) {
       if (value && !this.compound) {
-        this.$set(this.form, 'aliasName', value)
+        this.$set(this.form, 'alias_name', value)
       }
     },
-    'form.aliasName' (value) {
+    'form.alias_name' (value) {
       if (value) {
-        this.$set(this.form, 'aliasNameSentenceCase', value.toLowerCase())
+        this.$set(this.form, 'alias_name_sentence_case', value.toLowerCase())
       }
     }
   }

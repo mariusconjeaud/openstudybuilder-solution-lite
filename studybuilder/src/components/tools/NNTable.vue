@@ -16,8 +16,26 @@
       </template>
       <slot name="afterSwitches"></slot>
       <v-spacer />
+      <slot name="headerCenter"></slot>
       <v-spacer />
       <slot name="beforeActions"></slot>
+      <v-radio-group
+        v-if="showColumnNamesToggleButton"
+        v-model="showColumnNames"
+        row
+        dense
+        hide-details
+        >
+        <v-radio
+          :label="$t('NNTable.column_labels')"
+          :value="false"
+          />
+        <v-radio
+          :label="$t('NNTable.column_names')"
+          :value="true"
+          />
+      </v-radio-group>
+      <v-spacer />
       <div
         v-if="!hideActionsMenu"
         class="mt-3">
@@ -63,12 +81,13 @@
           data-cy="export-data-button"
           />
         <v-btn
-          v-if="hasHistory"
+          v-if="historyDataFetcher"
           class="ml-2"
           color="secondary"
           fab
           small
           :title="$t('NNTableTooltips.history')"
+          @click="openHistory"
           >
           <v-icon>mdi-history</v-icon>
         </v-btn>
@@ -137,6 +156,7 @@
         <v-data-table
           data-cy="data-table"
           v-model="selected"
+          :item-key="itemKey"
           :show-select="showSelectBoxes"
           :items-per-page="computedItemsPerPage"
           :footer-props="returnHasApi() ? {
@@ -149,7 +169,7 @@
           :height="areaProps.areaHeight"
           :search="search"
           :headers="shownColumns"
-          @update:page="returnHasApi() ? filterTable() : ''"
+          @update:page="returnHasApi() ? filterTable($event) : ''"
           @update:sort-desc="filterTable($event)"
           elevation="0"
           v-bind="$attrs"
@@ -162,7 +182,8 @@
           <template v-for="header in shownColumns" v-slot:[getHeaderSlotName(header)]>
             <v-row class="headerRow" :key="header.value">
               <v-chip v-if="header.color" small :color="header.color" class="mt-1 mr-1"/>
-              <div class="mt-1">{{ header.text }}</div>
+              <div class="mt-1" v-if="!showColumnNames">{{ header.text }}</div>
+              <div class="mt-1" v-else>{{ header.value }}</div>
               <v-icon v-if="options && options.sortBy[0] === header.value">
                 <template v-if="!currentSortDirection">mdi-arrow-up-thin</template>
                 <template v-else>mdi-arrow-down-thin</template>
@@ -175,6 +196,7 @@
                     v-on="on"
                     plain
                     class="pb-1"
+                    @mouseover="columnValueIndex=header.value"
                     >
                     <v-icon v-show="header.value==columnValueIndex">mdi-dots-vertical</v-icon>
                   </v-btn>
@@ -248,6 +270,19 @@
       />
   </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
+
+  <v-dialog
+    v-model="showHistory"
+    max-width="1200px"
+    persistent
+    >
+    <history-table
+      :headers="historyHeaders"
+      :items="historyItems"
+      @close="closeHistory"
+      :title="historyTitle"
+      />
+  </v-dialog>
 </div>
 </template>
 
@@ -257,6 +292,7 @@ import ColumnChoosingForm from '@/components/tools/ColumnChoosingForm'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import DataTableExportButton from '@/components/tools/DataTableExportButton'
 import FilterAutocomplete from '../tools/FilterAutocomplete.vue'
+import HistoryTable from './HistoryTable'
 import ResizingDiv from './ResizingDiv.vue'
 import i18n from '@/plugins/i18n'
 
@@ -266,12 +302,14 @@ export default {
     ConfirmDialog,
     DataTableExportButton,
     FilterAutocomplete,
+    HistoryTable,
     ResizingDiv
   },
   props: {
     headers: Array,
     defaultHeaders: Array,
     items: Array,
+    itemKey: String,
     hideDefaultSwitches: {
       type: Boolean,
       default: false
@@ -329,9 +367,13 @@ export default {
       type: Boolean,
       default: false
     },
-    hasHistory: {
-      type: Boolean,
-      default: false
+    historyDataFetcher: {
+      type: Function,
+      required: false
+    },
+    historyTitle: {
+      type: String,
+      required: false
     },
     disableFiltering: {
       type: Boolean,
@@ -365,6 +407,10 @@ export default {
     singleExpand: {
       type: Boolean,
       default: false
+    },
+    showColumnNamesToggleButton: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
@@ -393,6 +439,14 @@ export default {
     },
     computedItemsPerPage () {
       return this.itemsPerPage ? this.itemsPerPage : this.userData.rows
+    },
+    historyHeaders () {
+      const result = [...this.headers]
+      result.unshift({
+        text: this.$t('_global.uid'),
+        value: this.itemKey
+      })
+      return result
     }
   },
   mounted () {
@@ -446,13 +500,16 @@ export default {
       data: {
         name: []
       },
+      historyItems: [],
       menu: false,
       date: [],
       apiParams: new Map(),
       filters: '{}',
       trigger: 0,
       refreshFiltersTrigger: 0,
+      showColumnNames: false,
       showColumnsToFilterDialog: false,
+      showHistory: false,
       currentSortDirection: true,
       headerActions: [
         {
@@ -569,28 +626,31 @@ export default {
       this.filterTable()
     },
     filterTable (sort) {
-      if (sort === undefined) {
-        sort = this.currentSortDirection
-      } else {
-        sort = sort[0]
-      }
-      for (const elem of this.apiParams.entries()) {
-        if (elem[1].length === 0) {
-          this.apiParams.delete(elem[0])
+      if (this.timeout) clearTimeout(this.timeout)
+      this.timeout = setTimeout(() => {
+        if (sort === undefined) {
+          sort = this.currentSortDirection
+        } else {
+          sort = sort[0]
         }
-      }
-      const newFilters = JSON.stringify(Object.fromEntries(this.apiParams)).replaceAll(':[', ' :{ "v": [').replaceAll(']}', ']}}').replaceAll('],', ']},')
-      const filtersUpdated = (this.filters && newFilters !== this.filters)
-      this.filters = newFilters
-      let index = this.filters.indexOf('startDate')
-      if (index === -1 && this.filters.indexOf('Timestamp') !== -1) {
-        index = this.filters.indexOf('Timestamp')
-      }
-      if (index > -1) {
-        this.filters = this.filters.substring(0, index + 46) + ', "op": "bw"' + this.filters.substring(index + 46)
-      }
-      this.$emit('filter', this.filters, sort, filtersUpdated)
-      this.refreshFiltersTrigger += 1
+        for (const elem of this.apiParams.entries()) {
+          if (elem[1].length === 0) {
+            this.apiParams.delete(elem[0])
+          }
+        }
+        const newFilters = JSON.stringify(Object.fromEntries(this.apiParams)).replaceAll(':[', ' :{ "v": [').replaceAll(']}', ']}}').replaceAll('],', ']},')
+        const filtersUpdated = (this.filters && newFilters !== this.filters)
+        this.filters = newFilters
+        let index = this.filters.indexOf('start_date')
+        if (index === -1 && this.filters.indexOf('Timestamp') !== -1) {
+          index = this.filters.indexOf('Timestamp')
+        }
+        if (index > -1) {
+          this.filters = this.filters.substring(0, index + 46) + ', "op": "bw"' + this.filters.substring(index + 46)
+        }
+        this.$emit('filter', this.filters, sort, filtersUpdated)
+        this.refreshFiltersTrigger += 1
+      }, 500)
     },
     async confirmExport (resolve) {
       if (!this.selected.length) {
@@ -600,6 +660,14 @@ export default {
         }
       }
       resolve(true)
+    },
+    async openHistory () {
+      const resp = await this.historyDataFetcher()
+      this.historyItems = resp
+      this.showHistory = true
+    },
+    closeHistory () {
+      this.showHistory = false
     }
   },
   watch: {

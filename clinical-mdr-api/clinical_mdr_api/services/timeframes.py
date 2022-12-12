@@ -26,8 +26,8 @@ class TimeframeService(GenericObjectService[TimeframeAR]):
     repository_interface = TimeframeRepository
     template_repository_interface = TimeframeTemplateRepository
     version_class = TimeframeVersion
-    templateUidProperty = "timeframeTemplateUid"
-    templateNameProperty = "timeframeTemplate"
+    template_uid_property = "timeframe_template_uid"
+    template_name_property = "timeframe_template"
 
     def get_all(
         self,

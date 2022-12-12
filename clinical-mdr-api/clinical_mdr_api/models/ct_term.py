@@ -18,77 +18,77 @@ class CTTerm(BaseModel):
         cls, ct_term_name_ar: CTTermNameAR, ct_term_attributes_ar: CTTermAttributesAR
     ) -> "CTTerm":
         return cls(
-            termUid=ct_term_attributes_ar.uid,
-            catalogueName=ct_term_attributes_ar.ct_term_vo.catalogue_name,
-            codelistUid=ct_term_attributes_ar.ct_term_vo.codelist_uid,
-            conceptId=ct_term_attributes_ar.ct_term_vo.concept_id,
-            codeSubmissionValue=ct_term_attributes_ar.ct_term_vo.code_submission_value,
-            nameSubmissionValue=ct_term_attributes_ar.ct_term_vo.name_submission_value,
-            nciPreferredName=ct_term_attributes_ar.ct_term_vo.preferred_term,
+            term_uid=ct_term_attributes_ar.uid,
+            catalogue_name=ct_term_attributes_ar.ct_term_vo.catalogue_name,
+            codelist_uid=ct_term_attributes_ar.ct_term_vo.codelist_uid,
+            concept_id=ct_term_attributes_ar.ct_term_vo.concept_id,
+            code_submission_value=ct_term_attributes_ar.ct_term_vo.code_submission_value,
+            name_submission_value=ct_term_attributes_ar.ct_term_vo.name_submission_value,
+            nci_preferred_name=ct_term_attributes_ar.ct_term_vo.preferred_term,
             definition=ct_term_attributes_ar.ct_term_vo.definition,
-            libraryName=Library.from_library_vo(ct_term_attributes_ar.library).name,
-            sponsorPreferredName=ct_term_name_ar.ct_term_vo.name,
-            sponsorPreferredNameSentenceCase=ct_term_name_ar.ct_term_vo.name_sentence_case,
+            library_name=Library.from_library_vo(ct_term_attributes_ar.library).name,
+            sponsor_preferred_name=ct_term_name_ar.ct_term_vo.name,
+            sponsor_preferred_name_sentence_case=ct_term_name_ar.ct_term_vo.name_sentence_case,
             order=ct_term_name_ar.ct_term_vo.order,
-            possibleActions=sorted(
+            possible_actions=sorted(
                 [_.value for _ in ct_term_attributes_ar.get_possible_actions()]
             ),
         )
 
-    termUid: str = Field(
+    term_uid: str = Field(
         ...,
-        title="termUid",
+        title="term_uid",
         description="",
     )
 
-    catalogueName: str = Field(
+    catalogue_name: str = Field(
         ...,
-        title="catalogueName",
+        title="catalogue_name",
         description="",
     )
 
-    codelistUid: str = Field(
+    codelist_uid: str = Field(
         ...,
-        title="codelistUid",
+        title="codelist_uid",
         description="",
     )
-    conceptId: Optional[str] = Field(
+    concept_id: Optional[str] = Field(
         ...,
-        title="conceptId",
-        description="",
-    )
-
-    codeSubmissionValue: Optional[str] = Field(
-        ...,
-        title="codeSubmissionValue",
+        title="concept_id",
         description="",
     )
 
-    nameSubmissionValue: Optional[str] = Field(
+    code_submission_value: Optional[str] = Field(
         ...,
-        title="nameSubmissionValue",
+        title="code_submission_value",
         description="",
     )
 
-    nciPreferredName: str = Field(
+    name_submission_value: Optional[str] = Field(
         ...,
-        title="nciPreferredName",
+        title="name_submission_value",
+        description="",
+    )
+
+    nci_preferred_name: str = Field(
+        ...,
+        title="nci_preferred_name",
         description="",
     )
 
     definition: str = Field(
-        ..., title="definition", description="", removeFromWildcard=True
+        ..., title="definition", description="", remove_from_wildcard=True
     )
 
-    sponsorPreferredName: str = Field(
+    sponsor_preferred_name: str = Field(
         ...,
-        title="sponsorPreferredName",
+        title="sponsor_preferred_name",
         description="",
     )
 
-    sponsorPreferredNameSentenceCase: str = Field(
+    sponsor_preferred_name_sentence_case: str = Field(
         ...,
-        title="sponsorPreferredNameSentenceCase",
+        title="sponsor_preferred_name_sentence_case",
         description="",
     )
 
@@ -98,44 +98,44 @@ class CTTerm(BaseModel):
         description="",
     )
 
-    libraryName: str
-    possibleActions: Optional[List[str]] = Field(
+    library_name: str
+    possible_actions: Optional[List[str]] = Field(
         None,
         description=(
             "Holds those actions that can be performed on the CTTerm. "
-            "Actions are: 'approve', 'edit', 'newVersion'."
+            "Actions are: 'approve', 'edit', 'new_version'."
         ),
     )
 
 
 class CTTermCreateInput(BaseModel):
-    catalogueName: str = Field(
+    catalogue_name: str = Field(
         ...,
-        title="catalogueName",
+        title="catalogue_name",
         description="",
     )
 
-    codelistUid: str = Field(
+    codelist_uid: str = Field(
         ...,
-        title="codelistUid",
+        title="codelist_uid",
         description="",
     )
 
-    codeSubmissionValue: str = Field(
+    code_submission_value: str = Field(
         ...,
-        title="codeSubmissionValue",
+        title="code_submission_value",
         description="",
     )
 
-    nameSubmissionValue: Optional[str] = Field(
+    name_submission_value: Optional[str] = Field(
         None,
-        title="nameSubmissionValue",
+        title="name_submission_value",
         description="",
     )
 
-    nciPreferredName: str = Field(
+    nci_preferred_name: str = Field(
         ...,
-        title="nciPreferredName",
+        title="nci_preferred_name",
         description="",
     )
 
@@ -145,15 +145,15 @@ class CTTermCreateInput(BaseModel):
         description="",
     )
 
-    sponsorPreferredName: str = Field(
+    sponsor_preferred_name: str = Field(
         ...,
-        title="sponsorPreferredName",
+        title="sponsor_preferred_name",
         description="",
     )
 
-    sponsorPreferredNameSentenceCase: str = Field(
+    sponsor_preferred_name_sentence_case: str = Field(
         ...,
-        title="sponsorPreferredNameSentenceCase",
+        title="sponsor_preferred_name_sentence_case",
         description="",
     )
     order: Optional[int] = Field(
@@ -161,9 +161,9 @@ class CTTermCreateInput(BaseModel):
         title="order",
         description="",
     )
-    libraryName: str = Field(
+    library_name: str = Field(
         ...,
-        title="libraryName",
+        title="library_name",
         description="",
     )
 
@@ -176,10 +176,10 @@ class CTTermNameAndAttributes(BaseModel):
         if not ct_term_name_ar or not ct_term_attributes_ar:
             return None
         term_name_and_attributes = cls(
-            termUid=ct_term_attributes_ar.uid,
-            catalogueName=ct_term_attributes_ar.ct_term_vo.catalogue_name,
-            codelistUid=ct_term_attributes_ar.ct_term_vo.codelist_uid,
-            libraryName=Library.from_library_vo(ct_term_attributes_ar.library).name
+            term_uid=ct_term_attributes_ar.uid,
+            catalogue_name=ct_term_attributes_ar.ct_term_vo.catalogue_name,
+            codelist_uid=ct_term_attributes_ar.ct_term_vo.codelist_uid,
+            library_name=Library.from_library_vo(ct_term_attributes_ar.library).name
             if ct_term_attributes_ar.library
             else None,
             name=CTTermName.from_ct_term_ar_without_common_term_fields(ct_term_name_ar),
@@ -190,23 +190,23 @@ class CTTermNameAndAttributes(BaseModel):
 
         return term_name_and_attributes
 
-    termUid: str = Field(
+    term_uid: str = Field(
         ...,
-        title="codelistUid",
+        title="codelist_uid",
         description="",
     )
-    catalogueName: str = Field(
+    catalogue_name: str = Field(
         ...,
-        title="catalogueName",
+        title="catalogue_name",
         description="",
     )
-    codelistUid: str = Field(
+    codelist_uid: str = Field(
         ...,
-        title="codelistUid",
+        title="codelist_uid",
         description="",
     )
 
-    libraryName: Optional[str]
+    library_name: Optional[str]
 
     name: CTTermName = Field(
         ...,
@@ -222,14 +222,14 @@ class CTTermNameAndAttributes(BaseModel):
 
 
 class CTTermNewOrder(BaseModel):
-    codelistUid: str = Field(
+    codelist_uid: str = Field(
         ...,
-        title="codelistUid",
+        title="codelist_uid",
         description="",
     )
-    newOrder: int = Field(
+    new_order: int = Field(
         999999,
-        title="newOrder",
+        title="new_order",
         description="",
     )
 
@@ -245,20 +245,22 @@ class SimpleCTTermAttributes(BaseModel):
             if term is not None:
                 term_model = cls(
                     uid=uid,
-                    codeSubmissionValue=term.ct_term_vo.code_submission_value,
-                    preferredTerm=term.ct_term_vo.preferred_term,
+                    code_submission_value=term.ct_term_vo.code_submission_value,
+                    preferred_term=term.ct_term_vo.preferred_term,
                 )
             else:
-                term_model = cls(uid=uid, codeSubmissionValue=None, preferredTerm=None)
+                term_model = cls(
+                    uid=uid, code_submission_value=None, preferred_term=None
+                )
         else:
             term_model = None
         return term_model
 
     uid: str = Field(..., title="uid", description="")
-    codeSubmissionValue: Optional[str] = Field(
-        None, title="codeSubmissionValue", description=""
+    code_submission_value: Optional[str] = Field(
+        None, title="code_submission_value", description=""
     )
-    preferredTerm: Optional[str] = Field(None, title="preferredTerm", description="")
+    preferred_term: Optional[str] = Field(None, title="preferred_term", description="")
 
 
 class SimpleTermModel(BaseModel):
@@ -272,26 +274,26 @@ class SimpleTermModel(BaseModel):
 
             if term is not None:
                 if hasattr(term, "ct_term_vo"):
-                    simple_term_model = cls(termUid=c_code, name=term.ct_term_vo.name)
+                    simple_term_model = cls(term_uid=c_code, name=term.ct_term_vo.name)
                 elif hasattr(term, "dictionary_term_vo"):
                     simple_term_model = SimpleDictionaryTermModel(
-                        termUid=c_code,
+                        term_uid=c_code,
                         name=term.dictionary_term_vo.name,
-                        dictionaryId=getattr(
+                        dictionary_id=getattr(
                             term.dictionary_term_vo, "dictionary_id", None
                         ),
                     )
             else:
-                simple_term_model = cls(termUid=c_code, name=None)
+                simple_term_model = cls(term_uid=c_code, name=None)
         else:
             simple_term_model = None
         return simple_term_model
 
-    termUid: str = Field(..., title="termUid", description="")
+    term_uid: str = Field(..., title="term_uid", description="")
     name: Optional[str] = Field(None, title="name", description="")
 
 
 class SimpleDictionaryTermModel(SimpleTermModel):
-    dictionaryId: Optional[str] = Field(
-        None, title="dictionaryId", description="Id if item in the external dictionary"
+    dictionary_id: Optional[str] = Field(
+        None, title="dictionary_id", description="Id if item in the external dictionary"
     )

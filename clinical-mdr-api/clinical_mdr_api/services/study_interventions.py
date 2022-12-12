@@ -30,7 +30,7 @@ _gettext = {
     "sourcing": "Sourcing",
     "packaging_and_labelling": "Packaging and labelling",
     "authorisation_status_in": "Authorisation status in",
-    "medical_device_template": "Administered using {device} with a {dispensedIn}",
+    "medical_device_template": "Administered using {device} with a {dispensed_in}",
     "trial_product_strength_template": "{value} {unit}",
     "None": "None",
     "study_interventions": "Study Interventions",
@@ -95,7 +95,9 @@ class StudyInterventionsService:
         table.data[r][0] = _gettext("intervention_type")
         table.meta[r][0]["class"] = "header2"
         for c, cmp in enumerate(compounds, start=1):
-            table.data[r][c] = cmp.typeOfTreatment.name if cmp.typeOfTreatment else ""
+            table.data[r][c] = (
+                cmp.type_of_treatment.name if cmp.type_of_treatment else ""
+            )
 
         r += 1
         table.data[r][0] = _gettext("investigational_or_non_investigational")
@@ -107,14 +109,14 @@ class StudyInterventionsService:
         table.data[r][0] = _gettext("pharmaceutical_form")
         table.meta[r][0]["class"] = "header2"
         for c, cmp in enumerate(compounds, start=1):
-            table.data[r][c] = cmp.dosageForm.name if cmp.dosageForm else ""
+            table.data[r][c] = cmp.dosage_form.name if cmp.dosage_form else ""
 
         r += 1
         table.data[r][0] = _gettext("route_of_administration")
         table.meta[r][0]["class"] = "header2"
         for c, cmp in enumerate(compounds, start=1):
             table.data[r][c] = (
-                cmp.routeOfAdministration.name if cmp.routeOfAdministration else ""
+                cmp.route_of_administration.name if cmp.route_of_administration else ""
             )
 
         r += 1
@@ -123,8 +125,8 @@ class StudyInterventionsService:
         for c, cmp in enumerate(compounds, start=1):
             m = {
                 "device": cmp.device.name if cmp.device else _gettext("None"),
-                "dispensedIn": (
-                    cmp.dispensedIn.name if cmp.dispensedIn else _gettext("None")
+                "dispensed_in": (
+                    cmp.dispensed_in.name if cmp.dispensed_in else _gettext("None")
                 ),
             }
             table.data[r][c] = _gettext("medical_device_template").format_map(m)
@@ -133,10 +135,10 @@ class StudyInterventionsService:
         table.data[r][0] = _gettext("trial_product_strength")
         table.meta[r][0]["class"] = "header2"
         for c, cmp in enumerate(compounds, start=1):
-            if cmp.strengthValue:
+            if cmp.strength_value:
                 m = {
-                    "unit": cmp.strengthValue.unitLabel,
-                    "value": cmp.strengthValue.value,
+                    "unit": cmp.strength_value.unit_label,
+                    "value": cmp.strength_value.value,
                 }
                 table.data[r][c] = _gettext(
                     "trial_product_strength_template"

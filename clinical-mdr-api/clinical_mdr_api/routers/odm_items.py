@@ -1,18 +1,20 @@
-from typing import Any, Optional, Sequence
+from typing import Any, List, Optional, Sequence
 
 from fastapi import APIRouter, Body, Path, Query
-from pydantic.types import Json, List
+from pydantic.types import Json
 
+from clinical_mdr_api import config
 from clinical_mdr_api.models import (
     OdmItem,
     OdmItemActivityPostInput,
     OdmItemPatchInput,
     OdmItemPostInput,
-    OdmItemWithRelationsPatchInput,
-    OdmItemWithRelationsPostInput,
 )
 from clinical_mdr_api.models.error import ErrorResponse
-from clinical_mdr_api.models.odm_common_models import OdmXmlExtensionRelationPostInput
+from clinical_mdr_api.models.odm_common_models import (
+    OdmElementWithParentUid,
+    OdmXmlExtensionRelationPostInput,
+)
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions
@@ -34,33 +36,35 @@ OdmItemUID = Path(None, description="The unique id of the ODM Item.")
 )
 def get_all_odm_items(
     library: Optional[str] = Query(None),
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
 ):
     odm_item_service = OdmItemService()
     results = odm_item_service.get_all_concepts(
         library=library,
-        sort_by=sortBy,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -80,9 +84,9 @@ def get_all_odm_items(
     },
 )
 def get_distinct_values_for_header(
-    libraryName: Optional[str] = Query(None),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    library_name: Optional[str] = Query(None),
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -91,19 +95,32 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     odm_item_service = OdmItemService()
     return odm_item_service.get_distinct_values_for_header(
-        library=libraryName,
-        field_name=fieldName,
-        search_string=searchString,
+        library=library_name,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
+
+
+@router.get(
+    "/item-groups",
+    summary="Get all ODM Items that belongs to an ODM Item Group",
+    description="",
+    response_model=Sequence[OdmElementWithParentUid],
+    status_code=200,
+    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+)
+def get_odm_items_that_belongs_to_item_group():
+    odm_item_service = OdmItemService()
+    return odm_item_service.get_items_that_belongs_to_item_groups()
 
 
 @router.get(
@@ -134,14 +151,14 @@ def get_active_relationships(uid: str = OdmItemUID):
 
 @router.get(
     "/{uid}/versions",
-    summary="List version history for ODM Items",
+    summary="List version history for ODM Item",
     description="""
 State before:
  - uid must exist.
 
 Business logic:
  - List version history for ODM Items.
- - The returned versions are ordered by startDate descending (newest entries first).
+ - The returned versions are ordered by start_date descending (newest entries first).
 
 State after:
  - No change
@@ -165,13 +182,13 @@ def get_odm_item_versions(uid: str = OdmItemUID):
 
 
 @router.post(
-    "/select",
+    "",
     summary="Creates a new Item in 'Draft' status with version 0.1",
     description="",
     response_model=OdmItem,
     status_code=201,
     responses={
-        201: {"description": "Created - The odm item was successfully created."},
+        201: {"description": "Created - The ODM Item was successfully created."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -185,40 +202,12 @@ def create_odm_item(
     odm_item_create_input: OdmItemPostInput = Body(None, description="")
 ):
     odm_item_service = OdmItemService()
-    return odm_item_service.create(concept_input=odm_item_create_input)
-
-
-@router.post(
-    "/create",
-    summary="Creates an ODM Item with relationships",
-    description="",
-    response_model=OdmItem,
-    status_code=201,
-    responses={
-        201: {"description": "Created - The odm item was successfully created."},
-        403: {
-            "model": ErrorResponse,
-            "description": "Forbidden - Reasons include e.g.: \n"
-            "- The library does not exist.\n"
-            "- The library does not allow to add new items.\n",
-        },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
-    },
-)
-def create_odm_item_with_relations(
-    odm_item_with_relations_post_input: OdmItemWithRelationsPostInput = Body(
-        None, description=""
-    )
-):
-    odm_item_service = OdmItemService()
-    return odm_item_service.create_with_relations(
-        concept_input=odm_item_with_relations_post_input
-    )
+    return odm_item_service.create_with_relations(concept_input=odm_item_create_input)
 
 
 @router.patch(
-    "/{uid}/select",
-    summary="Update odm item",
+    "/{uid}",
+    summary="Update ODM Item",
     description="",
     response_model=OdmItem,
     status_code=200,
@@ -243,45 +232,13 @@ def edit_odm_item(
     odm_item_edit_input: OdmItemPatchInput = Body(None, description=""),
 ):
     odm_item_service = OdmItemService()
-    return odm_item_service.edit_draft(uid=uid, concept_edit_input=odm_item_edit_input)
-
-
-@router.patch(
-    "/{uid}/update",
-    summary="Updates an ODM Item with relationships",
-    description="",
-    response_model=OdmItem,
-    status_code=200,
-    responses={
-        200: {"description": "OK."},
-        403: {
-            "model": ErrorResponse,
-            "description": "Forbidden - Reasons include e.g.: \n"
-            "- The ODM Item is not in draft status.\n"
-            "- The ODM Item had been in 'Final' status before.\n"
-            "- The library does not allow to edit draft versions.\n",
-        },
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - The ODM Item with the specified 'uid' wasn't found.",
-        },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
-    },
-)
-def edit_odm_item_with_relations(
-    uid: str = OdmItemUID,
-    odm_item_with_relations_patch_input: OdmItemWithRelationsPatchInput = Body(
-        None, description=""
-    ),
-):
-    odm_item_service = OdmItemService()
     return odm_item_service.update_with_relations(
-        uid=uid, concept_edit_input=odm_item_with_relations_patch_input
+        uid=uid, concept_edit_input=odm_item_edit_input
     )
 
 
 @router.post(
-    "/{uid}/new-version",
+    "/{uid}/versions",
     summary=" Create a new version of ODM Item",
     description="""
 State before:
@@ -397,7 +354,7 @@ def reactivate_odm_item(uid: str = OdmItemUID):
 
 
 @router.post(
-    "/{uid}/add-activities",
+    "/{uid}/activities",
     summary="Adds activities to the ODM Item.",
     description="",
     response_model=OdmItem,
@@ -436,7 +393,7 @@ def add_activities_to_odm_item(
 
 
 @router.post(
-    "/{uid}/add-xml-extension-tags",
+    "/{uid}/xml-extension-tags",
     summary="Adds xml extension tags to the ODM Item.",
     description="",
     response_model=OdmItem,
@@ -475,7 +432,7 @@ def add_xml_extension_tags_to_odm_item(
 
 
 @router.post(
-    "/{uid}/add-xml-extension-attributes",
+    "/{uid}/xml-extension-attributes",
     summary="Adds xml extension attributes to the ODM Item.",
     description="",
     response_model=OdmItem,
@@ -515,7 +472,7 @@ def add_xml_extension_attributes_to_odm_item(
 
 
 @router.post(
-    "/{uid}/add-xml-extension-tag-attributes",
+    "/{uid}/xml-extension-tag-attributes",
     summary="Adds xml extension tag attributes to the ODM Item.",
     description="",
     response_model=OdmItem,

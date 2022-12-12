@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Optional, Sequence
+from typing import Callable, Optional, Sequence, Tuple
 
 from clinical_mdr_api.domain.concepts.concept_base import ConceptVO
 from clinical_mdr_api.domain.concepts.odms.odm_ar_base import OdmARBase
@@ -13,29 +13,18 @@ from clinical_mdr_api.exceptions import BusinessLogicException
 @dataclass(frozen=True)
 class OdmXmlExtensionTagVO(ConceptVO):
     xml_extension_uid: str
-    parent_xml_extension_tag_uid: Optional[str]
-    child_xml_extension_tag_uids: Optional[Sequence[str]]
-    xml_extension_attribute_uids: Optional[Sequence[str]]
+    xml_extension_attribute_uids: Sequence[str]
 
     @classmethod
     def from_repository_values(
         cls,
         name: str,
         xml_extension_uid: str,
-        parent_xml_extension_tag_uid: Optional[str],
-        child_xml_extension_tag_uids: Optional[Sequence[str]] = None,
-        xml_extension_attribute_uids: Optional[Sequence[str]] = None,
+        xml_extension_attribute_uids: Sequence[str],
     ) -> "OdmXmlExtensionTagVO":
-        if child_xml_extension_tag_uids is None:
-            child_xml_extension_tag_uids = []
-        if xml_extension_attribute_uids is None:
-            xml_extension_attribute_uids = []
-
         return cls(
             name=name,
             xml_extension_uid=xml_extension_uid,
-            parent_xml_extension_tag_uid=parent_xml_extension_tag_uid,
-            child_xml_extension_tag_uids=child_xml_extension_tag_uids,
             xml_extension_attribute_uids=xml_extension_attribute_uids,
             name_sentence_case=None,
             definition=None,
@@ -45,8 +34,10 @@ class OdmXmlExtensionTagVO(ConceptVO):
 
     def validate(
         self,
-        concept_exists_by_callback: Callable[[str, str, bool], bool],
         odm_xml_extension_exists_by_callback: Callable[[str, str, bool], bool],
+        find_odm_xml_extension_tag_callback: Callable[
+            [dict], Optional[Tuple[Sequence["OdmXmlExtensionTagAR"], int]]
+        ],
     ) -> None:
 
         if (
@@ -56,17 +47,18 @@ class OdmXmlExtensionTagVO(ConceptVO):
             )
         ):
             raise BusinessLogicException(
-                f"OdmXmlExtensionTag tried to connect to non existing OdmXmlExtension identified by uid ({self.xml_extension_uid})."
+                f"ODM XML Extension Tag tried to connect to non existing ODM XML Extension identified by uid ({self.xml_extension_uid})."
             )
 
-        if (
-            self.parent_xml_extension_tag_uid is not None
-            and not concept_exists_by_callback(
-                "uid", self.parent_xml_extension_tag_uid, True
-            )
-        ):
+        odm_xml_extension_tag, _ = find_odm_xml_extension_tag_callback(
+            filter_by={
+                "name": {"v": [self.name], "op": "eq"},
+                "xml_extension_uid": {"v": [self.xml_extension_uid], "op": "eq"},
+            }
+        )
+        if odm_xml_extension_tag:
             raise BusinessLogicException(
-                f"OdmXmlExtensionTag tried to connect to non existing OdmXmlExtensionTag identified by uid ({self.parent_xml_extension_tag_uid})."
+                f"ODM XML Extension Tag with name ({self.name}) already exists."
             )
 
 
@@ -104,16 +96,18 @@ class OdmXmlExtensionTagAR(OdmARBase):
         concept_vo: OdmXmlExtensionTagVO,
         library: LibraryVO,
         generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        concept_exists_by_callback: Callable[[str, str], bool] = lambda _: True,
         odm_xml_extension_exists_by_callback: Callable[
-            [str, str], bool
-        ] = lambda _: False,
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
+        find_odm_xml_extension_tag_callback: Callable[
+            [dict], Optional[Tuple[Sequence["OdmXmlExtensionTagAR"], int]]
+        ] = lambda _: None,
     ) -> "OdmXmlExtensionTagAR":
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
         concept_vo.validate(
-            concept_exists_by_callback=concept_exists_by_callback,
             odm_xml_extension_exists_by_callback=odm_xml_extension_exists_by_callback,
+            find_odm_xml_extension_tag_callback=find_odm_xml_extension_tag_callback,
         )
 
         return cls(
@@ -128,7 +122,7 @@ class OdmXmlExtensionTagAR(OdmARBase):
         author: str,
         change_description: Optional[str],
         concept_vo: OdmXmlExtensionTagVO,
-        concept_exists_by_name_callback: Callable[[str], bool] = None,
+        concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
     ) -> None:
         """
         Creates a new draft version for the object.

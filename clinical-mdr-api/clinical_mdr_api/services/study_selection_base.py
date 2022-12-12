@@ -41,13 +41,7 @@ class StudySelectionMixin:
 
     def _transform_latest_objective_model(self, objective_uid: str) -> Objective:
         objective_repo = self._repos.objective_repository
-        objective = objective_repo.find_by_uid_2(
-            uid=objective_uid, status=LibraryItemStatus.FINAL
-        )
-        if objective is None:
-            objective = objective_repo.find_by_uid_2(
-                uid=objective_uid, status=LibraryItemStatus.RETIRED
-            )
+        objective = objective_repo.find_by_uid_2(uid=objective_uid)
         return Objective.from_objective_ar(objective)
 
     def _transform_objective_model(
@@ -125,7 +119,7 @@ class StudySelectionMixin:
         """Finds the activity with a given UID."""
         return Activity.from_activity_ar(
             activity_ar=self._repos.activity_repository.find_by_uid_2(activity_uid),
-            find_activity_subgroup_by_uid=self._repos.activity_sub_group_repository.find_by_uid_2,
+            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_2,
             find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
         )
 
@@ -137,7 +131,7 @@ class StudySelectionMixin:
             activity_ar=self._repos.activity_repository.find_by_uid_2(
                 activity_uid, version=activity_version
             ),
-            find_activity_subgroup_by_uid=self._repos.activity_sub_group_repository.find_by_uid_2,
+            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_2,
             find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
         )
 

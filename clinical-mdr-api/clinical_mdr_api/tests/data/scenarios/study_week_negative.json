@@ -10,8 +10,8 @@
             "value": 1.23,
             "definition":"study_week_definition1",
             "abbreviation": "abbv",
-            "libraryName":"Sponsor",
-            "templateParameter": true
+            "library_name":"Sponsor",
+            "template_parameter": true
          },
          "url":"/concepts/study-weeks"
       },
@@ -24,11 +24,11 @@
             "uid":"StudyWeek_000001",
             "name":"Week 1.23",
             "value": 1.23,
-            "nameSentenceCase":"week 1.23",
+            "name_sentence_case":"week 1.23",
             "definition":"study_week_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName":"Sponsor"
+            "template_parameter": true,
+            "library_name":"Sponsor"
          }
       }
    }

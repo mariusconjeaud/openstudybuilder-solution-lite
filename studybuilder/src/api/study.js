@@ -19,7 +19,7 @@ export default {
     if (fields !== undefined) {
       fields = fields.join(',')
     }
-    return repository.get(url, { params: { fields } })
+    return repository.get(url, { params: { fields, page_size: 0 } })
   },
   getStudy (studyUid) {
     return repository.get(`${resource}/${studyUid}`)
@@ -43,46 +43,73 @@ export default {
     const fields = encodeURIComponent(constants.INTERVENTION_METADATA)
     return repository.get(`${resource}/${studyUid}?fields=${fields}`)
   },
+  getStudyFieldsAuditTrail (studyUid, section) {
+    // FIXME: remove ASAP (we wait for the API endpoint to be fixed)
+    if (section === 'study_population') {
+      section = 'StudyPopulation'
+    }
+    if (section === 'high_level_study_design') {
+      section = 'HighLevelStudyDesign'
+    }
+    if (section === 'study_intervention') {
+      section = 'StudyIntervention'
+    }
+    if (section === 'registry_identifiers') {
+      section = 'RegistryIdentifiers'
+    }
+
+    const params = { sections: `+${section},-IdentificationMetadata` }
+    return repository.get(`${resource}/${studyUid}/fields-audit-trail`, { params })
+  },
   getAllStudyObjectives (params) {
-    return repository.get('study/study-objectives', { params })
+    return repository.get('study-objectives', { params })
   },
   getStudyObjectives (studyUid, params) {
-    return repository.get(`study/${studyUid}/study-objectives`, { params })
+    return repository.get(`studies/${studyUid}/study-objectives`, { params })
+  },
+  getStudyObjectivesAuditTrail (studyUid) {
+    return repository.get(`studies/${studyUid}/study-objectives/audit-trail`)
   },
   getStudyObjectiveAuditTrail (studyUid, studyObjectiveUid) {
-    return repository.get(`study/${studyUid}/study-objectives/${studyObjectiveUid}/audit-trail`)
+    return repository.get(`studies/${studyUid}/study-objectives/${studyObjectiveUid}/audit-trail`)
+  },
+  getStudyObjectivesHtml (studyUid) {
+    return repository.get(`studies/${studyUid}/study-objectives.html`)
   },
   getStudyObjectivesDocx (studyUid) {
-    return repository.get(`study/${studyUid}/study-objectives.docx`, { responseType: 'arraybuffer' })
+    return repository.get(`studies/${studyUid}/study-objectives.docx`, { responseType: 'arraybuffer' })
   },
   selectStudyObjective (studyUid, objectiveUid, objectiveLevelUid) {
-    const data = { objectiveUid, objectiveLevelUid }
-    return repository.post(`study/${studyUid}/study-objectives/select`, data)
+    const data = {
+      objective_uid: objectiveUid,
+      objective_level_uid: objectiveLevelUid
+    }
+    return repository.post(`studies/${studyUid}/study-objectives`, data)
   },
   getStudyObjectivePreview (studyUid, data) {
-    return repository.post(`study/${studyUid}/study-objectives/create/preview`, data)
+    return repository.post(`studies/${studyUid}/study-objectives/preview`, data)
   },
   createStudyObjective (studyUid, data) {
-    return repository.post(`study/${studyUid}/study-objectives/create`, data)
+    return repository.post(`studies/${studyUid}/study-objectives?create_objective=true`, data)
   },
   updateStudyObjective (studyUid, studyObjectiveUid, data) {
-    return repository.patch(`study/${studyUid}/study-objectives/${studyObjectiveUid}`, data)
+    return repository.patch(`studies/${studyUid}/study-objectives/${studyObjectiveUid}`, data)
   },
   updateStudyObjectiveLatestVersion (studyUid, studyObjectiveUid) {
-    return repository.post(`study/${studyUid}/study-objectives/${studyObjectiveUid}/sync-latest-version`)
+    return repository.post(`studies/${studyUid}/study-objectives/${studyObjectiveUid}/sync-latest-version`)
   },
   updateStudyObjectiveOrder (studyUid, studyObjectiveUid, order) {
     const data = { new_order: order }
-    return repository.patch(`study/${studyUid}/study-objectives/${studyObjectiveUid}/order`, data)
+    return repository.patch(`studies/${studyUid}/study-objectives/${studyObjectiveUid}/order`, data)
   },
   deleteStudyObjective (studyUid, studyObjectiveUid) {
-    return repository.delete(`study/${studyUid}/study-objectives/${studyObjectiveUid}`)
+    return repository.delete(`studies/${studyUid}/study-objectives/${studyObjectiveUid}`)
   },
   getAllStudyEndpoints (params) {
-    return repository.get('study/study-endpoints', { params })
+    return repository.get('study-endpoints', { params })
   },
   getStudyEndpoints (studyUid, params) {
-    return repository.get(`study/${studyUid}/study-endpoints`, { params })
+    return repository.get(`studies/${studyUid}/study-endpoints`, { params })
   },
   getStudyEndpointsByObjective (studyUid, objectiveUid) {
     const params = {
@@ -92,195 +119,214 @@ export default {
         }
       }
     }
-    return repository.get('study/study-endpoints', { params })
+    return repository.get('study-endpoints', { params })
+  },
+  getStudyEndpointsAuditTrail (studyUid) {
+    return repository.get(`studies/${studyUid}/study-endpoints/audit-trail`)
   },
   getStudyEndpointAuditTrail (studyUid, studyEndpointUid) {
-    return repository.get(`study/${studyUid}/study-endpoints/${studyEndpointUid}/audit-trail`)
+    return repository.get(`studies/${studyUid}/study-endpoints/${studyEndpointUid}/audit-trail`)
   },
   getStudyEndpointPreview (studyUid, data) {
-    return repository.post(`study/${studyUid}/study-endpoints/create/preview`, data)
+    return repository.post(`studies/${studyUid}/study-endpoints/preview`, data)
   },
   createStudyEndpoint (studyUid, data) {
-    return repository.post(`study/${studyUid}/study-endpoints/create`, data)
+    return repository.post(`studies/${studyUid}/study-endpoints?create_endpoint=true`, data)
   },
   selectStudyEndpoint (studyUid, data) {
-    return repository.post(`study/${studyUid}/study-endpoints/select`, data)
+    return repository.post(`studies/${studyUid}/study-endpoints`, data)
   },
   updateStudyEndpoint (studyUid, studyEndpointUid, data) {
-    return repository.patch(`study/${studyUid}/study-endpoints/${studyEndpointUid}`, data)
+    return repository.patch(`studies/${studyUid}/study-endpoints/${studyEndpointUid}`, data)
   },
   updateStudyEndpointEndpointLatestVersion (studyUid, studyEndpointUid) {
-    return repository.post(`study/${studyUid}/study-endpoints/${studyEndpointUid}/sync-latest-endpoint-version`)
+    return repository.post(`studies/${studyUid}/study-endpoints/${studyEndpointUid}/sync-latest-endpoint-version`)
   },
   updateStudyEndpointTimeframeLatestVersion (studyUid, studyEndpointUid) {
-    return repository.post(`study/${studyUid}/study-endpoints/${studyEndpointUid}/sync-latest-timeframe-version`)
+    return repository.post(`studies/${studyUid}/study-endpoints/${studyEndpointUid}/sync-latest-timeframe-version`)
   },
   updateStudyEndpointOrder (studyUid, studyEndpointUid, order) {
     const data = { new_order: order }
-    return repository.patch(`study/${studyUid}/study-endpoints/${studyEndpointUid}/order`, data)
+    return repository.patch(`studies/${studyUid}/study-endpoints/${studyEndpointUid}/order`, data)
   },
   deleteStudyEndpoint (studyUid, studyEndpointUid) {
-    return repository.delete(`study/${studyUid}/study-endpoints/${studyEndpointUid}`)
+    return repository.delete(`studies/${studyUid}/study-endpoints/${studyEndpointUid}`)
   },
   updateStudyObjectiveAcceptVersion (studyUid, studyObjectiveUid) {
-    return repository.post(`study/${studyUid}/study-objectives/${studyObjectiveUid}/accept-version`)
+    return repository.post(`studies/${studyUid}/study-objectives/${studyObjectiveUid}/accept-version`)
   },
   updateStudyEndpointAcceptVersion (studyUid, studyEndpointUid) {
-    return repository.post(`study/${studyUid}/study-endpoints/${studyEndpointUid}/accept-version`)
+    return repository.post(`studies/${studyUid}/study-endpoints/${studyEndpointUid}/accept-version`)
   },
   getStudyCompounds (studyUid, params) {
-    return repository.get(`study/${studyUid}/study-compounds`, { params })
+    return repository.get(`studies/${studyUid}/study-compounds`, { params })
+  },
+  getStudyCompoundsAuditTrail (studyUid) {
+    return repository.get(`studies/${studyUid}/study-compounds/audit-trail`)
+  },
+  getStudyCompoundAuditTrail (studyUid, studyCompoundUid) {
+    return repository.get(`studies/${studyUid}/study-compounds/${studyCompoundUid}/audit-trail`)
   },
   updateStudyCompound (studyUid, studyCompoundUid, data) {
-    return repository.patch(`study/${studyUid}/study-compounds/${studyCompoundUid}`, data)
+    return repository.patch(`studies/${studyUid}/study-compounds/${studyCompoundUid}`, data)
   },
   selectStudyCompound (studyUid, data) {
-    return repository.post(`study/${studyUid}/study-compounds/select`, data)
+    return repository.post(`studies/${studyUid}/study-compounds`, data)
   },
   deleteStudyCompound (studyUid, studyCompoundUid) {
-    return repository.delete(`study/${studyUid}/study-compounds/${studyCompoundUid}`)
+    return repository.delete(`studies/${studyUid}/study-compounds/${studyCompoundUid}`)
   },
   getStudyCompoundDosings (studyUid) {
-    return repository.get(`study/${studyUid}/study-compound-dosings`)
+    return repository.get(`studies/${studyUid}/study-compound-dosings`, { params: { page_size: 0 } })
+  },
+  getStudyCompoundDosingsAuditTrail (studyUid) {
+    return repository.get(`studies/${studyUid}/study-compound-dosings/audit-trail`)
   },
   getStudyCompoundDosingAuditTrail (studyUid, studyCompoundDosingUid) {
-    return repository.get(`study/${studyUid}/study-compound-dosings/${studyCompoundDosingUid}/audit-trail`)
+    return repository.get(`studies/${studyUid}/study-compound-dosings/${studyCompoundDosingUid}/audit-trail`)
   },
   updateStudyCompoundDosing (studyUid, studyCompoundDosingUid, data) {
-    return repository.patch(`study/${studyUid}/study-compound-dosings/${studyCompoundDosingUid}`, data)
+    return repository.patch(`studies/${studyUid}/study-compound-dosings/${studyCompoundDosingUid}`, data)
   },
   addStudyCompoundDosing (studyUid, data) {
-    return repository.post(`study/${studyUid}/study-compound-dosings/select`, data)
+    return repository.post(`studies/${studyUid}/study-compound-dosings`, data)
   },
   deleteStudyCompoundDosing (studyUid, studyCompoundDosingUid) {
-    return repository.delete(`study/${studyUid}/study-compound-dosings/${studyCompoundDosingUid}`)
+    return repository.delete(`studies/${studyUid}/study-compound-dosings/${studyCompoundDosingUid}`)
   },
   getAllStudyActivities (params) {
-    return repository.get('study/study-activities', { params })
+    return repository.get('study-activities', { params })
   },
   getStudyActivities (studyUid, params) {
-    return repository.get(`study/${studyUid}/study-activities`, { params })
+    return repository.get(`studies/${studyUid}/study-activities`, { params })
   },
   createStudyActivity (studyUid, data) {
-    return repository.post(`study/${studyUid}/study-activities/create`, data)
+    return repository.post(`studies/${studyUid}/study-activities`, data)
   },
   updateStudyActivity (studyUid, studyActivityUid, data) {
-    return repository.patch(`study/${studyUid}/study-activities/${studyActivityUid}`, data)
+    return repository.patch(`studies/${studyUid}/study-activities/${studyActivityUid}`, data)
   },
   deleteStudyActivity (studyUid, studyActivityUid) {
-    return repository.delete(`study/${studyUid}/study-activities/${studyActivityUid}`)
+    return repository.delete(`studies/${studyUid}/study-activities/${studyActivityUid}`)
   },
   studyActivityBatchOperations (studyUid, data) {
-    return repository.post(`study/${studyUid}/study-activities/batch`, data)
+    return repository.post(`studies/${studyUid}/study-activities/batch`, data)
+  },
+  getStudyActivitiesAuditTrail (studyUid) {
+    return repository.get(`studies/${studyUid}/study-activities/audit-trail`)
   },
   getStudyActivityAuditTrail (studyUid, studyActivityUid) {
-    return repository.get(`study/${studyUid}/study-activities/${studyActivityUid}/audit-trail`)
+    return repository.get(`studies/${studyUid}/study-activities/${studyActivityUid}/audit-trail`)
   },
   updateStudyActivityOrder (studyUid, studyActivityUid, order) {
     const data = { new_order: order }
-    return repository.patch(`study/${studyUid}/study-activities/${studyActivityUid}/order`, data)
+    return repository.patch(`studies/${studyUid}/study-activities/${studyActivityUid}/order`, data)
   },
   getStudyActivitySchedules (studyUid) {
-    return repository.get(`study/${studyUid}/study-activity-schedules`)
+    return repository.get(`studies/${studyUid}/study-activity-schedules`)
   },
   createStudyActivitySchedule (studyUid, data) {
-    return repository.post(`study/${studyUid}/study-activity-schedules`, data)
+    return repository.post(`studies/${studyUid}/study-activity-schedules`, data)
   },
   deleteStudyActivitySchedule (studyUid, scheduleUid) {
-    return repository.delete(`study/${studyUid}/study-activity-schedules/${scheduleUid}`)
+    return repository.delete(`studies/${studyUid}/study-activity-schedules/${scheduleUid}`)
   },
   studyActivityScheduleBatchOperations (studyUid, data) {
-    return repository.post(`study/${studyUid}/study-activity-schedules/batch`, data)
+    return repository.post(`studies/${studyUid}/study-activity-schedules/batch`, data)
   },
   getAllStudyCriteria (params) {
-    return repository.get('study/study-criteria', { params })
+    return repository.get('study-criteria', { params })
   },
   getStudyCriteria (studyUid) {
-    return repository.get(`study/${studyUid}/study-criteria`)
+    return repository.get(`studies/${studyUid}/study-criteria`, { params: { page_size: 0 } })
   },
   getStudyCriteriaWithType (studyUid, criteriaType) {
     const params = {
-      filters: JSON.stringify({ 'criteriaType.sponsorPreferredNameSentenceCase': { v: [criteriaType.sponsorPreferredNameSentenceCase] } })
+      page_size: 0,
+      filters: JSON.stringify({ 'criteria_type.sponsor_preferred_name_sentence_case': { v: [criteriaType.sponsor_preferred_name_sentence_case] } })
     }
-    return repository.get(`study/${studyUid}/study-criteria`, { params })
+    return repository.get(`studies/${studyUid}/study-criteria`, { params })
+  },
+  getStudyCriteriaAllAuditTrail (studyUid) {
+    return repository.get(`studies/${studyUid}/study-criteria/audit-trail`)
   },
   getStudyCriteriaAuditTrail (studyUid, studyCriteriaUid) {
-    return repository.get(`study/${studyUid}/study-criteria/${studyCriteriaUid}/audit-trail`)
+    return repository.get(`studies/${studyUid}/study-criteria/${studyCriteriaUid}/audit-trail`)
   },
   getStudyCriteriaPreview (studyUid, data) {
-    return repository.post(`study/${studyUid}/study-criteria/create/preview`, data)
+    return repository.post(`studies/${studyUid}/study-criteria/preview`, data)
   },
   createStudyCriteria (studyUid, data) {
-    return repository.post(`study/${studyUid}/study-criteria/create`, data)
+    return repository.post(`studies/${studyUid}/study-criteria`, data)
   },
   batchCreateStudyCriteria (studyUid, data) {
-    return repository.post(`study/${studyUid}/study-criteria/batch-select`, data)
+    return repository.post(`studies/${studyUid}/study-criteria/batch-select`, data)
   },
   patchStudyCriteria (studyUid, studyCriteriaUid, data) {
-    return repository.patch(`study/${studyUid}/study-criteria/${studyCriteriaUid}/finalize`, data)
+    return repository.patch(`studies/${studyUid}/study-criteria/${studyCriteriaUid}/finalize`, data)
   },
   updateStudyCriteriaOrder (studyUid, studyCriteriaUid, order) {
     const data = { new_order: order }
-    return repository.patch(`study/${studyUid}/study-criteria/${studyCriteriaUid}/order`, data)
+    return repository.patch(`studies/${studyUid}/study-criteria/${studyCriteriaUid}/order`, data)
   },
   updateStudyCriteriaKeyCriteria (studyUid, studyCriteriaUid, keyCriteria) {
     const data = { key_criteria: keyCriteria }
-    return repository.patch(`study/${studyUid}/study-criteria/${studyCriteriaUid}/key-criteria`, data)
+    return repository.patch(`studies/${studyUid}/study-criteria/${studyCriteriaUid}/key-criteria`, data)
   },
   deleteStudyCriteria (studyUid, studyCriteriaUid) {
-    return repository.delete(`study/${studyUid}/study-criteria/${studyCriteriaUid}`)
+    return repository.delete(`studies/${studyUid}/study-criteria/${studyCriteriaUid}`)
   },
   getAllStudyActivityInstructions (params) {
-    return repository.get('study/study-activity-instructions', { params })
+    return repository.get('study-activity-instructions', { params })
   },
   getStudyActivityInstructions (studyUid) {
-    return repository.get(`study/${studyUid}/study-activity-instructions`)
+    return repository.get(`studies/${studyUid}/study-activity-instructions`)
   },
   studyActivityInstructionBatchOperations (studyUid, data) {
-    return repository.post(`study/${studyUid}/study-activity-instructions/batch`, data)
+    return repository.post(`studies/${studyUid}/study-activity-instructions/batch`, data)
   },
   deleteStudyActivityInstruction (studyUid, studyActivityInstructionUid) {
-    return repository.delete(`study/${studyUid}/study-activity-instructions/${studyActivityInstructionUid}`)
+    return repository.delete(`studies/${studyUid}/study-activity-instructions/${studyActivityInstructionUid}`)
   },
   create (data) {
     return repository.post(`${resource}`, data)
   },
   updateIdentification (uid, data) {
     const payload = {
-      currentMetadata: {
-        identificationMetadata: data
+      current_metadata: {
+        identification_metadata: data
       }
     }
     return repository.patch(`${resource}/${uid}`, payload)
   },
   updateStudyType (uid, data) {
     const payload = {
-      currentMetadata: {
-        highLevelStudyDesign: data
+      current_metadata: {
+        high_level_study_design: data
       }
     }
     return repository.patch(`${resource}/${uid}`, payload)
   },
   updateStudyPopulation (uid, data) {
     const payload = {
-      currentMetadata: {
-        studyPopulation: data
+      current_metadata: {
+        study_population: data
       }
     }
     return repository.patch(`${resource}/${uid}`, payload)
   },
   updateStudyIntervention (studyUid, data) {
     const payload = {
-      currentMetadata: {
-        studyIntervention: data
+      current_metadata: {
+        study_intervention: data
       }
     }
     return repository.patch(`${resource}/${studyUid}`, payload)
   },
   updateStudyDescription (studyUid, data) {
     const payload = {
-      currentMetadata: {
-        studyDescription: data
+      current_metadata: {
+        study_description: data
       }
     }
     return repository.patch(`${resource}/${studyUid}`, payload)
@@ -298,7 +344,7 @@ export default {
     return repository.get(`${resource}/${studyUid}/interventions.docx`, { responseType: 'arraybuffer' })
   },
   copyFromStudy (uid, options) {
-    return repository.patch(`${resource}/${uid}/copy-component?referenceStudyUid=${options.referenceStudyUid}&componentToCopy=${options.componentToCopy}&overwrite=${options.overwrite}`)
+    return repository.patch(`${resource}/${uid}/copy-component?reference_study_uid=${options.reference_study_uid}&component_to_copy=${options.component_to_copy}&overwrite=${options.overwrite}`)
   },
   getStudyDesignFigureSvg (studyUid) {
     return repository.get(`${resource}/${studyUid}/design.svg`)

@@ -20,4 +20,4 @@ class BrandTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "brand.json")]
 
     def ignored_fields(self):
-        return ["time", "userInitials"]
+        return ["time", "user_initials"]

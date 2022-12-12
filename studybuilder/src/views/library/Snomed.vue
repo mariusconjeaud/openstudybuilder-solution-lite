@@ -29,20 +29,20 @@ export default {
       dictionaryName: 'SNOMED',
       headers: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('DictionaryTermTable.snomed_id'), value: 'dictionaryId' },
+        { text: this.$t('DictionaryTermTable.snomed_id'), value: 'dictionary_id' },
         { text: this.$t('DictionaryTermTable.preferred_synonym'), value: 'name' },
-        { text: this.$t('DictionaryTermTable.preferred_synonym_lower_case'), value: 'nameSentenceCase' },
+        { text: this.$t('DictionaryTermTable.preferred_synonym_lower_case'), value: 'name_sentence_case' },
         { text: this.$t('DictionaryTermTable.abbreviation'), value: 'abbreviation' },
         { text: this.$t('_global.definition'), value: 'definition' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' },
-        { text: this.$t('_global.modified'), value: 'startDate' }
+        { text: this.$t('_global.modified'), value: 'start_date' }
       ]
     }
   },
   mounted () {
     dictionaries.getCodelists(this.dictionaryName).then(resp => {
-      this.codelistUid = resp.data.items[0].codelistUid
+      this.codelistUid = resp.data.items[0].codelist_uid
     })
   }
 }

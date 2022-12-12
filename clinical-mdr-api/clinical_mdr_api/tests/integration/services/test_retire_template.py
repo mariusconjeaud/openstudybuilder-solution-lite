@@ -89,7 +89,7 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
     def create_objectives(self, count=100, approved=False, retired=False):
         for i in range(count):
             pv = TemplateParameterMultiSelectInput(
-                templateParameter=self.TPR_LABEL,
+                template_parameter=self.TPR_LABEL,
                 conjunction="",
                 values=[
                     {
@@ -102,9 +102,9 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
                 ],
             )
             template = ObjectiveCreateInput(
-                objectiveTemplateUid=self.ar.uid,
-                libraryName="Library",
-                parameterValues=[pv],
+                objective_template_uid=self.ar.uid,
+                library_name="Library",
+                parameter_values=[pv],
             )
 
             item = self.objective_service.create(template)
@@ -120,7 +120,7 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
 
         study_service = StudyObjectiveSelectionService(author="TEST_USER")
         study_selection_objective_input = StudySelectionObjectiveInput(
-            objectiveUid="Objective_000002"
+            objective_uid="Objective_000002"
         )
         study_service.make_selection("study_root", study_selection_objective_input)
 

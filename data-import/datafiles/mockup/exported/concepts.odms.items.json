@@ -3,7 +3,7 @@
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "STRING",
@@ -18,34 +18,34 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 11,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Study ID",
     "oid": "I.STUDYID",
     "origin": "Protocol Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "StudyID",
-    "sasFieldName": "STUDYID",
-    "sdsVarName": "STUDYID",
+    "sasField_name": "STUDYID",
+    "sdsVar_name": "STUDYID",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:48.182386",
+    "start_date": "2022-10-18T13:18:48.182386",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000001",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "DATE",
@@ -60,34 +60,34 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 10,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Date informed consent obtained",
     "oid": "I.RFICDAT",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Date informed consent obtained",
-    "sasFieldName": "RFICDAT",
-    "sdsVarName": "RFICDTC, DSSTDTC",
+    "sasField_name": "RFICDAT",
+    "sdsVar_name": "RFICDTC, DSSTDTC",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:49.264531",
+    "start_date": "2022-10-18T13:18:49.264531",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000002",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "TIME",
@@ -102,34 +102,34 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 5,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Time informed consent obtained",
     "oid": "I.RFICTIM",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Time informed consent obtained",
-    "sasFieldName": "RFICTIM",
-    "sdsVarName": "RFICDTC, DSSTDTC",
+    "sasField_name": "RFICTIM",
+    "sdsVar_name": "RFICDTC, DSSTDTC",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:49.543859",
+    "start_date": "2022-10-18T13:18:49.543859",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000003",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "DATE",
@@ -144,34 +144,34 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 10,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) [de-activated]",
     "oid": "I.RFICDATLAR1",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "",
-    "sasFieldName": "RFICDAT",
-    "sdsVarName": "RFICDTC, DSSTDTC",
+    "sasField_name": "RFICDAT",
+    "sdsVar_name": "RFICDTC, DSSTDTC",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:49.827693",
+    "start_date": "2022-10-18T13:18:49.827693",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000004",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "TIME",
@@ -186,34 +186,34 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 5,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Informed Consent TIME obtained by Parents/Legally Acceptable Representative (LAR) [de-activated]",
     "oid": "I.RFICTIMLAR1",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "",
-    "sasFieldName": "RFICTIM",
-    "sdsVarName": "RFICDTC, DSSTDTC",
+    "sasField_name": "RFICTIM",
+    "sdsVar_name": "RFICDTC, DSSTDTC",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:50.102586",
+    "start_date": "2022-10-18T13:18:50.102586",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000005",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "DATE",
@@ -228,34 +228,34 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 10,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated]",
     "oid": "I.RFICDATLAR2",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "",
-    "sasFieldName": "RFICDAT",
-    "sdsVarName": "RFICDTC, DSSTDTC",
+    "sasField_name": "RFICDAT",
+    "sdsVar_name": "RFICDTC, DSSTDTC",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:50.378894",
+    "start_date": "2022-10-18T13:18:50.378894",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000006",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "TIME",
@@ -270,34 +270,34 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 5,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Informed Consent Time obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated]",
     "oid": "I.RFICTIMLAR2",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "",
-    "sasFieldName": "RFICTIM",
-    "sdsVarName": "RFICDTC, DSSTDTC",
+    "sasField_name": "RFICTIM",
+    "sdsVar_name": "RFICDTC, DSSTDTC",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:50.765027",
+    "start_date": "2022-10-18T13:18:50.765027",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000007",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "DATE",
@@ -312,34 +312,34 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 10,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Date of birth (only for Argus interface) [hidden]",
     "oid": "I.BRTHDTCARGUS",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "DOB",
-    "sasFieldName": "BRTHDAT",
-    "sdsVarName": "BRTHDTC",
+    "sasField_name": "BRTHDAT",
+    "sdsVar_name": "BRTHDTC",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:51.087113",
+    "start_date": "2022-10-18T13:18:51.087113",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000008",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "DATE",
@@ -354,38 +354,38 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 10,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Date of birth",
     "oid": "I.BRTHDTC",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "DOB",
-    "sasFieldName": "BRTHDAT",
-    "sdsVarName": "BRTHDTC",
+    "sasField_name": "BRTHDAT",
+    "sdsVar_name": "BRTHDTC",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:51.384879",
+    "start_date": "2022-10-18T13:18:51.384879",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000009",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": {
       "name": "Sex",
       "preferredTerm": "CDISC SDTM Sex of Individual Terminology",
-      "submissionValue": "SEX",
+      "submission_value": "SEX",
       "uid": "C66731"
     },
     "comment": "",
@@ -401,51 +401,51 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 15,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Sex [read-only]",
     "oid": "I.SEX",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Sex",
-    "sasFieldName": "SEX",
-    "sdsVarName": "SEX",
+    "sasField_name": "SEX",
+    "sdsVar_name": "SEX",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:51.976029",
+    "start_date": "2022-10-18T13:18:51.976029",
     "status": "Draft",
     "terms": [
       {
         "mandatory": true,
         "name": "Female",
         "order": 2,
-        "termUid": "C16576_F"
+        "term_uid": "C16576_F"
       },
       {
         "mandatory": true,
         "name": "Male",
         "order": 1,
-        "termUid": "C20197_M"
+        "term_uid": "C20197_M"
       }
     ],
     "uid": "OdmItem_000010",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": {
       "name": "Sex",
       "preferredTerm": "CDISC SDTM Sex of Individual Terminology",
-      "submissionValue": "SEX",
+      "submission_value": "SEX",
       "uid": "C66731"
     },
     "comment": "",
@@ -461,51 +461,51 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 15,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Sex [de-activated]",
     "oid": "I.SEXDEA",
     "origin": "Protocol Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Sex",
-    "sasFieldName": "SEX",
-    "sdsVarName": "SEX",
+    "sasField_name": "SEX",
+    "sdsVar_name": "SEX",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:52.726078",
+    "start_date": "2022-10-18T13:18:52.726078",
     "status": "Draft",
     "terms": [
       {
         "mandatory": true,
         "name": "Female",
         "order": 2,
-        "termUid": "C16576_F"
+        "term_uid": "C16576_F"
       },
       {
         "mandatory": true,
         "name": "Male",
         "order": 1,
-        "termUid": "C20197_M"
+        "term_uid": "C20197_M"
       }
     ],
     "uid": "OdmItem_000011",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": {
       "name": "Ethnic Group",
       "preferredTerm": "CDISC SDTM Ethnic Group Terminology",
-      "submissionValue": "ETHNIC",
+      "submission_value": "ETHNIC",
       "uid": "C66790"
     },
     "comment": "",
@@ -521,51 +521,51 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 20,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Ethnicity",
     "oid": "I.ETHNIC",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Etnicity",
-    "sasFieldName": "ETHNIC",
-    "sdsVarName": "ETHNIC",
+    "sasField_name": "ETHNIC",
+    "sdsVar_name": "ETHNIC",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:53.417524",
+    "start_date": "2022-10-18T13:18:53.417524",
     "status": "Draft",
     "terms": [
       {
         "mandatory": true,
         "name": "Hispanic or Latino",
         "order": 1,
-        "termUid": "C17459_HISPANIC OR LATINO"
+        "term_uid": "C17459_HISPANIC OR LATINO"
       },
       {
         "mandatory": true,
         "name": "Not Hispanic or Latino",
         "order": 2,
-        "termUid": "C41222_NOT HISPANIC OR LATINO"
+        "term_uid": "C41222_NOT HISPANIC OR LATINO"
       }
     ],
     "uid": "OdmItem_000012",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": {
       "name": "Race",
       "preferredTerm": "CDISC SDTM Race Terminology",
-      "submissionValue": "RACE",
+      "submission_value": "RACE",
       "uid": "C74457"
     },
     "comment": "",
@@ -581,65 +581,65 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 40,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Race",
     "oid": "I.RACE",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Race",
-    "sasFieldName": "RACE",
-    "sdsVarName": "RACE",
+    "sasField_name": "RACE",
+    "sdsVar_name": "RACE",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:54.104464",
+    "start_date": "2022-10-18T13:18:54.104464",
     "status": "Draft",
     "terms": [
       {
         "mandatory": true,
         "name": "African American",
         "order": 3,
-        "termUid": "C16352_BLACK OR AFRICAN AMERICAN"
+        "term_uid": "C16352_BLACK OR AFRICAN AMERICAN"
       },
       {
         "mandatory": true,
         "name": "American Indian or Alaska Native",
         "order": 1,
-        "termUid": "C41259_AMERICAN INDIAN OR ALASKA NATIVE"
+        "term_uid": "C41259_AMERICAN INDIAN OR ALASKA NATIVE"
       },
       {
         "mandatory": true,
         "name": "Asian",
         "order": 2,
-        "termUid": "C41260_ASIAN"
+        "term_uid": "C41260_ASIAN"
       },
       {
         "mandatory": true,
         "name": "Native Hawaiian or Other Pacific Islander",
         "order": 4,
-        "termUid": "C41219_NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER"
+        "term_uid": "C41219_NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER"
       },
       {
         "mandatory": true,
         "name": "White",
         "order": 5,
-        "termUid": "C41261_WHITE"
+        "term_uid": "C41261_WHITE"
       }
     ],
     "uid": "OdmItem_000013",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "INTEGER",
@@ -654,31 +654,31 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 3,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Age",
     "oid": "I.AGE",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Age",
-    "sasFieldName": "AGE",
-    "sdsVarName": "AGE",
+    "sasField_name": "AGE",
+    "sdsVar_name": "AGE",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:54.928412",
+    "start_date": "2022-10-18T13:18:54.928412",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000014",
-    "unitDefinitions": [
+    "unit_definitions": [
       {
-        "ctUnits": [
+        "ct_units": [
           {
             "name": "YEARS",
-            "termUid": "C29848_YEARS"
+            "term_uid": "C29848_YEARS"
           }
         ],
         "mandatory": true,
@@ -686,19 +686,19 @@
         "order": 999999,
         "ucum": {
           "name": "a",
-          "termUid": "DictionaryTerm_001010"
+          "term_uid": "DictionaryTerm_001010"
         },
         "uid": "UnitDefinition_000358"
       }
     ],
-    "userInitials": "TODO user initials",
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "STRING",
@@ -713,34 +713,34 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 40,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Race other",
     "oid": "I.RACEOTH",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Race other",
-    "sasFieldName": "RACEOTH",
-    "sdsVarName": "RACEOTH in SUPPDM",
+    "sasField_name": "RACEOTH",
+    "sdsVar_name": "RACEOTH in SUPPDM",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:55.408650",
+    "start_date": "2022-10-18T13:18:55.408650",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000015",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "STRING",
@@ -755,34 +755,34 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 10,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Subject No. [read-only]",
     "oid": "I.SUBJID",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Subject No",
-    "sasFieldName": "SUBJID",
-    "sdsVarName": "SUBJID",
+    "sasField_name": "SUBJID",
+    "sdsVar_name": "SUBJID",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:55.745459",
+    "start_date": "2022-10-18T13:18:55.745459",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000016",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "STRING",
@@ -797,34 +797,34 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 10,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Previous Subject No.",
     "oid": "I.PREVSUBJ",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Previous Subject No",
-    "sasFieldName": "PREVSUBJ",
-    "sdsVarName": "PREVSUBJ",
+    "sasField_name": "PREVSUBJ",
+    "sdsVar_name": "PREVSUBJ",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:56.086143",
+    "start_date": "2022-10-18T13:18:56.086143",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000017",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "DATE",
@@ -839,34 +839,34 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 10,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Date of examination",
     "oid": "I.VSDAT",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Date of examination",
-    "sasFieldName": "VSDAT",
-    "sdsVarName": "VSDTC",
+    "sasField_name": "VSDAT",
+    "sdsVar_name": "VSDTC",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:56.434854",
+    "start_date": "2022-10-18T13:18:56.434854",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000018",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "INTEGER",
@@ -881,31 +881,31 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 3,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Systolic blood pressure",
     "oid": "I.SYSBP",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Systolic blood pressure",
-    "sasFieldName": "BP_SYSTOLIC",
-    "sdsVarName": "VSORRES where VSTESTCD=SYSBP, VSORRESU where VSTESTCD=SYSBP",
+    "sasField_name": "BP_SYSTOLIC",
+    "sdsVar_name": "VSORRES where VSTESTCD=SYSBP, VSORRESU where VSTESTCD=SYSBP",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:56.778322",
+    "start_date": "2022-10-18T13:18:56.778322",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000019",
-    "unitDefinitions": [
+    "unit_definitions": [
       {
-        "ctUnits": [
+        "ct_units": [
           {
             "name": "mmHg",
-            "termUid": "C49670_mmHg"
+            "term_uid": "C49670_mmHg"
           }
         ],
         "mandatory": true,
@@ -913,19 +913,19 @@
         "order": 999999,
         "ucum": {
           "name": "mm[Hg]",
-          "termUid": "DictionaryTerm_000663"
+          "term_uid": "DictionaryTerm_000663"
         },
         "uid": "UnitDefinition_000160"
       }
     ],
-    "userInitials": "TODO user initials",
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "INTEGER",
@@ -940,31 +940,31 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 3,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Diastolic blood pressure",
     "oid": "I.DIABP",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Diastolic blood pressure",
-    "sasFieldName": "BP_DIASTOLIC",
-    "sdsVarName": "VSORRES where VSTESTCD=DIABP, VSORRESU where VSTESTCD=DIABP",
+    "sasField_name": "BP_DIASTOLIC",
+    "sdsVar_name": "VSORRES where VSTESTCD=DIABP, VSORRESU where VSTESTCD=DIABP",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:57.264688",
+    "start_date": "2022-10-18T13:18:57.264688",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000020",
-    "unitDefinitions": [
+    "unit_definitions": [
       {
-        "ctUnits": [
+        "ct_units": [
           {
             "name": "mmHg",
-            "termUid": "C49670_mmHg"
+            "term_uid": "C49670_mmHg"
           }
         ],
         "mandatory": true,
@@ -972,19 +972,19 @@
         "order": 999999,
         "ucum": {
           "name": "mm[Hg]",
-          "termUid": "DictionaryTerm_000663"
+          "term_uid": "DictionaryTerm_000663"
         },
         "uid": "UnitDefinition_000160"
       }
     ],
-    "userInitials": "TODO user initials",
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": null,
     "comment": "",
     "datatype": "INTEGER",
@@ -999,38 +999,38 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 3,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Pulse",
     "oid": "I.PULSE",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Pulse",
-    "sasFieldName": "PULSE",
-    "sdsVarName": "VSORRES/VSORRESU when VSTESTCD=PULSE",
+    "sasField_name": "PULSE",
+    "sdsVar_name": "VSORRES/VSORRESU when VSTESTCD=PULSE",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:57.782123",
+    "start_date": "2022-10-18T13:18:57.782123",
     "status": "Draft",
     "terms": [],
     "uid": "OdmItem_000021",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": {
       "name": "Position",
       "preferredTerm": "CDISC SDTM Body Position Terminology",
-      "submissionValue": "POSITION",
+      "submission_value": "POSITION",
       "uid": "C71148"
     },
     "comment": "",
@@ -1046,57 +1046,57 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 15,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Position",
     "oid": "I.POSITION",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Position",
-    "sasFieldName": "POSITION",
-    "sdsVarName": "VSPOS where VSTESTCD=SYSBP | VSPOS where VSTESTCD=DIABP",
+    "sasField_name": "POSITION",
+    "sdsVar_name": "VSPOS where VSTESTCD=SYSBP | VSPOS where VSTESTCD=DIABP",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:58.170168",
+    "start_date": "2022-10-18T13:18:58.170168",
     "status": "Draft",
     "terms": [
       {
         "mandatory": true,
         "name": "Sitting",
         "order": 1,
-        "termUid": "C62122_SITTING"
+        "term_uid": "C62122_SITTING"
       },
       {
         "mandatory": true,
         "name": "Standing",
         "order": 3,
-        "termUid": "C62166_STANDING"
+        "term_uid": "C62166_STANDING"
       },
       {
         "mandatory": true,
         "name": "Supine Position",
         "order": 2,
-        "termUid": "C62167_SUPINE"
+        "term_uid": "C62167_SUPINE"
       }
     ],
     "uid": "OdmItem_000022",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": {
       "name": "Laterality",
       "preferredTerm": "CDISC SDTM Laterality Terminology",
-      "submissionValue": "LAT",
+      "submission_value": "LAT",
       "uid": "C99073"
     },
     "comment": "",
@@ -1112,51 +1112,51 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 15,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Laterality",
     "oid": "I.LATERALITY",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Laterality",
-    "sasFieldName": "LATERALITY",
-    "sdsVarName": "VSLAT where VSTESTCD=SYSBP | VSLAT where VSTESTCD=DIABP",
+    "sasField_name": "LATERALITY",
+    "sdsVar_name": "VSLAT where VSTESTCD=SYSBP | VSLAT where VSTESTCD=DIABP",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:18:58.824530",
+    "start_date": "2022-10-18T13:18:58.824530",
     "status": "Draft",
     "terms": [
       {
         "mandatory": true,
         "name": "Left",
         "order": 2,
-        "termUid": "C25229_LEFT"
+        "term_uid": "C25229_LEFT"
       },
       {
         "mandatory": true,
         "name": "Right",
         "order": 1,
-        "termUid": "C25228_RIGHT"
+        "term_uid": "C25228_RIGHT"
       }
     ],
     "uid": "OdmItem_000023",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
     "activities": [],
     "aliases": [],
     "allowsMultiChoice": false,
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "codelist": {
       "name": "Anatomical Location",
       "preferredTerm": "CDISC SDTM Anatomical Location Terminology",
-      "submissionValue": "LOC",
+      "submission_value": "LOC",
       "uid": "C74456"
     },
     "comment": "",
@@ -1172,34 +1172,34 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "length": 15,
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Anatomical Location",
     "oid": "I.LOC",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "prompt": "Anatomical location",
-    "sasFieldName": "LOCATION",
-    "sdsVarName": "VSLOC where VSTESTCD=SYSBP | VSLOC where VSTESTCD=DIABP",
+    "sasField_name": "LOCATION",
+    "sdsVar_name": "VSLOC where VSTESTCD=SYSBP | VSLOC where VSTESTCD=DIABP",
     "significantDigits": 0,
-    "startDate": "2022-10-18T13:19:00.969206",
+    "start_date": "2022-10-18T13:19:00.969206",
     "status": "Draft",
     "terms": [
       {
         "mandatory": true,
         "name": "Arm",
         "order": 1,
-        "termUid": "C32141_ARM"
+        "term_uid": "C32141_ARM"
       }
     ],
     "uid": "OdmItem_000024",
-    "unitDefinitions": [],
-    "userInitials": "TODO user initials",
+    "unit_definitions": [],
+    "user_initials": "TODO user initials",
     "version": "0.1"
   }
 ]

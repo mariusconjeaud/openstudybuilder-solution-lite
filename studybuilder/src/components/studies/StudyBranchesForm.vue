@@ -16,12 +16,12 @@
         <v-row>
           <v-col cols="12">
             <v-autocomplete
-              v-model="form.armUid"
+              v-model="form.arm_uid"
               :label="$t('StudyBranchArms.study_arm')"
               data-cy="study-arm"
               :items="arms"
               item-text="name"
-              item-value="armUid"
+              item-value="arm_uid"
               :error-messages="errors"
               clearable
               :disabled="Object.keys(editedBranchArm).length !== 0"
@@ -52,7 +52,7 @@
         <v-row>
           <v-col cols="12">
             <v-text-field
-              v-model="form.shortName"
+              v-model="form.short_name"
               :label="$t('StudyBranchArms.branch_arm_short_name')"
               data-cy="study-branch-arm-short-name"
               :error-messages="errors"
@@ -68,7 +68,7 @@
         <v-row>
           <v-col cols="12">
             <v-text-field
-              v-model="form.randomizationGroup"
+              v-model="form.randomization_group"
               :label="$t('StudyBranchArms.randomisation_group')"
               data-cy="study-branch-arm-randomisation-group"
               :error-messages="errors"
@@ -102,8 +102,8 @@
         <v-row>
           <v-col cols="12">
             <v-text-field
-              :disabled="!form.armUid"
-              v-model="form.numberOfSubjects"
+              :disabled="!form.arm_uid"
+              v-model="form.number_of_subjects"
               :label="$t('StudyBranchArms.nuber_of_subjects')"
               data-cy="study-branch-arm-planned-number-of-subjects"
               :error-messages="(errors[0] && errors[0].includes($t('StudyBranchArms.value_less_then'))) ? $t('StudyBranchArms.number_of_subjects_exceeds') : errors"
@@ -185,7 +185,7 @@ export default {
   methods: {
     enableBranchCode () {
       if (!this.branchCodeEnable) {
-        this.$set(this.form, 'code', this.form.randomizationGroup)
+        this.$set(this.form, 'code', this.form.randomization_group)
         this.branchCodeEnable = true
         this.codeRules = [
           v => (v && v.length <= 20) || this.$t('_errors.max_length_reached', { length: '20' })
@@ -208,11 +208,11 @@ export default {
     },
     async create () {
       if (this.colorHash) {
-        this.form.colourCode = this.colorHash.hexa
+        this.form.colour_code = this.colorHash.hexa
       }
       let armNumberOfSubjects = 0;
-      (await arms.getAllBranchesForArm(this.selectedStudy.uid, this.form.armUid)).data.forEach(el => { armNumberOfSubjects += el.numberOfSubjects })
-      if (this.selectedArm.numberOfSubjects < (parseInt(armNumberOfSubjects, 10) + parseInt(this.form.numberOfSubjects, 10))) {
+      (await arms.getAllBranchesForArm(this.selectedStudy.uid, this.form.arm_uid)).data.forEach(el => { armNumberOfSubjects += el.number_of_subjects })
+      if (this.selectedArm.number_of_subjects < (parseInt(armNumberOfSubjects, 10) + parseInt(this.form.number_of_subjects, 10))) {
         const options = {
           type: 'warning',
           cancelLabel: this.$t('_global.cancel'),
@@ -233,24 +233,24 @@ export default {
     },
     async edit () {
       if (this.colorHash) {
-        this.form.colourCode = this.colorHash.hexa !== undefined ? this.colorHash.hexa : this.colorHash
+        this.form.colour_code = this.colorHash.hexa !== undefined ? this.colorHash.hexa : this.colorHash
       }
       let armNumberOfSubjects = 0;
-      (await arms.getAllBranchesForArm(this.selectedStudy.uid, this.form.armUid)).data.forEach(el => { armNumberOfSubjects += ((el.branchArmUid === this.editedBranchArm.branchArmUid) ? 0 : el.numberOfSubjects) })
-      if (this.selectedArm.numberOfSubjects < (parseInt(armNumberOfSubjects, 10) + parseInt(this.form.numberOfSubjects, 10))) {
+      (await arms.getAllBranchesForArm(this.selectedStudy.uid, this.form.arm_uid)).data.forEach(el => { armNumberOfSubjects += ((el.branch_arm_uid === this.editedBranchArm.branch_arm_uid) ? 0 : el.number_of_subjects) })
+      if (this.selectedArm.number_of_subjects < (parseInt(armNumberOfSubjects, 10) + parseInt(this.form.number_of_subjects, 10))) {
         const options = {
           type: 'warning',
           cancelLabel: this.$t('_global.cancel'),
           agreeLabel: this.$t('_global.save_anyway')
         }
         if (await this.$refs.form.confirm(this.$t('StudyBranchArms.subjects_exceeded'), options)) {
-          arms.editBranchArm(this.selectedStudy.uid, this.editedBranchArm.branchArmUid, this.form).then(resp => {
+          arms.editBranchArm(this.selectedStudy.uid, this.editedBranchArm.branch_arm_uid, this.form).then(resp => {
             bus.$emit('notification', { msg: this.$t('StudyBranchArms.branch_updated') })
             this.close()
           })
         }
       } else {
-        arms.editBranchArm(this.selectedStudy.uid, this.editedBranchArm.branchArmUid, this.form).then(resp => {
+        arms.editBranchArm(this.selectedStudy.uid, this.editedBranchArm.branch_arm_uid, this.form).then(resp => {
           bus.$emit('notification', { msg: this.$t('StudyBranchArms.branch_updated') })
           this.close()
         })
@@ -279,16 +279,16 @@ export default {
       }
     },
     findMaxNuberOfSubjects () {
-      this.selectedArm = this.arms.find(e => e.armUid === this.form.armUid)
-      return this.selectedArm ? this.selectedArm.numberOfSubjects : 0
+      this.selectedArm = this.arms.find(e => e.arm_uid === this.form.arm_uid)
+      return this.selectedArm ? this.selectedArm.number_of_subjects : 0
     }
   },
   mounted () {
     if (Object.keys(this.editedBranchArm).length !== 0) {
       this.form = JSON.parse(JSON.stringify(this.editedBranchArm))
-      this.$set(this.form, 'armUid', this.editedBranchArm.armRoot.armUid)
-      if (this.editedBranchArm.colourCode) {
-        this.colorHash = this.editedBranchArm.colourCode
+      this.$set(this.form, 'arm_uid', this.editedBranchArm.arm_root.arm_uid)
+      if (this.editedBranchArm.colour_code) {
+        this.colorHash = this.editedBranchArm.colour_code
       }
       this.$store.commit('form/SET_FORM', this.form)
     }
@@ -297,7 +297,7 @@ export default {
     editedBranchArm (value) {
       if (Object.keys(value).length !== 0) {
         this.form = JSON.parse(JSON.stringify(value))
-        this.$set(this.form, 'armUid', value.armRoot.armUid)
+        this.$set(this.form, 'arm_uid', value.arm_root.arm_uid)
         this.$store.commit('form/SET_FORM', this.form)
       }
     }

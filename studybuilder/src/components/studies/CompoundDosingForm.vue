@@ -19,7 +19,7 @@
             v-slot="{ errors }"
             >
             <v-autocomplete
-              v-model="form.studyElement"
+              v-model="form.study_element"
               :label="$t('StudyCompoundDosingForm.element')"
               :items="studyElements"
               item-text="name"
@@ -31,11 +31,11 @@
           </validation-provider>
         </v-col>
       </v-row>
-      <template v-if="form.studyElement">
+      <template v-if="form.study_element">
         <v-row>
           <v-col cols="6">
             <v-text-field
-              v-model="form.studyElement.order"
+              v-model="form.study_element.order"
               :label="$t('StudyCompoundDosingForm.element_order')"
               row
               disabled
@@ -57,7 +57,7 @@
           </v-col>
           <v-col cols="6">
             <v-text-field
-              v-model="form.studyElement.elementSubType.sponsorPreferredName"
+              v-model="form.study_element.element_subtype.sponsor_preferred_name"
               :label="$t('StudyCompoundDosingForm.element_subtype')"
               row
               disabled
@@ -68,7 +68,7 @@
         <v-row>
           <v-col cols="6">
             <v-text-field
-              v-model="form.studyElement.name"
+              v-model="form.study_element.name"
               :label="$t('StudyCompoundDosingForm.element_name')"
               row
               disabled
@@ -77,7 +77,7 @@
           </v-col>
           <v-col cols="6">
             <v-text-field
-              v-model="form.studyElement.shortName"
+              v-model="form.study_element.short_name"
               :label="$t('StudyCompoundDosingForm.element_short_name')"
               row
               disabled
@@ -88,7 +88,7 @@
         <v-row>
           <v-col cols="12">
             <v-text-field
-              v-model="form.studyElement.description"
+              v-model="form.study_element.description"
               :label="$t('StudyCompoundDosingForm.element_description')"
               row
               disabled
@@ -108,10 +108,10 @@
             v-slot="{ errors }"
             >
             <v-autocomplete
-              v-model="form.studyCompound"
+              v-model="form.study_compound"
               :label="$t('StudyCompoundDosingForm.compound')"
               :items="studyCompounds"
-              item-text="compoundAlias.name"
+              item-text="compound_alias.name"
               return-object
               :error-messages="errors"
               dense
@@ -121,11 +121,11 @@
         </v-col>
       </v-row>
     </validation-observer>
-    <template v-if="form.studyCompound">
+    <template v-if="form.study_compound">
       <v-row>
         <v-col cols="6">
           <v-text-field
-            v-model="form.studyCompound.order"
+            v-model="form.study_compound.order"
             :label="$t('StudyCompoundDosingForm.compound_order')"
             row
             disabled
@@ -134,7 +134,7 @@
         </v-col>
         <v-col cols="6">
           <v-text-field
-            v-model="form.studyCompound.typeOfTreatment.name"
+            v-model="form.study_compound.type_of_treatment.name"
             :label="$t('StudyCompoundDosingForm.type_of_treatment')"
             row
             disabled
@@ -145,7 +145,7 @@
         <v-row>
           <v-col cols="6">
             <v-text-field
-              v-model="form.studyCompound.compound.name"
+              v-model="form.study_compound.compound.name"
               :label="$t('StudyCompoundDosingForm.compound_name')"
               row
               disabled
@@ -154,7 +154,7 @@
           </v-col>
           <v-col cols="6">
             <v-text-field
-              v-model="form.studyCompound.compoundAlias.name"
+              v-model="form.study_compound.compound_alias.name"
               :label="$t('StudyCompoundDosingForm.compound_alias_name')"
               row
               disabled
@@ -165,7 +165,7 @@
         <v-row>
           <v-col cols="6">
             <yes-no-field
-              v-model="form.studyCompound.compoundAlias.isPreferredSynonym"
+              v-model="form.study_compound.compound_alias.is_preferred_synonym"
               :label="$t('StudyCompoundForm.is_preferred_synonym')"
               row
               disabled
@@ -204,11 +204,11 @@
       <v-row>
         <v-col>
           <v-autocomplete
-            v-if="form.studyCompound"
-            v-model="form.doseValueUid"
+            v-if="form.study_compound"
+            v-model="form.dose_value_uid"
             :label="$t('StudyCompoundDosingForm.dose_value')"
-            :items="form.studyCompound.compound.doseValues"
-            :item-text="(item) => `${item.value} ${item.unitLabel}`"
+            :items="form.study_compound.compound.dose_values"
+            :item-text="(item) => `${item.value} ${item.unit_label}`"
             item-value="uid"
             dense
             clearable
@@ -218,13 +218,13 @@
       <v-row>
         <v-col>
           <v-autocomplete
-            v-if="form.studyCompound"
+            v-if="form.study_compound"
             :data-cy="$t('StudyCompoundDosingForm.dose_frequency')"
-            v-model="form.doseFrequencyUid"
+            v-model="form.dose_frequency_uid"
             :label="$t('StudyCompoundDosingForm.dose_frequency')"
-            :items="form.studyCompound.compound.doseFrequencies"
+            :items="form.study_compound.compound.dose_frequencies"
             item-text="name"
-            item-value="termUid"
+            item-value="term_uid"
             dense
             clearable
             />
@@ -264,30 +264,30 @@ export default {
       return this.$t('StudyCompoundDosingForm.add_title')
     },
     substances () {
-      if (!this.form.studyCompound) {
+      if (!this.form.study_compound) {
         return ''
       }
-      const compound = this.form.studyCompound.compound
+      const compound = this.form.study_compound.compound
       if (compound && compound.substances && compound.substances.length) {
-        return compound.substances.map(item => `${item.substanceName} (${item.substanceUnii})`).join(', ')
+        return compound.substances.map(item => `${item.substance_name} (${item.substance_unii})`).join(', ')
       }
       return ''
     },
     pharmacologicalClass () {
-      if (!this.form.studyCompound) {
+      if (!this.form.study_compound) {
         return ''
       }
-      const compound = this.form.studyCompound.compound
+      const compound = this.form.study_compound.compound
       if (compound && compound.substances && compound.substances.length) {
-        return compound.substances.map(item => item.pclassName).filter(pclass => pclass !== undefined && pclass !== null).join(', ')
+        return compound.substances.map(item => item.pclass_name).filter(pclass => pclass !== undefined && pclass !== null).join(', ')
       }
       return ''
     },
     elementType () {
-      if (!this.form.studyElement) {
+      if (!this.form.study_element) {
         return ''
       }
-      return this.getElementType(this.form.studyElement)
+      return this.getElementType(this.form.study_element)
     }
   },
   data () {
@@ -322,16 +322,16 @@ export default {
       return this.$refs[`observer_${step}`]
     },
     getElementType (item) {
-      const type = this.studyElementTypes.filter(el => el.termUid === item.code)[0]
+      const type = this.studyElementTypes.filter(el => el.term_uid === item.code)[0]
       if (item.code && type) {
-        return type.sponsorPreferredName
+        return type.sponsor_preferred_name
       }
     },
     async submit () {
       const data = { ...this.form }
-      data.studyElementUid = data.studyElement.elementUid
-      delete data.studyElement
-      data.studyCompoundUid = data.studyCompound.studyCompoundUid
+      data.study_element_uid = data.study_element.element_uid
+      delete data.study_element
+      data.study_compound_uid = data.study_compound.study_compound_uid
 
       let action = null
       let notification = null
@@ -345,7 +345,7 @@ export default {
         notification = 'update_success'
         args = {
           studyUid: this.selectedStudy.uid,
-          studyCompoundDosingUid: this.studyCompoundDosing.studyCompoundDosingUid,
+          studyCompoundDosingUid: this.studyCompoundDosing.study_compound_dosing_uid,
           data
         }
       }
@@ -359,8 +359,8 @@ export default {
     }
   },
   mounted () {
-    this.$store.dispatch('studyCompounds/fetchStudyCompounds', { studyUid: this.selectedStudy.uid })
-    arms.getStudyElements(this.selectedStudy.uid).then(resp => {
+    this.$store.dispatch('studyCompounds/fetchStudyCompounds', { studyUid: this.selectedStudy.uid, page_size: 0 })
+    arms.getStudyElements(this.selectedStudy.uid, { page_size: 0 }).then(resp => {
       this.studyElements = resp.data.items
     })
     terms.getByCodelist('elementTypes').then(resp => {
@@ -372,11 +372,11 @@ export default {
       handler: function (value) {
         if (value) {
           this.form = { ...value }
-          if (value.doseValue) {
-            this.$set(this.form, 'doseValueUid', value.doseValue.uid)
+          if (value.dose_value) {
+            this.$set(this.form, 'dose_value_uid', value.dose_value.uid)
           }
-          if (value.doseFrequency) {
-            this.$set(this.form, 'doseFrequencyUid', value.doseFrequency.termUid)
+          if (value.dose_frequency) {
+            this.$set(this.form, 'dose_frequency_uid', value.dose_frequency.term_uid)
           }
         }
       },

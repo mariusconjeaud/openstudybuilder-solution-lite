@@ -2,16 +2,16 @@
 <package-timeline
   @catalogueChanged="updateCatalogue"
   @packageChanged="updateTerms"
-  :catalogueName="$route.params.catalogueName"
-  :packageName="$route.params.packageName"
+  :catalogue_name="$route.params.catalogue_name"
+  :packageName="$route.params.package_name"
   >
   <template v-slot:default="{ selectedPackage }">
     <div class="page-title">
-      {{ $t('CodelistTermsView.codelist') }} {{ $route.params.codelistId }} - {{ codelistAttributes.submissionValue }} / {{ $t('CodelistTermsView.terms_listing') }}
+      {{ $t('CodelistTermsView.codelist') }} {{ $route.params.codelist_id }} - {{ codelistAttributes.submission_value }} / {{ $t('CodelistTermsView.terms_listing') }}
     </div>
     <codelist-term-table
-      :catalogueName="$route.params.catalogueName"
-      :codelistUid="$route.params.codelistId"
+      :catalogue_name="$route.params.catalogue_name"
+      :codelist_uid="$route.params.codelist_id"
       :packageName="selectedPackage"
       />
   </template>
@@ -41,23 +41,23 @@ export default {
     updateCatalogue (catalogueName) {
       this.$router.push({
         name: 'CtPackages',
-        params: { catalogueName }
+        params: { catalogue_name: catalogueName }
       })
     },
     updateTerms (catalogueName, packageName) {
       this.$router.push({
         name: 'CtPackageTerms',
         params: {
-          codelistId: this.$route.params.codelistId,
-          catalogueName,
-          packageName
+          codelist_id: this.$route.params.codelist_id,
+          catalogue_name: catalogueName,
+          package_name: packageName
         }
       })
     }
   },
   mounted () {
     this.addBreadcrumbsLevel({
-      text: this.$route.params.codelistId,
+      text: this.$route.params.codelist_id,
       to: { name: 'CtPackages', params: this.$route.params },
       index: 5
     })
@@ -65,14 +65,14 @@ export default {
       text: this.$t('CodelistTermsView.terms'),
       to: { name: 'CtPackageTerms', params: this.$route.params }
     })
-    controlledTerminology.getCodelistAttributes(this.$route.params.codelistId).then(resp => {
+    controlledTerminology.getCodelistAttributes(this.$route.params.codelist_id).then(resp => {
       this.codelistAttributes = resp.data
     })
   },
   watch: {
-    '$route.params.packageName' (value) {
+    '$route.params.package_name' (value) {
       if (value) {
-        const to = { name: 'CtPackages', params: { catalogueName: this.$route.params.catalogueName, packageName: value } }
+        const to = { name: 'CtPackages', params: { catalogue_name: this.$route.params.catalogue_name, package_name: value } }
         this.addBreadcrumbsLevel({ text: value, to, index: 4, replace: true })
       } else {
         this.$store.commit('app/TRUNCATE_BREADCRUMBS_FROM_LEVEL', 4)

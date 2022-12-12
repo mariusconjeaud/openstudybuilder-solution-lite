@@ -26,7 +26,7 @@ class CTPackageTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "ct_package.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class CTPackageNegativeTest(api.APITest):
@@ -43,4 +43,4 @@ class CTPackageNegativeTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "ct_package_negative.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]

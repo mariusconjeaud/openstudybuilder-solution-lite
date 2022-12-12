@@ -8,8 +8,8 @@
             "value": 1.23,
             "definition": "study_duration_weeks_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor"
+            "template_parameter": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/study-duration-weeks"
       },
@@ -20,17 +20,17 @@
             "uid": "StudyDurationWeeks_000001",
             "name": "1.23 weeks",
             "value": 1.23,
-            "nameSentenceCase": "1.23 weeks",
+            "name_sentence_case": "1.23 weeks",
             "definition": "study_duration_weeks_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor",
+            "template_parameter": true,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null
          }
       }
    },
@@ -43,8 +43,8 @@
             "value": 1.23,
             "definition": "study_duration_weeks_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor"
+            "template_parameter": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/study-duration-weeks"
       },
@@ -55,17 +55,17 @@
             "uid": "StudyDurationWeeks_000001",
             "name": "1.23 weeks",
             "value": 1.23,
-            "nameSentenceCase": "1.23 weeks",
+            "name_sentence_case": "1.23 weeks",
             "definition": "study_duration_weeks_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor",
+            "template_parameter": true,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null
          }
       }
    },
@@ -78,8 +78,8 @@
             "value": 1.234,
             "definition": "study_duration_weeks_definition2",
             "abbreviation": "abbv",
-            "templateParameter": false,
-            "libraryName": "Sponsor"
+            "template_parameter": false,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/study-duration-weeks"
       },
@@ -90,17 +90,17 @@
             "uid": "StudyDurationWeeks_000002",
             "name": "1.234 weeks",
             "value": 1.234,
-            "nameSentenceCase": "1.234 weeks",
+            "name_sentence_case": "1.234 weeks",
             "definition": "study_duration_weeks_definition2",
             "abbreviation": "abbv",
-            "templateParameter": false,
-            "libraryName": "Sponsor",
+            "template_parameter": false,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null
          }
       }
    },
@@ -110,7 +110,7 @@
          "headers": {},
          "method": "GET",
          "request": {},
-         "url": "/concepts/study-duration-weeks?totalCount=true"
+         "url": "/concepts/study-duration-weeks?total_count=true"
       },
       "response": {
          "code": 200,
@@ -121,38 +121,38 @@
                   "uid": "StudyDurationWeeks_000001",
                   "name": "1.23 weeks",
                   "value": 1.23,
-                  "nameSentenceCase": "1.23 weeks",
+                  "name_sentence_case": "1.23 weeks",
                   "definition": "study_duration_weeks_definition1",
                   "abbreviation": "abbv",
-                  "templateParameter": true,
-                  "libraryName": "Sponsor",
+                  "template_parameter": true,
+                  "library_name": "Sponsor",
                   "status": null,
                   "version": null,
-                  "changeDescription": null,
-                  "userInitials": null,
-                  "startDate": null,
-                  "endDate": null
+                  "change_description": null,
+                  "user_initials": null,
+                  "start_date": null,
+                  "end_date": null
                },
                {
                   "uid": "StudyDurationWeeks_000002",
                   "name": "1.234 weeks",
                   "value": 1.234,
-                  "nameSentenceCase": "1.234 weeks",
+                  "name_sentence_case": "1.234 weeks",
                   "definition": "study_duration_weeks_definition2",
                   "abbreviation": "abbv",
-                  "templateParameter": false,
-                  "libraryName": "Sponsor",
+                  "template_parameter": false,
+                  "library_name": "Sponsor",
                   "status": null,
                   "version": null,
-                  "changeDescription": null,
-                  "userInitials": null,
-                  "startDate": null,
-                  "endDate": null
+                  "change_description": null,
+                  "user_initials": null,
+                  "start_date": null,
+                  "end_date": null
                }
             ],
             "total": 2,
             "page": 1,
-            "size": 0
+            "size": 10
          }
       }
    }

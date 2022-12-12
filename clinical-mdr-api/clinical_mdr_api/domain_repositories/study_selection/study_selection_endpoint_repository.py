@@ -40,7 +40,7 @@ class SelectionHistoryObject:
     endpoint_uid: Optional[str]
     endpoint_version: Optional[str]
     endpoint_level: Optional[str]
-    endpoint_sub_level: Optional[str]
+    endpoint_sublevel: Optional[str]
     study_objective_uid: Optional[str]
     timeframe_uid: Optional[str]
     timeframe_version: Optional[str]
@@ -104,7 +104,7 @@ class StudySelectionEndpointRepository:
               OPTIONAL MATCH (ev) <-[ver]-(er:EndpointRoot) 
               WHERE ver.status = "Final"
               RETURN ver as endpoint_ver, er as er
-              ORDER BY ver.startDate DESC
+              ORDER BY ver.start_date DESC
               LIMIT 1
             }
             OPTIONAL MATCH (se)-[:HAS_SELECTED_TIMEFRAME]->(tv:TimeframeValue)
@@ -113,18 +113,18 @@ class StudySelectionEndpointRepository:
               OPTIONAL MATCH (tv) <-[ver]-(tr:TimeframeRoot) 
               WHERE ver.status = "Final"
               RETURN ver as timeframe_ver, tr as tr
-              ORDER BY ver.startDate DESC
+              ORDER BY ver.start_date DESC
               LIMIT 1
             }
             WITH DISTINCT sr, se, er, tr, timeframe_ver, endpoint_ver
 
             OPTIONAL MATCH (se)-[:HAS_ENDPOINT_LEVEL]->(elr:CTTermRoot)<-[has_term:HAS_TERM]-(:CTCodelistRoot)
             -[:HAS_NAME_ROOT]->(:CTCodelistNameRoot)-[:LATEST_FINAL]->(:CTCodelistNameValue {name: "Endpoint Level"})
-            OPTIONAL MATCH (se)-[:HAS_ENDPOINT_SUB_LEVEL]->(endpoint_sub_level_root:CTTermRoot)
+            OPTIONAL MATCH (se)-[:HAS_ENDPOINT_SUB_LEVEL]->(endpoint_sublevel_root:CTTermRoot)
     
             OPTIONAL MATCH (se)-[:STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE]->(so:StudyObjective)
 
-            WITH sr, se, er, tr, elr, so, timeframe_ver, endpoint_ver, has_term, endpoint_sub_level_root
+            WITH sr, se, er, tr, elr, so, timeframe_ver, endpoint_ver, has_term, endpoint_sublevel_root
             CALL {
                 WITH se
                 OPTIONAL MATCH (se)-[rel:HAS_UNIT]->(un:UnitDefinitionRoot)
@@ -148,7 +148,7 @@ class StudySelectionEndpointRepository:
                 endpoint_ver.version AS endpoint_version,
                 timeframe_ver.version AS timeframe_version,
                 elr.uid AS endpoint_level_uid,
-                endpoint_sub_level_root.uid AS endpoint_sub_level_uid,
+                endpoint_sublevel_root.uid AS endpoint_sublevel_uid,
                 so.uid AS study_objective_uid,
                 se.text AS text,
                 sa.date AS start_date,
@@ -181,7 +181,7 @@ class StudySelectionEndpointRepository:
                 endpoint_uid=selection["endpoint_uid"],
                 endpoint_version=selection["endpoint_version"],
                 endpoint_level_uid=selection["endpoint_level_uid"],
-                endpoint_sub_level_uid=selection["endpoint_sub_level_uid"],
+                endpoint_sublevel_uid=selection["endpoint_sublevel_uid"],
                 endpoint_level_order=selection["endpoint_order"],
                 endpoint_units=units,
                 timeframe_uid=selection["timeframe_uid"],
@@ -405,7 +405,7 @@ class StudySelectionEndpointRepository:
         author: str,
     ) -> StudyAction:
         audit_node.user_initials = author
-        audit_node.date = datetime.datetime.now()
+        audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
         study_selection_node.has_before.connect(audit_node)
@@ -484,9 +484,9 @@ class StudySelectionEndpointRepository:
             ct_term_root = CTTermRoot.nodes.get(uid=selection.endpoint_level_uid)
             study_endpoint_selection_node.has_endpoint_level.connect(ct_term_root)
         # Set endpoint sub level if exists
-        if selection.endpoint_sub_level_uid:
-            ct_term_root = CTTermRoot.nodes.get(uid=selection.endpoint_sub_level_uid)
-            study_endpoint_selection_node.has_endpoint_sub_level.connect(ct_term_root)
+        if selection.endpoint_sublevel_uid:
+            ct_term_root = CTTermRoot.nodes.get(uid=selection.endpoint_sublevel_uid)
+            study_endpoint_selection_node.has_endpoint_sublevel.connect(ct_term_root)
         # for all units which was set
         for index, unit in enumerate(selection.endpoint_units, start=1):
             # get unit definition node
@@ -556,7 +556,7 @@ class StudySelectionEndpointRepository:
               OPTIONAL MATCH (ev) <-[ver]-(er:EndpointRoot) 
               WHERE ver.status = "Final"
               RETURN ver as endpoint_ver, er as er
-              ORDER BY ver.startDate DESC
+              ORDER BY ver.start_date DESC
               LIMIT 1
             }
             OPTIONAL MATCH (all_se)-[:HAS_SELECTED_TIMEFRAME]->(tv:TimeframeValue)
@@ -565,16 +565,16 @@ class StudySelectionEndpointRepository:
               OPTIONAL MATCH (tv) <-[ver]-(tr:TimeframeRoot) 
               WHERE ver.status = "Final"
               RETURN ver as timeframe_ver, tr as tr
-              ORDER BY ver.startDate DESC
+              ORDER BY ver.start_date DESC
               LIMIT 1
             }
             WITH DISTINCT all_se, er, tr, timeframe_ver, endpoint_ver
 
             OPTIONAL MATCH (all_se)-[:HAS_ENDPOINT_LEVEL]->(elr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST_FINAL]->(:CTTermNameValue)
-            OPTIONAL MATCH (all_se)-[:HAS_ENDPOINT_SUB_LEVEL]->(endpoint_sub_level:CTTermRoot)
+            OPTIONAL MATCH (all_se)-[:HAS_ENDPOINT_SUB_LEVEL]->(endpoint_sublevel:CTTermRoot)
             OPTIONAL MATCH (all_se)-[:STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE]->(so:StudyObjective)
 
-            WITH all_se, er, tr, elr, so, timeframe_ver, endpoint_ver, endpoint_sub_level
+            WITH all_se, er, tr, elr, so, timeframe_ver, endpoint_ver, endpoint_sublevel
             CALL {
                 WITH all_se
                 OPTIONAL MATCH (all_se)-[rel:HAS_UNIT]->(un:UnitDefinitionRoot)
@@ -588,7 +588,7 @@ class StudySelectionEndpointRepository:
             MATCH (all_se)<-[:AFTER]-(sa:StudyAction)
             OPTIONAL MATCH (all_se)<-[:BEFORE]-(bsa:StudyAction)
 
-            WITH all_se, er, elr, sa, bsa , endpoint_ver, timeframe_ver, tr, so, values, endpoint_sub_level
+            WITH all_se, er, elr, sa, bsa , endpoint_ver, timeframe_ver, tr, so, values, endpoint_sublevel
             ORDER BY all_se.uid, sa.date DESC
             RETURN
                 all_se.uid AS study_endpoint_uid,
@@ -598,7 +598,7 @@ class StudySelectionEndpointRepository:
                 endpoint_ver.version AS endpoint_version,
                 timeframe_ver.version AS timeframe_version,
                 elr.uid AS endpoint_level,
-                endpoint_sub_level.uid AS endpoint_sub_level,
+                endpoint_sublevel.uid AS endpoint_sublevel,
                 so.uid AS study_objective_uid,
                 all_se.text AS text,
                 values,
@@ -636,7 +636,7 @@ class StudySelectionEndpointRepository:
                     endpoint_uid=res["endpoint_uid"],
                     endpoint_version=res["endpoint_version"],
                     endpoint_level=res["endpoint_level"],
-                    endpoint_sub_level=res["endpoint_sub_level"],
+                    endpoint_sublevel=res["endpoint_sublevel"],
                     study_objective_uid=res["study_objective_uid"],
                     timeframe_uid=res["timeframe_uid"],
                     timeframe_version=res["timeframe_version"],

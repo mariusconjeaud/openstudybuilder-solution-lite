@@ -53,9 +53,9 @@ class TemplateParameterValueRoot(VersionRoot):
     @classmethod
     def check_value_exists(cls, parameter_name: str, parameter_value_uid: str) -> bool:
         cypher_query = """
-            MATCH (pt:TemplateParameter {name: $name})<-[:HAS_PARENT_PARAMETER*0..]-(ptParents)-[:HAS_VALUE]->(pr {uid: $uid})
+            MATCH (pt:TemplateParameter {name: $name})<-[:HAS_PARENT_PARAMETER*0..]-(pt_parents)-[:HAS_VALUE]->(pr {uid: $uid})
             RETURN
-                pt.name AS name, ptParents.name AS type, pr.uid AS uid
+                pt.name AS name, pt_parents.name AS type, pr.uid AS uid
             """
         dataset, _ = db.cypher_query(
             cypher_query, {"uid": parameter_value_uid, "name": parameter_name}

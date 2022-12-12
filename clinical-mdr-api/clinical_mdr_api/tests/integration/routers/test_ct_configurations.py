@@ -27,8 +27,8 @@ class ConfigurationTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
+            "start_date",
+            "end_date",
             "uid",
             "time",
             "path",

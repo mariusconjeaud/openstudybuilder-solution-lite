@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Sequence
 
 from fastapi import status
@@ -102,18 +102,18 @@ class StudyDesignCellService(StudySelectionMixin):
     ) -> StudyDesignCellVO:
         return StudyDesignCellVO(
             study_uid=study_uid,
-            study_arm_uid=design_cell_input.studyArmUid,
+            study_arm_uid=design_cell_input.study_arm_uid,
             study_arm_name=None,
-            study_branch_arm_uid=design_cell_input.studyBranchArmUid,
+            study_branch_arm_uid=design_cell_input.study_branch_arm_uid,
             study_branch_arm_name=None,
-            study_epoch_uid=design_cell_input.studyEpochUid,
+            study_epoch_uid=design_cell_input.study_epoch_uid,
             study_epoch_name=None,
-            study_element_uid=design_cell_input.studyElementUid,
+            study_element_uid=design_cell_input.study_element_uid,
             study_element_name=None,
             order=design_cell_input.order,
-            transition_rule=design_cell_input.transitionRule,
+            transition_rule=design_cell_input.transition_rule,
             user_initials=self.author,
-            start_date=datetime.now(),
+            start_date=datetime.now(timezone.utc),
         )
 
     @db.transaction
@@ -160,10 +160,10 @@ class StudyDesignCellService(StudySelectionMixin):
     ):
         study_design_cell_to_edit.edit_core_properties(
             study_epoch_uid=study_design_cell_to_edit.study_epoch_uid,
-            study_element_uid=study_design_cell_edit_input.studyElementUid,
-            study_arm_uid=study_design_cell_edit_input.studyArmUid,
-            study_branch_arm_uid=study_design_cell_edit_input.studyBranchArmUid,
-            transition_rule=study_design_cell_edit_input.transitionRule,
+            study_element_uid=study_design_cell_edit_input.study_element_uid,
+            study_arm_uid=study_design_cell_edit_input.study_arm_uid,
+            study_branch_arm_uid=study_design_cell_edit_input.study_branch_arm_uid,
+            transition_rule=study_design_cell_edit_input.transition_rule,
             order=study_design_cell_edit_input.order,
         )
 
@@ -174,12 +174,12 @@ class StudyDesignCellService(StudySelectionMixin):
 
         # study_design_cell: StudyDesignCellVO
         study_design_cell = self._repos.study_design_cell_repository.find_by_uid(
-            study_uid=study_uid, uid=design_cell_update_input.studyDesignCellUid
+            study_uid=study_uid, uid=design_cell_update_input.study_design_cell_uid
         )
-        if design_cell_update_input.studyBranchArmUid is not None:
-            design_cell_update_input.studyArmUid = None
-        elif design_cell_update_input.studyArmUid is not None:
-            design_cell_update_input.studyBranchArmUid = None
+        if design_cell_update_input.study_branch_arm_uid is not None:
+            design_cell_update_input.study_arm_uid = None
+        elif design_cell_update_input.study_arm_uid is not None:
+            design_cell_update_input.study_branch_arm_uid = None
 
         fill_missing_values_in_base_model_from_reference_base_model(
             base_model_with_missing_values=design_cell_update_input,
@@ -223,14 +223,14 @@ class StudyDesignCellService(StudySelectionMixin):
         self, study_selection_history: StudyDesignCellHistory, study_uid: str
     ) -> Sequence[models.StudyDesignCellHistory]:
         return models.StudyDesignCellHistory(
-            studyUid=study_uid,
-            studyDesignCellUid=study_selection_history.study_selection_uid,
-            studyArmUid=study_selection_history.study_arm_uid,
-            studyBranchArmUid=study_selection_history.study_branch_arm_uid,
-            studyEpochUid=study_selection_history.study_epoch_uid,
-            studyElementUid=study_selection_history.study_element_uid,
-            transitionRule=study_selection_history.transition_rule,
-            changeType=study_selection_history.change_type,
+            study_uid=study_uid,
+            study_design_cell_uid=study_selection_history.study_selection_uid,
+            study_arm_uid=study_selection_history.study_arm_uid,
+            study_branch_arm_uid=study_selection_history.study_branch_arm_uid,
+            study_epoch_uid=study_selection_history.study_epoch_uid,
+            study_element_uid=study_selection_history.study_element_uid,
+            transition_rule=study_selection_history.transition_rule,
+            change_type=study_selection_history.change_type,
             modified=study_selection_history.start_date,
             order=study_selection_history.order,
         )
@@ -314,10 +314,10 @@ class StudyDesignCellService(StudySelectionMixin):
                     self.delete(study_uid, operation.content.uid)
                     response_code = status.HTTP_204_NO_CONTENT
             except exceptions.MDRApiBaseException as error:
-                result["responseCode"] = error.status_code
+                result["response_code"] = error.status_code
                 result["content"] = models.error.BatchErrorResponse(error)
             else:
-                result["responseCode"] = response_code
+                result["response_code"] = response_code
                 if item:
                     result["content"] = item.dict()
             finally:

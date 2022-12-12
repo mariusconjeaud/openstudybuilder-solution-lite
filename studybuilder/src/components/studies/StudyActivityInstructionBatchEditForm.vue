@@ -9,10 +9,10 @@
   >
   <template v-slot:body>
     <v-autocomplete
-      v-model="form.activityInstructionTemplate"
+      v-model="form.activity_instruction_template"
       :label="$t('StudyActivityInstructionBatchEditForm.select_template')"
       :items="templates"
-      item-text="namePlain"
+      item-text="name_plain"
       return-object
       @change="loadParameters"
       />
@@ -90,6 +90,7 @@ export default {
   methods: {
     close () {
       this.$emit('close')
+      this.form = {}
     },
     async loadParameters (template) {
       if (template) {
@@ -118,18 +119,18 @@ export default {
           operations.push({
             method: 'DELETE',
             content: {
-              studyActivityInstructionUid: this.instructionsPerStudyActivity[item.studyActivityUid].studyActivityInstructionUid
+              study_activity_instruction_uid: this.instructionsPerStudyActivity[item.study_activity_uid].study_activity_instruction_uid
             }
           })
           operations.push({
             method: 'POST',
             content: {
-              activityInstructionData: {
-                activityInstructionTemplateUid: this.form.activityInstructionTemplate.uid,
-                parameterValues: await instances.formatParameterValues(this.parameters),
-                libraryName: this.form.activityInstructionTemplate.library.name
+              activity_instruction_data: {
+                activity_instruction_template_uid: this.form.activity_instruction_template.uid,
+                parameter_values: await instances.formatParameterValues(this.parameters),
+                library_name: this.form.activity_instruction_template.library.name
               },
-              studyActivityUid: item.studyActivityUid
+              study_activity_uid: item.study_activity_uid
             }
           })
         }
@@ -140,7 +141,7 @@ export default {
           operations.push({
             method: 'DELETE',
             content: {
-              studyActivityInstructionUid: this.instructionsPerStudyActivity[item.studyActivityUid].studyActivityInstructionUid
+              study_activity_instruction_uid: this.instructionsPerStudyActivity[item.study_activity_uid].study_activity_instruction_uid
             }
           })
         }
@@ -167,13 +168,13 @@ export default {
     const activityGroupUids = []
     const activitySubGroupUids = []
     for (const studyActivity of this.selection) {
-      activityGroupUids.push(studyActivity.activity.activityGroup.uid)
-      activitySubGroupUids.push(studyActivity.activity.activitySubGroup.uid)
+      activityGroupUids.push(studyActivity.activity.activity_group.uid)
+      activitySubGroupUids.push(studyActivity.activity.activity_subgroup.uid)
     }
     const params = {
       filters: {
-        'activityGroups.uid': { v: activityGroupUids },
-        'activitySubGroups.uid': { v: activitySubGroupUids }
+        'activity_groups.uid': { v: activityGroupUids },
+        'activity_subgroups.uid': { v: activitySubGroupUids }
       },
       operator: 'or'
     }

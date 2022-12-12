@@ -1,4 +1,4 @@
-from neomodel import RelationshipTo, StringProperty
+from neomodel import BooleanProperty, RelationshipTo, StringProperty
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTCodelistRoot,
@@ -17,11 +17,11 @@ class CTConfigValue(VersionValue):
     study_field_null_value_code = StringProperty()
 
     study_field_grouping = StringProperty()
-    study_field_name_property = StringProperty()
     study_field_name_api = StringProperty()
 
     has_configured_codelist = RelationshipTo(CTCodelistRoot, "HAS_CONFIGURED_CODELIST")
     has_configured_term = RelationshipTo(CTTermRoot, "HAS_CONFIGURED_TERM")
+    is_dictionary_term = BooleanProperty()
 
 
 class CTConfigRoot(VersionRoot):

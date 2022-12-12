@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Sequence
 
 from clinical_mdr_api.domain.concepts.odms.xml_extension import (
     OdmXmlExtensionAR,
@@ -73,22 +73,22 @@ class XmlExtensionRepository(OdmGenericRepository[OdmXmlExtensionAR]):
                 name=input_dict.get("name"),
                 prefix=input_dict.get("prefix"),
                 namespace=input_dict.get("namespace"),
-                xml_extension_tag_uids=input_dict.get("xmlExtensionTagUids"),
+                xml_extension_tag_uids=input_dict.get("xml_extension_tag_uids"),
                 xml_extension_attribute_uids=input_dict.get(
-                    "xmlExtensionAttributeUids"
+                    "xml_extension_attribute_uids"
                 ),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("libraryName"),
+                library_name=input_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: input_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("changeDescription"),
+                change_description=input_dict.get("change_description"),
                 status=LibraryItemStatus(input_dict.get("status")),
-                author=input_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=input_dict.get("startDate")),
+                author=input_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=input_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -97,7 +97,9 @@ class XmlExtensionRepository(OdmGenericRepository[OdmXmlExtensionAR]):
 
         return odm_xml_extension_ar
 
-    def specific_alias_clause(self, only_specific_status: list = None) -> str:
+    def specific_alias_clause(
+        self, only_specific_status: Optional[Sequence[str]] = None
+    ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]
 
@@ -106,12 +108,12 @@ class XmlExtensionRepository(OdmGenericRepository[OdmXmlExtensionAR]):
         concept_value.prefix AS prefix,
         concept_value.namespace AS namespace,
 
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmXmlExtensionRoot)-[hxet:HAS_XML_EXTENSION_TAG]->(xetr:OdmXmlExtensionTagRoot)-[:LATEST]->(xetv:OdmXmlExtensionTagValue) | {{uid: xetr.uid, name: xetv.name, prefix: xetv.prefix, namespace: xetv.namespace, value: hxet.value}}] AS xmlExtensionTags,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmXmlExtensionRoot)-[hxea:HAS_XML_EXTENSION_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, prefix: xeav.prefix, namespace: xeav.namespace, value: hxea.value}}] AS xmlExtensionAttributes
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmXmlExtensionRoot)-[hxet:HAS_XML_EXTENSION_TAG]->(xetr:OdmXmlExtensionTagRoot)-[:LATEST]->(xetv:OdmXmlExtensionTagValue) | {{uid: xetr.uid, name: xetv.name, prefix: xetv.prefix, namespace: xetv.namespace, value: hxet.value}}] AS xml_extension_tags,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmXmlExtensionRoot)-[hxea:HAS_XML_EXTENSION_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, prefix: xeav.prefix, namespace: xeav.namespace, value: hxea.value}}] AS xml_extension_attributes
 
         WITH *,
-        [xmlExtensionTag in xmlExtensionTags | xmlExtensionTag.uid] AS xmlExtensionTagUids,
-        [xmlExtensionAttribute in xmlExtensionAttributes | xmlExtensionAttribute.uid] AS xmlExtensionAttributeUids
+        [xml_extension_tag in xml_extension_tags | xml_extension_tag.uid] AS xml_extension_tag_uids,
+        [xml_extension_attribute in xml_extension_attributes | xml_extension_attribute.uid] AS xml_extension_attribute_uids
         """
 
     def _create_new_value_node(self, ar: OdmXmlExtensionAR) -> OdmXmlExtensionValue:

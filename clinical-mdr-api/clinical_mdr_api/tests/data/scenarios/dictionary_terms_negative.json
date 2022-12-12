@@ -7,7 +7,7 @@
                         "request": {
                                 "name": "new sentence case name",
                                 "definition": "definition",
-                                "changeDescription": "Changing codelist"
+                                "change_description": "Changing codelist"
                         },
                         "url": "/dictionaries/terms/term_root1_uid"
                 },
@@ -29,7 +29,7 @@
                         "method": "PATCH",
                         "request": {
                                 "definition": "definition",
-                                "changeDescription": "Changing codelist"
+                                "change_description": "Changing codelist"
                         },
                         "url": "/dictionaries/terms/term_root1_uid"
                 },
@@ -51,9 +51,9 @@
                         "method": "PATCH",
                         "request": {
                                 "name": "name1",
-                                "nameSentenceCase": "Name1",
+                                "name_sentence_case": "Name1",
                                 "definition": "definition",
-                                "changeDescription": "Changing term"
+                                "change_description": "Changing term"
                         },
                         "url": "/dictionaries/terms/term_root4_uid"
                 },

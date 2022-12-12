@@ -33,7 +33,7 @@
             :label="$t('StudySelectionTable.studies')"
             :items="studies"
             :error-messages="errors"
-            item-text="studyId"
+            item-text="study_id"
             clearable
             multiple
             return-object
@@ -48,6 +48,9 @@
         :headers="selectedObjectiveHeaders"
         :items="selectedStudyObjectives"
         >
+        <template v-slot:item.objective.name="{ item }">
+          <n-n-parameter-highlighter :name="item.objective.name" />
+        </template>
         <template v-slot:item.actions="{ item }">
           <v-btn
             icon
@@ -182,7 +185,7 @@
         <parameter-value-selector
           ref="paramSelector"
           v-model="parameters"
-          :template="studyObjective ? studyObjective.objective.objectiveTemplate.name : form.objectiveTemplate.name"
+          :template="studyObjective ? studyObjective.objective.objective_template.name : form.objective_template.name"
           :preview-text="$t('ParameterValueSelector.preview')"
           color="white"
           />
@@ -213,11 +216,11 @@
           color="secondary"
           />
 
-        <template v-if="form.objectiveTemplate !== undefined">
+        <template v-if="form.objective_template !== undefined">
           <parameter-value-selector
             ref="paramSelector"
             :value="parameters"
-            :template="form.objectiveTemplate.name"
+            :template="form.objective_template.name"
             color="white"
             preview-text=" "
             />
@@ -230,10 +233,10 @@
         <v-col cols="11">
           <v-select
             :data-cy="$t('StudyObjectiveForm.objective_level')"
-            v-model="form.objectiveLevel"
+            v-model="form.objective_level"
             :label="$t('StudyObjectiveForm.objective_level')"
             :items="objectiveLevels"
-            item-text="sponsorPreferredName"
+            item-text="sponsor_preferred_name"
             return-object
             dense
             clearable
@@ -282,7 +285,11 @@ export default {
       type: Object,
       required: false
     },
-    currentStudyObjectives: Array
+    currentStudyObjectives: Array,
+    cloneMode: {
+      type: Boolean,
+      default: false
+    }
   },
   computed: {
     ...mapGetters({
@@ -296,12 +303,12 @@ export default {
       return this.$t('StudyObjectiveForm.add_title')
     },
     selectedTemplateName () {
-      return (this.form.objectiveTemplate) ? this.form.objectiveTemplate.name : ''
+      return (this.form.objective_template) ? this.form.objective_template.name : ''
     },
     selectedDefaultParameterValues () {
-      if (this.form.objectiveTemplate) {
-        if (Array.isArray(this.form.objectiveTemplate.defaultParameterValues)) {
-          return this.form.objectiveTemplate.defaultParameterValues
+      if (this.form.objective_template) {
+        if (Array.isArray(this.form.objective_template.default_parameter_values)) {
+          return this.form.objective_template.default_parameter_values
         }
       }
       return []
@@ -367,6 +374,10 @@ export default {
         { name: 'createObjective', title: this.$t('StudyObjectiveForm.step2_title') },
         { name: 'objectiveLevel', title: this.$t('StudyObjectiveForm.step3_title') }
       ],
+      cloneModeSteps: [
+        { name: 'createTemplate', title: this.$t('StudyObjectiveForm.edit_template_title') },
+        { name: 'createObjective', title: this.$t('StudyObjectiveForm.step2_title') }
+      ],
       selectedStudies: [],
       selectedStudyObjectives: [],
       steps: this.getInitialSteps(),
@@ -376,20 +387,20 @@ export default {
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('_global.indications'), value: 'indications', filteringName: 'indications.name' },
         { text: this.$t('ObjectiveTemplateTable.objective_cat'), value: 'categories' },
-        { text: this.$t('ObjectiveTemplateTable.confirmatory_testing'), value: 'confirmatoryTesting' },
+        { text: this.$t('ObjectiveTemplateTable.confirmatory_testing'), value: 'confirmatory_testing' },
         { text: this.$t('_global.template'), value: 'name', width: '30%' }
       ],
       objectiveHeaders: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('Study.study_id'), value: 'studyUid' },
+        { text: this.$t('Study.study_id'), value: 'study_uid' },
         { text: this.$t('StudyObjectiveForm.study_objective'), value: 'objective.name' },
-        { text: this.$t('StudyObjectiveForm.objective_level'), value: 'objectiveLevel.sponsorPreferredName' }
+        { text: this.$t('StudyObjectiveForm.objective_level'), value: 'objective_level.sponsor_preferred_name' }
       ],
       selectedObjectiveHeaders: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('Study.study_id'), value: 'studyId' },
+        { text: this.$t('Study.study_id'), value: 'study_id' },
         { text: this.$t('StudyObjectiveForm.study_objective'), value: 'objective.name' },
-        { text: this.$t('StudyObjectiveForm.objective_level'), value: 'objectiveLevel.sponsorPreferredName' }
+        { text: this.$t('StudyObjectiveForm.objective_level'), value: 'objective_level.sponsor_preferred_name' }
       ],
       options: {},
       total: 0
@@ -436,11 +447,26 @@ export default {
     },
     async loadParameters (template) {
       if (template) {
+        if (this.cloneMode) {
+          const parameters = this.$refs.paramSelector.getTemplateParametersFromTemplate(template.name_plain)
+          if (parameters.length === this.parameters.length) {
+            let differ = false
+            for (let index = 0; index < parameters.length; index++) {
+              if (parameters[index] !== this.parameters[index].name) {
+                differ = true
+                break
+              }
+            }
+            if (!differ) {
+              return
+            }
+          }
+        }
         this.loadingParameters = true
         const resp = await objectiveTemplates.getParameters(template.uid, { study_uid: this.selectedStudy.uid })
         this.parameters = resp.data
-        if (template.defaultParameterValues.length) {
-          instances.loadParameterValues(template.defaultParameterValues, this.parameters, true)
+        if (template.default_parameter_values.length) {
+          instances.loadParameterValues(template.default_parameter_values, this.parameters, true)
         }
         this.loadingParameters = false
       } else {
@@ -448,24 +474,31 @@ export default {
       }
     },
     initFromStudyObjective (studyObjective) {
-      this.creationMode = 'template'
       this.form = JSON.parse(JSON.stringify(studyObjective))
       this.showParametersFromObject(studyObjective.objective)
-      this.steps = this.editModeSteps
-      if (this.templates.length !== 0) {
-        this.$set(this.form, 'objectiveTemplate', this.templates.find(
-          item => item.uid === this.form.objective.objectiveTemplate.uid))
+      if (!this.cloneMode) {
+        this.creationMode = 'template'
+        this.steps = this.editModeSteps
+        if (this.templates.length !== 0) {
+          this.$set(this.form, 'objective_template', this.templates.find(
+            item => item.uid === this.form.objective.objective_template.uid))
+        }
+        this.originalForm = { ...this.form }
+      } else {
+        this.creationMode = 'clone'
+        this.steps = this.cloneModeSteps
+        this.templateForm = { ...studyObjective.objective.objective_template }
+        this.$set(this.form, 'objective_template', studyObjective.objective.objective_template)
       }
-      this.originalForm = { ...this.form }
     },
     async selectObjectiveTemplate (template) {
       await this.loadParameters(template)
-      this.$set(this.form, 'objectiveTemplate', {})
-      this.$set(this.form, 'objectiveTemplate', template)
+      this.$set(this.form, 'objective_template', {})
+      this.$set(this.form, 'objective_template', template)
     },
     selectStudyObjective (studyObjective) {
       this.selectedStudyObjectives.push(studyObjective)
-      this.$set(this.form, 'objectiveLevel', studyObjective.objectiveLevel)
+      this.$set(this.form, 'objective_level', studyObjective.objective_level)
     },
     unselectStudyObjective (studyObjective) {
       this.selectedStudyObjectives = this.selectedStudyObjectives.filter(item => item.objective.name !== studyObjective.objective.name)
@@ -481,31 +514,31 @@ export default {
       return (!this.isStudyObjectiveSelected(item) ? 'primary' : '')
     },
     async createTemplate (step) {
-      if (this.creationMode !== 'scratch' || step !== 2) {
+      if ((this.creationMode !== 'scratch' || step !== 2) && (this.creationMode !== 'clone' || step !== 1)) {
         return true
       }
-      if (this.form.objectiveTemplate && this.form.objectiveTemplate.name === this.templateForm.name) {
+      if (this.form.objective_template && this.form.objective_template.name === this.templateForm.name) {
         return true
       }
       const data = { ...this.templateForm, studyUid: this.selectedStudy.uid }
-      data.libraryName = 'User Defined'
+      data.library_name = constants.LIBRARY_USER_DEFINED
       try {
         const resp = await objectiveTemplates.create(data)
         await objectiveTemplates.approve(resp.data.uid)
-        this.$set(this.form, 'objectiveTemplate', resp.data)
+        this.$set(this.form, 'objective_template', resp.data)
       } catch (error) {
         return false
       }
-      this.loadParameters(this.form.objectiveTemplate)
+      this.loadParameters(this.form.objective_template)
       return true
     },
     async getStudyObjectiveNamePreview () {
       const objectiveData = {
-        objectiveTemplateUid: this.form.objective.objectiveTemplate.uid,
-        parameterValues: await instances.formatParameterValues(this.parameters),
-        libraryName: this.form.objectiveTemplate ? this.form.objectiveTemplate.library.name : this.form.objective.library.name
+        objective_template_uid: this.form.objective.objective_template.uid,
+        parameter_values: await instances.formatParameterValues(this.parameters),
+        library_name: this.form.objective_template ? this.form.objective_template.library.name : this.form.objective.library.name
       }
-      const resp = await study.getStudyObjectivePreview(this.selectedStudy.uid, { objectiveData })
+      const resp = await study.getStudyObjectivePreview(this.selectedStudy.uid, { objective_data: objectiveData })
       return resp.data.objective.name
     },
     async submit () {
@@ -514,17 +547,31 @@ export default {
       let args = null
 
       if (this.studyObjective) {
-        args = {
-          studyUid: this.selectedStudy.uid,
-          studyObjectiveUid: this.studyObjective.studyObjectiveUid,
-          form: JSON.parse(JSON.stringify(this.form))
+        if (!this.cloneMode) {
+          args = {
+            studyUid: this.selectedStudy.uid,
+            studyObjectiveUid: this.studyObjective.study_objective_uid,
+            form: JSON.parse(JSON.stringify(this.form))
+          }
+          const namePreview = await this.getStudyObjectiveNamePreview()
+          if (namePreview !== this.studyObjective.objective.name) {
+            args.form.parameters = this.parameters
+          }
+          action = 'studyObjectives/updateStudyObjective'
+          notification = 'objective_updated'
+        } else {
+          this.$store.dispatch('studyObjectives/addStudyObjectiveFromTemplate', {
+            studyUid: this.selectedStudy.uid,
+            form: JSON.parse(JSON.stringify(this.form)),
+            parameters: this.parameters
+          })
+          action = 'studyObjectives/deleteStudyObjective'
+          args = {
+            studyUid: this.selectedStudy.uid,
+            studyObjectiveUid: this.studyObjective.study_objective_uid
+          }
+          notification = 'objective_updated'
         }
-        const namePreview = await this.getStudyObjectiveNamePreview()
-        if (namePreview !== this.studyObjective.objective.name) {
-          args.form.parameters = this.parameters
-        }
-        action = 'studyObjectives/updateStudyObjective'
-        notification = 'objective_updated'
       } else if (this.creationMode === 'template' || this.creationMode === 'scratch') {
         args = {
           studyUid: this.selectedStudy.uid,
@@ -539,8 +586,8 @@ export default {
             studyUid: this.selectedStudy.uid,
             objectiveUid: item.objective.uid
           }
-          if (this.form.objectiveLevel) {
-            args.objectiveLevelUid = this.form.objectiveLevel.termUid
+          if (this.form.objective_level) {
+            args.objectiveLevelUid = this.form.objective_level.term_uid
           }
           await this.$store.dispatch('studyObjectives/addStudyObjective', args)
         }
@@ -548,7 +595,7 @@ export default {
         this.close()
         return
       }
-      if (this.studyObjective && _isEqual(this.originalForm, args.form)) {
+      if (this.studyObjective && !this.cloneMode && _isEqual(this.originalForm, args.form)) {
         bus.$emit('notification', { msg: this.$t('_global.no_changes'), type: 'info' })
         this.close()
         return

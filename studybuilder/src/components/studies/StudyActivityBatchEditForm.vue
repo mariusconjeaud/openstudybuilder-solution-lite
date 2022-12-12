@@ -10,10 +10,10 @@
   >
   <template v-slot:body>
     <v-autocomplete
-      v-model="form.flowchartGroup"
+      v-model="form.flowchart_group"
       :label="$t('StudyActivityForm.flowchart_group')"
       :items="flowchartGroups"
-      item-text="sponsorPreferredName"
+      item-text="sponsor_preferred_name"
       return-object
       clearable
       class="border-top mt-4"
@@ -81,22 +81,24 @@ export default {
           data.push({
             method: 'DELETE',
             content: {
-              studyActivityUid: item.studyActivityUid
+              study_activity_uid: item.study_activity_uid
             }
           })
         }
       }
-      if (this.form.flowchartGroup || this.form.note) {
-        const data = []
+      if (this.form.flowchart_group || this.form.note) {
         for (const item of this.selection) {
+          const content = {
+            note: this.form.note
+          }
+          if (this.form.flowchart_group) {
+            content.flowchart_group_uid = this.form.flowchart_group.term_uid
+          }
           data.push({
             method: 'PATCH',
             content: {
-              studyActivityUid: item.studyActivityUid,
-              content: {
-                flowchartGroupUid: this.form.flowchartGroup.termUid,
-                note: this.form.note
-              }
+              study_activity_uid: item.study_activity_uid,
+              content
             }
           })
         }

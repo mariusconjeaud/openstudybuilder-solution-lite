@@ -4,6 +4,7 @@
     {{ $t('CrfDuplicationForm.duplicate') }}
   </v-card-title>
   <v-card-text>
+      <validation-observer ref="observer">
     <v-row>
       <v-col cols="2" v-if="type !== crfTypes.ITEM">
         <v-checkbox
@@ -11,7 +12,7 @@
           :label="$t('CrfDuplicationForm.include')"
           class="mt-6 ml-2"/>
       </v-col>
-      <v-col cols="4" v-if="type !== crfTypes.ITEM">
+      <v-col cols="10" v-if="type !== crfTypes.ITEM">
         <odm-references-tree
         :item="item"
         :type="type"
@@ -20,30 +21,54 @@
         :full-data="false"
         :open-all="relations"/>
       </v-col>
-      <v-col :cols="type === crfTypes.ITEM ? 12 : 6">
-        {{ $t('CrfDuplicationForm.attributes') }}
-        <v-row>
-          <v-col cols="5">
-            <v-text-field
-              :label="$t('_global.name')"
-              v-model="name"
-              dense
-              clearable
-              class="mt-6"
-            />
-          </v-col>
-          <v-col cols="5">
-            <v-text-field
-              :label="$t('_global.oid')"
-              v-model="oid"
-              dense
-              clearable
-              class="mt-6"
-            />
-          </v-col>
-        </v-row>
+    </v-row>
+    <v-row>
+      <div class="ml-4">{{ $t('CrfDuplicationForm.attributes') }}</div>
+    </v-row>
+    <v-row>
+      <v-col cols="4">
+        <validation-provider
+          v-slot="{ errors }"
+          rules="required"
+          >
+          <v-text-field
+            :label="$t('_global.name')"
+            v-model="name"
+            dense
+            clearable
+            :error-messages="errors"
+          />
+        </validation-provider>
+      </v-col>
+      <v-col cols="4">
+        <v-text-field
+          :label="$t('_global.oid')"
+          v-model="oid"
+          dense
+          clearable
+        />
+      </v-col>
+      <v-col cols="4">
+        <validation-provider
+          v-slot="{ errors }"
+          rules="required"
+          v-if="type !== crfTypes.TEMPLATE"
+          >
+          <v-autocomplete
+            v-model="itemToLinkTo"
+            :items="itemsToLinkTo"
+            :label="$t('CrfDuplicationForm.item_to_link')"
+            item-text="name"
+            item-value="uid"
+            dense
+            clearable
+            :error-messages="errors"
+            return-object>
+          </v-autocomplete>
+        </validation-provider>
       </v-col>
     </v-row>
+    </validation-observer>
   </v-card-text>
   <v-card-actions>
     <v-spacer></v-spacer>
@@ -83,18 +108,40 @@ export default {
       relations: false,
       name: '',
       oid: '',
-      form: {}
+      form: {},
+      itemsToLinkTo: [],
+      itemToLinkTo: null
     }
   },
   created () {
     this.crfTypes = crfTypes
   },
+  mounted () {
+    this.getElementsToLinkTo()
+  },
   methods: {
+    getElementsToLinkTo () {
+      if (this.type === crfTypes.FORM) {
+        crfs.get('templates', {}).then((resp) => {
+          this.itemsToLinkTo = resp.data.items
+        })
+      } else if (this.type === crfTypes.GROUP) {
+        crfs.getCrfForms().then(resp => {
+          this.itemsToLinkTo = resp.data
+        })
+      } else if (this.type === crfTypes.ITEM) {
+        crfs.getCrfGroups().then(resp => {
+          this.itemsToLinkTo = resp.data
+        })
+      }
+    },
     close () {
       this.$emit('close')
     },
-    save () {
-      this.form = this.item
+    async save () {
+      const isValid = await this.$refs.observer.validate()
+      if (!isValid) return
+      this.form = Object.assign(this.form, this.item)
       this.$set(this.form, 'name', this.name)
       this.$set(this.form, 'oid', this.oid)
       if (this.type === crfTypes.TEMPLATE) {
@@ -106,35 +153,54 @@ export default {
           this.close()
         })
       } else if (this.type === crfTypes.FORM) {
-        this.form.aliasUids = this.form.aliases.map(alias => alias.uid)
+        this.form.alias_uids = this.form.aliases.map(alias => alias.uid)
         crfs.createForm(this.form).then(resp => {
+          this.$set(this.form, 'uid', resp.data.uid)
           if (this.relations) {
-            crfs.addItemGroupsToForm(this.item.itemGroups, resp.data.uid, true)
+            crfs.addItemGroupsToForm(this.item.item_groups, resp.data.uid, true)
           }
+          crfs.addFormsToTemplate([this.form], this.itemToLinkTo.uid, false).then(resp => {
+          })
           this.close()
         })
       } else if (this.type === crfTypes.GROUP) {
-        this.form.aliasUids = this.form.aliases.map(alias => alias.uid)
-        this.form.sdtmDomainUids = this.form.sdtmDomains.map(sdtm => sdtm.uid)
+        this.form.alias_uids = this.form.aliases.map(alias => alias.uid)
+        this.form.sdtm_domain_uids = this.form.sdtm_domains.map(sdtm => sdtm.uid)
         crfs.createItemGroup(this.form).then(resp => {
+          this.$set(this.form, 'uid', resp.data.uid)
           if (this.relations) {
             crfs.addItemsToItemGroup(this.item.items, resp.data.uid, true)
           }
+          crfs.addItemGroupsToForm([this.form], this.itemToLinkTo.uid, false).then(resp => {
+          })
           this.close()
         })
       } else {
-        this.form.aliasUids = this.form.aliases.map(alias => alias.uid)
+        this.form.alias_uids = this.form.aliases.map(alias => alias.uid)
         if (this.form.codelist) {
-          this.form.codelistUid = this.form.codelist
+          this.$set(this.form, 'codelist_uid', this.form.codelist.uid)
+        }
+        if (this.form.unit_definitions) {
+          for (const unit of this.form.unit_definitions) {
+            this.form.unit_definitions[this.form.unit_definitions.indexOf(unit)].mandatory = (unit.mandatory !== null && unit.mandatory !== false)
+          }
         }
         this.form.terms.forEach(term => {
-          term.uid = term.termUid
-          delete term.termUid
+          term.uid = term.term_uid
+          delete term.term_uid
         })
         crfs.createItem(this.form).then(resp => {
+          this.$set(this.form, 'uid', resp.data.uid)
+          crfs.addItemsToItemGroup([this.form], this.itemToLinkTo.uid, false).then(resp => {
+          })
           this.close()
         })
       }
+    }
+  },
+  watch: {
+    type () {
+      this.getElementsToLinkTo()
     }
   }
 }

@@ -22,13 +22,13 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "criteriaData": {
-                    "criteriaTemplateUid": "{ctuid}",
-                    "libraryName": "Test library",
-                    "parameterValues": []
+                "criteria_data": {
+                    "criteria_template_uid": "{ctuid}",
+                    "library_name": "Test library",
+                    "parameter_values": []
                 }
             },
-            "url": "/study/study_root/study-criteria/create"
+            "url": "/studies/study_root/study-criteria"
         },
         "response": {
             "code": 201,
@@ -37,106 +37,61 @@
                 "content-type": "application/json"
             },
             "result": {
-                "studyUid": "study_root",
-                "keyCriteria": false,
+                "study_uid": "study_root",
+                "key_criteria": false,
                 "order": 1,
-                "projectNumber": "123",
-                "projectName": "Project ABC",
-                "studyCriteriaUid": "StudyCriteria_000001",
-                "criteriaType": {
-                    "termUid": "C25532",
-                    "catalogueName": "SDTM CT",
-                    "codelistUid": "CTCodelist_000001",
-                    "sponsorPreferredName": "INCLUSION CRITERIA",
-                    "sponsorPreferredNameSentenceCase": "Inclusion Criteria",
+                "project_number": "123",
+                "project_name": "Project ABC",
+                "study_criteria_uid": "StudyCriteria_000001",
+                "criteria_type": {
+                    "term_uid": "C25532",
+                    "catalogue_name": "SDTM CT",
+                    "codelist_uid": "CTCodelist_000001",
+                    "sponsor_preferred_name": "INCLUSION CRITERIA",
+                    "sponsor_preferred_name_sentence_case": "Inclusion Criteria",
                     "order": null,
-                    "libraryName": "CDISC",
-                    "startDate": "2021-10-26T11:40:24.812000",
-                    "endDate": null,
+                    "library_name": "CDISC",
+                    "start_date": "2021-10-26T11:40:24.812000",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ]
                 },
                 "criteria": {
-                    "uid": "{criteriaUid}",
+                    "uid": "Criteria_000001",
                     "name": "Test_Name_Template",
-                    "namePlain": "Test_Name_Template",
-                    "startDate": "2021-10-26T13:45:25.918966",
-                    "endDate": null,
+                    "name_plain": "Test_Name_Template",
+                    "start_date": "2021-10-26T13:45:25.918966",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TEST_USER",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TEST_USER",
+                    "possible_actions": [
                         "inactivate"
                     ],
-                    "criteriaTemplate": {
+                    "criteria_template": {
                         "name": "Test_Name_Template",
-                        "namePlain": "Test_Name_Template",
+                        "name_plain": "Test_Name_Template",
                         "uid": "{ctuid}",
-                        "guidanceText": null
+                        "guidance_text": null
                     },
-                    "parameterValues": [],
+                    "parameter_values": [],
                     "library": {
                         "name": "Test library",
-                        "isEditable": true
+                        "is_editable": true
                     },
-                    "studyCount": null
+                    "study_count": null
                 },
-                "startDate": "2021-10-26T13:45:26.058572",
-                "userInitials": "TEST_USER",
-                "latestCriteria": null,
-                "acceptedVersion": false
-            }
-        }
-    },
-    {
-        "name": "Test get-by-name",
-        "request": {
-            "headers": {},
-            "method": "GET",
-            "request": {},
-            "url": "/criteria/get-by-name/Test_Name_Template"
-        },
-        "response": {
-            "code": 200,
-            "headers": {
-                "content-length": "416",
-                "content-type": "application/json"
-            },
-            "result": {
-                "uid": "Criteria_000001",
-                "name": "Test_Name_Template",
-                "namePlain": "Test_Name_Template",
-                "startDate": "2021-10-26T13:45:25.918966",
-                "endDate": null,
-                "status": "Final",
-                "version": "1.0",
-                "changeDescription": "Approved version",
-                "userInitials": "TEST_USER",
-                "possibleActions": [
-                    "inactivate"
-                ],
-                "criteriaTemplate": {
-                    "name": "Test_Name_Template",
-                    "namePlain": "Test_Name_Template",
-                    "uid": "{ctuid}",
-                    "guidanceText": null
-                },
-                "parameterValues": [],
-                "library": {
-                    "name": "Test library",
-                    "isEditable": true
-                },
-                "studyCount": null
-            },
-            "save": {
-                "criteriaUid": "uid"
+                "start_date": "2021-10-26T13:45:26.058572",
+                "user_initials": "TEST_USER",
+                "latest_criteria": null,
+                "accepted_version": false
             }
         }
     },
@@ -156,30 +111,30 @@
             },
             "result": [
                 {
-                    "uid": "{criteriaUid}",
+                    "uid": "Criteria_000001",
                     "name": "Test_Name_Template",
-                    "namePlain": "Test_Name_Template",
-                    "startDate": "2021-10-26T13:45:25.918966",
-                    "endDate": null,
+                    "name_plain": "Test_Name_Template",
+                    "start_date": "2021-10-26T13:45:25.918966",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TEST_USER",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TEST_USER",
+                    "possible_actions": [
                         "inactivate"
                     ],
-                    "criteriaTemplate": {
+                    "criteria_template": {
                         "name": "Test_Name_Template",
-                        "namePlain": "Test_Name_Template",
+                        "name_plain": "Test_Name_Template",
                         "uid": "{ctuid}",
-                        "guidanceText": null
+                        "guidance_text": null
                     },
-                    "parameterValues": [],
+                    "parameter_values": [],
                     "library": {
                         "name": "Test library",
-                        "isEditable": true
+                        "is_editable": true
                     },
-                    "studyCount": 1
+                    "study_count": 1
                 }
             ]
         }
@@ -190,13 +145,13 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "criteriaData": {
-                    "criteriaTemplateUid": "{ctuid}",
-                    "libraryName": "Test library",
-                    "parameterValues": []
+                "criteria_data": {
+                    "criteria_template_uid": "{ctuid}",
+                    "library_name": "Test library",
+                    "parameter_values": []
                 }
             },
-            "url": "/study/study_root/study-criteria/create"
+            "url": "/studies/study_root/study-criteria"
         },
         "response": {
             "code": 201,
@@ -205,61 +160,61 @@
                 "content-type": "application/json"
             },
             "result": {
-                "studyUid": "study_root",
-                "keyCriteria": false,
+                "study_uid": "study_root",
+                "key_criteria": false,
                 "order": 2,
-                "projectNumber": "123",
-                "projectName": "Project ABC",
-                "studyCriteriaUid": "StudyCriteria_000002",
-                "criteriaType": {
-                    "termUid": "C25532",
-                    "catalogueName": "SDTM CT",
-                    "codelistUid": "CTCodelist_000001",
-                    "sponsorPreferredName": "INCLUSION CRITERIA",
-                    "sponsorPreferredNameSentenceCase": "Inclusion Criteria",
+                "project_number": "123",
+                "project_name": "Project ABC",
+                "study_criteria_uid": "StudyCriteria_000002",
+                "criteria_type": {
+                    "term_uid": "C25532",
+                    "catalogue_name": "SDTM CT",
+                    "codelist_uid": "CTCodelist_000001",
+                    "sponsor_preferred_name": "INCLUSION CRITERIA",
+                    "sponsor_preferred_name_sentence_case": "Inclusion Criteria",
                     "order": null,
-                    "libraryName": "CDISC",
-                    "startDate": "2021-10-26T11:40:24.812000",
-                    "endDate": null,
+                    "library_name": "CDISC",
+                    "start_date": "2021-10-26T11:40:24.812000",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ]
                 },
                 "criteria": {
-                    "uid": "{criteriaUid}",
+                    "uid": "Criteria_000001",
                     "name": "Test_Name_Template",
-                    "namePlain": "Test_Name_Template",
-                    "startDate": "2021-10-26T13:45:25.918966",
-                    "endDate": null,
+                    "name_plain": "Test_Name_Template",
+                    "start_date": "2021-10-26T13:45:25.918966",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TEST_USER",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TEST_USER",
+                    "possible_actions": [
                         "inactivate"
                     ],
-                    "criteriaTemplate": {
+                    "criteria_template": {
                         "name": "Test_Name_Template",
-                        "namePlain": "Test_Name_Template",
+                        "name_plain": "Test_Name_Template",
                         "uid": "{ctuid}",
-                        "guidanceText": null
+                        "guidance_text": null
                     },
-                    "parameterValues": [],
+                    "parameter_values": [],
                     "library": {
                         "name": "Test library",
-                        "isEditable": true
+                        "is_editable": true
                     },
-                    "studyCount": null
+                    "study_count": null
                 },
-                "startDate": "2021-10-26T13:49:10.699364",
-                "userInitials": "TEST_USER",
-                "latestCriteria": null,
-                "acceptedVersion": false
+                "start_date": "2021-10-26T13:49:10.699364",
+                "user_initials": "TEST_USER",
+                "latest_criteria": null,
+                "accepted_version": false
             }
         }
     },
@@ -279,30 +234,30 @@
             },
             "result": [
                 {
-                    "uid": "{criteriaUid}",
+                    "uid": "Criteria_000001",
                     "name": "Test_Name_Template",
-                    "namePlain": "Test_Name_Template",
-                    "startDate": "2021-10-26T13:45:25.918966",
-                    "endDate": null,
+                    "name_plain": "Test_Name_Template",
+                    "start_date": "2021-10-26T13:45:25.918966",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TEST_USER",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TEST_USER",
+                    "possible_actions": [
                         "inactivate"
                     ],
-                    "criteriaTemplate": {
+                    "criteria_template": {
                         "name": "Test_Name_Template",
-                        "namePlain": "Test_Name_Template",
+                        "name_plain": "Test_Name_Template",
                         "uid": "{ctuid}",
-                        "guidanceText": null
+                        "guidance_text": null
                     },
-                    "parameterValues": [],
+                    "parameter_values": [],
                     "library": {
                         "name": "Test library",
-                        "isEditable": true
+                        "is_editable": true
                     },
-                    "studyCount": 1
+                    "study_count": 1
                 }
             ]
         }
@@ -313,7 +268,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/criteria/{criteriaUid}"
+            "url": "/criteria/Criteria_000001"
         },
         "response": {
             "code": 200,
@@ -322,30 +277,30 @@
                 "content-type": "application/json"
             },
             "result": {
-                "uid": "{criteriaUid}",
+                "uid": "Criteria_000001",
                 "name": "Test_Name_Template",
-                "namePlain": "Test_Name_Template",
-                "startDate": "2021-10-26T13:45:25.918966",
-                "endDate": null,
+                "name_plain": "Test_Name_Template",
+                "start_date": "2021-10-26T13:45:25.918966",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Approved version",
-                "userInitials": "TEST_USER",
-                "possibleActions": [
+                "change_description": "Approved version",
+                "user_initials": "TEST_USER",
+                "possible_actions": [
                     "inactivate"
                 ],
-                "criteriaTemplate": {
+                "criteria_template": {
                     "name": "Test_Name_Template",
-                    "namePlain": "Test_Name_Template",
+                    "name_plain": "Test_Name_Template",
                     "uid": "{ctuid}",
-                    "guidanceText": null
+                    "guidance_text": null
                 },
-                "parameterValues": [],
+                "parameter_values": [],
                 "library": {
                     "name": "Test library",
-                    "isEditable": true
+                    "is_editable": true
                 },
-                "studyCount": 1
+                "study_count": 1
             }
         }
     },
@@ -355,7 +310,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/criteria/{criteriaUid}/versions"
+            "url": "/criteria/Criteria_000001/versions"
         },
         "response": {
             "code": 200,
@@ -365,74 +320,74 @@
             },
             "result": [
                 {
-                    "uid": "{criteriaUid}",
+                    "uid": "Criteria_000001",
                     "name": "Test_Name_Template",
-                    "namePlain": "Test_Name_Template",
-                    "startDate": "2021-10-26T14:50:03.165155",
-                    "endDate": null,
+                    "name_plain": "Test_Name_Template",
+                    "start_date": "2021-10-26T14:50:03.165155",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TEST_USER",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TEST_USER",
+                    "possible_actions": [
                         "inactivate"
                     ],
-                    "criteriaTemplate": {
+                    "criteria_template": {
                         "name": "Test_Name_Template",
-                        "namePlain": "Test_Name_Template",
+                        "name_plain": "Test_Name_Template",
                         "uid": "{ctuid}",
-                        "guidanceText": null
+                        "guidance_text": null
                     },
-                    "parameterValues": [],
+                    "parameter_values": [],
                     "library": {
                         "name": "Test library",
-                        "isEditable": true
+                        "is_editable": true
                     },
-                    "studyCount": 1,
+                    "study_count": 1,
                     "changes": {
                         "uid": false,
                         "name": false,
-                        "namePlain": false,
-                        "startDate": true,
-                        "endDate": true,
+                        "name_plain": false,
+                        "start_date": true,
+                        "end_date": true,
                         "status": true,
                         "version": true,
-                        "changeDescription": true,
-                        "userInitials": true,
-                        "possibleActions": true,
-                        "criteriaTemplate": false,
-                        "parameterValues": false,
+                        "change_description": true,
+                        "user_initials": true,
+                        "possible_actions": true,
+                        "criteria_template": false,
+                        "parameter_values": false,
                         "library": false,
-                        "studyCount": false
+                        "study_count": false
                     }
                 },
                 {
-                    "uid": "{criteriaUid}",
+                    "uid": "Criteria_000001",
                     "name": "Test_Name_Template",
-                    "namePlain": "Test_Name_Template",
-                    "startDate": "2021-10-26T14:50:02.673373",
-                    "endDate": "2021-10-26T14:50:03.165155",
+                    "name_plain": "Test_Name_Template",
+                    "start_date": "2021-10-26T14:50:02.673373",
+                    "end_date": "2021-10-26T14:50:03.165155",
                     "status": "Draft",
                     "version": "0.1",
-                    "changeDescription": "Initial version",
-                    "userInitials": "TODO Initials",
-                    "possibleActions": [
+                    "change_description": "Initial version",
+                    "user_initials": "TODO Initials",
+                    "possible_actions": [
                         "approve",
                         "delete",
                         "edit"
                     ],
-                    "criteriaTemplate": {
+                    "criteria_template": {
                         "name": "Test_Name_Template",
-                        "namePlain": "Test_Name_Template",
+                        "name_plain": "Test_Name_Template",
                         "uid": "{ctuid}",
-                        "guidanceText": null
+                        "guidance_text": null
                     },
-                    "parameterValues": [],
+                    "parameter_values": [],
                     "library": {
                         "name": "Test library",
-                        "isEditable": true
+                        "is_editable": true
                     },
-                    "studyCount": 1,
+                    "study_count": 1,
                     "changes": {}
                 }
             ]
@@ -444,7 +399,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/criteria/{criteriaUid}/studies"
+            "url": "/criteria/Criteria_000001/studies"
         },
         "response": {
             "code": 200,
@@ -455,18 +410,18 @@
             "result": [
                 {
                     "uid": "study_root",
-                    "studyNumber": null,
-                    "studyId": null,
-                    "studyAcronym": null,
-                    "projectNumber": null,
-                    "studyStatus": null,
-                    "currentMetadata": {
-                        "identificationMetadata": null,
-                        "versionMetadata": null,
-                        "highLevelStudyDesign": null,
-                        "studyPopulation": null,
-                        "studyIntervention": null,
-                        "studyDescription": null
+                    "study_number": null,
+                    "study_id": null,
+                    "study_acronym": null,
+                    "project_number": null,
+                    "study_status": null,
+                    "current_metadata": {
+                        "identification_metadata": null,
+                        "version_metadata": null,
+                        "high_level_study_design": null,
+                        "study_population": null,
+                        "study_intervention": null,
+                        "study_description": null
                     }
                 }
             ]
@@ -478,7 +433,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/criteria/{criteriaUid}/parameters"
+            "url": "/criteria/Criteria_000001/parameters"
         },
         "response": {
             "code": 200,
@@ -495,7 +450,7 @@
             "headers": {},
             "method": "DELETE",
             "request": {},
-            "url": "/criteria/{criteriaUid}"
+            "url": "/criteria/Criteria_000001"
         },
         "response": {
             "code": 400,
@@ -506,7 +461,7 @@
             "result": {
                 "message": "Object has been accepted",
                 "time": "2021-10-26T15:18:22.382509",
-                "path": "http://testserver/criteria/{criteriaUid}",
+                "path": "http://testserver/criteria/Criteria_000001",
                 "method": "DELETE",
                 "type": "BusinessLogicException"
             }

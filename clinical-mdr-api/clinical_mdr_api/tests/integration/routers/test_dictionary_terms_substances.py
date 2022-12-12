@@ -30,7 +30,7 @@ class DictionaryTermsSubstancesTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials"]
+        return ["start_date", "end_date", "user_initials"]
 
 
 class DictionaryTermsSubstancesNegativeTest(api.APITest):
@@ -50,4 +50,4 @@ class DictionaryTermsSubstancesNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "userInitials"]
+        return ["start_date", "end_date", "time", "user_initials"]

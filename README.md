@@ -1,3 +1,5 @@
+[[_TOC_]]
+
 # Status quo of the OpenStudyBuilder
 The OpenStudyBuilder solution introduces a new approach for working with studies that once fully implemented will drive end-to-end consistency and more efficient processes - all the way from protocol development and CRF design - to creation of datasets, analysis, reporting, submission to health authorities and public disclosure of study information.
 
@@ -31,7 +33,12 @@ Currently the following containers are part of the docker compose solution.
 - sonarqube (A container a Sonarqube server for code validation. This is not started by default)
 
 # Getting Started
-## Overview
+
+## Preperations
+Currently there are two main ways of settings up a development environment of the OpenStudyBuilder (each with their own advantages and disadvantages):
+1. Using docker method. Yo use this, simply follow the instructions in the [Software Dependencies](#software-dependencies) section.
+2. Using the maunual method without docker (except for the database). To use the this method follow the [Developer Setup Guide](DeveloperSetupGuide.md).
+## System Overview
 A number of steps must be performed in order to get the StudyBuilder application running.
 This can either be accomplished by using docker-compose as descibed in [Build and Test](#build-and-test),
 or by manually performing the following steps in the listed order. Note that it is also possible to run step 5 before step 4, but for performance reasons it's still recommended to run them in the listed order.
@@ -71,11 +78,10 @@ or by manually performing the following steps in the listed order. Note that it 
    The StudyBuilder GUI should now be accessible by pointing a brower at
    the host and port used in [step 5](#start-the-frontend).
 
-
 ## Software dependencies
 
 A Docker environment with at least 6GB of docker memory allocated is required.
-The solution is tested on Ubuntu and Windows (WSL 2) docker environment.
+The solution is tested on Ubuntu and Windows (WSL 2) docker environment. For alternative platforms, please refer to [Platform architecture notes](platform-architecture-notes).
 It can be either Docker Desktop or docker binaries that can run
 docker compose version 3.9 files and related docker commands.
 The following docker environments have been tested:
@@ -117,25 +123,32 @@ memory=6GB
 See [Advanced settings configuration in WSL](https://docs.microsoft.com/en-us/windows/wsl/wsl-config)
 for all available options.
 
+### Platform architecture notes
+An issue has been reported related to running the dockerfiles on aarch64 architecture [(ref)](https://gitlab.com/Novo-Nordisk/nn-public/openstudybuilder/OpenStudyBuilder-Solution/-/issues/3). 
+This can be resolved by setting an environment variable to: `DOCKER_DEFAULT_PLATFORM=linux/x86_64`. Note that since this is a global setting, it will also affect other docker commands in the same session.
+
+As a long-term solution, we are investigating the possibility of extending the compose file with additional configuration compose files to provide easy to use configurations fitting for various architectures (if interested, see [compose/extends](https://docs.docker.com/compose/extends/) for more information).
+
 # Build and Test
 
-By this point, you should have a Git clone of the OpenStudyBuilder-solution repo or a zip file with complete folder structure including subcomponents.
+By this point, you should have a Git clone of the OpenStudyBuilder-Solution repo (with submodules initiated)
+or a zip file with complete folder structure including sub modules.
 If you don't have that, jump back to the [Getting Started](getting-started) section above.
 
 Your folder structure should look like this:
 ```
-─ OpenStudyBuilder-solution
-  ├─ clinical-mdr-api
-  ├─ data-import
+─ OpenStudyBuilder-Solution
+  ├─ clinical-mdr-api (Submodule Azure DevOps repo)
+  ├─ data-import (Submodule Azure DevOps repo)
   ├─ documentationfiles
-  ├─ documentation-portal
+  ├─ documentation-portal (Submodule Azure DevOps repo)
   ├─ frontendfiles
-  ├─ mdr-standards-import
-  ├─ neo4j-mdr-db
-  └─ studybuilder
+  ├─ mdr-standards-import (Submodule Azure DevOps repo)
+  ├─ neo4j-mdr-db (Submodule Azure DevOps repo)
+  └─ studybuilder (Submodule Azure DevOps repo)
 ```
 
-Use the docker-compose.yml file in the root folder (OpenStudyBuilder-solution) to build
+Use the docker-compose.yml file in the root folder (OpenStudyBuilder-Solution) to build
 and bring up the environment with this docker command:
 `docker compose up -d --build`
 
@@ -163,10 +176,10 @@ To validate that the environment is running use this docker command:
 This should show an output looking something like this:
 ```
 IMAGE                       COMMAND                  CREATED              STATUS              PORTS
-OpenStudyBuilder-solution_documentation   "/docker-entrypoint.…"   About a minute ago   Up About a minute   80/tcp, 0.0.0.0:5006->5006/tcp, :::5006->5006/tcp
-OpenStudyBuilder-solution_frontend        "/docker-entrypoint.…"   About a minute ago   Up About a minute   80/tcp, 0.0.0.0:5005->5005/tcp, :::5005->5005/tcp
-OpenStudyBuilder-solution_api             "uvicorn clinical_md…"   About a minute ago   Up 47 seconds       0.0.0.0:5003->5003/tcp, :::5003->5003/tcp
-OpenStudyBuilder-solution_database        "/sbin/tini -g -- /d…"   About a minute ago   Up About a minute   7473-7474/tcp, 0.0.0.0:5001-5002->5001-5002/tcp,
+OpenStudyBuilder-Solution_documentation   "/docker-entrypoint.…"   About a minute ago   Up About a minute   80/tcp, 0.0.0.0:5006->5006/tcp, :::5006->5006/tcp
+OpenStudyBuilder-Solution_frontend        "/docker-entrypoint.…"   About a minute ago   Up About a minute   80/tcp, 0.0.0.0:5005->5005/tcp, :::5005->5005/tcp
+OpenStudyBuilder-Solution_api             "uvicorn clinical_md…"   About a minute ago   Up 47 seconds       0.0.0.0:5003->5003/tcp, :::5003->5003/tcp
+OpenStudyBuilder-Solution_database        "/sbin/tini -g -- /d…"   About a minute ago   Up About a minute   7473-7474/tcp, 0.0.0.0:5001-5002->5001-5002/tcp,
 ```
 
 To access the application the following links can be used:
@@ -184,7 +197,7 @@ To access the application the following links can be used:
 
 - Neo4j database web client: <http://localhost:5001/>
 
-  Username and password default is user: `neo4j` and password: `secret1234`
+  Username and password default is user: `neo4j` and password: `changeme1234`
 
 - Neo4j database bolt connection: <neo4j://localhost:5002>
 

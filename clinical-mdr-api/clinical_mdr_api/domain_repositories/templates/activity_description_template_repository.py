@@ -82,10 +82,10 @@ class ActivityDescriptionTemplateRepository(
             for group in item.activity_groups:
                 group = self._get_activity_group(group.uid)
                 root.has_activity_group.connect(group)
-        if item.activity_sub_groups:
-            for group in item.activity_sub_groups:
-                group = self._get_activity_sub_group(group.uid)
-                root.has_activity_sub_group.connect(group)
+        if item.activity_subgroups:
+            for group in item.activity_subgroups:
+                group = self._get_activity_subgroup(group.uid)
+                root.has_activity_subgroup.connect(group)
 
         return item
 
@@ -97,7 +97,7 @@ class ActivityDescriptionTemplateRepository(
         # Finds activity group in database based on root node uid
         return ActivityGroupRoot.nodes.get(uid=uid)
 
-    def _get_activity_sub_group(self, uid: str) -> ActivitySubGroupRoot:
+    def _get_activity_subgroup(self, uid: str) -> ActivitySubGroupRoot:
         # Finds activity sub group in database based on root node uid
         return ActivitySubGroupRoot.nodes.get(uid=uid)
 
@@ -117,11 +117,11 @@ class ActivityDescriptionTemplateRepository(
             group = self._get_activity_group(group)
             root.has_activity_group.connect(group)
 
-    def patch_activity_sub_groups(
-        self, uid: str, activity_sub_group_uids: Sequence[str]
+    def patch_activity_subgroups(
+        self, uid: str, activity_subgroup_uids: Sequence[str]
     ) -> None:
         root = self.root_class.nodes.get(uid=uid)
-        root.has_activity_sub_group.disconnect_all()
-        for group in activity_sub_group_uids:
-            sub_group = self._get_activity_sub_group(group)
-            root.has_activity_sub_group.connect(sub_group)
+        root.has_activity_subgroup.disconnect_all()
+        for group in activity_subgroup_uids:
+            sub_group = self._get_activity_subgroup(group)
+            root.has_activity_subgroup.connect(sub_group)

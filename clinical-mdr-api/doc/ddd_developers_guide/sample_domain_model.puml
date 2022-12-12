@@ -108,14 +108,14 @@ package StudyDefinition <<Aggregate>> {
     class RegistryIdentifiersVO {
         + ct_gov_id: Optional[str]
         + eudract_id: Optional[str]
-        + universal_trial_number_UTN: Optional[str]
-        + japanese_trial_registry_id_JAPIC: Optional[str]
-        + investigational_new_drug_application_number_IND: Optional[str]
+        + universal_trial_number_utn: Optional[str]
+        + japanese_trial_registry_id_japic: Optional[str]
+        + investigational_new_drug_application_number_ind: Optional[str]
         + ct_gov_id_null_value_code= Optional[str]
         + eudract_id_null_value_code= Optional[str]
-        + universal_trial_number_UTN_null_value_code= Optional[str]
-        + japanese_trial_registry_id_JAPIC_null_value_code= Optional[str]
-        + investigational_new_drug_application_number_IND_null_value_code= Optional[str]
+        + universal_trial_number_utn_null_value_code= Optional[str]
+        + japanese_trial_registry_id_japic_null_value_code= Optional[str]
+        + investigational_new_drug_application_number_ind_null_value_code= Optional[str]
         + validate()
         + {static} from_input_values(): RegistryIdentifiersVO
 

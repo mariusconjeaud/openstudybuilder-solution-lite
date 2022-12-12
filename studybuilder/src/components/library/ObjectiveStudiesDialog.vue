@@ -9,7 +9,7 @@
         <strong>{{ $t('ObjectiveStudiesDialog.objective_template') }}</strong>
       </v-col>
       <v-col cols="10">
-        <n-n-parameter-highlighter :name="objective.objectiveTemplate.name" :show-prefix-and-postfix="false" />
+        <n-n-parameter-highlighter :name="objective.objective_template.name" :show-prefix-and-postfix="false" />
       </v-col>
       <v-col cols="2">
         <strong>{{ $t('ObjectiveStudiesDialog.objective_text') }}</strong>
@@ -70,13 +70,13 @@ export default {
     return {
       headers: [
         { text: this.$t('ObjectiveStudiesDialog.view'), value: 'redirect', width: '5%' },
-        { text: this.$t('ObjectiveStudiesDialog.project_id'), value: 'currentMetadata.identificationMetadata.projectNumber' },
-        { text: this.$t('ObjectiveStudiesDialog.project_name'), value: 'currentMetadata.identificationMetadata.projectName' },
-        { text: this.$t('ObjectiveStudiesDialog.brand_name'), value: 'currentMetadata.identificationMetadata.brandName' },
-        { text: this.$t('ObjectiveStudiesDialog.study_number'), value: 'studyNumber' },
-        { text: this.$t('ObjectiveStudiesDialog.study_id'), value: 'studyId' },
-        { text: this.$t('ObjectiveStudiesDialog.study_acronym'), value: 'studyAcronym' },
-        { text: this.$t('_global.status'), value: 'studyStatus' }
+        { text: this.$t('ObjectiveStudiesDialog.project_id'), value: 'current_metadata.identification_metadata.project_number' },
+        { text: this.$t('ObjectiveStudiesDialog.project_name'), value: 'current_metadata.identification_metadata.project_name' },
+        { text: this.$t('ObjectiveStudiesDialog.brand_name'), value: 'current_metadata.identification_metadata.brand_name' },
+        { text: this.$t('ObjectiveStudiesDialog.study_number'), value: 'study_number' },
+        { text: this.$t('ObjectiveStudiesDialog.study_id'), value: 'study_id' },
+        { text: this.$t('ObjectiveStudiesDialog.study_acronym'), value: 'study_acronym' },
+        { text: this.$t('_global.status'), value: 'study_status' }
       ],
       studies: []
     }

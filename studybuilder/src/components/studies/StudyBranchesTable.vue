@@ -3,12 +3,15 @@
   <n-n-table
     @filter="fetchStudyBranchArms"
     :headers="headers"
-    item-key="branchArmUid"
+    item-key="branch_arm_uid"
     :server-items-length="total"
     :options.sync="options"
     :items="branchArms"
     :no-data-text="arms.length === 0 ? $t('StudyBranchArms.no_data') : undefined"
     :export-data-url="exportDataUrl"
+    export-object-label="StudyBranches"
+    :history-data-fetcher="fetchBranchArmsHistory"
+    :history-title="$t('StudyBranchArms.global_history_title')"
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -34,19 +37,6 @@
           mdi-plus
         </v-icon>
       </v-btn>
-      <v-btn
-        fab
-        class="ml-2"
-        dark
-        small
-        color="secondary"
-        :title="$t('NNTableTooltips.history')"
-        @click="openStudyBranchesHistory()"
-        >
-        <v-icon dark>
-          mdi-history
-        </v-icon>
-      </v-btn>
     </template>
     <template v-slot:body="props" v-if="sortMode">
       <draggable
@@ -69,24 +59,24 @@
             </v-icon>
             {{ item.order }}
           </td>
-          <td width="15%">{{ item.armRoot.name }}</td>
+          <td width="15%">{{ item.arm_root.name }}</td>
           <td width="15%">{{ item.name }}</td>
-          <td width="15%">{{ item.shortName }}</td>
-          <td width="10%">{{ item.randomizationGroup }}</td>
+          <td width="15%">{{ item.short_name }}</td>
+          <td width="10%">{{ item.randomization_group }}</td>
           <td width="10%">{{ item.code }}</td>
-          <td width="5%">{{ item.numberOfSubjects }}</td>
+          <td width="5%">{{ item.number_of_subjects }}</td>
           <td width="10%">{{ item.description }}</td>
-          <td width="10%"><v-chip :color="item.colourCode" small /></td>
-          <td width="10%">{{ item.startDate | date }}</td>
-          <td width="10%">{{ item.userInitials }}</td>
+          <td width="10%"><v-chip :color="item.colour_code" small /></td>
+          <td width="10%">{{ item.start_date | date }}</td>
+          <td width="10%">{{ item.user_initials }}</td>
         </tr>
       </draggable>
     </template>
-    <template v-slot:item.colourCode="{ item }">
-      <v-chip :data-cy="'color='+item.colourCode" :color="item.colourCode" small />
+    <template v-slot:item.colour_code="{ item }">
+      <v-chip :data-cy="'color='+item.colour_code" :color="item.colour_code" small />
     </template>
-    <template v-slot:item.startDate="{ item }">
-      {{ item.startDate|date }}
+    <template v-slot:item.start_date="{ item }">
+      {{ item.start_date|date }}
     </template>
     <template v-slot:item.actions="{ item }">
       <actions-menu :actions="actions" :item="item" />
@@ -97,13 +87,19 @@
     @close="closeForm"
     :editedBranchArm="branchArmToEdit"
     :arms="arms"/>
+  <v-dialog
+    v-model="showBranchHistory"
+    persistent
+    max-width="1200px"
+    >
+    <history-table
+      :title="studyBranchHistoryTitle"
+      @close="closeBranchHistory"
+      :headers="headers"
+      :items="branchHistoryItems"
+      />
+  </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-  <v-dialog v-model="showBranchHistory">
-    <history-table @close="closeBranchHistory" :item="selectedBranch" type="studyBranch" :title-label="$t('StudyBranchArms.study_branch_arm')"/>
-  </v-dialog>
-  <v-dialog v-model="showStudyBranchesHistory">
-    <summary-history-table @close="closeStudyBranchesHistory" type="studyBranches" :title-label="$t('StudyDesignTable.study_branches')" />
-  </v-dialog>
 </div>
 </template>
 
@@ -117,8 +113,8 @@ import ActionsMenu from '@/components/tools/ActionsMenu'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import { bus } from '@/main'
 import draggable from 'vuedraggable'
-import HistoryTable from '@/components/library/HistoryTable'
-import SummaryHistoryTable from '@/components/tools/SummaryHistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable'
+import studyEpochs from '@/api/studyEpochs'
 
 export default {
   components: {
@@ -127,15 +123,22 @@ export default {
     ActionsMenu,
     ConfirmDialog,
     draggable,
-    HistoryTable,
-    SummaryHistoryTable
+    HistoryTable
   },
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy'
     }),
     exportDataUrl () {
-      return `study/${this.selectedStudy.uid}/study-branch-arms`
+      return `studies/${this.selectedStudy.uid}/study-branch-arms`
+    },
+    studyBranchHistoryTitle () {
+      if (this.selectedBranch) {
+        return this.$t(
+          'StudyBranchArms.study_branch_history_title',
+          { branchUid: this.selectedBranch.branch_arm_uid })
+      }
+      return ''
     }
   },
   data () {
@@ -143,16 +146,16 @@ export default {
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: '#', value: 'order', width: '5%' },
-        { text: this.$t('StudyBranchArms.arm_name'), value: 'armRoot.name' },
+        { text: this.$t('StudyBranchArms.arm_name'), value: 'arm_root.name' },
         { text: this.$t('StudyBranchArms.name'), value: 'name' },
-        { text: this.$t('StudyBranchArms.short_name'), value: 'shortName' },
-        { text: this.$t('StudyBranchArms.randomisation_group'), value: 'randomizationGroup' },
+        { text: this.$t('StudyBranchArms.short_name'), value: 'short_name' },
+        { text: this.$t('StudyBranchArms.randomisation_group'), value: 'randomization_group' },
         { text: this.$t('StudyBranchArms.code'), value: 'code' },
-        { text: this.$t('StudyBranchArms.number_of_subjects'), value: 'numberOfSubjects' },
+        { text: this.$t('StudyBranchArms.number_of_subjects'), value: 'number_of_subjects' },
         { text: this.$t('StudyBranchArms.description'), value: 'description' },
-        { text: this.$t('StudyBranchArms.colour'), value: 'colourCode' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
-        { text: this.$t('_global.modified_by'), value: 'userInitials' }
+        { text: this.$t('StudyBranchArms.colour'), value: 'colour_code' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
+        { text: this.$t('_global.modified_by'), value: 'user_initials' }
       ],
       actions: [
         {
@@ -181,6 +184,7 @@ export default {
       branchArms: [],
       sortMode: false,
       showBranchHistory: false,
+      branchHistoryItems: [],
       selectedBranch: null,
       showStudyBranchesHistory: false
     }
@@ -189,15 +193,14 @@ export default {
     this.fetchStudyArms()
   },
   methods: {
-    openStudyBranchesHistory () {
-      this.showStudyBranchesHistory = true
-    },
-    closeStudyBranchesHistory () {
-      this.showStudyBranchesHistory = false
+    async fetchBranchArmsHistory () {
+      const resp = await studyEpochs.getStudyBranchesVersions(this.selectedStudy.uid)
+      return resp.data
     },
     fetchStudyArms () {
       const params = {
-        totalCount: true
+        total_count: true,
+        page_size: 0
       }
       arms.getAllForStudy(this.selectedStudy.uid, params).then(resp => {
         this.arms = resp.data.items
@@ -205,9 +208,9 @@ export default {
     },
     fetchStudyBranchArms () {
       const params = {
-        pageNumber: (this.options.page),
-        pageSize: this.options.itemsPerPage,
-        totalCount: true
+        page_number: (this.options.page),
+        page_size: this.options.itemsPerPage,
+        total_count: true
       }
       arms.getAllBranchArms(this.selectedStudy.uid, params).then(resp => {
         this.branchArms = resp.data
@@ -223,11 +226,13 @@ export default {
       this.branchArmToEdit = item
       this.showBranchArmsForm = true
     },
-    openBranchHistory (item) {
+    async openBranchHistory (branch) {
+      this.selectedBranch = branch
+      const resp = await studyEpochs.getStudyBranchVersions(this.selectedStudy.uid, branch.branch_arm_uid)
+      this.branchHistoryItems = resp.data
       this.showBranchHistory = true
-      this.selectedBranch = item
     },
-    closeBranchHistory (item) {
+    closeBranchHistory () {
       this.showBranchHistory = false
       this.selectedBranch = null
     },

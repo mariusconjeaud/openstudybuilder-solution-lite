@@ -41,7 +41,10 @@ def create_unicode_brand_name_for_testing(app_client, test_string):
 
 def create_unicode_configuration_property_for_testing(app_client, test_string):
     response = request_with_json_payload(
-        app_client, "POST", "/configurations", {"studyFieldNameProperty": test_string}
+        app_client,
+        "POST",
+        "/configurations",
+        {"study_field_name": test_string},
     )
     response.raise_for_status()
     payload = response.json()
@@ -85,7 +88,7 @@ def test_unicode_retrieval(app_client):
 def test_unicode_patch(app_client):
     """Validates that a resource maintains unicode value of a property after patching"""
     test_string = create_unicode_test_string()
-    property_name = "studyFieldNameProperty"
+    property_name = "study_field_name"
     response = request_with_json_payload(
         app_client, "POST", "/configurations", {property_name: test_string}
     )
@@ -104,7 +107,7 @@ def test_unicode_patch(app_client):
             app_client,
             "PATCH",
             f"/configurations/{uid}",
-            {property_name: test_string, "changeDescription": "testing"},
+            {property_name: test_string, "change_description": "testing"},
         )
         response.raise_for_status()
         payload = response.json()
@@ -141,7 +144,7 @@ def test_non_unicode_input_error_response(app_client):
 def test_non_unicode_patch_error_response(app_client):
     """Validates that API rejects on-UTF-8/16 and non-ASCII-escaped JSON payload on PATCH request"""
     test_string = create_unicode_test_string()
-    property_name = "studyFieldNameProperty"
+    property_name = "study_field_name"
     response = request_with_json_payload(
         app_client, "POST", "/configurations", {property_name: test_string}
     )

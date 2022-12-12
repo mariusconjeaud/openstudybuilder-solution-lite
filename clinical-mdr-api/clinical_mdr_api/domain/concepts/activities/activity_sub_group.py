@@ -25,7 +25,7 @@ class ActivitySubGroupVO(ConceptVO):
         abbreviation: Optional[str],
         activity_group: Optional[str],
     ) -> "ActivitySubGroupVO":
-        activity_sub_group_vo = cls(
+        activity_subgroup_vo = cls(
             name=name,
             name_sentence_case=name_sentence_case,
             definition=definition,
@@ -34,16 +34,16 @@ class ActivitySubGroupVO(ConceptVO):
             activity_group=activity_group if activity_group is not None else None,
         )
 
-        return activity_sub_group_vo
+        return activity_subgroup_vo
 
     def validate(
         self,
-        activity_sub_group_exists_by_name_callback: Callable[[str], bool],
+        activity_subgroup_exists_by_name_callback: Callable[[str], bool],
         activity_group_exists: Callable[[str], bool],
         previous_name: Optional[str] = None,
     ):
         if (
-            activity_sub_group_exists_by_name_callback(self.name)
+            activity_subgroup_exists_by_name_callback(self.name)
             and previous_name != self.name
         ):
             raise ValueError(
@@ -74,7 +74,7 @@ class ActivitySubGroupAR(ConceptARBase):
         concept_vo: ActivitySubGroupVO,
         library: LibraryVO,
         generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        activity_sub_group_exists_by_name_callback: Callable[
+        activity_subgroup_exists_by_name_callback: Callable[
             [str], bool
         ] = lambda _: True,
         activity_group_exists: Callable[[str], bool] = lambda _: False,
@@ -87,17 +87,17 @@ class ActivitySubGroupAR(ConceptARBase):
             )
 
         concept_vo.validate(
-            activity_sub_group_exists_by_name_callback=activity_sub_group_exists_by_name_callback,
+            activity_subgroup_exists_by_name_callback=activity_subgroup_exists_by_name_callback,
             activity_group_exists=activity_group_exists,
         )
 
-        activity_sub_group_ar = cls(
+        activity_subgroup_ar = cls(
             _uid=generate_uid_callback(),
             _item_metadata=item_metadata,
             _library=library,
             _concept_vo=concept_vo,
         )
-        return activity_sub_group_ar
+        return activity_subgroup_ar
 
     def edit_draft(
         self,
@@ -111,7 +111,7 @@ class ActivitySubGroupAR(ConceptARBase):
         Creates a new draft version for the object.
         """
         concept_vo.validate(
-            activity_sub_group_exists_by_name_callback=concept_exists_by_name_callback,
+            activity_subgroup_exists_by_name_callback=concept_exists_by_name_callback,
             activity_group_exists=activity_group_exists,
             previous_name=self.name,
         )

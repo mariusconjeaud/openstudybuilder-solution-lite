@@ -12,15 +12,15 @@ const getters = {
   studyCompounds__Loading: state => state.studyCompounds__Loading,
   studyCompoundDosings: state => state.studyCompoundDosings,
   getStudyCompoundsByTypeOfTreatment: state => typeOfTreatmentUid => {
-    return state.studyCompounds.filter(item => item.typeOfTreatment.termUid === typeOfTreatmentUid)
+    return state.studyCompounds.filter(item => item.type_of_treatment.term_uid === typeOfTreatmentUid)
   },
   getNAStudyCompoundsByTypeOfTreatment: state => typeOfTreatmentUid => {
-    return state.studyCompounds.filter(item => item.typeOfTreatment.termUid === typeOfTreatmentUid && !item.compound)
+    return state.studyCompounds.filter(item => item.type_of_treatment.term_uid === typeOfTreatmentUid && !item.compound)
   },
   getStudyCompoundDosingsByStudyCompound: state => {
     const result = {}
     for (const compoundDosing of state.studyCompoundDosings) {
-      const uid = compoundDosing.studyCompound.studyCompoundUid
+      const uid = compoundDosing.study_compound.study_compound_uid
       if (result[uid] === undefined) {
         result[uid] = []
       }
@@ -42,14 +42,14 @@ const mutations = {
   },
   UPDATE_STUDY_COMPOUND (state, studyCompound) {
     state.studyCompounds.filter((item, pos) => {
-      if (item.studyCompoundUid === studyCompound.studyCompoundUid) {
+      if (item.study_compound_uid === studyCompound.study_compound_uid) {
         Vue.set(state.studyCompounds, pos, studyCompound)
       }
     })
   },
   REMOVE_STUDY_COMPOUND (state, studyCompoundUid) {
     state.studyCompounds = state.studyCompounds.filter(function (item) {
-      return item.studyCompoundUid !== studyCompoundUid
+      return item.study_compound_uid !== studyCompoundUid
     })
   },
   SET_STUDY_COMPOUND_DOSINGS (states, studyCompoundDosings) {
@@ -60,14 +60,14 @@ const mutations = {
   },
   UPDATE_STUDY_COMPOUND_DOSING (state, studyCompoundDosing) {
     state.studyCompoundDosings.filter((item, pos) => {
-      if (item.studyCompoundDosingUid === studyCompoundDosing.studyCompoundDosingUid) {
+      if (item.study_compound_dosing_uid === studyCompoundDosing.study_compound_dosing_uid) {
         Vue.set(state.studyCompoundDosings, pos, studyCompoundDosing)
       }
     })
   },
   REMOVE_STUDY_COMPOUND_DOSING (state, studyCompoundDosingUid) {
     state.studyCompoundDosings = state.studyCompoundDosings.filter(function (item) {
-      return item.studyCompoundDosingUid !== studyCompoundDosingUid
+      return item.study_compound_dosing_uid !== studyCompoundDosingUid
     })
   }
 }
@@ -76,7 +76,9 @@ const actions = {
   async fetchStudyCompounds ({ commit }, data) {
     commit('SET_STUDY_COMPOUNDS_LOADING', true)
     let respData
-    await study.getStudyCompounds(data.studyUid, data).then(resp => {
+    const studyUid = data.studyUid
+    delete data.studyUid
+    await study.getStudyCompounds(studyUid, data).then(resp => {
       commit('SET_STUDY_COMPOUNDS', resp.data.items)
       commit('SET_STUDY_COMPOUNDS_LOADING', false)
       respData = resp
@@ -109,6 +111,7 @@ const actions = {
     })
   },
   updateStudyCompoundDosing ({ commit }, { studyUid, studyCompoundDosingUid, data }) {
+    delete data.study_compound
     return study.updateStudyCompoundDosing(studyUid, studyCompoundDosingUid, data).then(resp => {
       commit('UPDATE_STUDY_COMPOUND_DOSING', resp.data)
     })

@@ -26,7 +26,7 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
         return ActivityInstance.from_activity_ar(
             activity_ar=item_ar,
             find_activity_hierarchy_by_uid=self._repos.activity_repository.find_by_uid_2,
-            find_activity_subgroup_by_uid=self._repos.activity_sub_group_repository.find_by_uid_2,
+            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_2,
             find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
         )
 

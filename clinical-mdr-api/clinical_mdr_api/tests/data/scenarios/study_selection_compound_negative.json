@@ -5,16 +5,16 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "compoundAliasUid": "TemplateParameter_000001_WRONG_UID",
-                "typeOfTreatmentUid": "CTTerm_000001",
-                "routeOfAdministrationUid": "CTTerm_000002",
-                "dosageFormUid": "CTTerm_000003",
-                "dispensedInUid": "CTTerm_000004",
-                "deviceUid": "CTTerm_000005",
-                "formulationUid": "CTTerm_000006",
-                "otherInfo": "some other information"
+                "compound_alias_uid": "TemplateParameter_000001_WRONG_UID",
+                "type_of_treatment_uid": "CTTerm_000001",
+                "route_of_administration_uid": "CTTerm_000002",
+                "dosage_form_uid": "CTTerm_000003",
+                "dispensed_in_uid": "CTTerm_000004",
+                "device_uid": "CTTerm_000005",
+                "formulation_uid": "CTTerm_000006",
+                "other_info": "some other information"
             },
-            "url": "/study/study_root/study-compounds/select"
+            "url": "/studies/study_root/study-compounds"
         },
         "response": {
             "code": 400,
@@ -25,7 +25,7 @@
             "result": {
                 "message": "There is no approved compound alias identified by provided uid (TemplateParameter_000001_WRONG_UID)",
                 "method": "POST",
-                "path": "http://testserver/study/study_root/study-compounds/select",
+                "path": "http://testserver/studies/study_root/study-compounds",
                 "time": "2020-11-03T23:42:41.518146",
                 "type": "ValidationException"
             }
@@ -37,17 +37,17 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "compoundAliasUid": "TemplateParameter_000002",
-                "typeOfTreatmentUid": "CTTerm_000001",
-                "routeOfAdministrationUid": "CTTerm_000002",
-                "dosageFormUid": "CTTerm_000003",
-                "dispensedInUid": "CTTerm_000004",
-                "deviceUid": "CTTerm_000005",
-                "formulationUid": "CTTerm_000006",
-                "otherInfo": "some other information",
-                "reasonForMissingNullValueUid": "CTTerm_000007"
+                "compound_alias_uid": "TemplateParameter_000002",
+                "type_of_treatment_uid": "CTTerm_000001",
+                "route_of_administration_uid": "CTTerm_000002",
+                "dosage_form_uid": "CTTerm_000003",
+                "dispensed_in_uid": "CTTerm_000004",
+                "device_uid": "CTTerm_000005",
+                "formulation_uid": "CTTerm_000006",
+                "other_info": "some other information",
+                "reason_for_missing_null_value_uid": "CTTerm_000007"
             },
-            "url": "/study/study_root/study-compounds/select"
+            "url": "/studies/study_root/study-compounds"
         },
         "response": {
             "code": 400,
@@ -56,9 +56,9 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "If reasonForMissingNullValueUid has a value, all fields except type of treatment have to be empty",
+                "message": "If reason_for_missing_null_value_uid has a value, all fields except type of treatment have to be empty",
                 "method": "POST",
-                "path": "http://testserver/study/study_root/study-compounds/select",
+                "path": "http://testserver/studies/study_root/study-compounds",
                 "time": "2020-11-03T23:42:41.518146",
                 "type": "ValidationException"
             }
@@ -70,10 +70,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "typeOfTreatmentUid": "CTTerm_000001",
-                "reasonForMissingNullValueUid": "UNK_NOT_VALID"
+                "type_of_treatment_uid": "CTTerm_000001",
+                "reason_for_missing_null_value_uid": "UNK_NOT_VALID"
             },
-            "url": "/study/study_root/study-compounds/select"
+            "url": "/studies/study_root/study-compounds"
         },
         "response": {
             "code": 400,
@@ -84,7 +84,7 @@
             "result": {
                 "message": "Unknown reason for missing value code provided for Reason For Missing",
                 "method": "POST",
-                "path": "http://testserver/study/study_root/study-compounds/select",
+                "path": "http://testserver/studies/study_root/study-compounds",
                 "time": "2020-11-03T23:42:41.518146",
                 "type": "ValidationException"
             }
@@ -97,7 +97,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study_root/study-compounds/study_compound_uid"
+            "url": "/studies/study_root/study-compounds/study_compound_uid"
         },
         "response": {
             "code": 404,
@@ -108,7 +108,7 @@
             "result": {
                 "message": "There is no selection between the study compound (study_compound_uid and the study)",
                 "method": "GET",
-                "path": "http://testserver/study/study_root/study-compounds/study_compound_uid",
+                "path": "http://testserver/studies/study_root/study-compounds/study_compound_uid",
                 "time": "2020-11-03T23:42:41.518146",
                 "type": "NotFoundException"
             }

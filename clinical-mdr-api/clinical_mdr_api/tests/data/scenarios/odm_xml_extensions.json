@@ -1,6 +1,6 @@
 [
     {
-        "name": "Test getting empty list of odm xml extensions",
+        "name": "Test getting empty list of ODM XML Extensions",
         "request": {
             "headers": {},
             "method": "GET",
@@ -17,17 +17,17 @@
                 "items": [],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
     {
-        "name": "Test creating a new odm xml extension",
+        "name": "Test creating a new ODM XML Extension",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "prefix": "prefix",
                 "namespace": "namespace1"
@@ -42,19 +42,19 @@
             },
             "result": {
                 "uid": "OdmXmlExtension_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "prefix": "prefix",
                 "namespace": "namespace1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTags": [],
-                "possibleActions": [
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
+                "xml_extension_attributes": [],
+                "xml_extension_tags": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -63,7 +63,7 @@
         }
     },
     {
-        "name": "Test getting non empty list of odm xml extensions",
+        "name": "Test getting non empty list of ODM XML Extensions",
         "request": {
             "headers": {},
             "method": "GET",
@@ -80,19 +80,19 @@
                 "items": [
                     {
                         "uid": "OdmXmlExtension_000001",
-                        "libraryName": "Sponsor",
+                        "library_name": "Sponsor",
                         "name": "name1",
                         "prefix": "prefix",
                         "namespace": "namespace1",
-                        "startDate": "2022-03-03T11:17:56.799074",
-                        "endDate": null,
+                        "start_date": "2022-03-03T11:17:56.799074",
+                        "end_date": null,
                         "status": "Draft",
                         "version": "0.1",
-                        "changeDescription": "Initial version",
-                        "userInitials": "TODO user initials",
-                        "xmlExtensionAttributes": [],
-                        "xmlExtensionTags": [],
-                        "possibleActions": [
+                        "change_description": "Initial version",
+                        "user_initials": "TODO user initials",
+                        "xml_extension_attributes": [],
+                        "xml_extension_tags": [],
+                        "possible_actions": [
                             "approve",
                             "delete",
                             "edit"
@@ -101,17 +101,17 @@
                 ],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
     {
-        "name": "Test getting possible header values of odm xml extensions",
+        "name": "Test getting possible header values of ODM XML Extensions",
         "request": {
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "concepts/odms/xml-extensions/headers?fieldName=name"
+            "url": "concepts/odms/xml-extensions/headers?field_name=name"
         },
         "response": {
             "code": 200,
@@ -125,7 +125,7 @@
         }
     },
     {
-        "name": "Test getting a specific odm xml extension",
+        "name": "Test getting a specific ODM XML Extension",
         "request": {
             "headers": {},
             "method": "GET",
@@ -140,19 +140,19 @@
             },
             "result": {
                 "uid": "OdmXmlExtension_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "prefix": "prefix",
                 "namespace": "namespace1",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO initials",
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTags": [],
-                "possibleActions": [
+                "change_description": "Initial version",
+                "user_initials": "TODO initials",
+                "xml_extension_attributes": [],
+                "xml_extension_tags": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -161,7 +161,7 @@
         }
     },
     {
-        "name": "Test getting versions of a specific odm xml extension",
+        "name": "Test getting versions of a specific ODM XML Extension",
         "request": {
             "headers": {},
             "method": "GET",
@@ -177,19 +177,19 @@
             "result": [
                 {
                     "uid": "OdmXmlExtension_000001",
-                    "libraryName": "Sponsor",
+                    "library_name": "Sponsor",
                     "name": "name1",
                     "prefix": "prefix",
                     "namespace": "namespace1",
-                    "startDate": "2022-03-03T13:18:03.230000",
-                    "endDate": null,
+                    "start_date": "2022-03-03T13:18:03.230000",
+                    "end_date": null,
                     "status": "Draft",
                     "version": "0.1",
-                    "changeDescription": "Initial version",
-                    "userInitials": "TODO initials",
-                    "xmlExtensionAttributes": [],
-                    "xmlExtensionTags": [],
-                    "possibleActions": [
+                    "change_description": "Initial version",
+                    "user_initials": "TODO initials",
+                    "xml_extension_attributes": [],
+                    "xml_extension_tags": [],
+                    "possible_actions": [
                         "approve",
                         "delete",
                         "edit"
@@ -199,16 +199,16 @@
         }
     },
     {
-        "name": "Test updating an existing odm xml extension",
+        "name": "Test updating an existing ODM XML Extension",
         "request": {
             "headers": {},
             "method": "PATCH",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "prefix": "prefix",
                 "namespace": "new namespace",
-                "changeDescription": "namespace changed to new namespace"
+                "change_description": "namespace changed to new namespace"
             },
             "url": "concepts/odms/xml-extensions/OdmXmlExtension_000001"
         },
@@ -220,19 +220,19 @@
             },
             "result": {
                 "uid": "OdmXmlExtension_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "prefix": "prefix",
                 "namespace": "new namespace",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.2",
-                "changeDescription": "namespace changed to new namespace",
-                "userInitials": "TODO initials",
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTags": [],
-                "possibleActions": [
+                "change_description": "namespace changed to new namespace",
+                "user_initials": "TODO initials",
+                "xml_extension_attributes": [],
+                "xml_extension_tags": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -241,7 +241,7 @@
         }
     },
     {
-        "name": "Test approving an odm xml extension",
+        "name": "Test approving an ODM XML Extension",
         "request": {
             "headers": {},
             "method": "POST",
@@ -256,27 +256,27 @@
             },
             "result": {
                 "uid": "OdmXmlExtension_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "prefix": "prefix",
                 "namespace": "new namespace",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Approved version",
-                "userInitials": "TODO initials",
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTags": [],
-                "possibleActions": [
+                "change_description": "Approved version",
+                "user_initials": "TODO initials",
+                "xml_extension_attributes": [],
+                "xml_extension_tags": [],
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test inactivating a specific odm xml extension",
+        "name": "Test inactivating a specific ODM XML Extension",
         "request": {
             "headers": {},
             "method": "POST",
@@ -291,19 +291,19 @@
             },
             "result": {
                 "uid": "OdmXmlExtension_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "prefix": "prefix",
                 "namespace": "new namespace",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Retired",
                 "version": "1.0",
-                "changeDescription": "Deactivated version",
-                "userInitials": "TODO initials",
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTags": [],
-                "possibleActions": [
+                "change_description": "Deactivated version",
+                "user_initials": "TODO initials",
+                "xml_extension_attributes": [],
+                "xml_extension_tags": [],
+                "possible_actions": [
                     "delete",
                     "reactivate"
                 ]
@@ -311,7 +311,7 @@
         }
     },
     {
-        "name": "Test reactivating a specific odm xml extension",
+        "name": "Test reactivating a specific ODM XML Extension",
         "request": {
             "headers": {},
             "method": "POST",
@@ -326,32 +326,32 @@
             },
             "result": {
                 "uid": "OdmXmlExtension_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "prefix": "prefix",
                 "namespace": "new namespace",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO initials",
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTags": [],
-                "possibleActions": [
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
+                "xml_extension_attributes": [],
+                "xml_extension_tags": [],
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test creating a new odm xml extension version",
+        "name": "Test creating a new ODM XML Extension version",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/odms/xml-extensions/OdmXmlExtension_000001/new-version"
+            "url": "concepts/odms/xml-extensions/OdmXmlExtension_000001/versions"
         },
         "response": {
             "code": 201,
@@ -361,19 +361,19 @@
             },
             "result": {
                 "uid": "OdmXmlExtension_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "prefix": "prefix",
                 "namespace": "new namespace",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "1.1",
-                "changeDescription": "New draft created",
-                "userInitials": "TODO user initials",
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTags": [],
-                "possibleActions": [
+                "change_description": "New draft created",
+                "user_initials": "TODO user initials",
+                "xml_extension_attributes": [],
+                "xml_extension_tags": [],
+                "possible_actions": [
                     "approve",
                     "edit"
                 ]
@@ -381,14 +381,14 @@
         }
     },
     {
-        "name": "Create a new odm xml extension for deleting it",
+        "name": "Create a new ODM XML Extension for deleting it",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name - delete",
-                "prefix": "prefix",
+                "prefix": "prefixOne",
                 "namespace": "namespace2"
             },
             "url": "concepts/odms/xml-extensions"
@@ -402,18 +402,18 @@
             "result": {
                 "uid": "OdmXmlExtension_000002",
                 "name": "name - delete",
-                "libraryName": "Sponsor",
-                "prefix": "prefix",
+                "library_name": "Sponsor",
+                "prefix": "prefixOne",
                 "namespace": "namespace2",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTags": [],
-                "possibleActions": [
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
+                "xml_extension_attributes": [],
+                "xml_extension_tags": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -422,7 +422,7 @@
         }
     },
     {
-        "name": "Test deleting a specific odm xml extension",
+        "name": "Test deleting a specific ODM XML Extension",
         "request": {
             "headers": {},
             "method": "DELETE",
@@ -439,7 +439,7 @@
         }
     },
     {
-        "name": "Test getting UIDs of a specific odm xml extension's active relationships",
+        "name": "Test getting UIDs of a specific ODM XML Extension's active relationships",
         "request": {
             "headers": {},
             "method": "GET",

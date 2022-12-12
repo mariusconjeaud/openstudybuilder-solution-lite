@@ -120,7 +120,7 @@ class DictionaryCodelistGenericService:
 
         # First, check that attributes provided for filtering exist in the return class
         # Properties can be nested => check if root property exists in class
-        if not models.utils.isAttributeInModel(
+        if not models.utils.is_attribute_in_model(
             field_name.split(".")[0], DictionaryCodelist
         ):
             raise exceptions.NotFoundException(
@@ -185,14 +185,14 @@ class DictionaryCodelistGenericService:
         self, codelist_input: DictionaryCodelistCreateInput
     ) -> DictionaryCodelist:
         if not self._repos.library_repository.library_exists(
-            normalize_string(codelist_input.libraryName)
+            normalize_string(codelist_input.library_name)
         ):
             raise exceptions.BusinessLogicException(
-                f"There is no library identified by provided library name ({codelist_input.libraryName})"
+                f"There is no library identified by provided library name ({codelist_input.library_name})"
             )
 
         library_vo = LibraryVO.from_input_values_2(
-            library_name=codelist_input.libraryName,
+            library_name=codelist_input.library_name,
             is_library_editable_callback=(
                 lambda name: self._repos.library_repository.find_by_name(
                     name
@@ -206,7 +206,7 @@ class DictionaryCodelistGenericService:
                 author=self.user_initials,
                 dictionary_codelist_vo=DictionaryCodelistVO.from_input_values(
                     name=codelist_input.name,
-                    is_template_parameter=codelist_input.templateParameter,
+                    is_template_parameter=codelist_input.template_parameter,
                     current_terms=[],
                     previous_terms=[],
                     codelist_exists_by_name_callback=self.repository.codelist_exists_by_name,
@@ -240,13 +240,13 @@ class DictionaryCodelistGenericService:
             item = self._find_by_uid_or_raise_not_found(codelist_uid, for_update=True)
             item.edit_draft(
                 author=self.user_initials,
-                change_description=codelist_input.changeDescription,
+                change_description=codelist_input.change_description,
                 dictionary_codelist_vo=DictionaryCodelistVO.from_input_values(
                     name=self.get_input_or_previous_property(
                         codelist_input.name, item.name
                     ),
                     is_template_parameter=self.get_input_or_previous_property(
-                        codelist_input.templateParameter,
+                        codelist_input.template_parameter,
                         item.dictionary_codelist_vo.is_template_parameter,
                     ),
                     current_terms=item.dictionary_codelist_vo.current_terms,

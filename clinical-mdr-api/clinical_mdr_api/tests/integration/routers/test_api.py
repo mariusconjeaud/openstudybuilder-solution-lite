@@ -18,7 +18,7 @@ class TestApi(TestCase):
         # load_schema_file(graph, DB_SCHEMA_SCRIPT)
         # load_data_file(graph, DB_INIT_SCRIPT)
 
-    def tearDown(self):
+    def tear_down(self):
         pass  # db.cypher_query(f"DROP DATABASE {self.EST_DB_NAME}")
 
     def test_all_gets(self):
@@ -37,13 +37,10 @@ class TestApi(TestCase):
                         # self.assertIn(response.status_code, [400, 404, 422])
                         pass
                     elif path in [
-                        "/study/1/study-objectives/{study_objective_uid}",
-                        "/study/1/study-criteria/{studycriteriauid}",
+                        "/studies/1/study-objectives/{study_objective_uid}",
+                        "/studies/1/study-criteria/{study_criteria_uid}",
                     ]:
                         # this test fails for now as there are no connections between study and objective/criteria selected
-                        self.assertIn(response.status_code, [404])
-                    elif path.endswith("get-by-name/{name}"):
-                        # This test fails because we do not know the name
                         self.assertIn(response.status_code, [404])
                     elif path == "/ct/packages/changes":
                         # This test fails because of mandatory query parameter
@@ -54,7 +51,7 @@ class TestApi(TestCase):
                     elif path.endswith("/headers"):
                         # This fails because it takes a mandatory query parameter
                         self.assertIn(response.status_code, [422])
-                    elif path == "/study/allowed-configs":
+                    elif path == "/studies/allowed-configs":
                         # This fails because it needs data setup
                         self.assertIn(response.status_code, [404])
                     elif path.startswith("/studies/1/study-epochs/"):
@@ -63,7 +60,7 @@ class TestApi(TestCase):
                     elif path == "/ct/catalogues/changes":
                         # This test fails because of mandatory query parameter
                         self.assertIn(response.status_code, [422])
-                    elif path == "/ct/codelists/{codelistUid}/sub-codelists":
+                    elif path == "/ct/codelists/{codelist_uid}/sub-codelists":
                         # This test fails because of mandatory query parameter
                         self.assertIn(response.status_code, [422])
                     elif path == "/dictionaries/terms":
@@ -75,16 +72,10 @@ class TestApi(TestCase):
                     elif path == "/study-flowchart/flowchart":
                         # This test fails because of mandatory query parameter
                         self.assertIn(response.status_code, [422, 404])
-                    elif path == "/study/study-visits/allowed-visit-types":
+                    elif path == "/study-visits/allowed-visit-types":
                         # This test fails because of mandatory query parameter
                         self.assertIn(response.status_code, [422])
-                    elif path == "/study/study-visits/allowed-time-references":
-                        # This test fails because of mandatory query parameter
-                        self.assertIn(response.status_code, [422])
-                    elif path == "/concepts/odms/metadata/xmls":
-                        # This test fails because of mandatory query parameter
-                        self.assertIn(response.status_code, [422])
-                    elif path == "/concepts/odms/metadata/csvs":
+                    elif path == "/study-visits/allowed-time-references":
                         # This test fails because of mandatory query parameter
                         self.assertIn(response.status_code, [422])
                     elif path == "/system/check/secured":

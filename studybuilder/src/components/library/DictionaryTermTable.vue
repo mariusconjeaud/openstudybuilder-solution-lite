@@ -30,8 +30,8 @@
     <template v-slot:item.status="{ item }">
       <status-chip :status="item.status" />
     </template>
-    <template v-slot:item.startDate="{ item }">
-      {{ item.startDate | date }}
+    <template v-slot:item.start_date="{ item }">
+      {{ item.start_date | date }}
     </template>
     <template v-slot:item.actions="{ item }">
       <actions-menu :actions="actions" :item="item" />
@@ -72,55 +72,55 @@ export default {
           label: this.$t('_global.approve'),
           icon: 'mdi-check-decagram',
           iconColor: 'success',
-          condition: (item) => item.possibleActions.find(action => action === 'approve'),
+          condition: (item) => item.possible_actions.find(action => action === 'approve'),
           click: this.approveTerm
         },
         {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'edit'),
+          condition: (item) => item.possible_actions.find(action => action === 'edit'),
           click: this.editTerm
         },
         {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'newVersion'),
+          condition: (item) => item.possible_actions.find(action => action === 'new_version'),
           click: this.newTermVersion
         },
         {
           label: this.$t('_global.inactivate'),
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'inactivate'),
+          condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
           click: this.inactivateTerm
         },
         {
           label: this.$t('_global.reactivate'),
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'reactivate'),
+          condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
           click: this.reactivateTerm
         },
         {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete',
           iconColor: 'error',
-          condition: (item) => item.possibleActions.find(action => action === 'delete'),
+          condition: (item) => item.possible_actions.find(action => action === 'delete'),
           click: this.deleteTerm
         }
       ],
       defaultHeaders: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.dictionaryName, value: 'dictionaryId' },
+        { text: this.dictionaryName, value: 'dictionary_id' },
         { text: this.$t('_global.name'), value: 'name' },
-        { text: this.$t('DictionaryTermTable.lower_case_name'), value: 'nameSentenceCase' },
+        { text: this.$t('DictionaryTermTable.lower_case_name'), value: 'name_sentence_case' },
         { text: this.$t('DictionaryTermTable.abbreviation'), value: 'abbreviation' },
         { text: this.$t('_global.definition'), value: 'definition' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' },
-        { text: this.$t('_global.modified'), value: 'startDate' }
+        { text: this.$t('_global.modified'), value: 'start_date' }
       ],
       total: 0,
       options: {},
@@ -156,27 +156,27 @@ export default {
       }
     },
     inactivateTerm (item) {
-      dictionaries.inactivate(item.termUid).then(resp => {
+      dictionaries.inactivate(item.term_uid).then(resp => {
         this.fetchTerms()
       })
     },
     reactivateTerm (item) {
-      dictionaries.reactivate(item.termUid).then(resp => {
+      dictionaries.reactivate(item.term_uid).then(resp => {
         this.fetchTerms()
       })
     },
     deleteTerm (item) {
-      dictionaries.delete(item.termUid).then(resp => {
+      dictionaries.delete(item.term_uid).then(resp => {
         this.fetchTerms()
       })
     },
     approveTerm (item) {
-      dictionaries.approve(item.termUid).then(resp => {
+      dictionaries.approve(item.term_uid).then(resp => {
         this.fetchTerms()
       })
     },
     newTermVersion (item) {
-      dictionaries.newVersion(item.termUid).then(resp => {
+      dictionaries.newVersion(item.term_uid).then(resp => {
         this.fetchTerms()
       })
     },

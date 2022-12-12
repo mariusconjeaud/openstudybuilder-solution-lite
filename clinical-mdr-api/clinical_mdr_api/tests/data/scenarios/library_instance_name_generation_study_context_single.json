@@ -5,11 +5,11 @@
       "headers": {},
       "method": "POST",
       "request": {
-        "objectiveData": {
-          "libraryName": "Test library",
+        "objective_data": {
+          "library_name": "Test library",
           "name": "Test objective",
-          "objectiveTemplateUid": "{otuid}",
-          "parameterValues": [
+          "objective_template_uid": "{otuid}",
+          "parameter_values": [
             {
               "position": 1,
               "conjunction": "and",
@@ -17,9 +17,9 @@
             }
           ]
         },
-        "objectiveLevelUid": "term_root_final"
+        "objective_level_uid": "term_root_final"
       },
-      "url": "/study/study_root/study-objectives/create"
+      "url": "/studies/study_root/study-objectives?create_objective=true"
     },
     "response": {
       "code": 201,
@@ -28,49 +28,49 @@
         "content-type": "application/json"
       },
       "result": {
-        "studyUid": "study_root",
+        "study_uid": "study_root",
         "order": 1,
-        "projectNumber": "123",
-        "projectName": "Project ABC",
-        "studyObjectiveUid": "StudyObjective_000001",
-        "objectiveLevel": {
-          "termUid": "term_root_final",
-          "catalogueName": "SDTM CT",
-          "codelistUid": "editable_cr",
-          "sponsorPreferredName": "term_value_name1",
-          "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+        "project_number": "123",
+        "project_name": "Project ABC",
+        "study_objective_uid": "StudyObjective_000001",
+        "objective_level": {
+          "term_uid": "term_root_final",
+          "catalogue_name": "SDTM CT",
+          "codelist_uid": "editable_cr",
+          "sponsor_preferred_name": "term_value_name1",
+          "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
           "order": 1,
-          "libraryName": "Sponsor",
-          "startDate": "2021-10-25T11:17:00.998000",
-          "endDate": null,
+          "library_name": "Sponsor",
+          "start_date": "2021-10-25T11:17:00.998000",
+          "end_date": null,
           "status": "Final",
           "version": "1.0",
-          "changeDescription": "Approved version",
-          "userInitials": "TODO initials",
-          "possibleActions": [
+          "change_description": "Approved version",
+          "user_initials": "TODO initials",
+          "possible_actions": [
             "inactivate",
-            "newVersion"
+            "new_version"
           ]
         },
         "objective": {
           "uid": "Objective_000001",
           "name": "To investigate []",
-          "namePlain": "To investigate ",
-          "startDate": "2021-10-25T13:17:02.868961",
-          "endDate": null,
+          "name_plain": "To investigate ",
+          "start_date": "2021-10-25T13:17:02.868961",
+          "end_date": null,
           "status": "Final",
           "version": "1.0",
-          "changeDescription": "Approved version",
-          "userInitials": "TEST_USER",
-          "possibleActions": [
+          "change_description": "Approved version",
+          "user_initials": "TEST_USER",
+          "possible_actions": [
             "inactivate"
           ],
-          "objectiveTemplate": {
+          "objective_template": {
             "name": "To investigate [Indication]",
-            "namePlain": "To investigate [Indication]",
+            "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001"
           },
-          "parameterValues": [
+          "parameter_values": [
             {
               "position": 1,
               "conjunction": "and",
@@ -79,15 +79,15 @@
           ],
           "library": {
             "name": "Test library",
-            "isEditable": null
+            "is_editable": null
           },
-          "studyCount": null
+          "study_count": null
         },
-        "startDate": "2021-10-25T13:17:02.952076",
-        "userInitials": "TEST_USER",
-        "endpointCount": 0,
-        "latestObjective": null,
-        "acceptedVersion": false
+        "start_date": "2021-10-25T13:17:02.952076",
+        "user_initials": "TEST_USER",
+        "endpoint_count": 0,
+        "latest_objective": null,
+        "accepted_version": false
       }
     }
   },
@@ -97,11 +97,11 @@
       "headers": {},
       "method": "POST",
       "request": {
-        "objectiveData": {
-          "libraryName": "Test library",
+        "objective_data": {
+          "library_name": "Test library",
           "name": "To investigate [Indication]",
-          "objectiveTemplateUid": "{otuid}",
-          "parameterValues": [
+          "objective_template_uid": "{otuid}",
+          "parameter_values": [
             {
               "position": 1,
               "conjunction": "and",
@@ -116,9 +116,9 @@
             }
           ]
         },
-        "objectiveLevelUid": "term_root_final"
+        "objective_level_uid": "term_root_final"
       },
-      "url": "/study/study_root/study-objectives/create"
+      "url": "/studies/study_root/study-objectives?create_objective=true"
     },
     "response": {
       "code": 201,
@@ -127,49 +127,49 @@
         "content-type": "application/json"
       },
       "result": {
-        "studyUid": "study_root",
+        "study_uid": "study_root",
         "order": 2,
-        "projectNumber": "123",
-        "projectName": "Project ABC",
-        "studyObjectiveUid": "StudyObjective_000002",
-        "objectiveLevel": {
-          "termUid": "term_root_final",
-          "catalogueName": "SDTM CT",
-          "codelistUid": "editable_cr",
-          "sponsorPreferredName": "term_value_name1",
-          "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+        "project_number": "123",
+        "project_name": "Project ABC",
+        "study_objective_uid": "StudyObjective_000002",
+        "objective_level": {
+          "term_uid": "term_root_final",
+          "catalogue_name": "SDTM CT",
+          "codelist_uid": "editable_cr",
+          "sponsor_preferred_name": "term_value_name1",
+          "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
           "order": 1,
-          "libraryName": "Sponsor",
-          "startDate": "2021-10-25T11:17:00.998000",
-          "endDate": null,
+          "library_name": "Sponsor",
+          "start_date": "2021-10-25T11:17:00.998000",
+          "end_date": null,
           "status": "Final",
           "version": "1.0",
-          "changeDescription": "Approved version",
-          "userInitials": "TODO initials",
-          "possibleActions": [
+          "change_description": "Approved version",
+          "user_initials": "TODO initials",
+          "possible_actions": [
             "inactivate",
-            "newVersion"
+            "new_version"
           ]
         },
         "objective": {
           "uid": "Objective_000001",
           "name": "To investigate [type 2 diabetes]",
-          "namePlain": "To investigate type 2 diabetes",
-          "startDate": "2021-10-25T13:17:02.868961",
-          "endDate": null,
+          "name_plain": "To investigate type 2 diabetes",
+          "start_date": "2021-10-25T13:17:02.868961",
+          "end_date": null,
           "status": "Final",
           "version": "1.0",
-          "changeDescription": "Approved version",
-          "userInitials": "TEST_USER",
-          "possibleActions": [
+          "change_description": "Approved version",
+          "user_initials": "TEST_USER",
+          "possible_actions": [
             "inactivate"
           ],
-          "objectiveTemplate": {
+          "objective_template": {
             "name": "To investigate [Indication]",
-            "namePlain": "To investigate [Indication]",
+            "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001"
           },
-          "parameterValues": [
+          "parameter_values": [
             {
               "position": 1,
               "conjunction": "and",
@@ -185,15 +185,15 @@
           ],
           "library": {
             "name": "Test library",
-            "isEditable": null
+            "is_editable": null
           },
-          "studyCount": null
+          "study_count": null
         },
-        "startDate": "2021-10-25T13:17:02.952076",
-        "userInitials": "TEST_USER",
-        "endpointCount": 0,
-        "latestObjective": null,
-        "acceptedVersion": false
+        "start_date": "2021-10-25T13:17:02.952076",
+        "user_initials": "TEST_USER",
+        "endpoint_count": 0,
+        "latest_objective": null,
+        "accepted_version": false
       }
     }
   },
@@ -203,11 +203,11 @@
       "headers": {},
       "method": "POST",
       "request": {
-        "objectiveData": {
-          "libraryName": "Test library",
+        "objective_data": {
+          "library_name": "Test library",
           "name": "To investigate [Indication]",
-          "objectiveTemplateUid": "{otuid}",
-          "parameterValues": [
+          "objective_template_uid": "{otuid}",
+          "parameter_values": [
             {
               "position": 1,
               "conjunction": "and",
@@ -228,9 +228,9 @@
             }
           ]
         },
-        "objectiveLevelUid": "term_root_final"
+        "objective_level_uid": "term_root_final"
       },
-      "url": "/study/study_root/study-objectives/create"
+      "url": "/studies/study_root/study-objectives?create_objective=true"
     },
     "response": {
       "code": 201,
@@ -239,49 +239,49 @@
         "content-type": "application/json"
       },
       "result": {
-        "studyUid": "study_root",
+        "study_uid": "study_root",
         "order": 3,
-        "projectNumber": "123",
-        "projectName": "Project ABC",
-        "studyObjectiveUid": "StudyObjective_000003",
-        "objectiveLevel": {
-          "termUid": "term_root_final",
-          "catalogueName": "SDTM CT",
-          "codelistUid": "editable_cr",
-          "sponsorPreferredName": "term_value_name1",
-          "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+        "project_number": "123",
+        "project_name": "Project ABC",
+        "study_objective_uid": "StudyObjective_000003",
+        "objective_level": {
+          "term_uid": "term_root_final",
+          "catalogue_name": "SDTM CT",
+          "codelist_uid": "editable_cr",
+          "sponsor_preferred_name": "term_value_name1",
+          "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
           "order": 1,
-          "libraryName": "Sponsor",
-          "startDate": "2021-10-25T11:17:00.998000",
-          "endDate": null,
+          "library_name": "Sponsor",
+          "start_date": "2021-10-25T11:17:00.998000",
+          "end_date": null,
           "status": "Final",
           "version": "1.0",
-          "changeDescription": "Approved version",
-          "userInitials": "TODO initials",
-          "possibleActions": [
+          "change_description": "Approved version",
+          "user_initials": "TODO initials",
+          "possible_actions": [
             "inactivate",
-            "newVersion"
+            "new_version"
           ]
         },
         "objective": {
           "uid": "Objective_000001",
           "name": "To investigate [type 2 diabetes and coronary heart disease]",
-          "namePlain": "To investigate type 2 diabetes and coronary heart disease",
-          "startDate": "2021-10-25T13:17:02.868961",
-          "endDate": null,
+          "name_plain": "To investigate type 2 diabetes and coronary heart disease",
+          "start_date": "2021-10-25T13:17:02.868961",
+          "end_date": null,
           "status": "Final",
           "version": "1.0",
-          "changeDescription": "Approved version",
-          "userInitials": "TEST_USER",
-          "possibleActions": [
+          "change_description": "Approved version",
+          "user_initials": "TEST_USER",
+          "possible_actions": [
             "inactivate"
           ],
-          "objectiveTemplate": {
+          "objective_template": {
             "name": "To investigate [Indication]",
-            "namePlain": "To investigate [Indication]",
+            "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001"
           },
-          "parameterValues": [
+          "parameter_values": [
             {
               "position": 1,
               "conjunction": "and",
@@ -303,15 +303,15 @@
           ],
           "library": {
             "name": "Test library",
-            "isEditable": null
+            "is_editable": null
           },
-          "studyCount": null
+          "study_count": null
         },
-        "startDate": "2021-10-25T13:17:02.952076",
-        "userInitials": "TEST_USER",
-        "endpointCount": 0,
-        "latestObjective": null,
-        "acceptedVersion": false
+        "start_date": "2021-10-25T13:17:02.952076",
+        "user_initials": "TEST_USER",
+        "endpoint_count": 0,
+        "latest_objective": null,
+        "accepted_version": false
       }
     }
   },
@@ -321,11 +321,11 @@
       "headers": {},
       "method": "POST",
       "request": {
-        "objectiveData": {
-          "libraryName": "Test library",
+        "objective_data": {
+          "library_name": "Test library",
           "name": "To investigate [Indication]",
-          "objectiveTemplateUid": "{otuid}",
-          "parameterValues": [
+          "objective_template_uid": "{otuid}",
+          "parameter_values": [
             {
               "position": 1,
               "conjunction": "and",
@@ -352,9 +352,9 @@
             }
           ]
         },
-        "objectiveLevelUid": "term_root_final"
+        "objective_level_uid": "term_root_final"
       },
-      "url": "/study/study_root/study-objectives/create"
+      "url": "/studies/study_root/study-objectives?create_objective=true"
     },
     "response": {
       "code": 201,
@@ -363,49 +363,49 @@
         "content-type": "application/json"
       },
       "result": {
-        "studyUid": "study_root",
+        "study_uid": "study_root",
         "order": 4,
-        "projectNumber": "123",
-        "projectName": "Project ABC",
-        "studyObjectiveUid": "StudyObjective_000004",
-        "objectiveLevel": {
-          "termUid": "term_root_final",
-          "catalogueName": "SDTM CT",
-          "codelistUid": "editable_cr",
-          "sponsorPreferredName": "term_value_name1",
-          "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+        "project_number": "123",
+        "project_name": "Project ABC",
+        "study_objective_uid": "StudyObjective_000004",
+        "objective_level": {
+          "term_uid": "term_root_final",
+          "catalogue_name": "SDTM CT",
+          "codelist_uid": "editable_cr",
+          "sponsor_preferred_name": "term_value_name1",
+          "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
           "order": 1,
-          "libraryName": "Sponsor",
-          "startDate": "2021-10-25T11:17:00.998000",
-          "endDate": null,
+          "library_name": "Sponsor",
+          "start_date": "2021-10-25T11:17:00.998000",
+          "end_date": null,
           "status": "Final",
           "version": "1.0",
-          "changeDescription": "Approved version",
-          "userInitials": "TODO initials",
-          "possibleActions": [
+          "change_description": "Approved version",
+          "user_initials": "TODO initials",
+          "possible_actions": [
             "inactivate",
-            "newVersion"
+            "new_version"
           ]
         },
         "objective": {
           "uid": "Objective_000001",
           "name": "To investigate [type 2 diabetes, coronary heart disease and breathing problems]",
-          "namePlain": "To investigate type 2 diabetes, coronary heart disease and breathing problems",
-          "startDate": "2021-10-25T13:17:02.868961",
-          "endDate": null,
+          "name_plain": "To investigate type 2 diabetes, coronary heart disease and breathing problems",
+          "start_date": "2021-10-25T13:17:02.868961",
+          "end_date": null,
           "status": "Final",
           "version": "1.0",
-          "changeDescription": "Approved version",
-          "userInitials": "TEST_USER",
-          "possibleActions": [
+          "change_description": "Approved version",
+          "user_initials": "TEST_USER",
+          "possible_actions": [
             "inactivate"
           ],
-          "objectiveTemplate": {
+          "objective_template": {
             "name": "To investigate [Indication]",
-            "namePlain": "To investigate [Indication]",
+            "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001"
           },
-          "parameterValues": [
+          "parameter_values": [
             {
               "position": 1,
               "conjunction": "and",
@@ -433,15 +433,15 @@
           ],
           "library": {
             "name": "Test library",
-            "isEditable": null
+            "is_editable": null
           },
-          "studyCount": null
+          "study_count": null
         },
-        "startDate": "2021-10-25T13:17:02.952076",
-        "userInitials": "TEST_USER",
-        "endpointCount": 0,
-        "latestObjective": null,
-        "acceptedVersion": false
+        "start_date": "2021-10-25T13:17:02.952076",
+        "user_initials": "TEST_USER",
+        "endpoint_count": 0,
+        "latest_objective": null,
+        "accepted_version": false
       }
     }
   }

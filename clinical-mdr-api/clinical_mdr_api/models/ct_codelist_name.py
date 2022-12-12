@@ -14,18 +14,18 @@ class CTCodelistName(BaseModel):
     @classmethod
     def from_ct_codelist_ar(cls, ct_codelist_ar: CTCodelistNameAR) -> "CTCodelistName":
         return cls(
-            catalogueName=ct_codelist_ar.ct_codelist_vo.catalogue_name,
-            codelistUid=ct_codelist_ar.uid,
+            catalogue_name=ct_codelist_ar.ct_codelist_vo.catalogue_name,
+            codelist_uid=ct_codelist_ar.uid,
             name=ct_codelist_ar.name,
-            templateParameter=ct_codelist_ar.ct_codelist_vo.is_template_parameter,
-            libraryName=Library.from_library_vo(ct_codelist_ar.library).name,
-            startDate=ct_codelist_ar.item_metadata.start_date,
-            endDate=ct_codelist_ar.item_metadata.end_date,
+            template_parameter=ct_codelist_ar.ct_codelist_vo.is_template_parameter,
+            library_name=Library.from_library_vo(ct_codelist_ar.library).name,
+            start_date=ct_codelist_ar.item_metadata.start_date,
+            end_date=ct_codelist_ar.item_metadata.end_date,
             status=ct_codelist_ar.item_metadata.status.value,
             version=ct_codelist_ar.item_metadata.version,
-            changeDescription=ct_codelist_ar.item_metadata.change_description,
-            userInitials=ct_codelist_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=ct_codelist_ar.item_metadata.change_description,
+            user_initials=ct_codelist_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 [_.value for _ in ct_codelist_ar.get_possible_actions()]
             ),
         )
@@ -36,27 +36,27 @@ class CTCodelistName(BaseModel):
     ) -> "CTCodelistName":
         return cls(
             name=ct_codelist_ar.name,
-            templateParameter=ct_codelist_ar.ct_codelist_vo.is_template_parameter,
-            startDate=ct_codelist_ar.item_metadata.start_date,
-            endDate=ct_codelist_ar.item_metadata.end_date,
+            template_parameter=ct_codelist_ar.ct_codelist_vo.is_template_parameter,
+            start_date=ct_codelist_ar.item_metadata.start_date,
+            end_date=ct_codelist_ar.item_metadata.end_date,
             status=ct_codelist_ar.item_metadata.status.value,
             version=ct_codelist_ar.item_metadata.version,
-            changeDescription=ct_codelist_ar.item_metadata.change_description,
-            userInitials=ct_codelist_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=ct_codelist_ar.item_metadata.change_description,
+            user_initials=ct_codelist_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 [_.value for _ in ct_codelist_ar.get_possible_actions()]
             ),
         )
 
-    catalogueName: Optional[str] = Field(
+    catalogue_name: Optional[str] = Field(
         None,
-        title="catalogueName",
+        title="catalogue_name",
         description="",
     )
 
-    codelistUid: Optional[str] = Field(
+    codelist_uid: Optional[str] = Field(
         None,
-        title="codelistUid",
+        title="codelist_uid",
         description="",
     )
 
@@ -66,23 +66,23 @@ class CTCodelistName(BaseModel):
         description="",
     )
 
-    templateParameter: bool = Field(
+    template_parameter: bool = Field(
         ...,
-        title="templateParameter",
+        title="template_parameter",
         description="",
     )
-    libraryName: Optional[str] = None
-    startDate: Optional[datetime] = None
-    endDate: Optional[datetime] = None
+    library_name: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     status: Optional[str] = None
     version: Optional[str] = None
-    changeDescription: Optional[str] = None
-    userInitials: Optional[str] = None
-    possibleActions: Optional[List[str]] = Field(
+    change_description: Optional[str] = None
+    user_initials: Optional[str] = None
+    possible_actions: Optional[List[str]] = Field(
         None,
         description=(
             "Holds those actions that can be performed on the CTCodelistName. "
-            "Actions are: 'approve', 'edit', 'newVersion'."
+            "Actions are: 'approve', 'edit', 'new_version'."
         ),
     )
 
@@ -96,7 +96,7 @@ class CTCodelistNameVersion(CTCodelistName):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the objective (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )
 
@@ -108,14 +108,14 @@ class CTCodelistNameInput(BaseModel):
         description="",
     )
 
-    templateParameter: Optional[bool] = Field(
-        None, title="templateParameter", description=""
+    template_parameter: Optional[bool] = Field(
+        None, title="template_parameter", description=""
     )
 
 
 class CTCodelistNameEditInput(CTCodelistNameInput):
-    changeDescription: str = Field(None, title="changeDescription", description="")
+    change_description: str = Field(None, title="change_description", description="")
 
 
 class CTCodelistNameCreateInput(CTCodelistNameInput):
-    codelistUid: str = Field(None, title="changeDescription", description="")
+    codelist_uid: str = Field(None, title="change_description", description="")

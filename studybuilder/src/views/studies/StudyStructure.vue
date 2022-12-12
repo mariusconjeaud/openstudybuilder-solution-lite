@@ -9,6 +9,7 @@
 
   </div>
   <v-tabs v-model="tab">
+    <v-tab href="#overview" @click="refreshOverview()">{{ $t('_global.overview') }}</v-tab>
     <v-tab href="#arms">{{ $t('Sidebar.study.study_arms') }}</v-tab>
     <v-tab href="#branches">{{ $t('Sidebar.study.study_branches') }}</v-tab>
     <v-tab href="#cohorts">{{ $t('Sidebar.study.study_cohorts') }}</v-tab>
@@ -18,6 +19,9 @@
     <v-tab href="#design_matrix" @click="refreshMatrix()">{{ $t('Sidebar.study.design_matrix') }}</v-tab>
   </v-tabs>
   <v-tabs-items v-model="tab">
+    <v-tab-item id="overview">
+      <study-structure-overview :key="overviewKey" />
+    </v-tab-item>
     <v-tab-item id="arms">
       <study-arms-table />
     </v-tab-item>
@@ -53,6 +57,7 @@ import StudyBranchesTable from '@/components/studies/StudyBranchesTable'
 import StudyVisitTable from '@/components/studies/StudyVisitTable'
 import StudyElementsTable from '@/components/studies/StudyElementsTable'
 import StudyCohortsTable from '@/components/studies/StudyCohortsTable'
+import StudyStructureOverview from '@/components/studies/StudyStructureOverview'
 
 export default {
   mixins: [studySelectedNavigationGuard],
@@ -64,7 +69,8 @@ export default {
     DesignMatrixTable,
     StudyElementsTable,
     StudyBranchesTable,
-    StudyCohortsTable
+    StudyCohortsTable,
+    StudyStructureOverview
   },
   data () {
     return {
@@ -79,6 +85,7 @@ export default {
         'StudyStructure.edit_visit_tableview'
       ],
       key: 0,
+      overviewKey: 0,
       tab: null
     }
   },
@@ -88,6 +95,9 @@ export default {
   methods: {
     refreshMatrix () {
       this.key += 1
+    },
+    refreshOverview () {
+      this.overviewKey += 1
     }
   },
   watch: {

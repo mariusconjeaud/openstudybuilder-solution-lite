@@ -3,10 +3,16 @@ import datetime
 from typing import Optional, Sequence
 
 from aenum import extend_enum
-from neomodel import db
+from neomodel import Q, db
 
 from clinical_mdr_api import config as settings
-from clinical_mdr_api.config import GLOBAL_ANCHOR_VISIT_NAME, PREVIOUS_VISIT_NAME
+from clinical_mdr_api.config import (
+    ANCHOR_VISIT_IN_VISIT_GROUP,
+    GLOBAL_ANCHOR_VISIT_NAME,
+    NON_VISIT_NUMBER,
+    PREVIOUS_VISIT_NAME,
+    UNSCHEDULED_VISIT_NUMBER,
+)
 from clinical_mdr_api.domain.concepts.simple_concepts.numeric_value import (
     NumericValueAR,
     NumericValueType,
@@ -167,153 +173,160 @@ class StudyVisitService:
             study_uid=study_uid
         ).items():
             resp.append(
-                AllowedTimeReferences(timeReferenceUid=uid, timeReferenceName=name)
+                AllowedTimeReferences(time_reference_uid=uid, time_reference_name=name)
             )
         # if we don't have any visits we have to remove 'previous visit' time reference
         if self.repo.count_study_visits(study_uid=study_uid) < 1:
             resp = [
-                item for item in resp if item.timeReferenceName != PREVIOUS_VISIT_NAME
+                item for item in resp if item.time_reference_name != PREVIOUS_VISIT_NAME
             ]
-        return sorted(resp, key=lambda time_reference: time_reference.timeReferenceName)
+        return sorted(
+            resp, key=lambda time_reference: time_reference.time_reference_name
+        )
 
     def _transform_all_to_response_model(
         self, visit: StudyVisitVO, study_activity_count: Optional[int] = None
     ) -> StudyVisit:
         return StudyVisit(
             uid=visit.uid,
-            studyUid=visit.study_uid,
-            studyEpochUid=visit.epoch_uid,
-            studyEpochName=visit.epoch.epoch.value,
-            epochUid=visit.epoch.epoch.name,
+            study_uid=visit.study_uid,
+            study_epoch_uid=visit.epoch_uid,
+            study_epoch_name=visit.epoch.epoch.value,
+            epoch_uid=visit.epoch.epoch.name,
             order=visit.visit_order,
-            visitTypeUid=visit.visit_type.name,
-            visitTypeName=visit.visit_type.value,
-            timeReferenceUid=visit.timepoint.visit_timereference.name
+            visit_type_uid=visit.visit_type.name,
+            visit_type_name=visit.visit_type.value,
+            time_reference_uid=visit.timepoint.visit_timereference.name
             if visit.timepoint
             else None,
-            timeReferenceName=visit.timepoint.visit_timereference.value
+            time_reference_name=visit.timepoint.visit_timereference.value
             if visit.timepoint
             else None,
-            timeValue=visit.timepoint.visit_value if visit.timepoint else None,
-            timeUnitUid=visit.timepoint.time_unit_uid if visit.timepoint else None,
-            timeUnitName=visit.time_unit_object.name
+            time_value=visit.timepoint.visit_value if visit.timepoint else None,
+            time_unit_uid=visit.timepoint.time_unit_uid if visit.timepoint else None,
+            time_unit_name=visit.time_unit_object.name
             if visit.time_unit_object
             else None,
-            durationTime=visit.get_absolute_duration() if visit.timepoint else None,
-            durationTimeUnit=visit.timepoint.time_unit_uid if visit.timepoint else None,
-            studyDayNumber=visit.study_day_number if visit.study_day else None,
-            studyDayLabel=visit.study_day_label if visit.study_day else None,
-            studyDurationDaysLabel=visit.study_duration_days_label
+            duration_time=visit.get_absolute_duration() if visit.timepoint else None,
+            duration_time_unit=visit.timepoint.time_unit_uid
+            if visit.timepoint
+            else None,
+            study_day_number=visit.study_day_number if visit.study_day else None,
+            study_day_label=visit.study_day_label if visit.study_day else None,
+            study_duration_days_label=visit.study_duration_days_label
             if visit.study_duration_days
             else None,
-            studyWeekNumber=visit.study_week_number if visit.study_week else None,
-            studyWeekLabel=visit.study_week_label if visit.study_week else None,
-            studyDurationWeeksLabel=visit.study_duration_weeks_label
+            study_week_number=visit.study_week_number if visit.study_week else None,
+            study_week_label=visit.study_week_label if visit.study_week else None,
+            study_duration_weeks_label=visit.study_duration_weeks_label
             if visit.study_duration_weeks
             else None,
-            visitNumber=visit.visit_number,
-            visitSubNumber=visit.visit_sub_number,
-            uniqueVisitNumber=visit.unique_visit_number,
-            visitSubName=visit.visit_sub_name,
-            visitSubLabel=visit.visit_sub_label,
-            visitName=visit.derive_visit_name(),
-            visitShortName=visit.visit_short_name,
-            legacyVisitId=visit.legacy_visit_id,
-            legacyVisitTypeAlias=visit.legacy_visit_type_alias,
-            legacyName=visit.legacy_name,
-            legacySubName=visit.legacy_sub_name,
-            consecutiveVisitGroup=visit.consecutive_visit_group,
-            showVisit=visit.show_visit,
-            minVisitWindowValue=visit.visit_window_min,
-            maxVisitWindowValue=visit.visit_window_max,
-            visitWindowUnitUid=visit.window_unit_uid,
-            visitWindowUnitName=visit.window_unit_object.name
+            visit_number=visit.visit_number,
+            visit_subnumber=visit.visit_subnumber,
+            unique_visit_number=visit.unique_visit_number,
+            visit_subname=visit.visit_subname,
+            visit_sublabel=visit.visit_sublabel,
+            visit_sublabel_reference=visit.visit_sublabel_reference,
+            visit_name=visit.derive_visit_name(),
+            visit_short_name=visit.visit_short_name,
+            legacy_visit_id=visit.legacy_visit_id,
+            legacy_visit_type_alias=visit.legacy_visit_type_alias,
+            legacy_name=visit.legacy_name,
+            legacy_subname=visit.legacy_subname,
+            consecutive_visit_group=visit.consecutive_visit_group,
+            show_visit=visit.show_visit,
+            min_visit_window_value=visit.visit_window_min,
+            max_visit_window_value=visit.visit_window_max,
+            visit_window_unit_uid=visit.window_unit_uid,
+            visit_window_unit_name=visit.window_unit_object.name
             if visit.window_unit_object
             else None,
             description=visit.description,
-            startRule=visit.start_rule,
-            endRule=visit.end_rule,
+            start_rule=visit.start_rule,
+            end_rule=visit.end_rule,
             note=visit.note,
-            visitContactModeUid=visit.visit_contact_mode.name,
-            visitContactModeName=visit.visit_contact_mode.value,
-            epochAllocationUid=visit.epoch_allocation.name
+            visit_contact_mode_uid=visit.visit_contact_mode.name,
+            visit_contact_mode_name=visit.visit_contact_mode.value,
+            epoch_allocation_uid=visit.epoch_allocation.name
             if visit.epoch_allocation
             else None,
-            epochAllocationName=visit.epoch_allocation.value
+            epoch_allocation_name=visit.epoch_allocation.value
             if visit.epoch_allocation
             else None,
-            visitType=visit.visit_type.name,
+            visit_type=visit.visit_type.name,
             status=visit.status.value,
-            startDate=visit.start_date.strftime(settings.TIME_FORMAT),
-            userInitials=visit.author,
-            possibleActions=visit.possible_actions,
-            studyActivityCount=study_activity_count,
-            visitClass=visit.visit_class.name,
-            visitSubclass=visit.visit_subclass.name if visit.visit_subclass else None,
-            isGlobalAnchorVisit=visit.is_global_anchor_visit,
+            start_date=visit.start_date.strftime(settings.DATE_TIME_FORMAT),
+            user_initials=visit.author,
+            possible_actions=visit.possible_actions,
+            study_activity_count=study_activity_count,
+            visit_class=visit.visit_class.name,
+            visit_subclass=visit.visit_subclass.name if visit.visit_subclass else None,
+            is_global_anchor_visit=visit.is_global_anchor_visit,
         )
 
     def _transform_all_to_history_model(self, visit: StudyVisitVO) -> StudyVisit:
         return StudyVisit(
             uid=visit.uid,
-            studyUid=visit.study_uid,
-            studyEpochUid=visit.epoch_uid,
-            studyEpochName=visit.epoch.epoch.value,
-            epochUid=visit.epoch.epoch.name,
+            study_uid=visit.study_uid,
+            study_epoch_uid=visit.epoch_uid,
+            study_epoch_name=visit.epoch.epoch.value,
+            epoch_uid=visit.epoch.epoch.name,
             order=0,
-            visitTypeUid=visit.visit_type.name,
-            visitTypeName=visit.visit_type.value,
-            timeReferenceUid=visit.timepoint.visit_timereference.name,
-            timeReferenceName=visit.timepoint.visit_timereference.value,
-            timeValue=visit.timepoint.visit_value,
-            timeUnitUid=visit.timepoint.time_unit_uid,
-            timeUnitName=visit.time_unit_object.name,
-            durationTime=0,
-            durationTimeUnit=visit.timepoint.time_unit_uid if visit.timepoint else None,
-            studyDayNumber=0,
-            studyDayLabel=0,
-            studyDurationDaysLabel=0,
-            studyWeekNumber=0,
-            studyWeekLabel=0,
-            studyDurationWeeksLabel=0,
-            visitNumber=0,
-            visitSubNumber=0,
-            uniqueVisitNumber=0,
-            visitSubName=visit.visit_sub_name,
-            visitSubLabel=visit.visit_sub_label,
-            visitSubLabelReference=visit.visit_sub_label_reference,
-            visitName=visit.visit_name,
-            visitShortName=visit.visit_short_name,
-            legacyVisitId=visit.legacy_visit_id,
-            legacyVisitTypeAlias=visit.legacy_visit_type_alias,
-            legacyName=visit.legacy_name,
-            legacySubName=visit.legacy_sub_name,
-            consecutiveVisitGroup=visit.consecutive_visit_group,
-            showVisit=visit.show_visit,
-            minVisitWindowValue=visit.visit_window_min,
-            maxVisitWindowValue=visit.visit_window_max,
-            visitWindowUnitUid=visit.window_unit_uid,
-            visitWindowUnitName=visit.window_unit_object.name,
+            visit_type_uid=visit.visit_type.name,
+            visit_type_name=visit.visit_type.value,
+            time_reference_uid=visit.timepoint.visit_timereference.name,
+            time_reference_name=visit.timepoint.visit_timereference.value,
+            time_value=visit.timepoint.visit_value,
+            time_unit_uid=visit.timepoint.time_unit_uid,
+            time_unit_name=visit.time_unit_object.name,
+            duration_time=0,
+            duration_time_unit=visit.timepoint.time_unit_uid
+            if visit.timepoint
+            else None,
+            study_day_number=0,
+            study_day_label=0,
+            study_duration_days_label=0,
+            study_week_number=0,
+            study_week_label=0,
+            study_duration_weeks_label=0,
+            visit_number=0,
+            visit_subnumber=0,
+            unique_visit_number=0,
+            visit_subname=visit.visit_subname,
+            visit_sublabel=visit.visit_sublabel,
+            visit_sublabel_reference=visit.visit_sublabel_reference,
+            visit_name=visit.visit_name,
+            visit_short_name=visit.visit_short_name,
+            legacy_visit_id=visit.legacy_visit_id,
+            legacy_visit_type_alias=visit.legacy_visit_type_alias,
+            legacy_name=visit.legacy_name,
+            legacy_subname=visit.legacy_subname,
+            consecutive_visit_group=visit.consecutive_visit_group,
+            show_visit=visit.show_visit,
+            min_visit_window_value=visit.visit_window_min,
+            max_visit_window_value=visit.visit_window_max,
+            visit_window_unit_uid=visit.window_unit_uid,
+            visit_window_unit_name=visit.window_unit_object.name,
             description=visit.description,
-            startRule=visit.start_rule,
-            endRule=visit.end_rule,
+            start_rule=visit.start_rule,
+            end_rule=visit.end_rule,
             note=visit.note,
-            visitContactModeUid=visit.visit_contact_mode.name,
-            visitContactModeName=visit.visit_contact_mode.value,
-            epochAllocationUid=visit.epoch_allocation.name
+            visit_contact_mode_uid=visit.visit_contact_mode.name,
+            visit_contact_mode_name=visit.visit_contact_mode.value,
+            epoch_allocation_uid=visit.epoch_allocation.name
             if visit.epoch_allocation
             else None,
-            epochAllocationName=visit.epoch_allocation.value
+            epoch_allocation_name=visit.epoch_allocation.value
             if visit.epoch_allocation
             else None,
-            visitType=visit.visit_type.name,
+            visit_type=visit.visit_type.name,
             status=visit.status.value,
-            startDate=visit.start_date.strftime(settings.TIME_FORMAT),
-            userInitials=visit.author,
-            possibleActions=visit.possible_actions,
-            visitClass=visit.visit_class.name,
-            visitSubclass=visit.visit_subclass.name if visit.visit_subclass else None,
-            isGlobalAnchorVisit=visit.is_global_anchor_visit,
+            start_date=visit.start_date.strftime(settings.DATE_TIME_FORMAT),
+            user_initials=visit.author,
+            possible_actions=visit.possible_actions,
+            visit_class=visit.visit_class.name,
+            visit_subclass=visit.visit_subclass.name if visit.visit_subclass else None,
+            is_global_anchor_visit=visit.is_global_anchor_visit,
         )
 
     def _get_all_visits(self, study_uid: str) -> Sequence[StudyVisitVO]:
@@ -375,6 +388,28 @@ class StudyVisitService:
         return [
             SimpleStudyVisit.from_orm(anchor_visit)
             for anchor_visit in anchor_visits_in_a_group_of_subv
+        ]
+
+    def get_anchor_for_special_visit(
+        self, study_uid: str
+    ) -> Sequence[SimpleStudyVisit]:
+        anchor_visits_for_special_visit = (
+            StudyVisitNeoModel.nodes.fetch_relations(
+                "has_visit_name__has_latest_value",
+                "has_visit_type__has_name_root__has_latest_value",
+            )
+            .filter(
+                Q(visit_subclass=VisitSubclass.SINGLE_VISIT.name)
+                | Q(visit_subclass=VisitSubclass.ANCHOR_VISIT_IN_GROUP_OF_SUBV.name),
+                visit_class=VisitClass.SINGLE_VISIT.name,
+                has_study_visit__study_root__uid=study_uid,
+                is_deleted=False,
+            )
+            .to_relation_trees()
+        )
+        return [
+            SimpleStudyVisit.from_orm(anchor_visit)
+            for anchor_visit in anchor_visits_for_special_visit
         ]
 
     @db.transaction
@@ -484,6 +519,7 @@ class StudyVisitService:
             not in (
                 VisitClass.NON_VISIT,
                 VisitClass.UNSCHEDULED_VISIT,
+                VisitClass.SPECIAL_VISIT,
             )
             and visit_vo.visit_type.value
             == visit_vo.timepoint.visit_timereference.value
@@ -504,6 +540,7 @@ class StudyVisitService:
         if is_first_reference_visit and visit_vo.visit_class not in (
             VisitClass.NON_VISIT,
             VisitClass.UNSCHEDULED_VISIT,
+            VisitClass.SPECIAL_VISIT,
         ):
             if (
                 visit_vo.timepoint.visit_value != 0
@@ -525,6 +562,7 @@ class StudyVisitService:
         if is_reference_visit and visit_vo.visit_class not in (
             VisitClass.NON_VISIT,
             VisitClass.UNSCHEDULED_VISIT,
+            VisitClass.SPECIAL_VISIT,
         ):
             for visit in timeline._visits:
                 if (
@@ -549,15 +587,17 @@ class StudyVisitService:
             not in (
                 VisitClass.NON_VISIT,
                 VisitClass.UNSCHEDULED_VISIT,
+                VisitClass.SPECIAL_VISIT,
             )
         ):
-            reference_name = StudyVisitTimeReference[visit_input.timeReferenceUid]
+            reference_name = StudyVisitTimeReference[visit_input.time_reference_uid]
             for visit in timeline._visits:
                 if visit.visit_type.value == reference_name.value:
                     reference_found = True
             if not reference_found and reference_name.value.lower() not in [
                 PREVIOUS_VISIT_NAME.lower(),
                 GLOBAL_ANCHOR_VISIT_NAME.lower(),
+                ANCHOR_VISIT_IN_VISIT_GROUP.lower(),
             ]:
                 raise ValueError(
                     f"Time reference of type: {visit_vo.timepoint.visit_timereference.value} wasn't used by previous visits as visit type"
@@ -575,34 +615,53 @@ class StudyVisitService:
             VisitClass.NON_VISIT,
             VisitClass.UNSCHEDULED_VISIT,
         ):
+            if (
+                visit_vo.visit_class == VisitClass.SPECIAL_VISIT
+                and visit_vo.visit_sublabel_reference is None
+            ):
+                raise ValueError(
+                    "Special Visit has to time reference to some other visit."
+                )
             if create:
                 timeline.add_visit(visit_vo)
                 ordered_visits = timeline.ordered_study_visits
 
                 for index, visit in enumerate(ordered_visits):
-                    if (
-                        visit.get_absolute_duration()
-                        == visit_vo.get_absolute_duration()
+                    if visit_vo.visit_class != VisitClass.SPECIAL_VISIT:
+                        if (
+                            visit.get_absolute_duration()
+                            == visit_vo.get_absolute_duration()
+                            and visit.uid != visit_vo.uid
+                        ):
+                            raise ValueError(
+                                f"There already exists a visit with timing set to {visit.timepoint.visit_value}"
+                            )
+                        if index + 2 < len(ordered_visits):
+                            # we check whether the created visit is not from the epoch that sits
+                            # out of the epoch schedule
+                            if visit.epoch.order > ordered_visits[
+                                index + 2
+                            ].epoch.order and ordered_visits[
+                                index + 2
+                            ].visit_class not in (
+                                VisitClass.NON_VISIT,
+                                VisitClass.UNSCHEDULED_VISIT,
+                            ):
+                                raise ValueError(
+                                    f"Visit with study day {visit.study_day_number} from "
+                                    f"epoch with order ({visit.epoch.order}) ({visit.epoch.epoch.value}) is out of order with "
+                                    f"visit with study day {ordered_visits[index+2].study_day_number} from epoch with order "
+                                    f"({ordered_visits[index+2].epoch.order}) ({ordered_visits[index+2].epoch.epoch.value})"
+                                )
+                    elif (
+                        visit_vo.visit_class == VisitClass.SPECIAL_VISIT
+                        and visit.visit_class == VisitClass.SPECIAL_VISIT
+                        and visit_vo.epoch_uid == visit.epoch_uid
                         and visit.uid != visit_vo.uid
                     ):
                         raise ValueError(
-                            f"There already exists a visit with timing set to {visit.timepoint.visit_value}"
+                            f"There already exists a Special visit {visit.uid} in the following epoch {visit.epoch_connector.epoch.value}"
                         )
-                    if index + 2 < len(ordered_visits):
-                        # we check whether the created visit is not from the epoch that sits
-                        # out of the epoch schedule
-                        if visit.epoch.order > ordered_visits[
-                            index + 2
-                        ].epoch.order and ordered_visits[index + 2].visit_class not in (
-                            VisitClass.NON_VISIT,
-                            VisitClass.UNSCHEDULED_VISIT,
-                        ):
-                            raise ValueError(
-                                f"Visit with study day {visit.study_day_number} from "
-                                f"epoch with order ({visit.epoch.order}) ({visit.epoch.epoch.value}) is out of order with "
-                                f"visit with study day {ordered_visits[index+2].study_day_number} from epoch with order "
-                                f"({ordered_visits[index+2].epoch.order}) ({ordered_visits[index+2].epoch.epoch.value})"
-                            )
             if not preview:
                 study_epochs = (
                     self._repos.study_epoch_repository.find_all_epochs_by_study(
@@ -634,12 +693,15 @@ class StudyVisitService:
             if create:
                 timeline.remove_visit(visit_vo)
 
-        if visit_input.visitSubLabelCodelistUid:
-            if visit_input.visitSubLabelCodelistUid not in self.study_visit_sublabels:
+        if visit_input.visit_sublabel_codelist_uid:
+            if (
+                visit_input.visit_sublabel_codelist_uid
+                not in self.study_visit_sublabels
+            ):
                 raise ValueError("Visit Sub Label codelist is not used properly")
-        if visit_input.visitContactModeUid not in self.study_visit_contact_mode:
+        if visit_input.visit_contact_mode_uid not in self.study_visit_contact_mode:
             raise ValueError(
-                f"The following CTTerm identified by uid {visit_input.visitContactModeUid} is not a valid"
+                f"The following CTTerm identified by uid {visit_input.visit_contact_mode_uid} is not a valid"
                 f"Visit Contact Mode term."
             )
 
@@ -720,7 +782,7 @@ class StudyVisitService:
     ):
 
         numeric_ar = self._create_numeric_value_simple_concept(
-            value=study_visit_input.timeValue,
+            value=study_visit_input.time_value,
             numeric_value_type=NumericValueType.NUMERIC_VALUE,
         )
         timepoint_ar = TimePointAR.from_input_values(
@@ -731,8 +793,8 @@ class StudyVisitService:
                 abbreviation=None,
                 is_template_parameter=True,
                 numeric_value_uid=numeric_ar.uid,
-                unit_definition_uid=study_visit_input.timeUnitUid,
-                time_reference_uid=study_visit_input.timeReferenceUid,
+                unit_definition_uid=study_visit_input.time_unit_uid,
+                time_reference_uid=study_visit_input.time_reference_uid,
                 find_numeric_value_by_uid=self._repos.numeric_value_repository.find_by_uid_2,
                 find_unit_definition_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
                 find_time_reference_by_uid=self._repos.ct_term_name_repository.find_by_uid,
@@ -745,27 +807,34 @@ class StudyVisitService:
         timepoint_object = TimePoint(
             uid=timepoint_ar.uid,
             visit_timereference=StudyVisitTimeReference[
-                study_visit_input.timeReferenceUid
+                study_visit_input.time_reference_uid
             ],
-            time_unit_uid=study_visit_input.timeUnitUid,
-            visit_value=study_visit_input.timeValue,
+            time_unit_uid=study_visit_input.time_unit_uid,
+            visit_value=study_visit_input.time_value,
         )
         return timepoint_object
+
+    def derive_visit_number(self, visit_class: VisitClass):
+        if visit_class == VisitClass.NON_VISIT:
+            return NON_VISIT_NUMBER
+        if visit_class == VisitClass.UNSCHEDULED_VISIT:
+            return UNSCHEDULED_VISIT_NUMBER
+        return 1
 
     def _from_input_values(
         self, create_input: StudyVisitCreateInput, epoch: StudyEpochVO
     ):
         unit_repository = self._repos.unit_definition_repository
-        if create_input.timeUnitUid:
+        if create_input.time_unit_uid:
             req_time_unit_ar: UnitDefinitionAR = unit_repository.find_by_uid_2(
-                create_input.timeUnitUid
+                create_input.time_unit_uid
             )
             req_time_unit = req_time_unit_ar.concept_vo
         else:
             req_time_unit = None
-        if create_input.visitWindowUnitUid:
+        if create_input.visit_window_unit_uid:
             window_time_unit_ar: UnitDefinitionAR = unit_repository.find_by_uid_2(
-                create_input.visitWindowUnitUid
+                create_input.visit_window_unit_uid
             )
             window_time_unit = window_time_unit_ar.concept_vo
             window_unit_object = TimeUnit(
@@ -776,11 +845,11 @@ class StudyVisitService:
         else:
             window_unit_object = None
         if (
-            create_input.visitSubLabelCodelistUid != ""
-            and create_input.visitSubLabelCodelistUid is not None
+            create_input.visit_sublabel_codelist_uid != ""
+            and create_input.visit_sublabel_codelist_uid is not None
         ):
             visit_sublabel = self.study_visit_sublabels[
-                create_input.visitSubLabelCodelistUid
+                create_input.visit_sublabel_codelist_uid
             ]
         else:
             visit_sublabel = None
@@ -804,48 +873,58 @@ class StudyVisitService:
             conversion_factor_to_master=self._week_unit.concept_vo.conversion_factor_to_master,
             from_timedelta=lambda u, x: u.conversion_factor_to_master * x,
         )
-
+        visit_class = (
+            VisitClass[create_input.visit_class] if create_input.visit_class else None
+        )
+        visit_subclass = (
+            VisitSubclass[create_input.visit_subclass]
+            if create_input.visit_subclass
+            else None
+        )
         study_visit_vo = StudyVisitVO(
-            legacy_visit_id=create_input.legacyVisitId,
-            legacy_visit_type_alias=create_input.legacyVisitTypeAlias,
-            legacy_name=create_input.legacyName,
-            legacy_sub_name=create_input.legacySubName,
-            visit_sub_label=visit_sublabel,
-            visit_sub_label_uid=create_input.visitSubLabelCodelistUid,
-            visit_sub_label_reference=create_input.visitSubLabelReference,
-            consecutive_visit_group=create_input.consecutiveVisitGroup,
+            legacy_visit_id=create_input.legacy_visit_id,
+            legacy_visit_type_alias=create_input.legacy_visit_type_alias,
+            legacy_name=create_input.legacy_name,
+            legacy_subname=create_input.legacy_subname,
+            visit_sublabel=visit_sublabel,
+            visit_sublabel_uid=create_input.visit_sublabel_codelist_uid,
+            visit_sublabel_reference=create_input.visit_sublabel_reference,
+            consecutive_visit_group=create_input.consecutive_visit_group,
             show_visit=create_input.show_visit,
-            visit_window_min=create_input.minVisitWindowValue,
-            visit_window_max=create_input.maxVisitWindowValue,
-            window_unit_uid=create_input.visitWindowUnitUid,
+            visit_window_min=create_input.min_visit_window_value,
+            visit_window_max=create_input.max_visit_window_value,
+            window_unit_uid=create_input.visit_window_unit_uid,
             window_unit_object=window_unit_object,
             time_unit_object=time_unit_object,
             description=create_input.description,
-            start_rule=create_input.startRule,
-            end_rule=create_input.endRule,
+            start_rule=create_input.start_rule,
+            end_rule=create_input.end_rule,
             note=create_input.note,
-            visit_contact_mode=StudyVisitContactMode[create_input.visitContactModeUid],
-            epoch_allocation=StudyVisitEpochAllocation[create_input.epochAllocationUid]
-            if create_input.epochAllocationUid
+            visit_contact_mode=StudyVisitContactMode[
+                create_input.visit_contact_mode_uid
+            ],
+            epoch_allocation=StudyVisitEpochAllocation[
+                create_input.epoch_allocation_uid
+            ]
+            if create_input.epoch_allocation_uid
             else None,
-            visit_type=StudyVisitType[create_input.visitTypeUid],
-            start_date=datetime.datetime.now(),
+            visit_type=StudyVisitType[create_input.visit_type_uid],
+            start_date=datetime.datetime.now(datetime.timezone.utc),
             author=self.author,
             status=StudyStatus.DRAFT,
             day_unit_object=day_unit_object,
             week_unit_object=week_unit_object,
             epoch_connector=epoch,
-            visit_class=VisitClass[create_input.visitClass],
-            visit_subclass=VisitSubclass[create_input.visitSubclass]
-            if create_input.visitSubclass
-            else None,
-            is_global_anchor_visit=create_input.isGlobalAnchorVisit,
-            visit_number=1,
-            visit_order=1,
+            visit_class=visit_class,
+            visit_subclass=visit_subclass if create_input.visit_subclass else None,
+            is_global_anchor_visit=create_input.is_global_anchor_visit,
+            visit_number=self.derive_visit_number(visit_class=visit_class),
+            visit_order=self.derive_visit_number(visit_class=visit_class),
         )
         if study_visit_vo.visit_class not in [
             VisitClass.NON_VISIT,
             VisitClass.UNSCHEDULED_VISIT,
+            VisitClass.SPECIAL_VISIT,
         ]:
             study_visit_vo.timepoint = self._create_timepoint_simple_concept(
                 study_visit_input=create_input
@@ -921,21 +1000,6 @@ class StudyVisitService:
                     ordered_visits=ordered_visits,
                     start_index_to_synchronize=added_item.visit_number,
                 )
-            ordered_visits_without_added = [
-                vis for vis in ordered_visits if vis.uid != added_item.uid
-            ]
-            sorted_study_visits = sorted(study_visits, key=lambda item: item.uid)
-            sorted_study_visits_without_added = sorted(
-                ordered_visits_without_added, key=lambda item: item.uid
-            )
-            for visit_bef_add, visit_aft_add in zip(
-                sorted_study_visits, sorted_study_visits_without_added
-            ):
-                if (
-                    visit_bef_add.unique_visit_number
-                    != visit_aft_add.unique_visit_number
-                ):
-                    self.repo.save(visit_aft_add)
             return self._transform_all_to_response_model(added_item)
         except ValueError as e:
             raise ValidationException(e.args[0]) from e

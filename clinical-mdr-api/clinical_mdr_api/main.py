@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from fastapi_etag.dependency import PreconditionFailed
 from opencensus.ext.azure.trace_exporter import AzureExporter
 from opencensus.trace.samplers import AlwaysOnSampler
+from pydantic import ValidationError
 from starlette.middleware import Middleware
 from starlette_context.middleware import RawContextMiddleware
 
@@ -87,7 +88,7 @@ app = FastAPI(
     dependencies=global_dependencies,
     swagger_ui_init_oauth=SWAGGER_UI_INIT_OAUTH,
     title=config.settings.app_name,
-    version="1.0",
+    version="2.0.0",
     description=f"""
 ## NOTICE
 
@@ -134,6 +135,16 @@ def mdr_api_exception_handler(
         status_code=exception.status_code,
         content=jsonable_encoder(ErrorResponse(request, exception)),
         headers=exception.headers,
+    )
+
+
+@app.exception_handler(ValidationError)
+def pydantic_validation_error_handler(request: Request, exception: ValidationError):
+    """Returns `400 Bad Request` http error status code in case Pydantic detects validation issues
+    with supplied payloads or parameters."""
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content=jsonable_encoder(ErrorResponse(request, exception)),
     )
 
 
@@ -238,26 +249,26 @@ app.include_router(
 )
 app.include_router(routers.timeframes_router, prefix="/timeframes", tags=["Timeframes"])
 app.include_router(routers.libraries_router, prefix="/libraries", tags=["Libraries"])
-app.include_router(routers.ct_catalogues_router, prefix="/ct", tags=["CT catalogues"])
-app.include_router(routers.ct_packages_router, prefix="/ct", tags=["CT packages"])
-app.include_router(routers.ct_codelists_router, prefix="/ct", tags=["CT codelists"])
+app.include_router(routers.ct_catalogues_router, prefix="/ct", tags=["CT Catalogues"])
+app.include_router(routers.ct_packages_router, prefix="/ct", tags=["CT Packages"])
+app.include_router(routers.ct_codelists_router, prefix="/ct", tags=["CT Codelists"])
 app.include_router(
-    routers.ct_codelist_attributes_router, prefix="/ct", tags=["CT codelists"]
+    routers.ct_codelist_attributes_router, prefix="/ct", tags=["CT Codelists"]
 )
 app.include_router(
-    routers.ct_codelist_names_router, prefix="/ct", tags=["CT codelists"]
+    routers.ct_codelist_names_router, prefix="/ct", tags=["CT Codelists"]
 )
-app.include_router(routers.ct_terms_router, prefix="/ct", tags=["CT terms"])
-app.include_router(routers.ct_term_attributes_router, prefix="/ct", tags=["CT terms"])
-app.include_router(routers.ct_term_names_router, prefix="/ct", tags=["CT terms"])
-app.include_router(routers.ct_stats_router, prefix="/ct", tags=["CT stats"])
+app.include_router(routers.ct_terms_router, prefix="/ct", tags=["CT Terms"])
+app.include_router(routers.ct_term_attributes_router, prefix="/ct", tags=["CT Terms"])
+app.include_router(routers.ct_term_names_router, prefix="/ct", tags=["CT Terms"])
+app.include_router(routers.ct_stats_router, prefix="/ct", tags=["CT Stats"])
 app.include_router(
     routers.dictionary_codelists_router,
     prefix="/dictionaries",
-    tags=["Dictionary codelists"],
+    tags=["Dictionary Codelists"],
 )
 app.include_router(
-    routers.dictionary_terms_router, prefix="/dictionaries", tags=["Dictionary terms"]
+    routers.dictionary_terms_router, prefix="/dictionaries", tags=["Dictionary Terms"]
 )
 app.include_router(
     routers.template_parameters_router,
@@ -318,52 +329,52 @@ app.include_router(
     tags=["Activities"],
 )
 app.include_router(
-    routers.activity_sub_groups_router,
+    routers.activity_subgroups_router,
     prefix="/concepts/activities",
-    tags=["Activity sub groups"],
+    tags=["Activity Subgroups"],
 )
 app.include_router(
     routers.activity_groups_router,
     prefix="/concepts/activities",
-    tags=["Activity groups"],
+    tags=["Activity Groups"],
 )
 app.include_router(
     routers.numeric_values_router,
     prefix="/concepts/numeric-values",
-    tags=["Numeric values"],
+    tags=["Numeric Values"],
 )
 app.include_router(
     routers.numeric_values_with_unit_router,
     prefix="/concepts/numeric-values-with-unit",
-    tags=["Numeric values with unit"],
+    tags=["Numeric Values With Unit"],
 )
 app.include_router(
-    routers.text_values_router, prefix="/concepts/text-values", tags=["Text values"]
+    routers.text_values_router, prefix="/concepts/text-values", tags=["Text Values"]
 )
 app.include_router(
-    routers.visit_names_router, prefix="/concepts/visit-names", tags=["Visit names"]
+    routers.visit_names_router, prefix="/concepts/visit-names", tags=["Visit Names"]
 )
 app.include_router(
-    routers.study_days_router, prefix="/concepts/study-days", tags=["Study days"]
+    routers.study_days_router, prefix="/concepts/study-days", tags=["Study Days"]
 )
 app.include_router(
-    routers.study_weeks_router, prefix="/concepts/study-weeks", tags=["Study weeks"]
+    routers.study_weeks_router, prefix="/concepts/study-weeks", tags=["Study Weeks"]
 )
 app.include_router(
     routers.study_duration_days_router,
     prefix="/concepts/study-duration-days",
-    tags=["Study duration days"],
+    tags=["Study Duration Days"],
 )
 app.include_router(
     routers.study_duration_weeks_router,
     prefix="/concepts/study-duration-weeks",
-    tags=["Study duration weeks"],
+    tags=["Study Duration Weeks"],
 )
 app.include_router(
-    routers.time_points_router, prefix="/concepts/time-points", tags=["Time points"]
+    routers.time_points_router, prefix="/concepts/time-points", tags=["Time Points"]
 )
 app.include_router(
-    routers.lag_times_router, prefix="/concepts/lag-times", tags=["Lag times"]
+    routers.lag_times_router, prefix="/concepts/lag-times", tags=["Lag Times"]
 )
 app.include_router(routers.projects_router, prefix="/projects", tags=["Projects"])
 app.include_router(
@@ -374,7 +385,7 @@ app.include_router(
 app.include_router(routers.admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(routers.brands_router, prefix="/brands", tags=["Brands"])
 app.include_router(routers.studies_router, prefix="/studies", tags=["Studies"])
-app.include_router(routers.study_router, prefix="/study", tags=["Study Selections"])
+app.include_router(routers.study_router, prefix="", tags=["Study Selections"])
 app.include_router(
     routers.unit_definition_router,
     prefix="/concepts/unit-definitions",
@@ -383,26 +394,35 @@ app.include_router(
 app.include_router(
     routers.complex_template_parameter_router,
     prefix="/parameter-templates",
-    tags=["Parameter templates"],
+    tags=["Parameter Templates"],
 )
 app.include_router(
-    routers.metadata_router, prefix="/listings", tags=["Listing metadata"]
+    routers.metadata_router, prefix="/listings", tags=["Listing Metadata"]
 )
 app.include_router(
     routers.listing_router, prefix="/listings", tags=["Listing Legacy CDW MMA"]
 )
 app.include_router(
-    routers.sdtm_listing_router, prefix="/listings", tags=["SDTM study design listings"]
+    routers.sdtm_listing_router, prefix="/listings", tags=["SDTM Study Design Listings"]
 )
 app.include_router(
-    routers.study_listing_router, prefix="/listings", tags=["study design listings"]
+    routers.study_listing_router, prefix="/listings", tags=["Study Design Listings"]
 )
 app.include_router(
     routers.configuration_router,
     prefix="/configurations",
-    tags=["configuration", "Study Fields", "Field definition"],
+    tags=["Configurations"],
 )
-
+app.include_router(
+    routers.data_models_router,
+    prefix="/standards",
+    tags=["Standards"],
+)
+app.include_router(
+    routers.data_model_igs_router,
+    prefix="/standards",
+    tags=["Standards"],
+)
 system_app = FastAPI(
     middleware=None,
     title="System info sub-application",

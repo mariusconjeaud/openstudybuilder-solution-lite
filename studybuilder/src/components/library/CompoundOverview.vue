@@ -6,13 +6,13 @@
           {{ $t('CompoundOverview.sponsor_compound') }}
       </v-col>
       <v-col cols="2">
-        {{ compound.isSponsorCompound|yesno }}
+        {{ compound.is_sponsor_compound|yesno }}
       </v-col>
       <v-col cols="2" class="font-weight-bold">
         {{ $t('CompoundOverview.is_name_inn') }}
       </v-col>
       <v-col cols="2">
-        {{ compound.isNameInn|yesno }}
+        {{ compound.is_name_inn|yesno }}
       </v-col>
     </v-row>
     <v-row>
@@ -20,13 +20,13 @@
         {{ $t('CompoundOverview.nnc_number_long') }}
       </v-col>
       <v-col cols="2">
-        {{ compound.nncLongNumber }}
+        {{ compound.nnc_long_number }}
       </v-col>
       <v-col cols="2" class="font-weight-bold">
         {{ $t('CompoundOverview.nnc_number_short') }}
       </v-col>
       <v-col cols="2">
-        {{ compound.nncShortNumber }}
+        {{ compound.nnc_short_number }}
       </v-col>
     </v-row>
     <v-row>
@@ -34,7 +34,7 @@
         {{ $t('CompoundOverview.analyte_number') }}
       </v-col>
       <v-col cols="2">
-        {{ compound.analyteNumber }}
+        {{ compound.analyte_number }}
       </v-col>
     </v-row>
     <v-row>
@@ -55,7 +55,7 @@
               <tr v-for="alias in compoundAliases" :key="alias.uid">
                 <td>{{ alias.name }}</td>
                 <td>{{ alias.definition }}</td>
-                <td>{{ alias.isPreferredSynonym|yesno }}</td>
+                <td>{{ alias.is_preferred_synonym|yesno }}</td>
               </tr>
             </tbody>
           </template>
@@ -80,19 +80,19 @@
         </p>
       </v-col>
     </v-row>
-    <div class="my-4 py-4 substance" v-for="substance in compound.substances" :key="substance.substanceTermUid">
+    <div class="my-4 py-4 substance" v-for="substance in compound.substances" :key="substance.substance_term_uid">
       <v-row>
         <v-col cols="2" class="font-weight-bold">
           {{ $t('CompoundOverview.substance_name') }}
         </v-col>
         <v-col cols="2">
-          {{ substance.substanceName }}
+          {{ substance.substance_name }}
         </v-col>
         <v-col cols="2" class="font-weight-bold">
           {{ $t('CompoundOverview.unii') }}
         </v-col>
         <v-col cols="2">
-          {{ substance.substanceUnii }}
+          {{ substance.substance_unii }}
         </v-col>
       </v-row>
       <v-row>
@@ -100,13 +100,13 @@
           {{ $t('CompoundOverview.pharma_class') }}
         </v-col>
         <v-col cols="2">
-          {{ substance.pclassName }}
+          {{ substance.pclass_name }}
         </v-col>
         <v-col cols="2" class="font-weight-bold">
           {{ $t('CompoundOverview.med_rt') }}
         </v-col>
         <v-col cols="2">
-          {{ substance.pclassId }}
+          {{ substance.pclass_id }}
         </v-col>
       </v-row>
     </div>
@@ -124,9 +124,9 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="dose in compound.doseValues" :key="dose.uid">
+              <tr v-for="dose in compound.dose_values" :key="dose.uid">
                 <td>{{ dose.value }}</td>
-                <td>{{ dose.unitLabel }}</td>
+                <td>{{ dose.unit_label }}</td>
               </tr>
             </tbody>
           </template>
@@ -147,9 +147,9 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="strength in compound.strengthValues" :key="strength.uid">
+              <tr v-for="strength in compound.strength_values" :key="strength.uid">
                 <td>{{ strength.value }}</td>
-                <td>{{ strength.unitLabel }}</td>
+                <td>{{ strength.unit_label }}</td>
               </tr>
             </tbody>
           </template>
@@ -161,7 +161,7 @@
         {{ $t('CompoundOverview.dosing_freq') }}
       </v-col>
       <v-col cols="10">
-        <p v-for="doseFreq in compound.doseFrequencies" :key="doseFreq.termUid">
+        <p v-for="doseFreq in compound.dose_frequencies" :key="doseFreq.term_uid">
           {{ doseFreq.name }}
         </p>
       </v-col>
@@ -171,7 +171,7 @@
         {{ $t('CompoundOverview.route_of_admin') }}
       </v-col>
       <v-col cols="10">
-        <p v-for="route in compound.routesOfAdministration" :key="route.termUid">
+        <p v-for="route in compound.routes_of_administration" :key="route.term_uid">
           {{ route.name }}
         </p>
       </v-col>
@@ -181,7 +181,7 @@
         {{ $t('CompoundOverview.dosage_form') }}
       </v-col>
       <v-col cols="10">
-        <p v-for="dosageForm in compound.dosageForms" :key="dosageForm.termUid">
+        <p v-for="dosageForm in compound.dosage_forms" :key="dosageForm.term_uid">
           {{ dosageForm.name }}
         </p>
       </v-col>
@@ -191,7 +191,7 @@
         {{ $t('CompoundOverview.dispensed_in') }}
       </v-col>
       <v-col cols="10">
-        <p v-for="dispenser in compound.dispensers" :key="dispenser.termUid">
+        <p v-for="dispenser in compound.dispensers" :key="dispenser.term_uid">
           {{ dispenser.name }}
         </p>
       </v-col>
@@ -201,7 +201,7 @@
         {{ $t('CompoundOverview.device') }}
       </v-col>
       <v-col cols="10">
-        <p v-for="device in compound.deliveryDevices" :key="device.termUid">
+        <p v-for="device in compound.delivery_devices" :key="device.term_uid">
           {{ device.name }}
         </p>
       </v-col>
@@ -211,13 +211,13 @@
           {{ $t('CompoundOverview.half_life') }}
       </v-col>
       <v-col cols="2">
-        {{ compound.halfLife ? compound.halfLife.value : "" }}
+        {{ compound.half_life ? compound.half_life.value : "" }}
       </v-col>
       <v-col cols="2" class="font-weight-bold">
         {{ $t('CompoundOverview.unit') }}
       </v-col>
       <v-col cols="2">
-        {{ compound.halfLife ? compound.halfLife.unitLabel : "" }}
+        {{ compound.half_life ? compound.half_life.unit_label : "" }}
       </v-col>
     </v-row>
     <v-row>
@@ -235,10 +235,10 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="lagTime in compound.lagTimes" :key="lagTime.uid">
-                <td>{{ lagTime.sdtmDomainLabel }}</td>
-                <td>{{ lagTime.value }}</td>
-                <td>{{ lagTime.unitLabel }}</td>
+              <tr v-for="lag_time in compound.lag_times" :key="lag_time.uid">
+                <td>{{ lag_time.sdtm_domain_label }}</td>
+                <td>{{ lag_time.value }}</td>
+                <td>{{ lag_time.unit_label }}</td>
               </tr>
             </tbody>
           </template>
@@ -266,7 +266,7 @@ export default {
     compound (value) {
       const params = {
         filters: {
-          compoundUid: { v: [value.uid] }
+          compound_uid: { v: [value.uid] }
         }
       }
       compoundAliases.getFiltered(params).then(resp => {

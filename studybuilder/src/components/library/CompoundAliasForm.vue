@@ -39,7 +39,7 @@
         <v-row>
           <v-col cols="12">
             <yes-no-field
-              v-model="form.compound.isSponsorCompound"
+              v-model="form.compound.is_sponsor_compound"
               :label="$t('CompoundForm.sponsor_compound')"
               row
               disabled
@@ -50,7 +50,7 @@
         <v-row>
           <v-col cols="4">
             <v-text-field
-              v-model="form.compound.analyteNumber"
+              v-model="form.compound.analyte_number"
               :label="$t('CompoundForm.analyte_number')"
               dense
               disabled
@@ -60,7 +60,7 @@
           </v-col>
           <v-col cols="4">
             <v-text-field
-              v-model="form.compound.nncLongNumber"
+              v-model="form.compound.nnc_long_number"
               :label="$t('CompoundForm.long_number')"
               dense
               disabled
@@ -70,7 +70,7 @@
           </v-col>
           <v-col cols="4">
             <v-text-field
-              v-model="form.compound.nncShortNumber"
+              v-model="form.compound.nnc_short_number"
               :label="$t('CompoundForm.short_number')"
               dense
               disabled
@@ -169,7 +169,7 @@
             rules="required"
             >
             <v-text-field
-              v-model="form.nameSentenceCase"
+              v-model="form.name_sentence_case"
               :label="$t('CompoundAliasForm.sentence_case_name')"
               dense
               clearable
@@ -185,7 +185,7 @@
             rules="required"
             >
             <yes-no-field
-              v-model="form.isPreferredSynonym"
+              v-model="form.is_preferred_synonym"
               :label="$t('CompoundAliasForm.is_preferred_synonym')"
               :error-messages="errors"
               />
@@ -260,13 +260,13 @@ export default {
     },
     substances () {
       if (this.form.compound && this.form.compound.substances && this.form.compound.substances.length) {
-        return this.form.compound.substances.map(item => `${item.substanceName} (${item.substanceUnii})`).join(', ')
+        return this.form.compound.substances.map(item => `${item.substance_name} (${item.substance_unii})`).join(', ')
       }
       return ''
     },
     pharmacologicalClass () {
       if (this.form.compound && this.form.compound.substances && this.form.compound.substances.length) {
-        return this.form.compound.substances.map(item => item.pclassName).filter(pclass => pclass !== undefined && pclass !== null).join(', ')
+        return this.form.compound.substances.map(item => item.pclass_name).filter(pclass => pclass !== undefined && pclass !== null).join(', ')
       }
       return ''
     }
@@ -300,13 +300,13 @@ export default {
       return this.$refs[`observer_${step}`]
     },
     async add (data) {
-      data.libraryName = libConstants.LIBRARY_SPONSOR
+      data.library_name = libConstants.LIBRARY_SPONSOR
       await compoundAliases.create(data)
       this.$emit('created')
       bus.$emit('notification', { msg: this.$t('CompoundAliasForm.add_success'), type: 'success' })
     },
     async update (data) {
-      data.changeDescription = this.$t('_global.work_in_progress')
+      data.change_description = this.$t('_global.work_in_progress')
       await compoundAliases.update(this.compoundAlias.uid, data)
       this.$emit('updated')
       bus.$emit('notification', { msg: this.$t('CompoundAliasForm.update_success'), type: 'success' })
@@ -318,7 +318,7 @@ export default {
         return
       }
       const data = { ...this.form }
-      data.compoundUid = data.compound.uid
+      data.compound_uid = data.compound.uid
       delete data.compound
       try {
         if (!this.compoundAliasUid) {
@@ -336,7 +336,7 @@ export default {
         filters: {
           name: { v: [search], op: 'co' }
         },
-        sortBy: {
+        sort_by: {
           name: true
         }
       }
@@ -373,7 +373,7 @@ export default {
     },
     'form.name' (value) {
       if (value) {
-        this.$set(this.form, 'nameSentenceCase', value.toLowerCase())
+        this.$set(this.form, 'name_sentence_case', value.toLowerCase())
       }
     },
     compoundSearch (value) {

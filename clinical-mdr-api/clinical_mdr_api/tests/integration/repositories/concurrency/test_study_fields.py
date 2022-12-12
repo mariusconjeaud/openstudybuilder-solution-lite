@@ -69,7 +69,7 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
         inject_and_clear_db("concurrency.studyfields")
         inject_base_data()
 
-    def set_up_base_graph_for_studies(self):
+    def setUp_base_graph_for_studies(self):
         db.cypher_query("MATCH (n) DETACH DELETE n")
         db.cypher_query(STARTUP_STUDY_FIELD_CYPHER)
         db.cypher_query(STARTUP_CT_TERM_ATTRIBUTES_CYPHER)
@@ -92,14 +92,14 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
                     registry_identifiers=RegistryIdentifiersVO.from_input_values(
                         ct_gov_id="CT_GOV_ID",
                         eudract_id="EUDRACT_ID",
-                        universal_trial_number_UTN="UTN",
-                        japanese_trial_registry_id_JAPIC="JAPIC",
-                        investigational_new_drug_application_number_IND="IND",
+                        universal_trial_number_utn="UTN",
+                        japanese_trial_registry_id_japic="JAPIC",
+                        investigational_new_drug_application_number_ind="IND",
                         ct_gov_id_null_value_code=None,
                         eudract_id_null_value_code=None,
-                        universal_trial_number_UTN_null_value_code=None,
-                        japanese_trial_registry_id_JAPIC_null_value_code=None,
-                        investigational_new_drug_application_number_IND_null_value_code=None,
+                        universal_trial_number_utn_null_value_code=None,
+                        japanese_trial_registry_id_japic_null_value_code=None,
+                        investigational_new_drug_application_number_ind_null_value_code=None,
                     ),
                 ),
                 project_exists_callback=(lambda _: True),
@@ -164,7 +164,7 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
         The intended functionality is that adding study fields does not need concurrency checks,
         we confirm no shared locks are grabbed.
         """
-        self.set_up_base_graph_for_studies()
+        self.setUp_base_graph_for_studies()
         with self.assertRaises(AssertionError) as message:
             OptimisticLockingValidator().assert_optimistic_locking_ensures_execution_order(
                 main_operation_before=self.add_study_field_without_save,

@@ -5,12 +5,14 @@
     :items="studyElements"
     :sort-desc="sortDesc"
     export-object-label="StudyElements"
-    item-key="elementUid"
+    item-key="element_uid"
     :options.sync="options"
     :export-data-url="exportDataUrl"
     has-api
-    :column-data-resource="`study/${selectedStudy.uid}/study-elements`"
+    :column-data-resource="`studies/${selectedStudy.uid}/study-elements`"
     @filter="getStudyElements"
+    :history-data-fetcher="fetchElementsHistory"
+    :history-title="$t('StudyElements.global_history_title')"
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -44,27 +46,27 @@
             {{ item.order }}
           </td>
           <td width="15%">{{ item.name }}</td>
-          <td width="15%">{{ item.shortName }}</td>
-          <td width="10%">{{ item.elementSubType.sponsorPreferredName }}</td>
-          <td width="5%">{{ item.elementType }}</td>
+          <td width="15%">{{ item.short_name }}</td>
+          <td width="10%">{{ item.element_subtype.sponsor_preferred_name }}</td>
+          <td width="5%">{{ item.element_type }}</td>
           <td width="10%">{{ item.description }}</td>
-          <td width="10%">{{ item.startDate | date }}</td>
-          <td width="10%">{{ item.userInitials }}</td>
+          <td width="10%">{{ item.start_date | date }}</td>
+          <td width="10%">{{ item.user_initials }}</td>
         </tr>
       </draggable>
     </template>
-    <template v-slot:item.elementColour="{ item }">
-      <v-chip :data-cy="'color='+item.elementColour" :color="item.elementColour" small />
+    <template v-slot:item.element_colour="{ item }">
+      <v-chip :data-cy="'color='+item.element_colour" :color="item.element_colour" small />
     </template>
-    <template v-slot:item.startDate="{ item }">
-      {{ item.startDate | date }}
+    <template v-slot:item.start_date="{ item }">
+      {{ item.start_date | date }}
     </template>
     <template v-slot:item.actions="{ item }">
       <div class="pr-0 mr-0">
         <actions-menu :actions="actions" :item="item"/>
       </div>
     </template>
-    <template v-slot:item.elementType="{ item }">
+    <template v-slot:item.element_type="{ item }">
       {{ getElementType(item) }}
     </template>
     <template v-slot:actions="">
@@ -80,19 +82,6 @@
           mdi-plus
         </v-icon>
       </v-btn>
-      <v-btn
-        fab
-        dark
-        class="ml-2"
-        small
-        color="secondary"
-        :title="$t('NNTableTooltips.history')"
-        @click="openStudyElementsHistory()"
-        >
-        <v-icon dark>
-          mdi-history
-        </v-icon>
-      </v-btn>
     </template>
   </n-n-table>
   <study-elements-form
@@ -100,13 +89,19 @@
     @close="closeForm"
     :metadata="activeElement"
     />
+  <v-dialog
+    v-model="showElementHistory"
+    persistent
+    max-width="1200px"
+    >
+    <history-table
+      :title="studyElementHistoryTitle"
+      @close="closeElementHistory"
+      :headers="headers"
+      :items="elementHistoryItems"
+      />
+  </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-  <v-dialog v-model="showElementHistory">
-    <history-table @close="closeElementHistory" :item="selectedElement" type="studyElement" :title-label="$t('StudyElements.study_element')"/>
-  </v-dialog>
-  <v-dialog v-model="showStudyElementsHistory">
-    <summary-history-table @close="closeStudyElementsHistory" type="studyElements" :title-label="$t('StudyDesignTable.study_elements')" />
-  </v-dialog>
 </div>
 </template>
 
@@ -121,8 +116,7 @@ import arms from '@/api/arms'
 import terms from '@/api/controlledTerminology/terms'
 import draggable from 'vuedraggable'
 import filteringParameters from '@/utils/filteringParameters'
-import HistoryTable from '@/components/library/HistoryTable'
-import SummaryHistoryTable from '@/components/tools/SummaryHistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable'
 
 export default {
   components: {
@@ -131,15 +125,22 @@ export default {
     StudyElementsForm,
     ActionsMenu,
     draggable,
-    HistoryTable,
-    SummaryHistoryTable
+    HistoryTable
   },
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy'
     }),
     exportDataUrl () {
-      return `study/${this.selectedStudy.uid}/study-elements`
+      return `studies/${this.selectedStudy.uid}/study-elements`
+    },
+    studyElementHistoryTitle () {
+      if (this.selectedElement) {
+        return this.$t(
+          'StudyElements.study_element_history_title',
+          { elementUid: this.selectedElement.element_uid })
+      }
+      return ''
     }
   },
   data () {
@@ -166,14 +167,16 @@ export default {
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: '#', value: 'order', width: '5%' },
-        { text: this.$t('StudyElements.el_type'), value: 'elementType' },
-        { text: this.$t('StudyElements.el_sub_type'), value: 'elementSubType.sponsorPreferredName' },
+        { text: this.$t('StudyElements.el_type'), value: 'element_type' },
+        { text: this.$t('StudyElements.el_sub_type'), value: 'element_subtype.sponsor_preferred_name' },
         { text: this.$t('StudyElements.el_name'), value: 'name' },
-        { text: this.$t('StudyElements.el_short_name'), value: 'shortName' },
-        { text: this.$t('StudyElements.colour'), value: 'elementColour' },
+        { text: this.$t('StudyElements.el_short_name'), value: 'short_name' },
+        { text: this.$t('StudyElements.el_start_rule'), value: 'start_rule' },
+        { text: this.$t('StudyElements.el_end_rule'), value: 'end_rule' },
+        { text: this.$t('StudyElements.colour'), value: 'element_colour' },
         { text: this.$t('_global.description'), value: 'description' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
-        { text: this.$t('_global.modified_by'), value: 'userInitials' }
+        { text: this.$t('_global.modified'), value: 'start_date' },
+        { text: this.$t('_global.modified_by'), value: 'user_initials' }
       ],
       showForm: false,
       sortBy: 'name',
@@ -185,21 +188,20 @@ export default {
       options: {},
       total: 0,
       showElementHistory: false,
+      elementHistoryItems: [],
       selectedElement: null,
       showStudyElementsHistory: false
     }
   },
   methods: {
-    openStudyElementsHistory () {
-      this.showStudyElementsHistory = true
-    },
-    closeStudyElementsHistory () {
-      this.showStudyElementsHistory = false
+    async fetchElementsHistory () {
+      const resp = await arms.getStudyElementsVersions(this.selectedStudy.uid)
+      return resp.data
     },
     getStudyElements (filters, sort, filtersUpdated) {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
-      params.studyUid = this.selectedStudy.uid
+      params.study_uid = this.selectedStudy.uid
       arms.getStudyElements(this.selectedStudy.uid, params).then(resp => {
         this.studyElements = resp.data.items
         this.total = resp.data.total
@@ -209,8 +211,8 @@ export default {
       const options = { type: 'warning' }
       let msg
       const context = { element: element.name }
-      if (element.studyCompoundDosingCount) {
-        context.compoundDosings = element.studyCompoundDosingCount
+      if (element.study_compound_dosing_count) {
+        context.compoundDosings = element.study_compound_dosing_count
         msg = this.$t('StudyElements.confirm_delete_cascade', context)
       } else {
         msg = this.$t('StudyElements.confirm_delete', context)
@@ -218,7 +220,7 @@ export default {
       if (!await this.$refs.confirm.open(msg, options)) {
         return
       }
-      arms.deleteStudyElement(this.selectedStudy.uid, element.elementUid).then(resp => {
+      arms.deleteStudyElement(this.selectedStudy.uid, element.element_uid).then(resp => {
         bus.$emit('notification', { msg: this.$t('StudyElements.el_deleted') })
         this.getStudyElements()
       })
@@ -228,22 +230,24 @@ export default {
       this.showForm = true
     },
     closeForm () {
-      this.activeElement = null
+      this.activeElement = {}
       this.showForm = false
       this.getStudyElements()
     },
-    openElementHistory (item) {
+    async openElementHistory (element) {
+      this.selectedElement = element
+      const resp = await arms.getStudyElementVersions(this.selectedStudy.uid, element.element_uid)
+      this.elementHistoryItems = resp.data
       this.showElementHistory = true
-      this.selectedElement = item
     },
-    closeElementHistory (item) {
+    closeElementHistory () {
       this.showElementHistory = false
       this.selectedElement = null
     },
     getElementType (item) {
-      const type = this.elementTypes.filter(el => el.termUid === item.code)[0]
+      const type = this.elementTypes.filter(el => el.term_uid === item.code)[0]
       if (item.code && type) {
-        return type.sponsorPreferredName
+        return type.sponsor_preferred_name
       }
     },
     onChange (event) {
@@ -251,7 +255,7 @@ export default {
       const newOrder = {
         new_order: this.studyElements[event.moved.newIndex].order
       }
-      arms.updateElementOrder(this.selectedStudy.uid, element.elementUid, newOrder).then(resp => {
+      arms.updateElementOrder(this.selectedStudy.uid, element.element_uid, newOrder).then(resp => {
         this.getStudyElements()
       })
     }

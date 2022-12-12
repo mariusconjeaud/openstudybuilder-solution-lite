@@ -31,15 +31,15 @@ class CTTermNameService(CTTermGenericService[CTTermNameAR]):
 
             item.edit_draft(
                 author=self.user_initials,
-                change_description=term_input.changeDescription,
+                change_description=term_input.change_description,
                 ct_term_vo=CTTermNameVO.from_input_values(
                     codelist_uid=item.ct_term_vo.codelist_uid,
                     catalogue_name=item.ct_term_vo.catalogue_name,
                     name=self.get_input_or_previous_property(
-                        term_input.sponsorPreferredName, item.ct_term_vo.name
+                        term_input.sponsor_preferred_name, item.ct_term_vo.name
                     ),
                     name_sentence_case=self.get_input_or_previous_property(
-                        term_input.sponsorPreferredNameSentenceCase,
+                        term_input.sponsor_preferred_name_sentence_case,
                         item.ct_term_vo.name_sentence_case,
                     ),
                     order=item.ct_term_vo.order,

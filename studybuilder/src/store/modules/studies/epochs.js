@@ -4,18 +4,23 @@ import studyEpochs from '@/api/studyEpochs'
 const state = {
   studyEpochs: [],
   studyVisits: [],
+  totalVisits: 0,
   allowedConfigs: []
 }
 
 const getters = {
   studyEpochs: state => state.studyEpochs,
   studyVisits: state => state.studyVisits,
+  totalVisits: state => state.totalVisits,
   allowedConfigs: state => state.allowedConfigs
 }
 
 const mutations = {
   SET_STUDY_VISITS (state, studyVisits) {
     state.studyVisits = studyVisits
+  },
+  SET_TOTAL_VISITS (state, totalVisits) {
+    state.totalVisits = totalVisits
   },
   SET_STUDY_EPOCHS (state, studyEpochs) {
     state.studyEpochs = studyEpochs
@@ -47,8 +52,11 @@ const actions = {
     })
   },
   fetchFilteredStudyVisits ({ commit }, data) {
-    return studyEpochs.getStudyVisits(data.studyUid, data).then(resp => {
-      commit('SET_STUDY_VISITS', resp.data)
+    const studyUid = data.studyUid
+    delete data.studyUid
+    return studyEpochs.getStudyVisits(studyUid, data).then(resp => {
+      commit('SET_STUDY_VISITS', resp.data.items)
+      commit('SET_TOTAL_VISITS', resp.data.total)
     })
   },
   async addStudyVisit ({ commit, dispatch }, { studyUid, input }) {

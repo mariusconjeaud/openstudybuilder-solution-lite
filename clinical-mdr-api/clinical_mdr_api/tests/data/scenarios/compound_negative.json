@@ -44,49 +44,49 @@
          "method": "POST",
          "request": {
             "name": "compound_name1",
-            "nameSentenceCase": "compound_name_sentence_case1",
+            "name_sentence_case": "compound_name_sentence_case1",
             "definition": "compound_definition1",
             "abbreviation": "abbv",
-            "doseValuesUids": [
+            "dose_values_uids": [
                "NumericValueWithUnit_000001",
                "NumericValueWithUnit_000002"
             ],
-            "strengthValuesUids": [
+            "strength_values_uids": [
                "NumericValueWithUnit_000001",
                "NumericValueWithUnit_000002"
             ],
-            "deliveryDevicesUids": [
+            "delivery_devices_uids": [
                "delivery_device_uid1",
                "delivery_device_uid2"
             ],
-            "dispensersUids": [
+            "dispensers_uids": [
                "dispenser_uid1",
                "dispenser_uid2"
             ],
-            "projectsUids": [
+            "projects_uids": [
                "project_uid1",
                "project_uid2"
             ],
-            "brandsUids": [
+            "brands_uids": [
                "Brand_000001",
                "Brand_000002"
             ],
-            "halfLifeUid": "NumericValueWithUnit_000001",
-            "doseFrequencyUids": [
+            "half_life_uid": "NumericValueWithUnit_000001",
+            "dose_frequency_uids": [
                "dose_frequency_uid1"
             ],
-            "dosageFormUids": [
+            "dosage_form_uids": [
                "dosage_form_uid1"
             ],
-            "routeOfAdministrationUids": [
+            "route_of_administration_uids": [
                "route_of_administration_uid1"
             ],
-            "analyteNumber": "analyteNumber",
-            "nncShortNumber": "nncShortNumber",
-            "nncLongNumber": "nncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
-            "libraryName": "Sponsor"
+            "analyte_number": "analyte_number",
+            "nnc_short_number": "nnc_short_number",
+            "nnc_long_number": "nnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/compounds"
       },
@@ -96,63 +96,63 @@
          "result": {
             "uid": "Compound_000001",
             "name": "compound_name1",
-            "nameSentenceCase": "compound_name_sentence_case1",
+            "name_sentence_case": "compound_name_sentence_case1",
             "definition": "compound_definition1",
             "abbreviation": "abbv",
-            "doseValues": [
+            "dose_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "strengthValues": [
+            "strength_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "lagTimes": [],
-            "deliveryDevices": [
+            "lag_times": [],
+            "delivery_devices": [
                {
-                  "termUid": "delivery_device_uid1",
+                  "term_uid": "delivery_device_uid1",
                   "name": "delivery_device_name1"
                },
                {
-                  "termUid": "delivery_device_uid2",
+                  "term_uid": "delivery_device_uid2",
                   "name": "delivery_device_name2"
                }
             ],
             "dispensers": [
                {
-                  "termUid": "dispenser_uid1",
+                  "term_uid": "dispenser_uid1",
                   "name": "dispenser_name1"
                },
                {
-                  "termUid": "dispenser_uid2",
+                  "term_uid": "dispenser_uid2",
                   "name": "dispenser_name2"
                }
             ],
             "projects": [
                {
                   "uid": "project_uid1",
-                  "projectNumber": "PRJ-001",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-001",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -161,8 +161,8 @@
                },
                {
                   "uid": "project_uid2",
-                  "projectNumber": "PRJ-002",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-002",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -180,44 +180,44 @@
                   "name": "Brand B"
                }
             ],
-            "halfLife": {
+            "half_life": {
                "uid": "NumericValueWithUnit_000001",
                "value": 1.23,
-               "unitDefinitionUid": "UnitDefinition_000001",
-               "unitLabel": "name_1"
+               "unit_definition_uid": "UnitDefinition_000001",
+               "unit_label": "name_1"
             },
-            "doseFrequencies": [
+            "dose_frequencies": [
                {
-                  "termUid": "dose_frequency_uid1",
+                  "term_uid": "dose_frequency_uid1",
                   "name": "dose_frequency_name1"
                }
             ],
-            "dosageForms": [
+            "dosage_forms": [
                {
-                  "termUid": "dosage_form_uid1",
+                  "term_uid": "dosage_form_uid1",
                   "name": "dosage_form_name1"
                }
             ],
-            "routesOfAdministration": [
+            "routes_of_administration": [
                {
-                  "termUid": "route_of_administration_uid1",
+                  "term_uid": "route_of_administration_uid1",
                   "name": "route_of_administration_name1"
                }
             ],
-            "analyteNumber": "analyteNumber",
-            "nncShortNumber": "nncShortNumber",
-            "nncLongNumber": "nncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
+            "analyte_number": "analyte_number",
+            "nnc_short_number": "nnc_short_number",
+            "nnc_long_number": "nnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
             "substances": [],
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
             "status": "Draft",
             "version": "0.1",
-            "changeDescription": "Initial version",
-            "userInitials": "TODO user initials",
-            "startDate": null,
-            "endDate": null,
-            "possibleActions": [
+            "change_description": "Initial version",
+            "user_initials": "TODO user initials",
+            "start_date": null,
+            "end_date": null,
+            "possible_actions": [
                "approve",
                "delete",
                "edit"
@@ -231,10 +231,10 @@
          "headers": {},
          "method": "PATCH",
          "request": {
-            "doseFrequencyUids": [
+            "dose_frequency_uids": [
                "dose_frequency_non_existing_uid"
             ],
-            "changeDescription": "Changing compound"
+            "change_description": "Changing compound"
          },
          "url": "/concepts/compounds/Compound_000001"
       },
@@ -255,10 +255,10 @@
          "headers": {},
          "method": "PATCH",
          "request": {
-            "doseValuesUids": [
+            "dose_values_uids": [
                "dose_value_non_existing_uid"
             ],
-            "changeDescription": "Changing compound"
+            "change_description": "Changing compound"
          },
          "url": "/concepts/compounds/Compound_000001"
       },
@@ -279,10 +279,10 @@
          "headers": {},
          "method": "PATCH",
          "request": {
-            "strengthValuesUids": [
+            "strength_values_uids": [
                "non_existing_uid"
             ],
-            "changeDescription": "Changing compound"
+            "change_description": "Changing compound"
          },
          "url": "/concepts/compounds/Compound_000001"
       },
@@ -303,10 +303,10 @@
          "headers": {},
          "method": "PATCH",
          "request": {
-            "dosageFormUids": [
+            "dosage_form_uids": [
                "dosage_form_non_existing_uid"
             ],
-            "changeDescription": "Changing compound"
+            "change_description": "Changing compound"
          },
          "url": "/concepts/compounds/Compound_000001"
       },
@@ -327,10 +327,10 @@
          "headers": {},
          "method": "PATCH",
          "request": {
-            "routeOfAdministrationUids": [
+            "route_of_administration_uids": [
                "route_of_administration_non_existing_uid"
             ],
-            "changeDescription": "Changing compound"
+            "change_description": "Changing compound"
          },
          "url": "/concepts/compounds/Compound_000001"
       },
@@ -351,10 +351,10 @@
          "headers": {},
          "method": "PATCH",
          "request": {
-            "substanceTermsUids": [
+            "substance_terms_uids": [
                "unii_non_existing_uid"
             ],
-            "changeDescription": "Changing compound"
+            "change_description": "Changing compound"
          },
          "url": "/concepts/compounds/Compound_000001"
       },
@@ -375,10 +375,10 @@
          "headers": {},
          "method": "PATCH",
          "request": {
-            "deliveryDevicesUids": [
+            "delivery_devices_uids": [
                "non_existing_uid"
             ],
-            "changeDescription": "Changing compound"
+            "change_description": "Changing compound"
          },
          "url": "/concepts/compounds/Compound_000001"
       },
@@ -399,10 +399,10 @@
          "headers": {},
          "method": "PATCH",
          "request": {
-            "dispensersUids": [
+            "dispensers_uids": [
                "non_existing_uid"
             ],
-            "changeDescription": "Changing compound"
+            "change_description": "Changing compound"
          },
          "url": "/concepts/compounds/Compound_000001"
       },
@@ -423,10 +423,10 @@
          "headers": {},
          "method": "PATCH",
          "request": {
-            "projectsUids": [
+            "projects_uids": [
                "non_existing_uid"
             ],
-            "changeDescription": "Changing compound"
+            "change_description": "Changing compound"
          },
          "url": "/concepts/compounds/Compound_000001"
       },
@@ -447,10 +447,10 @@
          "headers": {},
          "method": "PATCH",
          "request": {
-            "brandsUids": [
+            "brands_uids": [
                "non_existing_uid"
             ],
-            "changeDescription": "Changing compound"
+            "change_description": "Changing compound"
          },
          "url": "/concepts/compounds/Compound_000001"
       },
@@ -471,10 +471,10 @@
          "headers": {},
          "method": "PATCH",
          "request": {
-            "lagTimesUids": [
+            "lag_times_uids": [
                "non_existing_uid"
             ],
-            "changeDescription": "Changing compound"
+            "change_description": "Changing compound"
          },
          "url": "/concepts/compounds/Compound_000001"
       },
@@ -496,31 +496,31 @@
          "method": "POST",
          "request": {
             "name": "compound_name1",
-            "nameSentenceCase": "compound_name_sentence_case1",
+            "name_sentence_case": "compound_name_sentence_case1",
             "definition": "compound_definition1",
-            "doseValuesUids": [
+            "dose_values_uids": [
                "NumericValueWithUnit_000001",
                "NumericValueWithUnit_000002"
             ],
-            "strengthValuesUids": [
+            "strength_values_uids": [
                "NumericValueWithUnit_000001",
                "NumericValueWithUnit_000002"
             ],
-            "doseFrequencyUids": [
+            "dose_frequency_uids": [
                "dose_frequency_uid1"
             ],
-            "dosageFormUids": [
+            "dosage_form_uids": [
                "dosage_form_uid1"
             ],
-            "routeOfAdministrationUids": [
+            "route_of_administration_uids": [
                "route_of_administration_uid1"
             ],
-            "analyteNumber": "analyteNumber",
-            "nncShortNumber": "nncShortNumber",
-            "nncLongNumber": "nncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
-            "libraryName": "Sponsor"
+            "analyte_number": "analyte_number",
+            "nnc_short_number": "nnc_short_number",
+            "nnc_long_number": "nnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/compounds"
       },
@@ -542,31 +542,31 @@
          "method": "POST",
          "request": {
             "name": "compound_name1xyz",
-            "nameSentenceCase": "compound_name_sentence_case1",
+            "name_sentence_case": "compound_name_sentence_case1",
             "definition": "compound_definition1",
-            "doseValuesUids": [
+            "dose_values_uids": [
                "NumericValueWithUnit_000001",
                "NumericValueWithUnit_000002"
             ],
-            "strengthValuesUids": [
+            "strength_values_uids": [
                "NumericValueWithUnit_000001",
                "NumericValueWithUnit_000002"
             ],
-            "doseFrequencyUids": [
+            "dose_frequency_uids": [
                "dose_frequency_uid1"
             ],
-            "dosageFormUids": [
+            "dosage_form_uids": [
                "dosage_form_uid1"
             ],
-            "routeOfAdministrationUids": [
+            "route_of_administration_uids": [
                "route_of_administration_uid1"
             ],
-            "analyteNumber": "analyteNumber",
-            "nncShortNumber": "nncShortNumber",
-            "nncLongNumber": "nncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
-            "libraryName": "Sponsor"
+            "analyte_number": "analyte_number",
+            "nnc_short_number": "nnc_short_number",
+            "nnc_long_number": "nnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/compounds"
       },
@@ -588,21 +588,21 @@
          "method": "POST",
          "request": {
             "name": "compound_name1_XYZ",
-            "nameSentenceCase": "compound_name_sentence_case1_XYZ",
+            "name_sentence_case": "compound_name_sentence_case1_XYZ",
             "definition": "compound_definition1",
-            "analyteNumber": "analyteNumber",
-            "nncShortNumber": "nncShortNumber_XYZ",
-            "nncLongNumber": "nncLongNumber_XYZ",
-            "isSponsorCompound": true,
-            "isNameInn": true,
-            "libraryName": "Sponsor"
+            "analyte_number": "analyte_number",
+            "nnc_short_number": "nnc_short_number_XYZ",
+            "nnc_long_number": "nnc_long_number_XYZ",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/compounds"
       },
       "response": {
          "code": 400,
          "result": {
-            "message": "Compound with analyte number (analyteNumber) already exists",
+            "message": "Compound with analyte number (analyte_number) already exists",
             "method": "POST",
             "path": "http://testserver/concepts/compounds",
             "time": "2020-11-10T01:51:17.884429",
@@ -617,21 +617,21 @@
          "method": "POST",
          "request": {
             "name": "compound_name1_XYZ",
-            "nameSentenceCase": "compound_name_sentence_case1_XYZ",
+            "name_sentence_case": "compound_name_sentence_case1_XYZ",
             "definition": "compound_definition1_XYZ",
-            "analyteNumber": "analyteNumber_XYZ",
-            "nncShortNumber": "nncShortNumber",
-            "nncLongNumber": "nncLongNumber_XYZ",
-            "isSponsorCompound": true,
-            "isNameInn": true,
-            "libraryName": "Sponsor"
+            "analyte_number": "analyte_number_XYZ",
+            "nnc_short_number": "nnc_short_number",
+            "nnc_long_number": "nnc_long_number_XYZ",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/compounds"
       },
       "response": {
          "code": 400,
          "result": {
-            "message": "Compound with short number (nncShortNumber) already exists",
+            "message": "Compound with short number (nnc_short_number) already exists",
             "method": "POST",
             "path": "http://testserver/concepts/compounds",
             "time": "2020-11-10T01:51:17.884429",
@@ -646,21 +646,21 @@
          "method": "POST",
          "request": {
             "name": "compound_name1_XYZ",
-            "nameSentenceCase": "compound_name_sentence_case1_XYZ",
+            "name_sentence_case": "compound_name_sentence_case1_XYZ",
             "definition": "compound_definition1_XYZ",
-            "analyteNumber": "analyteNumber_XYZ",
-            "nncShortNumber": "nncShortNumber_XYZ",
-            "nncLongNumber": "nncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
-            "libraryName": "Sponsor"
+            "analyte_number": "analyte_number_XYZ",
+            "nnc_short_number": "nnc_short_number_XYZ",
+            "nnc_long_number": "nnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/compounds"
       },
       "response": {
          "code": 400,
          "result": {
-            "message": "Compound with long number (nncLongNumber) already exists",
+            "message": "Compound with long number (nnc_long_number) already exists",
             "method": "POST",
             "path": "http://testserver/concepts/compounds",
             "time": "2020-11-10T01:51:17.884429",

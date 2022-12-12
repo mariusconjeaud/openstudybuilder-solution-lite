@@ -9,7 +9,7 @@ from clinical_mdr_api.services.study_design_figure import StudyDesignFigureServi
 
 StudyUID = Path(None, description="The unique id of the study.")
 
-timeUnit = Query(
+time_unit = Query(
     "days",
     regex="^(weeks|days)$",
     description="The preferred time unit, either days or weeks.",
@@ -21,7 +21,7 @@ class SVGResponse(Response):
 
 
 @router.get(
-    "/{study_uid}/design.svg",
+    "/{uid}/design.svg",
     summary="Builds and returns a Study Design visualization image in SVG format",
     status_code=200,
     responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
@@ -29,9 +29,7 @@ class SVGResponse(Response):
 )
 def get_study_flowchart_html(
     response: Response,
-    study_uid: str = StudyUID,
+    uid: str = StudyUID,
 ) -> str:
-    response.headers[
-        "Content-Disposition"
-    ] = f'inline; filename="{study_uid} design.svg"'
-    return StudyDesignFigureService().get_svg_document(study_uid)
+    response.headers["Content-Disposition"] = f'inline; filename="{uid} design.svg"'
+    return StudyDesignFigureService().get_svg_document(uid)

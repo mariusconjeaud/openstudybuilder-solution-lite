@@ -10,7 +10,7 @@ export default {
     return repository.get(`${resource}/codelists/SNOMED`, { params })
   },
   getCodelists (library) {
-    return repository.get(`${resource}/codelists/${library}`)
+    return repository.get(`${resource}/codelists/${library}`, { params: { page_size: 0 } })
   },
   getTerms (options) {
     const params = {
@@ -34,7 +34,7 @@ export default {
     return repository.post(`${resource}/terms/${uid}/approve`)
   },
   newVersion (uid) {
-    return repository.post(`${resource}/terms/${uid}/new-version`)
+    return repository.post(`${resource}/terms/${uid}/versions`)
   },
   edit (uid, term) {
     const params = {

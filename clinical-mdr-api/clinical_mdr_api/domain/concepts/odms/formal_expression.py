@@ -80,6 +80,7 @@ class OdmFormalExpressionAR(OdmARBase):
         author: str,
         change_description: Optional[str],
         concept_vo: OdmFormalExpressionVO,
+        concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
     ) -> None:
         """
         Creates a new draft version for the object.

@@ -19,7 +19,7 @@
             <v-col>
               <v-select
                 data-cy="catalogue-dropdown"
-                v-model="form.catalogueName"
+                v-model="form.catalogue_name"
                 :label="$t('CodelistCreationForm.catalogue')"
                 :items="catalogues"
                 item-text="name"
@@ -44,7 +44,7 @@
             <v-col>
               <v-text-field
                 data-cy="sponsor-preffered-name"
-                v-model="form.sponsorPreferredName"
+                v-model="form.sponsor_preferred_name"
                 :label="$t('CodelistSponsorValuesForm.pref_name')"
                 :error-messages="errors"
                 clearable
@@ -57,7 +57,7 @@
         <v-row>
           <v-col>
             <v-switch
-              v-model="form.templateParameter"
+              v-model="form.template_parameter"
               :label="$t('CodelistSponsorValuesForm.tpl_parameter')"
               />
           </v-col>
@@ -92,7 +92,7 @@
             <v-col>
               <v-text-field
                 data-cy="submission-value"
-                v-model="form.submissionValue"
+                v-model="form.submission_value"
                 :label="$t('CodelistAttributesForm.subm_value')"
                 :error-messages="errors"
                 dense
@@ -110,7 +110,7 @@
             <v-col>
               <v-text-field
                 data-cy="nci-preffered-name"
-                v-model="form.nciPreferredName"
+                v-model="form.nci_preferred_name"
                 :label="$t('CodelistAttributesForm.nci_pref_name')"
                 :error-messages="errors"
                 dense
@@ -176,8 +176,8 @@ export default {
     return {
       form: {
         extensible: false,
-        libraryName: 'Sponsor',
-        templateParameter: false
+        library_name: 'Sponsor',
+        template_parameter: false
       },
       helpItems: [
         'CodelistCreationForm.catalogue',
@@ -198,7 +198,7 @@ export default {
   },
   methods: {
     async cancel () {
-      if (this.form.catalogueName === 'All') {
+      if (this.form.catalogue_name === 'All') {
         this.close()
       } else {
         const options = {
@@ -232,7 +232,7 @@ export default {
     }
   },
   mounted () {
-    this.form.catalogueName = this.catalogue
+    this.form.catalogue_name = this.catalogue
   }
 }
 </script>

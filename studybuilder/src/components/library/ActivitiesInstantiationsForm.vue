@@ -93,7 +93,7 @@
         <v-row>
           <v-col>
             <v-text-field
-              v-model="form.topicCode"
+              v-model="form.topic_code"
               :label="$t('ActivityForms.topicCode')"
               hide-details
               class="mb-4"
@@ -109,7 +109,7 @@
         <v-row>
           <v-col>
             <v-text-field
-              v-model="form.adamParamCode"
+              v-model="form.adam_param_code"
               :label="$t('ActivityForms.adamCode')"
               hide-details
               class="mb-4"
@@ -125,7 +125,7 @@
         <v-row>
           <v-col>
             <v-text-field
-              v-model="form.legacyDescription"
+              v-model="form.legacy_description"
               :label="$t('ActivityForms.legacyDesc')"
               hide-details
               class="mb-4"
@@ -268,12 +268,17 @@ export default {
   },
   methods: {
     initForm (value) {
+      this.type = value.type
       this.form = {
         name: value.name,
-        nameSentenceCase: value.nameSentenceCase,
+        name_sentence_case: value.name_sentence_case,
         definition: value.definition,
-        changeDescription: value.changeDescription,
-        activitySubGroups: value.activitySubGroups
+        change_description: value.change_description,
+        activity_sub_groups: value.activity_sub_groups,
+        topic_code: value.topic_code,
+        adam_param_code: value.adam_param_code,
+        legacy_description: value.legacy_description,
+        activities: value.activities
       }
       this.$store.commit('form/SET_FORM', this.form)
     },
@@ -304,8 +309,8 @@ export default {
       this.$refs.observer.reset()
     },
     async submit () {
-      this.form.libraryName = 'Sponsor' // Hardcoded for now at the Sinna and Mikkel request
-      this.form.nameSentenceCase = this.form.name.charAt(0).toUpperCase() + this.form.name.slice(1)
+      this.form.library_name = 'Sponsor' // Hardcoded for now at the Sinna and Mikkel request
+      this.form.name_sentence_case = this.form.name.charAt(0).toUpperCase() + this.form.name.slice(1)
       this.working = true
       if (!this.editedActivity) {
         activities.create(this.form, this.type).then(resp => {

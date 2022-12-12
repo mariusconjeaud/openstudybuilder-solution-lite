@@ -24,7 +24,7 @@ class TestCreate(TestCase):
         cls.library = library_service.create(**library_data)
 
     def test_create(self):
-        data = {"name": template_data["name"], "libraryName": self.library["name"]}
+        data = {"name": template_data["name"], "library_name": self.library["name"]}
         objective_template = models.ObjectiveTemplateCreateInput(**data)
         result = service.ObjectiveTemplateService().create(objective_template)
         self.assertIsInstance(result, models.ObjectiveTemplate)
@@ -49,7 +49,7 @@ class TestDraftEdit(TestCase):
     def test_edit(self):
         data = {
             "name": template_data["name"] + " edited",
-            "changeDescription": "tested",
+            "change_description": "tested",
         }
         ot = models.ObjectiveTemplateEditInput(**data)
         result = service.ObjectiveTemplateService().edit_draft(self.ot["uid"], ot)
@@ -61,7 +61,7 @@ class TestDraftEdit(TestCase):
 
         data = {
             "name": template_data["name"] + " edited again",
-            "changeDescription": "tested",
+            "change_description": "tested",
         }
         ot = models.ObjectiveTemplateEditInput(**data)
         result = service.ObjectiveTemplateService().edit_draft(self.ot["uid"], ot)

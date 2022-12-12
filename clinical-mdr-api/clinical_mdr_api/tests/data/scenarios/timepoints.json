@@ -23,10 +23,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
+                "library_name": "Test library",
                 "name": "Test timepoint",
-                "timepointTemplateUid": "{otuid}",
-                "parameterValues": []
+                "timepoint_template_uid": "{otuid}",
+                "parameter_values": []
             },
             "url": "/timepoints/preview"
         },
@@ -37,27 +37,27 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
+                "change_description": "Initial version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 "name": "Test_Name_Template",
-                "timepointTemplate": {
+                "timepoint_template": {
                     "name": "Test_Name_Template",
                     "uid": "{otuid}"
                 },
-                "parameterValues": [],
-                "possibleActions": [
+                "parameter_values": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-03T22:19:07+00:00",
+                "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Draft",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "userInitials": "TODO Initials",
+                "user_initials": "TODO Initials",
                 "version": "0.1"
             },
             "save": {
@@ -71,10 +71,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
+                "library_name": "Test library",
                 "name": "Test timepoint",
-                "timepointTemplateUid": "{otuid}",
-                "parameterValues": []
+                "timepoint_template_uid": "{otuid}",
+                "parameter_values": []
             },
             "url": "/timepoints/"
         },
@@ -85,27 +85,27 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
+                "change_description": "Initial version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 "name": "Test_Name_Template",
-                "timepointTemplate": {
+                "timepoint_template": {
                     "name": "Test_Name_Template",
                     "uid": "{otuid}"
                 },
-                "parameterValues": [],
-                "possibleActions": [
+                "parameter_values": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-03T22:19:07+00:00",
+                "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Draft",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "userInitials": "TODO Initials",
+                "user_initials": "TODO Initials",
                 "version": "0.1"
             },
             "save": {
@@ -128,25 +128,25 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Approved version",
-                "endDate": null,
+                "change_description": "Approved version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 "name": "Test_Name_Template",
-                "parameterValues": [],
-                "possibleActions": [
+                "parameter_values": [],
+                "possible_actions": [
                     "inactivate"
                 ],
-                "timepointTemplate": {
+                "timepoint_template": {
                     "name": "Test_Name_Template",
                     "uid": "{otuid}"
                 },
-                "startDate": "2020-11-03T22:19:07+00:00",
+                "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Final",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "userInitials": "TODO Initials",
+                "user_initials": "TODO Initials",
                 "version": "1.0"
             }
         }
@@ -226,61 +226,61 @@
                 {
                     "uid": "04f672c6-5532-4c8b-bd46-32c26e28d529",
                     "name": "Test_Name_Template",
-                    "startDate": "2020-12-02T11:40:16+00:00",
-                    "endDate": null,
+                    "start_date": "2020-12-02T11:40:16+00:00",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO Initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO Initials",
+                    "possible_actions": [
                         "inactivate"
                     ],
-                    "timepointTemplate": {
+                    "timepoint_template": {
                         "name": "Test_Name_Template",
                         "uid": "{otuid}"
                     },
-                    "parameterValues": [],
+                    "parameter_values": [],
                     "library": {
                         "name": "Test library",
-                        "isEditable": true
+                        "is_editable": true
                     },
                     "changes": {
                         "uid": false,
                         "name": false,
-                        "startDate": true,
-                        "endDate": true,
+                        "start_date": true,
+                        "end_date": true,
                         "status": true,
                         "version": true,
-                        "changeDescription": true,
-                        "userInitials": false,
-                        "possibleActions": true,
-                        "timepointTemplate": false,
+                        "change_description": true,
+                        "user_initials": false,
+                        "possible_actions": true,
+                        "timepoint_template": false,
                         "library": false,
-                        "parameterValues": false
+                        "parameter_values": false
                     }
                 },
                 {
                     "uid": "04f672c6-5532-4c8b-bd46-32c26e28d529",
                     "name": "Test_Name_Template",
-                    "startDate": "2020-12-02T11:40:16+00:00",
-                    "endDate": "2020-12-02T11:40:16+00:00",
+                    "start_date": "2020-12-02T11:40:16+00:00",
+                    "end_date": "2020-12-02T11:40:16+00:00",
                     "status": "Draft",
                     "version": "0.1",
-                    "changeDescription": "Initial version",
-                    "userInitials": "TODO Initials",
-                    "possibleActions": [
+                    "change_description": "Initial version",
+                    "user_initials": "TODO Initials",
+                    "possible_actions": [
                         "approve",
                         "delete",
                         "edit"
                     ],
-                    "timepointTemplate": {
+                    "timepoint_template": {
                         "name": "Test_Name_Template",
                         "uid": "{otuid}"
                     },
-                    "parameterValues": [],
+                    "parameter_values": [],
                     "library": {
                         "name": "Test library",
-                        "isEditable": true
+                        "is_editable": true
                     },
                     "changes": {}
                 }
@@ -294,7 +294,7 @@
             "method": "PATCH",
             "request": {
                 "name": "test{test-uid}",
-                "parameterValues": [
+                "parameter_values": [
                     {
                       "name": "Intervention",
                         "values": [{
@@ -321,7 +321,7 @@
                     {
                         "loc": [
                             "body",
-                            "changeDescription"
+                            "change_description"
                         ],
                         "msg": "field required",
                         "type": "value_error.missing"
@@ -336,9 +336,9 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "changeDescription": "Change test",
+                "change_description": "Change test",
                 "name": "test{test-uid}",
-                "parameterValues": []
+                "parameter_values": []
             },
             "url": "/timepoints/{uid}"
         },
@@ -362,10 +362,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "changeDescription": "Test new version creation",
+                "change_description": "Test new version creation",
                 "name": "test1"
             },
-            "url": "/timepoints/{uid}/new-version"
+            "url": "/timepoints/{uid}/versions"
         },
         "response": {
             "code": 404,
@@ -384,9 +384,9 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "changeDescription": "Change test",
+                "change_description": "Change test",
                 "name": "test{test-uid}",
-                "parameterValues": []
+                "parameter_values": []
             },
             "url": "/timepoints/{uid}"
         },

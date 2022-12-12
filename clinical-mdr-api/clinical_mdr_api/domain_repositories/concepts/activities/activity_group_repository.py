@@ -39,21 +39,21 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
             uid=input_dict.get("uid"),
             concept_vo=ActivityGroupVO.from_repository_values(
                 name=input_dict.get("name"),
-                name_sentence_case=input_dict.get("nameSentenceCase"),
+                name_sentence_case=input_dict.get("name_sentence_case"),
                 definition=input_dict.get("definition"),
                 abbreviation=input_dict.get("abbreviation"),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("libraryName"),
+                library_name=input_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: input_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("changeDescription"),
+                change_description=input_dict.get("change_description"),
                 status=LibraryItemStatus(input_dict.get("status")),
-                author=input_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=input_dict.get("startDate")),
+                author=input_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=input_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -90,16 +90,14 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
             filter_query_parameters,
         ) = super().create_query_filter_statement(library=library)
         filter_parameters = []
-        if kwargs.get("activitySubGroupNames") is not None:
-            activity_sub_group_names = kwargs.get("activitySubGroupNames")
-            filter_by_activity_sub_group_names = """
-            size([(concept_value)<-[:IN_GROUP]-(v:ActivitySubGroupValue) WHERE v.name IN $activity_sub_group_names | v.name]) > 0"""
-            filter_parameters.append(filter_by_activity_sub_group_names)
-            filter_query_parameters[
-                "activity_sub_group_names"
-            ] = activity_sub_group_names
-        if kwargs.get("activityNames") is not None:
-            activity_names = kwargs.get("activityNames")
+        if kwargs.get("activity_subgroup_names") is not None:
+            activity_subgroup_names = kwargs.get("activity_subgroup_names")
+            filter_by_activity_subgroup_names = """
+            size([(concept_value)<-[:IN_GROUP]-(v:ActivitySubGroupValue) WHERE v.name IN $activity_subgroup_names | v.name]) > 0"""
+            filter_parameters.append(filter_by_activity_subgroup_names)
+            filter_query_parameters["activity_subgroup_names"] = activity_subgroup_names
+        if kwargs.get("activity_names") is not None:
+            activity_names = kwargs.get("activity_names")
             filter_by_activity_names = """
             size([(concept_value)<-[:IN_GROUP]-()<-[:IN_SUB_GROUP]-(v:ActivityValue) WHERE v.name IN $activity_names | v.name]) > 0"""
             filter_parameters.append(filter_by_activity_names)

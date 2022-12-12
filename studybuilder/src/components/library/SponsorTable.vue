@@ -33,7 +33,7 @@ export default {
   components: {
     CodelistTable
   },
-  props: ['catalogueName'],
+  props: ['catalogue_name'],
   computed: {
     ...mapGetters({
       catalogues: 'ctCatalogues/catalogues'
@@ -49,10 +49,10 @@ export default {
     }
   },
   methods: {
-    openCodelistTerms ({ codelist }) {
+    openCodelistTerms ({ codelist, catalogueName }) {
       this.$router.push({
         name: 'CodelistTerms',
-        params: { codelistId: codelist.codelistUid }
+        params: { codelist_id: codelist.codelist_uid, catalogue_name: catalogueName }
       })
     }
   },

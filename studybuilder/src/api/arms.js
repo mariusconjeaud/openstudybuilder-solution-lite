@@ -1,6 +1,6 @@
 import repository from './repository'
 
-const resource = 'study'
+const resource = 'studies'
 
 export default {
   getAllForStudy (uid, options) {
@@ -13,7 +13,7 @@ export default {
     const params = {
       ...data
     }
-    return repository.post(`${resource}/${uid}/study-arms/create`, params)
+    return repository.post(`${resource}/${uid}/study-arms`, params)
   },
   edit (uid, data, armUid) {
     const params = {
@@ -34,7 +34,7 @@ export default {
     return repository.get(`${resource}/${uid}/study-elements/${elementUid}`)
   },
   addStudyElement (uid, data) {
-    return repository.post(`${resource}/${uid}/study-elements/create`, data)
+    return repository.post(`${resource}/${uid}/study-elements`, data)
   },
   editStudyElement (uid, elementUid, data) {
     return repository.patch(`${resource}/${uid}/study-elements/${elementUid}`, data)
@@ -43,7 +43,7 @@ export default {
     return repository.delete(`${resource}/${uid}/study-elements/${elementUid}`)
   },
   getStudyElementsAllowedConfigs () {
-    return repository.get(`${resource}/study-elements/allowed-element-configs`)
+    return repository.get('study-elements/allowed-element-configs')
   },
   getAllStudyCells (uid) {
     return repository.get(`${resource}/${uid}/study-design-cells`)
@@ -64,7 +64,7 @@ export default {
     return repository.get(`${resource}/${uid}/study-branch-arms`, { params })
   },
   createBranchArm (uid, data) {
-    return repository.post(`${resource}/${uid}/study-branch-arms/create`, data)
+    return repository.post(`${resource}/${uid}/study-branch-arms`, data)
   },
   editBranchArm (uid, branchArmUid, data) {
     return repository.patch(`${resource}/${uid}/study-branch-arms/${branchArmUid}`, data)
@@ -95,7 +95,7 @@ export default {
     return repository.get(`${resource}/${uid}/study-cohorts`, { params })
   },
   createCohort (uid, data) {
-    return repository.post(`${resource}/${uid}/study-cohorts/create`, data)
+    return repository.post(`${resource}/${uid}/study-cohorts`, data)
   },
   editCohort (uid, cohortUid, data) {
     return repository.patch(`${resource}/${uid}/study-cohorts/${cohortUid}`, data)

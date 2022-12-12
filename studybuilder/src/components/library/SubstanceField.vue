@@ -68,12 +68,12 @@ export default {
       if (value) {
         if (value.pclass) {
           this.pclass = value.pclass.name
-          this.medrtId = value.pclass.dictionaryId
+          this.medrtId = value.pclass.dictionary_id
         } else {
           this.pclass = ''
           this.medrtId = ''
         }
-        this.unii = value.dictionaryId
+        this.unii = value.dictionary_id
       }
     },
     update (val) {

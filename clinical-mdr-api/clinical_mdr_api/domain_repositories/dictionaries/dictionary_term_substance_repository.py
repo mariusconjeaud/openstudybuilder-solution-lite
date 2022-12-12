@@ -55,27 +55,27 @@ class DictionaryTermSubstanceRepository(
     ) -> DictionaryTermSubstanceAR:
         major, minor = term_dict.get("version").split(".")
         return DictionaryTermSubstanceAR.from_repository_values(
-            uid=term_dict.get("termUid"),
+            uid=term_dict.get("term_uid"),
             dictionary_term_vo=DictionaryTermSubstanceVO.from_repository_values(
-                codelist_uid=term_dict.get("codelistUid"),
-                dictionary_id=term_dict.get("dictionaryId"),
+                codelist_uid=term_dict.get("codelist_uid"),
+                dictionary_id=term_dict.get("dictionary_id"),
                 name=term_dict.get("name"),
-                name_sentence_case=term_dict.get("nameSentenceCase"),
+                name_sentence_case=term_dict.get("name_sentence_case"),
                 abbreviation=term_dict.get("abbreviation"),
                 definition=term_dict.get("definition"),
-                pclass_uid=term_dict.get("pclassUid"),
+                pclass_uid=term_dict.get("pclass_uid"),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=term_dict.get("libraryName"),
+                library_name=term_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: term_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=term_dict.get("changeDescription"),
+                change_description=term_dict.get("change_description"),
                 status=LibraryItemStatus(term_dict.get("status")),
-                author=term_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=term_dict.get("startDate")),
+                author=term_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=term_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -122,7 +122,7 @@ class DictionaryTermSubstanceRepository(
     def specific_alias_clause(self) -> str:
         return """
             WITH *,
-                head([(dictionary_term_value)-[:HAS_PCLASS]->(pclass_dict_term_root:DictionaryTermRoot) | pclass_dict_term_root.uid]) AS pclassUid
+                head([(dictionary_term_value)-[:HAS_PCLASS]->(pclass_dict_term_root:DictionaryTermRoot) | pclass_dict_term_root.uid]) AS pclass_uid
             """
 
     def find_all(
@@ -168,9 +168,7 @@ class DictionaryTermSubstanceRepository(
         )
 
         query.parameters.update({"codelist_name": codelist_name})
-        result_array, attributes_names = db.cypher_query(
-            query=query.full_query, params=query.parameters
-        )
+        result_array, attributes_names = query.execute()
         extracted_items = self._retrieve_terms_from_cypher_res(
             result_array, attributes_names
         )

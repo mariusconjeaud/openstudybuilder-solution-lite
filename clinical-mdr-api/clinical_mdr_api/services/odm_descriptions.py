@@ -20,13 +20,10 @@ from clinical_mdr_api.models.odm_description import (
     OdmDescriptionPostInput,
     OdmDescriptionVersion,
 )
-from clinical_mdr_api.services.concepts.concept_generic_service import (
-    ConceptGenericService,
-    _AggregateRootType,
-)
+from clinical_mdr_api.services.odm_generic_service import OdmGenericService
 
 
-class OdmDescriptionService(ConceptGenericService[OdmDescriptionAR]):
+class OdmDescriptionService(OdmGenericService[OdmDescriptionAR]):
     aggregate_class = OdmDescriptionAR
     version_class = OdmDescriptionVersion
     repository_interface = DescriptionRepository
@@ -38,7 +35,7 @@ class OdmDescriptionService(ConceptGenericService[OdmDescriptionAR]):
 
     def _create_aggregate_root(
         self, concept_input: OdmDescriptionPostInput, library
-    ) -> _AggregateRootType:
+    ) -> OdmDescriptionAR:
         return OdmDescriptionAR.from_input_values(
             author=self.user_initials,
             concept_vo=OdmDescriptionVO.from_repository_values(
@@ -46,7 +43,7 @@ class OdmDescriptionService(ConceptGenericService[OdmDescriptionAR]):
                 language=concept_input.language,
                 description=concept_input.description,
                 instruction=concept_input.instruction,
-                sponsor_instruction=concept_input.sponsorInstruction,
+                sponsor_instruction=concept_input.sponsor_instruction,
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
@@ -57,20 +54,22 @@ class OdmDescriptionService(ConceptGenericService[OdmDescriptionAR]):
     ) -> OdmDescriptionAR:
         item.edit_draft(
             author=self.user_initials,
-            change_description=concept_edit_input.changeDescription,
+            change_description=concept_edit_input.change_description,
             concept_vo=OdmDescriptionVO.from_repository_values(
                 name=concept_edit_input.name,
                 language=concept_edit_input.language,
                 description=concept_edit_input.description,
                 instruction=concept_edit_input.instruction,
-                sponsor_instruction=concept_edit_input.sponsorInstruction,
+                sponsor_instruction=concept_edit_input.sponsor_instruction,
             ),
         )
         return item
 
     def soft_delete(self, uid: str) -> None:
         if not self._repos.odm_description_repository.exists_by("uid", uid, True):
-            raise NotFoundException(f"Odm Description with uid {uid} does not exist.")
+            raise NotFoundException(
+                f"ODM Description identified by uid ({uid}) does not exist."
+            )
 
         if self._repos.odm_description_repository.has_active_relationships(
             uid,
@@ -96,10 +95,10 @@ class OdmDescriptionService(ConceptGenericService[OdmDescriptionAR]):
                     item = self.edit_draft(operation.content.uid, operation.content)
                     response_code = status.HTTP_200_OK
             except exceptions.MDRApiBaseException as error:
-                result["responseCode"] = error.status_code
+                result["response_code"] = error.status_code
                 result["content"] = models.error.BatchErrorResponse(message=str(error))
             else:
-                result["responseCode"] = response_code
+                result["response_code"] = response_code
                 if item:
                     result["content"] = item.dict()
             finally:
@@ -110,7 +109,7 @@ class OdmDescriptionService(ConceptGenericService[OdmDescriptionAR]):
     def get_active_relationships(self, uid: str):
         if not self._repos.odm_description_repository.exists_by("uid", uid, True):
             raise exceptions.NotFoundException(
-                f"Odm Description with uid {uid} does not exist."
+                f"ODM Description identified by uid ({uid}) does not exist."
             )
 
         return self._repos.odm_description_repository.get_active_relationships(

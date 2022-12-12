@@ -4,7 +4,7 @@ import instances from '@/utils/instances'
 export const objectManagerMixin = {
   methods: {
     async setParameterValues (data, parameters) {
-      data.parameterValues = await instances.formatParameterValues(parameters)
+      data.parameter_values = await instances.formatParameterValues(parameters)
     },
     getInitialFormContent () {
       return {
@@ -30,8 +30,8 @@ export const objectManagerMixin = {
             parameters.push(value)
           }
         })
-        if (useDefaultValues && template.defaultParameterValues) {
-          instances.loadParameterValues(template.defaultParameterValues, parameters, true)
+        if (useDefaultValues && template.default_parameter_values) {
+          instances.loadParameterValues(template.default_parameter_values, parameters, true)
         }
         this.parameters = parameters
       })
@@ -57,7 +57,7 @@ export const objectManagerMixin = {
         })
         this.parameters = parameters
         this.apiEndpoint.getObject(object.uid).then(resp => {
-          instances.loadParameterValues(resp.data.parameterValues, this.parameters)
+          instances.loadParameterValues(resp.data.parameter_values, this.parameters)
         })
       })
     },
@@ -66,7 +66,7 @@ export const objectManagerMixin = {
 
       data[this.objectTemplateUidLabel] = data[this.objectTemplateUidResultLabel].uid
       delete data[this.objectTemplateUidResultLabel]
-      data.libraryName = data.library.name
+      data.library_name = data.library.name
       delete data.library
       await this.setParameterValues(data, this.parameters)
 
@@ -76,7 +76,7 @@ export const objectManagerMixin = {
     },
     async updateObject () {
       const data = JSON.parse(JSON.stringify(this.form))
-      data.parameterUids = []
+      data.parameter_uids = []
       await this.setParameterValues(data, this.parameters)
       return this.$store.dispatch(this.storeEndpointUpdate, { uid: this.objectUid, data }).then(resp => {
         bus.$emit('notification', { msg: this.$t(this.translationLabel + '.update_success') })

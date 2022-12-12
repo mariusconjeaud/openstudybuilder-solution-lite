@@ -6,11 +6,11 @@
          "method": "POST",
          "request": {
             "name": "new_name",
-            "nameSentenceCase": "name_sentence_case",
+            "name_sentence_case": "name_sentence_case",
             "definition": "definition",
             "abbreviation": "abbv",
-            "libraryName": "Sponsor",
-            "activitySubGroup": "activity_sub_group_root1"
+            "library_name": "Sponsor",
+            "activity_subgroup": "activity_subgroup_root1"
          },
          "url": "/concepts/activities/activities"
       },
@@ -20,25 +20,25 @@
          "result": {
             "uid": "Activity_000001",
             "name": "new_name",
-            "nameSentenceCase": "name_sentence_case",
+            "name_sentence_case": "name_sentence_case",
             "definition": "definition",
             "abbreviation": "abbv",
-            "libraryName": "Sponsor",
-            "activitySubGroup": {
-                  "uid": "activity_sub_group_root1",
+            "library_name": "Sponsor",
+            "activity_subgroup": {
+                  "uid": "activity_subgroup_root1",
                   "name": "name1"
             },
-            "activityGroup": {
+            "activity_group": {
                   "uid": "activity_group_root1",
                   "name": "name1"
             },
-            "startDate": "2021-03-18T11:54:20.898Z",
-            "endDate": null,
+            "start_date": "2021-03-18T11:54:20.898Z",
+            "end_date": null,
             "status": "Draft",
             "version": "0.1",
-            "changeDescription": "Initial version",
-            "userInitials": "TODO user initials",
-            "possibleActions": [
+            "change_description": "Initial version",
+            "user_initials": "TODO user initials",
+            "possible_actions": [
                "approve",
                "delete",
                "edit"
@@ -52,7 +52,7 @@
          "headers": {},
          "method": "GET",
          "request": {},
-         "url": "/concepts/activities/activities?totalCount=true"
+         "url": "/concepts/activities/activities?total_count=true"
       },
       "response": {
          "code": 200,
@@ -60,80 +60,80 @@
          "result": {
             "items": [
                {
-                  "uid": "activity_root1",
-                  "name": "name1",
-                  "nameSentenceCase": "name_sentence_case1",
-                  "definition": "definition1",
+                  "uid": "Activity_000001",
+                  "name": "new_name",
+                  "name_sentence_case": "name_sentence_case",
+                  "definition": "definition",
                   "abbreviation": "abbv",
-                  "libraryName": "Sponsor",
-                  "activitySubGroup": {
-                        "uid": "activity_sub_group_root1",
+                  "library_name": "Sponsor",
+                  "activity_subgroup": {
+                        "uid": "activity_subgroup_root1",
                         "name": "name1"
                   },
-                  "activityGroup": {
+                  "activity_group": {
                         "uid": "activity_group_root1",
                         "name": "name1"
                   },
-                  "startDate": "2021-03-18T11:54:20.898Z",
-                  "endDate": null,
-                  "status": "Final",
-                  "version": "1.0",
-                  "changeDescription": "Approved version",
-                  "userInitials": "TODO user initials",
-                  "possibleActions": [
-                     "inactivate",
-                     "newVersion"
-                  ]
-               },
-               {
-                  "uid": "activity_root2",
-                  "name": "name2",
-                  "nameSentenceCase": "name_sentence_case2",
-                  "definition": "definition2",
-                  "abbreviation": "abbv",
-                  "libraryName": "Sponsor",
-                  "activitySubGroup": {
-                        "uid": "activity_sub_group_root2",
-                        "name": "name2"
-                  },
-                  "activityGroup": {
-                        "uid": "activity_group_root2",
-                        "name": "name2"
-                  },
-                  "startDate": "2021-03-18T11:54:20.898Z",
-                  "endDate": null,
+                  "start_date": "2021-03-18T11:54:20.898Z",
+                  "end_date": null,
                   "status": "Draft",
                   "version": "0.1",
-                  "changeDescription": "New draft version",
-                  "userInitials": "TODO user initials",
-                  "possibleActions": [
+                  "change_description": "Initial version",
+                  "user_initials": "TODO user initials",
+                  "possible_actions": [
                      "approve",
                      "delete",
                      "edit"
                   ]
                },
                {
-                  "uid": "Activity_000001",
-                  "name": "new_name",
-                  "nameSentenceCase": "name_sentence_case",
-                  "definition": "definition",
+                  "uid": "activity_root1",
+                  "name": "name1",
+                  "name_sentence_case": "name_sentence_case1",
+                  "definition": "definition1",
                   "abbreviation": "abbv",
-                  "libraryName": "Sponsor",
-                  "activitySubGroup": {
-                        "uid": "activity_sub_group_root1",
+                  "library_name": "Sponsor",
+                  "activity_subgroup": {
+                        "uid": "activity_subgroup_root1",
                         "name": "name1"
                   },
-                  "activityGroup": {
+                  "activity_group": {
                         "uid": "activity_group_root1",
                         "name": "name1"
                   },
-                  "startDate": "2021-03-18T11:54:20.898Z",
-                  "endDate": null,
+                  "start_date": "2021-03-18T11:54:20.898Z",
+                  "end_date": null,
+                  "status": "Final",
+                  "version": "1.0",
+                  "change_description": "Approved version",
+                  "user_initials": "TODO user initials",
+                  "possible_actions": [
+                     "inactivate",
+                     "new_version"
+                  ]
+               },
+               {
+                  "uid": "activity_root2",
+                  "name": "name2",
+                  "name_sentence_case": "name_sentence_case2",
+                  "definition": "definition2",
+                  "abbreviation": "abbv",
+                  "library_name": "Sponsor",
+                  "activity_subgroup": {
+                        "uid": "activity_subgroup_root2",
+                        "name": "name2"
+                  },
+                  "activity_group": {
+                        "uid": "activity_group_root2",
+                        "name": "name2"
+                  },
+                  "start_date": "2021-03-18T11:54:20.898Z",
+                  "end_date": null,
                   "status": "Draft",
                   "version": "0.1",
-                  "changeDescription": "Initial version",
-                  "userInitials": "TODO user initials",
-                  "possibleActions": [
+                  "change_description": "New draft version",
+                  "user_initials": "TODO user initials",
+                  "possible_actions": [
                      "approve",
                      "delete",
                      "edit"
@@ -142,7 +142,7 @@
             ],
             "total": 3,
             "page": 1,
-            "size": 0
+            "size": 10
          }
       }
    },
@@ -152,7 +152,7 @@
          "headers": {},
          "method": "GET",
          "request": {},
-         "url": "/concepts/activities/activities?activitySubGroupUid=activity_sub_group_root2&totalCount=true"
+         "url": "/concepts/activities/activities?activity_subgroup_uid=activity_subgroup_root2&total_count=true"
       },
       "response": {
          "code": 200,
@@ -162,25 +162,25 @@
                {
                   "uid": "activity_root2",
                   "name": "name2",
-                  "nameSentenceCase": "name_sentence_case2",
+                  "name_sentence_case": "name_sentence_case2",
                   "definition": "definition2",
                   "abbreviation": "abbv",
-                  "libraryName": "Sponsor",
-                  "activitySubGroup": {
-                        "uid": "activity_sub_group_root2",
+                  "library_name": "Sponsor",
+                  "activity_subgroup": {
+                        "uid": "activity_subgroup_root2",
                         "name": "name2"
                   },
-                  "activityGroup": {
+                  "activity_group": {
                         "uid": "activity_group_root2",
                         "name": "name2"
                   },
-                  "startDate": "2021-03-18T11:54:20.898Z",
-                  "endDate": null,
+                  "start_date": "2021-03-18T11:54:20.898Z",
+                  "end_date": null,
                   "status": "Draft",
                   "version": "0.1",
-                  "changeDescription": "New draft version",
-                  "userInitials": "TODO user initials",
-                  "possibleActions": [
+                  "change_description": "New draft version",
+                  "user_initials": "TODO user initials",
+                  "possible_actions": [
                      "approve",
                      "delete",
                      "edit"
@@ -189,7 +189,7 @@
             ],
             "total": 1,
             "page": 1,
-            "size": 0
+            "size": 10
          }
       }
    },
@@ -199,7 +199,7 @@
          "headers": {},
          "method": "GET",
          "request": {},
-         "url": "/concepts/activities/activities?activityNames[]=name2&totalCount=true"
+         "url": "/concepts/activities/activities?activity_names[]=name2&total_count=true"
       },
       "response": {
          "code": 200,
@@ -209,25 +209,25 @@
                {
                   "uid": "activity_root2",
                   "name": "name2",
-                  "nameSentenceCase": "name_sentence_case2",
+                  "name_sentence_case": "name_sentence_case2",
                   "definition": "definition2",
                   "abbreviation": "abbv",
-                  "libraryName": "Sponsor",
-                  "activitySubGroup": {
-                        "uid": "activity_sub_group_root2",
+                  "library_name": "Sponsor",
+                  "activity_subgroup": {
+                        "uid": "activity_subgroup_root2",
                         "name": "name2"
                   },
-                  "activityGroup": {
+                  "activity_group": {
                         "uid": "activity_group_root2",
                         "name": "name2"
                   },
-                  "startDate": "2021-03-18T11:54:20.898Z",
-                  "endDate": null,
+                  "start_date": "2021-03-18T11:54:20.898Z",
+                  "end_date": null,
                   "status": "Draft",
                   "version": "0.1",
-                  "changeDescription": "New draft version",
-                  "userInitials": "TODO user initials",
-                  "possibleActions": [
+                  "change_description": "New draft version",
+                  "user_initials": "TODO user initials",
+                  "possible_actions": [
                      "approve",
                      "delete",
                      "edit"
@@ -236,7 +236,7 @@
             ],
             "total": 1,
             "page": 1,
-            "size": 0
+            "size": 10
          }
       }
    },
@@ -246,7 +246,7 @@
          "headers": {},
          "method": "GET",
          "request": {},
-         "url": "/concepts/activities/activities?activitySubGroupNames[]=name2&totalCount=true"
+         "url": "/concepts/activities/activities?activity_subgroup_names[]=name2&total_count=true"
       },
       "response": {
          "code": 200,
@@ -256,25 +256,25 @@
                {
                   "uid": "activity_root2",
                   "name": "name2",
-                  "nameSentenceCase": "name_sentence_case2",
+                  "name_sentence_case": "name_sentence_case2",
                   "definition": "definition2",
                   "abbreviation": "abbv",
-                  "libraryName": "Sponsor",
-                  "activitySubGroup": {
-                        "uid": "activity_sub_group_root2",
+                  "library_name": "Sponsor",
+                  "activity_subgroup": {
+                        "uid": "activity_subgroup_root2",
                         "name": "name2"
                   },
-                  "activityGroup": {
+                  "activity_group": {
                         "uid": "activity_group_root2",
                         "name": "name2"
                   },
-                  "startDate": "2021-03-18T11:54:20.898Z",
-                  "endDate": null,
+                  "start_date": "2021-03-18T11:54:20.898Z",
+                  "end_date": null,
                   "status": "Draft",
                   "version": "0.1",
-                  "changeDescription": "New draft version",
-                  "userInitials": "TODO user initials",
-                  "possibleActions": [
+                  "change_description": "New draft version",
+                  "user_initials": "TODO user initials",
+                  "possible_actions": [
                      "approve",
                      "delete",
                      "edit"
@@ -283,7 +283,7 @@
             ],
             "total": 1,
             "page": 1,
-            "size": 0
+            "size": 10
          }
       }
    },
@@ -293,7 +293,7 @@
          "headers": {},
          "method": "GET",
          "request": {},
-         "url": "/concepts/activities/activities?activityGroupNames[]=name2&totalCount=true"
+         "url": "/concepts/activities/activities?activity_group_names[]=name2&total_count=true"
       },
       "response": {
          "code": 200,
@@ -303,25 +303,25 @@
                {
                   "uid": "activity_root2",
                   "name": "name2",
-                  "nameSentenceCase": "name_sentence_case2",
+                  "name_sentence_case": "name_sentence_case2",
                   "definition": "definition2",
                   "abbreviation": "abbv",
-                  "libraryName": "Sponsor",
-                  "activitySubGroup": {
-                        "uid": "activity_sub_group_root2",
+                  "library_name": "Sponsor",
+                  "activity_subgroup": {
+                        "uid": "activity_subgroup_root2",
                         "name": "name2"
                   },
-                  "activityGroup": {
+                  "activity_group": {
                         "uid": "activity_group_root2",
                         "name": "name2"
                   },
-                  "startDate": "2021-03-18T11:54:20.898Z",
-                  "endDate": null,
+                  "start_date": "2021-03-18T11:54:20.898Z",
+                  "end_date": null,
                   "status": "Draft",
                   "version": "0.1",
-                  "changeDescription": "New draft version",
-                  "userInitials": "TODO user initials",
-                  "possibleActions": [
+                  "change_description": "New draft version",
+                  "user_initials": "TODO user initials",
+                  "possible_actions": [
                      "approve",
                      "delete",
                      "edit"
@@ -330,7 +330,7 @@
             ],
             "total": 1,
             "page": 1,
-            "size": 0
+            "size": 10
          }
       }
    },
@@ -348,38 +348,38 @@
          "result": {
             "uid": "Activity_000001",
             "name": "new_name",
-            "nameSentenceCase": "name_sentence_case",
+            "name_sentence_case": "name_sentence_case",
             "definition": "definition",
             "abbreviation": "abbv",
-            "libraryName": "Sponsor",
-            "activitySubGroup": {
-                  "uid": "activity_sub_group_root1",
+            "library_name": "Sponsor",
+            "activity_subgroup": {
+                  "uid": "activity_subgroup_root1",
                   "name": "name1"
             },
-            "activityGroup": {
+            "activity_group": {
                   "uid": "activity_group_root1",
                   "name": "name1"
             },
-            "startDate": "2021-03-18T11:54:20.898Z",
-            "endDate": null,
+            "start_date": "2021-03-18T11:54:20.898Z",
+            "end_date": null,
             "status": "Final",
             "version": "1.0",
-            "changeDescription": "Approved version",
-            "userInitials": "TODO user initials",
-            "possibleActions": [
+            "change_description": "Approved version",
+            "user_initials": "TODO user initials",
+            "possible_actions": [
                "inactivate",
-               "newVersion"
+               "new_version"
             ]
          }
       }
    },
    {
-      "name": "Test POST new-version activity",
+      "name": "Test POST /versions activity",
       "request": {
          "headers": {},
          "method": "POST",
          "request": {},
-         "url": "/concepts/activities/activities/Activity_000001/new-version"
+         "url": "/concepts/activities/activities/Activity_000001/versions"
       },
       "response": {
          "code": 201,
@@ -387,25 +387,25 @@
          "result": {
             "uid": "Activity_000001",
             "name": "new_name",
-            "nameSentenceCase": "name_sentence_case",
+            "name_sentence_case": "name_sentence_case",
             "definition": "definition",
             "abbreviation": "abbv",
-            "libraryName": "Sponsor",
-            "activitySubGroup": {
-                  "uid": "activity_sub_group_root1",
+            "library_name": "Sponsor",
+            "activity_subgroup": {
+                  "uid": "activity_subgroup_root1",
                   "name": "name1"
             },
-            "activityGroup": {
+            "activity_group": {
                   "uid": "activity_group_root1",
                   "name": "name1"
             },
-            "startDate": "2021-03-18T11:54:20.898Z",
-            "endDate": null,
+            "start_date": "2021-03-18T11:54:20.898Z",
+            "end_date": null,
             "status": "Draft",
             "version": "1.1",
-            "changeDescription": "New draft created",
-            "userInitials": "TODO user initials",
-            "possibleActions": [
+            "change_description": "New draft created",
+            "user_initials": "TODO user initials",
+            "possible_actions": [
                "approve",
                "edit"
             ]
@@ -426,25 +426,25 @@
          "result": {
             "uid": "activity_root1",
             "name": "name1",
-            "nameSentenceCase": "name_sentence_case1",
+            "name_sentence_case": "name_sentence_case1",
             "definition": "definition1",
             "abbreviation": "abbv",
-            "libraryName": "Sponsor",
-            "activitySubGroup": {
-                  "uid": "activity_sub_group_root1",
+            "library_name": "Sponsor",
+            "activity_subgroup": {
+                  "uid": "activity_subgroup_root1",
                   "name": "name1"
             },
-            "activityGroup": {
+            "activity_group": {
                   "uid": "activity_group_root1",
                   "name": "name1"
             },
-            "startDate": "2021-03-18T11:54:20.898Z",
-            "endDate": null,
+            "start_date": "2021-03-18T11:54:20.898Z",
+            "end_date": null,
             "status": "Retired",
             "version": "1.0",
-            "changeDescription": "Deactivated version",
-            "userInitials": "TODO user initials",
-            "possibleActions": [
+            "change_description": "Deactivated version",
+            "user_initials": "TODO user initials",
+            "possible_actions": [
                "reactivate"
             ]
          }
@@ -464,27 +464,27 @@
          "result": {
             "uid": "activity_root1",
             "name": "name1",
-            "nameSentenceCase": "name_sentence_case1",
+            "name_sentence_case": "name_sentence_case1",
             "definition": "definition1",
             "abbreviation": "abbv",
-            "libraryName": "Sponsor",
-            "activitySubGroup": {
-                  "uid": "activity_sub_group_root1",
+            "library_name": "Sponsor",
+            "activity_subgroup": {
+                  "uid": "activity_subgroup_root1",
                   "name": "name1"
             },
-            "activityGroup": {
+            "activity_group": {
                   "uid": "activity_group_root1",
                   "name": "name1"
             },
-            "startDate": "2021-03-18T11:54:20.898Z",
-            "endDate": null,
+            "start_date": "2021-03-18T11:54:20.898Z",
+            "end_date": null,
             "status": "Final",
             "version": "1.0",
-            "changeDescription": "Reactivated version",
-            "userInitials": "TODO user initials",
-            "possibleActions": [
+            "change_description": "Reactivated version",
+            "user_initials": "TODO user initials",
+            "possible_actions": [
                "inactivate",
-               "newVersion"
+               "new_version"
             ]
          }
       }

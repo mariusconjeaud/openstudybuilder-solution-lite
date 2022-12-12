@@ -32,7 +32,7 @@ class CTCodelistAttributesService(CTCodelistGenericService[CTCodelistAttributesA
             item = self._find_by_uid_or_raise_not_found(codelist_uid, for_update=True)
             item.edit_draft(
                 author=self.user_initials,
-                change_description=codelist_input.changeDescription,
+                change_description=codelist_input.change_description,
                 ct_codelist_vo=CTCodelistAttributesVO.from_input_values(
                     name=self.get_input_or_previous_property(
                         codelist_input.name, item.ct_codelist_vo.name
@@ -41,11 +41,11 @@ class CTCodelistAttributesService(CTCodelistGenericService[CTCodelistAttributesA
                     parent_codelist_uid=item.ct_codelist_vo.parent_codelist_uid,
                     child_codelist_uids=item.ct_codelist_vo.child_codelist_uids,
                     submission_value=self.get_input_or_previous_property(
-                        codelist_input.submissionValue,
+                        codelist_input.submission_value,
                         item.ct_codelist_vo.submission_value,
                     ),
                     preferred_term=self.get_input_or_previous_property(
-                        codelist_input.nciPreferredName,
+                        codelist_input.nci_preferred_name,
                         item.ct_codelist_vo.preferred_term,
                     ),
                     definition=self.get_input_or_previous_property(

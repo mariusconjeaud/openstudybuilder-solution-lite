@@ -78,25 +78,25 @@ class TimePointRepository(SimpleConceptGenericRepository[TimePointAR]):
             uid=input_dict.get("uid"),
             simple_concept_vo=TimePointVO.from_repository_values(
                 name=input_dict.get("name"),
-                name_sentence_case=input_dict.get("nameSentenceCase"),
+                name_sentence_case=input_dict.get("name_sentence_case"),
                 definition=input_dict.get("definition"),
                 abbreviation=input_dict.get("abbreviation"),
-                is_template_parameter=input_dict.get("templateParameter"),
-                unit_definition_uid=input_dict.get("unitDefinitionUid"),
-                numeric_value_uid=input_dict.get("numericValueUid"),
-                time_reference_uid=input_dict.get("timeReferenceUid"),
+                is_template_parameter=input_dict.get("template_parameter"),
+                unit_definition_uid=input_dict.get("unit_definition_uid"),
+                numeric_value_uid=input_dict.get("numeric_value_uid"),
+                time_reference_uid=input_dict.get("time_reference_uid"),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("libraryName"),
+                library_name=input_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: input_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("changeDescription"),
+                change_description=input_dict.get("change_description"),
                 status=LibraryItemStatus(input_dict.get("status")),
-                author=input_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=input_dict.get("startDate")),
+                author=input_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=input_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -132,7 +132,7 @@ class TimePointRepository(SimpleConceptGenericRepository[TimePointAR]):
     def specific_alias_clause(self) -> str:
         return """
         WITH *,
-            head([(concept_value)-[:HAS_UNIT_DEFINITION]->(unit_definition) | unit_definition.uid]) AS unitDefinitionUid,
-            head([(concept_value)-[:HAS_VALUE]->(numeric_value_root) | numeric_value_root.uid]) AS numericValueUid,
-            head([(concept_value)-[:HAS_TIME_REFERENCE]->(ct_term_root) | ct_term_root.uid]) as timeReferenceUid
+            head([(concept_value)-[:HAS_UNIT_DEFINITION]->(unit_definition) | unit_definition.uid]) AS unit_definition_uid,
+            head([(concept_value)-[:HAS_VALUE]->(numeric_value_root) | numeric_value_root.uid]) AS numeric_value_uid,
+            head([(concept_value)-[:HAS_TIME_REFERENCE]->(ct_term_root) | ct_term_root.uid]) as time_reference_uid
         """

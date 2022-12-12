@@ -1,61 +1,61 @@
 [
   {
     "categories": null,
-    "changeDescription": "Approved version",
-    "confirmatoryTesting": null,
-    "defaultParameterValues": {},
-    "editableInstance": false,
-    "endDate": null,
+    "change_description": "Approved version",
+    "confirmatory_testing": null,
+    "default_parameter_values": {},
+    "editable_instance": false,
+    "end_date": null,
     "indications": null,
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "User Defined"
     },
     "name": "<p>Time from randomisation to all cause death</p>",
-    "namePlain": "Time from randomisation to all cause death",
+    "name_plain": "Time from randomisation to all cause death",
     "parameters": [],
-    "possibleActions": [
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-10-20T12:27:08.867746",
+    "start_date": "2022-10-20T12:27:08.867746",
     "status": "Final",
-    "studyCount": 1,
+    "study_count": 1,
     "uid": "ObjectiveTemplate_000006",
-    "userInitials": "MT",
+    "user_initials": "MT",
     "version": "1.0"
   },
   {
     "categories": null,
-    "changeDescription": "Approved version",
-    "confirmatoryTesting": null,
-    "defaultParameterValues": {},
-    "editableInstance": false,
-    "endDate": null,
+    "change_description": "Approved version",
+    "confirmatory_testing": null,
+    "default_parameter_values": {},
+    "editable_instance": false,
+    "end_date": null,
     "indications": null,
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "User Defined"
     },
     "name": "<p>Time to first occurrence of MACE+, a composite endpoint consisting of: CV death, nonfatal MI,</p><p>nonfatal stroke, or hospitalization for unstable&nbsp;</p><p>angina</p>",
-    "namePlain": "Time to first occurrence of MACE+, a composite endpoint consisting of: CV death, nonfatal MI,nonfatal stroke, or hospitalization for unstable\u00a0angina",
+    "name_plain": "Time to first occurrence of MACE+, a composite endpoint consisting of: CV death, nonfatal MI,nonfatal stroke, or hospitalization for unstable\u00a0angina",
     "parameters": [],
-    "possibleActions": [
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-10-20T06:32:34.022117",
+    "start_date": "2022-10-20T06:32:34.022117",
     "status": "Final",
-    "studyCount": 1,
+    "study_count": 1,
     "uid": "ObjectiveTemplate_000005",
-    "userInitials": "MT",
+    "user_initials": "MT",
     "version": "1.0"
   },
   {
     "categories": null,
-    "changeDescription": "Work in Progress",
-    "confirmatoryTesting": false,
-    "defaultParameterValues": {
+    "change_description": "Work in Progress",
+    "confirmatory_testing": false,
+    "default_parameter_values": {
       "0": [
         {
           "conjunction": "",
@@ -74,35 +74,35 @@
         }
       ]
     },
-    "editableInstance": false,
-    "endDate": null,
+    "editable_instance": false,
+    "end_date": null,
     "indications": [
       {
         "abbreviation": "HF",
-        "changeDescription": "Approved version",
+        "change_description": "Approved version",
         "definition": "Heart failure (disorder)",
-        "dictionaryId": "84114007",
-        "endDate": null,
-        "libraryName": "SNOMED",
+        "dictionary_id": "84114007",
+        "end_date": null,
+        "library_name": "SNOMED",
         "name": "Heart failure",
-        "nameSentenceCase": "heart failure",
-        "possibleActions": [
+        "name_sentence_case": "heart failure",
+        "possible_actions": [
           "inactivate",
           "newVersion"
         ],
-        "startDate": "2022-10-18T12:43:45.780737",
+        "start_date": "2022-10-18T12:43:45.780737",
         "status": "Final",
-        "termUid": "DictionaryTerm_000015",
-        "userInitials": "MT",
+        "term_uid": "DictionaryTerm_000015",
+        "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
         "version": "1.0"
       }
     ],
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "Sponsor"
     },
     "name": "<p>To compare the effect of [Compound] relative to [Comparator] on [ActivityInstance] when something</p>",
-    "namePlain": "To compare the effect of [Compound] relative to [Comparator] on [ActivityInstance] when something",
+    "name_plain": "To compare the effect of [Compound] relative to [Comparator] on [ActivityInstance] when something",
     "parameters": [
       {
         "name": "Compound",
@@ -117,22 +117,22 @@
         "values": null
       }
     ],
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "edit"
     ],
-    "startDate": "2022-10-20T08:27:47.760273",
+    "start_date": "2022-10-20T08:27:47.760273",
     "status": "Draft",
-    "studyCount": 0,
+    "study_count": 0,
     "uid": "ObjectiveTemplate_000004",
-    "userInitials": "AJLD",
+    "user_initials": "AJLD",
     "version": "1.2"
   },
   {
     "categories": null,
-    "changeDescription": "Approved version",
-    "confirmatoryTesting": null,
-    "defaultParameterValues": {
+    "change_description": "Approved version",
+    "confirmatory_testing": null,
+    "default_parameter_values": {
       "0": [
         {
           "conjunction": "",
@@ -141,37 +141,37 @@
         }
       ]
     },
-    "editableInstance": false,
-    "endDate": null,
+    "editable_instance": false,
+    "end_date": null,
     "indications": null,
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "User Defined"
     },
     "name": "test user defined [ActivityInstance]",
-    "namePlain": "test user defined [ActivityInstance]",
+    "name_plain": "test user defined [ActivityInstance]",
     "parameters": [
       {
         "name": "ActivityInstance",
         "values": null
       }
     ],
-    "possibleActions": [
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-10-18T13:21:59.449192",
+    "start_date": "2022-10-18T13:21:59.449192",
     "status": "Final",
-    "studyCount": 0,
+    "study_count": 0,
     "uid": "ObjectiveTemplate_000003",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "categories": null,
-    "changeDescription": "Approved version",
-    "confirmatoryTesting": null,
-    "defaultParameterValues": {
+    "change_description": "Approved version",
+    "confirmatory_testing": null,
+    "default_parameter_values": {
       "0": [
         {
           "conjunction": "",
@@ -185,15 +185,15 @@
         }
       ]
     },
-    "editableInstance": false,
-    "endDate": null,
+    "editable_instance": false,
+    "end_date": null,
     "indications": null,
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "Sponsor"
     },
     "name": "test [ActivityInstance] and [DiseaseDisorder]",
-    "namePlain": "test [ActivityInstance] and [DiseaseDisorder]",
+    "name_plain": "test [ActivityInstance] and [DiseaseDisorder]",
     "parameters": [
       {
         "name": "ActivityInstance",
@@ -204,22 +204,22 @@
         "values": null
       }
     ],
-    "possibleActions": [
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-10-18T13:21:58.923397",
+    "start_date": "2022-10-18T13:21:58.923397",
     "status": "Final",
-    "studyCount": 0,
+    "study_count": 0,
     "uid": "ObjectiveTemplate_000002",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "categories": null,
-    "changeDescription": "Approved version",
-    "confirmatoryTesting": null,
-    "defaultParameterValues": {
+    "change_description": "Approved version",
+    "confirmatory_testing": null,
+    "default_parameter_values": {
       "0": [
         {
           "conjunction": "",
@@ -228,30 +228,30 @@
         }
       ]
     },
-    "editableInstance": false,
-    "endDate": null,
+    "editable_instance": false,
+    "end_date": null,
     "indications": null,
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "Sponsor"
     },
     "name": "test [ActivityInstance]",
-    "namePlain": "test [ActivityInstance]",
+    "name_plain": "test [ActivityInstance]",
     "parameters": [
       {
         "name": "ActivityInstance",
         "values": null
       }
     ],
-    "possibleActions": [
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-10-18T13:21:58.172432",
+    "start_date": "2022-10-18T13:21:58.172432",
     "status": "Final",
-    "studyCount": 0,
+    "study_count": 0,
     "uid": "ObjectiveTemplate_000001",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   }
 ]

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Iterable, Optional, Sequence, cast
 
 from neomodel import db
@@ -196,9 +196,7 @@ class CTCodelistGenericRepository(
             format_filter_sort_keys=format_codelist_filter_sort_keys,
         )
         query.parameters.update(filter_query_parameters)
-        result_array, attributes_names = db.cypher_query(
-            query=query.full_query, params=query.parameters
-        )
+        result_array, attributes_names = query.execute()
         extracted_items = self._retrieve_codelists_from_cypher_res(
             result_array, attributes_names
         )
@@ -268,13 +266,13 @@ class CTCodelistGenericRepository(
             format_filter_sort_keys=format_codelist_filter_sort_keys,
         )
 
-        header_query = query.build_header_query(
+        query.full_query = query.build_header_query(
             header_alias=format_codelist_filter_sort_keys(field_name),
             result_count=result_count,
         )
 
         query.parameters.update(filter_query_parameters)
-        result_array, _ = db.cypher_query(query=header_query, params=query.parameters)
+        result_array, _ = query.execute()
 
         return (
             format_generic_header_values(result_array[0][0])
@@ -442,7 +440,7 @@ class CTCodelistGenericRepository(
         ct_codelist_node.has_term.connect(
             ct_term_node,
             {
-                "start_date": datetime.now(),
+                "start_date": datetime.now(timezone.utc),
                 "end_date": None,
                 "user_initials": author,
                 "order": order,
@@ -482,7 +480,7 @@ class CTCodelistGenericRepository(
         creating HAD_TERM relationship from CTCodelistRoot to CTTermRoot.
         When term that is being removed is a TemplateParameter value, then also HAS_VALUE relationship from
         CTCodelistNameValue node to the CTTermNameRoot node is deleted. We leave the TemplateParameterValueRoot
-        and templateParameterValue labels as other codelist may use that term as TemplateParameter value.
+        and template_parameter_value labels as other codelist may use that term as TemplateParameter value.
         :param codelist_uid:
         :param term_uid:
         :param author:
@@ -508,7 +506,7 @@ class CTCodelistGenericRepository(
                     ct_term_node,
                     {
                         "start_date": has_term_relationship.start_date,
-                        "end_date": datetime.now(),
+                        "end_date": datetime.now(timezone.utc),
                         "user_initials": author,
                         "order": has_term_relationship.order,
                     },

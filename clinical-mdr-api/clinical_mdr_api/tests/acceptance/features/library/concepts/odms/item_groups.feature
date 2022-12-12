@@ -124,7 +124,7 @@ Feature: ODMs Item Groups API
 
     Scenario: Create a new version of an ODM Item Group
         Given the ODM Item Group is in 'Final' status
-        When a 'POST' request is sent to 'concepts/odms/item-groups/OdmItemGroup_000001/new-version'
+        When a 'POST' request is sent to 'concepts/odms/item-groups/OdmItemGroup_000001/versions'
         Then a response with json body is received with the newly created version of the ODM Item Group
         And the response has status code '201'
 

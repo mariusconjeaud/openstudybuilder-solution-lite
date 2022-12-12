@@ -33,7 +33,7 @@ class ActivityGroupService(ConceptGenericService[ActivityGroupAR]):
             author=self.user_initials,
             concept_vo=ActivityGroupVO.from_repository_values(
                 name=concept_input.name,
-                name_sentence_case=concept_input.nameSentenceCase,
+                name_sentence_case=concept_input.name_sentence_case,
                 definition=concept_input.definition,
                 abbreviation=concept_input.abbreviation,
             ),
@@ -47,10 +47,10 @@ class ActivityGroupService(ConceptGenericService[ActivityGroupAR]):
     ) -> ActivityGroupAR:
         item.edit_draft(
             author=self.user_initials,
-            change_description=concept_edit_input.changeDescription,
+            change_description=concept_edit_input.change_description,
             concept_vo=ActivityGroupVO.from_repository_values(
                 name=concept_edit_input.name,
-                name_sentence_case=concept_edit_input.nameSentenceCase,
+                name_sentence_case=concept_edit_input.name_sentence_case,
                 definition=concept_edit_input.definition,
                 abbreviation=concept_edit_input.abbreviation,
             ),

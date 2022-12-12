@@ -5,6 +5,7 @@
   :first-col-label="$t('StudyRegistryIdentifiersSummary.registry_identifiers')"
   :fullscreen-form="false"
   form-max-width="1000px"
+  component="registry_identifiers"
   >
   <template v-slot:form="{ closeHandler, openHandler }">
     <registry-identifiers-form
@@ -39,28 +40,28 @@ export default {
       params: [
         {
           label: this.$t('RegistryIdentifiersForm.ctgovid'),
-          name: 'ctGovId',
-          nullValueName: 'ctGovIdNullValueCode'
+          name: 'ct_gov_id',
+          nullValueName: 'ct_gov_id_null_value_code'
         },
         {
           label: this.$t('RegistryIdentifiersForm.eudractid'),
-          name: 'eudractId',
-          nullValueName: 'eudractIdNullValueCode'
+          name: 'eudract_id',
+          nullValueName: 'eudract_id_null_value_code'
         },
         {
           label: this.$t('RegistryIdentifiersForm.utn'),
-          name: 'universalTrialNumberUTN',
-          nullValueName: 'universalTrialNumberUTNNullValueCode'
+          name: 'universal_trial_number_utn',
+          nullValueName: 'universal_trial_number_utn_null_value_code'
         },
         {
           label: this.$t('RegistryIdentifiersForm.japic'),
-          name: 'japaneseTrialRegistryIdJAPIC',
-          nullValueName: 'japaneseTrialRegistryIdJAPICNullValueCode'
+          name: 'japanese_trial_registry_id_japic',
+          nullValueName: 'japanese_trial_registry_id_japic_null_value_code'
         },
         {
           label: this.$t('RegistryIdentifiersForm.ind'),
-          name: 'investigationalNewDrugApplicationNumberIND',
-          nullValueName: 'investigationalNewDrugApplicationNumberINDNullValueCode'
+          name: 'investigational_new_drug_application_number_ind',
+          nullValueName: 'investigational_new_drug_application_number_ind_null_value_code'
         }
       ]
     }
@@ -73,7 +74,7 @@ export default {
   mounted () {
     this.$store.dispatch('studiesGeneral/fetchNullValues')
     study.getStudy(this.selectedStudy.uid).then(resp => {
-      this.identifiers = resp.data.currentMetadata.identificationMetadata.registryIdentifiers
+      this.identifiers = resp.data.current_metadata.identification_metadata.registry_identifiers
     })
   }
 }

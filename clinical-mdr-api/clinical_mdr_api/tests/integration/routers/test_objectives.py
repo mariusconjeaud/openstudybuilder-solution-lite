@@ -44,7 +44,7 @@ class ObjectiveTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "objectives.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time"]
+        return ["start_date", "end_date", "uid", "time"]
 
 
 # @pytest.mark.skip
@@ -61,7 +61,7 @@ class ObjectiveNegativeTest(api.APITest):
         self.test_client = TestClient(main.app)
         self.library = library_service.create(name="Test library", is_editable=True)
         otdata = template_data.copy()
-        otdata["editableInstance"] = False
+        otdata["editable_instance"] = False
         objective_template = ct_models.ObjectiveTemplateCreateInput(**otdata)
         self.ot = ObjectiveTemplateService().create(objective_template)
         if isinstance(self.ot, BaseModel):
@@ -87,7 +87,7 @@ class ObjectiveNegativeTest(api.APITest):
         check_objectives_empty()
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "uid"]
+        return ["start_date", "end_date", "time", "uid"]
 
 
 # @pytest.mark.skip
@@ -113,4 +113,4 @@ class ObjectiveVersioningTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "objective_versioning.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "path", "uid"]
+        return ["start_date", "end_date", "time", "path", "uid"]

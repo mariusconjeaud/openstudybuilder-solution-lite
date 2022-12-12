@@ -13,7 +13,7 @@
               <span class="v-label">{{ $t('CodelistSummary.concept_id') }}</span>
             </v-col>
             <v-col data-cy="Concept ID"  sm="10" md="11">
-              {{ codelistAttributes.codelistUid }}
+              {{ codelistAttributes.codelist_uid }}
             </v-col>
           </v-row>
         </v-col>
@@ -47,13 +47,13 @@
               <span class="v-label">{{ $t('_global.library') }}</span>
             </v-col>
             <v-col data-cy="Library" cols="6">
-              {{ codelistNames.libraryName }}
+              {{ codelistNames.library_name }}
             </v-col>
             <v-col cols="6">
               <span class="v-label">{{ $t('CtCatalogueTable.template_parameter') }}</span>
             </v-col>
             <v-col data-cy="Template parameter" cols="6">
-              {{ codelistNames.templateParameter|yesno }}
+              {{ codelistNames.template_parameter|yesno }}
             </v-col>
             <v-col cols="6">
               <span class="v-label">{{ $t('CtCatalogueTable.extensible') }}</span>

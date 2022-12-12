@@ -3,14 +3,17 @@
   <n-n-table
     key="endpointTable1"
     :headers="headers"
-    :items="studyEndpoints"
-    item-key="order"
+    :items="formatedStudyEndpoints"
+    item-key="study_endpoint_uid"
     has-api
-    :column-data-resource="`study/${selectedStudy.uid}/study-endpoints`"
+    :column-data-resource="`studies/${selectedStudy.uid}/study-endpoints`"
     :export-data-url="exportDataUrl"
+    export-object-label="StudyEndpoints"
     :options.sync="options"
     :server-items-length="total"
     @filter="fetchEndpoints"
+    :history-data-fetcher="fetchEndpointsHistory"
+    :history-title="$t('StudyEndpointsTable.global_history_title')"
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -59,6 +62,12 @@
             </v-icon>
             {{ item.order }}
           </td>
+          <td>
+            <template v-if="item.endpoint_level">{{ item.endpoint_level.sponsor_preferred_name }}</template>
+          </td>
+          <td>
+            <template v-if="item.endpoint_sublevel">{{ item.endpoint_sublevel.sponsor_preferred_name }}</template>
+          </td>
           <td width="25%">
             <n-n-parameter-highlighter
               v-if="item.endpoint"
@@ -66,38 +75,36 @@
               :show-prefix-and-postfix="false"
               />
           </td>
-          <td>
-            <template v-if="item.endpointLevel">{{ item.endpointLevel.sponsorPreferredName }}</template>
-          </td>
-          <td width="10%">{{ displayUnits(item.endpointUnits) }}</td>
+          <td width="10%">{{ item.units }}</td>
           <td width="25%">
             <n-n-parameter-highlighter
               v-if="item.timeframe"
               :name="item.timeframe.name"
               :show-prefix-and-postfix="false"
               />
+            <span v-else>{{ $t('StudyEndpointForm.select_later') }}</span>
           </td>
           <td width="25%">
             <n-n-parameter-highlighter
-              v-if="item.studyObjective"
-              :name="item.studyObjective.objective.name"
+              v-if="item.study_objective"
+              :name="item.study_objective.objective.name"
               :show-prefix-and-postfix="false"
               />
             <span v-else>{{ $t('StudyEndpointForm.select_later') }}</span>
           </td>
-          <td width="10%">{{ item.startDate | date }}</td>
-          <td width="10%">{{ item.userInitials }}</td>
+          <td width="10%">{{ item.start_date | date }}</td>
+          <td width="10%">{{ item.user_initials }}</td>
         </tr>
       </draggable>
     </template>
     <template v-slot:item.actions="{ item }">
       <actions-menu :actions="actions" :item="item"/>
     </template>
-    <template v-slot:item.startDate="{ item }">
-      {{ item.startDate | date }}
+    <template v-slot:item.start_date="{ item }">
+      {{ item.start_date | date }}
     </template>
     <template v-slot:item.endpoint.name="{ item }">
-    <v-row>
+    <div class="d-flex">
       <n-n-parameter-highlighter
         v-if="item.endpoint"
         :name="item.endpoint.name"
@@ -111,23 +118,20 @@
             v-bind="attrs"
             v-on="on"
             color="red">
-              mdi-alert-circle
-            </v-icon>
+            mdi-alert-circle
+          </v-icon>
         </template>
         <span>{{ $t('StudyEndpointForm.endpoint_title_warning') }}</span>
       </v-tooltip>
-    </v-row>
+    </div>
     </template>
-    <template v-slot:item.studyObjective="{ item }">
+    <template v-slot:item.study_objective.objective.name="{ item }">
       <n-n-parameter-highlighter
-        v-if="item.studyObjective"
-        :name="item.studyObjective.objective.name"
+        v-if="item.study_objective"
+        :name="item.study_objective.objective.name"
         :show-prefix-and-postfix="false"
         />
       <span v-else>{{ $t('StudyEndpointForm.select_later') }}</span>
-    </template>
-    <template v-slot:item.endpointUnits.units="{ item }">
-      {{ displayUnits(item.endpointUnits) }}
     </template>
     <template v-slot:item.timeframe.name="{ item }">
       <n-n-parameter-highlighter
@@ -148,16 +152,17 @@
       :study-endpoint="selectedStudyEndpoint"
       @close="closeForm"
       class="fullscreen-dialog"
+      :clone-mode="cloneMode"
       />
   </v-dialog>
   <v-dialog v-model="showHistory"
             persistent
             max-width="1200px">
     <history-table
+      :title="studyEndpointHistoryTitle"
       @close="closeHistory"
-      type="studyEndpoint"
-      :item="selectedStudyEndpoint"
-      :title-label="$t('StudyEndpointsTable.history_title')"
+      :headers="headers"
+      :items="endpointHistoryItems"
       />
   </v-dialog>
   <confirm-dialog ref="confirm" width="600"/>
@@ -179,7 +184,7 @@ import study from '@/api/study'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
 import EndpointForm from '@/components/studies/EndpointForm'
-import HistoryTable from '@/components/library/HistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import statuses from '@/constants/statuses'
 import NNTable from '@/components/tools/NNTable'
@@ -206,7 +211,18 @@ export default {
       return this.headers.filter(header => header.show === true || header.show === undefined)
     },
     exportDataUrl () {
-      return `study/${this.selectedStudy.uid}/study-endpoints`
+      return `studies/${this.selectedStudy.uid}/study-endpoints`
+    },
+    formatedStudyEndpoints () {
+      return this.transformItems(this.studyEndpoints)
+    },
+    studyEndpointHistoryTitle () {
+      if (this.selectedStudyEndpoint) {
+        return this.$t(
+          'StudyEndpointsTable.study_endpoint_history_title',
+          { studyEndpointUid: this.selectedStudyEndpoint.study_endpoint_uid })
+      }
+      return ''
     }
   },
   data () {
@@ -246,6 +262,12 @@ export default {
           click: this.editStudyEndpoint
         },
         {
+          label: this.$t('StudyEndpointsTable.edit_template_text'),
+          icon: 'mdi-pencil',
+          iconColor: 'primary',
+          click: this.cloneStudyEndpoint
+        },
+        {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete',
           iconColor: 'error',
@@ -254,27 +276,29 @@ export default {
         {
           label: this.$t('_global.history'),
           icon: 'mdi-history',
-          click: this.openObjectiveHistory
+          click: this.openEndpointHistory
         }
       ],
       actionsMenu: false,
+      cloneMode: false,
+      endpointHistoryItems: [],
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('StudyEndpointsTable.order'), value: 'order', width: '5%' },
+        { text: this.$t('StudyEndpointsTable.endpoint_level'), value: 'endpoint_level.sponsor_preferred_name' },
+        { text: this.$t('StudyEndpointsTable.endpoint_sub_level'), value: 'endpoint_sublevel.sponsor_preferred_name' },
         { text: this.$t('StudyEndpointsTable.endpoint_title'), value: 'endpoint.name', width: '25%' },
-        { text: this.$t('StudyEndpointsTable.endpoint_level'), value: 'endpointLevel.sponsorPreferredName' },
-        { text: this.$t('StudyEndpointsTable.endpoint_sub_level'), value: 'endpointSubLevel.sponsorPreferredName' },
-        { text: this.$t('StudyEndpointsTable.units'), value: 'endpointUnits.units', width: '10%' },
+        { text: this.$t('StudyEndpointsTable.units'), value: 'units', width: '10%' },
         { text: this.$t('StudyEndpointsTable.time_frame'), value: 'timeframe.name', width: '25%' },
-        { text: this.$t('StudyEndpointsTable.objective'), value: 'studyObjective', filteringName: 'studyObjective.objective.name', width: '25%' },
-        { text: this.$t('_global.modified'), value: 'startDate', width: '10%' },
-        { text: this.$t('_global.modified_by'), value: 'userInitials', width: '10%' }
+        { text: this.$t('StudyEndpointsTable.objective'), value: 'study_objective.objective.name', filteringName: 'study_objective.objective.name', width: '25%' },
+        { text: this.$t('_global.modified'), value: 'start_date', width: '10%' },
+        { text: this.$t('_global.modified_by'), value: 'user_initials', width: '10%' }
       ],
       selectedStudyEndpoint: null,
       showForm: false,
       showHistory: false,
       snackbar: false,
-      sortBy: 'startDate',
+      sortBy: 'start_date',
       sortMode: false,
       endpoints: [],
       total: 0,
@@ -296,6 +320,10 @@ export default {
         this.total = resp.data.total
       })
     },
+    async fetchEndpointsHistory () {
+      const resp = await study.getStudyEndpointsAuditTrail(this.selectedStudy.uid)
+      return this.transformItems(resp.data)
+    },
     actionsMenuBadge (item) {
       if (this.endpointNeedsUpdate(item) || this.timeframeNeedsUpdate(item)) {
         return {
@@ -306,16 +334,16 @@ export default {
       return null
     },
     timeframeNeedsUpdate (item) {
-      if (item.latestTimeframe) {
+      if (item.latest_timeframe) {
         if (!this.isTimeframeRetired(item)) {
-          return item.timeframe.version !== item.latestTimeframe.version
+          return item.timeframe.version !== item.latest_timeframe.version
         }
       }
       return false
     },
     isTimeframeRetired (item) {
-      if (item.latestTimeframe) {
-        return item.latestTimeframe.status === statuses.RETIRED
+      if (item.latest_timeframe) {
+        return item.latest_timeframe.status === statuses.RETIRED
       }
       return false
     },
@@ -330,12 +358,12 @@ export default {
       '<h4 class="confirmation-text-header">' + this.$t('StudyEndpointsTable.previous_version') + '</h4>' +
       '<p class="confirmation-text-field">' + item.timeframe.name + '</p>' +
       '<h4 class="confirmation-text-header">' + this.$t('StudyEndpointsTable.new_version') + '</h4>' +
-      '<p class="confirmation-text-field">' + item.latestTimeframe.name + '</p>'
+      '<p class="confirmation-text-field">' + item.latest_timeframe.name + '</p>'
 
       if (await this.$refs.confirm.open(message, options)) {
         const args = {
-          studyUid: item.studyUid,
-          studyEndpointUid: item.studyEndpointUid
+          study_uid: item.study_uid,
+          studyEndpointUid: item.study_endpoint_uid
         }
         this.$store.dispatch('studyEndpoints/updateStudyEndpointTimeframeLatestVersion', args).then(resp => {
           bus.$emit('notification', { msg: this.$t('StudyObjectivesTable.update_version_successful') })
@@ -343,24 +371,24 @@ export default {
       } else {
         this.abortConfirm = true
         const args = {
-          studyUid: item.studyUid,
-          studyObjectiveUid: item.studyEndpointUid
+          studyUid: item.study_uid,
+          studyEndpointUid: item.study_endpoint_uid
         }
         this.$store.dispatch('studyEndpoints/updateStudyEndpointAcceptVersion', args).then(resp => {
         })
       }
     },
     endpointNeedsUpdate (item) {
-      if (item.latestEndpoint) {
+      if (item.latest_endpoint) {
         if (!this.isEndpointRetired(item)) {
-          return item.endpoint.version !== item.latestEndpoint.version
+          return item.endpoint.version !== item.latest_endpoint.version
         }
       }
       return false
     },
     isEndpointRetired (item) {
-      if (item.latestEndpoint) {
-        return item.latestEndpoint.status === statuses.RETIRED
+      if (item.latest_endpoint) {
+        return item.latest_endpoint.status === statuses.RETIRED
       }
       return false
     },
@@ -375,12 +403,12 @@ export default {
         agreeLabel: this.$t('StudyObjectivesTable.use_new_version')
       }
       const message = this.$t('StudyEndpointsTable.update_endpoint_version_alert') + ' ' + this.$t('StudyEndpointsTable.previous_version') +
-      ' ' + item.endpoint.name + ' ' + this.$t('StudyEndpointsTable.new_version') + ' ' + item.latestEndpoint.name
+      ' ' + item.endpoint.name + ' ' + this.$t('StudyEndpointsTable.new_version') + ' ' + item.latest_endpoint.name
 
       if (await this.$refs.confirm.open(message, options)) {
         const args = {
-          studyUid: item.studyUid,
-          studyObjectiveUid: item.studyEndpointUid
+          studyUid: item.study_uid,
+          studyEndpointUid: item.study_endpoint_uid
         }
         this.$store.dispatch('studyEndpoints/updateStudyEndpointEndpointLatestVersion', args).then(resp => {
           bus.$emit('notification', { msg: this.$t('StudyEndpointsTable.update_version_successful') })
@@ -388,8 +416,8 @@ export default {
       } else {
         this.abortConfirm = true
         const args = {
-          studyUid: item.studyUid,
-          studyEndpointUid: item.studyEndpointUid
+          studyUid: item.study_uid,
+          studyEndpointUid: item.study_endpoint_uid
         }
         this.$store.dispatch('studyEndpoints/updateStudyEndpointAcceptVersion', args).then(resp => {
         })
@@ -397,6 +425,7 @@ export default {
     },
     closeForm () {
       this.showForm = false
+      this.cloneMode = false
       this.selectedStudyEndpoint = null
       this.fetchEndpoints()
     },
@@ -406,6 +435,10 @@ export default {
     editStudyEndpoint (studyEndpoint) {
       this.selectedStudyEndpoint = studyEndpoint
       this.showForm = true
+    },
+    cloneStudyEndpoint (studyEndpoint) {
+      this.cloneMode = true
+      this.editStudyEndpoint(studyEndpoint)
     },
     getUnitName (unitUid) {
       for (let cpt = 0; cpt < this.units.length; cpt++) {
@@ -433,7 +466,7 @@ export default {
         // endpoints is updated after deletion
         this.$store.dispatch('studyEndpoints/deleteStudyEndpoint', {
           studyUid: this.selectedStudy.uid,
-          studyEndpointUid: studyEndpoint.studyEndpointUid
+          studyEndpointUid: studyEndpoint.study_endpoint_uid
         }).then(resp => {
           bus.$emit('notification', { msg: this.$t('StudyEndpointsTable.delete_success') })
           this.fetchEndpoints()
@@ -444,16 +477,18 @@ export default {
       this.selectedStudyEndpoint = null
       this.showHistory = false
     },
-    openObjectiveHistory (studyEndpoint) {
+    async openEndpointHistory (studyEndpoint) {
       this.selectedStudyEndpoint = studyEndpoint
+      const resp = await study.getStudyEndpointAuditTrail(this.selectedStudy.uid, studyEndpoint.study_endpoint_uid)
+      this.endpointHistoryItems = this.transformItems(resp.data)
       this.showHistory = true
     },
     /*
     ** Prevent dragging between different endpoint levels
     */
     checkEndpointLevel (event) {
-      const leftOrder = event.draggedContext.element.endpointLevel ? event.draggedContext.element.endpointLevel.order : null
-      const rightOrder = event.relatedContext.element.endpointLevel ? event.relatedContext.element.endpointLevel.order : null
+      const leftOrder = event.draggedContext.element.endpoint_level ? event.draggedContext.element.endpoint_level.order : null
+      const rightOrder = event.relatedContext.element.endpoint_level ? event.relatedContext.element.endpoint_level.order : null
       const result = leftOrder === rightOrder
       this.snackbar = !result
       return result
@@ -461,8 +496,19 @@ export default {
     onChange (event) {
       const studyEndpoint = event.moved.element
       const newOrder = this.studyEndpoints[event.moved.newIndex].order
-      study.updateStudyEndpointOrder(studyEndpoint.studyUid, studyEndpoint.studyEndpointUid, newOrder).then(resp => {
+      study.updateStudyEndpointOrder(studyEndpoint.study_uid, studyEndpoint.study_endpoint_uid, newOrder).then(resp => {
       })
+    },
+    transformItems (items) {
+      const result = []
+      for (const item of items) {
+        const newItem = { ...item }
+        if (item.endpoint_units.units) {
+          newItem.units = this.displayUnits(item.endpoint_units)
+        }
+        result.push(newItem)
+      }
+      return result
     }
   },
   mounted () {
@@ -477,7 +523,7 @@ export default {
       this.headers.forEach(header => {
         this.$set(header, 'sortable', !value)
       })
-      this.sortBy = (value) ? 'order' : 'startDate'
+      this.sortBy = (value) ? 'order' : 'start_date'
     },
     options () {
       this.fetchEndpoints()

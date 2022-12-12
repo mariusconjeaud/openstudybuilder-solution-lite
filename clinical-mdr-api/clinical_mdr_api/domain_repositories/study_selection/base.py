@@ -49,7 +49,9 @@ class StudySelectionRepository:
         # Update audit trail
         before_audit_node = None
         if selection_vo.uid is not None:
-            before_audit_node = Edit(user_initials=author, date=datetime.datetime.now())
+            before_audit_node = Edit(
+                user_initials=author, date=datetime.datetime.now(datetime.timezone.utc)
+            )
             before_audit_node.save()
             study_root_node.audit_trail.connect(before_audit_node)
             selection.has_before.connect(before_audit_node)
@@ -58,7 +60,7 @@ class StudySelectionRepository:
             after_audit_node = Create()
 
         after_audit_node.user_initials = author
-        after_audit_node.date = datetime.datetime.now()
+        after_audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         after_audit_node.save()
         study_root_node.audit_trail.connect(after_audit_node)
         selection.has_after.connect(after_audit_node)
@@ -78,7 +80,9 @@ class StudySelectionRepository:
         latest_study_value_node = study_root_node.latest_value.single()
         selection = self.get_study_selection(latest_study_value_node, selection_uid)
         # Audit trail
-        audit_node = Delete(user_initials=author, date=datetime.datetime.now())
+        audit_node = Delete(
+            user_initials=author, date=datetime.datetime.now(datetime.timezone.utc)
+        )
         audit_node.save()
         study_root_node.audit_trail.connect(audit_node)
         selection.has_before.connect(audit_node)

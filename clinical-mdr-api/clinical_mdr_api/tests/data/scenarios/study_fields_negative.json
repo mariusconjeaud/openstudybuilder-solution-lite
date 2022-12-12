@@ -28,9 +28,9 @@
          "headers": {},
          "method": "POST",
          "request": {
-            "studyNumber": "007",
-            "studyAcronym": "Study-007",
-            "projectNumber": "123"
+            "study_number": "007",
+            "study_acronym": "Study-007",
+            "project_number": "123"
          },
          "url": "/studies"
       },
@@ -42,38 +42,38 @@
          },
          "result": {
             "uid": "Study_000001",
-            "studyNumber": "007",
-            "studyId": "123-007",
-            "studyAcronym": "Study-007",
-            "projectNumber": "123",
-            "studyStatus": "DRAFT",
-            "currentMetadata": {
-               "identificationMetadata": {
-                  "studyNumber": "007",
-                  "studyAcronym": "Study-007",
-                  "projectNumber": "123",
-                  "projectName": "Project ABC",
-                  "clinicalProgrammeName": "CP",
-                  "studyId": "123-007",
-                  "registryIdentifiers": {
-                     "ctGovId": null,
-                     "eudractId": null,
-                     "universalTrialNumberUTN": null,
-                     "japaneseTrialRegistryIdJAPIC": null,
-                     "investigationalNewDrugApplicationNumberIND": null,
-                     "ctGovIdNullValueCode": null,
-                     "eudractIdNullValueCode": null,
-                     "universalTrialNumberUTNNullValueCode": null,
-                     "japaneseTrialRegistryIdJAPICNullValueCode": null,
-                     "investigationalNewDrugApplicationNumberINDNullValueCode": null
+            "study_number": "007",
+            "study_id": "123-007",
+            "study_acronym": "Study-007",
+            "project_number": "123",
+            "study_status": "DRAFT",
+            "current_metadata": {
+               "identification_metadata": {
+                  "study_number": "007",
+                  "study_acronym": "Study-007",
+                  "project_number": "123",
+                  "project_name": "Project ABC",
+                  "clinical_programme_name": "CP",
+                  "study_id": "123-007",
+                  "registry_identifiers": {
+                     "ct_gov_id": null,
+                     "eudract_id": null,
+                     "universal_trial_number_utn": null,
+                     "japanese_trial_registry_id_japic": null,
+                     "investigational_new_drug_application_number_ind": null,
+                     "ct_gov_id_null_value_code": null,
+                     "eudract_id_null_value_code": null,
+                     "universal_trial_number_utn_null_value_code": null,
+                     "japanese_trial_registry_id_japic_null_value_code": null,
+                     "investigational_new_drug_application_number_ind_null_value_code": null
                   }
                },
-               "versionMetadata": {
-                  "studyStatus": "DRAFT",
-                  "lockedVersionNumber": null,
-                  "versionTimestamp": "2021-04-06T13:51:58.468263",
-                  "lockedVersionAuthor": null,
-                  "lockedVersionInfo": null
+               "version_metadata": {
+                  "study_status": "DRAFT",
+                  "locked_version_number": null,
+                  "version_timestamp": "2021-04-06T13:51:58.468263",
+                  "locked_version_author": null,
+                  "locked_version_info": null
                }
             }
          }
@@ -85,8 +85,8 @@
          "headers": {},
          "method": "POST",
          "request": {
-            "studyNumber": "007",
-            "projectNumber": "123"
+            "study_number": "007",
+            "project_number": "123"
          },
          "url": "/studies"
       },
@@ -108,9 +108,9 @@
          "headers": {},
          "method": "PATCH",
          "request": {
-            "currentMetadata": {
-               "identificationMetadata": {
-                  "studyNumber": "008"
+            "current_metadata": {
+               "identification_metadata": {
+                  "study_number": "008"
                }
             }
          },

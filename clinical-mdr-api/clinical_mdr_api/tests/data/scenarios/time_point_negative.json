@@ -5,14 +5,14 @@
          "headers": {},
          "method": "POST",
          "request": {
-            "nameSentenceCase": "time_point_name_sentence_case1",
+            "name_sentence_case": "time_point_name_sentence_case1",
             "definition": "time_point_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor",
-            "numericValueUid": "NumericValue_000001",
-            "unitDefinitionUid": "UnitDefinition_000001",
-            "timeReferenceUid": "term_root_final"
+            "template_parameter": true,
+            "library_name": "Sponsor",
+            "numeric_value_uid": "NumericValue_000001",
+            "unit_definition_uid": "UnitDefinition_000001",
+            "time_reference_uid": "term_root_final"
          },
          "url": "/concepts/time-points"
       },
@@ -22,20 +22,20 @@
          "result": {
             "uid": "TimePoint_000001",
             "name": "1.23 name_1 after term_value_name1",
-            "nameSentenceCase": "time_point_name_sentence_case1",
+            "name_sentence_case": "time_point_name_sentence_case1",
             "definition": "time_point_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor",
+            "template_parameter": true,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null,
-            "numericValueUid": "NumericValue_000001",
-            "unitDefinitionUid": "UnitDefinition_000001",
-            "timeReferenceUid": "term_root_final"
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null,
+            "numeric_value_uid": "NumericValue_000001",
+            "unit_definition_uid": "UnitDefinition_000001",
+            "time_reference_uid": "term_root_final"
          }
       }
    },
@@ -45,12 +45,12 @@
          "headers": {},
          "method": "POST",
          "request": {
-            "nameSentenceCase": "time_point_name_sentence_case1",
+            "name_sentence_case": "time_point_name_sentence_case1",
             "definition": "time_point_definition1",
-            "libraryName": "Sponsor",
-            "numericValueUid": "NumericValue_NON_EXISTING",
-            "unitDefinitionUid": "UnitDefinition_000001",
-            "timeReferenceUid": "term_root_final"
+            "library_name": "Sponsor",
+            "numeric_value_uid": "NumericValue_NON_EXISTING",
+            "unit_definition_uid": "UnitDefinition_000001",
+            "time_reference_uid": "term_root_final"
          },
          "url": "/concepts/time-points"
       },
@@ -71,12 +71,12 @@
          "headers": {},
          "method": "POST",
          "request": {
-            "nameSentenceCase": "time_point_name_sentence_case1",
+            "name_sentence_case": "time_point_name_sentence_case1",
             "definition": "time_point_definition1",
-            "libraryName": "Sponsor",
-            "numericValueUid": "NumericValue_000001",
-            "unitDefinitionUid": "UnitDefinition_NON_EXISTING",
-            "timeReferenceUid": "term_root_final"
+            "library_name": "Sponsor",
+            "numeric_value_uid": "NumericValue_000001",
+            "unit_definition_uid": "UnitDefinition_NON_EXISTING",
+            "time_reference_uid": "term_root_final"
          },
          "url": "/concepts/time-points"
       },
@@ -97,12 +97,12 @@
          "headers": {},
          "method": "POST",
          "request": {
-            "nameSentenceCase": "time_point_name_sentence_case1",
+            "name_sentence_case": "time_point_name_sentence_case1",
             "definition": "time_point_definition1",
-            "libraryName": "Sponsor",
-            "numericValueUid": "NumericValue_000001",
-            "unitDefinitionUid": "UnitDefinition_000001",
-            "timeReferenceUid": "TimeReference_NON_EXISTING"
+            "library_name": "Sponsor",
+            "numeric_value_uid": "NumericValue_000001",
+            "unit_definition_uid": "UnitDefinition_000001",
+            "time_reference_uid": "TimeReference_NON_EXISTING"
          },
          "url": "/concepts/time-points"
       },

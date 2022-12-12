@@ -31,20 +31,20 @@ class CTTermAttributesService(CTTermGenericService[CTTermAttributesAR]):
 
             item.edit_draft(
                 author=self.user_initials,
-                change_description=term_input.changeDescription,
+                change_description=term_input.change_description,
                 ct_term_vo=CTTermAttributesVO.from_input_values(
                     codelist_uid=item.ct_term_vo.codelist_uid,
                     catalogue_name=item.ct_term_vo.catalogue_name,
                     code_submission_value=self.get_input_or_previous_property(
-                        term_input.codeSubmissionValue,
+                        term_input.code_submission_value,
                         item.ct_term_vo.code_submission_value,
                     ),
                     name_submission_value=self.get_input_or_previous_property(
-                        term_input.nameSubmissionValue,
+                        term_input.name_submission_value,
                         item.ct_term_vo.name_submission_value,
                     ),
                     preferred_term=self.get_input_or_previous_property(
-                        term_input.nciPreferredName, item.ct_term_vo.preferred_term
+                        term_input.nci_preferred_name, item.ct_term_vo.preferred_term
                     ),
                     definition=self.get_input_or_previous_property(
                         term_input.definition, item.ct_term_vo.definition

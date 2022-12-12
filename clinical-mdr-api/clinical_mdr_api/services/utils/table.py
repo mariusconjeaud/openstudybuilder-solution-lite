@@ -55,7 +55,7 @@ def _html_cell(line, meta, td, txt):
 
 def _meta_to_html_attrs(meta):
     return (
-        (a, meta[a]) for a in ("class", "colspan", "rowSpan") if meta.get(a) is not None
+        (a, meta[a]) for a in ("class", "colspan", "rowspan") if meta.get(a) is not None
     )
 
 

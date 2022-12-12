@@ -8,13 +8,12 @@
     :export-object-label="objectType"
     :export-data-url="urlPrefix"
     :server-items-length="total"
-    sort-by="startDate"
+    sort-by="start_date"
     sort-desc
     :options.sync="options"
     :has-api="hasApi"
     :column-data-resource="urlPrefix"
     @filter="filter"
-    has-history
     >
     <template v-slot:actions="">
       <v-btn
@@ -56,9 +55,9 @@
         :default-parameter-values="item.defaultParameterValues"
         />
     </template>
-    <template v-slot:item.startDate="{ item }">
+    <template v-slot:item.start_date="{ item }">
       <template v-if="item.defaultParameterValuesSet === undefined">
-        {{ item.startDate | date }}
+        {{ item.start_date | date }}
       </template>
     </template>
     <template v-slot:item.status="{ item }">
@@ -95,11 +94,17 @@
       >
     </slot>
   </v-dialog>
-  <v-dialog v-model="showOTHistory"
-            persistent
-            max-width="1200px">
-    <history-table @close="closeHistory" :type="objectType" :url-prefix="urlPrefix+'/'"
-                   :item="selectedObject" :title-label="appLabel" />
+  <v-dialog
+    v-model="showOTHistory"
+    persistent
+    max-width="1200px"
+    >
+    <history-table
+      :title="oTHistoryTitle"
+      @close="closeOTHistory"
+      :headers="headers"
+      :items="oTHistoryItems"
+      />
   </v-dialog>
   <default-parameter-values-set-form
     :open="showParameterValuesSetForm"
@@ -130,13 +135,15 @@ import templates from '@/api/templates'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import defaultParameterValues from '@/utils/defaultParameterValues'
 import DefaultParameterValuesSetForm from '@/components/library/DefaultParameterValuesSetForm'
-import HistoryTable from '@/components/library/HistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
 import NNTable from '@/components/tools/NNTable'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import StatusChip from '@/components/tools/StatusChip'
 import statuses from '@/constants/statuses'
 import filteringParameters from '@/utils/filteringParameters'
+import objectives from '@/api/objectives'
+import timeframes from '@/api/timeframes'
 
 export default Vue.extend({
   name: 'studybuilder-template-table',
@@ -173,7 +180,7 @@ export default Vue.extend({
           },
           { text: this.$t('_global.library'), value: 'library.name' },
           { text: this.$t('_global.template'), value: 'name', width: '30%' },
-          { text: this.$t('_global.modified'), value: 'startDate' },
+          { text: this.$t('_global.modified'), value: 'start_date' },
           { text: this.$t('_global.modified_by'), value: 'fixme' },
           { text: this.$t('_global.status'), value: 'status' },
           { text: this.$t('_global.version'), value: 'version' }
@@ -214,42 +221,42 @@ export default Vue.extend({
         label: this.$t('_global.edit'),
         icon: 'mdi-pencil',
         iconColor: 'primary',
-        condition: (item) => item.possibleActions.find(action => action === 'edit'),
+        condition: (item) => item.possible_actions.find(action => action === 'edit'),
         click: this.editTemplate
       },
       {
         label: this.$t('_global.approve'),
         icon: 'mdi-check-decagram',
         iconColor: 'success',
-        condition: (item) => item.possibleActions.find(action => action === 'approve'),
+        condition: (item) => item.possible_actions.find(action => action === 'approve'),
         click: this.approveTemplate
       },
       {
         label: this.$t('_global.new_version'),
         icon: 'mdi-plus-circle-outline',
         iconColor: 'primary',
-        condition: (item) => item.possibleActions.find(action => action === 'newVersion'),
+        condition: (item) => item.possible_actions.find(action => action === 'new_version'),
         click: this.createNewVersion
       },
       {
         label: this.$t('_global.inactivate'),
         icon: 'mdi-close-octagon-outline',
         iconColor: 'primary',
-        condition: (item) => item.possibleActions.find(action => action === 'inactivate'),
+        condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
         click: this.inactivateTemplate
       },
       {
         label: this.$t('_global.reactivate'),
         icon: 'mdi-undo-variant',
         iconColor: 'primary',
-        condition: (item) => item.possibleActions.find(action => action === 'reactivate'),
+        condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
         click: this.reactivateTemplate
       },
       {
         label: this.$t('_global.delete'),
         icon: 'mdi-delete',
         iconColor: 'error',
-        condition: (item) => item.possibleActions.find(action => action === 'delete'),
+        condition: (item) => item.possible_actions.find(action => action === 'delete'),
         click: this.deleteTemplate
       },
       {
@@ -297,7 +304,8 @@ export default Vue.extend({
       templates: [],
       options: {},
       total: 0,
-      key: 0
+      key: 0,
+      oTHistoryItems: []
     }
   },
   computed: {
@@ -318,6 +326,14 @@ export default Vue.extend({
         }
       }
       return result
+    },
+    oTHistoryTitle () {
+      if (this.selectedObject) {
+        return this.$t(
+          'GenericTemplateTable.template_history_title',
+          { templateUid: this.selectedObject.uid })
+      }
+      return ''
     }
   },
   created () {
@@ -374,9 +390,23 @@ export default Vue.extend({
       this.selectedObject = template
       this.showIndexingForm = true
     },
-    openTemplateHistory (template) {
+    async openTemplateHistory (template) {
       this.selectedObject = template
+      let resp = {}
+      const type = this.getBaseObjectType()
+      if (type === 'objective') {
+        resp = await objectives.getVersions(template.uid)
+      } else if (this.type === 'timeframe') {
+        resp = await timeframes.getVersions(template.uid)
+      } else {
+        return
+      }
+      this.oTHistoryItems = resp.data
       this.showOTHistory = true
+    },
+    closeOTHistory () {
+      this.selectedObject = null
+      this.showOTHistory = false
     },
     async createNewVersion (template) {
       if (template.studyCount > 0) {
@@ -392,7 +422,7 @@ export default Vue.extend({
       }
       const data = {
         name: template.name,
-        changeDescription: this.$t(this.translationType + '.new_version_default_description')
+        change_description: this.$t(this.translationType + '.new_version_default_description')
       }
       this.api.createNewVersion(template.uid, data).then(resp => {
         this.updateTemplate(resp.data, template.status)

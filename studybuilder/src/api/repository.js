@@ -13,8 +13,8 @@ _axios.interceptors.request.use(
 
     // the component used to display available rows per page uses -1 to describe all elements
     // but API expects 0 to be sent to fetch all items in a paginated query
-    if (config?.params?.pageSize === -1) {
-      config.params.pageSize = 0
+    if (config?.params?.page_size === -1) {
+      config.params.page_size = 0
     }
     const accessToken = await Vue.prototype.$auth.getAccessToken()
     if (accessToken) {

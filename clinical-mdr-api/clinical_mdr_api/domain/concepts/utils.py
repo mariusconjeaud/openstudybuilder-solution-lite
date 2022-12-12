@@ -10,7 +10,7 @@ class RelationType(Enum):
 
     ACTIVITY = "activity"
     ACTIVITY_GROUP = "activity_group"
-    ACTIVITY_SUB_GROUP = "activity_sub_group"
+    ACTIVITY_SUB_GROUP = "activity_subgroup"
     ITEM_GROUP = "item_group"
     ITEM = "item"
     FORM = "form"
@@ -29,15 +29,5 @@ class TargetType(Enum):
     TEMPLATE = "template"
     STUDY = "study"
     FORM = "form"
-    ITEM_GROUP = "item-group"
+    ITEM_GROUP = "item_group"
     ITEM = "item"
-
-
-class OdmExportTo(Enum):
-    """
-    Enum for systems that import ODM XML exported by StudyBuilder
-    """
-
-    V1 = "v1"
-    V2 = "v2"
-    CLINSPARK = "clinspark"

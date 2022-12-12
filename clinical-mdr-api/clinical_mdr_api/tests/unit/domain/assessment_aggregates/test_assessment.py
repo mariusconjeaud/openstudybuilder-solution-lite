@@ -15,7 +15,7 @@ def create_random_activity_vo() -> ActivityVO:
         name_sentence_case=random_str(),
         definition=random_str(),
         abbreviation=random_str(),
-        activity_sub_group=random_str(),
+        activity_subgroup=random_str(),
     )
     return random_activity_vo
 
@@ -34,7 +34,7 @@ def create_random_activity_ar(
         ),
         author="TODO Initials",
         concept_exists_by_name_callback=lambda _: False,
-        activity_sub_group_exists=lambda _: True,
+        activity_subgroup_exists=lambda _: True,
     )
 
     return random_activity_ar
@@ -67,7 +67,7 @@ class TestActivity(unittest.TestCase):
             change_description="Test",
             concept_vo=activity_vo,
             concept_exists_by_name_callback=lambda _: False,
-            activity_sub_group_exists=lambda _: True,
+            activity_subgroup_exists=lambda _: True,
         )
 
         # then
@@ -84,7 +84,7 @@ class TestActivity(unittest.TestCase):
         )
         self.assertEqual(activity_ar.concept_vo.definition, activity_vo.definition)
         self.assertIn(
-            activity_vo.activity_sub_group, activity_ar.concept_vo.activity_sub_group
+            activity_vo.activity_subgroup, activity_ar.concept_vo.activity_subgroup
         )
 
     def test__approve__version_created(self):

@@ -55,7 +55,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
     def setUpClass(cls) -> None:
         inject_and_clear_db("concurrency.versioning")
 
-    def set_up_base_graph_for_objectives(self):
+    def setUp_base_graph_for_objectives(self):
         db.cypher_query("MATCH (n) DETACH DELETE n")
         db.cypher_query(self.INIT_TEST_DATA)
         self.template_uid = "ObjectiveTemplate_000002"
@@ -113,7 +113,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         self.object_repository.save(self.object_ar)
 
     def test_soft_delete_objective_aborted_on_approval(self):
-        self.set_up_base_graph_for_objectives()
+        self.setUp_base_graph_for_objectives()
         with self.assertRaises(VersioningException) as message:
             OptimisticLockingValidator().assert_optimistic_locking_ensures_execution_order(
                 main_operation_before=self.approve_object_without_save,
@@ -123,7 +123,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         self.assertEqual("Object has been accepted", str(message.exception))
 
     def test_approve_objective_aborted_on_soft_delete(self):
-        self.set_up_base_graph_for_objectives()
+        self.setUp_base_graph_for_objectives()
         with self.assertRaises(VersioningException) as message:
             OptimisticLockingValidator().assert_optimistic_locking_ensures_execution_order(
                 main_operation_before=self.soft_delete_object_with_save,
@@ -136,7 +136,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         )
 
     def test_edit_objective_aborted_on_approval(self):
-        self.set_up_base_graph_for_objectives()
+        self.setUp_base_graph_for_objectives()
         with self.assertRaises(VersioningException) as message:
             OptimisticLockingValidator().assert_optimistic_locking_ensures_execution_order(
                 main_operation_before=self.approve_object_without_save,
@@ -146,7 +146,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         self.assertEqual("The object is not in draft status.", str(message.exception))
 
     def test_edit_objective_aborted_on_soft_delete(self):
-        self.set_up_base_graph_for_objectives()
+        self.setUp_base_graph_for_objectives()
         with self.assertRaises(VersioningException) as message:
             OptimisticLockingValidator().assert_optimistic_locking_ensures_execution_order(
                 main_operation_before=self.soft_delete_object_with_save,
@@ -159,7 +159,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         )
 
     def test_inactivate_aborted_on_new_version(self):
-        self.set_up_base_graph_for_objectives()
+        self.setUp_base_graph_for_objectives()
         with db.transaction:
             self.approve_object_with_save()
         with self.assertRaises(VersioningException) as message:
@@ -171,7 +171,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         self.assertEqual("Cannot retire draft version.", str(message.exception))
 
     def test_new_version_aborted_on_inactivate(self):
-        self.set_up_base_graph_for_objectives()
+        self.setUp_base_graph_for_objectives()
         with db.transaction:
             self.approve_object_with_save()
         with self.assertRaises(VersioningException) as message:
@@ -183,7 +183,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         self.assertEqual("Cannot create new Draft version", str(message.exception))
 
     def test_new_version_aborted_on_reactivate(self):
-        self.set_up_base_graph_for_objectives()
+        self.setUp_base_graph_for_objectives()
         with db.transaction:
             self.approve_object_with_save()
         with db.transaction:
@@ -199,7 +199,7 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
         )
 
     def test_reactivate_aborted_on_new_version(self):
-        self.set_up_base_graph_for_objectives()
+        self.setUp_base_graph_for_objectives()
         with db.transaction:
             self.approve_object_with_save()
         with db.transaction:

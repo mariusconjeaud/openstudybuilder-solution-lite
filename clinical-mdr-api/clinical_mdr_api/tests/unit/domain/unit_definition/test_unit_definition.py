@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Sequence
 
 import pytest
@@ -763,7 +763,7 @@ def test__unit_definition_ar__edit_draft__result(
 
     # when
     library = unit_definition_ar.library
-    datetime_before = datetime.now()
+    datetime_before = datetime.now(timezone.utc)
 
     unit_definition_ar.edit_draft(
         new_unit_definition_value=new_unit_definition_value,
@@ -788,7 +788,7 @@ def test__unit_definition_ar__edit_draft__result(
         or _ != new_unit_definition_value.legacy_code,
     )
 
-    datetime_after = datetime.now()
+    datetime_after = datetime.now(timezone.utc)
 
     # then
     assert unit_definition_ar.concept_vo == new_unit_definition_value
@@ -849,7 +849,7 @@ def test__unit_definition_ar__edit_draft_without_legacy_code_change__result(
 
     # when
     library = unit_definition_ar.library
-    datetime_before = datetime.now()
+    datetime_before = datetime.now(timezone.utc)
     unit_definition_ar.edit_draft(
         new_unit_definition_value=new_unit_definition_value,
         change_description=change_description,
@@ -869,7 +869,7 @@ def test__unit_definition_ar__edit_draft_without_legacy_code_change__result(
         ),
         unit_definition_exists_by_legacy_code=lambda _: True,
     )
-    datetime_after = datetime.now()
+    datetime_after = datetime.now(timezone.utc)
 
     # then
     assert unit_definition_ar.concept_vo == new_unit_definition_value
@@ -920,7 +920,7 @@ def test__unit_definition_ar__edit_draft_without_unit_ct_uid_change__result(
 
     # when
     library = unit_definition_ar.library
-    datetime_before = datetime.now()
+    datetime_before = datetime.now(timezone.utc)
     unit_definition_ar.edit_draft(
         new_unit_definition_value=new_unit_definition_value,
         change_description=change_description,
@@ -943,7 +943,7 @@ def test__unit_definition_ar__edit_draft_without_unit_ct_uid_change__result(
             or _ != new_unit_definition_value.legacy_code
         ),
     )
-    datetime_after = datetime.now()
+    datetime_after = datetime.now(timezone.utc)
 
     # then
     assert unit_definition_ar.concept_vo == new_unit_definition_value
@@ -997,7 +997,7 @@ def test__unit_definition_ar__edit_draft_without_name_change__result(
 
     # when
     library = unit_definition_ar.library
-    datetime_before = datetime.now()
+    datetime_before = datetime.now(timezone.utc)
     unit_definition_ar.edit_draft(
         new_unit_definition_value=new_unit_definition_value,
         change_description=change_description,
@@ -1018,7 +1018,7 @@ def test__unit_definition_ar__edit_draft_without_name_change__result(
         == unit_definition_ar.concept_vo.legacy_code
         or _ != new_unit_definition_value.legacy_code,
     )
-    datetime_after = datetime.now()
+    datetime_after = datetime.now(timezone.utc)
 
     # then
     if unit_def_value_before_edit != new_unit_definition_value:

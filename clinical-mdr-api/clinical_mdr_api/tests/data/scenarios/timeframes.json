@@ -17,7 +17,7 @@
                 "items": [],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
@@ -27,8 +27,8 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
-                "parameterValues": [
+                "library_name": "Test library",
+                "parameter_values": [
                     {
                         "conjunction": ",",
                         "name": "Intervention",
@@ -43,7 +43,7 @@
                         ]
                     }
                 ],
-                "timeframeTemplateUid": "{ttuid}"
+                "timeframe_template_uid": "{ttuid}"
             },
             "url": "/timeframes"
         },
@@ -68,8 +68,8 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
-                "parameterValues": [
+                "library_name": "Test library",
+                "parameter_values": [
                     {
                         "conjunction": ",",
                         "name": "Indication",
@@ -91,7 +91,7 @@
                         ]
                     }
                 ],
-                "timeframeTemplateUid": "{ttuid}"
+                "timeframe_template_uid": "{ttuid}"
             },
             "url": "/timeframes/preview"
         },
@@ -102,15 +102,15 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
+                "change_description": "Initial version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 "name": "Test [type 2 diabetes , coronary heart disease]",
-                "namePlain": "Test type 2 diabetes , coronary heart disease",
-                "parameterValues": [
+                "name_plain": "Test type 2 diabetes , coronary heart disease",
+                "parameter_values": [
                     {
                         "conjunction": ",",
                         "position": 1,
@@ -130,20 +130,20 @@
                         ]
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-11T01:06:37+00:00",
+                "start_date": "2020-11-11T01:06:37+00:00",
                 "status": "Draft",
-                "timeframeTemplate": {
+                "timeframe_template": {
                     "name": "Test [Indication]",
-                    "namePlain": "Test [Indication]",
+                    "name_plain": "Test [Indication]",
                     "uid": "{ttuid}"
                 },
                 "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             }
         }
@@ -154,8 +154,8 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
-                "parameterValues": [
+                "library_name": "Test library",
+                "parameter_values": [
                     {
                         "conjunction": ",",
                         "name": "Indication",
@@ -177,7 +177,7 @@
                         ]
                     }
                 ],
-                "timeframeTemplateUid": "{ttuid}"
+                "timeframe_template_uid": "{ttuid}"
             },
             "url": "/timeframes"
         },
@@ -188,15 +188,15 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
+                "change_description": "Initial version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 "name": "Test [type 2 diabetes , coronary heart disease]",
-                "namePlain": "Test type 2 diabetes , coronary heart disease",
-                "parameterValues": [
+                "name_plain": "Test type 2 diabetes , coronary heart disease",
+                "parameter_values": [
                     {
                         "conjunction": ",",
                         "position": 1,
@@ -216,20 +216,20 @@
                         ]
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-11T01:06:37+00:00",
+                "start_date": "2020-11-11T01:06:37+00:00",
                 "status": "Draft",
-                "timeframeTemplate": {
+                "timeframe_template": {
                     "name": "Test [Indication]",
-                    "namePlain": "Test [Indication]",
+                    "name_plain": "Test [Indication]",
                     "uid": "{ttuid}"
                 },
                 "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             }
         }
@@ -240,8 +240,8 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
-                "parameterValues": [
+                "library_name": "Test library",
+                "parameter_values": [
                     {
                         "conjunction": ",",
                         "name": "Indication",
@@ -279,7 +279,7 @@
                         ]
                     }
                 ],
-                "timeframeTemplateUid": "{ttuid2}"
+                "timeframe_template_uid": "{ttuid2}"
             },
             "url": "/timeframes"
         },
@@ -290,15 +290,15 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
+                "change_description": "Initial version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 "name": "Test [type 2 diabetes , coronary heart disease] and [human insulin and Metformin]",
-                "namePlain": "Test type 2 diabetes , coronary heart disease and human insulin and Metformin",
-                "parameterValues": [
+                "name_plain": "Test type 2 diabetes , coronary heart disease and human insulin and Metformin",
+                "parameter_values": [
                     {
                         "conjunction": ",",
                         "position": 1,
@@ -336,20 +336,20 @@
                         ]
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-11T01:06:37+00:00",
+                "start_date": "2020-11-11T01:06:37+00:00",
                 "status": "Draft",
-                "timeframeTemplate": {
+                "timeframe_template": {
                     "name": "Test [Indication] and [Intervention]",
-                    "namePlain": "Test [Indication] and [Intervention]",
+                    "name_plain": "Test [Indication] and [Intervention]",
                     "uid": "{ttuid}"
                 },
                 "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             }
         }
@@ -360,7 +360,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/timeframes?totalCount=True"
+            "url": "/timeframes?total_count=True"
         },
         "response": {
             "code": 200,
@@ -371,15 +371,15 @@
             "result": {
                 "items": [
                     {
-                        "changeDescription": "Initial version",
-                        "endDate": null,
+                        "change_description": "Initial version",
+                        "end_date": null,
                         "library": {
-                            "isEditable": true,
+                            "is_editable": true,
                             "name": "Test library"
                         },
                         "name": "Test [type 2 diabetes , coronary heart disease] and [human insulin and Metformin]",
-                        "namePlain": "Test type 2 diabetes , coronary heart disease and human insulin and Metformin",
-                        "parameterValues": [
+                        "name_plain": "Test type 2 diabetes , coronary heart disease and human insulin and Metformin",
+                        "parameter_values": [
                             {
                                 "conjunction": ",",
                                 "position": 1,
@@ -417,32 +417,32 @@
                                 ]
                             }
                         ],
-                        "possibleActions": [
+                        "possible_actions": [
                             "approve",
                             "delete",
                             "edit"
                         ],
-                        "startDate": "2020-11-11T01:06:37+00:00",
+                        "start_date": "2020-11-11T01:06:37+00:00",
                         "status": "Draft",
-                        "timeframeTemplate": {
+                        "timeframe_template": {
                             "name": "Test [Indication] and [Intervention]",
-                            "namePlain": "Test [Indication] and [Intervention]",
+                            "name_plain": "Test [Indication] and [Intervention]",
                             "uid": "{ttuid}"
                         },
                         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-                        "userInitials": "TEST_USER",
+                        "user_initials": "TEST_USER",
                         "version": "0.1"
                     },
                     {
-                        "changeDescription": "Initial version",
-                        "endDate": null,
+                        "change_description": "Initial version",
+                        "end_date": null,
                         "library": {
-                            "isEditable": true,
+                            "is_editable": true,
                             "name": "Test library"
                         },
                         "name": "Test [type 2 diabetes , coronary heart disease]",
-                        "namePlain": "Test type 2 diabetes , coronary heart disease",
-                        "parameterValues": [
+                        "name_plain": "Test type 2 diabetes , coronary heart disease",
+                        "parameter_values": [
                             {
                                 "conjunction": ",",
                                 "position": 1,
@@ -462,26 +462,26 @@
                                 ]
                             }
                         ],
-                        "possibleActions": [
+                        "possible_actions": [
                             "approve",
                             "delete",
                             "edit"
                         ],
-                        "startDate": "2020-11-11T01:06:37+00:00",
+                        "start_date": "2020-11-11T01:06:37+00:00",
                         "status": "Draft",
-                        "timeframeTemplate": {
+                        "timeframe_template": {
                             "name": "Test [Indication]",
-                            "namePlain": "Test [Indication]",
+                            "name_plain": "Test [Indication]",
                             "uid": "{ttuid}"
                         },
                         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-                        "userInitials": "TEST_USER",
+                        "user_initials": "TEST_USER",
                         "version": "0.1"
                     }
                 ],
                 "total": 2,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
@@ -491,8 +491,8 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
-                "parameterValues": [
+                "library_name": "Test library",
+                "parameter_values": [
                     {
                         "conjunction": ",",
                         "position": 1,
@@ -512,7 +512,7 @@
                         ]
                     }
                 ],
-                "timeframeTemplateUid": "{ttuid}"
+                "timeframe_template_uid": "{ttuid}"
             },
             "url": "/timeframes"
         },
@@ -537,7 +537,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/timeframes?totalCount=True"
+            "url": "/timeframes?total_count=True"
         },
         "response": {
             "code": 200,
@@ -548,15 +548,15 @@
             "result": {
                 "items": [
                     {
-                        "changeDescription": "Initial version",
-                        "endDate": null,
+                        "change_description": "Initial version",
+                        "end_date": null,
                         "library": {
-                            "isEditable": true,
+                            "is_editable": true,
                             "name": "Test library"
                         },
                         "name": "Test [type 2 diabetes , coronary heart disease] and [human insulin and Metformin]",
-                        "namePlain": "Test type 2 diabetes , coronary heart disease and human insulin and Metformin",
-                        "parameterValues": [
+                        "name_plain": "Test type 2 diabetes , coronary heart disease and human insulin and Metformin",
+                        "parameter_values": [
                             {
                                 "conjunction": ",",
                                 "position": 1,
@@ -594,32 +594,32 @@
                                 ]
                             }
                         ],
-                        "possibleActions": [
+                        "possible_actions": [
                             "approve",
                             "delete",
                             "edit"
                         ],
-                        "startDate": "2020-11-11T01:06:37+00:00",
+                        "start_date": "2020-11-11T01:06:37+00:00",
                         "status": "Draft",
-                        "timeframeTemplate": {
+                        "timeframe_template": {
                             "name": "Test [Indication] and [Intervention]",
-                            "namePlain": "Test [Indication] and [Intervention]",
+                            "name_plain": "Test [Indication] and [Intervention]",
                             "uid": "{ttuid}"
                         },
                         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-                        "userInitials": "TEST_USER",
+                        "user_initials": "TEST_USER",
                         "version": "0.1"
                     },
                     {
-                        "changeDescription": "Initial version",
-                        "endDate": null,
+                        "change_description": "Initial version",
+                        "end_date": null,
                         "library": {
-                            "isEditable": true,
+                            "is_editable": true,
                             "name": "Test library"
                         },
                         "name": "Test [type 2 diabetes , coronary heart disease]",
-                        "namePlain": "Test type 2 diabetes , coronary heart disease",
-                        "parameterValues": [
+                        "name_plain": "Test type 2 diabetes , coronary heart disease",
+                        "parameter_values": [
                             {
                                 "conjunction": ",",
                                 "position": 1,
@@ -639,26 +639,26 @@
                                 ]
                             }
                         ],
-                        "possibleActions": [
+                        "possible_actions": [
                             "approve",
                             "delete",
                             "edit"
                         ],
-                        "startDate": "2020-11-11T01:06:37+00:00",
+                        "start_date": "2020-11-11T01:06:37+00:00",
                         "status": "Draft",
-                        "timeframeTemplate": {
+                        "timeframe_template": {
                             "name": "Test [Indication]",
-                            "namePlain": "Test [Indication]",
+                            "name_plain": "Test [Indication]",
                             "uid": "{ttuid}"
                         },
                         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-                        "userInitials": "TEST_USER",
+                        "user_initials": "TEST_USER",
                         "version": "0.1"
                     }
                 ],
                 "total": 2,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
@@ -668,9 +668,9 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
-                "nameOverride": "Test [Indication] - edited instance name",
-                "parameterValues": [
+                "library_name": "Test library",
+                "name_override": "Test [Indication] - edited instance name",
+                "parameter_values": [
                     {
                         "conjunction": ",",
                         "name": "Indication",
@@ -692,7 +692,7 @@
                         ]
                     }
                 ],
-                "timeframeTemplateUid": "{ttuid}"
+                "timeframe_template_uid": "{ttuid}"
             },
             "url": "/timeframes"
         },
@@ -703,15 +703,15 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
+                "change_description": "Initial version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 "name": "Test [type 2 diabetes , coronary heart disease] - edited instance name",
-                "namePlain": "Test type 2 diabetes , coronary heart disease - edited instance name",
-                "parameterValues": [
+                "name_plain": "Test type 2 diabetes , coronary heart disease - edited instance name",
+                "parameter_values": [
                     {
                         "conjunction": ",",
                         "position": 1,
@@ -731,20 +731,20 @@
                         ]
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-11T01:06:37+00:00",
+                "start_date": "2020-11-11T01:06:37+00:00",
                 "status": "Draft",
-                "timeframeTemplate": {
+                "timeframe_template": {
                     "name": "Test [Indication] - edited instance name",
-                    "namePlain": "Test [Indication] - edited instance name",
+                    "name_plain": "Test [Indication] - edited instance name",
                     "uid": "{ttuid}"
                 },
                 "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             }
         }

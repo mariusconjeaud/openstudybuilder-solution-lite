@@ -8,8 +8,8 @@ export const studySelectedNavigationGuard = {
       selectedStudy: 'studiesGeneral/selectedStudy'
     }),
     studyId () {
-      return (this.selectedStudy.studyNumber !== undefined && this.selectedStudy.studyNumber !== null)
-        ? this.selectedStudy.studyId : this.selectedStudy.studyAcronym
+      return (this.selectedStudy.study_number !== undefined && this.selectedStudy.study_number !== null)
+        ? this.selectedStudy.study_id : this.selectedStudy.study_acronym
     }
   },
 

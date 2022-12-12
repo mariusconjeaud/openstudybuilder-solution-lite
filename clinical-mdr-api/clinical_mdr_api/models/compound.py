@@ -32,31 +32,31 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class Compound(Concept):
-    possibleActions: List[str] = Field(
+    possible_actions: List[str] = Field(
         ...,
         description=(
             "Holds those actions that can be performed on Compounds. "
-            "Actions are: 'approve', 'edit', 'newVersion'."
+            "Actions are: 'approve', 'edit', 'new_version'."
         ),
     )
 
-    analyteNumber: Optional[str]
-    nncShortNumber: Optional[str]
-    nncLongNumber: Optional[str]
-    isSponsorCompound: Optional[bool] = True
-    isNameInn: Optional[bool] = True
+    analyte_number: Optional[str]
+    nnc_short_number: Optional[str]
+    nnc_long_number: Optional[str]
+    is_sponsor_compound: Optional[bool] = True
+    is_name_inn: Optional[bool] = True
     substances: Optional[Sequence[CompoundSubstance]]
-    doseValues: Optional[Sequence[SimpleNumericValueWithUnit]]
-    strengthValues: Optional[Sequence[SimpleNumericValueWithUnit]]
-    lagTimes: Optional[Sequence[SimpleLagTime]]
-    deliveryDevices: Optional[Sequence[SimpleTermModel]]
+    dose_values: Optional[Sequence[SimpleNumericValueWithUnit]]
+    strength_values: Optional[Sequence[SimpleNumericValueWithUnit]]
+    lag_times: Optional[Sequence[SimpleLagTime]]
+    delivery_devices: Optional[Sequence[SimpleTermModel]]
     dispensers: Optional[Sequence[SimpleTermModel]]
     projects: Optional[Sequence[Project]]
     brands: Optional[Sequence[Brand]]
-    halfLife: Optional[SimpleNumericValueWithUnit]
-    doseFrequencies: Optional[Sequence[SimpleTermModel]]
-    dosageForms: Optional[Sequence[SimpleTermModel]]
-    routesOfAdministration: Optional[Sequence[SimpleTermModel]]
+    half_life: Optional[SimpleNumericValueWithUnit]
+    dose_frequencies: Optional[Sequence[SimpleTermModel]]
+    dosage_forms: Optional[Sequence[SimpleTermModel]]
+    routes_of_administration: Optional[Sequence[SimpleTermModel]]
 
     @classmethod
     def from_compound_ar(
@@ -77,10 +77,10 @@ class Compound(Concept):
         return cls(
             uid=compound_ar.uid,
             name=compound_ar.name,
-            nameSentenceCase=compound_ar.concept_vo.name_sentence_case,
+            name_sentence_case=compound_ar.concept_vo.name_sentence_case,
             definition=compound_ar.concept_vo.definition,
             abbreviation=compound_ar.concept_vo.abbreviation,
-            doseValues=sorted(
+            dose_values=sorted(
                 [
                     SimpleNumericValueWithUnit.from_concept_uid(
                         uid=uid,
@@ -91,7 +91,7 @@ class Compound(Concept):
                 ],
                 key=lambda item: item.value,
             ),
-            strengthValues=sorted(
+            strength_values=sorted(
                 [
                     SimpleNumericValueWithUnit.from_concept_uid(
                         uid=uid,
@@ -102,7 +102,7 @@ class Compound(Concept):
                 ],
                 key=lambda item: item.value,
             ),
-            lagTimes=sorted(
+            lag_times=sorted(
                 [
                     SimpleLagTime.from_concept_uid(
                         uid=uid,
@@ -114,7 +114,7 @@ class Compound(Concept):
                 ],
                 key=lambda item: item.value,
             ),
-            deliveryDevices=sorted(
+            delivery_devices=sorted(
                 [
                     SimpleTermModel.from_ct_code(
                         c_code=uid,
@@ -155,12 +155,12 @@ class Compound(Concept):
                 ],
                 key=lambda item: item.name,
             ),
-            halfLife=SimpleNumericValueWithUnit.from_concept_uid(
+            half_life=SimpleNumericValueWithUnit.from_concept_uid(
                 uid=compound_ar.concept_vo.half_life_uid,
                 find_unit_by_uid=find_unit_by_uid,
                 find_numeric_value_by_uid=find_numeric_value_by_uid,
             ),
-            doseFrequencies=sorted(
+            dose_frequencies=sorted(
                 [
                     SimpleTermModel.from_ct_code(
                         c_code=uid,
@@ -170,7 +170,7 @@ class Compound(Concept):
                 ],
                 key=lambda item: item.name if item.name else "",
             ),
-            dosageForms=sorted(
+            dosage_forms=sorted(
                 [
                     SimpleTermModel.from_ct_code(
                         c_code=uid,
@@ -180,7 +180,7 @@ class Compound(Concept):
                 ],
                 key=lambda item: item.name if item.name else "",
             ),
-            routesOfAdministration=sorted(
+            routes_of_administration=sorted(
                 [
                     SimpleTermModel.from_ct_code(
                         c_code=uid,
@@ -190,11 +190,11 @@ class Compound(Concept):
                 ],
                 key=lambda item: item.name if item.name else "",
             ),
-            analyteNumber=compound_ar.concept_vo.analyte_number,
-            nncShortNumber=compound_ar.concept_vo.nnc_short_number,
-            nncLongNumber=compound_ar.concept_vo.nnc_long_number,
-            isSponsorCompound=compound_ar.concept_vo.is_sponsor_compound,
-            isNameInn=compound_ar.concept_vo.is_name_inn,
+            analyte_number=compound_ar.concept_vo.analyte_number,
+            nnc_short_number=compound_ar.concept_vo.nnc_short_number,
+            nnc_long_number=compound_ar.concept_vo.nnc_long_number,
+            is_sponsor_compound=compound_ar.concept_vo.is_sponsor_compound,
+            is_name_inn=compound_ar.concept_vo.is_name_inn,
             substances=sorted(
                 [
                     CompoundSubstance.from_term_uid(
@@ -204,16 +204,16 @@ class Compound(Concept):
                     )
                     for unii_uid in compound_ar.concept_vo.substance_terms_uids
                 ],
-                key=lambda item: item.substanceName,
+                key=lambda item: item.substance_name,
             ),
-            libraryName=Library.from_library_vo(compound_ar.library).name,
-            startDate=compound_ar.item_metadata.start_date,
-            endDate=compound_ar.item_metadata.end_date,
+            library_name=Library.from_library_vo(compound_ar.library).name,
+            start_date=compound_ar.item_metadata.start_date,
+            end_date=compound_ar.item_metadata.end_date,
             status=compound_ar.item_metadata.status.value,
             version=compound_ar.item_metadata.version,
-            changeDescription=compound_ar.item_metadata.change_description,
-            userInitials=compound_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=compound_ar.item_metadata.change_description,
+            user_initials=compound_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 [_.value for _ in compound_ar.get_possible_actions()]
             ),
         )
@@ -244,44 +244,44 @@ class SimpleCompound(BaseModel):
 
 
 class CompoundCreateInput(ConceptInput):
-    analyteNumber: Optional[str] = None
-    nncShortNumber: Optional[str] = None
-    nncLongNumber: Optional[str] = None
-    isSponsorCompound: bool = True
-    isNameInn: bool = True
-    substanceTermsUids: Optional[Sequence[str]] = []
-    doseValuesUids: Sequence[str] = []
-    strengthValuesUids: Sequence[str] = []
-    lagTimesUids: Sequence[str] = []
-    deliveryDevicesUids: Sequence[str] = []
-    dispensersUids: Sequence[str] = []
-    projectsUids: Sequence[str] = []
-    brandsUids: Sequence[str] = []
-    doseFrequencyUids: Sequence[str] = []
-    dosageFormUids: Sequence[str] = []
-    routeOfAdministrationUids: Sequence[str] = []
-    halfLifeUid: Optional[str] = None
+    analyte_number: Optional[str] = None
+    nnc_short_number: Optional[str] = None
+    nnc_long_number: Optional[str] = None
+    is_sponsor_compound: bool = True
+    is_name_inn: bool = True
+    substance_terms_uids: Optional[Sequence[str]] = []
+    dose_values_uids: Sequence[str] = []
+    strength_values_uids: Sequence[str] = []
+    lag_times_uids: Sequence[str] = []
+    delivery_devices_uids: Sequence[str] = []
+    dispensers_uids: Sequence[str] = []
+    projects_uids: Sequence[str] = []
+    brands_uids: Sequence[str] = []
+    dose_frequency_uids: Sequence[str] = []
+    dosage_form_uids: Sequence[str] = []
+    route_of_administration_uids: Sequence[str] = []
+    half_life_uid: Optional[str] = None
 
 
 class CompoundEditInput(ConceptInput):
-    analyteNumber: Optional[str]
-    nncShortNumber: Optional[str]
-    nncLongNumber: Optional[str]
-    isSponsorCompound: Optional[bool]
-    isNameInn: Optional[bool]
-    substanceTermsUids: Optional[Sequence[str]] = []
-    doseValuesUids: Optional[Sequence[str]] = []
-    strengthValuesUids: Optional[Sequence[str]] = []
-    lagTimesUids: Optional[Sequence[str]] = []
-    deliveryDevicesUids: Optional[Sequence[str]] = []
-    dispensersUids: Optional[Sequence[str]] = []
-    projectsUids: Optional[Sequence[str]] = []
-    brandsUids: Optional[Sequence[str]] = []
-    halfLifeUid: Optional[str]
-    doseFrequencyUids: Optional[Sequence[str]] = []
-    dosageFormUids: Optional[Sequence[str]] = []
-    routeOfAdministrationUids: Optional[Sequence[str]] = []
-    changeDescription: str
+    analyte_number: Optional[str]
+    nnc_short_number: Optional[str]
+    nnc_long_number: Optional[str]
+    is_sponsor_compound: Optional[bool]
+    is_name_inn: Optional[bool]
+    substance_terms_uids: Optional[Sequence[str]] = []
+    dose_values_uids: Optional[Sequence[str]] = []
+    strength_values_uids: Optional[Sequence[str]] = []
+    lag_times_uids: Optional[Sequence[str]] = []
+    delivery_devices_uids: Optional[Sequence[str]] = []
+    dispensers_uids: Optional[Sequence[str]] = []
+    projects_uids: Optional[Sequence[str]] = []
+    brands_uids: Optional[Sequence[str]] = []
+    half_life_uid: Optional[str]
+    dose_frequency_uids: Optional[Sequence[str]] = []
+    dosage_form_uids: Optional[Sequence[str]] = []
+    route_of_administration_uids: Optional[Sequence[str]] = []
+    change_description: str
 
 
 class CompoundVersion(Compound):
@@ -289,6 +289,6 @@ class CompoundVersion(Compound):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the objective (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )

@@ -1,19 +1,21 @@
-from typing import Any, Optional, Sequence
+from typing import Any, List, Optional, Sequence
 
 from fastapi import APIRouter, Body, Path, Query
-from pydantic.types import Json, List
+from pydantic.types import Json
 
+from clinical_mdr_api import config
 from clinical_mdr_api.models import (
     OdmForm,
     OdmFormActivityGroupPostInput,
     OdmFormItemGroupPostInput,
     OdmFormPatchInput,
     OdmFormPostInput,
-    OdmFormWithRelationsPatchInput,
-    OdmFormWithRelationsPostInput,
 )
 from clinical_mdr_api.models.error import ErrorResponse
-from clinical_mdr_api.models.odm_common_models import OdmXmlExtensionRelationPostInput
+from clinical_mdr_api.models.odm_common_models import (
+    OdmElementWithParentUid,
+    OdmXmlExtensionRelationPostInput,
+)
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions
@@ -35,33 +37,35 @@ OdmFormUID = Path(None, description="The unique id of the ODM Form.")
 )
 def get_all_odm_forms(
     library: Optional[str] = Query(None),
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
 ):
     odm_form_service = OdmFormService()
     results = odm_form_service.get_all_concepts(
         library=library,
-        sort_by=sortBy,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -81,9 +85,9 @@ def get_all_odm_forms(
     },
 )
 def get_distinct_values_for_header(
-    libraryName: Optional[str] = Query(None),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    library_name: Optional[str] = Query(None),
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -92,19 +96,32 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     odm_form_service = OdmFormService()
     return odm_form_service.get_distinct_values_for_header(
-        library=libraryName,
-        field_name=fieldName,
-        search_string=searchString,
+        library=library_name,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
+
+
+@router.get(
+    "/templates",
+    summary="Get all ODM Forms that belongs to an ODM Template",
+    description="",
+    response_model=Sequence[OdmElementWithParentUid],
+    status_code=200,
+    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+)
+def get_odm_form_that_belongs_to_template():
+    odm_form_service = OdmFormService()
+    return odm_form_service.get_forms_that_belongs_to_template()
 
 
 @router.get(
@@ -135,14 +152,14 @@ def get_active_relationships(uid: str = OdmFormUID):
 
 @router.get(
     "/{uid}/versions",
-    summary="List version history for ODM Forms",
+    summary="List version history for ODM Form",
     description="""
 State before:
  - uid must exist.
 
 Business logic:
  - List version history for ODM Forms.
- - The returned versions are ordered by startDate descending (newest entries first).
+ - The returned versions are ordered by start_date descending (newest entries first).
 
 State after:
  - No change
@@ -166,13 +183,13 @@ def get_odm_form_versions(uid: str = OdmFormUID):
 
 
 @router.post(
-    "/select",
+    "",
     summary="Creates a new Form in 'Draft' status with version 0.1",
     description="",
     response_model=OdmForm,
     status_code=201,
     responses={
-        201: {"description": "Created - The odm form was successfully created."},
+        201: {"description": "Created - The ODM Form was successfully created."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -183,43 +200,16 @@ def get_odm_form_versions(uid: str = OdmFormUID):
     },
 )
 def create_odm_form(
-    odm_form_create_input: OdmFormPostInput = Body(None, description="")
+    odm_form_create_input: OdmFormPostInput = Body(None, description=""),
 ):
     odm_form_service = OdmFormService()
-    return odm_form_service.create(concept_input=odm_form_create_input)
 
-
-@router.post(
-    "/create",
-    summary="Creates an ODM Form with relationships",
-    description="",
-    response_model=OdmForm,
-    status_code=201,
-    responses={
-        201: {"description": "Created - The odm form was successfully created."},
-        403: {
-            "model": ErrorResponse,
-            "description": "Forbidden - Reasons include e.g.: \n"
-            "- The library does not exist.\n"
-            "- The library does not allow to add new items.\n",
-        },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
-    },
-)
-def create_odm_form_with_relations(
-    odm_form_with_relations_post_input: OdmFormWithRelationsPostInput = Body(
-        None, description=""
-    )
-):
-    odm_form_service = OdmFormService()
-    return odm_form_service.create_with_relations(
-        concept_input=odm_form_with_relations_post_input
-    )
+    return odm_form_service.create_with_relations(concept_input=odm_form_create_input)
 
 
 @router.patch(
-    "/{uid}/select",
-    summary="Update odm form",
+    "/{uid}",
+    summary="Update ODM Form",
     description="",
     response_model=OdmForm,
     status_code=200,
@@ -244,45 +234,13 @@ def edit_odm_form(
     odm_form_edit_input: OdmFormPatchInput = Body(None, description=""),
 ):
     odm_form_service = OdmFormService()
-    return odm_form_service.edit_draft(uid=uid, concept_edit_input=odm_form_edit_input)
-
-
-@router.patch(
-    "/{uid}/update",
-    summary="Updates an ODM Form with relationships",
-    description="",
-    response_model=OdmForm,
-    status_code=200,
-    responses={
-        200: {"description": "OK."},
-        403: {
-            "model": ErrorResponse,
-            "description": "Forbidden - Reasons include e.g.: \n"
-            "- The ODM Form is not in draft status.\n"
-            "- The ODM Form had been in 'Final' status before.\n"
-            "- The library does not allow to edit draft versions.\n",
-        },
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - The ODM Form with the specified 'uid' wasn't found.",
-        },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
-    },
-)
-def edit_odm_form_with_relations(
-    uid: str = OdmFormUID,
-    odm_form_with_relations_patch_input: OdmFormWithRelationsPatchInput = Body(
-        None, description=""
-    ),
-):
-    odm_form_service = OdmFormService()
     return odm_form_service.update_with_relations(
-        uid=uid, concept_edit_input=odm_form_with_relations_patch_input
+        uid=uid, concept_edit_input=odm_form_edit_input
     )
 
 
 @router.post(
-    "/{uid}/new-version",
+    "/{uid}/versions",
     summary=" Create a new version of ODM Form",
     description="""
 State before:
@@ -398,7 +356,7 @@ def reactivate_odm_form(uid: str = OdmFormUID):
 
 
 @router.post(
-    "/{uid}/add-activity-groups",
+    "/{uid}/activity-groups",
     summary="Adds activity groups to the ODM Form.",
     description="",
     response_model=OdmForm,
@@ -437,7 +395,7 @@ def add_activity_groups_to_odm_form(
 
 
 @router.post(
-    "/{uid}/add-item-groups",
+    "/{uid}/item-groups",
     summary="Adds item groups to the ODM Form.",
     description="",
     response_model=OdmForm,
@@ -476,7 +434,7 @@ def add_item_groups_to_odm_form(
 
 
 @router.post(
-    "/{uid}/add-xml-extension-tags",
+    "/{uid}/xml-extension-tags",
     summary="Adds xml extension tags to the ODM Form.",
     description="",
     response_model=OdmForm,
@@ -515,7 +473,7 @@ def add_xml_extension_tags_to_odm_form(
 
 
 @router.post(
-    "/{uid}/add-xml-extension-attributes",
+    "/{uid}/xml-extension-attributes",
     summary="Adds xml extension attributes to the ODM Form.",
     description="",
     response_model=OdmForm,
@@ -555,7 +513,7 @@ def add_xml_extension_attributes_to_odm_form(
 
 
 @router.post(
-    "/{uid}/add-xml-extension-tag-attributes",
+    "/{uid}/xml-extension-tag-attributes",
     summary="Adds xml extension tag attributes to the ODM Form.",
     description="",
     response_model=OdmForm,

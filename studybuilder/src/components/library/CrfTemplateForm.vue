@@ -23,20 +23,22 @@
               dense
               clearable
               class="mt-3"
+              :readonly="readOnly"
             />
           </validation-provider>
         </v-col>
       </v-row>
       <v-row>
         <v-col>
-            <v-text-field
-              :label="$t('CrfTemplates.oid')"
-              data-cy="crf-template-oid"
-              v-model="form.oid"
-              dense
-              clearable
-              class="mt-3"
-            />
+          <v-text-field
+            :label="$t('CrfTemplates.oid')"
+            data-cy="crf-template-oid"
+            v-model="form.oid"
+            dense
+            clearable
+            class="mt-3"
+            :readonly="readOnly"
+          />
         </v-col>
       </v-row>
       <v-row>
@@ -59,10 +61,11 @@
             </template>
             <v-date-picker
               locale="en-in"
-              v-model="form.effectiveDate"
+              v-model="form.effective_date"
               no-title
               @input="effectiveDateMenu = false"
               data-cy="crf-template-effective-date-picker"
+              :readonly="readOnly"
             ></v-date-picker>
           </v-menu>
         </v-col>
@@ -85,15 +88,25 @@
             </template>
             <v-date-picker
               locale="en-in"
-              v-model="form.retiredDate"
+              v-model="form.retired_date"
               no-title
               @input="retiredDateMenu = false"
               data-cy="crf-template-retired-date-picker"
+              :readonly="readOnly"
             ></v-date-picker>
           </v-menu>
         </v-col>
       </v-row>
     </validation-observer>
+  </template>
+  <template v-slot:actions>
+    <v-btn
+      @click="newVersion"
+      class="primary mr-2"
+      v-if="readOnly"
+      >
+      {{ $t('_global.new_version') }}
+    </v-btn>
   </template>
 </simple-form-dialog>
 </template>
@@ -110,7 +123,8 @@ export default {
   },
   props: {
     selectedTemplate: Object,
-    open: Boolean
+    open: Boolean,
+    readOnlyProp: Boolean
   },
   computed: {
     title () {
@@ -119,10 +133,10 @@ export default {
         : this.$t('CrfTemplates.add_template')
     },
     effectiveDateDisp () {
-      return this.form.effectiveDate
+      return this.form.effective_date
     },
     retiredDateDisp () {
-      return this.form.retiredDate
+      return this.form.retired_date
     }
   },
   data () {
@@ -130,10 +144,16 @@ export default {
       form: {},
       helpItems: [],
       effectiveDateMenu: false,
-      retiredDateMenu: false
+      retiredDateMenu: false,
+      readOnly: this.readOnlyProp
     }
   },
   methods: {
+    newVersion () {
+      crfs.newVersion('templates', this.selectedTemplate.uid).then((resp) => {
+        this.readOnly = false
+      })
+    },
     async submit () {
       const isValid = await this.$refs.observer.validate()
       if (!isValid) return
@@ -186,6 +206,9 @@ export default {
         this.form = { ...value }
         this.$store.commit('form/SET_FORM', this.form)
       }
+    },
+    readOnlyProp (value) {
+      this.readOnly = value
     }
   }
 }

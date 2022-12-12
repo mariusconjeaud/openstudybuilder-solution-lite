@@ -27,4 +27,4 @@ compounds = "python run_import_compounds.py"
 crfs = "python run_import_crfs.py"
 mockdata = "python run_import_mockdata.py"
 mockdatajson = "python run_import_mockdatajson.py"
-
+validatedatafiles = "python test_datafiles_e2e_sync.py"

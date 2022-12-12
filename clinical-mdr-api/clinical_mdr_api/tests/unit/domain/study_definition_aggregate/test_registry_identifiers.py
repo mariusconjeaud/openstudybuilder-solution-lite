@@ -37,14 +37,14 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 registry_identifier = RegistryIdentifiersVO(
                     ct_gov_id=test_tuple[0],
                     eudract_id=test_tuple[1],
-                    universal_trial_number_UTN=test_tuple[2],
-                    japanese_trial_registry_id_JAPIC=test_tuple[3],
-                    investigational_new_drug_application_number_IND=test_tuple[4],
+                    universal_trial_number_utn=test_tuple[2],
+                    japanese_trial_registry_id_japic=test_tuple[3],
+                    investigational_new_drug_application_number_ind=test_tuple[4],
                     ct_gov_id_null_value_code=test_tuple[5],
                     eudract_id_null_value_code=test_tuple[5],
-                    universal_trial_number_UTN_null_value_code=test_tuple[5],
-                    japanese_trial_registry_id_JAPIC_null_value_code=test_tuple[5],
-                    investigational_new_drug_application_number_IND_null_value_code=test_tuple[
+                    universal_trial_number_utn_null_value_code=test_tuple[5],
+                    japanese_trial_registry_id_japic_null_value_code=test_tuple[5],
+                    investigational_new_drug_application_number_ind_null_value_code=test_tuple[
                         5
                     ],
                 )
@@ -85,14 +85,14 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 registry_identifier = RegistryIdentifiersVO(
                     ct_gov_id=test_tuple[0],
                     eudract_id=test_tuple[1],
-                    universal_trial_number_UTN=test_tuple[2],
-                    japanese_trial_registry_id_JAPIC=test_tuple[3],
-                    investigational_new_drug_application_number_IND=test_tuple[4],
+                    universal_trial_number_utn=test_tuple[2],
+                    japanese_trial_registry_id_japic=test_tuple[3],
+                    investigational_new_drug_application_number_ind=test_tuple[4],
                     ct_gov_id_null_value_code=test_tuple[5],
                     eudract_id_null_value_code=test_tuple[5],
-                    universal_trial_number_UTN_null_value_code=test_tuple[5],
-                    japanese_trial_registry_id_JAPIC_null_value_code=test_tuple[5],
-                    investigational_new_drug_application_number_IND_null_value_code=test_tuple[
+                    universal_trial_number_utn_null_value_code=test_tuple[5],
+                    japanese_trial_registry_id_japic_null_value_code=test_tuple[5],
+                    investigational_new_drug_application_number_ind_null_value_code=test_tuple[
                         5
                     ],
                 )

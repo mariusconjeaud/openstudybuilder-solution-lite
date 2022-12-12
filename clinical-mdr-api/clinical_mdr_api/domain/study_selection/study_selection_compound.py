@@ -81,7 +81,7 @@ class StudySelectionCompoundVO:
             study_selection_uid = generate_uid_callback()
 
         if start_date is None:
-            start_date = datetime.datetime.now()
+            start_date = datetime.datetime.now(datetime.timezone.utc)
 
         # returns a new instance of the VO
         return StudySelectionCompoundVO(
@@ -139,7 +139,7 @@ class StudySelectionCompoundVO:
             ):
                 if value is not None:
                     raise ValueError(
-                        "If reasonForMissingNullValueUid has a value, "
+                        "If reason_for_missing_null_value_uid has a value, "
                         + "all fields except type of treatment have to be empty"
                     )
 

@@ -10,10 +10,10 @@
   >
   <template v-slot:body>
     <v-alert
-      v-if="studyEpoch && studyEpoch.studyVisitCount > 0"
+      v-if="studyEpoch && studyEpoch.study_visit_count > 0"
       type="warning"
       >
-      {{ $t('StudyEpochForm.epoch_linked_to_visits_warning', { epoch: studyEpoch.epochName }) }}
+      {{ $t('StudyEpochForm.epoch_linked_to_visits_warning', { epoch: studyEpoch.epoch_name }) }}
     </v-alert>
     <validation-observer ref="observer">
       <v-row>
@@ -31,10 +31,10 @@
               :error-messages="errors"
               clearable
               data-cy="epoch-type"
-              v-model="form.epochType"
+              v-model="form.epoch_type"
               @input="setEpochGroups()"
               @click:clear="setEpochGroups()"
-              :disabled="studyEpoch && studyEpoch.studyVisitCount > 0"
+              :disabled="studyEpoch && studyEpoch.study_visit_count > 0"
               />
           </validation-provider>
         </v-col>
@@ -52,10 +52,10 @@
               :error-messages="errors"
               clearable
               data-cy="epoch-subtype"
-              v-model="form.epochSubType"
+              v-model="form.epoch_subtype"
               @input="setEpochGroups()"
               @click:clear="setEpochGroups()"
-              :disabled="studyEpoch && studyEpoch.studyVisitCount > 0"
+              :disabled="studyEpoch && studyEpoch.study_visit_count > 0"
               />
           </validation-provider>
         </v-col>
@@ -87,7 +87,7 @@
               data-cy="epoch-start-rule"
               id="startRule"
               :label="$t('StudyEpochForm.start_rule')"
-              v-model="form.startRule"
+              v-model="form.start_rule"
               rows="1"
               auto-grow
               :error-messages="errors"
@@ -104,7 +104,7 @@
               data-cy="epoch-end-rule"
               id="endRule"
               :label="$t('StudyEpochForm.stop_rule')"
-              v-model="form.endRule"
+              v-model="form.end_rule"
               rows="1"
               auto-grow
               :error-messages="errors"
@@ -131,7 +131,7 @@
         >
         <label class="v-label">{{ $t('_global.change_description') }}</label>
         <v-textarea
-          v-model="form.changeDescription"
+          v-model="form.change_description"
           :error-messages="errors"
           dense
           clearable
@@ -210,7 +210,7 @@ export default {
     createMapping (codelist) {
       const returnValue = {}
       codelist.forEach(item => {
-        returnValue[item.termUid] = item.sponsorPreferredName
+        returnValue[item.term_uid] = item.sponsor_preferred_name
       })
       return returnValue
     },
@@ -239,23 +239,23 @@ export default {
     setEpochGroups () {
       let type = ''
       let subtype = ''
-      if (!this.form.epochSubType && !this.form.epochType) {
+      if (!this.form.epoch_subtype && !this.form.epoch_type) {
         this.$set(this.form, 'epoch', '')
         this.subtypeGroups = this.groups
         this.typeGroups = this.groups
         this.epochDisplay = ''
-      } else if (!this.form.epochSubType) {
+      } else if (!this.form.epoch_subtype) {
         this.$set(this.form, 'epoch', '')
-        type = this.form.epochType
+        type = this.form.epoch_type
         this.subtypeGroups = this.groups
         this.typeGroups = this.groups
         this.subtypeGroups = this.groups.filter(function (value) {
           return value.type === type
         })
         this.epochDisplay = ''
-      } else if (!this.form.epochType) {
+      } else if (!this.form.epoch_type) {
         this.$set(this.form, 'epoch', '')
-        subtype = this.form.epochSubType
+        subtype = this.form.epoch_subtype
         this.typeGroups = this.groups
         this.subtypeGroups = this.groups
         this.typeGroups = this.groups.filter(function (value) {
@@ -263,8 +263,8 @@ export default {
         })
         this.epochDisplay = ''
       } else {
-        subtype = this.form.epochSubType
-        type = this.form.epochType
+        subtype = this.form.epoch_subtype
+        type = this.form.epoch_type
         this.typeGroups = this.groups.filter(function (value) {
           return value.subtype === subtype
         })
@@ -273,12 +273,12 @@ export default {
         })
 
         const data = {
-          studyUid: this.selectedStudy.uid,
-          epochSubType: subtype
+          study_uid: this.selectedStudy.uid,
+          epoch_subtype: subtype
         }
         studyEpochs.getPreviewEpoch(this.selectedStudy.uid, data).then(resp => {
           this.$set(this.form, 'epoch', resp.data.epoch)
-          this.epochDisplay = resp.data.epochName
+          this.epochDisplay = resp.data.epoch_name
         })
       }
     },
@@ -302,9 +302,9 @@ export default {
     addObject () {
       const data = JSON.parse(JSON.stringify(this.form))
       if (this.colorHash) {
-        data.colorHash = this.colorHash.hexa
+        data.color_hash = this.colorHash.hexa
       }
-      data.studyUid = this.selectedStudy.uid
+      data.study_uid = this.selectedStudy.uid
       return this.$store.dispatch('studyEpochs/addStudyEpoch', { studyUid: this.selectedStudy.uid, input: data }).then(resp => {
         this.$store.dispatch('studyEpochs/fetchStudyEpochs', this.selectedStudy.uid)
         bus.$emit('notification', { msg: this.$t('StudyEpochForm.add_success') })
@@ -313,7 +313,7 @@ export default {
     updateObject () {
       const data = JSON.parse(JSON.stringify(this.form))
       if (this.colorHash) {
-        data.colorHash = this.colorHash.hexa !== undefined ? this.colorHash.hexa : this.colorHash
+        data.color_hash = this.colorHash.hexa !== undefined ? this.colorHash.hexa : this.colorHash
       }
       return this.$store.dispatch('studyEpochs/updateStudyEpoch', { studyUid: this.selectedStudy.uid, studyEpochUid: this.studyEpoch.uid, input: data }).then(resp => {
         this.$store.dispatch('studyEpochs/fetchStudyEpochs', this.selectedStudy.uid)
@@ -322,8 +322,8 @@ export default {
     },
     loadFromStudyEpoch (studyEpoch) {
       this.form = { ...studyEpoch }
-      if (studyEpoch.colorHash) {
-        this.colorHash = studyEpoch.colorHash
+      if (studyEpoch.color_hash) {
+        this.colorHash = studyEpoch.color_hash
       }
     }
   },

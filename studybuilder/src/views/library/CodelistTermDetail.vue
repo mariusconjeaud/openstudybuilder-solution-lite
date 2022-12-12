@@ -1,11 +1,11 @@
 <template>
 <div class="px-4">
   <div class="page-title">
-    {{ $t('CodelistTermsView.codelist') }} {{ $route.params.codelistId }} - {{ codelistAttributes.submissionValue }} / {{ $t('CodelistTermDetail.term_detail') }} ({{ $t('CodelistTermDetail.concept_id') }}: {{ $route.params.termId }})
+    {{ $t('CodelistTermsView.codelist') }} {{ $route.params.codelist_id }} - {{ codelistAttributes.submission_value }} / {{ $t('CodelistTermDetail.term_detail') }} ({{ $t('CodelistTermDetail.concept_id') }}: {{ $route.params.term_id }})
   </div>
   <codelist-term-detail
-    :codelistUid="$route.params.codelistId"
-    :termUid="$route.params.termId"
+    :codelist-uid="$route.params.codelist_id"
+    :term-uid="$route.params.term_id"
     />
 </div>
 </template>
@@ -25,10 +25,10 @@ export default {
   },
   mounted () {
     this.$store.dispatch('app/addBreadcrumbsLevel', {
-      text: this.$route.params.termId,
+      text: this.$route.params.term_id,
       index: 6
     })
-    controlledTerminology.getCodelistAttributes(this.$route.params.codelistId).then(resp => {
+    controlledTerminology.getCodelistAttributes(this.$route.params.codelist_id).then(resp => {
       this.codelistAttributes = resp.data
     })
   }

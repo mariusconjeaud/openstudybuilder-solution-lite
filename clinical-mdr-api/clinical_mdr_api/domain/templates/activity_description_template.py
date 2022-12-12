@@ -29,7 +29,7 @@ class ActivityDescriptionTemplateAR(TemplateAggregateRootBase):
 
     _activity_groups: Optional[Sequence[ActivityGroupAR]] = None
 
-    _activity_sub_groups: Optional[Sequence[ActivitySubGroupAR]] = None
+    _activity_subgroups: Optional[Sequence[ActivitySubGroupAR]] = None
 
     @property
     def indications(self) -> Sequence[DictionaryTermAR]:
@@ -44,8 +44,8 @@ class ActivityDescriptionTemplateAR(TemplateAggregateRootBase):
         return self._activity_groups
 
     @property
-    def activity_sub_groups(self) -> Sequence[ActivitySubGroupAR]:
-        return self._activity_sub_groups
+    def activity_subgroups(self) -> Sequence[ActivitySubGroupAR]:
+        return self._activity_subgroups
 
     @classmethod
     def from_repository_values(
@@ -60,7 +60,7 @@ class ActivityDescriptionTemplateAR(TemplateAggregateRootBase):
         indications: Optional[Sequence[DictionaryTermAR]] = None,
         activities: Optional[Sequence[ActivityAR]] = None,
         activity_groups: Optional[Sequence[ActivityGroupAR]] = None,
-        activity_sub_groups: Optional[Sequence[ActivitySubGroupAR]] = None,
+        activity_subgroups: Optional[Sequence[ActivitySubGroupAR]] = None,
     ) -> "TemplateAggregateRootBase":
         ar = cls(
             _uid=uid,
@@ -71,7 +71,7 @@ class ActivityDescriptionTemplateAR(TemplateAggregateRootBase):
             _indications=indications,
             _activities=activities,
             _activity_groups=activity_groups,
-            _activity_sub_groups=activity_sub_groups,
+            _activity_subgroups=activity_subgroups,
             _study_count=study_count,
             _counts=counts,
         )
@@ -92,7 +92,7 @@ class ActivityDescriptionTemplateAR(TemplateAggregateRootBase):
         indications: Optional[Sequence[DictionaryTermAR]] = None,
         activities: Optional[Sequence[ActivityAR]] = None,
         activity_groups: Optional[Sequence[ActivityGroupAR]] = None,
-        activity_sub_groups: Optional[Sequence[ActivitySubGroupAR]] = None
+        activity_subgroups: Optional[Sequence[ActivitySubGroupAR]] = None
     ) -> "ActivityDescriptionTemplateAR":
         ar: ActivityDescriptionTemplateAR = super().from_input_values(
             author=author,
@@ -105,6 +105,6 @@ class ActivityDescriptionTemplateAR(TemplateAggregateRootBase):
         ar._indications = indications
         ar._activities = activities
         ar._activity_groups = activity_groups
-        ar._activity_sub_groups = activity_sub_groups
+        ar._activity_subgroups = activity_subgroups
 
         return ar

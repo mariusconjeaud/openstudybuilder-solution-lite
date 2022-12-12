@@ -13,15 +13,15 @@ async function formatConstantParameterValue (parameter) {
     if (parameter.name === pconstants.NUM_VALUE) {
       const numData = {
         value: parameter.selectedValues,
-        libraryName: 'Sponsor',
+        library_name: 'Sponsor',
         templateParameter: true
       }
       resp = await concepts.create(numData, 'numeric-values')
     } else if (parameter.name === pconstants.TEXT_VALUE) {
       const textData = {
         name: parameter.selectedValues,
-        nameSentenceCase: parameter.selectedValues.toLowerCase(),
-        libraryName: 'Sponsor',
+        name_sentence_case: parameter.selectedValues.toLowerCase(),
+        library_name: 'Sponsor',
         templateParameter: true
       }
       resp = await concepts.create(textData, 'text-values')

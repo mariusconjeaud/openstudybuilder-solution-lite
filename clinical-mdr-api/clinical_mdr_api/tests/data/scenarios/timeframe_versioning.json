@@ -18,7 +18,7 @@
                 "items": [],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
@@ -28,10 +28,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
+                "library_name": "Test library",
                 "name": "Test timeframe",
-                "timeframeTemplateUid": "{ttuid}",
-                "parameterValues": []
+                "timeframe_template_uid": "{ttuid}",
+                "parameter_values": []
             },
             "url": "/timeframes"
         },
@@ -42,29 +42,29 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
+                "change_description": "Initial version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 "name": "Test_Name_Template",
-                "namePlain": "Test_Name_Template",
-                "timeframeTemplate": {
+                "name_plain": "Test_Name_Template",
+                "timeframe_template": {
                     "name": "Test_Name_Template",
-                    "namePlain": "Test_Name_Template",
+                    "name_plain": "Test_Name_Template",
                     "uid": "{ttuid}"
                 },
-                "parameterValues": [],
-                "possibleActions": [
+                "parameter_values": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-03T22:19:07+00:00",
+                "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Draft",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             },
             "save": {
@@ -87,27 +87,27 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Approved version",
-                "endDate": null,
+                "change_description": "Approved version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 "name": "Test_Name_Template",
-                "namePlain": "Test_Name_Template",
-                "parameterValues": [],
-                "possibleActions": [
+                "name_plain": "Test_Name_Template",
+                "parameter_values": [],
+                "possible_actions": [
                     "inactivate"
                 ],
-                "timeframeTemplate": {
+                "timeframe_template": {
                     "name": "Test_Name_Template",
-                    "namePlain": "Test_Name_Template",
+                    "name_plain": "Test_Name_Template",
                     "uid": "{ttuid}"
                 },
-                "startDate": "2020-11-03T22:19:07+00:00",
+                "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Final",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "1.0"
             }
         }
@@ -188,66 +188,66 @@
                 {
                     "uid": "04f672c6-5532-4c8b-bd46-32c26e28d529",
                     "name": "Test_Name_Template",
-                    "namePlain": "Test_Name_Template",
-                    "startDate": "2020-12-02T11:40:16+00:00",
-                    "endDate": null,
+                    "name_plain": "Test_Name_Template",
+                    "start_date": "2020-12-02T11:40:16+00:00",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TEST_USER",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TEST_USER",
+                    "possible_actions": [
                         "inactivate"
                     ],
-                    "timeframeTemplate": {
+                    "timeframe_template": {
                         "name": "Test_Name_Template",
-                        "namePlain": "Test_Name_Template",
+                        "name_plain": "Test_Name_Template",
                         "uid": "{ttuid}"
                     },
-                    "parameterValues": [],
+                    "parameter_values": [],
                     "library": {
                         "name": "Test library",
-                        "isEditable": true
+                        "is_editable": true
                     },
                     "changes": {
                         "uid": false,
                         "name": false,
-                        "namePlain": false,
-                        "startDate": true,
-                        "endDate": true,
+                        "name_plain": false,
+                        "start_date": true,
+                        "end_date": true,
                         "status": true,
                         "version": true,
-                        "changeDescription": true,
-                        "userInitials": false,
-                        "possibleActions": true,
-                        "timeframeTemplate": false,
+                        "change_description": true,
+                        "user_initials": false,
+                        "possible_actions": true,
+                        "timeframe_template": false,
                         "library": false,
-                        "parameterValues": false
+                        "parameter_values": false
                     }
                 },
                 {
                     "uid": "04f672c6-5532-4c8b-bd46-32c26e28d529",
                     "name": "Test_Name_Template",
-                    "namePlain": "Test_Name_Template",
-                    "startDate": "2020-12-02T11:40:16+00:00",
-                    "endDate": "2020-12-02T11:40:16+00:00",
+                    "name_plain": "Test_Name_Template",
+                    "start_date": "2020-12-02T11:40:16+00:00",
+                    "end_date": "2020-12-02T11:40:16+00:00",
                     "status": "Draft",
                     "version": "0.1",
-                    "changeDescription": "Initial version",
-                    "userInitials": "TEST_USER",
-                    "possibleActions": [
+                    "change_description": "Initial version",
+                    "user_initials": "TEST_USER",
+                    "possible_actions": [
                         "approve",
                         "delete",
                         "edit"
                     ],
-                    "timeframeTemplate": {
+                    "timeframe_template": {
                         "name": "Test_Name_Template",
-                        "namePlain": "Test_Name_Template",
+                        "name_plain": "Test_Name_Template",
                         "uid": "{ttuid}"
                     },
-                    "parameterValues": [],
+                    "parameter_values": [],
                     "library": {
                         "name": "Test library",
-                        "isEditable": true
+                        "is_editable": true
                     },
                     "changes": {}
                 }
@@ -261,7 +261,7 @@
             "method": "PATCH",
             "request": {
                 "name": "test{test-uid}",
-                "parameterValues": [
+                "parameter_values": [
                     {
                         "name": "Intervention",
                         "values": [
@@ -290,7 +290,7 @@
                     {
                         "loc": [
                             "body",
-                            "changeDescription"
+                            "change_description"
                         ],
                         "msg": "field required",
                         "type": "value_error.missing"
@@ -305,9 +305,9 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "changeDescription": "Change test",
+                "change_description": "Change test",
                 "name": "test{test-uid}",
-                "parameterValues": []
+                "parameter_values": []
             },
             "url": "/timeframes/{uid}"
         },
@@ -321,55 +321,6 @@
                 "message": "The object is not in draft status.",
                 "time": "2020-11-10T02:11:38.697632",
                 "path": "http://testserver/timeframes/1754bfdc-9237-4657-a4e3-950945416529",
-                "method": "PATCH",
-                "type": "BusinessLogicException"
-            }
-        }
-    },
-    {
-        "name": "Test new version creation",
-        "request": {
-            "headers": {},
-            "method": "POST",
-            "request": {
-                "changeDescription": "Test new version creation",
-                "name": "test1"
-            },
-            "url": "/timeframes/{uid}/new-version"
-        },
-        "response": {
-            "code": 404,
-            "headers": {
-                "content-length": "22",
-                "content-type": "application/json"
-            },
-            "result": {
-                "detail": "Not Found"
-            }
-        }
-    },
-    {
-        "name": "Test patching (duplicate)?",
-        "request": {
-            "headers": {},
-            "method": "PATCH",
-            "request": {
-                "changeDescription": "Change test",
-                "name": "test{test-uid}",
-                "parameterValues": []
-            },
-            "url": "/timeframes/{uid}"
-        },
-        "response": {
-            "code": 400,
-            "headers": {
-                "content-length": "178",
-                "content-type": "application/json"
-            },
-            "result": {
-                "message": "The object is not in draft status.",
-                "time": "2020-11-10T02:15:12.837621",
-                "path": "http://testserver/timeframes/b03ab611-5723-482f-9422-de1db41a7acf",
                 "method": "PATCH",
                 "type": "BusinessLogicException"
             }

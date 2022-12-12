@@ -6,8 +6,8 @@
             "method": "PATCH",
             "request": {
                 "name": "codelist name",
-                "templateParameter": true,
-                "changeDescription": "Changing codelist"
+                "template_parameter": true,
+                "change_description": "Changing codelist"
             },
             "url": "/dictionaries/codelists/codelist_root1_uid"
         },
@@ -29,8 +29,8 @@
             "method": "PATCH",
             "request": {
                 "name": "name1",
-                "templateParameter": true,
-                "changeDescription": "Changing codelist"
+                "template_parameter": true,
+                "change_description": "Changing codelist"
             },
             "url": "/dictionaries/codelists/codelist_root2_uid"
         },
@@ -70,37 +70,34 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "termUid": "term_root1_uid"
+                "term_uid": "term_root1_uid"
             },
-            "url": "/dictionaries/codelists/codelist_root1_uid/add-term"
+            "url": "/dictionaries/codelists/codelist_root1_uid/terms"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "The codelist identified by codelist_root1_uid already has a term identified by term_root1_uid",
                 "method": "POST",
-                "path": "http://testserver/dictionaries/codelists/codelist_root1_uid/add-term",
+                "path": "http://testserver/dictionaries/codelists/codelist_root1_uid/terms",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "ValidationException"
             }
         }
     },
     {
-        "name": "Test POST remove term that is not assigned to given codelist",
+        "name": "Test DELETE remove term that is not assigned to given codelist",
         "request": {
             "headers": {},
-            "method": "POST",
-            "request": {
-                "termUid": "term_root3_uid"
-            },
-            "url": "/dictionaries/codelists/codelist_root1_uid/remove-term"
+            "method": "DELETE",
+            "url": "/dictionaries/codelists/codelist_root1_uid/terms/term_root3_uid"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "The codelist identified by codelist_root1_uid doesn't have a term identified by term_root3_uid",
-                "method": "POST",
-                "path": "http://testserver/dictionaries/codelists/codelist_root1_uid/remove-term",
+                "method": "DELETE",
+                "path": "http://testserver/dictionaries/codelists/codelist_root1_uid/terms/term_root3_uid",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "ValidationException"
             }

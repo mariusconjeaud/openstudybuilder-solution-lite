@@ -50,10 +50,10 @@ ramete
             WITH pt
             CALL {
                 WITH pt
-                MATCH (pt)<-[:HAS_PARENT_PARAMETER*0..]-(ptParents)-[:HAS_VALUE]->(pr)-[:LATEST_FINAL]->(pv)
-                WITH  pr, pv,  ptParents
+                MATCH (pt)<-[:HAS_PARENT_PARAMETER*0..]-(pt_parents)-[:HAS_VALUE]->(pr)-[:LATEST_FINAL]->(pv)
+                WITH  pr, pv,  pt_parents
                 ORDER BY pv.name ASC
-                RETURN collect({uid: pr.uid, name: pv.name, type: ptParents.name }) AS values
+                RETURN collect({uid: pr.uid, name: pv.name, type: pt_parents.name }) AS values
             }
             RETURN
                 pt.name AS name,

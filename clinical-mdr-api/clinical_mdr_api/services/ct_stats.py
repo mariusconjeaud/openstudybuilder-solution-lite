@@ -63,11 +63,11 @@ class CTStatsService:
         return CTStats(
             catalogues=self._repos.ct_catalogue_repository.count_all(),
             packages=self._repos.ct_package_repository.count_all(),
-            codelistCounts=self._repos.ct_codelist_aggregated_repository.count_all(),
-            termCounts=self._repos.ct_term_aggregated_repository.count_all(),
-            codelistChangePercentage=self._repos.ct_codelist_aggregated_repository.get_change_percentage(),
-            termChangePercentage=self._repos.ct_term_aggregated_repository.get_change_percentage(),
-            codelistChangeDetails=codelist_change_details,
-            termChangeDetails=term_change_details,
-            latestAddedCodelists=latest_codelists,
+            codelist_counts=self._repos.ct_codelist_aggregated_repository.count_all(),
+            term_counts=self._repos.ct_term_aggregated_repository.count_all(),
+            codelist_change_percentage=self._repos.ct_codelist_aggregated_repository.get_change_percentage(),
+            term_change_percentage=self._repos.ct_term_aggregated_repository.get_change_percentage(),
+            codelist_change_details=codelist_change_details,
+            term_change_details=term_change_details,
+            latest_added_codelists=latest_codelists,
         )

@@ -1,10 +1,4 @@
 TOPIC_CD,adam_param_code,SDTM_DOMAIN,activity,activity_instance,specimen,legacy_description,sub_domain_class,GENERAL_DOMAIN_CLASS
-AB_CON_0113_0217_SE,ABC217,LB,Anti-Semaglutide Antibody Confirmation,Anti-Semaglutide Antibody Confirmation,SERUM,Anti NNC 0113-0217 antibodies (confirmation)_x000D_,CATEGORIC FINDING,FINDINGS
-AB_CON_0148_0287_SE,ABC287,LB,Anti-insulin icodec binding antibodies confirmation,Anti-insulin icodec Binding Antibodies Confirmation Serum,SERUM,Confirmation of the anti-insulin icodec binding antibody response (negative or positive) in serum.,CATEGORIC FINDING,FINDINGS
-AB_CR_0148_0287_SE,ABR287,LB,Anti-insulin icodec antibodies cross-reacting,Anti-insulin icodec Antibodies Cross-Reacting Serum,SERUM,A measurement of the antibodies cross-reacting with insulin icodec in serum.,CATEGORIC FINDING,FINDINGS
-AB_CR_GLP1_SE,ABRGLP1,LB,Antibodies cross reacting native GLP-1,Antibodies cross reacting native GLP-1,SERUM,Antibodies cross reacting with native GLP-1_x000D_,CATEGORIC FINDING,FINDINGS
-AB_TIT_0113_0217_SE,ABT217,LB,Semaglutide Antibodies (Titer),Semaglutide Antibodies (Titer),SERUM,Anti-NNC 0113-0217 antibodies (titer)_x000D_,NUMERIC FINDING,FINDINGS
-AB_TIT_0148_0287_SE,ABT287,LB,Anti-insulin icodec antibodies titre,Anti-insulin icodec Antibodies Titre Serum,SERUM,A measurement of the strength of the anti-insulin icodec binding antibody response (titre) in serum.,NUMERIC FINDING,FINDINGS
 ACUTE KIDNEY INJURY,AKI,CE,Acute Kidney Injury,Acute Kidney Injury,,Acute Kidney Injury_x000D_,PERIODIC,EVENTS
 ACUTE_KIDNEY_INJURY_ACUTE_URINARY_TRACT_INFECTION,AKIAURIN,FA,Acute Kidney Injury - Acute Urinary Tract Infection,Acute Kidney Injury - Acute Urinary Tract Infection,,"Acute Kidney Injury: Was there evidence or suspicion of conditions which could explain or have contributed to the event: _x000D_
 Acute urinary tract infection",CATEGORIC FINDING,FINDINGS

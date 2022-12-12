@@ -70,6 +70,11 @@ class UnitDefinitionService:
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[UnitDefinitionModel]:
+        # for unit-definitions we want to return the shortest unit-definitions first
+        if sort_by is None:
+            sort_by = {"size(name)": "true"}
+        else:
+            sort_by["size(name)"] = "true"
         items, total_items = self._repos.unit_definition_repository.find_all(
             library=library_name,
             total_count=total_count,
@@ -168,7 +173,7 @@ class UnitDefinitionService:
                     post_input
                 ),
                 library=LibraryVO.from_input_values_2(
-                    library_name=post_input.libraryName,
+                    library_name=post_input.library_name,
                     is_library_editable_callback=self._is_library_editable,
                 ),
                 uid_supplier=self._generate_unit_definition_uid,
@@ -202,7 +207,7 @@ class UnitDefinitionService:
             )
             unit_definition_ar.edit_draft(
                 author=self._user_id,
-                change_description=patch_input.changeDescription,
+                change_description=patch_input.change_description,
                 new_unit_definition_value=new_unit_dimension_value,
                 unit_definition_by_name_exists_predicate=(
                     self._repos.unit_definition_repository.check_exists_by_name
@@ -293,26 +298,26 @@ class UnitDefinitionService:
         self, post_input: UnitDefinitionPostInput
     ) -> UnitDefinitionValueVO:
         return UnitDefinitionValueVO.from_input_values(
-            si_unit=post_input.siUnit,
+            si_unit=post_input.si_unit,
             name=post_input.name,
             definition=post_input.definition,
-            ct_units=post_input.ctUnits,
-            unit_subsets=post_input.unitSubsets,
+            ct_units=post_input.ct_units,
+            unit_subsets=post_input.unit_subsets,
             ucum_uid=post_input.ucum,
-            display_unit=post_input.displayUnit,
-            convertible_unit=post_input.convertibleUnit,
-            us_conventional_unit=post_input.usConventionalUnit,
-            legacy_code=post_input.legacyCode,
-            molecular_weight_conv_expon=post_input.molecularWeightConvExpon,
-            conversion_factor_to_master=post_input.conversionFactorToMaster,
+            display_unit=post_input.display_unit,
+            convertible_unit=post_input.convertible_unit,
+            us_conventional_unit=post_input.us_conventional_unit,
+            legacy_code=post_input.legacy_code,
+            molecular_weight_conv_expon=post_input.molecular_weight_conv_expon,
+            conversion_factor_to_master=post_input.conversion_factor_to_master,
             unit_ct_uid_exists_callback=self._repos.ct_term_name_repository.term_exists,
-            master_unit=post_input.masterUnit,
-            unit_dimension_uid=post_input.unitDimension,
+            master_unit=post_input.master_unit,
+            unit_dimension_uid=post_input.unit_dimension,
             comment=post_input.comment,
             order=post_input.order,
             ucum_uid_exists_callback=self._repos.dictionary_term_generic_repository.term_exists,
             find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
-            is_template_parameter=post_input.templateParameter,
+            is_template_parameter=post_input.template_parameter,
         )
 
     @staticmethod
@@ -356,24 +361,24 @@ class UnitDefinitionService:
         return UnitDefinitionValueVO.from_input_values(
             name=patch_input.name,
             definition=patch_input.definition,
-            ct_units=patch_input.ctUnits,
-            unit_subsets=patch_input.unitSubsets,
+            ct_units=patch_input.ct_units,
+            unit_subsets=patch_input.unit_subsets,
             ucum_uid=patch_input.ucum,
-            convertible_unit=patch_input.convertibleUnit,
-            display_unit=patch_input.displayUnit,
-            master_unit=patch_input.masterUnit,
-            si_unit=patch_input.siUnit,
-            us_conventional_unit=patch_input.usConventionalUnit,
-            unit_dimension_uid=patch_input.unitDimension,
-            legacy_code=patch_input.legacyCode,
-            molecular_weight_conv_expon=patch_input.molecularWeightConvExpon,
-            conversion_factor_to_master=patch_input.conversionFactorToMaster,
+            convertible_unit=patch_input.convertible_unit,
+            display_unit=patch_input.display_unit,
+            master_unit=patch_input.master_unit,
+            si_unit=patch_input.si_unit,
+            us_conventional_unit=patch_input.us_conventional_unit,
+            unit_dimension_uid=patch_input.unit_dimension,
+            legacy_code=patch_input.legacy_code,
+            molecular_weight_conv_expon=patch_input.molecular_weight_conv_expon,
+            conversion_factor_to_master=patch_input.conversion_factor_to_master,
             comment=patch_input.comment,
             order=patch_input.order,
             unit_ct_uid_exists_callback=self._repos.ct_term_name_repository.term_exists,
             ucum_uid_exists_callback=self._repos.dictionary_term_generic_repository.term_exists,
             find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
-            is_template_parameter=patch_input.templateParameter,
+            is_template_parameter=patch_input.template_parameter,
         )
 
     # noinspection PyMethodMayBeStatic

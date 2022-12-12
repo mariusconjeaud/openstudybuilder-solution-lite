@@ -65,7 +65,7 @@ class StudyActivitySelectionService(StudySelectionMixin):
             with db.transaction:
                 # check if name exists
                 activity_service = ActivityService()
-                activity_uid = selection_create_input.activityUid
+                activity_uid = selection_create_input.activity_uid
                 activity_ar = activity_service.repository.find_by_uid_2(
                     activity_uid, for_update=True
                 )
@@ -90,7 +90,7 @@ class StudyActivitySelectionService(StudySelectionMixin):
                     user_initials=self.author,
                     activity_uid=activity_uid,
                     activity_version=activity_ar.item_metadata.version,
-                    flowchart_group_uid=selection_create_input.flowchartGroupUid,
+                    flowchart_group_uid=selection_create_input.flowchart_group_uid,
                     activity_order=None,
                     generate_uid_callback=repos.study_selection_activity_repository.generate_uid,
                 )
@@ -143,7 +143,7 @@ class StudyActivitySelectionService(StudySelectionMixin):
         project_name: Optional[str] = None,
         project_number: Optional[str] = None,
         activity_names: Optional[List[str]] = None,
-        activity_sub_group_names: Optional[List[str]] = None,
+        activity_subgroup_names: Optional[List[str]] = None,
         activity_group_names: Optional[List[str]] = None,
         sort_by: Optional[dict] = None,
         page_number: int = 1,
@@ -157,7 +157,7 @@ class StudyActivitySelectionService(StudySelectionMixin):
             project_name=project_name,
             project_number=project_number,
             activity_names=activity_names,
-            activity_sub_group_names=activity_sub_group_names,
+            activity_subgroup_names=activity_subgroup_names,
             activity_group_names=activity_group_names,
         )
 
@@ -359,10 +359,10 @@ class StudyActivitySelectionService(StudySelectionMixin):
     ) -> StudySelectionActivityVO:
         # transform current to input model
         transformed_current = models.StudySelectionActivityInput(
-            showActivityGroupInProtocolFlowchart=current_study_activity.show_activity_group_in_protocol_flowchart,
-            showActivitySubGroupInProtocolFlowchart=current_study_activity.show_activity_subgroup_in_protocol_flowchart,
-            showActivityInProtocolFlowchart=current_study_activity.show_activity_in_protocol_flowchart,
-            flowchartGroupUid=current_study_activity.flowchart_group_uid,
+            show_activity_group_in_protocol_flowchart=current_study_activity.show_activity_group_in_protocol_flowchart,
+            show_activity_subgroup_in_protocol_flowchart=current_study_activity.show_activity_subgroup_in_protocol_flowchart,
+            show_activity_in_protocol_flowchart=current_study_activity.show_activity_in_protocol_flowchart,
+            flowchart_group_uid=current_study_activity.flowchart_group_uid,
             note=current_study_activity.note,
         )
 
@@ -377,11 +377,11 @@ class StudyActivitySelectionService(StudySelectionMixin):
             activity_uid=current_study_activity.activity_uid,
             activity_version=current_study_activity.activity_version,
             activity_order=current_study_activity.activity_order,
-            flowchart_group_uid=request_study_activity.flowchartGroupUid,
+            flowchart_group_uid=request_study_activity.flowchart_group_uid,
             study_selection_uid=current_study_activity.study_selection_uid,
-            show_activity_group_in_protocol_flowchart=request_study_activity.showActivityGroupInProtocolFlowchart,
-            show_activity_subgroup_in_protocol_flowchart=request_study_activity.showActivitySubGroupInProtocolFlowchart,
-            show_activity_in_protocol_flowchart=request_study_activity.showActivityInProtocolFlowchart,
+            show_activity_group_in_protocol_flowchart=request_study_activity.show_activity_group_in_protocol_flowchart,
+            show_activity_subgroup_in_protocol_flowchart=request_study_activity.show_activity_subgroup_in_protocol_flowchart,
+            show_activity_in_protocol_flowchart=request_study_activity.show_activity_in_protocol_flowchart,
             note=request_study_activity.note,
             user_initials=self.author,
         )
@@ -463,21 +463,23 @@ class StudyActivitySelectionService(StudySelectionMixin):
                 if operation.method == "PATCH":
                     item = self.patch_selection(
                         study_uid,
-                        operation.content.studyActivityUid,
+                        operation.content.study_activity_uid,
                         operation.content.content,
                     )
                     response_code = status.HTTP_200_OK
                 elif operation.method == "DELETE":
-                    self.delete_selection(study_uid, operation.content.studyActivityUid)
+                    self.delete_selection(
+                        study_uid, operation.content.study_activity_uid
+                    )
                     response_code = status.HTTP_204_NO_CONTENT
                 else:
                     item = self.make_selection(study_uid, operation.content)
                     response_code = status.HTTP_201_CREATED
             except exceptions.MDRApiBaseException as error:
-                result["responseCode"] = error.status_code
+                result["response_code"] = error.status_code
                 result["content"] = BatchErrorResponse(message=str(error))
             else:
-                result["responseCode"] = response_code
+                result["response_code"] = response_code
                 result["content"] = item
             finally:
                 results.append(models.StudySelectionActivityBatchOutput(**result))

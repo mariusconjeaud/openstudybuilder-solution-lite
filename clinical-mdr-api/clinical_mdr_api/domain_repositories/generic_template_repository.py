@@ -106,12 +106,12 @@ class GenericTemplateRepository(
             category = self._get_category(category)
             root.has_category.connect(category)
 
-    def patch_sub_categories(self, uid: str, sub_category_uids: Sequence[str]) -> None:
+    def patch_subcategories(self, uid: str, sub_category_uids: Sequence[str]) -> None:
         root = self.root_class.nodes.get(uid=uid)
-        root.has_sub_category.disconnect_all()
+        root.has_subcategory.disconnect_all()
         for sub_category in sub_category_uids:
             sub_category = self._get_category(sub_category)
-            root.has_sub_category.connect(sub_category)
+            root.has_subcategory.connect(sub_category)
 
     def patch_default_parameter_values(
         self,
@@ -286,13 +286,13 @@ class GenericTemplateRepository(
         index: int,
         set_number: Optional[int],
     ):
-        set_number_sub_clause = (
+        set_number_subclause = (
             "set_number: $set_number, " if set_number is not None else ""
         )
         cypher_query = f"""
             MATCH (tv), (pt:TemplateParameterValueRoot {{uid: $parameter_uid}})
             WHERE ID(tv) = $value_id
-            CREATE (tv)-[r:{value.PARAMETERS_LABEL} {{{set_number_sub_clause}position: $position, index: $index}}]->(pt)
+            CREATE (tv)-[r:{value.PARAMETERS_LABEL} {{{set_number_subclause}position: $position, index: $index}}]->(pt)
             """
         db.cypher_query(
             cypher_query,
@@ -321,8 +321,8 @@ class GenericTemplateRepository(
                 uses_parameter.position ASC
             CALL {{
                 WITH pt
-                OPTIONAL MATCH (pt)<-[:HAS_PARENT_PARAMETER*0..]-(ptParents)-[:HAS_VALUE]->(pr)-[:LATEST_FINAL]->(pv)
-                WITH  pr, pv,  ptParents
+                OPTIONAL MATCH (pt)<-[:HAS_PARENT_PARAMETER*0..]-(pt_parents)-[:HAS_VALUE]->(pr)-[:LATEST_FINAL]->(pv)
+                WITH  pr, pv,  pt_parents
                 CALL apoc.case(
                  [
                    pv.name_sentence_case IS NOT NULL, 'RETURN pv.name_sentence_case AS name',
@@ -331,9 +331,9 @@ class GenericTemplateRepository(
                  '',
                  {{ pv:pv }})
                  yield value
-                WITH pr, ptParents, value.name as value
+                WITH pr, pt_parents, value.name as value
                 ORDER BY value ASC
-                RETURN collect({{uid: pr.uid, name: value, type: ptParents.name}}) AS values
+                RETURN collect({{uid: pr.uid, name: value, type: pt_parents.name}}) AS values
             }}
             RETURN
                 pt.name AS name, tpd.uid as definition, tpv.template_string as template,

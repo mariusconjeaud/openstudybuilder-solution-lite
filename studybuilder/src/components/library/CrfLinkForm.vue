@@ -6,6 +6,7 @@
   @close="close"
   @submit="submit"
   :open="open"
+  maxWidth="1200px"
   >
   <template v-slot:body>
     <v-data-table
@@ -34,6 +35,12 @@
         hide-default-switches
         column-data-resource="ct/codelists"
         additional-margin>
+          <template v-slot:item.desc="{ item }">
+            <div v-html="getDescription(item)"></div>
+          </template>
+          <template v-slot:item.notes="{ item }">
+            <div v-html="getNotes(item)"></div>
+          </template>
           <template v-slot:item.add="{ item }">
             <v-btn
               icon
@@ -83,22 +90,32 @@ export default {
         { text: '', value: 'delete' }
       ],
       availableItemsHeaders: [
-        { text: this.$t('_global.name'), value: 'name' },
-        { text: '', value: 'add' }
+        { text: this.$t('_global.name'), value: 'name', width: '25%' },
+        { text: this.$t('_global.description'), value: 'desc', width: '35%' },
+        { text: this.$t('CrfTree.impl_notes'), value: 'notes', width: '35%' },
+        { text: '', value: 'add', width: '5%' }
       ]
     }
   },
   methods: {
+    getDescription (item) {
+      const engDesc = item.descriptions.find(el => el.language === constants.ENG)
+      return engDesc ? engDesc.description : ''
+    },
+    getNotes (item) {
+      const engDesc = item.descriptions.find(el => el.language === constants.ENG)
+      return engDesc ? engDesc.sponsor_instruction : ''
+    },
     submit () {
       const payload = []
       this.choosenItems.forEach((el, index) => {
         payload.push({
           uid: el.uid ? el.uid : el,
-          orderNumber: index,
+          order_number: index,
           mandatory: el.mandatory ? el.mandatory : false,
-          dataEntryRequired: el.dataEntryRequired ? el.dataEntryRequired : 'No',
+          data_entry_required: el.data_entry_required ? el.data_entry_required : 'No',
           sdv: el.sdv ? el.sdv : 'No',
-          collectionExceptionConditionOid: el.collectionExceptionConditionOid ? el.collectionExceptionConditionOid : null
+          collection_exception_condition_oid: el.collection_exception_condition_oid ? el.collection_exception_condition_oid : null
         })
       })
       switch (this.itemsType) {
@@ -114,11 +131,11 @@ export default {
           return
         case 'items':
           payload.forEach(el => {
-            el.keySequence = el.keySequence ? el.keySequence : constants.NULL
-            el.methodOid = el.methodOid ? el.methodOid : constants.NULL
-            el.imputationMethodOid = el.imputationMethodOid ? el.imputationMethodOid : constants.NULL
+            el.key_sequence = el.key_sequence ? el.key_sequence : constants.NULL
+            el.method_oid = el.method_oid ? el.method_oid : constants.NULL
+            el.imputation_method_oid = el.imputation_method_oid ? el.imputation_method_oid : constants.NULL
             el.role = el.role ? el.role : constants.NULL
-            el.roleCodelistOid = el.roleCodelistOid ? el.roleCodelistOid : constants.NULL
+            el.role_codelist_oid = el.role_codelist_oid ? el.role_codelist_oid : constants.NULL
           })
           crfs.addItemsToItemGroup(payload, this.itemToLink.uid, true).then(resp => {
             this.$emit('close')
@@ -147,10 +164,10 @@ export default {
       this.form = {}
       this.choosenItems = []
       this.items = []
-      this.$emit('close')
+      this.$emit('cancel')
     },
     initForm () {
-      this.choosenItems = this.itemToLink.forms || this.itemToLink.itemGroups || this.itemToLink.items
+      this.choosenItems = Array.from(new Set(this.itemToLink.forms || this.itemToLink.item_groups || this.itemToLink.items))
       if (this.itemsType) {
         crfs.get(this.itemsType).then((resp) => {
           this.items = resp.data.items

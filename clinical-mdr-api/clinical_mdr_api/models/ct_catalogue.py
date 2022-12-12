@@ -14,51 +14,51 @@ class CTCatalogue(BaseModel):
         description="",
     )
 
-    libraryName: Optional[str] = Field(
+    library_name: Optional[str] = Field(
         ...,
-        title="libraryName",
+        title="library_name",
         description="",
     )
 
 
 class CTCatalogueChanges(BaseModel):
-    startDatetime: datetime
-    endDatetime: datetime
-    newCodelists: Sequence[CodelistChangeItem]
-    deletedCodelists: Sequence[CodelistChangeItem]
-    updatedCodelists: Sequence[CodelistChangeItem]
-    newTerms: Sequence[TermChangeItem]
-    deletedTerms: Sequence[TermChangeItem]
-    updatedTerms: Sequence[TermChangeItem]
+    start_datetime: datetime
+    end_datetime: datetime
+    new_codelists: Sequence[CodelistChangeItem]
+    deleted_codelists: Sequence[CodelistChangeItem]
+    updated_codelists: Sequence[CodelistChangeItem]
+    new_terms: Sequence[TermChangeItem]
+    deleted_terms: Sequence[TermChangeItem]
+    updated_terms: Sequence[TermChangeItem]
 
     @classmethod
     def from_repository_output(
         cls, start_datetime: datetime, end_datetime: datetime, query_output
     ) -> "CTCatalogueChanges":
         return cls(
-            startDatetime=start_datetime,
-            endDatetime=end_datetime,
-            newCodelists=[
+            start_datetime=start_datetime,
+            end_datetime=end_datetime,
+            new_codelists=[
                 CodelistChangeItem.from_repository_output(item)
                 for item in query_output["new_codelists"]
             ],
-            updatedCodelists=[
+            updated_codelists=[
                 CodelistChangeItem.from_repository_output(item)
                 for item in query_output["updated_codelists"]
             ],
-            deletedCodelists=[
+            deleted_codelists=[
                 CodelistChangeItem.from_repository_output(item)
                 for item in query_output["deleted_codelists"]
             ],
-            newTerms=[
+            new_terms=[
                 TermChangeItem.from_repository_output(item)
                 for item in query_output["new_terms"]
             ],
-            updatedTerms=[
+            updated_terms=[
                 TermChangeItem.from_repository_output(item)
                 for item in query_output["updated_terms"]
             ],
-            deletedTerms=[
+            deleted_terms=[
                 TermChangeItem.from_repository_output(item)
                 for item in query_output["deleted_terms"]
             ],

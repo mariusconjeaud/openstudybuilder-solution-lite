@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Sequence
 
 from neomodel import db
 
@@ -77,21 +77,21 @@ class ConditionRepository(OdmGenericRepository[OdmConditionAR]):
             concept_vo=OdmConditionVO.from_repository_values(
                 oid=input_dict.get("oid"),
                 name=input_dict.get("name"),
-                formal_expression_uids=input_dict.get("formalExpressionUids"),
-                description_uids=input_dict.get("descriptionUids"),
-                alias_uids=input_dict.get("aliasUids"),
+                formal_expression_uids=input_dict.get("formal_expression_uids"),
+                description_uids=input_dict.get("description_uids"),
+                alias_uids=input_dict.get("alias_uids"),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("libraryName"),
+                library_name=input_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: input_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("changeDescription"),
+                change_description=input_dict.get("change_description"),
                 status=LibraryItemStatus(input_dict.get("status")),
-                author=input_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=input_dict.get("startDate")),
+                author=input_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=input_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -100,7 +100,9 @@ class ConditionRepository(OdmGenericRepository[OdmConditionAR]):
 
         return odm_condition_ar
 
-    def specific_alias_clause(self, only_specific_status: list = None) -> str:
+    def specific_alias_clause(
+        self, only_specific_status: Optional[Sequence[str]] = None
+    ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]
 
@@ -108,14 +110,14 @@ class ConditionRepository(OdmGenericRepository[OdmConditionAR]):
         WITH *,
         concept_value.oid AS oid,
 
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmConditionRoot)-[:HAS_FORMAL_EXPRESSION]->(fer:OdmFormalExpressionRoot)-[:LATEST]->(fev:OdmFormalExpressionValue) | {{uid: fer.uid, context: fev.context, expression: fev.expression}}] AS formalExpressions,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmConditionRoot)-[:HAS_FORMAL_EXPRESSION]->(fer:OdmFormalExpressionRoot)-[:LATEST]->(fev:OdmFormalExpressionValue) | {{uid: fer.uid, context: fev.context, expression: fev.expression}}] AS formal_expressions,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmConditionRoot)-[:HAS_DESCRIPTION]->(dr:OdmDescriptionRoot)-[:LATEST]->(dv:OdmDescriptionValue) | {{uid: dr.uid, name: dv.name, language: dv.language, description: dv.description, instruction: dv.instruction}}] AS descriptions,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmConditionRoot)-[:HAS_ALIAS]->(ar:OdmAliasRoot)-[:LATEST]->(av:OdmAliasValue) | {{uid: ar.uid, name: av.name, context: av.context}}] AS aliases
 
         WITH *,
-        [formalExpression in formalExpressions | formalExpression.uid] AS formalExpressionUids,
-        [description in descriptions | description.uid] AS descriptionUids,
-        [alias in aliases | alias.uid] AS aliasUids
+        [formal_expression in formal_expressions | formal_expression.uid] AS formal_expression_uids,
+        [description in descriptions | description.uid] AS description_uids,
+        [alias in aliases | alias.uid] AS alias_uids
         """
 
     def _get_or_create_value(

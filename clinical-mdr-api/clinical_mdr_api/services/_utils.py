@@ -39,7 +39,7 @@ from clinical_mdr_api.repositories._utils import (
 
 
 def get_term_uid_or_none(field):
-    return field.termUid if field else None
+    return field.term_uid if field else None
 
 
 def get_unit_def_uid_or_none(field):
@@ -47,7 +47,7 @@ def get_unit_def_uid_or_none(field):
 
 
 def get_input_or_new_value(
-    input_field: str, prefix: str, output_field: str, sep: str = "."
+    input_field: Optional[str], prefix: str, output_field: str, sep: str = "."
 ):
     """
     Returns input_field if not empty, otherwise a new value based on prefix
@@ -510,7 +510,7 @@ def service_level_generic_header_filtering(
         extracted_value = extract_nested_key_value(item, field_name)
         # The extracted value can be
         # * A list when the property associated with key is a list of objects
-        # ** (e.g. categories.name.sponsorPreferredName for an Objective Template)
+        # ** (e.g. categories.name.sponsor_preferred_name for an Objective Template)
         if isinstance(extracted_value, list):
             # Merge lists
             extracted_values = extracted_values + extracted_value
@@ -545,7 +545,7 @@ def extract_properties_for_wildcard(item, prefix: str = ""):
         if isinstance(item, list) and len(item) > 0:
             return extract_properties_for_wildcard(item[0], prefix[:-1])
         # Otherwise, let's iterate over all the attributes of the single item we have
-        for attribute, attrDesc in item.__fields__.items():
+        for attribute, attr_desc in item.__fields__.items():
             # The attribute might be a non-class dictionary
             # In that case, we extract the first value and make a recursive call on it
             if (
@@ -556,10 +556,10 @@ def extract_properties_for_wildcard(item, prefix: str = ""):
                     list(getattr(item, attribute).values())[0], attribute
                 )
             # An attribute can be a nested class, which will inherit from Pydantic's BaseModel
-            # In that case, we do a recursive call and add the attribute key of the class as a prefix, like "nestedClass."
+            # In that case, we do a recursive call and add the attribute key of the class as a prefix, like "nested_class."
             # Checking for isinstance of type will make sure that the attribute is a class before checking if it is a subclass
-            elif isinstance(attrDesc.type_, type) and issubclass(
-                attrDesc.type_, BaseModel
+            elif isinstance(attr_desc.type_, type) and issubclass(
+                attr_desc.type_, BaseModel
             ):
                 output = output + extract_properties_for_wildcard(
                     getattr(item, attribute), prefix=prefix + attribute
@@ -593,7 +593,7 @@ def filter_aggregated_items(item, filter_key, filter_values, filter_operator):
     _item_value_for_key = extract_nested_key_value(item, filter_key)
 
     # The property associated with the filter key can be inside a list
-    # e.g., categories.name.sponsorPreferredName for Objective Templates
+    # e.g., categories.name.sponsor_preferred_name for Objective Templates
     # In these cases, a list of values will be returned here
     # Filtering then becomes "if any of the values matches with the operator"
     if isinstance(_item_value_for_key, list):
@@ -631,7 +631,7 @@ def apply_filter_operator(
     # An empty filter_values list means that the returned item's property value should be null
     if ComparisonOperator(operator) == ComparisonOperator.EQUALS:
         return value is None
-    return exceptions.InternalErrorException(
+    return exceptions.ValidationException(
         "Filtering on a null value can be only be used with the 'equal' operator."
     )
 

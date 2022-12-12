@@ -1,7 +1,7 @@
 import re
 from collections import abc
 from dataclasses import Field, dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Iterable, List, Optional, Sequence
 
@@ -23,9 +23,9 @@ class StudyStatus(Enum):
 
 
 class StudyComponentEnum(str, Enum):
-    STUDY_DESIGN = "highLevelStudyDesign"
-    STUDY_INTERVENTION = "studyIntervention"
-    STUDY_POPULATION = "studyPopulation"
+    STUDY_DESIGN = "high_level_study_design"
+    STUDY_INTERVENTION = "study_intervention"
+    STUDY_POPULATION = "study_population"
 
 
 _STUDY_NUMBER_PATTERN = re.compile("[0-9]{1,4}")
@@ -193,7 +193,7 @@ class StudyVersionMetadataVO:
         locked_version_info: Optional[str] = None,
     ):
         if isinstance(version_timestamp, Field):
-            version_timestamp = datetime.today()
+            version_timestamp = datetime.now(timezone.utc)
         assert version_timestamp is None or isinstance(version_timestamp, datetime)
 
         def norm_str(s: Optional[str]) -> Optional[str]:
@@ -1002,7 +1002,7 @@ class StudyInterventionVO:
     intervention_model_code: Optional[str] = None
     intervention_model_null_value_code: Optional[str] = None
 
-    trial_intent_type_codes: Sequence[str] = field(default_factory=list)
+    trial_intent_types_codes: Sequence[str] = field(default_factory=list)
     trial_intent_type_null_value_code: Optional[str] = None
 
     is_trial_randomised: Optional[bool] = None
@@ -1046,7 +1046,7 @@ class StudyInterventionVO:
         drug_study_indication_null_value_code: Optional[str],
         device_study_indication: Optional[bool],
         device_study_indication_null_value_code: Optional[str],
-        trial_intent_type_codes: Sequence[str],
+        trial_intent_types_codes: Sequence[str],
         trial_intent_type_null_value_code: Optional[str],
     ) -> "StudyInterventionVO":
 
@@ -1089,8 +1089,8 @@ class StudyInterventionVO:
             device_study_indication_null_value_code=normalize_string(
                 device_study_indication_null_value_code
             ),
-            trial_intent_type_codes=(
-                [] if trial_intent_type_codes is None else trial_intent_type_codes
+            trial_intent_types_codes=(
+                [] if trial_intent_types_codes is None else trial_intent_types_codes
             ),
             trial_intent_type_null_value_code=trial_intent_type_null_value_code,
         )
@@ -1143,9 +1143,9 @@ class StudyInterventionVO:
         )
 
         validate_value_and_associated_null_value_valid(
-            self.trial_intent_type_codes,
+            self.trial_intent_types_codes,
             self.trial_intent_type_null_value_code,
-            "trial_intent_type_codes",
+            "trial_intent_types_codes",
         )
 
         validate_value_and_associated_null_value_valid(
@@ -1253,7 +1253,7 @@ class StudyInterventionVO:
         drug_study_indication_null_value_code: Optional[str] = field(),
         device_study_indication: Optional[bool] = field(),
         device_study_indication_null_value_code: Optional[str] = field(),
-        trial_intent_type_codes: Sequence[str] = field(),
+        trial_intent_types_codes: Sequence[str] = field(),
         trial_itent_type_null_value_code: Optional[str] = field(),
     ) -> "StudyInterventionVO":
         def helper(parameter: Any, def_value: Any):
@@ -1325,8 +1325,8 @@ class StudyInterventionVO:
                 device_study_indication_null_value_code,
                 self.device_study_indication_null_value_code,
             ),
-            trial_intent_type_codes=helper(
-                trial_intent_type_codes, self.trial_intent_type_codes
+            trial_intent_types_codes=helper(
+                trial_intent_types_codes, self.trial_intent_types_codes
             ),
             trial_intent_type_null_value_code=helper(
                 trial_itent_type_null_value_code, self.trial_intent_type_null_value_code

@@ -34,7 +34,7 @@ export default {
   data () {
     return {
       catalogues: [],
-      tab: this.$route.params.catalogueName
+      tab: this.$route.params.catalogue_name
     }
   },
   methods: {
@@ -44,7 +44,7 @@ export default {
   },
   mounted () {
     this.addBreadcrumbsLevel({
-      text: this.$route.params.catalogueName,
+      text: this.$route.params.catalogue_name,
       to: { name: 'CtPackages', params: this.$route.params },
       index: 3
     })
@@ -61,7 +61,7 @@ export default {
     tab (newValue) {
       this.$router.push({
         name: 'CtPackagesHistory',
-        params: { catalogueName: newValue }
+        params: { catalogue_name: newValue }
       })
     }
   }

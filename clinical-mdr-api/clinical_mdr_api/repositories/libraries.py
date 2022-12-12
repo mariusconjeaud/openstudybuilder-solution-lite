@@ -24,7 +24,7 @@ def find_all(is_editable: Optional[bool]):
     find_all_query += """
         RETURN
             l.name AS name,
-            l.is_editable AS isEditable
+            l.is_editable AS is_editable
         """
 
     result, attributes = db.cypher_query(
@@ -44,7 +44,7 @@ def find_by_name(name: str):
         MATCH (l:Library{name: $name})
         RETURN
             l.name AS name,
-            l.is_editable AS isEditable
+            l.is_editable AS is_editable
         LIMIT 1
         """
     result, attributes = db.cypher_query(
@@ -67,7 +67,7 @@ def create(name: str, is_editable: bool):
         })
         RETURN
             library.name AS name,
-            library.is_editable AS isEditable
+            library.is_editable AS is_editable
         """
     result, attributes = db.cypher_query(
         query=create_query, params={"name": name, "is_editable": is_editable}

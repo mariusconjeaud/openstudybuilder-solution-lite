@@ -25,10 +25,10 @@ class CTCodelistNameTest(api.APITest):
 
         self.test_client = TestClient(main.app)
 
-    def testFiltering(self):
+    def test_filtering(self):
         self.filtering_common_test_scenario(
             test_client=self.test_client,
-            filter_field_name="catalogueName",
+            filter_field_name="catalogue_name",
             path_root="/ct/codelists/names",
             wildcard_filter_field_name="CT",
         )
@@ -36,7 +36,7 @@ class CTCodelistNameTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "ct_codelist_name.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials"]
+        return ["start_date", "end_date", "user_initials"]
 
 
 class CTCodelistNameTestNegativeTest(api.APITest):
@@ -55,7 +55,7 @@ class CTCodelistNameTestNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "userInitials"]
+        return ["start_date", "end_date", "time", "user_initials"]
 
 
 class CTCodelistAttributesTest(api.APITest):
@@ -72,7 +72,7 @@ class CTCodelistAttributesTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "ct_codelist_attributes.json")]
 
     def ignored_fields(self):
-        return ["codelistUid", "startDate", "endDate", "userInitials"]
+        return ["codelist_uid", "start_date", "end_date", "user_initials"]
 
 
 class CTCodelistAttributesTestNegativeTest(api.APITest):
@@ -91,7 +91,7 @@ class CTCodelistAttributesTestNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "userInitials"]
+        return ["start_date", "end_date", "time", "user_initials"]
 
 
 class CTCodelistConcurrencyTest(api.APITest):
@@ -113,10 +113,10 @@ class CTCodelistConcurrencyTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
+            "start_date",
+            "end_date",
             "time",
-            "userInitials",
+            "user_initials",
             "traceresponse",
             "content-length",
             "content-type",

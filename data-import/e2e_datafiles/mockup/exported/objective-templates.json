@@ -1,9 +1,9 @@
 [
   {
     "categories": null,
-    "changeDescription": "Approved version",
-    "confirmatoryTesting": false,
-    "defaultParameterValues": {
+    "change_description": "Approved version",
+    "confirmatory_testing": false,
+    "default_parameter_values": {
       "0": [
         {
           "conjunction": "",
@@ -22,35 +22,35 @@
         }
       ]
     },
-    "editableInstance": false,
-    "endDate": null,
+    "editable_instance": false,
+    "end_date": null,
     "indications": [
       {
         "abbreviation": "HF",
-        "changeDescription": "Approved version",
+        "change_description": "Approved version",
         "definition": "Heart failure (disorder)",
-        "dictionaryId": "84114007",
-        "endDate": null,
-        "libraryName": "SNOMED",
+        "dictionary_id": "84114007",
+        "end_date": null,
+        "library_name": "SNOMED",
         "name": "Heart failure",
-        "nameSentenceCase": "heart failure",
-        "possibleActions": [
+        "name_sentence_case": "heart failure",
+        "possible_actions": [
           "inactivate",
           "newVersion"
         ],
-        "startDate": "2022-05-23T11:41:23.366441",
+        "start_date": "2022-05-23T11:41:23.366441",
         "status": "Final",
-        "termUid": "DictionaryTerm_000015",
-        "userInitials": "unknown-user",
+        "term_uid": "DictionaryTerm_000015",
+        "user_initials": "unknown-user",
         "version": "1.0"
       }
     ],
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "Sponsor"
     },
     "name": "To compare the effect of [Compound] relative to [Comparator] on [ActivityInstance]",
-    "namePlain": "To compare the effect of [Compound] relative to [Comparator] on [ActivityInstance]",
+    "name_plain": "To compare the effect of [Compound] relative to [Comparator] on [ActivityInstance]",
     "parameters": [
       {
         "name": "Compound",
@@ -65,22 +65,22 @@
         "values": null
       }
     ],
-    "possibleActions": [
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-05-23T12:12:03.038862",
+    "start_date": "2022-05-23T12:12:03.038862",
     "status": "Final",
-    "studyCount": 1,
+    "study_count": 1,
     "uid": "ObjectiveTemplate_000004",
-    "userInitials": "unknown-user",
+    "user_initials": "unknown-user",
     "version": "1.0"
   },
   {
     "categories": null,
-    "changeDescription": "Approved version",
-    "confirmatoryTesting": null,
-    "defaultParameterValues": {
+    "change_description": "Approved version",
+    "confirmatory_testing": null,
+    "default_parameter_values": {
       "0": [
         {
           "conjunction": "",
@@ -89,37 +89,37 @@
         }
       ]
     },
-    "editableInstance": false,
-    "endDate": null,
+    "editable_instance": false,
+    "end_date": null,
     "indications": null,
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "User Defined"
     },
     "name": "test user defined [ActivityInstance]",
-    "namePlain": "test user defined [ActivityInstance]",
+    "name_plain": "test user defined [ActivityInstance]",
     "parameters": [
       {
         "name": "ActivityInstance",
         "values": null
       }
     ],
-    "possibleActions": [
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-05-23T12:12:02.455852",
+    "start_date": "2022-05-23T12:12:02.455852",
     "status": "Final",
-    "studyCount": 0,
+    "study_count": 0,
     "uid": "ObjectiveTemplate_000003",
-    "userInitials": "unknown-user",
+    "user_initials": "unknown-user",
     "version": "1.0"
   },
   {
     "categories": null,
-    "changeDescription": "Approved version",
-    "confirmatoryTesting": null,
-    "defaultParameterValues": {
+    "change_description": "Approved version",
+    "confirmatory_testing": null,
+    "default_parameter_values": {
       "0": [
         {
           "conjunction": "",
@@ -133,15 +133,15 @@
         }
       ]
     },
-    "editableInstance": false,
-    "endDate": null,
+    "editable_instance": false,
+    "end_date": null,
     "indications": null,
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "Sponsor"
     },
     "name": "test [ActivityInstance] and [DiseaseDisorder]",
-    "namePlain": "test [ActivityInstance] and [DiseaseDisorder]",
+    "name_plain": "test [ActivityInstance] and [DiseaseDisorder]",
     "parameters": [
       {
         "name": "ActivityInstance",
@@ -152,22 +152,22 @@
         "values": null
       }
     ],
-    "possibleActions": [
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-05-23T12:12:02.252115",
+    "start_date": "2022-05-23T12:12:02.252115",
     "status": "Final",
-    "studyCount": 0,
+    "study_count": 0,
     "uid": "ObjectiveTemplate_000002",
-    "userInitials": "unknown-user",
+    "user_initials": "unknown-user",
     "version": "1.0"
   },
   {
     "categories": null,
-    "changeDescription": "Approved version",
-    "confirmatoryTesting": null,
-    "defaultParameterValues": {
+    "change_description": "Approved version",
+    "confirmatory_testing": null,
+    "default_parameter_values": {
       "0": [
         {
           "conjunction": "",
@@ -176,30 +176,30 @@
         }
       ]
     },
-    "editableInstance": false,
-    "endDate": null,
+    "editable_instance": false,
+    "end_date": null,
     "indications": null,
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "Sponsor"
     },
     "name": "test [ActivityInstance]",
-    "namePlain": "test [ActivityInstance]",
+    "name_plain": "test [ActivityInstance]",
     "parameters": [
       {
         "name": "ActivityInstance",
         "values": null
       }
     ],
-    "possibleActions": [
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-05-23T12:12:01.873848",
+    "start_date": "2022-05-23T12:12:01.873848",
     "status": "Final",
-    "studyCount": 0,
+    "study_count": 0,
     "uid": "ObjectiveTemplate_000001",
-    "userInitials": "unknown-user",
+    "user_initials": "unknown-user",
     "version": "1.0"
   }
 ]

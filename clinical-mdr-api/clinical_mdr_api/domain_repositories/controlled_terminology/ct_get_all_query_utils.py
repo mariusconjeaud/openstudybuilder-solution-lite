@@ -31,11 +31,15 @@ from clinical_mdr_api.models.ct_codelist_attributes import CTCodelistAttributes
 from clinical_mdr_api.models.ct_codelist_name import CTCodelistName
 from clinical_mdr_api.models.ct_term_attributes import CTTermAttributes
 from clinical_mdr_api.models.ct_term_name import CTTermName
-from clinical_mdr_api.models.utils import camel_to_snake
 
 # Properties always on root level, even in aggregated mode (names + attributes)
-term_root_level_properties = ["termUid", "catalogueName", "codelistUid", "libraryName"]
-codelist_root_level_properties = ["catalogueName", "codelistUid", "libraryName"]
+term_root_level_properties = [
+    "term_uid",
+    "catalogue_name",
+    "codelist_uid",
+    "library_name",
+]
+codelist_root_level_properties = ["catalogue_name", "codelist_uid", "library_name"]
 
 
 def create_term_filter_statement(
@@ -202,42 +206,40 @@ def format_term_filter_sort_keys(key: str, prefix: str = None) -> str:
     """
     # Always root level properties
     if key in term_root_level_properties:
-        return camel_to_snake(key)
+        return key
     # Possibly nested properties
     # name property
-    if key in ["sponsorPreferredName", "nciPreferredName"]:
+    if key == "sponsor_preferred_name":
         return f"value_node_{prefix}.name" if prefix else "value_node.name"
-    if key == "sponsorPreferredNameSentenceCase":
+    if key == "nci_preferred_name":
+        return (
+            f"value_node_{prefix}.preferred_term"
+            if prefix
+            else "value_node.preferred_term"
+        )
+    if key == "sponsor_preferred_name_sentence_case":
         return (
             f"value_node_{prefix}.name_sentence_case"
             if prefix
             else "value_node.name_sentence_case"
         )
     if key in [
-        "codeSubmissionValue",
-        "nameSubmissionValue",
+        "code_submission_value",
+        "name_submission_value",
         "definition",
-        "conceptId",
+        "concept_id",
     ]:
-        return (
-            f"value_node_{prefix}.{camel_to_snake(key)}"
-            if prefix
-            else f"value_node.{camel_to_snake(key)}"
-        )
+        return f"value_node_{prefix}.{key}" if prefix else f"value_node.{key}"
     # Property coming from relationship
     if key in [
-        "startDate",
-        "endDate",
+        "start_date",
+        "end_date",
         "status",
         "version",
-        "changeDescription",
-        "userInitials",
+        "change_description",
+        "user_initials",
     ]:
-        return (
-            f"rel_data_{prefix}.{camel_to_snake(key)}"
-            if prefix
-            else f"rel_data.{camel_to_snake(key)}"
-        )
+        return f"rel_data_{prefix}.{key}" if prefix else f"rel_data.{key}"
     # Nested field names -> recursive call with prefix
     if key.startswith("name.") or key.startswith("attributes."):
         prefix = key.split(".")[0]
@@ -245,8 +247,8 @@ def format_term_filter_sort_keys(key: str, prefix: str = None) -> str:
         if suffix == "order":
             return "order"
         return format_term_filter_sort_keys(suffix, prefix)
-    # All other cases are simple camel_to_snake conversion
-    return camel_to_snake(key)
+    # All other cases don't require transformation
+    return key
 
 
 def list_term_wildcard_properties(
@@ -267,23 +269,27 @@ def list_term_wildcard_properties(
     else:
         if is_aggregated:
             prefix = "name" if target_model == CTTermName else "attributes"
-            for attribute, attrDesc in target_model.__fields__.items():
+            for attribute, attr_desc in target_model.__fields__.items():
                 # Wildcard filtering only searches in properties of type string
                 if (
-                    attrDesc.type_ is str
-                    and not attribute in ["possibleActions"]
-                    and not attrDesc.field_info.extra.get("removeFromWildcard", False)
+                    attr_desc.type_ is str
+                    and not attribute in ["possible_actions"]
+                    and not attr_desc.field_info.extra.get(
+                        "remove_from_wildcard", False
+                    )
                 ):
                     property_list.append(
                         format_term_filter_sort_keys(attribute, prefix)
                     )
         else:
-            for attribute, attrDesc in target_model.__fields__.items():
+            for attribute, attr_desc in target_model.__fields__.items():
                 # Wildcard filtering only searches in properties of type string
                 if (
-                    attrDesc.type_ is str
-                    and not attribute in ["possibleActions"]
-                    and not attrDesc.field_info.extra.get("removeFromWildcard", False)
+                    attr_desc.type_ is str
+                    and not attribute in ["possible_actions"]
+                    and not attr_desc.field_info.extra.get(
+                        "remove_from_wildcard", False
+                    )
                 ):
                     property_list.append(format_term_filter_sort_keys(attribute))
     return list(set(property_list))
@@ -439,44 +445,36 @@ def format_codelist_filter_sort_keys(key: str, prefix: str = None) -> str:
     """
     # Always root level properties
     if key in codelist_root_level_properties:
-        return camel_to_snake(key)
+        return key
     # Possibly nested properties
     # name property
-    if key == "nciPreferredName":
+    if key == "nci_preferred_name":
         return (
             f"value_node_{prefix}.preferred_term"
             if prefix
             else "value_node.preferred_term"
         )
-    if key == "templateParameter":
+    if key == "template_parameter":
         return "is_template_parameter"
-    if key in ["name", "definition", "submissionValue", "extensible"]:
-        return (
-            f"value_node_{prefix}.{camel_to_snake(key)}"
-            if prefix
-            else f"value_node.{camel_to_snake(key)}"
-        )
+    if key in ["name", "definition", "submission_value", "extensible"]:
+        return f"value_node_{prefix}.{key}" if prefix else f"value_node.{key}"
     # Property coming from relationship
     if key in [
-        "startDate",
-        "endDate",
+        "start_date",
+        "end_date",
         "status",
         "version",
-        "changeDescription",
-        "userInitials",
+        "change_description",
+        "user_initials",
     ]:
-        return (
-            f"rel_data_{prefix}.{camel_to_snake(key)}"
-            if prefix
-            else f"rel_data.{camel_to_snake(key)}"
-        )
+        return f"rel_data_{prefix}.{key}" if prefix else f"rel_data.{key}"
     # Nested field names -> recursive call with prefix
     if key.startswith("name.") or key.startswith("attributes."):
         prefix = key.split(".")[0]
         suffix = key.split(".")[1]
         return format_codelist_filter_sort_keys(suffix, prefix)
-    # All other cases are simple camel_to_snake conversion
-    return camel_to_snake(key)
+    # All other cases don't require transformation
+    return key
 
 
 def list_codelist_wildcard_properties(
@@ -497,25 +495,29 @@ def list_codelist_wildcard_properties(
     else:
         if is_aggregated:
             prefix = "name" if target_model == CTCodelistName else "attributes"
-            for attribute, attrDesc in target_model.__fields__.items():
+            for attribute, attr_desc in target_model.__fields__.items():
                 # Wildcard filtering only searches in properties of type string
                 if (
-                    attrDesc.type_ is str
-                    and not attribute in ["possibleActions"]
+                    attr_desc.type_ is str
+                    and not attribute in ["possible_actions"]
                     # remove fields that shouldn't be included in wildcard filter
-                    and not attrDesc.field_info.extra.get("removeFromWildcard", False)
+                    and not attr_desc.field_info.extra.get(
+                        "remove_from_wildcard", False
+                    )
                 ):
                     property_list.append(
                         format_codelist_filter_sort_keys(attribute, prefix)
                     )
         else:
-            for attribute, attrDesc in target_model.__fields__.items():
+            for attribute, attr_desc in target_model.__fields__.items():
                 # Wildcard filtering only searches in properties of type string
                 if (
-                    attrDesc.type_ is str
-                    and not attribute in ["possibleActions"]
+                    attr_desc.type_ is str
+                    and not attribute in ["possible_actions"]
                     # remove fields that shouldn't be included in wildcard filter
-                    and not attrDesc.field_info.extra.get("removeFromWildcard", False)
+                    and not attr_desc.field_info.extra.get(
+                        "remove_from_wildcard", False
+                    )
                 ):
                     property_list.append(format_codelist_filter_sort_keys(attribute))
     return list(set(property_list))

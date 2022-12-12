@@ -22,44 +22,46 @@ class CTCodelist(BaseModel):
         ct_codelist_attributes_ar: CTCodelistAttributesAR,
     ) -> "CTCodelist":
         return cls(
-            catalogueName=ct_codelist_attributes_ar.ct_codelist_vo.catalogue_name,
-            codelistUid=ct_codelist_attributes_ar.uid,
-            parentCodelistUid=ct_codelist_attributes_ar._ct_codelist_attributes_vo.parent_codelist_uid,
-            childCodelistUids=ct_codelist_attributes_ar._ct_codelist_attributes_vo.child_codelist_uids,
+            catalogue_name=ct_codelist_attributes_ar.ct_codelist_vo.catalogue_name,
+            codelist_uid=ct_codelist_attributes_ar.uid,
+            parent_codelist_uid=ct_codelist_attributes_ar._ct_codelist_attributes_vo.parent_codelist_uid,
+            child_codelist_uids=ct_codelist_attributes_ar._ct_codelist_attributes_vo.child_codelist_uids,
             name=ct_codelist_attributes_ar.name,
-            submissionValue=ct_codelist_attributes_ar.ct_codelist_vo.submission_value,
-            nciPreferredName=ct_codelist_attributes_ar.ct_codelist_vo.preferred_term,
+            submission_value=ct_codelist_attributes_ar.ct_codelist_vo.submission_value,
+            nci_preferred_name=ct_codelist_attributes_ar.ct_codelist_vo.preferred_term,
             definition=ct_codelist_attributes_ar.ct_codelist_vo.definition,
             extensible=ct_codelist_attributes_ar.ct_codelist_vo.extensible,
-            libraryName=Library.from_library_vo(ct_codelist_attributes_ar.library).name,
-            sponsorPreferredName=ct_codelist_name_ar.name,
-            templateParameter=ct_codelist_name_ar.ct_codelist_vo.is_template_parameter,
-            possibleActions=sorted(
+            library_name=Library.from_library_vo(
+                ct_codelist_attributes_ar.library
+            ).name,
+            sponsor_preferred_name=ct_codelist_name_ar.name,
+            template_parameter=ct_codelist_name_ar.ct_codelist_vo.is_template_parameter,
+            possible_actions=sorted(
                 [_.value for _ in ct_codelist_attributes_ar.get_possible_actions()]
             ),
         )
 
-    catalogueName: str = Field(
+    catalogue_name: str = Field(
         ...,
-        title="catalogueName",
+        title="catalogue_name",
         description="",
     )
 
-    codelistUid: str = Field(
+    codelist_uid: str = Field(
         ...,
-        title="codelistUid",
+        title="codelist_uid",
         description="",
     )
 
-    parentCodelistUid: Optional[str] = Field(
+    parent_codelist_uid: Optional[str] = Field(
         ...,
-        title="parentCodelistUid",
+        title="parent_codelist_uid",
         description="",
     )
 
-    childCodelistUids: Optional[Sequence[str]] = Field(
+    child_codelist_uids: Optional[Sequence[str]] = Field(
         ...,
-        title="childCodelistUids",
+        title="child_codelist_uids",
         description="",
     )
 
@@ -69,15 +71,15 @@ class CTCodelist(BaseModel):
         description="",
     )
 
-    submissionValue: str = Field(
+    submission_value: str = Field(
         ...,
-        title="submissionValue",
+        title="submission_value",
         description="",
     )
 
-    nciPreferredName: str = Field(
+    nci_preferred_name: str = Field(
         ...,
-        title="nciPreferredName",
+        title="nci_preferred_name",
         description="",
     )
 
@@ -93,32 +95,32 @@ class CTCodelist(BaseModel):
         description="",
     )
 
-    sponsorPreferredName: str = Field(
+    sponsor_preferred_name: str = Field(
         ...,
-        title="sponsorPreferredName",
+        title="sponsor_preferred_name",
         description="",
     )
 
-    templateParameter: bool = Field(
+    template_parameter: bool = Field(
         ...,
-        title="templateParameter",
+        title="template_parameter",
         description="",
     )
 
-    libraryName: str
-    possibleActions: Optional[List[str]] = Field(
+    library_name: str
+    possible_actions: Optional[List[str]] = Field(
         None,
         description=(
             "Holds those actions that can be performed on the CTCodelistAttributes. "
-            "Actions are: 'approve', 'edit', 'newVersion'."
+            "Actions are: 'approve', 'edit', 'new_version'."
         ),
     )
 
 
 class CTCodelistTermInput(BaseModel):
-    termUid: str = Field(
+    term_uid: str = Field(
         ...,
-        title="termUid",
+        title="term_uid",
         description="",
     )
     order: Optional[int] = Field(
@@ -129,9 +131,9 @@ class CTCodelistTermInput(BaseModel):
 
 
 class CTCodelistCreateInput(BaseModel):
-    catalogueName: str = Field(
+    catalogue_name: str = Field(
         ...,
-        title="catalogueName",
+        title="catalogue_name",
         description="",
     )
 
@@ -141,15 +143,15 @@ class CTCodelistCreateInput(BaseModel):
         description="",
     )
 
-    submissionValue: str = Field(
+    submission_value: str = Field(
         ...,
-        title="submissionValue",
+        title="submission_value",
         description="",
     )
 
-    nciPreferredName: str = Field(
+    nci_preferred_name: str = Field(
         ...,
-        title="nciPreferredName",
+        title="nci_preferred_name",
         description="",
     )
 
@@ -165,27 +167,27 @@ class CTCodelistCreateInput(BaseModel):
         description="",
     )
 
-    sponsorPreferredName: str = Field(
+    sponsor_preferred_name: str = Field(
         ...,
-        title="sponsorPreferredName",
+        title="sponsor_preferred_name",
         description="",
     )
 
-    templateParameter: bool = Field(
+    template_parameter: bool = Field(
         ...,
-        title="templateParameter",
+        title="template_parameter",
         description="",
     )
 
-    parentCodelistUid: Optional[str] = Field(
+    parent_codelist_uid: Optional[str] = Field(
         None,
-        title="parentCodelistUid",
+        title="parent_codelist_uid",
         description="",
     )
 
     terms: Sequence[CTCodelistTermInput]
 
-    libraryName: str
+    library_name: str
 
 
 class CTCodelistNameAndAttributes(BaseModel):
@@ -196,11 +198,13 @@ class CTCodelistNameAndAttributes(BaseModel):
         ct_codelist_attributes_ar: CTCodelistAttributesAR,
     ) -> "CTCodelistNameAndAttributes":
         codelist_name_and_attributes = cls(
-            catalogueName=ct_codelist_attributes_ar.ct_codelist_vo.catalogue_name,
-            codelistUid=ct_codelist_attributes_ar.uid,
-            parentCodelistUid=ct_codelist_attributes_ar._ct_codelist_attributes_vo.parent_codelist_uid,
-            childCodelistUids=ct_codelist_attributes_ar._ct_codelist_attributes_vo.child_codelist_uids,
-            libraryName=Library.from_library_vo(ct_codelist_attributes_ar.library).name,
+            catalogue_name=ct_codelist_attributes_ar.ct_codelist_vo.catalogue_name,
+            codelist_uid=ct_codelist_attributes_ar.uid,
+            parent_codelist_uid=ct_codelist_attributes_ar._ct_codelist_attributes_vo.parent_codelist_uid,
+            child_codelist_uids=ct_codelist_attributes_ar._ct_codelist_attributes_vo.child_codelist_uids,
+            library_name=Library.from_library_vo(
+                ct_codelist_attributes_ar.library
+            ).name,
             name=CTCodelistName.from_ct_codelist_ar_without_common_codelist_fields(
                 ct_codelist_name_ar
             ),
@@ -211,31 +215,31 @@ class CTCodelistNameAndAttributes(BaseModel):
 
         return codelist_name_and_attributes
 
-    catalogueName: str = Field(
+    catalogue_name: str = Field(
         ...,
-        title="catalogueName",
+        title="catalogue_name",
         description="",
     )
 
-    codelistUid: str = Field(
+    codelist_uid: str = Field(
         ...,
-        title="codelistUid",
+        title="codelist_uid",
         description="",
     )
 
-    parentCodelistUid: str = Field(
+    parent_codelist_uid: str = Field(
         None,
-        title="parentCodelistUid",
+        title="parent_codelist_uid",
         description="",
     )
 
-    childCodelistUids: Sequence = Field(
+    child_codelist_uids: Sequence = Field(
         None,
-        title="childCodelistUids",
+        title="child_codelist_uids",
         description="",
     )
 
-    libraryName: str
+    library_name: str
 
     name: CTCodelistName = Field(
         ...,

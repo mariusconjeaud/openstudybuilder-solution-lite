@@ -1,7 +1,7 @@
 <template>
 <v-menu
   offset-y
-  >
+  v-if="item">
   <template v-slot:activator="{ on, attrs }">
     <div>
       <v-btn

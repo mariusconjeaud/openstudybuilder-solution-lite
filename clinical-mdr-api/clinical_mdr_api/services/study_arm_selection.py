@@ -220,7 +220,7 @@ class StudyArmSelectionService(StudySelectionMixin):
                         design_cells_on_branch_arm = self._repos.study_design_cell_repository.get_design_cells_connected_to_branch_arm(
                             study_uid=study_uid, study_branch_arm_uid=i_branch_arm.uid
                         )
-                        # if the studyBranchArm is the last StudyBranchArm of its StudyArm root
+                        # if the study_branch_arm is the last StudyBranchArm of its StudyArm root
                         if repos.study_selection_branch_arm_repository.branch_arm_specific_is_last_on_arm_root(
                             study_uid=study_uid,
                             arm_root_uid=study_selection_uid,
@@ -229,7 +229,7 @@ class StudyArmSelectionService(StudySelectionMixin):
                             # switch all the study designcells to the study branch arm
                             cascade_deletion_last_branch = True
 
-                        # else the studyBranchArm is not last StudyBranchArm of its StudyArm root
+                        # else the study_branch_arm is not last StudyBranchArm of its StudyArm root
                         else:
                             design_cells_to_delete_from_branch_arm = (
                                 design_cells_on_branch_arm
@@ -350,9 +350,9 @@ class StudyArmSelectionService(StudySelectionMixin):
 
         endpoint_repo = self._repos.endpoint_repository
         timeframe_repo = self._repos.timeframe_repository
-        if request_study_endpoint.endpointUid:
+        if request_study_endpoint.endpoint_uid:
             endpoint_ar: EndpointAR = endpoint_repo.find_by_uid_2(
-                request_study_endpoint.endpointUid
+                request_study_endpoint.endpoint_uid
             )
         elif current_study_endpoint.endpoint_uid:
             endpoint_ar: EndpointAR = endpoint_repo.find_by_uid_2(
@@ -360,9 +360,9 @@ class StudyArmSelectionService(StudySelectionMixin):
             )
         else:
             endpoint_ar = None
-        if request_study_endpoint.timeframeUid:
+        if request_study_endpoint.timeframe_uid:
             timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid_2(
-                request_study_endpoint.timeframeUid
+                request_study_endpoint.timeframe_uid
             )
         elif current_study_endpoint.timeframe_uid:
             timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid_2(
@@ -373,14 +373,14 @@ class StudyArmSelectionService(StudySelectionMixin):
 
         # transform current to input model
         transformed_current = StudySelectionEndpointInput(
-            endpointUid=current_study_endpoint.endpoint_uid,
-            endpointLevelUid=current_study_endpoint.endpoint_level_uid,
-            endpointUnits=EndpointUnits(
+            endpoint_uid=current_study_endpoint.endpoint_uid,
+            endpoint_level_uid=current_study_endpoint.endpoint_level_uid,
+            endpoint_units=EndpointUnits(
                 units=current_study_endpoint.endpoint_units,
                 separator=current_study_endpoint.unit_separator,
             ),
-            studyObjectiveUid=current_study_endpoint.study_objective_uid,
-            timeframeUid=current_study_endpoint.timeframe_uid,
+            study_objective_uid=current_study_endpoint.study_objective_uid,
+            timeframe_uid=current_study_endpoint.timeframe_uid,
         )
 
         # fill the missing from the inputs
@@ -390,27 +390,27 @@ class StudyArmSelectionService(StudySelectionMixin):
         )
 
         # get order from the endpoint level CT term
-        if request_study_endpoint.endpointLevelUid is not None:
+        if request_study_endpoint.endpoint_level_uid is not None:
             endpoint_level_order = (
                 self._repos.ct_term_name_repository.term_specific_order_by_uid(
-                    uid=request_study_endpoint.endpointLevelUid
+                    uid=request_study_endpoint.endpoint_level_uid
                 )
             )
         else:
             endpoint_level_order = None
 
         return StudySelectionEndpointVO.from_input_values(
-            endpoint_uid=request_study_endpoint.endpointUid,
+            endpoint_uid=request_study_endpoint.endpoint_uid,
             endpoint_version=endpoint_ar.item_metadata.version if endpoint_ar else None,
-            endpoint_level_uid=request_study_endpoint.endpointLevelUid,
-            endpoint_sub_level_uid=request_study_endpoint.endpointSubLevelUid,
-            endpoint_units=request_study_endpoint.endpointUnits.units,
-            timeframe_uid=request_study_endpoint.timeframeUid,
+            endpoint_level_uid=request_study_endpoint.endpoint_level_uid,
+            endpoint_sublevel_uid=request_study_endpoint.endpoint_sublevel_uid,
+            endpoint_units=request_study_endpoint.endpoint_units.units,
+            timeframe_uid=request_study_endpoint.timeframe_uid,
             timeframe_version=timeframe_ar.item_metadata.version
             if timeframe_ar
             else None,
-            unit_separator=request_study_endpoint.endpointUnits.separator,
-            study_objective_uid=request_study_endpoint.studyObjectiveUid,
+            unit_separator=request_study_endpoint.endpoint_units.separator,
+            study_objective_uid=request_study_endpoint.study_objective_uid,
             study_selection_uid=current_study_endpoint.study_selection_uid,
             endpoint_level_order=endpoint_level_order,
             user_initials=self.author,
@@ -614,13 +614,13 @@ class StudyArmSelectionService(StudySelectionMixin):
                     study_uid=study_uid,
                     user_initials=self.author,
                     name=selection_create_input.name,
-                    short_name=selection_create_input.shortName,
+                    short_name=selection_create_input.short_name,
                     code=selection_create_input.code,
                     description=selection_create_input.description,
-                    arm_colour=selection_create_input.armColour,
-                    randomization_group=selection_create_input.randomizationGroup,
-                    number_of_subjects=selection_create_input.numberOfSubjects,
-                    arm_type_uid=selection_create_input.armTypeUid,
+                    arm_colour=selection_create_input.arm_colour,
+                    randomization_group=selection_create_input.randomization_group,
+                    number_of_subjects=selection_create_input.number_of_subjects,
+                    arm_type_uid=selection_create_input.arm_type_uid,
                     generate_uid_callback=repos.study_selection_arm_repository.generate_uid,
                 )
                 # add VO to aggregate
@@ -667,15 +667,15 @@ class StudyArmSelectionService(StudySelectionMixin):
     ) -> StudySelectionArmVO:
         # transform current to input model
         transformed_current = models.StudySelectionArmInput(
-            armUid=current_study_arm.study_selection_uid,
+            arm_uid=current_study_arm.study_selection_uid,
             name=current_study_arm.name,
-            shortName=current_study_arm.short_name,
+            short_name=current_study_arm.short_name,
             code=current_study_arm.code,
             description=current_study_arm.description,
-            armColour=current_study_arm.arm_colour,
-            randomizationGroup=current_study_arm.randomization_group,
-            numberOfSubjects=current_study_arm.number_of_subjects,
-            armTypeUid=current_study_arm.arm_type_uid,
+            arm_colour=current_study_arm.arm_colour,
+            randomization_group=current_study_arm.randomization_group,
+            number_of_subjects=current_study_arm.number_of_subjects,
+            arm_type_uid=current_study_arm.arm_type_uid,
         )
 
         # fill the missing from the inputs
@@ -687,13 +687,13 @@ class StudyArmSelectionService(StudySelectionMixin):
         return StudySelectionArmVO.from_input_values(
             study_uid=current_study_arm.study_uid,
             name=request_study_arm.name,
-            short_name=request_study_arm.shortName,
+            short_name=request_study_arm.short_name,
             code=request_study_arm.code,
             description=request_study_arm.description,
-            arm_colour=request_study_arm.armColour,
-            randomization_group=request_study_arm.randomizationGroup,
-            number_of_subjects=request_study_arm.numberOfSubjects,
-            arm_type_uid=request_study_arm.armTypeUid,
+            arm_colour=request_study_arm.arm_colour,
+            randomization_group=request_study_arm.randomization_group,
+            number_of_subjects=request_study_arm.number_of_subjects,
+            arm_type_uid=request_study_arm.arm_type_uid,
             study_selection_uid=current_study_arm.study_selection_uid,
             user_initials=self.author,
         )

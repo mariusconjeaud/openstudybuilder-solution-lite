@@ -114,8 +114,8 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
         ON CREATE SET m:{LABEL}Counter, m.count=0
         WITH m
         CALL apoc.atomic.add(m,'count',1,1) yield oldValue, newValue
-        WITH apoc.convert.toInteger(newValue) as uidNumber
-        RETURN "{LABEL}_"+apoc.text.lpad(""+(uidNumber), 6, "0")
+        WITH apoc.convert.toInteger(newValue) as uid_number
+        RETURN "{LABEL}_"+apoc.text.lpad(""+(uid_number), 6, "0")
         """.format(
                     LABEL=object_name
                 )
@@ -146,17 +146,17 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
         MATCH (n:{NODE_LABEL})
         USING SCAN n:{NODE_LABEL}
         WHERE n.uid is null
-        WITH collect(n) as newNodes, m
+        WITH collect(n) as new_nodes, m
 
         // Increment the counter by the size of the newly created nodes, so we store this for the next transaction.
-        SET m.count = m.count + size(newNodes)
+        SET m.count = m.count + size(new_nodes)
 
         // Then, we need to assign new UIDs to the created nodes.
-        // We start at the old counter value (startUidNumber), and increment the values for each new node.
-        WITH newNodes, range(0,size(newNodes)-1) as indices, m.count - size(newNodes) as startUidNumber
+        // We start at the old counter value (start_uid_number), and increment the values for each new node.
+        WITH new_nodes, range(0,size(new_nodes)-1) as indices, m.count - size(new_nodes) as start_uid_number
         UNWIND indices as index
-        WITH newNodes[index] as node, index + startUidNumber as uidNumber
-        SET node.uid = "{LABEL}_"+apoc.text.lpad(""+(uidNumber), 6, "0")
+        WITH new_nodes[index] as node, index + start_uid_number as uid_number
+        SET node.uid = "{LABEL}_"+apoc.text.lpad(""+(uid_number), 6, "0")
         """.format(
                 LABEL=object_name, NODE_LABEL=node_label
             )
@@ -244,8 +244,8 @@ class VersionRelationship(ClinicalMdrRel):
     `LATEST_DRAFT` or `LATEST_FINAL`.
     """
 
-    start_date = ZonedDateTimeProperty(format="%Y-%m-%d %H:%M:%S.%f")
-    end_date = ZonedDateTimeProperty(format="%Y-%m-%d %H:%M:%S.%f")
+    start_date = ZonedDateTimeProperty()
+    end_date = ZonedDateTimeProperty()
     change_description = StringProperty()
     version = StringProperty()
     status = StringProperty()

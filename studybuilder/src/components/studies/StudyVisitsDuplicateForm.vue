@@ -16,10 +16,25 @@
         <v-text-field
           :label="$t('StudyVisitForm.time_value')"
           dense
-          v-model="timing"
+          v-model="form.timing"
           :error-messages="errors"
           type="number"
         />
+      </validation-provider>
+      <validation-provider
+        v-slot="{ errors }"
+        rules="required"
+        >
+        <v-autocomplete
+          v-model="form.time_unit_uid"
+          :label="$t('StudyVisitForm.time_unit_name')"
+          data-cy="time-unit"
+          :items="timeUnits"
+          item-text="name"
+          item-value="uid"
+          :error-messages="errors"
+          clearable
+          />
       </validation-provider>
     </validation-observer>
   </template>
@@ -31,6 +46,8 @@ import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
 import { mapGetters } from 'vuex'
 import { bus } from '@/main'
 import epochs from '@/api/studyEpochs'
+import unitConstants from '@/constants/units'
+import units from '@/api/units'
 
 export default {
   components: {
@@ -47,7 +64,7 @@ export default {
   },
   data () {
     return {
-      timing: null,
+      timeUnits: [],
       form: {}
     }
   },
@@ -60,9 +77,10 @@ export default {
       try {
         this.$refs.form.working = true
         const newVisit = structuredClone(this.studyVisit)
-        newVisit.timeValue = this.timing
+        newVisit.time_value = this.form.timing
+        newVisit.time_unit_uid = this.form.time_unit_uid
         await epochs.getStudyVisitPreview(this.selectedStudy.uid, newVisit).then(resp => {
-          for (const field of ['visitName', 'visitShortName', 'studyDayLabel', 'studyWeekLabel', 'studyDayNumber', 'studyWeekNumber', 'durationTime', 'uniqueVisitNumber', 'visitNumber']) {
+          for (const field of ['visit_name', 'visit_short_name', 'study_day_label', 'study_week_label', 'study_day_number', 'study_week_number', 'duration_time', 'unique_visit_number', 'visit_number']) {
             this.$set(newVisit, field, resp.data[field])
           }
           this.$store.dispatch('studyEpochs/addStudyVisit', { studyUid: this.selectedStudy.uid, input: newVisit }).then(resp => {
@@ -76,9 +94,24 @@ export default {
       }
     },
     close () {
-      this.timing = null
+      this.form = {}
       this.$refs.observer.reset()
       this.$emit('close')
+    }
+  },
+  mounted () {
+    units.getBySubset(unitConstants.TIME_UNIT_SUBSET_STUDY_TIME).then(resp => {
+      this.timeUnits = resp.data.items
+    })
+  },
+  watch: {
+    studyVisit: {
+      handler: function (newVal) {
+        if (newVal) {
+          this.$set(this.form, 'time_unit_uid', newVal.time_unit_uid)
+        }
+      },
+      immediate: true
     }
   }
 }

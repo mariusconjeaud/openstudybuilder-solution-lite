@@ -15,8 +15,8 @@ class OdmXmlExtensionVO(ConceptVO):
     name: str
     prefix: str
     namespace: str
-    xml_extension_tag_uids: Optional[Sequence[str]]
-    xml_extension_attribute_uids: Optional[Sequence[str]]
+    xml_extension_tag_uids: Sequence[str]
+    xml_extension_attribute_uids: Sequence[str]
 
     @classmethod
     def from_repository_values(
@@ -24,14 +24,9 @@ class OdmXmlExtensionVO(ConceptVO):
         name: str,
         prefix: str,
         namespace: str,
-        xml_extension_tag_uids: Optional[Sequence[str]] = None,
-        xml_extension_attribute_uids: Optional[Sequence[str]] = None,
+        xml_extension_tag_uids: Sequence[str],
+        xml_extension_attribute_uids: Sequence[str],
     ) -> "OdmXmlExtensionVO":
-        if xml_extension_tag_uids is None:
-            xml_extension_tag_uids = []
-        if xml_extension_attribute_uids is None:
-            xml_extension_attribute_uids = []
-
         return cls(
             name=name,
             prefix=prefix,
@@ -46,20 +41,31 @@ class OdmXmlExtensionVO(ConceptVO):
 
     def validate(
         self,
-        concept_exists_by_callback: Callable[[str, str, bool], bool],
+        concept_exists_by_callback: Callable[[str, str], bool],
+        previous_name: Optional[str] = None,
         previous_prefix: Optional[str] = None,
         previous_namespace: Optional[str] = None,
     ) -> None:
 
+        if concept_exists_by_callback("name", self.name) and previous_name != self.name:
+            raise BusinessLogicException(
+                f"ODM XML Extension with name ({self.name}) already exists."
+            )
+
         if (
             concept_exists_by_callback("prefix", self.prefix)
             and previous_prefix != self.prefix
-        ) and (
+        ):
+            raise BusinessLogicException(
+                f"ODM XML Extension with prefix ({self.prefix}) already exists."
+            )
+
+        if (
             concept_exists_by_callback("namespace", self.namespace)
             and previous_namespace != self.namespace
         ):
             raise BusinessLogicException(
-                f"OdmXmlExtension with prefix ({self.prefix}) and namespace ({self.namespace}) already exists."
+                f"ODM XML Extension with namespace ({self.namespace}) already exists."
             )
 
 
@@ -97,7 +103,7 @@ class OdmXmlExtensionAR(OdmARBase):
         concept_vo: OdmXmlExtensionVO,
         library: LibraryVO,
         generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        concept_exists_by_callback: Callable[[str, str, bool], bool] = lambda _: True,
+        concept_exists_by_callback: Callable[[str, str], bool] = lambda x, y: True,
     ) -> "OdmXmlExtensionAR":
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
@@ -117,14 +123,15 @@ class OdmXmlExtensionAR(OdmARBase):
         author: str,
         change_description: Optional[str],
         concept_vo: OdmXmlExtensionVO,
-        concept_exists_by_name_callback: Callable[[str], bool] = None,
-        concept_exists_by_callback: Callable[[str, str, bool], bool] = None,
+        concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
+        concept_exists_by_callback: Callable[[str, str], bool] = lambda x, y: True,
     ) -> None:
         """
         Creates a new draft version for the object.
         """
         concept_vo.validate(
             concept_exists_by_callback=concept_exists_by_callback,
+            previous_name=self.concept_vo.name,
             previous_prefix=self.concept_vo.prefix,
             previous_namespace=self.concept_vo.namespace,
         )

@@ -1,14 +1,14 @@
 
 import repository from './repository'
 
-const resource = 'study'
+const resource = 'studies'
 
 export default {
   getFilteredEpochs (studyUid, params) {
     return repository.get(`${resource}/${studyUid}/study-epochs`, { params })
   },
   getStudyEpochs (studyUid) {
-    return repository.get(`${resource}/${studyUid}/study-epochs`)
+    return repository.get(`${resource}/${studyUid}/study-epochs`, { params: { page_size: 0 } })
   },
   getStudyVisits (studyUid, options) {
     const params = {
@@ -24,6 +24,9 @@ export default {
   },
   getAnchorVisitsInGroupOfSubvisits (studyUid) {
     return repository.get(`${resource}/${studyUid}/anchor-visits-in-group-of-subvisits`)
+  },
+  getAnchorVisitsForSpecialVisit (studyUid) {
+    return repository.get(`${resource}/${studyUid}/anchor-visits-for-special-visit`)
   },
   addStudyVisit (studyUid, data) {
     return repository.post(`${resource}/${studyUid}/study-visits`, data)
@@ -65,7 +68,7 @@ export default {
     return repository.get(`${resource}/${studyUid}/study-branch-arms/${studyBranchUid}/audit-trail`)
   },
   getAllowedConfigs () {
-    return repository.get(`${resource}/epochs/allowed-configs`)
+    return repository.get('epochs/allowed-configs')
   },
   getPreviewEpoch (studyUid, data) {
     return repository.post(`${resource}/${studyUid}/study-epochs/preview`, data)
@@ -74,7 +77,7 @@ export default {
     const params = {
       ...data
     }
-    return repository.get(`${resource}/study-visits/allowed-visit-types`, { params })
+    return repository.get('study-visits/allowed-visit-types', { params })
   },
   getStudyArmsVersions (studyUid) {
     return repository.get(`${resource}/${studyUid}/study-arms/audit-trail`)
@@ -83,6 +86,9 @@ export default {
     return repository.get(`${resource}/${studyUid}/study-branch-arm/audit-trail`)
   },
   getStudyVisitsVersions (studyUid) {
-    return repository.get(`${resource}/${studyUid}/study-visits/audit-trail`)
+    return repository.get(`${resource}/${studyUid}/study-visit/audit-trail`)
+  },
+  getStudyEpochsVersions (studyUid) {
+    return repository.get(`${resource}/${studyUid}/study-epoch/audit-trail`)
   }
 }

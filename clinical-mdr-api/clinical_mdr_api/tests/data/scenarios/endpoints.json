@@ -17,7 +17,7 @@
                 "items": [],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
@@ -27,11 +27,11 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "endpointTemplateUid": "{etuid}",
-                "libraryName": "Test library",
+                "endpoint_template_uid": "{etuid}",
+                "library_name": "Test library",
                 "name": "Test endpoint",
-                "objectiveUid": "{ouid}",
-                "parameterValues": [
+                "objective_uid": "{ouid}",
+                "parameter_values": [
                     {
                         "conjunction": "and",
                         "position": 1,
@@ -75,11 +75,11 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "endpointTemplateUid": "{etuid}",
-                "libraryName": "Test library",
+                "endpoint_template_uid": "{etuid}",
+                "library_name": "Test library",
                 "name": "Test objective",
-                "objectiveUid": "{ouid}",
-                "parameterValues": [
+                "objective_uid": "{ouid}",
+                "parameter_values": [
                     {
                         "conjunction": "and",
                         "position": 1,
@@ -103,20 +103,20 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
-                "endpointTemplate": {
+                "change_description": "Initial version",
+                "end_date": null,
+                "endpoint_template": {
                     "name": "Test [Indication]",
-                    "namePlain": "Test [Indication]",
+                    "name_plain": "Test [Indication]",
                     "uid": "{otuid}"
                 },
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 "name": "Test [type 2 diabetes]",
-                "namePlain": "Test type 2 diabetes",
-                "parameterValues": [
+                "name_plain": "Test type 2 diabetes",
+                "parameter_values": [
                     {
                         "conjunction": "and",
                         "position": 1,
@@ -130,16 +130,16 @@
                         ]
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-25T00:34:19+00:00",
+                "start_date": "2020-11-25T00:34:19+00:00",
                 "status": "Draft",
-                "studyCount": null,
+                "study_count": null,
                 "uid": "64b411b1-b022-4b95-8b9b-52c300d6f988",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             }
         }
@@ -150,11 +150,11 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "endpointTemplateUid": "{etuid}",
-                "libraryName": "Test library",
+                "endpoint_template_uid": "{etuid}",
+                "library_name": "Test library",
                 "name": "Test objective",
-                "objectiveUid": "{ouid}",
-                "parameterValues": [
+                "objective_uid": "{ouid}",
+                "parameter_values": [
                     {
                         "conjunction": "and",
                         "position": 1,
@@ -178,20 +178,20 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
-                "endpointTemplate": {
+                "change_description": "Initial version",
+                "end_date": null,
+                "endpoint_template": {
                     "name": "Test [Indication]",
-                    "namePlain": "Test [Indication]",
+                    "name_plain": "Test [Indication]",
                     "uid": "{otuid}"
                 },
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 "name": "Test [type 2 diabetes]",
-                "namePlain": "Test type 2 diabetes",
-                "parameterValues": [
+                "name_plain": "Test type 2 diabetes",
+                "parameter_values": [
                     {
                         "conjunction": "and",
                         "position": 1,
@@ -205,72 +205,16 @@
                         ]
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-25T00:34:19+00:00",
+                "start_date": "2020-11-25T00:34:19+00:00",
                 "status": "Draft",
-                "studyCount": null,
+                "study_count": null,
                 "uid": "64b411b1-b022-4b95-8b9b-52c300d6f988",
-                "userInitials": "TEST_USER",
-                "version": "0.1"
-            }
-        }
-    },
-    {
-        "name": "Test get-by-name",
-        "request": {
-            "headers": {},
-            "method": "GET",
-            "request": {},
-            "url": "/endpoints/get-by-name/Test [type 2 diabetes]"
-        },
-        "response": {
-            "code": 200,
-            "headers": {
-                "content-length": "459",
-                "content-type": "application/json"
-            },
-            "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
-                "endpointTemplate": {
-                    "name": "Test [Indication]",
-                    "namePlain": "Test [Indication]",
-                    "uid": "{otuid}"
-                },
-                "library": {
-                    "isEditable": true,
-                    "name": "Test library"
-                },
-                "name": "Test [type 2 diabetes]",
-                "namePlain": "Test type 2 diabetes",
-                "parameterValues": [
-                    {
-                        "conjunction": "and",
-                        "position": 1,
-                        "values": [
-                            {
-                                "index": 1,
-                                "name": "type 2 diabetes",
-                                "type": "Indication",
-                                "uid": "Indication-99991"
-                            }
-                        ]
-                    }
-                ],
-                "possibleActions": [
-                    "approve",
-                    "delete",
-                    "edit"
-                ],
-                "startDate": "2020-11-25T00:34:19+00:00",
-                "status": "Draft",
-                "studyCount": null,
-                "uid": "64b411b1-b022-4b95-8b9b-52c300d6f988",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             }
         }
@@ -281,11 +225,11 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "endpointTemplateUid": "{etuid}",
-                "libraryName": "Test library",
+                "endpoint_template_uid": "{etuid}",
+                "library_name": "Test library",
                 "name": "Test objective",
-                "objectiveUid": "{ouid}",
-                "parameterValues": [
+                "objective_uid": "{ouid}",
+                "parameter_values": [
                     {
                         "conjunction": "and",
                         "position": 1,
@@ -323,11 +267,11 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
-                "endpointTemplateUid": "{etuid}",
-                "nameOverride": "Test [Indication] - edited instance name",
-                "objectiveUid": "{ouid}",
-                "parameterValues": [
+                "library_name": "Test library",
+                "endpoint_template_uid": "{etuid}",
+                "name_override": "Test [Indication] - edited instance name",
+                "objective_uid": "{ouid}",
+                "parameter_values": [
                     {
                         "conjunction": "and",
                         "position": 1,
@@ -351,20 +295,20 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
-                "endpointTemplate": {
+                "change_description": "Initial version",
+                "end_date": null,
+                "endpoint_template": {
                     "name": "Test [Indication] - edited instance name",
-                    "namePlain": "Test [Indication] - edited instance name",
+                    "name_plain": "Test [Indication] - edited instance name",
                     "uid": "{otuid}"
                 },
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 "name": "Test [type 2 diabetes] - edited instance name",
-                "namePlain": "Test type 2 diabetes - edited instance name",
-                "parameterValues": [
+                "name_plain": "Test type 2 diabetes - edited instance name",
+                "parameter_values": [
                     {
                         "conjunction": "and",
                         "position": 1,
@@ -378,16 +322,16 @@
                         ]
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-25T00:34:19+00:00",
+                "start_date": "2020-11-25T00:34:19+00:00",
                 "status": "Draft",
-                "studyCount": null,
+                "study_count": null,
                 "uid": "64b411b1-b022-4b95-8b9b-52c300d6f988",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             }
         }

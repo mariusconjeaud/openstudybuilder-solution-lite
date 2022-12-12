@@ -79,16 +79,29 @@
   </template>
   <template v-slot:item.desc="{ index }">
     <vue-editor
-      v-model="desc[index].sponsorInstruction"
+      v-model="desc[index].description"
+      :editor-toolbar="customToolbar"
+      :disabled="readOnly"
+      v-show="readOnly"/>
+    <vue-editor
+      v-model="desc[index].description"
+      :editor-toolbar="customToolbar"
+      :placeholder="desc[index].uid ? '' : $t('_global.description')"
+      :disabled="readOnly"
+      v-show="!readOnly"/>
+  </template>
+  <template v-slot:item.notes="{ index }">
+    <vue-editor
+      v-model="desc[index].sponsor_instruction"
       data-cy="sponsor-instructions"
       :editor-toolbar="customToolbar"
       :disabled="readOnly"
       v-show="readOnly"/>
     <vue-editor
-      v-model="desc[index].sponsorInstruction"
+      v-model="desc[index].sponsor_instruction"
       data-cy="sponsor-instructions"
       :editor-toolbar="customToolbar"
-      :placeholder="desc[index].uid ? '' : $t('CRFForms.help_for_sponsor')"
+      :placeholder="desc[index].uid ? '' : $t('CRFForms.impl_notes')"
       :disabled="readOnly"
       v-show="!readOnly"/>
   </template>
@@ -103,7 +116,7 @@
       v-model="desc[index].instruction"
       data-cy="description-instructions"
       :editor-toolbar="customToolbar"
-      :placeholder="desc[index].uid ? '' : $t('CRFForms.instructions')"
+      :placeholder="desc[index].uid ? '' : $t('CRFForms.compl_instructions')"
       :disabled="readOnly"
       v-show="!readOnly"/>
   </template>
@@ -141,7 +154,8 @@ export default {
         { text: this.$t('CRFForms.language'), value: 'language', width: '10%' },
         { text: this.$t('CRFForms.displayed_text'), value: 'name', width: '15%' },
         { text: this.$t('CRFForms.description'), value: 'desc' },
-        { text: this.$t('CRFForms.help_for_site'), value: 'inst' },
+        { text: this.$t('CRFForms.impl_notes'), value: 'notes' },
+        { text: this.$t('CRFForms.compl_instructions'), value: 'inst' },
         { text: '', value: 'delete' }
       ],
       descriptionUids: [],
@@ -164,15 +178,17 @@ export default {
   methods: {
     createNewDescription (index) {
       this.desc[index].newDesc = true
-      delete this.desc[index].sponsorInstruction
+      delete this.desc[index].sponsor_instruction
       delete this.desc[index].instruction
+      delete this.desc[index].description
       delete this.desc[index].uid
       this.descKey += 1
     },
     addExistingDescription (item, index) {
       if (item.name) {
-        this.desc[index].sponsorInstruction = item.name.sponsorInstruction
+        this.desc[index].sponsor_instruction = item.name.sponsor_instruction
         this.desc[index].instruction = item.name.instruction
+        this.desc[index].description = item.name.description
         this.desc[index].uid = item.name.uid
         this.desc[index].name = item.name.name
       }

@@ -3,6 +3,7 @@ from typing import Any, Optional, Sequence
 from fastapi import Body, Depends, Path, Query, Request, Response, status
 from pydantic.types import Json
 
+from clinical_mdr_api import config
 from clinical_mdr_api.models import study_epoch
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
@@ -15,9 +16,13 @@ from clinical_mdr_api.services.study_visit import StudyVisitService
 
 studyUID = Path(None, description="The unique id of the study.")
 
-studyEpochUidDescription = Path(None, description="The unique id of the study epoch.")
+study_epoch_uid_description = Path(
+    None, description="The unique id of the study epoch."
+)
 
-studyVisitUidDescription = Path(None, description="The unique id of the study visit.")
+study_visit_uid_description = Path(
+    None, description="The unique id of the study visit."
+)
 
 """
     API endpoints to study epochs
@@ -25,7 +30,7 @@ studyVisitUidDescription = Path(None, description="The unique id of the study vi
 
 
 @router.get(
-    "/{uid}/study-epochs",
+    "/studies/{uid}/study-epochs",
     summary="List all study epochs currently selected for the study.",
     description="""
 State before:
@@ -56,14 +61,14 @@ Possible errors:
         "defaults": [
             "uid",
             "order",
-            "epochName",
-            "epochType",
-            "epochSubType",
-            "startRule",
-            "endRule",
+            "epoch_name",
+            "epoch_type",
+            "epoch_subtype",
+            "start_rule",
+            "end_rule",
             "description",
-            "studyVisitCount",
-            "colorHash",
+            "study_visit_count",
+            "color_hash",
         ],
         "formats": [
             "text/csv",
@@ -76,18 +81,20 @@ Possible errors:
 # pylint: disable=unused-argument
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     uid: str = studyUID,
@@ -97,24 +104,24 @@ def get_all(
 
     all_items = service.get_all_epochs(
         study_uid=uid,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        sort_by=sortBy,
+        sort_by=sort_by,
     )
 
     return CustomPage.create(
         items=all_items.items,
         total=all_items.total_count,
-        page=pageNumber,
-        size=pageSize,
+        page=page_number,
+        size=page_size,
     )
 
 
 @router.get(
-    "/{uid}/study-epochs/headers",
+    "/studies/{uid}/study-epochs/headers",
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
@@ -129,8 +136,8 @@ def get_all(
     },
 )
 def get_distinct_values_for_header(
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -139,7 +146,7 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
     uid: str = studyUID,
@@ -148,16 +155,16 @@ def get_distinct_values_for_header(
     service = StudyEpochService(author=current_user_id)
     return service.get_distinct_values_for_header(
         study_uid=uid,
-        field_name=fieldName,
-        search_string=searchString,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
 @router.get(
-    "/{uid}/study-epochs/{studyEpochUid}",
+    "/studies/{uid}/study-epochs/{study_epoch_uid}",
     summary="List all definitions for a specific study epoch",
     description="""
 State before:
@@ -176,7 +183,7 @@ State after:
  - no change
  
 Possible errors:
- - Invalid study-uid or studyEpoch Uid.
+ - Invalid study-uid or study_epoch Uid.
     """,
     response_model=study_epoch.StudyEpoch,
     response_model_exclude_unset=True,
@@ -192,15 +199,15 @@ Possible errors:
 # pylint: disable=unused-argument
 def get_study_epoch(
     uid: str = studyUID,
-    studyEpochUid: str = studyEpochUidDescription,
+    study_epoch_uid: str = study_epoch_uid_description,
     current_user_id: str = Depends(get_current_user_id),
 ) -> study_epoch.StudyEpoch:
     service = StudyEpochService(current_user_id)
-    return service.find_by_uid(studyEpochUid)
+    return service.find_by_uid(study_epoch_uid)
 
 
 @router.get(
-    "/{uid}/study-epochs/{studyEpochUid}/audit-trail/",
+    "/studies/{uid}/study-epochs/{study_epoch_uid}/audit-trail",
     summary="List audit trail related to definition of a specific study epoch",
     description="""
 State before:
@@ -229,15 +236,15 @@ Possible errors:
 )
 def get_study_epoch_audit_trail(
     uid: str = studyUID,
-    studyEpochUid: str = studyEpochUidDescription,
+    study_epoch_uid: str = study_epoch_uid_description,
     current_user_id: str = Depends(get_current_user_id),
 ) -> Sequence[study_epoch.StudyEpochVersion]:
     service = StudyEpochService(current_user_id)
-    return service.audit_trail(uid, studyEpochUid, uid)
+    return service.audit_trail(study_uid=uid, epoch_uid=study_epoch_uid)
 
 
 @router.get(
-    "/{uid}/study-epoch/audit-trail/",
+    "/studies/{uid}/study-epoch/audit-trail",
     summary="List audit trail related to all study epochs within the specified study-uid",
     description="""
 State before:
@@ -273,7 +280,7 @@ def get_study_epochs_all_audit_trail(
 
 
 @router.post(
-    "/{uid}/study-epochs",
+    "/studies/{uid}/study-epochs",
     summary="Add a study epoch to a study",
     description="""
 State before:
@@ -317,7 +324,7 @@ def post_new_epoch_create(
 
 
 @router.post(
-    "/{uid}/study-epochs/preview",
+    "/studies/{uid}/study-epochs/preview",
     summary="Preview a study epoch",
     response_model=study_epoch.StudyEpoch,
     response_model_exclude_unset=True,
@@ -342,7 +349,7 @@ def post_preview_epoch(
 
 
 @router.delete(
-    "/{uid}/study-epochs/{studyEpochUid}",
+    "/studies/{uid}/study-epochs/{study_epoch_uid}",
     summary="Delete a study epoch.",
     description="""
 State before:
@@ -359,7 +366,7 @@ State after:
 - Added new entry in the audit trail for the deletion of the study-epoch.
  
 Possible errors:
-- Invalid study-uid or studyEpochUid.
+- Invalid study-uid or study_epoch_uid.
     """,
     response_model=None,
     status_code=204,
@@ -374,22 +381,22 @@ Possible errors:
 )
 def delete_study_epoch(
     uid: str = studyUID,
-    studyEpochUid: str = studyEpochUidDescription,
+    study_epoch_uid: str = study_epoch_uid_description,
     current_user_id: str = Depends(get_current_user_id),
 ):
     service = StudyEpochService(author=current_user_id)
 
-    service.delete(study_uid=uid, study_epoch_uid=studyEpochUid)
+    service.delete(study_uid=uid, study_epoch_uid=study_epoch_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
-    "/{uid}/study-epochs/{studyEpochUid}/order/{new_order}",
+    "/studies/{uid}/study-epochs/{study_epoch_uid}/order/{new_order}",
     summary="Change display order of study epoch",
     description="""
 State before:
  - Study must exist and study status must be in draft.
- - studyEpochUid must exist. 
+ - study_epoch_uid must exist. 
  - Old order number must match current order number in database for study epoch.
 
 Business logic:
@@ -406,7 +413,7 @@ State after:
  - Added new entry in the audit trail for the re-ordering of the study epoch.
 
 Possible errors:
- - Invalid study-uid, studyEpochUid
+ - Invalid study-uid, study_epoch_uid
  - Old order number do not match current order number in database.
  - New order number not an increase or decrease of 1
  - Decrease order number for the first study epoch on the list
@@ -426,16 +433,16 @@ Possible errors:
 # pylint: disable=unused-argument
 def patch_reorder(
     uid: str = studyUID,
-    studyEpochUid: str = studyEpochUidDescription,
+    study_epoch_uid: str = study_epoch_uid_description,
     new_order: int = 0,
     current_user_id: str = Depends(get_current_user_id),
 ) -> study_epoch.StudyEpoch:
     service = StudyEpochService(current_user_id)
-    return service.reorder(study_epoch_uid=studyEpochUid, new_order=new_order)
+    return service.reorder(study_epoch_uid=study_epoch_uid, new_order=new_order)
 
 
 @router.patch(
-    "/{uid}/study-epochs/{studyEpochUid}",
+    "/studies/{uid}/study-epochs/{study_epoch_uid}",
     summary="Edit a study epoch",
     description="""
 State before:
@@ -452,7 +459,7 @@ State after:
  - Added new entry in the audit trail for the update of the study-epoch.
 
 Possible errors:
- - Invalid study-uid or studyEpochUid .
+ - Invalid study-uid or study_epoch_uid .
     """,
     response_model=study_epoch.StudyEpoch,
     response_model_exclude_unset=True,
@@ -468,14 +475,14 @@ Possible errors:
 # pylint: disable=unused-argument
 def patch_update_epoch(
     uid: str = studyUID,
-    studyEpochUid: str = studyEpochUidDescription,
+    study_epoch_uid: str = study_epoch_uid_description,
     selection: study_epoch.StudyEpochEditInput = Body(
         None, description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> study_epoch.StudyEpoch:
     service = StudyEpochService(current_user_id)
-    return service.edit(study_epoch_uid=studyEpochUid, study_epoch_input=selection)
+    return service.edit(study_epoch_uid=study_epoch_uid, study_epoch_input=selection)
 
 
 @router.get(
@@ -501,7 +508,7 @@ def get_all_configs(
 
 
 @router.get(
-    "/{uid}/allowed-consecutive-groups",
+    "/studies/{uid}/allowed-consecutive-groups",
     summary="Returns all consecutive groups",
     response_model=Sequence[str],
     response_model_exclude_unset=True,

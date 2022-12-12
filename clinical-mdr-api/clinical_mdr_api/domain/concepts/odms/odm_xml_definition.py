@@ -13,10 +13,10 @@ E.g. given the following class:
 class TranslatedText:
     _custom_tag_name: str
     _string: str
-    Lang: Attribute
+    lang: Attribute
 
 When we instantiate it:
-TranslatedText("_custom_tag_name":"Translation", "_string": "This is inner text", "Lang": Attribute("lang", "en"))
+TranslatedText("_custom_tag_name":"Translation", "_string": "This is inner text", "lang": Attribute("lang", "en"))
 the following will be produced:
 <Translation lang="en">This is inner text</Translation>
 """
@@ -32,368 +32,381 @@ class Tag:
     def __init__(self, _custom_tag_name, **kwargs):
         self._custom_tag_name = _custom_tag_name
 
-        for name, val in kwargs.items():
-            setattr(self, name, val)
+        for key, val in kwargs.items():
+            setattr(self, key, val)
 
 
 @dataclass
 class Attribute:
-    Name: str
-    Value: Optional[Union[str, int, datetime]]
+    name: str
+    value: Optional[Union[str, int, datetime]]
 
 
-class V1:
-    @dataclass
-    class TranslatedText:
-        _string: str
-        Lang: Attribute
+class TranslatedText:
+    _string: str
+    lang: Attribute
 
-        def __init__(self, _string, Lang, **kwargs):
-            self._string = _string
-            self.Lang = Lang
+    def __init__(self, _string, lang, **kwargs):
+        self._string = _string
+        self.lang = lang
 
-            for name, val in kwargs.items():
-                setattr(self, name, val)
-
-    @dataclass
-    class Decode:
-        TranslatedText: "V1.TranslatedText"
-
-    class CodeListItem:
-        CodedValue: Attribute
-        Decode: "V1.Decode"
-
-        def __init__(self, CodedValue, Decode, **kwargs):
-            self.CodedValue = CodedValue
-            self.Decode = Decode
-
-            for name, val in kwargs.items():
-                setattr(self, name, val)
-
-    @dataclass
-    class CodeList:
-        OID: Attribute
-        Name: Attribute
-        DataType: Attribute
-        SASFormatName: Attribute
-        CodeListItem: Sequence["V1.CodeListItem"]
-
-    class Alias:
-        Name: Attribute
-        Context: Attribute
-
-        def __init__(self, Name, Context, **kwargs):
-            self.Name = Name
-            self.Context = Context
-
-            for name, val in kwargs.items():
-                setattr(self, name, val)
-
-    @dataclass
-    class Description:
-        TranslatedText: Sequence["V1.TranslatedText"]
-
-    @dataclass
-    class Question:
-        TranslatedText: Sequence["V1.TranslatedText"]
-
-    @dataclass
-    class CodeListRef:
-        CodeListOID: Attribute
-
-    @dataclass
-    class MeasurementUnitRef:
-        MeasurementUnitOID: Attribute
-
-    class FormalExpression:
-        _string: str
-        Context: Attribute
-
-        def __init__(self, _string, Context, **kwargs):
-            self._string = _string
-            self.Context = Context
-
-            for name, val in kwargs.items():
-                setattr(self, name, val)
-
-    class ConditionDef:
-        OID: Attribute
-        Name: Attribute
-        Description: "V1.Description"
-        Alias: Sequence["V1.Alias"]
-        FormalExpression: Sequence["V1.FormalExpression"]
-
-        def __init__(self, OID, Name, Description, Alias, FormalExpression, **kwargs):
-            self.OID = OID
-            self.Name = Name
-            self.Description = Description
-            self.Alias = Alias
-            self.FormalExpression = FormalExpression
-
-            for name, val in kwargs.items():
-                setattr(self, name, val)
-
-    class ItemDef:
-        OID: Attribute
-        Name: Attribute
-        Origin: Attribute
-        DataType: Attribute
-        Length: Attribute
-        SASFieldName: Attribute
-        SDSVarName: Attribute
-        Question: "V1.Question"
-        Description: "V1.Description"
-        Alias: Sequence["V1.Alias"]
-        CodeListRef: "V1.CodeListRef"
-        MeasurementUnitRef: Sequence["V1.MeasurementUnitRef"]
-
-        def __init__(
-            self,
-            OID,
-            Name,
-            Origin,
-            DataType,
-            Length,
-            SASFieldName,
-            SDSVarName,
-            Question,
-            Description,
-            Alias,
-            CodeListRef,
-            MeasurementUnitRef,
-            **kwargs
-        ):
-            self.OID = OID
-            self.Name = Name
-            self.Origin = Origin
-            self.DataType = DataType
-            self.Length = Length
-            self.SASFieldName = SASFieldName
-            self.SDSVarName = SDSVarName
-            self.Question = Question
-            self.Description = Description
-            self.Alias = Alias
-            self.CodeListRef = CodeListRef
-            self.MeasurementUnitRef = MeasurementUnitRef
-
-            if not self.CodeListRef.CodeListOID.Value:
-                del self.CodeListRef
-
-            for name, val in kwargs.items():
-                setattr(self, name, val)
-
-    @dataclass
-    class ItemRef:
-        ItemOID: Attribute
-        Mandatory: Attribute
-        OrderNumber: Attribute
-        CollectionExceptionConditionOID: Attribute
-
-        def __init__(
-            self,
-            ItemOID,
-            Mandatory,
-            OrderNumber,
-            CollectionExceptionConditionOID,
-            **kwargs
-        ):
-            self.ItemOID = ItemOID
-            self.Mandatory = Mandatory
-            self.OrderNumber = OrderNumber
-            self.CollectionExceptionConditionOID = CollectionExceptionConditionOID
-
-            if not self.CollectionExceptionConditionOID.Value:
-                del self.CollectionExceptionConditionOID
-
-            for name, val in kwargs.items():
-                setattr(self, name, val)
-
-    @dataclass
-    class osbDomainColor:
-        _string: str
-        _custom_tag_name: str = "osb:DomainColor"
-
-    class ItemGroupDef:
-        OID: Attribute
-        Name: Attribute
-        Repeating: Attribute
-        Purpose: Attribute
-        SASDatasetName: Attribute
-        Domain: Attribute
-        osbDomainColor: Sequence["V1.osbDomainColor"]
-        Description: "V1.Description"
-        Alias: Sequence["V1.Alias"]
-        ItemRef: Sequence["V1.ItemRef"]
-
-        def __init__(
-            self,
-            OID,
-            Name,
-            Repeating,
-            Purpose,
-            SASDatasetName,
-            Domain,
-            osbDomainColor,
-            Description,
-            Alias,
-            ItemRef,
-            **kwargs
-        ):
-            self.OID = OID
-            self.Name = Name
-            self.Repeating = Repeating
-            self.Purpose = Purpose
-            self.SASDatasetName = SASDatasetName
-            self.Domain = Domain
-            self.osbDomainColor = osbDomainColor
-            self.Description = Description
-            self.Alias = Alias
-            self.ItemRef = ItemRef
-
-            for name, val in kwargs.items():
-                setattr(self, name, val)
-
-    class ItemGroupRef:
-        ItemGroupOID: Attribute
-        Mandatory: Attribute
-        OrderNumber: Attribute
-        CollectionExceptionConditionOID: Attribute
-
-        def __init__(
-            self,
-            ItemGroupOID,
-            Mandatory,
-            OrderNumber,
-            CollectionExceptionConditionOID,
-            **kwargs
-        ):
-            self.ItemGroupOID = ItemGroupOID
-            self.Mandatory = Mandatory
-            self.OrderNumber = OrderNumber
-            self.CollectionExceptionConditionOID = CollectionExceptionConditionOID
-
-            if not self.CollectionExceptionConditionOID.Value:
-                del self.CollectionExceptionConditionOID
-
-            for name, val in kwargs.items():
-                setattr(self, name, val)
-
-    class FormDef:
-        OID: Attribute
-        Name: Attribute
-        Repeating: Attribute
-        Description: "V1.Description"
-        Alias: Sequence["V1.Alias"]
-        ItemGroupRef: Sequence["V1.ItemGroupRef"]
-
-        def __init__(
-            self, OID, Name, Repeating, Description, Alias, ItemGroupRef, **kwargs
-        ):
-            self.OID = OID
-            self.Name = Name
-            self.Repeating = Repeating
-            self.Description = Description
-            self.Alias = Alias
-            self.ItemGroupRef = ItemGroupRef
-
-            for name, val in kwargs.items():
-                setattr(self, name, val)
-
-    @dataclass
-    class Symbol:
-        TranslatedText: "V1.TranslatedText"
-
-    @dataclass
-    class MeasurementUnit:
-        OID: Attribute
-        Name: Attribute
-        Symbol: "V1.Symbol"
-
-    @dataclass
-    class MetaDataVersion:
-        OID: Attribute
-        Name: Attribute
-        Description: Attribute
-        FormDef: Sequence["V1.FormDef"]
-        ItemGroupDef: Sequence["V1.ItemGroupDef"]
-        ItemDef: Sequence["V1.ItemDef"]
-        ConditionDef: Sequence["V1.ConditionDef"]
-        CodeList: Sequence["V1.CodeList"]
-
-    @dataclass
-    class BasicDefinitions:
-        MeasurementUnit: Sequence["V1.MeasurementUnit"]
-
-    @dataclass
-    class ProtocolName:
-        _string: str
-
-    @dataclass
-    class StudyName:
-        _string: str
-
-    @dataclass
-    class StudyDescription:
-        _string: str
-
-    @dataclass
-    class GlobalVariables:
-        ProtocolName: "V1.ProtocolName"
-        StudyName: "V1.StudyName"
-        StudyDescription: "V1.StudyDescription"
-
-    @dataclass
-    class Study:
-        OID: Attribute
-        GlobalVariables: "V1.GlobalVariables"
-        BasicDefinitions: "V1.BasicDefinitions"
-        MetaDataVersion: "V1.MetaDataVersion"
-
-    @dataclass
-    class ODM:
-        OdmNS: Attribute
-        ODMVersion: Attribute
-        FileType: Attribute
-        FileOID: Attribute
-        CreationDateTime: Attribute
-        Granularity: Attribute
-        Study: "V1.Study"
-
-        def __init__(
-            self,
-            OdmNS,
-            ODMVersion,
-            FileType,
-            FileOID,
-            CreationDateTime,
-            Granularity,
-            Study,
-            **kwargs
-        ):
-            self.OdmNS = OdmNS
-            self.ODMVersion = ODMVersion
-            self.FileType = FileType
-            self.FileOID = FileOID
-            self.CreationDateTime = CreationDateTime
-            self.Granularity = Granularity
-            self.Study = Study
-
-            for name, val in kwargs.items():
-                setattr(self, name, val)
+        for key, val in kwargs.items():
+            setattr(self, key, val)
 
 
-class V2:
-    @dataclass
-    class TranslatedText:
-        _string: str
-        Lang: Attribute
+@dataclass
+class Decode:
+    translated_text: TranslatedText
 
-    @dataclass
-    class Alias:
-        Name: Attribute
-        Context: Attribute
 
-    @dataclass
-    class Oam:
-        Aliases: Sequence["V2.TranslatedText"]
-        Texts: Sequence["V2.Alias"]
+class CodeListItem:
+    coded_value: Attribute
+    decode: Decode
+
+    def __init__(self, coded_value, decode, **kwargs):
+        self.coded_value = coded_value
+        self.decode = decode
+
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
+
+@dataclass
+class CodeList:
+    oid: Attribute
+    name: Attribute
+    datatype: Attribute
+    sas_format_name: Attribute
+    codelist_items: Sequence[CodeListItem]
+
+
+class Alias:
+    name: Attribute
+    context: Attribute
+
+    def __init__(self, name, context, **kwargs):
+        self.name = name
+        self.context = context
+
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
+
+@dataclass
+class Description:
+    translated_text: Sequence[TranslatedText]
+
+
+@dataclass
+class Question:
+    translated_text: Sequence[TranslatedText]
+
+
+@dataclass
+class CodeListRef:
+    codelist_oid: Attribute
+
+
+@dataclass
+class MeasurementUnitRef:
+    measurement_unit_oid: Attribute
+
+
+class FormalExpression:
+    _string: str
+    context: Attribute
+
+    def __init__(self, _string, context, **kwargs):
+        self._string = _string
+        self.context = context
+
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
+
+class ConditionDef:
+    oid: Attribute
+    name: Attribute
+    description: Description
+    aliases: Sequence[Alias]
+    formal_expressions: Sequence[FormalExpression]
+
+    def __init__(self, oid, name, description, aliases, formal_expressions, **kwargs):
+        self.oid = oid
+        self.name = name
+        self.description = description
+        self.aliases = aliases
+        self.formal_expressions = formal_expressions
+
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
+
+class ItemDef:
+    oid: Attribute
+    name: Attribute
+    origin: Attribute
+    datatype: Attribute
+    length: Attribute
+    sas_field_name: Attribute
+    sds_var_name: Attribute
+    question: Question
+    description: Description
+    aliases: Sequence[Alias]
+    codelist_ref: CodeListRef
+    measurement_unit_refs: Sequence[MeasurementUnitRef]
+
+    def __init__(
+        self,
+        oid,
+        name,
+        origin,
+        datatype,
+        length,
+        sas_field_name,
+        sds_var_name,
+        question,
+        description,
+        aliases,
+        codelist_ref,
+        measurement_unit_refs,
+        **kwargs
+    ):
+        self.oid = oid
+        self.name = name
+        self.origin = origin
+        self.datatype = datatype
+        self.length = length
+        self.sas_field_name = sas_field_name
+        self.sds_var_name = sds_var_name
+        self.question = question
+        self.description = description
+        self.aliases = aliases
+        self.codelist_ref = codelist_ref
+        self.measurement_unit_refs = measurement_unit_refs
+
+        if not self.codelist_ref.codelist_oid.value:
+            del self.codelist_ref
+
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
+
+@dataclass
+class ItemRef:
+    item_oid: Attribute
+    mandatory: Attribute
+    order_number: Attribute
+    method_oid: Attribute
+    collection_exception_condition_oid: Attribute
+
+    def __init__(
+        self,
+        item_oid,
+        mandatory,
+        order_number,
+        method_oid,
+        collection_exception_condition_oid,
+        **kwargs
+    ):
+        self.item_oid = item_oid
+        self.mandatory = mandatory
+        self.order_number = order_number
+        self.method_oid = method_oid
+        self.collection_exception_condition_oid = collection_exception_condition_oid
+
+        if not self.collection_exception_condition_oid.value:
+            del self.collection_exception_condition_oid
+
+        if not self.method_oid.value:
+            del self.method_oid
+
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
+
+@dataclass
+class OsbDomainColor:
+    _string: str
+    _custom_tag_name: str = "osb:DomainColor"
+
+
+class ItemGroupDef:
+    oid: Attribute
+    name: Attribute
+    repeating: Attribute
+    purpose: Attribute
+    sas_dataset_name: Attribute
+    domain: Attribute
+    osb_domain_colors: Sequence[OsbDomainColor]
+    description: Description
+    aliases: Sequence[Alias]
+    item_refs: Sequence[ItemRef]
+
+    def __init__(
+        self,
+        oid,
+        name,
+        repeating,
+        purpose,
+        sas_dataset_name,
+        domain,
+        osb_domain_colors,
+        description,
+        aliases,
+        item_refs,
+        **kwargs
+    ):
+        self.oid = oid
+        self.name = name
+        self.repeating = repeating
+        self.purpose = purpose
+        self.sas_dataset_name = sas_dataset_name
+        self.domain = domain
+        self.osb_domain_colors = osb_domain_colors
+        self.description = description
+        self.aliases = aliases
+        self.item_refs = item_refs
+
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
+
+class ItemGroupRef:
+    item_group_oid: Attribute
+    mandatory: Attribute
+    order_number: Attribute
+    collection_exception_condition_oid: Attribute
+
+    def __init__(
+        self,
+        item_group_oid,
+        mandatory,
+        order_number,
+        collection_exception_condition_oid,
+        **kwargs
+    ):
+        self.item_group_oid = item_group_oid
+        self.mandatory = mandatory
+        self.order_number = order_number
+        self.collection_exception_condition_oid = collection_exception_condition_oid
+
+        if not self.collection_exception_condition_oid.value:
+            del self.collection_exception_condition_oid
+
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
+
+class FormDef:
+    oid: Attribute
+    name: Attribute
+    repeating: Attribute
+    description: Description
+    aliases: Sequence[Alias]
+    item_group_refs: Sequence[ItemGroupRef]
+
+    def __init__(
+        self, oid, name, repeating, description, aliases, item_group_refs, **kwargs
+    ):
+        self.oid = oid
+        self.name = name
+        self.repeating = repeating
+        self.description = description
+        self.aliases = aliases
+        self.item_group_refs = item_group_refs
+
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
+
+@dataclass
+class Symbol:
+    translated_text: TranslatedText
+
+
+@dataclass
+class MeasurementUnit:
+    oid: Attribute
+    name: Attribute
+    symbol: Symbol
+
+
+@dataclass
+class MetaDataVersion:
+    oid: Attribute
+    name: Attribute
+    description: Attribute
+    form_defs: Sequence[FormDef]
+    item_group_defs: Sequence[ItemGroupDef]
+    item_defs: Sequence[ItemDef]
+    condition_defs: Sequence[ConditionDef]
+    codelists: Sequence[CodeList]
+
+
+@dataclass
+class BasicDefinitions:
+    measurement_units: Sequence[MeasurementUnit]
+
+
+@dataclass
+class ProtocolName:
+    _string: str
+
+
+@dataclass
+class StudyName:
+    _string: str
+
+
+@dataclass
+class StudyDescription:
+    _string: str
+
+
+@dataclass
+class GlobalVariables:
+    protocol_name: ProtocolName
+    study_name: StudyName
+    study_description: StudyDescription
+
+
+@dataclass
+class Study:
+    oid: Attribute
+    global_variables: GlobalVariables
+    basic_definitions: BasicDefinitions
+    meta_data_version: MetaDataVersion
+
+
+@dataclass
+class ODM:
+    odm_ns: Attribute
+    odm_version: Attribute
+    file_type: Attribute
+    file_oid: Attribute
+    creation_date_time: Attribute
+    granularity: Attribute
+    study: Study
+
+    def __init__(
+        self,
+        odm_ns,
+        odm_version,
+        file_type,
+        file_oid,
+        creation_date_time,
+        granularity,
+        study,
+        **kwargs
+    ):
+        self.odm_ns = odm_ns
+        self.odm_version = odm_version
+        self.file_type = file_type
+        self.file_oid = file_oid
+        self.creation_date_time = creation_date_time
+        self.granularity = granularity
+        self.study = study
+
+        for key, val in kwargs.items():
+            setattr(self, key, val)

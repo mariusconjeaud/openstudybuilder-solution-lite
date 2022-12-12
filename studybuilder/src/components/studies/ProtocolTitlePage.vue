@@ -34,13 +34,13 @@ export default {
   mounted () {
     study.getStudyProtocolTitle(this.selectedStudy.uid).then(resp => {
       this.items = [
-        { label: this.$t('ProtocolTitlePage.protocol_title'), value: resp.data.studyTitle },
-        { label: this.$t('ProtocolTitlePage.protocol_short_title'), value: resp.data.studyShortTitle },
-        { label: this.$t('ProtocolTitlePage.substance_name'), value: resp.data.substanceName },
-        { label: this.$t('ProtocolTitlePage.utn'), value: resp.data.universalTrialNumberUTN },
-        { label: this.$t('ProtocolTitlePage.eudract_number'), value: resp.data.eudractId },
-        { label: this.$t('ProtocolTitlePage.ind_number'), value: resp.data.indNumber },
-        { label: this.$t('ProtocolTitlePage.study_phase'), value: resp.data.trialPhaseCode ? resp.data.trialPhaseCode.name : '' }
+        { label: this.$t('ProtocolTitlePage.protocol_title'), value: resp.data.study_title },
+        { label: this.$t('ProtocolTitlePage.protocol_short_title'), value: resp.data.study_short_title },
+        { label: this.$t('ProtocolTitlePage.substance_name'), value: resp.data.substance_name },
+        { label: this.$t('ProtocolTitlePage.utn'), value: resp.data.universal_trial_number_utn },
+        { label: this.$t('ProtocolTitlePage.eudract_number'), value: resp.data.eudract_id },
+        { label: this.$t('ProtocolTitlePage.ind_number'), value: resp.data.ind_number },
+        { label: this.$t('ProtocolTitlePage.study_phase'), value: resp.data.trial_phase_code ? resp.data.trial_phase_code.name : '' }
       ]
     })
   }

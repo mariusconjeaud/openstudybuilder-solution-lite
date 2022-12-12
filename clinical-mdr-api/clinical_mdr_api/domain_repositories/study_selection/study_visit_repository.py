@@ -218,9 +218,9 @@ class StudyVisitRepository:
         return StudyVisitVO(
             uid=study_visit_ogm_input.uid,
             visit_number=study_visit_ogm_input.visit_number,
-            visit_sub_label=study_visit_ogm_input.visit_sub_label,
-            visit_sub_label_reference=study_visit_ogm_input.visit_sub_label_reference,
-            visit_sub_label_uid=study_visit_ogm_input.visit_sub_label_uid,
+            visit_sublabel=study_visit_ogm_input.visit_sublabel,
+            visit_sublabel_reference=study_visit_ogm_input.visit_sublabel_reference,
+            visit_sublabel_uid=study_visit_ogm_input.visit_sublabel_uid,
             consecutive_visit_group=study_visit_ogm_input.consecutive_visit_group,
             show_visit=study_visit_ogm_input.show_visit,
             timepoint=study_visit_ogm_input.timepoint,
@@ -326,6 +326,7 @@ class StudyVisitRepository:
                 "has_study_duration_weeks__has_latest_value",
                 "has_epoch_allocation",
             )
+            .has(has_before=False)
             .filter(uid=uid, is_deleted=False)
             .to_relation_trees()
         )
@@ -401,7 +402,7 @@ class StudyVisitRepository:
         self, study_root: StudyRoot, study_visit: StudyVisitVO, new_item: StudyVisit
     ):
         action = Create(
-            date=datetime.datetime.now(),
+            date=datetime.datetime.now(datetime.timezone.utc),
             status=study_visit.status.value,
             user_initials=study_visit.author,
         )
@@ -417,7 +418,7 @@ class StudyVisitRepository:
         new_item: StudyVisit,
     ):
         action = Edit(
-            date=datetime.datetime.now(),
+            date=datetime.datetime.now(datetime.timezone.utc),
             status=study_visit.status.value,
             user_initials=study_visit.author,
         )
@@ -435,7 +436,7 @@ class StudyVisitRepository:
         previous_item: StudyVisit,
     ):
         action = Delete(
-            date=datetime.datetime.now(),
+            date=datetime.datetime.now(datetime.timezone.utc),
             status=study_visit.status.value,
             user_initials=study_visit.author,
         )
@@ -454,11 +455,11 @@ class StudyVisitRepository:
             legacy_visit_id=study_visit.legacy_visit_id,
             legacy_visit_type_alias=study_visit.legacy_visit_type_alias,
             legacy_name=study_visit.legacy_name,
-            legacy_sub_name=study_visit.legacy_sub_name,
+            legacy_subname=study_visit.legacy_subname,
             visit_number=study_visit.visit_number,
-            visit_sub_label=study_visit.visit_sub_label,
-            visit_sub_label_uid=study_visit.visit_sub_label_uid,
-            visit_sub_label_reference=study_visit.visit_sub_label_reference,
+            visit_sublabel=study_visit.visit_sublabel,
+            visit_sublabel_uid=study_visit.visit_sublabel_uid,
+            visit_sublabel_reference=study_visit.visit_sublabel_reference,
             visit_name_label=study_visit.visit_name_label,
             short_visit_label=study_visit.visit_short_name,
             unique_visit_number=study_visit.unique_visit_number,
@@ -534,7 +535,7 @@ class StudyVisitRepository:
 
         if not create:
             previous_item = StudyVisit.nodes.filter(uid=study_visit.uid).has(
-                study_epoch_has_study_visit=True
+                study_epoch_has_study_visit=True, has_before=False
             )[0]
 
         study_epoch = (

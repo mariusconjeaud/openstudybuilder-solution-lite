@@ -9,10 +9,10 @@
     :options.sync="options"
     :server-items-length="total"
     @filter="getAliases"
-    has-history
     has-api
     column-data-resource="concepts/odms/aliases"
     export-data-url="concepts/odms/aliases"
+    export-object-label="CRFAliases"
     >
     <template v-slot:actions="">
       <v-btn
@@ -65,14 +65,14 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'edit'),
+          condition: (item) => item.possible_actions.find(action => action === 'edit'),
           click: this.edit
         },
         {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete',
           iconColor: 'error',
-          condition: (item) => item.possibleActions.find(action => action === 'delete'),
+          condition: (item) => item.possible_actions.find(action => action === 'delete'),
           click: this.delete
         }
       ],

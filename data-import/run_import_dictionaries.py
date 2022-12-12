@@ -32,8 +32,8 @@ DICTIONARY_CODELISTS_DEFINITION_MAPPER = {
         "path": "/dictionaries/codelists",
         "body": {
             "name": row[headers.index("dictionary_codelist_name")],
-            "templateParameter": map_boolean(row[headers.index("template_parameter")]),
-            "libraryName": row[headers.index("library")],
+            "template_parameter": map_boolean(row[headers.index("template_parameter")]),
+            "library_name": row[headers.index("library")],
         },
     }
 }
@@ -43,15 +43,15 @@ SNOMED_DEFINITION_MAPPER = {
     "SNOMED": lambda row, headers: {
         "path": "/dictionaries/terms",
         "body": {
-            "dictionaryId": row[headers.index("concept_id")],
+            "dictionary_id": row[headers.index("concept_id")],
             "name": row[headers.index("Preferred synonym")],
-            "nameSentenceCase": row[
+            "name_sentence_case": row[
                 headers.index("Preferred synonym in sentence case")
             ],
             "abbreviation": row[headers.index("Abbreviation")],
             "definition": row[headers.index("Fully specified name")],
-            "codelistUid": None,
-            "libraryName": "SNOMED",
+            "codelist_uid": None,
+            "library_name": "SNOMED",
         },
     }
 }
@@ -61,11 +61,11 @@ MED_RT_DEFINITION_MAPPER = {
         "path": "/dictionaries/terms",
         "body": {
             "name": row[headers.index("pclass_ndf_rt_concept")],
-            "nameSentenceCase": row[headers.index("pclass_ndf_rt_concept")].lower(),
-            "dictionaryId": row[headers.index("PCLASS_NDF_RT_NUI")],
+            "name_sentence_case": row[headers.index("pclass_ndf_rt_concept")].lower(),
+            "dictionary_id": row[headers.index("PCLASS_NDF_RT_NUI")],
             "definition": row[headers.index("pclass_ndf_rt_concept")],
-            "codelistUid": None,
-            "libraryName": "MED-RT",
+            "codelist_uid": None,
+            "library_name": "MED-RT",
         },
     }
 }
@@ -75,13 +75,13 @@ UNII_DEFINITION_MAPPER = {
         "path": "/dictionaries/substances",
         "body": {
             "name": row[headers.index("CD_VAL_LB")],
-            "nameSentenceCase": row[headers.index("CD_VAL_LB")].lower(),
-            "dictionaryId": row[
+            "name_sentence_case": row[headers.index("CD_VAL_LB")].lower(),
+            "dictionary_id": row[
                 headers.index("CD_VAL")
             ],  # find out which field is dictionaryID
-            "codelistUid": None,
-            "libraryName": "UNII",
-            "pclassUid": None,
+            "codelist_uid": None,
+            "library_name": "UNII",
+            "pclass_uid": None,
         },
     }
 }
@@ -92,16 +92,16 @@ UCUM_DEFINITION_MAPPER = {
         "path": "/dictionaries/terms",
         "body": {
             "name": row[headers.index("UCUM_CODE")],
-            "nameSentenceCase": row[headers.index("UCUM_CODE")].lower(),
+            "name_sentence_case": row[headers.index("UCUM_CODE")].lower(),
             "definition": row[
                 headers.index(
                     "Description of the Unit (using UCUM descriptions where they exist)"
                 )
             ],
             "abbreviation": "",
-            "dictionaryId": "UCUM",
-            "codelistUid": None,
-            "libraryName": "UCUM",
+            "dictionary_id": "UCUM",
+            "codelist_uid": None,
+            "library_name": "UCUM",
         },
     }
 }
@@ -124,7 +124,7 @@ class Dictionaries(BaseImporter):
     # Create a new library
     def create_library(self, new_lib):
 
-        self.api.create_library({"name": new_lib, "isEditable": True})
+        self.api.create_library({"name": new_lib, "is_editable": True})
 
     # Migrate codelist definitions
     @open_file()
@@ -145,7 +145,7 @@ class Dictionaries(BaseImporter):
                 if res is not None:
                     # Approve dictionary codelist
                     self.api.simple_approve2(
-                        data["path"], f"/{res['codelistUid']}/approve", label="Names"
+                        data["path"], f"/{res['codelist_uid']}/approve", label="Names"
                     )
             else:
                 self.log.info(f"Codelist '{data['body']['name']}' already exists")
@@ -161,7 +161,7 @@ class Dictionaries(BaseImporter):
             all_dictionary_codelist = self.api.get_all_identifiers(
                 self.api.get_all_from_api(f"/dictionaries/codelists/{library}"),
                 identifier="name",
-                value="codelistUid",
+                value="codelist_uid",
             )
 
             if codelist_name in all_dictionary_codelist:
@@ -190,9 +190,9 @@ class Dictionaries(BaseImporter):
                     multiple_rows = []
                     dictionary_names = data["body"]["name"].split("|")
                     dictionary_name_sentence_cases = data["body"][
-                        "nameSentenceCase"
+                        "name_sentence_case"
                     ].split("|")
-                    dictionary_ids = data["body"]["dictionaryId"].split("|")
+                    dictionary_ids = data["body"]["dictionary_id"].split("|")
                     dictionary_definitions = data["body"]["definition"].split("|")
                     for name, nsc, dict_id, defin in zip(
                         dictionary_names,
@@ -202,8 +202,8 @@ class Dictionaries(BaseImporter):
                     ):
                         data = copy.deepcopy(data)
                         data["body"]["name"] = name
-                        data["body"]["nameSentenceCase"] = nsc
-                        data["body"]["dictionaryId"] = dict_id
+                        data["body"]["name_sentence_case"] = nsc
+                        data["body"]["dictionary_id"] = dict_id
                         data["body"]["definition"] = defin
                         multiple_rows.append(data)
                 # the '|' was not spotted, migrate just simple records
@@ -214,13 +214,13 @@ class Dictionaries(BaseImporter):
                         self.log.info(
                             f"Add item '{data['body']['name']}' to codelist '{codelist_name}'"
                         )
-                        data["body"]["codelistUid"] = dictionary_codelist_uid
+                        data["body"]["codelist_uid"] = dictionary_codelist_uid
                         res = self.api.post_to_api(data)
                         if res is not None:
                             # Approve dictionary term
                             self.api.simple_approve2(
                                 data["path"],
-                                f"/{res['termUid']}/approve",
+                                f"/{res['term_uid']}/approve",
                                 label="Names",
                             )
                     else:
@@ -239,10 +239,10 @@ class Dictionaries(BaseImporter):
                 self.api.get_all_identifiers(
                     self.api.get_all_from_api(
                         "/dictionaries/terms",
-                        params={"codelist_uid": pclass_codelist["codelistUid"]},
+                        params={"codelist_uid": pclass_codelist["codelist_uid"]},
                     ),
                     "name",
-                    "termUid",
+                    "term_uid",
                 )
             )
         with open(file_env_variable, encoding=encoding, errors="ignore") as csvfile:
@@ -251,7 +251,7 @@ class Dictionaries(BaseImporter):
             all_dictionary_codelist = self.api.get_all_identifiers(
                 self.api.get_all_from_api(f"/dictionaries/codelists/{library}"),
                 identifier="name",
-                value="codelistUid",
+                value="codelist_uid",
             )
 
             if codelist_name in all_dictionary_codelist:
@@ -275,14 +275,14 @@ class Dictionaries(BaseImporter):
                 data = mappings[_class](row, headers)
 
                 if data["body"]["name"] not in all_substance_terms_names:
-                    data["body"]["codelistUid"] = dictionary_codelist_uid
+                    data["body"]["codelist_uid"] = dictionary_codelist_uid
 
                     if row[headers.index("PCLASS_NDF_RT_CONCEPT")] != "":
                         pclass_term_uid = all_pclass_terms.get(
                             row[headers.index("PCLASS_NDF_RT_CONCEPT")]
                         )
                         if pclass_term_uid:
-                            data["body"]["pclassUid"] = pclass_term_uid
+                            data["body"]["pclass_uid"] = pclass_term_uid
                     self.log.info(
                         f"Adding item '{data['body']['name']}' to codelist '{codelist_name}'"
                     )
@@ -290,7 +290,7 @@ class Dictionaries(BaseImporter):
                     if res is not None:
                         # Approve dictionary term
                         if self.api.simple_approve(
-                            "/dictionaries/terms/" + res["termUid"] + "/approve"
+                            "/dictionaries/terms/" + res["term_uid"] + "/approve"
                         ):
                             self.metrics.icrement(data["path"] + "--Approve")
                         else:

@@ -1,17 +1,17 @@
 <template>
 <package-timeline
-  :catalogueName="$route.params.catalogueName"
-  :packageName="$route.params.packageName"
+  :catalogue_name="$route.params.catalogue_name"
+  :packageName="$route.params.package_name"
   @catalogueChanged="updateCatalogue"
   @packageChanged="updateTerms"
   >
   <template v-slot:default="{ selectedPackage }">
     <div class="page-title">
-      {{ $t('CodelistTermsView.codelist') }} {{ $route.params.codelistId }} - {{ codelistAttributes.submissionValue }} / {{ $t('CodelistTermDetail.term_detail') }} ({{ $t('CodelistTermDetail.concept_id') }}: {{ $route.params.termId }})
+      {{ $t('CodelistTermsView.codelist') }} {{ $route.params.codelist_id }} - {{ codelistAttributes.submissionValue }} / {{ $t('CodelistTermDetail.term_detail') }} ({{ $t('CodelistTermDetail.concept_id') }}: {{ $route.params.termId }})
     </div>
     <codelist-term-detail
-      :codelistUid="$route.params.codelistId"
-      :termUid="$route.params.termId"
+      :codelistUid="$route.params.codelist_id"
+      :termUid="$route.params.term_id"
       :packageName="selectedPackage"
       />
   </template>
@@ -37,16 +37,16 @@ export default {
     updateCatalogue (catalogueName) {
       this.$router.push({
         name: 'CtPackages',
-        params: { catalogueName }
+        params: { catalogue_name: catalogueName }
       })
     },
     updateTerms (catalogueName, packageName) {
       this.$router.push({
         name: 'CtPackageTerms',
         params: {
-          codelistId: this.$route.params.codelistId,
-          catalogueName,
-          packageName
+          codelist_id: this.$route.params.codelist_id,
+          catalogue_name: catalogueName,
+          package_name: packageName
         }
       })
     }
@@ -56,7 +56,7 @@ export default {
       text: this.$route.params.termId,
       index: 7
     })
-    controlledTerminology.getCodelistAttributes(this.$route.params.codelistId).then(resp => {
+    controlledTerminology.getCodelistAttributes(this.$route.params.codelist_id).then(resp => {
       this.codelistAttributes = resp.data
     })
   }

@@ -1,7 +1,7 @@
 <template>
 <div>
   <v-dialog
-    v-model="open"
+    :value="open"
     scrollable
     persistent
     :max-width="maxWidth">
@@ -23,6 +23,9 @@
       <v-divider></v-divider>
       <v-card-actions>
         <v-spacer></v-spacer>
+        <div>
+          <slot name="actions"></slot>
+        </div>
         <v-btn
           data-cy="cancel-button"
           class="secondary-btn"

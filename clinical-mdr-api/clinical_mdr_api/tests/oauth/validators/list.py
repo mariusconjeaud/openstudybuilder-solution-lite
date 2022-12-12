@@ -1,4 +1,4 @@
-def assert_list_of_str(value, message):
+def assertList_of_str(value, message):
     """Assert value is a list of strings"""
     # pylint:disable=unused-variable
     __tracebackhide__ = True

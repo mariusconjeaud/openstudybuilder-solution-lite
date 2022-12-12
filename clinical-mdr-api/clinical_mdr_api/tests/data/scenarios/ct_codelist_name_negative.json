@@ -5,7 +5,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/ct/codelists/names?cataloguename=SDTM%20CTM"
+            "url": "/ct/codelists/names?catalogue_name=SDTM%20CTM"
         },
         "response": {
             "code": 400,
@@ -16,7 +16,7 @@
             "result": {
                 "message": "There is no catalogue identified by provided catalogue name (SDTM CTM)",
                 "method": "GET",
-                "path": "http://testserver/ct/codelists/names?cataloguename=SDTM%20CTM",
+                "path": "http://testserver/ct/codelists/names?catalogue_name=SDTM%20CTM",
                 "time": "2020-11-03T23:42:41.518146",
                 "type": "BusinessLogicException"
             }
@@ -29,8 +29,8 @@
             "method": "PATCH",
             "request": {
                 "name": "codelist name",
-                "templateParameter": true,
-                "changeDescription": "Changing codelist"
+                "template_parameter": true,
+                "change_description": "Changing codelist"
             },
             "url": "/ct/codelists/ct_codelist_root1/names"
         },
@@ -52,8 +52,8 @@
             "method": "PATCH",
             "request": {
                 "name": "not_tp_codelist_name_value",
-                "templateParameter": true,
-                "changeDescription": "Changing codelist"
+                "template_parameter": true,
+                "change_description": "Changing codelist"
             },
             "url": "/ct/codelists/ct_codelist_root3/names"
         },

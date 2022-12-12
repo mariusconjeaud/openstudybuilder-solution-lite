@@ -106,7 +106,7 @@ class TestTimeframeTemplateCascade(unittest.TestCase):
     def create_timeframes(self, count=100, approved=False, retired=False):
         for i in range(count):
             pv = TemplateParameterMultiSelectInput(
-                templateParameter=self.TPR_LABEL,
+                template_parameter=self.TPR_LABEL,
                 conjunction="",
                 values=[
                     {
@@ -119,9 +119,9 @@ class TestTimeframeTemplateCascade(unittest.TestCase):
                 ],
             )
             template = TimeframeCreateInput(
-                timeframeTemplateUid=self.ar.uid,
-                libraryName="Library",
-                parameterValues=[pv],
+                timeframe_template_uid=self.ar.uid,
+                library_name="Library",
+                parameter_values=[pv],
             )
 
             item = self.timeframe_service.create(template)
@@ -136,9 +136,9 @@ class TestTimeframeTemplateCascade(unittest.TestCase):
         # given
 
         # when
-        start = datetime.datetime.now()
+        start = datetime.datetime.now(datetime.timezone.utc)
         self.timeframe_template_service.approve_cascade(self.ar.uid)
-        end = datetime.datetime.now()
+        end = datetime.datetime.now(datetime.timezone.utc)
         print("100 cascades run in ", end - start)
 
     def test__init__cascade_10(self):
@@ -147,9 +147,9 @@ class TestTimeframeTemplateCascade(unittest.TestCase):
         # given
 
         # when
-        start = datetime.datetime.now()
+        start = datetime.datetime.now(datetime.timezone.utc)
         self.timeframe_template_service.approve_cascade(self.ar.uid)
-        end = datetime.datetime.now()
+        end = datetime.datetime.now(datetime.timezone.utc)
         print("10 cascades run in ", end - start)
 
     def test__init__cascade_approved_10(self):
@@ -158,9 +158,9 @@ class TestTimeframeTemplateCascade(unittest.TestCase):
         # given
 
         # when
-        start = datetime.datetime.now()
+        start = datetime.datetime.now(datetime.timezone.utc)
         self.timeframe_template_service.approve_cascade(self.ar.uid)
-        end = datetime.datetime.now()
+        end = datetime.datetime.now(datetime.timezone.utc)
         print("10 approved cascades run in ", end - start)
 
     def test__init__cascade_retired_10(self):
@@ -169,7 +169,7 @@ class TestTimeframeTemplateCascade(unittest.TestCase):
         # given
 
         # when
-        start = datetime.datetime.now()
+        start = datetime.datetime.now(datetime.timezone.utc)
         self.timeframe_template_service.approve_cascade(self.ar.uid)
-        end = datetime.datetime.now()
+        end = datetime.datetime.now(datetime.timezone.utc)
         print("10 retired run in ", end - start)

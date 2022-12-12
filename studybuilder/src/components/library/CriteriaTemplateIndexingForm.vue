@@ -19,8 +19,8 @@
             v-model="form.categories"
             :label="$t('CriteriaTemplateForm.criterion_cat')"
             :items="categories"
-            item-text="sponsorPreferredName"
-            item-value="termUid"
+            item-text="sponsor_preferred_name"
+            item-value="term_uid"
             :disabled="notApplicable"
             :errors="errors"
             />
@@ -29,8 +29,8 @@
     </not-applicable-field>
     <not-applicable-field
       class="mt-4"
-      :checked="template && !template.subCategories"
-      :clean-function="value => $set(form, 'subCategories', null)"
+      :checked="template && !template.sub_categories"
+      :clean-function="value => $set(form, 'sub_categories', null)"
       >
       <template v-slot:mainField="{ notApplicable }">
         <validation-provider
@@ -39,11 +39,11 @@
           :rules="`requiredIfNotNA:${notApplicable}`"
           >
           <multiple-select
-            v-model="form.subCategories"
+            v-model="form.sub_categories"
             :label="$t('CriteriaTemplateForm.criterion_sub_cat')"
             :items="subCategories"
-            item-text="sponsorPreferredName"
-            item-value="termUid"
+            item-text="sponsor_preferred_name"
+            item-value="term_uid"
             :disabled="notApplicable"
             :errors="errors"
             />
@@ -79,24 +79,24 @@ export default {
   methods: {
     preparePayload (form) {
       const result = {
-        categoryUids: [],
-        subCategoryUids: []
+        category_uids: [],
+        sub_category_uids: []
       }
       if (form.categories) {
         for (const category of form.categories) {
           if (typeof category === 'string') {
-            result.categoryUids.push(category)
+            result.category_uids.push(category)
           } else {
-            result.categoryUids.push(category.termUid)
+            result.category_uids.push(category.term_uid)
           }
         }
       }
-      if (form.subCategories) {
-        for (const subcategory of form.subCategories) {
+      if (form.sub_categories) {
+        for (const subcategory of form.sub_categories) {
           if (typeof subcategory === 'string') {
-            result.subCategoryUids.push(subcategory)
+            result.sub_category_uids.push(subcategory)
           } else {
-            result.subCategoryUids.push(subcategory.termUid)
+            result.sub_category_uids.push(subcategory.term_uid)
           }
         }
       }

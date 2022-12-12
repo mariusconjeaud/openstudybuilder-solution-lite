@@ -50,22 +50,20 @@ from clinical_mdr_api.models.utils import booltostr
 class OdmItemGroup(ConceptModel):
     oid: Optional[str]
     repeating: Optional[str]
-    isReferenceData: Optional[str]
-    sasDatasetName: Optional[str]
+    is_reference_data: Optional[str]
+    sas_dataset_name: Optional[str]
     origin: Optional[str]
     purpose: Optional[str]
     comment: Optional[str]
-    descriptions: Optional[Sequence[OdmDescriptionSimpleModel]]
-    aliases: Optional[Sequence[OdmAliasSimpleModel]]
-    sdtmDomains: Optional[Sequence[SimpleCTTermAttributes]]
-    activitySubGroups: Optional[Sequence[ActivityHierarchySimpleModel]]
-    items: Optional[Sequence[OdmItemRefModel]]
-    xmlExtensionTags: Optional[Sequence[OdmXmlExtensionTagRelationModel]]
-    xmlExtensionAttributes: Optional[Sequence[OdmXmlExtensionAttributeRelationModel]]
-    xmlExtensionTagAttributes: Optional[
-        Sequence[OdmXmlExtensionTagAttributeRelationModel]
-    ]
-    possibleActions: List[str]
+    descriptions: Sequence[OdmDescriptionSimpleModel]
+    aliases: Sequence[OdmAliasSimpleModel]
+    sdtm_domains: Sequence[SimpleCTTermAttributes]
+    activity_subgroups: Sequence[ActivityHierarchySimpleModel]
+    items: Sequence[OdmItemRefModel]
+    xml_extension_tags: Sequence[OdmXmlExtensionTagRelationModel]
+    xml_extension_attributes: Sequence[OdmXmlExtensionAttributeRelationModel]
+    xml_extension_tag_attributes: Sequence[OdmXmlExtensionTagAttributeRelationModel]
+    possible_actions: List[str]
 
     @classmethod
     def from_odm_item_group_ar(
@@ -74,15 +72,15 @@ class OdmItemGroup(ConceptModel):
         find_odm_description_by_uid: Callable[[str], Optional[OdmDescriptionAR]],
         find_odm_alias_by_uid: Callable[[str], Optional[OdmAliasAR]],
         find_term_by_uid: Callable[[str], Optional[CTTermAttributesAR]],
-        find_activity_sub_group_by_uid: Callable[[str], Optional[ActivitySubGroupAR]],
+        find_activity_subgroup_by_uid: Callable[[str], Optional[ActivitySubGroupAR]],
         find_odm_item_by_uid_with_item_group_relation: Callable[
             [str, str], Optional[OdmItemRefVO]
         ],
         find_odm_xml_extension_tag_by_uid_with_odm_element_relation: Callable[
-            [str, str, str], Optional[OdmXmlExtensionTagRelationVO]
+            [str, str, RelationType], Optional[OdmXmlExtensionTagRelationVO]
         ],
         find_odm_xml_extension_attribute_by_uid_with_odm_element_relation: Callable[
-            [str, str, str, str],
+            [str, str, RelationType, bool],
             Union[
                 OdmXmlExtensionAttributeRelationVO,
                 OdmXmlExtensionAttributeTagRelationVO,
@@ -95,18 +93,18 @@ class OdmItemGroup(ConceptModel):
             oid=odm_item_group_ar.concept_vo.oid,
             name=odm_item_group_ar.concept_vo.name,
             repeating=booltostr(odm_item_group_ar.concept_vo.repeating),
-            isReferenceData=booltostr(odm_item_group_ar.concept_vo.is_reference_data),
-            sasDatasetName=odm_item_group_ar.concept_vo.sas_dataset_name,
+            is_reference_data=booltostr(odm_item_group_ar.concept_vo.is_reference_data),
+            sas_dataset_name=odm_item_group_ar.concept_vo.sas_dataset_name,
             origin=odm_item_group_ar.concept_vo.origin,
             purpose=odm_item_group_ar.concept_vo.purpose,
             comment=odm_item_group_ar.concept_vo.comment,
-            libraryName=odm_item_group_ar.library.name,
-            startDate=odm_item_group_ar.item_metadata.start_date,
-            endDate=odm_item_group_ar.item_metadata.end_date,
+            library_name=odm_item_group_ar.library.name,
+            start_date=odm_item_group_ar.item_metadata.start_date,
+            end_date=odm_item_group_ar.item_metadata.end_date,
             status=odm_item_group_ar.item_metadata.status.value,
             version=odm_item_group_ar.item_metadata.version,
-            changeDescription=odm_item_group_ar.item_metadata.change_description,
-            userInitials=odm_item_group_ar.item_metadata.user_initials,
+            change_description=odm_item_group_ar.item_metadata.change_description,
+            user_initials=odm_item_group_ar.item_metadata.user_initials,
             descriptions=sorted(
                 [
                     OdmDescriptionSimpleModel.from_odm_description_uid(
@@ -127,7 +125,7 @@ class OdmItemGroup(ConceptModel):
                 ],
                 key=lambda item: item.name,
             ),
-            sdtmDomains=sorted(
+            sdtm_domains=sorted(
                 [
                     SimpleCTTermAttributes.from_term_uid(
                         uid=sdtm_domain_uid,
@@ -135,15 +133,15 @@ class OdmItemGroup(ConceptModel):
                     )
                     for sdtm_domain_uid in odm_item_group_ar.concept_vo.sdtm_domain_uids
                 ],
-                key=lambda item: item.codeSubmissionValue,
+                key=lambda item: item.code_submission_value,
             ),
-            activitySubGroups=sorted(
+            activity_subgroups=sorted(
                 [
                     ActivityHierarchySimpleModel.from_activity_uid(
-                        uid=activity_sub_group_uid,
-                        find_activity_by_uid=find_activity_sub_group_by_uid,
+                        uid=activity_subgroup_uid,
+                        find_activity_by_uid=find_activity_subgroup_by_uid,
                     )
-                    for activity_sub_group_uid in odm_item_group_ar.concept_vo.activity_sub_group_uids
+                    for activity_subgroup_uid in odm_item_group_ar.concept_vo.activity_subgroup_uids
                 ],
                 key=lambda item: item.name,
             ),
@@ -156,9 +154,9 @@ class OdmItemGroup(ConceptModel):
                     )
                     for item_uid in odm_item_group_ar.concept_vo.item_uids
                 ],
-                key=lambda item: item.orderNumber,
+                key=lambda item: item.order_number,
             ),
-            xmlExtensionTags=sorted(
+            xml_extension_tags=sorted(
                 [
                     OdmXmlExtensionTagRelationModel.from_uid(
                         uid=xml_extension_tag_uid,
@@ -170,7 +168,7 @@ class OdmItemGroup(ConceptModel):
                 ],
                 key=lambda item: item.name,
             ),
-            xmlExtensionAttributes=sorted(
+            xml_extension_attributes=sorted(
                 [
                     OdmXmlExtensionAttributeRelationModel.from_uid(
                         uid=xml_extension_attribute_uid,
@@ -183,7 +181,7 @@ class OdmItemGroup(ConceptModel):
                 ],
                 key=lambda item: item.name,
             ),
-            xmlExtensionTagAttributes=sorted(
+            xml_extension_tag_attributes=sorted(
                 [
                     OdmXmlExtensionTagAttributeRelationModel.from_uid(
                         uid=xml_extension_tag_attribute_uid,
@@ -195,7 +193,7 @@ class OdmItemGroup(ConceptModel):
                 ],
                 key=lambda item: item.name,
             ),
-            possibleActions=sorted(
+            possible_actions=sorted(
                 [_.value for _ in odm_item_group_ar.get_possible_actions()]
             ),
         )
@@ -221,19 +219,20 @@ class OdmItemGroupRefModel(BaseModel):
                     uid=uid,
                     oid=odm_item_group_ref_vo.oid,
                     name=odm_item_group_ref_vo.name,
-                    orderNumber=odm_item_group_ref_vo.order_number,
+                    order_number=odm_item_group_ref_vo.order_number,
                     mandatory=odm_item_group_ref_vo.mandatory,
                     locked=odm_item_group_ref_vo.locked,
-                    collectionExceptionConditionOid=odm_item_group_ref_vo.collection_exception_condition_oid,
+                    collection_exception_condition_oid=odm_item_group_ref_vo.collection_exception_condition_oid,
                 )
             else:
                 odm_item_group_ref_model = cls(
                     uid=uid,
                     oid=None,
                     name=None,
-                    orderNumber=None,
+                    order_number=None,
                     mandatory=None,
-                    collectionExceptionConditionOid=None,
+                    locked=None,
+                    collection_exception_condition_oid=None,
                 )
         else:
             odm_item_group_ref_model = None
@@ -242,66 +241,40 @@ class OdmItemGroupRefModel(BaseModel):
     uid: str = Field(..., title="uid", description="")
     oid: Optional[str] = Field(None, title="oid", description="")
     name: Optional[str] = Field(None, title="name", description="")
-    orderNumber: Optional[int] = Field(None, title="orderNumber", description="")
+    order_number: Optional[int] = Field(None, title="order_number", description="")
     mandatory: Optional[str] = Field(None, title="mandatory", description="")
     locked: Optional[str] = Field(None, title="locked", description="")
-    collectionExceptionConditionOid: Optional[str] = Field(
-        None, title="collectionExceptionConditionOid", description=""
+    collection_exception_condition_oid: Optional[str] = Field(
+        None, title="collection_exception_condition_oid", description=""
     )
 
 
 class OdmItemGroupPostInput(ConceptPostInput):
     oid: Optional[str]
     repeating: str
-    isReferenceData: Optional[str]
-    sasDatasetName: Optional[str]
-    origin: Optional[str]
-    purpose: Optional[str]
-    comment: Optional[str]
-    descriptionUids: Sequence[str]
-    aliasUids: Sequence[str]
-    sdtmDomainUids: Sequence[str]
-
-
-class OdmItemGroupWithRelationsPostInput(ConceptPostInput):
-    oid: Optional[str]
-    repeating: str
-    isReferenceData: Optional[str]
-    sasDatasetName: Optional[str]
+    is_reference_data: Optional[str]
+    sas_dataset_name: Optional[str]
     origin: Optional[str]
     purpose: Optional[str]
     comment: Optional[str]
     descriptions: Sequence[Union[OdmDescriptionPostInput, str]]
-    aliasUids: Sequence[str]
-    sdtmDomainUids: Sequence[str]
+    alias_uids: Sequence[str]
+    sdtm_domain_uids: Sequence[str]
 
 
 class OdmItemGroupPatchInput(ConceptPatchInput):
     oid: Optional[str]
     repeating: Optional[str]
-    isReferenceData: Optional[str]
-    sasDatasetName: Optional[str]
-    origin: Optional[str]
-    purpose: Optional[str]
-    comment: Optional[str]
-    descriptionUids: Sequence[str]
-    aliasUids: Sequence[str]
-    sdtmDomainUids: Sequence[str]
-
-
-class OdmItemGroupWithRelationsPatchInput(ConceptPatchInput):
-    oid: Optional[str]
-    repeating: Optional[str]
-    isReferenceData: Optional[str]
-    sasDatasetName: Optional[str]
+    is_reference_data: Optional[str]
+    sas_dataset_name: Optional[str]
     origin: Optional[str]
     purpose: Optional[str]
     comment: Optional[str]
     descriptions: Sequence[
-        Union[OdmDescriptionBatchPatchInput, OdmDescriptionPostInput]
+        Union[OdmDescriptionBatchPatchInput, OdmDescriptionPostInput, str]
     ]
-    aliasUids: Sequence[str]
-    sdtmDomainUids: Sequence[str]
+    alias_uids: Sequence[str]
+    sdtm_domain_uids: Sequence[str]
 
 
 class OdmItemGroupActivitySubGroupPostInput(BaseModel):
@@ -310,17 +283,17 @@ class OdmItemGroupActivitySubGroupPostInput(BaseModel):
 
 class OdmItemGroupItemPostInput(BaseModel):
     uid: str
-    orderNumber: int
+    order_number: int
     mandatory: str
-    dataEntryRequired: str
-    sdv: str
+    data_entry_required: str
+    sdv: str = "No"
     locked: str = "No"
-    keySequence: str
-    methodOid: str
-    imputationMethodOid: str
+    key_sequence: str
+    method_oid: Optional[str]
+    imputation_method_oid: str
     role: str
-    roleCodelistOid: str
-    collectionExceptionConditionOid: Optional[str]
+    role_codelist_oid: str
+    collection_exception_condition_oid: Optional[str]
 
 
 class OdmItemGroupVersion(OdmItemGroup):
@@ -332,6 +305,6 @@ class OdmItemGroupVersion(OdmItemGroup):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the objective (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )

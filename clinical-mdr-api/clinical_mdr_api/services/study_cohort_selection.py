@@ -266,13 +266,13 @@ class StudyCohortSelectionService(StudySelectionMixin):
                     study_uid=study_uid,
                     user_initials=self.author,
                     name=selection_create_input.name,
-                    short_name=selection_create_input.shortName,
+                    short_name=selection_create_input.short_name,
                     code=selection_create_input.code,
                     description=selection_create_input.description,
-                    colour_code=selection_create_input.colourCode,
-                    number_of_subjects=selection_create_input.numberOfSubjects,
-                    branch_arm_root_uids=selection_create_input.branchArmUids,
-                    arm_root_uids=selection_create_input.armUids,
+                    colour_code=selection_create_input.colour_code,
+                    number_of_subjects=selection_create_input.number_of_subjects,
+                    branch_arm_root_uids=selection_create_input.branch_arm_uids,
+                    arm_root_uids=selection_create_input.arm_uids,
                     generate_uid_callback=repos.study_selection_cohort_repository.generate_uid,
                 )
                 # add VO to aggregate
@@ -323,15 +323,15 @@ class StudyCohortSelectionService(StudySelectionMixin):
     ) -> StudySelectionCohortVO:
         # transform current to input model
         transformed_current = models.StudySelectionCohortEditInput(
-            cohortUid=current_study_cohort.study_selection_uid,
+            cohort_uid=current_study_cohort.study_selection_uid,
             name=current_study_cohort.name,
-            shortName=current_study_cohort.short_name,
+            short_name=current_study_cohort.short_name,
             code=current_study_cohort.code,
             description=current_study_cohort.description,
-            colourCode=current_study_cohort.colour_code,
-            numberOfSubjects=current_study_cohort.number_of_subjects,
-            branchArmUids=current_study_cohort.branch_arm_root_uids,
-            armUids=current_study_cohort.arm_root_uids,
+            colour_code=current_study_cohort.colour_code,
+            number_of_subjects=current_study_cohort.number_of_subjects,
+            branch_arm_uids=current_study_cohort.branch_arm_root_uids,
+            arm_uids=current_study_cohort.arm_root_uids,
         )
 
         # fill the missing from the inputs
@@ -343,13 +343,13 @@ class StudyCohortSelectionService(StudySelectionMixin):
         return StudySelectionCohortVO.from_input_values(
             study_uid=current_study_cohort.study_uid,
             name=request_study_cohort.name,
-            short_name=request_study_cohort.shortName,
+            short_name=request_study_cohort.short_name,
             code=request_study_cohort.code,
             description=request_study_cohort.description,
-            colour_code=request_study_cohort.colourCode,
-            number_of_subjects=request_study_cohort.numberOfSubjects,
-            branch_arm_root_uids=request_study_cohort.branchArmUids,
-            arm_root_uids=request_study_cohort.armUids,
+            colour_code=request_study_cohort.colour_code,
+            number_of_subjects=request_study_cohort.number_of_subjects,
+            branch_arm_root_uids=request_study_cohort.branch_arm_uids,
+            arm_root_uids=request_study_cohort.arm_uids,
             study_selection_uid=current_study_cohort.study_selection_uid,
             user_initials=self.author,
         )

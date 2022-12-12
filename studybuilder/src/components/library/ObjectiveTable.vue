@@ -4,7 +4,7 @@
     :headers="headers"
     :items="objectives"
     item-key="uid"
-    sort-by="startDate"
+    sort-by="start_date"
     export-object-label="Objectives"
     export-data-url="/objectives"
     sort-desc
@@ -16,11 +16,11 @@
     <template v-slot:item.name="{ item }">
       <n-n-parameter-highlighter :name="item.name" :show-prefix-and-postfix="false" />
     </template>
-    <template v-slot:item.objectiveTemplate.name="{ item }">
-      <n-n-parameter-highlighter :name="item.objectiveTemplate.name" default-color="orange" />
+    <template v-slot:item.objective_template.name="{ item }">
+      <n-n-parameter-highlighter :name="item.objective_template.name" default-color="orange" />
     </template>
-    <template v-slot:item.studyCount="{ item }">
-      <v-chip small color="primary">{{ item.studyCount }}</v-chip>
+    <template v-slot:item.study_count="{ item }">
+      <v-chip small color="primary">{{ item.study_count }}</v-chip>
     </template>
     <template v-slot:item.actions="{ item }">
       <actions-menu :actions="actions" :item="item" />
@@ -84,9 +84,9 @@ export default {
           width: '5%'
         },
         { text: this.$t('_global.library'), value: 'library.name' },
-        { text: this.$t('_global.template'), value: 'objectiveTemplate.name', width: '30%' },
+        { text: this.$t('_global.template'), value: 'objective_template.name', width: '30%' },
         { text: this.$t('_global.objective'), value: 'name' },
-        { text: this.$t('ObjectiveTable.studies_count'), value: 'studyCount' }
+        { text: this.$t('ObjectiveTable.studies_count'), value: 'study_count' }
       ],
       showStudies: false,
       showOHistory: false,

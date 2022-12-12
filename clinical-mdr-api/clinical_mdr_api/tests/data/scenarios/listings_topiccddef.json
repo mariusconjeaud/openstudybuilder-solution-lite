@@ -40,7 +40,7 @@
           ],
           "total": 0,
           "page": 1,
-          "size": 0
+          "size": 10
         }
     }
   },
@@ -50,7 +50,7 @@
         "headers": {},
         "method": "GET",
         "request": {},
-        "url": "/listings/libraries/all/gcmd/topic-cd-def?atSpecifiedDateTime=2021-10-02T10%3A00%3A00Z"
+        "url": "/listings/libraries/all/gcmd/topic-cd-def?at_specified_date_time=2021-10-02T10%3A00%3A00Z"
     },
     "response": {
         "code": 200,
@@ -74,7 +74,7 @@
           ],
           "total": 0,
           "page": 1,
-          "size": 0
+          "size": 10
         }
     }
   }

@@ -52,7 +52,7 @@ class TimeframeTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "timeframes.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time"]
+        return ["start_date", "end_date", "uid", "time"]
 
 
 class TimeframeNegativeTest(api.APITest):
@@ -73,7 +73,7 @@ class TimeframeNegativeTest(api.APITest):
         self.library = library_service.create(name="Test library", is_editable=True)
         ttdata = template_data.copy()
         ttdata["name"] = "Test [Indication]"
-        ttdata["editableInstance"] = False
+        ttdata["editable_instance"] = False
         timeframe_template = tt_models.TimeframeTemplateCreateInput(**ttdata)
         self.tt = _service.create(timeframe_template)
         tt_uid = (
@@ -107,7 +107,7 @@ class TimeframeNegativeTest(api.APITest):
         check_timeframes_empty()
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "uid"]
+        return ["start_date", "end_date", "time", "uid"]
 
 
 class TimeframeVersioningTest(api.APITest):
@@ -137,4 +137,4 @@ class TimeframeVersioningTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "timeframe_versioning.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "path", "uid"]
+        return ["start_date", "end_date", "time", "path", "uid"]

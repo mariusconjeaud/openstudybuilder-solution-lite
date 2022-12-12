@@ -57,13 +57,13 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 BASE_SCENARIO_PATH = "clinical_mdr_api/tests/data/scenarios/"
 initialize_ct_data_map = {
-    "TypeOfTreatment": ["CTTerm_000001"],
-    "RouteOfAdministration": ["CTTerm_000002"],
-    "DosageForm": ["CTTerm_000003"],
-    "DispensedIn": ["CTTerm_000004"],
-    "Device": ["CTTerm_000005"],
-    "Formulation": ["CTTerm_000006"],
-    "ReasonForMissingNullValue": ["CTTerm_000007"],
+    "TypeOfTreatment": [("CTTerm_000001", "CTTerm_000001")],
+    "RouteOfAdministration": [("CTTerm_000002", "CTTerm_000002")],
+    "DosageForm": [("CTTerm_000003", "CTTerm_000003")],
+    "DispensedIn": [("CTTerm_000004", "CTTerm_000004")],
+    "Device": [("CTTerm_000005", "CTTerm_000005")],
+    "Formulation": [("CTTerm_000006", "CTTerm_000006")],
+    "ReasonForMissingNullValue": [("CTTerm_000007", "CTTerm_000007")],
 }
 
 
@@ -85,21 +85,21 @@ class StudyObjectivesTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "uid", "userInitials"]
+        return ["start_date", "end_date", "time", "uid", "user_initials"]
 
     def preprocess_expected_response(self, resp_item, actual_response, url):
         """
         Preprocessing is needed as the order returned for the full audit trail of the study selection is depending on the uuid generated,
         as these are random we cannot know up front which is supposed to be listed first.
         """
-        if "/study/study_root/study-objectives/audit-trail/" == url:
+        if "/studies/study_root/study-objectives/audit-trail/" == url:
             actual_responses_items = []
             for item in actual_response:
-                actual_responses_items.append(item["studyObjectiveUid"])
+                actual_responses_items.append(item["study_objective_uid"])
             uids = {}
             for item in set(actual_responses_items):
                 uids[item] = actual_responses_items.count(item)
-            first_uid = actual_response[0]["studyObjectiveUid"]
+            first_uid = actual_response[0]["study_objective_uid"]
             if uids[first_uid] == 2:
                 return resp_item
             resp_item["result"] = resp_item["result"][3:5].extend(
@@ -125,11 +125,11 @@ class StudyObjectivesNegativeTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
-            "userInitials",
+            "start_date",
+            "end_date",
+            "user_initials",
             "time",
-            "studyEndpointUid",
+            "study_endpoint_uid",
             "uid",
         ]
 
@@ -156,13 +156,13 @@ class StudyEndpointsTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
-            "modifiedDate",
+            "start_date",
+            "end_date",
+            "modified_date",
             "time",
             "uid",
-            "userInitials",
-            "codelistUid",
+            "user_initials",
+            "codelist_uid",
         ]
 
 
@@ -181,33 +181,7 @@ class StudyEndpointsNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "uid"]
-
-
-def initialize_ct_from_data_map():
-    for _, value in initialize_ct_data_map.items():
-        if isinstance(value, list):
-            for val in value:
-                db.cypher_query(
-                    """MATCH (l:Library {name:"CDISC", is_editable:false}), (codelist:CTCodelistRoot {uid:"CTCodelist_000001"})
-                CREATE (l)-[:CONTAINS_TERM]->(a:CTTermRoot {uid: $val})-[:HAS_NAME_ROOT]->(term_ver_root:CTTermNameRoot{uid: $val})
-                -[:LATEST]->(term_ver_value:CTTermNameValue {name_sentence_case: $val, name: $val})
-                CREATE (term_ver_root)-[:LATEST_FINAL{version:1.0,status:"Final",change_description:"test",
-                user_initials:"test",start_date:datetime()}]->(term_ver_value)
-                CREATE (a)<-[:HAS_TERM]-(codelist)
-                """,
-                    {"val": val},
-                )
-        else:
-            db.cypher_query(
-                """MATCH (l:Library {name:"CDISC", is_editable:false}), (codelist:CTCodelistRoot {uid:"CTCodelist_000001"})
-                CREATE (l)-[:CONTAINS_TERM]->(a:CTTermRoot {uid: $val})-[:HAS_NAME_ROOT]->(term_ver_root:CTTermNameRoot{uid: $val})
-                -[:LATEST]->(term_ver_value:CTTermNameValue {name_sentence_case: $val, name: $val})
-                CREATE (term_ver_root)-[:LATEST_FINAL{version:1.0,status:"Final",change_description:"test",
-                user_initials:"test",start_date:datetime()}]->(term_ver_value)
-                CREATE (a)<-[:HAS_TERM]-(codelist)""",
-                {"val": value},
-            )
+        return ["start_date", "end_date", "time", "uid"]
 
 
 class StudyCompoundsTest(api.APITest):
@@ -218,7 +192,11 @@ class StudyCompoundsTest(api.APITest):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_ACTIVITY_INSTANCES_CT_INIT)
         db.cypher_query(STARTUP_NUMERIC_VALUES_WITH_UNITS)
-        initialize_ct_from_data_map()
+        TestUtils.create_library(name="UCUM", is_editable=True)
+        TestUtils.create_ct_catalogue()
+        TestUtils.create_study_ct_data_map(
+            codelist_uid="CTCodelist_000001", ct_data_map=initialize_ct_data_map
+        )
         db.cypher_query(STARTUP_STUDY_COMPOUND_CYPHER)
         from clinical_mdr_api import main
 
@@ -226,16 +204,16 @@ class StudyCompoundsTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
-            "modifiedDate",
+            "start_date",
+            "end_date",
+            "modified_date",
             "time",
             "uid",
-            "nncId",
+            "nnc_id",
             "UNII",
             "PClass",
-            "changeDescription",
-            "userInitials",
+            "change_description",
+            "user_initials",
         ]
 
 
@@ -246,7 +224,11 @@ class StudyCompoundsNegativeTest(api.APITest):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_ACTIVITY_INSTANCES_CT_INIT)
         db.cypher_query(STARTUP_NUMERIC_VALUES_WITH_UNITS)
-        initialize_ct_from_data_map()
+        TestUtils.create_library(name="UCUM", is_editable=True)
+        TestUtils.create_ct_catalogue()
+        TestUtils.create_study_ct_data_map(
+            codelist_uid="CTCodelist_000001", ct_data_map=initialize_ct_data_map
+        )
         db.cypher_query(STARTUP_STUDY_COMPOUND_CYPHER)
         from clinical_mdr_api import main
 
@@ -257,7 +239,7 @@ class StudyCompoundsNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "modifiedDate", "time", "uid"]
+        return ["start_date", "end_date", "modified_date", "time", "uid"]
 
 
 class StudyActivityTest(api.APITest):
@@ -279,7 +261,7 @@ class StudyActivityTest(api.APITest):
         db.cypher_query(STARTUP_STUDY_ACTIVITY_CYPHER)
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "uid", "userInitials"]
+        return ["start_date", "end_date", "time", "uid", "user_initials"]
 
 
 class StudyArmsTest(api.APITest):
@@ -297,13 +279,13 @@ class StudyArmsTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
-            "modifiedDate",
+            "start_date",
+            "end_date",
+            "modified_date",
             "time",
             "uid",
-            "userInitials",
-            "codelistUid",
+            "user_initials",
+            "codelist_uid",
         ]
 
 
@@ -372,7 +354,7 @@ class StudyElementsTest(api.APITest):
             library=library_name,
         )
         hour_term = create_ct_term(
-            codelist=codelist.codelistUid,
+            codelist=codelist.codelist_uid,
             name="hours",
             uid="hours001",
             order=1,
@@ -386,7 +368,7 @@ class StudyElementsTest(api.APITest):
             library=library_name,
         )
         study_time_subset = create_ct_term(
-            codelist=subset_codelist.codelistUid,
+            codelist=subset_codelist.codelist_uid,
             name="Study Time",
             uid="StudyTimeSuid",
             order=1,
@@ -394,7 +376,7 @@ class StudyElementsTest(api.APITest):
             library_name=library_name,
         )
         week_term = create_ct_term(
-            codelist=codelist.codelistUid,
+            codelist=codelist.codelist_uid,
             name="weeks",
             uid="weeks001",
             order=1,
@@ -403,28 +385,28 @@ class StudyElementsTest(api.APITest):
         )
         TestUtils.create_unit_definition(
             name="hours",
-            libraryName="Sponsor",
-            ctUnits=[hour_term.uid],
-            unitSubsets=[study_time_subset.uid],
+            library_name="Sponsor",
+            ct_units=[hour_term.uid],
+            unit_subsets=[study_time_subset.uid],
         )
         TestUtils.create_unit_definition(
             name="weeks",
-            libraryName="Sponsor",
-            ctUnits=[week_term.uid],
-            unitSubsets=[study_time_subset.uid],
+            library_name="Sponsor",
+            ct_units=[week_term.uid],
+            unit_subsets=[study_time_subset.uid],
         )
 
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "study_selection_elements.json")]
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
-            "modifiedDate",
+            "start_date",
+            "end_date",
+            "modified_date",
             "time",
             "uid",
-            "userInitials",
-            "codelistUid",
+            "user_initials",
+            "codelist_uid",
         ]
 
 
@@ -447,7 +429,7 @@ class StudyBranchArmsTest(api.APITest):
             "Element Type", "CTCodelist_ElementType", catalogue_name, library_name
         )
         element_type_term = create_ct_term(
-            element_type_codelist.codelistUid,
+            element_type_codelist.codelist_uid,
             "Element Type",
             "ElementType_0001",
             1,
@@ -455,7 +437,7 @@ class StudyBranchArmsTest(api.APITest):
             library_name,
         )
         element_type_term_2 = create_ct_term(
-            element_type_codelist.codelistUid,
+            element_type_codelist.codelist_uid,
             "Element Type",
             "ElementType_0002",
             2,
@@ -470,13 +452,13 @@ class StudyBranchArmsTest(api.APITest):
         db.cypher_query(STARTUP_STUDY_ARM_CYPHER)
         db.cypher_query(STARTUP_STUDY_BRANCH_ARM_CYPHER)
         self.design_cell = create_study_design_cell(
-            study_element_uid=self.study_elements[0].elementUid,
+            study_element_uid=self.study_elements[0].element_uid,
             study_epoch_uid=self.study_epoch.uid,
             study_arm_uid="StudyArm_000003",
             study_uid=self.study.uid,
         )
         self.design_cell = create_study_design_cell(
-            study_element_uid=self.study_elements[0].elementUid,
+            study_element_uid=self.study_elements[0].element_uid,
             study_epoch_uid=self.study_epoch2.uid,
             study_arm_uid="StudyArm_000003",
             study_uid=self.study.uid,
@@ -491,13 +473,13 @@ class StudyBranchArmsTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
-            "modifiedDate",
+            "start_date",
+            "end_date",
+            "modified_date",
             "time",
             "uid",
-            "userInitials",
-            "codelistUid",
+            "user_initials",
+            "codelist_uid",
         ]
 
 
@@ -519,13 +501,13 @@ class StudyBranchArmsNegativeTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
-            "modifiedDate",
+            "start_date",
+            "end_date",
+            "modified_date",
             "time",
             "uid",
-            "userInitials",
-            "codelistUid",
+            "user_initials",
+            "codelist_uid",
         ]
 
 
@@ -537,29 +519,29 @@ class StudyCohortsTest(api.APITest):
         db.cypher_query(STARTUP_CT_TERM_NAME_CYPHER)
         db.cypher_query(STARTUP_STUDY_ARM_CYPHER)
         db.cypher_query(STARTUP_STUDY_BRANCH_ARM_CYPHER)
-        self.studyUid = "study_root"
-        self.armUid1 = "StudyArm_000001"
+        self.study_uid = "study_root"
+        self.arm_uid1 = "StudyArm_000001"
         self.branch_arm = create_study_branch_arm(
-            study_uid=self.studyUid,
+            study_uid=self.study_uid,
             name="Branch_Arm_Name_1",
-            shortName="Branch_Arm_Short_Name_1",
+            short_name="Branch_Arm_Short_Name_1",
             code="Branch_Arm_code_1",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Branch_Arm_randomizationGroup",
-            numberOfSubjects=100,
-            armUid=self.armUid1,
+            colour_code="colour...",
+            randomization_group="Branch_Arm_randomizationGroup",
+            number_of_subjects=100,
+            arm_uid=self.arm_uid1,
         )
         self.branch_arm = create_study_branch_arm(
-            study_uid=self.studyUid,
+            study_uid=self.study_uid,
             name="Branch_Arm_Name_2",
-            shortName="Branch_Arm_Short_Name_2",
+            short_name="Branch_Arm_Short_Name_2",
             code="Branch_Arm_code_2",
             description="desc...",
-            colourCode="colour...2",
-            randomizationGroup="Branch_Arm_randomizationGroup2",
-            numberOfSubjects=20,
-            armUid=self.armUid1,
+            colour_code="colour...2",
+            randomization_group="Branch_Arm_randomizationGroup2",
+            number_of_subjects=20,
+            arm_uid=self.arm_uid1,
         )
         from clinical_mdr_api import main
 
@@ -569,13 +551,13 @@ class StudyCohortsTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
-            "modifiedDate",
+            "start_date",
+            "end_date",
+            "modified_date",
             "time",
             "uid",
-            "userInitials",
-            "codelistUid",
+            "user_initials",
+            "codelist_uid",
         ]
 
 
@@ -588,41 +570,41 @@ class StudyCohortsNegativeTest(api.APITest):
         db.cypher_query(STARTUP_STUDY_ARM_CYPHER)
         db.cypher_query(STARTUP_STUDY_BRANCH_ARM_CYPHER)
 
-        self.studyUid = "study_root"
-        self.armUid1 = "StudyArm_000001"
+        self.study_uid = "study_root"
+        self.arm_uid1 = "StudyArm_000001"
 
         self.cohorts = [
             create_study_cohort(
-                study_uid=self.studyUid,
+                study_uid=self.study_uid,
                 name="Cohort_Name_1",
-                shortName="Cohort_Short_Name_1",
+                short_name="Cohort_Short_Name_1",
                 code="Cohort_code_1",
                 description="desc...",
-                colourCode="desc...",
-                numberOfSubjects=100,
-                armUids=[self.armUid1],
+                colour_code="desc...",
+                number_of_subjects=100,
+                arm_uids=[self.arm_uid1],
             ),
             create_study_cohort(
-                study_uid=self.studyUid,
+                study_uid=self.study_uid,
                 name="Cohort_Name_2",
-                shortName="Cohort_Short_Name_2",
+                short_name="Cohort_Short_Name_2",
                 code="Cohort_code_2",
                 description="desc...",
-                colourCode="desc...",
-                numberOfSubjects=100,
-                armUids=[self.armUid1],
+                colour_code="desc...",
+                number_of_subjects=100,
+                arm_uids=[self.arm_uid1],
             ),
         ]
         self.branch_arm = create_study_branch_arm(
-            study_uid=self.studyUid,
+            study_uid=self.study_uid,
             name="Branch_Arm_Name_1",
-            shortName="Branch_Arm_Short_Name_1",
+            short_name="Branch_Arm_Short_Name_1",
             code="Branch_Arm_code_1",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Branch_Arm_randomizationGroup",
-            numberOfSubjects=100,
-            armUid=self.armUid1,
+            colour_code="colour...",
+            randomization_group="Branch_Arm_randomizationGroup",
+            number_of_subjects=100,
+            arm_uid=self.arm_uid1,
         )
         from clinical_mdr_api import main
 
@@ -634,13 +616,13 @@ class StudyCohortsNegativeTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
-            "modifiedDate",
+            "start_date",
+            "end_date",
+            "modified_date",
             "time",
             "uid",
-            "userInitials",
-            "codelistUid",
+            "user_initials",
+            "codelist_uid",
         ]
 
 
@@ -666,7 +648,7 @@ class StudyDesignCellsTest(api.APITest):
             "Element Type", "CTCodelist_ElementType", catalogue_name, library_name
         )
         element_type_term = create_ct_term(
-            element_type_codelist.codelistUid,
+            element_type_codelist.codelist_uid,
             "Element Type",
             "ElementType_0001",
             1,
@@ -674,7 +656,7 @@ class StudyDesignCellsTest(api.APITest):
             library_name,
         )
         element_type_term_2 = create_ct_term(
-            element_type_codelist.codelistUid,
+            element_type_codelist.codelist_uid,
             "Element Type",
             "ElementType_0002",
             2,
@@ -699,14 +681,14 @@ class StudyDesignCellsTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
-            "modifiedDate",
+            "start_date",
+            "end_date",
+            "modified_date",
             "modified",
             "time",
             "uid",
-            "userInitials",
-            "codelistUid",
+            "user_initials",
+            "codelist_uid",
         ]
 
 
@@ -729,7 +711,7 @@ class StudyDesignJointTest(api.APITest):
             "Element Type", "CTCodelist_ElementType", catalogue_name, library_name
         )
         element_type_term = create_ct_term(
-            element_type_codelist.codelistUid,
+            element_type_codelist.codelist_uid,
             "Element Type",
             "ElementType_0001",
             1,
@@ -737,7 +719,7 @@ class StudyDesignJointTest(api.APITest):
             library_name,
         )
         element_type_term_2 = create_ct_term(
-            element_type_codelist.codelistUid,
+            element_type_codelist.codelist_uid,
             "Element Type",
             "ElementType_0002",
             2,
@@ -755,8 +737,8 @@ class StudyDesignJointTest(api.APITest):
             catalogue=catalogue_name,
             library=library_name,
         )
-        armType = create_ct_term(
-            codelist=codelist.codelistUid,
+        arm_type = create_ct_term(
+            codelist=codelist.codelist_uid,
             name="Arm Type",
             uid="ArmType_0001",
             order=1,
@@ -767,64 +749,64 @@ class StudyDesignJointTest(api.APITest):
         self.arm = create_study_arm(
             study_uid=self.study.uid,
             name="Arm_Name_1",
-            shortName="Arm_Short_Name_1",
+            short_name="Arm_Short_Name_1",
             code="Arm_code_1",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Arm_randomizationGroup",
-            numberOfSubjects=100,
-            armTypeUid=armType.uid,
+            colour_code="colour...",
+            randomization_group="Arm_randomizationGroup",
+            number_of_subjects=100,
+            arm_type_uid=arm_type.uid,
         )
         self.arm = create_study_arm(
             study_uid=self.study.uid,
             name="Arm_Name_2",
-            shortName="Arm_Short_Name_2",
+            short_name="Arm_Short_Name_2",
             code="Arm_code_2",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Arm_randomizationGroup2",
-            numberOfSubjects=100,
-            armTypeUid=armType.uid,
+            colour_code="colour...",
+            randomization_group="Arm_randomizationGroup2",
+            number_of_subjects=100,
+            arm_type_uid=arm_type.uid,
         )
         self.arm = create_study_arm(
             study_uid=self.study.uid,
             name="Arm_Name_3",
-            shortName="Arm_Short_Name_3",
+            short_name="Arm_Short_Name_3",
             code="Arm_code_3",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Arm_randomizationGroup3",
-            numberOfSubjects=100,
-            armTypeUid=armType.uid,
+            colour_code="colour...",
+            randomization_group="Arm_randomizationGroup3",
+            number_of_subjects=100,
+            arm_type_uid=arm_type.uid,
         )
 
         self.arm = create_study_arm(
             study_uid=self.study.uid,
             name="Arm_Name_9",
-            shortName="Arm_Short_Name_9",
+            short_name="Arm_Short_Name_9",
             code="Arm_code_9",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Arm_randomizationGroup9",
-            numberOfSubjects=100,
-            armTypeUid=armType.uid,
+            colour_code="colour...",
+            randomization_group="Arm_randomizationGroup9",
+            number_of_subjects=100,
+            arm_type_uid=arm_type.uid,
         )
 
         self.design_cell = create_study_design_cell(
-            study_element_uid=self.study_elements[0].elementUid,
+            study_element_uid=self.study_elements[0].element_uid,
             study_epoch_uid=self.study_epoch.uid,
             study_arm_uid="StudyArm_000003",
             study_uid=self.study.uid,
         )
         self.design_cell2 = create_study_design_cell(
-            study_element_uid=self.study_elements[0].elementUid,
+            study_element_uid=self.study_elements[0].element_uid,
             study_epoch_uid=self.study_epoch2.uid,
             study_arm_uid="StudyArm_000003",
             study_uid=self.study.uid,
         )
 
         self.design_cell2 = create_study_design_cell(
-            study_element_uid=self.study_elements[1].elementUid,
+            study_element_uid=self.study_elements[1].element_uid,
             study_epoch_uid=self.study_epoch2.uid,
             study_arm_uid="StudyArm_000001",
             study_uid=self.study.uid,
@@ -833,20 +815,20 @@ class StudyDesignJointTest(api.APITest):
         self.branch_arm = create_study_branch_arm(
             study_uid=self.study.uid,
             name="Branch_Arm_Name_1",
-            shortName="Branch_Arm_Short_Name_1",
+            short_name="Branch_Arm_Short_Name_1",
             code="Branch_Arm_code_1",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Branch_Arm_randomizationGroup",
-            numberOfSubjects=100,
-            armUid="StudyArm_000003",
+            colour_code="colour...",
+            randomization_group="Branch_Arm_randomizationGroup",
+            number_of_subjects=100,
+            arm_uid="StudyArm_000003",
         )
         self.branch_arm = patch_study_branch_arm(
-            branch_arm_uid=self.branch_arm.branchArmUid, study_uid=self.study.uid
+            branch_arm_uid=self.branch_arm.branch_arm_uid, study_uid=self.study.uid
         )
 
         self.design_cell3 = create_study_design_cell(
-            study_element_uid=self.study_elements[0].elementUid,
+            study_element_uid=self.study_elements[0].element_uid,
             study_epoch_uid=self.study_epoch2.uid,
             study_arm_uid="StudyArm_000005",
             study_uid=self.study.uid,
@@ -855,12 +837,12 @@ class StudyDesignJointTest(api.APITest):
         self.cohort = create_study_cohort(
             study_uid=self.study.uid,
             name="Cohort_Name_1",
-            shortName="Cohort_Short_Name_1",
+            short_name="Cohort_Short_Name_1",
             code="Cohort_code_1",
             description="desc...",
-            colourCode="desc...",
-            numberOfSubjects=100,
-            armUids=["StudyArm_000001"],
+            colour_code="desc...",
+            number_of_subjects=100,
+            arm_uids=["StudyArm_000001"],
         )
         # edit an epoch to track if the relationships have been updated
         epoch_service = StudyEpochService()
@@ -868,10 +850,10 @@ class StudyDesignJointTest(api.APITest):
         start_rule = "New start rule"
         end_rule = "New end rule"
         edit_input = StudyEpochEditInput(
-            studyUid=epoch.studyUid,
-            startRule=start_rule,
-            endRule=end_rule,
-            changeDescription="rules change",
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
         )
         self.study_epoch3 = epoch_service.edit(
             study_epoch_uid=epoch.uid,
@@ -886,12 +868,12 @@ class StudyDesignJointTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
-            "modifiedDate",
+            "start_date",
+            "end_date",
+            "modified_date",
             "modified",
             "time",
             "uid",
-            "userInitials",
-            "codelistUid",
+            "user_initials",
+            "codelist_uid",
         ]

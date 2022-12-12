@@ -87,7 +87,7 @@ export default {
   mounted () {
     terms.getByCodelist('criteriaTypes').then(resp => {
       this.types = resp.data.items
-      this.typeUid = this.types.find(item => item.sponsorPreferredName.toLowerCase().startsWith(this.type)).termUid
+      this.typeUid = this.types.find(item => item.sponsor_preferred_name.toLowerCase().startsWith(this.type)).termUid
     })
   }
 }

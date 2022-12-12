@@ -4,10 +4,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "non existent library",
+                "library_name": "non existent library",
                 "name": "Test objective",
-                "objectiveTemplateUid": "{otuid}",
-                "parameterValues": []
+                "objective_template_uid": "{otuid}",
+                "parameter_values": []
             },
             "url": "/objectives"
         },
@@ -31,10 +31,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
+                "library_name": "Test library",
                 "name": "Test objective",
-                "objectiveTemplateUid": "wrong-uid",
-                "parameterValues": []
+                "objective_template_uid": "wrong-uid",
+                "parameter_values": []
             },
             "url": "/objectives"
         },
@@ -58,10 +58,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
+                "library_name": "Test library",
                 "name": "Test objective",
-                "objectiveTemplateUid": "{otuidna}",
-                "parameterValues": []
+                "objective_template_uid": "{otuidna}",
+                "parameter_values": []
             },
             "url": "/objectives"
         },
@@ -86,11 +86,11 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
+                "library_name": "Test library",
                 "name": "Test objective",
-                "objectiveTemplateUid": "{otuid}",
-                "nameOverride": "Name not approved - edited instance name",
-                "parameterValues": []
+                "objective_template_uid": "{otuid}",
+                "name_override": "Name not approved - edited instance name",
+                "parameter_values": []
             },
             "url": "/objectives"
         },

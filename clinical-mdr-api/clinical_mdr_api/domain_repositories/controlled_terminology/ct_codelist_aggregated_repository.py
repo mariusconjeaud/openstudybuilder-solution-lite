@@ -170,9 +170,7 @@ class CTCodelistAggregatedRepository:
         )
 
         query.parameters.update(filter_query_parameters)
-        result_array, attributes_names = db.cypher_query(
-            query=query.full_query, params=query.parameters
-        )
+        result_array, attributes_names = query.execute()
 
         codelists_ars = []
         for codelist in result_array:
@@ -252,13 +250,13 @@ class CTCodelistAggregatedRepository:
             format_filter_sort_keys=format_codelist_filter_sort_keys,
         )
 
-        header_query = query.build_header_query(
+        query.full_query = query.build_header_query(
             header_alias=format_codelist_filter_sort_keys(field_name),
             result_count=result_count,
         )
 
         query.parameters.update(filter_query_parameters)
-        result_array, _ = db.cypher_query(query=header_query, params=query.parameters)
+        result_array, _ = query.execute()
 
         return (
             format_generic_header_values(result_array[0][0])
@@ -292,11 +290,11 @@ class CTCodelistAggregatedRepository:
         """
         query = """
             MATCH (n:CTCodelistRoot)<-[:CONTAINS_CODELIST]-(l:Library)
-            RETURN l.name as libraryName, count(n) as count
+            RETURN l.name as library_name, count(n) as count
             """
 
         result, _ = db.cypher_query(query)
-        return [CodelistCount(libraryName=item[0], count=item[1]) for item in result]
+        return [CodelistCount(library_name=item[0], count=item[1]) for item in result]
 
     def get_change_percentage(self) -> float:
         """

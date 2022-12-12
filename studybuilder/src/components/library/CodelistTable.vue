@@ -8,14 +8,13 @@
     :page="currentCataloguePage"
     export-object-label="Codelists"
     :export-data-url="columnDataResource"
-    item-key="codelistUid"
+    item-key="codelist_uid"
     @update:page="storeCurrentPage"
     dense
     has-api
     @filter="fetchCodelists"
     :column-data-resource="columnDataResource"
     :column-data-parameters="getPackageObject()"
-    has-history
     :library="library"
     >
     <template v-slot:actions="">
@@ -38,14 +37,14 @@
     <template v-slot:item.actions="{ item }">
       <actions-menu :actions="actions" :item="item" />
     </template>
-    <template v-slot:item.name.templateParameter="{ item }">
-      {{ item.name.templateParameter|yesno }}
+    <template v-slot:item.name.template_parameter="{ item }">
+      {{ item.name.template_parameter|yesno }}
     </template>
     <template v-slot:item.name.status="{ item }">
       <status-chip :status="item.name.status" />
     </template>
-    <template v-slot:item.name.startDate="{ item }">
-      {{ item.name.startDate | date }}
+    <template v-slot:item.name.start_date="{ item }">
+      {{ item.name.start_date | date }}
     </template>
     <template v-slot:item.attributes.extensible="{ item }">
       {{ item.attributes.extensible|yesno }}
@@ -53,8 +52,8 @@
     <template v-slot:item.attributes.status="{ item }">
       <status-chip :status="item.attributes.status" />
     </template>
-    <template v-slot:item.attributes.startDate="{ item }">
-      {{ item.attributes.startDate | date }}
+    <template v-slot:item.attributes.start_date="{ item }">
+      {{ item.attributes.start_date | date }}
     </template>
   </n-n-table>
   <v-dialog
@@ -148,28 +147,28 @@ export default {
       codelists: [],
       headers: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('_global.library'), value: 'libraryName' },
-        { text: this.$t('CtCatalogueTable.concept_id'), value: 'codelistUid' },
+        { text: this.$t('_global.library'), value: 'library_name' },
+        { text: this.$t('CtCatalogueTable.concept_id'), value: 'codelist_uid' },
         { text: this.$t('CtCatalogueTable.sponsor_pref_name'), value: 'name.name', width: '15%' },
-        { text: this.$t('CtCatalogueTable.template_parameter'), value: 'name.templateParameter' },
+        { text: this.$t('CtCatalogueTable.template_parameter'), value: 'name.template_parameter' },
         { text: this.$t('CtCatalogueTable.cd_status'), value: 'name.status' },
-        { text: this.$t('CtCatalogueTable.modified_name'), value: 'name.startDate' },
+        { text: this.$t('CtCatalogueTable.modified_name'), value: 'name.start_date' },
         { text: this.$t('CtCatalogueTable.cd_name'), value: 'attributes.name' },
-        { text: this.$t('CtCatalogueTable.submission_value'), value: 'attributes.submissionValue' },
-        { text: this.$t('CtCatalogueTable.nci_pref_name'), value: 'attributes.nciPreferredName' },
+        { text: this.$t('CtCatalogueTable.submission_value'), value: 'attributes.submission_value' },
+        { text: this.$t('CtCatalogueTable.nci_pref_name'), value: 'attributes.nci_preferred_name' },
         { text: this.$t('CtCatalogueTable.extensible'), value: 'attributes.extensible' },
         { text: this.$t('CtCatalogueTable.attr_status'), value: 'attributes.status' },
-        { text: this.$t('CtCatalogueTable.modified_attributes'), value: 'attributes.startDate' }
+        { text: this.$t('CtCatalogueTable.modified_attributes'), value: 'attributes.start_date' }
       ],
       historyHeaders: [
-        { text: this.$t('_global.library'), value: 'libraryName' },
+        { text: this.$t('_global.library'), value: 'library_name' },
         { text: this.$t('_global.name'), value: 'name' },
-        { text: this.$t('HistoryTable.change_description'), value: 'changeDescription' },
+        { text: this.$t('HistoryTable.change_description'), value: 'change_description' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' },
-        { text: this.$t('_global.user'), value: 'userInitials' },
-        { text: this.$t('HistoryTable.start_date'), value: 'startDate' },
-        { text: this.$t('HistoryTable.end_date'), value: 'endDate' }
+        { text: this.$t('_global.user'), value: 'user_initials' },
+        { text: this.$t('HistoryTable.start_date'), value: 'start_date' },
+        { text: this.$t('HistoryTable.end_date'), value: 'end_date' }
       ],
       options: {},
       showCreationForm: false,
@@ -188,7 +187,7 @@ export default {
         this.options, filters, sort, filtersUpdated)
       params.library = this.library
       if (this.catalogue && this.catalogue !== 'All') {
-        params.cataloguename = this.catalogue
+        params.catalogue_name = this.catalogue
       } else if (this.package) {
         params.package = this.package
       }
@@ -198,11 +197,11 @@ export default {
       })
     },
     goToCodelist (codelist) {
-      this.$router.push({ name: 'CodeListDetail', params: { codelistId: codelist.codelistUid } })
+      this.$router.push({ name: 'CodeListDetail', params: { codelist_id: codelist.codelist_uid } })
       bus.$emit('notification', { msg: this.$t('CodelistCreationForm.add_success') })
     },
     openCodelistDetail (codelist) {
-      this.$router.push({ name: 'CodeListDetail', params: { catalogueName: this.catalogue, codelistId: codelist.codelistUid } })
+      this.$router.push({ name: 'CodeListDetail', params: { catalogue_name: this.catalogue, codelist_id: codelist.codelist_uid } })
     },
     openCodelistTerms (codelist) {
       const params = { codelist }

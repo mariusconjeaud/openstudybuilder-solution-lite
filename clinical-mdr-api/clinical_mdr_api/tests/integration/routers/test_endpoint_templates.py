@@ -32,14 +32,14 @@ class EndpointTemplatesTest(api.APITest):
         self.test_client = TestClient(main.app)
         self.library = library_service.create(**library_data)
 
-    def testFiltering(self):
+    def test_filtering(self):
         inject_and_clear_db(self.TEST_DB_NAME)
         import clinical_mdr_api.services.libraries as library_service
 
         self.library = library_service.create(**library_data)
         Service = EndpointTemplateService
         Service().create(
-            EndpointTemplateCreateInput(libraryName=library_data["name"], name="test")
+            EndpointTemplateCreateInput(library_name=library_data["name"], name="test")
         )
         self.filtering_common_test_scenario(
             test_client=self.test_client,
@@ -51,7 +51,7 @@ class EndpointTemplatesTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "endpoint_template.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid"]
+        return ["start_date", "end_date", "uid"]
 
 
 class EndpointTemplatesNegativeTest(api.APITest):
@@ -79,7 +79,7 @@ class EndpointTemplatesNegativeTest(api.APITest):
         check_endpoint_templates_empty()
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "uid"]
+        return ["start_date", "end_date", "time", "uid"]
 
 
 class EndpointTemplatesVersioningTest(api.APITest):
@@ -99,4 +99,4 @@ class EndpointTemplatesVersioningTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "path", "uid"]
+        return ["start_date", "end_date", "time", "path", "uid"]

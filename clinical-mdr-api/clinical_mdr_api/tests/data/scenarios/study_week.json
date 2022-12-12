@@ -8,8 +8,8 @@
             "value": 1.23,
             "definition": "study_week_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor"
+            "template_parameter": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/study-weeks"
       },
@@ -20,17 +20,17 @@
             "uid": "StudyWeek_000001",
             "name": "Week 1.23",
             "value": 1.23,
-            "nameSentenceCase": "week 1.23",
+            "name_sentence_case": "week 1.23",
             "definition": "study_week_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor",
+            "template_parameter": true,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null
          }
       }
    },
@@ -43,8 +43,8 @@
             "value": 1.23,
             "definition": "study_week_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor"
+            "template_parameter": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/study-weeks"
       },
@@ -55,17 +55,17 @@
             "uid": "StudyWeek_000001",
             "name": "Week 1.23",
             "value": 1.23,
-            "nameSentenceCase": "week 1.23",
+            "name_sentence_case": "week 1.23",
             "definition": "study_week_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor",
+            "template_parameter": true,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null
          }
       }
    },
@@ -78,8 +78,8 @@
             "value": 1.234,
             "definition": "study_week_definition2",
             "abbreviation": "abbv",
-            "templateParameter": false,
-            "libraryName": "Sponsor"
+            "template_parameter": false,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/study-weeks"
       },
@@ -90,17 +90,17 @@
             "uid": "StudyWeek_000002",
             "name": "Week 1.234",
             "value": 1.234,
-            "nameSentenceCase": "week 1.234",
+            "name_sentence_case": "week 1.234",
             "definition": "study_week_definition2",
             "abbreviation": "abbv",
-            "templateParameter": false,
-            "libraryName": "Sponsor",
+            "template_parameter": false,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null
          }
       }
    },
@@ -110,7 +110,7 @@
          "headers": {},
          "method": "GET",
          "request": {},
-         "url": "/concepts/study-weeks?totalCount=true"
+         "url": "/concepts/study-weeks?total_count=true"
       },
       "response": {
          "code": 200,
@@ -121,38 +121,38 @@
                   "uid": "StudyWeek_000001",
                   "name": "Week 1.23",
                   "value": 1.23,
-                  "nameSentenceCase": "week 1.23",
+                  "name_sentence_case": "week 1.23",
                   "definition": "study_week_definition1",
                   "abbreviation": "abbv",
-                  "templateParameter": true,
-                  "libraryName": "Sponsor",
+                  "template_parameter": true,
+                  "library_name": "Sponsor",
                   "status": null,
                   "version": null,
-                  "changeDescription": null,
-                  "userInitials": null,
-                  "startDate": null,
-                  "endDate": null
+                  "change_description": null,
+                  "user_initials": null,
+                  "start_date": null,
+                  "end_date": null
                },
                {
                   "uid": "StudyWeek_000002",
                   "name": "Week 1.234",
                   "value": 1.234,
-                  "nameSentenceCase": "week 1.234",
+                  "name_sentence_case": "week 1.234",
                   "definition": "study_week_definition2",
                   "abbreviation": "abbv",
-                  "templateParameter": false,
-                  "libraryName": "Sponsor",
+                  "template_parameter": false,
+                  "library_name": "Sponsor",
                   "status": null,
                   "version": null,
-                  "changeDescription": null,
-                  "userInitials": null,
-                  "startDate": null,
-                  "endDate": null
+                  "change_description": null,
+                  "user_initials": null,
+                  "start_date": null,
+                  "end_date": null
                }
             ],
             "total": 2,
             "page": 1,
-            "size": 0
+            "size": 10
          }
       }
    }

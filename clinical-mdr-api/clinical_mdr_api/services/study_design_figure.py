@@ -175,7 +175,7 @@ class StudyDesignFigureService:
         study_arms = StudyArmSelectionService(self._current_user_id).get_all_selection(
             study_uid=study_uid, sort_by={"order": True}
         )
-        study_arms = OrderedDict((arm.armUid, arm) for arm in study_arms.items)
+        study_arms = OrderedDict((arm.arm_uid, arm) for arm in study_arms.items)
         return study_arms
 
     def _get_study_epochs(
@@ -196,7 +196,7 @@ class StudyDesignFigureService:
             self._current_user_id
         ).get_all_selection(study_uid=study_uid)
         study_elements = OrderedDict(
-            (element.elementUid, element) for element in study_elements.items
+            (element.element_uid, element) for element in study_elements.items
         )
         return study_elements
 
@@ -234,8 +234,8 @@ class StudyDesignFigureService:
             table[0][epoch.order].update(
                 klass="epoch",
                 id=id_,
-                text=epoch.epochName,
-                colors=self._calculate_colors(epoch.colorHash or EPOCH_COLOR_DEFAULT),
+                text=epoch.epoch_name,
+                colors=self._calculate_colors(epoch.color_hash or EPOCH_COLOR_DEFAULT),
                 margin=EPOCH_MARGIN,
                 paddings=EPOCH_PADDINGS,
             )
@@ -244,33 +244,33 @@ class StudyDesignFigureService:
             table[arm.order][0].update(
                 klass="arm",
                 id=id_,
-                text=arm.shortName or arm.name,
-                colors=self._calculate_colors(arm.armColour or ARM_COLOR_DEFAULT),
+                text=arm.short_name or arm.name,
+                colors=self._calculate_colors(arm.arm_colour or ARM_COLOR_DEFAULT),
                 margin=ARM_MARGIN,
                 paddings=ARM_PADDINGS,
             )
 
         for cell in study_design_cells:
-            arm = study_arms.get(cell.studyArmUid)
-            epoch = study_epochs.get(cell.studyEpochUid)
-            element = study_elements.get(cell.studyElementUid)
+            arm = study_arms.get(cell.study_arm_uid)
+            epoch = study_epochs.get(cell.study_epoch_uid)
+            element = study_elements.get(cell.study_element_uid)
 
             if not all((arm, epoch, element)):
                 log.debug(
                     "Skipping %s, missing %s, %s or %s not in results",
-                    cell.designCellUid,
-                    cell.studyArmUid,
-                    cell.studyEpochUid,
-                    cell.studyElementUid,
+                    cell.design_cell_uid,
+                    cell.study_arm_uid,
+                    cell.study_epoch_uid,
+                    cell.study_element_uid,
                 )
                 continue
 
             table[arm.order][epoch.order].update(
                 klass="element",
-                id=element.elementUid,
-                text=element.shortName or element.name,
+                id=element.element_uid,
+                text=element.short_name or element.name,
                 colors=self._calculate_colors(
-                    element.elementColour or ELEMENT_COLOR_DEFAULT
+                    element.element_colour or ELEMENT_COLOR_DEFAULT
                 ),
                 margin=ELEMENT_MARGIN,
                 paddings=ELEMENT_PADDINGS,
@@ -291,11 +291,11 @@ class StudyDesignFigureService:
                 visits[epoch.order - 1].update(
                     id=id_,
                     visit=visit,
-                    day_label=visit.studyDayLabel,
-                    week_label=visit.studyWeekLabel,
-                    shot_name=visit.visitShortName,
-                    type_uid=visit.visitTypeUid,
-                    type_name=visit.visitTypeName,
+                    day_label=visit.study_day_label,
+                    week_label=visit.study_week_label,
+                    shot_name=visit.visit_short_name,
+                    type_uid=visit.visit_type_uid,
+                    type_name=visit.visit_type_name,
                 )
 
         return visits
@@ -990,11 +990,11 @@ class StudyDesignFigureService:
         with doc.tag(
             "marker",
             id=id_,
-            viewBox="0 0 6 6",
+            view_box="0 0 6 6",
             refX="6",
             refY="3",
-            markerWidth="6",
-            markerHeight="6",
+            marker_width="6",
+            marker_height="6",
             orient="auto-start-reverse",
         ):
             doc.stag("path", d="M 0 0 L 6 3 L 0 6 z")
@@ -1005,11 +1005,11 @@ class StudyDesignFigureService:
         with doc.tag(
             "marker",
             id=id_,
-            viewBox="0 0 6 6",
+            view_box="0 0 6 6",
             refX="3",
             refY="0",
-            markerWidth="6",
-            markerHeight="6",
+            marker_width="6",
+            marker_height="6",
             orient="0",
         ):
             doc.stag("path", d="M 0 6 L 3 0 L 6 6 z")
@@ -1020,11 +1020,11 @@ class StudyDesignFigureService:
         with doc.tag(
             "marker",
             id=id_,
-            viewBox="0 0 6 6",
+            view_box="0 0 6 6",
             refX="3",
             refY="3",
-            markerWidth="6",
-            markerHeight="6",
+            marker_width="6",
+            marker_height="6",
             orient="auto",
         ):
             doc.stag("polyline", points="3 0, 3 6")

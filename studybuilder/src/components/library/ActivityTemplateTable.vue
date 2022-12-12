@@ -15,14 +15,14 @@
       :template="selectedObject"
       />
   </template>
-  <template v-slot:item.activityGroups="{ item }">
-    <template v-if="item.activityGroups">
-      {{ displayList(item.activityGroups) }}
+  <template v-slot:item.activity_groups="{ item }">
+    <template v-if="item.activity_groups">
+      {{ displayList(item.activity_groups) }}
     </template>
   </template>
-  <template v-slot:item.activitySubGroups="{ item }">
-    <template v-if="item.activitySubGroups">
-      {{ displayList(item.activitySubGroups) }}
+  <template v-slot:item.activity_subgroups="{ item }">
+    <template v-if="item.activity_subgroups">
+      {{ displayList(item.activity_subgroups) }}
     </template>
   </template>
   <template v-slot:item.activities="{ item }">
@@ -40,7 +40,7 @@
       :template="template"
       :prepare-payload-func="prepareIndexingPayload"
       :url-prefix="urlPrefix"
-      :open="show"
+      :show="show"
       >
       <template v-slot:form="{ form }">
         <activity-template-indexing-form
@@ -77,11 +77,11 @@ export default {
           width: '5%'
         },
         { text: this.$t('ActivityTemplateTable.indications'), value: 'indications.name' },
-        { text: this.$t('ActivityTemplateTable.activity_group'), value: 'activityGroups' },
-        { text: this.$t('ActivityTemplateTable.activity_subgroup'), value: 'activitySubGroups' },
+        { text: this.$t('ActivityTemplateTable.activity_group'), value: 'activity_groups' },
+        { text: this.$t('ActivityTemplateTable.activity_subgroup'), value: 'activity_subgroups' },
         { text: this.$t('ActivityTemplateTable.activity_name'), value: 'activities' },
         { text: this.$t('ActivityTemplateTable.activity_template'), value: 'name', width: '30%' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
       ],

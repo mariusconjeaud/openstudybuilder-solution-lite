@@ -93,11 +93,11 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 for template_input in selection_create_input:
                     # Get criteria template
                     criteria_template = criteria_template_repo.find_by_uid_2(
-                        uid=template_input.criteriaTemplateUid
+                        uid=template_input.criteria_template_uid
                     )
                     if criteria_template is None:
                         raise exceptions.NotFoundException(
-                            f"Criteria template with uid {template_input.criteriaTemplateUid} does not exist"
+                            f"Criteria template with uid {template_input.criteria_template_uid} does not exist"
                         )
 
                     if (
@@ -168,10 +168,10 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                         new_selection = self.make_selection_create_criteria(
                             study_uid=study_uid,
                             selection_create_input=StudySelectionCriteriaCreateInput(
-                                criteriaData=CriteriaCreateInput(
-                                    criteriaTemplateUid=template_input.criteriaTemplateUid,
-                                    parameterValues=[],
-                                    libraryName=template_input.libraryName,
+                                criteria_data=CriteriaCreateInput(
+                                    criteria_template_uid=template_input.criteria_template_uid,
+                                    parameter_values=[],
+                                    library_name=template_input.library_name,
                                 )
                             ),
                         )
@@ -181,7 +181,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             repos.close()
 
     def _create_criteria_instance(
-        self, criteria_data: CriteriaCreateInput
+        self, criteria_data: CriteriaCreateInput, criteria_type_uid: str
     ) -> CriteriaAR:
         # check if name exists
         criteria_service = CriteriaService()
@@ -189,7 +189,9 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
 
         # create criteria
         criteria_uid = criteria_ar.uid
-        if not criteria_service.repository.check_exists_by_name(criteria_ar.name):
+        if not criteria_service.repository.check_exists_by_name_for_type(
+            name=criteria_ar.name, criteria_type_uid=criteria_type_uid
+        ):
             criteria_service.repository.save(criteria_ar)
         else:
             criteria_uid = criteria_service.repository.find_uid_by_name(
@@ -230,9 +232,15 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             with db.transaction:
+                criteria_type_uid = (
+                    repos.criteria_template_repository.get_criteria_type_uid(
+                        criteria_data.criteria_template_uid
+                    )
+                )
+
                 # Create instance from the template
                 criteria_ar = self._create_criteria_instance(
-                    criteria_data=criteria_data
+                    criteria_data=criteria_data, criteria_type_uid=criteria_type_uid
                 )
 
                 # Go to repository to reroute the study criteria relationship from template to instance
@@ -247,11 +255,6 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 selection_aggregate = (
                     repos.study_selection_criteria_repository.find_by_study(
                         study_uid=study_uid, for_update=False
-                    )
-                )
-                criteria_type_uid = (
-                    repos.criteria_template_repository.get_criteria_type_uid(
-                        criteria_data.criteriaTemplateUid
                     )
                 )
 
@@ -281,15 +284,14 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             # get criteria type uid from the criteria template
-            criteria_type_uid = (
-                repos.criteria_template_repository.get_criteria_type_uid(
-                    template_uid=selection_create_input.criteriaData.criteriaTemplateUid
-                )
+            criteria_type_uid = repos.criteria_template_repository.get_criteria_type_uid(
+                template_uid=selection_create_input.criteria_data.criteria_template_uid
             )
 
             # create criteria instance
             criteria_ar = self._create_criteria_instance(
-                criteria_data=selection_create_input.criteriaData
+                criteria_data=selection_create_input.criteria_data,
+                criteria_type_uid=criteria_type_uid,
             )
 
             # get pre-existing selection aggregate
@@ -357,12 +359,12 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
 
                 # get criteria type uid from the criteria template
                 criteria_type_uid = repos.criteria_template_repository.get_criteria_type_uid(
-                    template_uid=selection_create_input.criteriaData.criteriaTemplateUid
+                    template_uid=selection_create_input.criteria_data.criteria_template_uid
                 )
 
                 # create criteria instance
                 criteria_ar = criteria_service.create_ar_from_input_values(
-                    selection_create_input.criteriaData,
+                    selection_create_input.criteria_data,
                     generate_uid_callback=(lambda: "preview"),
                 )
 

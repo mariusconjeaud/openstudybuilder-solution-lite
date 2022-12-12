@@ -33,15 +33,15 @@ class StudyActivitySelectionTestCase(unittest.TestCase):
                 models.StudySelectionActivityBatchInput(
                     method="POST",
                     content=models.StudySelectionActivityCreateInput(
-                        flowchartGroupUid="term_root_final",
-                        activityUid="activity_root1",
+                        flowchart_group_uid="term_root_final",
+                        activity_uid="activity_root1",
                     ),
                 ),
                 models.StudySelectionActivityBatchInput(
                     method="POST",
                     content=models.StudySelectionActivityCreateInput(
-                        flowchartGroupUid="term_root_final",
-                        activityUid="activity_root2",
+                        flowchart_group_uid="term_root_final",
+                        activity_uid="activity_root2",
                     ),
                 ),
             ],
@@ -56,25 +56,25 @@ class StudyActivitySelectionTestCase(unittest.TestCase):
                 models.StudySelectionActivityBatchInput(
                     method="PATCH",
                     content=models.StudySelectionActivityBatchUpdateInput(
-                        studyActivityUid=study_activities[0].studyActivityUid,
+                        study_activity_uid=study_activities[0].study_activity_uid,
                         content=models.StudySelectionActivityInput(
-                            note="Test note", showActivityInProtocolFlowchart=True
+                            note="Test note", show_activity_in_protocol_flowchart=True
                         ),
                     ),
                 ),
                 models.StudySelectionActivityBatchInput(
                     method="DELETE",
                     content=models.StudySelectionActivityBatchDeleteInput(
-                        studyActivityUid=study_activities[1].studyActivityUid
+                        study_activity_uid=study_activities[1].study_activity_uid
                     ),
                 ),
             ],
         )
 
         sa1 = service.get_specific_selection(
-            "study_root", study_activities[0].studyActivityUid
+            "study_root", study_activities[0].study_activity_uid
         )
-        assert sa1.showActivityInProtocolFlowchart is True
+        assert sa1.show_activity_in_protocol_flowchart is True
 
         study_activities = service.get_all_selection("study_root").items
         assert len(study_activities) == 1

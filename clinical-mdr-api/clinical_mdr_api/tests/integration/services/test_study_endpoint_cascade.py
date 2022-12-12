@@ -137,6 +137,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
         self.ot_ar.edit_draft(
             author="TEST", change_description="Change", template=self.ntv
         )
+        self.ot_ar.approve(author="TEST")
         self.otr.save(self.ot_ar)
 
         self.et_ar = EndpointTemplateAR(
@@ -160,18 +161,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
         self.et_ar.create_new_version(
             author="TEST", change_description="Change", template=self.tv
         )
-        self.etr.save(self.et_ar)
-
-        self.et_ar: EndpointTemplateAR = self.etr.find_by_uid_2(
-            self.et_ar.uid, for_update=True
-        )
-        self.ntv = TemplateVO(
-            name=self.changed_template_name,
-            name_plain=self.changed_template_name_plain,
-        )
-        self.et_ar.edit_draft(
-            author="TEST", change_description="Change", template=self.ntv
-        )
+        self.et_ar.approve(author="TEST")
         self.etr.save(self.et_ar)
 
         self.tt_ar = TimeframeTemplateAR(
@@ -197,16 +187,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
         )
         self.ttr.save(self.tt_ar)
 
-        self.tt_ar: TimeframeTemplateAR = self.ttr.find_by_uid_2(
-            self.tt_ar.uid, for_update=True
-        )
-        self.ntv = TemplateVO(
-            name=self.changed_template_name,
-            name_plain=self.changed_template_name_plain,
-        )
-        self.tt_ar.edit_draft(
-            author="TEST", change_description="Change", template=self.ntv
-        )
+        self.tt_ar.approve(author="TEST")
         self.ttr.save(self.tt_ar)
 
         self.create_template_parameters(count=14)
@@ -215,11 +196,29 @@ class TestStudyEndpointUpversion(unittest.TestCase):
         self.create_timeframes(count=10, approved=True)
         study_service = StudyObjectiveSelectionService(author="TEST_USER")
         study_selection_objective_input = StudySelectionObjectiveInput(
-            objectiveUid="Objective_000010"
+            objective_uid="Objective_000010"
         )
         self.selection: StudySelectionObjective = study_service.make_selection(
             "study_root", study_selection_objective_input
         )
+
+    def modify_endpoint_template(self):
+        self.et_ar: EndpointTemplateAR = self.etr.find_by_uid_2(
+            self.et_ar.uid, for_update=True
+        )
+        self.et_ar.create_new_version(
+            author="TEST", change_description="Change", template=self.ntv
+        )
+        self.etr.save(self.et_ar)
+
+    def modify_timeframe_template(self):
+        self.tt_ar: TimeframeTemplateAR = self.ttr.find_by_uid_2(
+            self.tt_ar.uid, for_update=True
+        )
+        self.tt_ar.create_new_version(
+            author="TEST", change_description="Change", template=self.ntv
+        )
+        self.ttr.save(self.tt_ar)
 
     def create_template_parameters(self, label=TPR_LABEL, count=10):
         self.value_roots = []
@@ -239,7 +238,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
     def create_objectives(self, count=10, approved=False, retired=False):
         for i in range(count):
             pv = TemplateParameterMultiSelectInput(
-                templateParameter=self.TPR_LABEL,
+                template_parameter=self.TPR_LABEL,
                 conjunction="",
                 values=[
                     {
@@ -252,9 +251,9 @@ class TestStudyEndpointUpversion(unittest.TestCase):
                 ],
             )
             template = ObjectiveCreateInput(
-                objectiveTemplateUid=self.ot_ar.uid,
-                libraryName="Library",
-                parameterValues=[pv],
+                objective_template_uid=self.ot_ar.uid,
+                library_name="Library",
+                parameter_values=[pv],
             )
 
             print("CREATE", pv)
@@ -267,7 +266,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
     def create_timeframes(self, count=10, approved=False, retired=False):
         for i in range(count):
             pv = TemplateParameterMultiSelectInput(
-                templateParameter=self.TPR_LABEL,
+                template_parameter=self.TPR_LABEL,
                 conjunction="",
                 values=[
                     {
@@ -280,9 +279,9 @@ class TestStudyEndpointUpversion(unittest.TestCase):
                 ],
             )
             template = TimeframeCreateInput(
-                timeframeTemplateUid=self.tt_ar.uid,
-                libraryName="Library",
-                parameterValues=[pv],
+                timeframe_template_uid=self.tt_ar.uid,
+                library_name="Library",
+                parameter_values=[pv],
             )
 
             item = self.timeframe_service.create(template)
@@ -294,7 +293,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
     def create_endpoints(self, count=10, approved=False, retired=False):
         for i in range(count):
             pv = TemplateParameterMultiSelectInput(
-                templateParameter=self.TPR_LABEL,
+                template_parameter=self.TPR_LABEL,
                 conjunction="",
                 values=[
                     {
@@ -307,9 +306,9 @@ class TestStudyEndpointUpversion(unittest.TestCase):
                 ],
             )
             template = EndpointCreateInput(
-                endpointTemplateUid=self.et_ar.uid,
-                libraryName="Library",
-                parameterValues=[pv],
+                endpoint_template_uid=self.et_ar.uid,
+                library_name="Library",
+                parameter_values=[pv],
             )
             item = self.endpoint_service.create(template)
             if approved:
@@ -320,137 +319,139 @@ class TestStudyEndpointUpversion(unittest.TestCase):
     def test__endpoint_upversion__update(self):
         # given
 
-        endpointData = {
-            "endpointLevel": None,
-            "endpointUid": "Endpoint_000005",
-            "endpointUnits": {"separator": "string", "units": ["unit 1", "unit 2"]},
-            "studyObjectiveUid": self.selection.studyObjectiveUid,
-            "timeframeUid": "Timeframe_000005",
+        endpoint_data = {
+            "endpoint_level": None,
+            "endpoint_uid": "Endpoint_000005",
+            "endpoint_units": {"separator": "string", "units": ["unit 1", "unit 2"]},
+            "study_objective_uid": self.selection.study_objective_uid,
+            "timeframe_uid": "Timeframe_000005",
         }
         endpoint_service = StudyEndpointSelectionService(author="TEST_USER")
         endpoint_selection_input: StudySelectionEndpointInput = (
-            StudySelectionEndpointInput(**endpointData)
+            StudySelectionEndpointInput(**endpoint_data)
         )
         endpoint_selection: StudySelectionEndpoint = endpoint_service.make_selection(
             "study_root", endpoint_selection_input
         )
 
-        self.assertIsNone(endpoint_selection.latestTimeframe)
-        self.assertIsNone(endpoint_selection.latestEndpoint)
+        self.assertIsNone(endpoint_selection.latest_timeframe)
+        self.assertIsNone(endpoint_selection.latest_endpoint)
 
+        self.modify_endpoint_template()
         self.endpoint_template_service.approve_cascade(self.et_ar.uid)
 
         selection: StudySelectionEndpoint = endpoint_service.get_specific_selection(
             study_uid="study_root",
-            study_selection_uid=endpoint_selection.studyEndpointUid,
+            study_selection_uid=endpoint_selection.study_endpoint_uid,
         )
 
         self.assertNotEqual(
-            selection.endpoint.version, selection.latestEndpoint.version
+            selection.endpoint.version, selection.latest_endpoint.version
         )
 
         # when
 
         response = endpoint_service.update_selection_to_latest_version_of_endpoint(
-            "study_root", selection.studyEndpointUid
+            "study_root", selection.study_endpoint_uid
         )
 
-        self.assertIsNone(response.latestEndpoint)
+        self.assertIsNone(response.latest_endpoint)
         # then
         selection: StudySelectionEndpoint = endpoint_service.get_specific_selection(
-            study_uid="study_root", study_selection_uid=selection.studyEndpointUid
+            study_uid="study_root", study_selection_uid=selection.study_endpoint_uid
         )
-        self.assertIsNone(selection.latestEndpoint)
-        self.assertIsNone(selection.latestTimeframe)
+        self.assertIsNone(selection.latest_endpoint)
+        self.assertIsNone(selection.latest_timeframe)
 
     def test__timeframe_upversion__update(self):
         # given
-        endpointData = {
-            "endpointLevel": None,
-            "endpointUid": "Endpoint_000005",
-            "endpointUnits": {"separator": "string", "units": ["unit 1", "unit 2"]},
-            "studyObjectiveUid": self.selection.studyObjectiveUid,
-            "timeframeUid": "Timeframe_000005",
+        endpoint_data = {
+            "endpoint_level": None,
+            "endpoint_uid": "Endpoint_000005",
+            "endpoint_units": {"separator": "string", "units": ["unit 1", "unit 2"]},
+            "study_objective_uid": self.selection.study_objective_uid,
+            "timeframe_uid": "Timeframe_000005",
         }
         endpoint_service = StudyEndpointSelectionService(author="TEST_USER")
         endpoint_selection_input: StudySelectionEndpointInput = (
-            StudySelectionEndpointInput(**endpointData)
+            StudySelectionEndpointInput(**endpoint_data)
         )
         endpoint_selection: StudySelectionEndpoint = endpoint_service.make_selection(
             "study_root", endpoint_selection_input
         )
 
-        self.assertIsNone(endpoint_selection.latestTimeframe)
-        self.assertIsNone(endpoint_selection.latestEndpoint)
-
+        self.assertIsNone(endpoint_selection.latest_timeframe)
+        self.assertIsNone(endpoint_selection.latest_endpoint)
+        self.modify_timeframe_template()
         self.timeframe_template_service.approve_cascade(self.tt_ar.uid)
 
         selection: StudySelectionEndpoint = endpoint_service.get_specific_selection(
             study_uid="study_root",
-            study_selection_uid=endpoint_selection.studyEndpointUid,
+            study_selection_uid=endpoint_selection.study_endpoint_uid,
         )
 
         self.assertNotEqual(
-            selection.timeframe.version, selection.latestTimeframe.version
+            selection.timeframe.version, selection.latest_timeframe.version
         )
 
         # when
         response = endpoint_service.update_selection_to_latest_version_of_timeframe(
-            "study_root", selection.studyEndpointUid
+            "study_root", selection.study_endpoint_uid
         )
 
-        self.assertIsNone(response.latestTimeframe)
+        self.assertIsNone(response.latest_timeframe)
         # then
         selection: StudySelectionEndpoint = endpoint_service.get_specific_selection(
-            study_uid="study_root", study_selection_uid=selection.studyEndpointUid
+            study_uid="study_root", study_selection_uid=selection.study_endpoint_uid
         )
-        self.assertIsNone(selection.latestTimeframe)
-        self.assertIsNone(selection.latestEndpoint)
+        self.assertIsNone(selection.latest_timeframe)
+        self.assertIsNone(selection.latest_endpoint)
 
     def test__timeframe_and_endpoint_upversion__update(self):
         # given
-        endpointData = {
-            "endpointLevel": None,
-            "endpointUid": "Endpoint_000005",
-            "endpointUnits": {"separator": "string", "units": ["unit 1", "unit 2"]},
-            "studyObjectiveUid": self.selection.studyObjectiveUid,
-            "timeframeUid": "Timeframe_000005",
+        endpoint_data = {
+            "endpoint_level": None,
+            "endpoint_uid": "Endpoint_000005",
+            "endpoint_units": {"separator": "string", "units": ["unit 1", "unit 2"]},
+            "study_objective_uid": self.selection.study_objective_uid,
+            "timeframe_uid": "Timeframe_000005",
         }
         endpoint_service = StudyEndpointSelectionService(author="TEST_USER")
         endpoint_selection_input: StudySelectionEndpointInput = (
-            StudySelectionEndpointInput(**endpointData)
+            StudySelectionEndpointInput(**endpoint_data)
         )
         endpoint_selection: StudySelectionEndpoint = endpoint_service.make_selection(
             "study_root", endpoint_selection_input
         )
 
-        self.assertIsNone(endpoint_selection.latestTimeframe)
-        self.assertIsNone(endpoint_selection.latestEndpoint)
-
+        self.assertIsNone(endpoint_selection.latest_timeframe)
+        self.assertIsNone(endpoint_selection.latest_endpoint)
+        self.modify_timeframe_template()
         self.timeframe_template_service.approve_cascade(self.tt_ar.uid)
+        self.modify_endpoint_template()
         self.endpoint_template_service.approve_cascade(self.et_ar.uid)
 
         selection: StudySelectionEndpoint = endpoint_service.get_specific_selection(
             study_uid="study_root",
-            study_selection_uid=endpoint_selection.studyEndpointUid,
+            study_selection_uid=endpoint_selection.study_endpoint_uid,
         )
 
         self.assertNotEqual(
-            selection.timeframe.version, selection.latestTimeframe.version
+            selection.timeframe.version, selection.latest_timeframe.version
         )
         self.assertNotEqual(
-            selection.endpoint.version, selection.latestEndpoint.version
+            selection.endpoint.version, selection.latest_endpoint.version
         )
 
         # when
         response = endpoint_service.update_selection_to_latest_version_of_timeframe(
-            "study_root", selection.studyEndpointUid
+            "study_root", selection.study_endpoint_uid
         )
 
-        self.assertIsNone(response.latestTimeframe)
+        self.assertIsNone(response.latest_timeframe)
         # then
         selection: StudySelectionEndpoint = endpoint_service.get_specific_selection(
-            study_uid="study_root", study_selection_uid=selection.studyEndpointUid
+            study_uid="study_root", study_selection_uid=selection.study_endpoint_uid
         )
-        self.assertIsNone(selection.latestTimeframe)
-        self.assertIsNotNone(selection.latestEndpoint)
+        self.assertIsNone(selection.latest_timeframe)
+        self.assertIsNotNone(selection.latest_endpoint)

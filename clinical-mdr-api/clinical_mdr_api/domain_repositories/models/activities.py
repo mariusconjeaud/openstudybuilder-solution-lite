@@ -15,7 +15,10 @@ from clinical_mdr_api.domain_repositories.models.concepts import (
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
-from clinical_mdr_api.domain_repositories.models.generic import VersionRelationship
+from clinical_mdr_api.domain_repositories.models.generic import (
+    ClinicalMdrRel,
+    VersionRelationship,
+)
 
 
 class ActivityGroupValue(ConceptValue):
@@ -41,7 +44,7 @@ class ActivityGroupRoot(ConceptRoot):
 
 class ActivitySubGroupValue(ConceptValue):
     has_latest_value = RelationshipFrom("ActivitySubGroupRoot", "LATEST")
-    in_group = RelationshipTo(ActivityGroupValue, "IN_GROUP")
+    in_group = RelationshipTo(ActivityGroupValue, "IN_GROUP", model=ClinicalMdrRel)
 
 
 class ActivitySubGroupRoot(ConceptRoot):
@@ -62,8 +65,19 @@ class ActivitySubGroupRoot(ConceptRoot):
 
 
 class ActivityValue(ConceptValue):
-    in_sub_group = RelationshipTo(ActivitySubGroupValue, "IN_SUB_GROUP")
-    has_latest_value = RelationshipFrom("ActivityRoot", "LATEST")
+    has_latest_value = RelationshipFrom("ActivityRoot", "LATEST", model=ClinicalMdrRel)
+    latest_draft = RelationshipFrom(
+        "ActivityRoot", "LATEST_DRAFT", model=VersionRelationship
+    )
+    latest_final = RelationshipFrom(
+        "ActivityRoot", "LATEST_FINAL", model=VersionRelationship
+    )
+    latest_retired = RelationshipFrom(
+        "ActivityRoot", "LATEST_RETIRED", model=VersionRelationship
+    )
+    in_subgroup = RelationshipTo(
+        ActivitySubGroupValue, "IN_SUB_GROUP", model=ClinicalMdrRel
+    )
 
 
 class ActivityRoot(ConceptRoot):

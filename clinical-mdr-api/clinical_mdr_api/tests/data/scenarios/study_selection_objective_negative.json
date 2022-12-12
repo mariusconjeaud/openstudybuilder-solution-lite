@@ -5,10 +5,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "objectiveUid": "Objective_000001_does_not_exists",
-                "objectiveLevel": "Primary"
+                "objective_uid": "Objective_000001_does_not_exists",
+                "objective_level": "Primary"
             },
-            "url": "/study/study_root/study-objectives/select"
+            "url": "/studies/study_root/study-objectives"
         },
         "response": {
             "code": 400,
@@ -19,7 +19,7 @@
             "result": {
                 "message": "There is no approved objective identified by provided uid (Objective_000001_does_not_exists)",
                 "method": "POST",
-                "path": "http://testserver/study/study_root/study-objectives/select",
+                "path": "http://testserver/studies/study_root/study-objectives",
                 "time": "2020-11-03T23:42:41.518146",
                 "type": "BusinessLogicException"
             }
@@ -31,10 +31,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "objectiveUid": "Objective_000005",
-                "objectiveLevel": "Primary"
+                "objective_uid": "Objective_000005",
+                "objective_level": "Primary"
             },
-            "url": "/study/study_root/study-objectives/select"
+            "url": "/studies/study_root/study-objectives"
         },
         "response": {
             "code": 400,
@@ -45,7 +45,7 @@
             "result": {
                 "message": "There is no approved objective identified by provided uid (Objective_000005)",
                 "method": "POST",
-                "path": "http://testserver/study/study_root/study-objectives/select",
+                "path": "http://testserver/studies/study_root/study-objectives",
                 "time": "2020-11-03T23:42:41.518146",
                 "type": "BusinessLogicException"
             }
@@ -58,7 +58,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study_root/study-objectives/study_objective_uid"
+            "url": "/studies/study_root/study-objectives/study_objective_uid"
         },
         "response": {
             "code": 404,
@@ -69,7 +69,7 @@
             "result": {
                 "message": "The study objective uid does not exist (study_objective_uid)",
                 "method": "GET",
-                "path": "http://testserver/study/study_root/study-objectives/study_objective_uid",
+                "path": "http://testserver/studies/study_root/study-objectives/study_objective_uid",
                 "time": "2020-11-03T23:42:41.518146",
                 "type": "NotFoundException"
             }

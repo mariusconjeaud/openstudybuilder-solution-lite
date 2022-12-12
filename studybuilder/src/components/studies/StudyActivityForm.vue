@@ -29,7 +29,7 @@
             :label="$t('StudySelectionTable.studies')"
             :items="studies"
             :error-messages="errors"
-            item-text="studyId"
+            item-text="study_id"
             clearable
             multiple
             return-object
@@ -49,7 +49,7 @@
                 v-model="currentFlowchartGroup"
                 :label="$t('StudyActivityForm.flowchart_group')"
                 :items="flowchartGroups"
-                item-text="sponsorPreferredName"
+                item-text="sponsor_preferred_name"
                 return-object
                 :error-messages="errors"
                 :hint="$t('_help.StudyActivityForm.flowchart_group')"
@@ -64,7 +64,7 @@
     <template v-slot:step.selectFromStudies>
       <v-data-table
         key="fromStudiesSelection"
-        :headers="selectionHeaders"
+        :headers="selectionFromStudiesHeaders"
         :items="selectedActivities"
         >
         <template v-slot:item.name="{ item }">
@@ -93,7 +93,7 @@
           data-fetcher-name="getAllStudyActivities"
           :extra-data-fetcher-filters="extraDataFetcherFilters"
           :studies="selectedStudies"
-          :column-data-resource="`study/${selectedStudy.uid}/study-activities`"
+          :column-data-resource="`studies/${selectedStudy.uid}/study-activities`"
           show-filter-bar-by-default
           >
           <template v-slot:header.actions>
@@ -123,7 +123,7 @@
     <template v-slot:step.selectFromLibrary>
       <v-data-table
         key="fromLibrarySelection"
-        :headers="selectionHeaders"
+        :headers="selectionFromLibraryHeaders"
         :items="selectedActivities"
         >
         <template v-slot:item.actions="{ item }">
@@ -225,9 +225,9 @@ export default {
       activitiesTotal: 0,
       activityHeaders: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('StudyActivity.activity_group'), value: 'activityGroup.name', externalFilterSource: 'concepts/activities/activity-groups$name' },
-        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activitySubGroup.name', externalFilterSource: 'concepts/activities/activity-sub-groups$name' },
-        { text: this.$t('StudyActivity.activity'), value: 'name', externalFilterSource: 'concepts/activities/activities$name' }
+        { text: this.$t('StudyActivity.activity_group'), value: 'activity_group.name' },
+        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity_subgroup.name' },
+        { text: this.$t('StudyActivity.activity'), value: 'name' }
       ],
       currentFlowchartGroup: null,
       flowchartGroups: [],
@@ -248,20 +248,27 @@ export default {
         { name: 'creationMode', title: this.$t('StudyActivityForm.creation_mode_title') },
         { name: 'selectFlowchartGroup', title: this.$t('StudyActivityForm.flowchart_group_title') }
       ],
-      selectionHeaders: [
+      selectionFromLibraryHeaders: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('StudyActivityForm.flowchart_group'), value: 'flowchartGroup.sponsorPreferredName' },
-        { text: this.$t('StudyActivity.activity_group'), value: 'activity.activityGroup.name' },
-        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity.activitySubGroup.name' },
+        { text: this.$t('StudyActivityForm.flowchart_group'), value: 'flowchart_group.sponsor_preferred_name' },
+        { text: this.$t('StudyActivity.activity_group'), value: 'activity_group.name' },
+        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity_subgroup.name' },
+        { text: this.$t('StudyActivity.activity'), value: 'name' }
+      ],
+      selectionFromStudiesHeaders: [
+        { text: '', value: 'actions', width: '5%' },
+        { text: this.$t('StudyActivityForm.flowchart_group'), value: 'flowchart_group.sponsor_preferred_name' },
+        { text: this.$t('StudyActivity.activity_group'), value: 'activity.activity_group.name' },
+        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity.activity_subgroup.name' },
         { text: this.$t('StudyActivity.activity'), value: 'name' }
       ],
       selectedActivities: [],
       studyActivityHeaders: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('StudyActivityForm.study_id'), value: 'studyUid' },
-        { text: this.$t('StudyActivityForm.flowchart_group'), value: 'flowchartGroup.sponsorPreferredName' },
-        { text: this.$t('StudyActivity.activity_group'), value: 'activity.activityGroup.name' },
-        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity.activitySubGroup.name' },
+        { text: this.$t('StudyActivityForm.study_id'), value: 'study_uid' },
+        { text: this.$t('StudyActivityForm.flowchart_group'), value: 'flowchart_group.sponsor_preferred_name' },
+        { text: this.$t('StudyActivity.activity_group'), value: 'activity.activity_group.name' },
+        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity.activity_subgroup.name' },
         { text: this.$t('StudyActivity.activity'), value: 'activity.name' }
       ],
       filters: ''
@@ -305,30 +312,30 @@ export default {
         this.options.page = 1
       }
       const params = {
-        pageNumber: (this.options.page),
-        pageSize: this.options.itemsPerPage,
-        totalCount: true
+        page_number: (this.options.page),
+        page_size: this.options.itemsPerPage,
+        total_count: true
       }
       if (this.filters && this.filters !== undefined) {
         const filtersObj = JSON.parse(this.filters)
-        if (filtersObj.activityGroup) {
-          params.activityGroupNames = []
-          filtersObj.activityGroup.v.forEach(value => {
-            params.activityGroupNames.push(value)
+        if (filtersObj.activity_group) {
+          params.activity_group_names = []
+          filtersObj.activity_group.v.forEach(value => {
+            params.activity_group_names.push(value)
           })
-          delete filtersObj.activityGroup
+          delete filtersObj.activity_group
         }
-        if (filtersObj.activitySubGroup) {
-          params.activitySubGroupNames = []
-          filtersObj.activitySubGroup.v.forEach(value => {
-            params.activitySubGroupNames.push(value)
+        if (filtersObj.activity_subgroup) {
+          params.activity_subgroup_names = []
+          filtersObj.activity_subgroup.v.forEach(value => {
+            params.activity_subgroup_names.push(value)
           })
-          delete filtersObj.activitySubGroup
+          delete filtersObj.activity_subgroup
         }
         if (filtersObj.name) {
-          params.activityNames = []
+          params.activity_names = []
           filtersObj.name.v.forEach(value => {
-            params.activityNames.push(value)
+            params.activity_names.push(value)
           })
           delete filtersObj.name
         }
@@ -337,7 +344,7 @@ export default {
         }
       }
       if (this.options.sortBy && this.options.sortBy.length !== 0 && sort !== undefined) {
-        params.sortBy = `{"${this.options.sortBy[0]}":${!sort}}`
+        params.sort_by = `{"${this.options.sortBy[0]}":${!sort}}`
       }
       activities.get(params, 'activities').then(resp => {
         this.activities = resp.data.items
@@ -345,24 +352,24 @@ export default {
       })
     },
     modifyFilters (jsonFilter, params) {
-      if (jsonFilter.activityGroup) {
-        params.activityGroupNames = []
-        jsonFilter.activityGroup.v.forEach(value => {
-          params.activityGroupNames.push(value)
+      if (jsonFilter.activity_group) {
+        params.activity_group_names = []
+        jsonFilter.activity_group.v.forEach(value => {
+          params.activity_group_names.push(value)
         })
-        delete jsonFilter.activityGroup
+        delete jsonFilter.activity_group
       }
-      if (jsonFilter.activitySubGroup) {
-        params.activitySubGroupNames = []
-        jsonFilter.activitySubGroup.v.forEach(value => {
-          params.activitySubGroupNames.push(value)
+      if (jsonFilter.activity_subgroup) {
+        params.activity_subgroup_names = []
+        jsonFilter.activity_subgroup.v.forEach(value => {
+          params.activity_subgroup_names.push(value)
         })
-        delete jsonFilter.activitySubGroup
+        delete jsonFilter.activity_subgroup
       }
       if (jsonFilter.name) {
-        params.activityNames = []
+        params.activity_names = []
         jsonFilter.name.v.forEach(value => {
-          params.activityNames.push(value)
+          params.activity_names.push(value)
         })
         delete jsonFilter.name
       }
@@ -377,7 +384,7 @@ export default {
         return
       }
       const activityCopy = { ...activity }
-      activityCopy.flowchartGroup = { ...this.currentFlowchartGroup }
+      activityCopy.flowchart_group = { ...this.currentFlowchartGroup }
       this.selectedActivities.push(activityCopy)
     },
     selectAllActivities () {
@@ -387,7 +394,7 @@ export default {
       for (const activity of this.activities) {
         if (!this.selectedActivities.find(item => item.uid === activity.uid)) {
           const activityCopy = { ...activity }
-          activityCopy.flowchartGroup = { ...this.currentFlowchartGroup }
+          activityCopy.flowchart_group = { ...this.currentFlowchartGroup }
           this.selectedActivities.push(activityCopy)
         }
       }
@@ -440,13 +447,13 @@ export default {
         let payload
         if (this.creationMode === 'selectFromLibrary') {
           payload = {
-            flowchartGroupUid: item.flowchartGroup.termUid,
-            activityUid: item.uid
+            flowchart_group_uid: item.flowchart_group.term_uid,
+            activity_uid: item.uid
           }
         } else {
           payload = {
-            flowchartGroupUid: item.flowchartGroup.termUid,
-            activityUid: item.activity.uid
+            flowchart_group_uid: item.flowchart_group.term_uid,
+            activity_uid: item.activity.uid
           }
         }
         await study.createStudyActivity(this.selectedStudy.uid, payload)

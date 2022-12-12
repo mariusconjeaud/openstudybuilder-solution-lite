@@ -17,17 +17,17 @@
       :template="selectedObject"
       />
   </template>
-  <template v-slot:item.confirmatoryTesting="{ item }">
+  <template v-slot:item.confirmatory_testing="{ item }">
     <template v-if="item.defaultParameterValuesSet === undefined">
-      <template v-if="item.confirmatoryTesting !== null">
-        {{ item.confirmatoryTesting|yesno }}
+      <template v-if="item.confirmatory_testing !== null">
+        {{ item.confirmatory_testing|yesno }}
       </template>
       <template v-else>
         {{ $t('_global.not_applicable_long') }}
       </template>
     </template>
   </template>
-  <template v-slot:item.categories.name.sponsorPreferredName="{ item }">
+  <template v-slot:item.categories.name.sponsor_preferred_name="{ item }">
     <template v-if="item.defaultParameterValuesSet === undefined">
       <template v-if="item.categories">
         {{ item.categories|terms }}
@@ -37,13 +37,14 @@
       </template>
     </template>
   </template>
-  <template v-slot:indexingDialog="{ closeDialog, template }">
+  <template v-slot:indexingDialog="{ closeDialog, template, show }">
     <template-indexing-dialog
       @close="closeDialog"
       @updated="refreshTable"
       :template="template"
       :prepare-payload-func="prepareIndexingPayload"
       :url-prefix="urlPrefix"
+      :show="show"
       >
       <template v-slot:form="{ form }">
         <objective-template-indexing-form
@@ -80,10 +81,10 @@ export default {
           width: '5%'
         },
         { text: this.$t('_global.indications'), value: 'indications.name' },
-        { text: this.$t('ObjectiveTemplateTable.objective_cat'), value: 'categories.name.sponsorPreferredName' },
-        { text: this.$t('ObjectiveTemplateTable.confirmatory_testing'), value: 'confirmatoryTesting' },
+        { text: this.$t('ObjectiveTemplateTable.objective_cat'), value: 'categories.name.sponsor_preferred_name' },
+        { text: this.$t('ObjectiveTemplateTable.confirmatory_testing'), value: 'confirmatory_testing' },
         { text: this.$t('_global.template'), value: 'name', width: '30%' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
       ],

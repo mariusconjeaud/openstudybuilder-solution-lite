@@ -22,9 +22,9 @@ from clinical_mdr_api.models.odm_common_models import (
 class OdmXmlExtension(ConceptModel):
     prefix: Optional[str]
     namespace: Optional[str]
-    xmlExtensionTags: Optional[Sequence[OdmXmlExtensionTagSimpleModel]]
-    xmlExtensionAttributes: Optional[Sequence[OdmXmlExtensionAttributeSimpleModel]]
-    possibleActions: List[str]
+    xml_extension_tags: Sequence[OdmXmlExtensionTagSimpleModel]
+    xml_extension_attributes: Sequence[OdmXmlExtensionAttributeSimpleModel]
+    possible_actions: List[str]
 
     @classmethod
     def from_odm_xml_extension_ar(
@@ -42,14 +42,14 @@ class OdmXmlExtension(ConceptModel):
             name=odm_xml_extension_ar.concept_vo.name,
             prefix=odm_xml_extension_ar.concept_vo.prefix,
             namespace=odm_xml_extension_ar.concept_vo.namespace,
-            libraryName=odm_xml_extension_ar.library.name,
-            startDate=odm_xml_extension_ar.item_metadata.start_date,
-            endDate=odm_xml_extension_ar.item_metadata.end_date,
+            library_name=odm_xml_extension_ar.library.name,
+            start_date=odm_xml_extension_ar.item_metadata.start_date,
+            end_date=odm_xml_extension_ar.item_metadata.end_date,
             status=odm_xml_extension_ar.item_metadata.status.value,
             version=odm_xml_extension_ar.item_metadata.version,
-            changeDescription=odm_xml_extension_ar.item_metadata.change_description,
-            userInitials=odm_xml_extension_ar.item_metadata.user_initials,
-            xmlExtensionTags=sorted(
+            change_description=odm_xml_extension_ar.item_metadata.change_description,
+            user_initials=odm_xml_extension_ar.item_metadata.user_initials,
+            xml_extension_tags=sorted(
                 [
                     OdmXmlExtensionTagSimpleModel.from_odm_xml_extension_tag_uid(
                         uid=xml_extension_tag_uid,
@@ -59,7 +59,7 @@ class OdmXmlExtension(ConceptModel):
                 ],
                 key=lambda item: item.name,
             ),
-            xmlExtensionAttributes=sorted(
+            xml_extension_attributes=sorted(
                 [
                     OdmXmlExtensionAttributeSimpleModel.from_odm_xml_extension_attribute_uid(
                         uid=xml_extension_attribute_uid,
@@ -69,7 +69,7 @@ class OdmXmlExtension(ConceptModel):
                 ],
                 key=lambda item: item.name,
             ),
-            possibleActions=sorted(
+            possible_actions=sorted(
                 [_.value for _ in odm_xml_extension_ar.get_possible_actions()]
             ),
         )
@@ -101,6 +101,6 @@ class OdmXmlExtensionVersion(OdmXmlExtension):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the objective (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )

@@ -113,19 +113,19 @@ class StudyCompoundSelectionService(
 
             new_selection = StudySelectionCompoundVO.from_input_values(
                 compound_uid=repos.compound_alias_repository.get_compound_uid_by_alias_uid(
-                    selection_create_input.compoundAliasUid
+                    selection_create_input.compound_alias_uid
                 ),
                 study_uid=study_uid,
-                compound_alias_uid=selection_create_input.compoundAliasUid,
-                type_of_treatment_uid=selection_create_input.typeOfTreatmentUid,
-                route_of_administration_uid=selection_create_input.routeOfAdministrationUid,
-                strength_value_uid=selection_create_input.strengthValueUid,
-                dosage_form_uid=selection_create_input.dosageFormUid,
-                dispensed_in_uid=selection_create_input.dispensedInUid,
-                device_uid=selection_create_input.deviceUid,
-                formulation_uid=selection_create_input.formulationUid,
-                other_info=selection_create_input.otherInfo,
-                reason_for_missing_value_uid=selection_create_input.reasonForMissingNullValueUid,
+                compound_alias_uid=selection_create_input.compound_alias_uid,
+                type_of_treatment_uid=selection_create_input.type_of_treatment_uid,
+                route_of_administration_uid=selection_create_input.route_of_administration_uid,
+                strength_value_uid=selection_create_input.strength_value_uid,
+                dosage_form_uid=selection_create_input.dosage_form_uid,
+                dispensed_in_uid=selection_create_input.dispensed_in_uid,
+                device_uid=selection_create_input.device_uid,
+                formulation_uid=selection_create_input.formulation_uid,
+                other_info=selection_create_input.other_info,
+                reason_for_missing_value_uid=selection_create_input.reason_for_missing_null_value_uid,
                 study_compound_dosing_count=0,
                 generate_uid_callback=repos.study_selection_compound_repository.generate_uid,
                 user_initials=self.author,
@@ -373,15 +373,15 @@ class StudyCompoundSelectionService(
     ) -> StudySelectionCompoundVO:
         # transform current to input model
         transformed_current = StudySelectionCompoundInput(
-            compoundUid=current_study_compound.compound_uid,
-            typeOfTreatmentUid=current_study_compound.type_of_treatment_uid,
-            routeOfAdministrationUid=current_study_compound.route_of_administration_uid,
-            dosageFormUid=current_study_compound.dosage_form_uid,
-            dispensedInUid=current_study_compound.dispensed_in_uid,
-            deviceUid=current_study_compound.device_uid,
-            formulationUid=current_study_compound.formulation_uid,
-            otherInfo=current_study_compound.other_info,
-            reasonForMissingNullValueUid=current_study_compound.reason_for_missing_value_uid,
+            compound_uid=current_study_compound.compound_uid,
+            type_of_treatment_uid=current_study_compound.type_of_treatment_uid,
+            route_of_administration_uid=current_study_compound.route_of_administration_uid,
+            dosage_form_uid=current_study_compound.dosage_form_uid,
+            dispensed_in_uid=current_study_compound.dispensed_in_uid,
+            device_uid=current_study_compound.device_uid,
+            formulation_uid=current_study_compound.formulation_uid,
+            other_info=current_study_compound.other_info,
+            reason_for_missing_null_value_uid=current_study_compound.reason_for_missing_value_uid,
         )
 
         # fill the missing from the inputs
@@ -392,18 +392,18 @@ class StudyCompoundSelectionService(
 
         return StudySelectionCompoundVO.from_input_values(
             compound_uid=self._repos.compound_alias_repository.get_compound_uid_by_alias_uid(
-                request_study_compound.compoundAliasUid
+                request_study_compound.compound_alias_uid
             ),
-            compound_alias_uid=request_study_compound.compoundAliasUid,
-            type_of_treatment_uid=request_study_compound.typeOfTreatmentUid,
-            route_of_administration_uid=request_study_compound.routeOfAdministrationUid,
-            strength_value_uid=request_study_compound.strengthValueUid,
-            dosage_form_uid=request_study_compound.dosageFormUid,
-            dispensed_in_uid=request_study_compound.dispensedInUid,
-            device_uid=request_study_compound.deviceUid,
-            formulation_uid=request_study_compound.formulationUid,
-            other_info=request_study_compound.otherInfo,
-            reason_for_missing_value_uid=request_study_compound.reasonForMissingNullValueUid,
+            compound_alias_uid=request_study_compound.compound_alias_uid,
+            type_of_treatment_uid=request_study_compound.type_of_treatment_uid,
+            route_of_administration_uid=request_study_compound.route_of_administration_uid,
+            strength_value_uid=request_study_compound.strength_value_uid,
+            dosage_form_uid=request_study_compound.dosage_form_uid,
+            dispensed_in_uid=request_study_compound.dispensed_in_uid,
+            device_uid=request_study_compound.device_uid,
+            formulation_uid=request_study_compound.formulation_uid,
+            other_info=request_study_compound.other_info,
+            reason_for_missing_value_uid=request_study_compound.reason_for_missing_null_value_uid,
             study_compound_dosing_count=current_study_compound.study_compound_dosing_count,
             study_selection_uid=current_study_compound.study_selection_uid,
             user_initials=self.author,

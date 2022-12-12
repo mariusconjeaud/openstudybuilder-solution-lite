@@ -22,7 +22,7 @@ export default {
     return repository.post(`${resource}/${source}/${uid}/approve`)
   },
   newVersion (uid, source) {
-    return repository.post(`${resource}/${source}/${uid}/new-version`)
+    return repository.post(`${resource}/${source}/${uid}/versions`)
   },
   getCompounds () {
     return repository.get(`${resource}/compounds`)
@@ -38,7 +38,8 @@ export default {
   },
   getSubGroups (group) {
     const params = {
-      activityGroupUid: group
+      activity_group_uid: group,
+      page_size: 0
     }
     return repository.get(`${resource}/activity-sub-groups`, { params })
   },
@@ -56,7 +57,8 @@ export default {
   },
   getSubGroupActivities (group) {
     const params = {
-      activitySubGroupUid: group
+      activity_subgroup_uid: group,
+      page_size: 0
     }
     return repository.get(`${resource}/activities`, { params })
   },

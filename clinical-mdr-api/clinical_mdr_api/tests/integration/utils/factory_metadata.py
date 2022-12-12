@@ -25,19 +25,19 @@ def input_metadata_in_study(study_uid):
 
 def generate_id_metadata() -> StudyIdentificationMetadataJsonModel:
     ri_data = RegistryIdentifiersJsonModel(
-        ctGovId="some ct gov id",
-        ctGovIdNullValueCode=None,
-        eudractId="some eudtact id",
-        eudractIdNullValueCode=None,
-        universalTrialNumberUTN="some utn id",
-        universalTrialNumberUTNNullValueCode=None,
-        japaneseTrialRegistryIdJAPIC="some japic id",
-        japaneseTrialRegistryIdJAPICNullValueCode=None,
-        investigationalNewDrugApplicationNumberIND="some ind id",
-        investigationalNewDrugApplicationNumberINDNullValueCode=None,
+        ct_gov_id="some ct gov id",
+        ct_gov_id_null_value_code=None,
+        eudract_id="some eudtact id",
+        eudract_id_null_value_code=None,
+        universal_trial_number_utn="some utn id",
+        universal_trial_number_utn_null_value_code=None,
+        japanese_trial_registry_id_japic="some japic id",
+        japanese_trial_registry_id_japic_null_value_code=None,
+        investigational_new_drug_application_number_ind="some ind id",
+        investigational_new_drug_application_number_ind_null_value_code=None,
     )
 
-    return StudyIdentificationMetadataJsonModel(registryIdentifiers=ri_data)
+    return StudyIdentificationMetadataJsonModel(registry_identifiers=ri_data)
 
 
 def generate_ver_metadata() -> StudyVersionMetadataJsonModel:
@@ -47,64 +47,64 @@ def generate_ver_metadata() -> StudyVersionMetadataJsonModel:
 
 def generate_high_level_study_design() -> HighLevelStudyDesignJsonModel:
     return HighLevelStudyDesignJsonModel(
-        studyTypeCode=None,
-        studyTypeNullValueCode=None,
-        trialTypesCodes=None,
-        trialTypesNullValueCode=None,
-        trialPhaseCode=None,
-        trialPhaseNullValueCode=None,
-        isExtensionTrial=None,
-        isExtensionTrialNullValueCode=None,
-        isAdaptiveDesign=None,
-        isAdaptiveDesignNullValueCode=None,
-        studyStopRules="some stop rule",
-        studyStopRulesNullValueCode=None,
-        confirmedResponseMinimumDuration=None,
-        confirmedResponseMinimumDurationNullValueCode=None,
-        postAuthIndicator="True",
-        postAuthIndicatorNullValueCode=None,
+        study_type_code=None,
+        study_type_null_value_code=None,
+        trial_types_codes=None,
+        trial_types_null_value_code=None,
+        trial_phase_code=None,
+        trial_phase_null_value_code=None,
+        is_extension_trial=None,
+        is_extension_trial_null_value_code=None,
+        is_adaptive_design=None,
+        is_adaptive_design_null_value_code=None,
+        study_stop_rules="some stop rule",
+        study_stop_rules_null_value_code=None,
+        confirmed_response_minimum_duration=None,
+        confirmed_response_minimum_duration_null_value_code=None,
+        post_auth_indicator="True",
+        post_auth_indicator_null_value_code=None,
     )
 
 
 def generate_study_population() -> StudyPopulationJsonModel:
     return StudyPopulationJsonModel(
-        therapeuticAreasCodes=None,
-        therapeuticAreasNullValueCode=None,
-        diseaseConditionsOrIndicationsCodes=None,
-        diseaseConditionsOrIndicationsNullValueCode=None,
-        diagnosisGroupsCodes=None,
-        diagnosisGroupsNullValueCode=None,
-        sexOfParticipantsCode=None,
-        sexOfParticipantsNullValueCode=None,
-        rareDiseaseIndicator=None,
-        rareDiseaseIndicatorNullValueCode=None,
-        healthySubjectIndicator=None,
-        healthySubjectIndicatorNullValueCode=None,
-        plannedMinimumAgeOfSubjects=None,
-        plannedMinimumAgeOfSubjectsNullValueCode=None,
-        plannedMaximumAgeOfSubjects=None,
-        plannedMaximumAgeOfSubjectsNullValueCode=None,
-        stableDiseaseMinimumDuration=None,
-        stableDiseaseMinimumDurationNullValueCode=None,
-        pediatricStudyIndicator=None,
-        pediatricStudyIndicatorNullValueCode=None,
-        pediatricPostmarketStudyIndicator=False,
-        pediatricPostmarketStudyIndicatorNullValueCode=None,
-        pediatricInvestigationPlanIndicator=True,
-        pediatricInvestigationPlanIndicatorNullValueCode=None,
-        relapseCriteria="some criteria",
-        relapseCriteriaNullValueCode=None,
+        therapeutic_areas_codes=None,
+        therapeutic_areas_null_value_code=None,
+        disease_conditions_or_indications_codes=None,
+        disease_conditions_or_indications_null_value_code=None,
+        diagnosis_groups_codes=None,
+        diagnosis_groups_null_value_code=None,
+        sex_of_participants_code=None,
+        sex_of_participants_null_value_code=None,
+        rare_disease_indicator=None,
+        rare_disease_indicator_null_value_code=None,
+        healthy_subject_indicator=None,
+        healthy_subject_indicator_null_value_code=None,
+        planned_minimum_age_of_subjects=None,
+        planned_minimum_age_of_subjects_null_value_code=None,
+        planned_maximum_age_of_subjects=None,
+        planned_maximum_age_of_subjects_null_value_code=None,
+        stable_disease_minimum_duration=None,
+        stable_disease_minimum_duration_null_value_code=None,
+        pediatric_study_indicator=None,
+        pediatric_study_indicator_null_value_code=None,
+        pediatric_postmarket_study_indicator=False,
+        pediatric_postmarket_study_indicator_null_value_code=None,
+        pediatric_investigation_plan_indicator=True,
+        pediatric_investigation_plan_indicator_null_value_code=None,
+        relapse_criteria="some criteria",
+        relapse_criteria_null_value_code=None,
     )
 
 
 def generate_study_metadata() -> StudyMetadataJsonModel:
     return StudyMetadataJsonModel(
-        identificationMetadata=generate_id_metadata(),
-        versionMetadata=generate_ver_metadata(),
-        highLevelStudyDesign=generate_high_level_study_design(),
-        studyPopulation=generate_study_population(),
+        identification_metadata=generate_id_metadata(),
+        version_metadata=generate_ver_metadata(),
+        high_level_study_design=generate_high_level_study_design(),
+        study_population=generate_study_population(),
     )
 
 
 def generate_study_patch_request() -> StudyPatchRequestJsonModel:
-    return StudyPatchRequestJsonModel(currentMetadata=generate_study_metadata())
+    return StudyPatchRequestJsonModel(current_metadata=generate_study_metadata())

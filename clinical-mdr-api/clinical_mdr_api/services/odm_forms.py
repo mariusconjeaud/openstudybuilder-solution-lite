@@ -19,13 +19,8 @@ from clinical_mdr_api.models.odm_form import (
     OdmFormPatchInput,
     OdmFormPostInput,
     OdmFormVersion,
-    OdmFormWithRelationsPatchInput,
-    OdmFormWithRelationsPostInput,
 )
 from clinical_mdr_api.services._utils import get_input_or_new_value, normalize_string
-from clinical_mdr_api.services.concepts.concept_generic_service import (
-    _AggregateRootType,
-)
 from clinical_mdr_api.services.odm_descriptions import OdmDescriptionService
 from clinical_mdr_api.services.odm_generic_service import OdmGenericService
 
@@ -55,17 +50,22 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
 
     def _create_aggregate_root(
         self, concept_input: OdmFormPostInput, library
-    ) -> _AggregateRootType:
+    ) -> OdmFormAR:
         return OdmFormAR.from_input_values(
             author=self.user_initials,
             concept_vo=OdmFormVO.from_repository_values(
                 oid=get_input_or_new_value(concept_input.oid, "F.", concept_input.name),
                 name=concept_input.name,
-                sdtm_version=concept_input.sdtmVersion,
+                sdtm_version=concept_input.sdtm_version,
                 repeating=strtobool(concept_input.repeating),
-                scope_uid=concept_input.scopeUid,
-                description_uids=concept_input.descriptionUids,
-                alias_uids=concept_input.aliasUids,
+                scope_uid=concept_input.scope_uid,
+                description_uids=concept_input.descriptions,
+                alias_uids=concept_input.alias_uids,
+                activity_group_uids=[],
+                item_group_uids=[],
+                xml_extension_tag_uids=[],
+                xml_extension_attribute_uids=[],
+                xml_extension_tag_attribute_uids=[],
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
@@ -80,15 +80,20 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
     ) -> OdmFormAR:
         item.edit_draft(
             author=self.user_initials,
-            change_description=concept_edit_input.changeDescription,
+            change_description=concept_edit_input.change_description,
             concept_vo=OdmFormVO.from_repository_values(
                 oid=concept_edit_input.oid,
                 name=concept_edit_input.name,
-                sdtm_version=concept_edit_input.sdtmVersion,
+                sdtm_version=concept_edit_input.sdtm_version,
                 repeating=strtobool(concept_edit_input.repeating),
-                scope_uid=concept_edit_input.scopeUid,
-                description_uids=concept_edit_input.descriptionUids,
-                alias_uids=concept_edit_input.aliasUids,
+                scope_uid=concept_edit_input.scope_uid,
+                description_uids=concept_edit_input.descriptions,
+                alias_uids=concept_edit_input.alias_uids,
+                activity_group_uids=[],
+                item_group_uids=[],
+                xml_extension_tag_uids=[],
+                xml_extension_attribute_uids=[],
+                xml_extension_tag_attribute_uids=[],
             ),
             concept_exists_by_callback=self._repos.odm_form_repository.exists_by,
             find_term_callback=self._repos.ct_term_attributes_repository.find_by_uid,
@@ -98,9 +103,7 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
         return item
 
     @db.transaction
-    def create_with_relations(
-        self, concept_input: OdmFormWithRelationsPostInput
-    ) -> _AggregateRootType:
+    def create_with_relations(self, concept_input: OdmFormPostInput) -> OdmForm:
         description_uids = [
             description
             if isinstance(description, str)
@@ -110,24 +113,31 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
             for description in concept_input.descriptions
         ]
 
-        return self.non_transactional_create(
+        form = self.non_transactional_create(
             concept_input=OdmFormPostInput(
-                library=concept_input.libraryName,
+                library=concept_input.library_name,
                 name=concept_input.name,
-                sdtmVersion=concept_input.sdtmVersion,
+                sdtm_version=concept_input.sdtm_version,
                 oid=get_input_or_new_value(concept_input.oid, "F.", concept_input.name),
                 repeating=concept_input.repeating,
-                descriptionUids=description_uids,
-                aliasUids=concept_input.aliasUids,
+                scope_uid=concept_input.scope_uid,
+                descriptions=description_uids,
+                alias_uids=concept_input.alias_uids,
             )
+        )
+
+        return self._transform_aggregate_root_to_pydantic_model(
+            self._repos.odm_form_repository.find_by_uid_2(form.uid)
         )
 
     @db.transaction
     def update_with_relations(
-        self, uid: str, concept_edit_input: OdmFormWithRelationsPatchInput
-    ) -> _AggregateRootType:
+        self, uid: str, concept_edit_input: OdmFormPatchInput
+    ) -> OdmForm:
         description_uids = [
-            OdmDescriptionService()
+            description
+            if isinstance(description, str)
+            else OdmDescriptionService()
             .non_transactional_edit(uid=description.uid, concept_edit_input=description)
             .uid
             if isinstance(description, OdmDescriptionBatchPatchInput)
@@ -137,17 +147,22 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
             for description in concept_edit_input.descriptions
         ]
 
-        return self.non_transactional_edit(
+        form = self.non_transactional_edit(
             uid=uid,
             concept_edit_input=OdmFormPatchInput(
-                changeDescription=concept_edit_input.changeDescription,
+                change_description=concept_edit_input.change_description,
                 name=concept_edit_input.name,
-                sdtmVersion=concept_edit_input.sdtmVersion,
+                sdtm_version=concept_edit_input.sdtm_version,
                 oid=concept_edit_input.oid,
                 repeating=concept_edit_input.repeating,
-                descriptionUids=description_uids,
-                aliasUids=concept_edit_input.aliasUids,
+                scope_uid=concept_edit_input.scope_uid,
+                descriptions=description_uids,
+                alias_uids=concept_edit_input.alias_uids,
             ),
+        )
+
+        return self._transform_aggregate_root_to_pydantic_model(
+            self._repos.odm_form_repository.find_by_uid_2(form.uid)
         )
 
     @db.transaction
@@ -160,7 +175,7 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         if odm_form_ar.item_metadata.status == LibraryItemStatus.RETIRED:
-            raise exceptions.BusinessLogicException("The object is inactive")
+            raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
 
         if override:
             self._repos.odm_form_repository.remove_relation(
@@ -194,7 +209,7 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         if odm_form_ar.item_metadata.status == LibraryItemStatus.RETIRED:
-            raise exceptions.BusinessLogicException("The object is inactive")
+            raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
 
         if override:
             self._repos.odm_form_repository.remove_relation(
@@ -211,10 +226,10 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
                     relation_uid=item_group.uid,
                     relationship_type=RelationType.ITEM_GROUP,
                     parameters={
-                        "order_number": item_group.orderNumber,
+                        "order_number": item_group.order_number,
                         "mandatory": strtobool(item_group.mandatory),
                         "locked": strtobool(item_group.locked),
-                        "collection_exception_condition_oid": item_group.collectionExceptionConditionOid,
+                        "collection_exception_condition_oid": item_group.collection_exception_condition_oid,
                     },
                 )
         except ValueError as exception:
@@ -236,7 +251,7 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         if odm_form_ar.item_metadata.status == LibraryItemStatus.RETIRED:
-            raise exceptions.BusinessLogicException("The object is inactive")
+            raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
 
         if override:
             self.fail_if_non_present_tags_are_used_by_current_odm_element_attributes(
@@ -280,7 +295,7 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         if odm_form_ar.item_metadata.status == LibraryItemStatus.RETIRED:
-            raise exceptions.BusinessLogicException("The object is inactive")
+            raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
 
         self.fail_if_these_attributes_cannot_be_added(
             odm_xml_extension_relation_post_input
@@ -323,7 +338,7 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         if odm_form_ar.item_metadata.status == LibraryItemStatus.RETIRED:
-            raise exceptions.BusinessLogicException("The object is inactive")
+            raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
 
         self.fail_if_these_attributes_cannot_be_added(
             odm_xml_extension_relation_post_input,
@@ -359,9 +374,13 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
     def get_active_relationships(self, uid: str):
         if not self._repos.odm_form_repository.exists_by("uid", uid, True):
             raise exceptions.NotFoundException(
-                f"Odm Form with uid {uid} does not exist."
+                f"ODM Form identified by uid ({uid}) does not exist."
             )
 
         return self._repos.odm_form_repository.get_active_relationships(
             uid, ["form_ref"]
         )
+
+    @db.transaction
+    def get_forms_that_belongs_to_template(self):
+        return self._repos.odm_form_repository.get_if_has_relationship("form_ref")

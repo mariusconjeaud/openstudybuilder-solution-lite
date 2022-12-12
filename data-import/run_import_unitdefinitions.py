@@ -83,25 +83,25 @@ class Units(BaseImporter):
                 codelist_name = self.sponsor_codelist_legacy_name_map[
                     row[headers.index("CD_LIST_ID")]
                 ]
-            codelistUid = ""
+            codelist_uid = ""
             if codelist_name in code_lists_uids:
-                codelistUid = code_lists_uids[codelist_name]
+                codelist_uid = code_lists_uids[codelist_name]
             else:
                 self.log.warning(
                     f"Codelist '{codelist_name}' does not exist, skipping row."
                 )
                 continue
             data = {
-                "termName": row[headers.index("CD_VAL_LB")],
+                "term_name": row[headers.index("CD_VAL_LB")],
                 "body": {
-                    "codelistUid": codelistUid,
-                    "catalogueName": "SDTM CT",
-                    "codeSubmissionValue": row[headers.index("CD_VAL")],
-                    "nciPreferredName": "UNK",
+                    "codelist_uid": codelist_uid,
+                    "catalogue_name": "SDTM CT",
+                    "code_submission_value": row[headers.index("CD_VAL")],
+                    "nci_preferred_name": "UNK",
                     "definition": row[headers.index("description")],
-                    "sponsorPreferredName": row[headers.index("CD_VAL_LB")],
-                    "sponsorPreferredNameSentenceCase": row[headers.index("CD_VAL_LB")],
-                    "libraryName": "Sponsor",
+                    "sponsor_preferred_name": row[headers.index("CD_VAL_LB")],
+                    "sponsor_preferred_name_sentence_case": row[headers.index("CD_VAL_LB")],
+                    "library_name": "Sponsor",
                     "order": row[headers.index("CD_VAL_SORT_SEQ")],
                 },
             }
@@ -110,15 +110,15 @@ class Units(BaseImporter):
         await asyncio.gather(*api_tasks)
 
     async def process_units(self, data: dict, session: aiohttp.ClientSession):
-        termName = data["termName"]
-        self.log.info(f"Adding unit dimension {termName}")
+        term_name = data["term_name"]
+        self.log.info(f"Adding unit dimension {term_name}")
         post_status, post_result = await self.api.post_to_api_async(
             url="/ct/terms", body=data["body"], session=session
         )
         if post_status == 201:
-            self.cache.added_terms[termName] = post_result
+            self.cache.added_terms[term_name] = post_result
             status, result = await self.api.approve_async(
-                "/ct/terms/" + post_result["termUid"] + "/names/approve",
+                "/ct/terms/" + post_result["term_uid"] + "/names/approve",
                 session=session,
             )
             if status != 201:
@@ -126,7 +126,7 @@ class Units(BaseImporter):
             else:
                 self.metrics.icrement("/ct/terms-NamesApprove")
             status, result = await self.api.approve_async(
-                "/ct/terms/" + post_result["termUid"] + "/attributes/approve",
+                "/ct/terms/" + post_result["term_uid"] + "/attributes/approve",
                 session=session,
             )
             if status != 201:
@@ -135,21 +135,21 @@ class Units(BaseImporter):
                 self.metrics.icrement("/ct/terms-AttributesApprove")
             return result
         else:
-            termUid = None
-            if termName in self.cache.added_terms:
-                termUid = self.cache.added_terms[termName]["termUid"]
+            term_uid = None
+            if term_name in self.cache.added_terms:
+                term_uid = self.cache.added_terms[term_name]["term_uid"]
             elif (
-                data["body"]["codeSubmissionValue"]
+                data["body"]["code_submission_value"]
                 in self.cache.all_terms_code_submission_values
             ):
-                termUid = self.cache.all_terms_code_submission_values[
-                    data["body"]["codeSubmissionValue"]
+                term_uid = self.cache.all_terms_code_submission_values[
+                    data["body"]["code_submission_value"]
                 ]
-            if termUid:
-                codelist_uid = data["body"]["codelistUid"]
+            if term_uid:
+                codelist_uid = data["body"]["codelist_uid"]
                 result = await self.api.post_to_api_async(
-                    url="/ct/codelists/" + codelist_uid + "/add-term",
-                    body={"termUid": termUid, "order": data["body"]["order"]},
+                    url="/ct/codelists/" + codelist_uid + "/terms",
+                    body={"term_uid": term_uid, "order": data["body"]["order"]},
                     session=session,
                 )
                 return result
@@ -171,23 +171,23 @@ class Units(BaseImporter):
                 self.api.get_all_identifiers(
                     self.api.get_all_from_api(
                         "/dictionaries/terms",
-                        params={"codelist_uid": ucum_codelist["codelistUid"]},
+                        params={"codelist_uid": ucum_codelist["codelist_uid"]},
                     ),
                     "name",
-                    "termUid",
+                    "term_uid",
                 )
             )
         all_unit_dimension_terms = self.api.get_all_identifiers(
             self.api.get_all_from_api(
                 "/ct/terms/attributes?codelist_name=Unit Dimension"
             ),
-            identifier="codeSubmissionValue",
-            value="termUid",
+            identifier="code_submission_value",
+            value="term_uid",
         )
         all_unit_subset_terms = self.api.get_all_identifiers(
             self.api.get_all_from_api("/ct/terms/names?codelist_name=Unit Subset"),
-            identifier="sponsorPreferredName",
-            value="termUid",
+            identifier="sponsor_preferred_name",
+            value="term_uid",
         )
         age_unit_subset_uid = all_unit_subset_terms["Age Unit"]
         dose_unit_subset_uid = all_unit_subset_terms["Dose Unit"]
@@ -197,26 +197,26 @@ class Units(BaseImporter):
         for row in readCSV:
             name = row[headers.index("UNIT")]
 
-            ucumUid = all_ucum_terms.get(row[headers.index("UCUM name")])
+            ucum_uid = all_ucum_terms.get(row[headers.index("UCUM name")])
 
-            unitDimensionUid = all_unit_dimension_terms.get(
+            unit_dimension_uid = all_unit_dimension_terms.get(
                 row[headers.index("UNIT_DIMENSION")]
             )
 
 
-            ctUnits = []
+            ct_units = []
             # Link to CDISC units
             # TODO look up via submission value instead of "guessing" uid?
             if row[headers.index("CT_CD")] != "":
                 if row[headers.index("CT_SUBMVAL")] not in ("", "0"):
                     # Guess uid, we know it should be  Cnnnnn_{submission value}
-                    ctUnits.append(
+                    ct_units.append(
                         row[headers.index("CT_CD")]
                         + "_"
                         + row[headers.index("CT_SUBMVAL")]
                     )
                 if row[headers.index("CT_SUBMVAL_2")] not in ("", "0"):
-                    ctUnits.append(
+                    ct_units.append(
                         row[headers.index("CT_CD")]
                         + "_"
                         + row[headers.index("CT_SUBMVAL_2")]
@@ -224,73 +224,73 @@ class Units(BaseImporter):
             # Link to sponsor defined units
             if row[headers.index("SPDEF_SUBMVAL")] != "":
                 submval =  row[headers.index("SPDEF_SUBMVAL")]
-                filt = {"attributes.codeSubmissionValue": {"v": [submval], "op": "eq"}}
+                filt = {"attributes.code_submission_value": {"v": [submval], "op": "eq"}}
                 unitdefs = self.api.get_all_from_api(
                     f"/ct/terms?codelist_name=Unit&filters={json.dumps(filt)}"
                 )
                 #print(json.dumps(unitdefs, indent=2))
-                unitUids = [v["termUid"] for v in unitdefs]
-                #print(json.dumps(unitUids, indent=2))
-                ctUnits.extend(unitUids)
+                unit_uids = [v["term_uid"] for v in unitdefs]
+                #print(json.dumps(unit_uids, indent=2))
+                ct_units.extend(unit_uids)
 
-            unitSubsets = []
+            unit_subsets = []
             if row[headers.index("AGE_UNIT_SUBSET")] == "Y":
-                unitSubsets.append(age_unit_subset_uid)
+                unit_subsets.append(age_unit_subset_uid)
             if row[headers.index("DOSE_UNIT_SUBSET")] == "Y":
-                unitSubsets.append(dose_unit_subset_uid)
+                unit_subsets.append(dose_unit_subset_uid)
             if row[headers.index("STUDY_TIME_UNIT_SUBSET")] == "Y":
-                unitSubsets.append(study_time_subset_uid)
+                unit_subsets.append(study_time_subset_uid)
             if row[headers.index("TIME_UNIT_SUBSET")] == "Y":
-                unitSubsets.append(time_unit_subset_uid)
+                unit_subsets.append(time_unit_subset_uid)
             if row[headers.index("STRENGTH_UNIT_SUBSET")] == "Y":
-                unitSubsets.append(strength_unit_subset_uid)
+                unit_subsets.append(strength_unit_subset_uid)
 
             # Mark as template parameter if part of any subset
-            # templateParameter = len(unitSubsets) > 0
+            # template_parameter = len(unit_subsets) > 0
             # All units are template parameters!
-            templateParameter = True
+            template_parameter = True
 
             data = {
                 "path": "/concepts/unit-definitions",
                 "approve_path": "/concepts/unit-definitions",
                 "body": {
                     "name": name,
-                    "libraryName": "Sponsor",
-                    "ctUnits": ctUnits,
-                    "unitSubsets": unitSubsets,
-                    "convertibleUnit": map_boolean(
+                    "library_name": "Sponsor",
+                    "ct_units": ct_units,
+                    "unit_subsets": unit_subsets,
+                    "convertible_unit": map_boolean(
                         row[headers.index("CONVERTIBLE_UNIT")]
                     ),
-                    "displayUnit": map_boolean(row[headers.index("DISPLAY_UNIT")]),
-                    "masterUnit": map_boolean(row[headers.index("MASTER_UNIT")]),
-                    "siUnit": map_boolean(row[headers.index("SI_UNIT")]),
-                    "usConventionalUnit": map_boolean(
+                    "display_unit": map_boolean(row[headers.index("DISPLAY_UNIT")]),
+                    "master_unit": map_boolean(row[headers.index("MASTER_UNIT")]),
+                    "si_unit": map_boolean(row[headers.index("SI_UNIT")]),
+                    "us_conventional_unit": map_boolean(
                         row[headers.index("US_CONVENTIONAL_UNIT")]
                     ),
-                    "legacyCode": row[headers.index("UNIT")],
-                    "molecularWeightConvExpon": pass_float(
+                    "legacy_code": row[headers.index("UNIT")],
+                    "molecular_weight_conv_expon": pass_float(
                         row[headers.index("MOLECULAR_WEIGHT_CONV_EXPON")]
                     ),
-                    "conversionFactorToMaster": pass_float(
+                    "conversion_factor_to_master": pass_float(
                         row[headers.index("CONVERTION_FACTOR_TO_MASTER")]
                     ),
-                    "unitDimension": unitDimensionUid,
+                    "unit_dimension": unit_dimension_uid,
                     "definition": row[headers.index("description")],
                     "order": row[headers.index("CD_VAL_SORT_SEQ")],
-                    "ucum": ucumUid,
+                    "ucum": ucum_uid,
                     "comment": row[headers.index("Comment")],
-                    "templateParameter": templateParameter,
+                    "template_parameter": template_parameter,
                 },
             }
             if existing_rows.get(name):
                 self.log.info(
-                    f"Skipping existing unit '{name}' with ct codes: {ctUnits}"
+                    f"Skipping existing unit '{name}' with ct codes: {ct_units}"
                 )
             elif row[headers.index("Migrate Y/N")] not in ("Y", "y"):
                 self.log.info(f"Unit '{name}' is not marked for migration, skipping")
             else:
                 self.log.info(
-                    f"Adding unit '{name}' with ct codes: {ctUnits}, part of subsets: {unitSubsets}"
+                    f"Adding unit '{name}' with ct codes: {ct_units}, part of subsets: {unit_subsets}"
                 )
                 api_tasks.append(
                     self.api.post_then_approve(data=data, session=session, approve=True)
@@ -307,16 +307,16 @@ class Units(BaseImporter):
 
         # existing_rows = self.api.get_all_identifiers(
         #     self.api.get_all_from_api(f"/ct/terms/names?codelist_name=Unit"),
-        #     identifier="sponsorPreferredName",
-        #     value="codelistUid",
+        #     identifier="sponsor_preferred_name",
+        #     value="codelist_uid",
         # )
 
         # existing_code_subm_values = self.api.get_all_identifiers(
         #     self.api.get_all_from_api(
         #         "/ct/terms/attributes?codelist_name=Unit"
         #     ),
-        #     identifier="codeSubmissionValue",
-        #     value="termUid",
+        #     identifier="code_submission_value",
+        #     value="term_uid",
         # )
 
         for row in readCSV:
@@ -324,19 +324,19 @@ class Units(BaseImporter):
                 "path": "/ct/terms",
                 "codelist": "UNIT",
                 "body": {
-                    "catalogueName": "SDTM CT",
-                    "codeSubmissionValue": row[headers.index("SPDEF_SUBMVAL")],
-                    "nciPreferredName": row[headers.index("NCI_PREFERRED_NAME")],
+                    "catalogue_name": "SDTM CT",
+                    "code_submission_value": row[headers.index("SPDEF_SUBMVAL")],
+                    "nci_preferred_name": row[headers.index("NCI_PREFERRED_NAME")],
                     "definition": row[headers.index("DEFINITION")],
-                    "sponsorPreferredName": row[headers.index("SPDEF_SUBMVAL")],
-                    "sponsorPreferredNameSentenceCase": row[headers.index("SPDEF_SUBMVAL")],
-                    "libraryName": "Sponsor",
+                    "sponsor_preferred_name": row[headers.index("SPDEF_SUBMVAL")],
+                    "sponsor_preferred_name_sentence_case": row[headers.index("SPDEF_SUBMVAL")],
+                    "library_name": "Sponsor",
                     "order": None
                 },
             }
 
-            data["body"]["codelistUid"] = code_lists_uids["Unit"]
-            # if not existing_rows.get(data["body"]["sponsorPreferredName"]):
+            data["body"]["codelist_uid"] = code_lists_uids["Unit"]
+            # if not existing_rows.get(data["body"]["sponsor_preferred_name"]):
             #print(json.dumps(data, indent=2))
             api_tasks.append(
                 self.process_simple_term_migration(data=data, session=session)

@@ -86,7 +86,7 @@ class EndpointTemplateService(GenericTemplateService[EndpointTemplateAR]):
     ) -> EndpointTemplateAR:
         default_parameter_values = self._create_default_parameter_entries(
             template_name=template.name,
-            default_parameter_values=template.defaultParameterValues,
+            default_parameter_values=template.default_parameter_values,
         )
 
         template_vo, library_vo = self._create_template_vo(
@@ -103,7 +103,7 @@ class EndpointTemplateService(GenericTemplateService[EndpointTemplateAR]):
                     template=template
                 ),
                 author=self.user_initials,
-                editable_instance=template.editableInstance,
+                editable_instance=template.editable_instance,
                 template=template_vo,
                 library=library_vo,
                 generate_uid_callback=self.repository.generate_uid_callback,
@@ -121,12 +121,12 @@ class EndpointTemplateService(GenericTemplateService[EndpointTemplateAR]):
         self, uid: str, groupings: EndpointTemplateEditGroupingsInput
     ) -> EndpointTemplate:
         try:
-            if groupings.indicationUids is not None:
-                self.repository.patch_indications(uid, groupings.indicationUids)
-            if groupings.categoryUids is not None:
-                self.repository.patch_categories(uid, groupings.categoryUids)
-            if groupings.subCategoryUids is not None:
-                self.repository.patch_sub_categories(uid, groupings.subCategoryUids)
+            if groupings.indication_uids is not None:
+                self.repository.patch_indications(uid, groupings.indication_uids)
+            if groupings.category_uids is not None:
+                self.repository.patch_categories(uid, groupings.category_uids)
+            if groupings.sub_category_uids is not None:
+                self.repository.patch_subcategories(uid, groupings.sub_category_uids)
         finally:
             self.repository.close()
 
@@ -154,7 +154,7 @@ class EndpointTemplateService(GenericTemplateService[EndpointTemplateAR]):
             _study_count=item.study_count,
             _indications=item.indications,
             _categories=item.categories,
-            _sub_categories=item.sub_categories,
+            _subcategories=item.sub_categories,
             _template=TemplateVO(
                 name=item.template_value.name,
                 name_plain=item.template_value.name_plain,
@@ -199,17 +199,17 @@ class EndpointTemplateService(GenericTemplateService[EndpointTemplateAR]):
             ]
         # Get sub_categories
         sub_category_names = (
-            self._repos.ct_term_name_repository.get_template_sub_categories(
+            self._repos.ct_term_name_repository.get_template_subcategories(
                 self.root_node_class, item.uid
             )
         )
         sub_category_attributes = (
-            self._repos.ct_term_attributes_repository.get_template_sub_categories(
+            self._repos.ct_term_attributes_repository.get_template_subcategories(
                 self.root_node_class, item.uid
             )
         )
         if sub_category_names and sub_category_attributes:
-            item.subCategories = [
+            item.sub_categories = [
                 CTTermNameAndAttributes.from_ct_term_ars(
                     ct_term_name_ar=category_name,
                     ct_term_attributes_ar=category_attribute,
@@ -230,15 +230,15 @@ class EndpointTemplateService(GenericTemplateService[EndpointTemplateAR]):
         categories: Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]] = []
         sub_categories: Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]] = []
 
-        if template.indicationUids and len(template.indicationUids) > 0:
-            for uid in template.indicationUids:
+        if template.indication_uids and len(template.indication_uids) > 0:
+            for uid in template.indication_uids:
                 indication = self._repos.dictionary_term_generic_repository.find_by_uid(
                     term_uid=uid
                 )
                 indications.append(indication)
 
-        if template.categoryUids and len(template.categoryUids) > 0:
-            for uid in template.categoryUids:
+        if template.category_uids and len(template.category_uids) > 0:
+            for uid in template.category_uids:
                 category_name = self._repos.ct_term_name_repository.find_by_uid(
                     term_uid=uid
                 )
@@ -248,8 +248,8 @@ class EndpointTemplateService(GenericTemplateService[EndpointTemplateAR]):
                 category = (category_name, category_attributes)
                 categories.append(category)
 
-        if template.subCategoryUids and len(template.subCategoryUids) > 0:
-            for uid in template.subCategoryUids:
+        if template.sub_category_uids and len(template.sub_category_uids) > 0:
+            for uid in template.sub_category_uids:
                 category_name = self._repos.ct_term_name_repository.find_by_uid(
                     term_uid=uid
                 )

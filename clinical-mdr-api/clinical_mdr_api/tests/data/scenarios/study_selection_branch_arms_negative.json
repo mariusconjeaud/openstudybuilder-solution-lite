@@ -28,7 +28,7 @@
   
   
   
-"shortName": "BranchArm_Short_Name_1",
+"short_name": "BranchArm_Short_Name_1",
   
   
   
@@ -43,22 +43,22 @@
   
   
   
-"colourCode": "desc...",
+"colour_code": "desc...",
   
   
   
   
-"randomizationGroup": "Randomization_Group_1",
+"randomization_group": "Randomization_Group_1",
   
   
   
   
-"numberOfSubjects": 1,
+"number_of_subjects": 1,
   
   
   
   
-"armUid": "StudyArm_000001"
+"arm_uid": "StudyArm_000001"
   
   
   
@@ -66,7 +66,7 @@
   
   
   
-"url": "/study/study_root/study-branch-arms/create"
+"url": "/studies/study_root/study-branch-arms"
   
   
 },
@@ -103,12 +103,12 @@
   
   
   
-"studyUid": "study_root",
+"study_uid": "study_root",
   
   
   
   
-"branchArmUid": "StudyBranchArm_000001",
+"branch_arm_uid": "StudyBranchArm_000001",
   
   
   
@@ -123,7 +123,7 @@
   
   
   
-"shortName": "BranchArm_Short_Name_1",
+"short_name": "BranchArm_Short_Name_1",
   
   
   
@@ -133,12 +133,12 @@
   
   
   
-"startDate": "2020-06-26T00:00:00",
+"start_date": "2020-06-26T00:00:00",
   
   
   
   
-"endDate": null,
+"end_date": null,
   
   
   
@@ -148,29 +148,29 @@
   
   
   
-"changeType": null,
+"change_type": null,
   
   
   
   
-"acceptedVersion": null,
+"accepted_version": null,
   
   
   
   
-"armRoot": {
-  
-  
-  
-  
-  
-"studyUid": "study_root",
+"arm_root": {
   
   
   
   
   
-"armUid": "StudyArm_000001",
+"study_uid": "study_root",
+  
+  
+  
+  
+  
+"arm_uid": "StudyArm_000001",
   
   
   
@@ -188,7 +188,7 @@
   
   
   
-"shortName": null,
+"short_name": null,
   
   
   
@@ -200,13 +200,13 @@
   
   
   
-"startDate": null,
+"start_date": null,
   
   
   
   
   
-"endDate": null,
+"end_date": null,
   
   
   
@@ -218,68 +218,68 @@
   
   
   
-"changeType": null,
+"change_type": null,
   
   
   
   
   
-"acceptedVersion": null,
+"accepted_version": null,
   
   
   
   
   
-"armType": {
-  
-  
-  
-  
-  
-  
-"termUid": "term_root_final",
+"arm_type": {
   
   
   
   
   
   
-"catalogueName": "SDTM CT",
+"term_uid": "term_root_final",
   
   
   
   
   
   
-"codelistUid": "ct_codelist_root1",
+"catalogue_name": "SDTM CT",
   
   
   
   
   
   
-"sponsorPreferredName": "term_value_name1",
+"codelist_uid": "ct_codelist_root1",
   
   
   
   
   
   
-"sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+"sponsor_preferred_name": "term_value_name1",
   
   
   
   
   
   
-"libraryName": "Sponsor",
+"sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
   
   
   
   
   
   
-"startDate": "2020-06-26T00:00:00",
+"library_name": "Sponsor",
+  
+  
+  
+  
+  
+  
+"start_date": "2020-06-26T00:00:00",
   
   
   
@@ -293,7 +293,7 @@
   
   
   
-"endDate": null,
+"end_date": null,
   
   
   
@@ -314,21 +314,21 @@
   
   
   
-"changeDescription": "Approved version",
+"change_description": "Approved version",
   
   
   
   
   
   
-"userInitials": "TODO initials",
+"user_initials": "TODO initials",
   
   
   
   
   
   
-"possibleActions": [
+"possible_actions": [
   
   
   
@@ -344,7 +344,7 @@
   
   
   
-"newVersion"
+"new_version"
   
   
   
@@ -369,25 +369,25 @@
   
   
   
-"armColour": null,
+"arm_colour": null,
   
   
   
   
   
-"numberOfSubjects": null,
+"number_of_subjects": null,
   
   
   
   
   
-"randomizationGroup": null,
+"randomization_group": null,
   
   
   
   
   
-"userInitials": null
+"user_initials": null
   
   
   
@@ -402,22 +402,22 @@
   
   
   
-"colourCode": "desc...",
+"colour_code": "desc...",
   
   
   
   
-"numberOfSubjects": 1,
+"number_of_subjects": 1,
   
   
   
   
-"randomizationGroup": "Randomization_Group_1",
+"randomization_group": "Randomization_Group_1",
   
   
   
   
-"userInitials": "TODO initials"
+"user_initials": "TODO initials"
   
   
   
@@ -430,7 +430,7 @@
   
   
   
-"branchArmUid": "branchArmUid"
+"branch_arm_uid": "branch_arm_uid"
   
   
   
@@ -469,7 +469,7 @@
   
   
   
-"shortName": "BranchArm_Short_Name_2",
+"short_name": "BranchArm_Short_Name_2",
   
   
   
@@ -484,22 +484,22 @@
   
   
   
-"colourCode": "desc...",
+"colour_code": "desc...",
   
   
   
   
-"randomizationGroup": "Randomization_Group_2",
+"randomization_group": "Randomization_Group_2",
   
   
   
   
-"numberOfSubjects": 2,
+"number_of_subjects": 2,
   
   
   
   
-"armUid": "StudyArm_000001"
+"arm_uid": "StudyArm_000001"
   
   
   
@@ -507,7 +507,7 @@
   
   
   
-"url": "/study/study_root/study-branch-arms/create"
+"url": "/studies/study_root/study-branch-arms"
   
   
 },
@@ -544,12 +544,12 @@
   
   
   
-"studyUid": "study_root",
+"study_uid": "study_root",
   
   
   
   
-"branchArmUid": "StudyBranchArm_000003",
+"branch_arm_uid": "StudyBranchArm_000003",
   
   
   
@@ -564,7 +564,7 @@
   
   
   
-"shortName": "BranchArm_Short_Name_2",
+"short_name": "BranchArm_Short_Name_2",
   
   
   
@@ -574,12 +574,12 @@
   
   
   
-"startDate": "2020-06-26T00:00:00",
+"start_date": "2020-06-26T00:00:00",
   
   
   
   
-"endDate": null,
+"end_date": null,
   
   
   
@@ -589,29 +589,29 @@
   
   
   
-"changeType": null,
+"change_type": null,
   
   
   
   
-"acceptedVersion": null,
+"accepted_version": null,
   
   
   
   
-"armRoot": {
-  
-  
-  
-  
-  
-"studyUid": "study_root",
+"arm_root": {
   
   
   
   
   
-"armUid": "StudyArm_000001",
+"study_uid": "study_root",
+  
+  
+  
+  
+  
+"arm_uid": "StudyArm_000001",
   
   
   
@@ -629,7 +629,7 @@
   
   
   
-"shortName": null,
+"short_name": null,
   
   
   
@@ -641,13 +641,13 @@
   
   
   
-"startDate": null,
+"start_date": null,
   
   
   
   
   
-"endDate": null,
+"end_date": null,
   
   
   
@@ -659,68 +659,68 @@
   
   
   
-"changeType": null,
+"change_type": null,
   
   
   
   
   
-"acceptedVersion": null,
+"accepted_version": null,
   
   
   
   
   
-"armType": {
-  
-  
-  
-  
-  
-  
-"termUid": "term_root_final",
+"arm_type": {
   
   
   
   
   
   
-"catalogueName": "SDTM CT",
+"term_uid": "term_root_final",
   
   
   
   
   
   
-"codelistUid": "ct_codelist_root1",
+"catalogue_name": "SDTM CT",
   
   
   
   
   
   
-"sponsorPreferredName": "term_value_name1",
+"codelist_uid": "ct_codelist_root1",
   
   
   
   
   
   
-"sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+"sponsor_preferred_name": "term_value_name1",
   
   
   
   
   
   
-"libraryName": "Sponsor",
+"sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
   
   
   
   
   
   
-"startDate": "2020-06-26T00:00:00",
+"library_name": "Sponsor",
+  
+  
+  
+  
+  
+  
+"start_date": "2020-06-26T00:00:00",
   
   
   
@@ -734,7 +734,7 @@
   
   
   
-"endDate": null,
+"end_date": null,
   
   
   
@@ -755,21 +755,21 @@
   
   
   
-"changeDescription": "Approved version",
+"change_description": "Approved version",
   
   
   
   
   
   
-"userInitials": "TODO initials",
+"user_initials": "TODO initials",
   
   
   
   
   
   
-"possibleActions": [
+"possible_actions": [
   
   
   
@@ -785,7 +785,7 @@
   
   
   
-"newVersion"
+"new_version"
   
   
   
@@ -810,25 +810,25 @@
   
   
   
-"armColour": null,
+"arm_colour": null,
   
   
   
   
   
-"numberOfSubjects": null,
+"number_of_subjects": null,
   
   
   
   
   
-"randomizationGroup": null,
+"randomization_group": null,
   
   
   
   
   
-"userInitials": null
+"user_initials": null
   
   
   
@@ -843,22 +843,22 @@
   
   
   
-"colourCode": "desc...",
+"colour_code": "desc...",
   
   
   
   
-"numberOfSubjects": 2,
+"number_of_subjects": 2,
   
   
   
   
-"randomizationGroup": "Randomization_Group_2",
+"randomization_group": "Randomization_Group_2",
   
   
   
   
-"userInitials": "TODO initials"
+"user_initials": "TODO initials"
   
   
   
@@ -871,7 +871,7 @@
   
   
   
-"branchArmUid": "branchArmUid"
+"branch_arm_uid": "branch_arm_uid"
   
   
   
@@ -910,7 +910,7 @@
   
   
   
-"shortName": "BranchArm_Short_Name_9",
+"short_name": "BranchArm_Short_Name_9",
   
   
   
@@ -925,22 +925,22 @@
   
   
   
-"colourCode": "desc...",
+"colour_code": "desc...",
   
   
   
   
-"randomizationGroup": "Randomization_Group_9",
+"randomization_group": "Randomization_Group_9",
   
   
   
   
-"numberOfSubjects": 1,
+"number_of_subjects": 1,
   
   
   
   
-"armUid": "StudyArm_000001"
+"arm_uid": "StudyArm_000001"
   
   
   
@@ -948,7 +948,7 @@
   
   
   
-"url": "/study/study_root/study-branch-arms/create"
+"url": "/studies/study_root/study-branch-arms"
   
   
 },
@@ -977,7 +977,7 @@
   
   
   
-"path": "http://testserver/study/study_root/study-branch-arms/create",
+"path": "http://testserver/studies/study_root/study-branch-arms",
   
   
   
@@ -1026,7 +1026,7 @@
   
   
   
-"shortName": "BranchArm_Short_Name_4",
+"short_name": "BranchArm_Short_Name_4",
   
   
   
@@ -1041,12 +1041,12 @@
   
   
   
-"colourCode": "desc...",
+"colour_code": "desc...",
   
   
   
   
-"randomizationGroup": "Randomization_Group_4"
+"randomization_group": "Randomization_Group_4"
   
   
   
@@ -1054,7 +1054,7 @@
   
   
   
-"url": "/study/study_root/study-branch-arms/StudyBranchArm_000001"
+"url": "/studies/study_root/study-branch-arms/StudyBranchArm_000001"
   
   
 },
@@ -1091,12 +1091,12 @@
   
   
   
-"studyUid": "study_root",
+"study_uid": "study_root",
   
   
   
   
-"branchArmUid": "StudyBranchArm_000001",
+"branch_arm_uid": "StudyBranchArm_000001",
   
   
   
@@ -1111,7 +1111,7 @@
   
   
   
-"shortName": "BranchArm_Short_Name_4",
+"short_name": "BranchArm_Short_Name_4",
   
   
   
@@ -1121,12 +1121,12 @@
   
   
   
-"startDate": "2020-06-26T00:00:00",
+"start_date": "2020-06-26T00:00:00",
   
   
   
   
-"endDate": null,
+"end_date": null,
   
   
   
@@ -1136,29 +1136,29 @@
   
   
   
-"changeType": null,
+"change_type": null,
   
   
   
   
-"acceptedVersion": null,
+"accepted_version": null,
   
   
   
   
-"armRoot": {
-  
-  
-  
-  
-  
-"studyUid": "study_root",
+"arm_root": {
   
   
   
   
   
-"armUid": "StudyArm_000001",
+"study_uid": "study_root",
+  
+  
+  
+  
+  
+"arm_uid": "StudyArm_000001",
   
   
   
@@ -1176,7 +1176,7 @@
   
   
   
-"shortName": null,
+"short_name": null,
   
   
   
@@ -1188,13 +1188,13 @@
   
   
   
-"startDate": null,
+"start_date": null,
   
   
   
   
   
-"endDate": null,
+"end_date": null,
   
   
   
@@ -1206,68 +1206,68 @@
   
   
   
-"changeType": null,
+"change_type": null,
   
   
   
   
   
-"acceptedVersion": null,
+"accepted_version": null,
   
   
   
   
   
-"armType": {
-  
-  
-  
-  
-  
-  
-"termUid": "term_root_final",
+"arm_type": {
   
   
   
   
   
   
-"catalogueName": "SDTM CT",
+"term_uid": "term_root_final",
   
   
   
   
   
   
-"codelistUid": "ct_codelist_root1",
+"catalogue_name": "SDTM CT",
   
   
   
   
   
   
-"sponsorPreferredName": "term_value_name1",
+"codelist_uid": "ct_codelist_root1",
   
   
   
   
   
   
-"sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+"sponsor_preferred_name": "term_value_name1",
   
   
   
   
   
   
-"libraryName": "Sponsor",
+"sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
   
   
   
   
   
   
-"startDate": "2020-06-26T00:00:00",
+"library_name": "Sponsor",
+  
+  
+  
+  
+  
+  
+"start_date": "2020-06-26T00:00:00",
   
   
   
@@ -1281,7 +1281,7 @@
   
   
   
-"endDate": null,
+"end_date": null,
   
   
   
@@ -1302,21 +1302,21 @@
   
   
   
-"changeDescription": "Approved version",
+"change_description": "Approved version",
   
   
   
   
   
   
-"userInitials": "TODO initials",
+"user_initials": "TODO initials",
   
   
   
   
   
   
-"possibleActions": [
+"possible_actions": [
   
   
   
@@ -1332,7 +1332,7 @@
   
   
   
-"newVersion"
+"new_version"
   
   
   
@@ -1357,25 +1357,25 @@
   
   
   
-"armColour": null,
+"arm_colour": null,
   
   
   
   
   
-"numberOfSubjects": null,
+"number_of_subjects": null,
   
   
   
   
   
-"randomizationGroup": null,
+"randomization_group": null,
   
   
   
   
   
-"userInitials": null
+"user_initials": null
   
   
   
@@ -1390,22 +1390,22 @@
   
   
   
-"colourCode": "desc...",
+"colour_code": "desc...",
   
   
   
   
-"numberOfSubjects": 1,
+"number_of_subjects": 1,
   
   
   
   
-"randomizationGroup": "Randomization_Group_4",
+"randomization_group": "Randomization_Group_4",
   
   
   
   
-"userInitials": "TODO initials"
+"user_initials": "TODO initials"
   
   
   
@@ -1438,7 +1438,7 @@
   
   
   
-"url": "/study/study_root/study-branch-arms/StudyBranchArm_000001/audit-trail/"
+"url": "/studies/study_root/study-branch-arms/StudyBranchArm_000001/audit-trail/"
   
   
 },
@@ -1481,7 +1481,7 @@
   
   
   
-"studyUid": "study_root",
+"study_uid": "study_root",
   
   
   
@@ -1493,19 +1493,19 @@
   
   
   
-"projectNumber": null,
+"project_number": null,
   
   
   
   
   
-"projectName": null,
+"project_name": null,
   
   
   
   
   
-"branchArmUid": "StudyBranchArm_000001",
+"branch_arm_uid": "StudyBranchArm_000001",
   
   
   
@@ -1517,7 +1517,7 @@
   
   
   
-"shortName": "BranchArm_Short_Name_4",
+"short_name": "BranchArm_Short_Name_4",
   
   
   
@@ -1535,37 +1535,37 @@
   
   
   
-"colourCode": "desc...",
+"colour_code": "desc...",
   
   
   
   
   
-"randomizationGroup": "Randomization_Group_4",
+"randomization_group": "Randomization_Group_4",
   
   
   
   
   
-"numberOfSubjects": 1,
+"number_of_subjects": 1,
   
   
   
   
   
-"startDate": "2022-08-11T05:46:54.470678",
+"start_date": "2022-08-11T05:46:54.470678",
   
   
   
   
   
-"userInitials": "TEST_USER",
+"user_initials": "TEST_USER",
   
   
   
   
   
-"endDate": null,
+"end_date": null,
   
   
   
@@ -1577,19 +1577,19 @@
   
   
   
-"changeType": "Edit",
+"change_type": "Edit",
   
   
   
   
   
-"acceptedVersion": false,
+"accepted_version": false,
   
   
   
   
   
-"armRootUid": "StudyArm_000001",
+"arm_root_uid": "StudyArm_000001",
   
   
   
@@ -1602,7 +1602,7 @@
   
   
   
-"studyUid": false,
+"study_uid": false,
   
   
   
@@ -1616,21 +1616,21 @@
   
   
   
-"projectNumber": false,
+"project_number": false,
   
   
   
   
   
   
-"projectName": false,
+"project_name": false,
   
   
   
   
   
   
-"branchArmUid": false,
+"branch_arm_uid": false,
   
   
   
@@ -1644,7 +1644,7 @@
   
   
   
-"shortName": true,
+"short_name": true,
   
   
   
@@ -1665,42 +1665,42 @@
   
   
   
-"colourCode": false,
+"colour_code": false,
   
   
   
   
   
   
-"randomizationGroup": true,
+"randomization_group": true,
   
   
   
   
   
   
-"numberOfSubjects": false,
+"number_of_subjects": false,
   
   
   
   
   
   
-"startDate": true,
+"start_date": true,
   
   
   
   
   
   
-"userInitials": false,
+"user_initials": false,
   
   
   
   
   
   
-"endDate": true,
+"end_date": true,
   
   
   
@@ -1714,21 +1714,21 @@
   
   
   
-"changeType": true,
+"change_type": true,
   
   
   
   
   
   
-"acceptedVersion": false,
+"accepted_version": false,
   
   
   
   
   
   
-"armRootUid": false
+"arm_root_uid": false
   
   
   
@@ -1750,7 +1750,7 @@
   
   
   
-"studyUid": "study_root",
+"study_uid": "study_root",
   
   
   
@@ -1762,19 +1762,19 @@
   
   
   
-"projectNumber": null,
+"project_number": null,
   
   
   
   
   
-"projectName": null,
+"project_name": null,
   
   
   
   
   
-"branchArmUid": "StudyBranchArm_000001",
+"branch_arm_uid": "StudyBranchArm_000001",
   
   
   
@@ -1786,7 +1786,7 @@
   
   
   
-"shortName": "BranchArm_Short_Name_1",
+"short_name": "BranchArm_Short_Name_1",
   
   
   
@@ -1804,37 +1804,37 @@
   
   
   
-"colourCode": "desc...",
+"colour_code": "desc...",
   
   
   
   
   
-"randomizationGroup": "Randomization_Group_1",
+"randomization_group": "Randomization_Group_1",
   
   
   
   
   
-"numberOfSubjects": 1,
+"number_of_subjects": 1,
   
   
   
   
   
-"startDate": "2022-08-11T05:24:53.229953",
+"start_date": "2022-08-11T05:24:53.229953",
   
   
   
   
   
-"userInitials": "TEST_USER",
+"user_initials": "TEST_USER",
   
   
   
   
   
-"endDate": "2022-08-11T05:46:54.470678",
+"end_date": "2022-08-11T05:46:54.470678",
   
   
   
@@ -1846,19 +1846,19 @@
   
   
   
-"changeType": "Create",
+"change_type": "Create",
   
   
   
   
   
-"acceptedVersion": false,
+"accepted_version": false,
   
   
   
   
   
-"armRootUid": "StudyArm_000001",
+"arm_root_uid": "StudyArm_000001",
   
   
   
@@ -1908,7 +1908,7 @@
   
   
   
-"shortName": "BranchArm_Short_Name_5",
+"short_name": "BranchArm_Short_Name_5",
   
   
   
@@ -1923,12 +1923,12 @@
   
   
   
-"colourCode": "desc...",
+"colour_code": "desc...",
   
   
   
   
-"randomizationGroup": "Randomization_Group_1"
+"randomization_group": "Randomization_Group_1"
   
   
   
@@ -1936,7 +1936,7 @@
   
   
   
-"url": "/study/study_root/study-branch-arms/StudyBranchArm_000001"
+"url": "/studies/study_root/study-branch-arms/StudyBranchArm_000001"
   
   
 },
@@ -1973,7 +1973,7 @@
   
   
   
-"studyUid": "study_root",
+"study_uid": "study_root",
   
   
   
@@ -1983,7 +1983,7 @@
   
   
   
-"branchArmUid": "StudyBranchArm_000001",
+"branch_arm_uid": "StudyBranchArm_000001",
   
   
   
@@ -1993,7 +1993,7 @@
   
   
   
-"shortName": "BranchArm_Short_Name_5",
+"short_name": "BranchArm_Short_Name_5",
   
   
   
@@ -2008,28 +2008,28 @@
   
   
   
-"colourCode": "desc...",
+"colour_code": "desc...",
   
   
   
   
-"randomizationGroup": "Randomization_Group_1",
+"randomization_group": "Randomization_Group_1",
   
   
   
   
-"numberOfSubjects": 1,
+"number_of_subjects": 1,
   
   
   
   
-"armRoot": {
+"arm_root": {
   
   
   
   
   
-"studyUid": "study_root",
+"study_uid": "study_root",
   
   
   
@@ -2041,7 +2041,7 @@
   
   
   
-"armUid": "StudyArm_000001",
+"arm_uid": "StudyArm_000001",
   
   
   
@@ -2053,7 +2053,7 @@
   
   
   
-"shortName": null,
+"short_name": null,
   
   
   
@@ -2071,60 +2071,60 @@
   
   
   
-"armColour": null,
+"arm_colour": null,
   
   
   
   
   
-"randomizationGroup": null,
+"randomization_group": null,
   
   
   
   
   
-"numberOfSubjects": null,
+"number_of_subjects": null,
   
   
   
   
   
-"armType": {
-  
-  
-  
-  
-  
-  
-"termUid": "term_root_final",
+"arm_type": {
   
   
   
   
   
   
-"catalogueName": "SDTM CT",
+"term_uid": "term_root_final",
   
   
   
   
   
   
-"codelistUid": "ct_codelist_root_endpoint",
+"catalogue_name": "SDTM CT",
   
   
   
   
   
   
-"sponsorPreferredName": "term_value_name1",
+"codelist_uid": "ct_codelist_root_endpoint",
   
   
   
   
   
   
-"sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+"sponsor_preferred_name": "term_value_name1",
+  
+  
+  
+  
+  
+  
+"sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
   
   
   
@@ -2138,21 +2138,21 @@
   
   
   
-"libraryName": "Sponsor",
+"library_name": "Sponsor",
   
   
   
   
   
   
-"startDate": "2022-05-11T06:52:00.115000",
+"start_date": "2022-05-11T06:52:00.115000",
   
   
   
   
   
   
-"endDate": null,
+"end_date": null,
   
   
   
@@ -2173,21 +2173,21 @@
   
   
   
-"changeDescription": "Approved version",
+"change_description": "Approved version",
   
   
   
   
   
   
-"userInitials": "TODO initials",
+"user_initials": "TODO initials",
   
   
   
   
   
   
-"possibleActions": [
+"possible_actions": [
   
   
   
@@ -2203,7 +2203,7 @@
   
   
   
-"newVersion"
+"new_version"
   
   
   
@@ -2222,19 +2222,19 @@
   
   
   
-"startDate": "2022-05-11T06:52:02.569000",
+"start_date": "2022-05-11T06:52:02.569000",
   
   
   
   
   
-"userInitials": "TODO user initials",
+"user_initials": "TODO user initials",
   
   
   
   
   
-"endDate": null,
+"end_date": null,
   
   
   
@@ -2246,13 +2246,13 @@
   
   
   
-"changeType": null,
+"change_type": null,
   
   
   
   
   
-"acceptedVersion": null
+"accepted_version": null
   
   
   
@@ -2262,17 +2262,17 @@
   
   
   
-"startDate": "2022-05-11T08:52:26.575638",
+"start_date": "2022-05-11T08:52:26.575638",
   
   
   
   
-"userInitials": "TEST_USER",
+"user_initials": "TEST_USER",
   
   
   
   
-"endDate": null,
+"end_date": null,
   
   
   
@@ -2282,12 +2282,12 @@
   
   
   
-"changeType": null,
+"change_type": null,
   
   
   
   
-"acceptedVersion": null
+"accepted_version": null
   
   
   
@@ -2326,7 +2326,7 @@
   
   
   
-"shortName": "BranchArm_Short_Name_8",
+"short_name": "BranchArm_Short_Name_8",
   
   
   
@@ -2341,12 +2341,12 @@
   
   
   
-"colourCode": "desc...",
+"colour_code": "desc...",
   
   
   
   
-"randomizationGroup": "Randomization_Group_2"
+"randomization_group": "Randomization_Group_2"
   
   
   
@@ -2354,7 +2354,7 @@
   
   
   
-"url": "/study/study_root/study-branch-arms/StudyBranchArm_000001"
+"url": "/studies/study_root/study-branch-arms/StudyBranchArm_000001"
   
   
 },
@@ -2383,7 +2383,7 @@
   
   
   
-"path": "http://testserver/study/study_root/study-branch-arms/StudyBranchArm_000001",
+"path": "http://testserver/studies/study_root/study-branch-arms/StudyBranchArm_000001",
   
   
   

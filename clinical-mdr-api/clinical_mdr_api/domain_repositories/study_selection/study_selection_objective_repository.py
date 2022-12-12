@@ -92,7 +92,7 @@ class StudySelectionObjectiveRepository:
               MATCH (ov) <-[ver]-(or:ObjectiveRoot) 
               WHERE ver.status = "Final"
               RETURN ver as ver, or as or
-              ORDER BY ver.startDate DESC
+              ORDER BY ver.start_date DESC
               LIMIT 1
             }
             WITH DISTINCT sr, so, or, ver
@@ -338,7 +338,7 @@ class StudySelectionObjectiveRepository:
         author: str,
     ) -> StudyAction:
         audit_node.user_initials = author
-        audit_node.date = datetime.datetime.now()
+        audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
         study_objective_selection_node.has_before.connect(audit_node)
@@ -430,7 +430,7 @@ class StudySelectionObjectiveRepository:
               MATCH (ov) <-[ver]-(or:ObjectiveRoot) 
               WHERE ver.status = "Final"
               RETURN ver as ver, or as or
-              ORDER BY ver.startDate DESC
+              ORDER BY ver.start_date DESC
               LIMIT 1
             }
 

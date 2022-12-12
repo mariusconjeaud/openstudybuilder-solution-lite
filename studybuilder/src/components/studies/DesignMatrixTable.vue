@@ -95,7 +95,7 @@ export default {
       studyEpochs: 'studyEpochs/studyEpochs'
     }),
     exportDataUrl () {
-      return `study/${this.selectedStudy.uid}/study-design-cells`
+      return `studies/${this.selectedStudy.uid}/study-design-cells`
     },
     filteredStudyEpochs () {
       return this.studyEpochs.filter(item => item.epochName !== visitConstants.EPOCH_BASIC)
@@ -114,7 +114,7 @@ export default {
       total: 0,
       arms: [],
       elements: [],
-      cells: [],
+      cells: {},
       matrix: [],
       editMode: false,
       loading: true,
@@ -140,9 +140,9 @@ export default {
     },
     async fetchStudyArms () {
       const params = {
-        pageNumber: (this.options.page),
-        pageSize: this.options.itemsPerPage,
-        totalCount: true
+        page_number: (this.options.page),
+        page_size: this.options.itemsPerPage,
+        total_count: true
       }
       let matrixPushStack = []
       arms.getAllForStudy(this.selectedStudy.uid, params).then(resp => {
@@ -152,14 +152,14 @@ export default {
         matrixPushStack = []
         for (let i = 0; i < this.arms.length; i++) {
           const el = this.arms[i]
-          arms.getAllBranchesForArm(this.selectedStudy.uid, el.armUid).then(resp => {
+          arms.getAllBranchesForArm(this.selectedStudy.uid, el.arm_uid).then(resp => {
             if (resp.data.length === 0) {
               // making a stack of what has to be pushed in this.matrix
-              matrixPushStack.push({ uid: el.armUid, arms: el.name, armColor: el.armColour, order: el.order })
+              matrixPushStack.push({ uid: el.arm_uid, arms: el.name, armColor: el.arm_colour, order: el.order })
             } else {
               resp.data.forEach(value => {
                 // making a stack of what has to be pushed in this.matrix
-                matrixPushStack.push({ id: value.branchArmUid, uid: el.armUid, arms: el.name, armColor: value.armRoot.armColour, branches: value.name, branchColor: value.colourCode, order: el.order })
+                matrixPushStack.push({ id: value.branch_arm_uid, uid: el.arm_uid, arms: el.name, armColor: value.arm_root.arm_colour, branches: value.name, branchColor: value.colour_code, order: el.order })
               })
             }
             // making this.matrix.push() in the right order
@@ -170,7 +170,7 @@ export default {
       })
     },
     async fetchStudyElements () {
-      return arms.getStudyElements(this.selectedStudy.uid).then(resp => {
+      return arms.getStudyElements(this.selectedStudy.uid, { page_size: 0 }).then(resp => {
         this.elements = resp.data.items
       })
     },
@@ -216,7 +216,7 @@ export default {
         { text: this.$t('DesignMatrix.study_arm'), value: 'arms' },
         { text: this.$t('DesignMatrix.branches'), value: 'branches' }
       ]
-      this.filteredStudyEpochs.forEach(el => this.headers.push({ text: el.epochName, value: el.uid, color: el.colorHash }))
+      this.filteredStudyEpochs.forEach(el => this.headers.push({ text: el.epoch_name, value: el.uid, color: el.color_hash }))
       this.fetchStudyArms()
     },
     refresh () {

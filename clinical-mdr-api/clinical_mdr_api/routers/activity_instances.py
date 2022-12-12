@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Path, Query, Response, status
 from pydantic.types import Json
 from starlette.requests import Request
 
+from clinical_mdr_api import config
 from clinical_mdr_api.models.activities.activity_instance import ActivityInstance
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
@@ -43,15 +44,15 @@ Possible errors:
     {
         "defaults": [
             "uid",
-            "libraryName",
+            "library_name",
             "activity=activities.name",
             "name",
             "definition",
-            "topicCode",
-            "adamParamCode",
-            "sdtmDomain=sdtmDomain.name",
-            "startDate",
-            "userInitials",
+            "topic_code",
+            "adam_param_code",
+            "sdtm_domain=sdtm_domain.name",
+            "start_date",
+            "user_initials",
             "status",
             "version",
         ],
@@ -67,48 +68,50 @@ Possible errors:
 def get_activities(
     request: Request,  # request is actually required by the allow_exports decorator
     library: Optional[str] = Query(None, description=""),
-    activityNames: Optional[List[str]] = Query(
+    activity_names: Optional[List[str]] = Query(
         None,
         description="A list of activity names to use as a specific filter",
-        alias="activityNames[]",
+        alias="activity_names[]",
     ),
-    specimenNames: Optional[List[str]] = Query(
+    specimen_names: Optional[List[str]] = Query(
         None,
         description="A list of specimen names to use as a specific filter",
-        alias="specimenNames[]",
+        alias="specimen_names[]",
     ),
-    sdtmVariableNames: Optional[List[str]] = Query(
+    sdtm_variable_names: Optional[List[str]] = Query(
         None,
         description="A list of sdtm variable names to use as a specific filter",
-        alias="sdtmVariableNames[]",
+        alias="sdtm_variable_names[]",
     ),
-    sdtmDomainNames: Optional[List[str]] = Query(
+    sdtm_domain_names: Optional[List[str]] = Query(
         None,
         description="A list of sdtm domain names to use as a specific filter",
-        alias="sdtmDomainNames[]",
+        alias="sdtm_domain_names[]",
     ),
-    sdtmCategoryNames: Optional[List[str]] = Query(
+    sdtm_category_names: Optional[List[str]] = Query(
         None,
         description="A list of sdtm category names to use as a specific filter",
-        alias="sdtmCategoryNames[]",
+        alias="sdtm_category_names[]",
     ),
-    sdtmSubCategoryNames: Optional[List[str]] = Query(
+    sdtm_subcategory_names: Optional[List[str]] = Query(
         None,
         description="A list of sdtm sub category names to use as a specific filter",
-        alias="sdtmSubCategoryNames[]",
+        alias="sdtm_subcategory_names[]",
     ),
-    sortBy: Json = Query({}, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query({}, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -116,21 +119,21 @@ def get_activities(
     activity_instance_service = ActivityInstanceService(user=current_user_id)
     results = activity_instance_service.get_all_concepts(
         library=library,
-        activityNames=activityNames,
-        specimenNames=specimenNames,
-        sdtmCategoryNames=sdtmCategoryNames,
-        sdtmSubCategoryNames=sdtmSubCategoryNames,
-        sdtmDomainNames=sdtmDomainNames,
-        sdtmVariableNames=sdtmVariableNames,
-        sort_by=sortBy,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        activity_names=activity_names,
+        specimen_names=specimen_names,
+        sdtm_category_names=sdtm_category_names,
+        sdtm_subcategory_names=sdtm_subcategory_names,
+        sdtm_domain_names=sdtm_domain_names,
+        sdtm_variable_names=sdtm_variable_names,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -152,8 +155,8 @@ def get_activities(
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
     library: Optional[str] = Query(None, description=""),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -162,23 +165,23 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     activity_instance_service = ActivityInstanceService(user=current_user_id)
     return activity_instance_service.get_distinct_values_for_header(
         library=library,
-        field_name=fieldName,
-        search_string=searchString,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
 @router.post(
-    "/activity-instances/{uid}/new-version",
+    "/activity-instances/{uid}/versions",
     summary=" Create a new version of an activity instance",
     description="""
 State before:
@@ -231,7 +234,7 @@ Business logic:
  - The latest 'Draft' version will remain the same as before.
  - The status of the new approved version will be automatically set to 'Final'.
  - The 'version' property of the new version will be automatically set to the version of the latest 'Final' version increased by +1.0.
- - The 'changeDescription' property will be set automatically 'Approved version'.
+ - The 'change_description' property will be set automatically 'Approved version'.
  
 State after:
  - Activity instance changed status to Final and assigned a new major version number.
@@ -275,7 +278,7 @@ State before:
 Business logic:
  - The latest 'Final' version will remain the same as before.
  - The status will be automatically set to 'Retired'.
- - The 'changeDescription' property will be set automatically.
+ - The 'change_description' property will be set automatically.
  - The 'version' property will remain the same as before.
  
 State after:
@@ -319,7 +322,7 @@ State before:
 Business logic:
  - The latest 'Retired' version will remain the same as before.
  - The status will be automatically set to 'Final'.
- - The 'changeDescription' property will be set automatically.
+ - The 'change_description' property will be set automatically.
  - The 'version' property will remain the same as before.
 
 State after:
@@ -360,7 +363,7 @@ def reactivate(
 State before:
  - uid must exist
  - The concept must be in status Draft in a version less then 1.0 (never been approved).
- - The concept must belongs to a library that allows deleting (the 'isEditable' property of the library needs to be true).
+ - The concept must belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).
  
 Business logic:
  - The draft concept is deleted.

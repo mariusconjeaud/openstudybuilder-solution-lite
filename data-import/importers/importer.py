@@ -8,7 +8,7 @@ import aiohttp
 import requests
 
 from importers.metrics import Metrics
-from .api_bindings import ApiBinding
+from .api_bindings import ApiBinding, CODELIST_NAME_MAP
 from .functions.utils import create_logger, load_env
 from .functions.caselessdict import CaselessDict
 
@@ -24,7 +24,6 @@ API_HEADERS = {"Accept": "application/json"}
 #
 API_BASE_URL = load_env("API_BASE_URL")
 
-
 class TermCache:
     def __init__(self, api):
         self.api = api
@@ -32,21 +31,21 @@ class TermCache:
         self.all_terms_name_submission_values = CaselessDict(
             self.api.get_all_identifiers(
                 self.all_terms_attributes,
-                identifier="nameSubmissionValue",
-                value="termUid",
+                identifier="name_submission_value",
+                value="term_uid",
             )
         )
         self.all_terms_code_submission_values = CaselessDict(
             self.api.get_all_identifiers(
                 self.all_terms_attributes,
-                identifier="codeSubmissionValue",
-                value="termUid",
+                identifier="code_submission_value",
+                value="term_uid",
             )
         )
         self.all_term_names = self.api.get_all_from_api("/ct/terms/names")
         self.all_term_name_values = CaselessDict(
             self.api.get_all_identifiers_multiple(
-                self.all_term_names, identifier="sponsorPreferredName", values=["termUid", "catalogueName"]
+                self.all_term_names, identifier="sponsor_preferred_name", values=["term_uid", "catalogue_name"]
             )
         )
         self.added_terms = CaselessDict()
@@ -179,7 +178,7 @@ class BaseImporter:
     def search_codelist(self, codelist, name):
         for item in codelist:
             if (
-                item.get("name", {}).get("sponsorPreferredName", "").lower()
+                item.get("name", {}).get("sponsor_preferred_name", "").lower()
                 == name.lower()
             ):
                 return True
@@ -191,15 +190,15 @@ class BaseImporter:
     def get_uid_for_sponsor_preferred_name(self, terms, name):
         for item in terms:
             try:
-                if item["name"]["sponsorPreferredName"] == name:
-                    return item["termUid"]
+                if item["name"]["sponsor_preferred_name"] == name:
+                    return item["term_uid"]
             except KeyError:
                 pass
 
     # Helper to return the first term that has a matching catalogue name.
     def _find_term_with_catalogue(self, terms, catalogue):
         for term in terms:
-            if term["catalogueName"] == catalogue:
+            if term["catalogue_name"] == catalogue:
                 return term
 
     async def process_simple_term_migration(
@@ -207,111 +206,116 @@ class BaseImporter:
     ):
         self.ensure_cache()
         result = None
-        termName = data["body"]["sponsorPreferredName"]
+        term_name = data["body"]["sponsor_preferred_name"]
         post_status, post_result = await self.api.post_to_api_async(
             url="/ct/terms", body=data["body"], session=session
         )
-        termUid = None
+        term_uid = None
         if post_status == 201:
-            self.cache.added_terms[termName] = post_result
-            termUid = post_result["termUid"]
-            self.log.info(f"Added term name '{termName}' with uid '{termUid}'")
+            self.cache.added_terms[term_name] = post_result
+            term_uid = post_result["term_uid"]
+            self.log.info(f"Added term name '{term_name}' with uid '{term_uid}'")
             time.sleep(0.01)
             status, result = await self.api.approve_async(
-                "/ct/terms/" + termUid + "/names/approve", session=session
+                "/ct/terms/" + term_uid + "/names/approve", session=session
             )
             if status != 201:
                 self.log.error(
-                    f"Failed to approve term name '{termName}' with uid '{termUid}'"
+                    f"Failed to approve term name '{term_name}' with uid '{term_uid}'"
                 )
                 metrics.icrement("/ct/terms--NamesApproveError")
             else:
-                self.log.info(f"Approved term name '{termName}' with uid '{termUid}'")
+                self.log.info(f"Approved term name '{term_name}' with uid '{term_uid}'")
                 metrics.icrement("/ct/terms--NamesApprove")
             status, result = await self.api.approve_async(
-                "/ct/terms/" + termUid + "/attributes/approve", session=session
+                "/ct/terms/" + term_uid + "/attributes/approve", session=session
             )
             if status != 201:
                 self.log.error(
-                    f"Failed to approve term attributes '{termName}' with uid '{termUid}'"
+                    f"Failed to approve term attributes '{term_name}' with uid '{term_uid}'"
                 )
                 metrics.icrement("/ct/terms--AttributesApproveError")
             else:
                 self.log.info(
-                    f"Approved term attributes '{termName}' with uid '{termUid}'"
+                    f"Approved term attributes '{term_name}' with uid '{term_uid}'"
                 )
                 metrics.icrement("/ct/terms--AttributesApprove")
         else:
             self.log.error(
-                f"Failed to add term name '{termName}' with uid '{termUid}', trying to link to already existing"
+                f"Failed to add term name '{term_name}' with uid '{term_uid}', trying to link to already existing"
             )
-            if termName in self.cache.added_terms:
-                termUid = self.cache.added_terms[termName]["termUid"]
+            if term_name in self.cache.added_terms:
+                term_uid = self.cache.added_terms[term_name]["term_uid"]
                 self.log.info(
-                    f"Term name '{termName}' with uid '{termUid}' found in cache of newly added terms"
+                    f"Term name '{term_name}' with uid '{term_uid}' found in cache of newly added terms"
                 )
-            elif termName in self.cache.all_term_name_values:
-                found_terms = self.cache.all_term_name_values[termName]
-                term_in_catalogue = self._find_term_with_catalogue(found_terms, data["body"]["catalogueName"])
+            elif term_name in self.cache.all_term_name_values:
+                found_terms = self.cache.all_term_name_values[term_name]
+                term_in_catalogue = self._find_term_with_catalogue(found_terms, data["body"]["catalogue_name"])
                 self.log.info(
-                    f"Term name '{termName}' found as '{[str(t['catalogueName']) + ':' + t['termUid'] for t in found_terms]}' among existing term names"
+                    f"Term name '{term_name}' found as '{[str(t['catalogue_name']) + ':' + t['term_uid'] for t in found_terms]}' among existing term names"
                 )
                 if term_in_catalogue is None:
                     self.log.error(
-                        f"Term '{termName}' not found in catalogue: '{data['body']['catalogueName']}', using first match from catalogue '{found_terms[0]['catalogueName']}'"
+                        f"Term '{term_name}' not found in catalogue: '{data['body']['catalogue_name']}', using first match from catalogue '{found_terms[0]['catalogue_name']}'"
                     )
-                    termUid = found_terms[0]["termUid"]
+                    term_uid = found_terms[0]["term_uid"]
                 else:
-                    termUid = term_in_catalogue["termUid"]
-                codelist_uid = data["body"]["codelistUid"]
+                    term_uid = term_in_catalogue["term_uid"]
+                codelist_uid = data["body"]["codelist_uid"]
                 codelist = self.retry_function(self.api.get_terms_for_codelist_uid, [codelist_uid], nbr_retries=3, retry_delay=0.5)
-                if self.search_codelist(codelist, termName):
+                if self.search_codelist(codelist, term_name):
                     self.log.info(
-                        f"Term name '{termName}' already exits in the codelist with uid {codelist_uid}, not adding again"
+                        f"Term name '{term_name}' already exits in the codelist with uid {codelist_uid}, not adding again"
                     )
                     return
             elif (
-                data["body"].get("codeSubmissionValue")
+                data["body"].get("code_submission_value")
                 in self.cache.all_terms_code_submission_values
             ):
-                termUid = self.cache.all_terms_code_submission_values[
-                    data["body"].get("codeSubmissionValue")
+                term_uid = self.cache.all_terms_code_submission_values[
+                    data["body"].get("code_submission_value")
                 ]
                 self.log.info(
-                    f"Term name '{termName}' found with uid '{termUid}' among existing term code submission values"
+                    f"Term name '{term_name}' found with uid '{term_uid}' among existing term code submission values"
                 )
             elif (
-                data["body"].get("nameSubmissionValue")
+                data["body"].get("name_submission_value")
                 in self.cache.all_terms_name_submission_values
             ):
-                termUid = self.cache.all_terms_name_submission_values[
-                    data["body"].get("nameSubmissionValue")
+                term_uid = self.cache.all_terms_name_submission_values[
+                    data["body"].get("name_submission_value")
                 ]
                 self.log.info(
-                    f"Term name '{termName}' found with uid '{termUid}' among existing term name submission values"
+                    f"Term name '{term_name}' found with uid '{term_uid}' among existing term name submission values"
                 )
-            if termUid:
-                codelist_uid = data["body"]["codelistUid"]
+            if term_uid:
+                codelist_uid = data["body"]["codelist_uid"]
                 self.log.info(
-                    f"Add term name '{termName}' with uid '{termUid}' to codelist '{codelist_uid}'"
+                    f"Add term name '{term_name}' with uid '{term_uid}' to codelist '{codelist_uid}'"
                 )
                 result = await self.api.post_to_api_async(
-                    url="/ct/codelists/" + codelist_uid + "/add-term",
-                    body={"termUid": termUid, "order": data["body"]["order"]},
+                    url="/ct/codelists/" + codelist_uid + "/terms",
+                    body={"term_uid": term_uid, "order": data["body"]["order"]},
                     session=session,
                 )
-        if data.get("validEpochUids"):
-            for valid_epoch_uid in data.get("validEpochUids"):
+                post_status, post_result = result
+                if post_status != 201:
+                    self.log.error(
+                        f"Failed to add term name '{term_name}' with uid '{term_uid}' to codelist '{codelist_uid}'"
+                    )
+        if data.get("valid_epoch_uids"):
+            for valid_epoch_uid in data.get("valid_epoch_uids"):
                 self.api.post_to_api(
                     {
-                        "path": f"/ct/terms/{termUid}/add-parent?parent_uid={valid_epoch_uid}&relationship_type=valid_for_epoch",
+                        "path": f"/ct/terms/{term_uid}/parents?parent_uid={valid_epoch_uid}&relationship_type=valid_for_epoch",
                         "body": {},
                     }
                 )
-        if data.get("elementTypeUid"):
+        if data.get("element_type_uid"):
             self.api.post_to_api(
                 {
-                    "path": f"/ct/terms/{termUid}/add-parent?parent_uid={data.get('elementTypeUid')}&relationship_type=type",
+                    "path": f"/ct/terms/{term_uid}/parents?parent_uid={data.get('element_type_uid')}&relationship_type=type",
                     "body": {},
                 }
             )

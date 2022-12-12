@@ -1,9 +1,21 @@
 import re
+from enum import Enum
 from typing import Optional, Sequence, Union
 
 from bs4 import BeautifulSoup
 
 from clinical_mdr_api.domain.iso_languages import langs
+
+
+class ObjectStatus(Enum):
+    """
+    Enum for object status
+    """
+
+    LATEST_FINAL = "final"
+    LATEST_RETIRED = "retired"
+    LATEST_DRAFT = "draft"
+    LATEST = "latest"
 
 
 def get_iso_lang_data(

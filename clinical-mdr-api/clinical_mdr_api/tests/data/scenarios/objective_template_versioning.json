@@ -17,7 +17,7 @@
                 "items": [],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
@@ -27,7 +27,7 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
+                "library_name": "Test library",
                 "name": "test"
             },
             "url": "/objective-templates"
@@ -39,30 +39,30 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
+                "change_description": "Initial version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
-                "studyCount": null,
+                "study_count": null,
                 "indications": null,
                 "categories": null,
-                "confirmatoryTesting": null,
+                "confirmatory_testing": null,
                 "name": "test",
-                "namePlain": "test",
-                "editableInstance": false,
+                "name_plain": "test",
+                "editable_instance": false,
                 "parameters": [],
-                "defaultParameterValues": [],
-                "possibleActions": [
+                "default_parameter_values": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-03T22:19:07+00:00",
+                "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Draft",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             },
             "save": {
@@ -76,7 +76,7 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "changeDescription": "Change test",
+                "change_description": "Change test",
                 "name": "Test {test-uid}"
             },
             "url": "/objective-templates/{uid}"
@@ -88,30 +88,30 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Change test",
-                "endDate": null,
+                "change_description": "Change test",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
-                "studyCount": null,
+                "study_count": null,
                 "indications": null,
                 "categories": null,
-                "confirmatoryTesting": null,
+                "confirmatory_testing": null,
                 "name": "Test {test-uid}",
-                "namePlain": "Test {test-uid}",
-                "editableInstance": false,
+                "name_plain": "Test {test-uid}",
+                "editable_instance": false,
                 "parameters": [],
-                "defaultParameterValues": [],
-                "possibleActions": [
+                "default_parameter_values": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-04T02:23:58+00:00",
+                "start_date": "2020-11-04T02:23:58+00:00",
                 "status": "Draft",
                 "uid": "2550998f-c234-43dd-b99f-a3636660953e",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.2"
             }
         }
@@ -131,29 +131,29 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Approved version",
-                "endDate": null,
+                "change_description": "Approved version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
-                "studyCount": null,
+                "study_count": null,
                 "indications": null,
                 "categories": null,
-                "confirmatoryTesting": null,
+                "confirmatory_testing": null,
                 "name": "Test {test-uid}",
-                "namePlain": "Test {test-uid}",
-                "editableInstance": false,
+                "name_plain": "Test {test-uid}",
+                "editable_instance": false,
                 "parameters": [],
-                "defaultParameterValues": [],
-                "possibleActions": [
+                "default_parameter_values": [],
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ],
-                "startDate": "2020-11-03T22:19:07+00:00",
+                "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Final",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "1.0"
             }
         }
@@ -233,131 +233,131 @@
             },
             "result": [
                 {
-                    "changeDescription": "Approved version",
+                    "change_description": "Approved version",
                     "changes": {
-                        "changeDescription": true,
-                        "endDate": true,
+                        "change_description": true,
+                        "end_date": true,
                         "library": false,
                         "name": false,
-                        "namePlain": false,
-                        "editableInstance": false,
+                        "name_plain": false,
+                        "editable_instance": false,
                         "parameters": false,
-                        "defaultParameterValues": false,
-                        "possibleActions": true,
-                        "startDate": false,
+                        "default_parameter_values": false,
+                        "possible_actions": true,
+                        "start_date": false,
                         "status": true,
                         "uid": false,
-                        "userInitials": false,
+                        "user_initials": false,
                         "version": true,
-                        "studyCount": false,
+                        "study_count": false,
                         "indications": false,
                         "categories": false,
-                        "confirmatoryTesting": false
+                        "confirmatory_testing": false
                     },
-                    "endDate": null,
+                    "end_date": null,
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Test library"
                     },
-                    "studyCount": null,
+                    "study_count": null,
                     "indications": null,
                     "categories": null,
-                    "confirmatoryTesting": null,
+                    "confirmatory_testing": null,
                     "name": "Test {test-uid}",
-                    "namePlain": "Test {test-uid}",
-                    "editableInstance": false,
+                    "name_plain": "Test {test-uid}",
+                    "editable_instance": false,
                     "parameters": [],
-                    "defaultParameterValues": [],
-                    "possibleActions": [
+                    "default_parameter_values": [],
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ],
-                    "startDate": "2020-11-11T01:26:58+00:00",
+                    "start_date": "2020-11-11T01:26:58+00:00",
                     "status": "Final",
                     "uid": "c205c6f4-181d-4f1d-9d78-29b5367603b6",
-                    "userInitials": "TEST_USER",
+                    "user_initials": "TEST_USER",
                     "version": "1.0"
                 },
                 {
-                    "changeDescription": "Change test",
+                    "change_description": "Change test",
                     "changes": {
-                        "changeDescription": true,
-                        "endDate": true,
+                        "change_description": true,
+                        "end_date": true,
                         "library": false,
                         "name": true,
-                        "namePlain": true,
-                        "editableInstance": false,
+                        "name_plain": true,
+                        "editable_instance": false,
                         "parameters": false,
-                        "defaultParameterValues": false,
-                        "possibleActions": false,
-                        "startDate": true,
+                        "default_parameter_values": false,
+                        "possible_actions": false,
+                        "start_date": true,
                         "status": false,
                         "uid": false,
-                        "userInitials": false,
+                        "user_initials": false,
                         "version": true,
-                        "studyCount": false,
+                        "study_count": false,
                         "indications": false,
                         "categories": false,
-                        "confirmatoryTesting": false
+                        "confirmatory_testing": false
                     },
-                    "endDate": null,
+                    "end_date": null,
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Test library"
                     },
-                    "studyCount": null,
+                    "study_count": null,
                     "indications": null,
                     "categories": null,
-                    "confirmatoryTesting": null,
+                    "confirmatory_testing": null,
                     "name": "Test {test-uid}",
-                    "namePlain": "Test {test-uid}",
-                    "editableInstance": false,
+                    "name_plain": "Test {test-uid}",
+                    "editable_instance": false,
                     "parameters": [],
-                    "defaultParameterValues": [],
-                    "possibleActions": [
+                    "default_parameter_values": [],
+                    "possible_actions": [
                         "approve",
                         "delete",
                         "edit"
                     ],
-                    "startDate": "2020-11-04T02:23:58+00:00",
+                    "start_date": "2020-11-04T02:23:58+00:00",
                     "status": "Draft",
                     "uid": "2550998f-c234-43dd-b99f-a3636660953e",
-                    "userInitials": "TEST_USER",
+                    "user_initials": "TEST_USER",
                     "version": "0.2"
                 },
                 {
-                    "changeDescription": "Initial version",
+                    "change_description": "Initial version",
                     "changes": {},
-                    "endDate": "2020-11-11T01:26:58+00:00",
+                    "end_date": "2020-11-11T01:26:58+00:00",
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Test library"
                     },
-                    "studyCount": null,
+                    "study_count": null,
                     "indications": null,
                     "categories": null,
-                    "confirmatoryTesting": null,
+                    "confirmatory_testing": null,
                     "name": "test",
-                    "namePlain": "test",
-                    "editableInstance": false,
+                    "name_plain": "test",
+                    "editable_instance": false,
                     "parameters": [],
-                    "defaultParameterValues": [],
-                    "possibleActions": [
+                    "default_parameter_values": [],
+                    "possible_actions": [
                         "approve",
                         "delete",
                         "edit"
                     ],
-                    "startDate": "2020-11-11T01:26:58+00:00",
+                    "start_date": "2020-11-11T01:26:58+00:00",
                     "status": "Draft",
                     "uid": "c205c6f4-181d-4f1d-9d78-29b5367603b6",
-                    "userInitials": "TEST_USER",
+                    "user_initials": "TEST_USER",
                     "version": "0.1"
                 }
             ]
         }
     },
     {
-        "name": "Test update with PATCH without changeDescription",
+        "name": "Test update with PATCH without change_description",
         "request": {
             "headers": {},
             "method": "PATCH",
@@ -377,7 +377,7 @@
                     {
                         "loc": [
                             "body",
-                            "changeDescription"
+                            "change_description"
                         ],
                         "msg": "field required",
                         "type": "value_error.missing"
@@ -392,7 +392,7 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "changeDescription": "Change test",
+                "change_description": "Change test",
                 "name": "test{test-uid}"
             },
             "url": "/objective-templates/{uid}"
@@ -418,10 +418,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "changeDescription": "Test new version creation",
+                "change_description": "Test new version creation",
                 "name": "test1"
             },
-            "url": "/objective-templates/{uid}/new-version"
+            "url": "/objective-templates/{uid}/versions"
         },
         "response": {
             "code": 201,
@@ -430,29 +430,29 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Test new version creation",
-                "endDate": null,
+                "change_description": "Test new version creation",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
-                "studyCount": null,
+                "study_count": null,
                 "indications": null,
                 "categories": null,
-                "confirmatoryTesting": null,
+                "confirmatory_testing": null,
                 "name": "test1",
-                "namePlain": "test1",
-                "editableInstance": false,
+                "name_plain": "test1",
+                "editable_instance": false,
                 "parameters": [],
-                "defaultParameterValues": [],
-                "possibleActions": [
+                "default_parameter_values": [],
+                "possible_actions": [
                     "approve",
                     "edit"
                 ],
-                "startDate": "2020-11-03T22:19:07+00:00",
+                "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Draft",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "1.1"
             }
         }
@@ -463,7 +463,7 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "changeDescription": "Change test",
+                "change_description": "Change test",
                 "name": "test{test-uid}"
             },
             "url": "/objective-templates/{uid}"
@@ -475,29 +475,29 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Change test",
-                "endDate": null,
+                "change_description": "Change test",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
-                "studyCount": null,
+                "study_count": null,
                 "indications": null,
                 "categories": null,
-                "confirmatoryTesting": null,
+                "confirmatory_testing": null,
                 "name": "test{test-uid}",
-                "namePlain": "test{test-uid}",
-                "editableInstance": false,
+                "name_plain": "test{test-uid}",
+                "editable_instance": false,
                 "parameters": [],
-                "defaultParameterValues": [],
-                "possibleActions": [
+                "default_parameter_values": [],
+                "possible_actions": [
                     "approve",
                     "edit"
                 ],
-                "startDate": "2020-11-04T02:23:58+00:00",
+                "start_date": "2020-11-04T02:23:58+00:00",
                 "status": "Draft",
                 "uid": "2550998f-c234-43dd-b99f-a3636660953e",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "1.2"
             }
         }
@@ -508,7 +508,7 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "changeDescription": "Change test",
+                "change_description": "Change test",
                 "name": "test{test-uid} {another-uid} [Indication]"
             },
             "url": "/objective-templates/{uid}"
@@ -520,7 +520,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "You cannot change number or order of template parameters.",
+                "message": "You cannot change number or order of template parameters for a previously approved template.",
                 "method": "PATCH",
                 "path": "http://testserver/objective-templates",
                 "time": "2020-11-03T23:42:41.518146",
@@ -534,7 +534,7 @@
             "headers": {},
             "method": "GET",
             "request": {
-                "changeDescription": "Change test",
+                "change_description": "Change test",
                 "name": "test{test-uid}"
             },
             "url": "/objective-templates/{uid}?return_instantiation_counts=1"
@@ -546,35 +546,35 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Change test",
+                "change_description": "Change test",
                 "counts": {
                     "draft": 0,
                     "final": 0,
                     "retired": 0,
                     "total": 0
                 },
-                "endDate": null,
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
-                "studyCount": null,
+                "study_count": null,
                 "indications": null,
                 "categories": null,
-                "confirmatoryTesting": null,
+                "confirmatory_testing": null,
                 "name": "test{test-uid}",
-                "namePlain": "test{test-uid}",
-                "editableInstance": false,
+                "name_plain": "test{test-uid}",
+                "editable_instance": false,
                 "parameters": [],
-                "defaultParameterValues": [],
-                "possibleActions": [
+                "default_parameter_values": [],
+                "possible_actions": [
                     "approve",
                     "edit"
                 ],
-                "startDate": "2020-11-04T02:23:58+00:00",
+                "start_date": "2020-11-04T02:23:58+00:00",
                 "status": "Draft",
                 "uid": "2550998f-c234-43dd-b99f-a3636660953e",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "1.2"
             }
         }

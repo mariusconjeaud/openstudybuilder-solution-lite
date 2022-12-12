@@ -33,7 +33,7 @@ class OdmAliasVO(ConceptVO):
 
         if odm_alias_exists_by_name_callback(self.name) and previous_name != self.name:
             raise BusinessLogicException(
-                f"OdmAlias with name ({self.name}) already exists."
+                f"ODM Alias with name ({self.name}) already exists."
             )
 
 

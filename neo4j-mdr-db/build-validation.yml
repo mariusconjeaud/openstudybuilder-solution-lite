@@ -1,0 +1,76 @@
+# Specify an automatic trigger for executing this pipeline
+trigger:
+  batch: true # Whether to batch changes per branch.  (false,n,no,off,on,true,y,yes)
+  branches:  
+    include: 
+    - main
+
+# Identify which agent to run the pipeline on
+pool:
+  name: 'clinical-mdr-dev-vmss'
+
+variables:
+ - name: python_version
+   value: 3.9
+
+jobs:
+- job: 
+  displayName: 'Automated build validation'  
+  steps:
+  - checkout: self
+    persistCredentials: true
+    # Checkout source repos
+  - script: |
+      git fetch -a
+
+      if [[ "$(Build.Reason)" == "PullRequest" ]]; then
+        gitbranch=`echo $(System.PullRequest.SourceBranch) | sed 's/^refs\/heads\///'`
+      else
+        gitbranch=`echo $(Build.SourceBranchName)`
+      fi
+
+      echo "##vso[task.setvariable variable=gitbranch;isOutput=true;]$gitbranch"
+
+      git checkout $gitbranch
+      git pull
+    displayName: 'Checkout git branch'
+    name: gitref
+
+  # Specify python version. The version must be manually installed beforehand so the agent has it available.
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: $(python_version)
+      addToPath: true
+      architecture: 'x64'
+
+  # Resolve and install python dependencies
+  - script: |
+      python3 -m venv venv --clear
+      source $(Build.SourcesDirectory)/venv/bin/activate
+      python -m pip install --upgrade pipenv
+      python -m pipenv lock
+      python -m pipenv requirements | tee requirements.txt
+      python -m pipenv install --dev
+      python -m pipenv graph
+    displayName: Setup dependencies
+
+  - script: |
+      pip install -r requirements.txt # duplicated installation step - temporary until sbom is rewritten to work with pipenv
+      find /opt/hostedtoolcache/Python/$(python_version).*/x64/lib/python3.*/site-packages/*.dist*/ -type f -iname "*license*" > files.txt
+      echo "## Third party library licenses descriptions" > sbom.md
+      while read line; do echo $line | rev | cut -d "/" -f2 | rev | cut -d "-" -f1 | awk '{ print "### License for 3rd party library " $1 }' >> sbom.md; echo '```' >> sbom.md && cat $line >> sbom.md && echo ' ' >> sbom.md && echo '```' >> sbom.md; done < files.txt
+      #tail -n +4 sbom.md > tmp && mv tmp sbom.md # include after nnsbom fix
+      tail -n +2 sbom-additional.md > tmp && mv tmp sbom-additional.md
+      cat sbom-additional.md >> sbom.md
+      cat sbom.md
+
+      if [[ "$(Build.SourceBranchName)" != "main" && "$(Build.Reason)" == "PullRequest" ]]; then
+        git config --global user.email pipeline@studybuilder.com
+        git config --global user.name "Pipeline $(Build.BuildNumber)"
+        git add sbom.md
+        git commit sbom.md -m "Pipeline $(Build.BuildNumber) committed changes to SBOM"
+        git push https://$SYSTEM_ACCESSTOKEN@dev.azure.com/novonordiskit/Clinical-MDR/_git/neo4j-mdr-db $(gitref.gitbranch)
+      fi
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+    displayName: Generate full sbom for neo4j-mdr-db

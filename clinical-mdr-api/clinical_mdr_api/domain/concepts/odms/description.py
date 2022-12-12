@@ -12,18 +12,18 @@ from clinical_mdr_api.domain.versioned_object_aggregate import (
 @dataclass(frozen=True)
 class OdmDescriptionVO(ConceptVO):
     language: str
-    description: str
-    instruction: str
-    sponsor_instruction: str
+    description: Optional[str]
+    instruction: Optional[str]
+    sponsor_instruction: Optional[str]
 
     @classmethod
     def from_repository_values(
         cls,
         name: str,
         language: str,
-        description: str,
-        instruction: str,
-        sponsor_instruction: str,
+        description: Optional[str],
+        instruction: Optional[str],
+        sponsor_instruction: Optional[str],
     ) -> "OdmDescriptionVO":
         return cls(
             name=name,
@@ -87,6 +87,7 @@ class OdmDescriptionAR(OdmARBase):
         author: str,
         change_description: Optional[str],
         concept_vo: OdmDescriptionVO,
+        concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
     ) -> None:
         """
         Creates a new draft version for the object.

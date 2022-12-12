@@ -17,7 +17,7 @@ class StudySelectionEndpointVO:
     endpoint_uid: Optional[str]
     endpoint_version: Optional[str]
     endpoint_level_uid: Optional[str]
-    endpoint_sub_level_uid: Optional[str]
+    endpoint_sublevel_uid: Optional[str]
     study_objective_uid: Optional[str]
     timeframe_uid: Optional[str]
     timeframe_version: Optional[str]
@@ -35,7 +35,7 @@ class StudySelectionEndpointVO:
         endpoint_uid: Optional[str],
         endpoint_version: Optional[str],
         endpoint_level_uid: Optional[str],
-        endpoint_sub_level_uid: Optional[str],
+        endpoint_sublevel_uid: Optional[str],
         unit_separator: Optional[str],
         study_objective_uid: Optional[str],
         timeframe_uid: Optional[str],
@@ -54,7 +54,7 @@ class StudySelectionEndpointVO:
         :param study_uid:
         :param endpoint_uid:
         :param endpoint_level_uid:
-        :param endpoint_sub_level_uid:
+        :param endpoint_sublevel_uid:
         :param unit_separator:
         :param study_objective_uid:
         :param timeframe_uid:
@@ -68,7 +68,7 @@ class StudySelectionEndpointVO:
             study_selection_uid = generate_uid_callback()
 
         if start_date is None:
-            start_date = datetime.datetime.now()
+            start_date = datetime.datetime.now(datetime.timezone.utc)
 
         if endpoint_units is not None:
             units = []
@@ -84,7 +84,7 @@ class StudySelectionEndpointVO:
             endpoint_uid=normalize_string(endpoint_uid),
             endpoint_version=normalize_string(endpoint_version),
             endpoint_level_uid=normalize_string(endpoint_level_uid),
-            endpoint_sub_level_uid=normalize_string(endpoint_sub_level_uid),
+            endpoint_sublevel_uid=normalize_string(endpoint_sublevel_uid),
             unit_separator=normalize_string(unit_separator),
             study_objective_uid=normalize_string(study_objective_uid),
             timeframe_uid=normalize_string(timeframe_uid),
@@ -151,11 +151,11 @@ class StudySelectionEndpointVO:
             raise ValueError(
                 f"There is no approved endpoint level identified by provided term uid ({self.endpoint_level_uid})"
             )
-        if self.endpoint_sub_level_uid and not ct_term_exists_callback(
-            self.endpoint_sub_level_uid
+        if self.endpoint_sublevel_uid and not ct_term_exists_callback(
+            self.endpoint_sublevel_uid
         ):
             raise ValueError(
-                f"There is no approved endpoint sub level identified by provided term uid ({self.endpoint_sub_level_uid})"
+                f"There is no approved endpoint sub level identified by provided term uid ({self.endpoint_sublevel_uid})"
             )
         for unit in self.endpoint_units:
             if not unit_definition_exists_callback(unit):
@@ -424,7 +424,7 @@ class StudySelectionEndpointsAR:
                         endpoint_uid=selection.endpoint_uid,
                         endpoint_version=selection.endpoint_version,
                         endpoint_level_uid=selection.endpoint_level_uid,
-                        endpoint_sub_level_uid=selection.endpoint_sub_level_uid,
+                        endpoint_sublevel_uid=selection.endpoint_sublevel_uid,
                         unit_separator=selection.unit_separator,
                         study_objective_uid=None,
                         study_selection_uid=selection.study_selection_uid,
@@ -446,14 +446,15 @@ class StudySelectionEndpointsAR:
             if (
                 selection.endpoint_uid,
                 selection.timeframe_uid,
+                *selection.endpoint_units,
             ) in endpoints_timeframes:
                 raise ValueError(
-                    "There is already a study endpoint created for the selected endpoint and timeframe combination"
+                    "There is already a study endpoint created for the selected endpoint, timeframe and unit combination"
                 )
-            if (
-                selection.endpoint_uid is not None
-                and selection.timeframe_uid is not None
-            ):
-                endpoints_timeframes.append(
-                    (selection.endpoint_uid, selection.timeframe_uid)
+            endpoints_timeframes.append(
+                (
+                    selection.endpoint_uid,
+                    selection.timeframe_uid,
+                    *selection.endpoint_units,
                 )
+            )

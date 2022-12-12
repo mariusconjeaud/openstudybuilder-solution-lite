@@ -1,8 +1,8 @@
 [
   {
-    "activityGroups": [],
+    "activity_groups": [],
     "aliases": [],
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "descriptions": [
       {
         "description": "Informed Consent and Demography form",
@@ -14,12 +14,12 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "itemGroups": [],
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Informed Consent and Demography",
     "oid": "F.DM",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
@@ -27,16 +27,16 @@
     "repeating": "No",
     "scope": null,
     "sdtmVersion": null,
-    "startDate": "2022-10-18T13:18:42.612182",
+    "start_date": "2022-10-18T13:18:42.612182",
     "status": "Draft",
     "uid": "OdmForm_000001",
-    "userInitials": "TODO user initials",
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
-    "activityGroups": [],
+    "activity_groups": [],
     "aliases": [],
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "descriptions": [
       {
         "description": "Vital signs form",
@@ -48,12 +48,12 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "itemGroups": [],
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Vital Signs",
     "oid": "F.VS",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
@@ -61,16 +61,16 @@
     "repeating": "No",
     "scope": null,
     "sdtmVersion": null,
-    "startDate": "2022-10-18T13:18:43.134982",
+    "start_date": "2022-10-18T13:18:43.134982",
     "status": "Draft",
     "uid": "OdmForm_000002",
-    "userInitials": "TODO user initials",
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
-    "activityGroups": [],
+    "activity_groups": [],
     "aliases": [],
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "descriptions": [
       {
         "description": "Medical History/Concomitant Illness (Without pre-printed diagnosis)",
@@ -82,12 +82,12 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "itemGroups": [],
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Medical History/Concomitant Illness",
     "oid": "F.MH",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
@@ -95,16 +95,16 @@
     "repeating": "No",
     "scope": null,
     "sdtmVersion": null,
-    "startDate": "2022-10-18T13:18:43.358862",
+    "start_date": "2022-10-18T13:18:43.358862",
     "status": "Draft",
     "uid": "OdmForm_000003",
-    "userInitials": "TODO user initials",
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
-    "activityGroups": [],
+    "activity_groups": [],
     "aliases": [],
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "descriptions": [
       {
         "description": "Administration of <Investigational medicinal product>",
@@ -116,12 +116,12 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "itemGroups": [],
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Administration of <Investigational medicinal product>",
     "oid": "F.IM",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
@@ -129,16 +129,16 @@
     "repeating": "No",
     "scope": null,
     "sdtmVersion": null,
-    "startDate": "2022-10-18T13:18:43.602452",
+    "start_date": "2022-10-18T13:18:43.602452",
     "status": "Draft",
     "uid": "OdmForm_000004",
-    "userInitials": "TODO user initials",
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
-    "activityGroups": [],
+    "activity_groups": [],
     "aliases": [],
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "descriptions": [
       {
         "description": "Adverse Event",
@@ -150,12 +150,12 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "itemGroups": [],
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Adverse Event",
     "oid": "F.AE",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
@@ -163,16 +163,16 @@
     "repeating": "No",
     "scope": null,
     "sdtmVersion": null,
-    "startDate": "2022-10-18T13:18:43.847241",
+    "start_date": "2022-10-18T13:18:43.847241",
     "status": "Draft",
     "uid": "OdmForm_000005",
-    "userInitials": "TODO user initials",
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
-    "activityGroups": [],
+    "activity_groups": [],
     "aliases": [],
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "descriptions": [
       {
         "description": "ECG form",
@@ -184,12 +184,12 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "itemGroups": [],
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "ECG",
     "oid": "F.EG",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
@@ -197,10 +197,10 @@
     "repeating": "No",
     "scope": null,
     "sdtmVersion": null,
-    "startDate": "2022-10-18T13:18:44.124570",
+    "start_date": "2022-10-18T13:18:44.124570",
     "status": "Draft",
     "uid": "OdmForm_000006",
-    "userInitials": "TODO user initials",
+    "user_initials": "TODO user initials",
     "version": "0.1"
   }
 ]

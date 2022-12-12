@@ -1,0 +1,380 @@
+trigger:
+  batch: true # Whether to batch changes per branch.  (false,n,no,off,on,true,y,yes)
+  branches:  
+    include: 
+    - main
+
+# Pipeline parameters
+parameters:
+- name: SERVICE_CONN
+  type: string
+  default: IaCAgent-ClinicalMDR-DEV
+- name: DEPLOY_ID_NUMBER
+  displayName: ID number of parallel deployments running in the same environment.
+  type: string
+  default: '1'
+  values:
+  - '1'
+  - '2'
+  - '3'
+  - '4'
+  - '5'
+- name: VAULT_NAME_PREFIX
+  type: string
+  default: kv-general
+
+# Identify which agent to run the pipeline on
+pool:
+  name: 'clinical-mdr-dev-vmss'
+
+variables:
+ - name: python_version
+   value: 3.9
+
+jobs:
+#############################################################################
+####                      TEST THE APPLICATION                          #####
+#############################################################################
+- job: test_app
+  displayName: 'Testing the application' 
+  timeoutInMinutes: 90
+  continueOnError: true
+  steps:
+    - checkout: self
+      persistCredentials: true
+
+    - template: pipelines/templates/setup.yml
+      parameters:
+        DEPLOY_ID_NUMBER: ${{parameters.DEPLOY_ID_NUMBER}}
+        VAULT_NAME_PREFIX: kv-general
+
+    - script: |
+        echo "y" | docker volume prune
+        docker-compose down -v
+        docker-compose up -d -V
+      displayName: "Reset docker services"
+
+    - task: PowerShell@2
+      displayName: 'Check neo4j availability'    
+      inputs:
+        failOnStderr: true
+        targetType: 'filePath'
+        filePath: $(Build.SourcesDirectory)/pipelines/scripts/InvokeRequestWithRetry.ps1
+        arguments: > # Use this to avoid newline characters in multi-line string
+          -URI "http://localhost:5074/"
+          -Method "GET"
+          -Retries 20
+          -SecondsDelay 10
+          -TimeoutSec 200
+
+    - script: |
+        source $(Build.SourcesDirectory)/venv/bin/activate
+
+        # Plain environment, no authorization #
+        export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
+        export ALLOW_ORIGIN_REGEX='.*'
+        export OAUTH_ENABLED='False'
+
+        python -m pipenv run testunit      
+      displayName: "Unit test"
+    
+    - script: |
+        source $(Build.SourcesDirectory)/venv/bin/activate
+
+        # Plain environment, no authorization #
+        export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
+        export ALLOW_ORIGIN_REGEX='.*'
+        export OAUTH_ENABLED='False'
+
+        python -m pipenv run testint
+      displayName: "Integration test"
+
+    - script: |
+        source $(Build.SourcesDirectory)/venv/bin/activate
+
+        export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
+        export ALLOW_ORIGIN_REGEX='.*'
+        export OAUTH_ENABLED='False'
+
+        # Although the fake connection string, it enables App Insights integration code related to logging and tracing 
+        export APPLICATIONINSIGHTS_CONNECTION_STRING='InstrumentationKey=00000000-0000-0000-0000-000000000000'
+        # Configure Python logging with logging-azure.yaml to validate config file and code dependencies
+        export UVICORN_LOG_CONFIG='logging-azure.yaml'
+        
+        python -m pipenv run test-telemetry
+      displayName: "Telemetry test"
+
+    - script: |
+        source $(Build.SourcesDirectory)/venv/bin/activate
+
+        export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
+        export ALLOW_ORIGIN_REGEX='.*'
+
+        # Enable authorization for the rest of the tests below #
+        unset OAUTH_ENABLED  # Authentication is enabled by default, unless OAUTH_ENABLED in [False|0|off] 
+        # Please provide these environment variables for the pipeline, otherwise auth test will fail
+        # OIDC_METADATA_DOCUMENT OAUTH_AUTHORIZATION_URL OAUTH_TOKEN_URL OAUTH_APP_ID OAUTH_APP_ID_URI OUATH_CLIENT_ID
+        
+        export OIDC_METADATA_DOCUMENT="$(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-OIDC-DOC)"
+        export OAUTH_AUTHORIZATION_URL="$(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-AUTH-URL)"
+        export OAUTH_TOKEN_URL="$(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-TOKEN-URL)"
+        export OAUTH_APP_ID="$(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-APP-ID)"
+        export OAUTH_APP_ID_URI="$(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-URI)"
+        export OUATH_CLIENT_ID="$(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-CLIENT-ID)"
+        export OAUTH_EXPIRED_ACCESS_TOKEN="$(CLINICAL-MDR-TEST-${{parameters.DEPLOY_ID_NUMBER}}-EXP-ACCESS-TOKEN)"
+        
+        python -m pipenv run testauth
+      displayName: "Auth test"
+  
+    # Publish test results to Azure Pipelines
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '$(Build.SourcesDirectory)/unit_report.xml' 
+        failTaskOnFailedTests: true
+        testRunTitle: "$(Build.BuildNumber) - Unit"
+      displayName: "Publish unit test report"
+
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '$(Build.SourcesDirectory)/telemetry_report.xml'
+        failTaskOnFailedTests: true
+        testRunTitle: "$(Build.BuildNumber) - Telemetry"
+      displayName: "Publish telemetry tests report"
+
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '$(Build.SourcesDirectory)/auth_report.xml'
+        failTaskOnFailedTests: true
+        testRunTitle: "$(Build.BuildNumber) - Auth"
+      displayName: "Publish auth test report" 
+    
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '$(Build.SourcesDirectory)/int_report.xml' 
+        failTaskOnFailedTests: true
+        testRunTitle: "$(Build.BuildNumber) - Integration"
+      displayName: "Publish integration test report"    
+
+    # Publish combined code coverage by unit/integration/auth tests
+    - task: PublishCodeCoverageResults@1
+      inputs:
+        codeCoverageTool: Cobertura
+        summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+      displayName: "Publish code coverage"
+
+    # Save logs from Neo4j container
+    - script: |
+        docker logs db_testint > neo4j.log
+      condition: always() # this step will always run, even if the pipeline is canceled
+      displayName: Save database logs
+
+    # Publish Neo4j logs
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: 'neo4j.log'
+        artifactName: 'neo4j.log'
+      condition: always() # this step will always run, even if the pipeline is canceled
+      displayName: "Publish neo4j.log"
+
+    # Sonarqube scanning
+    - task: SonarQubePrepare@5
+      displayName: SonarQube Prepare
+      inputs:
+        SonarQube: 'Sonarqube-ClinicalMDR-DEV'
+        scannerMode: 'CLI'
+        configMode: 'manual'
+        cliProjectKey: 'clinical-mdr-api'
+        cliProjectName: 'clinical-mdr-api'
+        cliSources: './clinical_mdr_api'
+        extraProperties: |
+          sonar.verbose=true
+          sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/coverage.xml
+          sonar.sources=clinical_mdr_api 
+          sonar.tests=clinical_mdr_api
+          sonar.test.inclusions=**/tests/**
+          sonar.exclusions=**/tests/**
+
+    - task: SonarQubeAnalyze@5
+      displayName: SonarQube Analyze
+
+    - task: SonarQubePublish@5
+      displayName: SonarQube Publish
+      inputs:
+        pollingTimeoutSec: '300'
+
+    # Make sure we shut down docker
+    - script: |
+        docker-compose down -v
+        docker stop db_testint
+        docker rm db_testint
+        docker volume prune -f
+      condition: always() # this step will always run, even if the pipeline is canceled
+      displayName: Ensure docker shutdown
+
+    # Ensure shutdown of the full pipeline, if one of the jobs fail
+    - template: pipelines/templates/shutdown.yml
+
+#############################################################################
+####                      QUALITY AND LICENSES                          #####
+#############################################################################
+- job: evaluate_app
+  displayName: 'Quality and license tasks' 
+  continueOnError: true
+  timeoutInMinutes: 90
+  steps:
+    - checkout: self
+      persistCredentials: true
+
+    - template: pipelines/templates/setup.yml
+      parameters:
+        DEPLOY_ID_NUMBER: ${{parameters.DEPLOY_ID_NUMBER}}
+        VAULT_NAME_PREFIX: kv-general
+
+    - script: |
+        cd $(Build.SourcesDirectory)/clinical-mdr-api
+        python -m pip install --upgrade pip pipenv
+        pipenv --three install
+      displayName: 'Install Python libraries'
+
+    # Generate SBOM
+    - script: |
+        mv sbom.md sbom.md.org
+        
+        pipenv run pipelines/scripts/generate-sbom.sh > sbom.md
+
+        if [[ "$(Build.SourceBranchName)" != "main" && "$(Build.Reason)" == "PullRequest" && `git diff --exit-code sbom.md` ]]; then
+          git config --global user.email pipeline@studybuilder.com
+          git config --global user.name "Pipeline $(Build.BuildNumber)"
+          mv sbom.md sbom.md.new && mv sbom.md.org sbom.md
+        fi
+      displayName: Generate full SBOM for clinical-mdr-api
+
+    # Generate openapi.json
+    - script: |
+        source $(Build.SourcesDirectory)/venv/bin/activate
+
+        export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
+        export ALLOW_ORIGIN_REGEX='.*'
+        export OAUTH_ENABLED='False'
+
+        cp openapi.json openapi.json.org 
+        python -m pipenv run openapi
+
+        if [[ "$(Build.SourceBranchName)" != "main" && "$(Build.Reason)" == "PullRequest" && `git diff --exit-code openapi.json` ]]; then
+          git config --global user.email pipeline@studybuilder.com
+          git config --global user.name "Pipeline $(Build.BuildNumber)"
+          cp openapi.json openapi.json.new
+          mv openapi.json.org openapi.json 
+        fi
+      displayName: Generate openapi.json
+
+    # Prepare git and commit changes
+    - script: |
+        git fetch -a
+
+        if [[ "$(Build.Reason)" == "PullRequest" ]]; then
+          gitbranch=`echo $(System.PullRequest.SourceBranch) | sed 's/^refs\/heads\///'`
+        else
+          gitbranch=`echo $(Build.SourceBranchName)`
+        fi
+
+        echo "##vso[task.setvariable variable=gitbranch;isOutput=true;]$gitbranch"
+
+        git checkout $gitbranch
+        git pull
+      displayName: 'Checkout git branch'
+      name: gitref
+
+    - script: |
+        if [[ "$(Build.SourceBranchName)" != "main" && "$(Build.Reason)" == "PullRequest" ]]; then
+          if [[ -f openapi.json.new ]]; then
+            cp openapi.json.new openapi.json
+            git add openapi.json
+            git commit openapi.json -m "Pipeline $(Build.BuildNumber) committed changes to openapi.json swagger documentation"
+          fi
+          if [[ -f sbom.md.new ]]; then
+            mv sbom.md.new sbom.md
+            git add sbom.md
+            git commit sbom.md -m "Pipeline $(Build.BuildNumber) committed changes to SBOM"
+          fi
+          gitbranch=`echo $(System.PullRequest.SourceBranch) | sed 's/^refs\/heads\///'`
+          git push https://$SYSTEM_ACCESSTOKEN@dev.azure.com/novonordiskit/Clinical-MDR/_git/clinical-mdr-api $gitbranch
+        fi
+      env:
+        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      displayName: Push committed changes
+
+    # Build requirements.txt
+    - script: |
+        pipenv requirements > requirements.txt
+      displayName: "Build requirements.txt"
+
+    # Publish requirements.txt
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: 'requirements.txt'
+        artifactName: 'requirements'
+      displayName: "Publish requirements.txt"
+
+    # pipenv vulnerabilities
+    - script: |
+        source $(Build.SourcesDirectory)/venv/bin/activate
+        python -m pipenv check | tee pipenv_report.txt
+      continueOnError: true
+      displayName: "Check packages for security vulnerabilities"
+  
+    # black check
+    - script: |
+        source $(Build.SourcesDirectory)/venv/bin/activate
+        python -m pipenv run black --check .
+      displayName: "Black"
+
+    # Isort check
+    - script: |
+        source $(Build.SourcesDirectory)/venv/bin/activate
+        python -m pipenv run isort ./clinical_mdr_api/ --check
+      displayName: "Isort"
+
+    # Check for absolute paths
+    - script: |
+        source $(Build.SourcesDirectory)/venv/bin/activate
+        ./.git-hooks/absolute-import-paths.sh ./clinical_mdr_api
+      displayName: "Absolute Import Paths Check"
+
+    # Linting
+    - script: |
+        source $(Build.SourcesDirectory)/venv/bin/activate
+        python -m pipenv run lint
+      displayName: "Pylint"
+
+    # Publish security report
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: 'pipenv_report.txt'
+        artifactName: 'pipenv-vulnerabilities'
+      displayName: "Publish security vulnerability report"
+
+    # Run whitesource bolt
+    - task: WhiteSource@21
+      inputs:
+        cwd: '$(System.DefaultWorkingDirectory)'
+
+    - task: UseDotNet@2
+      displayName: 'Use .NET Core sdk'
+      inputs:
+        packageType: sdk
+        version: 6.0.100
+        installationPath: $(Agent.ToolsDirectory)/dotnet
+
+    # Publish specflow
+    - task: SpecFlowPlus@0
+      inputs:
+        generatorSource: 'FeatureFolder'
+        projectFilePath: '$(Build.SourcesDirectory)/clinical_mdr_api/tests/acceptance/features/'
+
+    # Ensure shutdown of the full pipeline, if one of the jobs fail
+    - template: pipelines/templates/shutdown.yml

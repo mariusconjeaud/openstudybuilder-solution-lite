@@ -42,7 +42,7 @@ class EndpointTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "endpoints.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time"]
+        return ["start_date", "end_date", "uid", "time"]
 
 
 # @pytest.mark.skip
@@ -60,7 +60,7 @@ class EndpointNegativeTest(EndpointTest):
         self.test_client = TestClient(main.app)
         self.library = library_service.create(name="Test library", is_editable=True)
         etdata = template_data.copy()
-        etdata["editableInstance"] = False
+        etdata["editable_instance"] = False
         endpoint_template = ep_models.EndpointTemplateCreateInput(**etdata)
         self.et = EndpointTemplateService().create(endpoint_template)
         assert isinstance(self.et, EndpointTemplate)
@@ -84,7 +84,7 @@ class EndpointNegativeTest(EndpointTest):
         check_endpoints_empty()
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "uid"]
+        return ["start_date", "end_date", "time", "uid"]
 
 
 # @pytest.mark.skip
@@ -112,4 +112,4 @@ class EndpointVersioningTest(EndpointTest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "endpoint_versioning.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "path", "uid"]
+        return ["start_date", "end_date", "time", "path", "uid"]

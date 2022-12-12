@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Sequence
 
 from clinical_mdr_api.domain.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.domain.concepts.odms.item_group import (
@@ -67,9 +67,9 @@ class ItemGroupRepository(OdmGenericRepository[OdmItemGroupAR]):
                 sdtm_domain_uids=[
                     sdtm_domain.uid for sdtm_domain in root.has_sdtm_domain.all()
                 ],
-                activity_sub_group_uids=[
-                    activity_sub_group.uid
-                    for activity_sub_group in root.has_activity_sub_group.all()
+                activity_subgroup_uids=[
+                    activity_subgroup.uid
+                    for activity_subgroup in root.has_activity_subgroup.all()
                 ],
                 item_uids=[item.uid for item in root.item_ref.all()],
                 xml_extension_tag_uids=[
@@ -102,35 +102,35 @@ class ItemGroupRepository(OdmGenericRepository[OdmItemGroupAR]):
                 oid=input_dict.get("oid"),
                 name=input_dict.get("name"),
                 repeating=input_dict.get("repeating"),
-                is_reference_data=input_dict.get("isReferenceData"),
-                sas_dataset_name=input_dict.get("sasDatasetName"),
+                is_reference_data=input_dict.get("is_reference_data"),
+                sas_dataset_name=input_dict.get("sas_dataset_name"),
                 origin=input_dict.get("origin"),
                 purpose=input_dict.get("purpose"),
                 comment=input_dict.get("comment"),
-                description_uids=input_dict.get("descriptionUids"),
-                alias_uids=input_dict.get("aliasUids"),
-                sdtm_domain_uids=input_dict.get("sdtmDomainUids"),
-                activity_sub_group_uids=input_dict.get("activitySubGroupUids"),
-                item_uids=input_dict.get("itemUids"),
-                xml_extension_tag_uids=input_dict.get("xmlExtensionTagUids"),
+                description_uids=input_dict.get("description_uids"),
+                alias_uids=input_dict.get("alias_uids"),
+                sdtm_domain_uids=input_dict.get("sdtm_domain_uids"),
+                activity_subgroup_uids=input_dict.get("activity_subgroup_uids"),
+                item_uids=input_dict.get("item_uids"),
+                xml_extension_tag_uids=input_dict.get("xml_extension_tag_uids"),
                 xml_extension_attribute_uids=input_dict.get(
-                    "xmlExtensionAttributeUids"
+                    "xml_extension_attribute_uids"
                 ),
                 xml_extension_tag_attribute_uids=input_dict.get(
-                    "xmlExtensionTagAttributeUids"
+                    "xml_extension_tag_attribute_uids"
                 ),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("libraryName"),
+                library_name=input_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: input_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("changeDescription"),
+                change_description=input_dict.get("change_description"),
                 status=LibraryItemStatus(input_dict.get("status")),
-                author=input_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=input_dict.get("startDate")),
+                author=input_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=input_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -139,7 +139,9 @@ class ItemGroupRepository(OdmGenericRepository[OdmItemGroupAR]):
 
         return odm_item_group_ar
 
-    def specific_alias_clause(self, only_specific_status: list = None) -> str:
+    def specific_alias_clause(
+        self, only_specific_status: Optional[Sequence[str]] = None
+    ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]
 
@@ -147,30 +149,30 @@ class ItemGroupRepository(OdmGenericRepository[OdmItemGroupAR]):
         WITH *,
         concept_value.oid AS oid,
         concept_value.repeating AS repeating,
-        concept_value.is_reference_data AS isReferenceData,
-        concept_value.sas_dataset_name AS sasDatasetName,
+        concept_value.is_reference_data AS is_reference_data,
+        concept_value.sas_dataset_name AS sas_dataset_name,
         concept_value.origin AS origin,
         concept_value.purpose AS purpose,
         concept_value.comment AS comment,
 
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemGroupRoot)-[:HAS_DESCRIPTION]->(dr:OdmDescriptionRoot)-[:LATEST]->(dv:OdmDescriptionValue) | {{uid: dr.uid, name: dv.name, language: dv.language, description: dv.description, instruction: dv.instruction}}] AS descriptions,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemGroupRoot)-[:HAS_ALIAS]->(ar:OdmAliasRoot)-[:LATEST]->(av:OdmAliasValue) | {{uid: ar.uid, name: av.name, context: av.context}}] AS aliases,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemGroupRoot)-[:HAS_SDTM_DOMAIN]->(tr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(tav:CTTermAttributesValue) | {{uid: tr.uid, code_submission_value: tav.code_submission_value, preferred_term: tav.preferred_term}}] AS sdtmDomains,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemGroupRoot)-[:HAS_ACTIVITY_SUB_GROUP]->(agr:ActivitySubGroupRoot)-[:LATEST]->(agv:ActivitySubGroupValue) | {{uid: agr.uid, name: agv.name}}] AS activitySubGroups,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemGroupRoot)-[:HAS_SDTM_DOMAIN]->(tr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(tav:CTTermAttributesValue) | {{uid: tr.uid, code_submission_value: tav.code_submission_value, preferred_term: tav.preferred_term}}] AS sdtm_domains,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemGroupRoot)-[:HAS_ACTIVITY_SUB_GROUP]->(agr:ActivitySubGroupRoot)-[:LATEST]->(agv:ActivitySubGroupValue) | {{uid: agr.uid, name: agv.name}}] AS activity_subgroups,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemGroupRoot)-[iref:ITEM_REF]->(ir:OdmItemRoot)-[:LATEST]->(iv:OdmItemValue) | {{uid: ir.uid, name: iv.name, order: iref.order, mandatory: iref.mandatory}}] AS items,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemGroupRoot)-[hxet:HAS_XML_EXTENSION_TAG]->(xetr:OdmXmlExtensionTagRoot)-[:LATEST]->(xetv:OdmXmlExtensionTagValue) | {{uid: xetr.uid, name: xetv.name, value: hxet.value}}] AS xmlExtensionTags,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemGroupRoot)-[hxea:HAS_XML_EXTENSION_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, value: hxea.value}}] AS xmlExtensionAttributes,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemGroupRoot)-[hxeta:HAS_XML_EXTENSION_TAG_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, value: hxeta.value}}] AS xmlExtensionTagAttributes
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemGroupRoot)-[hxet:HAS_XML_EXTENSION_TAG]->(xetr:OdmXmlExtensionTagRoot)-[:LATEST]->(xetv:OdmXmlExtensionTagValue) | {{uid: xetr.uid, name: xetv.name, value: hxet.value}}] AS xml_extension_tags,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemGroupRoot)-[hxea:HAS_XML_EXTENSION_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, value: hxea.value}}] AS xml_extension_attributes,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemGroupRoot)-[hxeta:HAS_XML_EXTENSION_TAG_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, value: hxeta.value}}] AS xml_extension_tag_attributes
 
         WITH *,
-        [description in descriptions | description.uid] AS descriptionUids,
-        [alias in aliases | alias.uid] AS aliasUids,
-        [sdtmDomain in sdtmDomains | sdtmDomain.uid] AS sdtmDomainUids,
-        [activitySubGroup in activitySubGroups | activitySubGroup.uid] AS activitySubGroupUids,
-        [item in items | item.uid] AS itemUids,
-        [xmlExtensionTag in xmlExtensionTags | xmlExtensionTag.uid] AS xmlExtensionTagUids,
-        [xmlExtensionAttribute in xmlExtensionAttributes | xmlExtensionAttribute.uid] AS xmlExtensionAttributeUids,
-        [xmlExtensionTagAttribute in xmlExtensionTagAttributes | xmlExtensionTagAttribute.uid] AS xmlExtensionTagAttributeUids
+        [description in descriptions | description.uid] AS description_uids,
+        [alias in aliases | alias.uid] AS alias_uids,
+        [sdtm_domain in sdtm_domains | sdtm_domain.uid] AS sdtm_domain_uids,
+        [activity_subgroup in activity_subgroups | activity_subgroup.uid] AS activity_subgroup_uids,
+        [item in items | item.uid] AS item_uids,
+        [xml_extension_tag in xml_extension_tags | xml_extension_tag.uid] AS xml_extension_tag_uids,
+        [xml_extension_attribute in xml_extension_attributes | xml_extension_attribute.uid] AS xml_extension_attribute_uids,
+        [xml_extension_tag_attribute in xml_extension_tag_attributes | xml_extension_tag_attribute.uid] AS xml_extension_tag_attribute_uids
         """
 
     def _get_or_create_value(

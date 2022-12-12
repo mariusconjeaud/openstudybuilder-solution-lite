@@ -5,7 +5,7 @@
   :first-col-label="$t('StudyInterventionTypeSummary.intervention_type_info')"
   persistent-dialog
   copy-from-study
-  component="studyIntervention"
+  component="study_intervention"
   >
   <template v-slot:form="{ closeHandler, dataToCopy, openHandler }">
     <intervention-type-form :open="openHandler" :metadata="(Object.keys(dataToCopy).length !== 0) ? dataToCopy : metadata" @updated="onMetadataUpdated" @close="closeHandler" />
@@ -35,43 +35,43 @@ export default {
       params: [
         {
           label: this.$t('StudyInterventionTypeForm.intervention_type'),
-          name: 'interventionTypeCode',
+          name: 'intervention_type_code',
           valuesDisplay: 'term'
         },
         {
           label: this.$t('StudyDefineForm.studyintent'),
-          name: 'trialIntentTypesCodes',
+          name: 'trial_intent_types_codes',
           valuesDisplay: 'terms'
         },
         {
           label: this.$t('StudyInterventionTypeForm.added_to_et'),
-          name: 'addOnToExistingTreatments',
+          name: 'add_on_to_existing_treatments',
           valuesDisplay: 'yesno'
         },
         {
           label: this.$t('StudyInterventionTypeForm.control_type'),
-          name: 'controlTypeCode',
+          name: 'control_type_code',
           valuesDisplay: 'term'
         },
         {
           label: this.$t('StudyInterventionTypeForm.intervention_model'),
-          name: 'interventionModelCode',
+          name: 'intervention_model_code',
           valuesDisplay: 'term'
         },
         {
           label: this.$t('StudyInterventionTypeForm.randomised'),
-          name: 'isTrialRandomised',
+          name: 'is_trial_randomised',
           valuesDisplay: 'yesno'
         },
-        { label: this.$t('StudyInterventionTypeForm.strfactor'), name: 'stratificationFactor' },
+        { label: this.$t('StudyInterventionTypeForm.strfactor'), name: 'stratification_factor' },
         {
           label: this.$t('StudyInterventionTypeForm.blinding_schema'),
-          name: 'trialBlindingSchemaCode',
+          name: 'trial_blinding_schema_code',
           valuesDisplay: 'term'
         },
         {
           label: this.$t('StudyInterventionTypeForm.planned_st_length'),
-          name: 'plannedStudyLength',
+          name: 'planned_study_length',
           valuesDisplay: 'duration'
         }
       ]
@@ -90,7 +90,7 @@ export default {
     this.$store.dispatch('studiesGeneral/fetchTrialIntentTypes')
     this.$store.dispatch('studiesGeneral/fetchInterventionTypes')
     study.getStudyInterventionMetadata(this.selectedStudy.uid).then(resp => {
-      this.metadata = resp.data.currentMetadata.studyIntervention
+      this.metadata = resp.data.current_metadata.study_intervention
     })
   }
 }

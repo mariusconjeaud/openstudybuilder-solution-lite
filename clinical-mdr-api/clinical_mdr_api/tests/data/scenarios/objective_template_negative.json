@@ -4,7 +4,7 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "test library",
+                "library_name": "test library",
                 "name": "test"
             },
             "url": "/objective-templates"
@@ -29,7 +29,7 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
+                "library_name": "Test library",
                 "name": "test"
             },
             "url": "/objective-templates"

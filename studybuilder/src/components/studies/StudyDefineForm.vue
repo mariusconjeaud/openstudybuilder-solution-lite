@@ -18,11 +18,11 @@
             >
             <v-autocomplete
               data-cy="study-type"
-              v-model="form.studyTypeCode"
+              v-model="form.study_type_code"
               :label="$t('StudyDefineForm.studytype')"
               :items="studyTypes"
-              item-text="sponsorPreferredName"
-              item-value="termUid"
+              item-text="sponsor_preferred_name"
+              item-value="term_uid"
               return-object
               :error-messages="errors"
               dense
@@ -39,11 +39,11 @@
             >
             <multiple-select
               data-cy="trial-type"
-              v-model="form.trialTypesCodes"
+              v-model="form.trial_types_codes"
               :label="$t('StudyDefineForm.trialtype')"
               :items="trialTypes"
-              item-text="sponsorPreferredName"
-              item-value="termUid"
+              item-text="sponsor_preferred_name"
+              item-value="term_uid"
               return-object
               :errors="errors"
               />
@@ -58,11 +58,11 @@
             >
             <v-select
               data-cy="study-phase-classification"
-              v-model="form.trialPhaseCode"
+              v-model="form.trial_phase_code"
               :label="$t('StudyDefineForm.trialphase')"
               :items="trialPhases"
-              item-text="sponsorPreferredNameSentenceCase"
-              item-value="termUid"
+              item-text="sponsor_preferred_name_sentence_case"
+              item-value="term_uid"
               return-object
               :error-messages="errors"
               dense
@@ -80,7 +80,7 @@
             >
             <yes-no-field
               data-cy="extension-study"
-              v-model="form.isExtensionTrial"
+              v-model="form.is_extension_trial"
               :error-messages="errors"
               :label="$t('StudyDefineForm.extensiontrial')"
               />
@@ -93,7 +93,7 @@
             >
             <yes-no-field
               data-cy="adaptive-design"
-              v-model="form.isAdaptiveDesign"
+              v-model="form.is_adaptive_design"
               :error-messages="errors"
               :label="$t('StudyDefineForm.adaptivedesign')"
               />
@@ -108,7 +108,7 @@
             >
             <v-text-field
               data-cy="stop-rule"
-              v-model="form.studyStopRules"
+              v-model="form.study_stop_rules"
               :label="$t('StudyDefineForm.studystoprule')"
               :error-messages="errors"
               dense
@@ -130,14 +130,14 @@
         :label="$t('StudyDefineForm.confirmed_resp_min_duration')"
         data-cy="confirmed-resp-min-dur-field"
         :clean-function="setNullValueConfirmedDuration"
-        :checked="form.confirmedResponseMinimumDurationNullValueCode ? true : false"
+        :checked="form.confirmed_response_minimum_duration_null_value_code ? true : false"
         >
         <template v-slot:mainField="{ notApplicable }">
           <duration-field
             data-cy="confirmed-resp-min-dur"
-            v-model="form.confirmedResponseMinimumDuration"
-            numericFieldName="durationValue"
-            unitFieldName="durationUnitCode"
+            v-model="form.confirmed_response_minimum_duration"
+            numericFieldName="duration_value"
+            unitFieldName="duration_unit_code"
             :disabled="notApplicable"
             />
         </template>
@@ -150,7 +150,7 @@
             >
             <yes-no-field
               data-cy="post-auth-safety-indicator"
-              v-model="form.postAuthIndicator"
+              v-model="form.post_auth_indicator"
               :error-messages="errors"
               :label="$t('StudyDefineForm.post_auth_safety_indicator')"
               />
@@ -219,11 +219,11 @@ export default {
   },
   methods: {
     setNullValueConfirmedDuration () {
-      this.$set(this.form, 'confirmedResponseMinimumDuration', {})
-      if (this.form.confirmedResponseMinimumDurationNullValueCode) {
-        this.$set(this.form, 'confirmedResponseMinimumDurationNullValueCode', null)
+      this.$set(this.form, 'confirmed_response_minimum_duration', {})
+      if (this.form.confirmed_response_minimum_duration_null_value_code) {
+        this.$set(this.form, 'confirmed_response_minimum_duration_null_value_code', null)
       } else {
-        this.$set(this.form, 'confirmedResponseMinimumDurationNullValueCode', { termUid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
+        this.$set(this.form, 'confirmed_response_minimum_duration_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
       }
     },
     close () {
@@ -232,13 +232,13 @@ export default {
     },
     prepareRequestPayload () {
       const data = { ...this.form }
-      if (!data.confirmedResponseMinimumDuration.durationValue) {
-        data.confirmedResponseMinimumDuration = null
+      if (!data.confirmed_response_minimum_duration.duration_value) {
+        data.confirmed_response_minimum_duration = null
       }
-      data.studyTypeCode = this.getTermPayload('studyTypeCode')
-      data.trialIntentTypesCodes = this.getTermsPayload('trialIntentTypesCodes')
-      data.trialTypesCodes = this.getTermsPayload('trialTypesCodes')
-      data.trialPhaseCode = this.getTermPayload('trialPhaseCode')
+      data.study_type_code = this.getTermPayload('study_type_code')
+      data.trial_intent_types_codes = this.getTermsPayload('trial_intent_types_codes')
+      data.trial_types_codes = this.getTermsPayload('trial_types_codes')
+      data.trial_phase_code = this.getTermPayload('trial_phase_code')
       if (this.stopRulesNone) {
         data.studyStopRules = studyConstants.STOP_RULE_NONE
       }
@@ -278,7 +278,7 @@ export default {
     },
     updateStopRules (value) {
       if (value) {
-        this.$set(this.form, 'studyStopRules', null)
+        this.$set(this.form, 'study_stop_rules', null)
       }
     }
   },
@@ -286,13 +286,13 @@ export default {
     data: {
       handler: function (value) {
         this.form = JSON.parse(JSON.stringify(value))
-        if (!this.form.confirmedResponseMinimumDuration) {
-          this.form.confirmedResponseMinimumDuration = {}
+        if (!this.form.confirmed_response_minimum_duration) {
+          this.form.confirmed_response_minimum_duration = {}
         }
-        if (!this.metadata.confirmedResponseMinimumDuration) {
-          this.metadata.confirmedResponseMinimumDuration = null
+        if (!this.metadata.confirmed_response_minimum_duration) {
+          this.metadata.confirmed_response_minimum_duration = null
         }
-        if (this.metadata.studyStopRules === studyConstants.STOP_RULE_NONE) {
+        if (this.metadata.study_stop_rules === studyConstants.STOP_RULE_NONE) {
           this.stopRulesNone = true
         }
       },

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
 from pydantic.types import Json
 
-from clinical_mdr_api import models
+from clinical_mdr_api import config, models
 from clinical_mdr_api.models import ObjectiveTemplateNameInput
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.objective_template import ObjectiveTemplateWithCount
@@ -57,13 +57,13 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
             "content": {
                 "text/csv": {
                     "example": """
-"library","uid","name","startDate","endDate","status","version","changeDescription","userInitials"
+"library","uid","name","start_date","end_date","status","version","change_description","user_initials"
 "Sponsor","826d80a7-0b6a-419d-8ef1-80aa241d7ac7","First  [ComparatorIntervention]","2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
 """
                 },
                 "text/xml": {
                     "example": """
-                    <?xml version="1.0" encoding="UTF-8" ?><root><data type="list"><item type="dict"><uid type="str">e9117175-918f-489e-9a6e-65e0025233a6</uid><name type="str">Alamakota</name><startDate type="str">2020-11-19T11:51:43.000Z</startDate><status type="str">Draft</status><version type="str">0.2</version><changeDescription type="str">Test</changeDescription><userInitials type="str">TODO Initials</userInitials></item></data></root>
+                    <?xml version="1.0" encoding="UTF-8" ?><root><data type="list"><item type="dict"><uid type="str">e9117175-918f-489e-9a6e-65e0025233a6</uid><name type="str">Alamakota</name><start_date type="str">2020-11-19T11:51:43.000Z</start_date><status type="str">Draft</status><version type="str">0.2</version><change_description type="str">Test</change_description><user_initials type="str">TODO Initials</user_initials></item></data></root>
 """
                 },
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
@@ -79,14 +79,14 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
             "uid",
             "name",
             "indications=indications.name",
-            "category=categories.name.sponsorPreferredName",
-            "confirmatoryTesting",
-            "startDate",
-            "endDate",
+            "category=categories.name.sponsor_preferred_name",
+            "confirmatory_testing",
+            "start_date",
+            "end_date",
             "status",
             "version",
-            "changeDescription",
-            "userInitials",
+            "change_description",
+            "user_initials",
         ],
         "formats": [
             "text/csv",
@@ -108,18 +108,20 @@ def get_objective_templates(
         "and you are interested in the 'Final' or 'Retired' status.\n"
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -127,16 +129,16 @@ def get_objective_templates(
     results = Service(current_user_id).get_all(
         status=status,
         return_study_count=True,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        sort_by=sortBy,
+        sort_by=sort_by,
     )
 
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -166,8 +168,8 @@ def get_distinct_values_for_header(
         "and you are interested in the 'Final' or 'Retired' status.\n"
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -176,17 +178,17 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     return Service(current_user_id).get_distinct_values_for_header(
         status=status,
-        field_name=fieldName,
-        search_string=searchString,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
@@ -242,7 +244,7 @@ def get_objective_template(
     "/{uid}/versions",
     summary="Returns the version history of a specific objective template identified by 'uid'.",
     description="The returned versions are ordered by\n"
-    "0. startDate descending (newest entries first)",
+    "0. start_date descending (newest entries first)",
     response_model=List[models.ObjectiveTemplateVersion],
     status_code=200,
     responses={
@@ -250,13 +252,13 @@ def get_objective_template(
             "content": {
                 "text/csv": {
                     "example": """
-"library";"uid";"name";"startDate";"endDate";"status";"version";"changeDescription";"userInitials"
+"library";"uid";"name";"start_date";"end_date";"status";"version";"change_description";"user_initials"
 "Sponsor";"826d80a7-0b6a-419d-8ef1-80aa241d7ac7";"First  [ComparatorIntervention]";"2020-10-22T10:19:29+00:00";;"Draft";"0.1";"Initial version";"NdSJ"
 """
                 },
                 "text/xml": {
                     "example": """
-                    <?xml version="1.0" encoding="UTF-8" ?><root><data type="list"><item type="dict"><name type="str">Alamakota</name><startDate type="str">2020-11-19 11:51:43+00:00</startDate><endDate type="str">None</endDate><status type="str">Draft</status><version type="str">0.2</version><changeDescription type="str">Test</changeDescription><userInitials type="str">TODO Initials</userInitials></item><item type="dict"><name type="str">Alamakota</name><startDate type="str">2020-11-19 11:51:07+00:00</startDate><endDate type="str">2020-11-19 11:51:43+00:00</endDate><status type="str">Draft</status><version type="str">0.1</version><changeDescription type="str">Initial version</changeDescription><userInitials type="str">TODO user initials</userInitials></item></data></root>
+                    <?xml version="1.0" encoding="UTF-8" ?><root><data type="list"><item type="dict"><name type="str">Alamakota</name><start_date type="str">2020-11-19 11:51:43+00:00</start_date><end_date type="str">None</end_date><status type="str">Draft</status><version type="str">0.2</version><change_description type="str">Test</change_description><user_initials type="str">TODO Initials</user_initials></item><item type="dict"><name type="str">Alamakota</name><start_date type="str">2020-11-19 11:51:07+00:00</start_date><end_date type="str">2020-11-19 11:51:43+00:00</end_date><status type="str">Draft</status><version type="str">0.1</version><change_description type="str">Initial version</change_description><user_initials type="str">TODO user initials</user_initials></item></data></root>
 """
                 },
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
@@ -274,12 +276,12 @@ def get_objective_template(
         "defaults": [
             "library=library.name",
             "name",
-            "changeDescription",
+            "change_description",
             "status",
             "version",
-            "startDate",
-            "endDate",
-            "userInitials",
+            "start_date",
+            "end_date",
+            "user_initials",
         ],
         "formats": [
             "text/csv",
@@ -354,11 +356,11 @@ def get_objective_template_releases(
     "",
     summary="Creates a new objective template in 'Draft' status.",
     description="""This request is only valid if the objective template
-* belongs to a library that allows creating (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows creating (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The status will be automatically set to 'Draft'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will be set to '0.1'.
 * The objective template will be linked to a library.
 
@@ -378,7 +380,7 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The library with the specified 'libraryName' could not be found.",
+            "description": "Not Found - The library with the specified 'library_name' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
@@ -398,7 +400,7 @@ def create_objective_template(
     summary="Updates the objective template identified by 'uid'.",
     description="""This request is only valid if the objective template
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true). 
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
 
 If the request succeeds:
 * The 'version' property will be increased automatically by +0.1.
@@ -443,7 +445,7 @@ def edit(
     "/{uid}/groupings",
     summary="Updates the groupings of the objective template identified by 'uid'.",
     description="""This request is only valid if the template
-    * belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
+    * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
     
     This is version independent : it won't trigger a status or a version change.
     """,
@@ -476,7 +478,7 @@ def patch_groupings(
     summary="Edit the default parameter values of the objective template identified by 'uid'.",
     description="""This request is only valid if the objective template
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true). 
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
 
 If the request succeeds:
 * The 'version' property will be increased automatically by +0.1.
@@ -507,11 +509,11 @@ This endpoint can be used to either :
 )
 def patch_default_parameter_values(
     uid: str = ObjectiveTemplateUID,
-    setNumber: Optional[int] = Body(
+    set_number: Optional[int] = Body(
         None,
         description="Optionally, the set number of the default parameter values to be patched. If not set, a new set will be created.",
     ),
-    defaultParameterValues: Sequence[MultiTemplateParameterValue] = Body(
+    default_parameter_values: Sequence[MultiTemplateParameterValue] = Body(
         None,
         description="The set of default parameter values.\n"
         "If empty and an existing set_number is passed, the set will be deleted.",
@@ -519,16 +521,18 @@ def patch_default_parameter_values(
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.ObjectiveTemplate:
     return Service(current_user_id).patch_default_parameter_values(
-        uid=uid, set_number=setNumber, default_parameter_values=defaultParameterValues
+        uid=uid,
+        set_number=set_number,
+        default_parameter_values=default_parameter_values,
     )
 
 
 @router.post(
-    "/{uid}/new-version",
+    "/{uid}/versions",
     summary="Creates a new version of the objective template identified by 'uid'.",
     description="""This request is only valid if the objective template
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The latest 'Final' or 'Retired' version will remain the same as before.
@@ -576,11 +580,11 @@ def create_new_version(
     summary="Approves the objective template identified by 'uid'.",
     description="""This request is only valid if the objective template
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
     response_model=models.ObjectiveTemplate,
@@ -626,7 +630,7 @@ def approve(
 
 If the request succeeds:
 * The status will be automatically set to 'Retired'.
-* The 'changeDescription' property will be set automatically. 
+* The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
     response_model=models.ObjectiveTemplate,
@@ -661,7 +665,7 @@ def inactivate(
 
 If the request succeeds:
 * The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically. 
+* The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
     response_model=models.ObjectiveTemplate,
@@ -695,7 +699,7 @@ def reactivate(
 * the objective template is in 'Draft' status and
 * the objective template has never been in 'Final' status and
 * the objective template has no references to any objectives and
-* the objective template belongs to a library that allows deleting (the 'isEditable' property of the library needs to be true).""",
+* the objective template belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
     response_model=None,
     status_code=204,
     responses={

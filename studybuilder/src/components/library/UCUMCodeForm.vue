@@ -88,9 +88,9 @@ export default {
       }
       this.$refs.form.working = true
       const data = { ...this.form }
-      data.libraryName = 'UCUM'
+      data.library_name = 'UCUM'
       data.name = data.name.code
-      data.dictionaryId = data.nameSentenceCase = data.name
+      data.dictionaryId = data.name_sentence_case = data.name
       dictionaries.create(data).then(resp => {
         bus.$emit('notification', { msg: this.$t('DictionaryTermForm.create_success') })
         this.$emit('save')

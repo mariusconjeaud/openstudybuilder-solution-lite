@@ -9,9 +9,22 @@
       <v-row class="mt-2" v-if="doc === ''">
         <v-col cols="3">
           <v-select
-            v-model="params.targetUid"
-            :items="templates"
-            :label="$t('OdmViewer.template')"
+            v-model="params.target_type"
+            :items="types"
+            @change="setElements()"
+            :label="$t('OdmViewer.odm_element_type')"
+            dense
+            clearable
+            item-text="name"
+            item-value="value"
+            class="mt-2">
+          </v-select>
+        </v-col>
+        <v-col cols="3">
+          <v-select
+            :items="elements"
+            :label="$t('OdmViewer.odm_element_name')"
+            v-model="params.target_uid"
             dense
             clearable
             class="mt-2"
@@ -19,24 +32,30 @@
             item-value="uid">
           </v-select>
         </v-col>
+        <v-col cols="1">
+          <v-checkbox
+            v-model="draft"
+            :label="$t('OdmViewer.include_draft')">
+          </v-checkbox>
+        </v-col>
         <v-col cols="5">
           <v-row>
             <v-radio-group
               v-model="params.stylesheet"
               :label="$t('OdmViewer.stylesheet')"
               row
-              class="mt-4">
+              class="mt-7">
               <v-radio :label="$t('OdmViewer.blank')" value="odm_template_blankcrf.xsl" />
               <v-radio :label="$t('OdmViewer.sdtm')" value="odm_template_sdtmcrf.xsl" />
             </v-radio-group>
               <v-btn
-                class="mt-4"
+                class="mt-7"
                 dark
                 small
                 color="primary"
                 :label="$t('_global.load')"
                 @click="loadXml"
-                v-show="params.targetUid && params.stylesheet">
+                v-show="params.target_uid && params.stylesheet">
                 {{ $t('OdmViewer.load')}}
               </v-btn>
             </v-row>
@@ -50,7 +69,7 @@
           color="primary"
           :label="$t('_global.load')"
           @click="clearXml"
-          v-show="params.targetUid && params.stylesheet">
+          v-show="params.target_uid && params.stylesheet">
           {{ $t('OdmViewer.load_another')}}
         </v-btn>
         <v-btn
@@ -106,68 +125,113 @@ import exportLoader from '@/utils/exportLoader'
 import { DateTime } from 'luxon'
 
 export default {
-  components: {
+  props: {
+    typeProp: String,
+    elementProp: String
   },
   data () {
     return {
-      templates: [],
+      elements: [],
       uri: '',
       xml: '',
       doc: '',
       params: {
-        exportTo: 'v1'
+        target_type: 'template',
+        stylesheet: 'odm_template_sdtmcrf.xsl',
+        export_to: 'v1'
       },
       loading: false,
       downloadLoadingXml: false,
-      downloadLoadingHtml: false
+      downloadLoadingHtml: false,
+      type: '',
+      types: [
+        { name: this.$t('OdmViewer.template'), value: 'template' },
+        { name: this.$t('OdmViewer.form'), value: 'form' },
+        { name: this.$t('OdmViewer.item_group'), value: 'item-group' },
+        { name: this.$t('OdmViewer.item'), value: 'item' }
+      ],
+      draft: true
     }
   },
   mounted () {
-    crfs.get('templates').then((resp) => {
-      this.templates = resp.data.items.filter(this.isFinal)
-    })
+    this.automaticLoad()
   },
   methods: {
+    automaticLoad () {
+      this.$set(this.params, 'target_type', this.$route.params.type)
+      this.$set(this.params, 'target_uid', this.$route.params.uid)
+      this.setElements()
+      if (this.params.target_type && this.params.target_uid) {
+        this.loadXml()
+      }
+    },
+    setElements () {
+      switch (this.params.target_type) {
+        case 'template':
+          crfs.get('templates').then((resp) => {
+            this.elements = resp.data.items.filter(this.isFinal)
+          })
+          return
+        case 'form':
+          crfs.get('forms').then((resp) => {
+            this.elements = resp.data.items.filter(this.isFinal)
+          })
+          return
+        case 'item-group':
+          crfs.get('item-groups').then((resp) => {
+            this.elements = resp.data.items.filter(this.isFinal)
+          })
+          return
+        case 'item':
+          crfs.get('items').then((resp) => {
+            this.elements = resp.data.items.filter(this.isFinal)
+          })
+      }
+    },
     isFinal (item) {
       return item.status === statuses.FINAL
     },
     loadXml () {
       this.doc = ''
       this.loading = true
-      this.params.targetType = 'template'
       let url = ''
       if (process.env.NODE_ENV === 'development') {
         url = `/${this.params.stylesheet}`
       } else {
         url = `https://${location.host}/${this.params.stylesheet}`
       }
+      this.params.status = this.draft ? 'final&status=draft' : 'final'
       crfs.getXml(this.params).then(resp => {
-        this.xml = resp.data
+        const parser = new DOMParser()
+        this.xml = parser.parseFromString(resp.data, 'application/xml')
         const xsltProcessor = new XSLTProcessor()
         axios.get(url).then(resp => {
-          const parser = new DOMParser()
           const xmlDoc = parser.parseFromString(resp.data, 'text/xml')
           xsltProcessor.importStylesheet(xmlDoc)
           this.doc = new XMLSerializer().serializeToString(xsltProcessor.transformToDocument(this.xml))
           this.loading = false
         })
       })
+      this.$router.push({
+        name: 'Crfs',
+        params: { tab: 'odm-viewer', type: this.params.target_type, uid: this.params.target_uid }
+      })
     },
     downloadHtml () {
       this.downloadLoadingHtml = true
       const blob = new Blob([this.doc], { type: 'text/html' })
       const stylesheet = this.params.stylesheet === 'odm_template_sdtmcrf.xsl' ? '_sdtm_crf_' : '_blank_crf_'
-      const templateName = this.templates.filter(el => el.uid === this.params.targetUid)[0].name
+      const templateName = this.elements.filter(el => el.uid === this.params.target_uid)[0].name
       const fileName = `${templateName + stylesheet + DateTime.local().toFormat('yyyy-MM-dd HH:mm')}`
       exportLoader.generateDownload(blob, fileName)
       this.downloadLoadingHtml = false
     },
     downloadXml () {
       this.downloadLoadingXml = true
-      crfs.getXmlToDownload(this.params).then(resp => {
+      crfs.getXml(this.params).then(resp => {
         const blob = new Blob([resp.data], { type: 'text/xml' })
         const stylesheet = this.params.stylesheet === 'odm_template_sdtmcrf.xsl' ? '_sdtm_crf_' : '_blank_crf_'
-        const templateName = this.templates.filter(el => el.uid === this.params.targetUid)[0].name
+        const templateName = this.elements.filter(el => el.uid === this.params.target_uid)[0].name
         const fileName = `${templateName + stylesheet + DateTime.local().toFormat('yyyy-MM-dd HH:mm')}`
         exportLoader.generateDownload(blob, fileName)
         this.downloadLoadingXml = false
@@ -175,6 +239,11 @@ export default {
     },
     clearXml () {
       this.doc = ''
+    }
+  },
+  watch: {
+    elementProp () {
+      this.automaticLoad()
     }
   }
 }

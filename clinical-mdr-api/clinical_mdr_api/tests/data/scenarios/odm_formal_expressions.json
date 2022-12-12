@@ -1,6 +1,6 @@
 [
     {
-        "name": "Test getting empty list of odm formal expressions",
+        "name": "Test getting empty list of ODM Formal Expressions",
         "request": {
             "headers": {},
             "method": "GET",
@@ -17,17 +17,17 @@
                 "items": [],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
     {
-        "name": "Test creating a new odm formal expression",
+        "name": "Test creating a new ODM Formal Expression",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context1",
                 "expression": "expression1"
             },
@@ -41,16 +41,16 @@
             },
             "result": {
                 "uid": "OdmFormalExpression_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context1",
                 "expression": "expression1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
-                "possibleActions": [
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -59,7 +59,7 @@
         }
     },
     {
-        "name": "Test getting non empty list of odm formal expressions",
+        "name": "Test getting non empty list of ODM Formal Expressions",
         "request": {
             "headers": {},
             "method": "GET",
@@ -76,16 +76,16 @@
                 "items": [
                     {
                         "uid": "OdmFormalExpression_000001",
-                        "libraryName": "Sponsor",
+                        "library_name": "Sponsor",
                         "context": "context1",
                         "expression": "expression1",
-                        "startDate": "2022-03-03T11:17:56.799074",
-                        "endDate": null,
+                        "start_date": "2022-03-03T11:17:56.799074",
+                        "end_date": null,
                         "status": "Draft",
                         "version": "0.1",
-                        "changeDescription": "Initial version",
-                        "userInitials": "TODO user initials",
-                        "possibleActions": [
+                        "change_description": "Initial version",
+                        "user_initials": "TODO user initials",
+                        "possible_actions": [
                             "approve",
                             "delete",
                             "edit"
@@ -94,17 +94,17 @@
                 ],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
     {
-        "name": "Test getting possible header values of odm formal expressions",
+        "name": "Test getting possible header values of ODM Formal Expressions",
         "request": {
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "concepts/odms/formal-expressions/headers?fieldName=context"
+            "url": "concepts/odms/formal-expressions/headers?field_name=context"
         },
         "response": {
             "code": 200,
@@ -118,7 +118,7 @@
         }
     },
     {
-        "name": "Test getting a specific odm formal expression",
+        "name": "Test getting a specific ODM Formal Expression",
         "request": {
             "headers": {},
             "method": "GET",
@@ -133,16 +133,16 @@
             },
             "result": {
                 "uid": "OdmFormalExpression_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context1",
                 "expression": "expression1",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO initials",
-                "possibleActions": [
+                "change_description": "Initial version",
+                "user_initials": "TODO initials",
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -151,7 +151,7 @@
         }
     },
     {
-        "name": "Test getting versions of a specific odm formal expression",
+        "name": "Test getting versions of a specific ODM Formal Expression",
         "request": {
             "headers": {},
             "method": "GET",
@@ -167,16 +167,16 @@
             "result": [
                 {
                     "uid": "OdmFormalExpression_000001",
-                    "libraryName": "Sponsor",
+                    "library_name": "Sponsor",
                     "context": "context1",
                     "expression": "expression1",
-                    "startDate": "2022-03-03T13:18:03.230000",
-                    "endDate": null,
+                    "start_date": "2022-03-03T13:18:03.230000",
+                    "end_date": null,
                     "status": "Draft",
                     "version": "0.1",
-                    "changeDescription": "Initial version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Initial version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "approve",
                         "delete",
                         "edit"
@@ -186,15 +186,15 @@
         }
     },
     {
-        "name": "Test updating an existing odm formal expression",
+        "name": "Test updating an existing ODM Formal Expression",
         "request": {
             "headers": {},
             "method": "PATCH",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context1",
                 "expression": "expression1 updated",
-                "changeDescription": "updated expression"
+                "change_description": "updated expression"
             },
             "url": "concepts/odms/formal-expressions/OdmFormalExpression_000001"
         },
@@ -206,16 +206,16 @@
             },
             "result": {
                 "uid": "OdmFormalExpression_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context1",
                 "expression": "expression1 updated",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.2",
-                "changeDescription": "updated expression",
-                "userInitials": "TODO initials",
-                "possibleActions": [
+                "change_description": "updated expression",
+                "user_initials": "TODO initials",
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -224,7 +224,7 @@
         }
     },
     {
-        "name": "Test approving an odm formal expression",
+        "name": "Test approving an ODM Formal Expression",
         "request": {
             "headers": {},
             "method": "POST",
@@ -239,24 +239,24 @@
             },
             "result": {
                 "uid": "OdmFormalExpression_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context1",
                 "expression": "expression1 updated",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Approved version",
-                "userInitials": "TODO initials",
-                "possibleActions": [
+                "change_description": "Approved version",
+                "user_initials": "TODO initials",
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test inactivating a specific odm formal expression",
+        "name": "Test inactivating a specific ODM Formal Expression",
         "request": {
             "headers": {},
             "method": "POST",
@@ -271,16 +271,16 @@
             },
             "result": {
                 "uid": "OdmFormalExpression_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context1",
                 "expression": "expression1 updated",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Retired",
                 "version": "1.0",
-                "changeDescription": "Deactivated version",
-                "userInitials": "TODO initials",
-                "possibleActions": [
+                "change_description": "Deactivated version",
+                "user_initials": "TODO initials",
+                "possible_actions": [
                     "delete",
                     "reactivate"
                 ]
@@ -288,7 +288,7 @@
         }
     },
     {
-        "name": "Test reactivating a specific odm formal expression",
+        "name": "Test reactivating a specific ODM Formal Expression",
         "request": {
             "headers": {},
             "method": "POST",
@@ -303,29 +303,29 @@
             },
             "result": {
                 "uid": "OdmFormalExpression_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context1",
                 "expression": "expression1 updated",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO initials",
-                "possibleActions": [
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test creating a new odm formal expression version",
+        "name": "Test creating a new ODM Formal Expression version",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/odms/formal-expressions/OdmFormalExpression_000001/new-version"
+            "url": "concepts/odms/formal-expressions/OdmFormalExpression_000001/versions"
         },
         "response": {
             "code": 201,
@@ -335,16 +335,16 @@
             },
             "result": {
                 "uid": "OdmFormalExpression_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context1",
                 "expression": "expression1 updated",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "1.1",
-                "changeDescription": "New draft created",
-                "userInitials": "TODO user initials",
-                "possibleActions": [
+                "change_description": "New draft created",
+                "user_initials": "TODO user initials",
+                "possible_actions": [
                     "approve",
                     "edit"
                 ]
@@ -352,12 +352,12 @@
         }
     },
     {
-        "name": "Create a new odm formal expression for deleting it",
+        "name": "Create a new ODM Formal Expression for deleting it",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context - delete",
                 "expression": "expression2"
             },
@@ -371,16 +371,16 @@
             },
             "result": {
                 "uid": "OdmFormalExpression_000002",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context - delete",
                 "expression": "expression2",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
-                "possibleActions": [
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -389,7 +389,7 @@
         }
     },
     {
-        "name": "Test deleting a specific odm formal expression",
+        "name": "Test deleting a specific ODM Formal Expression",
         "request": {
             "headers": {},
             "method": "DELETE",
@@ -406,23 +406,23 @@
         }
     },
     {
-        "name": "Create a new odm condition with relation to odm formal expression",
+        "name": "Create a new ODM Condition with relation to ODM Formal Expression",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
-                "formalExpressionUids": [
+                "formal_expressions": [
                     "OdmFormalExpression_000001"
                 ],
-                "descriptionUids": [
+                "descriptions": [
                     "odm_description1"
                 ],
-                "aliasUids": []
+                "alias_uids": []
             },
-            "url": "concepts/odms/conditions/select"
+            "url": "concepts/odms/conditions"
         },
         "response": {
             "code": 201,
@@ -433,15 +433,15 @@
             "result": {
                 "uid": "OdmCondition_000001",
                 "name": "name1",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "oid": "oid1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
-                "formalExpressions": [
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
+                "formal_expressions": [
                     {
                         "uid": "OdmFormalExpression_000001",
                         "context": "context1",
@@ -456,12 +456,12 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     }
                 ],
                 "aliases": [],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -470,7 +470,7 @@
         }
     },
     {
-        "name": "Test getting UIDs of a specific odm formal expression's active relationships",
+        "name": "Test getting UIDs of a specific ODM Formal Expression's active relationships",
         "request": {
             "headers": {},
             "method": "GET",

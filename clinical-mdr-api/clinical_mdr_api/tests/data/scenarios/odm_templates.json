@@ -1,6 +1,6 @@
 [
     {
-        "name": "Test getting empty list of odm templates",
+        "name": "Test getting empty list of ODM Templates",
         "request": {
             "headers": {},
             "method": "GET",
@@ -17,21 +17,21 @@
                 "items": [],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
     {
-        "name": "Test creating a new odm template",
+        "name": "Test creating a new ODM Template",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
                 "description": "description1"
             },
             "url": "concepts/odms/templates"
@@ -44,20 +44,20 @@
             },
             "result": {
                 "uid": "OdmTemplate_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
                 "description": "description1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
                 "forms": [],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -66,7 +66,7 @@
         }
     },
     {
-        "name": "Test getting non empty list of odm templates",
+        "name": "Test getting non empty list of ODM Templates",
         "request": {
             "headers": {},
             "method": "GET",
@@ -83,20 +83,20 @@
                 "items": [
                     {
                         "uid": "OdmTemplate_000001",
-                        "libraryName": "Sponsor",
+                        "library_name": "Sponsor",
                         "name": "name1",
                         "oid": "oid1",
-                        "effectiveDate": "2022-04-21",
-                        "retiredDate": "2022-04-21",
+                        "effective_date": "2022-04-21",
+                        "retired_date": "2022-04-21",
                         "description": "description1",
-                        "startDate": "2022-03-03T11:17:56.799074",
-                        "endDate": null,
+                        "start_date": "2022-03-03T11:17:56.799074",
+                        "end_date": null,
                         "status": "Draft",
                         "version": "0.1",
-                        "changeDescription": "Initial version",
-                        "userInitials": "TODO user initials",
+                        "change_description": "Initial version",
+                        "user_initials": "TODO user initials",
                         "forms": [],
-                        "possibleActions": [
+                        "possible_actions": [
                             "approve",
                             "delete",
                             "edit"
@@ -105,17 +105,17 @@
                 ],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
     {
-        "name": "Test getting possible header values of odm templates",
+        "name": "Test getting possible header values of ODM Templates",
         "request": {
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "concepts/odms/templates/headers?fieldName=name"
+            "url": "concepts/odms/templates/headers?field_name=name"
         },
         "response": {
             "code": 200,
@@ -129,7 +129,7 @@
         }
     },
     {
-        "name": "Test getting a specific odm template",
+        "name": "Test getting a specific ODM Template",
         "request": {
             "headers": {},
             "method": "GET",
@@ -144,20 +144,20 @@
             },
             "result": {
                 "uid": "OdmTemplate_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
                 "description": "description1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
                 "forms": [],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -166,7 +166,7 @@
         }
     },
     {
-        "name": "Test getting versions of a specific odm template",
+        "name": "Test getting versions of a specific ODM Template",
         "request": {
             "headers": {},
             "method": "GET",
@@ -182,20 +182,20 @@
             "result": [
                 {
                     "uid": "OdmTemplate_000001",
-                    "libraryName": "Sponsor",
+                    "library_name": "Sponsor",
                     "name": "name1",
                     "oid": "oid1",
-                    "effectiveDate": "2022-04-21",
-                    "retiredDate": "2022-04-21",
+                    "effective_date": "2022-04-21",
+                    "retired_date": "2022-04-21",
                     "description": "description1",
-                    "startDate": "2022-03-03T11:17:56.799074",
-                    "endDate": null,
+                    "start_date": "2022-03-03T11:17:56.799074",
+                    "end_date": null,
                     "status": "Draft",
                     "version": "0.1",
-                    "changeDescription": "Initial version",
-                    "userInitials": "TODO user initials",
+                    "change_description": "Initial version",
+                    "user_initials": "TODO user initials",
                     "forms": [],
-                    "possibleActions": [
+                    "possible_actions": [
                         "approve",
                         "delete",
                         "edit"
@@ -205,17 +205,17 @@
         }
     },
     {
-        "name": "Test updating an existing odm template",
+        "name": "Test updating an existing ODM Template",
         "request": {
             "headers": {},
             "method": "PATCH",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "new oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
-                "changeDescription": "oid changed"
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
+                "change_description": "oid changed"
             },
             "url": "concepts/odms/templates/OdmTemplate_000001"
         },
@@ -227,20 +227,20 @@
             },
             "result": {
                 "uid": "OdmTemplate_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "new oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
                 "description": "description1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.2",
-                "changeDescription": "oid changed",
-                "userInitials": "TODO user initials",
+                "change_description": "oid changed",
+                "user_initials": "TODO user initials",
                 "forms": [],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -249,7 +249,7 @@
         }
     },
     {
-        "name": "Test approving an odm template",
+        "name": "Test approving an ODM Template",
         "request": {
             "headers": {},
             "method": "POST",
@@ -264,28 +264,28 @@
             },
             "result": {
                 "uid": "OdmTemplate_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "new oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
                 "description": "description1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Approved version",
-                "userInitials": "TODO initials",
+                "change_description": "Approved version",
+                "user_initials": "TODO initials",
                 "forms": [],
-                "possibleActions": [
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test inactivating a specific odm template",
+        "name": "Test inactivating a specific ODM Template",
         "request": {
             "headers": {},
             "method": "POST",
@@ -300,20 +300,20 @@
             },
             "result": {
                 "uid": "OdmTemplate_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "new oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
                 "description": "description1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Retired",
                 "version": "1.0",
-                "changeDescription": "Deactivated version",
-                "userInitials": "TODO initials",
+                "change_description": "Deactivated version",
+                "user_initials": "TODO initials",
                 "forms": [],
-                "possibleActions": [
+                "possible_actions": [
                     "delete",
                     "reactivate"
                 ]
@@ -321,7 +321,7 @@
         }
     },
     {
-        "name": "Test reactivating a specific odm template",
+        "name": "Test reactivating a specific ODM Template",
         "request": {
             "headers": {},
             "method": "POST",
@@ -336,41 +336,41 @@
             },
             "result": {
                 "uid": "OdmTemplate_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "new oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
                 "description": "description1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO initials",
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
                 "forms": [],
-                "possibleActions": [
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test adding odm forms to a specific odm template",
+        "name": "Test adding ODM Forms to a specific ODM Template",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
                     "uid": "odm_form1",
-                    "orderNumber": 1,
+                    "order_number": 1,
                     "mandatory": "Yes",
                     "locked": "Yes",
-                    "collectionExceptionConditionOid": "None"
+                    "collection_exception_condition_oid": "None"
                 }
             ],
-            "url": "concepts/odms/templates/OdmTemplate_000001/add-forms"
+            "url": "concepts/odms/templates/OdmTemplate_000001/forms"
         },
         "response": {
             "code": 201,
@@ -380,50 +380,50 @@
             },
             "result": {
                 "uid": "OdmTemplate_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "new oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
                 "description": "description1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO initials",
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
                 "forms": [
                     {
                         "uid": "odm_form1",
                         "name": "name1",
-                        "orderNumber": 1,
+                        "order_number": 1,
                         "mandatory": "Yes",
                         "locked": "Yes",
-                        "collectionExceptionConditionOid": "None"
+                        "collection_exception_condition_oid": "None"
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test overriding odm forms from a specific odm template",
+        "name": "Test overriding ODM Forms from a specific ODM Template",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
                     "uid": "odm_form2",
-                    "orderNumber": 2,
+                    "order_number": 2,
                     "mandatory": "Yes",
                     "locked": "Yes",
-                    "collectionExceptionConditionOid": "None"
+                    "collection_exception_condition_oid": "None"
                 }
             ],
-            "url": "concepts/odms/templates/OdmTemplate_000001/add-forms?override=true"
+            "url": "concepts/odms/templates/OdmTemplate_000001/forms?override=true"
         },
         "response": {
             "code": 201,
@@ -433,42 +433,42 @@
             },
             "result": {
                 "uid": "OdmTemplate_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "new oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
                 "description": "description1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO initials",
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
                 "forms": [
                     {
                         "uid": "odm_form2",
                         "name": "name2",
-                        "orderNumber": 2,
+                        "order_number": 2,
                         "mandatory": "Yes",
                         "locked": "Yes",
-                        "collectionExceptionConditionOid": "None"
+                        "collection_exception_condition_oid": "None"
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test creating a new odm template version",
+        "name": "Test creating a new ODM Template version",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/odms/templates/OdmTemplate_000001/new-version"
+            "url": "concepts/odms/templates/OdmTemplate_000001/versions"
         },
         "response": {
             "code": 201,
@@ -478,29 +478,29 @@
             },
             "result": {
                 "uid": "OdmTemplate_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "new oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
                 "description": "description1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "1.1",
-                "changeDescription": "New draft created",
-                "userInitials": "TODO user initials",
+                "change_description": "New draft created",
+                "user_initials": "TODO user initials",
                 "forms": [
                     {
                         "uid": "odm_form2",
                         "name": "name2",
-                        "orderNumber": 2,
+                        "order_number": 2,
                         "mandatory": "Yes",
                         "locked": "Yes",
-                        "collectionExceptionConditionOid": "None"
+                        "collection_exception_condition_oid": "None"
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "edit"
                 ]
@@ -508,16 +508,16 @@
         }
     },
     {
-        "name": "Create a new odm template for deleting it",
+        "name": "Create a new ODM Template for deleting it",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1 - delete",
                 "oid": "oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
                 "description": "description1"
             },
             "url": "concepts/odms/templates"
@@ -530,20 +530,20 @@
             },
             "result": {
                 "uid": "OdmTemplate_000002",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1 - delete",
                 "oid": "oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
                 "description": "description1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
                 "forms": [],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -552,7 +552,7 @@
         }
     },
     {
-        "name": "Test deleting a specific odm template",
+        "name": "Test deleting a specific ODM Template",
         "request": {
             "headers": {},
             "method": "DELETE",
@@ -569,7 +569,7 @@
         }
     },
     {
-        "name": "Test getting UIDs of a specific odm template's active relationships",
+        "name": "Test getting UIDs of a specific ODM Template's active relationships",
         "request": {
             "headers": {},
             "method": "GET",

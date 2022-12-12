@@ -40,22 +40,22 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
             uid=input_dict.get("uid"),
             concept_vo=ActivitySubGroupVO.from_repository_values(
                 name=input_dict.get("name"),
-                name_sentence_case=input_dict.get("nameSentenceCase"),
+                name_sentence_case=input_dict.get("name_sentence_case"),
                 definition=input_dict.get("definition"),
                 abbreviation=input_dict.get("abbreviation"),
-                activity_group=input_dict.get("activityGroup"),
+                activity_group=input_dict.get("activity_group"),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("libraryName"),
+                library_name=input_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: input_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("changeDescription"),
+                change_description=input_dict.get("change_description"),
                 status=LibraryItemStatus(input_dict.get("status")),
-                author=input_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=input_dict.get("startDate")),
+                author=input_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=input_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -96,7 +96,7 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
         return """
         WITH *,
             head([(concept_value)-[:IN_GROUP]->(activity_group_value:ActivityGroupValue)<-[:LATEST]-(activity_group_root:ActivityGroupRoot) | 
-                activity_group_root.uid]) AS activityGroup
+                activity_group_root.uid]) AS activity_group
         """
 
     def create_query_filter_statement(
@@ -107,22 +107,22 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
             filter_query_parameters,
         ) = super().create_query_filter_statement(library=library)
         filter_parameters = []
-        if kwargs.get("activityGroupUid") is not None:
-            activity_group_uid = kwargs.get("activityGroupUid")
+        if kwargs.get("activity_group_uid") is not None:
+            activity_group_uid = kwargs.get("activity_group_uid")
             filter_by_activity_group_uid = """
             $activity_group_uid IN 
             [(concept_value)-[:IN_GROUP]->(activity_group_value:ActivityGroupValue)<-[:LATEST]-(activity_group_root:ActivityGroupRoot) 
                 | activity_group_root.uid]"""
             filter_parameters.append(filter_by_activity_group_uid)
             filter_query_parameters["activity_group_uid"] = activity_group_uid
-        if kwargs.get("activityGroupNames") is not None:
-            activity_group_names = kwargs.get("activityGroupNames")
+        if kwargs.get("activity_group_names") is not None:
+            activity_group_names = kwargs.get("activity_group_names")
             filter_by_activity_group_names = """
             size([(concept_value)-[:IN_GROUP]->(v:ActivityGroupValue) WHERE v.name IN $activity_group_names | v.name]) > 0"""
             filter_parameters.append(filter_by_activity_group_names)
             filter_query_parameters["activity_group_names"] = activity_group_names
-        if kwargs.get("activityNames") is not None:
-            activity_names = kwargs.get("activityNames")
+        if kwargs.get("activity_names") is not None:
+            activity_names = kwargs.get("activity_names")
             filter_by_activity_names = """
             size([(concept_value)<-[:IN_SUB_GROUP]-(v:ActivityValue) WHERE v.name IN $activity_names | v.name]) > 0"""
             filter_parameters.append(filter_by_activity_names)
@@ -165,7 +165,7 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
 
         return are_concept_properties_changed or are_rels_changed
 
-    def get_template_activity_sub_groups(
+    def get_template_activity_subgroups(
         self, root_class: type, template_uid: str
     ) -> Optional[Sequence[ActivitySubGroupAR]]:
         """
@@ -176,10 +176,10 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
         :return Sequence[ActivitySubGroupAR]:
         """
         template = root_class.nodes.get(uid=template_uid)
-        activity_sub_group_nodes = template.has_activity_sub_group.all()
-        if activity_sub_group_nodes:
+        activity_subgroup_nodes = template.has_activity_subgroup.all()
+        if activity_subgroup_nodes:
             groups = []
-            for node in activity_sub_group_nodes:
+            for node in activity_subgroup_nodes:
                 group = self.find_by_uid_2(uid=node.uid)
                 groups.append(group)
             return groups

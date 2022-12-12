@@ -1,12 +1,11 @@
 from datetime import datetime
 from typing import Any, List, Optional
-from urllib.parse import unquote
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
 from pydantic.types import Json
 
-from clinical_mdr_api import models
+from clinical_mdr_api import config, models
 from clinical_mdr_api.domain_repositories.models.endpoint import EndpointValue
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study import Study
@@ -34,7 +33,7 @@ EndpointUID = Path(None, description="The unique id of the endpoint.")
             "content": {
                 "text/csv": {
                     "example": """
-"library","uid","objective","endpointTemplate","endpoint","startDate","endDate","status","version","changeDescription","userInitials"
+"library","uid","objective","endpoint_template","endpoint","start_date","end_date","status","version","change_description","user_initials"
 "Sponsor","826d80a7-0b6a-419d-8ef1-80aa241d7ac7","Objective","First [ComparatorIntervention]","First Intervention","2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
 """
                 },
@@ -48,14 +47,14 @@ EndpointUID = Path(None, description="The unique id of the endpoint.")
             <library type="str">Sponsor</library>
             <uid type="str">682d7003-8dcc-480d-b07b-878e659b8697</uid>
             <objective type="str">Test template new [glucose metabolism] [MACE+] totot</objective>
-            <endpointTemplate type="str">Endpoint using [Activity] and [Indication]</endpointTemplate>
+            <endpoint_template type="str">Endpoint using [Activity] and [Indication]</endpoint_template>
             <endpoint type="str">Endpoint using [body weight] and [type 2 diabetes]</endpoint>
-            <startDate type="str">2020-11-26T13:43:23.000Z</startDate>
-            <endDate type="str"></endDate>
+            <start_date type="str">2020-11-26T13:43:23.000Z</start_date>
+            <end_date type="str"></end_date>
             <status type="str">Draft</status>
             <version type="str">0.2</version>
-            <changeDescription type="str">Changed indication</changeDescription>
-            <userInitials type="str">TODO Initials</userInitials>
+            <change_description type="str">Changed indication</change_description>
+            <user_initials type="str">TODO Initials</user_initials>
         </item>
     </data>
 </root>
@@ -72,14 +71,14 @@ EndpointUID = Path(None, description="The unique id of the endpoint.")
             "library=library.name",
             "uid",
             "objective=objective.name",
-            "endpointTemplate=endpointTemplate.name",
+            "endpoint_template=endpoint_template.name",
             "endpoint=name",
-            "startDate",
-            "endDate",
+            "start_date",
+            "end_date",
             "status",
             "version",
-            "changeDescription",
-            "userInitials",
+            "change_description",
+            "user_initials",
         ],
         "formats": [
             "text/csv",
@@ -92,37 +91,39 @@ EndpointUID = Path(None, description="The unique id of the endpoint.")
 # pylint: disable=unused-argument
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
     all_items = EndpointService(current_user_id).get_all(
         return_study_count=True,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        sort_by=sortBy,
+        sort_by=sort_by,
     )
 
     return CustomPage.create(
         items=all_items.items,
         total=all_items.total_count,
-        page=pageNumber,
-        size=pageSize,
+        page=page_number,
+        size=page_size,
     )
 
 
@@ -152,8 +153,8 @@ def get_distinct_values_for_header(
         "and you are interested in the 'Final' or 'Retired' status.\n"
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -162,17 +163,17 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     return Service(current_user_id).get_distinct_values_for_header(
         status=status,
-        field_name=fieldName,
-        search_string=searchString,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
@@ -193,7 +194,7 @@ def get_distinct_values_for_header(
 )
 def get(
     uid: str = EndpointUID,
-    atSpecifiedDateTime: Optional[datetime] = Query(
+    at_specified_date_time: Optional[datetime] = Query(
         None,
         description="If specified, the latest/newest representation of the endpoint at this point in time is returned.\n"
         "The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: "
@@ -218,37 +219,19 @@ def get(
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    if atSpecifiedDateTime is not None or status is not None or version is not None:
+    if at_specified_date_time is not None or status is not None or version is not None:
         raise NotImplementedError(
             "TODO: support for at_specified_date, status and version parameters not implemented."
         )
     return EndpointService(current_user_id).get_by_uid(uid=uid)  # type: ignore
-    # return service.get_latest(uid, atSpecifiedDateTime, status, version)
-
-
-@router.get(
-    "/get-by-name/{name}",
-    summary="Returns the latest/newest version of a specific endpoint identified by 'name'.",
-    description="Gets an object by name - uses LATEST_DRAFT and LATEST_FINAL relations",
-    response_model=Optional[models.Endpoint],
-    status_code=200,
-    responses={
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - The endpoint with the specified 'name' wasn't found.",
-        },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
-    },
-)
-def get_by_name(name: str, current_user_id: str = Depends(get_current_user_id)):
-    return EndpointService(current_user_id).find_by(name=unquote(name))  # type: ignore
+    # return service.get_latest(uid, at_specified_date_time, status, version)
 
 
 @router.get(
     "/{uid}/versions",
     summary="Returns the version history of a specific endpoint identified by 'uid'.",
     description="The returned versions are ordered by\n"
-    "0. startDate descending (newest entries first)",
+    "0. start_date descending (newest entries first)",
     response_model=List[models.EndpointVersion],
     status_code=200,
     responses={
@@ -256,7 +239,7 @@ def get_by_name(name: str, current_user_id: str = Depends(get_current_user_id)):
             "content": {
                 "text/csv": {
                     "example": """
-"library","endpointTemplate","objective","uid","endpoint","startDate","endDate","status","version","changeDescription","userInitials"
+"library","endpoint_template","objective","uid","endpoint","start_date","end_date","status","version","change_description","user_initials"
 "Sponsor","First [ComparatorIntervention]","Objective","826d80a7-0b6a-419d-8ef1-80aa241d7ac7","First Intervention","2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
 """
                 },
@@ -268,16 +251,16 @@ def get_by_name(name: str, current_user_id: str = Depends(get_current_user_id)):
     <data type="list">
         <item type="dict">
             <library type="str">Sponsor</library>
-            <endpointTemplate type="str">Endpoint using [Activity] and [Indication]</endpointTemplate>
+            <endpoint_template type="str">Endpoint using [Activity] and [Indication]</endpoint_template>
             <objective type="str">Test template new [glucose metabolism] [MACE+] totot</objective>
             <uid type="str">682d7003-8dcc-480d-b07b-878e659b8697</uid>
             <endpoint type="str">Endpoint using [body weight] and [type 2 diabetes]</endpoint>
-            <startDate type="str">2020-11-26T13:43:23.000Z</startDate>
-            <endDate type="str"></endDate>
+            <start_date type="str">2020-11-26T13:43:23.000Z</start_date>
+            <end_date type="str"></end_date>
             <status type="str">Draft</status>
             <version type="str">0.2</version>
-            <changeDescription type="str">Changed indication</changeDescription>
-            <userInitials type="str">TODO Initials</userInitials>
+            <change_description type="str">Changed indication</change_description>
+            <user_initials type="str">TODO Initials</user_initials>
         </item>
     </data>
 </root>
@@ -296,42 +279,42 @@ def get_by_name(name: str, current_user_id: str = Depends(get_current_user_id)):
     {
         "text/csv": [
             "library=library.name",
-            "endpointTemplate=endpointTemplate.name",
+            "endpoint_template=endpoint_template.name",
             "objective=objective.name",
             "uid",
             "endpoint=name",
-            "startDate",
-            "endDate",
+            "start_date",
+            "end_date",
             "status",
             "version",
-            "changeDescription",
-            "userInitials",
+            "change_description",
+            "user_initials",
         ],
         "text/xml": [
             "library=library.name",
-            "endpointTemplate=endpointTemplate.name",
+            "endpoint_template=endpoint_template.name",
             "objective=objective.name",
             "uid",
             "endpoint=name",
-            "startDate",
-            "endDate",
+            "start_date",
+            "end_date",
             "status",
             "version",
-            "changeDescription",
-            "userInitials",
+            "change_description",
+            "user_initials",
         ],
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
             "library=library.name",
-            "endpointTemplate=endpointTemplate.name",
+            "endpoint_template=endpoint_template.name",
             "objective=objective.name",
             "uid",
             "endpoint=name",
-            "startDate",
-            "endDate",
+            "start_date",
+            "end_date",
             "status",
             "version",
-            "changeDescription",
-            "userInitials",
+            "change_description",
+            "user_initials",
         ],
     }
 )
@@ -371,9 +354,9 @@ def get_studies(
         " If value starts with `+` or `-` above default is extended or reduced by the specified fields"
         " otherwise (if not started with `+` or `-`) provided fields specification"
         " replaces the default. Currently supported fields are"
-        " `currentMetadata.identificationMetadata`, `currentMetadata.highLevelStudyDesign`"
-        " , `currentMetadata.studyPopulation` and `currentMetadata.studyIntervention`"
-        " , `currentMetadata.studyDescription`.",
+        " `current_metadata.identification_metadata`, `current_metadata.high_level_study_design`"
+        " , `current_metadata.study_population` and `current_metadata.study_intervention`"
+        " , `current_metadata.study_description`.",
     ),
 ):
     return Service(current_user_id).get_referencing_studies(
@@ -387,12 +370,12 @@ def get_studies(
     description="""This request is only valid if
 * the specified endpoint template is in 'Final' status and
 * the specified objective is in 'Final' status and
-* the specified library allows creating endpoints (the 'isEditable' property of the library needs to be true) and
+* the specified library allows creating endpoints (the 'is_editable' property of the library needs to be true) and
 * the endpoint does not yet exist (no endpoint with the same content in 'Final' or 'Draft' status).
 
 If the request succeeds:
 * The status will be automatically set to 'Draft'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will be set to '0.1'.
 """,
     response_model=models.Endpoint,
@@ -410,8 +393,8 @@ If the request succeeds:
         404: {
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
-            "- The library with the specified 'libraryName' could not be found.\n"
-            "- The endpoint template with the specified 'endpointTemplateUid' could not be found.",
+            "- The library with the specified 'library_name' could not be found.\n"
+            "- The endpoint template with the specified 'endpoint_template_uid' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
@@ -431,7 +414,7 @@ def create(
     summary="Previews the creation of a new endpoint.",
     description="""This request is only valid if
 * the specified endpoint template is in 'Final' status and
-* the specified library allows creating endpoints (the 'isEditable' property of the library needs to be true) and
+* the specified library allows creating endpoints (the 'is_editable' property of the library needs to be true) and
 * the endpoint does not yet exist (no endpoint with the same content in 'Final' or 'Draft' status).
 
 If the request succeeds:
@@ -451,8 +434,8 @@ If the request succeeds:
         404: {
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
-            "- The library with the specified 'libraryName' could not be found.\n"
-            "- The endpoint template with the specified 'endpointTemplateUid' could not be found.",
+            "- The library with the specified 'library_name' could not be found.\n"
+            "- The endpoint template with the specified 'endpoint_template_uid' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
@@ -471,7 +454,7 @@ def preview(
     summary="Updates the endpoint identified by 'uid'.",
     description="""This request is only valid if the endpoint
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true). 
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
 
 If the request succeeds:
 * The 'version' property will be increased automatically by +0.1.
@@ -515,11 +498,11 @@ def edit(
     summary="Approves the endpoint identified by 'uid'.",
     description="""This request is only valid if the endpoint
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
     response_model=models.Endpoint,
@@ -554,7 +537,7 @@ def approve(
 
 If the request succeeds:
 * The status will be automatically set to 'Retired'.
-* The 'changeDescription' property will be set automatically. 
+* The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
     response_model=models.Endpoint,
@@ -589,7 +572,7 @@ def inactivate(
 
 If the request succeeds:
 * The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically. 
+* The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
     response_model=models.Endpoint,
@@ -621,7 +604,7 @@ def reactivate(
     description="""This request is only valid if \n
 * the endpoint is in 'Draft' status and
 * the endpoint has never been in 'Final' status and
-* the endpoint belongs to a library that allows deleting (the 'isEditable' property of the library needs to be true).""",
+* the endpoint belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
     response_model=None,
     status_code=204,
     responses={

@@ -22,14 +22,14 @@ class Timepoint(BaseModel):
     uid: Optional[str] = None
     name: Optional[str] = None
 
-    startDate: Optional[datetime] = None
-    endDate: Optional[datetime] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     status: Optional[str] = None
     version: Optional[str] = None
-    changeDescription: Optional[str] = None
-    userInitials: Optional[str] = None
+    change_description: Optional[str] = None
+    user_initials: Optional[str] = None
 
-    possibleActions: Optional[List[str]] = Field(
+    possible_actions: Optional[List[str]] = Field(
         None,
         description=(
             "Holds those actions that can be performed on the timeframe. "
@@ -37,7 +37,7 @@ class Timepoint(BaseModel):
         ),
     )
 
-    parameterValues: Optional[List[TemplateParameterComplexValue]] = Field(
+    parameter_values: Optional[List[TemplateParameterComplexValue]] = Field(
         None,
         description="Holds the parameter values that are used within the timeframe. The values are ordered as they occur in the timeframe name.",
     )
@@ -87,17 +87,17 @@ class Timepoint(BaseModel):
         return cls(
             uid=timepoint_ar.uid,
             name=timepoint_ar.name,
-            startDate=timepoint_ar.item_metadata.start_date,
-            endDate=timepoint_ar.item_metadata.end_date,
+            start_date=timepoint_ar.item_metadata.start_date,
+            end_date=timepoint_ar.item_metadata.end_date,
             status=timepoint_ar.item_metadata.status.value,
             version=timepoint_ar.item_metadata.version,
-            changeDescription=timepoint_ar.item_metadata.change_description,
-            userInitials=timepoint_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=timepoint_ar.item_metadata.change_description,
+            user_initials=timepoint_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 {_.value for _ in timepoint_ar.get_possible_actions()}
             ),
             library=Library.from_library_vo(timepoint_ar.library),
-            parameterValues=parameter_values,
+            parameter_values=parameter_values,
         )
 
 
@@ -110,37 +110,37 @@ class TimepointVersion(Timepoint):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the timeframe (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the timeframe (e.g. name, start_date, ..)."
         ),
     )
 
 
 class TimepointParameterInput(BaseModel):
-    parameterValues: List[TemplateParameterMultiSelectInput] = Field(
+    parameter_values: List[TemplateParameterMultiSelectInput] = Field(
         None,
-        title="parameterValues",
+        title="parameter_values",
         description="An ordered list of selected parameter values that are used to replace the parameters of the timeframe template.",
     )
 
 
 class TimepointEditInput(TimepointParameterInput):
-    changeDescription: str = Field(
+    change_description: str = Field(
         ...,
         description="A short description about what has changed compared to the previous version.",
     )
 
 
 class TimepointCreateInput(TimepointParameterInput):
-    timeframeTemplateUid: str = Field(
+    timeframe_template_uid: str = Field(
         ...,
-        title="timeframeTemplateUid",
+        title="timeframe_template_uid",
         description="The unique id of the timeframe template that is used as the basis for the new timeframe.",
     )
-    libraryName: str = Field(
+    library_name: str = Field(
         None,
-        title="libraryName",
+        title="library_name",
         description="If specified: The name of the library to which the timeframe will be linked. The following rules apply: \n"
         "* The library needs to be present, it will not be created with this request. The *[GET] /libraries* endpoint can help. And \n"
-        "* The library needs to allow the creation: The 'isEditable' property of the library needs to be true. \n\n"
+        "* The library needs to allow the creation: The 'is_editable' property of the library needs to be true. \n\n"
         "If not specified: The library of the timeframe template will be used.",
     )

@@ -10,12 +10,12 @@ class RegistryIdentifiersVO:
     ct_gov_id_null_value_code: Optional[str]
     eudract_id: Optional[str]
     eudract_id_null_value_code: Optional[str]
-    universal_trial_number_UTN: Optional[str]
-    universal_trial_number_UTN_null_value_code: Optional[str]
-    japanese_trial_registry_id_JAPIC: Optional[str]
-    japanese_trial_registry_id_JAPIC_null_value_code: Optional[str]
-    investigational_new_drug_application_number_IND: Optional[str]
-    investigational_new_drug_application_number_IND_null_value_code: Optional[str]
+    universal_trial_number_utn: Optional[str]
+    universal_trial_number_utn_null_value_code: Optional[str]
+    japanese_trial_registry_id_japic: Optional[str]
+    japanese_trial_registry_id_japic_null_value_code: Optional[str]
+    investigational_new_drug_application_number_ind: Optional[str]
+    investigational_new_drug_application_number_ind_null_value_code: Optional[str]
 
     @classmethod
     def from_input_values(
@@ -24,12 +24,12 @@ class RegistryIdentifiersVO:
         ct_gov_id_null_value_code: Optional[str],
         eudract_id: Optional[str],
         eudract_id_null_value_code: Optional[str],
-        universal_trial_number_UTN: Optional[str],
-        universal_trial_number_UTN_null_value_code: Optional[str],
-        japanese_trial_registry_id_JAPIC: Optional[str],
-        japanese_trial_registry_id_JAPIC_null_value_code: Optional[str],
-        investigational_new_drug_application_number_IND: Optional[str],
-        investigational_new_drug_application_number_IND_null_value_code: Optional[str],
+        universal_trial_number_utn: Optional[str],
+        universal_trial_number_utn_null_value_code: Optional[str],
+        japanese_trial_registry_id_japic: Optional[str],
+        japanese_trial_registry_id_japic_null_value_code: Optional[str],
+        investigational_new_drug_application_number_ind: Optional[str],
+        investigational_new_drug_application_number_ind_null_value_code: Optional[str],
     ) -> "RegistryIdentifiersVO":
         def norm_str(s: Optional[str]) -> Optional[str]:
             return normalize_string(s)
@@ -39,19 +39,19 @@ class RegistryIdentifiersVO:
             ct_gov_id_null_value_code=norm_str(ct_gov_id_null_value_code),
             eudract_id=norm_str(eudract_id),
             eudract_id_null_value_code=norm_str(eudract_id_null_value_code),
-            universal_trial_number_UTN=norm_str(universal_trial_number_UTN),
-            universal_trial_number_UTN_null_value_code=norm_str(
-                universal_trial_number_UTN_null_value_code
+            universal_trial_number_utn=norm_str(universal_trial_number_utn),
+            universal_trial_number_utn_null_value_code=norm_str(
+                universal_trial_number_utn_null_value_code
             ),
-            japanese_trial_registry_id_JAPIC=norm_str(japanese_trial_registry_id_JAPIC),
-            japanese_trial_registry_id_JAPIC_null_value_code=norm_str(
-                japanese_trial_registry_id_JAPIC_null_value_code
+            japanese_trial_registry_id_japic=norm_str(japanese_trial_registry_id_japic),
+            japanese_trial_registry_id_japic_null_value_code=norm_str(
+                japanese_trial_registry_id_japic_null_value_code
             ),
-            investigational_new_drug_application_number_IND=norm_str(
-                investigational_new_drug_application_number_IND
+            investigational_new_drug_application_number_ind=norm_str(
+                investigational_new_drug_application_number_ind
             ),
-            investigational_new_drug_application_number_IND_null_value_code=norm_str(
-                investigational_new_drug_application_number_IND_null_value_code
+            investigational_new_drug_application_number_ind_null_value_code=norm_str(
+                investigational_new_drug_application_number_ind_null_value_code
             ),
         )
 
@@ -76,9 +76,9 @@ class RegistryIdentifiersVO:
             )
 
         if (
-            self.universal_trial_number_UTN_null_value_code is not None
+            self.universal_trial_number_utn_null_value_code is not None
             and not null_value_exists_callback(
-                self.universal_trial_number_UTN_null_value_code
+                self.universal_trial_number_utn_null_value_code
             )
         ):
             raise ValueError(
@@ -86,9 +86,9 @@ class RegistryIdentifiersVO:
             )
 
         if (
-            self.japanese_trial_registry_id_JAPIC_null_value_code is not None
+            self.japanese_trial_registry_id_japic_null_value_code is not None
             and not null_value_exists_callback(
-                self.japanese_trial_registry_id_JAPIC_null_value_code
+                self.japanese_trial_registry_id_japic_null_value_code
             )
         ):
             raise ValueError(
@@ -96,10 +96,10 @@ class RegistryIdentifiersVO:
             )
 
         if (
-            self.investigational_new_drug_application_number_IND_null_value_code
+            self.investigational_new_drug_application_number_ind_null_value_code
             is not None
             and not null_value_exists_callback(
-                self.investigational_new_drug_application_number_IND_null_value_code
+                self.investigational_new_drug_application_number_ind_null_value_code
             )
         ):
             raise ValueError(
@@ -108,35 +108,38 @@ class RegistryIdentifiersVO:
 
         if self.ct_gov_id_null_value_code is not None and self.ct_gov_id is not None:
             raise ValueError(
-                "If reasonForMissingNullValueUid has a value, then field ctGovId must be None or empty string"
+                "If reason_for_missing_null_value_uid has a value, then field ct_gov_id must be None or empty string"
             )
 
         if self.eudract_id_null_value_code is not None and self.eudract_id is not None:
             raise ValueError(
-                "If reasonForMissingNullValueUid has a value, then field eudractId must be None or empty string"
+                "If reason_for_missing_null_value_uid has a value, then field eudract_id must be None or empty string"
             )
 
         if (
-            self.universal_trial_number_UTN_null_value_code is not None
-            and self.universal_trial_number_UTN is not None
+            self.universal_trial_number_utn_null_value_code is not None
+            and self.universal_trial_number_utn is not None
         ):
             raise ValueError(
-                "If reasonForMissingNullValueUid has a value, then field universalTrialNumberUTN must be None or empty string"
+                "If reason_for_missing_null_value_uid has a value, then field universal_trial_number_utn must be None or empty string"
             )
 
         if (
-            self.japanese_trial_registry_id_JAPIC_null_value_code is not None
-            and self.japanese_trial_registry_id_JAPIC is not None
+            self.japanese_trial_registry_id_japic_null_value_code is not None
+            and self.japanese_trial_registry_id_japic is not None
         ):
             raise ValueError(
-                "If reasonForMissingNullValueUid has a value, then field japaneseTrialRegistryIdJAPIC must be None or empty string"
+                "If reason_for_missing_null_value_uid has a value, then field japanese_trial_registry_id_japic must be None or empty string"
             )
 
         if (
-            self.investigational_new_drug_application_number_IND_null_value_code
+            self.investigational_new_drug_application_number_ind_null_value_code
             is not None
-            and self.investigational_new_drug_application_number_IND is not None
+            and self.investigational_new_drug_application_number_ind is not None
         ):
             raise ValueError(
-                "If reasonForMissingNullValueUid has a value, then field investigationalNewDrugApplicationNumberIND must be None or empty string"
+                (
+                    "If reason_for_missing_null_value_uid has a value, "
+                    "then field investigational_new_drug_application_number_ind must be None or empty string"
+                )
             )

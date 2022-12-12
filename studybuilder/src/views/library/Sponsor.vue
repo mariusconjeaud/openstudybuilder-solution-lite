@@ -5,7 +5,7 @@
     <help-button :help-text="$t('_help.CtSponsorTable.general')" />
   </div>
   <sponsor-table
-    :catalogueName="$route.params.catalogueName"
+    :catalogue_name="$route.params.catalogue_name"
     />
 </div>
 </template>

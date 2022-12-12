@@ -59,7 +59,7 @@ class TestCTTermRepository(unittest.TestCase):
         cls.codelist_names_repo = CTCodelistNameRepository()
 
     @classmethod
-    def tearDownClass(cls) -> None:
+    def tear_down_class(cls) -> None:
         cls.term_aggregated_repo.close()
         cls.term_attributes_repo.close()
         cls.term_names_repo.close()

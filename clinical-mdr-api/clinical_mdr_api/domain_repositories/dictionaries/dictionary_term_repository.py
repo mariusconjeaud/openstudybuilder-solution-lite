@@ -1,5 +1,5 @@
 from abc import ABC
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Sequence, Tuple
 
 from neomodel import db
@@ -78,26 +78,26 @@ class DictionaryTermGenericRepository(
     ) -> DictionaryTermAR:
         major, minor = term_dict.get("version").split(".")
         return DictionaryTermAR.from_repository_values(
-            uid=term_dict.get("termUid"),
+            uid=term_dict.get("term_uid"),
             dictionary_term_vo=DictionaryTermVO.from_repository_values(
-                codelist_uid=term_dict.get("codelistUid"),
-                dictionary_id=term_dict.get("dictionaryId"),
+                codelist_uid=term_dict.get("codelist_uid"),
+                dictionary_id=term_dict.get("dictionary_id"),
                 name=term_dict.get("name"),
-                name_sentence_case=term_dict.get("nameSentenceCase"),
+                name_sentence_case=term_dict.get("name_sentence_case"),
                 abbreviation=term_dict.get("abbreviation"),
                 definition=term_dict.get("definition"),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=term_dict.get("libraryName"),
+                library_name=term_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: term_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=term_dict.get("changeDescription"),
+                change_description=term_dict.get("change_description"),
                 status=LibraryItemStatus(term_dict.get("status")),
-                author=term_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=term_dict.get("startDate")),
+                author=term_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=term_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -144,14 +144,14 @@ class DictionaryTermGenericRepository(
             head([(dictionary_term_root)-[hv:HAS_VERSION]->(dictionary_term_value) | hv]) AS hv
             WITH
                 dictionary_term_value,
-                dictionary_codelist_root.uid as codelistUid,
-                dictionary_term_root.uid AS termUid,
-                dictionary_term_value.dictionary_id as dictionaryId,
+                dictionary_codelist_root.uid as codelist_uid,
+                dictionary_term_root.uid AS term_uid,
+                dictionary_term_value.dictionary_id as dictionary_id,
                 dictionary_term_value.name AS name,
-                dictionary_term_value.name_sentence_case as nameSentenceCase,
+                dictionary_term_value.name_sentence_case as name_sentence_case,
                 dictionary_term_value.abbreviation as abbreviation,
                 dictionary_term_value.definition AS definition,
-                library.name AS libraryName,
+                library.name AS library_name,
                 library.is_editable AS is_library_editable,
                 ld, lf, lr, hv
                 CALL apoc.case(
@@ -166,20 +166,20 @@ class DictionaryTermGenericRepository(
                  yield value
             WITH 
                 dictionary_term_value,
-                codelistUid,
-                termUid,
-                dictionaryId,
+                codelist_uid,
+                term_uid,
+                dictionary_id,
                 name,
-                nameSentenceCase,
+                name_sentence_case,
                 abbreviation,
                 definition,
-                libraryName,
+                library_name,
                 is_library_editable,
-                value.version_rel.start_date AS startDate,
+                value.version_rel.start_date AS start_date,
                 value.version_rel.status AS status,
                 value.version_rel.version AS version,
-                value.version_rel.change_description AS changeDescription,
-                value.version_rel.user_initials AS userInitials
+                value.version_rel.change_description AS change_description,
+                value.version_rel.user_initials AS user_initials
         """
 
     def specific_alias_clause(self) -> str:
@@ -232,9 +232,7 @@ class DictionaryTermGenericRepository(
         )
 
         query.parameters.update({"codelist_uid": codelist_uid})
-        result_array, attributes_names = db.cypher_query(
-            query=query.full_query, params=query.parameters
-        )
+        result_array, attributes_names = query.execute()
         extracted_items = self._retrieve_terms_from_cypher_res(
             result_array, attributes_names
         )
@@ -300,10 +298,10 @@ class DictionaryTermGenericRepository(
         )
 
         query.parameters.update({"codelist_uid": codelist_uid})
-        header_query = query.build_header_query(
+        query.full_query = query.build_header_query(
             header_alias=field_name, result_count=result_count
         )
-        result_array, _ = db.cypher_query(query=header_query, params=query.parameters)
+        result_array, _ = query.execute()
 
         return (
             format_generic_header_values(result_array[0][0])
@@ -385,7 +383,7 @@ class DictionaryTermGenericRepository(
         dictionary_codelist.has_term.connect(
             root,
             {
-                "start_date": datetime.now(),
+                "start_date": datetime.now(timezone.utc),
                 "end_date": None,
                 "user_initials": item.item_metadata.user_initials,
             },

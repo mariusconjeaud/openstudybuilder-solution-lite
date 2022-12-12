@@ -56,7 +56,7 @@ class ActivityDescriptionTemplateService(
         )
         return cls.from_activity_description_template_ar(
             item_ar,
-            find_activity_subgroup_by_uid=self._repos.activity_sub_group_repository.find_by_uid_2,
+            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_2,
             find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
         )
 
@@ -93,7 +93,7 @@ class ActivityDescriptionTemplateService(
     ) -> ActivityDescriptionTemplateAR:
         default_parameter_values = self._create_default_parameter_entries(
             template_name=template.name,
-            default_parameter_values=template.defaultParameterValues,
+            default_parameter_values=template.default_parameter_values,
         )
 
         template_vo, library_vo = self._create_template_vo(
@@ -105,7 +105,7 @@ class ActivityDescriptionTemplateService(
             indications,
             activities,
             activity_groups,
-            activity_sub_groups,
+            activity_subgroups,
         ) = self._get_groupings(template)
 
         # Process item to save
@@ -117,14 +117,14 @@ class ActivityDescriptionTemplateService(
                     )
                 ),
                 author=self.user_initials,
-                editable_instance=template.editableInstance,
+                editable_instance=template.editable_instance,
                 template=template_vo,
                 library=library_vo,
                 generate_uid_callback=self.repository.generate_uid_callback,
                 indications=indications,
                 activities=activities,
                 activity_groups=activity_groups,
-                activity_sub_groups=activity_sub_groups,
+                activity_subgroups=activity_subgroups,
             )
         except ValueError as e:
             raise exceptions.ValidationException(e.args[0])
@@ -136,15 +136,17 @@ class ActivityDescriptionTemplateService(
         self, uid: str, groupings: ActivityDescriptionTemplateEditGroupingsInput
     ) -> ActivityDescriptionTemplate:
         try:
-            if groupings.indicationUids is not None:
-                self.repository.patch_indications(uid, groupings.indicationUids)
-            if groupings.activityUids is not None:
-                self.repository.patch_activities(uid, groupings.activityUids)
-            if groupings.activityGroupUids is not None:
-                self.repository.patch_activity_groups(uid, groupings.activityGroupUids)
-            if groupings.activitySubGroupUids is not None:
-                self.repository.patch_activity_sub_groups(
-                    uid, groupings.activitySubGroupUids
+            if groupings.indication_uids is not None:
+                self.repository.patch_indications(uid, groupings.indication_uids)
+            if groupings.activity_uids is not None:
+                self.repository.patch_activities(uid, groupings.activity_uids)
+            if groupings.activity_group_uids is not None:
+                self.repository.patch_activity_groups(
+                    uid, groupings.activity_group_uids
+                )
+            if groupings.activity_subgroup_uids is not None:
+                self.repository.patch_activity_subgroups(
+                    uid, groupings.activity_subgroup_uids
                 )
         finally:
             self.repository.close()
@@ -174,7 +176,7 @@ class ActivityDescriptionTemplateService(
             _indications=item.indications,
             _activities=item.activities,
             _activity_groups=item.activity_groups,
-            _activity_sub_groups=item.activity_sub_groups,
+            _activity_subgroups=item.activity_subgroups,
             _template=TemplateVO(
                 name=item.template_value.name,
                 name_plain=item.template_value.name_plain,
@@ -206,7 +208,7 @@ class ActivityDescriptionTemplateService(
             item.activities = [
                 Activity.from_activity_ar(
                     activity,
-                    self._repos.activity_sub_group_repository.find_by_uid_2,
+                    self._repos.activity_subgroup_repository.find_by_uid_2,
                     self._repos.activity_group_repository.find_by_uid_2,
                 )
                 for activity in activities
@@ -218,21 +220,21 @@ class ActivityDescriptionTemplateService(
             )
         )
         if activity_groups:
-            item.activityGroups = [
+            item.activity_groups = [
                 ActivityGroup.from_activity_ar(activity) for activity in activity_groups
             ]
-        # Get activity subGroups
-        activity_sub_groups = (
-            self._repos.activity_sub_group_repository.get_template_activity_sub_groups(
+        # Get activity sub_groups
+        activity_subgroups = (
+            self._repos.activity_subgroup_repository.get_template_activity_subgroups(
                 self.root_node_class, item.uid
             )
         )
-        if activity_sub_groups:
-            item.activitySubGroups = [
+        if activity_subgroups:
+            item.activity_subgroups = [
                 ActivitySubGroup.from_activity_ar(
                     activity, self._repos.activity_group_repository.find_by_uid_2
                 )
-                for activity in activity_sub_groups
+                for activity in activity_subgroups
             ]
 
     def _get_groupings(
@@ -246,32 +248,32 @@ class ActivityDescriptionTemplateService(
         indications: Sequence[DictionaryTermAR] = []
         activities: Sequence[ActivityAR] = []
         activity_groups: Sequence[ActivityGroupAR] = []
-        activity_sub_groups: Sequence[ActivitySubGroupAR] = []
+        activity_subgroups: Sequence[ActivitySubGroupAR] = []
 
-        if template.indicationUids and len(template.indicationUids) > 0:
-            for uid in template.indicationUids:
+        if template.indication_uids and len(template.indication_uids) > 0:
+            for uid in template.indication_uids:
                 indication = self._repos.dictionary_term_generic_repository.find_by_uid(
                     term_uid=uid
                 )
                 indications.append(indication)
 
-        if template.activityUids and len(template.activityUids) > 0:
-            for uid in template.activityUids:
+        if template.activity_uids and len(template.activity_uids) > 0:
+            for uid in template.activity_uids:
                 activity = self._repos.activity_repository.find_by_uid_2(uid=uid)
                 activities.append(activity)
 
-        if template.activityGroupUids and len(template.activityGroupUids) > 0:
-            for uid in template.activityGroupUids:
+        if template.activity_group_uids and len(template.activity_group_uids) > 0:
+            for uid in template.activity_group_uids:
                 activity_group = self._repos.activity_group_repository.find_by_uid_2(
                     uid=uid
                 )
                 activity_groups.append(activity_group)
 
-        if template.activitySubGroupUids and len(template.activitySubGroupUids) > 0:
-            for uid in template.activitySubGroupUids:
-                activity_sub_group = (
-                    self._repos.activity_sub_group_repository.find_by_uid_2(uid=uid)
+        if template.activity_subgroup_uids and len(template.activity_subgroup_uids) > 0:
+            for uid in template.activity_subgroup_uids:
+                activity_subgroup = (
+                    self._repos.activity_subgroup_repository.find_by_uid_2(uid=uid)
                 )
-                activity_sub_groups.append(activity_sub_group)
+                activity_subgroups.append(activity_subgroup)
 
-        return indications, activities, activity_groups, activity_sub_groups
+        return indications, activities, activity_groups, activity_subgroups

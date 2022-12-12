@@ -90,23 +90,23 @@ class StudySelectionCriteriaRepository:
                 WITH sc
                 MATCH (sc)-[:HAS_SELECTED_CRITERIA]->(:CriteriaValue)<-[ver]-(cr:CriteriaRoot)<-[:HAS_CRITERIA]-(:CriteriaTemplateRoot)-[:HAS_TYPE]->(term:CTTermRoot)
                 WHERE ver.status = "Final"
-                RETURN ver as ver, cr as obj, term.uid as termUid, true as isInstance
-                ORDER BY ver.startDate DESC
+                RETURN ver as ver, cr as obj, term.uid as term_uid, true as is_instance
+                ORDER BY ver.start_date DESC
                 LIMIT 1
             UNION
                 WITH sc
                 MATCH (sc)-[:HAS_SELECTED_CRITERIA_TEMPLATE]->(:CriteriaTemplateValue)<-[ver]-(ctr:CriteriaTemplateRoot)-[:HAS_TYPE]->(term:CTTermRoot)
                 WHERE ver.status = "Final"
-                RETURN ver as ver, ctr as obj, term.uid as termUid, false as isInstance
-                ORDER BY ver.startDate DESC
+                RETURN ver as ver, ctr as obj, term.uid as term_uid, false as is_instance
+                ORDER BY ver.start_date DESC
                 LIMIT 1
             }
-            WITH DISTINCT sr, termUid, sc, obj, ver, isInstance
-            ORDER BY termUid, sc.order ASC
+            WITH DISTINCT sr, term_uid, sc, obj, ver, is_instance
+            ORDER BY term_uid, sc.order ASC
             MATCH (sc)<-[:AFTER]-(sa:StudyAction)
             RETURN
                 sr.uid AS study_uid,
-                termUid AS criteria_type_uid,
+                term_uid AS criteria_type_uid,
                 sc.order AS criteria_type_order,
                 sc.uid AS study_selection_uid,
                 sc.accepted_version AS accepted_version,
@@ -114,7 +114,7 @@ class StudySelectionCriteriaRepository:
                 sa.date AS start_date,
                 sa.user_initials AS user_initials,
                 ver.version AS syntax_object_version,
-                isInstance AS is_instance,
+                is_instance AS is_instance,
                 sc.key_criteria as key_criteria
             """
 
@@ -434,7 +434,7 @@ class StudySelectionCriteriaRepository:
         author: str,
     ) -> StudyAction:
         audit_node.user_initials = author
-        audit_node.date = datetime.datetime.now()
+        audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
         study_criteria_selection_node.has_before.connect(audit_node)
@@ -530,26 +530,26 @@ class StudySelectionCriteriaRepository:
                 WITH all_sc
                 MATCH (all_sc)-[:HAS_SELECTED_CRITERIA]->(:CriteriaValue)<-[ver]-(cr:CriteriaRoot)<-[:HAS_CRITERIA]-(:CriteriaTemplateRoot)-[:HAS_TYPE]->(term:CTTermRoot)
                 WHERE ver.status = "Final"
-                RETURN ver as ver, cr as obj, term.uid as termUid, true as isInstance
-                ORDER BY ver.startDate DESC
+                RETURN ver as ver, cr as obj, term.uid as term_uid, true as is_instance
+                ORDER BY ver.start_date DESC
                 LIMIT 1
             UNION
                 WITH all_sc
                 MATCH (all_sc)-[:HAS_SELECTED_CRITERIA_TEMPLATE]->(:CriteriaTemplateValue)<-[ver]-(ctr:CriteriaTemplateRoot)-[:HAS_TYPE]->(term:CTTermRoot)
                 WHERE ver.status = "Final"
-                RETURN ver as ver, ctr as obj, term.uid as termUid, false as isInstance
-                ORDER BY ver.startDate DESC
+                RETURN ver as ver, ctr as obj, term.uid as term_uid, false as is_instance
+                ORDER BY ver.start_date DESC
                 LIMIT 1
             }
 
-            WITH DISTINCT termUid, all_sc, obj, ver, isInstance
-            ORDER BY termUid, all_sc.order ASC
+            WITH DISTINCT term_uid, all_sc, obj, ver, is_instance
+            ORDER BY term_uid, all_sc.order ASC
             MATCH (all_sc)<-[:AFTER]-(asa:StudyAction)
             OPTIONAL MATCH (all_sc)<-[:BEFORE]-(bsa:StudyAction)
-            WITH termUid, all_sc, obj, asa, bsa, ver, isInstance
+            WITH term_uid, all_sc, obj, asa, bsa, ver, is_instance
             ORDER BY all_sc.uid, asa.date DESC
             RETURN
-                termUid AS criteria_type_uid,
+                term_uid AS criteria_type_uid,
                 all_sc.order AS criteria_type_order,
                 all_sc.uid AS study_selection_uid,
                 obj.uid AS syntax_object_uid,
@@ -559,7 +559,7 @@ class StudySelectionCriteriaRepository:
                 labels(asa) AS change_type,
                 bsa.date AS end_date,
                 ver.version AS syntax_object_version,
-                isInstance AS is_instance,
+                is_instance AS is_instance,
                 all_sc.key_criteria as key_criteria
             """
 

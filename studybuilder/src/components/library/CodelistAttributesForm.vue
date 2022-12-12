@@ -30,7 +30,7 @@
               rules="required"
               >
               <v-text-field
-                v-model="form.submissionValue"
+                v-model="form.submission_value"
                 :label="$t('CodelistAttributesForm.subm_value')"
                 :error-messages="errors"
                 dense
@@ -46,7 +46,7 @@
               rules="required"
               >
               <v-text-field
-                v-model="form.nciPreferredName"
+                v-model="form.nci_preferred_name"
                 :label="$t('CodelistAttributesForm.nci_pref_name')"
                 :error-messages="errors"
                 dense
@@ -87,7 +87,7 @@
               rules="required"
               >
               <v-textarea
-                v-model="form.changeDescription"
+                v-model="form.change_description"
                 :label="$t('HistoryTable.change_description')"
                 :error-messages="errors"
                 :rows="1"
@@ -172,7 +172,7 @@ export default {
       if (!isValid) return
       this.working = true
       try {
-        const resp = await controlledTerminology.updateCodelistAttributes(this.value.codelistUid, this.form)
+        const resp = await controlledTerminology.updateCodelistAttributes(this.value.codelist_uid, this.form)
         this.$emit('input', resp.data)
         bus.$emit('notification', { msg: this.$t('CodelistAttributesForm.update_success') })
         this.close()
@@ -187,8 +187,8 @@ export default {
         if (val) {
           this.form = {
             name: val.name,
-            submissionValue: val.submissionValue,
-            nciPreferredName: val.nciPreferredName,
+            submission_value: val.submission_value,
+            nci_preferred_name: val.nci_preferred_name,
             extensible: val.extensible,
             definition: val.definition
           }

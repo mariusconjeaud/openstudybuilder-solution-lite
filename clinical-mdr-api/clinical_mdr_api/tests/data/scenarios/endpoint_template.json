@@ -13,7 +13,7 @@
                 "content-length": "2",
                 "content-type": "application/json"
             },
-            "result": {"items": [], "total": 0, "page": 1, "size": 0}
+            "result": {"items": [], "total": 0, "page": 1, "size": 10}
         }
     },
     {
@@ -22,7 +22,7 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
+                "library_name": "Test library",
                 "name": "<p>test</p>"
             },
             "url": "/endpoint-templates"
@@ -34,30 +34,30 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
+                "change_description": "Initial version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
-                "studyCount":null,
+                "study_count":null,
                 "indications":null,
                 "categories":null,
-                "subCategories":null,
+                "sub_categories":null,
                 "name": "<p>test</p>",
-                "namePlain": "test",
-                "editableInstance": false,
+                "name_plain": "test",
+                "editable_instance": false,
                 "parameters": [],
-                "defaultParameterValues": [],
-                "possibleActions": [
+                "default_parameter_values": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-03T22:19:07+00:00",
+                "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Draft",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             }
         }
@@ -78,34 +78,34 @@
             },
             "result": {"items": [
                 {
-                    "changeDescription": "Initial version",
-                    "endDate": null,
+                    "change_description": "Initial version",
+                    "end_date": null,
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Test library"
                     },
-                    "studyCount":null,
+                    "study_count":null,
                     "indications":null,
                     "categories":null,
-                    "subCategories":null,
+                    "sub_categories":null,
                     "name": "<p>test</p>",
-                    "namePlain": "test",
-                    "editableInstance": false,
+                    "name_plain": "test",
+                    "editable_instance": false,
                     "parameters": null,
-                    "defaultParameterValues": [],
-                    "possibleActions": [
+                    "default_parameter_values": [],
+                    "possible_actions": [
                         "approve",
                         "delete",
                         "edit"
                     ],
-                    "startDate": "2020-11-03T22:19:07+00:00",
+                    "start_date": "2020-11-03T22:19:07+00:00",
                     "status": "Draft",
                     "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                    "userInitials": "TEST_USER",
+                    "user_initials": "TEST_USER",
                     "version": "0.1"
                 }
             ],
-                "total": 0, "page": 1, "size": 0}
+                "total": 0, "page": 1, "size": 10}
         }
     },
     {
@@ -115,10 +115,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
+                "library_name": "Test library",
                 "name": "test2 [Intervention]",
-                "editableInstance": true,
-                "defaultParameterValues": [{
+                "editable_instance": true,
+                "default_parameter_values": [{
                     "position" : 1,
                     "conjunction": "",
                     "values": [{"index": 1, "name":"human insulin", "uid":"Intervention-99991", "type": "Intervention"}]
@@ -133,26 +133,26 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
+                "change_description": "Initial version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
-                "studyCount":null,
+                "study_count":null,
                 "indications":null,
                 "categories":null,
-                "subCategories":null,
+                "sub_categories":null,
                 "name": "test2 [Intervention]",
-                "namePlain": "test2 [Intervention]",
-                "editableInstance": true,
+                "name_plain": "test2 [Intervention]",
+                "editable_instance": true,
                 "parameters": [
                     {
                         "name": "Intervention",
                         "values": null
                     }
                 ],
-                "defaultParameterValues": {
+                "default_parameter_values": {
                     "0": [
                         {
                             "position": 1,
@@ -166,19 +166,19 @@
                         }
                     ]
                 },
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-03T22:19:07+00:00",
+                "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Draft",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             },
             "save": {
-                "templateUid": "uid"
+                "template_uid": "uid"
             }
         }
     },
@@ -188,7 +188,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/endpoint-templates?totalCount=true"
+            "url": "/endpoint-templates?total_count=true"
         },
         "response": {
             "code": 200,
@@ -198,26 +198,26 @@
             },
             "result": {"items":[
                 {
-                    "changeDescription": "Initial version",
-                    "endDate": null,
+                    "change_description": "Initial version",
+                    "end_date": null,
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Test library"
                     },
-                    "studyCount":null,
+                    "study_count":null,
                     "indications":null,
                     "categories":null,
-                    "subCategories":null,
+                    "sub_categories":null,
                     "name": "test2 [Intervention]",
-                    "namePlain": "test2 [Intervention]",
-                    "editableInstance": true,
+                    "name_plain": "test2 [Intervention]",
+                    "editable_instance": true,
                     "parameters": [
                         {
                           "name": "Intervention",
                           "values": null
                         }
                     ],
-                    "defaultParameterValues": {
+                    "default_parameter_values": {
                         "0": [
                             {
                                 "position": 1,
@@ -231,46 +231,46 @@
                             }
                         ]
                     },
-                    "possibleActions": [
+                    "possible_actions": [
                         "approve",
                         "delete",
                         "edit"
                     ],
-                    "startDate": "2020-11-03T23:11:42+00:00",
+                    "start_date": "2020-11-03T23:11:42+00:00",
                     "status": "Draft",
                     "uid": "8ec52a64-7a26-4ea3-8844-a82f26151986",
-                    "userInitials": "TEST_USER",
+                    "user_initials": "TEST_USER",
                     "version": "0.1"
                 },
                 {
-                    "changeDescription": "Initial version",
-                    "endDate": null,
+                    "change_description": "Initial version",
+                    "end_date": null,
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Test library"
                     },
-                    "studyCount":null,
+                    "study_count":null,
                     "indications":null,
                     "categories":null,
-                    "subCategories":null,
+                    "sub_categories":null,
                     "name": "<p>test</p>",
-                    "namePlain": "test",
-                    "editableInstance": false,
+                    "name_plain": "test",
+                    "editable_instance": false,
                     "parameters": null,
-                    "defaultParameterValues": [],
-                    "possibleActions": [
+                    "default_parameter_values": [],
+                    "possible_actions": [
                         "approve",
                         "delete",
                         "edit"
                     ],
-                    "startDate": "2020-11-03T23:11:42+00:00",
+                    "start_date": "2020-11-03T23:11:42+00:00",
                     "status": "Draft",
                     "uid": "7a9fd0e7-387b-4bf4-a08b-08790e684ae5",
-                    "userInitials": "TEST_USER",
+                    "user_initials": "TEST_USER",
                     "version": "0.1"
                 }
             ],
-                "total": 2, "page": 1, "size": 0}
+                "total": 2, "page": 1, "size": 10}
         }
     },
     {
@@ -279,9 +279,9 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "indicationUids": ["term_root1_uid"]
+                "indication_uids": ["term_root1_uid"]
             },
-            "url": "/endpoint-templates/{templateUid}/groupings"
+            "url": "/endpoint-templates/{template_uid}/groupings"
         },
         "response": {
             "code": 200,
@@ -290,46 +290,46 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
+                "change_description": "Initial version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
-                "studyCount": 0,
+                "study_count": 0,
                 "indications":[
                     {
-                        "termUid": "term_root1_uid",
-                        "dictionaryId": "dictionary_id1",
+                        "term_uid": "term_root1_uid",
+                        "dictionary_id": "dictionary_id1",
                         "name": "name1",
-                        "nameSentenceCase": "Name1",
+                        "name_sentence_case": "Name1",
                         "abbreviation": "abbreviation1",
                         "definition": "definition1",
-                        "possibleActions": [
+                        "possible_actions": [
                             "inactivate",
-                            "newVersion"
+                            "new_version"
                         ],
-                        "libraryName": "SNOMED",
-                        "startDate": "2022-04-04T16:24:33.893611",
-                        "endDate": null,
+                        "library_name": "SNOMED",
+                        "start_date": "2022-04-04T16:24:33.893611",
+                        "end_date": null,
                         "status": "Final",
                         "version": "1.0",
-                        "changeDescription": "Approved version",
-                        "userInitials": "TODO initials"
+                        "change_description": "Approved version",
+                        "user_initials": "TODO initials"
                     }
                 ],
                 "categories":null,
-                "subCategories":null,
+                "sub_categories":null,
                 "name": "test2 [Intervention]",
-                "namePlain": "test2 [Intervention]",
-                "editableInstance": true,
+                "name_plain": "test2 [Intervention]",
+                "editable_instance": true,
                 "parameters": [
                     {
                         "name": "Intervention",
                         "values": null
                     }
                 ],
-                "defaultParameterValues": {
+                "default_parameter_values": {
                     "0": [
                         {
                             "position": 1,
@@ -343,15 +343,15 @@
                         }
                     ]
                 },
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-03T22:19:07+00:00",
+                "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Draft",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             }
         }
@@ -362,8 +362,8 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "setNumber": 0,
-                "defaultParameterValues": [{
+                "set_number": 0,
+                "default_parameter_values": [{
                     "position" : 1,
                     "conjunction": "or",
                     "values": [
@@ -371,7 +371,7 @@
                         {"index": 2, "name":"human insulin", "uid":"Intervention-99991", "type": "Intervention"}]
                 }]
             },
-            "url": "/endpoint-templates/{templateUid}/default-parameter-values"
+            "url": "/endpoint-templates/{template_uid}/default-parameter-values"
         },
         "response": {
             "code": 200,
@@ -380,26 +380,26 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
+                "change_description": "Initial version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
-                "studyCount":null,
+                "study_count":null,
                 "indications":null,
                 "categories":null,
-                "subCategories":null,
+                "sub_categories":null,
                 "name": "test2 [Intervention]",
-                "namePlain": "test2 [Intervention]",
-                "editableInstance": true,
+                "name_plain": "test2 [Intervention]",
+                "editable_instance": true,
                 "parameters": [
                     {
                         "name": "Intervention",
                         "values": null
                     }
                 ],
-                "defaultParameterValues": {
+                "default_parameter_values": {
                     "0": [
                         {
                             "position": 1,
@@ -418,15 +418,15 @@
                         }
                     ]
                 },
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-03T23:11:42+00:00",
+                "start_date": "2020-11-03T23:11:42+00:00",
                 "status": "Draft",
                 "uid": "8ec52a64-7a26-4ea3-8844-a82f26151986",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             }
         }
@@ -437,7 +437,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/endpoint-templates?totalCount=true"
+            "url": "/endpoint-templates?total_count=true"
         },
         "response": {
             "code": 200,
@@ -447,26 +447,26 @@
             },
             "result": {"items":[
                 {
-                    "changeDescription": "Initial version",
-                    "endDate": null,
+                    "change_description": "Initial version",
+                    "end_date": null,
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Test library"
                     },
-                    "studyCount":null,
+                    "study_count":null,
                     "indications":null,
                     "categories":null,
-                    "subCategories":null,
+                    "sub_categories":null,
                     "name": "test2 [Intervention]",
-                    "namePlain": "test2 [Intervention]",
-                    "editableInstance": true,
+                    "name_plain": "test2 [Intervention]",
+                    "editable_instance": true,
                     "parameters": [
                         {
                           "name": "Intervention",
                           "values": null
                         }
                     ],
-                    "defaultParameterValues": {
+                    "default_parameter_values": {
                         "0": [
                             {
                                 "position": 1,
@@ -485,46 +485,46 @@
                             }
                         ]
                     },
-                    "possibleActions": [
+                    "possible_actions": [
                         "approve",
                         "delete",
                         "edit"
                     ],
-                    "startDate": "2020-11-03T23:11:42+00:00",
+                    "start_date": "2020-11-03T23:11:42+00:00",
                     "status": "Draft",
                     "uid": "8ec52a64-7a26-4ea3-8844-a82f26151986",
-                    "userInitials": "TEST_USER",
+                    "user_initials": "TEST_USER",
                     "version": "0.1"
                 },
                 {
-                    "changeDescription": "Initial version",
-                    "endDate": null,
+                    "change_description": "Initial version",
+                    "end_date": null,
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Test library"
                     },
-                    "studyCount":null,
+                    "study_count":null,
                     "indications":null,
                     "categories":null,
-                    "subCategories":null,
+                    "sub_categories":null,
                     "name": "<p>test</p>",
-                    "namePlain": "test",
-                    "editableInstance": false,
+                    "name_plain": "test",
+                    "editable_instance": false,
                     "parameters": null,
-                    "defaultParameterValues": [],
-                    "possibleActions": [
+                    "default_parameter_values": [],
+                    "possible_actions": [
                         "approve",
                         "delete",
                         "edit"
                     ],
-                    "startDate": "2020-11-03T23:11:42+00:00",
+                    "start_date": "2020-11-03T23:11:42+00:00",
                     "status": "Draft",
                     "uid": "7a9fd0e7-387b-4bf4-a08b-08790e684ae5",
-                    "userInitials": "TEST_USER",
+                    "user_initials": "TEST_USER",
                     "version": "0.1"
                 }
             ],
-                "total": 2, "page": 1, "size": 0}
+                "total": 2, "page": 1, "size": 10}
         }
     },
     {

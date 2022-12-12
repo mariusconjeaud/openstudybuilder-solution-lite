@@ -8,19 +8,19 @@
     <v-tab
       v-for="type in criteriaTypes"
       :key="type.termUid"
-      :href="`#${type.sponsorPreferredName}`"
+      :href="`#${type.sponsor_preferred_name}`"
       >
-      {{ type.sponsorPreferredName }}
+      {{ type.sponsor_preferred_name }}
     </v-tab>
   </v-tabs>
   <v-tabs-items v-model="tab">
     <v-tab-item
       v-for="type in criteriaTypes"
       :key="type.termUid"
-      :id="type.sponsorPreferredName"
+      :id="type.sponsor_preferred_name"
       >
       <eligibility-criteria-table
-        :criteria-type="type"
+        :criteriaType="type"
         />
     </v-tab-item>
   </v-tabs-items>

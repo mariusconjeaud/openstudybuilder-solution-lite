@@ -36,7 +36,7 @@
           </v-timeline>
         </v-col>
         <v-col cols="10" style="min-width: 100px; max-width: 100%;" class="flex-grow-1 flex-shrink-0 pb-4">
-          <slot :catalogueName="catalogue" v-bind:selectedPackage="packages[catalogue].selectedPackage" />
+          <slot :catalogue_name="catalogue" v-bind:selectedPackage="packages[catalogue].selectedPackage" />
         </v-col>
       </v-row>
     </v-tab-item>
@@ -78,11 +78,11 @@ export default {
     sortPackages (packages) {
       const result = {}
       packages.forEach(pkg => {
-        if (result[pkg.catalogueName] === undefined) {
-          result[pkg.catalogueName] = []
+        if (result[pkg.catalogue_name] === undefined) {
+          result[pkg.catalogue_name] = []
         }
-        const date = DateTime.fromISO(pkg.effectiveDate).toJSDate()
-        result[pkg.catalogueName].push({ date, name: pkg.name, selectedPackage: null })
+        const date = DateTime.fromISO(pkg.effective_date).toJSDate()
+        result[pkg.catalogue_name].push({ date, name: pkg.name, selectedPackage: null })
       })
       for (const catalogue in result) {
         result[catalogue].sort((a, b) => {

@@ -56,23 +56,23 @@ class NumericValueRepository(SimpleConceptGenericRepository[NumericValueAR]):
             uid=input_dict.get("uid"),
             simple_concept_vo=self.value_object_class.from_repository_values(
                 name=input_dict.get("name"),
-                name_sentence_case=input_dict.get("nameSentenceCase"),
+                name_sentence_case=input_dict.get("name_sentence_case"),
                 value=input_dict.get("value"),
                 definition=input_dict.get("definition"),
                 abbreviation=input_dict.get("abbreviation"),
-                is_template_parameter=input_dict.get("templateParameter"),
+                is_template_parameter=input_dict.get("template_parameter"),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("libraryName"),
+                library_name=input_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: input_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("changeDescription"),
+                change_description=input_dict.get("change_description"),
                 status=LibraryItemStatus(input_dict.get("status")),
-                author=input_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=input_dict.get("startDate")),
+                author=input_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=input_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),

@@ -26,14 +26,14 @@ CACHE_STORE_NAMES = [
 )
 def get_caches(
     _current_user_id: str = Depends(get_current_user_id),
-    showItems: Optional[bool] = Query(False),
+    show_items: Optional[bool] = Query(False),
 ) -> Sequence[Any]:
     all_repos = _get_all_repos()
-    return [_get_cache_info(x, showItems) for x in all_repos]
+    return [_get_cache_info(x, show_items) for x in all_repos]
 
 
-@router.post(
-    "/caches/clear",
+@router.delete(
+    "/caches",
     summary="Clears all cache stores",
     response_model=Sequence[Any],
     status_code=200,

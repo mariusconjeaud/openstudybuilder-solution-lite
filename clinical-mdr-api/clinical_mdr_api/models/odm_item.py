@@ -67,23 +67,25 @@ class OdmItemTermRelationshipModel(BaseModel):
 
             if term is not None:
                 simple_term_model = cls(
-                    termUid=term_uid,
+                    term_uid=term_uid,
                     name=term.name,
                     mandatory=term.mandatory,
                     order=term.order,
+                    display_text=term.display_text,
                 )
             else:
                 simple_term_model = cls(
-                    termUid=term_uid, name=None, mandatory=None, order=None
+                    term_uid=term_uid, name=None, mandatory=None, order=None
                 )
         else:
             simple_term_model = None
         return simple_term_model
 
-    termUid: str = Field(..., title="termUid", description="")
+    term_uid: str = Field(..., title="term_uid", description="")
     name: Optional[str] = Field(None, title="name", description="")
     mandatory: Optional[bool] = Field(None, title="mandatory", description="")
     order: Optional[int] = Field(None, title="order", description="")
+    display_text: Optional[str] = Field(None, title="display_text", description="")
 
 
 class OdmItemUnitDefinitionWithRelationship(BaseModel):
@@ -113,7 +115,7 @@ class OdmItemUnitDefinitionWithRelationship(BaseModel):
                     )
                 else:
                     ucum = SimpleTermModel(
-                        termUid=unit_definition.concept_vo.ucum_uid,
+                        term_uid=unit_definition.concept_vo.ucum_uid,
                         name=unit_definition.concept_vo.ucum_name,
                     )
 
@@ -125,7 +127,7 @@ class OdmItemUnitDefinitionWithRelationship(BaseModel):
                         )
                     else:
                         controlled_terminology_unit = SimpleTermModel(
-                            termUid=ct_unit.uid, name=ct_unit.name
+                            term_uid=ct_unit.uid, name=ct_unit.name
                         )
                     ct_units.append(controlled_terminology_unit)
 
@@ -135,7 +137,7 @@ class OdmItemUnitDefinitionWithRelationship(BaseModel):
                     mandatory=unit_definition_rel.mandatory,
                     order=unit_definition_rel.order,
                     ucum=ucum,
-                    ctUnits=ct_units,
+                    ct_units=ct_units,
                 )
             else:
                 simple_unit_definition_model = cls(
@@ -144,7 +146,7 @@ class OdmItemUnitDefinitionWithRelationship(BaseModel):
                     mandatory=None,
                     order=None,
                     ucum=None,
-                    ctUnits=None,
+                    ct_units=None,
                 )
         else:
             simple_unit_definition_model = None
@@ -155,8 +157,8 @@ class OdmItemUnitDefinitionWithRelationship(BaseModel):
     mandatory: Optional[bool] = Field(None, title="mandatory", description="")
     order: Optional[int] = Field(None, title="order", description="")
     ucum: Optional[SimpleTermModel] = Field(None, title="ucum", description="")
-    ctUnits: Optional[Sequence[SimpleTermModel]] = Field(
-        None, title="ucumName", description=""
+    ct_units: Optional[Sequence[SimpleTermModel]] = Field(
+        None, title="ucum_name", description=""
     )
 
 
@@ -165,23 +167,21 @@ class OdmItem(ConceptModel):
     prompt: Optional[str]
     datatype: Optional[str]
     length: Optional[int]
-    significantDigits: Optional[int]
-    sasFieldName: Optional[str]
-    sdsVarName: Optional[str]
+    significant_digits: Optional[int]
+    sas_field_name: Optional[str]
+    sds_var_name: Optional[str]
     origin: Optional[str]
     comment: Optional[str]
-    descriptions: Optional[Sequence[OdmDescriptionSimpleModel]]
-    aliases: Optional[Sequence[OdmAliasSimpleModel]]
-    unitDefinitions: Optional[Sequence[OdmItemUnitDefinitionWithRelationship]]
+    descriptions: Sequence[OdmDescriptionSimpleModel]
+    aliases: Sequence[OdmAliasSimpleModel]
+    unit_definitions: Sequence[OdmItemUnitDefinitionWithRelationship]
     codelist: Optional[CTCodelistAttributesSimpleModel]
-    terms: Optional[Sequence[OdmItemTermRelationshipModel]]
-    activities: Optional[Sequence[ActivityHierarchySimpleModel]]
-    xmlExtensionTags: Optional[Sequence[OdmXmlExtensionTagRelationModel]]
-    xmlExtensionAttributes: Optional[Sequence[OdmXmlExtensionAttributeRelationModel]]
-    xmlExtensionTagAttributes: Optional[
-        Sequence[OdmXmlExtensionTagAttributeRelationModel]
-    ]
-    possibleActions: List[str]
+    terms: Sequence[OdmItemTermRelationshipModel]
+    activities: Sequence[ActivityHierarchySimpleModel]
+    xml_extension_tags: Sequence[OdmXmlExtensionTagRelationModel]
+    xml_extension_attributes: Sequence[OdmXmlExtensionAttributeRelationModel]
+    xml_extension_tag_attributes: Sequence[OdmXmlExtensionTagAttributeRelationModel]
+    possible_actions: List[str]
 
     @classmethod
     def from_odm_item_ar(
@@ -203,10 +203,10 @@ class OdmItem(ConceptModel):
         ],
         find_activity_by_uid: Callable[[str], Optional[ActivityAR]],
         find_odm_xml_extension_tag_by_uid_with_odm_element_relation: Callable[
-            [str, str, str], Optional[OdmXmlExtensionTagRelationVO]
+            [str, str, RelationType], Optional[OdmXmlExtensionTagRelationVO]
         ],
         find_odm_xml_extension_attribute_by_uid_with_odm_element_relation: Callable[
-            [str, str, str, str],
+            [str, str, RelationType, bool],
             Union[
                 OdmXmlExtensionAttributeRelationVO,
                 OdmXmlExtensionAttributeTagRelationVO,
@@ -221,18 +221,18 @@ class OdmItem(ConceptModel):
             prompt=odm_item_ar.concept_vo.prompt,
             datatype=odm_item_ar.concept_vo.datatype,
             length=odm_item_ar.concept_vo.length,
-            significantDigits=odm_item_ar.concept_vo.significant_digits,
-            sasFieldName=odm_item_ar.concept_vo.sas_field_name,
-            sdsVarName=odm_item_ar.concept_vo.sds_var_name,
+            significant_digits=odm_item_ar.concept_vo.significant_digits,
+            sas_field_name=odm_item_ar.concept_vo.sas_field_name,
+            sds_var_name=odm_item_ar.concept_vo.sds_var_name,
             origin=odm_item_ar.concept_vo.origin,
             comment=odm_item_ar.concept_vo.comment,
-            libraryName=odm_item_ar.library.name,
-            startDate=odm_item_ar.item_metadata.start_date,
-            endDate=odm_item_ar.item_metadata.end_date,
+            library_name=odm_item_ar.library.name,
+            start_date=odm_item_ar.item_metadata.start_date,
+            end_date=odm_item_ar.item_metadata.end_date,
             status=odm_item_ar.item_metadata.status.value,
             version=odm_item_ar.item_metadata.version,
-            changeDescription=odm_item_ar.item_metadata.change_description,
-            userInitials=odm_item_ar.item_metadata.user_initials,
+            change_description=odm_item_ar.item_metadata.change_description,
+            user_initials=odm_item_ar.item_metadata.user_initials,
             descriptions=sorted(
                 [
                     OdmDescriptionSimpleModel.from_odm_description_uid(
@@ -253,7 +253,7 @@ class OdmItem(ConceptModel):
                 ],
                 key=lambda item: item.name,
             ),
-            unitDefinitions=sorted(
+            unit_definitions=sorted(
                 [
                     OdmItemUnitDefinitionWithRelationship.from_unit_definition_uid(
                         uid=odm_item_ar._uid,
@@ -265,7 +265,7 @@ class OdmItem(ConceptModel):
                     )
                     for unit_definition_uid in odm_item_ar.concept_vo.unit_definition_uids
                 ],
-                key=lambda item: item.name,
+                key=lambda item: item.uid,
             ),
             codelist=CTCodelistAttributesSimpleModel.from_codelist_uid(
                 uid=odm_item_ar.concept_vo.codelist_uid,
@@ -280,7 +280,7 @@ class OdmItem(ConceptModel):
                     )
                     for term_uid in odm_item_ar.concept_vo.term_uids
                 ],
-                key=lambda item: item.name,
+                key=lambda item: (item.order is not None, item.order),
             ),
             activities=sorted(
                 [
@@ -292,7 +292,7 @@ class OdmItem(ConceptModel):
                 ],
                 key=lambda item: item.name,
             ),
-            xmlExtensionTags=sorted(
+            xml_extension_tags=sorted(
                 [
                     OdmXmlExtensionTagRelationModel.from_uid(
                         uid=xml_extension_tag_uid,
@@ -304,7 +304,7 @@ class OdmItem(ConceptModel):
                 ],
                 key=lambda item: item.name,
             ),
-            xmlExtensionAttributes=sorted(
+            xml_extension_attributes=sorted(
                 [
                     OdmXmlExtensionAttributeRelationModel.from_uid(
                         uid=xml_extension_attribute_uid,
@@ -317,7 +317,7 @@ class OdmItem(ConceptModel):
                 ],
                 key=lambda item: item.name,
             ),
-            xmlExtensionTagAttributes=sorted(
+            xml_extension_tag_attributes=sorted(
                 [
                     OdmXmlExtensionTagAttributeRelationModel.from_uid(
                         uid=xml_extension_tag_attribute_uid,
@@ -329,7 +329,7 @@ class OdmItem(ConceptModel):
                 ],
                 key=lambda item: item.name,
             ),
-            possibleActions=sorted(
+            possible_actions=sorted(
                 [_.value for _ in odm_item_ar.get_possible_actions()]
             ),
         )
@@ -356,34 +356,34 @@ class OdmItemRefModel(BaseModel):
                     uid=uid,
                     oid=odm_item_ref_vo.oid,
                     name=odm_item_ref_vo.name,
-                    orderNumber=odm_item_ref_vo.order_number,
+                    order_number=odm_item_ref_vo.order_number,
                     mandatory=odm_item_ref_vo.mandatory,
-                    dataEntryRequired=odm_item_ref_vo.data_entry_required,
+                    data_entry_required=odm_item_ref_vo.data_entry_required,
                     sdv=odm_item_ref_vo.sdv,
                     locked=odm_item_ref_vo.locked,
-                    keySequence=odm_item_ref_vo.key_sequence,
-                    methodOid=odm_item_ref_vo.method_oid,
-                    imputationMethodOid=odm_item_ref_vo.imputation_method_oid,
+                    key_sequence=odm_item_ref_vo.key_sequence,
+                    method_oid=odm_item_ref_vo.method_oid,
+                    imputation_method_oid=odm_item_ref_vo.imputation_method_oid,
                     role=odm_item_ref_vo.role,
-                    roleCodelistOid=odm_item_ref_vo.role_codelist_oid,
-                    collectionExceptionConditionOid=odm_item_ref_vo.collection_exception_condition_oid,
+                    role_codelist_oid=odm_item_ref_vo.role_codelist_oid,
+                    collection_exception_condition_oid=odm_item_ref_vo.collection_exception_condition_oid,
                 )
             else:
                 odm_item_ref_model = cls(
                     uid=uid,
                     oid=None,
                     name=None,
-                    orderNumber=None,
+                    order_number=None,
                     mandatory=None,
-                    dataEntryRequired=None,
+                    data_entry_required=None,
                     sdv=None,
                     locked=None,
-                    keySequence=None,
-                    methodOid=None,
-                    imputationMethodOid=None,
+                    key_sequence=None,
+                    method_oid=None,
+                    imputation_method_oid=None,
                     role=None,
-                    roleCodelistOid=None,
-                    collectionExceptionConditionOid=None,
+                    role_codelist_oid=None,
+                    collection_exception_condition_oid=None,
                 )
         else:
             odm_item_ref_model = None
@@ -392,24 +392,24 @@ class OdmItemRefModel(BaseModel):
     uid: str = Field(..., title="uid", description="")
     oid: Optional[str] = Field(None, title="oid", description="")
     name: Optional[str] = Field(None, title="name", description="")
-    orderNumber: Optional[int] = Field(None, title="orderNumber", description="")
+    order_number: Optional[int] = Field(None, title="order_number", description="")
     mandatory: Optional[str] = Field(None, title="mandatory", description="")
-    dataEntryRequired: Optional[str] = Field(
-        None, title="dataEntryRequired", description=""
+    data_entry_required: Optional[str] = Field(
+        None, title="data_entry_required", description=""
     )
     sdv: Optional[str] = Field(None, title="sdv", description="")
     locked: Optional[str] = Field(None, title="locked", description="")
-    keySequence: Optional[str] = Field(None, title="keySequence", description="")
-    methodOid: Optional[str] = Field(None, title="methodOid", description="")
-    imputationMethodOid: Optional[str] = Field(
-        None, title="imputationMethodOid", description=""
+    key_sequence: Optional[str] = Field(None, title="key_sequence", description="")
+    method_oid: Optional[str] = Field(None, title="method_oid", description="")
+    imputation_method_oid: Optional[str] = Field(
+        None, title="imputation_method_oid", description=""
     )
     role: Optional[str] = Field(None, title="role", description="")
-    roleCodelistOid: Optional[str] = Field(
-        None, title="roleCodelistOid", description=""
+    role_codelist_oid: Optional[str] = Field(
+        None, title="role_codelist_oid", description=""
     )
-    collectionExceptionConditionOid: Optional[str] = Field(
-        None, title="collectionExceptionConditionOid", description=""
+    collection_exception_condition_oid: Optional[str] = Field(
+        None, title="collection_exception_condition_oid", description=""
     )
 
 
@@ -417,6 +417,7 @@ class OdmItemTermRelationshipInput(BaseModel):
     uid: str
     mandatory: bool = True
     order: Optional[int] = 999999
+    display_text: Optional[str] = None
 
 
 class OdmItemUnitDefinitionRelationshipInput(BaseModel):
@@ -430,68 +431,34 @@ class OdmItemPostInput(ConceptPostInput):
     datatype: str
     prompt: Optional[str]
     length: Optional[int]
-    significantDigits: Optional[int]
-    sasFieldName: Optional[str]
-    sdsVarName: Optional[str]
-    origin: Optional[str]
-    comment: Optional[str]
-    descriptionUids: Sequence[str]
-    aliasUids: Sequence[str]
-    codelistUid: Optional[str]
-    unitDefinitions: Sequence[OdmItemUnitDefinitionRelationshipInput] = []
-    terms: Sequence[OdmItemTermRelationshipInput] = []
-
-
-class OdmItemWithRelationsPostInput(ConceptPostInput):
-    oid: Optional[str]
-    datatype: str
-    prompt: Optional[str]
-    length: Optional[int]
-    significantDigits: Optional[int]
-    sasFieldName: Optional[str]
-    sdsVarName: Optional[str]
+    significant_digits: Optional[int]
+    sas_field_name: Optional[str]
+    sds_var_name: Optional[str]
     origin: Optional[str]
     comment: Optional[str]
     descriptions: Sequence[Union[OdmDescriptionPostInput, str]]
-    aliasUids: Sequence[str]
-    codelistUid: Optional[str]
-    unitDefinitions: Sequence[OdmItemUnitDefinitionRelationshipInput] = []
+    alias_uids: Sequence[str]
+    codelist_uid: Optional[str]
+    unit_definitions: Sequence[OdmItemUnitDefinitionRelationshipInput] = []
     terms: Sequence[OdmItemTermRelationshipInput] = []
 
 
 class OdmItemPatchInput(ConceptPatchInput):
     oid: Optional[str]
-    prompt: Optional[str]
-    datatype: Optional[str]
-    length: Optional[int]
-    significantDigits: Optional[int]
-    sasFieldName: Optional[str]
-    sdsVarName: Optional[str]
-    origin: Optional[str]
-    comment: Optional[str]
-    descriptionUids: Sequence[str]
-    aliasUids: Sequence[str]
-    unitDefinitions: Sequence[OdmItemUnitDefinitionRelationshipInput]
-    codelistUid: Optional[str]
-    terms: Sequence[OdmItemTermRelationshipInput]
-
-
-class OdmItemWithRelationsPatchInput(ConceptPatchInput):
-    oid: Optional[str]
     datatype: Optional[str]
     prompt: Optional[str]
     length: Optional[int]
-    significantDigits: Optional[int]
-    sasFieldName: Optional[str]
-    sdsVarName: Optional[str]
+    significant_digits: Optional[int]
+    sas_field_name: Optional[str]
+    sds_var_name: Optional[str]
     origin: Optional[str]
     comment: Optional[str]
     descriptions: Sequence[
-        Union[OdmDescriptionBatchPatchInput, OdmDescriptionPostInput]
+        Union[OdmDescriptionBatchPatchInput, OdmDescriptionPostInput, str]
     ]
-    aliasUids: Sequence[str]
-    unitDefinitions: Sequence[OdmItemUnitDefinitionRelationshipInput]
-    codelistUid: Optional[str]
+    alias_uids: Sequence[str]
+    unit_definitions: Sequence[OdmItemUnitDefinitionRelationshipInput]
+    codelist_uid: Optional[str]
     terms: Sequence[OdmItemTermRelationshipInput]
 
 
@@ -508,6 +475,6 @@ class OdmItemVersion(OdmItem):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the objective (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )

@@ -18,7 +18,7 @@
           v-model="selectedVisits"
           :items="studyVisits"
           :label="$t('StudyActivityScheduleBatchEditForm.studyVisits')"
-          item-text="visitShortName"
+          item-text="visit_short_name"
           return-object
           multiple
           clearable
@@ -73,7 +73,7 @@ export default {
       const data = []
       for (const item of this.selection) {
         // First: delete any existing study activity schedule for the given selection
-        for (const cell of Object.values(this.currentSelectionMatrix[item.studyActivityUid])) {
+        for (const cell of Object.values(this.currentSelectionMatrix[item.study_activity_uid])) {
           if (cell.uid) {
             this.$set(cell, 'value', false)
             data.push({
@@ -84,12 +84,12 @@ export default {
         }
         // Second: create new activity schedules
         for (const visit of this.selectedVisits) {
-          this.$set(this.currentSelectionMatrix[item.studyActivityUid][visit.uid], 'value', true)
+          this.$set(this.currentSelectionMatrix[item.study_activity_uid][visit.uid], 'value', true)
           data.push({
             method: 'POST',
             content: {
-              studyActivityUid: item.studyActivityUid,
-              studyVisitUid: visit.uid
+              study_activity_uid: item.study_activity_uid,
+              study_visit_uid: visit.uid
             }
           })
         }
@@ -106,8 +106,9 @@ export default {
     // Only retrieve ungrouped visits since groups are already used
     // for batch operations...
     const params = {
+      page_size: 0,
       filters: {
-        consecutiveVisitGroup: { v: [null], op: 'eq' }
+        consecutive_visit_group: { v: [null], op: 'eq' }
       }
     }
     studyEpochs.getStudyVisits(this.selectedStudy.uid, params).then(resp => {

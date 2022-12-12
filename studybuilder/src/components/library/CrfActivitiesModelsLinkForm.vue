@@ -149,13 +149,13 @@ export default {
   },
   mounted () {
     this.fetchActivities()
-    this.choosenItems = this.itemToLink ? (this.itemToLink.activityGroups || this.itemToLink.activitySubGroups || this.itemToLink.activities) : []
+    this.choosenItems = this.itemToLink ? (this.itemToLink.activity_groups || this.itemToLink.activity_sub_groups || this.itemToLink.activities) : []
   },
   watch: {
     itemToLink (value) {
       if (value) {
         this.fetchActivities()
-        this.choosenItems = this.itemToLink.activityGroups || this.itemToLink.activitySubGroups || this.itemToLink.activities
+        this.choosenItems = this.itemToLink.activity_groups || this.itemToLink.activity_sub_groups || this.itemToLink.activities
       }
     },
     options () {

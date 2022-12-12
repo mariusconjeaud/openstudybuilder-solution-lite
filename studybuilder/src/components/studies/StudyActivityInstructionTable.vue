@@ -89,28 +89,28 @@
                   </td>
                 </tr>
                 <template v-if="rowsDisplayState[`subgroup-${flGroupIndex}-${groupIndex}-${subgroupIndex}`]">
-                  <tr v-for="studyActivity in studyActivities" :key="studyActivity.studyActivityUid">
+                  <tr v-for="studyActivity in studyActivities" :key="studyActivity.study_activity_uid">
                     <td></td>
                     <td class="activity">
                       <div class="d-flex align-center">
                         <v-checkbox
                           hide-details
                           @change="value => toggleActivitySelection(studyActivity, value)"
-                          :value="currentSelection.findIndex(item => item.studyActivityUid === studyActivity.studyActivityUid) !== -1"
+                          :value="currentSelection.findIndex(item => item.study_activity_uid === studyActivity.study_activity_uid) !== -1"
                           />
                         {{ studyActivity.activity.name }}
                       </div>
                     </td>
-                    <td>{{ getStudyActivityVisits(studyActivity.studyActivityUid) }}</td>
+                    <td>{{ getStudyActivityVisits(studyActivity.study_activity_uid) }}</td>
                     <td>
                       <n-n-parameter-highlighter
-                        :name="getStudyActivityInstruction(studyActivity.studyActivityUid)"
+                        :name="getStudyActivityInstruction(studyActivity.study_activity_uid)"
                         :show-prefix-and-postfix="false"
                         />
                     </td>
                     <td>
                       <actions-menu
-                        v-if="getStudyActivityInstruction(studyActivity.studyActivityUid)"
+                        v-if="getStudyActivityInstruction(studyActivity.study_activity_uid)"
                         :actions="actions"
                         :item="studyActivity"
                         />
@@ -223,29 +223,29 @@ export default {
       this.instructionsPerStudyActivity = {}
       const resp = await study.getStudyActivityInstructions(this.selectedStudy.uid)
       for (const instruction of resp.data) {
-        this.$set(this.instructionsPerStudyActivity, instruction.studyActivityUid, instruction)
+        this.$set(this.instructionsPerStudyActivity, instruction.study_activity_uid, instruction)
       }
       this.studyActivityInstructions = resp.data
     },
     getStudyActivityInstruction (studyActivityUid) {
       if (this.instructionsPerStudyActivity[studyActivityUid] !== undefined) {
-        return this.instructionsPerStudyActivity[studyActivityUid].activityInstructionName
+        return this.instructionsPerStudyActivity[studyActivityUid].activity_instruction_name
       }
       return ''
     },
     async getVisitsPerActivity () {
-      const resp = await studyEpochs.getStudyVisits(this.selectedStudy.uid)
+      const resp = await studyEpochs.getStudyVisits(this.selectedStudy.uid, { page_size: 0 })
       const visitNamePerUid = {}
 
       for (const visit of resp.data.items) {
-        visitNamePerUid[visit.uid] = visit.visitShortName
+        visitNamePerUid[visit.uid] = visit.visit_short_name
       }
       study.getStudyActivitySchedules(this.selectedStudy.uid).then(resp => {
         for (const schedule of resp.data) {
-          if (this.visitsPerStudyActivity[schedule.studyActivityUid] === undefined) {
-            this.$set(this.visitsPerStudyActivity, schedule.studyActivityUid, [])
+          if (this.visitsPerStudyActivity[schedule.study_activity_uid] === undefined) {
+            this.$set(this.visitsPerStudyActivity, schedule.study_activity_uid, [])
           }
-          this.visitsPerStudyActivity[schedule.studyActivityUid].push(visitNamePerUid[schedule.studyVisitUid])
+          this.visitsPerStudyActivity[schedule.study_activity_uid].push(visitNamePerUid[schedule.study_visit_uid])
         }
       })
     },
@@ -261,12 +261,12 @@ export default {
     },
     async deleteActivityInstruction (studyActivity) {
       const options = { type: 'warning' }
-      const instruction = this.instructionsPerStudyActivity[studyActivity.studyActivityUid]
-      const uid = instruction.studyActivityInstructionUid
-      const msg = this.$t('StudyActivityInstructionTable.confirm_delete', { instruction: instruction.activityInstructionName })
+      const instruction = this.instructionsPerStudyActivity[studyActivity.study_activity_uid]
+      const uid = instruction.study_activity_instruction_uid
+      const msg = this.$t('StudyActivityInstructionTable.confirm_delete', { instruction: instruction.activity_instruction_name })
       if (await this.$refs.confirm.open(msg, options)) {
         study.deleteStudyActivityInstruction(this.selectedStudy.uid, uid).then(resp => {
-          this.$delete(this.instructionsPerStudyActivity, studyActivity.studyActivityUid)
+          this.$delete(this.instructionsPerStudyActivity, studyActivity.study_activity_uid)
           bus.$emit('notification', { type: 'success', msg: this.$t('StudyActivityInstructionTable.delete_success') })
         })
       }
@@ -276,7 +276,7 @@ export default {
     */
     onInstructionsDeleted () {
       for (const item of this.currentSelection) {
-        this.$delete(this.instructionsPerStudyActivity, item.studyActivityUid)
+        this.$delete(this.instructionsPerStudyActivity, item.study_activity_uid)
       }
     },
     openBatchForm () {
@@ -286,7 +286,7 @@ export default {
       }
       let itemWithNoInstruction = false
       for (const item of this.currentSelection) {
-        if (this.instructionsPerStudyActivity[item.studyActivityUid] === undefined) {
+        if (this.instructionsPerStudyActivity[item.study_activity_uid] === undefined) {
           itemWithNoInstruction = true
           break
         }
@@ -330,7 +330,7 @@ export default {
         this.currentSelection.push(studyActivity)
       } else {
         for (let i = 0; i < this.currentSelection.length; i++) {
-          if (this.currentSelection[i].studyActivityUid === studyActivity.studyActivityUid) {
+          if (this.currentSelection[i].study_activity_uid === studyActivity.study_activity_uid) {
             this.currentSelection.splice(i, 1)
             break
           }
@@ -342,7 +342,7 @@ export default {
         this.currentSelection = this.currentSelection.concat(this.sortedStudyActivities[flgroup][group][subgroup])
       } else {
         for (const studyActivity of this.sortedStudyActivities[flgroup][group][subgroup]) {
-          const index = this.currentSelection.findIndex(item => item.studyActivityUid === studyActivity.studyActivityUid)
+          const index = this.currentSelection.findIndex(item => item.study_activity_uid === studyActivity.study_activity_uid)
           this.currentSelection.splice(index, 1)
         }
       }

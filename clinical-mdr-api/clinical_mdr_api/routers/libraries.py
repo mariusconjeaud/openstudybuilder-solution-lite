@@ -18,14 +18,14 @@ router = APIRouter()
 )
 # pylint: disable=unused-argument
 def get_libraries(
-    isEditable: Optional[bool] = Query(
+    is_editable: Optional[bool] = Query(
         None,
         description="If specified, only those libraries are returned that are editable. \n"
         "Valid values are: 'true' or 'false'.",
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    return service.get_libraries(isEditable)
+    return service.get_libraries(is_editable)
 
 
 @router.post(
@@ -42,4 +42,4 @@ def create_library(
     library: models.Library = Body(None, description=""),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    return service.create(library.name, library.isEditable)
+    return service.create(library.name, library.is_editable)

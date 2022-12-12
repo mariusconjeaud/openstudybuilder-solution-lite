@@ -28,24 +28,24 @@ class TestProjectService(unittest.TestCase):
         # then
         # we check if project sets are equal (by project_number)
         self.assertEqual(
-            {_.projectNumber for _ in service_response},
+            {_.project_number for _ in service_response},
             {_.project_number for _ in repo_instance.find_all()},
         )
 
         # then we check whether values retrieved by service agree with those from mocked repo
         for service_response_item in service_response:
-            self.assertIsNotNone(service_response_item.projectNumber)
-            assert service_response_item.projectNumber is not None
+            self.assertIsNotNone(service_response_item.project_number)
+            assert service_response_item.project_number is not None
             repo_item = repo_instance.find_by_project_number(
-                service_response_item.projectNumber
+                service_response_item.project_number
             )
             assert repo_item is not None  # we already check that (by comparing sets)
             self.assertEqual(repo_item.name, service_response_item.name)
             self.assertEqual(repo_item.description, service_response_item.description)
             self.assertEqual(
                 repo_item.clinical_programme_uid,
-                service_response_item.clinicalProgramme.uid,
+                service_response_item.clinical_programme.uid,
             )
             self.assertEqual(
-                repo_item.project_number, service_response_item.projectNumber
+                repo_item.project_number, service_response_item.project_number
             )

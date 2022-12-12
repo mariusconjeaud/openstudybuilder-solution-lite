@@ -29,9 +29,9 @@ dosage_form = {
         "path": "/ct/terms",
         "uid": row[headers.index("CT_CD")],
         "body": {
-            "sponsorPreferredName": row[headers.index("CD_VAL_LB")],
-            "sponsorPreferredNameSentenceCase": row[headers.index("CD_VAL_LB_LC")],
-            "changeDescription": "Migration",
+            "sponsor_preferred_name": row[headers.index("CD_VAL_LB")],
+            "sponsor_preferred_name_sentence_case": row[headers.index("CD_VAL_LB_LC")],
+            "change_description": "Migration",
         },
     }
 }
@@ -54,7 +54,7 @@ class StandardCodelistFinish(BaseImporter):
             data = dosage_form[_class](row, headers)
             # Start a new version
             self.api.post_to_api(
-                {"path": "/ct/terms/" + data["uid"] + "/names/new-version", "body": {}}
+                {"path": "/ct/terms/" + data["uid"] + "/names/versions", "body": {}}
             )
             # path the names
             res = self.api.simple_patch(
@@ -64,7 +64,7 @@ class StandardCodelistFinish(BaseImporter):
             if res is not None:
                 # Approve Names
                 self.api.simple_approve2(
-                    "/ct/terms", f"/{res['termUid']}/names/approve", label="Names"
+                    "/ct/terms", f"/{res['term_uid']}/names/approve", label="Names"
                 )
 
     def run(self):

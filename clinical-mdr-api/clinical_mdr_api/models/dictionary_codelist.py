@@ -16,24 +16,24 @@ class DictionaryCodelist(BaseModel):
         cls, dictionary_codelist_ar: DictionaryCodelistAR
     ) -> "DictionaryCodelist":
         return cls(
-            codelistUid=dictionary_codelist_ar.uid,
+            codelist_uid=dictionary_codelist_ar.uid,
             name=dictionary_codelist_ar.name,
-            libraryName=Library.from_library_vo(dictionary_codelist_ar.library).name,
-            templateParameter=dictionary_codelist_ar.dictionary_codelist_vo.is_template_parameter,
-            startDate=dictionary_codelist_ar.item_metadata.start_date,
-            endDate=dictionary_codelist_ar.item_metadata.end_date,
+            library_name=Library.from_library_vo(dictionary_codelist_ar.library).name,
+            template_parameter=dictionary_codelist_ar.dictionary_codelist_vo.is_template_parameter,
+            start_date=dictionary_codelist_ar.item_metadata.start_date,
+            end_date=dictionary_codelist_ar.item_metadata.end_date,
             status=dictionary_codelist_ar.item_metadata.status.value,
             version=dictionary_codelist_ar.item_metadata.version,
-            changeDescription=dictionary_codelist_ar.item_metadata.change_description,
-            userInitials=dictionary_codelist_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=dictionary_codelist_ar.item_metadata.change_description,
+            user_initials=dictionary_codelist_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 [_.value for _ in dictionary_codelist_ar.get_possible_actions()]
             ),
         )
 
-    codelistUid: str = Field(
+    codelist_uid: str = Field(
         ...,
-        title="codelistUid",
+        title="codelist_uid",
         description="",
     )
 
@@ -43,27 +43,27 @@ class DictionaryCodelist(BaseModel):
         description="",
     )
 
-    templateParameter: bool = Field(
+    template_parameter: bool = Field(
         ...,
-        title="templateParameter",
+        title="template_parameter",
         description="",
     )
 
-    possibleActions: List[str] = Field(
+    possible_actions: List[str] = Field(
         ...,
         description=(
             "Holds those actions that can be performed on the DictionaryCodelist. "
-            "Actions are: 'approve', 'edit', 'newVersion'."
+            "Actions are: 'approve', 'edit', 'new_version'."
         ),
     )
 
-    libraryName: str
-    startDate: Optional[datetime] = None
-    endDate: Optional[datetime] = None
+    library_name: str
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     status: Optional[str] = None
     version: Optional[str] = None
-    changeDescription: Optional[str] = None
-    userInitials: Optional[str] = None
+    change_description: Optional[str] = None
+    user_initials: Optional[str] = None
 
 
 class DictionaryCodelistInput(BaseModel):
@@ -73,25 +73,25 @@ class DictionaryCodelistInput(BaseModel):
         description="",
     )
 
-    templateParameter: Optional[bool] = Field(
+    template_parameter: Optional[bool] = Field(
         None,
-        title="templateParameter",
+        title="template_parameter",
         description="",
     )
 
 
 class DictionaryCodelistEditInput(DictionaryCodelistInput):
-    changeDescription: str = Field(None, title="changeDescription", description="")
+    change_description: str = Field(None, title="change_description", description="")
 
 
 class DictionaryCodelistCreateInput(DictionaryCodelistInput):
-    libraryName: str
+    library_name: str
 
 
 class DictionaryCodelistTermInput(BaseModel):
-    termUid: str = Field(
+    term_uid: str = Field(
         ...,
-        title="termUid",
+        title="term_uid",
         description="",
     )
 
@@ -105,6 +105,6 @@ class DictionaryCodelistVersion(DictionaryCodelist):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the objective (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )

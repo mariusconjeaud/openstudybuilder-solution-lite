@@ -51,7 +51,7 @@ class StudyCompoundDosingVO:
             study_selection_uid = generate_uid_callback()
 
         if start_date is None:
-            start_date = datetime.datetime.now()
+            start_date = datetime.datetime.now(datetime.timezone.utc)
 
         return StudyCompoundDosingVO(
             study_uid=study_uid,

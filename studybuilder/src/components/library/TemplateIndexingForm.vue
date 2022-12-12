@@ -47,7 +47,7 @@ export default {
   created () {
     dictionaries.getCodelists('SNOMED').then(resp => {
       /* FIXME: we need a direct way to retrieve the terms here */
-      dictionaries.getTerms({ codelist_uid: resp.data.items[0].codelistUid }).then(resp => {
+      dictionaries.getTerms({ codelist_uid: resp.data.items[0].codelist_uid }).then(resp => {
         this.indications = resp.data.items
       })
     })

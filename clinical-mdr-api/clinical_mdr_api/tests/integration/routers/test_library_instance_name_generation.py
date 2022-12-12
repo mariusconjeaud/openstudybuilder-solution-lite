@@ -43,7 +43,7 @@ class LibraryInstanceNameGenerationSingleParameterTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time"]
+        return ["start_date", "end_date", "uid", "time"]
 
 
 class LibraryInstanceNameGenerationMultiParameterTest1(api.APITest):
@@ -74,7 +74,7 @@ class LibraryInstanceNameGenerationMultiParameterTest1(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time"]
+        return ["start_date", "end_date", "uid", "time"]
 
 
 class LibraryInstanceNameGenerationMultiParameterTest2(api.APITest):
@@ -104,7 +104,7 @@ class LibraryInstanceNameGenerationMultiParameterTest2(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time"]
+        return ["start_date", "end_date", "uid", "time"]
 
 
 class LibraryInstanceNameGenerationMultiParameterTest3(api.APITest):
@@ -134,7 +134,7 @@ class LibraryInstanceNameGenerationMultiParameterTest3(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time"]
+        return ["start_date", "end_date", "uid", "time"]
 
 
 class LibraryInstanceNameGenerationMultiParameterTest4(api.APITest):
@@ -165,4 +165,4 @@ class LibraryInstanceNameGenerationMultiParameterTest4(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time"]
+        return ["start_date", "end_date", "uid", "time"]

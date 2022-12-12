@@ -31,13 +31,13 @@ class TimePointService(SimpleConceptGenericService[TimePointAR]):
         return TimePointAR.from_input_values(
             author=self.user_initials,
             simple_concept_vo=TimePointVO.from_input_values(
-                name_sentence_case=concept_input.nameSentenceCase,
+                name_sentence_case=concept_input.name_sentence_case,
                 definition=concept_input.definition,
                 abbreviation=concept_input.abbreviation,
-                is_template_parameter=concept_input.templateParameter,
-                numeric_value_uid=concept_input.numericValueUid,
-                unit_definition_uid=concept_input.unitDefinitionUid,
-                time_reference_uid=concept_input.timeReferenceUid,
+                is_template_parameter=concept_input.template_parameter,
+                numeric_value_uid=concept_input.numeric_value_uid,
+                unit_definition_uid=concept_input.unit_definition_uid,
+                time_reference_uid=concept_input.time_reference_uid,
                 find_numeric_value_by_uid=self._repos.numeric_value_repository.find_by_uid_2,
                 find_unit_definition_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
                 find_time_reference_by_uid=self._repos.ct_term_name_repository.find_by_uid,

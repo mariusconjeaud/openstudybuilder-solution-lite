@@ -38,7 +38,7 @@ class CTCodelistService:
         self._repos.close()
 
     def get_codelist_etag(self, request: Request) -> str:
-        codelist_uid = request.path_params["codelistuid"]
+        codelist_uid = request.path_params["codelist_uid"]
         attributes_etag = (
             self._repos.ct_codelist_attribute_repository.get_codelist_etag_value(
                 codelist_uid=codelist_uid
@@ -49,8 +49,9 @@ class CTCodelistService:
         )
         return f"{codelist_uid}_{attributes_etag}_{codelist_uid}_{name_etag}"
 
-    @db.transaction
-    def create(self, codelistInput: CTCodelistCreateInput) -> CTCodelist:
+    def non_transactional_create(
+        self, codelist_input: CTCodelistCreateInput
+    ) -> CTCodelist:
         """
         Method creates CTCodelistAttributesAR and saves that object to the database.
         When saving CTCodelistAttributesAR - CTCodelistRoot node is created that will become a root node for
@@ -61,19 +62,19 @@ class CTCodelistService:
         relationship from CTCodelistRoot to CTCodelistName node when saving a CTCodelistNameAR.
         If terms are provided then the codelist will be approved and the terms will be connected to the codelist.
         When no terms are provided the codelist is created in draft state.
-        :param codelistInput:
+        :param codelist_input:
         :return codelist:CTCodelist
         """
 
         if not self._repos.library_repository.library_exists(
-            normalize_string(codelistInput.libraryName)
+            normalize_string(codelist_input.library_name)
         ):
             raise exceptions.BusinessLogicException(
-                f"There is no library identified by provided library name ({codelistInput.libraryName})"
+                f"There is no library identified by provided library name ({codelist_input.library_name})"
             )
 
         library_vo = LibraryVO.from_input_values_2(
-            library_name=codelistInput.libraryName,
+            library_name=codelist_input.library_name,
             is_library_editable_callback=(
                 lambda name: self._repos.library_repository.find_by_name(
                     name
@@ -86,13 +87,13 @@ class CTCodelistService:
             ct_codelist_attributes_ar = CTCodelistAttributesAR.from_input_values(
                 author=self.user_initials,
                 ct_codelist_attributes_vo=CTCodelistAttributesVO.from_input_values(
-                    name=codelistInput.name,
-                    parent_codelist_uid=codelistInput.parentCodelistUid,
-                    catalogue_name=codelistInput.catalogueName,
-                    submission_value=codelistInput.submissionValue,
-                    preferred_term=codelistInput.nciPreferredName,
-                    definition=codelistInput.definition,
-                    extensible=codelistInput.extensible,
+                    name=codelist_input.name,
+                    parent_codelist_uid=codelist_input.parent_codelist_uid,
+                    catalogue_name=codelist_input.catalogue_name,
+                    submission_value=codelist_input.submission_value,
+                    preferred_term=codelist_input.nci_preferred_name,
+                    definition=codelist_input.definition,
+                    extensible=codelist_input.extensible,
                     catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
                     codelist_exists_by_uid_callback=self._repos.ct_codelist_attribute_repository.codelist_specific_exists_by_uid,
                     codelist_exists_by_name_callback=self._repos.ct_codelist_attribute_repository.codelist_specific_exists_by_name,
@@ -104,7 +105,7 @@ class CTCodelistService:
                 generate_uid_callback=self._repos.ct_codelist_attribute_repository.generate_uid,
             )
 
-            if codelistInput.terms:
+            if codelist_input.terms:
                 ct_codelist_attributes_ar.approve(author=self.user_initials)
 
             self._repos.ct_codelist_attribute_repository.save(ct_codelist_attributes_ar)
@@ -112,9 +113,9 @@ class CTCodelistService:
             ct_codelist_name_ar = CTCodelistNameAR.from_input_values(
                 author=self.user_initials,
                 ct_codelist_name_vo=CTCodelistNameVO.from_input_values(
-                    name=codelistInput.sponsorPreferredName,
-                    catalogue_name=codelistInput.catalogueName,
-                    is_template_parameter=codelistInput.templateParameter,
+                    name=codelist_input.sponsor_preferred_name,
+                    catalogue_name=codelist_input.catalogue_name,
+                    is_template_parameter=codelist_input.template_parameter,
                     catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
                     codelist_exists_by_name_callback=self._repos.ct_codelist_name_repository.codelist_specific_exists_by_name,
                 ),
@@ -124,12 +125,12 @@ class CTCodelistService:
 
             self._repos.ct_codelist_name_repository.save(ct_codelist_name_ar)
 
-            if codelistInput.terms:
+            if codelist_input.terms:
                 parent_codelist_uid = (
                     ct_codelist_attributes_ar.ct_codelist_vo.parent_codelist_uid
                 )
 
-                term_uids = [term.termUid for term in codelistInput.terms]
+                term_uids = [term.term_uid for term in codelist_input.terms]
 
                 if parent_codelist_uid:
                     sub_codelist_with_given_terms = (
@@ -141,27 +142,27 @@ class CTCodelistService:
                     if sub_codelist_with_given_terms.items:
                         raise exceptions.BusinessLogicException(
                             f"""Sub codelists with these terms already exist.
-                            Codelist UIDs ({[item.codelistUid for item in sub_codelist_with_given_terms.items]})"""
+                            Codelist UIDs ({[item.codelist_uid for item in sub_codelist_with_given_terms.items]})"""
                         )
 
-                for term in codelistInput.terms:
+                for term in codelist_input.terms:
                     if (
                         parent_codelist_uid
                         and not len(
                             self._repos.ct_term_aggregated_repository.find_all_aggregated_result(
                                 filter_by={
-                                    "codelistUid": {
+                                    "codelist_uid": {
                                         "v": [parent_codelist_uid],
                                         "op": "eq",
                                     },
-                                    "termUid": {"v": [term.termUid], "op": "eq"},
+                                    "term_uid": {"v": [term.term_uid], "op": "eq"},
                                 }
                             ).items
                         )
                         > 0
                     ):
                         raise exceptions.BusinessLogicException(
-                            f"The term identifed by ({term.termUid}) is not in use by parent codelist identifed by ({parent_codelist_uid})"
+                            f"The term identifed by ({term.term_uid}) is not in use by parent codelist identifed by ({parent_codelist_uid})"
                         )
 
                     ct_codelist_name_ar = (
@@ -172,7 +173,7 @@ class CTCodelistService:
 
                     self._repos.ct_codelist_attribute_repository.add_term(
                         codelist_uid=ct_codelist_attributes_ar.uid,
-                        term_uid=term.termUid,
+                        term_uid=term.term_uid,
                         author=self.user_initials,
                         order=term.order,
                     )
@@ -183,6 +184,10 @@ class CTCodelistService:
         return CTCodelist.from_ct_codelist_ar(
             ct_codelist_name_ar, ct_codelist_attributes_ar
         )
+
+    @db.transaction
+    def create(self, codelist_input: CTCodelistCreateInput) -> CTCodelist:
+        return self.non_transactional_create(codelist_input)
 
     def get_all_codelists(
         self,
@@ -243,7 +248,7 @@ class CTCodelistService:
                 library=library,
                 total_count=total_count,
                 sort_by=sort_by,
-                filter_by={"parentCodelistUid": {"v": [codelist_uid], "op": "eq"}},
+                filter_by={"parent_codelist_uid": {"v": [codelist_uid], "op": "eq"}},
                 filter_operator=filter_operator,
                 page_number=page_number,
                 page_size=page_size,
@@ -309,11 +314,12 @@ class CTCodelistService:
 
         return header_values
 
-    @db.transaction
-    def add_term(self, codelistuid: str, termUid: str, order: int) -> CTCodelist:
+    def non_transactional_add_term(
+        self, codelist_uid: str, term_uid: str, order: int
+    ) -> CTCodelist:
         ct_codelist_attributes_ar = (
             self._repos.ct_codelist_attribute_repository.find_by_uid(
-                codelist_uid=codelistuid
+                codelist_uid=codelist_uid
             )
         )
 
@@ -323,7 +329,7 @@ class CTCodelistService:
                 and not ct_codelist_attributes_ar.ct_codelist_vo.extensible
             ):
                 raise exceptions.BusinessLogicException(
-                    f"Codelist identified by {codelistuid} is not extensible"
+                    f"Codelist identified by {codelist_uid} is not extensible"
                 )
 
             parent_codelist_uid = (
@@ -334,27 +340,27 @@ class CTCodelistService:
                 and not len(
                     self._repos.ct_term_aggregated_repository.find_all_aggregated_result(
                         filter_by={
-                            "codelistUid": {
+                            "codelist_uid": {
                                 "v": [parent_codelist_uid],
                                 "op": "eq",
                             },
-                            "termUid": {"v": [termUid], "op": "eq"},
+                            "term_uid": {"v": [term_uid], "op": "eq"},
                         }
                     ).items
                 )
                 > 0
             ):
                 raise exceptions.BusinessLogicException(
-                    f"The term identifed by ({termUid}) is not in use by parent codelist identifed by ({parent_codelist_uid})"
+                    f"The term identifed by ({term_uid}) is not in use by parent codelist identifed by ({parent_codelist_uid})"
                 )
 
         ct_codelist_name_ar = self._repos.ct_codelist_name_repository.find_by_uid(
-            codelist_uid=codelistuid
+            codelist_uid=codelist_uid
         )
         try:
             self._repos.ct_codelist_attribute_repository.add_term(
-                codelist_uid=codelistuid,
-                term_uid=termUid,
+                codelist_uid=codelist_uid,
+                term_uid=term_uid,
                 author=self.user_initials,
                 order=order,
             )
@@ -366,10 +372,14 @@ class CTCodelistService:
         )
 
     @db.transaction
-    def remove_term(self, codelistuid: str, termUid: str) -> CTCodelist:
+    def add_term(self, codelist_uid: str, term_uid: str, order: int) -> CTCodelist:
+        return self.non_transactional_add_term(codelist_uid, term_uid, order)
+
+    @db.transaction
+    def remove_term(self, codelist_uid: str, term_uid: str) -> CTCodelist:
         ct_codelist_attributes_ar = (
             self._repos.ct_codelist_attribute_repository.find_by_uid(
-                codelist_uid=codelistuid
+                codelist_uid=codelist_uid
             )
         )
         if ct_codelist_attributes_ar is not None:
@@ -378,7 +388,7 @@ class CTCodelistService:
                 and not ct_codelist_attributes_ar.ct_codelist_vo.extensible
             ):
                 raise exceptions.BusinessLogicException(
-                    f"Codelist identified by {codelistuid} is not extensible"
+                    f"Codelist identified by {codelist_uid} is not extensible"
                 )
 
             child_codelist_uids = (
@@ -387,25 +397,25 @@ class CTCodelistService:
             if child_codelist_uids:
                 terms = self._repos.ct_term_aggregated_repository.find_all_aggregated_result(
                     filter_by={
-                        "codelistUid": {
+                        "codelist_uid": {
                             "v": child_codelist_uids,
                             "op": "eq",
                         },
-                        "termUid": {"v": [termUid], "op": "eq"},
+                        "term_uid": {"v": [term_uid], "op": "eq"},
                     }
                 ).items
                 if len(terms) > 0:
                     raise exceptions.BusinessLogicException(
-                        f"""The term identifed by ({termUid}) is in use by child codelists
+                        f"""The term identifed by ({term_uid}) is in use by child codelists
                         identifed by {[term[1]._ct_term_attributes_vo.codelist_uid for term in terms]}"""
                     )
         ct_codelist_name_ar = self._repos.ct_codelist_name_repository.find_by_uid(
-            codelist_uid=codelistuid
+            codelist_uid=codelist_uid
         )
 
         try:
             self._repos.ct_codelist_attribute_repository.remove_term(
-                codelist_uid=codelistuid, term_uid=termUid, author=self.user_initials
+                codelist_uid=codelist_uid, term_uid=term_uid, author=self.user_initials
             )
         except ValueError as exception:
             raise exceptions.ValidationException(exception.args[0])

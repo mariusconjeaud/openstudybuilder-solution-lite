@@ -300,7 +300,7 @@ class StudySelectionCohortRepository:
 
         # loop through and add selections
         for order, selection in selections_to_add:
-            # create last_study_selection_node None as the new studySelection could not have an audit trial node
+            # create last_study_selection_node None as the new study_selection could not have an audit trial node
             last_study_selection_node = None
             # if the study selection already has an audit trail node
             if selection.study_selection_uid in audit_trail_nodes:
@@ -358,7 +358,7 @@ class StudySelectionCohortRepository:
         author: str,
     ) -> StudyAction:
         audit_node.user_initials = author
-        audit_node.date = datetime.datetime.now()
+        audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
         study_selection_node.has_before.connect(audit_node)

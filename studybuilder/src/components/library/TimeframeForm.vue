@@ -89,7 +89,7 @@
               <v-col>
                 <v-textarea
                   :label="$t('HistoryTable.change_description')"
-                  v-model="form.changeDescription"
+                  v-model="form.change_description"
                   :error-messages="errors"
                   rows="1"
                   color="white"
@@ -153,7 +153,7 @@ export default {
       return ''
     },
     calculateTemplateName () {
-      const timeframeTemplate = this.timeframe ? this.timeframe.timeframeTemplate : this.form.timeframeTemplate
+      const timeframeTemplate = this.timeframe ? this.timeframe.timeframe_template : this.form.timeframe_template
       let result = timeframeTemplate.name
       this.parameterResponse.forEach(value => {
         if (value.format) {
@@ -193,7 +193,7 @@ export default {
       storeEndpointAdd: 'timeframes/addTimeframe',
       storeEndpointUpdate: 'timeframes/updateTimeframe',
       translationLabel: 'TimeframeForm',
-      objectTemplateUidLabel: 'timeframeTemplateUid',
+      objectTemplateUidLabel: 'timeframe_template_uid',
       objectTemplateUidResultLabel: 'timeframeTemplate'
     }
   },
@@ -220,8 +220,8 @@ export default {
     libraries.get(1).then(resp => {
       this.libraries = resp.data
     })
-    timeframeTemplates.get({ status: statuses.FINAL }).then(resp => {
-      this.templates = resp.data
+    timeframeTemplates.get({ status: statuses.FINAL, page_size: 0 }).then(resp => {
+      this.templates = resp.data.items
     })
     if (this.timeframe) {
       this.showParametersFromObject(this.timeframe)

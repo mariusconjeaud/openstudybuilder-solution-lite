@@ -70,12 +70,12 @@ export default {
   },
   mounted () {
     study.getStudyCriteria(this.selectedStudy.uid).then(resp => {
-      resp.data.forEach(el => {
-        if (el.criteriaType.sponsorPreferredName in this.studyCriterias) {
-          this.studyCriterias[el.criteriaType.sponsorPreferredName].push(el.criteria ? this.removeBrackets(el.criteria.name) : this.removeBrackets(el.criteriaTemplate.name))
+      resp.data.items.forEach(el => {
+        if (el.criteria_type.sponsor_preferred_name in this.studyCriterias) {
+          this.studyCriterias[el.criteria_type.sponsor_preferred_name].push(el.criteria ? this.removeBrackets(el.criteria.name) : this.removeBrackets(el.criteria_template.name))
         } else {
-          this.studyCriterias[el.criteriaType.sponsorPreferredName] = []
-          this.studyCriterias[el.criteriaType.sponsorPreferredName].push(el.criteria ? this.removeBrackets(el.criteria.name) : this.removeBrackets(el.criteriaTemplate.name))
+          this.studyCriterias[el.criteria_type.sponsor_preferred_name] = []
+          this.studyCriterias[el.criteria_type.sponsor_preferred_name].push(el.criteria ? this.removeBrackets(el.criteria.name) : this.removeBrackets(el.criteria_template.name))
         }
       })
       this.key += 1

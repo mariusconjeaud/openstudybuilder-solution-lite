@@ -4,10 +4,9 @@
     :headers="headers"
     :items="computedParams"
     item-key="name"
-    export-object-label="Metadata"
     :itemsPerPage="15"
-    has-history
     disable-filtering
+    hide-export-button
     >
     <template v-slot:actions="">
       <v-btn
@@ -34,6 +33,16 @@
           mdi-pencil
         </v-icon>
       </v-btn>
+      <v-btn
+        class="ml-2"
+        color="secondary"
+        fab
+        small
+        :title="$t('NNTableTooltips.history')"
+        @click="openHistory"
+        >
+        <v-icon>mdi-history</v-icon>
+      </v-btn>
     </template>
   </n-n-table>
   <slot name="form" :openHandler="showForm" v-bind:closeHandler="closeForm" v-bind:data="metadata" v-bind:dataToCopy="dataToCopy"></slot>
@@ -43,18 +52,35 @@
     persistent
     max-width="500px"
     >
-    <copy-from-study-form  @close="closeCopyForm" @apply="openFormToCopy" :component="component"/>
+    <copy-from-study-form @close="closeCopyForm" @apply="openFormToCopy" :component="component"/>
+  </v-dialog>
+
+  <v-dialog
+    v-model="showHistory"
+    persistent
+    max-width="1200px"
+    >
+    <history-table
+      :headers="historyHeaders"
+      :items="historyItems"
+      :title="historyTitle"
+      :export-name="component"
+      @close="closeHistory"
+      />
   </v-dialog>
 </div>
 </template>
 
 <script>
+import CopyFromStudyForm from '@/components/tools/CopyFromStudyForm'
+import HistoryTable from '@/components/tools/HistoryTable'
 import { mapGetters } from 'vuex'
 import NNTable from '@/components/tools/NNTable'
-import CopyFromStudyForm from '@/components/tools/CopyFromStudyForm'
+import study from '@/api/study'
 
 export default {
   components: {
+    HistoryTable,
     NNTable,
     CopyFromStudyForm
   },
@@ -94,6 +120,12 @@ export default {
     }),
     computedParams () {
       return this.buildTableParams(this.params)
+    },
+    historyTitle () {
+      return `${this.component} ${this.$t('HistoryTable.fields')} ${this.$t('HistoryTable.history')} (${this.selectedStudy.uid})`
+    },
+    exportDataUrl () {
+      return `studies/${this.selectedStudy.uid}`
     }
   },
   data () {
@@ -101,8 +133,18 @@ export default {
       headers: [
         { text: this.firstColLabel, value: 'name', width: '30%' },
         { text: this.$t('StudyMetadataSummary.selected_values'), value: 'values' },
-        { text: this.$t('StudyMetadataSummary.reason_for_missing'), value: 'reasonForMissing' }
+        { text: this.$t('StudyMetadataSummary.reason_for_missing'), value: 'reason_for_missing' }
       ],
+      historyHeaders: [
+        { text: this.$t('HistoryTable.field'), value: 'field' },
+        { text: this.$t('HistoryTable.action'), value: 'action' },
+        { text: this.$t('HistoryTable.value_before'), value: 'before_value.term_uid' },
+        { text: this.$t('HistoryTable.value_after'), value: 'after_value.term_uid' },
+        { text: this.$t('_global.user'), value: 'user_initials' },
+        { text: this.$t('HistoryTable.date'), value: 'date' }
+      ],
+      historyItems: [],
+      showHistory: false,
       showForm: false,
       showCopyForm: false,
       dataToCopy: {}
@@ -126,30 +168,51 @@ export default {
     closeCopyForm () {
       this.showCopyForm = false
     },
+    async openHistory () {
+      this.historyItems = []
+      const resp = await study.getStudyFieldsAuditTrail(this.selectedStudy.uid, this.component)
+      for (const group of resp.data) {
+        for (const groupItem of group.actions) {
+          const row = {
+            user_initials: group.user_initials,
+            date: group.date,
+            field: groupItem.field,
+            action: groupItem.action,
+            before_value: groupItem.before_value,
+            after_value: groupItem.after_value
+          }
+          this.historyItems.push(row)
+        }
+      }
+      this.showHistory = true
+    },
+    closeHistory () {
+      this.showHistory = false
+    },
     buildTableParams (fields) {
       const result = []
       fields.forEach(field => {
         let nullValueName = null
         if (field.nullValueName === undefined) {
           nullValueName = field.name
-          const suffixes = ['Code', 'Codes']
+          const suffixes = ['_code', '_codes']
           suffixes.forEach(suffix => {
             if (nullValueName.endsWith(suffix)) {
               nullValueName = nullValueName.replace(suffix, '')
             }
           })
-          nullValueName += 'NullValueCode'
+          nullValueName += '_null_value_code'
         } else {
           nullValueName = field.nullValueName
         }
         let values = this.metadata[field.name]
-        if (field.name === 'sexOfParticipantsCode' && values !== undefined && values !== null) {
+        if (field.name === 'sex_of_participants_code' && values !== undefined && values !== null) {
           values = values.name
         }
         result.push({
           name: field.label,
-          values: (values !== undefined && values !== null && field.valuesDisplay && field.name !== 'sexOfParticipantsCode') ? this[`${field.valuesDisplay}Display`](values) : values,
-          reasonForMissing: this.naDisplay(this.metadata[nullValueName])
+          values: (values !== undefined && values !== null && field.valuesDisplay && field.name !== 'sex_of_participants_code') ? this[`${field.valuesDisplay}Display`](values) : values,
+          reason_for_missing: this.naDisplay(this.metadata[nullValueName])
         })
       })
       return result
@@ -158,7 +221,7 @@ export default {
       return (value) ? this.$t('_global.yes') : this.$t('_global.no')
     },
     durationDisplay (value) {
-      return `${value.durationValue} ${value.durationUnitCode.name}`
+      return `${value.duration_value} ${value.duration_unit_code.name}`
     },
     termDisplay (value) {
       if (!value) {

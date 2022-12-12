@@ -33,16 +33,16 @@
         :item="item"
         />
     </template>
-    <template v-slot:item.isSponsorCompound="{ item }">
-      {{ item.isSponsorCompound|yesno }}
+    <template v-slot:item.is_sponsor_compound="{ item }">
+      {{ item.is_sponsor_compound|yesno }}
     </template>
     <template v-slot:item.name="{ item }">
       <router-link :to="{ name: 'CompoundOverview', params: { id: item.uid } }">
         {{ item.name }}
       </router-link>
     </template>
-    <template v-slot:item.isNameInn="{ item }">
-      {{ item.isNameInn|yesno }}
+    <template v-slot:item.is_name_inn="{ item }">
+      {{ item.is_name_inn|yesno }}
     </template>
     <template v-slot:item.brands="{ item }">
       {{ item.brands|names }}
@@ -50,40 +50,40 @@
     <template v-slot:item.substances="{ item }">
       {{ item.substances|substances }}
     </template>
-    <template v-slot:item.pharmacologicalClasses="{ item }">
+    <template v-slot:item.pharmacological_classes="{ item }">
       {{ item.substances|pharmacologicalClasses }}
     </template>
-    <template v-slot:item.doseValues="{ item }">
-      {{ item.doseValues|numericValues }}
+    <template v-slot:item.dose_values="{ item }">
+      {{ item.dose_values|numericValues }}
     </template>
-    <template v-slot:item.strengthValues="{ item }">
-      {{ item.strengthValues|numericValues }}
+    <template v-slot:item.strength_values="{ item }">
+      {{ item.strength_values|numericValues }}
     </template>
-    <template v-slot:item.dosageForms="{ item }">
-      {{ item.dosageForms|names }}
+    <template v-slot:item.dosage_forms="{ item }">
+      {{ item.dosage_forms|names }}
     </template>
-    <template v-slot:item.routesOfAdministration="{ item }">
-      {{ item.routesOfAdministration|names }}
+    <template v-slot:item.routes_of_administration="{ item }">
+      {{ item.routes_of_administration|names }}
     </template>
-    <template v-slot:item.doseFrequencies="{ item }">
-      {{ item.doseFrequencies|names }}
+    <template v-slot:item.dose_frequencies="{ item }">
+      {{ item.dose_frequencies|names }}
     </template>
     <template v-slot:item.dispensers="{ item }">
       {{ item.dispensers|names }}
     </template>
-    <template v-slot:item.deliveryDevices="{ item }">
-      {{ item.deliveryDevices|names }}
+    <template v-slot:item.delivery_devices="{ item }">
+      {{ item.delivery_devices|names }}
     </template>
-    <template v-slot:item.halfLife="{ item }">
-      <template v-if="item.halfLife">
-        {{ item.halfLife.value }} {{ item.halfLife.unitLabel }}
+    <template v-slot:item.half_life="{ item }">
+      <template v-if="item.half_life">
+        {{ item.half_life.value }} {{ item.half_life.unit_label }}
       </template>
     </template>
-    <template v-slot:item.lagTimes="{ item }">
-      {{ item.lagTimes|lagTimes }}
+    <template v-slot:item.lag_times="{ item }">
+      {{ item.lag_times|lagTimes }}
     </template>
-    <template v-slot:item.startDate="{ item }">
-      {{ item.startDate|date }}
+    <template v-slot:item.start_date="{ item }">
+      {{ item.start_date|date }}
     </template>
     <template v-slot:item.status="{ item }">
       <status-chip :status="item.status" />
@@ -149,42 +149,42 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'edit'),
+          condition: (item) => item.possible_actions.find(action => action === 'edit'),
           click: this.editCompound
         },
         {
           label: this.$t('_global.approve'),
           icon: 'mdi-check-decagram',
           iconColor: 'success',
-          condition: (item) => item.possibleActions.find(action => action === 'approve'),
+          condition: (item) => item.possible_actions.find(action => action === 'approve'),
           click: this.approveCompound
         },
         {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'newVersion'),
+          condition: (item) => item.possible_actions.find(action => action === 'new_version'),
           click: this.createNewVersion
         },
         {
           label: this.$t('_global.inactivate'),
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'inactivate'),
+          condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
           click: this.inactivateCompound
         },
         {
           label: this.$t('_global.reactivate'),
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'reactivate'),
+          condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
           click: this.reactivateCompound
         },
         {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete',
           iconColor: 'error',
-          condition: (item) => item.possibleActions.find(action => action === 'delete'),
+          condition: (item) => item.possible_actions.find(action => action === 'delete'),
           click: this.deleteCompound
         },
         {
@@ -198,26 +198,26 @@ export default {
       sort: {},
       headers: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('CompoundTable.sponsor_compound'), value: 'isSponsorCompound' },
+        { text: this.$t('CompoundTable.sponsor_compound'), value: 'is_sponsor_compound' },
         { text: this.$t('CompoundTable.compound_name'), value: 'name' },
-        { text: this.$t('CompoundTable.is_name_inn'), value: 'isNameInn' },
-        { text: this.$t('CompoundTable.nnc_number_long'), value: 'nncLongNumber' },
-        { text: this.$t('CompoundTable.nnc_number_short'), value: 'nncShortNumber' },
-        { text: this.$t('CompoundTable.analyte_number'), value: 'analyteNumber' },
+        { text: this.$t('CompoundTable.is_name_inn'), value: 'is_name_inn' },
+        { text: this.$t('CompoundTable.nnc_number_long'), value: 'nnc_long_number' },
+        { text: this.$t('CompoundTable.nnc_number_short'), value: 'nnc_short_number' },
+        { text: this.$t('CompoundTable.analyte_number'), value: 'analyte_number' },
         { text: this.$t('_global.definition'), value: 'definition' },
         { text: this.$t('CompoundTable.brand_name'), value: 'brands' },
         { text: this.$t('CompoundTable.substance_name'), value: 'substances' },
-        { text: this.$t('CompoundTable.pharmacological_class'), value: 'pharmacologicalClasses' },
-        { text: this.$t('CompoundTable.dose'), value: 'doseValues' },
-        { text: this.$t('CompoundTable.strength'), value: 'strengthValues' },
-        { text: this.$t('CompoundTable.dosage_form'), value: 'dosageForms' },
-        { text: this.$t('CompoundTable.route_of_admin'), value: 'routesOfAdministration' },
-        { text: this.$t('CompoundTable.dose_frequency'), value: 'doseFrequencies' },
+        { text: this.$t('CompoundTable.pharmacological_class'), value: 'pharmacological_classes' },
+        { text: this.$t('CompoundTable.dose'), value: 'dose_values' },
+        { text: this.$t('CompoundTable.strength'), value: 'strength_values' },
+        { text: this.$t('CompoundTable.dosage_form'), value: 'dosage_forms' },
+        { text: this.$t('CompoundTable.route_of_admin'), value: 'routes_of_administration' },
+        { text: this.$t('CompoundTable.dose_frequency'), value: 'dose_frequencies' },
         { text: this.$t('CompoundTable.dispensed_in'), value: 'dispensers' },
-        { text: this.$t('CompoundTable.delivery_device'), value: 'deliveryDevices' },
-        { text: this.$t('CompoundTable.half_life'), value: 'halfLife' },
-        { text: this.$t('CompoundTable.lag_time'), value: 'lagTimes' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
+        { text: this.$t('CompoundTable.delivery_device'), value: 'delivery_devices' },
+        { text: this.$t('CompoundTable.half_life'), value: 'half_life' },
+        { text: this.$t('CompoundTable.lag_time'), value: 'lag_times' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.version'), value: 'version' },
         { text: this.$t('_global.status'), value: 'status' }
       ],
@@ -230,7 +230,7 @@ export default {
   },
   filters: {
     numericValues: function (value) {
-      return value.map(item => `${item.value} ${item.unitLabel}`).join(', ')
+      return value.map(item => `${item.value} ${item.unit_label}`).join(', ')
     }
   },
   methods: {
@@ -245,15 +245,15 @@ export default {
         this.options.page = 1
       }
       const params = {
-        pageNumber: (this.options.page),
-        pageSize: this.options.itemsPerPage,
-        totalCount: true
+        page_number: (this.options.page),
+        page_size: this.options.itemsPerPage,
+        total_count: true
       }
       if (this.filters !== undefined) {
         params.filters = this.filters
       }
       if (this.options.sortBy.length !== 0 && this.sort !== undefined) {
-        params.sortBy = `{"${this.options.sortBy[0]}":${!this.sort}}`
+        params.sort_by = `{"${this.options.sortBy[0]}":${!this.sort}}`
       }
       compounds.getFiltered(params).then(resp => {
         this.compounds = resp.data.items

@@ -34,7 +34,7 @@ const routes = [
     }
   },
   {
-    path: '/library/ct_catalogues/:catalogueName/:codelistId',
+    path: '/library/ct_catalogues/:catalogue_name/:codelist_id',
     name: 'CodeListDetail',
     component: () => import('../views/library/CodeListDetail.vue'),
     meta: {
@@ -42,7 +42,7 @@ const routes = [
     }
   },
   {
-    path: '/library/ct_catalogues/:catalogueName/:codelistId/terms/:termId',
+    path: '/library/ct_catalogues/:catalogue_name/:codelist_id/terms/:term_id',
     name: 'CodelistTermDetail',
     component: () => import('../views/library/CodelistTermDetail.vue'),
     meta: {
@@ -50,7 +50,7 @@ const routes = [
     }
   },
   {
-    path: '/library/ct_catalogues/:catalogueName/:codelistId/terms',
+    path: '/library/ct_catalogues/:catalogue_name/:codelist_id/terms',
     name: 'CodelistTerms',
     component: () => import('../views/library/CodelistTerms.vue'),
     meta: {
@@ -58,7 +58,7 @@ const routes = [
     }
   },
   {
-    path: '/library/ct_catalogues/:catalogueName?',
+    path: '/library/ct_catalogues/:catalogue_name?',
     name: 'CtCatalogues',
     component: () => import('../views/library/CtCatalogues.vue'),
     meta: {
@@ -66,7 +66,7 @@ const routes = [
     }
   },
   {
-    path: '/library/ct_packages/:catalogueName/history',
+    path: '/library/ct_packages/:catalogue_name/history',
     name: 'CtPackagesHistory',
     component: () => import('../views/library/CtPackagesHistory.vue'),
     meta: {
@@ -74,7 +74,7 @@ const routes = [
     }
   },
   {
-    path: '/library/ct_packages/:catalogueName/history/:codelistId',
+    path: '/library/ct_packages/:catalogue_name/history/:codelist_id',
     name: 'CtPackageCodelistHistory',
     component: () => import('../views/library/CtPackageCodelistHistory.vue'),
     meta: {
@@ -82,7 +82,7 @@ const routes = [
     }
   },
   {
-    path: '/library/ct_packages/:catalogueName?/:packageName?',
+    path: '/library/ct_packages/:catalogue_name?/:package_name?',
     name: 'CtPackages',
     component: () => import('../views/library/CtPackages.vue'),
     meta: {
@@ -90,7 +90,7 @@ const routes = [
     }
   },
   {
-    path: '/library/ct_packages/:catalogueName/:packageName/:codelistId/terms/:termId',
+    path: '/library/ct_packages/:catalogue_name/:package_name/:codelist_id/terms/:term_id',
     name: 'CtPackageTermDetail',
     component: () => import('../views/library/CtPackageTermDetail.vue'),
     meta: {
@@ -98,7 +98,7 @@ const routes = [
     }
   },
   {
-    path: '/library/ct_packages/:catalogueName/:packageName/:codelistId/terms',
+    path: '/library/ct_packages/:catalogue_name/:package_name/:codelist_id/terms',
     name: 'CtPackageTerms',
     component: () => import('../views/library/CtPackageTerms.vue'),
     meta: {
@@ -186,7 +186,7 @@ const routes = [
     }
   },
   {
-    path: '/library/crfs/:tab?',
+    path: '/library/crfs/:tab?/:type?/:uid?',
     name: 'Crfs',
     component: () => import('../views/library/Crfs.vue'),
     meta: {
@@ -567,9 +567,9 @@ const routes = [
     }
   },
   {
-    path: '/studies/pharma_cm_specifications',
-    name: 'PharmaCmSpecifications',
-    component: () => import('../views/studies/PharmaCmSpecifications.vue'),
+    path: '/studies/study_disclosure',
+    name: 'StudyDisclosure',
+    component: () => import('../views/studies/StudyDisclosure.vue'),
     meta: {
       authRequired: true
     }

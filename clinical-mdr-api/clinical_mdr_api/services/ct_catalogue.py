@@ -27,7 +27,7 @@ class CTCatalogueService:
         cls, ct_catalogue_ar: CTCatalogueAR
     ) -> models.CTCatalogue:
         return models.CTCatalogue(
-            name=ct_catalogue_ar.name, libraryName=ct_catalogue_ar.library_name
+            name=ct_catalogue_ar.name, library_name=ct_catalogue_ar.library_name
         )
 
     def get_all_ct_catalogues(

@@ -17,11 +17,11 @@
         <v-row>
           <v-col cols="12">
             <v-autocomplete
-              v-model="form.armTypeUid"
+              v-model="form.arm_type_uid"
               :label="$t('StudyArmsForm.arm_type')"
               :items="armTypes"
-              item-text="sponsorPreferredName"
-              item-value="termUid"
+              item-text="sponsor_preferred_name"
+              item-value="term_uid"
               data-cy="arm-type"
               :error-messages="errors"
               clearable
@@ -56,7 +56,7 @@
         <v-row>
           <v-col cols="12">
             <v-text-field
-              v-model="form.shortName"
+              v-model="form.short_name"
               :label="$t('StudyArmsForm.arm_short_name')"
               data-cy="arm-short-name"
               :error-messages="errors"
@@ -73,7 +73,7 @@
         <v-row>
           <v-col cols="12">
             <v-text-field
-              v-model="form.randomizationGroup"
+              v-model="form.randomization_group"
               :label="$t('StudyArmsForm.randomisation_group')"
               data-cy="arm-randomisation-group"
               :error-messages="errors"
@@ -112,7 +112,7 @@
         <v-row>
           <v-col cols="12">
             <v-text-field
-              v-model="form.numberOfSubjects"
+              v-model="form.number_of_subjects"
               :label="$t('StudyArmsForm.planned_number')"
               data-cy="arm-planned-number-of-subjects"
               :error-messages="errors"
@@ -215,7 +215,7 @@ export default {
   methods: {
     enableArmCode () {
       if (!this.armCodeEnable) {
-        this.$set(this.form, 'code', this.form.randomizationGroup)
+        this.$set(this.form, 'code', this.form.randomization_group)
         this.armCodeEnable = true
         this.codeRules = [
           v => (v && v.length <= 20) || this.$t('_errors.max_length_reached', { length: '20' })
@@ -238,7 +238,7 @@ export default {
     },
     create () {
       if (this.colorHash) {
-        this.form.armColour = this.colorHash.hexa
+        this.form.arm_colour = this.colorHash.hexa
       }
       arms.create(this.selectedStudy.uid, this.form).then(resp => {
         bus.$emit('notification', { msg: this.$t('StudyArmsForm.arm_created') })
@@ -247,9 +247,9 @@ export default {
     },
     edit () {
       if (this.colorHash) {
-        this.form.armColour = this.colorHash.hexa !== undefined ? this.colorHash.hexa : this.colorHash
+        this.form.arm_colour = this.colorHash.hexa !== undefined ? this.colorHash.hexa : this.colorHash
       }
-      arms.edit(this.selectedStudy.uid, this.form, this.editedArm.armUid).then(resp => {
+      arms.edit(this.selectedStudy.uid, this.form, this.editedArm.arm_uid).then(resp => {
         bus.$emit('notification', { msg: this.$t('StudyArmsForm.arm_updated') })
         this.close()
       })
@@ -283,11 +283,13 @@ export default {
     })
     if (Object.keys(this.editedArm).length !== 0) {
       this.form = JSON.parse(JSON.stringify(this.editedArm))
-      this.branches = this.form.armConnectedBranchArms.map(el => el.name)
-      delete this.form.armConnectedBranchArms
-      this.$set(this.form, 'armTypeUid', this.editedArm.armType.termUid)
-      if (this.editedArm.armColour) {
-        this.colorHash = this.editedArm.armColour
+      if (this.form.arm_connected_branch_arms) {
+        this.branches = this.form.arm_connected_branch_arms.map(el => el.name)
+        delete this.form.arm_connected_branch_arms
+      }
+      this.$set(this.form, 'arm_type_uid', this.editedArm.arm_type.term_uid)
+      if (this.editedArm.arm_colour) {
+        this.colorHash = this.editedArm.arm_colour
       }
       this.$store.commit('form/SET_FORM', this.form)
     }
@@ -296,9 +298,11 @@ export default {
     editedArm (value) {
       if (Object.keys(value).length !== 0) {
         this.form = JSON.parse(JSON.stringify(value))
-        this.branches = this.form.armConnectedBranchArms.map(el => el.name)
-        delete this.form.armConnectedBranchArms
-        this.$set(this.form, 'armTypeUid', value.armType.termUid)
+        if (this.form.arm_connected_branch_arms) {
+          this.branches = this.form.arm_connected_branch_arms.map(el => el.name)
+          delete this.form.arm_connected_branch_arms
+        }
+        this.$set(this.form, 'arm_type_uid', value.arm_type.term_uid)
         this.$store.commit('form/SET_FORM', this.form)
       }
     }

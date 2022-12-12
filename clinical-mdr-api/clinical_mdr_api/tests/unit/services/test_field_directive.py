@@ -12,9 +12,9 @@ from clinical_mdr_api.services._utils import (
 @pytest.mark.parametrize(
     "query_param, field_path, expected_should_include",
     [
-        ("", "whateverField", True),
+        ("", "whatever_field", True),
         ("", "whatever.nested.field", True),
-        (None, "whateverField", True),
+        (None, "whatever_field", True),
         (None, "whatever.nested.field", True),
         ("f1, +f2", "f1", True),
         ("f1, +f2", "f2", True),
@@ -24,7 +24,7 @@ from clinical_mdr_api.services._utils import (
         ("f1, +f2", "f3.any.nested.field", False),
         ("f1, +f2, -f2.excluded_nested", "f2.any.nested.field", True),
         ("f1, +f2, -f2.excluded_nested", "f2.excluded_nested", False),
-        ("f1, +f2, -f2.nested.excluded", "f2.nested.nonExcluded", True),
+        ("f1, +f2, -f2.nested.excluded", "f2.nested.non_excluded", True),
         ("f1, +f2, -f2.nested.excluded", "f2.nested.excluded", False),
         (
             "very.specific.deeply.nested.field, another.very.specific.deeply.nested.field",
@@ -85,11 +85,11 @@ def test__field_directive__is_field_included_and_get_fields_directive_for_childr
 
 
 class ChildBaseModel(BaseModel):
-    childField: Optional[str] = None
+    child_field: Optional[str] = None
 
 
 class ParentBaseModel(BaseModel):
-    parentField: Optional[str] = None
+    parent_field: Optional[str] = None
     child: Optional[ChildBaseModel] = None
 
 
@@ -97,9 +97,9 @@ class ParentBaseModel(BaseModel):
     "given_parent_field, given_child_field, query_fields_param",
     [
         ("parent Field Value", "child Field Value", None),
-        ("parent Field Value", "child Field Value", "parentField"),
+        ("parent Field Value", "child Field Value", "parent_field"),
         ("parent Field Value", "child Field Value", "child"),
-        ("parent Field Value", "child Field Value", "child, -child.childField"),
+        ("parent Field Value", "child Field Value", "child, -child.child_field"),
         ("parent Field Value", "child Field Value", "-child"),
     ],
 )
@@ -113,8 +113,8 @@ def test__filter_base_model_using_fields_directive__consistency_with_directive(
         query_fields_param
     )
     given_base_model = ParentBaseModel(
-        parentField=given_parent_field,
-        child=ChildBaseModel(childField=given_child_field),
+        parent_field=given_parent_field,
+        child=ChildBaseModel(child_field=given_child_field),
     )
 
     # when
@@ -123,15 +123,15 @@ def test__filter_base_model_using_fields_directive__consistency_with_directive(
     )
 
     # then
-    if field_directive.is_field_included("parentField"):
-        assert resulting_base_model.__dict__.get("parentField") is not None
+    if field_directive.is_field_included("parent_field"):
+        assert resulting_base_model.__dict__.get("parent_field") is not None
     else:
-        assert resulting_base_model.__dict__.get("parentField") is None
+        assert resulting_base_model.__dict__.get("parent_field") is None
 
     if field_directive.is_field_included("child"):
         assert resulting_base_model.__dict__.get("child") is not None
-        assert field_directive.is_field_included("child.childField") == (
-            "childField" in resulting_base_model.child.__fields_set__
+        assert field_directive.is_field_included("child.child_field") == (
+            "child_field" in resulting_base_model.child.__fields_set__
         )
     else:
         assert resulting_base_model.__dict__.get("child") is None

@@ -28,9 +28,9 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "sponsorPreferredName": "sponsorPreferredName",
-                "sponsorPreferredNameSentenceCase": "sponsorPreferredNameSentenceCase",
-                "changeDescription": "term change"
+                "sponsor_preferred_name": "sponsor_preferred_name",
+                "sponsor_preferred_name_sentence_case": "sponsor_preferred_name_sentence_case",
+                "change_description": "term change"
             },
             "url": "/ct/terms/term_root_final/names"
         },

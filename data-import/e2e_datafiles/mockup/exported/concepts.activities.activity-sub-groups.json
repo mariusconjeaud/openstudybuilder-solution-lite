@@ -1,127 +1,127 @@
 [
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "6 Minute Walk Test",
-    "nameSentenceCase": "6 minute walk test",
-    "possibleActions": [
+    "name_sentence_case": "6 minute walk test",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:10.062769",
+    "start_date": "2022-09-12T10:35:10.062769",
     "status": "Final",
     "uid": "ActivitySubGroup_000001",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "SF36 Health Survey Standard V2.0",
-    "nameSentenceCase": "sf36 health survey standard v2.0",
-    "possibleActions": [
+    "name_sentence_case": "sf36 health survey standard v2.0",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:10.585186",
+    "start_date": "2022-09-12T10:35:10.585186",
     "status": "Final",
     "uid": "ActivitySubGroup_000002",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "SF36 Health Survey Acute V2.0",
-    "nameSentenceCase": "sf36 health survey acute v2.0",
-    "possibleActions": [
+    "name_sentence_case": "sf36 health survey acute v2.0",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:11.054571",
+    "start_date": "2022-09-12T10:35:11.054571",
     "status": "Final",
     "uid": "ActivitySubGroup_000003",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Physical Examination - early ph1",
-    "nameSentenceCase": "physical examination - early ph1",
-    "possibleActions": [
+    "name_sentence_case": "physical examination - early ph1",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:11.638915",
+    "start_date": "2022-09-12T10:35:11.638915",
     "status": "Final",
     "uid": "ActivitySubGroup_000004",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "AE Requiring Additional Data",
         "uid": "ActivityGroup_000002"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Medication Error, Misuse and Abuse",
-    "nameSentenceCase": "medication error, misuse and abuse",
-    "possibleActions": [
+    "name_sentence_case": "medication error, misuse and abuse",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:12.043567",
+    "start_date": "2022-09-12T10:35:12.043567",
     "status": "Final",
     "uid": "ActivitySubGroup_000005",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
@@ -131,4172 +131,4148 @@
         "uid": "ActivityGroup_000004"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "24 Hour Urine Collection",
-    "nameSentenceCase": "24 hour urine collection",
-    "possibleActions": [
+    "name_sentence_case": "24 hour urine collection",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:12.990738",
+    "start_date": "2022-09-12T10:35:12.990738",
     "status": "Final",
     "uid": "ActivitySubGroup_000006",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "AE Requiring Additional Data",
         "uid": "ActivityGroup_000002"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Acute Kidney Injury",
-    "nameSentenceCase": "acute kidney injury",
-    "possibleActions": [
+    "name_sentence_case": "acute kidney injury",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:13.467395",
+    "start_date": "2022-09-12T10:35:13.467395",
     "status": "Final",
     "uid": "ActivitySubGroup_000007",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Alzheimer's Disease - Cognitive Behavior (ADAS-Cog-13)",
-    "nameSentenceCase": "alzheimer's disease - cognitive behavior (adas-cog-13)",
-    "possibleActions": [
+    "name_sentence_case": "alzheimer's disease - cognitive behavior (adas-cog-13)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:14.554826",
+    "start_date": "2022-09-12T10:35:14.554826",
     "status": "Final",
     "uid": "ActivitySubGroup_000008",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Event Adjudication",
         "uid": "ActivityGroup_000005"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "General",
-    "nameSentenceCase": "general",
-    "possibleActions": [
+    "name_sentence_case": "general",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:15.100560",
+    "start_date": "2022-09-12T10:35:15.100560",
     "status": "Final",
     "uid": "ActivitySubGroup_000009",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
-      {
-        "name": "Laboratory Assessments",
-        "uid": "ActivityGroup_000004"
-      }
-    ],
-    "changeDescription": "Approved version",
-    "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
-    "name": "Antibodies",
-    "nameSentenceCase": "antibodies",
-    "possibleActions": [
-      "inactivate",
-      "newVersion"
-    ],
-    "startDate": "2022-09-12T10:35:15.609629",
-    "status": "Final",
-    "uid": "ActivitySubGroup_000010",
-    "userInitials": "MT",
-    "version": "1.0"
-  },
-  {
-    "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "The Alcohol Use Disorders Identification Test (AUDIT-I)",
-    "nameSentenceCase": "the alcohol use disorders identification test (audit-i)",
-    "possibleActions": [
+    "name_sentence_case": "the alcohol use disorders identification test (audit-i)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:15.651501",
+    "start_date": "2022-09-12T10:35:15.651501",
     "status": "Final",
     "uid": "ActivitySubGroup_000011",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Adverse Event",
-    "nameSentenceCase": "adverse event",
-    "possibleActions": [
+    "name_sentence_case": "adverse event",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:15.816149",
+    "start_date": "2022-09-12T10:35:15.816149",
     "status": "Final",
     "uid": "ActivitySubGroup_000012",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Abnormal Involuntary Movement Scale (AIMS)",
-    "nameSentenceCase": "abnormal involuntary movement scale (aims)",
-    "possibleActions": [
+    "name_sentence_case": "abnormal involuntary movement scale (aims)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:15.883258",
+    "start_date": "2022-09-12T10:35:15.883258",
     "status": "Final",
     "uid": "ActivitySubGroup_000013",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "AE Requiring Additional Data",
         "uid": "ActivityGroup_000002"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Laboratory Assessment",
-    "nameSentenceCase": "laboratory assessment",
-    "possibleActions": [
+    "name_sentence_case": "laboratory assessment",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:16.044376",
+    "start_date": "2022-09-12T10:35:16.044376",
     "status": "Final",
     "uid": "ActivitySubGroup_000014",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Laboratory Assessments",
         "uid": "ActivityGroup_000004"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Urinalysis",
-    "nameSentenceCase": "urinalysis",
-    "possibleActions": [
+    "name_sentence_case": "urinalysis",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:16.146909",
+    "start_date": "2022-09-12T10:35:16.146909",
     "status": "Final",
     "uid": "ActivitySubGroup_000015",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Laboratory Assessments",
         "uid": "ActivityGroup_000004"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Biochemistry",
-    "nameSentenceCase": "biochemistry",
-    "possibleActions": [
+    "name_sentence_case": "biochemistry",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:16.274328",
+    "start_date": "2022-09-12T10:35:16.274328",
     "status": "Final",
     "uid": "ActivitySubGroup_000016",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Alcohol Breath Test",
-    "nameSentenceCase": "alcohol breath test",
-    "possibleActions": [
+    "name_sentence_case": "alcohol breath test",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:16.379814",
+    "start_date": "2022-09-12T10:35:16.379814",
     "status": "Final",
     "uid": "ActivitySubGroup_000017",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Laboratory Assessments",
         "uid": "ActivityGroup_000004"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Coagulation Parameters",
-    "nameSentenceCase": "coagulation parameters",
-    "possibleActions": [
+    "name_sentence_case": "coagulation parameters",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:16.629834",
+    "start_date": "2022-09-12T10:35:16.629834",
     "status": "Final",
     "uid": "ActivitySubGroup_000018",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "ASCQ-Me Pain Impact V2.0",
-    "nameSentenceCase": "ascq-me pain impact v2.0",
-    "possibleActions": [
+    "name_sentence_case": "ascq-me pain impact v2.0",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:16.647760",
+    "start_date": "2022-09-12T10:35:16.647760",
     "status": "Final",
     "uid": "ActivitySubGroup_000019",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "ASCQ-Me Emotional Impact V2.0",
-    "nameSentenceCase": "ascq-me emotional impact v2.0",
-    "possibleActions": [
+    "name_sentence_case": "ascq-me emotional impact v2.0",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:16.864785",
+    "start_date": "2022-09-12T10:35:16.864785",
     "status": "Final",
     "uid": "ActivitySubGroup_000020",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "ASCQ-Me Social Functioning Impact V2.0",
-    "nameSentenceCase": "ascq-me social functioning impact v2.0",
-    "possibleActions": [
+    "name_sentence_case": "ascq-me social functioning impact v2.0",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:16.860360",
+    "start_date": "2022-09-12T10:35:16.860360",
     "status": "Final",
     "uid": "ActivitySubGroup_000021",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Laboratory Assessments",
         "uid": "ActivityGroup_000004"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Haematology Differential Count",
-    "nameSentenceCase": "haematology differential count",
-    "possibleActions": [
+    "name_sentence_case": "haematology differential count",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:17.140818",
+    "start_date": "2022-09-12T10:35:17.140818",
     "status": "Final",
     "uid": "ActivitySubGroup_000022",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "TRIM-CGHD-Observer",
-    "nameSentenceCase": "trim-cghd-observer",
-    "possibleActions": [
+    "name_sentence_case": "trim-cghd-observer",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:17.213573",
+    "start_date": "2022-09-12T10:35:17.213573",
     "status": "Final",
     "uid": "ActivitySubGroup_000023",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Laboratory Assessments",
         "uid": "ActivityGroup_000004"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Glucose Metabolism",
-    "nameSentenceCase": "glucose metabolism",
-    "possibleActions": [
+    "name_sentence_case": "glucose metabolism",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:17.341312",
+    "start_date": "2022-09-12T10:35:17.341312",
     "status": "Final",
     "uid": "ActivitySubGroup_000024",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Urine Dipstick",
-    "nameSentenceCase": "urine dipstick",
-    "possibleActions": [
+    "name_sentence_case": "urine dipstick",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:17.500049",
+    "start_date": "2022-09-12T10:35:17.500049",
     "status": "Final",
     "uid": "ActivitySubGroup_000025",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Collection of Samples for Laboratory",
-    "nameSentenceCase": "collection of samples for laboratory",
-    "possibleActions": [
+    "name_sentence_case": "collection of samples for laboratory",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:17.523729",
+    "start_date": "2022-09-12T10:35:17.523729",
     "status": "Final",
     "uid": "ActivitySubGroup_000026",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Vital Signs",
-    "nameSentenceCase": "vital signs",
-    "possibleActions": [
+    "name_sentence_case": "vital signs",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:17.694244",
+    "start_date": "2022-09-12T10:35:17.694244",
     "status": "Final",
     "uid": "ActivitySubGroup_000027",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Body Measurements",
-    "nameSentenceCase": "body measurements",
-    "possibleActions": [
+    "name_sentence_case": "body measurements",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:17.826220",
+    "start_date": "2022-09-12T10:35:17.826220",
     "status": "Final",
     "uid": "ActivitySubGroup_000028",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Event Adjudication",
         "uid": "ActivityGroup_000005"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Death",
-    "nameSentenceCase": "death",
-    "possibleActions": [
+    "name_sentence_case": "death",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:18.384770",
+    "start_date": "2022-09-12T10:35:18.384770",
     "status": "Final",
     "uid": "ActivitySubGroup_000029",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Event Adjudication",
         "uid": "ActivityGroup_000005"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Acute Pancreatitis",
-    "nameSentenceCase": "acute pancreatitis",
-    "possibleActions": [
+    "name_sentence_case": "acute pancreatitis",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:18.525064",
+    "start_date": "2022-09-12T10:35:18.525064",
     "status": "Final",
     "uid": "ActivitySubGroup_000030",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Childbearing Potential",
-    "nameSentenceCase": "childbearing potential",
-    "possibleActions": [
+    "name_sentence_case": "childbearing potential",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:18.619633",
+    "start_date": "2022-09-12T10:35:18.619633",
     "status": "Final",
     "uid": "ActivitySubGroup_000031",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "ISS - Child Impact Measure - Observer (ISS-CIM Observer)",
-    "nameSentenceCase": "iss - child impact measure - observer (iss-cim observer)",
-    "possibleActions": [
+    "name_sentence_case": "iss - child impact measure - observer (iss-cim observer)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:18.720478",
+    "start_date": "2022-09-12T10:35:18.720478",
     "status": "Final",
     "uid": "ActivitySubGroup_000032",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "SGA-Child Impact Measure - Observer",
-    "nameSentenceCase": "sga-child impact measure - observer",
-    "possibleActions": [
+    "name_sentence_case": "sga-child impact measure - observer",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:18.816697",
+    "start_date": "2022-09-12T10:35:18.816697",
     "status": "Final",
     "uid": "ActivitySubGroup_000033",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Event Adjudication",
         "uid": "ActivityGroup_000005"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Acute Coronary Syndrome",
-    "nameSentenceCase": "acute coronary syndrome",
-    "possibleActions": [
+    "name_sentence_case": "acute coronary syndrome",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:19.102279",
+    "start_date": "2022-09-12T10:35:19.102279",
     "status": "Final",
     "uid": "ActivitySubGroup_000034",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Control of Eating Questionnaire VAS Scale (COEQ VAS)",
-    "nameSentenceCase": "control of eating questionnaire vas scale (coeq vas)",
-    "possibleActions": [
+    "name_sentence_case": "control of eating questionnaire vas scale (coeq vas)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:19.107799",
+    "start_date": "2022-09-12T10:35:19.107799",
     "status": "Final",
     "uid": "ActivitySubGroup_000035",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Laboratory Assessments",
         "uid": "ActivityGroup_000004"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Hormones",
-    "nameSentenceCase": "hormones",
-    "possibleActions": [
+    "name_sentence_case": "hormones",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:19.301419",
+    "start_date": "2022-09-12T10:35:19.301419",
     "status": "Final",
     "uid": "ActivitySubGroup_000036",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Child-Pugh Classification",
-    "nameSentenceCase": "child-pugh classification",
-    "possibleActions": [
+    "name_sentence_case": "child-pugh classification",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:19.389859",
+    "start_date": "2022-09-12T10:35:19.389859",
     "status": "Final",
     "uid": "ActivitySubGroup_000037",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "C-SSRS Baseline",
-    "nameSentenceCase": "c-ssrs baseline",
-    "possibleActions": [
+    "name_sentence_case": "c-ssrs baseline",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:19.511852",
+    "start_date": "2022-09-12T10:35:19.511852",
     "status": "Final",
     "uid": "ActivitySubGroup_000038",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "C-SSRS Since Last Visit",
-    "nameSentenceCase": "c-ssrs since last visit",
-    "possibleActions": [
+    "name_sentence_case": "c-ssrs since last visit",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:19.681632",
+    "start_date": "2022-09-12T10:35:19.681632",
     "status": "Final",
     "uid": "ActivitySubGroup_000039",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Child Treatment Burden Injection",
-    "nameSentenceCase": "child treatment burden injection",
-    "possibleActions": [
+    "name_sentence_case": "child treatment burden injection",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:19.809914",
+    "start_date": "2022-09-12T10:35:19.809914",
     "status": "Final",
     "uid": "ActivitySubGroup_000040",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Informed Consent and Demography",
-    "nameSentenceCase": "informed consent and demography",
-    "possibleActions": [
+    "name_sentence_case": "informed consent and demography",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:19.928022",
+    "start_date": "2022-09-12T10:35:19.928022",
     "status": "Final",
     "uid": "ActivitySubGroup_000041",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "AE Requiring Additional Data",
         "uid": "ActivityGroup_000002"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Diabetic Retinopathy",
-    "nameSentenceCase": "diabetic retinopathy",
-    "possibleActions": [
+    "name_sentence_case": "diabetic retinopathy",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:20.018066",
+    "start_date": "2022-09-12T10:35:20.018066",
     "status": "Final",
     "uid": "ActivitySubGroup_000042",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Drug Accountability",
-    "nameSentenceCase": "drug accountability",
-    "possibleActions": [
+    "name_sentence_case": "drug accountability",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:20.219728",
+    "start_date": "2022-09-12T10:35:20.219728",
     "status": "Final",
     "uid": "ActivitySubGroup_000043",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Diabetes Management Self-Efficacy Scale (DMSES)",
-    "nameSentenceCase": "diabetes management self-efficacy scale (dmses)",
-    "possibleActions": [
+    "name_sentence_case": "diabetes management self-efficacy scale (dmses)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:20.315307",
+    "start_date": "2022-09-12T10:35:20.315307",
     "status": "Final",
     "uid": "ActivitySubGroup_000044",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Dosing Conditions",
-    "nameSentenceCase": "dosing conditions",
-    "possibleActions": [
+    "name_sentence_case": "dosing conditions",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:20.446126",
+    "start_date": "2022-09-12T10:35:20.446126",
     "status": "Final",
     "uid": "ActivitySubGroup_000045",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Diabetes Pen Experience Measure (DPEM V3.0)",
-    "nameSentenceCase": "diabetes pen experience measure (dpem v3.0)",
-    "possibleActions": [
+    "name_sentence_case": "diabetes pen experience measure (dpem v3.0)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:20.541924",
+    "start_date": "2022-09-12T10:35:20.541924",
     "status": "Final",
     "uid": "ActivitySubGroup_000046",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Diabetes Pen Experience Measure (DPEM V4.0)",
-    "nameSentenceCase": "diabetes pen experience measure (dpem v4.0)",
-    "possibleActions": [
+    "name_sentence_case": "diabetes pen experience measure (dpem v4.0)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:20.726844",
+    "start_date": "2022-09-12T10:35:20.726844",
     "status": "Final",
     "uid": "ActivitySubGroup_000047",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Diabetes Treatment Preference Questionnaire (DTPQ)",
-    "nameSentenceCase": "diabetes treatment preference questionnaire (dtpq)",
-    "possibleActions": [
+    "name_sentence_case": "diabetes treatment preference questionnaire (dtpq)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:20.871686",
+    "start_date": "2022-09-12T10:35:20.871686",
     "status": "Final",
     "uid": "ActivitySubGroup_000048",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Device Training Questionnaire",
-    "nameSentenceCase": "device training questionnaire",
-    "possibleActions": [
+    "name_sentence_case": "device training questionnaire",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:21.040207",
+    "start_date": "2022-09-12T10:35:21.040207",
     "status": "Final",
     "uid": "ActivitySubGroup_000049",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Diabetes Treatment Satisfaction Questionnaire Change (DTSQC)",
-    "nameSentenceCase": "diabetes treatment satisfaction questionnaire change (dtsqc)",
-    "possibleActions": [
+    "name_sentence_case": "diabetes treatment satisfaction questionnaire change (dtsqc)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:21.130603",
+    "start_date": "2022-09-12T10:35:21.130603",
     "status": "Final",
     "uid": "ActivitySubGroup_000050",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Control of Eating Questionnaire (COEQ)",
-    "nameSentenceCase": "control of eating questionnaire (coeq)",
-    "possibleActions": [
+    "name_sentence_case": "control of eating questionnaire (coeq)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:21.247892",
+    "start_date": "2022-09-12T10:35:21.247892",
     "status": "Final",
     "uid": "ActivitySubGroup_000051",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "ECG",
-    "nameSentenceCase": "ecg",
-    "possibleActions": [
+    "name_sentence_case": "ecg",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:21.347823",
+    "start_date": "2022-09-12T10:35:21.347823",
     "status": "Final",
     "uid": "ActivitySubGroup_000052",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Stroop Color and Word Test Adult Version",
-    "nameSentenceCase": "stroop color and word test adult version",
-    "possibleActions": [
+    "name_sentence_case": "stroop color and word test adult version",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:21.517297",
+    "start_date": "2022-09-12T10:35:21.517297",
     "status": "Final",
     "uid": "ActivitySubGroup_000053",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Eligibility Criteria",
-    "nameSentenceCase": "eligibility criteria",
-    "possibleActions": [
+    "name_sentence_case": "eligibility criteria",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:21.648992",
+    "start_date": "2022-09-12T10:35:21.648992",
     "status": "Final",
     "uid": "ActivitySubGroup_000054",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Employment and Time Missed From Work (Employment)",
-    "nameSentenceCase": "employment and time missed from work (employment)",
-    "possibleActions": [
+    "name_sentence_case": "employment and time missed from work (employment)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:21.759802",
+    "start_date": "2022-09-12T10:35:21.759802",
     "status": "Final",
     "uid": "ActivitySubGroup_000055",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "End of Study",
-    "nameSentenceCase": "end of study",
-    "possibleActions": [
+    "name_sentence_case": "end of study",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:21.895715",
+    "start_date": "2022-09-12T10:35:21.895715",
     "status": "Final",
     "uid": "ActivitySubGroup_000056",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "EQ-5D-5L Self-Complete",
-    "nameSentenceCase": "eq-5d-5l self-complete",
-    "possibleActions": [
+    "name_sentence_case": "eq-5d-5l self-complete",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:22.011670",
+    "start_date": "2022-09-12T10:35:22.011670",
     "status": "Final",
     "uid": "ActivitySubGroup_000057",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "EQ-5D-3L Self-Complete",
-    "nameSentenceCase": "eq-5d-3l self-complete",
-    "possibleActions": [
+    "name_sentence_case": "eq-5d-3l self-complete",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:22.196462",
+    "start_date": "2022-09-12T10:35:22.196462",
     "status": "Final",
     "uid": "ActivitySubGroup_000058",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Laboratory Assessments",
         "uid": "ActivityGroup_000004"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Haematology",
-    "nameSentenceCase": "haematology",
-    "possibleActions": [
+    "name_sentence_case": "haematology",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:22.337506",
+    "start_date": "2022-09-12T10:35:22.337506",
     "status": "Final",
     "uid": "ActivitySubGroup_000059",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Hypoglycaemia Unawareness",
-    "nameSentenceCase": "hypoglycaemia unawareness",
-    "possibleActions": [
+    "name_sentence_case": "hypoglycaemia unawareness",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:22.499986",
+    "start_date": "2022-09-12T10:35:22.499986",
     "status": "Final",
     "uid": "ActivitySubGroup_000060",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Patient Health Questionnaire (PHQ-9)",
-    "nameSentenceCase": "patient health questionnaire (phq-9)",
-    "possibleActions": [
+    "name_sentence_case": "patient health questionnaire (phq-9)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:22.646785",
+    "start_date": "2022-09-12T10:35:22.646785",
     "status": "Final",
     "uid": "ActivitySubGroup_000061",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Laboratory Assessments",
         "uid": "ActivityGroup_000004"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Lipids",
-    "nameSentenceCase": "lipids",
-    "possibleActions": [
+    "name_sentence_case": "lipids",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:22.782430",
+    "start_date": "2022-09-12T10:35:22.782430",
     "status": "Final",
     "uid": "ActivitySubGroup_000062",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Event Adjudication",
         "uid": "ActivityGroup_000005"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Kidney Replacement Therapy",
-    "nameSentenceCase": "kidney replacement therapy",
-    "possibleActions": [
+    "name_sentence_case": "kidney replacement therapy",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:22.910713",
+    "start_date": "2022-09-12T10:35:22.910713",
     "status": "Final",
     "uid": "ActivitySubGroup_000063",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "AE Requiring Additional Data",
         "uid": "ActivityGroup_000002"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Gallbladder Disease",
-    "nameSentenceCase": "gallbladder disease",
-    "possibleActions": [
+    "name_sentence_case": "gallbladder disease",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:24.950763",
+    "start_date": "2022-09-12T10:35:24.950763",
     "status": "Final",
     "uid": "ActivitySubGroup_000064",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Patient Preference Quest (GHPPQ)",
-    "nameSentenceCase": "patient preference quest (ghppq)",
-    "possibleActions": [
+    "name_sentence_case": "patient preference quest (ghppq)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:25.070575",
+    "start_date": "2022-09-12T10:35:25.070575",
     "status": "Final",
     "uid": "ActivitySubGroup_000065",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Self Measured Plasma Glucose",
-    "nameSentenceCase": "self measured plasma glucose",
-    "possibleActions": [
+    "name_sentence_case": "self measured plasma glucose",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:25.221136",
+    "start_date": "2022-09-12T10:35:25.221136",
     "status": "Final",
     "uid": "ActivitySubGroup_000066",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Haemophilia Quality of Life Adult Version (HAEM-A-QOL)",
-    "nameSentenceCase": "haemophilia quality of life adult version (haem-a-qol)",
-    "possibleActions": [
+    "name_sentence_case": "haemophilia quality of life adult version (haem-a-qol)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:25.332122",
+    "start_date": "2022-09-12T10:35:25.332122",
     "status": "Final",
     "uid": "ActivitySubGroup_000067",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Haemophilia Activities List (HAL V2.0)",
-    "nameSentenceCase": "haemophilia activities list (hal v2.0)",
-    "possibleActions": [
+    "name_sentence_case": "haemophilia activities list (hal v2.0)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:25.463336",
+    "start_date": "2022-09-12T10:35:25.463336",
     "status": "Final",
     "uid": "ActivitySubGroup_000068",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Event Adjudication",
         "uid": "ActivityGroup_000005"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Heart Failure",
-    "nameSentenceCase": "heart failure",
-    "possibleActions": [
+    "name_sentence_case": "heart failure",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:25.556489",
+    "start_date": "2022-09-12T10:35:25.556489",
     "status": "Final",
     "uid": "ActivitySubGroup_000069",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "AE Requiring Additional Data",
         "uid": "ActivityGroup_000002"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Hepatic Event",
-    "nameSentenceCase": "hepatic event",
-    "possibleActions": [
+    "name_sentence_case": "hepatic event",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:25.734491",
+    "start_date": "2022-09-12T10:35:25.734491",
     "status": "Final",
     "uid": "ActivitySubGroup_000070",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Haemophilia Joint Health Score (HJHS)",
-    "nameSentenceCase": "haemophilia joint health score (hjhs)",
-    "possibleActions": [
+    "name_sentence_case": "haemophilia joint health score (hjhs)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:25.843552",
+    "start_date": "2022-09-12T10:35:25.843552",
     "status": "Final",
     "uid": "ActivitySubGroup_000071",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Diabetes Treatment Satisfaction Questionnaire Status (DTSQS)",
-    "nameSentenceCase": "diabetes treatment satisfaction questionnaire status (dtsqs)",
-    "possibleActions": [
+    "name_sentence_case": "diabetes treatment satisfaction questionnaire status (dtsqs)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:25.948049",
+    "start_date": "2022-09-12T10:35:25.948049",
     "status": "Final",
     "uid": "ActivitySubGroup_000072",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "TRIM-Diabetes (TRIM-D)",
-    "nameSentenceCase": "trim-diabetes (trim-d)",
-    "possibleActions": [
+    "name_sentence_case": "trim-diabetes (trim-d)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:26.047770",
+    "start_date": "2022-09-12T10:35:26.047770",
     "status": "Final",
     "uid": "ActivitySubGroup_000073",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "HPPQ Parent Report",
-    "nameSentenceCase": "hppq parent report",
-    "possibleActions": [
+    "name_sentence_case": "hppq parent report",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:26.226487",
+    "start_date": "2022-09-12T10:35:26.226487",
     "status": "Final",
     "uid": "ActivitySubGroup_000074",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Haemophilia Treatment Experience Measure (HEMO-TEM V2.0)",
-    "nameSentenceCase": "haemophilia treatment experience measure (hemo-tem v2.0)",
-    "possibleActions": [
+    "name_sentence_case": "haemophilia treatment experience measure (hemo-tem v2.0)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:26.356002",
+    "start_date": "2022-09-12T10:35:26.356002",
     "status": "Final",
     "uid": "ActivitySubGroup_000075",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "HEMO-TEM Caregiver Report",
-    "nameSentenceCase": "hemo-tem caregiver report",
-    "possibleActions": [
+    "name_sentence_case": "hemo-tem caregiver report",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:26.482494",
+    "start_date": "2022-09-12T10:35:26.482494",
     "status": "Final",
     "uid": "ActivitySubGroup_000076",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Hyperglycaemic Episodes",
-    "nameSentenceCase": "hyperglycaemic episodes",
-    "possibleActions": [
+    "name_sentence_case": "hyperglycaemic episodes",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:26.593093",
+    "start_date": "2022-09-12T10:35:26.593093",
     "status": "Final",
     "uid": "ActivitySubGroup_000077",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "AE Requiring Additional Data",
         "uid": "ActivityGroup_000002"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Hypersensitivity Reaction",
-    "nameSentenceCase": "hypersensitivity reaction",
-    "possibleActions": [
+    "name_sentence_case": "hypersensitivity reaction",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:26.778350",
+    "start_date": "2022-09-12T10:35:26.778350",
     "status": "Final",
     "uid": "ActivitySubGroup_000078",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Hypoglycaemic Episodes",
-    "nameSentenceCase": "hypoglycaemic episodes",
-    "possibleActions": [
+    "name_sentence_case": "hypoglycaemic episodes",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:26.869612",
+    "start_date": "2022-09-12T10:35:26.869612",
     "status": "Final",
     "uid": "ActivitySubGroup_000079",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Event Adjudication",
         "uid": "ActivityGroup_000005"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Hypoglycaemic Episode",
-    "nameSentenceCase": "hypoglycaemic episode",
-    "possibleActions": [
+    "name_sentence_case": "hypoglycaemic episode",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:27.035374",
+    "start_date": "2022-09-12T10:35:27.035374",
     "status": "Final",
     "uid": "ActivitySubGroup_000080",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Urinary Incontinence - Short Form (ICIQ-UI-SF)",
-    "nameSentenceCase": "urinary incontinence - short form (iciq-ui-sf)",
-    "possibleActions": [
+    "name_sentence_case": "urinary incontinence - short form (iciq-ui-sf)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:27.331626",
+    "start_date": "2022-09-12T10:35:27.331626",
     "status": "Final",
     "uid": "ActivitySubGroup_000081",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Injection Device Experience and Acceptance IDEA V1.0)",
-    "nameSentenceCase": "injection device experience and acceptance idea v1.0)",
-    "possibleActions": [
+    "name_sentence_case": "injection device experience and acceptance idea v1.0)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:27.333983",
+    "start_date": "2022-09-12T10:35:27.333983",
     "status": "Final",
     "uid": "ActivitySubGroup_000082",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Injection Device Questionnaire",
-    "nameSentenceCase": "injection device questionnaire",
-    "possibleActions": [
+    "name_sentence_case": "injection device questionnaire",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:27.546536",
+    "start_date": "2022-09-12T10:35:27.546536",
     "status": "Final",
     "uid": "ActivitySubGroup_000083",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "AE Requiring Additional Data",
         "uid": "ActivityGroup_000002"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Infusion Site Reaction",
-    "nameSentenceCase": "infusion site reaction",
-    "possibleActions": [
+    "name_sentence_case": "infusion site reaction",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:27.628574",
+    "start_date": "2022-09-12T10:35:27.628574",
     "status": "Final",
     "uid": "ActivitySubGroup_000084",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "AE Requiring Additional Data",
         "uid": "ActivityGroup_000002"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Injection Site Reaction (Early, Mature)",
-    "nameSentenceCase": "injection site reaction (early, mature)",
-    "possibleActions": [
+    "name_sentence_case": "injection site reaction (early, mature)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:27.736455",
+    "start_date": "2022-09-12T10:35:27.736455",
     "status": "Final",
     "uid": "ActivitySubGroup_000085",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "AE Requiring Additional Data",
         "uid": "ActivityGroup_000002"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Injection Site Reaction (Extra Mature)",
-    "nameSentenceCase": "injection site reaction (extra mature)",
-    "possibleActions": [
+    "name_sentence_case": "injection site reaction (extra mature)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:27.840782",
+    "start_date": "2022-09-12T10:35:27.840782",
     "status": "Final",
     "uid": "ActivitySubGroup_000086",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "IPAQ-LF Self-Administered Version",
-    "nameSentenceCase": "ipaq-lf self-administered version",
-    "possibleActions": [
+    "name_sentence_case": "ipaq-lf self-administered version",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:28.041375",
+    "start_date": "2022-09-12T10:35:28.041375",
     "status": "Final",
     "uid": "ActivitySubGroup_000087",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Intensity of Injection Site Pain",
-    "nameSentenceCase": "intensity of injection site pain",
-    "possibleActions": [
+    "name_sentence_case": "intensity of injection site pain",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:28.199924",
+    "start_date": "2022-09-12T10:35:28.199924",
     "status": "Final",
     "uid": "ActivitySubGroup_000088",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Impact on Weight on Daily Activities (IWDAQ V1.0)",
-    "nameSentenceCase": "impact on weight on daily activities (iwdaq v1.0)",
-    "possibleActions": [
+    "name_sentence_case": "impact on weight on daily activities (iwdaq v1.0)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:28.335410",
+    "start_date": "2022-09-12T10:35:28.335410",
     "status": "Final",
     "uid": "ActivitySubGroup_000089",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Impact of Weight on QOL - Lite",
-    "nameSentenceCase": "impact of weight on qol - lite",
-    "possibleActions": [
+    "name_sentence_case": "impact of weight on qol - lite",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:28.457723",
+    "start_date": "2022-09-12T10:35:28.457723",
     "status": "Final",
     "uid": "ActivitySubGroup_000090",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Joint Pain Rating Scale",
-    "nameSentenceCase": "joint pain rating scale",
-    "possibleActions": [
+    "name_sentence_case": "joint pain rating scale",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:28.549835",
+    "start_date": "2022-09-12T10:35:28.549835",
     "status": "Final",
     "uid": "ActivitySubGroup_000091",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Kansas City Cardiomyopathy Questionnaire (KCCQ)",
-    "nameSentenceCase": "kansas city cardiomyopathy questionnaire (kccq)",
-    "possibleActions": [
+    "name_sentence_case": "kansas city cardiomyopathy questionnaire (kccq)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:28.714374",
+    "start_date": "2022-09-12T10:35:28.714374",
     "status": "Final",
     "uid": "ActivitySubGroup_000092",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Life's Simple 7",
-    "nameSentenceCase": "life's simple 7",
-    "possibleActions": [
+    "name_sentence_case": "life's simple 7",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:28.808128",
+    "start_date": "2022-09-12T10:35:28.808128",
     "status": "Final",
     "uid": "ActivitySubGroup_000093",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Life-Style Assessment",
-    "nameSentenceCase": "life-style assessment",
-    "possibleActions": [
+    "name_sentence_case": "life-style assessment",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:28.977911",
+    "start_date": "2022-09-12T10:35:28.977911",
     "status": "Final",
     "uid": "ActivitySubGroup_000094",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Montgomary and Asberg Depression Rating Scale (MADRS)",
-    "nameSentenceCase": "montgomary and asberg depression rating scale (madrs)",
-    "possibleActions": [
+    "name_sentence_case": "montgomary and asberg depression rating scale (madrs)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:29.092992",
+    "start_date": "2022-09-12T10:35:29.092992",
     "status": "Final",
     "uid": "ActivitySubGroup_000095",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "AE Requiring Additional Data",
         "uid": "ActivityGroup_000002"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Malignant Neoplasm",
-    "nameSentenceCase": "malignant neoplasm",
-    "possibleActions": [
+    "name_sentence_case": "malignant neoplasm",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:29.227040",
+    "start_date": "2022-09-12T10:35:29.227040",
     "status": "Final",
     "uid": "ActivitySubGroup_000096",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Medical History/Concomitant Illness",
-    "nameSentenceCase": "medical history/concomitant illness",
-    "possibleActions": [
+    "name_sentence_case": "medical history/concomitant illness",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:29.356652",
+    "start_date": "2022-09-12T10:35:29.356652",
     "status": "Final",
     "uid": "ActivitySubGroup_000097",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Event Adjudication",
         "uid": "ActivityGroup_000005"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Coronary Revascularisation",
-    "nameSentenceCase": "coronary revascularisation",
-    "possibleActions": [
+    "name_sentence_case": "coronary revascularisation",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:29.467385",
+    "start_date": "2022-09-12T10:35:29.467385",
     "status": "Final",
     "uid": "ActivitySubGroup_000098",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Montreal Cognitive Assessment (MoCA V7.1)",
-    "nameSentenceCase": "montreal cognitive assessment (moca v7.1)",
-    "possibleActions": [
+    "name_sentence_case": "montreal cognitive assessment (moca v7.1)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:29.554506",
+    "start_date": "2022-09-12T10:35:29.554506",
     "status": "Final",
     "uid": "ActivitySubGroup_000099",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "NASH-CHECK V1.0",
-    "nameSentenceCase": "nash-check v1.0",
-    "possibleActions": [
+    "name_sentence_case": "nash-check v1.0",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:29.784210",
+    "start_date": "2022-09-12T10:35:29.784210",
     "status": "Final",
     "uid": "ActivitySubGroup_000100",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "AE Requiring Additional Data",
         "uid": "ActivityGroup_000002"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Neoplasm",
-    "nameSentenceCase": "neoplasm",
-    "possibleActions": [
+    "name_sentence_case": "neoplasm",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:30.033236",
+    "start_date": "2022-09-12T10:35:30.033236",
     "status": "Final",
     "uid": "ActivitySubGroup_000101",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "AE Requiring Additional Data",
         "uid": "ActivityGroup_000002"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Malignant Neoplasm/Neoplasm",
-    "nameSentenceCase": "malignant neoplasm/neoplasm",
-    "possibleActions": [
+    "name_sentence_case": "malignant neoplasm/neoplasm",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:30.187315",
+    "start_date": "2022-09-12T10:35:30.187315",
     "status": "Final",
     "uid": "ActivitySubGroup_000102",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Neuropathy Impairment Score",
-    "nameSentenceCase": "neuropathy impairment score",
-    "possibleActions": [
+    "name_sentence_case": "neuropathy impairment score",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:30.341931",
+    "start_date": "2022-09-12T10:35:30.341931",
     "status": "Final",
     "uid": "ActivitySubGroup_000103",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Non-Motor Symptom Assesment Scale (NMSS)",
-    "nameSentenceCase": "non-motor symptom assesment scale (nmss)",
-    "possibleActions": [
+    "name_sentence_case": "non-motor symptom assesment scale (nmss)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:30.474343",
+    "start_date": "2022-09-12T10:35:30.474343",
     "status": "Final",
     "uid": "ActivitySubGroup_000104",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Occupation",
-    "nameSentenceCase": "occupation",
-    "possibleActions": [
+    "name_sentence_case": "occupation",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:30.639071",
+    "start_date": "2022-09-12T10:35:30.639071",
     "status": "Final",
     "uid": "ActivitySubGroup_000105",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Eye Examination",
-    "nameSentenceCase": "eye examination",
-    "possibleActions": [
+    "name_sentence_case": "eye examination",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:30.718384",
+    "start_date": "2022-09-12T10:35:30.718384",
     "status": "Final",
     "uid": "ActivitySubGroup_000106",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Pain Rating",
-    "nameSentenceCase": "pain rating",
-    "possibleActions": [
+    "name_sentence_case": "pain rating",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:30.841115",
+    "start_date": "2022-09-12T10:35:30.841115",
     "status": "Final",
     "uid": "ActivitySubGroup_000107",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Intensity of Pump Infusion Site Pain",
-    "nameSentenceCase": "intensity of pump infusion site pain",
-    "possibleActions": [
+    "name_sentence_case": "intensity of pump infusion site pain",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:30.945614",
+    "start_date": "2022-09-12T10:35:30.945614",
     "status": "Final",
     "uid": "ActivitySubGroup_000108",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Pain Rating VOC",
-    "nameSentenceCase": "pain rating voc",
-    "possibleActions": [
+    "name_sentence_case": "pain rating voc",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:31.133066",
+    "start_date": "2022-09-12T10:35:31.133066",
     "status": "Final",
     "uid": "ActivitySubGroup_000109",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "AE Requiring Additional Data",
         "uid": "ActivityGroup_000002"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Pancreatitis",
-    "nameSentenceCase": "pancreatitis",
-    "possibleActions": [
+    "name_sentence_case": "pancreatitis",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:31.310363",
+    "start_date": "2022-09-12T10:35:31.310363",
     "status": "Final",
     "uid": "ActivitySubGroup_000110",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PROTECT Cognitive Test",
-    "nameSentenceCase": "protect cognitive test",
-    "possibleActions": [
+    "name_sentence_case": "protect cognitive test",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:31.407821",
+    "start_date": "2022-09-12T10:35:31.407821",
     "status": "Final",
     "uid": "ActivitySubGroup_000111",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Parkinson's Disease Questionnaire (PDQ-39)",
-    "nameSentenceCase": "parkinson's disease questionnaire (pdq-39)",
-    "possibleActions": [
+    "name_sentence_case": "parkinson's disease questionnaire (pdq-39)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:31.562439",
+    "start_date": "2022-09-12T10:35:31.562439",
     "status": "Final",
     "uid": "ActivitySubGroup_000112",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Parkinson's Disease Sleep Scale (PDSS-2)",
-    "nameSentenceCase": "parkinson's disease sleep scale (pdss-2)",
-    "possibleActions": [
+    "name_sentence_case": "parkinson's disease sleep scale (pdss-2)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:31.684031",
+    "start_date": "2022-09-12T10:35:31.684031",
     "status": "Final",
     "uid": "ActivitySubGroup_000113",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Pen-Injector Use Error",
-    "nameSentenceCase": "pen-injector use error",
-    "possibleActions": [
+    "name_sentence_case": "pen-injector use error",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:31.768346",
+    "start_date": "2022-09-12T10:35:31.768346",
     "status": "Final",
     "uid": "ActivitySubGroup_000114",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Status-Physical Functioning",
-    "nameSentenceCase": "pgi status-physical functioning",
-    "possibleActions": [
+    "name_sentence_case": "pgi status-physical functioning",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:31.893671",
+    "start_date": "2022-09-12T10:35:31.893671",
     "status": "Final",
     "uid": "ActivitySubGroup_000115",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Severity-Physical Functioning",
-    "nameSentenceCase": "pgi severity-physical functioning",
-    "possibleActions": [
+    "name_sentence_case": "pgi severity-physical functioning",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:32.064486",
+    "start_date": "2022-09-12T10:35:32.064486",
     "status": "Final",
     "uid": "ActivitySubGroup_000116",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Change-Physical Functioning",
-    "nameSentenceCase": "pgi change-physical functioning",
-    "possibleActions": [
+    "name_sentence_case": "pgi change-physical functioning",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:32.153366",
+    "start_date": "2022-09-12T10:35:32.153366",
     "status": "Final",
     "uid": "ActivitySubGroup_000117",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Status-Walk Quickly",
-    "nameSentenceCase": "pgi status-walk quickly",
-    "possibleActions": [
+    "name_sentence_case": "pgi status-walk quickly",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:32.321317",
+    "start_date": "2022-09-12T10:35:32.321317",
     "status": "Final",
     "uid": "ActivitySubGroup_000118",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Change-Walk Quickly",
-    "nameSentenceCase": "pgi change-walk quickly",
-    "possibleActions": [
+    "name_sentence_case": "pgi change-walk quickly",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:32.499296",
+    "start_date": "2022-09-12T10:35:32.499296",
     "status": "Final",
     "uid": "ActivitySubGroup_000119",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Severity-Symptoms",
-    "nameSentenceCase": "pgi severity-symptoms",
-    "possibleActions": [
+    "name_sentence_case": "pgi severity-symptoms",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:32.548733",
+    "start_date": "2022-09-12T10:35:32.548733",
     "status": "Final",
     "uid": "ActivitySubGroup_000120",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Status-Symptoms",
-    "nameSentenceCase": "pgi status-symptoms",
-    "possibleActions": [
+    "name_sentence_case": "pgi status-symptoms",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:32.713738",
+    "start_date": "2022-09-12T10:35:32.713738",
     "status": "Final",
     "uid": "ActivitySubGroup_000121",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Change-Symptoms",
-    "nameSentenceCase": "pgi change-symptoms",
-    "possibleActions": [
+    "name_sentence_case": "pgi change-symptoms",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:32.898504",
+    "start_date": "2022-09-12T10:35:32.898504",
     "status": "Final",
     "uid": "ActivitySubGroup_000122",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Change-Impact on Life",
-    "nameSentenceCase": "pgi change-impact on life",
-    "possibleActions": [
+    "name_sentence_case": "pgi change-impact on life",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:33.198550",
+    "start_date": "2022-09-12T10:35:33.198550",
     "status": "Final",
     "uid": "ActivitySubGroup_000123",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Status-Ability Things Needed",
-    "nameSentenceCase": "pgi status-ability things needed",
-    "possibleActions": [
+    "name_sentence_case": "pgi status-ability things needed",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:33.374614",
+    "start_date": "2022-09-12T10:35:33.374614",
     "status": "Final",
     "uid": "ActivitySubGroup_000124",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Change-Ability Things Need",
-    "nameSentenceCase": "pgi change-ability things need",
-    "possibleActions": [
+    "name_sentence_case": "pgi change-ability things need",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:33.573711",
+    "start_date": "2022-09-12T10:35:33.573711",
     "status": "Final",
     "uid": "ActivitySubGroup_000125",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Status-Ability Things Would Like",
-    "nameSentenceCase": "pgi status-ability things would like",
-    "possibleActions": [
+    "name_sentence_case": "pgi status-ability things would like",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:33.671162",
+    "start_date": "2022-09-12T10:35:33.671162",
     "status": "Final",
     "uid": "ActivitySubGroup_000126",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Change-Ability Things Would Like",
-    "nameSentenceCase": "pgi change-ability things would like",
-    "possibleActions": [
+    "name_sentence_case": "pgi change-ability things would like",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:33.815970",
+    "start_date": "2022-09-12T10:35:33.815970",
     "status": "Final",
     "uid": "ActivitySubGroup_000127",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Status-Ability to Walk",
-    "nameSentenceCase": "pgi status-ability to walk",
-    "possibleActions": [
+    "name_sentence_case": "pgi status-ability to walk",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:33.954069",
+    "start_date": "2022-09-12T10:35:33.954069",
     "status": "Final",
     "uid": "ActivitySubGroup_000128",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Change-Ability to Walk",
-    "nameSentenceCase": "pgi change-ability to walk",
-    "possibleActions": [
+    "name_sentence_case": "pgi change-ability to walk",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:34.133710",
+    "start_date": "2022-09-12T10:35:34.133710",
     "status": "Final",
     "uid": "ActivitySubGroup_000129",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Severity-Quality of Life",
-    "nameSentenceCase": "pgi severity-quality of life",
-    "possibleActions": [
+    "name_sentence_case": "pgi severity-quality of life",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:34.358907",
+    "start_date": "2022-09-12T10:35:34.358907",
     "status": "Final",
     "uid": "ActivitySubGroup_000130",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Change-Quality of Life",
-    "nameSentenceCase": "pgi change-quality of life",
-    "possibleActions": [
+    "name_sentence_case": "pgi change-quality of life",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:34.472482",
+    "start_date": "2022-09-12T10:35:34.472482",
     "status": "Final",
     "uid": "ActivitySubGroup_000131",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Status-Knee Pain",
-    "nameSentenceCase": "pgi status-knee pain",
-    "possibleActions": [
+    "name_sentence_case": "pgi status-knee pain",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:34.573809",
+    "start_date": "2022-09-12T10:35:34.573809",
     "status": "Final",
     "uid": "ActivitySubGroup_000132",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Change-Knee Pain",
-    "nameSentenceCase": "pgi change-knee pain",
-    "possibleActions": [
+    "name_sentence_case": "pgi change-knee pain",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:34.668976",
+    "start_date": "2022-09-12T10:35:34.668976",
     "status": "Final",
     "uid": "ActivitySubGroup_000133",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Status-Pain",
-    "nameSentenceCase": "pgi status-pain",
-    "possibleActions": [
+    "name_sentence_case": "pgi status-pain",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:34.885051",
+    "start_date": "2022-09-12T10:35:34.885051",
     "status": "Final",
     "uid": "ActivitySubGroup_000134",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Change-Pain",
-    "nameSentenceCase": "pgi change-pain",
-    "possibleActions": [
+    "name_sentence_case": "pgi change-pain",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:34.976631",
+    "start_date": "2022-09-12T10:35:34.976631",
     "status": "Final",
     "uid": "ActivitySubGroup_000135",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Status-Energy",
-    "nameSentenceCase": "pgi status-energy",
-    "possibleActions": [
+    "name_sentence_case": "pgi status-energy",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:35.075947",
+    "start_date": "2022-09-12T10:35:35.075947",
     "status": "Final",
     "uid": "ActivitySubGroup_000136",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Change-Energy",
-    "nameSentenceCase": "pgi change-energy",
-    "possibleActions": [
+    "name_sentence_case": "pgi change-energy",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:35.178614",
+    "start_date": "2022-09-12T10:35:35.178614",
     "status": "Final",
     "uid": "ActivitySubGroup_000137",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Status-Feel Mentally",
-    "nameSentenceCase": "pgi status-feel mentally",
-    "possibleActions": [
+    "name_sentence_case": "pgi status-feel mentally",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:35.386809",
+    "start_date": "2022-09-12T10:35:35.386809",
     "status": "Final",
     "uid": "ActivitySubGroup_000138",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Change-Feel Mentally",
-    "nameSentenceCase": "pgi change-feel mentally",
-    "possibleActions": [
+    "name_sentence_case": "pgi change-feel mentally",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:35.570455",
+    "start_date": "2022-09-12T10:35:35.570455",
     "status": "Final",
     "uid": "ActivitySubGroup_000139",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Status-Diabetes Severity",
-    "nameSentenceCase": "pgi status-diabetes severity",
-    "possibleActions": [
+    "name_sentence_case": "pgi status-diabetes severity",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:35.712548",
+    "start_date": "2022-09-12T10:35:35.712548",
     "status": "Final",
     "uid": "ActivitySubGroup_000140",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Change-Diabetes Severity",
-    "nameSentenceCase": "pgi change-diabetes severity",
-    "possibleActions": [
+    "name_sentence_case": "pgi change-diabetes severity",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:35.832107",
+    "start_date": "2022-09-12T10:35:35.832107",
     "status": "Final",
     "uid": "ActivitySubGroup_000141",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Change-Joint Pain",
-    "nameSentenceCase": "pgi change-joint pain",
-    "possibleActions": [
+    "name_sentence_case": "pgi change-joint pain",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:36.023139",
+    "start_date": "2022-09-12T10:35:36.023139",
     "status": "Final",
     "uid": "ActivitySubGroup_000142",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PGI Status-Physical Activity",
-    "nameSentenceCase": "pgi status-physical activity",
-    "possibleActions": [
+    "name_sentence_case": "pgi status-physical activity",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:36.150355",
+    "start_date": "2022-09-12T10:35:36.150355",
     "status": "Final",
     "uid": "ActivitySubGroup_000143",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PedHAL Children's/Teenagers' Version V0.12",
-    "nameSentenceCase": "pedhal children's/teenagers' version v0.12",
-    "possibleActions": [
+    "name_sentence_case": "pedhal children's/teenagers' version v0.12",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:36.300866",
+    "start_date": "2022-09-12T10:35:36.300866",
     "status": "Final",
     "uid": "ActivitySubGroup_000144",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PedHAL Parents' Version V0.12",
-    "nameSentenceCase": "pedhal parents' version v0.12",
-    "possibleActions": [
+    "name_sentence_case": "pedhal parents' version v0.12",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:36.456960",
+    "start_date": "2022-09-12T10:35:36.456960",
     "status": "Final",
     "uid": "ActivitySubGroup_000145",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Patient Interest Assessment",
-    "nameSentenceCase": "patient interest assessment",
-    "possibleActions": [
+    "name_sentence_case": "patient interest assessment",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:36.576182",
+    "start_date": "2022-09-12T10:35:36.576182",
     "status": "Final",
     "uid": "ActivitySubGroup_000146",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Work Productivity and Impairment Questionnaire (WPAI-SHP V2.0)",
-    "nameSentenceCase": "work productivity and impairment questionnaire (wpai-shp v2.0)",
-    "possibleActions": [
+    "name_sentence_case": "work productivity and impairment questionnaire (wpai-shp v2.0)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:36.700964",
+    "start_date": "2022-09-12T10:35:36.700964",
     "status": "Final",
     "uid": "ActivitySubGroup_000147",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PedsQL Acute Young Adult V4",
-    "nameSentenceCase": "pedsql acute young adult v4",
-    "possibleActions": [
+    "name_sentence_case": "pedsql acute young adult v4",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:36.856864",
+    "start_date": "2022-09-12T10:35:36.856864",
     "status": "Final",
     "uid": "ActivitySubGroup_000148",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PedsQL Acute Teen V4",
-    "nameSentenceCase": "pedsql acute teen v4",
-    "possibleActions": [
+    "name_sentence_case": "pedsql acute teen v4",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:37.024216",
+    "start_date": "2022-09-12T10:35:37.024216",
     "status": "Final",
     "uid": "ActivitySubGroup_000149",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PedsQL Acute Adult V4",
-    "nameSentenceCase": "pedsql acute adult v4",
-    "possibleActions": [
+    "name_sentence_case": "pedsql acute adult v4",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:37.303447",
+    "start_date": "2022-09-12T10:35:37.303447",
     "status": "Final",
     "uid": "ActivitySubGroup_000150",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PedsQL Acute Young Children Parent V4",
-    "nameSentenceCase": "pedsql acute young children parent v4",
-    "possibleActions": [
+    "name_sentence_case": "pedsql acute young children parent v4",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:37.351193",
+    "start_date": "2022-09-12T10:35:37.351193",
     "status": "Final",
     "uid": "ActivitySubGroup_000151",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PedsQL Acute Children Parent Report V4",
-    "nameSentenceCase": "pedsql acute children parent report v4",
-    "possibleActions": [
+    "name_sentence_case": "pedsql acute children parent report v4",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:37.512161",
+    "start_date": "2022-09-12T10:35:37.512161",
     "status": "Final",
     "uid": "ActivitySubGroup_000152",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Pregnancy Test",
-    "nameSentenceCase": "pregnancy test",
-    "possibleActions": [
+    "name_sentence_case": "pregnancy test",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:37.627723",
+    "start_date": "2022-09-12T10:35:37.627723",
     "status": "Final",
     "uid": "ActivitySubGroup_000153",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PROMIS Short Form V1.0 - Fatigue 8a",
-    "nameSentenceCase": "promis short form v1.0 - fatigue 8a",
-    "possibleActions": [
+    "name_sentence_case": "promis short form v1.0 - fatigue 8a",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:37.723641",
+    "start_date": "2022-09-12T10:35:37.723641",
     "status": "Final",
     "uid": "ActivitySubGroup_000154",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "PROMIS SF - Fatique 7a V1.0",
-    "nameSentenceCase": "promis sf - fatique 7a v1.0",
-    "possibleActions": [
+    "name_sentence_case": "promis sf - fatique 7a v1.0",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:37.829351",
+    "start_date": "2022-09-12T10:35:37.829351",
     "status": "Final",
     "uid": "ActivitySubGroup_000155",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Parent Treatment Burden Injection",
-    "nameSentenceCase": "parent treatment burden injection",
-    "possibleActions": [
+    "name_sentence_case": "parent treatment burden injection",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:38.037209",
+    "start_date": "2022-09-12T10:35:38.037209",
     "status": "Final",
     "uid": "ActivitySubGroup_000156",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Randomisation",
-    "nameSentenceCase": "randomisation",
-    "possibleActions": [
+    "name_sentence_case": "randomisation",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:38.151322",
+    "start_date": "2022-09-12T10:35:38.151322",
     "status": "Final",
     "uid": "ActivitySubGroup_000157",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Rush Dyskinesia Rating Scale (RDRS)",
-    "nameSentenceCase": "rush dyskinesia rating scale (rdrs)",
-    "possibleActions": [
+    "name_sentence_case": "rush dyskinesia rating scale (rdrs)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:38.365486",
+    "start_date": "2022-09-12T10:35:38.365486",
     "status": "Final",
     "uid": "ActivitySubGroup_000158",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "SF10 Health Survey for Children - Standard V1.0",
-    "nameSentenceCase": "sf10 health survey for children - standard v1.0",
-    "possibleActions": [
+    "name_sentence_case": "sf10 health survey for children - standard v1.0",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:38.610634",
+    "start_date": "2022-09-12T10:35:38.610634",
     "status": "Final",
     "uid": "ActivitySubGroup_000159",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Short-Form McGill Pain Questionnaire-2",
-    "nameSentenceCase": "short-form mcgill pain questionnaire-2",
-    "possibleActions": [
+    "name_sentence_case": "short-form mcgill pain questionnaire-2",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:38.767994",
+    "start_date": "2022-09-12T10:35:38.767994",
     "status": "Final",
     "uid": "ActivitySubGroup_000160",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "SPFQ V1.0",
-    "nameSentenceCase": "spfq v1.0",
-    "possibleActions": [
+    "name_sentence_case": "spfq v1.0",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:38.980340",
+    "start_date": "2022-09-12T10:35:38.980340",
     "status": "Final",
     "uid": "ActivitySubGroup_000161",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Stanford Presenteeism Scale (SPS-6)",
-    "nameSentenceCase": "stanford presenteeism scale (sps-6)",
-    "possibleActions": [
+    "name_sentence_case": "stanford presenteeism scale (sps-6)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:39.062006",
+    "start_date": "2022-09-12T10:35:39.062006",
     "status": "Final",
     "uid": "ActivitySubGroup_000162",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Child Treatment Burden (TB-CGHD-O)",
-    "nameSentenceCase": "child treatment burden (tb-cghd-o)",
-    "possibleActions": [
+    "name_sentence_case": "child treatment burden (tb-cghd-o)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:39.166527",
+    "start_date": "2022-09-12T10:35:39.166527",
     "status": "Final",
     "uid": "ActivitySubGroup_000163",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Parent Treatment Burden (TB-CGHD-P 8 Items)",
-    "nameSentenceCase": "parent treatment burden (tb-cghd-p 8 items)",
-    "possibleActions": [
+    "name_sentence_case": "parent treatment burden (tb-cghd-p 8 items)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:39.280614",
+    "start_date": "2022-09-12T10:35:39.280614",
     "status": "Final",
     "uid": "ActivitySubGroup_000164",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Technical Complaints",
-    "nameSentenceCase": "technical complaints",
-    "possibleActions": [
+    "name_sentence_case": "technical complaints",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:39.425699",
+    "start_date": "2022-09-12T10:35:39.425699",
     "status": "Final",
     "uid": "ActivitySubGroup_000165",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Three Factor Eating Questionnaire - R18 V2",
-    "nameSentenceCase": "three factor eating questionnaire - r18 v2",
-    "possibleActions": [
+    "name_sentence_case": "three factor eating questionnaire - r18 v2",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:39.545172",
+    "start_date": "2022-09-12T10:35:39.545172",
     "status": "Final",
     "uid": "ActivitySubGroup_000166",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Treadmill Test",
-    "nameSentenceCase": "treadmill test",
-    "possibleActions": [
+    "name_sentence_case": "treadmill test",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:39.668322",
+    "start_date": "2022-09-12T10:35:39.668322",
     "status": "Final",
     "uid": "ActivitySubGroup_000167",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Event Adjudication",
         "uid": "ActivityGroup_000005"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Cerebrovascular Event",
-    "nameSentenceCase": "cerebrovascular event",
-    "possibleActions": [
+    "name_sentence_case": "cerebrovascular event",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:39.794029",
+    "start_date": "2022-09-12T10:35:39.794029",
     "status": "Final",
     "uid": "ActivitySubGroup_000168",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Treating Physician Practice / Speciality",
-    "nameSentenceCase": "treating physician practice / speciality",
-    "possibleActions": [
+    "name_sentence_case": "treating physician practice / speciality",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:39.931998",
+    "start_date": "2022-09-12T10:35:39.931998",
     "status": "Final",
     "uid": "ActivitySubGroup_000169",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "General",
         "uid": "ActivityGroup_000001"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "End of IMP Treatment",
-    "nameSentenceCase": "end of imp treatment",
-    "possibleActions": [
+    "name_sentence_case": "end of imp treatment",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:40.068773",
+    "start_date": "2022-09-12T10:35:40.068773",
     "status": "Final",
     "uid": "ActivitySubGroup_000170",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Treatment Satisfaction Questionnaire for Medication (TSQM-9)",
-    "nameSentenceCase": "treatment satisfaction questionnaire for medication (tsqm-9)",
-    "possibleActions": [
+    "name_sentence_case": "treatment satisfaction questionnaire for medication (tsqm-9)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:40.203965",
+    "start_date": "2022-09-12T10:35:40.203965",
     "status": "Final",
     "uid": "ActivitySubGroup_000171",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "MDS Unified Parkinson's Disease Rating Scale (UPDRS)",
-    "nameSentenceCase": "mds unified parkinson's disease rating scale (updrs)",
-    "possibleActions": [
+    "name_sentence_case": "mds unified parkinson's disease rating scale (updrs)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:40.325874",
+    "start_date": "2022-09-12T10:35:40.325874",
     "status": "Final",
     "uid": "ActivitySubGroup_000172",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "VascuQoL-6 Questionnaire (VascuQoL-6)",
-    "nameSentenceCase": "vascuqol-6 questionnaire (vascuqol-6)",
-    "possibleActions": [
+    "name_sentence_case": "vascuqol-6 questionnaire (vascuqol-6)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:40.438818",
+    "start_date": "2022-09-12T10:35:40.438818",
     "status": "Final",
     "uid": "ActivitySubGroup_000173",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Walking Impairment Questionnaire (WIQ)",
-    "nameSentenceCase": "walking impairment questionnaire (wiq)",
-    "possibleActions": [
+    "name_sentence_case": "walking impairment questionnaire (wiq)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:40.452318",
+    "start_date": "2022-09-12T10:35:40.452318",
     "status": "Final",
     "uid": "ActivitySubGroup_000174",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Work Limitations Questionnaire Self-Administered Long-Form (WLQ)",
-    "nameSentenceCase": "work limitations questionnaire self-administered long-form (wlq)",
-    "possibleActions": [
+    "name_sentence_case": "work limitations questionnaire self-administered long-form (wlq)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:40.518635",
+    "start_date": "2022-09-12T10:35:40.518635",
     "status": "Final",
     "uid": "ActivitySubGroup_000175",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "WOMAC Osteoarthritis (WOMAC NRS 3.1 Index)",
-    "nameSentenceCase": "womac osteoarthritis (womac nrs 3.1 index)",
-    "possibleActions": [
+    "name_sentence_case": "womac osteoarthritis (womac nrs 3.1 index)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:40.702738",
+    "start_date": "2022-09-12T10:35:40.702738",
     "status": "Final",
     "uid": "ActivitySubGroup_000176",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Work Productivity and Impairment Questionnaire (WPAI-GH V2.0)",
-    "nameSentenceCase": "work productivity and impairment questionnaire (wpai-gh v2.0)",
-    "possibleActions": [
+    "name_sentence_case": "work productivity and impairment questionnaire (wpai-gh v2.0)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:40.701444",
+    "start_date": "2022-09-12T10:35:40.701444",
     "status": "Final",
     "uid": "ActivitySubGroup_000177",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Weight Related Sign and Symptom Measure (WRSS V2.0)",
-    "nameSentenceCase": "weight related sign and symptom measure (wrss v2.0)",
-    "possibleActions": [
+    "name_sentence_case": "weight related sign and symptom measure (wrss v2.0)",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:40.716191",
+    "start_date": "2022-09-12T10:35:40.716191",
     "status": "Final",
     "uid": "ActivitySubGroup_000178",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Clinical Outcome Assessments",
         "uid": "ActivityGroup_000003"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Sickle Cell Disease Work Study Impact",
-    "nameSentenceCase": "sickle cell disease work study impact",
-    "possibleActions": [
+    "name_sentence_case": "sickle cell disease work study impact",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-12T10:35:40.776491",
+    "start_date": "2022-09-12T10:35:40.776491",
     "status": "Final",
     "uid": "ActivitySubGroup_000179",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   }
 ]

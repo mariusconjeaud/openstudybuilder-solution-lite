@@ -17,7 +17,7 @@ export default {
     return repository.post(`${resource}/${source}/${uid}/inactivate`)
   },
   newVersion (source, uid) {
-    return repository.post(`${resource}/${source}/${uid}/new-version`)
+    return repository.post(`${resource}/${source}/${uid}/versions`)
   },
   approve (source, uid) {
     return repository.post(`${resource}/${source}/${uid}/approve`)
@@ -26,10 +26,10 @@ export default {
     return repository.delete(`${resource}/${source}/${uid}`)
   },
   createForm (data) {
-    return repository.post(`${resource}/forms/create`, data)
+    return repository.post(`${resource}/forms`, data)
   },
   updateForm (data, uid) {
-    return repository.patch(`${resource}/forms/${uid}/update`, data)
+    return repository.patch(`${resource}/forms/${uid}`, data)
   },
   batchCreateDescription (data) {
     return repository.post(`${resource}/descriptions/batch`, data)
@@ -44,13 +44,16 @@ export default {
     return repository.get(`${resource}/forms/${uid}`)
   },
   createItemGroup (data) {
-    return repository.post(`${resource}/item-groups/create`, data)
+    return repository.post(`${resource}/item-groups`, data)
   },
   updateItemGroup (data, uid) {
-    return repository.patch(`${resource}/item-groups/${uid}/update`, data)
+    return repository.patch(`${resource}/item-groups/${uid}`, data)
   },
   getItemGroup (uid) {
     return repository.get(`${resource}/item-groups/${uid}`)
+  },
+  getTemplateAuditTrail (uid) {
+    return repository.get(`${resource}/templates/${uid}/versions`)
   },
   getFormAuditTrail (uid) {
     return repository.get(`${resource}/forms/${uid}/versions`)
@@ -59,10 +62,10 @@ export default {
     return repository.get(`${resource}/item-groups/${uid}/versions`)
   },
   createItem (data) {
-    return repository.post(`${resource}/items/create`, data)
+    return repository.post(`${resource}/items`, data)
   },
   updateItem (data, uid) {
-    return repository.patch(`${resource}/items/${uid}/update`, data)
+    return repository.patch(`${resource}/items/${uid}`, data)
   },
   getItem (uid) {
     return repository.get(`${resource}/items/${uid}`)
@@ -80,13 +83,13 @@ export default {
     return repository.patch(`${resource}/templates/${uid}`, data)
   },
   addFormsToTemplate (data, uid, sync) {
-    return repository.post(`${resource}/templates/${uid}/add-forms?override=${sync}`, data)
+    return repository.post(`${resource}/templates/${uid}/forms?override=${sync}`, data)
   },
   addItemGroupsToForm (data, uid, sync) {
-    return repository.post(`${resource}/forms/${uid}/add-item-groups?override=${sync}`, data)
+    return repository.post(`${resource}/forms/${uid}/item-groups?override=${sync}`, data)
   },
   addItemsToItemGroup (data, uid, sync) {
-    return repository.post(`${resource}/item-groups/${uid}/add-items?override=${sync}`, data)
+    return repository.post(`${resource}/item-groups/${uid}/items?override=${sync}`, data)
   },
   overwriteFormsInTemplate (data, uid) {
     return repository.post(`${resource}/templates/${uid}/forms`, data)
@@ -98,19 +101,16 @@ export default {
     return repository.post(`${resource}/item-groups/${uid}/items`, data)
   },
   addActivityGroupsToForm (data, uid) {
-    return repository.post(`${resource}/forms/${uid}/add-activity-groups?override=true`, data)
+    return repository.post(`${resource}/forms/${uid}/activity-groups?override=true`, data)
   },
   addActivitySubGroupsToItemGroup (data, uid) {
-    return repository.post(`${resource}/item-groups/${uid}/add-activity-sub-groups?override=true`, data)
+    return repository.post(`${resource}/item-groups/${uid}/activity-sub-groups?override=true`, data)
   },
   addActivitiesToItem (data, uid) {
-    return repository.post(`${resource}/items/${uid}/add-activities?override=true`, data)
+    return repository.post(`${resource}/items/${uid}/activities?override=true`, data)
   },
   getXml (params) {
-    return repository.get(`${resource}/metadata/xmls`, { params: params, responseType: 'document' })
-  },
-  getXmlToDownload (params) {
-    return repository.get(`${resource}/metadata/xmls`, { params })
+    return repository.post(`${resource}/metadata/xmls/export?target_uid=${params.target_uid}&target_type=${params.target_type}&export_to=${params.export_to}&stylesheet=${params.stylesheet}&status=${params.status}`)
   },
   getAllAliases (params) {
     return repository.get(`${resource}/aliases`, { params })
@@ -143,10 +143,10 @@ export default {
     return repository.get(`${resource}/conditions`, { params })
   },
   createCondition (data) {
-    return repository.post(`${resource}/conditions/create`, data)
+    return repository.post(`${resource}/conditions`, data)
   },
   editCondition (uid, data) {
-    return repository.patch(`${resource}/conditions/${uid}/update`, data)
+    return repository.patch(`${resource}/conditions/${uid}`, data)
   },
   deleteCondition (uid) {
     return repository.delete(`${resource}/conditions/${uid}`)
@@ -159,5 +159,11 @@ export default {
   },
   getItemRelationship (uid) {
     return repository.get(`${resource}/items/${uid}/relationships`)
+  },
+  getCrfForms () {
+    return repository.get(`${resource}/forms/templates`)
+  },
+  getCrfGroups () {
+    return repository.get(`${resource}/item-groups/forms`)
   }
 }

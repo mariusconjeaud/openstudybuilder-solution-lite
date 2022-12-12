@@ -20,6 +20,6 @@ class ActivityInstructionService(GenericObjectService[ActivityInstructionAR]):
     aggregate_class = ActivityInstructionAR
     repository_interface = ActivityInstructionRepository
     template_repository_interface = ActivityDescriptionTemplateRepository
-    templateUidProperty = "activityInstructionTemplateUid"
-    templateNameProperty = "activityInstructionTemplate"
+    template_uid_property = "activity_instruction_template_uid"
+    template_name_property = "activity_instruction_template"
     version_class = models.ActivityInstructionVersion

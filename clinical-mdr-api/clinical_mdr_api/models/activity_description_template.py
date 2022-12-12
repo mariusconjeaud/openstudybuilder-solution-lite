@@ -28,7 +28,7 @@ class ActivityDescriptionTemplateName(BaseModel):
         None,
         description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
     )
-    namePlain: Optional[str] = Field(
+    name_plain: Optional[str] = Field(
         None,
         description="The plain text version of the name property, stripped of HTML tags",
     )
@@ -41,16 +41,16 @@ class ActivityDescriptionTemplateNameUid(ActivityDescriptionTemplateName):
 
 
 class ActivityDescriptionTemplate(ActivityDescriptionTemplateNameUid):
-    editableInstance: bool = Field(
+    editable_instance: bool = Field(
         ...,
         description="Indicates if the name of this template's instances can be edited.",
     )
-    startDate: Optional[datetime] = Field(
+    start_date: Optional[datetime] = Field(
         default_factory=datetime.utcnow,
         description="Part of the metadata: The point in time when the (version of the) activity description template was created. "
         "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
     )
-    endDate: Optional[datetime] = Field(
+    end_date: Optional[datetime] = Field(
         default_factory=datetime.utcnow,
         description="""Part of the metadata: The point in time when the version of
         the activity description template was closed (and a new one was created). """
@@ -66,28 +66,28 @@ class ActivityDescriptionTemplate(ActivityDescriptionTemplateNameUid):
         description="The version number of the (version of the) activity description template. "
         "The format is: <major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0', ...",
     )
-    changeDescription: Optional[str] = Field(
+    change_description: Optional[str] = Field(
         None,
         description="A short description about what has changed compared to the previous version.",
     )
-    userInitials: Optional[str] = Field(
+    user_initials: Optional[str] = Field(
         None,
         description="The initials of the user that triggered the change of the activity description template.",
     )
 
     # TODO use the standard _link/name approach
-    possibleActions: Optional[List[str]] = Field(
+    possible_actions: Optional[List[str]] = Field(
         None,
         description=(
             "Holds those actions that can be performed on the activity description template. "
-            "Actions are: 'approve', 'edit', 'newVersion', 'inactivate', 'reactivate' and 'delete'."
+            "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
         ),
     )
     parameters: Optional[List[TemplateParameter]] = Field(
         None,
         description="Those parameters that are used by the activity description template.",
     )
-    defaultParameterValues: Optional[
+    default_parameter_values: Optional[
         Dict[int, List[MultiTemplateParameterValue]]
     ] = Field(
         None,
@@ -107,14 +107,14 @@ class ActivityDescriptionTemplate(ActivityDescriptionTemplateNameUid):
     activities: Optional[List[Activity]] = Field(
         None, description="The activities in scope for the template"
     )
-    activityGroups: Optional[List[ActivityGroup]] = Field(
+    activity_groups: Optional[List[ActivityGroup]] = Field(
         None, description="The activity groups in scope for the template"
     )
-    activitySubGroups: Optional[List[ActivitySubGroup]] = Field(
+    activity_subgroups: Optional[List[ActivitySubGroup]] = Field(
         None, description="The activity sub groups in scope for the template"
     )
 
-    studyCount: Optional[int] = Field(
+    study_count: Optional[int] = Field(
         None, description="Count of studies referencing template"
     )
 
@@ -159,16 +159,16 @@ class ActivityDescriptionTemplate(ActivityDescriptionTemplateNameUid):
 
         return cls(
             uid=activity_description_template_ar.uid,
-            editableInstance=activity_description_template_ar.editable_instance,
+            editable_instance=activity_description_template_ar.editable_instance,
             name=activity_description_template_ar.name,
-            namePlain=activity_description_template_ar.name_plain,
-            startDate=activity_description_template_ar.item_metadata.start_date,
-            endDate=activity_description_template_ar.item_metadata.end_date,
+            name_plain=activity_description_template_ar.name_plain,
+            start_date=activity_description_template_ar.item_metadata.start_date,
+            end_date=activity_description_template_ar.item_metadata.end_date,
             status=activity_description_template_ar.item_metadata.status.value,
             version=activity_description_template_ar.item_metadata.version,
-            changeDescription=activity_description_template_ar.item_metadata.change_description,
-            userInitials=activity_description_template_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=activity_description_template_ar.item_metadata.change_description,
+            user_initials=activity_description_template_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 [
                     _.value
                     for _ in activity_description_template_ar.get_possible_actions()
@@ -191,24 +191,24 @@ class ActivityDescriptionTemplate(ActivityDescriptionTemplateNameUid):
             ]
             if activity_description_template_ar.activities
             else None,
-            activityGroups=[
+            activity_groups=[
                 ActivityGroup.from_activity_ar(group)
                 for group in activity_description_template_ar.activity_groups
             ]
             if activity_description_template_ar.activity_groups
             else None,
-            activitySubGroups=[
+            activity_subgroups=[
                 ActivitySubGroup.from_activity_ar(group, find_activity_group_by_uid)
-                for group in activity_description_template_ar.activity_sub_groups
+                for group in activity_description_template_ar.activity_subgroups
             ]
-            if activity_description_template_ar.activity_sub_groups
+            if activity_description_template_ar.activity_subgroups
             else None,
-            studyCount=activity_description_template_ar.study_count,
+            study_count=activity_description_template_ar.study_count,
             parameters=[
                 TemplateParameter(name=_)
                 for _ in activity_description_template_ar.template_value.parameter_names
             ],
-            defaultParameterValues=default_parameter_values,
+            default_parameter_values=default_parameter_values,
         )
 
 
@@ -244,7 +244,7 @@ class ActivityDescriptionTemplateVersion(ActivityDescriptionTemplate):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the activity description template (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the activity description template (e.g. name, start_date, ..)."
         ),
     )
 
@@ -254,65 +254,65 @@ class ActivityDescriptionTemplateNameInput(BaseModel):
         ...,
         description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
     )
-    guidanceText: Optional[str] = Field(
+    guidance_text: Optional[str] = Field(
         None, description="Optional guidance text for using the template."
     )
 
 
 class ActivityDescriptionTemplateCreateInput(ActivityDescriptionTemplateNameInput):
-    libraryName: Optional[str] = Field(
+    library_name: Optional[str] = Field(
         "Sponsor",
         description="If specified: The name of the library to which the activity description template will be linked. The following rules apply: \n"
         "* The library needs to be present, it will not be created with this request. The *[GET] /libraries* endpoint can help. And \n"
-        "* The library needs to allow the creation: The 'isEditable' property of the library needs to be true.",
+        "* The library needs to allow the creation: The 'is_editable' property of the library needs to be true.",
     )
-    defaultParameterValues: Optional[List[MultiTemplateParameterValue]] = Field(
+    default_parameter_values: Optional[List[MultiTemplateParameterValue]] = Field(
         None,
         description="Holds the parameter values to be used as default for this template. The values are ordered as they occur in the template name.",
     )
 
-    editableInstance: Optional[bool] = Field(
+    editable_instance: Optional[bool] = Field(
         False,
         description="Indicates if the name of this template's instances can be edited. Defaults to False.",
     )
 
-    indicationUids: Optional[List[str]] = Field(
+    indication_uids: Optional[List[str]] = Field(
         None,
         description="A list of UID of the study indications, conditions, diseases or disorders to attach the template to.",
     )
-    activityUids: Optional[List[str]] = Field(
+    activity_uids: Optional[List[str]] = Field(
         None, description="A list of UID of the activities to attach the template to."
     )
-    activityGroupUids: conlist(
+    activity_group_uids: conlist(
         str,
         min_items=1,
     )
-    activitySubGroupUids: conlist(
+    activity_subgroup_uids: conlist(
         str,
         min_items=1,
     )
 
 
 class ActivityDescriptionTemplateEditInput(ActivityDescriptionTemplateNameInput):
-    changeDescription: str = Field(
+    change_description: str = Field(
         ...,
         description="A short description about what has changed compared to the previous version.",
     )
 
 
 class ActivityDescriptionTemplateEditGroupingsInput(BaseModel):
-    indicationUids: Optional[List[str]] = Field(
+    indication_uids: Optional[List[str]] = Field(
         None,
         description="A list of UID of the study indications, conditions, diseases or disorders to attach the template to.",
     )
-    activityUids: Optional[List[str]] = Field(
+    activity_uids: Optional[List[str]] = Field(
         None, description="A list of UID of the activities to attach the template to."
     )
-    activityGroupUids: Optional[List[str]] = Field(
+    activity_group_uids: Optional[List[str]] = Field(
         None,
         description="A list of UID of the activity groups to attach the template to.",
     )
-    activitySubGroupUids: Optional[List[str]] = Field(
+    activity_subgroup_uids: Optional[List[str]] = Field(
         None,
         description="A list of UID of the activity sub groups to attach the template to.",
     )

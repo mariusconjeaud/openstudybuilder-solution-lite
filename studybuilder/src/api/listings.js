@@ -7,6 +7,6 @@ export default {
     const params = {
       ...options
     }
-    return repository.get(`${resource}/all/SDTM/${type}/${uid}`, { params })
+    return repository.get(`${resource}/all/sdtm/${type.toLowerCase()}/${uid}`, { params })
   }
 }

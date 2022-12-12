@@ -25,10 +25,10 @@
             "method": "POST",
             "request": {
                 "name": "name3",
-                "nameSentenceCase": "nameSentenceCase3",
+                "name_sentence_case": "name_sentence_case3",
                 "definition": "definition3",
-                "libraryName": "Sponsor",
-                "activityGroup": "activity_group_root_non_existing"
+                "library_name": "Sponsor",
+                "activity_group": "activity_group_root_non_existing"
             },
             "url": "/concepts/activities/activity-sub-groups"
         },
@@ -50,10 +50,10 @@
             "method": "POST",
             "request": {
                 "name": "name1",
-                "nameSentenceCase": "nameSentenceCase3",
+                "name_sentence_case": "name_sentence_case3",
                 "definition": "definition3",
-                "libraryName": "Sponsor",
-                "activityGroup": "activity_group_root1"
+                "library_name": "Sponsor",
+                "activity_group": "activity_group_root1"
             },
             "url": "/concepts/activities/activity-sub-groups"
         },
@@ -74,17 +74,17 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "changeDescription": "Test change",
-                "activityGroup": "activity_group_root_non_existing"
+                "change_description": "Test change",
+                "activity_group": "activity_group_root_non_existing"
             },
-            "url": "/concepts/activities/activity-sub-groups/activity_sub_group_root1"
+            "url": "/concepts/activities/activity-sub-groups/activity_subgroup_root1"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "ActivitySubGroup tried to connect to non existing ActivityGroup identified by uid (activity_group_root_non_existing).",
                 "method": "PATCH",
-                "path": "http://testserver/concepts/activities/activity-sub-groups/activity_sub_group_root1",
+                "path": "http://testserver/concepts/activities/activity-sub-groups/activity_subgroup_root1",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "ValidationException"
             }
@@ -97,16 +97,16 @@
             "method": "PATCH",
             "request": {
                 "name": "name1",
-                "changeDescription": "Test change"
+                "change_description": "Test change"
             },
-            "url": "/concepts/activities/activity-sub-groups/activity_sub_group_root2"
+            "url": "/concepts/activities/activity-sub-groups/activity_subgroup_root2"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "ActivitySubGroup with name (name1) already exists.",
                 "method": "PATCH",
-                "path": "http://testserver/concepts/activities/activity-sub-groups/activity_sub_group_root2",
+                "path": "http://testserver/concepts/activities/activity-sub-groups/activity_subgroup_root2",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "ValidationException"
             }
@@ -118,14 +118,14 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/concepts/activities/activity-sub-groups/activity_sub_group_root1/approve"
+            "url": "/concepts/activities/activity-sub-groups/activity_subgroup_root1/approve"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "The object is not in draft status.",
                 "method": "POST",
-                "path": "http://testserver/concepts/activities/activity-sub-groups/activity_sub_group_root1/approve",
+                "path": "http://testserver/concepts/activities/activity-sub-groups/activity_subgroup_root1/approve",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }
@@ -137,14 +137,14 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/concepts/activities/activity-sub-groups/activity_sub_group_root2/inactivate"
+            "url": "/concepts/activities/activity-sub-groups/activity_subgroup_root2/inactivate"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "Cannot retire draft version.",
                 "method": "POST",
-                "path": "http://testserver/concepts/activities/activity-sub-groups/activity_sub_group_root2/inactivate",
+                "path": "http://testserver/concepts/activities/activity-sub-groups/activity_subgroup_root2/inactivate",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }
@@ -156,14 +156,14 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/concepts/activities/activity-sub-groups/activity_sub_group_root2/reactivate"
+            "url": "/concepts/activities/activity-sub-groups/activity_subgroup_root2/reactivate"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "Only RETIRED version can be reactivated.",
                 "method": "POST",
-                "path": "http://testserver/concepts/activities/activity-sub-groups/activity_sub_group_root2/reactivate",
+                "path": "http://testserver/concepts/activities/activity-sub-groups/activity_subgroup_root2/reactivate",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }
@@ -175,14 +175,14 @@
             "headers": {},
             "method": "DELETE",
             "request": {},
-            "url": "/concepts/activities/activity-sub-groups/activity_sub_group_root1"
+            "url": "/concepts/activities/activity-sub-groups/activity_subgroup_root1"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "Object has been accepted",
                 "method": "DELETE",
-                "path": "http://testserver/concepts/activities/activity-sub-groups/activity_sub_group_root1",
+                "path": "http://testserver/concepts/activities/activity-sub-groups/activity_subgroup_root1",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }

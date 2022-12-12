@@ -31,7 +31,7 @@ class ActivityInstance(ActivityBase):
         uid_value = getattr(item, uid_attribute)
         if uid_value is None:
             return None
-        return SimpleTermModel(termUid=uid_value, name=getattr(item, name_attribute))
+        return SimpleTermModel(term_uid=uid_value, name=getattr(item, name_attribute))
 
     @classmethod
     def from_activity_ar(
@@ -43,23 +43,23 @@ class ActivityInstance(ActivityBase):
     ) -> "ActivityInstance":
 
         activity_subgroup_uids = [
-            find_activity_hierarchy_by_uid(activity_uid).concept_vo.activity_sub_group
+            find_activity_hierarchy_by_uid(activity_uid).concept_vo.activity_subgroup
             for activity_uid in activity_ar.concept_vo.activity_uids
         ]
         activity_group_uids = [
             find_activity_subgroup_by_uid(subgroup_uid).concept_vo.activity_group
             for subgroup_uid in activity_subgroup_uids
         ]
-        sdtmVariable = cls._get_term_model(
+        sdtm_variable = cls._get_term_model(
             activity_ar.concept_vo, "sdtm_variable_uid", "sdtm_variable_name"
         )
-        sdtmSubcat = cls._get_term_model(
+        sdtm_subcat = cls._get_term_model(
             activity_ar.concept_vo, "sdtm_subcat_uid", "sdtm_subcat_name"
         )
-        sdtmCat = cls._get_term_model(
+        sdtm_cat = cls._get_term_model(
             activity_ar.concept_vo, "sdtm_cat_uid", "sdtm_cat_name"
         )
-        sdtmDomain = cls._get_term_model(
+        sdtm_domain = cls._get_term_model(
             activity_ar.concept_vo, "sdtm_domain_uid", "sdtm_domain_name"
         )
         specimen = cls._get_term_model(
@@ -70,16 +70,16 @@ class ActivityInstance(ActivityBase):
             uid=activity_ar.uid,
             type=activity_ar.concept_vo.activity_type,
             name=activity_ar.name,
-            nameSentenceCase=activity_ar.concept_vo.name_sentence_case,
+            name_sentence_case=activity_ar.concept_vo.name_sentence_case,
             definition=activity_ar.concept_vo.definition,
             abbreviation=activity_ar.concept_vo.abbreviation,
-            topicCode=activity_ar.concept_vo.topic_code,
-            adamParamCode=activity_ar.concept_vo.adam_param_code,
-            legacyDescription=activity_ar.concept_vo.legacy_description,
-            sdtmVariable=sdtmVariable,
-            sdtmSubcat=sdtmSubcat,
-            sdtmCat=sdtmCat,
-            sdtmDomain=sdtmDomain,
+            topic_code=activity_ar.concept_vo.topic_code,
+            adam_param_code=activity_ar.concept_vo.adam_param_code,
+            legacy_description=activity_ar.concept_vo.legacy_description,
+            sdtm_variable=sdtm_variable,
+            sdtm_subcat=sdtm_subcat,
+            sdtm_cat=sdtm_cat,
+            sdtm_domain=sdtm_domain,
             activities=sorted(
                 [
                     ActivityHierarchySimpleModel.from_activity_uid(
@@ -90,7 +90,7 @@ class ActivityInstance(ActivityBase):
                 ],
                 key=lambda item: item.name,
             ),
-            activitySubgroups=sorted(
+            activity_subgroups=sorted(
                 [
                     ActivityHierarchySimpleModel.from_activity_uid(
                         uid=activity_subgroup,
@@ -100,7 +100,7 @@ class ActivityInstance(ActivityBase):
                 ],
                 key=lambda item: item.name,
             ),
-            activityGroups=sorted(
+            activity_groups=sorted(
                 [
                     ActivityHierarchySimpleModel.from_activity_uid(
                         uid=activity_group,
@@ -111,14 +111,14 @@ class ActivityInstance(ActivityBase):
                 key=lambda item: item.name,
             ),
             specimen=specimen,
-            libraryName=Library.from_library_vo(activity_ar.library).name,
-            startDate=activity_ar.item_metadata.start_date,
-            endDate=activity_ar.item_metadata.end_date,
+            library_name=Library.from_library_vo(activity_ar.library).name,
+            start_date=activity_ar.item_metadata.start_date,
+            end_date=activity_ar.item_metadata.end_date,
             status=activity_ar.item_metadata.status.value,
             version=activity_ar.item_metadata.version,
-            changeDescription=activity_ar.item_metadata.change_description,
-            userInitials=activity_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=activity_ar.item_metadata.change_description,
+            user_initials=activity_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 [_.value for _ in activity_ar.get_possible_actions()]
             ),
         )
@@ -126,39 +126,39 @@ class ActivityInstance(ActivityBase):
     type: Optional[str] = Field(
         None, title="type", description="The subtype of ActivityInstance"
     )
-    topicCode: str = Field(
+    topic_code: str = Field(
         ...,
-        title="topicCode",
+        title="topic_code",
         description="",
     )
-    adamParamCode: str = Field(
+    adam_param_code: str = Field(
         ...,
-        title="adamParamCode",
+        title="adam_param_code",
         description="",
     )
-    legacyDescription: Optional[str] = Field(
+    legacy_description: Optional[str] = Field(
         None,
-        title="legacyDescription",
+        title="legacy_description",
         description="",
     )
-    sdtmVariable: Optional[SimpleTermModel] = Field(
+    sdtm_variable: Optional[SimpleTermModel] = Field(
         ...,
-        title="sdtmVariable",
+        title="sdtm_variable",
         description="",
     )
-    sdtmSubcat: Optional[SimpleTermModel] = Field(
+    sdtm_subcat: Optional[SimpleTermModel] = Field(
         ...,
-        title="sdtmSubcat",
+        title="sdtm_subcat",
         description="",
     )
-    sdtmCat: Optional[SimpleTermModel] = Field(
+    sdtm_cat: Optional[SimpleTermModel] = Field(
         ...,
-        title="sdtmCat",
+        title="sdtm_cat",
         description="",
     )
-    sdtmDomain: Optional[SimpleTermModel] = Field(
+    sdtm_domain: Optional[SimpleTermModel] = Field(
         ...,
-        title="sdtmDomain",
+        title="sdtm_domain",
         description="",
     )
     activities: Sequence[ActivityHierarchySimpleModel] = Field(
@@ -166,14 +166,14 @@ class ActivityInstance(ActivityBase):
         title="activities",
         description="List of activity unique identifiers",
     )
-    activitySubgroups: Sequence[ActivityHierarchySimpleModel] = Field(
+    activity_subgroups: Sequence[ActivityHierarchySimpleModel] = Field(
         ...,
-        title="activitySubgroups",
+        title="activity_subgroups",
         description="List of activity sub group unique identifiers",
     )
-    activityGroups: Sequence[ActivityHierarchySimpleModel] = Field(
+    activity_groups: Sequence[ActivityHierarchySimpleModel] = Field(
         ...,
-        title="activityGroups",
+        title="activity_groups",
         description="List of activity group unique identifiers",
     )
     specimen: Optional[SimpleTermModel] = Field(
@@ -181,17 +181,17 @@ class ActivityInstance(ActivityBase):
         title="specimen",
         description="",
     )
-    startDate: datetime
-    endDate: Optional[datetime] = None
+    start_date: datetime
+    end_date: Optional[datetime] = None
     status: str
     version: str
-    changeDescription: str
-    userInitials: str
-    possibleActions: List[str] = Field(
+    change_description: str
+    user_initials: str
+    possible_actions: List[str] = Field(
         ...,
         description=(
             "Holds those actions that can be performed on the ActivityInstances. "
-            "Actions are: 'approve', 'edit', 'newVersion'."
+            "Actions are: 'approve', 'edit', 'new_version'."
         ),
     )
 
@@ -202,44 +202,44 @@ class ActivityInstanceCreateInput(ConceptInput):
         title="name",
         description="The name or the actual value. E.g. 'Systolic Blood Pressure', 'Body Temperature', 'Metformin', ...",
     )
-    nameSentenceCase: Optional[str] = Field(
+    name_sentence_case: Optional[str] = Field(
         None,
-        title="nameSentenceCase",
+        title="name_sentence_case",
         description="",
     )
-    topicCode: Optional[str] = Field(
+    topic_code: Optional[str] = Field(
         None,
-        title="topicCode",
+        title="topic_code",
         description="",
     )
-    adamParamCode: Optional[str] = Field(
+    adam_param_code: Optional[str] = Field(
         None,
-        title="adamParamCode",
+        title="adam_param_code",
         description="",
     )
-    legacyDescription: Optional[str] = Field(
+    legacy_description: Optional[str] = Field(
         None,
-        title="legacyDescription",
+        title="legacy_description",
         description="",
     )
-    sdtmVariable: Optional[str] = Field(
+    sdtm_variable: Optional[str] = Field(
         None,
-        title="sdtmVariable",
+        title="sdtm_variable",
         description="",
     )
-    sdtmSubcat: Optional[str] = Field(
+    sdtm_subcat: Optional[str] = Field(
         None,
-        title="sdtmSubcat",
+        title="sdtm_subcat",
         description="",
     )
-    sdtmCat: Optional[str] = Field(
+    sdtm_cat: Optional[str] = Field(
         None,
-        title="sdtmCat",
+        title="sdtm_cat",
         description="",
     )
-    sdtmDomain: Optional[str] = Field(
+    sdtm_domain: Optional[str] = Field(
         None,
-        title="sdtmDomain",
+        title="sdtm_domain",
         description="",
     )
     activities: Optional[Sequence[str]] = Field(
@@ -247,7 +247,7 @@ class ActivityInstanceCreateInput(ConceptInput):
         title="activity",
         description="",
     )
-    libraryName: str
+    library_name: str
 
 
 class ActivityInstanceEditInput(ConceptInput):
@@ -256,44 +256,44 @@ class ActivityInstanceEditInput(ConceptInput):
         title="name",
         description="The name or the actual value. E.g. 'Systolic Blood Pressure', 'Body Temperature', 'Metformin', ...",
     )
-    nameSentenceCase: Optional[str] = Field(
+    name_sentence_case: Optional[str] = Field(
         None,
-        title="nameSentenceCase",
+        title="name_sentence_case",
         description="",
     )
-    topicCode: Optional[str] = Field(
+    topic_code: Optional[str] = Field(
         None,
-        title="topicCode",
+        title="topic_code",
         description="",
     )
-    adamParamCode: Optional[str] = Field(
+    adam_param_code: Optional[str] = Field(
         None,
-        title="adamParamCode",
+        title="adam_param_code",
         description="",
     )
-    legacyDescription: Optional[str] = Field(
+    legacy_description: Optional[str] = Field(
         None,
-        title="legacyDescription",
+        title="legacy_description",
         description="",
     )
-    sdtmVariable: Optional[str] = Field(
+    sdtm_variable: Optional[str] = Field(
         None,
-        title="sdtmVariable",
+        title="sdtm_variable",
         description="",
     )
-    sdtmSubcat: Optional[str] = Field(
+    sdtm_subcat: Optional[str] = Field(
         None,
-        title="sdtmSubcat",
+        title="sdtm_subcat",
         description="",
     )
-    sdtmCat: Optional[str] = Field(
+    sdtm_cat: Optional[str] = Field(
         None,
-        title="sdtmCat",
+        title="sdtm_cat",
         description="",
     )
-    sdtmDomain: Optional[str] = Field(
+    sdtm_domain: Optional[str] = Field(
         None,
-        title="sdtmDomain",
+        title="sdtm_domain",
         description="",
     )
     specimen: Optional[str] = Field(
@@ -306,7 +306,7 @@ class ActivityInstanceEditInput(ConceptInput):
         title="activity",
         description="",
     )
-    changeDescription: str = Field(..., title="changeDescription", description="")
+    change_description: str = Field(..., title="change_description", description="")
 
 
 class ActivityInstanceVersion(ActivityInstance):
@@ -318,6 +318,6 @@ class ActivityInstanceVersion(ActivityInstance):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the objective (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )

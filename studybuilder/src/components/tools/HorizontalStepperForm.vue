@@ -33,6 +33,9 @@
           <v-sheet elevation="4" class="ma-2 pa-4">
             <v-row>
               <v-col v-if="step.belowDisplay" cols="12" class="d-flex align-start justify-end py-4">
+                <div v-if="currentStep === 1">
+                  <slot name="actions"></slot>
+                </div>
                 <div class="mx-2">
                   <v-btn
                     color="white"
@@ -76,6 +79,9 @@
                 <slot :name="`step.${step.name}`" v-bind:step="index + 1" />
               </v-col>
               <v-col v-if="!step.belowDisplay" cols="4" class="d-flex align-start justify-end py-4">
+                <div v-if="currentStep === 1">
+                  <slot name="actions"></slot>
+                </div>
                 <div class="mx-2">
                   <v-btn
                     color="white"

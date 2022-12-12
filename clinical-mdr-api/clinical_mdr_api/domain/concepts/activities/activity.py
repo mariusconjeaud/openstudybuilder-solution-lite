@@ -18,7 +18,7 @@ class ActivityVO(ConceptVO):
     The ActivityVO acts as the value object for a single Activity aggregate
     """
 
-    activity_sub_group: str
+    activity_subgroup: str
 
     @classmethod
     def from_repository_values(
@@ -27,7 +27,7 @@ class ActivityVO(ConceptVO):
         name_sentence_case: Optional[str],
         definition: Optional[str],
         abbreviation: Optional[str],
-        activity_sub_group: Optional[str],
+        activity_subgroup: Optional[str],
     ) -> "ActivityVO":
         activity_vo = cls(
             name=name,
@@ -35,8 +35,8 @@ class ActivityVO(ConceptVO):
             definition=definition,
             abbreviation=abbreviation,
             is_template_parameter=True,
-            activity_sub_group=activity_sub_group
-            if activity_sub_group is not None
+            activity_subgroup=activity_subgroup
+            if activity_subgroup is not None
             else None,
         )
 
@@ -45,15 +45,15 @@ class ActivityVO(ConceptVO):
     def validate(
         self,
         activity_exists_by_name_callback: Callable[[str], bool],
-        activity_sub_group_exists: Callable[[str], bool],
+        activity_subgroup_exists: Callable[[str], bool],
         previous_name: Optional[str] = None,
     ) -> None:
 
         if activity_exists_by_name_callback(self.name) and previous_name != self.name:
             raise ValueError(f"Activity with name ({self.name}) already exists.")
-        if not activity_sub_group_exists(self.activity_sub_group):
+        if not activity_subgroup_exists(self.activity_subgroup):
             raise ValueError(
-                f"Activity tried to connect to non existing ActivitySubGroup identified by uid ({self.activity_sub_group})."
+                f"Activity tried to connect to non existing ActivitySubGroup identified by uid ({self.activity_subgroup})."
             )
 
 
@@ -78,7 +78,7 @@ class ActivityAR(ConceptARBase):
         library: LibraryVO,
         generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
         concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
-        activity_sub_group_exists: Callable[[str], bool] = lambda _: False,
+        activity_subgroup_exists: Callable[[str], bool] = lambda _: False,
     ) -> "ActivityAR":
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
@@ -88,7 +88,7 @@ class ActivityAR(ConceptARBase):
             )
         concept_vo.validate(
             activity_exists_by_name_callback=concept_exists_by_name_callback,
-            activity_sub_group_exists=activity_sub_group_exists,
+            activity_subgroup_exists=activity_subgroup_exists,
         )
 
         activity_ar = cls(
@@ -105,14 +105,14 @@ class ActivityAR(ConceptARBase):
         change_description: Optional[str],
         concept_vo: ActivityVO,
         concept_exists_by_name_callback: Callable[[str], bool],
-        activity_sub_group_exists: Callable[[str], bool] = None,
+        activity_subgroup_exists: Callable[[str], bool] = None,
     ) -> None:
         """
         Creates a new draft version for the object.
         """
         concept_vo.validate(
             activity_exists_by_name_callback=concept_exists_by_name_callback,
-            activity_sub_group_exists=activity_sub_group_exists,
+            activity_subgroup_exists=activity_subgroup_exists,
             previous_name=self.name,
         )
         if self._concept_vo != concept_vo:

@@ -117,7 +117,7 @@ Feature: ODM Froms API
 
     Scenario: Create a new version of an ODM Form
         Given the ODM Form is in 'Final' status
-        When a 'POST' request is sent to 'concepts/odms/forms/OdmForm_000001/new-version'
+        When a 'POST' request is sent to 'concepts/odms/forms/OdmForm_000001/versions'
         Then a response with json body is received with the newly created version of the ODM Form
         And the response has status code '201'
 

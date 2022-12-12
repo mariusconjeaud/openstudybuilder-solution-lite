@@ -81,20 +81,22 @@ def test_data(request: FixtureRequest):
     ]
     unit_separator = "and"
     timeframe_template = TestUtils.create_timeframe_template()
-    timeframe = TestUtils.create_timeframe(timeframeTemplateUid=timeframe_template.uid)
+    timeframe = TestUtils.create_timeframe(
+        timeframe_template_uid=timeframe_template.uid
+    )
     study_endpoint = TestUtils.create_study_endpoint(
         study_uid=study_uid,
-        endpointTemplateUid=endpoint_template.uid,
-        endpointUnits=study_selection.EndpointUnits(
+        endpoint_template_uid=endpoint_template.uid,
+        endpoint_units=study_selection.EndpointUnits(
             units=[u.uid for u in unit_definitions], separator=unit_separator
         ),
-        timeframeUid=timeframe.uid,
+        timeframe_uid=timeframe.uid,
     )
 
     study_2 = TestUtils.create_study()
     endpoint_template_2 = TestUtils.create_endpoint_template()
     study_endpoint_2 = TestUtils.create_study_endpoint(
-        study_uid=study_2.uid, endpointTemplateUid=endpoint_template_2.uid
+        study_uid=study_2.uid, endpoint_template_uid=endpoint_template_2.uid
     )
 
     log.debug("%s() fixture: setup complete", request.fixturename)
@@ -118,13 +120,13 @@ def test_crud(test_data, study_objective_service, objective_template_service):
     parameter_value_dict = {
         "index": 1,
         "type": STUDY_ENDPOINT_TP_NAME,
-        "uid": study_endpoint.studyEndpointUid,
+        "uid": study_endpoint.study_endpoint_uid,
         "name": study_endpoint.endpoint.name,
     }
     study_objective = TestUtils.create_study_objective(
         study_uid=study_uid,
-        objectiveTemplateUid=objective_template.uid,
-        parameterValues=[
+        objective_template_uid=objective_template.uid,
+        parameter_values=[
             TemplateParameterMultiSelectInput(
                 values=[IndexedTemplateParameterValue(**parameter_value_dict)]
             )
@@ -139,21 +141,21 @@ def test_crud(test_data, study_objective_service, objective_template_service):
         == f"Test objective template with [{expected_study_endpoint_name}] parameter"
     )
     assert (
-        study_objective.objective.parameterValues[0].values[0]
+        study_objective.objective.parameter_values[0].values[0]
         == expected_return_parameter_value_dict
     )
     log.info("Study objective successfully created")
 
     # Read
     created_study_objective = study_objective_service.get_specific_selection(
-        study_uid=study_uid, study_selection_uid=study_objective.studyObjectiveUid
+        study_uid=study_uid, study_selection_uid=study_objective.study_objective_uid
     )
     assert (
         created_study_objective.objective.name
         == f"Test objective template with [{expected_study_endpoint_name}] parameter"
     )
     assert (
-        study_objective.objective.parameterValues[0].values[0]
+        study_objective.objective.parameter_values[0].values[0]
         == expected_return_parameter_value_dict
     )
     log.info("Study objective successfully returned")
@@ -163,16 +165,16 @@ def test_crud(test_data, study_objective_service, objective_template_service):
         uid=objective_template.uid, study_uid=study_uid, include_study_endpoints=True
     )
     assert len(available_parameters) == 1
-    assert available_parameters[0].values[0].uid == study_endpoint.studyEndpointUid
+    assert available_parameters[0].values[0].uid == study_endpoint.study_endpoint_uid
     log.info("List of available StudyEndpoint parameter values is correct")
 
     # Try selecting a StudyEndpoint from another study as parameter
-    parameter_value_dict["uid"] = study_endpoint_2.studyEndpointUid
+    parameter_value_dict["uid"] = study_endpoint_2.study_endpoint_uid
     with pytest.raises(ValueError) as e_info:
         _ = TestUtils.create_study_objective(
             study_uid=study_uid,
-            objectiveTemplateUid=objective_template.uid,
-            parameterValues=[
+            objective_template_uid=objective_template.uid,
+            parameter_values=[
                 TemplateParameterMultiSelectInput(
                     values=[IndexedTemplateParameterValue(**parameter_value_dict)]
                 )

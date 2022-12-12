@@ -13,10 +13,10 @@ log = logging.getLogger(__name__)
 PATH_PARAMETERS = defaultdict(
     lambda: "Missing",
     **{
-        "codelistuid": "1",
-        "cataloguename": "1",
+        "codelist_uid": "1",
+        "catalogue_name": "1",
         "study_number": "1",
-        "termuid": "1",
+        "term_uid": "1",
         "uid": "1",
         "version": "0.1",
     },

@@ -1,66 +1,66 @@
 [
   {
-    "changeDescription": "Approved version",
-    "editableInstance": false,
-    "endDate": null,
+    "change_description": "Approved version",
+    "editable_instance": false,
+    "end_date": null,
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "Sponsor"
     },
     "name": "<p>after [StudyDurationWeeks]</p>",
-    "namePlain": "after [StudyDurationWeeks]",
+    "name_plain": "after [StudyDurationWeeks]",
     "parameters": [
       {
         "name": "StudyDurationWeeks",
         "values": null
       }
     ],
-    "possibleActions": [
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-10-20T12:29:20.144639",
+    "start_date": "2022-10-20T12:29:20.144639",
     "status": "Final",
     "uid": "TimeframeTemplate_000004",
-    "userInitials": "MT",
+    "user_initials": "MT",
     "version": "1.0"
   },
   {
-    "changeDescription": "Approved version",
-    "editableInstance": false,
-    "endDate": null,
+    "change_description": "Approved version",
+    "editable_instance": false,
+    "end_date": null,
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "User Defined"
     },
     "name": "test user defined [ActivityInstance]",
-    "namePlain": "test user defined [ActivityInstance]",
+    "name_plain": "test user defined [ActivityInstance]",
     "parameters": [
       {
         "name": "ActivityInstance",
         "values": null
       }
     ],
-    "possibleActions": [
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-10-18T13:22:12.290756",
+    "start_date": "2022-10-18T13:22:12.290756",
     "status": "Final",
     "uid": "TimeframeTemplate_000003",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
-    "changeDescription": "Approved version",
-    "editableInstance": false,
-    "endDate": null,
+    "change_description": "Approved version",
+    "editable_instance": false,
+    "end_date": null,
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "Sponsor"
     },
     "name": "test [ActivityInstance] and [DiseaseDisorder]",
-    "namePlain": "test [ActivityInstance] and [DiseaseDisorder]",
+    "name_plain": "test [ActivityInstance] and [DiseaseDisorder]",
     "parameters": [
       {
         "name": "ActivityInstance",
@@ -71,40 +71,40 @@
         "values": null
       }
     ],
-    "possibleActions": [
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-10-18T13:22:11.957188",
+    "start_date": "2022-10-18T13:22:11.957188",
     "status": "Final",
     "uid": "TimeframeTemplate_000002",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
-    "changeDescription": "Approved version",
-    "editableInstance": false,
-    "endDate": null,
+    "change_description": "Approved version",
+    "editable_instance": false,
+    "end_date": null,
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "Sponsor"
     },
     "name": "test [ActivityInstance]",
-    "namePlain": "test [ActivityInstance]",
+    "name_plain": "test [ActivityInstance]",
     "parameters": [
       {
         "name": "ActivityInstance",
         "values": null
       }
     ],
-    "possibleActions": [
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-10-18T13:22:11.529835",
+    "start_date": "2022-10-18T13:22:11.529835",
     "status": "Final",
     "uid": "TimeframeTemplate_000001",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   }
 ]

@@ -19,7 +19,7 @@
         <v-row>
           <v-col>
             <v-select
-              v-model="form.libraryName"
+              v-model="form.library_name"
               :label="$t('_global.library')"
               :items="libraries"
               item-text="name"
@@ -54,11 +54,11 @@
         <v-row>
           <v-col cols="12">
             <v-select
-              v-model="form.ctUnits"
+              v-model="form.ct_units"
               :label="$t('UnitForm.ct_term')"
               :items="unitTerms"
               :item-text="cTermText"
-              item-value="termUid"
+              item-value="term_uid"
               single-line
               multiple
               :error-messages="errors"
@@ -75,11 +75,11 @@
         <v-row>
           <v-col>
             <v-select
-              v-model="form.unitSubsets"
+              v-model="form.unit_subsets"
               label="Unit Subset"
               :items="unitSubsets"
-              item-text="sponsorPreferredName"
-              item-value="termUid"
+              item-text="sponsor_preferred_name"
+              item-value="term_uid"
               single-line
               multiple
               :error-messages="errors"
@@ -92,23 +92,23 @@
       <v-row>
         <v-col cols="6">
           <v-switch
-            v-model="form.convertibleUnit"
+            v-model="form.convertible_unit"
             :label="$t('UnitForm.convertible_unit')"
             />
           <v-switch
-            v-model="form.displayUnit"
+            v-model="form.display_unit"
             :label="$t('UnitForm.display_unit')"
             />
           <v-switch
-            v-model="form.masterUnit"
+            v-model="form.master_unit"
             :label="$t('UnitForm.master_unit')"
             />
           <v-switch
-            v-model="form.siUnit"
+            v-model="form.si_unit"
             :label="$t('UnitForm.si_unit')"
             />
           <v-switch
-            v-model="form.usConventionalUnit"
+            v-model="form.us_conventional_unit"
             :label="$t('UnitForm.us_unit')"
             />
         </v-col>
@@ -128,11 +128,11 @@
         <v-row>
           <v-col>
             <v-autocomplete
-              v-model="form.unitDimension"
+              v-model="form.unit_dimension"
               :label="$t('UnitForm.dimension')"
               :items="unitDimensions"
-              item-text="sponsorPreferredName"
-              item-value="termUid"
+              item-text="sponsor_preferred_name"
+              item-value="term_uid"
               :error-messages="errors"
               clearable
               />
@@ -146,7 +146,7 @@
         <v-row>
           <v-col>
             <v-text-field
-              v-model="form.legacyCode"
+              v-model="form.legacy_code"
               :label="$t('UnitForm.legacy_code')"
               :error-messages="errors"
               dense
@@ -162,7 +162,7 @@
         <v-row>
           <v-col>
             <v-text-field
-              v-model="form.molecularWeightConvExpon"
+              v-model="form.molecular_weight_conv_expon"
               :label="$t('UnitForm.molecular_weight')"
               :error-messages="errors"
               dense
@@ -178,7 +178,7 @@
         <v-row>
           <v-col>
             <v-text-field
-              v-model="form.conversionFactorToMaster"
+              v-model="form.conversion_factor_to_master"
               :label="$t('UnitForm.conversion_factor')"
               :error-messages="errors"
               dense
@@ -241,18 +241,18 @@ export default {
   methods: {
     getInitialForm () {
       return {
-        convertibleUnit: false,
-        displayUnit: false,
-        masterUnit: false,
-        siUnit: false,
-        usConventionalUnit: false
+        convertible_unit: false,
+        display_unit: false,
+        master_unit: false,
+        si_unit: false,
+        us_conventional_unit: false
       }
     },
     cTermText (unit) {
-      return `[${unit.termUid}] ${unit.sponsorPreferredName}`
+      return `[${unit.term_uid}] ${unit.sponsor_preferred_name}`
     },
     async cancel () {
-      if (this.form.libraryName === undefined) {
+      if (this.form.library_name === undefined) {
         this.close()
       } else {
         const options = {
@@ -274,8 +274,8 @@ export default {
       const isValid = await this.$refs.observer.validate()
       if (!isValid) return
       this.$refs.form.working = true
-      if (this.form.ucum.termUid) {
-        this.$set(this.form, 'ucum', this.form.ucum.termUid)
+      if (this.form.ucum && this.form.ucum.term_uid) {
+        this.$set(this.form, 'ucum', this.form.ucum.term_uid)
       }
       if (Object.keys(this.unit).length !== 0) {
         try {
@@ -315,20 +315,20 @@ export default {
     })
     if (Object.keys(this.unit).length !== 0) {
       this.form = JSON.parse(JSON.stringify(this.unit))
-      this.$set(this.form, 'ctUnits', this.unit.ctUnits.map(el => el.termUid))
-      this.$set(this.form, 'unitSubsets', this.unit.unitSubsets.map(el => el.termUid))
-      this.$set(this.form, 'ucum', this.unit.ucum.termUid)
-      this.$set(this.form, 'unitDimension', this.unit.unitDimension.termUid)
+      this.$set(this.form, 'ct_units', this.unit.ct_units.map(el => el.term_uid))
+      this.$set(this.form, 'unit_subsets', this.unit.unit_subsets.map(el => el.term_uid))
+      this.$set(this.form, 'ucum', this.unit.ucum.term_uid)
+      this.$set(this.form, 'unit_dimension', this.unit.unit_dimension.term_uid)
     }
   },
   watch: {
     unit (value) {
       if (Object.keys(value).length !== 0) {
         this.form = JSON.parse(JSON.stringify(value))
-        this.$set(this.form, 'ctUnits', this.unit.ctUnits.map(el => el.termUid))
-        this.$set(this.form, 'unitSubsets', this.unit.unitSubsets.map(el => el.termUid))
-        this.$set(this.form, 'ucum', this.unit.ucum.termUid)
-        this.$set(this.form, 'unitDimension', this.unit.unitDimension.termUid)
+        this.$set(this.form, 'ct_units', this.unit.ct_units.map(el => el.term_uid))
+        this.$set(this.form, 'unit_subsets', this.unit.unit_subsets.map(el => el.term_uid))
+        this.$set(this.form, 'ucum', this.unit.ucum.term_uid)
+        this.$set(this.form, 'unit_dimension', this.unit.unit_dimension.term_uid)
       }
     }
   }

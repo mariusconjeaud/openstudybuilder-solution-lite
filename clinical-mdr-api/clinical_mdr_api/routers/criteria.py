@@ -31,7 +31,7 @@ CriteriaUID = Path(None, description="The unique id of the criteria.")
             "content": {
                 "text/csv": {
                     "example": """
-"library","uid","objective","criteriaTemplate","criteria","startDate","endDate","status","version","changeDescription","userInitials"
+"library","uid","objective","criteria_template","criteria","start_date","end_date","status","version","change_description","user_initials"
 "Sponsor","826d80a7-0b6a-419d-8ef1-80aa241d7ac7","Objective","First [ComparatorIntervention]","First Intervention","2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
 """
                 },
@@ -45,14 +45,14 @@ CriteriaUID = Path(None, description="The unique id of the criteria.")
             <library type="str">Sponsor</library>
             <uid type="str">682d7003-8dcc-480d-b07b-878e659b8697</uid>
             <objective type="str">Test template new [glucose metabolism] [MACE+] totot</objective>
-            <criteriaTemplate type="str">Criteria using [Activity] and [Indication]</criteriaTemplate>
+            <criteria_template type="str">Criteria using [Activity] and [Indication]</criteria_template>
             <criteria type="str">Criteria using [body weight] and [type 2 diabetes]</criteria>
-            <startDate type="str">2020-11-26T13:43:23.000Z</startDate>
-            <endDate type="str"></endDate>
+            <start_date type="str">2020-11-26T13:43:23.000Z</start_date>
+            <end_date type="str"></end_date>
             <status type="str">Draft</status>
             <version type="str">0.2</version>
-            <changeDescription type="str">Changed indication</changeDescription>
-            <userInitials type="str">TODO Initials</userInitials>
+            <change_description type="str">Changed indication</change_description>
+            <user_initials type="str">TODO Initials</user_initials>
         </item>
     </data>
 </root>
@@ -69,14 +69,14 @@ CriteriaUID = Path(None, description="The unique id of the criteria.")
             "library=library.name",
             "uid",
             "objective=objective.name",
-            "criteriaTemplate=criteriaTemplate.name",
+            "criteria_template=criteria_template.name",
             "criteria=name",
-            "startDate",
-            "endDate",
+            "start_date",
+            "end_date",
             "status",
             "version",
-            "changeDescription",
-            "userInitials",
+            "change_description",
+            "user_initials",
         ],
         "formats": [
             "text/csv",
@@ -111,7 +111,7 @@ def get_all(
 )
 def get(
     uid: str = CriteriaUID,
-    atSpecifiedDateTime: Optional[datetime] = Query(
+    at_specified_date_time: Optional[datetime] = Query(
         None,
         description="If specified, the latest/newest representation of the criteria at this point in time is returned.\n"
         "The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: "
@@ -136,7 +136,7 @@ def get(
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    if atSpecifiedDateTime is not None or status is not None or version is not None:
+    if at_specified_date_time is not None or status is not None or version is not None:
         raise NotImplementedError(
             "TODO: support for at_specified_date, status and version parameters not implemented."
         )
@@ -144,28 +144,10 @@ def get(
 
 
 @router.get(
-    "/get-by-name/{name}",
-    summary="Returns the latest/newest version of a specific criteria identified by 'name'.",
-    description="Gets an object by name - uses LATEST_DRAFT and LATEST_FINAL relations",
-    response_model=Optional[models.Criteria],
-    status_code=200,
-    responses={
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - The criteria with the specified 'name' wasn't found.",
-        },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
-    },
-)
-def get_by_name(name: str, current_user_id: str = Depends(get_current_user_id)):
-    return CriteriaService(current_user_id).find_by(name=name)  # type: ignore
-
-
-@router.get(
     "/{uid}/versions",
     summary="Returns the version history of a specific criteria identified by 'uid'.",
     description="The returned versions are ordered by\n"
-    "0. startDate descending (newest entries first)",
+    "0. start_date descending (newest entries first)",
     response_model=List[models.CriteriaVersion],
     status_code=200,
     responses={
@@ -187,7 +169,7 @@ def get_versions(
     summary="Updates the criteria identified by 'uid'.",
     description="""This request is only valid if the criteria
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true). 
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
 
 If the request succeeds:
 * The 'version' property will be increased automatically by +0.1.
@@ -229,11 +211,11 @@ def edit(
     summary="Approves the criteria identified by 'uid'.",
     description="""This request is only valid if the criteria
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
     response_model=models.Criteria,
@@ -267,7 +249,7 @@ def approve(
 
 If the request succeeds:
 * The status will be automatically set to 'Retired'.
-* The 'changeDescription' property will be set automatically. 
+* The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
     response_model=models.Criteria,
@@ -300,7 +282,7 @@ def inactivate(
 
 If the request succeeds:
 * The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically. 
+* The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
     response_model=models.Criteria,
@@ -331,7 +313,7 @@ def reactivate(
     description="""This request is only valid if \n
 * the criteria is in 'Draft' status and
 * the criteria has never been in 'Final' status and
-* the criteria belongs to a library that allows deleting (the 'isEditable' property of the library needs to be true).""",
+* the criteria belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
     response_model=None,
     status_code=204,
     responses={
@@ -381,9 +363,9 @@ def get_studies(
         " If value starts with `+` or `-` above default is extended or reduced by the specified fields"
         " otherwise (if not started with `+` or `-`) provided fields specification"
         " replaces the default. Currently supported fields are"
-        " `currentMetadata.identificationMetadata`, `currentMetadata.highLevelStudyDesign`"
-        " , `currentMetadata.studyPopulation` and `currentMetadata.studyIntervention`"
-        " , `currentMetadata.studyDescription`.",
+        " `current_metadata.identification_metadata`, `current_metadata.high_level_study_design`"
+        " , `current_metadata.study_population` and `current_metadata.study_intervention`"
+        " , `current_metadata.study_description`.",
     ),
 ):
     return Service(current_user_id).get_referencing_studies(

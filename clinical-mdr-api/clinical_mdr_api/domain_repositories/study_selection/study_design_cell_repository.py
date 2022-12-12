@@ -140,7 +140,7 @@ class StudyDesignCellRepository:
             )
         latest_study_value_node = study_root_node.latest_value.single()
 
-        # check if the studyArm has StudyBranchArms assigned to it
+        # check if the study_arm has StudyBranchArms assigned to it
         # get StudyArm only if it's necessary
         if design_cell_vo.study_arm_uid:
             study_arm_node = latest_study_value_node.has_study_arm.get_or_none(
@@ -199,7 +199,7 @@ class StudyDesignCellRepository:
         # Create new node
         design_cell = StudyDesignCell(
             uid=design_cell_vo.uid,
-            transitionRule=design_cell_vo.transition_rule,
+            transition_rule=design_cell_vo.transition_rule,
             order=design_cell_vo.order,
         )
         design_cell.save()
@@ -246,7 +246,7 @@ class StudyDesignCellRepository:
         new_item: StudyDesignCell,
     ):
         action = Edit(
-            date=datetime.datetime.now(),
+            date=datetime.datetime.now(datetime.timezone.utc),
             user_initials=study_design_cell.user_initials,
         )
         action.save()
@@ -262,13 +262,13 @@ class StudyDesignCellRepository:
     ):
         # create StudyAction node
         action = Create(
-            date=datetime.datetime.now(),
+            date=datetime.datetime.now(datetime.timezone.utc),
             user_initials=study_design_cell.user_initials,
         )
         action.save()
         # connect the new item to the newly StudyAction
         new_item.has_after.connect(action)
-        # connect the audit trail to the studyRoot node
+        # connect the audit trail to the study_root node
         study_root.audit_trail.connect(action)
 
     def _remove_old_selection_if_exists(self, design_cell: StudyDesignCell):
@@ -491,7 +491,9 @@ class StudyDesignCellRepository:
             raise exceptions.NotFoundException("Study element must exists")
 
         # Audit trail
-        audit_node = Delete(user_initials=author, date=datetime.datetime.now())
+        audit_node = Delete(
+            user_initials=author, date=datetime.datetime.now(datetime.timezone.utc)
+        )
         audit_node.save()
         study_root_node.audit_trail.connect(audit_node)
         design_cell.has_before.connect(audit_node)

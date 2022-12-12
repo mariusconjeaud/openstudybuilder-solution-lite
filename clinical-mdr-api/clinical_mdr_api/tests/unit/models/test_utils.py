@@ -94,7 +94,6 @@ class TestModelUtils(unittest.TestCase):
                 {
                     "camelCaseInput": "x",
                     "camel32CaseInput": "y",
-                    "camel32CaseInput": "y",
                 },
             )
         ]
@@ -105,5 +104,5 @@ class TestModelUtils(unittest.TestCase):
     def test_is_attribute_in_model(self):
         model = type("model", (BaseModel,), {"z": "somehing", "x": 123})
 
-        assert utils.isAttributeInModel("x", model)
-        assert not utils.isAttributeInModel("y", model)
+        assert utils.is_attribute_in_model("x", model)
+        assert not utils.is_attribute_in_model("y", model)

@@ -14,13 +14,10 @@ from clinical_mdr_api.models.odm_xml_extension import (
     OdmXmlExtensionPostInput,
     OdmXmlExtensionVersion,
 )
-from clinical_mdr_api.services.concepts.concept_generic_service import (
-    ConceptGenericService,
-    _AggregateRootType,
-)
+from clinical_mdr_api.services.odm_generic_service import OdmGenericService
 
 
-class OdmXmlExtensionService(ConceptGenericService[OdmXmlExtensionAR]):
+class OdmXmlExtensionService(OdmGenericService[OdmXmlExtensionAR]):
     aggregate_class = OdmXmlExtensionAR
     version_class = OdmXmlExtensionVersion
     repository_interface = XmlExtensionRepository
@@ -36,13 +33,15 @@ class OdmXmlExtensionService(ConceptGenericService[OdmXmlExtensionAR]):
 
     def _create_aggregate_root(
         self, concept_input: OdmXmlExtensionPostInput, library
-    ) -> _AggregateRootType:
+    ) -> OdmXmlExtensionAR:
         return OdmXmlExtensionAR.from_input_values(
             author=self.user_initials,
             concept_vo=OdmXmlExtensionVO.from_repository_values(
                 name=concept_input.name,
                 prefix=concept_input.prefix,
                 namespace=concept_input.namespace,
+                xml_extension_tag_uids=[],
+                xml_extension_attribute_uids=[],
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
@@ -54,13 +53,13 @@ class OdmXmlExtensionService(ConceptGenericService[OdmXmlExtensionAR]):
     ) -> OdmXmlExtensionAR:
         item.edit_draft(
             author=self.user_initials,
-            change_description=concept_edit_input.changeDescription,
+            change_description=concept_edit_input.change_description,
             concept_vo=OdmXmlExtensionVO.from_repository_values(
                 name=concept_edit_input.name,
                 prefix=concept_edit_input.prefix,
                 namespace=concept_edit_input.namespace,
-                xml_extension_tag_uids=item.concept_vo.xml_extension_tag_uids,
-                xml_extension_attribute_uids=item.concept_vo.xml_extension_attribute_uids,
+                xml_extension_tag_uids=[],
+                xml_extension_attribute_uids=[],
             ),
             concept_exists_by_callback=self._repos.odm_xml_extension_repository.exists_by,
         )
@@ -69,7 +68,7 @@ class OdmXmlExtensionService(ConceptGenericService[OdmXmlExtensionAR]):
     def soft_delete(self, uid: str) -> None:
         if not self._repos.odm_xml_extension_repository.exists_by("uid", uid, True):
             raise exceptions.NotFoundException(
-                f"ODM XML Extension with uid {uid} does not exist."
+                f"ODM XML Extension identified by uid ({uid}) does not exist."
             )
 
         if self._repos.odm_xml_extension_repository.has_active_relationships(
@@ -83,7 +82,7 @@ class OdmXmlExtensionService(ConceptGenericService[OdmXmlExtensionAR]):
     def get_active_relationships(self, uid: str):
         if not self._repos.odm_xml_extension_repository.exists_by("uid", uid, True):
             raise exceptions.NotFoundException(
-                f"Odm Xml Extension with uid {uid} does not exist."
+                f"ODM XML Extension identified by uid ({uid}) does not exist."
             )
 
         return self._repos.odm_xml_extension_repository.get_active_relationships(

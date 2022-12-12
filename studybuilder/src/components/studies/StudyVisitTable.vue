@@ -28,18 +28,36 @@
     </div>
   </div>
   <n-n-table
+    ref="table"
     :headers="headers"
     :default-headers="defaultColumns"
     :items="studyVisits"
     item-key="uid"
     class="mt-6"
     :export-data-url="exportDataUrl"
+    export-object-label="StudyVisits"
     has-api
     @filter="fetchStudyVisits"
-    :column-data-resource="`study/${selectedStudy.uid}/study-visits`"
+    :column-data-resource="`studies/${selectedStudy.uid}/study-visits`"
     :options.sync="options"
+    :server-items-length="totalVisits"
     fixed-header
+    :history-data-fetcher="fetchVisitsHistory"
+    :history-title="$t('StudyVisitTable.global_history_title')"
     >
+    <template v-slot:headerCenter>
+      <v-btn
+        small
+        color="primary"
+        @click.stop="closeEditMode"
+        :title="$t('_global.cancel')"
+        class="ml-2"
+        data-cy="close-edit-mode"
+        v-if="editMode"
+        >
+        {{ $t('StudyVisitTable.close_edit_mode') }}
+      </v-btn>
+    </template>
     <template v-slot:actions>
       <v-progress-circular
         indeterminate
@@ -53,8 +71,6 @@
         small
         color="primary"
         @click.stop="openForm"
-        v-bind="attrs"
-        v-on="on"
         v-show="!loading"
         :title="$t('NNTableTooltips.add_content')"
         data-cy="add-visit"
@@ -84,49 +100,21 @@
         class="ml-2"
         >
       </v-progress-circular>
-      <v-btn
-        fab
-        small
-        color="primary"
-        @click.stop="closeEditMode"
-        title="Cancel"
-        class="ml-2"
-        data-cy="close-edit-mode"
-        v-if="editMode"
-        >
-        <v-icon dark>
-          mdi-close-thick
-        </v-icon>
-      </v-btn>
-      <v-btn
-        fab
-        dark
-        class="ml-2"
-        small
-        color="secondary"
-        :title="$t('NNTableTooltips.history')"
-        data-cy="visits-version-history"
-        @click="openStudyVisitsHistory()"
-        >
-        <v-icon dark>
-          mdi-history
-        </v-icon>
-      </v-btn>
     </template>
     <template v-slot:item.visitWindow="{ item }">
-      <div v-if="editMode && item.visitClass === 'SINGLE_VISIT'">
+      <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
         <v-row class="cellWidth">
           <v-col cols="3">
             <v-text-field
               dense
-              v-model="item.minVisitWindowValue"
+              v-model="item.min_visit_window_value"
               :disabled="item.disabled && itemsDisabled"
               @input="disableOthers(item)"/>
           </v-col>
           <v-col cols="3">
             <v-text-field
               dense
-              v-model="item.maxVisitWindowValue"
+              v-model="item.max_visit_window_value"
               :disabled="item.disabled && itemsDisabled"
               @input="disableOthers(item)"/>
           </v-col>
@@ -136,45 +124,47 @@
               item-text="name"
               item-value="uid"
               dense
-              v-model="item.visitWindowUnitUid"
+              v-model="item.visit_window_unit_uid"
               :disabled="item.disabled && itemsDisabled"
               @change="disableOthers(item)"/>
           </v-col>
         </v-row>
       </div>
-      <template v-else-if="item.minVisitWindowValue !== null && item.maxVisitWindowValue !== null">
-        {{ item.minVisitWindowValue }} / {{ item.maxVisitWindowValue }} {{ getUnitName(item.visitWindowUnitUid) }}
+      <template v-else-if="item.min_visit_window_value !== null && item.max_visit_window_value !== null">
+        {{ item.min_visit_window_value }} / {{ item.max_visit_window_value }} {{ getUnitName(item.visit_window_unit_uid) }}
       </template>
     </template>
-    <template v-slot:item.studyEpochUid="{ item }">
-      {{ getStudyEpochName(item.studyEpochUid) }}
+    <template v-slot:item.study_epoch_uid="{ item }">
+      {{ getStudyEpochName(item.study_epoch_uid) }}
     </template>
-    <template v-slot:item.showVisit="{ item }">
-      <div v-if="editMode && item.visitClass === 'SINGLE_VISIT'">
+    <template v-slot:item.show_visit="{ item }">
+      <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
         <v-checkbox
-          v-model="item.showVisit"
-          @change="disableOthers(item)"/>
+          v-model="item.show_visit"
+          @change="disableOthers(item)"
+          :disabled="item.disabled && itemsDisabled"
+          />
       </div>
       <div v-else>
-        {{ item.showVisit|yesno}}
+        {{ item.show_visit|yesno}}
       </div>
     </template>
-    <template v-slot:item.isGlobalAnchorVisit="{ item }">
-      {{ item.isGlobalAnchorVisit|yesno}}
+    <template v-slot:item.is_global_anchor_visit="{ item }">
+      {{ item.is_global_anchor_visit|yesno}}
     </template>
-    <template v-slot:item.visitSubclass="{ item }">
-      {{ item.visitSubclass === 'ANCHOR_VISIT_IN_GROUP_OF_SUBV' ? 'Yes' : 'No'}}
+    <template v-slot:item.visit_subclass="{ item }">
+      {{ item.visit_subclass === 'ANCHOR_VISIT_IN_GROUP_OF_SUBV' ? 'Yes' : 'No'}}
     </template>
-    <template v-slot:item.visitSubName="{ item }">
-      {{ item.visitSubclass === 'ANCHOR_VISIT_IN_GROUP_OF_SUBV' ? item.visitSubName : ''}}
+    <template v-slot:item.visit_subname="{ item }">
+      {{ item.visit_subclass === 'ANCHOR_VISIT_IN_GROUP_OF_SUBV' ? item.visit_subname : ''}}
     </template>
-    <template v-slot:item.timeValue="{ item }">
-      <div v-if="editMode && item.visitClass === 'SINGLE_VISIT'">
+    <template v-slot:item.time_value="{ item }">
+      <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
         <v-row class="cellWidth">
           <v-col cols="4">
             <v-text-field
               dense
-              v-model="item.timeValue"
+              v-model="item.time_value"
               :disabled="item.disabled && itemsDisabled"
               @input="disableOthers(item)"/>
           </v-col>
@@ -184,50 +174,53 @@
               item-text="name"
               item-value="uid"
               dense
-              v-model="item.timeUnitUid"
+              v-model="item.time_unit_uid"
               :disabled="item.disabled && itemsDisabled"
               @change="disableOthers(item)"/>
           </v-col>
         </v-row>
       </div>
       <div v-else>
-        {{ item.timeValue }} {{ getUnitName(item.timeUnitUid) }}
+        {{ item.time_value }} {{ getUnitName(item.time_unit_uid) }}
       </div>
     </template>
-    <template v-slot:item.visitContactModeName="{ item }">
-      <div v-if="editMode && item.visitClass === 'SINGLE_VISIT'">
+    <template v-slot:item.visit_contact_mode_name="{ item }">
+      <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
         <v-select
         class="cellWidth"
         :items="contactModes"
-        item-text="sponsorPreferredName"
-        item-value="termUid"
+        item-text="sponsor_preferred_name"
+        item-value="term_uid"
         dense
-        v-model="item.visitContactModeUid"
+        v-model="item.visit_contact_mode_uid"
         :disabled="item.disabled && itemsDisabled"
         @change="disableOthers(item)"/>
       </div>
       <div v-else>
-        {{ item.visitContactModeName }}
+        {{ item.visit_contact_mode_name }}
       </div>
     </template>
-    <template v-slot:item.timeReferenceName="{ item }">
-      <div v-if="editMode && item.visitClass === 'SINGLE_VISIT'">
+    <template v-slot:item.time_reference_name="{ item }">
+      <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
         <v-select
         class="cellWidth"
         :items="timeReferences"
-        item-text="sponsorPreferredName"
-        item-value="termUid"
+        item-text="sponsor_preferred_name"
+        item-value="term_uid"
         dense
-        v-model="item.timeReferenceUid"
+        v-model="item.time_reference_uid"
         :disabled="item.disabled && itemsDisabled"
         @change="disableOthers(item)"/>
       </div>
+      <div v-else-if="item.visit_subclass === visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV">
+        {{ item.visit_subname }}
+      </div>
       <div v-else>
-        {{ item.timeReferenceName }}
+        {{ item.time_reference_name }}
       </div>
     </template>
     <template v-slot:item.description="{ item }">
-      <div v-if="editMode && item.visitClass === 'SINGLE_VISIT'">
+      <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
         <v-row class="cellWidth">
           <v-col>
             <v-text-field
@@ -242,40 +235,61 @@
         {{ item.description }}
       </div>
     </template>
-    <template v-slot:item.startRule="{ item }">
-      <div v-if="editMode && item.visitClass === 'SINGLE_VISIT'">
+    <template v-slot:item.start_rule="{ item }">
+      <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
         <v-row class="cellWidth">
           <v-col>
             <v-text-field
               dense
-              v-model="item.startRule"
+              v-model="item.start_rule"
               :disabled="item.disabled && itemsDisabled"
               @input="disableOthers(item)"/>
           </v-col>
         </v-row>
       </div>
       <div v-else>
-        {{ item.startRule }}
+        {{ item.start_rule }}
       </div>
     </template>
-    <template v-slot:item.endRule="{ item }">
-      <div v-if="editMode && item.visitClass === 'SINGLE_VISIT'">
+    <template v-slot:item.end_rule="{ item }">
+      <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
         <v-row class="cellWidth">
           <v-col>
             <v-text-field
               dense
-              v-model="item.endRule"
+              v-model="item.end_rule"
               :disabled="item.disabled && itemsDisabled"
               @input="disableOthers(item)"/>
           </v-col>
         </v-row>
       </div>
       <div v-else>
-        {{ item.endRule }}
+        {{ item.end_rule }}
       </div>
     </template>
     <template v-slot:item.actions="{ item }">
-      <actions-menu :actions="actions" :item="item" />
+      <actions-menu
+        v-if="!itemsDisabled || item.disabled"
+        :actions="actions"
+        :item="item"
+        />
+      <v-btn
+        v-if="itemsDisabled && !item.disabled"
+        fab
+        x-small
+        color="success"
+        @click="saveVisit(item)"
+        >
+        <v-icon>mdi-content-save</v-icon>
+      </v-btn>
+      <v-btn
+        v-if="itemsDisabled && !item.disabled"
+        fab
+        x-small
+        @click="cancelVisitEditing"
+        >
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
     </template>
   </n-n-table>
   <study-visits-duplicate-form
@@ -290,11 +304,17 @@
     >
     <study-visit-form :opened="showForm" :firstVisit="studyVisits ? (studyVisits.length === 0) : true" :studyVisit="selectedStudyVisit" @close="closeForm" />
   </v-dialog>
-  <v-dialog v-model="showHistory">
-    <history-table @close="closeHistory" type="studyVisit" url-prefix="/studies/" :item="selectedStudyVisit" :title-label="$t('StudyVisitTimeline.history_title')"/>
-  </v-dialog>
-  <v-dialog v-model="showStudyVisitsHistory">
-    <summary-history-table @close="closeStudyVisitsHistory" type="studyVisits" :title-label="$t('StudyDesignTable.study_visits')" />
+  <v-dialog
+    v-model="showVisitHistory"
+    persistent
+    max-width="1200px"
+    >
+    <history-table
+      :title="studyVisitHistoryTitle"
+      @close="closeVisitHistory"
+      :headers="headers"
+      :items="visitHistoryItems"
+      />
   </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
 </div>
@@ -310,12 +330,14 @@ import NNTable from '@/components/tools/NNTable'
 import StudyVisitForm from './StudyVisitForm'
 import HorizontalBarChart from '@/components/tools/HorizontalBarChart'
 import BubbleChart from '@/components/tools/BubbleChart'
-import HistoryTable from '@/components/library/HistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import visitConstants from '@/constants/visits'
 import filteringParameters from '@/utils/filteringParameters'
 import StudyVisitsDuplicateForm from './StudyVisitsDuplicateForm'
-import SummaryHistoryTable from '@/components/tools/SummaryHistoryTable'
+import unitConstants from '@/constants/units'
+import studyEpochs from '@/api/studyEpochs'
+import dataFormating from '@/utils/dataFormating'
 
 export default {
   components: {
@@ -326,14 +348,14 @@ export default {
     HorizontalBarChart,
     BubbleChart,
     HistoryTable,
-    StudyVisitsDuplicateForm,
-    SummaryHistoryTable
+    StudyVisitsDuplicateForm
   },
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
       studyEpochs: 'studyEpochs/studyEpochs',
-      studyVisits: 'studyEpochs/studyVisits'
+      studyVisits: 'studyEpochs/studyVisits',
+      totalVisits: 'studyEpochs/totalVisits'
     }),
     barChartStyles () {
       return {
@@ -348,10 +370,18 @@ export default {
       }
     },
     exportDataUrl () {
-      return `study/${this.selectedStudy.uid}/study-visits`
+      return `studies/${this.selectedStudy.uid}/study-visits`
     },
     singleStudyVisits () {
-      return this.studyVisits.filter(visit => visit.visitClass === visitConstants.CLASS_SINGLE_VISIT)
+      return this.studyVisits.filter(visit => visit.visit_class === visitConstants.CLASS_SINGLE_VISIT)
+    },
+    studyVisitHistoryTitle () {
+      if (this.selectedStudyVisit) {
+        return this.$t(
+          'StudyVisitTable.study_visit_history_title',
+          { visitUid: this.selectedStudyVisit.uid })
+      }
+      return ''
     }
   },
   data () {
@@ -361,113 +391,104 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'edit') && !this.editMode,
+          condition: (item) => item.possible_actions.find(action => action === 'edit') && !this.editMode,
           click: this.editVisit
         },
         {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete',
           iconColor: 'error',
-          condition: (item) => item.possibleActions.find(action => action === 'delete') && !this.editMode,
+          condition: (item) => item.possible_actions.find(action => action === 'delete') && !this.editMode,
           click: this.deleteVisit
         },
         {
           label: this.$t('StudyVisitTable.duplicate'),
           icon: 'mdi-plus-box-multiple-outline',
           iconColor: 'primary',
-          condition: (item) => item && !this.editMode,
           click: this.openDuplicateForm
         },
         {
           label: this.$t('_global.history'),
           icon: 'mdi-history',
-          condition: (item) => item.visitClass === 'SINGLE_VISIT' && !this.editMode,
+          condition: (item) => item.visit_class === 'SINGLE_VISIT' && !this.editMode,
           click: this.openVisitHistory
-        },
-        {
-          label: this.$t('_global.save'),
-          condition: (item) => item && this.editMode,
-          icon: 'mdi-content-save',
-          click: this.saveVisit
-        },
-        {
-          label: this.$t('_global.cancel'),
-          condition: (item) => item && this.editMode,
-          icon: 'mdi-close-thick',
-          click: this.cancelVisitEditing
         }
       ],
       headers: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('StudyVisitForm.study_epoch'), value: 'studyEpochUid' },
-        { text: this.$t('StudyVisitForm.visit_type'), value: 'visitTypeName' },
-        { text: this.$t('StudyVisitForm.visit_class'), value: 'visitClass' },
-        { text: this.$t('StudyVisitForm.anchor_visit_in_group'), value: 'visitSubclass' },
-        { text: this.$t('StudyVisitForm.visit_group'), value: 'visitSubName' },
-        { text: this.$t('StudyVisitForm.global_anchor_visit'), value: 'isGlobalAnchorVisit' },
-        { text: this.$t('StudyVisitForm.contact_mode'), value: 'visitContactModeName' },
-        { text: this.$t('StudyVisitForm.time_reference'), value: 'timeReferenceName' },
-        { text: this.$t('StudyVisitForm.time_value'), value: 'timeValue' },
+        { text: this.$t('StudyVisitForm.study_epoch'), value: 'study_epoch_uid' },
+        { text: this.$t('StudyVisitForm.visit_type'), value: 'visit_type_name' },
+        { text: this.$t('StudyVisitForm.visit_class'), value: 'visit_class' },
+        { text: this.$t('StudyVisitForm.anchor_visit_in_group'), value: 'visit_subclass' },
+        { text: this.$t('StudyVisitForm.visit_group'), value: 'visit_subname' },
+        { text: this.$t('StudyVisitForm.global_anchor_visit'), value: 'is_global_anchor_visit' },
+        { text: this.$t('StudyVisitForm.contact_mode'), value: 'visit_contact_mode_name' },
+        { text: this.$t('StudyVisitForm.time_reference'), value: 'time_reference_name' },
+        { text: this.$t('StudyVisitForm.time_value'), value: 'time_value' },
         { text: this.$t('StudyVisitForm.visit_number'), value: 'order' },
-        { text: this.$t('StudyVisitForm.unique_visit_number'), value: 'uniqueVisitNumber' },
-        { text: this.$t('StudyVisitForm.visit_name'), value: 'visitName' },
-        { text: this.$t('StudyVisitForm.visit_short_name'), value: 'visitShortName' },
-        { text: this.$t('StudyVisitForm.study_day_label'), value: 'studyDayLabel' },
-        { text: this.$t('StudyVisitForm.study_week_label'), value: 'studyWeekLabel' },
-        { text: this.$t('StudyVisitForm.visit_window'), value: 'visitWindow' },
-        { text: this.$t('StudyVisitForm.consecutive_visit'), value: 'consecutiveVisitGroup' },
-        { text: this.$t('StudyVisitForm.show_wisit'), value: 'showVisit' },
+        { text: this.$t('StudyVisitForm.unique_visit_number'), value: 'unique_visit_number' },
+        { text: this.$t('StudyVisitForm.visit_name'), value: 'visit_name' },
+        { text: this.$t('StudyVisitForm.visit_short_name'), value: 'visit_short_name' },
+        { text: this.$t('StudyVisitForm.study_day_label'), value: 'study_day_label' },
+        { text: this.$t('StudyVisitForm.study_week_label'), value: 'study_week_label' },
+        { text: this.$t('StudyVisitForm.visit_window'), value: 'visit_window' },
+        { text: this.$t('StudyVisitForm.consecutive_visit'), value: 'consecutive_visit_group' },
+        { text: this.$t('StudyVisitForm.show_wisit'), value: 'show_visit' },
         { text: this.$t('StudyVisitForm.visit_description'), value: 'description' },
-        { text: this.$t('StudyVisitForm.epoch_allocation'), value: 'epochAllocationName' },
-        { text: this.$t('StudyVisitForm.visit_start_rule'), value: 'startRule' },
-        { text: this.$t('StudyVisitForm.visit_stop_rule'), value: 'endRule' },
-        { text: this.$t('_global.modified'), value: 'modifiedDate' },
-        { text: this.$t('StudyVisitForm.modified_user'), value: 'userInitials' }
+        { text: this.$t('StudyVisitForm.epoch_allocation'), value: 'epoch_allocation_name' },
+        { text: this.$t('StudyVisitForm.visit_start_rule'), value: 'start_rule' },
+        { text: this.$t('StudyVisitForm.visit_stop_rule'), value: 'end_rule' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
+        { text: this.$t('StudyVisitForm.modified_user'), value: 'user_initials' },
+        { text: this.$t('StudyVisitForm.study_duration_days'), value: 'study_duration_days_label' },
+        { text: this.$t('StudyVisitForm.study_duration_weeks'), value: 'study_duration_weeks_label' }
       ],
       defaultColumns: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('StudyVisitForm.study_epoch'), value: 'studyEpochUid' },
-        { text: this.$t('StudyVisitForm.visit_type'), value: 'visitTypeName' },
-        { text: this.$t('StudyVisitForm.visit_class'), value: 'visitClass' },
-        { text: this.$t('StudyVisitForm.anchor_visit_in_group'), value: 'visitSubclass' },
-        { text: this.$t('StudyVisitForm.visit_group'), value: 'visitSubName' },
-        { text: this.$t('StudyVisitForm.global_anchor_visit'), value: 'isGlobalAnchorVisit' },
-        { text: this.$t('StudyVisitForm.contact_mode'), value: 'visitContactModeName' },
-        { text: this.$t('StudyVisitForm.time_reference'), value: 'timeReferenceName' },
-        { text: this.$t('StudyVisitForm.time_value'), value: 'timeValue' },
+        { text: this.$t('StudyVisitForm.study_epoch'), value: 'study_epoch_uid' },
+        { text: this.$t('StudyVisitForm.visit_type'), value: 'visit_type_name' },
+        { text: this.$t('StudyVisitForm.visit_class'), value: 'visit_class' },
+        { text: this.$t('StudyVisitForm.anchor_visit_in_group'), value: 'visit_subclass' },
+        { text: this.$t('StudyVisitForm.visit_group'), value: 'visit_subname' },
+        { text: this.$t('StudyVisitForm.global_anchor_visit'), value: 'is_global_anchor_visit' },
+        { text: this.$t('StudyVisitForm.contact_mode'), value: 'visit_contact_mode_name' },
+        { text: this.$t('StudyVisitForm.time_reference'), value: 'time_reference_name' },
+        { text: this.$t('StudyVisitForm.time_value'), value: 'time_value' },
         { text: this.$t('StudyVisitForm.visit_number'), value: 'order' },
-        { text: this.$t('StudyVisitForm.unique_visit_number'), value: 'uniqueVisitNumber' },
-        { text: this.$t('StudyVisitForm.visit_name'), value: 'visitName' },
-        { text: this.$t('StudyVisitForm.visit_short_name'), value: 'visitShortName' },
-        { text: this.$t('StudyVisitForm.study_day_label'), value: 'studyDayLabel' },
-        { text: this.$t('StudyVisitForm.study_week_label'), value: 'studyWeekLabel' },
-        { text: this.$t('StudyVisitForm.visit_window'), value: 'visitWindow' },
-        { text: this.$t('StudyVisitForm.consecutive_visit'), value: 'consecutiveVisitGroup' },
-        { text: this.$t('StudyVisitForm.show_wisit'), value: 'showVisit' },
+        { text: this.$t('StudyVisitForm.unique_visit_number'), value: 'unique_visit_number' },
+        { text: this.$t('StudyVisitForm.visit_name'), value: 'visit_name' },
+        { text: this.$t('StudyVisitForm.visit_short_name'), value: 'visit_short_name' },
+        { text: this.$t('StudyVisitForm.study_day_label'), value: 'study_day_label' },
+        { text: this.$t('StudyVisitForm.study_week_label'), value: 'study_week_label' },
+        { text: this.$t('StudyVisitForm.visit_window'), value: 'visit_window' },
+        { text: this.$t('StudyVisitForm.consecutive_visit'), value: 'consecutive_visit_group' },
+        { text: this.$t('StudyVisitForm.show_wisit'), value: 'show_visit' },
         { text: this.$t('StudyVisitForm.visit_description'), value: 'description' },
-        { text: this.$t('StudyVisitForm.epoch_allocation'), value: 'epochAllocationName' },
-        { text: this.$t('StudyVisitForm.visit_start_rule'), value: 'startRule' },
-        { text: this.$t('StudyVisitForm.visit_stop_rule'), value: 'endRule' },
-        { text: this.$t('_global.modified'), value: 'modifiedDate' },
-        { text: this.$t('StudyVisitForm.modified_user'), value: 'userInitials' }
+        { text: this.$t('StudyVisitForm.epoch_allocation'), value: 'epoch_allocation_name' },
+        { text: this.$t('StudyVisitForm.visit_start_rule'), value: 'start_rule' },
+        { text: this.$t('StudyVisitForm.visit_stop_rule'), value: 'end_rule' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
+        { text: this.$t('StudyVisitForm.modified_user'), value: 'user_initials' },
+        { text: this.$t('StudyVisitForm.study_duration_days'), value: 'study_duration_days_label' },
+        { text: this.$t('StudyVisitForm.study_duration_weeks'), value: 'study_duration_weeks_label' }
       ],
       editHeaders: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('StudyVisitForm.visit_type'), value: 'visitTypeName' },
-        { text: this.$t('StudyVisitForm.global_anchor_visit'), value: 'isGlobalAnchorVisit' },
-        { text: this.$t('StudyVisitForm.contact_mode'), value: 'visitContactModeName' },
-        { text: this.$t('StudyVisitForm.time_reference'), value: 'timeReferenceName' },
-        { text: this.$t('StudyVisitForm.time_value'), value: 'timeValue' },
-        { text: this.$t('StudyVisitForm.visit_name'), value: 'visitName' },
-        { text: this.$t('StudyVisitForm.visit_window'), value: 'visitWindow' },
-        { text: this.$t('StudyVisitForm.show_wisit'), value: 'showVisit' },
+        { text: this.$t('StudyVisitForm.visit_type'), value: 'visit_type_name' },
+        { text: this.$t('StudyVisitForm.global_anchor_visit'), value: 'is_global_anchor_visit' },
+        { text: this.$t('StudyVisitForm.contact_mode'), value: 'visit_contact_mode_name' },
+        { text: this.$t('StudyVisitForm.time_reference'), value: 'time_reference_name' },
+        { text: this.$t('StudyVisitForm.time_value'), value: 'time_value' },
+        { text: this.$t('StudyVisitForm.visit_name'), value: 'visit_name' },
+        { text: this.$t('StudyVisitForm.visit_window'), value: 'visit_window' },
+        { text: this.$t('StudyVisitForm.show_wisit'), value: 'show_visit' },
         { text: this.$t('StudyVisitForm.visit_description'), value: 'description' },
-        { text: this.$t('StudyVisitForm.visit_start_rule'), value: 'startRule' },
-        { text: this.$t('StudyVisitForm.visit_stop_rule'), value: 'endRule' }
+        { text: this.$t('StudyVisitForm.visit_start_rule'), value: 'start_rule' },
+        { text: this.$t('StudyVisitForm.visit_stop_rule'), value: 'end_rule' }
       ],
       selectedStudyVisit: null,
       showForm: false,
-      showHistory: false,
+      showVisitHistory: false,
       timeUnits: [],
       loading: true,
       barChartOptions: {
@@ -509,7 +530,7 @@ export default {
         tooltips: {
           callbacks: {
             label: function (tooltipItem, data) {
-              return [[data.datasets[tooltipItem.datasetIndex].label, ` ${data.datasets[tooltipItem.datasetIndex].contactMode}`], [data.datasets[tooltipItem.datasetIndex].visitType, ` Day ${data.datasets[tooltipItem.datasetIndex].studyDay}`, ` ${data.datasets[tooltipItem.datasetIndex].week}`]]
+              return [[data.datasets[tooltipItem.datasetIndex].label, ` ${data.datasets[tooltipItem.datasetIndex].contact_mode}`], [data.datasets[tooltipItem.datasetIndex].visit_type, ` Day ${data.datasets[tooltipItem.datasetIndex].study_day}`, ` ${data.datasets[tooltipItem.datasetIndex].week}`]]
             }
           },
           backgroundColor: 'rgba(226, 230, 240, 0.8)',
@@ -566,15 +587,25 @@ export default {
         { label: this.$t('StudyVisitForm.non_visit'), value: visitConstants.CLASS_NON_VISIT }
       ],
       timeReferences: [],
-      showStudyVisitsHistory: false
+      showStudyVisitsHistory: false,
+      visitHistoryItems: []
     }
   },
   methods: {
-    openStudyVisitsHistory () {
-      this.showStudyVisitsHistory = true
+    async fetchVisitsHistory () {
+      const resp = await studyEpochs.getStudyVisitsVersions(this.selectedStudy.uid)
+      return this.transformItems(resp.data)
     },
-    closeStudyVisitsHistory () {
-      this.showStudyVisitsHistory = false
+    transformItems (items) {
+      const result = []
+      for (const item of items) {
+        const newItem = { ...item }
+        newItem.study_epoch_uid = this.getStudyEpochName(newItem.study_epoch_uid)
+        newItem.is_global_anchor_visit = dataFormating.yesno(newItem.is_global_anchor_visit)
+        newItem.show_visit = dataFormating.yesno(newItem.show_visit)
+        result.push(newItem)
+      }
+      return result
     },
     openEditMode () {
       this.headers = this.editHeaders
@@ -587,7 +618,7 @@ export default {
     },
     disableOthers (item) {
       if (item.minVisitWindowValue > 0) {
-        item.minVisitWindowValue = item.minVisitWindowValue * -1
+        item.min_visit_window_value = item.min_visit_window_value * -1
       }
       if (!this.itemsDisabled) {
         this.studyVisits.forEach(visit => {
@@ -666,18 +697,20 @@ export default {
       bus.$emit('notification', { msg: this.$t('StudyVisitTable.delete_success') })
       await this.$store.dispatch('studyEpochs/fetchStudyVisits', this.selectedStudy.uid)
     },
-    openVisitHistory (item) {
-      this.selectedStudyVisit = item
-      this.showHistory = true
+    async openVisitHistory (visit) {
+      this.selectedStudyVisit = visit
+      const resp = await studyEpochs.getStudyVisitVersions(this.selectedStudy.uid, visit.uid)
+      this.visitHistoryItems = this.transformItems(resp.data)
+      this.showVisitHistory = true
     },
-    closeHistory () {
+    closeVisitHistory () {
       this.selectedStudyVisit = null
-      this.showHistory = false
+      this.showVisitHistory = false
     },
     getStudyEpochName (studyEpochUid) {
       if (this.studyEpochs) {
         const epoch = this.studyEpochs.find(item => item.uid === studyEpochUid)
-        return epoch.epochName
+        return epoch.epoch_name
       }
       return ''
     },
@@ -695,7 +728,7 @@ export default {
       const negativeDaysEpochs = []
       let maxDay = 0
       for (const d of this.studyEpochs) {
-        if (d.startDay >= 0) {
+        if (d.start_day >= 0) {
           break
         } else {
           negativeDaysEpochs.push(d)
@@ -706,15 +739,15 @@ export default {
         this.studyEpochs.unshift(el)
       })
       this.studyEpochs.forEach(el => {
-        if (el.epochName !== visitConstants.EPOCH_BASIC) {
-          if (el.endDay > maxDay) {
-            maxDay = el.endDay
+        if (el.epoch_name !== visitConstants.EPOCH_BASIC) {
+          if (el.end_day > maxDay) {
+            maxDay = el.end_day
           }
           this.barChartDatasets.datasets.push(
             {
-              data: [[el.startDay, el.endDay]],
-              backgroundColor: el.colorHash, // and for the rest we need to just provide duration of epoch, but if the first epoch has positive first day number than we need to build
-              label: el.epochName // such array just for the first epoch
+              data: [[el.start_day, el.end_day]],
+              backgroundColor: el.color_hash, // and for the rest we need to just provide duration of epoch, but if the first epoch has positive first day number than we need to build
+              label: el.epoch_name // such array just for the first epoch
             }
           )
         }
@@ -723,22 +756,22 @@ export default {
         this.lineChartDatasets.datasets.push(
           {
             data: [{
-              x: el.studyDayNumber,
+              x: el.study_day_number,
               y: 0,
               r: 7
             }],
-            studyDay: el.studyDayNumber,
-            label: el.visitName,
+            study_day: el.study_day_number,
+            label: el.visit_name,
             backgroundColor: 'rgb(6, 57, 112)',
-            contactMode: el.visitContactModeName,
-            visitType: el.visitTypeName,
-            week: el.studyWeekLabel
+            contact_mode: el.visit_contact_mode_name,
+            visit_type: el.visit_type_name,
+            week: el.study_week_label
           }
         )
       })
       if (this.singleStudyVisits.length > 0) {
-        const lastVisitDay = this.singleStudyVisits[this.singleStudyVisits.length - 1].studyDayNumber
-        const firstVisitDay = this.singleStudyVisits[0].studyDayNumber
+        const lastVisitDay = this.singleStudyVisits[this.singleStudyVisits.length - 1].study_day_number
+        const firstVisitDay = this.singleStudyVisits[0].study_day_number
 
         this.barChartOptions.scales.xAxes[0].ticks.max = Math.round(maxDay)
         this.lineChartOptions.scales.xAxes[0].ticks.max = Math.round(maxDay)
@@ -751,19 +784,27 @@ export default {
       this.barChartKey += 1
     }
   },
+  created () {
+    this.visitConstants = visitConstants
+  },
   mounted () {
     this.calculatedItems = {}
     terms.getByCodelist('timepointReferences').then(resp => {
-      this.calculatedItems.timeReferenceUid = this.createMapping(resp.data.items, 'termUid', 'sponsorPreferredName')
+      this.calculatedItems.time_reference_uid = this.createMapping(resp.data.items, 'term_uid', 'sponsor_preferred_name')
       terms.getByCodelist('epochs').then(resp => {
-        this.calculatedItems.epochUid = this.createMapping(resp.data.items, 'termUid', 'sponsorPreferredName')
+        this.calculatedItems.epoch_uid = this.createMapping(resp.data.items, 'term_uid', 'sponsor_preferred_name')
       })
     })
     this.$store.dispatch('studyEpochs/fetchStudyEpochs', this.selectedStudy.uid).then(() => {
-      this.$store.dispatch('studyEpochs/fetchStudyVisits', this.selectedStudy.uid).then(() => {
-      })
+      const params = {
+        page_number: 1,
+        total_count: true,
+        page_size: this.$refs.table.computedItemsPerPage,
+        studyUid: this.selectedStudy.uid
+      }
+      this.$store.dispatch('studyEpochs/fetchFilteredStudyVisits', params)
     })
-    units.getBySubset('Study Time').then(resp => {
+    units.getBySubset(unitConstants.TIME_UNIT_SUBSET_STUDY_TIME).then(resp => {
       this.timeUnits = resp.data.items
     })
     terms.getByCodelist('contactModes').then(resp => {

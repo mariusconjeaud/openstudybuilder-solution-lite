@@ -9,10 +9,10 @@
     :options.sync="options"
     :server-items-length="total"
     @filter="getForms"
-    has-history
     has-api
     column-data-resource="concepts/odms/forms"
     export-data-url="concepts/odms/forms"
+    export-object-label="CRFForms"
     >
     <template v-slot:actions="">
       <v-btn
@@ -33,14 +33,17 @@
     <template v-slot:item.name="{ item }">
       {{ item.name }}
     </template>
+    <template v-slot:item.description="{ item }">
+      <div v-html="getDescription(item)" />
+    </template>
+    <template v-slot:item.notes="{ item }">
+      <div v-html="getNotes(item)" />
+    </template>
     <template v-slot:item.repeating="{ item }">
       {{ item.repeating }}
     </template>
-    <template v-slot:item.descriptionEngDescription="{ item }">
-      <div v-html="item.descriptionEngDescription"/>
-    </template>
-    <template v-slot:item.activityGroups="{ item }">
-      {{ item.activityGroups | names }}
+    <template v-slot:item.activity_groups="{ item }">
+      {{ item.activity_groups | names }}
     </template>
     <template v-slot:item.status="{ item }">
       <status-chip :status="item.status" />
@@ -72,14 +75,20 @@
       @close="closeForm"
       :editItem="editItem"
       class="fullscreen-dialog"
-      :readOnly="readOnlyForm"
+      :readOnlyProp="editItem.status === constants.FINAL"
       />
   </v-dialog>
-  <v-dialog v-model="showFormHistory"
-            persistent
-            max-width="1200px">
-    <history-table @close="closeFormHistory" type="crfForm" :item="selectedForm"
-                   :title-label="$t('CrfFormTable.singular_title')" />
+  <v-dialog
+    v-model="showFormHistory"
+    persistent
+    max-width="1200px"
+    >
+    <history-table
+      :title="formHistoryTitle"
+      @close="closeFormHistory"
+      :headers="headers"
+      :items="formHistoryItems"
+      />
   </v-dialog>
   <crf-activities-models-link-form
     :open="linkForm"
@@ -94,14 +103,6 @@
       type="form"
       @close="closeRelationsTree()"/>
   </v-dialog>
-  <v-dialog v-model="showDuplicationForm"
-            persistent>
-    <crf-duplication-form
-      @close="closeDuplicateForm"
-      :item="selectedForm"
-      type="form"
-      />
-  </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
 </div>
 </template>
@@ -112,13 +113,15 @@ import StatusChip from '@/components/tools/StatusChip'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import crfs from '@/api/crfs'
 import CrfFormForm from '@/components/library/CrfFormForm'
-import HistoryTable from '@/components/library/HistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable'
 import CrfActivitiesModelsLinkForm from '@/components/library/CrfActivitiesModelsLinkForm'
 import constants from '@/constants/statuses'
 import filteringParameters from '@/utils/filteringParameters'
 import OdmReferencesTree from '@/components/library/OdmReferencesTree.vue'
-import CrfDuplicationForm from '@/components/library/CrfDuplicationForm'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
+import crfTypes from '@/constants/crfTypes'
+import parameters from '@/constants/parameters'
+import dataFormating from '@/utils/dataFormating'
 
 export default {
   components: {
@@ -129,8 +132,20 @@ export default {
     HistoryTable,
     CrfActivitiesModelsLinkForm,
     OdmReferencesTree,
-    CrfDuplicationForm,
     ConfirmDialog
+  },
+  props: {
+    elementProp: Object
+  },
+  computed: {
+    formHistoryTitle () {
+      if (this.selectedForm) {
+        return this.$t(
+          'CrfFormTable.form_history_title',
+          { formUid: this.selectedForm.uid })
+      }
+      return ''
+    }
   },
   data () {
     return {
@@ -139,14 +154,14 @@ export default {
           label: this.$t('_global.approve'),
           icon: 'mdi-check-decagram',
           iconColor: 'success',
-          condition: (item) => item.possibleActions.find(action => action === 'approve'),
+          condition: (item) => item.possible_actions.find(action => action === 'approve'),
           click: this.approve
         },
         {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'edit'),
+          condition: (item) => item.possible_actions.find(action => action === 'edit'),
           click: this.edit
         },
         {
@@ -160,28 +175,28 @@ export default {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'newVersion'),
+          condition: (item) => item.possible_actions.find(action => action === 'new_version'),
           click: this.newVersion
         },
         {
           label: this.$t('_global.inactivate'),
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'inactivate'),
+          condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
           click: this.inactivate
         },
         {
           label: this.$t('_global.reactivate'),
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'reactivate'),
+          condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
           click: this.reactivate
         },
         {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete',
           iconColor: 'error',
-          condition: (item) => item.possibleActions.find(action => action === 'delete'),
+          condition: (item) => item.possible_actions.find(action => action === 'delete'),
           click: this.delete
         },
         {
@@ -192,25 +207,20 @@ export default {
           click: this.openLinkForm
         },
         {
-          label: this.$t('_global.duplicate'),
-          icon: 'mdi-content-copy',
-          iconColor: 'primary',
-          click: this.openDuplicateForm
-        },
-        {
           label: this.$t('_global.history'),
           icon: 'mdi-history',
           click: this.openFormHistory
         }
       ],
       headers: [
-        { text: this.$t('_global.actions'), value: 'actions', width: '5%' },
+        { text: '', value: 'actions', width: '5%' },
         { text: this.$t('CRFForms.oid'), value: 'oid' },
         { text: this.$t('_global.relations'), value: 'relations' },
         { text: this.$t('_global.name'), value: 'name' },
+        { text: this.$t('_global.description'), value: 'description' },
+        { text: this.$t('CRFItems.impl_notes'), value: 'notes' },
         { text: this.$t('CrfFormTable.repeating'), value: 'repeating' },
-        { text: this.$t('_global.description'), value: 'descriptionEngDescription' },
-        { text: this.$t('_global.links'), value: 'activityGroups' },
+        { text: this.$t('_global.links'), value: 'activity_groups' },
         { text: this.$t('_global.version'), value: 'version' },
         { text: this.$t('_global.status'), value: 'status' }
       ],
@@ -224,19 +234,32 @@ export default {
       editItem: {},
       showFormHistory: false,
       linkForm: false,
-      readOnlyForm: false,
       showRelations: false,
-      showDuplicationForm: false
+      formHistoryItems: []
     }
   },
+  mounted () {
+    if (this.elementProp.tab === 'forms' && this.elementProp.type === crfTypes.FORM && this.elementProp.uid) {
+      this.edit({ uid: this.elementProp.uid })
+    }
+  },
+  created () {
+    this.constants = constants
+  },
   methods: {
-    openDuplicateForm (item) {
-      this.selectedForm = item
-      this.showDuplicationForm = true
+    getDescription (item) {
+      const engDesc = item.descriptions.find(el => el.language === parameters.ENG)
+      if (engDesc) {
+        return engDesc.description
+      }
+      return ''
     },
-    closeDuplicateForm () {
-      this.showDuplicationForm = false
-      this.getForms()
+    getNotes (item) {
+      const engDesc = item.descriptions.find(el => el.language === parameters.ENG)
+      if (engDesc) {
+        return engDesc.sponsor_instruction
+      }
+      return ''
     },
     openRelationsTree (item) {
       this.showRelations = true
@@ -292,12 +315,12 @@ export default {
       crfs.getForm(item.uid).then((resp) => {
         this.editItem = resp.data
         this.showForm = true
+        this.$emit('clearUid')
       })
     },
     view (item) {
       crfs.getForm(item.uid).then((resp) => {
         this.editItem = resp.data
-        this.readOnlyForm = true
         this.showForm = true
       })
     },
@@ -306,17 +329,31 @@ export default {
     },
     closeForm () {
       this.showForm = false
-      this.readOnlyForm = false
       this.editItem = {}
       this.getForms()
     },
-    openFormHistory (form) {
+    async openFormHistory (form) {
       this.selectedForm = form
+      const resp = await crfs.getFormAuditTrail(form.uid)
+      this.formHistoryItems = this.transformItems(resp.data)
       this.showFormHistory = true
     },
     closeFormHistory () {
       this.selectedForm = {}
       this.showFormHistory = false
+    },
+    transformItems (items) {
+      const result = []
+      for (const item of items) {
+        const newItem = { ...item }
+        if (newItem.activity_groups) {
+          newItem.activity_groups = dataFormating.names(newItem.activity_groups)
+        } else {
+          newItem.activity_groups = ''
+        }
+        result.push(newItem)
+      }
+      return result
     },
     openLinkForm (item) {
       this.selectedForm = item
@@ -342,6 +379,11 @@ export default {
         this.getForms()
       },
       deep: true
+    },
+    elementProp (value) {
+      if (value.tab === 'forms' && value.type === crfTypes.FORM && value.uid) {
+        this.edit({ uid: value.uid })
+      }
     }
   }
 }

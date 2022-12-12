@@ -15,22 +15,22 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class UnitDefinitionModel(ConceptModel):
-    convertibleUnit: bool
-    displayUnit: bool
-    masterUnit: bool
-    siUnit: bool
-    usConventionalUnit: bool
-    ctUnits: Sequence[SimpleTermModel]
-    unitSubsets: Sequence[SimpleTermModel]
+    convertible_unit: bool
+    display_unit: bool
+    master_unit: bool
+    si_unit: bool
+    us_conventional_unit: bool
+    ct_units: Sequence[SimpleTermModel]
+    unit_subsets: Sequence[SimpleTermModel]
     ucum: Optional[SimpleTermModel]
-    unitDimension: Optional[SimpleTermModel]
-    legacyCode: Optional[str]
-    molecularWeightConvExpon: Optional[int]
-    conversionFactorToMaster: Optional[float]
+    unit_dimension: Optional[SimpleTermModel]
+    legacy_code: Optional[str]
+    molecular_weight_conv_expon: Optional[int]
+    conversion_factor_to_master: Optional[float]
     comment: Optional[str]
     order: Optional[int]
     definition: Optional[str]
-    templateParameter: bool
+    template_parameter: bool
 
     @classmethod
     def from_unit_definition_ar(
@@ -39,7 +39,7 @@ class UnitDefinitionModel(ConceptModel):
         find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
         find_dictionary_term_by_uid: Callable[[str], Optional[DictionaryTermAR]],
     ) -> "UnitDefinitionModel":
-        ctUnits = []
+        ct_units = []
         for ct_unit in unit_definition_ar.concept_vo.ct_units:
             if ct_unit.name is None:
                 controlled_terminology_unit = SimpleTermModel.from_ct_code(
@@ -47,13 +47,13 @@ class UnitDefinitionModel(ConceptModel):
                 )
             else:
                 controlled_terminology_unit = SimpleTermModel(
-                    termUid=ct_unit.uid, name=ct_unit.name
+                    term_uid=ct_unit.uid, name=ct_unit.name
                 )
-            ctUnits.append(controlled_terminology_unit)
-        if not any(ct_unit.name is None for ct_unit in ctUnits):
-            ctUnits.sort(key=lambda item: item.name)
+            ct_units.append(controlled_terminology_unit)
+        if not any(ct_unit.name is None for ct_unit in ct_units):
+            ct_units.sort(key=lambda item: item.name)
 
-        unitSubsets = []
+        unit_subsets = []
         for unit_subset in unit_definition_ar.concept_vo.unit_subsets:
             if unit_subset.name is None:
                 controlled_terminology_subset = SimpleTermModel.from_ct_code(
@@ -61,11 +61,11 @@ class UnitDefinitionModel(ConceptModel):
                 )
             else:
                 controlled_terminology_subset = SimpleTermModel(
-                    termUid=unit_subset.uid, name=unit_subset.name
+                    term_uid=unit_subset.uid, name=unit_subset.name
                 )
-            unitSubsets.append(controlled_terminology_subset)
-        if not any(unit_subset.name is None for unit_subset in unitSubsets):
-            unitSubsets.sort(key=lambda item: item.name)
+            unit_subsets.append(controlled_terminology_subset)
+        if not any(unit_subset.name is None for unit_subset in unit_subsets):
+            unit_subsets.sort(key=lambda item: item.name)
 
         if unit_definition_ar.concept_vo.ucum_name is None:
             ucum = SimpleTermModel.from_ct_code(
@@ -74,18 +74,18 @@ class UnitDefinitionModel(ConceptModel):
             )
         else:
             ucum = SimpleTermModel(
-                termUid=unit_definition_ar.concept_vo.ucum_uid,
+                term_uid=unit_definition_ar.concept_vo.ucum_uid,
                 name=unit_definition_ar.concept_vo.ucum_name,
             )
 
         if unit_definition_ar.concept_vo.unit_dimension_name is None:
-            unitDimension = SimpleTermModel.from_ct_code(
+            unit_dimension = SimpleTermModel.from_ct_code(
                 c_code=unit_definition_ar.concept_vo.unit_dimension_uid,
                 find_term_by_uid=find_term_by_uid,
             )
         else:
-            unitDimension = SimpleTermModel(
-                termUid=unit_definition_ar.concept_vo.unit_dimension_uid,
+            unit_dimension = SimpleTermModel(
+                term_uid=unit_definition_ar.concept_vo.unit_dimension_uid,
                 name=unit_definition_ar.concept_vo.unit_dimension_name,
             )
 
@@ -93,67 +93,67 @@ class UnitDefinitionModel(ConceptModel):
             uid=unit_definition_ar.uid,
             name=unit_definition_ar.name,
             definition=unit_definition_ar.concept_vo.definition,
-            ctUnits=ctUnits,
-            unitSubsets=unitSubsets,
+            ct_units=ct_units,
+            unit_subsets=unit_subsets,
             ucum=ucum,
-            convertibleUnit=unit_definition_ar.concept_vo.convertible_unit,
-            displayUnit=unit_definition_ar.concept_vo.display_unit,
-            masterUnit=unit_definition_ar.concept_vo.master_unit,
-            siUnit=unit_definition_ar.concept_vo.si_unit,
-            usConventionalUnit=unit_definition_ar.concept_vo.us_conventional_unit,
-            legacyCode=unit_definition_ar.concept_vo.legacy_code,
-            molecularWeightConvExpon=unit_definition_ar.concept_vo.molecular_weight_conv_expon,
-            conversionFactorToMaster=unit_definition_ar.concept_vo.conversion_factor_to_master,
-            startDate=unit_definition_ar.item_metadata.start_date,
-            endDate=unit_definition_ar.item_metadata.end_date,
-            userInitials=unit_definition_ar.item_metadata.user_initials,
+            convertible_unit=unit_definition_ar.concept_vo.convertible_unit,
+            display_unit=unit_definition_ar.concept_vo.display_unit,
+            master_unit=unit_definition_ar.concept_vo.master_unit,
+            si_unit=unit_definition_ar.concept_vo.si_unit,
+            us_conventional_unit=unit_definition_ar.concept_vo.us_conventional_unit,
+            legacy_code=unit_definition_ar.concept_vo.legacy_code,
+            molecular_weight_conv_expon=unit_definition_ar.concept_vo.molecular_weight_conv_expon,
+            conversion_factor_to_master=unit_definition_ar.concept_vo.conversion_factor_to_master,
+            start_date=unit_definition_ar.item_metadata.start_date,
+            end_date=unit_definition_ar.item_metadata.end_date,
+            user_initials=unit_definition_ar.item_metadata.user_initials,
             status=unit_definition_ar.item_metadata.status.value,
-            changeDescription=unit_definition_ar.item_metadata.change_description,
-            libraryName=unit_definition_ar.library.name,
+            change_description=unit_definition_ar.item_metadata.change_description,
+            library_name=unit_definition_ar.library.name,
             version=unit_definition_ar.item_metadata.version,
-            unitDimension=unitDimension,
+            unit_dimension=unit_dimension,
             comment=unit_definition_ar.concept_vo.comment,
             order=unit_definition_ar.concept_vo.order,
-            templateParameter=unit_definition_ar.concept_vo.is_template_parameter,
+            template_parameter=unit_definition_ar.concept_vo.is_template_parameter,
         )
 
 
 class UnitDefinitionPostInput(ConceptPostInput):
-    convertibleUnit: bool
-    displayUnit: bool
-    masterUnit: bool
-    siUnit: bool
-    usConventionalUnit: bool
-    ctUnits: Sequence[str]
-    unitSubsets: Optional[Sequence[str]] = []
+    convertible_unit: bool
+    display_unit: bool
+    master_unit: bool
+    si_unit: bool
+    us_conventional_unit: bool
+    ct_units: Sequence[str]
+    unit_subsets: Optional[Sequence[str]] = []
     ucum: Optional[str]
-    unitDimension: Optional[str]
-    legacyCode: Optional[str]
-    molecularWeightConvExpon: Optional[int]
-    conversionFactorToMaster: Optional[float]
+    unit_dimension: Optional[str]
+    legacy_code: Optional[str]
+    molecular_weight_conv_expon: Optional[int]
+    conversion_factor_to_master: Optional[float]
     comment: Optional[str]
     order: Optional[int]
     definition: Optional[str]
-    templateParameter: bool = False
+    template_parameter: bool = False
 
 
 class UnitDefinitionPatchInput(ConceptPatchInput):
-    convertibleUnit: Optional[bool] = None
-    displayUnit: Optional[bool] = None
-    masterUnit: Optional[bool] = None
-    siUnit: Optional[bool] = None
-    usConventionalUnit: Optional[bool] = None
-    ctUnits: Optional[Sequence[str]] = []
-    unitSubsets: Optional[Sequence[str]] = []
+    convertible_unit: Optional[bool] = None
+    display_unit: Optional[bool] = None
+    master_unit: Optional[bool] = None
+    si_unit: Optional[bool] = None
+    us_conventional_unit: Optional[bool] = None
+    ct_units: Optional[Sequence[str]] = []
+    unit_subsets: Optional[Sequence[str]] = []
     ucum: Optional[str] = None
-    unitDimension: Optional[str] = None
-    legacyCode: Optional[str] = None
-    molecularWeightConvExpon: Optional[int] = None
-    conversionFactorToMaster: Optional[float] = None
+    unit_dimension: Optional[str] = None
+    legacy_code: Optional[str] = None
+    molecular_weight_conv_expon: Optional[int] = None
+    conversion_factor_to_master: Optional[float] = None
     comment: Optional[str] = None
     order: Optional[int] = None
     definition: Optional[str] = None
-    templateParameter: Optional[bool] = None
+    template_parameter: Optional[bool] = None
 
 
 class UnitDefinitionSimpleModel(BaseModel):

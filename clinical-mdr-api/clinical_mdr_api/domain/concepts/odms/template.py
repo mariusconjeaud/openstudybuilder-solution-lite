@@ -13,25 +13,22 @@ from clinical_mdr_api.exceptions import BusinessLogicException
 
 @dataclass(frozen=True)
 class OdmTemplateVO(ConceptVO):
-    oid: str
+    oid: Optional[str]
     effective_date: Optional[date]
     retired_date: Optional[date]
     description: Optional[str]
-    form_uids: Optional[Sequence[str]]
+    form_uids: Sequence[str]
 
     @classmethod
     def from_repository_values(
         cls,
         name: str,
-        oid: str,
-        effective_date: date,
+        oid: Optional[str],
+        effective_date: Optional[date],
         retired_date: Optional[date],
         description: Optional[str],
-        form_uids: Optional[Sequence[str]] = None,
+        form_uids: Sequence[str],
     ) -> "OdmTemplateVO":
-        if form_uids is None:
-            form_uids = []
-
         return cls(
             name=name,
             oid=oid,
@@ -56,7 +53,7 @@ class OdmTemplateVO(ConceptVO):
             and previous_name != self.name
         ):
             raise BusinessLogicException(
-                f"OdmTemplate with name ({self.name}) already exists."
+                f"ODM Template with name ({self.name}) already exists."
             )
 
 
@@ -114,7 +111,7 @@ class OdmTemplateAR(OdmARBase):
         author: str,
         change_description: Optional[str],
         concept_vo: OdmTemplateVO,
-        concept_exists_by_name_callback: Callable[[str], bool],
+        concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
     ) -> None:
         """
         Creates a new draft version for the object.

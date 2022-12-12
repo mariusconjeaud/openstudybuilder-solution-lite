@@ -49,14 +49,14 @@ export default {
       selectedStudy: 'studiesGeneral/selectedStudy'
     }),
     template () {
-      if (this.studyCriteria.criteriaTemplate) {
-        return this.studyCriteria.criteriaTemplate
+      if (this.studyCriteria.criteria_template) {
+        return this.studyCriteria.criteria_template
       }
-      return this.studyCriteria.criteria.criteriaTemplate
+      return this.studyCriteria.criteria.criteria_template
     },
     library () {
-      if (this.studyCriteria.criteriaTemplate) {
-        return this.studyCriteria.criteriaTemplate.library
+      if (this.studyCriteria.criteria_template) {
+        return this.studyCriteria.criteria_template.library
       }
       return this.studyCriteria.criteria.library
     }
@@ -95,11 +95,11 @@ export default {
     },
     async getStudyCriteriaNamePreview () {
       const criteriaData = {
-        criteriaTemplateUid: this.studyCriteria.criteria.criteriaTemplate.uid,
-        parameterValues: await instances.formatParameterValues(this.parameters),
-        libraryName: this.studyCriteria.criteria.library.name
+        criteria_template_uid: this.studyCriteria.criteria.criteria_template.uid,
+        parameter_values: await instances.formatParameterValues(this.parameters),
+        library_name: this.studyCriteria.criteria.library.name
       }
-      const resp = await study.getStudyCriteriaPreview(this.selectedStudy.uid, { criteriaData })
+      const resp = await study.getStudyCriteriaPreview(this.selectedStudy.uid, { criteria_data: criteriaData })
       return resp.data.criteria.name
     },
     async submit () {
@@ -117,11 +117,11 @@ export default {
       }
       const parameterValues = await instances.formatParameterValues(this.parameters)
       const data = {
-        criteriaTemplateUid: this.template.uid,
-        parameterValues,
-        libraryName: this.library.name
+        criteria_template_uid: this.template.uid,
+        parameter_values: parameterValues,
+        library_name: this.library.name
       }
-      await study.patchStudyCriteria(this.selectedStudy.uid, this.studyCriteria.studyCriteriaUid, data)
+      await study.patchStudyCriteria(this.selectedStudy.uid, this.studyCriteria.study_criteria_uid, data)
       bus.$emit('notification', { msg: this.$t('EligibilityCriteriaEditForm.update_success') })
       this.$emit('updated')
       this.close()
@@ -138,8 +138,8 @@ export default {
     },
     parameters () {
       this.parameters.forEach(el => {
-        if (el.name === 'TextValue' && el.selectedValues && el.selectedValues.length) {
-          this.parameters[this.parameters.indexOf(el)].selectedValues = el.selectedValues[0].name
+        if (el.name === 'TextValue' && el.selected_values && el.selected_values.length) {
+          this.parameters[this.parameters.indexOf(el)].selected_values = el.selected_values[0].name
         }
       })
     }

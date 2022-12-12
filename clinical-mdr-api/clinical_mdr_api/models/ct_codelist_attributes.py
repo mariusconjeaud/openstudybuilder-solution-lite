@@ -16,23 +16,23 @@ class CTCodelistAttributes(BaseModel):
         cls, ct_codelist_ar: CTCodelistAttributesAR
     ) -> "CTCodelistAttributes":
         return cls(
-            catalogueName=ct_codelist_ar.ct_codelist_vo.catalogue_name,
-            codelistUid=ct_codelist_ar.uid,
-            parentCodelistUid=ct_codelist_ar.ct_codelist_vo.parent_codelist_uid,
-            childCodelistUids=ct_codelist_ar.ct_codelist_vo.child_codelist_uids,
+            catalogue_name=ct_codelist_ar.ct_codelist_vo.catalogue_name,
+            codelist_uid=ct_codelist_ar.uid,
+            parent_codelist_uid=ct_codelist_ar.ct_codelist_vo.parent_codelist_uid,
+            child_codelist_uids=ct_codelist_ar.ct_codelist_vo.child_codelist_uids,
             name=ct_codelist_ar.name,
-            submissionValue=ct_codelist_ar.ct_codelist_vo.submission_value,
-            nciPreferredName=ct_codelist_ar.ct_codelist_vo.preferred_term,
+            submission_value=ct_codelist_ar.ct_codelist_vo.submission_value,
+            nci_preferred_name=ct_codelist_ar.ct_codelist_vo.preferred_term,
             definition=ct_codelist_ar.ct_codelist_vo.definition,
             extensible=ct_codelist_ar.ct_codelist_vo.extensible,
-            libraryName=Library.from_library_vo(ct_codelist_ar.library).name,
-            startDate=ct_codelist_ar.item_metadata.start_date,
-            endDate=ct_codelist_ar.item_metadata.end_date,
+            library_name=Library.from_library_vo(ct_codelist_ar.library).name,
+            start_date=ct_codelist_ar.item_metadata.start_date,
+            end_date=ct_codelist_ar.item_metadata.end_date,
             status=ct_codelist_ar.item_metadata.status.value,
             version=ct_codelist_ar.item_metadata.version,
-            changeDescription=ct_codelist_ar.item_metadata.change_description,
-            userInitials=ct_codelist_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=ct_codelist_ar.item_metadata.change_description,
+            user_initials=ct_codelist_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 [_.value for _ in ct_codelist_ar.get_possible_actions()]
             ),
         )
@@ -43,39 +43,39 @@ class CTCodelistAttributes(BaseModel):
     ) -> "CTCodelistAttributes":
         return cls(
             name=ct_codelist_ar.name,
-            submissionValue=ct_codelist_ar.ct_codelist_vo.submission_value,
-            nciPreferredName=ct_codelist_ar.ct_codelist_vo.preferred_term,
+            submission_value=ct_codelist_ar.ct_codelist_vo.submission_value,
+            nci_preferred_name=ct_codelist_ar.ct_codelist_vo.preferred_term,
             definition=ct_codelist_ar.ct_codelist_vo.definition,
             extensible=ct_codelist_ar.ct_codelist_vo.extensible,
-            startDate=ct_codelist_ar.item_metadata.start_date,
-            endDate=ct_codelist_ar.item_metadata.end_date,
+            start_date=ct_codelist_ar.item_metadata.start_date,
+            end_date=ct_codelist_ar.item_metadata.end_date,
             status=ct_codelist_ar.item_metadata.status.value,
             version=ct_codelist_ar.item_metadata.version,
-            changeDescription=ct_codelist_ar.item_metadata.change_description,
-            userInitials=ct_codelist_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=ct_codelist_ar.item_metadata.change_description,
+            user_initials=ct_codelist_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 [_.value for _ in ct_codelist_ar.get_possible_actions()]
             ),
         )
 
-    catalogueName: Optional[str] = Field(
+    catalogue_name: Optional[str] = Field(
         None,
-        title="catalogueName",
+        title="catalogue_name",
         description="",
     )
 
-    codelistUid: Optional[str] = Field(
+    codelist_uid: Optional[str] = Field(
         None,
-        title="codelistUid",
+        title="codelist_uid",
         description="",
     )
 
-    parentCodelistUid: str = Field(
-        None, title="parentCodelistUid", description="", removeFromWildcard=True
+    parent_codelist_uid: str = Field(
+        None, title="parent_codelist_uid", description="", remove_from_wildcard=True
     )
 
-    childCodelistUids: Optional[Sequence[str]] = Field(
-        None, title="childCodelistUids", description="", removeFromWildcard=True
+    child_codelist_uids: Optional[Sequence[str]] = Field(
+        None, title="child_codelist_uids", description="", remove_from_wildcard=True
     )
 
     name: str = Field(
@@ -84,15 +84,15 @@ class CTCodelistAttributes(BaseModel):
         description="",
     )
 
-    submissionValue: str = Field(
+    submission_value: str = Field(
         ...,
-        title="submissionValue",
+        title="submission_value",
         description="",
     )
 
-    nciPreferredName: str = Field(
+    nci_preferred_name: str = Field(
         ...,
-        title="nciPreferredName",
+        title="nci_preferred_name",
         description="",
     )
 
@@ -108,18 +108,18 @@ class CTCodelistAttributes(BaseModel):
         description="",
     )
 
-    libraryName: Optional[str] = None
-    startDate: Optional[datetime] = None
-    endDate: Optional[datetime] = None
+    library_name: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     status: Optional[str] = None
     version: Optional[str] = None
-    changeDescription: Optional[str] = None
-    userInitials: Optional[str] = None
-    possibleActions: Optional[List[str]] = Field(
+    change_description: Optional[str] = None
+    user_initials: Optional[str] = None
+    possible_actions: Optional[List[str]] = Field(
         None,
         description=(
             "Holds those actions that can be performed on the CTCodelistAttributes. "
-            "Actions are: 'approve', 'edit', 'newVersion'."
+            "Actions are: 'approve', 'edit', 'new_version'."
         ),
     )
 
@@ -140,15 +140,15 @@ class CTCodelistAttributesSimpleModel(BaseModel):
                 simple_codelist_attribute_model = cls(
                     uid=uid,
                     name=codelist_attribute._ct_codelist_attributes_vo.name,
-                    submissionValue=codelist_attribute._ct_codelist_attributes_vo.submission_value,
-                    preferredTerm=codelist_attribute._ct_codelist_attributes_vo.preferred_term,
+                    submission_value=codelist_attribute._ct_codelist_attributes_vo.submission_value,
+                    preferred_term=codelist_attribute._ct_codelist_attributes_vo.preferred_term,
                 )
             else:
                 simple_codelist_attribute_model = cls(
                     uid=uid,
                     name=None,
-                    submissionValue=None,
-                    preferredTerm=None,
+                    submission_value=None,
+                    preferred_term=None,
                 )
         else:
             simple_codelist_attribute_model = None
@@ -156,10 +156,10 @@ class CTCodelistAttributesSimpleModel(BaseModel):
 
     uid: str = Field(..., title="uid", description="")
     name: Optional[str] = Field(None, title="name", description="")
-    submissionValue: Optional[str] = Field(
-        None, title="submissionValue", description=""
+    submission_value: Optional[str] = Field(
+        None, title="submission_value", description=""
     )
-    preferredTerm: Optional[str] = Field(None, title="preferredTerm", description="")
+    preferred_term: Optional[str] = Field(None, title="preferred_term", description="")
 
 
 class CTCodelistAttributesVersion(CTCodelistAttributes):
@@ -171,7 +171,7 @@ class CTCodelistAttributesVersion(CTCodelistAttributes):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the objective (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )
 
@@ -183,15 +183,15 @@ class CTCodelistAttributesInput(BaseModel):
         description="",
     )
 
-    submissionValue: Optional[str] = Field(
+    submission_value: Optional[str] = Field(
         None,
-        title="submissionValue",
+        title="submission_value",
         description="",
     )
 
-    nciPreferredName: Optional[str] = Field(
+    nci_preferred_name: Optional[str] = Field(
         None,
-        title="nciPreferredName",
+        title="nci_preferred_name",
         description="",
     )
 
@@ -209,4 +209,4 @@ class CTCodelistAttributesInput(BaseModel):
 
 
 class CTCodelistAttributesEditInput(CTCodelistAttributesInput):
-    changeDescription: str = Field(None, title="changeDescription", description="")
+    change_description: str = Field(None, title="change_description", description="")

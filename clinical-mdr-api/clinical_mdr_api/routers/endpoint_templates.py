@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
 from pydantic.types import Json
 
-from clinical_mdr_api import models
+from clinical_mdr_api import config, models
 from clinical_mdr_api.models.endpoint_template import (
     EndpointTemplateNameInput,
     EndpointTemplateWithCount,
@@ -57,7 +57,7 @@ name='This is my endpoint for [Intervention] with [Activity] and [Activity] in [
             "content": {
                 "text/csv": {
                     "example": """
-"library","uid","name","startDate","endDate","status","version","changeDescription","userInitials", <>
+"library","uid","name","start_date","end_date","status","version","change_description","user_initials", <>
 "Sponsor","826d80a7-0b6a-419d-8ef1-80aa241d7ac7","First  [ComparatorIntervention]","2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
 """
                 },
@@ -69,11 +69,11 @@ name='This is my endpoint for [Intervention] with [Activity] and [Activity] in [
         <item type="dict">
             <uid type="str">e9117175-918f-489e-9a6e-65e0025233a6</uid>
             <name type="str">"First  [ComparatorIntervention]</name>
-            <startDate type="str">2020-11-19T11:51:43.000Z</startDate>
+            <start_date type="str">2020-11-19T11:51:43.000Z</start_date>
             <status type="str">Draft</status>
             <version type="str">0.2</version>
-            <changeDescription type="str">Test</changeDescription>
-            <userInitials type="str">TODO Initials</userInitials>
+            <change_description type="str">Test</change_description>
+            <user_initials type="str">TODO Initials</user_initials>
         </item>
   </data>
 </root>
@@ -91,14 +91,14 @@ name='This is my endpoint for [Intervention] with [Activity] and [Activity] in [
             "uid",
             "name",
             "indications=indications.name",
-            "category=categories.name.sponsorPreferredName",
-            "subCategory=subCategories.name.sponsorPreferredName",
-            "startDate",
-            "endDate",
+            "category=categories.name.sponsor_preferred_name",
+            "sub_category=sub_categories.name.sponsor_preferred_name",
+            "start_date",
+            "end_date",
             "status",
             "version",
-            "changeDescription",
-            "userInitials",
+            "change_description",
+            "user_initials",
         ],
         "formats": [
             "text/csv",
@@ -120,18 +120,20 @@ def get_endpoint_templates(
         "and you are interested in the 'Final' or 'Retired' status.\n"
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -139,16 +141,16 @@ def get_endpoint_templates(
     results = Service(current_user_id).get_all(
         status=status,
         return_study_count=True,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        sort_by=sortBy,
+        sort_by=sort_by,
     )
 
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -178,8 +180,8 @@ def get_distinct_values_for_header(
         "and you are interested in the 'Final' or 'Retired' status.\n"
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -188,17 +190,17 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     return Service(current_user_id).get_distinct_values_for_header(
         status=status,
-        field_name=fieldName,
-        search_string=searchString,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
@@ -233,7 +235,7 @@ def get_endpoint_template(
     "/{uid}/versions",
     summary="Returns the version history of a specific endpoint template identified by 'uid'.",
     description="The returned versions are ordered by\n"
-    "0. startDate descending (newest entries first)",
+    "0. start_date descending (newest entries first)",
     response_model=List[models.EndpointTemplateVersion],
     status_code=200,
     responses={
@@ -241,7 +243,7 @@ def get_endpoint_template(
             "content": {
                 "text/csv": {
                     "example": """
-"library","uid","name","startDate","endDate","status","version","changeDescription","userInitials"
+"library","uid","name","start_date","end_date","status","version","change_description","user_initials"
 "Sponsor","826d80a7-0b6a-419d-8ef1-80aa241d7ac7","First  [ComparatorIntervention]","2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
 """
                 },
@@ -252,21 +254,21 @@ def get_endpoint_template(
     <data type="list">
         <item type="dict">
             <name type="str">First  [ComparatorIntervention]</name>
-            <startDate type="str">2020-11-19 11:51:43+00:00</startDate>
-            <endDate type="str">None</endDate>
+            <start_date type="str">2020-11-19 11:51:43+00:00</start_date>
+            <end_date type="str">None</end_date>
             <status type="str">Draft</status>
             <version type="str">0.2</version>
-            <changeDescription type="str">Test</changeDescription>
-            <userInitials type="str">TODO Initials</userInitials>
+            <change_description type="str">Test</change_description>
+            <user_initials type="str">TODO Initials</user_initials>
         </item>
         <item type="dict">
             <name type="str">First  [ComparatorIntervention]</name>
-            <startDate type="str">2020-11-19 11:51:07+00:00</startDate>
-            <endDate type="str">2020-11-19 11:51:43+00:00</endDate>
+            <start_date type="str">2020-11-19 11:51:07+00:00</start_date>
+            <end_date type="str">2020-11-19 11:51:43+00:00</end_date>
             <status type="str">Draft</status>
             <version type="str">0.1</version>
-            <changeDescription type="str">Initial version</changeDescription>
-            <userInitials type="str">TODO user initials</userInitials>
+            <change_description type="str">Initial version</change_description>
+            <user_initials type="str">TODO user initials</user_initials>
         </item>
     </data>
 </root>
@@ -287,12 +289,12 @@ def get_endpoint_template(
         "defaults": [
             "library=library.name",
             "name",
-            "changeDescription",
+            "change_description",
             "status",
             "version",
-            "startDate",
-            "endDate",
-            "userInitials",
+            "start_date",
+            "end_date",
+            "user_initials",
         ],
         "formats": [
             "text/csv",
@@ -335,11 +337,11 @@ def get_objective_template_releases(
     "",
     summary="Creates a new endpoint template in 'Draft' status.",
     description="""This request is only valid if the endpoint template
-* belongs to a library that allows creating (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows creating (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The status will be automatically set to 'Draft'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will be set to '0.1'.
 * The endpoint template will be linked to a library.
 
@@ -359,7 +361,7 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The library with the specified 'libraryName' could not be found.",
+            "description": "Not Found - The library with the specified 'library_name' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
@@ -378,7 +380,7 @@ def create_endpoint_template(
     summary="Updates the endpoint template identified by 'uid'.",
     description="""This request is only valid if the endpoint template
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true). 
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
 
 If the request succeeds:
 * The 'version' property will be increased automatically by +0.1.
@@ -423,7 +425,7 @@ def edit(
     "/{uid}/groupings",
     summary="Updates the groupings of the endpoint template identified by 'uid'.",
     description="""This request is only valid if the template
-    * belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
+    * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
     
     This is version independent : it won't trigger a status or a version change.
     """,
@@ -456,7 +458,7 @@ def patch_groupings(
     summary="Edit the default parameter values of the endpoint template identified by 'uid'.",
     description="""This request is only valid if the endpoint template
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true). 
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
 
 If the request succeeds:
 * The 'version' property will be increased automatically by +0.1.
@@ -487,11 +489,11 @@ This endpoint can be used to either :
 )
 def patch_default_parameter_values(
     uid: str = EndpointTemplateUID,
-    setNumber: Optional[int] = Body(
+    set_number: Optional[int] = Body(
         None,
         description="Optionally, the set number of the default parameter values to be patched. If not set, a new set will be created.",
     ),
-    defaultParameterValues: Sequence[MultiTemplateParameterValue] = Body(
+    default_parameter_values: Sequence[MultiTemplateParameterValue] = Body(
         None,
         description="The set of default parameter values.\n"
         "If empty and an existing set_number is passed, the set will be deleted.",
@@ -499,16 +501,18 @@ def patch_default_parameter_values(
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.EndpointTemplate:
     return Service(current_user_id).patch_default_parameter_values(
-        uid=uid, set_number=setNumber, default_parameter_values=defaultParameterValues
+        uid=uid,
+        set_number=set_number,
+        default_parameter_values=default_parameter_values,
     )
 
 
 @router.post(
-    "/{uid}/new-version",
+    "/{uid}/versions",
     summary="Creates a new version of the endpoint template identified by 'uid'.",
     description="""This request is only valid if the endpoint template
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The latest 'Final' or 'Retired' version will remain the same as before.
@@ -554,11 +558,11 @@ def create_new_version(
     summary="Approves the endpoint template identified by 'uid'.",
     description="""This request is only valid if the endpoint template
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
     response_model=models.EndpointTemplate,
@@ -604,7 +608,7 @@ def approve(
 
 If the request succeeds:
 * The status will be automatically set to 'Retired'.
-* The 'changeDescription' property will be set automatically. 
+* The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
     response_model=models.EndpointTemplate,
@@ -637,7 +641,7 @@ def inactivate(
 
 If the request succeeds:
 * The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically. 
+* The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
     response_model=models.EndpointTemplate,
@@ -669,7 +673,7 @@ def reactivate(
 * the endpoint template is in 'Draft' status and
 * the endpoint template has never been in 'Final' status and
 * the endpoint template has no references to any endpoints and
-* the endpoint template belongs to a library that allows deleting (the 'isEditable' property of the library needs to be true).""",
+* the endpoint template belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
     response_model=None,
     status_code=204,
     responses={

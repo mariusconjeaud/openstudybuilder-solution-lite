@@ -20,25 +20,19 @@ from clinical_mdr_api.models.concept import (
 from clinical_mdr_api.models.odm_common_models import (
     OdmXmlExtensionAttributeSimpleModel,
     OdmXmlExtensionSimpleModel,
-    OdmXmlExtensionTagSimpleModel,
 )
 
 
 class OdmXmlExtensionTag(ConceptModel):
-    xmlExtension: Optional[OdmXmlExtensionSimpleModel]
-    parentXmlExtensionTag: Optional[OdmXmlExtensionTagSimpleModel]
-    childXmlExtensionTags: Optional[Sequence[OdmXmlExtensionTagSimpleModel]]
-    xmlExtensionAttributes: Optional[Sequence[OdmXmlExtensionAttributeSimpleModel]]
-    possibleActions: List[str]
+    xml_extension: OdmXmlExtensionSimpleModel
+    xml_extension_attributes: Sequence[OdmXmlExtensionAttributeSimpleModel]
+    possible_actions: List[str]
 
     @classmethod
     def from_odm_xml_extension_tag_ar(
         cls,
         odm_xml_extension_tag_ar: OdmXmlExtensionTagAR,
         find_odm_xml_extension_by_uid: Callable[[str], Optional[OdmXmlExtensionAR]],
-        find_odm_xml_extension_tag_by_uid: Callable[
-            [str], Optional[OdmXmlExtensionTagAR]
-        ],
         find_odm_xml_extension_attribute_by_uid: Callable[
             [str], Optional[OdmXmlExtensionAttributeAR]
         ],
@@ -46,32 +40,18 @@ class OdmXmlExtensionTag(ConceptModel):
         return cls(
             uid=odm_xml_extension_tag_ar._uid,
             name=odm_xml_extension_tag_ar.concept_vo.name,
-            libraryName=odm_xml_extension_tag_ar.library.name,
-            startDate=odm_xml_extension_tag_ar.item_metadata.start_date,
-            endDate=odm_xml_extension_tag_ar.item_metadata.end_date,
+            library_name=odm_xml_extension_tag_ar.library.name,
+            start_date=odm_xml_extension_tag_ar.item_metadata.start_date,
+            end_date=odm_xml_extension_tag_ar.item_metadata.end_date,
             status=odm_xml_extension_tag_ar.item_metadata.status.value,
             version=odm_xml_extension_tag_ar.item_metadata.version,
-            changeDescription=odm_xml_extension_tag_ar.item_metadata.change_description,
-            userInitials=odm_xml_extension_tag_ar.item_metadata.user_initials,
-            xmlExtension=OdmXmlExtensionSimpleModel.from_odm_xml_extension_uid(
+            change_description=odm_xml_extension_tag_ar.item_metadata.change_description,
+            user_initials=odm_xml_extension_tag_ar.item_metadata.user_initials,
+            xml_extension=OdmXmlExtensionSimpleModel.from_odm_xml_extension_uid(
                 uid=odm_xml_extension_tag_ar.concept_vo.xml_extension_uid,
                 find_odm_xml_extension_by_uid=find_odm_xml_extension_by_uid,
             ),
-            parentXmlExtensionTag=OdmXmlExtensionTagSimpleModel.from_odm_xml_extension_tag_uid(
-                uid=odm_xml_extension_tag_ar.concept_vo.parent_xml_extension_tag_uid,
-                find_odm_xml_extension_tag_by_uid=find_odm_xml_extension_tag_by_uid,
-            ),
-            childXmlExtensionTags=sorted(
-                [
-                    OdmXmlExtensionTagSimpleModel.from_odm_xml_extension_tag_uid(
-                        uid=child_xml_extension_tag_uid,
-                        find_odm_xml_extension_tag_by_uid=find_odm_xml_extension_tag_by_uid,
-                    )
-                    for child_xml_extension_tag_uid in odm_xml_extension_tag_ar.concept_vo.child_xml_extension_tag_uids
-                ],
-                key=lambda item: item.name,
-            ),
-            xmlExtensionAttributes=sorted(
+            xml_extension_attributes=sorted(
                 [
                     OdmXmlExtensionAttributeSimpleModel.from_odm_xml_extension_attribute_uid(
                         uid=xml_extension_attribute_uid,
@@ -81,7 +61,7 @@ class OdmXmlExtensionTag(ConceptModel):
                 ],
                 key=lambda item: item.name,
             ),
-            possibleActions=sorted(
+            possible_actions=sorted(
                 [_.value for _ in odm_xml_extension_tag_ar.get_possible_actions()]
             ),
         )
@@ -125,8 +105,7 @@ class OdmXmlExtensionTagRelationModel(BaseModel):
 
 
 class OdmXmlExtensionTagPostInput(ConceptPostInput):
-    xmlExtensionUid: str
-    parentXmlExtensionTagUid: Optional[str]
+    xml_extension_uid: str
 
     @validator("name")
     # pylint:disable=no-self-argument
@@ -149,6 +128,6 @@ class OdmXmlExtensionTagVersion(OdmXmlExtensionTag):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the objective (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )

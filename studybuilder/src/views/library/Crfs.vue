@@ -19,22 +19,22 @@
     </v-tabs>
     <v-tabs-items v-model="tab">
       <v-tab-item id="templates">
-        <crf-template-table/>
+        <crf-template-table :elementProp="{uid: uid, type: type, tab: tab}" @clearUid="clearUid"/>
       </v-tab-item>
       <v-tab-item id="forms">
-        <crf-form-table/>
+        <crf-form-table :elementProp="{uid: uid, type: type, tab: tab}" @clearUid="clearUid"/>
       </v-tab-item>
       <v-tab-item id="item-groups">
-        <crf-item-group-table/>
+        <crf-item-group-table :elementProp="{uid: uid, type: type, tab: tab}" @clearUid="clearUid"/>
       </v-tab-item>
       <v-tab-item id="items">
-        <crf-item-table/>
+        <crf-item-table :elementProp="{uid: uid, type: type, tab: tab}" @clearUid="clearUid"/>
       </v-tab-item>
       <v-tab-item id="crf-tree">
-        <crf-tree :refresh="tab"/>
+        <crf-tree :refresh="tab" @redirectToPage="redirectToPage"/>
       </v-tab-item>
       <v-tab-item id="odm-viewer">
-        <odm-viewer/>
+        <odm-viewer :elementProp="uid"/>
       </v-tab-item>
       <v-tab-item id="alias">
         <crf-alias-table/>
@@ -66,17 +66,37 @@ export default {
   },
   data () {
     return {
-      tab: 1
+      tab: 1,
+      type: '',
+      uid: ''
     }
   },
   mounted () {
     this.tab = this.$route.params.tab
+    this.type = this.$route.params.type
+    this.uid = this.$route.params.uid
+  },
+  methods: {
+    redirectToPage (data) {
+      this.uid = data.uid
+      this.type = data.type
+      this.tab = data.tab
+    },
+    clearUid () {
+      this.uid = null
+      this.type = null
+    }
   },
   watch: {
     tab (newValue) {
+      const params = { tab: newValue }
+      if (this.uid && this.type) {
+        params.type = this.type
+        params.uid = this.uid
+      }
       this.$router.push({
         name: 'Crfs',
-        params: { tab: newValue }
+        params: params
       })
     }
   }

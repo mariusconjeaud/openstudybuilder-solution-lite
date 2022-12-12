@@ -31,14 +31,13 @@
         <v-row>
           <v-col>
             <v-autocomplete
-              v-model="form.activityGroups"
+              v-model="form.activity_group"
               :items="groups"
               :label="$t('ActivityForms.groups')"
               item-text="name"
               item-value="uid"
               dense
               clearable
-              multiple
               :error-messages="errors"
             />
           </v-col>
@@ -84,7 +83,7 @@
           <v-col>
             <v-textarea
               v-if="editing"
-              v-model="form.changeDescription"
+              v-model="form.change_description"
               :label="$t('ActivityForms.change_description')"
               hide-details
               :error-messages="errors"
@@ -152,16 +151,16 @@ export default {
       }
       this.form = {
         name: value.name,
-        nameSentenceCase: '',
+        name_sentence_case: '',
         definition: value.definition,
-        changeDescription: value.changeDescription,
-        activityGroups: []
+        change_description: value.change_description,
+        activity_groups: []
       }
       if (!_isEmpty(value)) {
-        this.form.nameSentenceCase = value.name.charAt(0).toUpperCase() + value.name.slice(1)
-        if (!_isEmpty(value.activityGroups)) {
-          value.activityGroups.forEach(element => {
-            this.form.activityGroups.push(element.uid)
+        this.form.name_sentence_case = value.name.charAt(0).toUpperCase() + value.name.slice(1)
+        if (!_isEmpty(value.activity_groups)) {
+          value.activity_groups.forEach(element => {
+            this.form.activity_groups.push(element.uid)
           })
         }
       }
@@ -192,8 +191,8 @@ export default {
       this.$refs.stepper.reset()
     },
     async submit () {
-      this.form.libraryName = 'Sponsor' // Hardcoded for now at the Sinna and Mikkel request
-      this.form.nameSentenceCase = this.form.name.charAt(0).toUpperCase() + this.form.name.slice(1)
+      this.form.library_name = 'Sponsor' // Hardcoded for now at the Sinna and Mikkel request
+      this.form.name_sentence_case = this.form.name.charAt(0).toUpperCase() + this.form.name.slice(1)
       if (!this.editedActivity) {
         if (!this.subgroup) {
           activities.create(this.form, 'activity-groups').then(resp => {
@@ -222,7 +221,7 @@ export default {
       this.$refs.stepper.loading = false
     },
     checkIfEqual () {
-      if (_isEqual(this.form.changeDescription, this.editedActivity.changeDescription) &&
+      if (_isEqual(this.form.change_description, this.editedActivity.change_description) &&
           _isEqual(this.form.definition, this.editedActivity.definition) &&
           _isEqual(this.form.name, this.editedActivity.name)) {
         return true

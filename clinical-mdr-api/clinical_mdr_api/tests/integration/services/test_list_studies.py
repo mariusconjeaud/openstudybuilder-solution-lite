@@ -78,7 +78,7 @@ class TestListStudies(unittest.TestCase):
         StudyActivitySelectionService("AZNG").make_selection(
             "study_root",
             models.StudySelectionActivityCreateInput(
-                flowchartGroupUid="term_root_final", activityUid="activity_root1"
+                flowchart_group_uid="term_root_final", activity_uid="activity_root1"
             ),
         )
 
@@ -103,10 +103,10 @@ MERGE (library)-[:CONTAINS_CRITERIA_TEMPLATE]->(ctr1)
         StudyCriteriaSelectionService("AZNG").make_selection_create_criteria(
             "study_root",
             models.study_selection.StudySelectionCriteriaCreateInput(
-                criteriaData=models.criteria.CriteriaCreateInput(
-                    criteriaTemplateUid="incl_criteria_1",
-                    libraryName="Sponsor",
-                    parameterValues=[],
+                criteria_data=models.criteria.CriteriaCreateInput(
+                    criteria_template_uid="incl_criteria_1",
+                    library_name="Sponsor",
+                    parameter_values=[],
                 )
             ),
         )
@@ -130,12 +130,12 @@ set relt.version = "1.0"
         StudyActivityInstructionService("AZNG").create(
             "study_root",
             models.StudyActivityInstructionCreateInput(
-                activityInstructionData=models.ActivityInstructionCreateInput(
-                    activityInstructionTemplateUid="ActivityDescriptionTemplate_000001",
-                    parameterValues=[],
-                    libraryName="Sponsor",
+                activity_instruction_data=models.ActivityInstructionCreateInput(
+                    activity_instruction_template_uid="ActivityDescriptionTemplate_000001",
+                    parameter_values=[],
+                    library_name="Sponsor",
                 ),
-                studyActivityUid="StudyActivity_000001",
+                study_activity_uid="StudyActivity_000001",
             ),
         )
 

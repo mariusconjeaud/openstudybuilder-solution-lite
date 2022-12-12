@@ -74,7 +74,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
                 setattr(
                     base_model_with_missing_values,
                     field_name,
-                    getattr(reference_base_model, field_name).termUid,
+                    getattr(reference_base_model, field_name).term_uid,
                 )
             elif isinstance(getattr(reference_base_model, field_name), Sequence):
                 if reference_base_model.__fields__[field_name].type_ is SimpleTermModel:
@@ -82,7 +82,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
                         base_model_with_missing_values,
                         field_name,
                         [
-                            term.termUid
+                            term.term_uid
                             for term in getattr(reference_base_model, field_name)
                         ],
                     )
@@ -149,7 +149,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         filter_by: Optional[dict] = None,
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         total_count: bool = False,
-        only_specific_status: list = None,
+        only_specific_status: Optional[Sequence[str]] = None,
         **kwargs,
     ) -> GenericFilteringReturn[BaseModel]:
 
@@ -308,14 +308,14 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
 
     def non_transactional_create(self, concept_input: BaseModel) -> BaseModel:
         if not self._repos.library_repository.library_exists(
-            normalize_string(concept_input.libraryName)
+            normalize_string(concept_input.library_name)
         ):
             raise exceptions.BusinessLogicException(
-                f"There is no library identified by provided library name ({concept_input.libraryName})"
+                f"There is no library identified by provided library name ({concept_input.library_name})"
             )
 
         library_vo = LibraryVO.from_input_values_2(
-            library_name=concept_input.libraryName,
+            library_name=concept_input.library_name,
             is_library_editable_callback=(
                 lambda name: self._repos.library_repository.find_by_name(
                     name

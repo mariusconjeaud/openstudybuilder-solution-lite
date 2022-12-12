@@ -60,13 +60,13 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
             "content": {
                 "text/csv": {
                     "example": """
-"library","uid","name","startDate","endDate","status","version","changeDescription","userInitials"
+"library","uid","name","start_date","end_date","status","version","change_description","user_initials"
 "Sponsor","826d80a7-0b6a-419d-8ef1-80aa241d7ac7","First  [ComparatorIntervention]","2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
 """
                 },
                 "text/xml": {
                     "example": """
-                    <?xml version="1.0" encoding="UTF-8" ?><root><data type="list"><item type="dict"><uid type="str">e9117175-918f-489e-9a6e-65e0025233a6</uid><name type="str">Alamakota</name><startDate type="str">2020-11-19T11:51:43.000Z</startDate><status type="str">Draft</status><version type="str">0.2</version><changeDescription type="str">Test</changeDescription><userInitials type="str">TODO Initials</userInitials></item></data></root>
+                    <?xml version="1.0" encoding="UTF-8" ?><root><data type="list"><item type="dict"><uid type="str">e9117175-918f-489e-9a6e-65e0025233a6</uid><name type="str">Alamakota</name><start_date type="str">2020-11-19T11:51:43.000Z</start_date><status type="str">Draft</status><version type="str">0.2</version><change_description type="str">Test</change_description><user_initials type="str">TODO Initials</user_initials></item></data></root>
 """
                 },
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
@@ -81,12 +81,12 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
             "library=library.name",
             "uid",
             "name",
-            "startDate",
-            "endDate",
+            "start_date",
+            "end_date",
             "status",
             "version",
-            "changeDescription",
-            "userInitials",
+            "change_description",
+            "user_initials",
         ],
         "formats": [
             "text/csv",
@@ -130,10 +130,10 @@ def get_parameter_templates(
     },
 )
 # pylint: disable=unused-argument
-# TODO: Should `atSpecifiedDateTime` query param be supported?
+# TODO: Should `at_specified_date_time` query param be supported?
 def get_parameter_template(
     uid: str = ComplexParameterTemplateUID,
-    atSpecifiedDateTime: Optional[datetime] = Query(
+    at_specified_date_time: Optional[datetime] = Query(
         None,
         description="If specified, the latest/newest representation of the parameter template at this point in time is returned.\n"
         "The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: "
@@ -175,7 +175,7 @@ def get_parameter_template(
     "/{uid}/versions",
     summary="Returns the version history of a specific parameter template identified by 'uid'.",
     description="The returned versions are ordered by\n"
-    "0. startDate descending (newest entries first)",
+    "0. start_date descending (newest entries first)",
     response_model=Sequence[ComplexParameterTemplateVersion],
     status_code=200,
     responses={
@@ -183,13 +183,13 @@ def get_parameter_template(
             "content": {
                 "text/csv": {
                     "example": """
-"library";"uid";"name";"startDate";"endDate";"status";"version";"changeDescription";"userInitials"
+"library";"uid";"name";"start_date";"end_date";"status";"version";"change_description";"user_initials"
 "Sponsor";"826d80a7-0b6a-419d-8ef1-80aa241d7ac7";"First  [ComparatorIntervention]";"2020-10-22T10:19:29+00:00";;"Draft";"0.1";"Initial version";"NdSJ"
 """
                 },
                 "text/xml": {
                     "example": """
-                    <?xml version="1.0" encoding="UTF-8" ?><root><data type="list"><item type="dict"><name type="str">Alamakota</name><startDate type="str">2020-11-19 11:51:43+00:00</startDate><endDate type="str">None</endDate><status type="str">Draft</status><version type="str">0.2</version><changeDescription type="str">Test</changeDescription><userInitials type="str">TODO Initials</userInitials></item><item type="dict"><name type="str">Alamakota</name><startDate type="str">2020-11-19 11:51:07+00:00</startDate><endDate type="str">2020-11-19 11:51:43+00:00</endDate><status type="str">Draft</status><version type="str">0.1</version><changeDescription type="str">Initial version</changeDescription><userInitials type="str">TODO user initials</userInitials></item></data></root>
+                    <?xml version="1.0" encoding="UTF-8" ?><root><data type="list"><item type="dict"><name type="str">Alamakota</name><start_date type="str">2020-11-19 11:51:43+00:00</start_date><end_date type="str">None</end_date><status type="str">Draft</status><version type="str">0.2</version><change_description type="str">Test</change_description><user_initials type="str">TODO Initials</user_initials></item><item type="dict"><name type="str">Alamakota</name><start_date type="str">2020-11-19 11:51:07+00:00</start_date><end_date type="str">2020-11-19 11:51:43+00:00</end_date><status type="str">Draft</status><version type="str">0.1</version><change_description type="str">Initial version</change_description><user_initials type="str">TODO user initials</user_initials></item></data></root>
 """
                 },
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
@@ -207,12 +207,12 @@ def get_parameter_template(
         "defaults": [
             "library=library.name",
             "name",
-            "changeDescription",
+            "change_description",
             "status",
             "version",
-            "startDate",
-            "endDate",
-            "userInitials",
+            "start_date",
+            "end_date",
+            "user_initials",
         ],
         "formats": [
             "text/csv",
@@ -266,11 +266,11 @@ def get_parameter_template_version(
     "",
     summary="Creates a new parameter template in 'Draft' status.",
     description="""This request is only valid if the parameter template
-* belongs to a library that allows creating (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows creating (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The status will be automatically set to 'Draft'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will be set to '0.1'.
 * The parameter template will be linked to a library.
 
@@ -290,7 +290,7 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The library with the specified 'libraryName' could not be found.",
+            "description": "Not Found - The library with the specified 'library_name' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
@@ -310,7 +310,7 @@ def create_parameter_template(
     summary="Updates the parameter template identified by 'uid'.",
     description="""This request is only valid if the parameter template
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The 'version' property will be increased automatically by +0.1.
@@ -352,11 +352,11 @@ def edit(
 
 
 @router.post(
-    "/{uid}/new-version",
+    "/{uid}/versions",
     summary="Creates a new version of the parameter template identified by 'uid'.",
     description="""This request is only valid if the parameter template
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The latest 'Final' or 'Retired' version will remain the same as before.
@@ -400,12 +400,12 @@ def create_new_version(
     summary="Approves the parameter template identified by 'uid'.",
     description="""This request is only valid if the parameter template
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
 If parameter template has any related objects status will not be updated but item will be extended with 
 related item counts.
 If the request succeeds:
 * The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
     response_model=ComplexParameterTemplate,
@@ -444,43 +444,6 @@ def approve(
 
 
 @router.post(
-    "/{uid}/approve_cascading",
-    summary="Approves the parameter template identified by 'uid'. Updates all related items",
-    description="""This request is only valid if the parameter template
-* is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
-
-If the request succeeds:
-* The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically.
-* The 'version' property will be increased automatically to the next major version.
-    """,
-    response_model=ComplexParameterTemplate,
-    status_code=201,
-    responses={
-        201: {"description": "OK."},
-        403: {
-            "model": ErrorResponse,
-            "description": "Forbidden - Reasons include e.g.: \n"
-            "- The parameter template is not in draft status.\n"
-            "- The library does not allow to approve drafts.",
-        },
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - The parameter template with the specified 'uid' could not be found.",
-        },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
-    },
-)
-def approve_cascading(
-    uid: str = ComplexParameterTemplateUID,
-    current_user_id: str = Depends(get_current_user_id),
-) -> ComplexParameterTemplate:
-    # TODO: do sth not to mislead static analysis
-    return Service(current_user_id).approve_cascade(uid)
-
-
-@router.post(
     "/{uid}/inactivate",
     summary="Inactivates/deactivates the parameter template identified by 'uid'.",
     description="""This request is only valid if the parameter template
@@ -488,7 +451,7 @@ def approve_cascading(
 
 If the request succeeds:
 * The status will be automatically set to 'Retired'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will remain the same as before.
     """,
     response_model=ComplexParameterTemplate,
@@ -523,7 +486,7 @@ def inactivate(
 
 If the request succeeds:
 * The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will remain the same as before.
     """,
     response_model=ComplexParameterTemplate,
@@ -557,7 +520,7 @@ def reactivate(
 * the parameter template is in 'Draft' status and
 * the parameter template has never been in 'Final' status and
 * the parameter template has no references to any complex-parameters and
-* the parameter template belongs to a library that allows deleting (the 'isEditable' property of the library needs to be true).""",
+* the parameter template belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
     response_model=None,
     status_code=204,
     responses={

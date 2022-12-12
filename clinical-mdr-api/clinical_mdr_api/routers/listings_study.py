@@ -41,8 +41,8 @@ def get_study_title(
     if uid is None:
         raise exceptions.NotFoundException(f"study '{study_number}' not found.")
     return study_service.get_by_uid(
-        uid=uid, fields="currentMetadata.studyDescription"
-    ).currentMetadata.studyDescription
+        uid=uid, fields="current_metadata.study_description"
+    ).current_metadata.study_description
 
 
 @router.get(

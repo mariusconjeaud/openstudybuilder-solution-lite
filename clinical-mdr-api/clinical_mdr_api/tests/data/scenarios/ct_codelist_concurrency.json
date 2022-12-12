@@ -10,30 +10,30 @@
         "response": {
             "code": 200,
             "headers": {
-                "etag": "W/\"ct_codelist_root1_2020-06-26 00:00:00\"",
+                "etag": "W/\"ct_codelist_root1_2020-06-26 00:00:00+00:00\"",
                 "traceresponse": "00-00000000000000000000000000000000-0000000000000000-00",
                 "content-length": "100",
                 "content-type": "application/json"
             },
             "result": {
-                "catalogueName": "SDTM CT",
-                "codelistUid": "ct_codelist_root1",
-                "parentCodelistUid": null,
-                "childCodelistUids": [],
+                "catalogue_name": "SDTM CT",
+                "codelist_uid": "ct_codelist_root1",
+                "parent_codelist_uid": null,
+                "child_codelist_uids": [],
                 "name": "codelist attributes value1",
-                "submissionValue": "codelist submission value1",
-                "nciPreferredName": "codelist preferred term",
+                "submission_value": "codelist submission value1",
+                "nci_preferred_name": "codelist preferred term",
                 "definition": "codelist definition",
                 "extensible": false,
-                "libraryName": "Sponsor",
-                "startDate": "2021-03-18T11:54:20.898Z",
-                "endDate": null,
+                "library_name": "Sponsor",
+                "start_date": "2021-03-18T11:54:20.898Z",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Approved version",
-                "userInitials": "TODO user initials",
-                "possibleActions": [
-                    "newVersion"
+                "change_description": "Approved version",
+                "user_initials": "TODO user initials",
+                "possible_actions": [
+                    "new_version"
                 ]
             }
         }
@@ -49,25 +49,25 @@
         "response": {
             "code": 200,
             "headers": {
-                "etag": "W/\"ct_codelist_root1_2020-06-26 00:00:00\"",
+                "etag": "W/\"ct_codelist_root1_2020-06-26 00:00:00+00:00\"",
                 "traceresponse": "00-00000000000000000000000000000000-0000000000000000-00",
                 "content-length": "100",
                 "content-type": "application/json"
             },
             "result": {
-                "catalogueName": "SDTM CT",
-                "codelistUid": "ct_codelist_root1",
+                "catalogue_name": "SDTM CT",
+                "codelist_uid": "ct_codelist_root1",
                 "name": "tp_codelist_name_value",
-                "templateParameter": true,
-                "libraryName": "Sponsor",
-                "startDate": "2021-03-18T11:54:20.898Z",
-                "endDate": null,
+                "template_parameter": true,
+                "library_name": "Sponsor",
+                "start_date": "2021-03-18T11:54:20.898Z",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Approved version",
-                "userInitials": "TODO user initials",
-                "possibleActions": [
-                    "newVersion"
+                "change_description": "Approved version",
+                "user_initials": "TODO user initials",
+                "possible_actions": [
+                    "new_version"
                 ]
             }
         }
@@ -82,17 +82,17 @@
             },
             "method": "POST",
             "request": {
-                "termUid": "ct_term_root1",
+                "term_uid": "ct_term_root1",
                 "order": 1
             },
-            "url": "/ct/codelists/ct_codelist_root1/add-term"
+            "url": "/ct/codelists/ct_codelist_root1/terms"
         },
         "response": {
             "code": 412,
             "result": {
                 "message": "412",
                 "method": "POST",
-                "path": "http://testserver/ct/codelists/ct_codelist_root1/add-term",
+                "path": "http://testserver/ct/codelists/ct_codelist_root1/terms",
                 "time": "2020-11-03T23:42:41.518146",
                 "type": "PreconditionFailed"
             }
@@ -102,34 +102,34 @@
         "name": "Test add term to a codelist returns 201 valid etag passed",
         "request": {
             "headers": {
-                "if-match": "W/\"ct_codelist_root1_2020-06-26 00:00:00_ct_codelist_root1_2020-06-26 00:00:00\"",
+                "if-match": "W/\"ct_codelist_root1_2020-06-26 00:00:00+00:00_ct_codelist_root1_2020-06-26 00:00:00+00:00\"",
                 "content-length": "100",
                 "content-type": "application/json"
             },
             "method": "POST",
             "request": {
-                "termUid": "ct_term_root1",
+                "term_uid": "ct_term_root1",
                 "order": 1
             },
-            "url": "/ct/codelists/ct_codelist_root1/add-term"
+            "url": "/ct/codelists/ct_codelist_root1/terms"
         },
         "response": {
             "code": 201,
             "result": {
-                "catalogueName": "SDTM CT",
-                "codelistUid": "ct_codelist_root1",
-                "parentCodelistUid": null,
-                "childCodelistUids": [],
+                "catalogue_name": "SDTM CT",
+                "codelist_uid": "ct_codelist_root1",
+                "parent_codelist_uid": null,
+                "child_codelist_uids": [],
                 "name": "codelist attributes value1",
-                "submissionValue": "codelist submission value1",
-                "nciPreferredName": "codelist preferred term",
+                "submission_value": "codelist submission value1",
+                "nci_preferred_name": "codelist preferred term",
                 "definition": "codelist definition",
                 "extensible": false,
-                "sponsorPreferredName": "tp_codelist_name_value",
-                "templateParameter": true,
-                "libraryName": "Sponsor",
-                "possibleActions": [
-                    "newVersion"
+                "sponsor_preferred_name": "tp_codelist_name_value",
+                "template_parameter": true,
+                "library_name": "Sponsor",
+                "possible_actions": [
+                    "new_version"
                 ]
             }
         }
@@ -142,19 +142,15 @@
                 "content-length": "100",
                 "content-type": "application/json"
             },
-            "method": "POST",
-            "request": {
-                "termUid": "ct_term_root1",
-                "order": 1
-            },
-            "url": "/ct/codelists/ct_codelist_root1/remove-term"
+            "method": "DELETE",
+            "url": "/ct/codelists/ct_codelist_root1/terms/ct_term_root1"
         },
         "response": {
             "code": 412,
             "result": {
                 "message": "412",
-                "method": "POST",
-                "path": "http://testserver/ct/codelists/ct_codelist_root1/remove-term",
+                "method": "DELETE",
+                "path": "http://testserver/ct/codelists/ct_codelist_root1/terms/ct_term_root1",
                 "time": "2020-11-03T23:42:41.518146",
                 "type": "PreconditionFailed"
             }
@@ -164,34 +160,30 @@
         "name": "Test remove term from a codelist returns 201 valid etag passed",
         "request": {
             "headers": {
-                "if-match": "W/\"ct_codelist_root1_2020-06-26 00:00:00_ct_codelist_root1_2020-06-26 00:00:00\"",
+                "if-match": "W/\"ct_codelist_root1_2020-06-26 00:00:00+00:00_ct_codelist_root1_2020-06-26 00:00:00+00:00\"",
                 "content-length": "100",
                 "content-type": "application/json"
             },
-            "method": "POST",
-            "request": {
-                "termUid": "ct_term_root1",
-                "order": 1
-            },
-            "url": "/ct/codelists/ct_codelist_root1/remove-term"
+            "method": "DELETE",
+            "url": "/ct/codelists/ct_codelist_root1/terms/ct_term_root1"
         },
         "response": {
             "code": 201,
             "result": {
-                "catalogueName": "SDTM CT",
-                "codelistUid": "ct_codelist_root1",
-                "parentCodelistUid": null,
-                "childCodelistUids": [],
+                "catalogue_name": "SDTM CT",
+                "codelist_uid": "ct_codelist_root1",
+                "parent_codelist_uid": null,
+                "child_codelist_uids": [],
                 "name": "codelist attributes value1",
-                "submissionValue": "codelist submission value1",
-                "nciPreferredName": "codelist preferred term",
+                "submission_value": "codelist submission value1",
+                "nci_preferred_name": "codelist preferred term",
                 "definition": "codelist definition",
                 "extensible": false,
-                "sponsorPreferredName": "tp_codelist_name_value",
-                "templateParameter": true,
-                "libraryName": "Sponsor",
-                "possibleActions": [
-                    "newVersion"
+                "sponsor_preferred_name": "tp_codelist_name_value",
+                "template_parameter": true,
+                "library_name": "Sponsor",
+                "possible_actions": [
+                    "new_version"
                 ]
             }
         }

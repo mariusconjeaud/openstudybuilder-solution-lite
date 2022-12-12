@@ -33,16 +33,16 @@
         :item="item"
         />
     </template>
-    <template v-slot:item.isPreferredSynonym="{ item }">
-      {{ item.isPreferredSynonym|yesno }}
+    <template v-slot:item.is_preferred_synonym="{ item }">
+      {{ item.is_preferred_synonym|yesno }}
     </template>
     <template v-slot:item.name="{ item }">
       <router-link :to="{ name: 'CompoundOverview', params: { id: item.compound.uid } }">
         {{ item.name }}
       </router-link>
     </template>
-    <template v-slot:item.startDate="{ item }">
-      {{ item.startDate|date }}
+    <template v-slot:item.start_date="{ item }">
+      {{ item.start_date|date }}
     </template>
     <template v-slot:item.status="{ item }">
       <status-chip :status="item.status" />
@@ -108,42 +108,42 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'edit'),
+          condition: (item) => item.possible_actions.find(action => action === 'edit'),
           click: this.editItem
         },
         {
           label: this.$t('_global.approve'),
           icon: 'mdi-check-decagram',
           iconColor: 'success',
-          condition: (item) => item.possibleActions.find(action => action === 'approve'),
+          condition: (item) => item.possible_actions.find(action => action === 'approve'),
           click: this.approveItem
         },
         {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'newVersion'),
+          condition: (item) => item.possible_actions.find(action => action === 'new_version'),
           click: this.createNewVersion
         },
         {
           label: this.$t('_global.inactivate'),
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'inactivate'),
+          condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
           click: this.inactivateItem
         },
         {
           label: this.$t('_global.reactivate'),
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'reactivate'),
+          condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
           click: this.reactivateItem
         },
         {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete',
           iconColor: 'error',
-          condition: (item) => item.possibleActions.find(action => action === 'delete'),
+          condition: (item) => item.possible_actions.find(action => action === 'delete'),
           click: this.deleteItem
         },
         {
@@ -159,10 +159,10 @@ export default {
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('CompoundAliasTable.compound_name'), value: 'compound.name' },
         { text: this.$t('_global.name'), value: 'name' },
-        { text: this.$t('_global.sentence_case_name'), value: 'nameSentenceCase' },
-        { text: this.$t('CompoundAliasTable.is_preferred_synonym'), value: 'isPreferredSynonym' },
+        { text: this.$t('_global.sentence_case_name'), value: 'name_sentence_case' },
+        { text: this.$t('CompoundAliasTable.is_preferred_synonym'), value: 'is_preferred_synonym' },
         { text: this.$t('_global.definition'), value: 'definition' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.version'), value: 'version' },
         { text: this.$t('_global.status'), value: 'status' }
       ],
@@ -185,15 +185,15 @@ export default {
         this.options.page = 1
       }
       const params = {
-        pageNumber: (this.options.page),
-        pageSize: this.options.itemsPerPage,
-        totalCount: true
+        page_number: (this.options.page),
+        page_size: this.options.itemsPerPage,
+        total_count: true
       }
       if (this.filters !== undefined) {
         params.filters = this.filters
       }
       if (this.options.sortBy.length !== 0 && this.sort !== undefined) {
-        params.sortBy = `{"${this.options.sortBy[0]}":${!this.sort}}`
+        params.sort_by = `{"${this.options.sortBy[0]}":${!this.sort}}`
       }
       compoundAliases.getFiltered(params).then(resp => {
         this.compoundAliases = resp.data.items

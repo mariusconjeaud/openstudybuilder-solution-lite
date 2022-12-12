@@ -6,7 +6,7 @@
       :items="studyElements"
       label="Element"
       item-text="name"
-      item-value="elementUid"
+      item-value="element_uid"
       dense
       clearable
       class="mt-6 cellWidth"
@@ -58,19 +58,19 @@ export default {
         this.data = {
           method: 'PATCH',
           content: {
-            studyElementUid: this.element,
-            studyDesignCellUid: this.cell.designCellUid
+            study_element_uid: this.element,
+            study_design_cell_uid: this.cell.design_cell_uid
           }
         }
-        this.armBranch ? this.data.studyBranchArmUid = this.armBranch : this.data.studyArmUid = this.arm
+        this.armBranch ? this.data.study_branch_arm_uid = this.armBranch : this.data.study_arm_uid = this.arm
       } else if (this.element) {
         this.data = {
           method: 'POST',
           content: {
-            studyArmUid: this.arm,
-            studyEpochUid: this.epoch,
-            studyElementUid: this.element,
-            studyBranchArmUid: this.armBranch
+            study_arm_uid: this.arm,
+            study_epoch_uid: this.epoch,
+            study_element_uid: this.element,
+            study_branch_arm_uid: this.armBranch
           }
         }
       }
@@ -80,28 +80,28 @@ export default {
         this.data = {
           method: 'DELETE',
           content: {
-            uid: this.cell.designCellUid
+            uid: this.cell.design_cell_uid
           }
         }
         this.cell = undefined
       }
     },
     findCell (cell) {
-      return (cell.studyEpochUid === this.epoch && (cell.studyArmUid ? (cell.studyArmUid === this.arm) : (cell.studyBranchArmUid === this.armBranch)))
+      return (cell.study_epoch_uid === this.epoch && (cell.study_arm_uid ? (cell.study_arm_uid === this.arm) : (cell.study_branch_arm_uid === this.armBranch)))
     },
     getElementShortName (elementUid) {
-      const element = this.studyElements.find(el => el.elementUid === elementUid)
-      return element ? element.shortName : ''
+      const element = this.studyElements.find(el => el.element_uid === elementUid)
+      return element ? element.short_name : ''
     },
     getElementName (elementUid) {
-      const element = this.studyElements.find(el => el.elementUid === elementUid)
+      const element = this.studyElements.find(el => el.element_uid === elementUid)
       return element ? element.name : ''
     }
   },
   mounted () {
     this.cell = this.cells.data.find(this.findCell)
     if (this.cell) {
-      this.element = this.cell.studyElementUid
+      this.element = this.cell.study_element_uid
     }
   },
   watch: {

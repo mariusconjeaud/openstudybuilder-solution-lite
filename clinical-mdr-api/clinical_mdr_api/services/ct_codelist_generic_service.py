@@ -35,7 +35,7 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
         return input_property if input_property is not None else previous_property
 
     def get_codelist_etag(self, request: Request) -> str:
-        codelist_uid = request.path_params["codelistuid"]
+        codelist_uid = request.path_params["codelist_uid"]
         etag = self.repository.get_codelist_etag_value(codelist_uid=codelist_uid)
         return f"{codelist_uid}_{etag}"
 
@@ -195,8 +195,7 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
     def edit_draft(self, codelist_uid: str, codelist_input: BaseModel) -> BaseModel:
         raise NotImplementedError()
 
-    @db.transaction
-    def approve(self, codelist_uid: str) -> BaseModel:
+    def non_transactional_approve(self, codelist_uid: str) -> BaseModel:
         try:
             item = self._find_by_uid_or_raise_not_found(
                 codelist_uid=codelist_uid, for_update=True
@@ -206,6 +205,10 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
             return self._transform_aggregate_root_to_pydantic_model(item)
         except VersioningException as e:
             raise exceptions.BusinessLogicException(e.msg)
+
+    @db.transaction
+    def approve(self, codelist_uid: str) -> BaseModel:
+        return self.non_transactional_approve(codelist_uid)
 
     def enforce_catalogue_library_package(
         self,

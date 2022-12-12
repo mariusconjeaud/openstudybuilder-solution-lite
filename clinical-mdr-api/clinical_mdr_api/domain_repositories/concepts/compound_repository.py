@@ -148,51 +148,51 @@ class CompoundRepository(ConceptGenericRepository):
             uid=input_dict.get("uid"),
             concept_vo=CompoundVO.from_repository_values(
                 name=input_dict.get("name"),
-                name_sentence_case=input_dict.get("nameSentenceCase"),
+                name_sentence_case=input_dict.get("name_sentence_case"),
                 definition=input_dict.get("definition"),
                 abbreviation=input_dict.get("abbreviation"),
                 dose_frequency_uids=list(
-                    map(lambda x: x.get("uid"), input_dict.get("doseFrequencies"))
+                    map(lambda x: x.get("uid"), input_dict.get("dose_frequencies"))
                 ),
                 dosage_form_uids=list(
-                    map(lambda x: x.get("uid"), input_dict.get("dosageForms"))
+                    map(lambda x: x.get("uid"), input_dict.get("dosage_forms"))
                 ),
                 route_of_administration_uids=list(
                     map(
                         lambda x: x.get("uid"),
-                        input_dict.get("routesOfAdministration"),
+                        input_dict.get("routes_of_administration"),
                     )
                 ),
-                half_life_uid=input_dict.get("halfLife"),
-                analyte_number=input_dict.get("analyteNumber"),
-                nnc_short_number=input_dict.get("nncShortNumber"),
-                nnc_long_number=input_dict.get("nncLongNumber"),
-                is_sponsor_compound=input_dict.get("isSponsorCompound"),
-                is_name_inn=input_dict.get("isNameInn"),
-                substance_terms_uids=input_dict.get("substanceTermsUids"),
-                dose_values_uids=input_dict.get("doseValuesUids"),
-                strength_values_uids=input_dict.get("strengthValuesUids"),
-                lag_time_uids=input_dict.get("lagTimesUids"),
+                half_life_uid=input_dict.get("half_life"),
+                analyte_number=input_dict.get("analyte_number"),
+                nnc_short_number=input_dict.get("nnc_short_number"),
+                nnc_long_number=input_dict.get("nnc_long_number"),
+                is_sponsor_compound=input_dict.get("is_sponsor_compound"),
+                is_name_inn=input_dict.get("is_name_inn"),
+                substance_terms_uids=input_dict.get("substance_terms_uids"),
+                dose_values_uids=input_dict.get("dose_values_uids"),
+                strength_values_uids=input_dict.get("strength_values_uids"),
+                lag_time_uids=input_dict.get("lag_times_uids"),
                 delivery_devices_uids=list(
-                    map(lambda x: x.get("uid"), input_dict.get("deliveryDevices"))
+                    map(lambda x: x.get("uid"), input_dict.get("delivery_devices"))
                 ),
                 dispensers_uids=list(
                     map(lambda x: x.get("uid"), input_dict.get("dispensers"))
                 ),
-                projects_uids=input_dict.get("projectsUids"),
-                brands_uids=input_dict.get("brandsUids"),
+                projects_uids=input_dict.get("projects_uids"),
+                brands_uids=input_dict.get("brands_uids"),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("libraryName"),
+                library_name=input_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: input_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("changeDescription"),
+                change_description=input_dict.get("change_description"),
                 status=LibraryItemStatus(input_dict.get("status")),
-                author=input_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=input_dict.get("startDate")),
+                author=input_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=input_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -249,27 +249,27 @@ class CompoundRepository(ConceptGenericRepository):
     def specific_alias_clause(self) -> str:
         return """
             WITH *,            
-                [(concept_value)-[:HAS_DOSE_FREQUENCY]->(dose_frequency:CTTermRoot) | dose_frequency] AS doseFrequencies,
-                [(concept_value)-[:HAS_DOSAGE_FORM]->(dosage_form:CTTermRoot) | dosage_form] AS dosageForms,
-                [(concept_value)-[:HAS_ROUTE_OF_ADMINISTRATION]->(route_of_administration:CTTermRoot) | route_of_administration] AS routesOfAdministration,
-                head([(concept_value)-[:HAS_HALF_LIFE]->(half_life:NumericValueWithUnitRoot) | half_life.uid]) AS halfLife,
-                concept_value.analyte_number AS analyteNumber,
-                concept_value.nnc_short_number AS nncShortNumber,
-                concept_value.nnc_long_number AS nncLongNumber,
-                concept_value.is_sponsor_compound AS isSponsorCompound,
-                concept_value.is_name_inn AS isNameInn,
-                [(concept_value)-[:HAS_UNII_VALUE]->(unii:DictionaryTermRoot) | unii.uid] AS substanceTermsUids,
+                [(concept_value)-[:HAS_DOSE_FREQUENCY]->(dose_frequency:CTTermRoot) | dose_frequency] AS dose_frequencies,
+                [(concept_value)-[:HAS_DOSAGE_FORM]->(dosage_form:CTTermRoot) | dosage_form] AS dosage_forms,
+                [(concept_value)-[:HAS_ROUTE_OF_ADMINISTRATION]->(route_of_administration:CTTermRoot) | route_of_administration] AS routes_of_administration,
+                head([(concept_value)-[:HAS_HALF_LIFE]->(half_life:NumericValueWithUnitRoot) | half_life.uid]) AS half_life,
+                concept_value.analyte_number AS analyte_number,
+                concept_value.nnc_short_number AS nnc_short_number,
+                concept_value.nnc_long_number AS nnc_long_number,
+                concept_value.is_sponsor_compound AS is_sponsor_compound,
+                concept_value.is_name_inn AS is_name_inn,
+                [(concept_value)-[:HAS_UNII_VALUE]->(unii:DictionaryTermRoot) | unii.uid] AS substance_terms_uids,
                 [(concept_value)-[:HAS_UNII_VALUE]->(unii:DictionaryTermRoot)-[:LATEST]->(unii_value:DictionaryTermValue) | unii_value.name] AS substances,
-                [(concept_value)-[:HAS_UNII_VALUE]->(unii:DictionaryTermRoot)-[:LATEST]->(unii_value:DictionaryTermValue)-[:HAS_PCLASS]->(pclass_root:DictionaryTermRoot)-[:LATEST]->(pclass_value:DictionaryTermValue) | pclass_value.name] AS pharmacologicalClasses,
-                [(concept_value)-[:HAS_DELIVERY_DEVICE]->(delivery_device:CTTermRoot) | delivery_device] AS deliveryDevices,
+                [(concept_value)-[:HAS_UNII_VALUE]->(unii:DictionaryTermRoot)-[:LATEST]->(unii_value:DictionaryTermValue)-[:HAS_PCLASS]->(pclass_root:DictionaryTermRoot)-[:LATEST]->(pclass_value:DictionaryTermValue) | pclass_value.name] AS pharmacological_classes,
+                [(concept_value)-[:HAS_DELIVERY_DEVICE]->(delivery_device:CTTermRoot) | delivery_device] AS delivery_devices,
                 [(concept_value)-[:HAS_DISPENSER]->(dispenser:CTTermRoot) | dispenser] AS dispensers,
-                [(concept_value)-[:HAS_DOSE_VALUE]->(dose_value_root:NumericValueWithUnitRoot) | dose_value_root.uid] AS doseValuesUids,
-                [(concept_value)-[:HAS_DOSE_VALUE]->(dose_value_root:NumericValueWithUnitRoot)-[:LATEST]->(dose_value_value:NumericValueWithUnitValue) | dose_value_value.value] AS doseValues,
-                [(concept_value)-[:HAS_STRENGTH_VALUE]->(strength_value_root:NumericValueWithUnitRoot) | strength_value_root.uid] AS strengthValuesUids,
-                [(concept_value)-[:HAS_STRENGTH_VALUE]->(strength_value_root:NumericValueWithUnitRoot)-[:LATEST]->(strength_value_value:NumericValueWithUnitValue) | strength_value_value.value] AS strengthValues,
-                [(concept_value)-[:HAS_LAG_TIME]->(lag_time_root:LagTimeRoot) | lag_time_root.uid] AS lagTimesUids,
-                [(concept_value)-[:HAS_LAG_TIME]->(lag_time_root:LagTimeRoot)-[:LATEST]->(lag_time_value:LagTimeValue) | lag_time_value.value] AS lagTimes,
-                [(concept_value)-[:HAS_PROJECT]->(project:Project) | project.uid] AS projectsUids,
-                [(concept_value)-[:HAS_BRAND]->(brand:Brand) | brand.uid] AS brandsUids,
+                [(concept_value)-[:HAS_DOSE_VALUE]->(dose_value_root:NumericValueWithUnitRoot) | dose_value_root.uid] AS dose_values_uids,
+                [(concept_value)-[:HAS_DOSE_VALUE]->(dose_value_root:NumericValueWithUnitRoot)-[:LATEST]->(dose_value_value:NumericValueWithUnitValue) | dose_value_value.value] AS dose_values,
+                [(concept_value)-[:HAS_STRENGTH_VALUE]->(strength_value_root:NumericValueWithUnitRoot) | strength_value_root.uid] AS strength_values_uids,
+                [(concept_value)-[:HAS_STRENGTH_VALUE]->(strength_value_root:NumericValueWithUnitRoot)-[:LATEST]->(strength_value_value:NumericValueWithUnitValue) | strength_value_value.value] AS strength_values,
+                [(concept_value)-[:HAS_LAG_TIME]->(lag_time_root:LagTimeRoot) | lag_time_root.uid] AS lag_times_uids,
+                [(concept_value)-[:HAS_LAG_TIME]->(lag_time_root:LagTimeRoot)-[:LATEST]->(lag_time_value:LagTimeValue) | lag_time_value.value] AS lag_times,
+                [(concept_value)-[:HAS_PROJECT]->(project:Project) | project.uid] AS projects_uids,
+                [(concept_value)-[:HAS_BRAND]->(brand:Brand) | brand.uid] AS brands_uids,
                 [(concept_value)-[:HAS_BRAND]->(brand:Brand) | brand.name] AS brands
             """

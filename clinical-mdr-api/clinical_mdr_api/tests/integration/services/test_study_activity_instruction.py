@@ -34,8 +34,8 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
         self.library = library_service.create(**data_library.library_data)
         data = data_library.template_data.copy()
         data["name"] = "Test [Indication]"
-        data["activitySubGroupUids"] = ["activity_sub_group_root1"]
-        data["activityGroupUids"] = ["activity_group_root1"]
+        data["activity_subgroup_uids"] = ["activity_subgroup_root1"]
+        data["activity_group_uids"] = ["activity_group_root1"]
         template_input = models.ActivityDescriptionTemplateCreateInput(**data)
         service = ActivityDescriptionTemplateService()
         self.template = service.create(template_input)
@@ -51,15 +51,15 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
                 models.StudySelectionActivityBatchInput(
                     method="POST",
                     content=models.StudySelectionActivityCreateInput(
-                        flowchartGroupUid="term_root_final",
-                        activityUid="activity_root1",
+                        flowchart_group_uid="term_root_final",
+                        activity_uid="activity_root1",
                     ),
                 ),
                 models.StudySelectionActivityBatchInput(
                     method="POST",
                     content=models.StudySelectionActivityCreateInput(
-                        flowchartGroupUid="term_root_final",
-                        activityUid="activity_root2",
+                        flowchart_group_uid="term_root_final",
+                        activity_uid="activity_root2",
                     ),
                 ),
             ],
@@ -69,9 +69,9 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
         self.service.create(
             "study_root",
             models.StudyActivityInstructionCreateInput(
-                activityInstructionData=models.ActivityInstructionCreateInput(
-                    activityInstructionTemplateUid=self.template.uid,
-                    parameterValues=[
+                activity_instruction_data=models.ActivityInstructionCreateInput(
+                    activity_instruction_template_uid=self.template.uid,
+                    parameter_values=[
                         {
                             "conjunction": "",
                             "position": 1,
@@ -85,9 +85,9 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
                             ],
                         }
                     ],
-                    libraryName=self.library["name"],
+                    library_name=self.library["name"],
                 ),
-                studyActivityUid="StudyActivity_000001",
+                study_activity_uid="StudyActivity_000001",
             ),
         )
 
@@ -96,7 +96,7 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
             self.service.create(
                 "study_root",
                 models.StudyActivityInstructionCreateInput(
-                    studyActivityUid="StudyActivity_000001"
+                    study_activity_uid="StudyActivity_000001"
                 ),
             )
 
@@ -115,8 +115,8 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
         self.service.create(
             "study_root",
             models.StudyActivityInstructionCreateInput(
-                activityInstructionUid="ActivityInstruction_000001",
-                studyActivityUid="StudyActivity_000001",
+                activity_instruction_uid="ActivityInstruction_000001",
+                study_activity_uid="StudyActivity_000001",
             ),
         )
         study_activity_instructions = self.service.get_all_instructions("study_root")
@@ -135,9 +135,9 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
                 models.StudyActivityInstructionBatchInput(
                     method="POST",
                     content=models.StudyActivityInstructionCreateInput(
-                        activityInstructionData=models.ActivityInstructionCreateInput(
-                            activityInstructionTemplateUid=self.template.uid,
-                            parameterValues=[
+                        activity_instruction_data=models.ActivityInstructionCreateInput(
+                            activity_instruction_template_uid=self.template.uid,
+                            parameter_values=[
                                 {
                                     "conjunction": "",
                                     "position": 1,
@@ -151,17 +151,17 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
                                     ],
                                 }
                             ],
-                            libraryName=self.library["name"],
+                            library_name=self.library["name"],
                         ),
-                        studyActivityUid="StudyActivity_000001",
+                        study_activity_uid="StudyActivity_000001",
                     ),
                 ),
                 models.StudyActivityInstructionBatchInput(
                     method="POST",
                     content=models.StudyActivityInstructionCreateInput(
-                        activityInstructionData=models.ActivityInstructionCreateInput(
-                            activityInstructionTemplateUid=self.template.uid,
-                            parameterValues=[
+                        activity_instruction_data=models.ActivityInstructionCreateInput(
+                            activity_instruction_template_uid=self.template.uid,
+                            parameter_values=[
                                 {
                                     "conjunction": "",
                                     "position": 1,
@@ -175,9 +175,9 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
                                     ],
                                 }
                             ],
-                            libraryName=self.library["name"],
+                            library_name=self.library["name"],
                         ),
-                        studyActivityUid="StudyActivity_000002",
+                        study_activity_uid="StudyActivity_000002",
                     ),
                 ),
             ],
@@ -191,7 +191,7 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
                 models.StudyActivityInstructionBatchInput(
                     method="DELETE",
                     content=models.StudyActivityInstructionDeleteInput(
-                        studyActivityInstructionUid="StudyActivityInstruction_000001"
+                        study_activity_instruction_uid="StudyActivityInstruction_000001"
                     ),
                 )
             ],

@@ -196,7 +196,7 @@
                 <em> * </em>
               </xsl:if>
               <br /><xsl:apply-templates select="Description"/>
-              <br /><span class="oidinfo">[OID=<xsl:value-of select="@OID" />]</span>
+              <br /><span class="oidinfo">[OID=<xsl:value-of select="@OID" /> / Version: <xsl:value-of select="./@osb:version" />]</span>
             </div>
             <!-- Item field column -->
             <xsl:choose>
@@ -262,7 +262,7 @@
                     <xsl:for-each select="CodeListRef">
                       <xsl:for-each select="//CodeList[@OID = current()/@CodeListOID]/CodeListItem">
                         <input type="{$displayType}" id="{@CodedValue}" name="{../@OID}" value="{@CodedValue}" />
-                        <label for="contactChoice2">&#160;<xsl:apply-templates select="Decode"/>&#160;[<xsl:value-of select="@CodedValue" />]</label><br />
+                        <label for="contactChoice2">&#160;<xsl:apply-templates select="Decode"/>&#160;[<xsl:value-of select="@CodedValue" />]</label>&#160;<span class="oidinfo">[OID=<xsl:value-of select="@osb:OID" />]</span><br />
                       </xsl:for-each>
                       <xsl:for-each select="//CodeList[@OID = current()/@CodeListOID]/EnumeratedItem">
                         <input type="{$displayType}" id="{@CodedValue}" name="{../@OID}" value="{@CodedValue}" />
@@ -293,8 +293,16 @@
                   </xsl:when>
                   <xsl:otherwise>
                     <div class="input-group">
-                      <input type="{@DataType}" class="form-control" id="item{@OID}" name="{@Name}" min="4" max="40" size="{@Length}" aria-describedby="basic-addon2"/>
-                      <span class="input-group-text" id="item{@OID}"><xsl:value-of select="@Length" /> digit(s)</span>
+                      <xsl:choose>
+                        <xsl:when test="@DataType = 'boolean'">
+                          <input type="checkbox" id="item{@OID}" name="{@Name}" aria-describedby="basic-addon2"/>
+                          <!-- &#160;<label for="{@name}"><xsl:value-of select="@Name" /></label> -->
+                        </xsl:when>
+                        <xsl:otherwise>
+                          <input type="{@DataType}" class="form-control" id="item{@OID}" name="{@Name}" min="4" max="40" size="{@Length}" aria-describedby="basic-addon2"/>
+                          <span class="input-group-text" id="item{@OID}"><xsl:value-of select="@Length" /> digit(s)</span>
+                        </xsl:otherwise>
+                      </xsl:choose>
                     </div>
                     <xsl:choose>
                       <xsl:when test="../Alias[@Context = 'CDASH/SDTM']">
@@ -375,7 +383,7 @@
             <em> * </em>
           </xsl:if>
         </h4>
-        <span class="oidinfo">[OID=<xsl:value-of select="@OID" />]</span>
+        <span class="oidinfo">[OID=<xsl:value-of select="@OID" /> / Version: <xsl:value-of select="./@osb:version" />]</span>
       </div>
       <div class="col-sm-9">
         <xsl:choose>
@@ -421,7 +429,7 @@
 <xsl:template match="FormDef" >
   <ul class="nav nav-tabs">
     <li class="nav-item">
-      <a class="nav-link active" href="#"><h3><xsl:value-of select="@Name" /></h3></a>
+      <a class="nav-link active" href="#"><h3><xsl:value-of select="@Name" />&#160;<span class="oidinfo">[Version: <xsl:value-of select="./@osb:version" />]</span></h3></a>
     </li>
     <li class="nav-item">
       <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true"><em>*</em> for mandatory item </a>

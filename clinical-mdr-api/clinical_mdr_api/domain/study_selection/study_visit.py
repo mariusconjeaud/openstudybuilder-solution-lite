@@ -29,6 +29,7 @@ class StudyVisitEpochAllocation(Enum):
 
 class VisitClass(Enum):
     SINGLE_VISIT = "Single visit"
+    SPECIAL_VISIT = "Special visit"
     NON_VISIT = "Non visit"
     UNSCHEDULED_VISIT = "Unscheduled visit"
 
@@ -116,7 +117,7 @@ class StudyVisitVO:
     legacy_visit_id: Optional[str] = None
     legacy_visit_type_alias: Optional[str] = None
     legacy_name: Optional[str] = None
-    legacy_sub_name: Optional[str] = None
+    legacy_subname: Optional[str] = None
 
     subvisit_number: Optional[int] = None
     subvisit_anchor: Optional["StudyVisitVO"] = None
@@ -131,15 +132,15 @@ class StudyVisitVO:
     day_unit_object: Optional[TimeUnit] = None
     week_unit_object: Optional[TimeUnit] = None
 
-    visit_sub_label: Optional[str] = None  # label for subvisit
-    visit_sub_label_reference: Optional[
+    visit_sublabel: Optional[str] = None  # label for subvisit
+    visit_sublabel_reference: Optional[
         str
     ] = None  # reference (uid) of the first subvisit in subvisit stream
-    visit_sub_label_uid: Optional[str] = None  # uid of subvisit label from Codelist
+    visit_sublabel_uid: Optional[str] = None  # uid of subvisit label from Codelist
 
     @property
     def visit_name_label(self):
-        return self.visit_sub_label
+        return self.visit_sublabel
 
     @property
     def visit_name(self):
@@ -164,6 +165,10 @@ class StudyVisitVO:
                 visit_short_name
                 + f"D{self.derive_study_day_number(relative_duration=True)}"
             )
+        if self.visit_subclass == VisitSubclass.ANCHOR_VISIT_IN_GROUP_OF_SUBV:
+            return visit_short_name + "D1"
+        if self.visit_class == VisitClass.SPECIAL_VISIT:
+            return visit_short_name + "A"
         if self.visit_class in (VisitClass.NON_VISIT, VisitClass.UNSCHEDULED_VISIT):
             return self.visit_number
         return visit_short_name
@@ -287,7 +292,7 @@ class StudyVisitVO:
         return f"{self.study_duration_days.value} days"
 
     @property
-    def visit_sub_number(self):
+    def visit_subnumber(self):
         return (
             self.subvisit_number
             if (self.subvisit_number is not None and self.subvisit_number != "")
@@ -295,9 +300,9 @@ class StudyVisitVO:
         )
 
     @property
-    def visit_sub_name(self):
-        if self.visit_sub_label:
-            return f"{self.visit_name} {self.visit_sub_label}"
+    def visit_subname(self):
+        if self.visit_sublabel:
+            return f"{self.visit_name} {self.visit_sublabel}"
         return f"{self.visit_name}"
 
     @property
@@ -310,6 +315,10 @@ class StudyVisitVO:
         return self.get_absolute_duration() / DURATION_DIVIDER
 
     def get_absolute_duration(self) -> Optional[int]:
+        # Special visit doesn't have a timing but we want to place it
+        # after the anchor visit for the special visit hence we derive timing based on the anchor visit
+        if self.visit_class == VisitClass.SPECIAL_VISIT and self.subvisit_anchor:
+            return self.subvisit_anchor.get_absolute_duration()
         if self.timepoint:
             if self.timepoint.visit_value == 0:
                 return 0

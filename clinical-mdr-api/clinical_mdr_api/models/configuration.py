@@ -8,16 +8,16 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class CTConfigBaseModel(BaseModel):
-    studyFieldName: Optional[str]
-    studyFieldDataType: Optional[str]
-    studyFieldNullValueCode: Optional[str]
+    study_field_name: Optional[str]
+    study_field_data_type: Optional[str]
+    study_field_null_value_code: Optional[str]
 
-    configuredCodelistUid: Optional[str]
-    configuredTermUid: Optional[str]
+    configured_codelist_uid: Optional[str]
+    configured_term_uid: Optional[str]
 
-    studyFieldGrouping: Optional[str]
-    studyFieldNameProperty: Optional[str]
-    studyFieldNameApi: Optional[str]
+    study_field_grouping: Optional[str]
+    study_field_name_api: Optional[str]
+    is_dictionary_term: Optional[bool]
 
 
 class CTConfigModel(CTConfigBaseModel, NoLibraryConceptModelNoName):
@@ -25,25 +25,25 @@ class CTConfigModel(CTConfigBaseModel, NoLibraryConceptModelNoName):
     def from_ct_config_ar(cls, ct_config_definition_ar: CTConfigAR) -> "CTConfigModel":
         return CTConfigModel(
             uid=ct_config_definition_ar.uid,
-            studyFieldName=ct_config_definition_ar.value.study_field_name,
-            studyFieldDataType=ct_config_definition_ar.value.study_field_data_type,
-            studyFieldNullValueCode=ct_config_definition_ar.value.study_field_null_value_code,
-            configuredCodelistUid=ct_config_definition_ar.value.configured_codelist_uid,
-            configuredTermUid=ct_config_definition_ar.value.configured_term_uid,
-            studyFieldGrouping=ct_config_definition_ar.value.study_field_grouping,
-            studyFieldNameProperty=ct_config_definition_ar.value.study_field_name_property,
-            studyFieldNameApi=ct_config_definition_ar.value.study_field_name_api,
-            startDate=ct_config_definition_ar.item_metadata.start_date,
+            study_field_name=ct_config_definition_ar.value.study_field_name,
+            study_field_data_type=ct_config_definition_ar.value.study_field_data_type,
+            study_field_null_value_code=ct_config_definition_ar.value.study_field_null_value_code,
+            configured_codelist_uid=ct_config_definition_ar.value.configured_codelist_uid,
+            configured_term_uid=ct_config_definition_ar.value.configured_term_uid,
+            study_field_grouping=ct_config_definition_ar.value.study_field_grouping,
+            study_field_name_api=ct_config_definition_ar.value.study_field_name_api,
+            is_dictionary_term=ct_config_definition_ar.value.is_dictionary_term,
+            start_date=ct_config_definition_ar.item_metadata.start_date,
             status=ct_config_definition_ar.item_metadata.status.value,
             version=ct_config_definition_ar.item_metadata.version,
-            userInitials=ct_config_definition_ar.item_metadata.user_initials,
-            changeDescription=ct_config_definition_ar.item_metadata.change_description,
+            user_initials=ct_config_definition_ar.item_metadata.user_initials,
+            change_description=ct_config_definition_ar.item_metadata.change_description,
         )
 
 
 class CTConfigPostInput(CTConfigBaseModel):
     # field used to create a configuration based on codelist name
-    configuredCodelistName: Optional[str]
+    configured_codelist_name: Optional[str]
 
     @validator("*")
     # pylint:disable=no-self-argument
@@ -54,4 +54,4 @@ class CTConfigPostInput(CTConfigBaseModel):
 
 
 class CTConfigPatchInput(CTConfigBaseModel):
-    changeDescription: str
+    change_description: str

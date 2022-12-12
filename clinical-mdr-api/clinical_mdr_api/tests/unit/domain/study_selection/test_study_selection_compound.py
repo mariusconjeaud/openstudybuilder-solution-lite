@@ -63,7 +63,7 @@ def create_random_valid_vo(selection_uid: str = None) -> StudySelectionCompoundV
         selection_uid = random_str()
     uid_compound = random_str()
     uid_list.append(uid_compound)
-    dt = datetime.datetime.now()
+    dt = datetime.datetime.now(datetime.timezone.utc)
     vo = StudySelectionCompoundVO.from_input_values(
         compound_uid=uid_compound,
         compound_alias_uid=uid_compound,
@@ -93,7 +93,7 @@ def create_random_valid_vo(selection_uid: str = None) -> StudySelectionCompoundV
 # test StudySelectionCompoundVO
 class TestStudySelectionCompoundVO(unittest.TestCase):
     def test__validate__success(self):
-        dt = datetime.datetime.now()
+        dt = datetime.datetime.now(datetime.timezone.utc)
         test_tuples = [
             [
                 "uid_compound",
@@ -208,7 +208,7 @@ class TestStudySelectionCompoundVO(unittest.TestCase):
                 )
 
     def test__validate__failure(self):
-        dt = datetime.datetime.now()
+        dt = datetime.datetime.now(datetime.timezone.utc)
         test_tuples = [
             [
                 "uid_compound",

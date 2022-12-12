@@ -31,7 +31,7 @@
           :items="terms"
           :server-items-length="total"
           :options.sync="options"
-          item-key="termUid"
+          item-key="term_uid"
           class="mt-4"
           has-api
           hide-export-button
@@ -53,7 +53,7 @@
           <v-col>
             <v-text-field
               data-cy="term-sponsor-preferred-name"
-              v-model="form.sponsorPreferredName"
+              v-model="form.sponsor_preferred_name"
               :label="$t('CodelistTermCreationForm.sponsor_pref_name')"
               :error-messages="errors"
               @blur="setSentenceCase"
@@ -71,7 +71,7 @@
           <v-col>
             <v-text-field
               data-cy="term-sentence-case-name"
-              v-model="form.sponsorPreferredNameSentenceCase"
+              v-model="form.sponsor_preferred_name_sentence_case"
               :label="$t('CodelistTermCreationForm.sponsor_sentence_case_name')"
               :error-messages="errors"
               dense
@@ -109,7 +109,7 @@
           <v-col>
             <v-text-field
               data-cy="term-name"
-              v-model="form.nameSubmissionValue"
+              v-model="form.name_submission_value"
               :label="$t('CodelistTermCreationForm.term_name')"
               :error-messages="errors"
               dense
@@ -126,7 +126,7 @@
           <v-col>
             <v-text-field
               data-cy="term-submission-value"
-              v-model="form.codeSubmissionValue"
+              v-model="form.code_submission_value"
               :label="$t('CodelistTermCreationForm.submission_value')"
               :error-messages="errors"
               dense
@@ -143,7 +143,7 @@
           <v-col>
             <v-text-field
               data-cy="term-nci-preffered-name"
-              v-model="form.nciPreferredName"
+              v-model="form.nci_preferred_name"
               :label="$t('CodelistTermCreationForm.nci_pref_name')"
               :error-messages="errors"
               dense
@@ -195,6 +195,7 @@
 
 <script>
 import { bus } from '@/main'
+import constants from '@/constants/libraries.js'
 import controlledTerminology from '@/api/controlledTerminology'
 import terms from '@/api/controlledTerminology/terms'
 import StepperForm from '@/components/tools/StepperForm'
@@ -231,9 +232,9 @@ export default {
       search: '',
       steps: this.getInitialSteps(),
       termHeaders: [
-        { text: this.$t('CodelistTermCreationForm.concept_id'), value: 'termUid' },
-        { text: this.$t('CodelistTermCreationForm.sponsor_name'), value: 'name.sponsorPreferredName' },
-        { text: this.$t('CodelistTermCreationForm.nci_pref_name'), value: 'attributes.nciPreferredName' },
+        { text: this.$t('CodelistTermCreationForm.concept_id'), value: 'term_uid' },
+        { text: this.$t('CodelistTermCreationForm.sponsor_name'), value: 'name.sponsor_preferred_name' },
+        { text: this.$t('CodelistTermCreationForm.nci_pref_name'), value: 'attributes.nci_preferred_name' },
         { text: this.$t('_global.definition'), value: 'attributes.definition' }
       ],
       terms: [],
@@ -263,9 +264,9 @@ export default {
       if (this.createNewTerm) {
         const data = {
           ...this.form,
-          catalogueName: this.catalogueName,
-          codelistUid: this.codelistUid,
-          libraryName: 'Sponsor'
+          catalogue_name: this.catalogueName,
+          codelist_uid: this.codelistUid,
+          library_name: constants.LIBRARY_SPONSOR
         }
         try {
           const resp = await controlledTerminology.createCodelistTerm(data)
@@ -282,15 +283,15 @@ export default {
         }
         const codelistUid = this.codelistUid
         for (const term of this.selection) {
-          await controlledTerminology.addTermToCodelist(codelistUid, term.termUid)
+          await controlledTerminology.addTermToCodelist(codelistUid, term.term_uid)
         }
         bus.$emit('notification', { msg: this.$t('CodelistTermCreationForm.add_success') })
         this.close()
       }
     },
     setSentenceCase () {
-      if (this.form.sponsorPreferredName) {
-        this.$set(this.form, 'sponsorPreferredNameSentenceCase', this.form.sponsorPreferredName.toLowerCase())
+      if (this.form.sponsor_preferred_name) {
+        this.$set(this.form, 'sponsor_preferred_name_sentence_case', this.form.sponsor_preferred_name.toLowerCase())
       }
     },
     filterTerms (filters, sort, filtersUpdated) {
@@ -299,15 +300,15 @@ export default {
         this.options.page = 1
       }
       const params = {
-        pageNumber: (this.options.page),
-        pageSize: this.options.itemsPerPage,
-        totalCount: true
+        page_number: (this.options.page),
+        page_size: this.options.itemsPerPage,
+        total_count: true
       }
       if (this.filters !== undefined) {
         params.filters = this.filters
       }
       if (this.options.sortBy.length !== 0 && sort !== undefined) {
-        params.sortBy = `{"${this.options.sortBy[0]}":${!sort}}`
+        params.sort_by = `{"${this.options.sortBy[0]}":${!sort}}`
       }
       terms.getAll(params).then(resp => {
         this.terms = resp.data.items
@@ -328,7 +329,7 @@ export default {
     }
   },
   mounted () {
-    terms.getAll({ pageSize: 10, totalCount: true }).then(resp => {
+    terms.getAll({ page_size: 10, total_count: true }).then(resp => {
       this.terms = resp.data.items
       this.total = resp.data.total
     })

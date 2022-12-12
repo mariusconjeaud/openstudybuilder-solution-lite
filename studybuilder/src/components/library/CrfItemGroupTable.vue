@@ -9,10 +9,10 @@
     :options.sync="options"
     :server-items-length="total"
     @filter="getItemGroups"
-    has-history
     has-api
     column-data-resource="concepts/odms/item-groups"
     export-data-url="concepts/odms/item-groups"
+    export-object-label="CRFItemGroups"
     >
     <template v-slot:actions="">
       <v-btn
@@ -36,11 +36,14 @@
     <template v-slot:item.repeating="{ item }">
       {{ item.repeating }}
     </template>
-    <template v-slot:item.descriptionEngDescription="{ item }">
-      <div v-html="item.descriptionEngDescription"/>
+    <template v-slot:item.activity_sub_groups="{ item }">
+      {{ item.activity_sub_groups | names }}
     </template>
-    <template v-slot:item.activitySubGroups="{ item }">
-      {{ item.activitySubGroups | names }}
+    <template v-slot:item.description="{ item }">
+      <div v-html="getDescription(item)" />
+    </template>
+    <template v-slot:item.notes="{ item }">
+      <div v-html="getNotes(item)" />
     </template>
     <template v-slot:item.status="{ item }">
       <status-chip :status="item.status" />
@@ -72,14 +75,20 @@
       @close="closeForm"
       :editItem="editItem"
       class="fullscreen-dialog"
-      :readOnly="readOnlyForm"
+      :readOnlyProp="editItem.status === 'Final'"
       />
   </v-dialog>
-  <v-dialog v-model="showGroupHistory"
-            persistent
-            max-width="1200px">
-    <history-table @close="closeGroupHistory" type="crfGroup" :item="selectedGroup"
-                   :title-label="$t('CrfFormTable.singular_title')" />
+  <v-dialog
+    v-model="showGroupHistory"
+    persistent
+    max-width="1200px"
+    >
+    <history-table
+      :title="groupHistoryTitle"
+      @close="closeGroupHistory"
+      :headers="headers"
+      :items="groupHistoryItems"
+      />
   </v-dialog>
   <crf-activities-models-link-form
     :open="linkForm"
@@ -94,14 +103,6 @@
       type="group"
       @close="closeRelationsTree()"/>
   </v-dialog>
-  <v-dialog v-model="showDuplicationForm"
-            persistent>
-    <crf-duplication-form
-      @close="closeDuplicateForm"
-      :item="selectedGroup"
-      type="group"
-      />
-  </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
 </div>
 </template>
@@ -112,13 +113,14 @@ import StatusChip from '@/components/tools/StatusChip'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import crfs from '@/api/crfs'
 import CrfItemGroupForm from '@/components/library/CrfItemGroupForm'
-import HistoryTable from '@/components/library/HistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable'
 import CrfActivitiesModelsLinkForm from '@/components/library/CrfActivitiesModelsLinkForm'
 import constants from '@/constants/statuses'
 import filteringParameters from '@/utils/filteringParameters'
 import OdmReferencesTree from '@/components/library/OdmReferencesTree.vue'
-import CrfDuplicationForm from '@/components/library/CrfDuplicationForm'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
+import crfTypes from '@/constants/crfTypes'
+import parameters from '@/constants/parameters'
 
 export default {
   components: {
@@ -129,8 +131,20 @@ export default {
     HistoryTable,
     CrfActivitiesModelsLinkForm,
     OdmReferencesTree,
-    CrfDuplicationForm,
     ConfirmDialog
+  },
+  props: {
+    elementProp: Object
+  },
+  computed: {
+    groupHistoryTitle () {
+      if (this.selectedGroup) {
+        return this.$t(
+          'CRFItemGroups.group_history_title',
+          { groupUid: this.selectedGroup.uid })
+      }
+      return ''
+    }
   },
   data () {
     return {
@@ -139,14 +153,14 @@ export default {
           label: this.$t('_global.approve'),
           icon: 'mdi-check-decagram',
           iconColor: 'success',
-          condition: (item) => item.possibleActions.find(action => action === 'approve'),
+          condition: (item) => item.possible_actions.find(action => action === 'approve'),
           click: this.approve
         },
         {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'edit'),
+          condition: (item) => item.possible_actions.find(action => action === 'edit'),
           click: this.edit
         },
         {
@@ -160,28 +174,28 @@ export default {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'newVersion'),
+          condition: (item) => item.possible_actions.find(action => action === 'new_version'),
           click: this.newVersion
         },
         {
           label: this.$t('_global.inactivate'),
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'inactivate'),
+          condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
           click: this.inactivate
         },
         {
           label: this.$t('_global.reactivate'),
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'reactivate'),
+          condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
           click: this.reactivate
         },
         {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete',
           iconColor: 'error',
-          condition: (item) => item.possibleActions.find(action => action === 'delete'),
+          condition: (item) => item.possible_actions.find(action => action === 'delete'),
           click: this.delete
         },
         {
@@ -192,25 +206,20 @@ export default {
           click: this.openLinkForm
         },
         {
-          label: this.$t('_global.duplicate'),
-          icon: 'mdi-content-copy',
-          iconColor: 'primary',
-          click: this.openDuplicateForm
-        },
-        {
           label: this.$t('_global.history'),
           icon: 'mdi-history',
           click: this.openGroupHistory
         }
       ],
       headers: [
-        { text: this.$t('_global.actions'), value: 'actions', width: '5%' },
+        { text: '', value: 'actions', width: '5%' },
         { text: this.$t('CRFItemGroups.oid'), value: 'oid' },
         { text: this.$t('_global.relations'), value: 'relations' },
         { text: this.$t('_global.name'), value: 'name' },
+        { text: this.$t('_global.description'), value: 'description' },
+        { text: this.$t('CRFItems.impl_notes'), value: 'notes' },
         { text: this.$t('CRFItemGroups.repeating'), value: 'repeating' },
-        { text: this.$t('_global.description'), value: 'descriptionEngDescription' },
-        { text: this.$t('_global.links'), value: 'activitySubGroups' },
+        { text: this.$t('_global.links'), value: 'activity_subgroups' },
         { text: this.$t('_global.version'), value: 'version' },
         { text: this.$t('_global.status'), value: 'status' }
       ],
@@ -224,19 +233,29 @@ export default {
       editItem: {},
       showGroupHistory: false,
       linkForm: false,
-      readOnlyForm: false,
       showRelations: false,
-      showDuplicationForm: false
+      groupHistoryItems: []
+    }
+  },
+  mounted () {
+    if (this.elementProp.tab === 'item-groups' && this.elementProp.type === crfTypes.ITEM_GROUP && this.elementProp.uid) {
+      this.edit({ uid: this.elementProp.uid })
     }
   },
   methods: {
-    openDuplicateForm (item) {
-      this.selectedGroup = item
-      this.showDuplicationForm = true
+    getDescription (item) {
+      const engDesc = item.descriptions.find(el => el.language === parameters.ENG)
+      if (engDesc) {
+        return engDesc.description
+      }
+      return ''
     },
-    closeDuplicateForm () {
-      this.showDuplicationForm = false
-      this.getItemGroups()
+    getNotes (item) {
+      const engDesc = item.descriptions.find(el => el.language === parameters.ENG)
+      if (engDesc) {
+        return engDesc.sponsor_instruction
+      }
+      return ''
     },
     openRelationsTree (item) {
       this.showRelations = true
@@ -292,20 +311,22 @@ export default {
       crfs.getItemGroup(item.uid).then((resp) => {
         this.editItem = resp.data
         this.showForm = true
+        this.$emit('clearUid')
       })
     },
     view (item) {
       crfs.getItemGroup(item.uid).then((resp) => {
         this.editItem = resp.data
-        this.readOnlyForm = true
         this.showForm = true
       })
     },
     openForm () {
       this.showForm = true
     },
-    openGroupHistory (form) {
-      this.selectedGroup = form
+    async openGroupHistory (group) {
+      this.selectedGroup = group
+      const resp = await crfs.getGroupAuditTrail(group.uid)
+      this.groupHistoryItems = resp.data
       this.showGroupHistory = true
     },
     closeGroupHistory () {
@@ -314,7 +335,6 @@ export default {
     },
     closeForm () {
       this.showForm = false
-      this.readOnlyForm = false
       this.editItem = {}
       this.getItemGroups()
     },
@@ -342,6 +362,11 @@ export default {
         this.getItemGroups()
       },
       deep: true
+    },
+    elementProp (value) {
+      if (value.tab === 'item-groups' && value.type === crfTypes.ITEM_GROUP && value.uid) {
+        this.edit({ uid: value.uid })
+      }
     }
   }
 }

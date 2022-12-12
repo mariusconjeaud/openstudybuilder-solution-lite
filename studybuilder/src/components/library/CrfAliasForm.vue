@@ -99,7 +99,7 @@ export default {
       if (!valid) {
         return
       }
-      this.form.libraryName = 'Sponsor'
+      this.form.library_name = 'Sponsor'
       if (Object.keys(this.editedItem).length !== 0) {
         crfs.editAlias(this.editedItem.uid, this.form).then(resp => {
           bus.$emit('notification', { msg: this.$t('CrfAliases.alias_edited') })

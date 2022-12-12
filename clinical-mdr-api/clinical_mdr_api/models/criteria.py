@@ -19,16 +19,16 @@ from clinical_mdr_api.models.template_parameter_value import (
 class Criteria(BaseModel):
     uid: str
     name: Optional[str] = None
-    namePlain: Optional[str] = None
+    name_plain: Optional[str] = None
 
-    startDate: Optional[datetime] = None
-    endDate: Optional[datetime] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     status: Optional[str] = None
     version: Optional[str] = None
-    changeDescription: Optional[str] = None
-    userInitials: Optional[str] = None
+    change_description: Optional[str] = None
+    user_initials: Optional[str] = None
 
-    possibleActions: Optional[Sequence[str]] = Field(
+    possible_actions: Optional[Sequence[str]] = Field(
         None,
         description=(
             "Holds those actions that can be performed on the criteria. "
@@ -36,14 +36,14 @@ class Criteria(BaseModel):
         ),
     )
 
-    criteriaTemplate: Optional[CriteriaTemplateNameUid]
-    parameterValues: Optional[Sequence[MultiTemplateParameterValue]] = Field(
+    criteria_template: Optional[CriteriaTemplateNameUid]
+    parameter_values: Optional[Sequence[MultiTemplateParameterValue]] = Field(
         None,
         description="Holds the parameter values that are used within the criteria. The values are ordered as they occur in the criteria name.",
     )
     library: Optional[Library] = None
 
-    studyCount: Optional[int] = Field(
+    study_count: Optional[int] = Field(
         None, description="Count of studies referencing criteria"
     )
 
@@ -71,25 +71,25 @@ class Criteria(BaseModel):
         return cls(
             uid=criteria_ar.uid,
             name=criteria_ar.name,
-            namePlain=criteria_ar.name_plain,
-            startDate=criteria_ar.item_metadata.start_date,
-            endDate=criteria_ar.item_metadata.end_date,
+            name_plain=criteria_ar.name_plain,
+            start_date=criteria_ar.item_metadata.start_date,
+            end_date=criteria_ar.item_metadata.end_date,
             status=criteria_ar.item_metadata.status.value,
             version=criteria_ar.item_metadata.version,
-            changeDescription=criteria_ar.item_metadata.change_description,
-            userInitials=criteria_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=criteria_ar.item_metadata.change_description,
+            user_initials=criteria_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 {_.value for _ in criteria_ar.get_possible_actions()}
             ),
-            criteriaTemplate=CriteriaTemplateNameUid(
+            criteria_template=CriteriaTemplateNameUid(
                 name=criteria_ar.template_name,
-                namePlain=criteria_ar.name_plain,
+                name_plain=criteria_ar.name_plain,
                 uid=criteria_ar.template_uid,
-                guidanceText=criteria_ar.template_guidance_text,
+                guidance_text=criteria_ar.template_guidance_text,
             ),
             library=Library.from_library_vo(criteria_ar.library),
-            studyCount=criteria_ar.study_count,
-            parameterValues=parameter_values,
+            study_count=criteria_ar.study_count,
+            parameter_values=parameter_values,
         )
 
 
@@ -102,42 +102,42 @@ class CriteriaVersion(Criteria):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the criteria (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the criteria (e.g. name, start_date, ..)."
         ),
     )
 
 
 class CriteriaParameterInput(BaseModel):
-    parameterValues: List[TemplateParameterMultiSelectInput] = Field(
+    parameter_values: List[TemplateParameterMultiSelectInput] = Field(
         ...,
-        title="parameterValues",
+        title="parameter_values",
         description="An ordered list of selected parameter values that are used to replace the parameters of the criteria template.",
     )
 
 
 class CriteriaEditInput(CriteriaParameterInput):
-    changeDescription: str = Field(
+    change_description: str = Field(
         ...,
         description="A short description about what has changed compared to the previous version.",
     )
 
 
 class CriteriaCreateInput(CriteriaParameterInput):
-    criteriaTemplateUid: str = Field(
+    criteria_template_uid: str = Field(
         ...,
-        title="criteriaTemplateUid",
+        title="criteria_template_uid",
         description="The unique id of the criteria template that is used as the basis for the new criteria.",
     )
-    nameOverride: Optional[str] = Field(
+    name_override: Optional[str] = Field(
         None,
         title="name",
         description="Optionally, a name to override the name inherited from the template.",
     )
-    libraryName: str = Field(
+    library_name: str = Field(
         None,
-        title="libraryName",
+        title="library_name",
         description="If specified: The name of the library to which the criteria will be linked. The following rules apply: \n"
         "* The library needs to be present, it will not be created with this request. The *[GET] /libraries* criteria can help. And \n"
-        "* The library needs to allow the creation: The 'isEditable' property of the library needs to be true. \n\n"
+        "* The library needs to allow the creation: The 'is_editable' property of the library needs to be true. \n\n"
         "If not specified: The library of the criteria template will be used.",
     )

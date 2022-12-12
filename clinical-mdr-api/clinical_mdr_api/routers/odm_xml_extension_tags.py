@@ -1,8 +1,9 @@
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, Path, Query
-from pydantic.types import Json, List
+from pydantic.types import Json
 
+from clinical_mdr_api import config
 from clinical_mdr_api.models import (
     OdmXmlExtensionTag,
     OdmXmlExtensionTagPatchInput,
@@ -24,7 +25,7 @@ OdmXmlExtensionTagUID = Path(
 
 @router.get(
     "",
-    summary="Return every variable related to the selected status and version of the ODM XML Extension Tag Tags",
+    summary="Return every variable related to the selected status and version of the ODM XML Extension Tags",
     description="",
     response_model=CustomPage[OdmXmlExtensionTag],
     status_code=200,
@@ -32,33 +33,35 @@ OdmXmlExtensionTagUID = Path(
 )
 def get_all_odm_xml_extension_tags(
     library: Optional[str] = Query(None),
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
 ):
     odm_xml_extension_tag_service = OdmXmlExtensionTagService()
     results = odm_xml_extension_tag_service.get_all_concepts(
         library=library,
-        sort_by=sortBy,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -78,9 +81,9 @@ def get_all_odm_xml_extension_tags(
     },
 )
 def get_distinct_values_for_header(
-    libraryName: Optional[str] = Query(None),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    library_name: Optional[str] = Query(None),
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -89,18 +92,18 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     odm_xml_extension_tag_service = OdmXmlExtensionTagService()
     return odm_xml_extension_tag_service.get_distinct_values_for_header(
-        library=libraryName,
-        field_name=fieldName,
-        search_string=searchString,
+        library=library_name,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
@@ -132,14 +135,14 @@ def get_active_relationships(uid: str = OdmXmlExtensionTagUID):
 
 @router.get(
     "/{uid}/versions",
-    summary="List version history for ODM XML Extension Tag Tags",
+    summary="List version history for ODM XML Extension Tag",
     description="""
 State before:
  - uid must exist.
 
 Business logic:
- - List version history for ODM XML Extension Tag Tags.
- - The returned versions are ordered by startDate descending (newest entries first).
+ - List version history for ODM XML Extension Tags.
+ - The returned versions are ordered by start_date descending (newest entries first).
 
 State after:
  - No change
@@ -170,7 +173,7 @@ def get_odm_xml_extension_tag_versions(uid: str = OdmXmlExtensionTagUID):
     status_code=201,
     responses={
         201: {
-            "description": "Created - The odm xml extension tag was successfully created."
+            "description": "Created - The ODM XML Extension Tag was successfully created."
         },
         403: {
             "model": ErrorResponse,
@@ -194,7 +197,7 @@ def create_odm_xml_extension_tag(
 
 @router.patch(
     "/{uid}",
-    summary="Update odm xml extension tag",
+    summary="Update ODM XML Extension Tag",
     description="",
     response_model=OdmXmlExtensionTag,
     status_code=200,
@@ -227,7 +230,7 @@ def edit_odm_xml_extension_tag(
 
 
 @router.post(
-    "/{uid}/new-version",
+    "/{uid}/versions",
     summary=" Create a new version of ODM XML Extension Tag",
     description="""
 State before:
@@ -250,7 +253,7 @@ Possible errors:
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
-            "- The library does not allow to create ODM XML Extension Tag Tags.\n",
+            "- The library does not allow to create ODM XML Extension Tags.\n",
         },
         404: {
             "model": ErrorResponse,

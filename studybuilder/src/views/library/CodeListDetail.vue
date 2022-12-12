@@ -1,9 +1,9 @@
 <template>
 <div class="px-4">
   <div class="mb-6 d-flex align-center">
-    <strong>{{ $t('_global.library') }}</strong> <span class="ml-2 secondary--text">{{ codelistNames.libraryName }}</span>
+    <strong>{{ $t('_global.library') }}</strong> <span class="ml-2 secondary--text">{{ codelistNames.library_name }}</span>
     <v-spacer />
-    <strong>{{ $t('CodeListDetail.concept_id') }}</strong> <span class="ml-2 secondary--text">{{ codelistNames.codelistUid }}</span>
+    <strong>{{ $t('CodeListDetail.concept_id') }}</strong> <span class="ml-2 secondary--text">{{ codelistNames.codelist_uid }}</span>
     <v-spacer />
     <v-speed-dial
       v-model="actionsMenu"
@@ -76,12 +76,12 @@
             <td>{{ $t('CodeListDetail.sponsor_pref_name') }}</td>
             <td>{{ codelistNames.name }}</td>
             <td data-cy="names-status" rowspan="2"><status-chip :status="codelistNames.status" /></td>
-            <td rowspan="2">{{ codelistNames.startDate|date }}</td>
+            <td rowspan="2">{{ codelistNames.start_date|date }}</td>
             <td data-cy="names-version" rowspan="2">{{ codelistNames.version }}</td>
             <td rowspan="2">
               <v-btn
                 data-cy="edit-sponsor-values"
-                v-if="codelistNames.possibleActions.find(action => action === 'edit')"
+                v-if="codelistNames.possible_actions.find(action => action === 'edit')"
                 icon
                 color="primary"
                 :title="$t('CodeListDetail.edit_sponsor_values')"
@@ -91,7 +91,7 @@
               </v-btn>
               <v-btn
                 data-cy='approve-sponsor-values'
-                v-if="codelistNames.possibleActions.find(action => action === 'approve')"
+                v-if="codelistNames.possible_actions.find(action => action === 'approve')"
                 color="success"
                 icon
                 @click="approveSponsorValues"
@@ -101,7 +101,7 @@
               </v-btn>
               <v-btn
                 data-cy='create-new-sponsor-values'
-                v-if="codelistNames.possibleActions.find(action => action === 'newVersion')"
+                v-if="codelistNames.possible_actions.find(action => action === 'new_version')"
                 color="primary"
                 icon
                 @click="createNewSponsorValuesVersion"
@@ -121,7 +121,7 @@
           </tr>
           <tr>
             <td>{{ $t('CodeListDetail.tpl_parameter') }}</td>
-            <td>{{ codelistNames.templateParameter|yesno }}</td>
+            <td>{{ codelistNames.template_parameter|yesno }}</td>
           </tr>
         </tbody>
       </table>
@@ -147,11 +147,11 @@
             <td>{{ $t('CodeListDetail.codelist_name') }}</td>
             <td>{{ attributes.name }}</td>
             <td data-cy="attributes-status" rowspan="5"><status-chip :status="attributes.status" /></td>
-            <td rowspan="5">{{ attributes.startDate|date }}</td>
+            <td rowspan="5">{{ attributes.start_date|date }}</td>
             <td data-cy="attributes-version" rowspan="5">{{ attributes.version }}</td>
             <td rowspan="5">
               <v-btn
-                v-if="attributes.possibleActions.find(action => action === 'edit')"
+                v-if="attributes.possible_actions.find(action => action === 'edit')"
                 icon
                 color="primary"
                 :title="$t('CodeListDetail.edit_sponsor_values')"
@@ -161,7 +161,7 @@
               </v-btn>
               <v-btn
                 data-cy="approve-attributes-values"
-                v-if="attributes.possibleActions.find(action => action === 'approve')"
+                v-if="attributes.possible_actions.find(action => action === 'approve')"
                 color="success"
                 icon
                 @click="approveAttributes"
@@ -170,7 +170,7 @@
                 <v-icon>mdi-check-decagram</v-icon>
               </v-btn>
               <v-btn
-                v-if="attributes.possibleActions.find(action => action === 'newVersion')"
+                v-if="attributes.possible_actions.find(action => action === 'new_version')"
                 color="primary"
                 icon
                 @click="createNewAttributesVersion"
@@ -189,11 +189,11 @@
           </tr>
           <tr>
             <td>{{ $t('CodeListDetail.submission_value') }}</td>
-            <td>{{ attributes.submissionValue }}</td>
+            <td>{{ attributes.submission_value }}</td>
           </tr>
           <tr>
             <td>{{ $t('CodeListDetail.nci_pref_name') }}</td>
-            <td>{{ attributes.nciPreferredName }}</td>
+            <td>{{ attributes.nci_preferred_name }}</td>
           </tr>
           <tr>
             <td>{{ $t('CodeListDetail.extensible') }}</td>
@@ -257,9 +257,9 @@
     content-class="top-dialog"
     >
     <codelist-term-creation-form
-      :catalogueName="codelistNames.catalogueName"
-      :codelistUid="codelistNames.codelistUid"
-      :libraryName="codelistNames.libraryName"
+      :catalogueName="codelistNames.catalogue_name"
+      :codelistUid="codelistNames.codelist_uid"
+      :libraryName="codelistNames.library_name"
       @close="showCreationForm = false"
       @created="goToTerm"
       />
@@ -290,16 +290,16 @@ export default {
   data () {
     return {
       actionsMenu: false,
-      attributes: { possibleActions: [] },
-      codelistNames: { possibleActions: [] },
+      attributes: { possible_actions: [] },
+      codelistNames: { possible_actions: [] },
       historyHeaders: [
-        { text: this.$t('_global.library'), value: 'libraryName' },
+        { text: this.$t('_global.library'), value: 'library_name' },
         { text: this.$t('_global.name'), value: 'name' },
-        { text: this.$t('HistoryTable.change_description'), value: 'changeDescription' },
+        { text: this.$t('HistoryTable.change_description'), value: 'change_description' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' },
-        { text: this.$t('_global.user'), value: 'userInitials' },
-        { text: this.$t('HistoryTable.start_date'), value: 'startDate' },
+        { text: this.$t('_global.user'), value: 'user_initials' },
+        { text: this.$t('HistoryTable.start_date'), value: 'start_date' },
         { text: this.$t('HistoryTable.end_date'), value: 'endDate' }
       ],
       showAttributesForm: false,
@@ -321,13 +321,13 @@ export default {
       this.showAttributesForm = true
     },
     createNewSponsorValuesVersion () {
-      controlledTerminology.newCodelistNamesVersion(this.codelistNames.codelistUid).then(resp => {
+      controlledTerminology.newCodelistNamesVersion(this.codelistNames.codelist_uid).then(resp => {
         this.codelistNames = resp.data
         bus.$emit('notification', { msg: this.$t('CodeListDetail.new_version_success') })
       })
     },
     approveSponsorValues () {
-      controlledTerminology.approveCodelistNames(this.codelistNames.codelistUid).then(resp => {
+      controlledTerminology.approveCodelistNames(this.codelistNames.codelist_uid).then(resp => {
         this.codelistNames = resp.data
         bus.$emit('notification', { msg: this.$t('CodeListDetail.sponsor_values_approve_success') })
       })
@@ -342,13 +342,13 @@ export default {
       this.showAttributesHistory = false
     },
     createNewAttributesVersion () {
-      controlledTerminology.newCodelistAttributesVersion(this.attributes.codelistUid).then(resp => {
+      controlledTerminology.newCodelistAttributesVersion(this.attributes.codelist_uid).then(resp => {
         this.attributes = resp.data
         bus.$emit('notification', { msg: this.$t('CodeListDetail.new_attributes_version_success') })
       })
     },
     approveAttributes () {
-      controlledTerminology.approveCodelistAttributes(this.attributes.codelistUid).then(resp => {
+      controlledTerminology.approveCodelistAttributes(this.attributes.codelist_uid).then(resp => {
         this.attributes = resp.data
         bus.$emit('notification', { msg: this.$t('CodeListDetail.attributes_approve_success') })
       })
@@ -358,23 +358,23 @@ export default {
       this.showAttributesHistory = true
     },
     goToTerm (term) {
-      this.$router.push({ name: 'CodelistTermDetail', params: { codelistId: term.codelistUid, termId: term.termUid } })
+      this.$router.push({ name: 'CodelistTermDetail', params: { codelist_id: term.codelist_uid, term_id: term.term_uid } })
       bus.$emit('notification', { msg: this.$t('CodelistTermCreationForm.add_success') })
     },
     openCodelistTerms () {
-      this.$router.push({ name: 'CodelistTerms', params: { codelistId: this.codelistNames.codelistUid } })
+      this.$router.push({ name: 'CodelistTerms', params: { codelist_id: this.codelistNames.codelist_uid } })
     }
   },
   mounted () {
-    controlledTerminology.getCodelistNames(this.$route.params.codelistId).then(resp => {
+    controlledTerminology.getCodelistNames(this.$route.params.codelist_id).then(resp => {
       this.codelistNames = resp.data
       this.addBreadcrumbsLevel({
-        text: this.codelistNames.codelistUid,
+        text: this.codelistNames.codelist_uid,
         to: { name: 'CodeListDetail', params: this.$route.params },
         index: 4
       })
     })
-    controlledTerminology.getCodelistAttributes(this.$route.params.codelistId).then(resp => {
+    controlledTerminology.getCodelistAttributes(this.$route.params.codelist_id).then(resp => {
       this.attributes = resp.data
     })
   }

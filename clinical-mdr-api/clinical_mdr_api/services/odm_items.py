@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Optional, Sequence
 
 from neomodel import db
 
@@ -19,13 +19,8 @@ from clinical_mdr_api.models.odm_item import (
     OdmItemTermRelationshipInput,
     OdmItemUnitDefinitionRelationshipInput,
     OdmItemVersion,
-    OdmItemWithRelationsPatchInput,
-    OdmItemWithRelationsPostInput,
 )
 from clinical_mdr_api.services._utils import get_input_or_new_value, normalize_string
-from clinical_mdr_api.services.concepts.concept_generic_service import (
-    _AggregateRootType,
-)
 from clinical_mdr_api.services.odm_descriptions import OdmDescriptionService
 from clinical_mdr_api.services.odm_generic_service import OdmGenericService
 
@@ -59,7 +54,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
 
     def _create_aggregate_root(
         self, concept_input: OdmItemPostInput, library
-    ) -> _AggregateRootType:
+    ) -> OdmItemAR:
         return OdmItemAR.from_input_values(
             author=self.user_initials,
             concept_vo=OdmItemVO.from_repository_values(
@@ -68,19 +63,23 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                 prompt=concept_input.prompt,
                 datatype=concept_input.datatype,
                 length=concept_input.length,
-                significant_digits=concept_input.significantDigits,
-                sas_field_name=concept_input.sasFieldName,
-                sds_var_name=concept_input.sdsVarName,
+                significant_digits=concept_input.significant_digits,
+                sas_field_name=concept_input.sas_field_name,
+                sds_var_name=concept_input.sds_var_name,
                 origin=concept_input.origin,
                 comment=concept_input.comment,
-                description_uids=concept_input.descriptionUids,
-                alias_uids=concept_input.aliasUids,
+                description_uids=concept_input.descriptions,
+                alias_uids=concept_input.alias_uids,
                 unit_definition_uids=[
                     unit_definition.uid
-                    for unit_definition in concept_input.unitDefinitions
+                    for unit_definition in concept_input.unit_definitions
                 ],
-                codelist_uid=concept_input.codelistUid,
+                codelist_uid=concept_input.codelist_uid,
                 term_uids=[term.uid for term in concept_input.terms],
+                activity_uids=[],
+                xml_extension_tag_uids=[],
+                xml_extension_attribute_uids=[],
+                xml_extension_tag_attribute_uids=[],
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
@@ -97,26 +96,30 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
     ) -> OdmItemAR:
         item.edit_draft(
             author=self.user_initials,
-            change_description=concept_edit_input.changeDescription,
+            change_description=concept_edit_input.change_description,
             concept_vo=OdmItemVO.from_repository_values(
                 oid=concept_edit_input.oid,
                 name=concept_edit_input.name,
                 prompt=concept_edit_input.prompt,
                 datatype=concept_edit_input.datatype,
                 length=concept_edit_input.length,
-                significant_digits=concept_edit_input.significantDigits,
-                sas_field_name=concept_edit_input.sasFieldName,
-                sds_var_name=concept_edit_input.sdsVarName,
+                significant_digits=concept_edit_input.significant_digits,
+                sas_field_name=concept_edit_input.sas_field_name,
+                sds_var_name=concept_edit_input.sds_var_name,
                 origin=concept_edit_input.origin,
                 comment=concept_edit_input.comment,
-                description_uids=concept_edit_input.descriptionUids,
-                alias_uids=concept_edit_input.aliasUids,
+                description_uids=concept_edit_input.descriptions,
+                alias_uids=concept_edit_input.alias_uids,
                 unit_definition_uids=[
                     unit_definition.uid
-                    for unit_definition in concept_edit_input.unitDefinitions
+                    for unit_definition in concept_edit_input.unit_definitions
                 ],
-                codelist_uid=concept_edit_input.codelistUid,
+                codelist_uid=concept_edit_input.codelist_uid,
                 term_uids=[term.uid for term in concept_edit_input.terms],
+                activity_uids=[],
+                xml_extension_tag_uids=[],
+                xml_extension_attribute_uids=[],
+                xml_extension_tag_attribute_uids=[],
             ),
             concept_exists_by_callback=self._repos.odm_item_repository.exists_by,
             odm_description_exists_by_callback=self._repos.odm_description_repository.exists_by,
@@ -128,25 +131,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         return item
 
     @db.transaction
-    def create(self, concept_input: OdmItemPostInput):
-        terms = concept_input.terms
-        unit_definitions = concept_input.unitDefinitions
-        setattr(concept_input, "terms", [])
-        setattr(concept_input, "unitDefinitions", [])
-
-        item = super().non_transactional_create(concept_input)
-
-        self._manage_terms(item.uid, terms)
-        self._manage_unit_definitions(item.uid, unit_definitions)
-
-        return self._transform_aggregate_root_to_pydantic_model(
-            self._repos.odm_item_repository.find_by_uid_2(item.uid)
-        )
-
-    @db.transaction
-    def create_with_relations(
-        self, concept_input: OdmItemWithRelationsPostInput
-    ) -> _AggregateRootType:
+    def create_with_relations(self, concept_input: OdmItemPostInput) -> OdmItem:
         description_uids = [
             description
             if isinstance(description, str)
@@ -158,55 +143,44 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
 
         item = self.non_transactional_create(
             concept_input=OdmItemPostInput(
-                library=concept_input.libraryName,
+                library=concept_input.library_name,
                 oid=concept_input.oid,
                 name=concept_input.name,
                 prompt=concept_input.prompt,
                 datatype=concept_input.datatype,
-                length=concept_input.length,
-                significantDigits=concept_input.significantDigits,
-                sasFieldName=concept_input.sasFieldName,
-                sdsVarName=concept_input.sdsVarName,
+                length=self.calculate_item_length_value(
+                    concept_input.length,
+                    concept_input.codelist_uid,
+                    concept_input.terms,
+                ),
+                significant_digits=concept_input.significant_digits,
+                sas_field_name=concept_input.sas_field_name,
+                sds_var_name=concept_input.sds_var_name,
                 origin=concept_input.origin,
                 comment=concept_input.comment,
-                descriptionUids=description_uids,
-                aliasUids=concept_input.aliasUids,
-                unitDefinitions=[],
-                codelistUid=concept_input.codelistUid,
-                terms=[],
+                descriptions=description_uids,
+                alias_uids=concept_input.alias_uids,
+                unit_definitions=concept_input.unit_definitions,
+                codelist_uid=concept_input.codelist_uid,
+                terms=concept_input.terms,
             ),
         )
 
         self._manage_terms(item.uid, concept_input.terms)
-        self._manage_unit_definitions(item.uid, concept_input.unitDefinitions)
+        self._manage_unit_definitions(item.uid, concept_input.unit_definitions)
 
         return self._transform_aggregate_root_to_pydantic_model(
             self._repos.odm_item_repository.find_by_uid_2(item.uid)
         )
 
     @db.transaction
-    def edit_draft(self, uid: str, concept_edit_input: OdmItemPatchInput):
-        terms = concept_edit_input.terms
-        unit_definitions = concept_edit_input.unitDefinitions
-
-        setattr(concept_edit_input, "terms", [])
-        setattr(concept_edit_input, "unitDefinitions", [])
-
-        super().non_transactional_edit(uid, concept_edit_input)
-
-        self._manage_terms(uid, terms, True)
-        self._manage_unit_definitions(uid, unit_definitions, True)
-
-        return self._transform_aggregate_root_to_pydantic_model(
-            self._repos.odm_item_repository.find_by_uid_2(uid)
-        )
-
-    @db.transaction
     def update_with_relations(
-        self, uid: str, concept_edit_input: OdmItemWithRelationsPatchInput
-    ) -> _AggregateRootType:
+        self, uid: str, concept_edit_input: OdmItemPatchInput
+    ) -> OdmItem:
         description_uids = [
-            OdmDescriptionService()
+            description
+            if isinstance(description, str)
+            else OdmDescriptionService()
             .non_transactional_edit(uid=description.uid, concept_edit_input=description)
             .uid
             if isinstance(description, OdmDescriptionBatchPatchInput)
@@ -219,27 +193,31 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         self.non_transactional_edit(
             uid=uid,
             concept_edit_input=OdmItemPatchInput(
-                changeDescription=concept_edit_input.changeDescription,
+                change_description=concept_edit_input.change_description,
                 name=concept_edit_input.name,
                 oid=concept_edit_input.oid,
                 prompt=concept_edit_input.prompt,
                 datatype=concept_edit_input.datatype,
-                length=concept_edit_input.length,
-                significantDigits=concept_edit_input.significantDigits,
-                sasFieldName=concept_edit_input.sasFieldName,
-                sdsVarName=concept_edit_input.sdsVarName,
+                length=self.calculate_item_length_value(
+                    concept_edit_input.length,
+                    concept_edit_input.codelist_uid,
+                    concept_edit_input.terms,
+                ),
+                significant_digits=concept_edit_input.significant_digits,
+                sas_field_name=concept_edit_input.sas_field_name,
+                sds_var_name=concept_edit_input.sds_var_name,
                 origin=concept_edit_input.origin,
                 comment=concept_edit_input.comment,
-                descriptionUids=description_uids,
-                aliasUids=concept_edit_input.aliasUids,
-                unitDefinitions=[],
-                codelistUid=concept_edit_input.codelistUid,
-                terms=[],
+                descriptions=description_uids,
+                alias_uids=concept_edit_input.alias_uids,
+                unit_definitions=concept_edit_input.unit_definitions,
+                codelist_uid=concept_edit_input.codelist_uid,
+                terms=concept_edit_input.terms,
             ),
         )
 
         self._manage_terms(uid, concept_edit_input.terms, True)
-        self._manage_unit_definitions(uid, concept_edit_input.unitDefinitions, True)
+        self._manage_unit_definitions(uid, concept_edit_input.unit_definitions, True)
 
         return self._transform_aggregate_root_to_pydantic_model(
             self._repos.odm_item_repository.find_by_uid_2(uid)
@@ -265,7 +243,11 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                     uid=item_uid,
                     relation_uid=term.uid,
                     relationship_type=RelationType.TERM,
-                    parameters={"mandatory": term.mandatory, "order": term.order},
+                    parameters={
+                        "mandatory": term.mandatory,
+                        "order": term.order,
+                        "display_text": term.display_text,
+                    },
                 )
         except ValueError as exception:
             raise exceptions.ValidationException(exception.args[0])
@@ -298,6 +280,42 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         except ValueError as exception:
             raise exceptions.ValidationException(exception.args[0])
 
+    def calculate_item_length_value(
+        self,
+        length: Optional[int],
+        codelist_uid: Optional[str],
+        input_terms: Sequence[OdmItemTermRelationshipInput],
+    ):
+        if length:
+            return length
+
+        if not codelist_uid or not input_terms:
+            return None
+
+        (
+            items,
+            prop_names,
+        ) = self._repos.ct_term_attributes_repository.get_term_attributes_by_codelist_uids(
+            [codelist_uid]
+        )
+
+        terms = sorted(
+            [dict(zip(prop_names, item)) for item in items],
+            key=lambda elm: len(elm["code_submission_value"]),
+            reverse=True,
+        )
+
+        input_term_uids = [input_term.uid for input_term in input_terms]
+
+        return next(
+            (
+                len(term["code_submission_value"])
+                for term in terms
+                if term["term_uid"] in input_term_uids
+            ),
+            None,
+        )
+
     @db.transaction
     def add_activities(
         self,
@@ -308,7 +326,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         if odm_item_ar.item_metadata.status == LibraryItemStatus.RETIRED:
-            raise exceptions.BusinessLogicException("The object is inactive")
+            raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
 
         if override:
             self._repos.odm_item_repository.remove_relation(
@@ -344,7 +362,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         if odm_item_ar.item_metadata.status == LibraryItemStatus.RETIRED:
-            raise exceptions.BusinessLogicException("The object is inactive")
+            raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
 
         if override:
             self.fail_if_non_present_tags_are_used_by_current_odm_element_attributes(
@@ -388,7 +406,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         if odm_item_ar.item_metadata.status == LibraryItemStatus.RETIRED:
-            raise exceptions.BusinessLogicException("The object is inactive")
+            raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
 
         self.fail_if_these_attributes_cannot_be_added(
             odm_xml_extension_relation_post_input
@@ -431,7 +449,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         if odm_item_ar.item_metadata.status == LibraryItemStatus.RETIRED:
-            raise exceptions.BusinessLogicException("The object is inactive")
+            raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
 
         self.fail_if_these_attributes_cannot_be_added(
             odm_xml_extension_relation_post_input,
@@ -467,9 +485,13 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
     def get_active_relationships(self, uid: str):
         if not self._repos.odm_item_repository.exists_by("uid", uid, True):
             raise exceptions.NotFoundException(
-                f"Odm Item with uid {uid} does not exist."
+                f"ODM Item identified by uid ({uid}) does not exist."
             )
 
         return self._repos.odm_item_repository.get_active_relationships(
             uid, ["item_ref"]
         )
+
+    @db.transaction
+    def get_items_that_belongs_to_item_groups(self):
+        return self._repos.odm_item_repository.get_if_has_relationship("item_ref")

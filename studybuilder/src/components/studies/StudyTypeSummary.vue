@@ -5,7 +5,7 @@
   :first-col-label="$t('StudyTypeSummary.info_column')"
   persistent-dialog
   copy-from-study
-  component="highLevelStudyDesign"
+  component="high_level_study_design"
   >
   <template v-slot:form="{ closeHandler, dataToCopy, openHandler }">
     <study-define-form :open="openHandler" :metadata="(Object.keys(dataToCopy).length !== 0) ? dataToCopy : metadata" @updated="onMetadataUpdated" @close="closeHandler" />
@@ -35,41 +35,41 @@ export default {
       params: [
         {
           label: this.$t('StudyDefineForm.studytype'),
-          name: 'studyTypeCode',
+          name: 'study_type_code',
           valuesDisplay: 'term'
         },
         {
           label: this.$t('StudyDefineForm.trialtype'),
-          name: 'trialTypesCodes',
+          name: 'trial_types_codes',
           valuesDisplay: 'terms'
         },
         {
           label: this.$t('StudyDefineForm.trialphase'),
-          name: 'trialPhaseCode',
+          name: 'trial_phase_code',
           valuesDisplay: 'term'
         },
         {
           label: this.$t('StudyDefineForm.extensiontrial'),
-          name: 'isExtensionTrial',
+          name: 'is_extension_trial',
           valuesDisplay: 'yesno'
         },
         {
           label: this.$t('StudyDefineForm.adaptivedesign'),
-          name: 'isAdaptiveDesign',
+          name: 'is_adaptive_design',
           valuesDisplay: 'yesno'
         },
         {
           label: this.$t('StudyDefineForm.studystoprule'),
-          name: 'studyStopRules'
+          name: 'study_stop_rules'
         },
         {
           label: this.$t('StudyDefineForm.confirmed_resp_min_duration'),
-          name: 'confirmedResponseMinimumDuration',
+          name: 'confirmed_response_minimum_duration',
           valuesDisplay: 'duration'
         },
         {
           label: this.$t('StudyDefineForm.post_auth_safety_indicator'),
-          name: 'postAuthIndicator',
+          name: 'post_auth_indicator',
           valuesDisplay: 'yesno'
         }
       ]
@@ -88,7 +88,7 @@ export default {
     this.$store.dispatch('studiesGeneral/fetchTrialTypes')
     this.$store.dispatch('studiesGeneral/fetchNullValues')
     study.getHighLevelStudyDesignMetadata(this.selectedStudy.uid).then(resp => {
-      this.metadata = resp.data.currentMetadata.highLevelStudyDesign
+      this.metadata = resp.data.current_metadata.high_level_study_design
     })
   }
 }

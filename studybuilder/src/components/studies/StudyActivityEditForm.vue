@@ -9,14 +9,14 @@
       <div class="d-flex">
         <v-text-field
           :label="$t('StudyActivity.activity_group')"
-          :value="activityGroup"
+          :value="activity_group"
           disabled
           filled
           class="mr-2"
           />
         <v-text-field
           :label="$t('StudyActivity.activity_sub_group')"
-          :value="activitySubGroup"
+          :value="activity_subgroup"
           disabled
           filled
           class="mr-2"
@@ -34,10 +34,10 @@
           rules="required"
           >
           <v-autocomplete
-            v-model="form.flowchartGroup"
+            v-model="form.flowchart_group"
             :label="$t('StudyActivityForm.flowchart_group')"
             :items="flowchartGroups"
-            item-text="sponsorPreferredName"
+            item-text="sponsor_preferred_name"
             return-object
             :error-messages="errors"
             clearable
@@ -85,14 +85,14 @@ export default {
     HelpButtonWithPanels
   },
   computed: {
-    activityGroup () {
+    activity_group () {
       return (this.studyActivity && this.studyActivity.activity)
-        ? this.studyActivity.activity.activityGroup.name
+        ? this.studyActivity.activity.activity_group.name
         : ''
     },
-    activitySubGroup () {
+    activity_subgroup () {
       return (this.studyActivity && this.studyActivity.activity)
-        ? this.studyActivity.activity.activitySubGroup.name
+        ? this.studyActivity.activity.activity_subgroup.name
         : ''
     },
     activity () {
@@ -124,10 +124,10 @@ export default {
       }
       this.working = true
       const data = {
-        flowchartGroupUid: this.form.flowchartGroup.termUid,
+        flowchart_group_uid: this.form.flowchart_group.term_uid,
         note: this.form.note
       }
-      study.updateStudyActivity(this.studyActivity.studyUid, this.studyActivity.studyActivityUid, data).then(resp => {
+      study.updateStudyActivity(this.studyActivity.study_uid, this.studyActivity.study_activity_uid, data).then(resp => {
         bus.$emit('notification', { type: 'success', msg: this.$t('StudyActivityEditForm.update_success') })
         this.$emit('updated')
         this.close()

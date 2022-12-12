@@ -28,11 +28,11 @@ from clinical_mdr_api.models.odm_formal_expression import (
 
 class OdmMethod(ConceptModel):
     oid: Optional[str]
-    type: Optional[str]
-    formalExpressions: Optional[Sequence[OdmFormalExpressionSimpleModel]]
+    method_type: Optional[str]
+    formal_expressions: Sequence[OdmFormalExpressionSimpleModel]
     descriptions: Sequence[OdmDescriptionSimpleModel]
-    aliases: Optional[Sequence[OdmAliasSimpleModel]]
-    possibleActions: List[str]
+    aliases: Sequence[OdmAliasSimpleModel]
+    possible_actions: List[str]
 
     @classmethod
     def from_odm_method_ar(
@@ -48,15 +48,15 @@ class OdmMethod(ConceptModel):
             uid=odm_method_ar._uid,
             oid=odm_method_ar.concept_vo.oid,
             name=odm_method_ar.concept_vo.name,
-            type=odm_method_ar.concept_vo.method_type,
-            libraryName=odm_method_ar.library.name,
-            startDate=odm_method_ar.item_metadata.start_date,
-            endDate=odm_method_ar.item_metadata.end_date,
+            method_type=odm_method_ar.concept_vo.method_type,
+            library_name=odm_method_ar.library.name,
+            start_date=odm_method_ar.item_metadata.start_date,
+            end_date=odm_method_ar.item_metadata.end_date,
             status=odm_method_ar.item_metadata.status.value,
             version=odm_method_ar.item_metadata.version,
-            changeDescription=odm_method_ar.item_metadata.change_description,
-            userInitials=odm_method_ar.item_metadata.user_initials,
-            formalExpressions=sorted(
+            change_description=odm_method_ar.item_metadata.change_description,
+            user_initials=odm_method_ar.item_metadata.user_initials,
+            formal_expressions=sorted(
                 [
                     OdmFormalExpressionSimpleModel.from_odm_formal_expression_uid(
                         uid=formal_expression_uid,
@@ -86,7 +86,7 @@ class OdmMethod(ConceptModel):
                 ],
                 key=lambda item: item.name,
             ),
-            possibleActions=sorted(
+            possible_actions=sorted(
                 [_.value for _ in odm_method_ar.get_possible_actions()]
             ),
         )
@@ -94,38 +94,22 @@ class OdmMethod(ConceptModel):
 
 class OdmMethodPostInput(ConceptPostInput):
     oid: Optional[str]
-    type: Optional[str]
-    formalExpressionUids: Sequence[str]
-    descriptionUids: Sequence[str]
-    aliasUids: Sequence[str]
-
-
-class OdmMethodWithRelationsPostInput(ConceptPostInput):
-    oid: Optional[str]
-    type: Optional[str]
-    formalExpressions: Sequence[Union[OdmFormalExpressionPostInput, str]]
+    method_type: Optional[str]
+    formal_expressions: Sequence[Union[OdmFormalExpressionPostInput, str]]
     descriptions: Sequence[Union[OdmDescriptionPostInput, str]]
-    aliasUids: Sequence[str]
+    alias_uids: Sequence[str]
 
 
 class OdmMethodPatchInput(ConceptPatchInput):
     oid: Optional[str]
-    type: Optional[str]
-    formalExpressionUids: Sequence[str]
-    descriptionUids: Sequence[str]
-    aliasUids: Sequence[str]
-
-
-class OdmMethodWithRelationsPatchInput(ConceptPatchInput):
-    oid: Optional[str]
-    type: Optional[str]
-    formalExpressions: Sequence[
-        Union[OdmFormalExpressionBatchPatchInput, OdmFormalExpressionPostInput]
+    method_type: Optional[str]
+    formal_expressions: Sequence[
+        Union[OdmFormalExpressionBatchPatchInput, OdmFormalExpressionPostInput, str]
     ]
     descriptions: Sequence[
-        Union[OdmDescriptionBatchPatchInput, OdmDescriptionPostInput]
+        Union[OdmDescriptionBatchPatchInput, OdmDescriptionPostInput, str]
     ]
-    aliasUids: Sequence[str]
+    alias_uids: Sequence[str]
 
 
 class OdmMethodVersion(OdmMethod):
@@ -137,6 +121,6 @@ class OdmMethodVersion(OdmMethod):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the objective (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )

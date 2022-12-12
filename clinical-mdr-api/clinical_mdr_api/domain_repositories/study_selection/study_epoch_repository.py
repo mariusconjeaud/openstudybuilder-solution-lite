@@ -158,18 +158,18 @@ class StudyEpochRepository:
     def _from_neomodel_to_vo(self, study_epoch_ogm_input: StudyEpochOGM):
         return StudyEpochVO(
             uid=study_epoch_ogm_input.uid,
-            study_uid=study_epoch_ogm_input.studyUid,
-            start_rule=study_epoch_ogm_input.startRule,
-            end_rule=study_epoch_ogm_input.endRule,
+            study_uid=study_epoch_ogm_input.study_uid,
+            start_rule=study_epoch_ogm_input.start_rule,
+            end_rule=study_epoch_ogm_input.end_rule,
             description=study_epoch_ogm_input.description,
             epoch=study_epoch.StudyEpochEpoch[study_epoch_ogm_input.epoch],
-            subtype=study_epoch.StudyEpochSubType[study_epoch_ogm_input.epochSubType],
-            epoch_type=study_epoch.StudyEpochType[study_epoch_ogm_input.epochType],
+            subtype=study_epoch.StudyEpochSubType[study_epoch_ogm_input.epoch_subtype],
+            epoch_type=study_epoch.StudyEpochType[study_epoch_ogm_input.epoch_type],
             order=study_epoch_ogm_input.order,
             status=StudyStatus(study_epoch_ogm_input.status),
-            start_date=study_epoch_ogm_input.startDate,
+            start_date=study_epoch_ogm_input.start_date,
             author=self.author,
-            color_hash=study_epoch_ogm_input.colorHash,
+            color_hash=study_epoch_ogm_input.color_hash,
         )
 
     def save(self, epoch: StudyEpochVO):
@@ -272,7 +272,7 @@ class StudyEpochRepository:
             # remove the relation from the old value node
             study_selection_nodes = getattr(previous_value, relation_name).all()
             # only the has_design_cell is deleted because
-            # the cardinality and the function of the studyDesign cell is to have just one StudyEpoch at the time
+            # the cardinality and the function of the study_design cell is to have just one StudyEpoch at the time
             if "has_design_cell" in relation_name:
                 getattr(previous_value, relation_name).disconnect_all()
 
@@ -286,7 +286,7 @@ class StudyEpochRepository:
         self, study_root: StudyRoot, item: StudyEpochVO, new_item: StudyEpoch
     ):
         action = Create(
-            date=datetime.datetime.now(),
+            date=datetime.datetime.now(datetime.timezone.utc),
             status=item.status.value,
             user_initials=item.author,
         )
@@ -302,7 +302,7 @@ class StudyEpochRepository:
         new_item: StudyEpoch,
     ):
         action = Edit(
-            date=datetime.datetime.now(),
+            date=datetime.datetime.now(datetime.timezone.utc),
             status=item.status.value,
             user_initials=item.author,
         )
@@ -318,7 +318,7 @@ class StudyEpochRepository:
         previous_item: StudyEpoch,
     ):
         action = Delete(
-            date=datetime.datetime.now(),
+            date=datetime.datetime.now(datetime.timezone.utc),
             status=item.status.value,
             user_initials=item.author,
         )

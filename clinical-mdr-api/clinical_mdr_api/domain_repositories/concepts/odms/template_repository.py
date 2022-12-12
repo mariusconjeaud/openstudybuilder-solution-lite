@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Sequence
 
 from clinical_mdr_api.domain.concepts.odms.template import OdmTemplateAR, OdmTemplateVO
 from clinical_mdr_api.domain.versioned_object_aggregate import (
@@ -64,22 +64,22 @@ class TemplateRepository(OdmGenericRepository[OdmTemplateAR]):
             concept_vo=OdmTemplateVO.from_repository_values(
                 name=input_dict.get("name"),
                 oid=input_dict.get("oid"),
-                effective_date=input_dict.get("effectiveDate"),
-                retired_date=input_dict.get("retiredDate"),
+                effective_date=input_dict.get("effective_date"),
+                retired_date=input_dict.get("retired_date"),
                 description=input_dict.get("description"),
-                form_uids=input_dict.get("formUids"),
+                form_uids=input_dict.get("form_uids"),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("libraryName"),
+                library_name=input_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: input_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("changeDescription"),
+                change_description=input_dict.get("change_description"),
                 status=LibraryItemStatus(input_dict.get("status")),
-                author=input_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=input_dict.get("startDate")),
+                author=input_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=input_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -88,21 +88,23 @@ class TemplateRepository(OdmGenericRepository[OdmTemplateAR]):
 
         return odm_form_ar
 
-    def specific_alias_clause(self, only_specific_status: list = None) -> str:
+    def specific_alias_clause(
+        self, only_specific_status: Optional[Sequence[str]] = None
+    ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]
 
         return f"""
         WITH *,
         concept_value.oid AS oid,
-        concept_value.effective_date AS effectiveDate,
-        concept_value.retired_date AS retiredDate,
+        concept_value.effective_date AS effective_date,
+        concept_value.retired_date AS retired_date,
         concept_value.description AS description,
 
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmTemplateRoot)-[fref:FORM_REF]->(fr:OdmFormRoot)-[:LATEST]->(fv:OdmFormValue) | {{uid: fr.uid, name: fv.name, order: fref.order, mandatory: fref.mandatory, collection_exception_condition_oid: fref.collection_exception_condition_oid}}] AS forms
         
         WITH *,
-        [form in forms | form.uid] AS formUids
+        [form in forms | form.uid] AS form_uids
         """
 
     def _create_new_value_node(self, ar: OdmTemplateAR) -> OdmTemplateValue:

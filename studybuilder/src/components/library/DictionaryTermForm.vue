@@ -49,7 +49,7 @@
             rules="required"
             >
             <v-text-field
-              v-model="form.nameSentenceCase"
+              v-model="form.name_sentence_case"
               :label="$t('DictionaryTermForm.lower_case_name')"
               :error-messages="errors"
               dense
@@ -99,7 +99,7 @@
             rules="required"
             >
             <v-textarea
-              v-model="form.changeDescription"
+              v-model="form.change_description"
               :label="$t('_global.change_description')"
               :error-messages="errors"
               dense
@@ -191,7 +191,7 @@ export default {
       if (!valid) {
         return
       }
-      this.form.libraryName = this.dictionaryName
+      this.form.library_name = this.dictionaryName
       this.form.codelistUid = this.editedTermCategory
       const data = JSON.parse(JSON.stringify(this.form))
       dictionaries.create(data).then(resp => {
@@ -206,7 +206,7 @@ export default {
     setLowerCase () {
       if (this.form.name) {
         this.$set(
-          this.form, 'nameSentenceCase', this.form.name.toLowerCase()
+          this.form, 'name_sentence_case', this.form.name.toLowerCase()
         )
       }
     }
@@ -219,7 +219,7 @@ export default {
         this.editedTerm.defComplete = false
       }
       this.initForm(this.editedTerm)
-      this.form.changeDescription = this.$t('DictionaryTermForm.default_change_descr')
+      this.form.change_description = this.$t('DictionaryTermForm.default_change_descr')
     }
     this.form.codelistUid = this.editedTermCategory
     this.$store.commit('form/SET_FORM', this.form)
