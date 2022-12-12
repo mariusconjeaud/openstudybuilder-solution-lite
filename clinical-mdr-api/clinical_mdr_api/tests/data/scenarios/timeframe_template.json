@@ -13,7 +13,7 @@
                 "content-length": "2",
                 "content-type": "application/json"
             },
-            "result": {"items": [], "total": 0, "page": 1, "size": 0}
+            "result": {"items": [], "total": 0, "page": 1, "size": 10}
         }
     },
     {
@@ -22,7 +22,7 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
+                "library_name": "Test library",
                 "name": "<p>test</p>"
             },
             "url": "/timeframe-templates"
@@ -34,25 +34,25 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
+                "change_description": "Initial version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 "name": "<p>test</p>",
-                "namePlain": "test",
-                "editableInstance": false,
+                "name_plain": "test",
+                "editable_instance": false,
                 "parameters": [],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-03T22:19:07+00:00",
+                "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Draft",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             }
         }
@@ -63,7 +63,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/timeframe-templates?totalCount=True"
+            "url": "/timeframe-templates?total_count=True"
         },
         "response": {
             "code": 200,
@@ -73,29 +73,29 @@
             },
             "result": {
                 "items" : [{
-                    "changeDescription": "Initial version",
-                    "endDate": null,
+                    "change_description": "Initial version",
+                    "end_date": null,
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Test library"
                     },
                     "name": "<p>test</p>",
-                    "namePlain": "test",
-                    "editableInstance": false,
+                    "name_plain": "test",
+                    "editable_instance": false,
                     "parameters": [],
-                    "possibleActions": [
+                    "possible_actions": [
                         "approve",
                         "delete",
                         "edit"
                     ],
-                    "startDate": "2020-11-03T22:19:07+00:00",
+                    "start_date": "2020-11-03T22:19:07+00:00",
                     "status": "Draft",
                     "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                    "userInitials": "TEST_USER",
+                    "user_initials": "TEST_USER",
                     "version": "0.1"
                     }
                 ],
-                "total": 1, "page": 1, "size": 0
+                "total": 1, "page": 1, "size": 10
             }
         }
     },
@@ -106,9 +106,9 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
+                "library_name": "Test library",
                 "name": "test2 [Intervention]",
-                "editableInstance": true
+                "editable_instance": true
             },
             "url": "/timeframe-templates"
         },
@@ -119,30 +119,30 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
+                "change_description": "Initial version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 "name": "test2 [Intervention]",
-                "namePlain": "test2 [Intervention]",
-                "editableInstance": true,
+                "name_plain": "test2 [Intervention]",
+                "editable_instance": true,
                 "parameters": [
                     {
                         "name": "Intervention",
                         "values": null
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-03T22:19:07+00:00",
+                "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Draft",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             }
         }
@@ -153,7 +153,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/timeframe-templates?totalCount=True"
+            "url": "/timeframe-templates?total_count=True"
         },
         "response": {
             "code": 200,
@@ -164,56 +164,56 @@
             "result": {
                 "items": [
                     {
-                        "changeDescription": "Initial version",
-                        "endDate": null,
+                        "change_description": "Initial version",
+                        "end_date": null,
                         "library": {
-                            "isEditable": true,
+                            "is_editable": true,
                             "name": "Test library"
                         },
                         "name": "test2 [Intervention]",
-                        "namePlain": "test2 [Intervention]",
-                        "editableInstance": true,
+                        "name_plain": "test2 [Intervention]",
+                        "editable_instance": true,
                         "parameters": [
                             {
                                 "name": "Intervention",
                                 "values": null
                             }
                         ],
-                        "possibleActions": [
+                        "possible_actions": [
                             "approve",
                             "delete",
                             "edit"
                         ],
-                        "startDate": "2020-11-03T23:11:42+00:00",
+                        "start_date": "2020-11-03T23:11:42+00:00",
                         "status": "Draft",
                         "uid": "8ec52a64-7a26-4ea3-8844-a82f26151986",
-                        "userInitials": "TEST_USER",
+                        "user_initials": "TEST_USER",
                         "version": "0.1"
                     },
                     {
-                        "changeDescription": "Initial version",
-                        "endDate": null,
+                        "change_description": "Initial version",
+                        "end_date": null,
                         "library": {
-                            "isEditable": true,
+                            "is_editable": true,
                             "name": "Test library"
                         },
                         "name": "<p>test</p>",
-                        "namePlain": "test",
-                        "editableInstance": false,
+                        "name_plain": "test",
+                        "editable_instance": false,
                         "parameters": [],
-                        "possibleActions": [
+                        "possible_actions": [
                             "approve",
                             "delete",
                             "edit"
                         ],
-                        "startDate": "2020-11-03T23:11:42+00:00",
+                        "start_date": "2020-11-03T23:11:42+00:00",
                         "status": "Draft",
                         "uid": "7a9fd0e7-387b-4bf4-a08b-08790e684ae5",
-                        "userInitials": "TEST_USER",
+                        "user_initials": "TEST_USER",
                         "version": "0.1"
                     }
                 ],
-                "total": 2, "page": 1, "size": 0
+                "total": 2, "page": 1, "size": 10
             }
         }
     },
@@ -224,7 +224,7 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
+                "library_name": "Test library",
                 "name": "test2 [Intervention], [Intervention] or [Intervention]"
             },
             "url": "/timeframe-templates"
@@ -236,15 +236,15 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
+                "change_description": "Initial version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 "name": "test2 [Intervention], [Intervention] or [Intervention]",
-                "namePlain": "test2 [Intervention], [Intervention] or [Intervention]",
-                "editableInstance": false,
+                "name_plain": "test2 [Intervention], [Intervention] or [Intervention]",
+                "editable_instance": false,
                 "parameters": [
                     {
                         "name": "Intervention",
@@ -259,15 +259,15 @@
                         "values": null
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-03T22:19:07+00:00",
+                "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Draft",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             }
         }
@@ -279,7 +279,7 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
+                "library_name": "Test library",
                 "name": "test2 [Intervention], [Intervention] and [Intervention] or [Indication]"
             },
             "url": "/timeframe-templates"
@@ -291,15 +291,15 @@
                 "content-type": "application/json"
             },
             "result": {
-                "changeDescription": "Initial version",
-                "endDate": null,
+                "change_description": "Initial version",
+                "end_date": null,
                 "library": {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 "name": "test2 [Intervention], [Intervention] and [Intervention] or [Indication]",
-                "namePlain": "test2 [Intervention], [Intervention] and [Intervention] or [Indication]",
-                "editableInstance": false,
+                "name_plain": "test2 [Intervention], [Intervention] and [Intervention] or [Indication]",
+                "editable_instance": false,
                 "parameters": [
                     {
                         "name": "Intervention",
@@ -318,15 +318,15 @@
                         "values": null
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
                 ],
-                "startDate": "2020-11-03T22:19:07+00:00",
+                "start_date": "2020-11-03T22:19:07+00:00",
                 "status": "Draft",
                 "uid": "55236767-3834-42d8-923d-ba8aba8eed18",
-                "userInitials": "TEST_USER",
+                "user_initials": "TEST_USER",
                 "version": "0.1"
             }
         }

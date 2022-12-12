@@ -25,8 +25,8 @@ export default {
     const params = {
       ...options
     }
-    if (params.size === -1) {
-      params.size = 1000
+    if (params.page_size === -1) {
+      params.page_size = 1000
     }
     return repository.get(`${resource}/codelists`, { params })
   },
@@ -40,7 +40,7 @@ export default {
     return repository.patch(`${resource}/codelists/${codelistUid}/names`, data)
   },
   newCodelistNamesVersion (codelistUid) {
-    return repository.post(`${resource}/codelists/${codelistUid}/names/new-version`)
+    return repository.post(`${resource}/codelists/${codelistUid}/names/versions`)
   },
   approveCodelistNames (codelistUid) {
     return repository.post(`${resource}/codelists/${codelistUid}/names/approve`)
@@ -52,7 +52,7 @@ export default {
     return repository.get(`${resource}/codelists/${codelistUid}/attributes/versions`)
   },
   newCodelistAttributesVersion (codelistUid) {
-    return repository.post(`${resource}/codelists/${codelistUid}/attributes/new-version`)
+    return repository.post(`${resource}/codelists/${codelistUid}/attributes/versions`)
   },
   approveCodelistAttributes (codelistUid) {
     return repository.post(`${resource}/codelists/${codelistUid}/attributes/approve`)
@@ -66,8 +66,11 @@ export default {
   getCodelistTermNames (termUid) {
     return repository.get(`${resource}/terms/${termUid}/names`)
   },
+  getCodelistTermNamesVersions (termUid) {
+    return repository.get(`${resource}/terms/${termUid}/names/versions`)
+  },
   newCodelistTermNamesVersion (termUid) {
-    return repository.post(`${resource}/terms/${termUid}/names/new-version`)
+    return repository.post(`${resource}/terms/${termUid}/names/versions`)
   },
   approveCodelistTermNames (termUid) {
     return repository.post(`${resource}/terms/${termUid}/names/approve`)
@@ -91,8 +94,11 @@ export default {
   getCodelistTermAttributes (termUid) {
     return repository.get(`${resource}/terms/${termUid}/attributes`)
   },
+  getCodelistTermAttributesVersions (termUid) {
+    return repository.get(`${resource}/terms/${termUid}/attributes/versions`)
+  },
   newCodelistTermAttributesVersion (termUid) {
-    return repository.post(`${resource}/terms/${termUid}/attributes/new-version`)
+    return repository.post(`${resource}/terms/${termUid}/attributes/versions`)
   },
   approveCodelistTermAttributes (termUid) {
     return repository.post(`${resource}/terms/${termUid}/attributes/approve`)
@@ -111,17 +117,13 @@ export default {
   },
   addTermToCodelist (codelistUid, termUid) {
     const data = {
-      termUid,
+      term_uid: termUid,
       order: 999999
     }
-    return repository.post(`${resource}/codelists/${codelistUid}/add-term`, data)
+    return repository.post(`${resource}/codelists/${codelistUid}/terms`, data)
   },
   removeTermFromCodelist (codelistUid, termUid) {
-    const data = {
-      termUid,
-      order: 999999
-    }
-    return repository.post(`${resource}/codelists/${codelistUid}/remove-term`, data)
+    return repository.delete(`${resource}/codelists/${codelistUid}/terms/${termUid}`)
   },
   updateCodelistTermNames (termUid, data) {
     return repository.patch(`${resource}/terms/${termUid}/names`, data)

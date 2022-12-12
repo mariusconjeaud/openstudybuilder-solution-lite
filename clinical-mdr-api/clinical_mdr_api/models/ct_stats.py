@@ -8,12 +8,12 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class CodelistCount(BaseModel):
-    libraryName: str
+    library_name: str
     count: int
 
 
 class TermCount(BaseModel):
-    libraryName: str
+    library_name: str
     count: int
 
 
@@ -40,32 +40,36 @@ class CTStats(BaseModel):
     packages: int = Field(
         ..., title="packages", description="Number of packages in the database"
     )
-    codelistCounts: Sequence[CodelistCount] = Field(
-        ..., title="codelistCounts", description="Count of codelists grouped by Library"
-    )
-    termCounts: Sequence[TermCount] = Field(
-        ..., title="termCounts", description="Count of terms grouped by Library"
-    )
-    codelistChangePercentage: float = Field(
+    codelist_counts: Sequence[CodelistCount] = Field(
         ...,
-        title="codelistChangePercentage",
+        title="codelist_counts",
+        description="Count of codelists grouped by Library",
+    )
+    term_counts: Sequence[TermCount] = Field(
+        ..., title="term_counts", description="Count of terms grouped by Library"
+    )
+    codelist_change_percentage: float = Field(
+        ...,
+        title="codelist_change_percentage",
         description="Mean percentage of evolution for codelists",
     )
-    termChangePercentage: float = Field(
+    term_change_percentage: float = Field(
         ...,
-        title="termChangePercentage",
+        title="term_change_percentage",
         description="Mean percentage of evolution for terms",
     )
-    codelistChangeDetails: Sequence[CountByTypeByYear] = Field(
+    codelist_change_details: Sequence[CountByTypeByYear] = Field(
         ...,
-        title="codelistChangeDetails",
+        title="codelist_change_details",
         description="Codelist changes, grouped by type and year",
     )
-    termChangeDetails: Sequence[CountByTypeByYear] = Field(
+    term_change_details: Sequence[CountByTypeByYear] = Field(
         ...,
-        title="termChangeDetails",
+        title="term_change_details",
         description="Term changes, grouped by type and year",
     )
-    latestAddedCodelists: Sequence[CTCodelistNameAndAttributes] = Field(
-        ..., title="latestAddedCodelists", description="List of latest added codelists"
+    latest_added_codelists: Sequence[CTCodelistNameAndAttributes] = Field(
+        ...,
+        title="latest_added_codelists",
+        description="List of latest added codelists",
     )

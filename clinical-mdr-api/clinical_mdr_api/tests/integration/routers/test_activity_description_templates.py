@@ -42,7 +42,7 @@ class ActivityDescriptionTemplatesTest(api.APITest):
         self.test_client = TestClient(main.app)
         self.library = library_service.create(**library_data)
 
-    def testFiltering(self):
+    def test_filtering(self):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_ACTIVITY_GROUPS)
         db.cypher_query(STARTUP_ACTIVITY_SUB_GROUPS)
@@ -53,10 +53,10 @@ class ActivityDescriptionTemplatesTest(api.APITest):
         Service = ActivityDescriptionTemplateService
         Service().create(
             ActivityDescriptionTemplateCreateInput(
-                libraryName=library_data["name"],
+                library_name=library_data["name"],
                 name="test",
-                activitySubGroupUids=["activity_sub_group_root1"],
-                activityGroupUids=["activity_group_root1"],
+                activity_subgroup_uids=["activity_subgroup_root1"],
+                activity_group_uids=["activity_group_root1"],
             )
         )
         self.filtering_common_test_scenario(
@@ -71,7 +71,7 @@ class ActivityDescriptionTemplatesTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid"]
+        return ["start_date", "end_date", "uid"]
 
 
 class ActivityDescriptionTemplatesNegativeTest(api.APITest):
@@ -101,7 +101,7 @@ class ActivityDescriptionTemplatesNegativeTest(api.APITest):
         check_activity_description_templates_empty()
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "uid"]
+        return ["start_date", "end_date", "time", "uid"]
 
 
 class ActivityDescriptionTemplatesVersioningTest(api.APITest):
@@ -126,4 +126,4 @@ class ActivityDescriptionTemplatesVersioningTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "path", "uid", "content-length"]
+        return ["start_date", "end_date", "time", "path", "uid", "content-length"]

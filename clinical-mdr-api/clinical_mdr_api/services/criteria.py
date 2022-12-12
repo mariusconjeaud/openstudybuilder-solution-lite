@@ -18,8 +18,8 @@ class CriteriaService(GenericObjectService[CriteriaAR]):
     repository_interface = CriteriaRepository
     template_repository_interface = CriteriaTemplateRepository
     version_class = CriteriaVersion
-    templateUidProperty = "criteriaTemplateUid"
-    templateNameProperty = "criteriaTemplate"
+    template_uid_property = "criteria_template_uid"
+    template_name_property = "criteria_template"
     parametrized_template_vo_class = CriteriaTemplateVO
 
     def _transform_aggregate_root_to_pydantic_model(

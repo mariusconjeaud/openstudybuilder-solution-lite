@@ -6,7 +6,7 @@ from fastapi_etag import Etag
 from pydantic.types import Json
 from starlette.requests import Request
 
-from clinical_mdr_api import models
+from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id
@@ -16,6 +16,7 @@ from clinical_mdr_api.services.ct_codelist import CTCodelistService
 
 router = APIRouter()
 CTCodelistUID = Path(None, description="The unique id of the CTCodelistRoot")
+TermUID = Path(None, description="The unique id of the Codelist Term")
 
 
 def get_etag(request: Request) -> str:
@@ -69,18 +70,18 @@ def create(
 @decorators.allow_exports(
     {
         "defaults": [
-            "libraryName",
-            "conceptId=codelistUid",
-            "sponsorPreferredName=name.name",
-            "templateParameter=name.templateParameter",
-            "cdStatus=name.status",
-            "modifiedName=name.startDate",
-            "cdName=attributes.name",
-            "submissionValue=attributes.submissionValue",
-            "nciPreferredName=attributes.nciPreferredName",
+            "library_name",
+            "concept_id=codelist_uid",
+            "sponsor_preferred_name=name.name",
+            "template_parameter=name.template_parameter",
+            "cd_status=name.status",
+            "modified_name=name.start_date",
+            "cd_name=attributes.name",
+            "submission_value=attributes.submission_value",
+            "nci_preferred_name=attributes.nci_preferred_name",
             "extensible=attributes.extensible",
-            "attributesStatus=attributes.status",
-            "modifiedAttributes=attributes.startDate",
+            "attributes_status=attributes.status",
+            "modified_attributes=attributes.start_date",
         ],
         "formats": [
             "text/csv",
@@ -93,7 +94,7 @@ def create(
 # pylint: disable=unused-argument
 def get_codelists(
     request: Request,  # request is actually required by the allow_exports decorator
-    cataloguename: Optional[str] = Query(
+    catalogue_name: Optional[str] = Query(
         None,
         description="If specified, only codelists from given catalogue are returned.",
     ),
@@ -105,41 +106,43 @@ def get_codelists(
         None,
         description="If specified, only codelists from given package are returned.",
     ),
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
     ct_codelist_service = CTCodelistService(user=current_user_id)
     results = ct_codelist_service.get_all_codelists(
-        catalogue_name=cataloguename,
+        catalogue_name=catalogue_name,
         library=library,
         package=package,
-        sort_by=sortBy,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
 @router.get(
-    "/codelists/{codelistUid}/sub-codelists",
+    "/codelists/{codelist_uid}/sub-codelists",
     summary="Returns all sub codelists names and attributes that only have the provided terms.",
     response_model=CustomPage[models.CTCodelistNameAndAttributes],
     response_model_exclude_unset=True,
@@ -147,8 +150,8 @@ def get_codelists(
     responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
 )
 def get_sub_codelists_that_have_given_terms(
-    codelistUid: str = CTCodelistUID,
-    termUids: Sequence[str] = Query(
+    codelist_uid: str = CTCodelistUID,
+    term_uids: Sequence[str] = Query(
         ...,
         description="A list of term uids",
     ),
@@ -156,28 +159,30 @@ def get_sub_codelists_that_have_given_terms(
         None,
         description="If specified, only codelists from given library are returned.",
     ),
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
-    totalCount: Optional[bool] = Query(
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
     ct_codelist_service = CTCodelistService(user=current_user_id)
     results = ct_codelist_service.get_sub_codelists_that_have_given_terms(
-        codelist_uid=codelistUid,
-        term_uids=termUids,
+        codelist_uid=codelist_uid,
+        term_uids=term_uids,
         library=library,
-        sort_by=sortBy,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -198,7 +203,7 @@ def get_sub_codelists_that_have_given_terms(
 )
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
-    cataloguename: Optional[str] = Query(
+    catalogue_name: Optional[str] = Query(
         None,
         description="If specified, only codelists from given catalogue are returned.",
     ),
@@ -208,8 +213,8 @@ def get_distinct_values_for_header(
     package: Optional[str] = Query(
         None, description="If specified, only terms from given package are returned."
     ),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -218,25 +223,25 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     ct_codelist_service = CTCodelistService(user=current_user_id)
     return ct_codelist_service.get_distinct_values_for_header(
-        catalogue_name=cataloguename,
+        catalogue_name=catalogue_name,
         library=library,
         package=package,
-        field_name=fieldName,
-        search_string=searchString,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
 @router.post(
-    "/codelists/{codelistuid}/add-term",
+    "/codelists/{codelist_uid}/terms",
     dependencies=[Depends(Etag(get_etag))],
     summary="Adds new CTTerm to CTCodelist.",
     response_model=models.CTCodelist,
@@ -259,7 +264,7 @@ def get_distinct_values_for_header(
     },
 )
 def add_term(
-    codelistuid: str = CTCodelistUID,
+    codelist_uid: str = CTCodelistUID,
     term_input: models.CTCodelistTermInput = Body(
         None, description="UID of the CTTermRoot node."
     ),
@@ -267,12 +272,12 @@ def add_term(
 ):
     ct_codelist_service = CTCodelistService(user=current_user_id)
     return ct_codelist_service.add_term(
-        codelistuid=codelistuid, termUid=term_input.termUid, order=term_input.order
+        codelist_uid=codelist_uid, term_uid=term_input.term_uid, order=term_input.order
     )
 
 
-@router.post(
-    "/codelists/{codelistuid}/remove-term",
+@router.delete(
+    "/codelists/{codelist_uid}/terms/{term_uid}",
     summary="Removes given CTTerm from CTCodelist.",
     dependencies=[Depends(Etag(get_etag))],
     response_model=models.CTCodelist,
@@ -296,13 +301,9 @@ def add_term(
     },
 )
 def remove_term(
-    codelistuid: str = CTCodelistUID,
-    term_input: models.CTCodelistTermInput = Body(
-        None, description="UID of the CTTermRoot node."
-    ),
+    codelist_uid: str = CTCodelistUID,
+    term_uid: str = TermUID,
     current_user_id: str = Depends(get_current_user_id),
 ):
     ct_codelist_service = CTCodelistService(user=current_user_id)
-    return ct_codelist_service.remove_term(
-        codelistuid=codelistuid, termUid=term_input.termUid
-    )
+    return ct_codelist_service.remove_term(codelist_uid=codelist_uid, term_uid=term_uid)

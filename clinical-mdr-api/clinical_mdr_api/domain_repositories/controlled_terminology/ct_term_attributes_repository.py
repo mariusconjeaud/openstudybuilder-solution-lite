@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from neomodel import db
@@ -171,7 +171,7 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
         ct_term_root_node.has_term.connect(
             ct_codelist_root_node,
             {
-                "start_date": datetime.now(),
+                "start_date": datetime.now(timezone.utc),
                 "end_date": None,
                 "user_initials": item.item_metadata.user_initials,
             },

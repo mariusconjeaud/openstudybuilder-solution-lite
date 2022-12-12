@@ -28,7 +28,7 @@ class CriteriaTemplateAR(TemplateAggregateRootBase):
 
     _categories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None
 
-    _sub_categories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None
+    _subcategories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None
 
     @property
     def type(self) -> Tuple[CTTermNameAR, CTTermAttributesAR]:
@@ -44,7 +44,7 @@ class CriteriaTemplateAR(TemplateAggregateRootBase):
 
     @property
     def sub_categories(self) -> Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]:
-        return self._sub_categories
+        return self._subcategories
 
     @classmethod
     def from_repository_values(
@@ -72,7 +72,7 @@ class CriteriaTemplateAR(TemplateAggregateRootBase):
             _type=criteria_type,
             _indications=indications,
             _categories=categories,
-            _sub_categories=sub_categories,
+            _subcategories=sub_categories,
             _study_count=study_count,
             _counts=counts,
         )
@@ -108,6 +108,6 @@ class CriteriaTemplateAR(TemplateAggregateRootBase):
         ar._type = criteria_type
         ar._indications = indications
         ar._categories = categories
-        ar._sub_categories = sub_categories
+        ar._subcategories = sub_categories
 
         return ar

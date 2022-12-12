@@ -9,10 +9,10 @@
     has-api
     column-data-resource="concepts/odms/templates"
     export-data-url="concepts/odms/templates"
+    export-object-label="CRFTemplates"
     :options.sync="options"
     :server-items-length="total"
     @filter="getTemplates"
-    has-history
     >
     <template v-slot:actions="">
       <v-btn
@@ -56,11 +56,17 @@
     @close="closeForm"
     :selectedTemplate="selectedTemplate"
     />
-  <v-dialog v-model="showTemplateHistory"
-            persistent
-            max-width="1200px">
-    <history-table @close="closeTemplateHistory" type="crfTemplate" :item="templateHistory"
-                   :title-label="$t('CrfTemplates.crf_template')" />
+  <v-dialog
+    v-model="showTemplateHistory"
+    persistent
+    max-width="1200px"
+    >
+    <history-table
+      :title="templateHistoryTitle"
+      @close="closeTemplateHistory"
+      :headers="headers"
+      :items="templateHistoryItems"
+      />
   </v-dialog>
   <v-dialog v-model="showRelations"
             max-width="800px"
@@ -70,14 +76,6 @@
       type="template"
       @close="closeRelationsTree()"/>
   </v-dialog>
-  <v-dialog v-model="showDuplicationForm"
-            persistent>
-    <crf-duplication-form
-      @close="closeDuplicateForm"
-      :item="selectedTemplate"
-      type="template"
-      />
-  </v-dialog>
 </div>
 </template>
 
@@ -85,12 +83,12 @@
 import NNTable from '@/components/tools/NNTable'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import crfs from '@/api/crfs'
-import HistoryTable from '@/components/library/HistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable'
 import CrfTemplateForm from '@/components/library/CrfTemplateForm'
 import StatusChip from '@/components/tools/StatusChip'
 import filteringParameters from '@/utils/filteringParameters'
 import OdmReferencesTree from '@/components/library/OdmReferencesTree.vue'
-import CrfDuplicationForm from '@/components/library/CrfDuplicationForm'
+import crfTypes from '@/constants/crfTypes'
 
 export default {
   components: {
@@ -99,8 +97,20 @@ export default {
     HistoryTable,
     CrfTemplateForm,
     StatusChip,
-    OdmReferencesTree,
-    CrfDuplicationForm
+    OdmReferencesTree
+  },
+  props: {
+    elementProp: Object
+  },
+  computed: {
+    templateHistoryTitle () {
+      if (this.selectedTemplate) {
+        return this.$t(
+          'CrfTemplates.template_history_title',
+          { templateUid: this.selectedTemplate.uid })
+      }
+      return ''
+    }
   },
   data () {
     return {
@@ -109,49 +119,43 @@ export default {
           label: this.$t('_global.approve'),
           icon: 'mdi-check-decagram',
           iconColor: 'success',
-          condition: (item) => item.possibleActions.find(action => action === 'approve'),
+          condition: (item) => item.possible_actions.find(action => action === 'approve'),
           click: this.approveTemplate
         },
         {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'edit'),
+          condition: (item) => item.possible_actions.find(action => action === 'edit'),
           click: this.editTemplate
         },
         {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete',
           iconColor: 'error',
-          condition: (item) => item.possibleActions.find(action => action === 'delete'),
+          condition: (item) => item.possible_actions.find(action => action === 'delete'),
           click: this.deleteTemplate
         },
         {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'newVersion'),
+          condition: (item) => item.possible_actions.find(action => action === 'new_version'),
           click: this.newTemplateVersion
         },
         {
           label: this.$t('_global.inactivate'),
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'inactivate'),
+          condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
           click: this.inactivateTemplate
         },
         {
           label: this.$t('_global.reactivate'),
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'reactivate'),
+          condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
           click: this.reactivateTemplate
-        },
-        {
-          label: this.$t('_global.duplicate'),
-          icon: 'mdi-content-copy',
-          iconColor: 'primary',
-          click: this.openDuplicateForm
         },
         {
           label: this.$t('_global.history'),
@@ -164,32 +168,30 @@ export default {
         { text: this.$t('CrfTemplates.oid'), value: 'oid' },
         { text: this.$t('_global.relations'), value: 'relations' },
         { text: this.$t('_global.name'), value: 'name' },
-        { text: this.$t('CrfTemplates.effective_date'), value: 'effectiveDate' },
-        { text: this.$t('CrfTemplates.retired_date'), value: 'retiredDate' },
+        { text: this.$t('CrfTemplates.effective_date'), value: 'effective_date' },
+        { text: this.$t('CrfTemplates.retired_date'), value: 'retired_date' },
         { text: this.$t('_global.version'), value: 'version' },
         { text: this.$t('_global.status'), value: 'status' }
       ],
       showForm: false,
       showTemplateHistory: false,
       selectedTemplate: null,
-      templateHistory: null,
       options: {},
       filters: '',
       total: 0,
       templates: [],
       showRelations: false,
-      showDuplicationForm: false
+      templateHistoryItems: []
+    }
+  },
+  mounted () {
+    if (this.elementProp.tab === 'templates' && this.elementProp.type === crfTypes.TEMPLATE && this.elementProp.uid) {
+      crfs.getTemplate(this.elementProp.uid).then((resp) => {
+        this.editTemplate(resp.data)
+      })
     }
   },
   methods: {
-    openDuplicateForm (item) {
-      this.selectedTemplate = item
-      this.showDuplicationForm = true
-    },
-    closeDuplicateForm () {
-      this.showDuplicationForm = false
-      this.getTemplates()
-    },
     openRelationsTree (item) {
       this.showRelations = true
       this.selectedTemplate = item
@@ -226,14 +228,17 @@ export default {
     editTemplate (item) {
       this.selectedTemplate = item
       this.showForm = true
+      this.$emit('clearUid')
     },
-    openTemplateHistory (item) {
+    async openTemplateHistory (template) {
+      this.selectedTemplate = template
+      const resp = await crfs.getTemplateAuditTrail(template.uid)
+      this.templateHistoryItems = resp.data
       this.showTemplateHistory = true
-      this.templateHistory = item
     },
     closeTemplateHistory () {
       this.showTemplateHistory = false
-      this.templateHistory = null
+      this.selectedTemplate = null
     },
     openForm () {
       this.selectedTemplate = null
@@ -259,6 +264,13 @@ export default {
         this.getTemplates()
       },
       deep: true
+    },
+    elementProp (value) {
+      if (value.tab === 'templates' && value.type === crfTypes.TEMPLATE && value.uid) {
+        crfs.getTemplate(value.uid).then((resp) => {
+          this.editTemplate(resp.data)
+        })
+      }
     }
   }
 }

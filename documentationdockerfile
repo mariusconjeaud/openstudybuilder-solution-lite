@@ -1,5 +1,5 @@
 # build stage
-FROM node:lts-alpine as build-stage
+FROM node:lts-alpine3.14 as build-stage
 
 WORKDIR /app
 COPY ./documentation-portal/package*.json ./

@@ -1,4 +1,5 @@
 from importers.importer import BaseImporter, open_file, open_file_async
+from importers.api_bindings import CODELIST_NAME_MAP, CODELIST_ROUTE_OF_ADMINISTRATION, CODELIST_DOSAGE_FORM, CODELIST_DELIVERY_DEVICE, CODELIST_COMPOUND_DISPENSED_IN
 from importers.metrics import Metrics
 import csv
 from importers.functions.parsers import (
@@ -22,24 +23,24 @@ compounds = lambda row, headers, dose_values, strength_values, half_life_value, 
     "path": "/concepts/compounds",
     "uid": "<uid>",
     "body": {
-        "nncShortNumber": row[headers.index("NNC_SHORT")] if row[headers.index("NNC_SHORT")] != "" else None,
-        "nncLongNumber": row[headers.index("NNC_LONG")] if row[headers.index("NNC_LONG")] != "" else None,
-        "changeDescription": "Creating Compound",
+        "nnc_short_number": row[headers.index("NNC_SHORT")] if row[headers.index("NNC_SHORT")] != "" else None,
+        "nnc_long_number": row[headers.index("NNC_LONG")] if row[headers.index("NNC_LONG")] != "" else None,
+        "change_description": "Creating Compound",
         "name": f"{row[headers.index('NAME')]}",
-        "nameSentenceCase": f"{row[headers.index('NAME')]}".lower(),
+        "name_sentence_case": f"{row[headers.index('NAME')]}".lower(),
         "definition": None,
-        "doseValuesUids": [val["uid"] for val in dose_values],
-        "strengthValuesUids": [val["uid"] for val in strength_values],
-        "lagTimesUids": [val["uid"] for val in lag_times],
-        "halfLifeUid": half_life_value,
-        "deliveryDevicesUids": [val["termUid"] for val in delivery_devices],
-        "dispensersUids": [val["termUid"] for val in dispensers],
-        "libraryName": "Sponsor",
-        "isSponsorCompound": True,
-        "isNameInn": True,
-        "analyteNumber": row[headers.index("ANALYTE")] if row[headers.index("ANALYTE")] != "" else None,
-        "routeOfAdministrationUids": [val["termUid"] for val in admin_routes],
-        "dosageFormUids": [val["termUid"] for val in dosage_forms],
+        "dose_values_uids": [val["uid"] for val in dose_values],
+        "strength_values_uids": [val["uid"] for val in strength_values],
+        "lag_times_uids": [val["uid"] for val in lag_times],
+        "half_life_uid": half_life_value,
+        "delivery_devices_uids": [val["term_uid"] for val in delivery_devices],
+        "dispensers_uids": [val["term_uid"] for val in dispensers],
+        "library_name": "Sponsor",
+        "is_sponsor_compound": True,
+        "is_name_inn": True,
+        "analyte_number": row[headers.index("ANALYTE")] if row[headers.index("ANALYTE")] != "" else None,
+        "route_of_administration_uids": [val["term_uid"] for val in admin_routes],
+        "dosage_form_uids": [val["term_uid"] for val in dosage_forms],
     },
 }
 
@@ -48,27 +49,27 @@ compound_alias = lambda uid, compound_data: {
     "uid": "<uid>",
     "body": {
         "name": compound_data["name"],
-        "nameSentenceCase": compound_data["nameSentenceCase"],
+        "name_sentence_case": compound_data["name_sentence_case"],
         "definition": compound_data["definition"],
-        "libraryName": compound_data["libraryName"],
-        "compoundUid": uid,
-        "isPreferredSynonym": True,
+        "library_name": compound_data["library_name"],
+        "compound_uid": uid,
+        "is_preferred_synonym": True,
     }
 }
 
 # Not used yet:
-# "projectsUids": [],
-# "brandsUids": [],
-# "doseFrequencyUids": [],
+# "projects_uids": [],
+# "brands_uids": [],
+# "dose_frequency_uids": [],
 
 numeric_value = lambda value, unit_uid: {
     "path": "/concepts/numeric-values-with-unit",
     "uid": "<uid>",
     "body": {
-        "libraryName": "Sponsor",
-        "templateParameter": False,
+        "library_name": "Sponsor",
+        "template_parameter": False,
         "value": value,
-        "unitDefinitionUid": unit_uid,
+        "unit_definition_uid": unit_uid,
     },
 }
 
@@ -76,11 +77,11 @@ lag_time = lambda value, unit_uid, sdtm_domain_uid: {
     "path": "/concepts/lag-times",
     "uid": "<uid>",
     "body": {
-        "libraryName": "Sponsor",
-        "templateParameter": False,
+        "library_name": "Sponsor",
+        "template_parameter": False,
         "value": value,
-        "unitDefinitionUid": unit_uid,
-        "sdtmDomainUid": sdtm_domain_uid,
+        "unit_definition_uid": unit_uid,
+        "sdtm_domain_uid": sdtm_domain_uid,
     },
 }
 
@@ -130,7 +131,7 @@ class Compounds(BaseImporter):
             if unit not in self.age_units:
                 self.log.warning(f"Unit '{unit}' not found, skipping value {val}")
                 continue
-            if domain not in [x["termUid"] for x in self.sdtm_domains]:
+            if domain not in [x["term_uid"] for x in self.sdtm_domains]:
                 self.log.warning(
                     f"SDTM domain '{domain}' not found, skipping lag time '{val} {unit}'"
                 )
@@ -156,10 +157,10 @@ class Compounds(BaseImporter):
                 self.api.get_all_identifiers(
                     self.api.get_all_from_api(
                         "/dictionaries/terms",
-                        params={"codelist_uid": unii_codelist["codelistUid"]},
+                        params={"codelist_uid": unii_codelist["codelist_uid"]},
                     ),
-                    "dictionaryId",
-                    "termUid",
+                    "dictionary_id",
+                    "term_uid",
                 )
             )
 
@@ -205,34 +206,34 @@ class Compounds(BaseImporter):
             delivery_devices = []
             if devices != "":
                 devs = devices.split("|")
-                filt = {"name.sponsorPreferredName": {"v": devs, "op": "eq"}}
+                filt = {"name.sponsor_preferred_name": {"v": devs, "op": "eq"}}
                 delivery_devices = self.api.get_all_from_api(
-                    f"/ct/terms?codelist_name=Delivery Device&filters={json.dumps(filt)}"
+                    f"/ct/terms?codelist_name={CODELIST_DELIVERY_DEVICE}&filters={json.dumps(filt)}"
                 )
             dispensers = row[headers.index("DISPENSED_IN")]
             dispensed_in = []
             if dispensers != "":
                 disps = dispensers.split("|")
                 disps = [d.title() for d in disps]
-                filt = {"name.sponsorPreferredName": {"v": disps, "op": "eq"}}
+                filt = {"name.sponsor_preferred_name": {"v": disps, "op": "eq"}}
                 dispensed_in = self.api.get_all_from_api(
-                    f"/ct/terms?codelist_name=Compound Dispensed In&filters={json.dumps(filt)}"
+                    f"/ct/terms?codelist_name={CODELIST_COMPOUND_DISPENSED_IN}&filters={json.dumps(filt)}"
                 )
             routes = row[headers.index("ROUTE_OF_ADMINISTRATION")]
             admin_routes = []
             if routes != "":
                 rts = routes.split("|")
-                filt = {"attributes.codeSubmissionValue": {"v": rts, "op": "eq"}}
+                filt = {"attributes.code_submission_value": {"v": rts, "op": "eq"}}
                 admin_routes = self.api.get_all_from_api(
-                    f"/ct/terms?codelist_name=Route of Administration&filters={json.dumps(filt)}"
+                    f"/ct/terms?codelist_uid={CODELIST_NAME_MAP[CODELIST_ROUTE_OF_ADMINISTRATION]}&filters={json.dumps(filt)}"
                 )
             dosage = row[headers.index("DOSAGE_FORM")]
             dosage_forms = []
             if dosage != "":
                 df = dosage.split("|")
-                filt = {"attributes.codeSubmissionValue": {"v": df, "op": "eq"}}
+                filt = {"attributes.code_submission_value": {"v": df, "op": "eq"}}
                 dosage_forms = self.api.get_all_from_api(
-                    f"/ct/terms?codelist_name=Pharmaceutical Dosage Form&filters={json.dumps(filt)}"
+                    f"/ct/terms?codelist_uid={CODELIST_NAME_MAP[CODELIST_DOSAGE_FORM]}&filters={json.dumps(filt)}"
                 )
 
             data = compounds(
@@ -254,15 +255,15 @@ class Compounds(BaseImporter):
                     term = all_unii_terms.get(unii_term)
                     if term:
                         term_uids.append(term)
-                    data["body"]["substanceTermsUids"] = term_uids
+                    data["body"]["substance_terms_uids"] = term_uids
             if row[headers.index("SPONSOR_YN")] != "":
                 try:
-                    data["body"]["isSponsorCompound"] = map_boolean_exc(row[headers.index("SPONSOR_YN")])
+                    data["body"]["is_sponsor_compound"] = map_boolean_exc(row[headers.index("SPONSOR_YN")])
                 except ValueError:
                     pass
             if row[headers.index("INN_YN")] != "":
                 try:
-                    data["body"]["isNameInn"] = map_boolean_exc(row[headers.index("INN_YN")])
+                    data["body"]["is_name_inn"] = map_boolean_exc(row[headers.index("INN_YN")])
                 except ValueError:
                     pass
             # print("--- compound to post")

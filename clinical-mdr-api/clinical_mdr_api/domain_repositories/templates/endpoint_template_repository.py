@@ -78,6 +78,6 @@ class EndpointTemplateRepository(GenericTemplateRepository[EndpointTemplateAR]):
         if item.sub_categories:
             for category in item.sub_categories:
                 category = self._get_category(category[0].uid)
-                root.has_sub_category.connect(category)
+                root.has_subcategory.connect(category)
 
         return item

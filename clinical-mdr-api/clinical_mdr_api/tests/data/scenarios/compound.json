@@ -44,12 +44,12 @@
          "method": "POST",
          "request": {
             "value": 7.5,
-            "unitDefinitionUid": "UnitDefinition_000001",
-            "sdtmDomainUid": "sdtm_domain_uid1",
+            "unit_definition_uid": "UnitDefinition_000001",
+            "sdtm_domain_uid": "sdtm_domain_uid1",
             "definition": "lag_time_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor"
+            "template_parameter": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/lag-times"
       },
@@ -60,19 +60,19 @@
             "uid": "LagTime_000001",
             "name": "7.5 [UnitDefinition_000001] for SDTM domain [sdtm_domain_uid1]",
             "value": 7.5,
-            "unitDefinitionUid": "UnitDefinition_000001",
-            "sdtmDomainUid": "sdtm_domain_uid1",
-            "nameSentenceCase": "7.5",
+            "unit_definition_uid": "UnitDefinition_000001",
+            "sdtm_domain_uid": "sdtm_domain_uid1",
+            "name_sentence_case": "7.5",
             "definition": "lag_time_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor",
+            "template_parameter": true,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null
          }
       }
    },
@@ -83,58 +83,58 @@
          "method": "POST",
          "request": {
             "name": "compound_name1",
-            "nameSentenceCase": "compound_name_sentence_case1",
+            "name_sentence_case": "compound_name_sentence_case1",
             "definition": "compound_definition1",
             "abbreviation": "abbv",
-            "doseValuesUids": [
+            "dose_values_uids": [
                "NumericValueWithUnit_000001",
                "NumericValueWithUnit_000002"
             ],
-            "strengthValuesUids": [
+            "strength_values_uids": [
                "NumericValueWithUnit_000001",
                "NumericValueWithUnit_000002"
             ],
-            "lagTimesUids": [
+            "lag_times_uids": [
                "LagTime_000001"
             ],
-            "deliveryDevicesUids": [
+            "delivery_devices_uids": [
                "delivery_device_uid1",
                "delivery_device_uid2"
             ],
-            "dispensersUids": [
+            "dispensers_uids": [
                "dispenser_uid1",
                "dispenser_uid2"
             ],
-            "projectsUids": [
+            "projects_uids": [
                "project_uid1",
                "project_uid2"
             ],
-            "brandsUids": [
+            "brands_uids": [
                "Brand_000001",
                "Brand_000002"
             ],
-            "doseFrequencyUids": [
+            "dose_frequency_uids": [
                "dose_frequency_uid1"
             ],
-            "dosageFormUids": [
+            "dosage_form_uids": [
                "dosage_form_uid1"
             ],
-            "routeOfAdministrationUids": [
+            "route_of_administration_uids": [
                "route_of_administration_uid1"
             ],
-            "halfLifeUid": "NumericValueWithUnit_000001",
-            "analyteNumber": "analyteNumber",
-            "nncShortNumber": "nncShortNumber",
-            "nncLongNumber": "nncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
-            "libraryName": "Sponsor",
+            "half_life_uid": "NumericValueWithUnit_000001",
+            "analyte_number": "analyte_number",
+            "nnc_short_number": "nnc_short_number",
+            "nnc_long_number": "nnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null
          },
          "url": "/concepts/compounds"
       },
@@ -144,71 +144,71 @@
          "result": {
             "uid": "Compound_000001",
             "name": "compound_name1",
-            "nameSentenceCase": "compound_name_sentence_case1",
+            "name_sentence_case": "compound_name_sentence_case1",
             "definition": "compound_definition1",
             "abbreviation": "abbv",
-            "doseValues": [
+            "dose_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "strengthValues": [
+            "strength_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "lagTimes": [
+            "lag_times": [
                {
                   "value": 7.5,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1",
-                  "sdtmDomainUid": "sdtm_domain_uid1",
-                  "sdtmDomainLabel": "sdtm_domain_name1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1",
+                  "sdtm_domain_uid": "sdtm_domain_uid1",
+                  "sdtm_domain_label": "sdtm_domain_name1"
                }
             ],
-            "deliveryDevices": [
+            "delivery_devices": [
                {
-                  "termUid": "delivery_device_uid1",
+                  "term_uid": "delivery_device_uid1",
                   "name": "delivery_device_name1"
                },
                {
-                  "termUid": "delivery_device_uid2",
+                  "term_uid": "delivery_device_uid2",
                   "name": "delivery_device_name2"
                }
             ],
             "dispensers": [
                {
-                  "termUid": "dispenser_uid1",
+                  "term_uid": "dispenser_uid1",
                   "name": "dispenser_name1"
                },
                {
-                  "termUid": "dispenser_uid2",
+                  "term_uid": "dispenser_uid2",
                   "name": "dispenser_name2"
                }
             ],
             "projects": [
                {
                   "uid": "project_uid1",
-                  "projectNumber": "PRJ-001",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-001",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -217,8 +217,8 @@
                },
                {
                   "uid": "project_uid2",
-                  "projectNumber": "PRJ-002",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-002",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -236,44 +236,44 @@
                   "name": "Brand B"
                }
             ],
-            "halfLife": {
+            "half_life": {
                "uid": "NumericValueWithUnit_000001",
                "value": 1.23,
-               "unitDefinitionUid": "UnitDefinition_000001",
-               "unitLabel": "name_1"
+               "unit_definition_uid": "UnitDefinition_000001",
+               "unit_label": "name_1"
             },
-            "doseFrequencies": [
+            "dose_frequencies": [
                {
-                  "termUid": "dose_frequency_uid1",
+                  "term_uid": "dose_frequency_uid1",
                   "name": "dose_frequency_name1"
                }
             ],
-            "dosageForms": [
+            "dosage_forms": [
                {
-                  "termUid": "dosage_form_uid1",
+                  "term_uid": "dosage_form_uid1",
                   "name": "dosage_form_name1"
                }
             ],
-            "routesOfAdministration": [
+            "routes_of_administration": [
                {
-                  "termUid": "route_of_administration_uid1",
+                  "term_uid": "route_of_administration_uid1",
                   "name": "route_of_administration_name1"
                }
             ],
-            "analyteNumber": "analyteNumber",
-            "nncShortNumber": "nncShortNumber",
-            "nncLongNumber": "nncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
+            "analyte_number": "analyte_number",
+            "nnc_short_number": "nnc_short_number",
+            "nnc_long_number": "nnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
             "substances": [],
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
             "status": "Draft",
             "version": "0.1",
-            "changeDescription": "Initial version",
-            "userInitials": "TODO user initials",
-            "startDate": null,
-            "endDate": null,
-            "possibleActions": [
+            "change_description": "Initial version",
+            "user_initials": "TODO user initials",
+            "start_date": null,
+            "end_date": null,
+            "possible_actions": [
                "approve",
                "delete",
                "edit"
@@ -287,7 +287,7 @@
          "headers": {},
          "method": "GET",
          "request": {},
-         "url": "/concepts/compounds?totalCount=true"
+         "url": "/concepts/compounds?total_count=true"
       },
       "response": {
          "code": 200,
@@ -297,71 +297,71 @@
                {
                   "uid": "Compound_000001",
                   "name": "compound_name1",
-                  "nameSentenceCase": "compound_name_sentence_case1",
+                  "name_sentence_case": "compound_name_sentence_case1",
                   "definition": "compound_definition1",
                   "abbreviation": "abbv",
-                  "doseValues": [
+                  "dose_values": [
                      {
                         "uid": "NumericValueWithUnit_000001",
                         "value": 1.23,
-                        "unitDefinitionUid": "UnitDefinition_000001",
-                        "unitLabel": "name_1"
+                        "unit_definition_uid": "UnitDefinition_000001",
+                        "unit_label": "name_1"
                      },
                      {
                         "uid": "NumericValueWithUnit_000002",
                         "value": 3.21,
-                        "unitDefinitionUid": "UnitDefinition_000001",
-                        "unitLabel": "name_1"
+                        "unit_definition_uid": "UnitDefinition_000001",
+                        "unit_label": "name_1"
                      }
                   ],
-                  "strengthValues": [
+                  "strength_values": [
                      {
                         "uid": "NumericValueWithUnit_000001",
                         "value": 1.23,
-                        "unitDefinitionUid": "UnitDefinition_000001",
-                        "unitLabel": "name_1"
+                        "unit_definition_uid": "UnitDefinition_000001",
+                        "unit_label": "name_1"
                      },
                      {
                         "uid": "NumericValueWithUnit_000002",
                         "value": 3.21,
-                        "unitDefinitionUid": "UnitDefinition_000001",
-                        "unitLabel": "name_1"
+                        "unit_definition_uid": "UnitDefinition_000001",
+                        "unit_label": "name_1"
                      }
                   ],
-                  "lagTimes": [
+                  "lag_times": [
                      {
                         "value": 7.5,
-                        "unitDefinitionUid": "UnitDefinition_000001",
-                        "unitLabel": "name_1",
-                        "sdtmDomainUid": "sdtm_domain_uid1",
-                        "sdtmDomainLabel": "sdtm_domain_name1"
+                        "unit_definition_uid": "UnitDefinition_000001",
+                        "unit_label": "name_1",
+                        "sdtm_domain_uid": "sdtm_domain_uid1",
+                        "sdtm_domain_label": "sdtm_domain_name1"
                      }
                   ],
-                  "deliveryDevices": [
+                  "delivery_devices": [
                      {
-                        "termUid": "delivery_device_uid1",
+                        "term_uid": "delivery_device_uid1",
                         "name": "delivery_device_name1"
                      },
                      {
-                        "termUid": "delivery_device_uid2",
+                        "term_uid": "delivery_device_uid2",
                         "name": "delivery_device_name2"
                      }
                   ],
                   "dispensers": [
                      {
-                        "termUid": "dispenser_uid1",
+                        "term_uid": "dispenser_uid1",
                         "name": "dispenser_name1"
                      },
                      {
-                        "termUid": "dispenser_uid2",
+                        "term_uid": "dispenser_uid2",
                         "name": "dispenser_name2"
                      }
                   ],
                   "projects": [
                      {
                         "uid": "project_uid1",
-                        "projectNumber": "PRJ-001",
-                        "clinicalProgramme": {
+                        "project_number": "PRJ-001",
+                        "clinical_programme": {
                            "uid": "cp_001",
                            "name": "CP"
                         },
@@ -370,8 +370,8 @@
                      },
                      {
                         "uid": "project_uid2",
-                        "projectNumber": "PRJ-002",
-                        "clinicalProgramme": {
+                        "project_number": "PRJ-002",
+                        "clinical_programme": {
                            "uid": "cp_001",
                            "name": "CP"
                         },
@@ -389,44 +389,44 @@
                         "name": "Brand B"
                      }
                   ],
-                  "halfLife": {
+                  "half_life": {
                      "uid": "NumericValueWithUnit_000001",
                      "value": 1.23,
-                     "unitDefinitionUid": "UnitDefinition_000001",
-                     "unitLabel": "name_1"
+                     "unit_definition_uid": "UnitDefinition_000001",
+                     "unit_label": "name_1"
                   },
-                  "doseFrequencies": [
+                  "dose_frequencies": [
                      {
-                        "termUid": "dose_frequency_uid1",
+                        "term_uid": "dose_frequency_uid1",
                         "name": "dose_frequency_name1"
                      }
                   ],
-                  "dosageForms": [
+                  "dosage_forms": [
                      {
-                        "termUid": "dosage_form_uid1",
+                        "term_uid": "dosage_form_uid1",
                         "name": "dosage_form_name1"
                      }
                   ],
-                  "routesOfAdministration": [
+                  "routes_of_administration": [
                      {
-                        "termUid": "route_of_administration_uid1",
+                        "term_uid": "route_of_administration_uid1",
                         "name": "route_of_administration_name1"
                      }
                   ],
                   "substances": [],
-                  "analyteNumber": "analyteNumber",
-                  "nncShortNumber": "nncShortNumber",
-                  "nncLongNumber": "nncLongNumber",
-                  "isSponsorCompound": true,
-                  "isNameInn": true,
-                  "libraryName": "Sponsor",
+                  "analyte_number": "analyte_number",
+                  "nnc_short_number": "nnc_short_number",
+                  "nnc_long_number": "nnc_long_number",
+                  "is_sponsor_compound": true,
+                  "is_name_inn": true,
+                  "library_name": "Sponsor",
                   "status": "Draft",
                   "version": "0.1",
-                  "changeDescription": "Initial version",
-                  "userInitials": "TODO user initials",
-                  "startDate": null,
-                  "endDate": null,
-                  "possibleActions": [
+                  "change_description": "Initial version",
+                  "user_initials": "TODO user initials",
+                  "start_date": null,
+                  "end_date": null,
+                  "possible_actions": [
                      "approve",
                      "delete",
                      "edit"
@@ -435,7 +435,7 @@
             ],
             "total": 1,
             "page": 1,
-            "size": 0
+            "size": 10
          }
       }
    },
@@ -445,7 +445,7 @@
          "headers": {},
          "method": "GET",
          "request": {},
-         "url": "/concepts/compounds-simple?totalCount=true"
+         "url": "/concepts/compounds-simple?total_count=true"
       },
       "response": {
          "code": 200,
@@ -459,7 +459,7 @@
             ],
             "total": 1,
             "page": 1,
-            "size": 0
+            "size": 10
          }
       }
    },
@@ -477,88 +477,88 @@
          "result": {
             "uid": "Compound_000001",
             "name": "compound_name1",
-            "nameSentenceCase": "compound_name_sentence_case1",
+            "name_sentence_case": "compound_name_sentence_case1",
             "definition": "compound_definition1",
             "abbreviation": "abbv",
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
             "status": "Final",
             "version": "1.0",
-            "changeDescription": "Approved version",
-            "userInitials": "TEST_USER",
-            "startDate": null,
-            "endDate": null,
-            "possibleActions": [
+            "change_description": "Approved version",
+            "user_initials": "TEST_USER",
+            "start_date": null,
+            "end_date": null,
+            "possible_actions": [
                "inactivate",
-               "newVersion"
+               "new_version"
             ],
-            "analyteNumber": "analyteNumber",
-            "nncShortNumber": "nncShortNumber",
-            "nncLongNumber": "nncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
+            "analyte_number": "analyte_number",
+            "nnc_short_number": "nnc_short_number",
+            "nnc_long_number": "nnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
             "substances": [],
-            "doseValues": [
+            "dose_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "strengthValues": [
+            "strength_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "lagTimes": [
+            "lag_times": [
                {
                   "value": 7.5,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1",
-                  "sdtmDomainUid": "sdtm_domain_uid1",
-                  "sdtmDomainLabel": "sdtm_domain_name1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1",
+                  "sdtm_domain_uid": "sdtm_domain_uid1",
+                  "sdtm_domain_label": "sdtm_domain_name1"
                }
             ],
-            "deliveryDevices": [
+            "delivery_devices": [
                {
-                  "termUid": "delivery_device_uid1",
+                  "term_uid": "delivery_device_uid1",
                   "name": "delivery_device_name1"
                },
                {
-                  "termUid": "delivery_device_uid2",
+                  "term_uid": "delivery_device_uid2",
                   "name": "delivery_device_name2"
                }
             ],
             "dispensers": [
                {
-                  "termUid": "dispenser_uid1",
+                  "term_uid": "dispenser_uid1",
                   "name": "dispenser_name1"
                },
                {
-                  "termUid": "dispenser_uid2",
+                  "term_uid": "dispenser_uid2",
                   "name": "dispenser_name2"
                }
             ],
             "projects": [
                {
                   "uid": "project_uid1",
-                  "projectNumber": "PRJ-001",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-001",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -567,8 +567,8 @@
                },
                {
                   "uid": "project_uid2",
-                  "projectNumber": "PRJ-002",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-002",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -586,27 +586,27 @@
                   "name": "Brand B"
                }
             ],
-            "halfLife": {
+            "half_life": {
                "uid": "NumericValueWithUnit_000001",
                "value": 1.23,
-               "unitDefinitionUid": "UnitDefinition_000001",
-               "unitLabel": "name_1"
+               "unit_definition_uid": "UnitDefinition_000001",
+               "unit_label": "name_1"
             },
-            "doseFrequencies": [
+            "dose_frequencies": [
                {
-                  "termUid": "dose_frequency_uid1",
+                  "term_uid": "dose_frequency_uid1",
                   "name": "dose_frequency_name1"
                }
             ],
-            "dosageForms": [
+            "dosage_forms": [
                {
-                  "termUid": "dosage_form_uid1",
+                  "term_uid": "dosage_form_uid1",
                   "name": "dosage_form_name1"
                }
             ],
-            "routesOfAdministration": [
+            "routes_of_administration": [
                {
-                  "termUid": "route_of_administration_uid1",
+                  "term_uid": "route_of_administration_uid1",
                   "name": "route_of_administration_name1"
                }
             ]
@@ -614,12 +614,12 @@
       }
    },
    {
-      "name": "Test POST new-version compound",
+      "name": "Test POST /versions compound",
       "request": {
          "headers": {},
          "method": "POST",
          "request": {},
-         "url": "/concepts/compounds/Compound_000001/new-version"
+         "url": "/concepts/compounds/Compound_000001/versions"
       },
       "response": {
          "code": 201,
@@ -627,88 +627,88 @@
          "result": {
             "uid": "Compound_000001",
             "name": "compound_name1",
-            "nameSentenceCase": "compound_name_sentence_case1",
+            "name_sentence_case": "compound_name_sentence_case1",
             "definition": "compound_definition1",
             "abbreviation": "abbv",
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
             "status": "Draft",
             "version": "1.1",
-            "changeDescription": "New draft created",
-            "userInitials": "TEST_USER",
-            "startDate": null,
-            "endDate": null,
-            "possibleActions": [
+            "change_description": "New draft created",
+            "user_initials": "TEST_USER",
+            "start_date": null,
+            "end_date": null,
+            "possible_actions": [
                "approve",
                "edit"
             ],
-            "analyteNumber": "analyteNumber",
-            "nncShortNumber": "nncShortNumber",
-            "nncLongNumber": "nncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
+            "analyte_number": "analyte_number",
+            "nnc_short_number": "nnc_short_number",
+            "nnc_long_number": "nnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
             "substances": [],
-            "doseValues": [
+            "dose_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "strengthValues": [
+            "strength_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "lagTimes": [
+            "lag_times": [
                {
                   "value": 7.5,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1",
-                  "sdtmDomainUid": "sdtm_domain_uid1",
-                  "sdtmDomainLabel": "sdtm_domain_name1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1",
+                  "sdtm_domain_uid": "sdtm_domain_uid1",
+                  "sdtm_domain_label": "sdtm_domain_name1"
                }
             ],
-            "deliveryDevices": [
+            "delivery_devices": [
                {
-                  "termUid": "delivery_device_uid1",
+                  "term_uid": "delivery_device_uid1",
                   "name": "delivery_device_name1"
                },
                {
-                  "termUid": "delivery_device_uid2",
+                  "term_uid": "delivery_device_uid2",
                   "name": "delivery_device_name2"
                }
             ],
             "dispensers": [
                {
-                  "termUid": "dispenser_uid1",
+                  "term_uid": "dispenser_uid1",
                   "name": "dispenser_name1"
                },
                {
-                  "termUid": "dispenser_uid2",
+                  "term_uid": "dispenser_uid2",
                   "name": "dispenser_name2"
                }
             ],
             "projects": [
                {
                   "uid": "project_uid1",
-                  "projectNumber": "PRJ-001",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-001",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -717,8 +717,8 @@
                },
                {
                   "uid": "project_uid2",
-                  "projectNumber": "PRJ-002",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-002",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -736,27 +736,27 @@
                   "name": "Brand B"
                }
             ],
-            "halfLife": {
+            "half_life": {
                "uid": "NumericValueWithUnit_000001",
                "value": 1.23,
-               "unitDefinitionUid": "UnitDefinition_000001",
-               "unitLabel": "name_1"
+               "unit_definition_uid": "UnitDefinition_000001",
+               "unit_label": "name_1"
             },
-            "doseFrequencies": [
+            "dose_frequencies": [
                {
-                  "termUid": "dose_frequency_uid1",
+                  "term_uid": "dose_frequency_uid1",
                   "name": "dose_frequency_name1"
                }
             ],
-            "dosageForms": [
+            "dosage_forms": [
                {
-                  "termUid": "dosage_form_uid1",
+                  "term_uid": "dosage_form_uid1",
                   "name": "dosage_form_name1"
                }
             ],
-            "routesOfAdministration": [
+            "routes_of_administration": [
                {
-                  "termUid": "route_of_administration_uid1",
+                  "term_uid": "route_of_administration_uid1",
                   "name": "route_of_administration_name1"
                }
             ]
@@ -771,43 +771,43 @@
          "request": {
             "name": "new_compound_name",
             "definition": "new_compound_definition",
-            "doseValuesUids": [
+            "dose_values_uids": [
                "NumericValueWithUnit_000001"
             ],
-            "strengthValuesUids": [
+            "strength_values_uids": [
                "NumericValueWithUnit_000001"
             ],
-            "lagTimesUids": [
+            "lag_times_uids": [
                "LagTime_000001"
             ],
-            "deliveryDevicesUids": [
+            "delivery_devices_uids": [
                "delivery_device_uid1"
             ],
-            "dispensersUids": [
+            "dispensers_uids": [
                "dispenser_uid1"
             ],
-            "projectsUids": [
+            "projects_uids": [
                "project_uid1"
             ],
-            "brandsUids": [
+            "brands_uids": [
                "Brand_000001"
             ],
-            "halfLifeUid": "NumericValueWithUnit_000002",
-            "doseFrequencyUids": [
+            "half_life_uid": "NumericValueWithUnit_000002",
+            "dose_frequency_uids": [
                "dose_frequency_uid2"
             ],
-            "dosageFormUids": [
+            "dosage_form_uids": [
                "dosage_form_uid2"
             ],
-            "routeOfAdministrationUids": [
+            "route_of_administration_uids": [
                "route_of_administration_uid2"
             ],
-            "analyteNumber": "newanalyteNumber",
-            "nncShortNumber": "newnncShortNumber",
-            "nncLongNumber": "newnncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
-            "changeDescription": "compound_patch"
+            "analyte_number": "newanalyte_number",
+            "nnc_short_number": "newnnc_short_number",
+            "nnc_long_number": "newnnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
+            "change_description": "compound_patch"
          },
          "url": "/concepts/compounds/Compound_000001"
       },
@@ -817,51 +817,51 @@
          "result": {
             "uid": "Compound_000001",
             "name": "new_compound_name",
-            "nameSentenceCase": "compound_name_sentence_case1",
+            "name_sentence_case": "compound_name_sentence_case1",
             "definition": "new_compound_definition",
             "abbreviation": "abbv",
-            "doseValues": [
+            "dose_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "strengthValues": [
+            "strength_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "lagTimes": [
+            "lag_times": [
                {
                   "value": 7.5,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1",
-                  "sdtmDomainUid": "sdtm_domain_uid1",
-                  "sdtmDomainLabel": "sdtm_domain_name1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1",
+                  "sdtm_domain_uid": "sdtm_domain_uid1",
+                  "sdtm_domain_label": "sdtm_domain_name1"
                }
             ],
-            "deliveryDevices": [
+            "delivery_devices": [
                {
-                  "termUid": "delivery_device_uid1",
+                  "term_uid": "delivery_device_uid1",
                   "name": "delivery_device_name1"
                }
             ],
             "dispensers": [
                {
-                  "termUid": "dispenser_uid1",
+                  "term_uid": "dispenser_uid1",
                   "name": "dispenser_name1"
                }
             ],
             "projects": [
                {
                   "uid": "project_uid1",
-                  "projectNumber": "PRJ-001",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-001",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -875,44 +875,44 @@
                   "name": "Brand A"
                }
             ],
-            "halfLife": {
+            "half_life": {
                "uid": "NumericValueWithUnit_000002",
                "value": 3.21,
-               "unitDefinitionUid": "UnitDefinition_000001",
-               "unitLabel": "name_1"
+               "unit_definition_uid": "UnitDefinition_000001",
+               "unit_label": "name_1"
             },
-            "doseFrequencies": [
+            "dose_frequencies": [
                {
-                  "termUid": "dose_frequency_uid2",
+                  "term_uid": "dose_frequency_uid2",
                   "name": "dose_frequency_name2"
                }
             ],
-            "dosageForms": [
+            "dosage_forms": [
                {
-                  "termUid": "dosage_form_uid2",
+                  "term_uid": "dosage_form_uid2",
                   "name": "dosage_form_name2"
                }
             ],
-            "routesOfAdministration": [
+            "routes_of_administration": [
                {
-                  "termUid": "route_of_administration_uid2",
+                  "term_uid": "route_of_administration_uid2",
                   "name": "route_of_administration_name2"
                }
             ],
-            "analyteNumber": "newanalyteNumber",
-            "nncShortNumber": "newnncShortNumber",
-            "nncLongNumber": "newnncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
+            "analyte_number": "newanalyte_number",
+            "nnc_short_number": "newnnc_short_number",
+            "nnc_long_number": "newnnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
             "substances": [],
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
             "status": "Draft",
             "version": "1.2",
-            "changeDescription": "compound_patch",
-            "userInitials": "TODO user initials",
-            "startDate": null,
-            "endDate": null,
-            "possibleActions": [
+            "change_description": "compound_patch",
+            "user_initials": "TODO user initials",
+            "start_date": null,
+            "end_date": null,
+            "possible_actions": [
                "approve",
                "edit"
             ]
@@ -927,49 +927,49 @@
          "request": {
             "name": "new_compound_name",
             "definition": "new_compound_definition",
-            "doseValuesUids": [
+            "dose_values_uids": [
                "NumericValueWithUnit_000001",
                "NumericValueWithUnit_000002"
             ],
-            "strengthValuesUids": [
+            "strength_values_uids": [
                "NumericValueWithUnit_000001",
                "NumericValueWithUnit_000002"
             ],
-            "lagTimesUids": [
+            "lag_times_uids": [
                "LagTime_000001"
             ],
-            "deliveryDevicesUids": [
+            "delivery_devices_uids": [
                "delivery_device_uid1",
                "delivery_device_uid2"
             ],
-            "dispensersUids": [
+            "dispensers_uids": [
                "dispenser_uid1",
                "dispenser_uid2"
             ],
-            "projectsUids": [
+            "projects_uids": [
                "project_uid1",
                "project_uid2"
             ],
-            "brandsUids": [
+            "brands_uids": [
                "Brand_000001",
                "Brand_000002"
             ],
-            "halfLifeUid": "NumericValueWithUnit_000002",
-            "doseFrequencyUids": [
+            "half_life_uid": "NumericValueWithUnit_000002",
+            "dose_frequency_uids": [
                "dose_frequency_uid2"
             ],
-            "dosageFormUids": [
+            "dosage_form_uids": [
                "dosage_form_uid2"
             ],
-            "routeOfAdministrationUids": [
+            "route_of_administration_uids": [
                "route_of_administration_uid2"
             ],
-            "analyteNumber": "newanalyteNumber",
-            "nncShortNumber": "newnncShortNumber",
-            "nncLongNumber": "newnncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
-            "changeDescription": "compound_patch"
+            "analyte_number": "newanalyte_number",
+            "nnc_short_number": "newnnc_short_number",
+            "nnc_long_number": "newnnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
+            "change_description": "compound_patch"
          },
          "url": "/concepts/compounds/Compound_000001"
       },
@@ -979,71 +979,71 @@
          "result": {
             "uid": "Compound_000001",
             "name": "new_compound_name",
-            "nameSentenceCase": "compound_name_sentence_case1",
+            "name_sentence_case": "compound_name_sentence_case1",
             "definition": "new_compound_definition",
             "abbreviation": "abbv",
-            "doseValues": [
+            "dose_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "strengthValues": [
+            "strength_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "lagTimes": [
+            "lag_times": [
                {
                   "value": 7.5,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1",
-                  "sdtmDomainUid": "sdtm_domain_uid1",
-                  "sdtmDomainLabel": "sdtm_domain_name1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1",
+                  "sdtm_domain_uid": "sdtm_domain_uid1",
+                  "sdtm_domain_label": "sdtm_domain_name1"
                }
             ],
-            "deliveryDevices": [
+            "delivery_devices": [
                {
-                  "termUid": "delivery_device_uid1",
+                  "term_uid": "delivery_device_uid1",
                   "name": "delivery_device_name1"
                },
                {
-                  "termUid": "delivery_device_uid2",
+                  "term_uid": "delivery_device_uid2",
                   "name": "delivery_device_name2"
                }
             ],
             "dispensers": [
                {
-                  "termUid": "dispenser_uid1",
+                  "term_uid": "dispenser_uid1",
                   "name": "dispenser_name1"
                },
                {
-                  "termUid": "dispenser_uid2",
+                  "term_uid": "dispenser_uid2",
                   "name": "dispenser_name2"
                }
             ],
             "projects": [
                {
                   "uid": "project_uid1",
-                  "projectNumber": "PRJ-001",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-001",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -1052,8 +1052,8 @@
                },
                {
                   "uid": "project_uid2",
-                  "projectNumber": "PRJ-002",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-002",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -1071,44 +1071,44 @@
                   "name": "Brand B"
                }
             ],
-            "halfLife": {
+            "half_life": {
                "uid": "NumericValueWithUnit_000002",
                "value": 3.21,
-               "unitDefinitionUid": "UnitDefinition_000001",
-               "unitLabel": "name_1"
+               "unit_definition_uid": "UnitDefinition_000001",
+               "unit_label": "name_1"
             },
-            "doseFrequencies": [
+            "dose_frequencies": [
                {
-                  "termUid": "dose_frequency_uid2",
+                  "term_uid": "dose_frequency_uid2",
                   "name": "dose_frequency_name2"
                }
             ],
-            "dosageForms": [
+            "dosage_forms": [
                {
-                  "termUid": "dosage_form_uid2",
+                  "term_uid": "dosage_form_uid2",
                   "name": "dosage_form_name2"
                }
             ],
-            "routesOfAdministration": [
+            "routes_of_administration": [
                {
-                  "termUid": "route_of_administration_uid2",
+                  "term_uid": "route_of_administration_uid2",
                   "name": "route_of_administration_name2"
                }
             ],
-            "analyteNumber": "newanalyteNumber",
-            "nncShortNumber": "newnncShortNumber",
-            "nncLongNumber": "newnncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
+            "analyte_number": "newanalyte_number",
+            "nnc_short_number": "newnnc_short_number",
+            "nnc_long_number": "newnnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
             "substances": [],
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
             "status": "Draft",
             "version": "1.3",
-            "changeDescription": "compound_patch",
-            "userInitials": "TODO user initials",
-            "startDate": null,
-            "endDate": null,
-            "possibleActions": [
+            "change_description": "compound_patch",
+            "user_initials": "TODO user initials",
+            "start_date": null,
+            "end_date": null,
+            "possible_actions": [
                "approve",
                "edit"
             ]
@@ -1129,88 +1129,88 @@
          "result": {
             "uid": "Compound_000001",
             "name": "new_compound_name",
-            "nameSentenceCase": "compound_name_sentence_case1",
+            "name_sentence_case": "compound_name_sentence_case1",
             "definition": "new_compound_definition",
             "abbreviation": "abbv",
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
             "status": "Final",
             "version": "2.0",
-            "changeDescription": "Approved version",
-            "userInitials": "TEST_USER",
-            "startDate": null,
-            "endDate": null,
-            "possibleActions": [
+            "change_description": "Approved version",
+            "user_initials": "TEST_USER",
+            "start_date": null,
+            "end_date": null,
+            "possible_actions": [
                "inactivate",
-               "newVersion"
+               "new_version"
             ],
-            "analyteNumber": "newanalyteNumber",
-            "nncShortNumber": "newnncShortNumber",
-            "nncLongNumber": "newnncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
+            "analyte_number": "newanalyte_number",
+            "nnc_short_number": "newnnc_short_number",
+            "nnc_long_number": "newnnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
             "substances": [],
-            "doseValues": [
+            "dose_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "strengthValues": [
+            "strength_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "lagTimes": [
+            "lag_times": [
                {
                   "value": 7.5,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1",
-                  "sdtmDomainUid": "sdtm_domain_uid1",
-                  "sdtmDomainLabel": "sdtm_domain_name1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1",
+                  "sdtm_domain_uid": "sdtm_domain_uid1",
+                  "sdtm_domain_label": "sdtm_domain_name1"
                }
             ],
-            "deliveryDevices": [
+            "delivery_devices": [
                {
-                  "termUid": "delivery_device_uid1",
+                  "term_uid": "delivery_device_uid1",
                   "name": "delivery_device_name1"
                },
                {
-                  "termUid": "delivery_device_uid2",
+                  "term_uid": "delivery_device_uid2",
                   "name": "delivery_device_name2"
                }
             ],
             "dispensers": [
                {
-                  "termUid": "dispenser_uid1",
+                  "term_uid": "dispenser_uid1",
                   "name": "dispenser_name1"
                },
                {
-                  "termUid": "dispenser_uid2",
+                  "term_uid": "dispenser_uid2",
                   "name": "dispenser_name2"
                }
             ],
             "projects": [
                {
                   "uid": "project_uid1",
-                  "projectNumber": "PRJ-001",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-001",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -1219,8 +1219,8 @@
                },
                {
                   "uid": "project_uid2",
-                  "projectNumber": "PRJ-002",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-002",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -1238,27 +1238,27 @@
                   "name": "Brand B"
                }
             ],
-            "halfLife": {
+            "half_life": {
                "uid": "NumericValueWithUnit_000002",
                "value": 3.21,
-               "unitDefinitionUid": "UnitDefinition_000001",
-               "unitLabel": "name_1"
+               "unit_definition_uid": "UnitDefinition_000001",
+               "unit_label": "name_1"
             },
-            "doseFrequencies": [
+            "dose_frequencies": [
                {
-                  "termUid": "dose_frequency_uid2",
+                  "term_uid": "dose_frequency_uid2",
                   "name": "dose_frequency_name2"
                }
             ],
-            "dosageForms": [
+            "dosage_forms": [
                {
-                  "termUid": "dosage_form_uid2",
+                  "term_uid": "dosage_form_uid2",
                   "name": "dosage_form_name2"
                }
             ],
-            "routesOfAdministration": [
+            "routes_of_administration": [
                {
-                  "termUid": "route_of_administration_uid2",
+                  "term_uid": "route_of_administration_uid2",
                   "name": "route_of_administration_name2"
                }
             ]
@@ -1279,87 +1279,87 @@
          "result": {
             "uid": "Compound_000001",
             "name": "new_compound_name",
-            "nameSentenceCase": "compound_name_sentence_case1",
+            "name_sentence_case": "compound_name_sentence_case1",
             "definition": "new_compound_definition",
             "abbreviation": "abbv",
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
             "status": "Retired",
             "version": "2.0",
-            "changeDescription": "Deactivated version",
-            "userInitials": "TEST_USER",
-            "startDate": null,
-            "endDate": null,
-            "possibleActions": [
+            "change_description": "Deactivated version",
+            "user_initials": "TEST_USER",
+            "start_date": null,
+            "end_date": null,
+            "possible_actions": [
                "reactivate"
             ],
-            "analyteNumber": "newanalyteNumber",
-            "nncShortNumber": "newnncShortNumber",
-            "nncLongNumber": "newnncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
+            "analyte_number": "newanalyte_number",
+            "nnc_short_number": "newnnc_short_number",
+            "nnc_long_number": "newnnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
             "substances": [],
-            "doseValues": [
+            "dose_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "strengthValues": [
+            "strength_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "lagTimes": [
+            "lag_times": [
                {
                   "value": 7.5,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1",
-                  "sdtmDomainUid": "sdtm_domain_uid1",
-                  "sdtmDomainLabel": "sdtm_domain_name1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1",
+                  "sdtm_domain_uid": "sdtm_domain_uid1",
+                  "sdtm_domain_label": "sdtm_domain_name1"
                }
             ],
-            "deliveryDevices": [
+            "delivery_devices": [
                {
-                  "termUid": "delivery_device_uid1",
+                  "term_uid": "delivery_device_uid1",
                   "name": "delivery_device_name1"
                },
                {
-                  "termUid": "delivery_device_uid2",
+                  "term_uid": "delivery_device_uid2",
                   "name": "delivery_device_name2"
                }
             ],
             "dispensers": [
                {
-                  "termUid": "dispenser_uid1",
+                  "term_uid": "dispenser_uid1",
                   "name": "dispenser_name1"
                },
                {
-                  "termUid": "dispenser_uid2",
+                  "term_uid": "dispenser_uid2",
                   "name": "dispenser_name2"
                }
             ],
             "projects": [
                {
                   "uid": "project_uid1",
-                  "projectNumber": "PRJ-001",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-001",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -1368,8 +1368,8 @@
                },
                {
                   "uid": "project_uid2",
-                  "projectNumber": "PRJ-002",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-002",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -1387,27 +1387,27 @@
                   "name": "Brand B"
                }
             ],
-            "halfLife": {
+            "half_life": {
                "uid": "NumericValueWithUnit_000002",
                "value": 3.21,
-               "unitDefinitionUid": "UnitDefinition_000001",
-               "unitLabel": "name_1"
+               "unit_definition_uid": "UnitDefinition_000001",
+               "unit_label": "name_1"
             },
-            "doseFrequencies": [
+            "dose_frequencies": [
                {
-                  "termUid": "dose_frequency_uid2",
+                  "term_uid": "dose_frequency_uid2",
                   "name": "dose_frequency_name2"
                }
             ],
-            "dosageForms": [
+            "dosage_forms": [
                {
-                  "termUid": "dosage_form_uid2",
+                  "term_uid": "dosage_form_uid2",
                   "name": "dosage_form_name2"
                }
             ],
-            "routesOfAdministration": [
+            "routes_of_administration": [
                {
-                  "termUid": "route_of_administration_uid2",
+                  "term_uid": "route_of_administration_uid2",
                   "name": "route_of_administration_name2"
                }
             ]
@@ -1428,88 +1428,88 @@
          "result": {
             "uid": "Compound_000001",
             "name": "new_compound_name",
-            "nameSentenceCase": "compound_name_sentence_case1",
+            "name_sentence_case": "compound_name_sentence_case1",
             "definition": "new_compound_definition",
             "abbreviation": "abbv",
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
             "status": "Final",
             "version": "2.0",
-            "changeDescription": "Reactivated version",
-            "userInitials": "TEST_USER",
-            "startDate": null,
-            "endDate": null,
-            "possibleActions": [
+            "change_description": "Reactivated version",
+            "user_initials": "TEST_USER",
+            "start_date": null,
+            "end_date": null,
+            "possible_actions": [
                "inactivate",
-               "newVersion"
+               "new_version"
             ],
-            "analyteNumber": "newanalyteNumber",
-            "nncShortNumber": "newnncShortNumber",
-            "nncLongNumber": "newnncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
+            "analyte_number": "newanalyte_number",
+            "nnc_short_number": "newnnc_short_number",
+            "nnc_long_number": "newnnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
             "substances": [],
-            "doseValues": [
+            "dose_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "strengthValues": [
+            "strength_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "lagTimes": [
+            "lag_times": [
                {
                   "value": 7.5,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1",
-                  "sdtmDomainUid": "sdtm_domain_uid1",
-                  "sdtmDomainLabel": "sdtm_domain_name1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1",
+                  "sdtm_domain_uid": "sdtm_domain_uid1",
+                  "sdtm_domain_label": "sdtm_domain_name1"
                }
             ],
-            "deliveryDevices": [
+            "delivery_devices": [
                {
-                  "termUid": "delivery_device_uid1",
+                  "term_uid": "delivery_device_uid1",
                   "name": "delivery_device_name1"
                },
                {
-                  "termUid": "delivery_device_uid2",
+                  "term_uid": "delivery_device_uid2",
                   "name": "delivery_device_name2"
                }
             ],
             "dispensers": [
                {
-                  "termUid": "dispenser_uid1",
+                  "term_uid": "dispenser_uid1",
                   "name": "dispenser_name1"
                },
                {
-                  "termUid": "dispenser_uid2",
+                  "term_uid": "dispenser_uid2",
                   "name": "dispenser_name2"
                }
             ],
             "projects": [
                {
                   "uid": "project_uid1",
-                  "projectNumber": "PRJ-001",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-001",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -1518,8 +1518,8 @@
                },
                {
                   "uid": "project_uid2",
-                  "projectNumber": "PRJ-002",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-002",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -1537,27 +1537,27 @@
                   "name": "Brand B"
                }
             ],
-            "halfLife": {
+            "half_life": {
                "uid": "NumericValueWithUnit_000002",
                "value": 3.21,
-               "unitDefinitionUid": "UnitDefinition_000001",
-               "unitLabel": "name_1"
+               "unit_definition_uid": "UnitDefinition_000001",
+               "unit_label": "name_1"
             },
-            "doseFrequencies": [
+            "dose_frequencies": [
                {
-                  "termUid": "dose_frequency_uid2",
+                  "term_uid": "dose_frequency_uid2",
                   "name": "dose_frequency_name2"
                }
             ],
-            "dosageForms": [
+            "dosage_forms": [
                {
-                  "termUid": "dosage_form_uid2",
+                  "term_uid": "dosage_form_uid2",
                   "name": "dosage_form_name2"
                }
             ],
-            "routesOfAdministration": [
+            "routes_of_administration": [
                {
-                  "termUid": "route_of_administration_uid2",
+                  "term_uid": "route_of_administration_uid2",
                   "name": "route_of_administration_name2"
                }
             ]
@@ -1571,52 +1571,52 @@
          "method": "POST",
          "request": {
             "name": "compound_name2",
-            "nameSentenceCase": "compound_name_sentence_case2",
+            "name_sentence_case": "compound_name_sentence_case2",
             "definition": "compound_definition2",
             "abbreviation": "abbv",
-            "doseValuesUids": [
+            "dose_values_uids": [
                "NumericValueWithUnit_000001",
                "NumericValueWithUnit_000002"
             ],
-            "strengthValuesUids": [
+            "strength_values_uids": [
                "NumericValueWithUnit_000001",
                "NumericValueWithUnit_000002"
             ],
-            "lagTimesUids": [
+            "lag_times_uids": [
                "LagTime_000001"
             ],
-            "deliveryDevicesUids": [
+            "delivery_devices_uids": [
                "delivery_device_uid1",
                "delivery_device_uid2"
             ],
-            "dispensersUids": [
+            "dispensers_uids": [
                "dispenser_uid1",
                "dispenser_uid2"
             ],
-            "projectsUids": [
+            "projects_uids": [
                "project_uid1",
                "project_uid2"
             ],
-            "brandsUids": [
+            "brands_uids": [
                "Brand_000001",
                "Brand_000002"
             ],
-            "halfLifeUid": "NumericValueWithUnit_000001",
-            "doseFrequencyUids": [
+            "half_life_uid": "NumericValueWithUnit_000001",
+            "dose_frequency_uids": [
                "dose_frequency_uid1"
             ],
-            "dosageFormUids": [
+            "dosage_form_uids": [
                "dosage_form_uid1"
             ],
-            "routeOfAdministrationUids": [
+            "route_of_administration_uids": [
                "route_of_administration_uid1"
             ],
-            "analyteNumber": "analyteNumber",
-            "nncShortNumber": "nncShortNumber",
-            "nncLongNumber": "nncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
-            "libraryName": "Sponsor"
+            "analyte_number": "analyte_number",
+            "nnc_short_number": "nnc_short_number",
+            "nnc_long_number": "nnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/compounds"
       },
@@ -1626,71 +1626,71 @@
          "result": {
             "uid": "Compound_000002",
             "name": "compound_name2",
-            "nameSentenceCase": "compound_name_sentence_case2",
+            "name_sentence_case": "compound_name_sentence_case2",
             "definition": "compound_definition2",
             "abbreviation": "abbv",
-            "doseValues": [
+            "dose_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "strengthValues": [
+            "strength_values": [
                {
                   "uid": "NumericValueWithUnit_000001",
                   "value": 1.23,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "value": 3.21,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1"
                }
             ],
-            "lagTimes": [
+            "lag_times": [
                {
                   "value": 7.5,
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "unitLabel": "name_1",
-                  "sdtmDomainUid": "sdtm_domain_uid1",
-                  "sdtmDomainLabel": "sdtm_domain_name1"
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "unit_label": "name_1",
+                  "sdtm_domain_uid": "sdtm_domain_uid1",
+                  "sdtm_domain_label": "sdtm_domain_name1"
                }
             ],
-            "deliveryDevices": [
+            "delivery_devices": [
                {
-                  "termUid": "delivery_device_uid1",
+                  "term_uid": "delivery_device_uid1",
                   "name": "delivery_device_name1"
                },
                {
-                  "termUid": "delivery_device_uid2",
+                  "term_uid": "delivery_device_uid2",
                   "name": "delivery_device_name2"
                }
             ],
             "dispensers": [
                {
-                  "termUid": "dispenser_uid1",
+                  "term_uid": "dispenser_uid1",
                   "name": "dispenser_name1"
                },
                {
-                  "termUid": "dispenser_uid2",
+                  "term_uid": "dispenser_uid2",
                   "name": "dispenser_name2"
                }
             ],
             "projects": [
                {
                   "uid": "project_uid1",
-                  "projectNumber": "PRJ-001",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-001",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -1699,8 +1699,8 @@
                },
                {
                   "uid": "project_uid2",
-                  "projectNumber": "PRJ-002",
-                  "clinicalProgramme": {
+                  "project_number": "PRJ-002",
+                  "clinical_programme": {
                      "uid": "cp_001",
                      "name": "CP"
                   },
@@ -1718,44 +1718,44 @@
                   "name": "Brand B"
                }
             ],
-            "halfLife": {
+            "half_life": {
                "uid": "NumericValueWithUnit_000001",
                "value": 1.23,
-               "unitDefinitionUid": "UnitDefinition_000001",
-               "unitLabel": "name_1"
+               "unit_definition_uid": "UnitDefinition_000001",
+               "unit_label": "name_1"
             },
-            "doseFrequencies": [
+            "dose_frequencies": [
                {
-                  "termUid": "dose_frequency_uid1",
+                  "term_uid": "dose_frequency_uid1",
                   "name": "dose_frequency_name1"
                }
             ],
-            "dosageForms": [
+            "dosage_forms": [
                {
-                  "termUid": "dosage_form_uid1",
+                  "term_uid": "dosage_form_uid1",
                   "name": "dosage_form_name1"
                }
             ],
-            "routesOfAdministration": [
+            "routes_of_administration": [
                {
-                  "termUid": "route_of_administration_uid1",
+                  "term_uid": "route_of_administration_uid1",
                   "name": "route_of_administration_name1"
                }
             ],
-            "analyteNumber": "analyteNumber",
-            "nncShortNumber": "nncShortNumber",
-            "nncLongNumber": "nncLongNumber",
-            "isSponsorCompound": true,
-            "isNameInn": true,
+            "analyte_number": "analyte_number",
+            "nnc_short_number": "nnc_short_number",
+            "nnc_long_number": "nnc_long_number",
+            "is_sponsor_compound": true,
+            "is_name_inn": true,
             "substances": [],
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
             "status": "Draft",
             "version": "0.1",
-            "changeDescription": "Initial version",
-            "userInitials": "TODO user initials",
-            "startDate": null,
-            "endDate": null,
-            "possibleActions": [
+            "change_description": "Initial version",
+            "user_initials": "TODO user initials",
+            "start_date": null,
+            "end_date": null,
+            "possible_actions": [
                "approve",
                "delete",
                "edit"

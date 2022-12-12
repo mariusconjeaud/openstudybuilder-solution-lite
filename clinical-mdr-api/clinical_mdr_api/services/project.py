@@ -42,9 +42,9 @@ class ProjectService:
         try:
             try:
                 project_ar = ProjectAR.from_input_values(
-                    project_number=project_create_input.projectNumber,
+                    project_number=project_create_input.project_number,
                     name=project_create_input.name,
-                    clinical_programme_uid=project_create_input.clinicalProgrammeUid,
+                    clinical_programme_uid=project_create_input.clinical_programme_uid,
                     description=project_create_input.description,
                     generate_uid_callback=repos.project_repository.generate_uid,
                     clinical_programme_exists_callback=repos.clinical_programme_repository.clinical_programme_exists,

@@ -19,16 +19,16 @@ from clinical_mdr_api.models.utils import BaseModel
 class Objective(BaseModel):
     uid: Optional[str] = None
     name: Optional[str] = None
-    namePlain: Optional[str] = None
+    name_plain: Optional[str] = None
 
-    startDate: Optional[datetime] = None
-    endDate: Optional[datetime] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     status: Optional[str] = None
     version: Optional[str] = None
-    changeDescription: Optional[str] = None
-    userInitials: Optional[str] = None
+    change_description: Optional[str] = None
+    user_initials: Optional[str] = None
 
-    possibleActions: Optional[List[str]] = Field(
+    possible_actions: Optional[List[str]] = Field(
         None,
         description=(
             "Holds those actions that can be performed on the objective. "
@@ -36,14 +36,14 @@ class Objective(BaseModel):
         ),
     )
 
-    objectiveTemplate: Optional[ObjectiveTemplateNameUid]
-    parameterValues: Optional[List[MultiTemplateParameterValue]] = Field(
+    objective_template: Optional[ObjectiveTemplateNameUid]
+    parameter_values: Optional[List[MultiTemplateParameterValue]] = Field(
         None,
         description="Holds the parameter values that are used within the objective. The values are ordered as they occur in the objective name.",
     )
     library: Optional[Library] = None
 
-    studyCount: Optional[int] = Field(
+    study_count: Optional[int] = Field(
         None, description="Count of studies referencing objective"
     )
 
@@ -70,24 +70,24 @@ class Objective(BaseModel):
         return cls(
             uid=objective_ar.uid,
             name=objective_ar.name,
-            namePlain=objective_ar.name_plain,
-            startDate=objective_ar.item_metadata.start_date,
-            endDate=objective_ar.item_metadata.end_date,
+            name_plain=objective_ar.name_plain,
+            start_date=objective_ar.item_metadata.start_date,
+            end_date=objective_ar.item_metadata.end_date,
             status=objective_ar.item_metadata.status.value,
             version=objective_ar.item_metadata.version,
-            changeDescription=objective_ar.item_metadata.change_description,
-            userInitials=objective_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=objective_ar.item_metadata.change_description,
+            user_initials=objective_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 {_.value for _ in objective_ar.get_possible_actions()}
             ),
-            objectiveTemplate=ObjectiveTemplateNameUid(
+            objective_template=ObjectiveTemplateNameUid(
                 name=objective_ar.template_name,
-                namePlain=objective_ar.template_name_plain,
+                name_plain=objective_ar.template_name_plain,
                 uid=objective_ar.template_uid,
             ),
             library=Library.from_library_vo(objective_ar.library),
-            studyCount=objective_ar.study_count,
-            parameterValues=parameter_values,
+            study_count=objective_ar.study_count,
+            parameter_values=parameter_values,
         )
 
 
@@ -100,42 +100,42 @@ class ObjectiveVersion(Objective):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the objective (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )
 
 
 class ObjectiveParameterInput(BaseModel):
-    parameterValues: List[TemplateParameterMultiSelectInput] = Field(
+    parameter_values: List[TemplateParameterMultiSelectInput] = Field(
         None,
-        title="parameterValues",
+        title="parameter_values",
         description="An ordered list of selected parameter values that are used to replace the parameters of the objective template.",
     )
 
 
 class ObjectiveEditInput(ObjectiveParameterInput):
-    changeDescription: str = Field(
+    change_description: str = Field(
         ...,
         description="A short description about what has changed compared to the previous version.",
     )
 
 
 class ObjectiveCreateInput(ObjectiveParameterInput):
-    objectiveTemplateUid: str = Field(
+    objective_template_uid: str = Field(
         ...,
-        title="objectiveTemplateUid",
+        title="objective_template_uid",
         description="The unique id of the objective template that is used as the basis for the new objective.",
     )
-    nameOverride: Optional[str] = Field(
+    name_override: Optional[str] = Field(
         None,
         title="name",
         description="Optionally, a name to override the name inherited from the template.",
     )
-    libraryName: str = Field(
+    library_name: str = Field(
         None,
-        title="libraryName",
+        title="library_name",
         description="If specified: The name of the library to which the objective will be linked. The following rules apply: \n"
         "* The library needs to be present, it will not be created with this request. The *[GET] /libraries* endpoint can help. And \n"
-        "* The library needs to allow the creation: The 'isEditable' property of the library needs to be true. \n\n"
+        "* The library needs to allow the creation: The 'is_editable' property of the library needs to be true. \n\n"
         "If not specified: The library of the objective template will be used.",
     )

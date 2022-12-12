@@ -35,7 +35,7 @@ def create_random_valid_vo(
         objective_version=version,
         objective_level_uid=uid2,
         objective_level_order=objective_order,
-        start_date=datetime.datetime.now(),
+        start_date=datetime.datetime.now(datetime.timezone.utc),
         user_initials=random_str(),
     )
     vo.validate(_check_uid_exists_callback, _check_uid_exists_callback)
@@ -45,7 +45,7 @@ def create_random_valid_vo(
 # test StudySelectionObjectivesVO
 class TestStudySelectionObjectiveVO(unittest.TestCase):
     def test__validate__success(self):
-        dt = datetime.datetime.now()
+        dt = datetime.datetime.now(datetime.timezone.utc)
         test_tuples = [
             ["uid_1", "ctterm_1", dt, "1.0", "todo user initials", 1],
             [" uid_2", "ctterm_2", dt, " 2.0 ", "todo user initials", 2],
@@ -68,7 +68,7 @@ class TestStudySelectionObjectiveVO(unittest.TestCase):
                 )
 
     def test__validate__failure(self):
-        dt = datetime.datetime.now()
+        dt = datetime.datetime.now(datetime.timezone.utc)
         test_tuples = [
             ["uid_1_200", "uid_1", dt, "1.0", "todo user initials", None],
             ["", None, dt, "2.0", "todo user initials", 1],

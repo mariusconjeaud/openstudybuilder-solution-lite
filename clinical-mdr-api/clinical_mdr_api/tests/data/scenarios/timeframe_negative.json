@@ -5,9 +5,9 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "non existent library",
+                "library_name": "non existent library",
                 "name": "Test timeframe",
-                "parameterValues": [
+                "parameter_values": [
                     {
                         "conjunction": ",",
                         "name": "Indication",
@@ -22,7 +22,7 @@
                         ]
                     }
                 ],
-                "timeframeTemplateUid": "{ttuid}"
+                "timeframe_template_uid": "{ttuid}"
             },
             "url": "/timeframes"
         },
@@ -47,10 +47,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
+                "library_name": "Test library",
                 "name": "Test timeframe",
-                "parameterValues": [],
-                "timeframeTemplateUid": "wrong-uid"
+                "parameter_values": [],
+                "timeframe_template_uid": "wrong-uid"
             },
             "url": "/timeframes"
         },
@@ -75,10 +75,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
+                "library_name": "Test library",
                 "name": "Test timeframe",
-                "parameterValues": [],
-                "timeframeTemplateUid": "{ttuidna}"
+                "parameter_values": [],
+                "timeframe_template_uid": "{ttuidna}"
             },
             "url": "/timeframes"
         },
@@ -103,8 +103,8 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
-                "parameterValues": [
+                "library_name": "Test library",
+                "parameter_values": [
                     {
                         "conjunction": ",",
                         "name": "Indication",
@@ -119,7 +119,7 @@
                         ]
                     }
                 ],
-                "timeframeTemplateUid": "{ttuid}"
+                "timeframe_template_uid": "{ttuid}"
             },
             "url": "/timeframes"
         },

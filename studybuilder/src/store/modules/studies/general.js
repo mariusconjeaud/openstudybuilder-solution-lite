@@ -124,7 +124,7 @@ const actions = {
     })
   },
   fetchAllUnits ({ commit, state }) {
-    units.get().then(resp => {
+    units.get({ params: { page_size: 0 } }).then(resp => {
       commit('SET_ALL_UNITS', resp.data.items)
     })
   },
@@ -156,7 +156,8 @@ const actions = {
   fetchSnomedTerms ({ commit, data }) {
     dictionaries.getCodelists('SNOMED').then(resp => {
       const params = {
-        codelist_uid: resp.data.items[0].codelistUid
+        codelist_uid: resp.data.items[0].codelist_uid,
+        page_size: 0
       }
       dictionaries.getTerms(params).then(resp => {
         commit('SET_SNOMED_TERMS', resp.data.items)

@@ -7,7 +7,7 @@
   :export-object-label="objectType"
   :export-data-url="urlPrefix"
   :server-items-length="total"
-  sort-by="startDate"
+  sort-by="start_date"
   sort-desc
   :options.sync="options"
   :has-api="hasApi"
@@ -20,8 +20,8 @@
   <template v-slot:item.name="{ item }">
     <n-n-parameter-highlighter :name="item.name" default-color="orange" />
   </template>
-  <template v-slot:item.startDate="{ item }">
-    {{ item.startDate | date }}
+  <template v-slot:item.start_date="{ item }">
+    {{ item.start_date | date }}
   </template>
   <template v-slot:item.status="{ item }">
     <status-chip :status="item.status" />
@@ -66,7 +66,7 @@ export default {
     return {
       headers: [
         { text: this.$t('_global.template'), value: 'name', width: '70%' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.modified_by'), value: 'fixme' }
       ],
       options: {},

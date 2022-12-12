@@ -226,7 +226,7 @@ class StudyDefinitionRepository(ABC):
         sort_by: dictionary of Cypher aliases on which to apply sorting as keys, and boolean to define sort direction (true=ascending) as values
         page_number : int, number of the page to return. 1-based
         page_size : int, number of results per page
-        filter_by : dict, keys are fieldNames for filter_variable and values are objects describing the filtering to execute
+        filter_by : dict, keys are field names for filter_variable and values are objects describing the filtering to execute
         total_count : boolean, indicates if total count of results should be returned
         :return: Dictionary of 'items' and 'total_count'. 'items' contains the results in the form of StudyDefinitionAR instances.
         Not more than page_size items. Can be less than than that in case of the last page.
@@ -423,7 +423,7 @@ class StudyDefinitionRepository(ABC):
 
         page_size : int, number of results per page
 
-        filter_by : dict, keys are fieldNames for filter_variable and values are
+        filter_by : dict, keys are field names for filter_variable and values are
         objects describing the filtering to execute
 
         total_count : boolean, indicates if total count of results should be returned

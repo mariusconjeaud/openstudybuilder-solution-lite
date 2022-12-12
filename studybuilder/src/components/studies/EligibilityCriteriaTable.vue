@@ -3,9 +3,13 @@
   <n-n-table
     :headers="headers"
     :items="criteria"
+    item-key="study_criteria_uid"
     hide-fixed-headers-switch
     :export-data-url="exportDataUrl"
     :export-data-url-params="exportDataUrlParams"
+    export-object-label="StudyCriteria"
+    :history-data-fetcher="fetchAllCriteriaHistory"
+    :history-title="$t('EligibilityCriteriaTable.global_history_title')"
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -32,9 +36,9 @@
       </v-btn>
     </template>
     <template v-slot:item.name="{ item }">
-      <template v-if="item.criteriaTemplate">
+      <template v-if="item.criteria_template">
         <n-n-parameter-highlighter
-          :name="item.criteriaTemplate.name"
+          :name="item.criteria_template.name"
           default-color="orange"
           />
       </template>
@@ -45,26 +49,18 @@
           />
       </template>
     </template>
-    <template v-slot:item.keyCriteria="{ item }">
+    <template v-slot:item.key_criteria="{ item }">
       <v-checkbox
-        v-model="item.keyCriteria"
-        @change="updateKeyCriteria($event, item.studyCriteriaUid)"
+        v-model="item.key_criteria"
+        @change="updateKeyCriteria($event, item.study_criteria_uid)"
         />
     </template>
-    <template v-slot:item.guidanceText="{ item }">
-      <template v-if="item.criteria">
-        <span v-html="item.criteria.criteriaTemplate.guidanceText" />
-      </template>
-      <template v-else-if="item.criteriaTemplate">
-        <span v-html="item.criteriaTemplate.guidanceText" />
-      </template>
-    </template>
-    <template v-slot:item.startDate="{ item }">
-      {{ item.startDate|date }}
+    <template v-slot:item.start_date="{ item }">
+      {{ item.start_date|date }}
     </template>
     <template v-slot:item.actions="{ item }">
       <actions-menu
-        :key="item.studyCriteriaUid"
+        :key="item.study_criteria_uid"
         :actions="filterEditAction(item)"
         :item="item"
         :badge="actionsMenuBadge(item)"
@@ -105,9 +101,9 @@
             {{ item.order }}
           </td>
           <td>
-            <template v-if="item.criteriaTemplate">
+            <template v-if="item.criteria_template">
               <n-n-parameter-highlighter
-                :name="item.criteriaTemplate.name"
+                :name="item.criteria_template.name"
                 default-color="orange"
                 />
             </template>
@@ -119,24 +115,24 @@
             </template>
           </td>
           <td>
-            <template v-if="item.criteriaTemplate">
-              <span v-html="item.criteriaTemplate.guidanceText" />
+            <template v-if="item.criteria_template">
+              <span v-html="item.criteria_template.guidance_text" />
             </template>
             <template v-else>
-              <span v-html="item.criteria.criteriaTemplate.guidanceText" />
+              <span v-html="item.criteria.criteria_template.guidance_text" />
             </template>
           </td>
           <td>
             <v-checkbox
               v-model="item.keyCriteria"
-              @change="updateKeyCriteria($event, item.studyCriteriaUid)"
+              @change="updateKeyCriteria($event, item.study_criteria_uid)"
               />
           </td>
           <td>
-            {{ item.startDate|date }}
+            {{ item.start_date|date }}
           </td>
           <td>
-            {{ item.userInitials }}
+            {{ item.user_initials }}
           </td>
         </tr>
       </draggable>
@@ -149,7 +145,7 @@
             >
     <eligibility-criteria-form
       @close="closeForm"
-      :criteria-type="criteriaType"
+      :criteriaType="criteriaType"
       class="fullscreen-dialog"
       @added="getStudyCriteria"
       />
@@ -173,10 +169,10 @@
     max-width="1200px"
     >
     <history-table
+      :title="studyCriteriaHistoryTitle"
       @close="closeHistory"
-      :type="'studyCriteria'"
-      :item="selectedStudyCriteria"
-      :title-label="'Study Criteria'"
+      :headers="headers"
+      :items="criteriaHistoryItems"
       />
   </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
@@ -190,7 +186,7 @@ import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import draggable from 'vuedraggable'
 import EligibilityCriteriaEditForm from './EligibilityCriteriaEditForm'
 import EligibilityCriteriaForm from './EligibilityCriteriaForm'
-import HistoryTable from '@/components/library/HistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable'
 import { mapGetters } from 'vuex'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
 import NNTable from '@/components/tools/NNTable'
@@ -215,12 +211,20 @@ export default {
       selectedStudy: 'studiesGeneral/selectedStudy'
     }),
     exportDataUrl () {
-      return `study/${this.selectedStudy.uid}/study-criteria`
+      return `studies/${this.selectedStudy.uid}/study-criteria`
     },
     exportDataUrlParams () {
       return {
-        filters: JSON.stringify({ 'criteriaType.sponsorPreferredNameSentenceCase': { v: [this.criteriaType.sponsorPreferredNameSentenceCase] } })
+        filters: JSON.stringify({ 'criteria_type.sponsor_preferred_name_sentence_case': { v: [this.criteriaType.sponsor_preferred_name_sentence_case] } })
       }
+    },
+    studyCriteriaHistoryTitle () {
+      if (this.selectedStudyCriteria) {
+        return this.$t(
+          'EligibilityCriteriaTable.study_criteria_history_title',
+          { studyCriteriaUid: this.selectedStudyCriteria.study_criteria_uid })
+      }
+      return ''
     }
   },
   data () {
@@ -245,14 +249,15 @@ export default {
         }
       ],
       criteria: [],
+      criteriaHistoryItems: [],
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: '#', value: 'order', width: '5%' },
-        { text: this.criteriaType.sponsorPreferredName, value: 'name', width: '30%' },
+        { text: this.criteriaType.sponsor_preferred_name, value: 'name', width: '30%' },
         { text: this.$t('EligibilityCriteriaTable.guidance_text'), value: 'guidanceText', width: '20%' },
         { text: this.$t('EligibilityCriteriaTable.key_criteria'), value: 'keyCriteria' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
-        { text: this.$t('_global.modified_by'), value: 'userInitials' }
+        { text: this.$t('_global.modified'), value: 'start_date' },
+        { text: this.$t('_global.modified_by'), value: 'user_initials' }
       ],
       selectedStudyCriteria: null,
       showEditForm: false,
@@ -262,8 +267,12 @@ export default {
     }
   },
   methods: {
+    async fetchAllCriteriaHistory () {
+      const resp = await study.getStudyCriteriaAllAuditTrail(this.selectedStudy.uid)
+      return this.transformItems(resp.data)
+    },
     actionsMenuBadge (item) {
-      if (!item.criteria && item.criteriaTemplate.parameters.length > 0) {
+      if (!item.criteria && item.criteria_template.parameters.length > 0) {
         return {
           color: 'error',
           icon: 'mdi-exclamation'
@@ -272,7 +281,7 @@ export default {
       return undefined
     },
     filterEditAction (item) {
-      if ((item.criteria && item.criteria.parameterValues.length > 0) || (item.criteriaTemplate && item.criteriaTemplate.parameters.length > 0)) {
+      if ((item.criteria && item.criteria.parameter_values.length > 0) || (item.criteria_template && item.criteria_template.parameters.length > 0)) {
         return this.actions
       } else {
         return this.actions.slice(1)
@@ -291,8 +300,10 @@ export default {
       this.selectedStudyCriteria = null
       this.showHistory = false
     },
-    openHistory (studyCriteria) {
+    async openHistory (studyCriteria) {
       this.selectedStudyCriteria = studyCriteria
+      const resp = await study.getStudyCriteriaAuditTrail(this.selectedStudy.uid, studyCriteria.study_criteria_uid)
+      this.criteriaHistoryItems = this.transformItems(resp.data)
       this.showHistory = true
     },
     editStudyCriteria (studyCriteria) {
@@ -301,18 +312,18 @@ export default {
     },
     async deleteStudyCriteria (studyCriteria) {
       const options = { type: 'warning' }
-      let criterion = (studyCriteria.criteriaTemplate) ? studyCriteria.criteriaTemplate.name : studyCriteria.criteria.name
+      let criterion = (studyCriteria.criteria_template) ? studyCriteria.criteria_template.name : studyCriteria.criteria.name
 
       criterion = criterion.replaceAll(/\[|\]/g, '')
       if (await this.$refs.confirm.open(this.$t('EligibilityCriteriaTable.confirm_delete', { criterion }), options)) {
-        await study.deleteStudyCriteria(this.selectedStudy.uid, studyCriteria.studyCriteriaUid)
+        await study.deleteStudyCriteria(this.selectedStudy.uid, studyCriteria.study_criteria_uid)
         this.getStudyCriteria()
         bus.$emit('notification', { msg: this.$t('EligibilityCriteriaTable.delete_success') })
       }
     },
     getStudyCriteria (sortByOrder) {
       study.getStudyCriteriaWithType(this.selectedStudy.uid, this.criteriaType).then(resp => {
-        this.criteria = resp.data.items
+        this.criteria = this.transformItems(resp.data.items)
         if (sortByOrder) {
           this.sortStudyCriteria()
         }
@@ -321,7 +332,7 @@ export default {
     onOrderChange (event) {
       const studyCriteria = event.moved.element
       const replacedStudyCriteria = this.criteria[event.moved.newIndex]
-      study.updateStudyCriteriaOrder(this.selectedStudy.uid, studyCriteria.studyCriteriaUid, replacedStudyCriteria.order).then(resp => {
+      study.updateStudyCriteriaOrder(this.selectedStudy.uid, studyCriteria.study_criteria_uid, replacedStudyCriteria.order).then(resp => {
         this.getStudyCriteria()
       })
     },
@@ -334,6 +345,21 @@ export default {
       study.updateStudyCriteriaKeyCriteria(this.selectedStudy.uid, studyCriteriaUid, value).then(resp => {
         this.getStudyCriteria()
       })
+    },
+    transformItems (items) {
+      const result = []
+      for (const item of items) {
+        const newItem = { ...item }
+        if (newItem.criteria_template) {
+          newItem.name = item.criteria_template.name
+          newItem.guidance_text = item.criteria_template.guidance_text
+        } else {
+          newItem.name = item.criteria.name
+          newItem.guidance_text = item.criteria.guidance_text
+        }
+        result.push(newItem)
+      }
+      return result
     }
   },
   mounted () {

@@ -27,7 +27,7 @@ class CompoundDosing(ActivityInstance):
     ) -> "CompoundDosing":
 
         activity_subgroup_uids = [
-            find_activity_hierarchy_by_uid(activity_uid).concept_vo.activity_sub_group
+            find_activity_hierarchy_by_uid(activity_uid).concept_vo.activity_subgroup
             for activity_uid in activity_ar.concept_vo.activity_uids
         ]
         activity_group_uids = [
@@ -35,16 +35,16 @@ class CompoundDosing(ActivityInstance):
             for subgroup_uid in activity_subgroup_uids
         ]
 
-        sdtmVariable = cls._get_term_model(
+        sdtm_variable = cls._get_term_model(
             activity_ar.concept_vo, "sdtm_variable_uid", "sdtm_variable_name"
         )
-        sdtmSubcat = cls._get_term_model(
+        sdtm_subcat = cls._get_term_model(
             activity_ar.concept_vo, "sdtm_subcat_uid", "sdtm_subcat_name"
         )
-        sdtmCat = cls._get_term_model(
+        sdtm_cat = cls._get_term_model(
             activity_ar.concept_vo, "sdtm_cat_uid", "sdtm_cat_name"
         )
-        sdtmDomain = cls._get_term_model(
+        sdtm_domain = cls._get_term_model(
             activity_ar.concept_vo, "sdtm_domain_uid", "sdtm_domain_name"
         )
 
@@ -52,16 +52,16 @@ class CompoundDosing(ActivityInstance):
             uid=activity_ar.uid,
             type=activity_ar.concept_vo.activity_type,
             name=activity_ar.name,
-            nameSentenceCase=activity_ar.concept_vo.name_sentence_case,
+            name_sentence_case=activity_ar.concept_vo.name_sentence_case,
             definition=activity_ar.concept_vo.definition,
             abbreviation=activity_ar.concept_vo.abbreviation,
-            topicCode=activity_ar.concept_vo.topic_code,
-            adamParamCode=activity_ar.concept_vo.adam_param_code,
-            legacyDescription=activity_ar.concept_vo.legacy_description,
-            sdtmVariable=sdtmVariable,
-            sdtmSubcat=sdtmSubcat,
-            sdtmCat=sdtmCat,
-            sdtmDomain=sdtmDomain,
+            topic_code=activity_ar.concept_vo.topic_code,
+            adam_param_code=activity_ar.concept_vo.adam_param_code,
+            legacy_description=activity_ar.concept_vo.legacy_description,
+            sdtm_variable=sdtm_variable,
+            sdtm_subcat=sdtm_subcat,
+            sdtm_cat=sdtm_cat,
+            sdtm_domain=sdtm_domain,
             activities=sorted(
                 [
                     ActivityHierarchySimpleModel.from_activity_uid(
@@ -72,7 +72,7 @@ class CompoundDosing(ActivityInstance):
                 ],
                 key=lambda item: item.name,
             ),
-            activitySubgroups=sorted(
+            activity_subgroups=sorted(
                 [
                     ActivityHierarchySimpleModel.from_activity_uid(
                         uid=activity_subgroup,
@@ -82,7 +82,7 @@ class CompoundDosing(ActivityInstance):
                 ],
                 key=lambda item: item.name,
             ),
-            activityGroups=sorted(
+            activity_groups=sorted(
                 [
                     ActivityHierarchySimpleModel.from_activity_uid(
                         uid=activity_group,
@@ -92,14 +92,14 @@ class CompoundDosing(ActivityInstance):
                 ],
                 key=lambda item: item.name,
             ),
-            libraryName=Library.from_library_vo(activity_ar.library).name,
-            startDate=activity_ar.item_metadata.start_date,
-            endDate=activity_ar.item_metadata.end_date,
+            library_name=Library.from_library_vo(activity_ar.library).name,
+            start_date=activity_ar.item_metadata.start_date,
+            end_date=activity_ar.item_metadata.end_date,
             status=activity_ar.item_metadata.status.value,
             version=activity_ar.item_metadata.version,
-            changeDescription=activity_ar.item_metadata.change_description,
-            userInitials=activity_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=activity_ar.item_metadata.change_description,
+            user_initials=activity_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 [_.value for _ in activity_ar.get_possible_actions()]
             ),
             specimen=None,

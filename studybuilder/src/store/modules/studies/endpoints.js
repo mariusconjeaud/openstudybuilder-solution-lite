@@ -22,21 +22,23 @@ const mutations = {
   },
   UPDATE_STUDY_ENDPOINT (state, studyEndpoint) {
     state.studyEndpoints.filter((item, pos) => {
-      if (item.studyEndpointUid === studyEndpoint.studyEndpointUid) {
+      if (item.study_endpoint_uid === studyEndpoint.study_endpoint_uid) {
         Vue.set(state.studyEndpoints, pos, studyEndpoint)
       }
     })
   },
   REMOVE_STUDY_ENDPOINT (state, studyEndpointUid) {
     state.studyEndpoints = state.studyEndpoints.filter(function (item) {
-      return item.studyEndpointUid !== studyEndpointUid
+      return item.study_endpoint_uid !== studyEndpointUid
     })
   }
 }
 
 const actions = {
   fetchStudyEndpoints ({ commit }, data) {
-    return study.getStudyEndpoints(data.studyUid, data).then(resp => {
+    const studyUid = data.studyUid
+    delete data.studyUid
+    return study.getStudyEndpoints(studyUid, data).then(resp => {
       commit('SET_STUDY_ENDPOINTS', resp.data.items)
       return resp
     })
@@ -48,51 +50,53 @@ const actions = {
   async addStudyEndpoint ({ commit, dispatch }, { studyUid, data, endpointParameters, timeframeParameters }) {
     // Create endpoint
     const endpointData = {
-      endpointTemplateUid: data.endpointTemplate.uid,
-      libraryName: data.endpointTemplate.library.name,
-      parameterValues: await instances.formatParameterValues(endpointParameters)
+      endpoint_template_uid: data.endpoint_template.uid,
+      library_name: data.endpoint_template.library.name,
+      parameter_values: await instances.formatParameterValues(endpointParameters)
     }
-    data.endpointData = endpointData
-    delete data.endpointTemplate
+    data.endpoint_data = endpointData
+    delete data.endpoint_template
 
-    if (data.timeframeTemplate) {
-      // Create timeframe
+    if (data.timeframe_template) {
+      // Create timeframe if a timeframe with specified name does not exist
       const timeframe = {
-        timeframeTemplateUid: data.timeframeTemplate.uid,
-        libraryName: data.timeframeTemplate.library.name,
-        parameterValues: await instances.formatParameterValues(timeframeParameters)
+        timeframe_template_uid: data.timeframe_template.uid,
+        library_name: data.timeframe_template.library.name,
+        parameter_values: await instances.formatParameterValues(timeframeParameters)
       }
-      const timeframeTemplate = data.timeframeTemplate
-      delete data.timeframeTemplate
+      const timeframeTemplate = data.timeframe_template
+      delete data.timeframe_template
       try {
+        // Search for an existing timeframe by name
         const searchName = utils.getInternalApiName(timeframeTemplate.name, timeframeParameters)
         const response = await timeframes.getObjectByName(searchName)
-        data.timeframeUid = response.data.uid
+        data.timeframe_uid = response.data.items[0].uid
       } catch (error) {
+        // Create timeframe since a timeframe with specified name does not exist
         const response = await timeframes.create(timeframe)
-        data.timeframeUid = response.data.uid
+        data.timeframe_uid = response.data.uid
         try {
-          await timeframes.approve(data.timeframeUid)
+          await timeframes.approve(data.timeframe_uid)
         } catch (error) {
           // Do some cleanup
-          await timeframes.deleteObject(data.timeframeUid)
+          await timeframes.deleteObject(data.timeframe_uid)
           throw error
         }
       }
     }
 
-    if (data.studyObjective) {
-      data.studyObjectiveUid = data.studyObjective.studyObjectiveUid
-      delete data.studyObjective
+    if (data.study_objective) {
+      data.study_objective_uid = data.study_objective.study_objective_uid
+      delete data.study_objective
     }
 
-    if (data.endpointLevel) {
-      data.endpointLevelUid = data.endpointLevel.termUid
-      delete data.endpointLevel
+    if (data.endpoint_level) {
+      data.endpoint_level_uid = data.endpoint_level.term_uid
+      delete data.endpoint_level
     }
-    if (data.endpointSubLevel) {
-      data.endpointSubLevelUid = data.endpointSubLevel.termUid
-      delete data.endpointSubLevel
+    if (data.endpoint_sublevel) {
+      data.endpoint_sublevel_uid = data.endpoint_sublevel.term_uid
+      delete data.endpoint_sublevel
     }
 
     return study.createStudyEndpoint(studyUid, data).then(resp => {
@@ -102,18 +106,18 @@ const actions = {
   },
   selectFromStudyEndpoint ({ commit }, { studyUid, form, studyEndpoint }) {
     const data = {
-      studyObjectiveUid: form.studyObjective.studyObjectiveUid,
-      endpointUid: studyEndpoint.endpoint.uid,
-      endpointUnits: studyEndpoint.endpointUnits
+      study_objective_uid: form.study_objective.study_objective_uid,
+      endpoint_uid: studyEndpoint.endpoint.uid,
+      endpoint_units: studyEndpoint.endpoint_units
     }
     if (studyEndpoint.timeframe) {
-      data.timeframeUid = studyEndpoint.timeframe.uid
+      data.timeframe_uid = studyEndpoint.timeframe.uid
     }
-    if (form.endpointLevel) {
-      data.endpointLevelUid = form.endpointLevel.termUid
+    if (form.endpoint_level) {
+      data.endpoint_level_uid = form.endpoint_level.term_uid
     }
-    if (form.endpointSubLevel) {
-      data.endpointSubLevelUid = form.endpointSubLevel.termUid
+    if (form.endpoint_sublevel) {
+      data.endpoint_sublevel_uid = form.endpoint_sublevel.term_uid
     }
     return study.selectStudyEndpoint(studyUid, data).then(resp => {
       commit('ADD_STUDY_ENDPOINT', resp.data)
@@ -121,61 +125,63 @@ const actions = {
   },
   async updateStudyEndpoint ({ commit, dispatch }, { studyUid, studyEndpointUid, form }) {
     const data = {
-      endpointUnits: form.endpointUnits
+      endpoint_units: form.endpoint_units
     }
-    if (form.studyObjective) {
-      data.studyObjectiveUid = form.studyObjective.studyObjectiveUid
+    if (form.study_objective) {
+      data.study_objective_uid = form.study_objective.study_objective_uid
     } else {
-      data.studyObjectiveUid = null
+      data.study_objective_uid = null
     }
-    if (form.endpointLevel) {
-      data.endpointLevelUid = form.endpointLevel.termUid
+    if (form.endpoint_level) {
+      data.endpoint_level_uid = form.endpoint_level.term_uid
     }
-    if (form.endpointSubLevel) {
-      data.endpointSubLevelUid = form.endpointSubLevel.termUid
+    if (form.endpoint_sublevel) {
+      data.endpoint_sublevel_uid = form.endpoint_sublevel.term_uid
     }
-    if (form.endpointParameters !== undefined) {
+    if (form.endpoint_parameters !== undefined) {
       try {
-        const searchName = utils.getInternalApiName(form.endpointTemplate.name, form.endpointParameters)
+        // Search for an existing endpoint by name
+        const searchName = utils.getInternalApiName(form.endpoint_template.name, form.endpoint_parameters)
         const response = await endpoints.getObjectByName(searchName)
-        data.endpointUid = response.data.uid
+        data.endpoint_uid = response.data.items[0].uid
       } catch (error) {
-        // Create endpoint
+        // Create endpoint since an endpoint with specified name does not exist
         const endpoint = {
-          endpointTemplateUid: form.endpointTemplate.uid,
-          libraryName: form.endpointTemplate.library.name,
-          parameterValues: await instances.formatParameterValues(form.endpointParameters)
+          endpoint_template_uid: form.endpoint_template.uid,
+          library_name: form.endpoint_template.library.name,
+          parameter_values: await instances.formatParameterValues(form.endpoint_parameters)
         }
         const resp = await endpoints.create(endpoint)
-        data.endpointUid = resp.data.uid
+        data.endpoint_uid = resp.data.uid
         try {
           await endpoints.approve(resp.data.uid)
         } catch (error) {
           // Do some cleanup
-          await endpoints.deleteObject(data.endpointUid)
+          await endpoints.deleteObject(data.endpoint_uid)
           throw error
         }
       }
     }
-    if (form.timeframeParameters !== undefined) {
+    if (form.timeframe_parameters !== undefined) {
       try {
-        const searchName = utils.getInternalApiName(form.timeframeTemplate.name, form.timeframeParameters)
+        // Search for an existing timeframe by name
+        const searchName = utils.getInternalApiName(form.timeframe_template.name, form.timeframe_parameters)
         const response = await timeframes.getObjectByName(searchName)
-        data.timeframeUid = response.data.uid
+        data.timeframe_uid = response.data.items[0].uid
       } catch (error) {
-        // Create timeframe
+        // Create timeframe since a timeframe with specified name does not exist
         const timeframe = {
-          timeframeTemplateUid: form.timeframeTemplate.uid,
-          libraryName: form.timeframeTemplate.library.name,
-          parameterValues: await instances.formatParameterValues(form.timeframeParameters)
+          timeframe_template_uid: form.timeframe_template.uid,
+          library_name: form.timeframe_template.library.name,
+          parameter_values: await instances.formatParameterValues(form.timeframe_parameters)
         }
         const resp = await timeframes.create(timeframe)
-        data.timeframeUid = resp.data.uid
+        data.timeframe_uid = resp.data.uid
         try {
           await timeframes.approve(resp.data.uid)
         } catch (error) {
           // Do some cleanup
-          await timeframes.deleteObject(data.timeframeUid)
+          await timeframes.deleteObject(data.timeframe_uid)
           throw error
         }
       }

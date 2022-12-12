@@ -8,7 +8,6 @@ Tests for /concepts/compounds endpoints
 
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
-
 import json
 import logging
 from functools import reduce
@@ -67,16 +66,16 @@ def test_data():
     global half_life
 
     # Create CT Terms
-    ct_term_dosage = TestUtils.create_ct_term(sponsorPreferredName="dosage_form_1")
+    ct_term_dosage = TestUtils.create_ct_term(sponsor_preferred_name="dosage_form_1")
     ct_term_delivery_device = TestUtils.create_ct_term(
-        sponsorPreferredName="delivery_device_1"
+        sponsor_preferred_name="delivery_device_1"
     )
     ct_term_dose_frequency = TestUtils.create_ct_term(
-        sponsorPreferredName="dose_frequency_1"
+        sponsor_preferred_name="dose_frequency_1"
     )
-    ct_term_dispenser = TestUtils.create_ct_term(sponsorPreferredName="dispenser_1")
+    ct_term_dispenser = TestUtils.create_ct_term(sponsor_preferred_name="dispenser_1")
     ct_term_roa = TestUtils.create_ct_term(
-        sponsorPreferredName="route_of_administration_1"
+        sponsor_preferred_name="route_of_administration_1"
     )
 
     # Create Numeric values with unit
@@ -100,17 +99,17 @@ def test_data():
     compounds_all.append(
         TestUtils.create_compound(
             name="Compound A",
-            dosageFormUids=[ct_term_dosage.termUid],
-            deliveryDevicesUids=[ct_term_delivery_device.termUid],
-            dispensersUids=[ct_term_dispenser.termUid],
-            routeOfAdministrationUids=[ct_term_roa.termUid],
-            strengthValuesUids=[strength_value.uid],
-            doseFrequencyUids=[ct_term_dose_frequency.termUid],
-            doseValuesUids=[dose_value.uid],
-            lagTimesUids=[lag_time.uid],
-            halfLifeUid=half_life.uid,
-            substanceTermsUids=[],
-            brandsUids=[brands[0].uid, brands[1].uid],
+            dosage_form_uids=[ct_term_dosage.term_uid],
+            delivery_devices_uids=[ct_term_delivery_device.term_uid],
+            dispensers_uids=[ct_term_dispenser.term_uid],
+            route_of_administration_uids=[ct_term_roa.term_uid],
+            strength_values_uids=[strength_value.uid],
+            dose_frequency_uids=[ct_term_dose_frequency.term_uid],
+            dose_values_uids=[dose_value.uid],
+            lag_times_uids=[lag_time.uid],
+            half_life_uid=half_life.uid,
+            substance_terms_uids=[],
+            brands_uids=[brands[0].uid, brands[1].uid],
         )
     )
 
@@ -129,40 +128,37 @@ def test_data():
 COMPOUND_FIELDS_ALL = [
     "uid",
     "name",
-    "nameSentenceCase",
+    "name_sentence_case",
     "definition",
     "abbreviation",
-    "libraryName",
-    "startDate",
-    "endDate",
+    "library_name",
+    "start_date",
+    "end_date",
     "status",
     "version",
-    "changeDescription",
-    "userInitials",
-    "possibleActions",
-    "analyteNumber",
-    "nncShortNumber",
-    "nncLongNumber",
-    "isSponsorCompound",
-    "isNameInn",
+    "change_description",
+    "user_initials",
+    "possible_actions",
+    "analyte_number",
+    "nnc_short_number",
+    "nnc_long_number",
+    "is_sponsor_compound",
+    "is_name_inn",
     "substances",
-    "doseValues",
-    "strengthValues",
-    "lagTimes",
-    "deliveryDevices",
+    "dose_values",
+    "strength_values",
+    "lag_times",
+    "delivery_devices",
     "dispensers",
     "projects",
     "brands",
-    "halfLife",
-    "doseFrequencies",
-    "dosageForms",
-    "routesOfAdministration",
+    "half_life",
+    "dose_frequencies",
+    "dosage_forms",
+    "routes_of_administration",
 ]
 
-COMPOUND_FIELDS_NOT_NULL = [
-    "uid",
-    "name",
-]
+COMPOUND_FIELDS_NOT_NULL = ["uid", "name", "start_date"]
 
 
 def test_get_compound(api_client):
@@ -172,7 +168,7 @@ def test_get_compound(api_client):
     assert response.status_code == 200
 
     # Check fields included in the response
-    assert list(res.keys()) == COMPOUND_FIELDS_ALL
+    assert set(list(res.keys())) == set(COMPOUND_FIELDS_ALL)
     for key in COMPOUND_FIELDS_NOT_NULL:
         assert res[key] is not None
 
@@ -180,54 +176,77 @@ def test_get_compound(api_client):
     assert res["name"] == "Compound A"
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
-    assert list(res["possibleActions"]) == ["approve", "delete", "edit"]
-    assert res["doseValues"][0]["uid"] == dose_value.uid
-    assert res["doseValues"][0]["value"] == dose_value.value
-    assert res["doseValues"][0]["unitDefinitionUid"] == dose_value.unitDefinitionUid
-    assert res["doseValues"][0]["unitLabel"] == "mg"
-    assert res["strengthValues"][0]["uid"] == strength_value.uid
-    assert res["strengthValues"][0]["value"] == strength_value.value
+    assert list(res["possible_actions"]) == ["approve", "delete", "edit"]
+    assert res["dose_values"][0]["uid"] == dose_value.uid
+    assert res["dose_values"][0]["value"] == dose_value.value
     assert (
-        res["strengthValues"][0]["unitDefinitionUid"]
-        == strength_value.unitDefinitionUid
+        res["dose_values"][0]["unit_definition_uid"] == dose_value.unit_definition_uid
     )
-    assert res["strengthValues"][0]["unitLabel"] == "mg/mL"
-    assert res["deliveryDevices"][0]["termUid"] == ct_term_delivery_device.termUid
+    assert res["dose_values"][0]["unit_label"] == "mg"
+    assert res["strength_values"][0]["uid"] == strength_value.uid
+    assert res["strength_values"][0]["value"] == strength_value.value
     assert (
-        res["deliveryDevices"][0]["name"]
-        == ct_term_delivery_device.sponsorPreferredName
+        res["strength_values"][0]["unit_definition_uid"]
+        == strength_value.unit_definition_uid
     )
-    assert res["doseFrequencies"][0]["termUid"] == ct_term_dose_frequency.termUid
+    assert res["strength_values"][0]["unit_label"] == "mg/mL"
+    assert res["delivery_devices"][0]["term_uid"] == ct_term_delivery_device.term_uid
     assert (
-        res["doseFrequencies"][0]["name"] == ct_term_dose_frequency.sponsorPreferredName
+        res["delivery_devices"][0]["name"]
+        == ct_term_delivery_device.sponsor_preferred_name
     )
-    assert res["dosageForms"][0]["termUid"] == ct_term_dosage.termUid
-    assert res["dosageForms"][0]["name"] == ct_term_dosage.sponsorPreferredName
-    assert res["dispensers"][0]["termUid"] == ct_term_dispenser.termUid
-    assert res["dispensers"][0]["name"] == ct_term_dispenser.sponsorPreferredName
-    assert res["routesOfAdministration"][0]["termUid"] == ct_term_roa.termUid
-    assert res["routesOfAdministration"][0]["name"] == ct_term_roa.sponsorPreferredName
+    assert res["dose_frequencies"][0]["term_uid"] == ct_term_dose_frequency.term_uid
+    assert (
+        res["dose_frequencies"][0]["name"]
+        == ct_term_dose_frequency.sponsor_preferred_name
+    )
+    assert res["dosage_forms"][0]["term_uid"] == ct_term_dosage.term_uid
+    assert res["dosage_forms"][0]["name"] == ct_term_dosage.sponsor_preferred_name
+    assert res["dispensers"][0]["term_uid"] == ct_term_dispenser.term_uid
+    assert res["dispensers"][0]["name"] == ct_term_dispenser.sponsor_preferred_name
+    assert res["routes_of_administration"][0]["term_uid"] == ct_term_roa.term_uid
+    assert (
+        res["routes_of_administration"][0]["name"] == ct_term_roa.sponsor_preferred_name
+    )
     assert res["brands"][0]["uid"] == "Brand_000001"
     assert res["brands"][0]["name"] == "Brand A"
     assert res["brands"][1]["uid"] == "Brand_000002"
     assert res["brands"][1]["name"] == "Brand B"
-    assert res["lagTimes"][0]["unitDefinitionUid"] is not None
-    assert res["lagTimes"][0]["sdtmDomainUid"] is not None
-    assert res["lagTimes"][0]["value"] == 7
-    assert res["lagTimes"][0]["unitLabel"] == "days"
-    assert res["lagTimes"][0]["sdtmDomainLabel"] == "Adverse Event Domain"
-    assert res["halfLife"]["value"] == 8
-    assert res["halfLife"]["unitLabel"] == "hours"
-    assert res["halfLife"]["uid"] is not None
+    assert res["lag_times"][0]["unit_definition_uid"] is not None
+    assert res["lag_times"][0]["sdtm_domain_uid"] is not None
+    assert res["lag_times"][0]["value"] == 7
+    assert res["lag_times"][0]["unit_label"] == "days"
+    assert res["lag_times"][0]["sdtm_domain_label"] == "Adverse Event Domain"
+    assert res["half_life"]["value"] == 8
+    assert res["half_life"]["unit_label"] == "hours"
+    assert res["half_life"]["uid"] is not None
+    TestUtils.assert_timestamp_is_in_utc_zone(res["start_date"])
+    TestUtils.assert_timestamp_is_newer_than(res["start_date"], 60)
+
+
+def test_update_compound(api_client):
+    payload = {
+        "name": f"{compounds_all[0].name}-updated",
+        "change_description": "name updated",
+    }
+    response = api_client.patch(
+        f"/concepts/compounds/{compounds_all[0].uid}",
+        data=json.dumps(payload),
+        headers={"content-type": "application/json"},
+    )
+    res = response.json()
+
+    assert response.status_code == 200
+
+    TestUtils.assert_timestamp_is_in_utc_zone(res["start_date"])
+    TestUtils.assert_timestamp_is_newer_than(res["start_date"], 60)
 
 
 def test_get_compounds_pagination(api_client):
     results_paginated: dict = {}
     sort_by = '{"name": true}'
     for page_number in range(1, 4):
-        url = (
-            f"/concepts/compounds?pageNumber={page_number}&pageSize=10&sortBy={sort_by}"
-        )
+        url = f"/concepts/compounds?page_number={page_number}&page_size=10&sort_by={sort_by}"
         response = api_client.get(url)
         res = response.json()
         res_names = list(map(lambda x: x["name"], res["items"]))
@@ -242,7 +261,7 @@ def test_get_compounds_pagination(api_client):
     log.info("All unique rows returned by pagination: %s", results_paginated_merged)
 
     res_all = api_client.get(
-        f"/concepts/compounds?pageNumber=1&pageSize=100&sortBy={sort_by}"
+        f"/concepts/compounds?page_number=1&page_size=100&sort_by={sort_by}"
     ).json()
     results_all_in_one_page = list(map(lambda x: x["name"], res_all["items"]))
     log.info("All rows in one page: %s", results_all_in_one_page)
@@ -253,7 +272,7 @@ def test_get_compounds_pagination(api_client):
 @pytest.mark.parametrize(
     "page_size, page_number, total_count, sort_by, expected_result_len",
     [
-        pytest.param(None, None, None, None, 25),
+        pytest.param(None, None, None, None, 10),
         pytest.param(3, 1, True, None, 3),
         pytest.param(3, 2, True, None, 3),
         pytest.param(10, 2, True, None, 10),
@@ -268,13 +287,13 @@ def test_get_compounds(
     url = "/concepts/compounds"
     query_params = []
     if page_size:
-        query_params.append(f"pageSize={page_size}")
+        query_params.append(f"page_size={page_size}")
     if page_number:
-        query_params.append(f"pageNumber={page_number}")
+        query_params.append(f"page_number={page_number}")
     if total_count:
-        query_params.append(f"totalCount={total_count}")
+        query_params.append(f"total_count={total_count}")
     if sort_by:
-        query_params.append(f"sortBy={sort_by}")
+        query_params.append(f"sort_by={sort_by}")
 
     if query_params:
         url = f"{url}?{'&'.join(query_params)}"
@@ -290,25 +309,26 @@ def test_get_compounds(
     assert len(res["items"]) == expected_result_len
     assert res["total"] == (len(compounds_all) if total_count else 0)
     assert res["page"] == (page_number if page_number else 1)
-    assert res["size"] == (page_size if page_size else 0)
+    assert res["size"] == (page_size if page_size else 10)
 
     for item in res["items"]:
-        assert list(item.keys()) == COMPOUND_FIELDS_ALL
+        assert set(list(item.keys())) == set(COMPOUND_FIELDS_ALL)
         for key in COMPOUND_FIELDS_NOT_NULL:
             assert item[key] is not None
+        TestUtils.assert_timestamp_is_in_utc_zone(item["start_date"])
+        TestUtils.assert_timestamp_is_newer_than(item["start_date"], 60)
 
     if sort_by:
-        # sort_by is JSON string in the form: {"sortFieldName": isAscendingOrder}
+        # sort_by is JSON string in the form: {"sort_field_name": is_ascending_order}
         sort_by_dict = json.loads(sort_by)
         sort_field: str = list(sort_by_dict.keys())[0]
         sort_order_ascending: bool = list(sort_by_dict.values())[0]
 
-        # extract list of values of 'sortFieldName' field from the returned result
+        # extract list of values of 'sort_field_name' field from the returned result
         result_vals = list(map(lambda x: x[sort_field], res["items"]))
         result_vals_sorted_locally = result_vals.copy()
         result_vals_sorted_locally.sort(reverse=not sort_order_ascending)
-        # This asser fails due to API issue with sorting coupled with pagination
-        # assert result_vals == result_vals_sorted_locally
+        assert result_vals == result_vals_sorted_locally
 
 
 @pytest.mark.parametrize(
@@ -370,9 +390,9 @@ def test_filtering_exact(
         pytest.param("/ct/terms", 20, '{"term_uid": true}'),
         pytest.param("/ct/terms/names", 20, '{"term_uid": true}'),
         pytest.param("/ct/terms/attributes", 20, '{"term_uid": true}'),
-        pytest.param("/ct/terms", 20, '{"codelistUid": true}'),
-        pytest.param("/ct/terms/names", 20, '{"sponsorPreferredName": true}'),
-        pytest.param("/ct/terms/attributes", 20, '{"codeSubmissionValue": true}'),
+        pytest.param("/ct/terms", 20, '{"codelist_uid": true}'),
+        pytest.param("/ct/terms/names", 20, '{"sponsor_preferred_name": true}'),
+        pytest.param("/ct/terms/attributes", 20, '{"code_submission_value": true}'),
         pytest.param("/ct/terms", 20, '{"term_uid": false}'),
         pytest.param("/ct/terms/names", 20, '{"term_uid": false}'),
         pytest.param("/ct/terms/attributes", 20, '{"term_uid": false}'),
@@ -381,12 +401,10 @@ def test_filtering_exact(
 def test_get_ct_terms_pagination(api_client, base_url, page_size, sort_by):
     results_paginated: dict = {}
     for page_number in range(1, 4):
-        url = (
-            f"{base_url}?pageNumber={page_number}&pageSize={page_size}&sortBy={sort_by}"
-        )
+        url = f"{base_url}?page_number={page_number}&page_size={page_size}&sort_by={sort_by}"
         response = api_client.get(url)
         res = response.json()
-        res_names = list(map(lambda x: x["termUid"], res["items"]))
+        res_names = list(map(lambda x: x["term_uid"], res["items"]))
         results_paginated[page_number] = res_names
         log.info("Page %s: %s", page_number, res_names)
 
@@ -396,8 +414,8 @@ def test_get_ct_terms_pagination(api_client, base_url, page_size, sort_by):
     log.info("All unique rows returned by pagination: %s", results_paginated_merged)
 
     res_all = api_client.get(
-        f"{base_url}?pageNumber=1&pageSize=100&sortBy={sort_by}"
+        f"{base_url}?page_number=1&page_size=100&sort_by={sort_by}"
     ).json()
-    results_all_in_one_page = list(map(lambda x: x["termUid"], res_all["items"]))
+    results_all_in_one_page = list(map(lambda x: x["term_uid"], res_all["items"]))
     log.info("All rows in one page: %s", results_all_in_one_page)
     assert len(results_all_in_one_page) == len(results_paginated_merged)

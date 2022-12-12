@@ -5,7 +5,7 @@ from fastapi import APIRouter, Body, Depends, Path, Query
 from pydantic.types import Json
 from starlette.requests import Request
 
-from clinical_mdr_api import models
+from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id
@@ -24,6 +24,7 @@ DictionaryCodelistLibrary = Path(
     None,
     description="The Library from which the dictionaries codelists should be retrieved",
 )
+TermUID = Path(None, description="The unique id of the Codelist Term")
 
 
 @router.get(
@@ -48,12 +49,12 @@ Possible errors:
 @decorators.allow_exports(
     {
         "defaults": [
-            "dictionaryId",
+            "dictionary_id",
             "name",
-            "nameSentenceCase",
+            "name_sentence_case",
             "abbreviation",
             "definition",
-            "startDate",
+            "start_date",
             "status",
             "version",
         ],
@@ -69,18 +70,20 @@ Possible errors:
 def get_codelists(
     request: Request,  # request is actually required by the allow_exports decorator
     library: str = DictionaryCodelistLibrary,
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -88,15 +91,15 @@ def get_codelists(
     dictionary_codelist_service = DictionaryCodelistGenericService(user=current_user_id)
     results = dictionary_codelist_service.get_all_dictionary_codelists(
         library=library,
-        sort_by=sortBy,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -118,8 +121,8 @@ def get_codelists(
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
     library: str = DictionaryCodelistLibrary,
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -128,18 +131,18 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     dictionary_codelist_service = DictionaryCodelistGenericService(user=current_user_id)
     return dictionary_codelist_service.get_distinct_values_for_header(
         library=library,
-        field_name=fieldName,
-        search_string=searchString,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
@@ -211,17 +214,17 @@ def get_codelist(
     summary="List version history for a dictionary codelist",
     description="""
 State before:
- - codelistuid must exist.
+ - codelist_uid must exist.
  
 Business logic:
  - List version history for the representation of the dictionary codelist, including the use as template parameter.
- - The returned versions are ordered by startDate descending (newest entries first).
+ - The returned versions are ordered by start_date descending (newest entries first).
  
 State after:
  - No change
  
 Possible errors:
- - Invalid codelistuid.
+ - Invalid codelist_uid.
     """,
     response_model=List[models.DictionaryCodelistVersion],
     status_code=200,
@@ -246,10 +249,10 @@ def get_versions(
     summary=" Update name or template parameter flag for dictionary codelist",
     description="""
 State before:
- - codelistuid must exist and the dictionary codelist must exist in status draft.
+ - codelist_uid must exist and the dictionary codelist must exist in status draft.
  
 Business logic:
- - If the dictionary codelist related to codelistuid exist in status draft then name attribute and Template Parameter node label are updated.
+ - If the dictionary codelist related to codelist_uid exist in status draft then name attribute and Template Parameter node label are updated.
  - If Template Parameter have been set to 'Y' then it cannot be set back to 'N' (i.e. when the Template Parameter node label have been added it cannot be removed).
  
 State after:
@@ -257,7 +260,7 @@ State after:
  - Audit trail entry must be made with update of name attribute or Template Parameter flag.
  
 Possible errors:
- - Invalid codelistuid.
+ - Invalid codelist_uid.
 """,
     response_model=models.DictionaryCodelist,
     status_code=200,
@@ -272,7 +275,7 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The codelist with the specified 'codelistuid' wasn't found.",
+            "description": "Not Found - The codelist with the specified 'codelist_uid' wasn't found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
@@ -292,24 +295,24 @@ def edit(
 
 
 @router.post(
-    "/codelists/{uid}/new-version",
+    "/codelists/{uid}/versions",
     summary=" Create a new version of the dictionary codelist",
     description="""
 State before:
- - codelistuid must exist and the dictionary codelist must be in status Final.
+ - codelist_uid must exist and the dictionary codelist must be in status Final.
  
 Business logic:
  - The latest 'Final' version will remain the same as before.
  - The status of the new created version will be automatically set to 'Draft'.
  - The 'version' property of the new version will be automatically set to the version of the latest 'Final' or 'Retired' version increased by +0.1.
- - The 'changeDescription' property will be set automatically to 'New version'.
+ - The 'change_description' property will be set automatically to 'New version'.
  
 State after:
  - Dictionary codelist changed status to Draft and assigned a new minor version number.
  - Audit trail entry must be made with action of creating new Draft version.
  
 Possible errors:
- - Invalid codelistuid or status not Final.
+ - Invalid codelist_uid or status not Final.
  
 """,
     response_model=models.DictionaryCodelist,
@@ -345,20 +348,20 @@ def create_new_version(
     summary="Approve draft version of the dictionary codelist",
     description="""
 State before:
- - codelistuid must exist and the dictionary codelist must be in status Draft.
+ - codelist_uid must exist and the dictionary codelist must be in status Draft.
  
 Business logic:
  - The latest 'Draft' version will remain the same as before.
  - The status of the new approved version will be automatically set to 'Final'.
  - The 'version' property of the new version will be automatically set to the version of the latest 'Final' version increased by +1.0.
- - The 'changeDescription' property will be set automatically 'Approved version'.
+ - The 'change_description' property will be set automatically 'Approved version'.
  
 State after:
  - Dictionary codelist changed status to Final and assigned a new major version number.
  - Audit trail entry must be made with action of approving to new Final version.
  
 Possible errors:
- - Invalid codelistuid or status not Draft.
+ - Invalid codelist_uid or status not Draft.
     """,
     response_model=models.DictionaryCodelist,
     status_code=201,
@@ -372,7 +375,7 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The codelist with the specified 'codelistuid' wasn't found.",
+            "description": "Not Found - The codelist with the specified 'codelist_uid' wasn't found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
@@ -386,19 +389,18 @@ def approve(
 
 
 @router.post(
-    "/codelists/{uid}/add-term",
+    "/codelists/{uid}/terms",
     summary=" Attaches a dictionary term to a dictionary codelist",
     description="""
 State before:
- - codelistuid must exist.
- - termUid must exist.
+ - Codelist identified by uid must exist.
 
 Business logic:
  - Create a HAS_TERM relationship between the selected codelist root and the selected term root, with the current date and current user.
 
 Possible errors:
- - Invalid codelistuid.
--  Invalid termuid.
+ - Invalid codelist_uid.
+-  Invalid term_uid.
 -  Codelist with {uid} is not extensible.
 - Term is already part of the specified codelist.""",
     response_model=models.DictionaryCodelist,
@@ -428,18 +430,18 @@ def add_term(
 ):
     dictionary_codelist_service = DictionaryCodelistGenericService(user=current_user_id)
     return dictionary_codelist_service.add_term(
-        codelist_uid=uid, term_uid=term_input.termUid
+        codelist_uid=uid, term_uid=term_input.term_uid
     )
 
 
-@router.post(
-    "/codelists/{uid}/remove-term",
+@router.delete(
+    "/codelists/{codelist_uid}/terms/{term_uid}",
     summary="Removes a dictionary term from a dictionary codelist",
     description="""
 State before:
- - codelistuid must exist.
- - termUid must exist.
- - the codelist contains the term that is removed.
+ - Codelist identified by codelist_uid must exist.
+ - Term identified by term_uid must exist.
+ - Codelist contains the term that is being removed.
 
 
 Business logic:
@@ -447,8 +449,8 @@ Business logic:
  - Remove the old HAS_TERM relationship between the codelist and the term.
 
 Possible errors:
- - Invalid codelistuid.
- - Invalid termuid.
+ - Invalid codelist_uid.
+ - Invalid term_uid.
 - Term is not part of the specified codelist. """,
     response_model=models.DictionaryCodelist,
     status_code=201,
@@ -470,13 +472,11 @@ Possible errors:
     },
 )
 def remove_term(
-    uid: str = DictionaryCodelistUID,
-    term_input: models.DictionaryCodelistTermInput = Body(
-        None, description="UID of the DictionaryTermRoot node."
-    ),
+    codelist_uid: str = DictionaryCodelistUID,
+    term_uid: str = TermUID,
     current_user_id: str = Depends(get_current_user_id),
 ):
     dictionary_codelist_service = DictionaryCodelistGenericService(user=current_user_id)
     return dictionary_codelist_service.remove_term(
-        codelist_uid=uid, term_uid=term_input.termUid
+        codelist_uid=codelist_uid, term_uid=term_uid
     )

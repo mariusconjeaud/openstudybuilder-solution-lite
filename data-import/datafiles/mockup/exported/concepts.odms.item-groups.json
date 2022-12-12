@@ -1,8 +1,8 @@
 [
   {
-    "activitySubGroups": [],
+    "activity_subgroups": [],
     "aliases": [],
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "comment": "",
     "descriptions": [
       {
@@ -15,38 +15,38 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "isReferenceData": "No",
     "items": [],
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Informed Consent",
     "oid": "G.DM.IC",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "purpose": "Tabulation",
     "repeating": "No",
-    "sasDatasetName": "DEMOG",
-    "sdtmDomains": [
+    "sasDataset_name": "DEMOG",
+    "sdtm_domains": [
       {
-        "codeSubmissionValue": "DM",
+        "code_submission_value": "DM",
         "preferredTerm": "Demographics Domain",
         "uid": "C49572_DM"
       }
     ],
-    "startDate": "2022-10-18T13:18:44.587035",
+    "start_date": "2022-10-18T13:18:44.587035",
     "status": "Draft",
     "uid": "OdmItemGroup_000001",
-    "userInitials": "TODO user initials",
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
-    "activitySubGroups": [],
+    "activity_subgroups": [],
     "aliases": [],
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "comment": "",
     "descriptions": [
       {
@@ -59,38 +59,38 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "isReferenceData": "No",
     "items": [],
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "General Demography ",
     "oid": "G.DM.DM",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "purpose": "Tabulation",
     "repeating": "No",
-    "sasDatasetName": "DEMOG",
-    "sdtmDomains": [
+    "sasDataset_name": "DEMOG",
+    "sdtm_domains": [
       {
-        "codeSubmissionValue": "DM",
+        "code_submission_value": "DM",
         "preferredTerm": "Demographics Domain",
         "uid": "C49572_DM"
       }
     ],
-    "startDate": "2022-10-18T13:18:45.129403",
+    "start_date": "2022-10-18T13:18:45.129403",
     "status": "Draft",
     "uid": "OdmItemGroup_000002",
-    "userInitials": "TODO user initials",
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
-    "activitySubGroups": [],
+    "activity_subgroups": [],
     "aliases": [],
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "comment": "",
     "descriptions": [
       {
@@ -103,38 +103,38 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "isReferenceData": "No",
     "items": [],
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Any conditions / illnesses",
     "oid": "G.MH.NS",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "purpose": "Tabulation",
     "repeating": "No",
-    "sasDatasetName": "MEDHIS",
-    "sdtmDomains": [
+    "sasDataset_name": "MEDHIS",
+    "sdtm_domains": [
       {
-        "codeSubmissionValue": "MH",
+        "code_submission_value": "MH",
         "preferredTerm": "Medical History Domain",
         "uid": "C49603_MH"
       }
     ],
-    "startDate": "2022-10-18T13:18:45.392687",
+    "start_date": "2022-10-18T13:18:45.392687",
     "status": "Draft",
     "uid": "OdmItemGroup_000003",
-    "userInitials": "TODO user initials",
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
-    "activitySubGroups": [],
+    "activity_subgroups": [],
     "aliases": [],
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "comment": "",
     "descriptions": [
       {
@@ -147,38 +147,38 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "isReferenceData": "No",
     "items": [],
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Medical History / Concomitant Illness",
     "oid": "G.MH.CM",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "purpose": "Tabulation",
     "repeating": "Yes",
-    "sasDatasetName": "MEDHIS",
-    "sdtmDomains": [
+    "sasDataset_name": "MEDHIS",
+    "sdtm_domains": [
       {
-        "codeSubmissionValue": "MH",
+        "code_submission_value": "MH",
         "preferredTerm": "Medical History Domain",
         "uid": "C49603_MH"
       }
     ],
-    "startDate": "2022-10-18T13:18:45.680232",
+    "start_date": "2022-10-18T13:18:45.680232",
     "status": "Draft",
     "uid": "OdmItemGroup_000004",
-    "userInitials": "TODO user initials",
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
-    "activitySubGroups": [],
+    "activity_subgroups": [],
     "aliases": [],
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "comment": "",
     "descriptions": [
       {
@@ -191,38 +191,38 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "isReferenceData": "No",
     "items": [],
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Vital Signs",
     "oid": "G.VS.VS",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "purpose": "Tabulation",
     "repeating": "Yes",
-    "sasDatasetName": "VITALSIGNS",
-    "sdtmDomains": [
+    "sasDataset_name": "VITALSIGNS",
+    "sdtm_domains": [
       {
-        "codeSubmissionValue": "VS",
+        "code_submission_value": "VS",
         "preferredTerm": "Vital Signs Domain",
         "uid": "C49622_VS"
       }
     ],
-    "startDate": "2022-10-18T13:18:45.965721",
+    "start_date": "2022-10-18T13:18:45.965721",
     "status": "Draft",
     "uid": "OdmItemGroup_000005",
-    "userInitials": "TODO user initials",
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
-    "activitySubGroups": [],
+    "activity_subgroups": [],
     "aliases": [],
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "comment": "",
     "descriptions": [
       {
@@ -235,38 +235,38 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "isReferenceData": "No",
     "items": [],
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Blood pressure and pulse",
     "oid": "G.VS.BPP",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "purpose": "Tabulation",
     "repeating": "No",
-    "sasDatasetName": "VITALSIGNSBPP",
-    "sdtmDomains": [
+    "sasDataset_name": "VITALSIGNSBPP",
+    "sdtm_domains": [
       {
-        "codeSubmissionValue": "VS",
+        "code_submission_value": "VS",
         "preferredTerm": "Vital Signs Domain",
         "uid": "C49622_VS"
       }
     ],
-    "startDate": "2022-10-18T13:18:46.293710",
+    "start_date": "2022-10-18T13:18:46.293710",
     "status": "Draft",
     "uid": "OdmItemGroup_000006",
-    "userInitials": "TODO user initials",
+    "user_initials": "TODO user initials",
     "version": "0.1"
   },
   {
-    "activitySubGroups": [],
+    "activity_subgroups": [],
     "aliases": [],
-    "changeDescription": "Initial version",
+    "change_description": "Initial version",
     "comment": "",
     "descriptions": [
       {
@@ -279,32 +279,32 @@
         "version": "0.1"
       }
     ],
-    "endDate": null,
+    "end_date": null,
     "isReferenceData": "No",
     "items": [],
-    "libraryName": "Sponsor",
+    "library_name": "Sponsor",
     "name": "Is teh ECG",
     "oid": "G.EG.ECGSTATUS",
     "origin": "Collected Value",
-    "possibleActions": [
+    "possible_actions": [
       "approve",
       "delete",
       "edit"
     ],
     "purpose": "Tabulation",
     "repeating": "No",
-    "sasDatasetName": "ECGSTATUS",
-    "sdtmDomains": [
+    "sasDataset_name": "ECGSTATUS",
+    "sdtm_domains": [
       {
-        "codeSubmissionValue": "EG",
+        "code_submission_value": "EG",
         "preferredTerm": "Electrocardiogram Domain",
         "uid": "C49626_EG"
       }
     ],
-    "startDate": "2022-10-18T13:18:46.536508",
+    "start_date": "2022-10-18T13:18:46.536508",
     "status": "Draft",
     "uid": "OdmItemGroup_000007",
-    "userInitials": "TODO user initials",
+    "user_initials": "TODO user initials",
     "version": "0.1"
   }
 ]

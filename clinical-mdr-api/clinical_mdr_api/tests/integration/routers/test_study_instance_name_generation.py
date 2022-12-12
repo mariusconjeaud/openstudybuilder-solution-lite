@@ -25,7 +25,7 @@ library_data = {"name": "Test library", "is_editable": True}
 ot_data = {
     "name": "Test_Name_OT",
     "library": library_data,
-    "libraryName": "Test library",
+    "library_name": "Test library",
 }
 
 
@@ -58,4 +58,4 @@ class StudyInstanceNameGenerationParameterTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time"]
+        return ["start_date", "end_date", "uid", "time"]

@@ -1,24 +1,24 @@
 [
     {
-        "name": "Create a new odm form",
+        "name": "Create a new ODM Form",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
-                "sdtmVersion": "0.1",
+                "sdtm_version": "0.1",
                 "repeating": "No",
-                "descriptionUids": [
+                "descriptions": [
                     "odm_description1",
                     "odm_description2"
                 ],
-                "aliasUids": [
+                "alias_uids": [
                     "odm_alias1"
                 ]
             },
-            "url": "concepts/odms/forms/select"
+            "url": "concepts/odms/forms"
         },
         "response": {
             "code": 201,
@@ -29,16 +29,16 @@
             "result": {
                 "uid": "OdmForm_000001",
                 "name": "name1",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "oid": "oid1",
                 "repeating": "No",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
-                "sdtmVersion": "0.1",
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
+                "sdtm_version": "0.1",
                 "scope": null,
                 "descriptions": [
                     {
@@ -47,7 +47,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -56,7 +56,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -68,12 +68,12 @@
                         "version": "0.1"
                     }
                 ],
-                "activityGroups": [],
-                "itemGroups": [],
-                "xmlExtensionTags": [],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "activity_groups": [],
+                "item_groups": [],
+                "xml_extension_tags": [],
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -82,7 +82,7 @@
         }
     },
     {
-        "name": "Add odm xml extension tag to an odm form",
+        "name": "Add ODM XML Extension Tag to an ODM Form",
         "request": {
             "headers": {},
             "method": "POST",
@@ -92,7 +92,7 @@
                     "value": "value1"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/add-xml-extension-tags"
+            "url": "concepts/odms/forms/OdmForm_000001/xml-extension-tags"
         },
         "response": {
             "code": 201,
@@ -103,16 +103,16 @@
             "result": {
                 "uid": "OdmForm_000001",
                 "name": "name1",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "oid": "oid1",
                 "repeating": "No",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
-                "sdtmVersion": "0.1",
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
+                "sdtm_version": "0.1",
                 "scope": null,
                 "descriptions": [
                     {
@@ -121,7 +121,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -130,7 +130,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -142,18 +142,18 @@
                         "version": "0.1"
                     }
                 ],
-                "activityGroups": [],
-                "itemGroups": [],
-                "xmlExtensionTags": [
+                "activity_groups": [],
+                "item_groups": [],
+                "xml_extension_tags": [
                     {
                         "uid": "odm_xml_extension_tag1",
                         "name": "nameOne",
                         "value": "value1"
                     }
                 ],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -162,7 +162,7 @@
         }
     },
     {
-        "name": "Add odm xml extension tag attribute to an odm form",
+        "name": "Add ODM XML Extension Tag Attribute to an ODM Form",
         "request": {
             "headers": {},
             "method": "POST",
@@ -172,7 +172,7 @@
                     "value": "value1"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/add-xml-extension-tag-attributes"
+            "url": "concepts/odms/forms/OdmForm_000001/xml-extension-tag-attributes"
         },
         "response": {
             "code": 201,
@@ -183,16 +183,16 @@
             "result": {
                 "uid": "OdmForm_000001",
                 "name": "name1",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "oid": "oid1",
                 "repeating": "No",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
-                "sdtmVersion": "0.1",
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
+                "sdtm_version": "0.1",
                 "scope": null,
                 "descriptions": [
                     {
@@ -201,7 +201,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -210,7 +210,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -222,25 +222,26 @@
                         "version": "0.1"
                     }
                 ],
-                "activityGroups": [],
-                "itemGroups": [],
-                "xmlExtensionTags": [
+                "activity_groups": [],
+                "item_groups": [],
+                "xml_extension_tags": [
                     {
                         "uid": "odm_xml_extension_tag1",
                         "name": "nameOne",
                         "value": "value1"
                     }
                 ],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [
                     {
                         "uid": "odm_xml_extension_attribute1",
                         "name": "nameOne",
+                        "data_type": "string",
                         "value": "value1",
-                        "odmXmlExtensionTagUid": "odm_xml_extension_tag1"
+                        "xml_extension_tag_uid": "odm_xml_extension_tag1"
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -249,22 +250,22 @@
         }
     },
     {
-        "name": "Test cannot create a new odm form with existing name",
+        "name": "Test cannot create a new ODM Form with existing name",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid2",
-                "sdtmVersion": "0.1",
+                "sdtm_version": "0.1",
                 "repeating": "No",
-                "descriptionUids": [
+                "descriptions": [
                     "odm_description1"
                 ],
-                "aliasUids": []
+                "alias_uids": []
             },
-            "url": "concepts/odms/forms/select"
+            "url": "concepts/odms/forms"
         },
         "response": {
             "code": 400,
@@ -273,31 +274,31 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "OdmForm with name (name1) already exists.",
+                "message": "ODM Form with name (name1) already exists.",
                 "time": "2022-03-07T12: 14: 18.116363",
-                "path": "http://testserver/concepts/odms/forms/select",
+                "path": "http://testserver/concepts/odms/forms",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test cannot create a new odm form with existing oid",
+        "name": "Test cannot create a new ODM Form with existing oid",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name2",
                 "oid": "oid1",
-                "sdtmVersion": "0.1",
+                "sdtm_version": "0.1",
                 "repeating": "No",
-                "descriptionUids": [
+                "descriptions": [
                     "odm_description1"
                 ],
-                "aliasUids": []
+                "alias_uids": []
             },
-            "url": "concepts/odms/forms/select"
+            "url": "concepts/odms/forms"
         },
         "response": {
             "code": 400,
@@ -306,16 +307,114 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "OdmForm with OID (oid1) already exists.",
+                "message": "ODM Form with OID (oid1) already exists.",
                 "time": "2022-03-07T12: 14: 18.116363",
-                "path": "http://testserver/concepts/odms/forms/select",
+                "path": "http://testserver/concepts/odms/forms",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test getting error for retrieving non existing odm form",
+        "name": "Test cannot create an ODM Form connected to non-existing Scope",
+        "request": {
+            "headers": {},
+            "method": "POST",
+            "request": {
+                "library_name": "Sponsor",
+                "name": "new name",
+                "oid": "new oid",
+                "sdtm_version": "0.1",
+                "repeating": "No",
+                "scope_uid": "wrong_uid",
+                "descriptions": [],
+                "alias_uids": []
+            },
+            "url": "concepts/odms/forms"
+        },
+        "response": {
+            "code": 400,
+            "headers": {
+                "content-length": "459",
+                "content-type": "application/json"
+            },
+            "result": {
+                "message": "ODM Form tried to connect to non existing Scope identified by uid (wrong_uid).",
+                "time": "2022-03-07T12: 14: 18.116363",
+                "path": "http://testserver/concepts/odms/forms",
+                "method": "POST",
+                "type": "BusinessLogicException"
+            }
+        }
+    },
+    {
+        "name": "Test cannot create an ODM Form connected to non-existing ODM Description",
+        "request": {
+            "headers": {},
+            "method": "POST",
+            "request": {
+                "library_name": "Sponsor",
+                "name": "new name",
+                "oid": "new oid",
+                "sdtm_version": "0.1",
+                "repeating": "No",
+                "descriptions": [
+                    "wrong_uid"
+                ],
+                "alias_uids": []
+            },
+            "url": "concepts/odms/forms"
+        },
+        "response": {
+            "code": 400,
+            "headers": {
+                "content-length": "459",
+                "content-type": "application/json"
+            },
+            "result": {
+                "message": "ODM Form tried to connect to non existing ODM Description identified by uid (wrong_uid).",
+                "time": "2022-03-07T12: 14: 18.116363",
+                "path": "http://testserver/concepts/odms/forms",
+                "method": "POST",
+                "type": "BusinessLogicException"
+            }
+        }
+    },
+    {
+        "name": "Test cannot create an ODM Form connected to non-existing ODM Alias",
+        "request": {
+            "headers": {},
+            "method": "POST",
+            "request": {
+                "library_name": "Sponsor",
+                "name": "new name",
+                "oid": "new oid",
+                "sdtm_version": "0.1",
+                "repeating": "No",
+                "descriptions": [],
+                "alias_uids": [
+                    "wrong_uid"
+                ]
+            },
+            "url": "concepts/odms/forms"
+        },
+        "response": {
+            "code": 400,
+            "headers": {
+                "content-length": "459",
+                "content-type": "application/json"
+            },
+            "result": {
+                "message": "ODM Form tried to connect to non existing ODM Alias identified by uid (wrong_uid).",
+                "time": "2022-03-07T12: 14: 18.116363",
+                "path": "http://testserver/concepts/odms/forms",
+                "method": "POST",
+                "type": "BusinessLogicException"
+            }
+        }
+    },
+    {
+        "name": "Test getting error for retrieving non existing ODM Form",
         "request": {
             "headers": {},
             "method": "GET",
@@ -338,7 +437,7 @@
         }
     },
     {
-        "name": "Test cannot inactivate an odm form that is in Draft status",
+        "name": "Test cannot inactivate an ODM Form that is in Draft status",
         "request": {
             "headers": {},
             "method": "POST",
@@ -361,7 +460,7 @@
         }
     },
     {
-        "name": "Test cannot reactivate an odm form that is not retired",
+        "name": "Test cannot reactivate an ODM Form that is not retired",
         "request": {
             "headers": {},
             "method": "POST",
@@ -384,7 +483,7 @@
         }
     },
     {
-        "name": "Test cannot override odm xml extension tag that has attributes connected this odm form",
+        "name": "Test cannot override ODM XML Extension Tag that has attributes connected this ODM Form",
         "request": {
             "headers": {},
             "method": "POST",
@@ -394,7 +493,7 @@
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/add-xml-extension-tags?override=true"
+            "url": "concepts/odms/forms/OdmForm_000001/xml-extension-tags?override=true"
         },
         "response": {
             "code": 400,
@@ -403,16 +502,16 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "Cannot remove an OdmXmlExtensionTag whose attributes are connected to this ODM element.",
+                "message": "Cannot remove an ODM XML Extension Tag whose attributes are connected to this ODM element.",
                 "time": "2022-03-07T12:30:50.195156",
-                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/add-xml-extension-tags?override=true",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/xml-extension-tags?override=true",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test cannot add odm xml extension tag attribute to an odm form as an xml extension attribute",
+        "name": "Test cannot add ODM XML Extension Tag Attribute to an ODM Form as an xml extension attribute",
         "request": {
             "headers": {},
             "method": "POST",
@@ -422,7 +521,7 @@
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/add-xml-extension-attributes"
+            "url": "concepts/odms/forms/OdmForm_000001/xml-extension-attributes"
         },
         "response": {
             "code": 400,
@@ -431,16 +530,16 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "OdmXmlExtensionAttribute identified by (odm_xml_extension_attribute1) cannot not be added as an xml extension attribute.",
+                "message": "ODM XML Extension Attribute identified by (odm_xml_extension_attribute1) cannot not be added as an xml extension attribute.",
                 "time": "2022-03-07T12:30:50.195156",
-                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/add-xml-extension-attributes",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/xml-extension-attributes",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test cannot add odm xml extension attribute to an odm form as an xml extension tag attribute",
+        "name": "Test cannot add ODM XML Extension Attribute to an ODM Form as an xml extension tag attribute",
         "request": {
             "headers": {},
             "method": "POST",
@@ -450,7 +549,7 @@
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/add-xml-extension-tag-attributes"
+            "url": "concepts/odms/forms/OdmForm_000001/xml-extension-tag-attributes"
         },
         "response": {
             "code": 400,
@@ -459,16 +558,16 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "OdmXmlExtensionAttribute identified by (odm_xml_extension_attribute3) cannot not be added as an xml extension tag attribute.",
+                "message": "ODM XML Extension Attribute identified by (odm_xml_extension_attribute3) cannot not be added as an xml extension tag attribute.",
                 "time": "2022-03-07T12:30:50.195156",
-                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/add-xml-extension-tag-attributes",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/xml-extension-tag-attributes",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Approve odm form",
+        "name": "Approve ODM Form",
         "request": {
             "headers": {},
             "method": "POST",
@@ -484,16 +583,16 @@
             "result": {
                 "uid": "OdmForm_000001",
                 "name": "name1",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "oid": "oid1",
                 "repeating": "No",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Approved version",
-                "userInitials": "TODO user initials",
-                "sdtmVersion": "0.1",
+                "change_description": "Approved version",
+                "user_initials": "TODO user initials",
+                "sdtm_version": "0.1",
                 "scope": null,
                 "descriptions": [
                     {
@@ -502,7 +601,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -511,7 +610,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -523,33 +622,34 @@
                         "version": "0.1"
                     }
                 ],
-                "activityGroups": [],
-                "itemGroups": [],
-                "xmlExtensionTags": [
+                "activity_groups": [],
+                "item_groups": [],
+                "xml_extension_tags": [
                     {
                         "uid": "odm_xml_extension_tag1",
                         "name": "nameOne",
                         "value": "value1"
                     }
                 ],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [
                     {
                         "uid": "odm_xml_extension_attribute1",
                         "name": "nameOne",
+                        "data_type": "string",
                         "value": "value1",
-                        "odmXmlExtensionTagUid": "odm_xml_extension_tag1"
+                        "xml_extension_tag_uid": "odm_xml_extension_tag1"
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Inactivate odm form",
+        "name": "Inactivate ODM Form",
         "request": {
             "headers": {},
             "method": "POST",
@@ -565,16 +665,16 @@
             "result": {
                 "uid": "OdmForm_000001",
                 "name": "name1",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "oid": "oid1",
                 "repeating": "No",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Retired",
                 "version": "1.0",
-                "changeDescription": "Deactivated version",
-                "userInitials": "TODO user initials",
-                "sdtmVersion": "0.1",
+                "change_description": "Deactivated version",
+                "user_initials": "TODO user initials",
+                "sdtm_version": "0.1",
                 "scope": null,
                 "descriptions": [
                     {
@@ -583,7 +683,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -592,7 +692,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -604,25 +704,26 @@
                         "version": "0.1"
                     }
                 ],
-                "activityGroups": [],
-                "itemGroups": [],
-                "xmlExtensionTags": [
+                "activity_groups": [],
+                "item_groups": [],
+                "xml_extension_tags": [
                     {
                         "uid": "odm_xml_extension_tag1",
                         "name": "nameOne",
                         "value": "value1"
                     }
                 ],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [
                     {
                         "uid": "odm_xml_extension_attribute1",
                         "name": "nameOne",
+                        "data_type": "string",
                         "value": "value1",
-                        "odmXmlExtensionTagUid": "odm_xml_extension_tag1"
+                        "xml_extension_tag_uid": "odm_xml_extension_tag1"
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "delete",
                     "reactivate"
                 ]
@@ -630,20 +731,20 @@
         }
     },
     {
-        "name": "Test cannot add odm item groups to an odm form that is in Retired status",
+        "name": "Test cannot add ODM Item Groups to an ODM Form that is in Retired status",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
                     "uid": "odm_item_group1",
-                    "orderNumber": 1,
+                    "order_number": 1,
                     "mandatory": "Yes",
                     "locked": "Yes",
-                    "collectionExceptionConditionOid": "collectionExceptionConditionOid1"
+                    "collection_exception_condition_oid": "collection_exception_condition_oid1"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/add-item-groups"
+            "url": "concepts/odms/forms/OdmForm_000001/item-groups"
         },
         "response": {
             "code": 400,
@@ -654,14 +755,14 @@
             "result": {
                 "message": "The object is inactive",
                 "time": "2022-03-07T12:30:50.195156",
-                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/add-item-groups",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/item-groups",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test cannot add odm activity groups to an odm form that is in Retired status",
+        "name": "Test cannot add ODM Activity Groups to an ODM Form that is in Retired status",
         "request": {
             "headers": {},
             "method": "POST",
@@ -670,7 +771,7 @@
                     "uid": "activity_group_root1"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/add-activity-groups"
+            "url": "concepts/odms/forms/OdmForm_000001/activity-groups"
         },
         "response": {
             "code": 400,
@@ -681,14 +782,14 @@
             "result": {
                 "message": "The object is inactive",
                 "time": "2022-03-07T12:30:50.195156",
-                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/add-activity-groups",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/activity-groups",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test cannot add odm xml extension tag to an odm form that is in Retired status",
+        "name": "Test cannot add ODM XML Extension Tag to an ODM Form that is in Retired status",
         "request": {
             "headers": {},
             "method": "POST",
@@ -698,7 +799,7 @@
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/add-xml-extension-tags"
+            "url": "concepts/odms/forms/OdmForm_000001/xml-extension-tags"
         },
         "response": {
             "code": 400,
@@ -709,14 +810,14 @@
             "result": {
                 "message": "The object is inactive",
                 "time": "2022-03-07T12:30:50.195156",
-                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/add-xml-extension-tags",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/xml-extension-tags",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test cannot add odm xml extension attribute to an odm form that is in Retired status",
+        "name": "Test cannot add ODM XML Extension Attribute to an ODM Form that is in Retired status",
         "request": {
             "headers": {},
             "method": "POST",
@@ -726,7 +827,7 @@
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/add-xml-extension-attributes"
+            "url": "concepts/odms/forms/OdmForm_000001/xml-extension-attributes"
         },
         "response": {
             "code": 400,
@@ -737,14 +838,14 @@
             "result": {
                 "message": "The object is inactive",
                 "time": "2022-03-07T12:30:50.195156",
-                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/add-xml-extension-attributes",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/xml-extension-attributes",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test cannot add odm xml extension tag attribute to an odm form that is in Retired status",
+        "name": "Test cannot add ODM XML Extension Tag Attribute to an ODM Form that is in Retired status",
         "request": {
             "headers": {},
             "method": "POST",
@@ -754,7 +855,7 @@
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/add-xml-extension-tag-attributes"
+            "url": "concepts/odms/forms/OdmForm_000001/xml-extension-tag-attributes"
         },
         "response": {
             "code": 400,
@@ -765,7 +866,7 @@
             "result": {
                 "message": "The object is inactive",
                 "time": "2022-03-07T12:30:50.195156",
-                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/add-xml-extension-tag-attributes",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/xml-extension-tag-attributes",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }

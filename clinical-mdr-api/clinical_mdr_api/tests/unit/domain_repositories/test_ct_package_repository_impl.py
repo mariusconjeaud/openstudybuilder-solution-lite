@@ -32,7 +32,7 @@ def create_random_ct_package_node(catalogue_name: str) -> CTPackage:
         href=random_str(),
         registration_status=random_str(),
         source=random_str(),
-        import_date=datetime.datetime.now(),
+        import_date=datetime.datetime.now(datetime.timezone.utc),
         effective_date=datetime.date(year=2020, month=6, day=26),
         user_initials=random_str(),
         contains_package=mock,

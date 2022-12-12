@@ -44,12 +44,12 @@
             "method": "POST",
             "request": {
                 "value": 7.5,
-                "unitDefinitionUid": "UnitDefinition_000001",
-                "sdtmDomainUid": "sdtm_domain_uid1",
+                "unit_definition_uid": "UnitDefinition_000001",
+                "sdtm_domain_uid": "sdtm_domain_uid1",
                 "definition": "lag_time_definition1",
                 "abbreviation": "abbv",
-                "templateParameter": true,
-                "libraryName": "Sponsor"
+                "template_parameter": true,
+                "library_name": "Sponsor"
             },
             "url": "/concepts/lag-times"
         },
@@ -60,19 +60,19 @@
                 "uid": "LagTime_000001",
                 "name": "7.5 [UnitDefinition_000001] for SDTM domain [sdtm_domain_uid1]",
                 "value": 7.5,
-                "unitDefinitionUid": "UnitDefinition_000001",
-                "sdtmDomainUid": "sdtm_domain_uid1",
-                "nameSentenceCase": "7.5",
+                "unit_definition_uid": "UnitDefinition_000001",
+                "sdtm_domain_uid": "sdtm_domain_uid1",
+                "name_sentence_case": "7.5",
                 "definition": "lag_time_definition1",
                 "abbreviation": "abbv",
-                "templateParameter": true,
-                "libraryName": "Sponsor",
+                "template_parameter": true,
+                "library_name": "Sponsor",
                 "status": null,
                 "version": null,
-                "changeDescription": null,
-                "userInitials": null,
-                "startDate": null,
-                "endDate": null
+                "change_description": null,
+                "user_initials": null,
+                "start_date": null,
+                "end_date": null
             }
         }
     },
@@ -83,52 +83,52 @@
             "method": "POST",
             "request": {
                 "name": "compound_name1",
-                "nameSentenceCase": "compound_name_sentence_case1",
+                "name_sentence_case": "compound_name_sentence_case1",
                 "definition": "compound_definition1",
                 "abbreviation": "abbv",
-                "doseValuesUids": [
+                "dose_values_uids": [
                     "NumericValueWithUnit_000001",
                     "NumericValueWithUnit_000002"
                 ],
-                "strengthValuesUids": [
+                "strength_values_uids": [
                     "NumericValueWithUnit_000001",
                     "NumericValueWithUnit_000002"
                 ],
-                "lagTimesUids": [
+                "lag_times_uids": [
                     "LagTime_000001"
                 ],
-                "deliveryDevicesUids": [
+                "delivery_devices_uids": [
                     "delivery_device_uid1",
                     "delivery_device_uid2"
                 ],
-                "dispensersUids": [
+                "dispensers_uids": [
                     "dispenser_uid1",
                     "dispenser_uid2"
                 ],
-                "projectsUids": [
+                "projects_uids": [
                     "project_uid1",
                     "project_uid2"
                 ],
-                "brandsUids": [
+                "brands_uids": [
                     "Brand_000001",
                     "Brand_000002"
                 ],
-                "doseFrequencyUids": [
+                "dose_frequency_uids": [
                     "dose_frequency_uid1"
                 ],
-                "dosageFormUids": [
+                "dosage_form_uids": [
                     "dosage_form_uid1"
                 ],
-                "routeOfAdministrationUids": [
+                "route_of_administration_uids": [
                     "route_of_administration_uid1"
                 ],
-                "halfLifeUid": "NumericValueWithUnit_000001",
-                "analyteNumber": "analyteNumber",
-                "nncShortNumber": "nncShortNumber",
-                "nncLongNumber": "nncLongNumber",
-                "isSponsorCompound": true,
-                "isNameInn": true,
-                "libraryName": "Sponsor"
+                "half_life_uid": "NumericValueWithUnit_000001",
+                "analyte_number": "analyte_number",
+                "nnc_short_number": "nnc_short_number",
+                "nnc_long_number": "nnc_long_number",
+                "is_sponsor_compound": true,
+                "is_name_inn": true,
+                "library_name": "Sponsor"
             },
             "url": "/concepts/compounds"
         },
@@ -138,71 +138,71 @@
             "result": {
                 "uid": "Compound_000001",
                 "name": "compound_name1",
-                "nameSentenceCase": "compound_name_sentence_case1",
+                "name_sentence_case": "compound_name_sentence_case1",
                 "definition": "compound_definition1",
                 "abbreviation": "abbv",
-                "doseValues": [
+                "dose_values": [
                     {
                         "uid": "NumericValueWithUnit_000001",
                         "value": 1.23,
-                        "unitDefinitionUid": "UnitDefinition_000001",
-                        "unitLabel": "name_1"
+                        "unit_definition_uid": "UnitDefinition_000001",
+                        "unit_label": "name_1"
                     },
                     {
                         "uid": "NumericValueWithUnit_000002",
                         "value": 3.21,
-                        "unitDefinitionUid": "UnitDefinition_000001",
-                        "unitLabel": "name_1"
+                        "unit_definition_uid": "UnitDefinition_000001",
+                        "unit_label": "name_1"
                     }
                 ],
-                "strengthValues": [
+                "strength_values": [
                     {
                         "uid": "NumericValueWithUnit_000001",
                         "value": 1.23,
-                        "unitDefinitionUid": "UnitDefinition_000001",
-                        "unitLabel": "name_1"
+                        "unit_definition_uid": "UnitDefinition_000001",
+                        "unit_label": "name_1"
                     },
                     {
                         "uid": "NumericValueWithUnit_000002",
                         "value": 3.21,
-                        "unitDefinitionUid": "UnitDefinition_000001",
-                        "unitLabel": "name_1"
+                        "unit_definition_uid": "UnitDefinition_000001",
+                        "unit_label": "name_1"
                     }
                 ],
-                "lagTimes": [
+                "lag_times": [
                     {
                         "value": 7.5,
-                        "unitDefinitionUid": "UnitDefinition_000001",
-                        "unitLabel": "name_1",
-                        "sdtmDomainUid": "sdtm_domain_uid1",
-                        "sdtmDomainLabel": "sdtm_domain_name1"
+                        "unit_definition_uid": "UnitDefinition_000001",
+                        "unit_label": "name_1",
+                        "sdtm_domain_uid": "sdtm_domain_uid1",
+                        "sdtm_domain_label": "sdtm_domain_name1"
                     }
                 ],
-                "deliveryDevices": [
+                "delivery_devices": [
                     {
-                        "termUid": "delivery_device_uid1",
+                        "term_uid": "delivery_device_uid1",
                         "name": "delivery_device_name1"
                     },
                     {
-                        "termUid": "delivery_device_uid2",
+                        "term_uid": "delivery_device_uid2",
                         "name": "delivery_device_name2"
                     }
                 ],
                 "dispensers": [
                     {
-                        "termUid": "dispenser_uid1",
+                        "term_uid": "dispenser_uid1",
                         "name": "dispenser_name1"
                     },
                     {
-                        "termUid": "dispenser_uid2",
+                        "term_uid": "dispenser_uid2",
                         "name": "dispenser_name2"
                     }
                 ],
                 "projects": [
                     {
                         "uid": "project_uid1",
-                        "projectNumber": "PRJ-001",
-                        "clinicalProgramme": {
+                        "project_number": "PRJ-001",
+                        "clinical_programme": {
                             "uid": "cp_001",
                             "name": "CP"
                         },
@@ -211,8 +211,8 @@
                     },
                     {
                         "uid": "project_uid2",
-                        "projectNumber": "PRJ-002",
-                        "clinicalProgramme": {
+                        "project_number": "PRJ-002",
+                        "clinical_programme": {
                             "uid": "cp_001",
                             "name": "CP"
                         },
@@ -230,44 +230,44 @@
                         "name": "Brand B"
                     }
                 ],
-                "halfLife": {
+                "half_life": {
                     "uid": "NumericValueWithUnit_000001",
                     "value": 1.23,
-                    "unitDefinitionUid": "UnitDefinition_000001",
-                    "unitLabel": "name_1"
+                    "unit_definition_uid": "UnitDefinition_000001",
+                    "unit_label": "name_1"
                 },
-                "doseFrequencies": [
+                "dose_frequencies": [
                     {
-                        "termUid": "dose_frequency_uid1",
+                        "term_uid": "dose_frequency_uid1",
                         "name": "dose_frequency_name1"
                     }
                 ],
-                "dosageForms": [
+                "dosage_forms": [
                     {
-                        "termUid": "dosage_form_uid1",
+                        "term_uid": "dosage_form_uid1",
                         "name": "dosage_form_name1"
                     }
                 ],
-                "routesOfAdministration": [
+                "routes_of_administration": [
                     {
-                        "termUid": "route_of_administration_uid1",
+                        "term_uid": "route_of_administration_uid1",
                         "name": "route_of_administration_name1"
                     }
                 ],
-                "analyteNumber": "analyteNumber",
-                "nncShortNumber": "nncShortNumber",
-                "nncLongNumber": "nncLongNumber",
-                "isSponsorCompound": true,
-                "isNameInn": true,
+                "analyte_number": "analyte_number",
+                "nnc_short_number": "nnc_short_number",
+                "nnc_long_number": "nnc_long_number",
+                "is_sponsor_compound": true,
+                "is_name_inn": true,
                 "substances": [],
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
-                "startDate": null,
-                "endDate": null,
-                "possibleActions": [
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
+                "start_date": null,
+                "end_date": null,
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -282,12 +282,12 @@
             "method": "POST",
             "request": {
                 "name": "compound_alias_name1",
-                "nameSentenceCase": "compound_alias_name_sentence_case1",
+                "name_sentence_case": "compound_alias_name_sentence_case1",
                 "definition": "compound_alias_definition1",
                 "abbreviation": "abbv",
-                "compoundUid": "Compound_000001",
-                "isPreferredSynonym": true,
-                "libraryName": "Sponsor"
+                "compound_uid": "Compound_000001",
+                "is_preferred_synonym": true,
+                "library_name": "Sponsor"
             },
             "url": "/concepts/compound-aliases"
         },
@@ -297,22 +297,22 @@
             "result": {
                 "uid": "CompoundAlias_000001",
                 "name": "compound_alias_name1",
-                "nameSentenceCase": "compound_alias_name_sentence_case1",
+                "name_sentence_case": "compound_alias_name_sentence_case1",
                 "definition": "compound_alias_definition1",
                 "abbreviation": "abbv",
                 "compound": {
                     "uid": "Compound_000001",
                     "name": "compound_name1"
                 },
-                "isPreferredSynonym": true,
-                "libraryName": "Sponsor",
+                "is_preferred_synonym": true,
+                "library_name": "Sponsor",
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
-                "startDate": null,
-                "endDate": null,
-                "possibleActions": [
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
+                "start_date": null,
+                "end_date": null,
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -327,13 +327,13 @@
             "method": "PATCH",
             "request": {
                 "name": "compound_alias_name1_updated",
-                "compoundUid": "Compound_000001",
-                "nameSentenceCase": "compound_alias_name_sentence_case1_updated",
+                "compound_uid": "Compound_000001",
+                "name_sentence_case": "compound_alias_name_sentence_case1_updated",
                 "definition": "compound_alias_definition1_updated",
                 "abbreviation": "abbv_updated",
-                "isPreferredSynonym": false,
-                "libraryName": "Sponsor",
-                "changeDescription": "patched"
+                "is_preferred_synonym": false,
+                "library_name": "Sponsor",
+                "change_description": "patched"
             },
             "url": "/concepts/compound-aliases/CompoundAlias_000001"
         },
@@ -343,22 +343,22 @@
             "result": {
                 "uid": "CompoundAlias_000001",
                 "name": "compound_alias_name1_updated",
-                "nameSentenceCase": "compound_alias_name_sentence_case1_updated",
+                "name_sentence_case": "compound_alias_name_sentence_case1_updated",
                 "definition": "compound_alias_definition1_updated",
                 "abbreviation": "abbv_updated",
                 "compound": {
                     "uid": "Compound_000001",
                     "name": "compound_name1"
                 },
-                "isPreferredSynonym": false,
-                "libraryName": "Sponsor",
+                "is_preferred_synonym": false,
+                "library_name": "Sponsor",
                 "status": "Draft",
                 "version": "0.2",
-                "changeDescription": "patched",
-                "userInitials": "TODO user initials",
-                "startDate": null,
-                "endDate": null,
-                "possibleActions": [
+                "change_description": "patched",
+                "user_initials": "TODO user initials",
+                "start_date": null,
+                "end_date": null,
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -373,13 +373,13 @@
             "method": "PATCH",
             "request": {
                 "name": "compound_alias_name1",
-                "compoundUid": "Compound_000001",
-                "nameSentenceCase": "compound_alias_name_sentence_case1",
+                "compound_uid": "Compound_000001",
+                "name_sentence_case": "compound_alias_name_sentence_case1",
                 "definition": "compound_alias_definition1",
                 "abbreviation": "abbv",
-                "isPreferredSynonym": true,
-                "libraryName": "Sponsor",
-                "changeDescription": "patched"
+                "is_preferred_synonym": true,
+                "library_name": "Sponsor",
+                "change_description": "patched"
             },
             "url": "/concepts/compound-aliases/CompoundAlias_000001"
         },
@@ -389,22 +389,22 @@
             "result": {
                 "uid": "CompoundAlias_000001",
                 "name": "compound_alias_name1",
-                "nameSentenceCase": "compound_alias_name_sentence_case1",
+                "name_sentence_case": "compound_alias_name_sentence_case1",
                 "definition": "compound_alias_definition1",
                 "abbreviation": "abbv",
                 "compound": {
                     "uid": "Compound_000001",
                     "name": "compound_name1"
                 },
-                "isPreferredSynonym": true,
-                "libraryName": "Sponsor",
+                "is_preferred_synonym": true,
+                "library_name": "Sponsor",
                 "status": "Draft",
                 "version": "0.3",
-                "changeDescription": "patched",
-                "userInitials": "TODO user initials",
-                "startDate": null,
-                "endDate": null,
-                "possibleActions": [
+                "change_description": "patched",
+                "user_initials": "TODO user initials",
+                "start_date": null,
+                "end_date": null,
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -418,7 +418,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/concepts/compound-aliases?library=Sponsor&totalCount=true"
+            "url": "/concepts/compound-aliases?library=Sponsor&total_count=true"
         },
         "response": {
             "code": 200,
@@ -428,22 +428,22 @@
                     {
                         "uid": "CompoundAlias_000001",
                         "name": "compound_alias_name1",
-                        "nameSentenceCase": "compound_alias_name_sentence_case1",
+                        "name_sentence_case": "compound_alias_name_sentence_case1",
                         "definition": "compound_alias_definition1",
                         "abbreviation": "abbv",
                         "compound": {
                             "uid": "Compound_000001",
                             "name": "compound_name1"
                         },
-                        "isPreferredSynonym": true,
-                        "libraryName": "Sponsor",
+                        "is_preferred_synonym": true,
+                        "library_name": "Sponsor",
                         "status": "Draft",
                         "version": "0.3",
-                        "changeDescription": "patched",
-                        "userInitials": "TODO user initials",
-                        "startDate": null,
-                        "endDate": null,
-                        "possibleActions": [
+                        "change_description": "patched",
+                        "user_initials": "TODO user initials",
+                        "start_date": null,
+                        "end_date": null,
+                        "possible_actions": [
                             "approve",
                             "delete",
                             "edit"
@@ -452,7 +452,7 @@
                 ],
                 "total": 1,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
@@ -473,32 +473,32 @@
                     "uid": "Compound_000001",
                     "name": "compound_name1"
                 },
-                "isPreferredSynonym": true,
+                "is_preferred_synonym": true,
                 "name": "compound_alias_name1",
-                "nameSentenceCase": "compound_alias_name_sentence_case1",
+                "name_sentence_case": "compound_alias_name_sentence_case1",
                 "definition": "compound_alias_definition1",
                 "abbreviation": "abbv",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Approved version",
-                "userInitials": "TODO user initials",
-                "startDate": null,
-                "endDate": null,
-                "possibleActions": [
+                "change_description": "Approved version",
+                "user_initials": "TODO user initials",
+                "start_date": null,
+                "end_date": null,
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test POST new-version compound alias",
+        "name": "Test POST /versions compound alias",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/concepts/compound-aliases/CompoundAlias_000001/new-version"
+            "url": "/concepts/compound-aliases/CompoundAlias_000001/versions"
         },
         "response": {
             "code": 201,
@@ -509,19 +509,19 @@
                     "uid": "Compound_000001",
                     "name": "compound_name1"
                 },
-                "isPreferredSynonym": true,
+                "is_preferred_synonym": true,
                 "name": "compound_alias_name1",
-                "nameSentenceCase": "compound_alias_name_sentence_case1",
+                "name_sentence_case": "compound_alias_name_sentence_case1",
                 "definition": "compound_alias_definition1",
                 "abbreviation": "abbv",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "status": "Draft",
                 "version": "1.1",
-                "changeDescription": "New draft created",
-                "userInitials": "TODO user initials",
-                "startDate": null,
-                "endDate": null,
-                "possibleActions": [
+                "change_description": "New draft created",
+                "user_initials": "TODO user initials",
+                "start_date": null,
+                "end_date": null,
+                "possible_actions": [
                     "approve",
                     "edit"
                 ]
@@ -545,21 +545,21 @@
                     "uid": "Compound_000001",
                     "name": "compound_name1"
                 },
-                "isPreferredSynonym": true,
+                "is_preferred_synonym": true,
                 "name": "compound_alias_name1",
-                "nameSentenceCase": "compound_alias_name_sentence_case1",
+                "name_sentence_case": "compound_alias_name_sentence_case1",
                 "definition": "compound_alias_definition1",
                 "abbreviation": "abbv",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "status": "Final",
                 "version": "2.0",
-                "changeDescription": "Approved version",
-                "userInitials": "TODO user initials",
-                "startDate": null,
-                "endDate": null,
-                "possibleActions": [
+                "change_description": "Approved version",
+                "user_initials": "TODO user initials",
+                "start_date": null,
+                "end_date": null,
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
@@ -581,19 +581,19 @@
                     "uid": "Compound_000001",
                     "name": "compound_name1"
                 },
-                "isPreferredSynonym": true,
+                "is_preferred_synonym": true,
                 "name": "compound_alias_name1",
-                "nameSentenceCase": "compound_alias_name_sentence_case1",
+                "name_sentence_case": "compound_alias_name_sentence_case1",
                 "definition": "compound_alias_definition1",
                 "abbreviation": "abbv",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "status": "Retired",
                 "version": "2.0",
-                "changeDescription": "Deactivated version",
-                "userInitials": "TODO user initials",
-                "startDate": null,
-                "endDate": null,
-                "possibleActions": [
+                "change_description": "Deactivated version",
+                "user_initials": "TODO user initials",
+                "start_date": null,
+                "end_date": null,
+                "possible_actions": [
                     "reactivate"
                 ]
             }
@@ -616,21 +616,21 @@
                     "uid": "Compound_000001",
                     "name": "compound_name1"
                 },
-                "isPreferredSynonym": true,
+                "is_preferred_synonym": true,
                 "name": "compound_alias_name1",
-                "nameSentenceCase": "compound_alias_name_sentence_case1",
+                "name_sentence_case": "compound_alias_name_sentence_case1",
                 "definition": "compound_alias_definition1",
                 "abbreviation": "abbv",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "status": "Final",
                 "version": "2.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO user initials",
-                "startDate": null,
-                "endDate": null,
-                "possibleActions": [
+                "change_description": "Reactivated version",
+                "user_initials": "TODO user initials",
+                "start_date": null,
+                "end_date": null,
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
@@ -641,7 +641,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "concepts/compound-aliases/headers?fieldName=name"
+            "url": "concepts/compound-aliases/headers?field_name=name"
         },
         "response": {
             "code": 200,

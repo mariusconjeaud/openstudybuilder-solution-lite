@@ -24,32 +24,32 @@ from clinical_mdr_api.tests.integration.utils.factory_epoch import (
 
 DAY = {
     "name": "day",
-    "libraryName": "Sponsor",
-    "ctUnits": ["unit1-ct-uid"],
-    "convertibleUnit": True,
-    "displayUnit": True,
-    "masterUnit": False,
-    "siUnit": True,
-    "usConventionalUnit": True,
-    "unitDimension": "TIME_UID",
-    "legacyCode": "unit1-legacy-code",
-    "molecularWeightConvExpon": 0,
-    "conversionFactorToMaster": DAY_UNIT_CONVERSION_FACTOR_TO_MASTER,
+    "library_name": "Sponsor",
+    "ct_units": ["unit1-ct-uid"],
+    "convertible_unit": True,
+    "display_unit": True,
+    "master_unit": False,
+    "si_unit": True,
+    "us_conventional_unit": True,
+    "unit_dimension": "TIME_UID",
+    "legacy_code": "unit1-legacy-code",
+    "molecular_weight_conv_expon": 0,
+    "conversion_factor_to_master": DAY_UNIT_CONVERSION_FACTOR_TO_MASTER,
 }
 
 WEEK = {
     "name": "week",
-    "libraryName": "Sponsor",
-    "ctUnits": ["unit2-ct-uid"],
-    "convertibleUnit": True,
-    "displayUnit": True,
-    "masterUnit": False,
-    "siUnit": False,
-    "usConventionalUnit": True,
-    "unitDimension": "TIME_UID",
-    "legacyCode": "unit2-legacy-code",
-    "molecularWeightConvExpon": 0,
-    "conversionFactorToMaster": WEEK_UNIT_CONVERSION_FACTOR_TO_MASTER,
+    "library_name": "Sponsor",
+    "ct_units": ["unit2-ct-uid"],
+    "convertible_unit": True,
+    "display_unit": True,
+    "master_unit": False,
+    "si_unit": False,
+    "us_conventional_unit": True,
+    "unit_dimension": "TIME_UID",
+    "legacy_code": "unit2-legacy-code",
+    "molecular_weight_conv_expon": 0,
+    "conversion_factor_to_master": WEEK_UNIT_CONVERSION_FACTOR_TO_MASTER,
 }
 
 
@@ -57,29 +57,29 @@ def generate_default_input_data_for_visit():
     DAYUID = get_unit_uid_by_name("day")
     WEEKUID = get_unit_uid_by_name("week")
     return {
-        "legacyVisitId": "legacyVisit",
-        "legacyVisitTypeAlias": "legacyVT",
-        "legacyName": "legacyN",
-        "legacySubVisitName": "",
-        "visitSubLabelCodelistUid": "",
-        "visitSubLabelReference": "",
-        "consecutiveVisitGroup": "",
-        "showVisit": True,
-        "minVisitWindowValue": -1,
-        "maxVisitWindowValue": 1,
-        "visitWindowUnitUid": DAYUID,
-        "timeUnitUid": WEEKUID,
-        "timeValue": 12,
+        "legacy_visit_id": "legacy_visit",
+        "legacy_visit_type_alias": "legacyVT",
+        "legacy_name": "legacyN",
+        "legacy_subname": "",
+        "visit_sublabel_codelist_uid": "",
+        "visit_sublabel_reference": "",
+        "consecutive_visit_group": "",
+        "show_visit": True,
+        "min_visit_window_value": -1,
+        "max_visit_window_value": 1,
+        "visit_window_unit_uid": DAYUID,
+        "time_unit_uid": WEEKUID,
+        "time_value": 12,
         "description": "description",
-        "startRule": "startRule",
-        "endRule": "endRule",
+        "start_rule": "start_rule",
+        "end_rule": "end_rule",
         "note": "note",
-        "visitContactModeUid": "VisitContactMode_0001",
-        "visitTypeUid": "VisitType_0003",
-        "timeReferenceUid": WEEKUID,
-        "isGlobalAnchorVisit": False,
-        "visitClass": "SINGLE_VISIT",
-        "visitSubclass": "SINGLE_VISIT",
+        "visit_contact_mode_uid": "VisitContactMode_0001",
+        "visit_type_uid": "VisitType_0003",
+        "time_reference_uid": WEEKUID,
+        "is_global_anchor_visit": False,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
     }
 
 
@@ -91,7 +91,7 @@ def create_study_visit_codelists():
         "Unit Dimension", "CTCodelist_UnitDim", catalogue_name, library_name
     )
     create_ct_term(
-        unit_dim_codelist.codelistUid,
+        unit_dim_codelist.codelist_uid,
         "TIME",
         "TIME_UID",
         1,
@@ -99,7 +99,7 @@ def create_study_visit_codelists():
         library_name,
     )
     create_ct_term(
-        unit_dim_codelist.codelistUid,
+        unit_dim_codelist.codelist_uid,
         "WEEK",
         "WEEK_UID",
         2,
@@ -111,7 +111,7 @@ def create_study_visit_codelists():
         "CT Unit", "CTCodelist_CTUnit", catalogue_name, library_name
     )
     create_ct_term(
-        ct_unit_codelist.codelistUid,
+        ct_unit_codelist.codelist_uid,
         "ct unit 1",
         "unit1-ct-uid",
         1,
@@ -119,7 +119,7 @@ def create_study_visit_codelists():
         library_name,
     )
     create_ct_term(
-        ct_unit_codelist.codelistUid,
+        ct_unit_codelist.codelist_uid,
         "ct unit 2",
         "unit2-ct-uid",
         2,
@@ -137,7 +137,7 @@ def create_study_visit_codelists():
         "VisitType", "CTCodelist_00004", catalogue_name, library_name
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "BASELINE",
         "VisitType_0001",
         1,
@@ -145,7 +145,7 @@ def create_study_visit_codelists():
         library_name,
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "BASELINE2",
         "VisitType_0002",
         2,
@@ -153,7 +153,7 @@ def create_study_visit_codelists():
         library_name,
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "Visit Type2",
         "VisitType_0003",
         3,
@@ -161,7 +161,7 @@ def create_study_visit_codelists():
         library_name,
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "Visit Type3",
         "VisitType_0004",
         4,
@@ -173,7 +173,7 @@ def create_study_visit_codelists():
         "Time Point Reference", "CTCodelist_00005", catalogue_name, library_name
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "BASELINE",
         "VisitSubType_0001",
         1,
@@ -181,7 +181,7 @@ def create_study_visit_codelists():
         library_name,
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "BASELINE2",
         "VisitSubType_0002",
         2,
@@ -189,7 +189,7 @@ def create_study_visit_codelists():
         library_name,
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "Visit Sub Type2",
         "VisitSubType_0003",
         3,
@@ -197,7 +197,7 @@ def create_study_visit_codelists():
         library_name,
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "Visit Sub Type3",
         "VisitSubType_0004",
         4,
@@ -205,7 +205,7 @@ def create_study_visit_codelists():
         library_name,
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "Global anchor visit",
         "VisitSubType_0005",
         5,
@@ -217,7 +217,7 @@ def create_study_visit_codelists():
         "Visit Sub Label", "CTCodelist_00006", catalogue_name, library_name
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "Visit Sub Label",
         "VisitSubLabel_0001",
         1,
@@ -225,7 +225,7 @@ def create_study_visit_codelists():
         library_name,
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "Visit Sub Label1",
         "VisitSubLabel_0002",
         2,
@@ -233,7 +233,7 @@ def create_study_visit_codelists():
         library_name,
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "Visit Sub Label2",
         "VisitSubLabel_0003",
         3,
@@ -241,7 +241,7 @@ def create_study_visit_codelists():
         library_name,
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "Visit Sub Label3",
         "VisitSubLabel_0004",
         4,
@@ -253,7 +253,7 @@ def create_study_visit_codelists():
         "Visit Contact Mode", "CTCodelist_00007", catalogue_name, library_name
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "On Site Visit",
         "VisitContactMode_0001",
         1,
@@ -261,7 +261,7 @@ def create_study_visit_codelists():
         library_name,
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "Phone Contact",
         "VisitContactMode_0002",
         2,
@@ -269,7 +269,7 @@ def create_study_visit_codelists():
         library_name,
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "Virtual Visit",
         "VisitContactMode_0003",
         3,
@@ -281,7 +281,7 @@ def create_study_visit_codelists():
         "Epoch Allocation", "CTCodelist_00008", catalogue_name, library_name
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "Previous Visit",
         "EpochAllocation_0001",
         1,
@@ -289,7 +289,7 @@ def create_study_visit_codelists():
         library_name,
     )
     create_ct_term(
-        codelist.codelistUid,
+        codelist.codelist_uid,
         "Current Visit",
         "EpochAllocation_0002",
         2,
@@ -324,7 +324,7 @@ def preview_visit_with_update(study_uid, **inputs) -> StudyVisit:
     visit_service: StudyVisitService = StudyVisitService()
     datadict = generate_default_input_data_for_visit().copy()
     datadict.update(inputs)
-    del datadict["visitWindowUnitUid"]
+    del datadict["visit_window_unit_uid"]
     visit_input = StudyVisitCreateInput(**datadict)
     preview: StudyVisit = visit_service.preview(study_uid, visit_input)
     return preview
@@ -336,63 +336,63 @@ def create_some_visits():
     epoch2 = create_study_epoch("EpochSubType_0002")
     DAYUID = get_unit_uid_by_name("day")
     create_visit_with_update(
-        studyEpochUid=epoch1.uid,
-        visitTypeUid="VisitType_0001",
-        timeReferenceUid="VisitSubType_0001",
-        timeValue=0,
-        timeUnitUid=DAYUID,
+        study_epoch_uid=epoch1.uid,
+        visit_type_uid="VisitType_0001",
+        time_reference_uid="VisitSubType_0001",
+        time_value=0,
+        time_unit_uid=DAYUID,
     )
     create_visit_with_update(
-        studyEpochUid=epoch1.uid,
-        visitTypeUid="VisitType_0003",
-        timeReferenceUid="VisitSubType_0001",
-        timeValue=12,
-        timeUnitUid=DAYUID,
+        study_epoch_uid=epoch1.uid,
+        visit_type_uid="VisitType_0003",
+        time_reference_uid="VisitSubType_0001",
+        time_value=12,
+        time_unit_uid=DAYUID,
     )
     create_visit_with_update(
-        studyEpochUid=epoch1.uid,
-        visitTypeUid="VisitType_0003",
-        timeReferenceUid="VisitSubType_0001",
-        timeValue=10,
-        timeUnitUid=DAYUID,
+        study_epoch_uid=epoch1.uid,
+        visit_type_uid="VisitType_0003",
+        time_reference_uid="VisitSubType_0001",
+        time_value=10,
+        time_unit_uid=DAYUID,
     )
 
     v3 = create_visit_with_update(
-        studyEpochUid=epoch1.uid,
-        visitTypeUid="VisitType_0004",
-        timeReferenceUid="VisitSubType_0001",
-        timeValue=20,
-        timeUnitUid=DAYUID,
+        study_epoch_uid=epoch1.uid,
+        visit_type_uid="VisitType_0004",
+        time_reference_uid="VisitSubType_0001",
+        time_value=20,
+        time_unit_uid=DAYUID,
     )
     v4 = create_visit_with_update(
-        studyEpochUid=epoch2.uid,
-        visitTypeUid="VisitType_0002",
-        timeReferenceUid="VisitSubType_0001",
-        timeValue=30,
-        timeUnitUid=DAYUID,
-        visitSubLabelCodelistUid="VisitSubLabel_0001",
-        visitSubLabelReference=None,
-        visitClass="SINGLE_VISIT",
-        visitSubclass="ANCHOR_VISIT_IN_GROUP_OF_SUBV",
+        study_epoch_uid=epoch2.uid,
+        visit_type_uid="VisitType_0002",
+        time_reference_uid="VisitSubType_0001",
+        time_value=30,
+        time_unit_uid=DAYUID,
+        visit_sublabel_codelist_uid="VisitSubLabel_0001",
+        visit_sublabel_reference=None,
+        visit_class="SINGLE_VISIT",
+        visit_subclass="ANCHOR_VISIT_IN_GROUP_OF_SUBV",
     )
     create_visit_with_update(
-        studyEpochUid=epoch2.uid,
-        visitTypeUid="VisitType_0003",
-        timeReferenceUid="VisitSubType_0002",
-        timeValue=31,
-        timeUnitUid=DAYUID,
-        visitSubLabelCodelistUid="VisitSubLabel_0002",
-        visitSubLabelReference=v4.uid,
-        visitClass="SINGLE_VISIT",
-        visitSubclass="ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV",
+        study_epoch_uid=epoch2.uid,
+        visit_type_uid="VisitType_0003",
+        time_reference_uid="VisitSubType_0002",
+        time_value=31,
+        time_unit_uid=DAYUID,
+        visit_sublabel_codelist_uid="VisitSubLabel_0002",
+        visit_sublabel_reference=v4.uid,
+        visit_class="SINGLE_VISIT",
+        visit_subclass="ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV",
     )
 
     update_visit_with_update(
         v3.uid,
         uid=v3.uid,
-        studyEpochUid=epoch1.uid,
-        visitTypeUid="VisitType_0004",
-        timeReferenceUid="VisitSubType_0001",
-        timeValue=35,
-        timeUnitUid=DAYUID,
+        study_epoch_uid=epoch1.uid,
+        visit_type_uid="VisitType_0004",
+        time_reference_uid="VisitSubType_0001",
+        time_value=35,
+        time_unit_uid=DAYUID,
     )

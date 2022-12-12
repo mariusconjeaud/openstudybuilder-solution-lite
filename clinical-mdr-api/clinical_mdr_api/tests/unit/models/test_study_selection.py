@@ -49,12 +49,12 @@ def objective_models(draw):
     return Objective(
         uid=draw(non_empty_text()),
         name=draw(non_empty_text()),
-        startDate=draw(datetimes()),
-        endDate=draw(datetimes()),
+        start_date=draw(datetimes()),
+        end_date=draw(datetimes()),
         status=draw(non_empty_text()),
         version=draw(non_empty_text()),
-        changeDescription=draw(non_empty_text()),
-        userInitials=draw(non_empty_text()),
+        change_description=draw(non_empty_text()),
+        user_initials=draw(non_empty_text()),
     )
 
 
@@ -83,7 +83,7 @@ def study_selection_endpoints_aggregates_with_given_study_uid_study_objective_ui
                 endpoint_version=draw(non_empty_text()),
                 endpoint_units=draw(non_empty_text()),
                 endpoint_level_uid=draw(non_empty_text()),
-                endpoint_sub_level_uid=draw(non_empty_text()),
+                endpoint_sublevel_uid=draw(non_empty_text()),
                 endpoint_level_order=0,
                 timeframe_uid=draw(non_empty_text()),
                 timeframe_version=draw(non_empty_text()),
@@ -103,7 +103,7 @@ def study_selection_endpoints_aggregates_with_given_study_uid_study_objective_ui
                 endpoint_version=draw(non_empty_text()),
                 endpoint_units=draw(non_empty_text()),
                 endpoint_level_uid=draw(non_empty_text()),
-                endpoint_sub_level_uid=draw(non_empty_text()),
+                endpoint_sublevel_uid=draw(non_empty_text()),
                 endpoint_level_order=0,
                 timeframe_uid=draw(non_empty_text()),
                 timeframe_version=draw(non_empty_text()),
@@ -193,22 +193,22 @@ def test__study_selection_objective__from_study_selection_objectives_ar_and_orde
     assert result.order == test_tuple.order
     assert result.objective == test_tuple.objective
     assert (
-        result.studyObjectiveUid
+        result.study_objective_uid
         == test_tuple.study_selection_objectives_ar.study_objectives_selection[
             test_tuple.order - 1
         ].study_selection_uid
     )
     assert (
-        result.startDate
+        result.start_date
         == test_tuple.study_selection_objectives_ar.study_objectives_selection[
             test_tuple.order - 1
         ].start_date
     )
     assert (
-        result.objectiveLevel
+        result.objective_level
         == test_tuple.study_selection_objectives_ar.study_objectives_selection[
             test_tuple.order - 1
         ].objective_level_uid
     )
-    assert result.studyUid == test_tuple.study_selection_objectives_ar.study_uid
-    assert result.endpointCount == test_tuple.expected_endpoint_count
+    assert result.study_uid == test_tuple.study_selection_objectives_ar.study_uid
+    assert result.endpoint_count == test_tuple.expected_endpoint_count

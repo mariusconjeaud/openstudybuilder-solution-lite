@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Sequence, Tuple
 
 from neomodel import db
@@ -70,10 +70,10 @@ class DictionaryCodelistGenericRepository(
         major, minor = codelist_dict.get("version").split(".")
 
         return DictionaryCodelistAR.from_repository_values(
-            uid=codelist_dict.get("codelistUid"),
+            uid=codelist_dict.get("codelist_uid"),
             dictionary_codelist_vo=DictionaryCodelistVO.from_repository_values(
                 name=codelist_dict.get("name"),
-                is_template_parameter=codelist_dict.get("templateParameter"),
+                is_template_parameter=codelist_dict.get("template_parameter"),
                 current_terms=[
                     (term["term_uid"], term["author"])
                     for term in codelist_dict.get("current_terms")
@@ -84,16 +84,16 @@ class DictionaryCodelistGenericRepository(
                 ],
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=codelist_dict.get("libraryName"),
+                library_name=codelist_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: codelist_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=codelist_dict.get("changeDescription"),
+                change_description=codelist_dict.get("change_description"),
                 status=LibraryItemStatus(codelist_dict.get("status")),
-                author=codelist_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=codelist_dict.get("startDate")),
+                author=codelist_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=codelist_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -159,10 +159,10 @@ class DictionaryCodelistGenericRepository(
                 author: had_term.author
             }] as had_terms
             WITH
-                dictionary_codelist_root.uid AS codelistUid,
+                dictionary_codelist_root.uid AS codelist_uid,
                 dictionary_codelist_value.name AS name,
-                "TemplateParameter" IN labels(dictionary_codelist_value) AS templateParameter,
-                library.name AS libraryName,
+                "TemplateParameter" IN labels(dictionary_codelist_value) AS template_parameter,
+                library.name AS library_name,
                 library.is_editable AS is_library_editable,
                 has_terms,
                 had_terms,
@@ -178,16 +178,16 @@ class DictionaryCodelistGenericRepository(
                  {ld:ld, lf:lf, lr:lr, hv:hv})
                  yield value
             WITH
-                codelistUid,
+                codelist_uid,
                 name,
-                templateParameter,
-                libraryName,
+                template_parameter,
+                library_name,
                 is_library_editable,
-                value.version_rel.start_date AS startDate,
+                value.version_rel.start_date AS start_date,
                 value.version_rel.status AS status,
                 value.version_rel.version AS version,
-                value.version_rel.change_description AS changeDescription,
-                value.version_rel.user_initials AS userInitials,
+                value.version_rel.change_description AS change_description,
+                value.version_rel.user_initials AS user_initials,
                 has_terms AS current_terms,
                 had_terms AS previous_terms
         """
@@ -233,9 +233,7 @@ class DictionaryCodelistGenericRepository(
             return_model=DictionaryCodelist,
         )
 
-        result_array, attributes_names = db.cypher_query(
-            query=query.full_query, params=query.parameters
-        )
+        result_array, attributes_names = query.execute()
         extracted_items = self._retrieve_codelists_from_cypher_res(
             result_array, attributes_names
         )
@@ -302,10 +300,10 @@ class DictionaryCodelistGenericRepository(
             alias_clause=alias_clause,
         )
 
-        header_query = query.build_header_query(
+        query.full_query = query.build_header_query(
             header_alias=field_name, result_count=result_count
         )
-        result_array, _ = db.cypher_query(query=header_query, params=query.parameters)
+        result_array, _ = query.execute()
 
         return (
             format_generic_header_values(result_array[0][0])
@@ -389,7 +387,7 @@ class DictionaryCodelistGenericRepository(
                 dictionary_codelist_node.has_term.connect(
                     dictionary_term_node,
                     {
-                        "start_date": datetime.now(),
+                        "start_date": datetime.now(timezone.utc),
                         "end_date": None,
                         "user_initials": added_term[1],
                     },
@@ -410,7 +408,7 @@ class DictionaryCodelistGenericRepository(
                     dictionary_term_node,
                     {
                         "start_date": has_term_relationship.start_date,
-                        "end_date": datetime.now(),
+                        "end_date": datetime.now(timezone.utc),
                         "user_initials": removed_term[1],
                     },
                 )

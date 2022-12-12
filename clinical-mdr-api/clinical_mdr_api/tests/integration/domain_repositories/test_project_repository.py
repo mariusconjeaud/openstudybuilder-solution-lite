@@ -35,7 +35,7 @@ class TestProjectRepository(unittest.TestCase):
         clinical_programme_repo.save(cls.created_clinical_programme)
 
     @classmethod
-    def tearDownClass(cls) -> None:
+    def tear_down_class(cls) -> None:
         wipe_clinical_programme_repository()
 
     def test__project_number_exist__non_existing_pr__returns_False(self):

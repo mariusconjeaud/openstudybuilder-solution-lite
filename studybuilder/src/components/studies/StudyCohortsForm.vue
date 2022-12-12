@@ -15,12 +15,12 @@
         <v-row>
           <v-col cols="12">
             <v-autocomplete
-              v-model="form.armUids"
+              v-model="form.arm_uids"
               :label="$t('StudyCohorts.study_arm')"
               data-cy="study-arm"
               :items="arms"
               item-text="name"
-              item-value="armUid"
+              item-value="arm_uid"
               :error-messages="errors"
               clearable
               multiple
@@ -34,12 +34,12 @@
         <v-row>
           <v-col cols="12">
             <v-autocomplete
-              v-model="form.branchArmUids"
+              v-model="form.branch_arm_uids"
               :label="$t('StudyCohorts.study_branch_arm')"
               data-cy="branch-arm"
               :items="branches"
               item-text="name"
-              item-value="branchArmUid"
+              item-value="branch_arm_uid"
               :error-messages="errors"
               clearable
               multiple
@@ -70,7 +70,7 @@
         <v-row>
           <v-col cols="12">
             <v-text-field
-              v-model="form.shortName"
+              v-model="form.short_name"
               :label="$t('StudyCohorts.cohort_short_name')"
               data-cy="study-cohort-short-name"
               :error-messages="errors"
@@ -101,9 +101,9 @@
         <v-row>
           <v-col cols="12">
             <v-text-field
-              :disabled="!form.armUids"
-              :value="form.numberOfSubjects"
-              @input="form.numberOfSubjects = $event !== '' ? $event : null"
+              :disabled="!form.arm_uids"
+              :value="form.number_of_subjects"
+              @input="form.number_of_subjects = $event !== '' ? $event : null"
               :label="$t('StudyCohorts.nuber_of_subjects')"
               data-cy="study-cohort-planned-number-of-subjects"
               :error-messages="(errors[0] && errors[0].includes($t('StudyCohorts.value_less_then'))) ? $t('StudyCohorts.number_of_subjects_exceeds') : errors"
@@ -193,7 +193,7 @@ export default {
     },
     async create () {
       if (this.colorHash) {
-        this.form.colourCode = this.colorHash.hexa
+        this.form.colour_code = this.colorHash.hexa
       }
       arms.createCohort(this.selectedStudy.uid, this.form).then(resp => {
         bus.$emit('notification', { msg: this.$t('StudyCohorts.cohort_created') })
@@ -202,9 +202,9 @@ export default {
     },
     edit () {
       if (this.colorHash) {
-        this.form.colourCode = this.colorHash.hexa !== undefined ? this.colorHash.hexa : this.colorHash
+        this.form.colour_code = this.colorHash.hexa !== undefined ? this.colorHash.hexa : this.colorHash
       }
-      arms.editCohort(this.selectedStudy.uid, this.editedCohort.cohortUid, this.form).then(resp => {
+      arms.editCohort(this.selectedStudy.uid, this.editedCohort.cohort_uid, this.form).then(resp => {
         bus.$emit('notification', { msg: this.$t('StudyCohorts.cohort_updated') })
         this.close()
       })
@@ -232,9 +232,9 @@ export default {
     },
     findMaxNuberOfSubjects () {
       let subjectsSum = 0
-      if (this.form.armUids) {
-        this.form.armUids.forEach(el => {
-          subjectsSum += this.arms.find(e => e.armUid === el).numberOfSubjects
+      if (this.form.arm_uids) {
+        this.form.arm_uids.forEach(el => {
+          subjectsSum += this.arms.find(e => e.arm_uid === el).number_of_subjects
         })
       }
       return subjectsSum
@@ -243,10 +243,10 @@ export default {
   mounted () {
     if (Object.keys(this.editedCohort).length !== 0) {
       this.form = JSON.parse(JSON.stringify(this.editedCohort))
-      this.$set(this.form, 'armUids', this.editedCohort.armRoots ? this.editedCohort.armRoots.map(el => el.armUid) : null)
-      this.$set(this.form, 'branchArmUids', this.editedCohort.branchArmRoots ? this.editedCohort.branchArmRoots.map(el => el.branchArmUid) : null)
-      if (this.editedCohort.colourCode) {
-        this.colorHash = this.editedCohort.colourCode
+      this.$set(this.form, 'arm_uids', this.editedCohort.arm_roots ? this.editedCohort.arm_roots.map(el => el.arm_uid) : null)
+      this.$set(this.form, 'branch_arm_uids', this.editedCohort.branch_arm_roots ? this.editedCohort.branch_arm_roots.map(el => el.branch_arm_uid) : null)
+      if (this.editedCohort.colour_code) {
+        this.colorHash = this.editedCohort.colour_code
       }
       this.$store.commit('form/SET_FORM', this.form)
     }
@@ -255,10 +255,10 @@ export default {
     editedCohort (value) {
       if (Object.keys(value).length !== 0) {
         this.form = JSON.parse(JSON.stringify(value))
-        this.$set(this.form, 'armUids', value.armRoots ? value.armRoots.map(el => el.armUid) : null)
-        this.$set(this.form, 'branchArmUids', value.branchArmRoots ? value.branchArmRoots.map(el => el.branchArmUid) : null)
-        if (value.colourCode) {
-          this.colorHash = value.colourCode
+        this.$set(this.form, 'arm_uids', value.arm_roots ? value.arm_roots.map(el => el.arm_uid) : null)
+        this.$set(this.form, 'branch_arm_uids', value.branch_arm_roots ? value.branch_arm_roots.map(el => el.branch_arm_uid) : null)
+        if (value.colour_code) {
+          this.colorHash = value.colour_code
         }
         this.$store.commit('form/SET_FORM', this.form)
       }

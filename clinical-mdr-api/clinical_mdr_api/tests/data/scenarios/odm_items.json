@@ -1,6 +1,6 @@
 [
     {
-        "name": "Test getting empty list of odm items",
+        "name": "Test getting empty list of ODM Items",
         "request": {
             "headers": {},
             "method": "GET",
@@ -17,51 +17,52 @@
                 "items": [],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
     {
-        "name": "Test creating a new odm item",
+        "name": "Test creating a new ODM Item",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 1,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "comment1",
-                "descriptionUids": [
+                "descriptions": [
                     "odm_description1",
                     "odm_description2"
                 ],
-                "aliasUids": [
+                "alias_uids": [
                     "odm_alias1"
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "mandatory": false,
                         "order": 1
                     }
                 ],
-                "codelistUid": "editable_cr",
+                "codelist_uid": "editable_cr",
                 "terms": [
                     {
                         "uid": "term_root_final",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": null
                     }
                 ]
             },
-            "url": "concepts/odms/items/select"
+            "url": "concepts/odms/items"
         },
         "response": {
             "code": 201,
@@ -71,23 +72,23 @@
             },
             "result": {
                 "uid": "OdmItem_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 1,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "comment1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -95,7 +96,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -104,7 +105,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -116,19 +117,19 @@
                         "version": "0.1"
                     }
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -137,22 +138,23 @@
                 "codelist": {
                     "uid": "editable_cr",
                     "name": "codelist attributes value1",
-                    "submissionValue": "codelist submission value1",
-                    "preferredTerm": "codelist preferred term"
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
                 },
                 "terms": [
                     {
-                        "termUid": "term_root_final",
+                        "term_uid": "term_root_final",
                         "name": "term_value_name1",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": null
                     }
                 ],
                 "activities": [],
-                "xmlExtensionTags": [],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_tags": [],
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -161,7 +163,7 @@
         }
     },
     {
-        "name": "Test getting non empty list of odm items",
+        "name": "Test getting non empty list of ODM Items",
         "request": {
             "headers": {},
             "method": "GET",
@@ -178,23 +180,23 @@
                 "items": [
                     {
                         "uid": "OdmItem_000001",
-                        "libraryName": "Sponsor",
+                        "library_name": "Sponsor",
                         "name": "name1",
                         "oid": "oid1",
                         "prompt": "prompt1",
                         "datatype": "datatype1",
-                        "length": 11,
-                        "significantDigits": 11,
-                        "sasFieldName": "sasFieldName1",
-                        "sdsVarName": "sdsVarName1",
+                        "length": 1,
+                        "significant_digits": 11,
+                        "sas_field_name": "sas_field_name1",
+                        "sds_var_name": "sds_var_name1",
                         "origin": "origin1",
                         "comment": "comment1",
-                        "startDate": "2022-03-03T11:17:56.799074",
-                        "endDate": null,
+                        "start_date": "2022-03-03T11:17:56.799074",
+                        "end_date": null,
                         "status": "Draft",
                         "version": "0.1",
-                        "changeDescription": "Initial version",
-                        "userInitials": "TODO user initials",
+                        "change_description": "Initial version",
+                        "user_initials": "TODO user initials",
                         "descriptions": [
                             {
                                 "uid": "odm_description1",
@@ -202,7 +204,7 @@
                                 "language": "ENG",
                                 "description": "description1",
                                 "instruction": "instruction1",
-                                "sponsorInstruction": "sponsorInstruction1",
+                                "sponsor_instruction": "sponsor_instruction1",
                                 "version": "0.1"
                             },
                             {
@@ -211,7 +213,7 @@
                                 "language": "language2",
                                 "description": "description2",
                                 "instruction": "instruction2",
-                                "sponsorInstruction": "sponsorInstruction2",
+                                "sponsor_instruction": "sponsor_instruction2",
                                 "version": "0.1"
                             }
                         ],
@@ -223,19 +225,19 @@
                                 "version": "0.1"
                             }
                         ],
-                        "unitDefinitions": [
+                        "unit_definitions": [
                             {
                                 "uid": "unit_definition_root1",
                                 "name": "name1",
                                 "mandatory": false,
                                 "order": 1,
                                 "ucum": {
-                                    "termUid": "term_root1_uid",
+                                    "term_uid": "term_root1_uid",
                                     "name": "name1"
                                 },
-                                "ctUnits": [
+                                "ct_units": [
                                     {
-                                        "termUid": "C25532_name1",
+                                        "term_uid": "C25532_name1",
                                         "name": "name1"
                                     }
                                 ]
@@ -244,22 +246,23 @@
                         "codelist": {
                             "uid": "editable_cr",
                             "name": "codelist attributes value1",
-                            "submissionValue": "codelist submission value1",
-                            "preferredTerm": "codelist preferred term"
+                            "submission_value": "codelist submission value1",
+                            "preferred_term": "codelist preferred term"
                         },
                         "terms": [
                             {
-                                "termUid": "term_root_final",
+                                "term_uid": "term_root_final",
                                 "name": "term_value_name1",
                                 "mandatory": true,
-                                "order": 1
+                                "order": 1,
+                                "display_text": null
                             }
                         ],
                         "activities": [],
-                        "xmlExtensionTags": [],
-                        "xmlExtensionAttributes": [],
-                        "xmlExtensionTagAttributes": [],
-                        "possibleActions": [
+                        "xml_extension_tags": [],
+                        "xml_extension_attributes": [],
+                        "xml_extension_tag_attributes": [],
+                        "possible_actions": [
                             "approve",
                             "delete",
                             "edit"
@@ -268,17 +271,17 @@
                 ],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
     {
-        "name": "Test getting possible header values of odm items",
+        "name": "Test getting possible header values of ODM Items",
         "request": {
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "concepts/odms/items/headers?fieldName=name"
+            "url": "concepts/odms/items/headers?field_name=name"
         },
         "response": {
             "code": 200,
@@ -292,7 +295,7 @@
         }
     },
     {
-        "name": "Test getting a specific odm item",
+        "name": "Test getting a specific ODM Item",
         "request": {
             "headers": {},
             "method": "GET",
@@ -307,23 +310,23 @@
             },
             "result": {
                 "uid": "OdmItem_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 1,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "comment1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -331,7 +334,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -340,7 +343,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -352,19 +355,19 @@
                         "version": "0.1"
                     }
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -373,22 +376,23 @@
                 "codelist": {
                     "uid": "editable_cr",
                     "name": "codelist attributes value1",
-                    "submissionValue": "codelist submission value1",
-                    "preferredTerm": "codelist preferred term"
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
                 },
                 "terms": [
                     {
-                        "termUid": "term_root_final",
+                        "term_uid": "term_root_final",
                         "name": "term_value_name1",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": null
                     }
                 ],
                 "activities": [],
-                "xmlExtensionTags": [],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_tags": [],
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -397,7 +401,7 @@
         }
     },
     {
-        "name": "Test getting versions of a specific odm item",
+        "name": "Test getting versions of a specific ODM Item",
         "request": {
             "headers": {},
             "method": "GET",
@@ -413,23 +417,23 @@
             "result": [
                 {
                     "uid": "OdmItem_000001",
-                    "libraryName": "Sponsor",
+                    "library_name": "Sponsor",
                     "name": "name1",
                     "oid": "oid1",
                     "prompt": "prompt1",
                     "datatype": "datatype1",
-                    "length": 11,
-                    "significantDigits": 11,
-                    "sasFieldName": "sasFieldName1",
-                    "sdsVarName": "sdsVarName1",
+                    "length": 1,
+                    "significant_digits": 11,
+                    "sas_field_name": "sas_field_name1",
+                    "sds_var_name": "sds_var_name1",
                     "origin": "origin1",
                     "comment": "comment1",
-                    "startDate": "2022-03-03T11:17:56.799074",
-                    "endDate": null,
+                    "start_date": "2022-03-03T11:17:56.799074",
+                    "end_date": null,
                     "status": "Draft",
                     "version": "0.1",
-                    "changeDescription": "Initial version",
-                    "userInitials": "TODO user initials",
+                    "change_description": "Initial version",
+                    "user_initials": "TODO user initials",
                     "descriptions": [
                         {
                             "uid": "odm_description1",
@@ -437,7 +441,7 @@
                             "language": "ENG",
                             "description": "description1",
                             "instruction": "instruction1",
-                            "sponsorInstruction": "sponsorInstruction1",
+                            "sponsor_instruction": "sponsor_instruction1",
                             "version": "0.1"
                         },
                         {
@@ -446,7 +450,7 @@
                             "language": "language2",
                             "description": "description2",
                             "instruction": "instruction2",
-                            "sponsorInstruction": "sponsorInstruction2",
+                            "sponsor_instruction": "sponsor_instruction2",
                             "version": "0.1"
                         }
                     ],
@@ -458,19 +462,19 @@
                             "version": "0.1"
                         }
                     ],
-                    "unitDefinitions": [
+                    "unit_definitions": [
                         {
                             "uid": "unit_definition_root1",
                             "name": "name1",
                             "mandatory": false,
                             "order": 1,
                             "ucum": {
-                                "termUid": "term_root1_uid",
+                                "term_uid": "term_root1_uid",
                                 "name": "name1"
                             },
-                            "ctUnits": [
+                            "ct_units": [
                                 {
-                                    "termUid": "C25532_name1",
+                                    "term_uid": "C25532_name1",
                                     "name": "name1"
                                 }
                             ]
@@ -479,22 +483,23 @@
                     "codelist": {
                         "uid": "editable_cr",
                         "name": "codelist attributes value1",
-                        "submissionValue": "codelist submission value1",
-                        "preferredTerm": "codelist preferred term"
+                        "submission_value": "codelist submission value1",
+                        "preferred_term": "codelist preferred term"
                     },
                     "terms": [
                         {
-                            "termUid": "term_root_final",
+                            "term_uid": "term_root_final",
                             "name": "term_value_name1",
                             "mandatory": true,
-                            "order": 1
+                            "order": 1,
+                            "display_text": null
                         }
                     ],
                     "activities": [],
-                    "xmlExtensionTags": [],
-                    "xmlExtensionAttributes": [],
-                    "xmlExtensionTagAttributes": [],
-                    "possibleActions": [
+                    "xml_extension_tags": [],
+                    "xml_extension_attributes": [],
+                    "xml_extension_tag_attributes": [],
+                    "possible_actions": [
                         "approve",
                         "delete",
                         "edit"
@@ -504,47 +509,48 @@
         }
     },
     {
-        "name": "Test updating an existing odm item",
+        "name": "Test updating an existing ODM Item",
         "request": {
             "headers": {},
             "method": "PATCH",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": null,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "new comment",
-                "changeDescription": "comment added",
-                "descriptionUids": [
+                "change_description": "comment added",
+                "descriptions": [
                     "odm_description1",
                     "odm_description2"
                 ],
-                "aliasUids": [
+                "alias_uids": [
                     "odm_alias1"
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "mandatory": false,
                         "order": 1
                     }
                 ],
-                "codelistUid": "editable_cr",
+                "codelist_uid": "editable_cr",
                 "terms": [
                     {
                         "uid": "term_root_final",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": "display text"
                     }
                 ]
             },
-            "url": "concepts/odms/items/OdmItem_000001/select"
+            "url": "concepts/odms/items/OdmItem_000001"
         },
         "response": {
             "code": 200,
@@ -554,23 +560,23 @@
             },
             "result": {
                 "uid": "OdmItem_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 22,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "new comment",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.2",
-                "changeDescription": "comment added",
-                "userInitials": "TODO user initials",
+                "change_description": "comment added",
+                "user_initials": "TODO user initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -578,7 +584,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -587,7 +593,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -599,19 +605,19 @@
                         "version": "0.1"
                     }
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -620,22 +626,23 @@
                 "codelist": {
                     "uid": "editable_cr",
                     "name": "codelist attributes value1",
-                    "submissionValue": "codelist submission value1",
-                    "preferredTerm": "codelist preferred term"
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
                 },
                 "terms": [
                     {
-                        "termUid": "term_root_final",
+                        "term_uid": "term_root_final",
                         "name": "term_value_name1",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": "display text"
                     }
                 ],
                 "activities": [],
-                "xmlExtensionTags": [],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_tags": [],
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -644,7 +651,7 @@
         }
     },
     {
-        "name": "Test approving an odm item",
+        "name": "Test approving an ODM Item",
         "request": {
             "headers": {},
             "method": "POST",
@@ -659,23 +666,23 @@
             },
             "result": {
                 "uid": "OdmItem_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 22,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "new comment",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Approved version",
-                "userInitials": "TODO initials",
+                "change_description": "Approved version",
+                "user_initials": "TODO initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -683,7 +690,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -692,7 +699,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -704,19 +711,19 @@
                         "version": "0.1"
                     }
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -725,30 +732,31 @@
                 "codelist": {
                     "uid": "editable_cr",
                     "name": "codelist attributes value1",
-                    "submissionValue": "codelist submission value1",
-                    "preferredTerm": "codelist preferred term"
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
                 },
                 "terms": [
                     {
-                        "termUid": "term_root_final",
+                        "term_uid": "term_root_final",
                         "name": "term_value_name1",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": "display text"
                     }
                 ],
                 "activities": [],
-                "xmlExtensionTags": [],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_tags": [],
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test inactivating a specific odm item",
+        "name": "Test inactivating a specific ODM Item",
         "request": {
             "headers": {},
             "method": "POST",
@@ -763,23 +771,23 @@
             },
             "result": {
                 "uid": "OdmItem_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 22,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "new comment",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Retired",
                 "version": "1.0",
-                "changeDescription": "Deactivated version",
-                "userInitials": "TODO initials",
+                "change_description": "Deactivated version",
+                "user_initials": "TODO initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -787,7 +795,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -796,7 +804,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -808,19 +816,19 @@
                         "version": "0.1"
                     }
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -829,22 +837,23 @@
                 "codelist": {
                     "uid": "editable_cr",
                     "name": "codelist attributes value1",
-                    "submissionValue": "codelist submission value1",
-                    "preferredTerm": "codelist preferred term"
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
                 },
                 "terms": [
                     {
-                        "termUid": "term_root_final",
+                        "term_uid": "term_root_final",
                         "name": "term_value_name1",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": "display text"
                     }
                 ],
                 "activities": [],
-                "xmlExtensionTags": [],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_tags": [],
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "delete",
                     "reactivate"
                 ]
@@ -852,7 +861,7 @@
         }
     },
     {
-        "name": "Test reactivating a specific odm item",
+        "name": "Test reactivating a specific ODM Item",
         "request": {
             "headers": {},
             "method": "POST",
@@ -867,23 +876,23 @@
             },
             "result": {
                 "uid": "OdmItem_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 22,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "new comment",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO initials",
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -891,7 +900,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -900,7 +909,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -912,19 +921,19 @@
                         "version": "0.1"
                     }
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -933,30 +942,31 @@
                 "codelist": {
                     "uid": "editable_cr",
                     "name": "codelist attributes value1",
-                    "submissionValue": "codelist submission value1",
-                    "preferredTerm": "codelist preferred term"
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
                 },
                 "terms": [
                     {
-                        "termUid": "term_root_final",
+                        "term_uid": "term_root_final",
                         "name": "term_value_name1",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": "display text"
                     }
                 ],
                 "activities": [],
-                "xmlExtensionTags": [],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_tags": [],
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test adding activities to a specific odm item",
+        "name": "Test adding activities to a specific ODM Item",
         "request": {
             "headers": {},
             "method": "POST",
@@ -965,7 +975,7 @@
                     "uid": "activity_root1"
                 }
             ],
-            "url": "concepts/odms/items/OdmItem_000001/add-activities"
+            "url": "concepts/odms/items/OdmItem_000001/activities"
         },
         "response": {
             "code": 201,
@@ -975,23 +985,23 @@
             },
             "result": {
                 "uid": "OdmItem_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 22,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "new comment",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO initials",
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -999,7 +1009,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -1008,7 +1018,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -1020,19 +1030,19 @@
                         "version": "0.1"
                     }
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -1041,15 +1051,16 @@
                 "codelist": {
                     "uid": "editable_cr",
                     "name": "codelist attributes value1",
-                    "submissionValue": "codelist submission value1",
-                    "preferredTerm": "codelist preferred term"
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
                 },
                 "terms": [
                     {
-                        "termUid": "term_root_final",
+                        "term_uid": "term_root_final",
                         "name": "term_value_name1",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": "display text"
                     }
                 ],
                 "activities": [
@@ -1058,18 +1069,18 @@
                         "name": "name1"
                     }
                 ],
-                "xmlExtensionTags": [],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_tags": [],
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test overriding activities from a specific odm item",
+        "name": "Test overriding activities from a specific ODM Item",
         "request": {
             "headers": {},
             "method": "POST",
@@ -1078,7 +1089,7 @@
                     "uid": "activity_root2"
                 }
             ],
-            "url": "concepts/odms/items/OdmItem_000001/add-activities?override=true"
+            "url": "concepts/odms/items/OdmItem_000001/activities?override=true"
         },
         "response": {
             "code": 201,
@@ -1088,23 +1099,23 @@
             },
             "result": {
                 "uid": "OdmItem_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 22,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "new comment",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO initials",
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -1112,7 +1123,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -1121,7 +1132,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -1133,19 +1144,19 @@
                         "version": "0.1"
                     }
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -1154,15 +1165,16 @@
                 "codelist": {
                     "uid": "editable_cr",
                     "name": "codelist attributes value1",
-                    "submissionValue": "codelist submission value1",
-                    "preferredTerm": "codelist preferred term"
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
                 },
                 "terms": [
                     {
-                        "termUid": "term_root_final",
+                        "term_uid": "term_root_final",
                         "name": "term_value_name1",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": "display text"
                     }
                 ],
                 "activities": [
@@ -1171,18 +1183,18 @@
                         "name": "name2"
                     }
                 ],
-                "xmlExtensionTags": [],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_tags": [],
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test adding odm xml extension tag to a specific odm item",
+        "name": "Test adding ODM XML Extension Tag to a specific ODM Item",
         "request": {
             "headers": {},
             "method": "POST",
@@ -1192,7 +1204,7 @@
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/items/OdmItem_000001/add-xml-extension-tags"
+            "url": "concepts/odms/items/OdmItem_000001/xml-extension-tags"
         },
         "response": {
             "code": 201,
@@ -1202,23 +1214,23 @@
             },
             "result": {
                 "uid": "OdmItem_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 22,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "new comment",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO initials",
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -1226,7 +1238,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -1235,7 +1247,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -1247,19 +1259,19 @@
                         "version": "0.1"
                     }
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -1268,15 +1280,16 @@
                 "codelist": {
                     "uid": "editable_cr",
                     "name": "codelist attributes value1",
-                    "submissionValue": "codelist submission value1",
-                    "preferredTerm": "codelist preferred term"
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
                 },
                 "terms": [
                     {
-                        "termUid": "term_root_final",
+                        "term_uid": "term_root_final",
                         "name": "term_value_name1",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": "display text"
                     }
                 ],
                 "activities": [
@@ -1285,24 +1298,24 @@
                         "name": "name2"
                     }
                 ],
-                "xmlExtensionTags": [
+                "xml_extension_tags": [
                     {
                         "uid": "odm_xml_extension_tag2",
                         "name": "nameTwo",
                         "value": "value"
                     }
                 ],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test overriding odm xml extension tag from a specific odm item",
+        "name": "Test overriding ODM XML Extension Tag from a specific ODM Item",
         "request": {
             "headers": {},
             "method": "POST",
@@ -1312,7 +1325,7 @@
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/items/OdmItem_000001/add-xml-extension-tags?override=true"
+            "url": "concepts/odms/items/OdmItem_000001/xml-extension-tags?override=true"
         },
         "response": {
             "code": 201,
@@ -1322,23 +1335,23 @@
             },
             "result": {
                 "uid": "OdmItem_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 22,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "new comment",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO initials",
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -1346,7 +1359,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -1355,7 +1368,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -1367,19 +1380,19 @@
                         "version": "0.1"
                     }
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -1388,15 +1401,16 @@
                 "codelist": {
                     "uid": "editable_cr",
                     "name": "codelist attributes value1",
-                    "submissionValue": "codelist submission value1",
-                    "preferredTerm": "codelist preferred term"
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
                 },
                 "terms": [
                     {
-                        "termUid": "term_root_final",
+                        "term_uid": "term_root_final",
                         "name": "term_value_name1",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": "display text"
                     }
                 ],
                 "activities": [
@@ -1405,24 +1419,24 @@
                         "name": "name2"
                     }
                 ],
-                "xmlExtensionTags": [
+                "xml_extension_tags": [
                     {
                         "uid": "odm_xml_extension_tag1",
                         "name": "nameOne",
                         "value": "value"
                     }
                 ],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test adding odm xml extension attribute to a specific odm item",
+        "name": "Test adding ODM XML Extension Attribute to a specific ODM Item",
         "request": {
             "headers": {},
             "method": "POST",
@@ -1432,7 +1446,7 @@
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/items/OdmItem_000001/add-xml-extension-attributes"
+            "url": "concepts/odms/items/OdmItem_000001/xml-extension-attributes"
         },
         "response": {
             "code": 201,
@@ -1442,23 +1456,23 @@
             },
             "result": {
                 "uid": "OdmItem_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 22,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "new comment",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO initials",
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -1466,7 +1480,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -1475,7 +1489,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -1487,19 +1501,19 @@
                         "version": "0.1"
                     }
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -1508,15 +1522,16 @@
                 "codelist": {
                     "uid": "editable_cr",
                     "name": "codelist attributes value1",
-                    "submissionValue": "codelist submission value1",
-                    "preferredTerm": "codelist preferred term"
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
                 },
                 "terms": [
                     {
-                        "termUid": "term_root_final",
+                        "term_uid": "term_root_final",
                         "name": "term_value_name1",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": "display text"
                     }
                 ],
                 "activities": [
@@ -1525,31 +1540,32 @@
                         "name": "name2"
                     }
                 ],
-                "xmlExtensionTags": [
+                "xml_extension_tags": [
                     {
                         "uid": "odm_xml_extension_tag1",
                         "name": "nameOne",
                         "value": "value"
                     }
                 ],
-                "xmlExtensionAttributes": [
+                "xml_extension_attributes": [
                     {
                         "uid": "odm_xml_extension_attribute3",
                         "name": "nameThree",
+                        "data_type": "string",
                         "value": "value",
-                        "odmXmlExtensionUid": "odm_xml_extension1"
+                        "xml_extension_uid": "odm_xml_extension1"
                     }
                 ],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test overriding odm xml extension attribute from a specific odm item",
+        "name": "Test overriding ODM XML Extension Attribute from a specific ODM Item",
         "request": {
             "headers": {},
             "method": "POST",
@@ -1559,7 +1575,7 @@
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/items/OdmItem_000001/add-xml-extension-attributes?override=true"
+            "url": "concepts/odms/items/OdmItem_000001/xml-extension-attributes?override=true"
         },
         "response": {
             "code": 201,
@@ -1569,23 +1585,23 @@
             },
             "result": {
                 "uid": "OdmItem_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 22,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "new comment",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO initials",
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -1593,7 +1609,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -1602,7 +1618,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -1614,19 +1630,19 @@
                         "version": "0.1"
                     }
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -1635,15 +1651,16 @@
                 "codelist": {
                     "uid": "editable_cr",
                     "name": "codelist attributes value1",
-                    "submissionValue": "codelist submission value1",
-                    "preferredTerm": "codelist preferred term"
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
                 },
                 "terms": [
                     {
-                        "termUid": "term_root_final",
+                        "term_uid": "term_root_final",
                         "name": "term_value_name1",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": "display text"
                     }
                 ],
                 "activities": [
@@ -1652,31 +1669,32 @@
                         "name": "name2"
                     }
                 ],
-                "xmlExtensionTags": [
+                "xml_extension_tags": [
                     {
                         "uid": "odm_xml_extension_tag1",
                         "name": "nameOne",
                         "value": "value"
                     }
                 ],
-                "xmlExtensionAttributes": [
+                "xml_extension_attributes": [
                     {
                         "uid": "odm_xml_extension_attribute4",
-                        "name": "nameFour",
+                        "name": "name_four",
+                        "data_type": "string",
                         "value": "value",
-                        "odmXmlExtensionUid": "odm_xml_extension1"
+                        "xml_extension_uid": "odm_xml_extension1"
                     }
                 ],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test adding odm xml extension tag attribute to a specific odm item",
+        "name": "Test adding ODM XML Extension Tag attribute to a specific ODM Item",
         "request": {
             "headers": {},
             "method": "POST",
@@ -1686,7 +1704,7 @@
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/items/OdmItem_000001/add-xml-extension-tag-attributes"
+            "url": "concepts/odms/items/OdmItem_000001/xml-extension-tag-attributes"
         },
         "response": {
             "code": 201,
@@ -1696,23 +1714,23 @@
             },
             "result": {
                 "uid": "OdmItem_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 22,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "new comment",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO initials",
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -1720,7 +1738,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -1729,7 +1747,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -1741,19 +1759,19 @@
                         "version": "0.1"
                     }
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -1762,15 +1780,16 @@
                 "codelist": {
                     "uid": "editable_cr",
                     "name": "codelist attributes value1",
-                    "submissionValue": "codelist submission value1",
-                    "preferredTerm": "codelist preferred term"
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
                 },
                 "terms": [
                     {
-                        "termUid": "term_root_final",
+                        "term_uid": "term_root_final",
                         "name": "term_value_name1",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": "display text"
                     }
                 ],
                 "activities": [
@@ -1779,38 +1798,40 @@
                         "name": "name2"
                     }
                 ],
-                "xmlExtensionTags": [
+                "xml_extension_tags": [
                     {
                         "uid": "odm_xml_extension_tag1",
                         "name": "nameOne",
                         "value": "value"
                     }
                 ],
-                "xmlExtensionAttributes": [
+                "xml_extension_attributes": [
                     {
                         "uid": "odm_xml_extension_attribute4",
-                        "name": "nameFour",
+                        "name": "name_four",
+                        "data_type": "string",
                         "value": "value",
-                        "odmXmlExtensionUid": "odm_xml_extension1"
+                        "xml_extension_uid": "odm_xml_extension1"
                     }
                 ],
-                "xmlExtensionTagAttributes": [
+                "xml_extension_tag_attributes": [
                     {
                         "uid": "odm_xml_extension_attribute1",
                         "name": "nameOne",
+                        "data_type": "string",
                         "value": "value",
-                        "odmXmlExtensionTagUid": "odm_xml_extension_tag1"
+                        "xml_extension_tag_uid": "odm_xml_extension_tag1"
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test overriding odm xml extension tag attribute from a specific odm item",
+        "name": "Test overriding ODM XML Extension Tag attribute from a specific ODM Item",
         "request": {
             "headers": {},
             "method": "POST",
@@ -1820,7 +1841,7 @@
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/items/OdmItem_000001/add-xml-extension-tag-attributes?override=true"
+            "url": "concepts/odms/items/OdmItem_000001/xml-extension-tag-attributes?override=true"
         },
         "response": {
             "code": 201,
@@ -1830,23 +1851,23 @@
             },
             "result": {
                 "uid": "OdmItem_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 22,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "new comment",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO initials",
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -1854,7 +1875,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -1863,7 +1884,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -1875,19 +1896,19 @@
                         "version": "0.1"
                     }
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -1896,15 +1917,16 @@
                 "codelist": {
                     "uid": "editable_cr",
                     "name": "codelist attributes value1",
-                    "submissionValue": "codelist submission value1",
-                    "preferredTerm": "codelist preferred term"
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
                 },
                 "terms": [
                     {
-                        "termUid": "term_root_final",
+                        "term_uid": "term_root_final",
                         "name": "term_value_name1",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": "display text"
                     }
                 ],
                 "activities": [
@@ -1913,43 +1935,45 @@
                         "name": "name2"
                     }
                 ],
-                "xmlExtensionTags": [
+                "xml_extension_tags": [
                     {
                         "uid": "odm_xml_extension_tag1",
                         "name": "nameOne",
                         "value": "value"
                     }
                 ],
-                "xmlExtensionAttributes": [
+                "xml_extension_attributes": [
                     {
                         "uid": "odm_xml_extension_attribute4",
-                        "name": "nameFour",
+                        "name": "name_four",
+                        "data_type": "string",
                         "value": "value",
-                        "odmXmlExtensionUid": "odm_xml_extension1"
+                        "xml_extension_uid": "odm_xml_extension1"
                     }
                 ],
-                "xmlExtensionTagAttributes": [
+                "xml_extension_tag_attributes": [
                     {
                         "uid": "odm_xml_extension_attribute2",
                         "name": "nameTwo",
+                        "data_type": "string",
                         "value": "value",
-                        "odmXmlExtensionTagUid": "odm_xml_extension_tag1"
+                        "xml_extension_tag_uid": "odm_xml_extension_tag1"
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test creating a new odm item version",
+        "name": "Test creating a new ODM Item version",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/odms/items/OdmItem_000001/new-version"
+            "url": "concepts/odms/items/OdmItem_000001/versions"
         },
         "response": {
             "code": 201,
@@ -1959,23 +1983,23 @@
             },
             "result": {
                 "uid": "OdmItem_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 22,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "new comment",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "1.1",
-                "changeDescription": "New draft created",
-                "userInitials": "TODO user initials",
+                "change_description": "New draft created",
+                "user_initials": "TODO user initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -1983,7 +2007,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -1992,7 +2016,7 @@
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
-                        "sponsorInstruction": "sponsorInstruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
                         "version": "0.1"
                     }
                 ],
@@ -2004,19 +2028,19 @@
                         "version": "0.1"
                     }
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -2025,15 +2049,16 @@
                 "codelist": {
                     "uid": "editable_cr",
                     "name": "codelist attributes value1",
-                    "submissionValue": "codelist submission value1",
-                    "preferredTerm": "codelist preferred term"
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
                 },
                 "terms": [
                     {
-                        "termUid": "term_root_final",
+                        "term_uid": "term_root_final",
                         "name": "term_value_name1",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": "display text"
                     }
                 ],
                 "activities": [
@@ -2042,30 +2067,32 @@
                         "name": "name2"
                     }
                 ],
-                "xmlExtensionTags": [
+                "xml_extension_tags": [
                     {
                         "uid": "odm_xml_extension_tag1",
                         "name": "nameOne",
                         "value": "value"
                     }
                 ],
-                "xmlExtensionAttributes": [
+                "xml_extension_attributes": [
                     {
                         "uid": "odm_xml_extension_attribute4",
-                        "name": "nameFour",
+                        "name": "name_four",
+                        "data_type": "string",
                         "value": "value",
-                        "odmXmlExtensionUid": "odm_xml_extension1"
+                        "xml_extension_uid": "odm_xml_extension1"
                     }
                 ],
-                "xmlExtensionTagAttributes": [
+                "xml_extension_tag_attributes": [
                     {
                         "uid": "odm_xml_extension_attribute2",
                         "name": "nameTwo",
+                        "data_type": "string",
                         "value": "value",
-                        "odmXmlExtensionTagUid": "odm_xml_extension_tag1"
+                        "xml_extension_tag_uid": "odm_xml_extension_tag1"
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "edit"
                 ]
@@ -2073,37 +2100,37 @@
         }
     },
     {
-        "name": "Create a new odm item for deleting it",
+        "name": "Create a new ODM Item for deleting it",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1 - delete",
                 "oid": "oid2",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 1,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "comment1",
-                "descriptionUids": [
+                "descriptions": [
                     "odm_description1"
                 ],
-                "aliasUids": [],
-                "unitDefinitions": [
+                "alias_uids": [],
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "mandatory": false,
                         "order": 1
                     }
                 ],
-                "codelistUid": null,
+                "codelist_uid": null,
                 "terms": []
             },
-            "url": "concepts/odms/items/select"
+            "url": "concepts/odms/items"
         },
         "response": {
             "code": 201,
@@ -2113,23 +2140,23 @@
             },
             "result": {
                 "uid": "OdmItem_000002",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1 - delete",
                 "oid": "oid2",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 1,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "comment1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -2137,24 +2164,24 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     }
                 ],
                 "aliases": [],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -2163,10 +2190,10 @@
                 "codelist": null,
                 "terms": [],
                 "activities": [],
-                "xmlExtensionTags": [],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_tags": [],
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -2175,7 +2202,7 @@
         }
     },
     {
-        "name": "Test deleting a specific odm item",
+        "name": "Test deleting a specific ODM Item",
         "request": {
             "headers": {},
             "method": "DELETE",
@@ -2192,39 +2219,39 @@
         }
     },
     {
-        "name": "Test creating a new odm item with relations",
+        "name": "Test creating a new ODM Item with relations",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "string",
                 "oid": "string",
                 "prompt": "string",
                 "datatype": "string",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "string",
-                "sdsVarName": "string",
+                "length": 0,
+                "significant_digits": 11,
+                "sas_field_name": "string",
+                "sds_var_name": "string",
                 "origin": "string",
                 "comment": "string",
                 "descriptions": [
                     "odm_description1",
                     {
                         "name": "string1",
-                        "libraryName": "Sponsor",
+                        "library_name": "Sponsor",
                         "language": "DAN",
                         "description": "string1",
                         "instruction": "string1",
-                        "sponsorInstruction": "string1"
+                        "sponsor_instruction": "string1"
                     }
                 ],
-                "aliasUids": [],
-                "unitDefinitions": [],
-                "codelistUid": null,
+                "alias_uids": [],
+                "unit_definitions": [],
+                "codelist_uid": null,
                 "terms": []
             },
-            "url": "concepts/odms/items/create"
+            "url": "concepts/odms/items"
         },
         "response": {
             "code": 201,
@@ -2234,23 +2261,23 @@
             },
             "result": {
                 "uid": "OdmItem_000003",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "string",
                 "oid": "string",
                 "prompt": "string",
                 "datatype": "string",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "string",
-                "sdsVarName": "string",
+                "length": null,
+                "significant_digits": 11,
+                "sas_field_name": "string",
+                "sds_var_name": "string",
                 "origin": "string",
                 "comment": "string",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -2258,7 +2285,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -2267,19 +2294,19 @@
                         "language": "DAN",
                         "description": "string1",
                         "instruction": "string1",
-                        "sponsorInstruction": "string1",
+                        "sponsor_instruction": "string1",
                         "version": "0.1"
                     }
                 ],
                 "aliases": [],
-                "unitDefinitions": [],
+                "unit_definitions": [],
                 "codelist": null,
                 "terms": [],
                 "activities": [],
-                "xmlExtensionTags": [],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_tags": [],
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -2288,31 +2315,31 @@
         }
     },
     {
-        "name": "Test updating an existing odm item with relations",
+        "name": "Test updating an existing ODM Item with relations",
         "request": {
             "headers": {},
             "method": "PATCH",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": null,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "new comment",
-                "changeDescription": "comment added",
+                "change_description": "comment added",
                 "descriptions": [
                     {
                         "name": "string3",
-                        "libraryName": "Sponsor",
+                        "library_name": "Sponsor",
                         "language": "ARA",
                         "description": "string3",
                         "instruction": "string3",
-                        "sponsorInstruction": "string3"
+                        "sponsor_instruction": "string3"
                     },
                     {
                         "uid": "odm_description1",
@@ -2320,21 +2347,21 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
-                        "changeDescription": "nothing changed"
+                        "sponsor_instruction": "sponsor_instruction1",
+                        "change_description": "nothing changed"
                     }
                 ],
-                "aliasUids": [
+                "alias_uids": [
                     "odm_alias1"
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "mandatory": false,
                         "order": 1
                     }
                 ],
-                "codelistUid": "editable_cr",
+                "codelist_uid": "editable_cr",
                 "terms": [
                     {
                         "uid": "term_root_final",
@@ -2343,7 +2370,7 @@
                     }
                 ]
             },
-            "url": "concepts/odms/items/OdmItem_000001/update"
+            "url": "concepts/odms/items/OdmItem_000001"
         },
         "response": {
             "code": 200,
@@ -2353,23 +2380,23 @@
             },
             "result": {
                 "uid": "OdmItem_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "prompt": "prompt1",
                 "datatype": "datatype1",
-                "length": 11,
-                "significantDigits": 11,
-                "sasFieldName": "sasFieldName1",
-                "sdsVarName": "sdsVarName1",
+                "length": 22,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
                 "origin": "origin1",
                 "comment": "new comment",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "1.2",
-                "changeDescription": "comment added",
-                "userInitials": "TODO user initials",
+                "change_description": "comment added",
+                "user_initials": "TODO user initials",
                 "descriptions": [
                     {
                         "uid": "odm_description1",
@@ -2377,7 +2404,7 @@
                         "language": "ENG",
                         "description": "description1",
                         "instruction": "instruction1",
-                        "sponsorInstruction": "sponsorInstruction1",
+                        "sponsor_instruction": "sponsor_instruction1",
                         "version": "0.1"
                     },
                     {
@@ -2386,7 +2413,7 @@
                         "language": "ARA",
                         "description": "string3",
                         "instruction": "string3",
-                        "sponsorInstruction": "string3",
+                        "sponsor_instruction": "string3",
                         "version": "0.1"
                     }
                 ],
@@ -2398,19 +2425,19 @@
                         "version": "0.1"
                     }
                 ],
-                "unitDefinitions": [
+                "unit_definitions": [
                     {
                         "uid": "unit_definition_root1",
                         "name": "name1",
                         "mandatory": false,
                         "order": 1,
                         "ucum": {
-                            "termUid": "term_root1_uid",
+                            "term_uid": "term_root1_uid",
                             "name": "name1"
                         },
-                        "ctUnits": [
+                        "ct_units": [
                             {
-                                "termUid": "C25532_name1",
+                                "term_uid": "C25532_name1",
                                 "name": "name1"
                             }
                         ]
@@ -2419,15 +2446,16 @@
                 "codelist": {
                     "uid": "editable_cr",
                     "name": "codelist attributes value1",
-                    "submissionValue": "codelist submission value1",
-                    "preferredTerm": "codelist preferred term"
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
                 },
                 "terms": [
                     {
-                        "termUid": "term_root_final",
+                        "term_uid": "term_root_final",
                         "name": "term_value_name1",
                         "mandatory": true,
-                        "order": 1
+                        "order": 1,
+                        "display_text": null
                     }
                 ],
                 "activities": [
@@ -2436,30 +2464,32 @@
                         "name": "name2"
                     }
                 ],
-                "xmlExtensionTags": [
+                "xml_extension_tags": [
                     {
                         "uid": "odm_xml_extension_tag1",
                         "name": "nameOne",
                         "value": "value"
                     }
                 ],
-                "xmlExtensionAttributes": [
+                "xml_extension_attributes": [
                     {
                         "uid": "odm_xml_extension_attribute4",
-                        "name": "nameFour",
+                        "name": "name_four",
+                        "data_type": "string",
                         "value": "value",
-                        "odmXmlExtensionUid": "odm_xml_extension1"
+                        "xml_extension_uid": "odm_xml_extension1"
                     }
                 ],
-                "xmlExtensionTagAttributes": [
+                "xml_extension_tag_attributes": [
                     {
                         "uid": "odm_xml_extension_attribute2",
                         "name": "nameTwo",
+                        "data_type": "string",
                         "value": "value",
-                        "odmXmlExtensionTagUid": "odm_xml_extension_tag1"
+                        "xml_extension_tag_uid": "odm_xml_extension_tag1"
                     }
                 ],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "edit"
                 ]
@@ -2467,25 +2497,25 @@
         }
     },
     {
-        "name": "Create a new odm item group with relation to odm item",
+        "name": "Create a new ODM Item Group with relation to ODM Item",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "repeating": "No",
-                "isReferenceData": "No",
-                "sasDatasetName": "sasDatasetName1",
+                "is_reference_data": "No",
+                "sas_dataset_name": "sas_dataset_name1",
                 "origin": "origin1",
                 "purpose": "purpose1",
                 "comment": "comment1",
-                "descriptionUids": [],
-                "aliasUids": [],
-                "sdtmDomainUids": []
+                "descriptions": [],
+                "alias_uids": [],
+                "sdtm_domain_uids": []
             },
-            "url": "concepts/odms/item-groups/select"
+            "url": "concepts/odms/item-groups"
         },
         "response": {
             "code": 201,
@@ -2496,29 +2526,29 @@
             "result": {
                 "uid": "OdmItemGroup_000001",
                 "name": "name1",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "oid": "oid1",
                 "repeating": "No",
-                "isReferenceData": "No",
-                "sasDatasetName": "sasDatasetName1",
+                "is_reference_data": "No",
+                "sas_dataset_name": "sas_dataset_name1",
                 "origin": "origin1",
                 "purpose": "purpose1",
                 "comment": "comment1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
                 "descriptions": [],
                 "aliases": [],
-                "sdtmDomains": [],
-                "activitySubGroups": [],
+                "sdtm_domains": [],
+                "activity_subgroups": [],
                 "items": [],
-                "xmlExtensionTags": [],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_tags": [],
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -2527,7 +2557,7 @@
         }
     },
     {
-        "name": "Approve the odm item group",
+        "name": "Approve the ODM Item Group",
         "request": {
             "headers": {},
             "method": "POST",
@@ -2543,57 +2573,57 @@
             "result": {
                 "uid": "OdmItemGroup_000001",
                 "name": "name1",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "oid": "oid1",
                 "repeating": "No",
-                "isReferenceData": "No",
-                "sasDatasetName": "sasDatasetName1",
+                "is_reference_data": "No",
+                "sas_dataset_name": "sas_dataset_name1",
                 "origin": "origin1",
                 "purpose": "purpose1",
                 "comment": "comment1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Approved version",
-                "userInitials": "TODO user initials",
+                "change_description": "Approved version",
+                "user_initials": "TODO user initials",
                 "descriptions": [],
                 "aliases": [],
-                "sdtmDomains": [],
-                "activitySubGroups": [],
+                "sdtm_domains": [],
+                "activity_subgroups": [],
                 "items": [],
-                "xmlExtensionTags": [],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_tags": [],
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Add the odm item to the odm item group",
+        "name": "Add the ODM Item to the ODM Item Group",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
                     "uid": "OdmItem_000001",
-                    "orderNumber": 1,
+                    "order_number": 1,
                     "mandatory": "Yes",
-                    "dataEntryRequired": "Yes",
+                    "data_entry_required": "Yes",
                     "sdv": "Yes",
                     "locked": "No",
-                    "keySequence": "None",
-                    "methodOid": "None",
-                    "imputationMethodOid": "None",
+                    "key_sequence": "None",
+                    "method_oid": "None",
+                    "imputation_method_oid": "None",
                     "role": "role1",
-                    "roleCodelistOid": "None",
-                    "collectionExceptionConditionOid": "None"
+                    "role_codelist_oid": "None",
+                    "collection_exception_condition_oid": "None"
                 }
             ],
-            "url": "concepts/odms/item-groups/OdmItemGroup_000001/add-items"
+            "url": "concepts/odms/item-groups/OdmItemGroup_000001/items"
         },
         "response": {
             "code": 201,
@@ -2604,54 +2634,54 @@
             "result": {
                 "uid": "OdmItemGroup_000001",
                 "name": "name1",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "oid": "oid1",
                 "repeating": "No",
-                "isReferenceData": "No",
-                "sasDatasetName": "sasDatasetName1",
+                "is_reference_data": "No",
+                "sas_dataset_name": "sas_dataset_name1",
                 "origin": "origin1",
                 "purpose": "purpose1",
                 "comment": "comment1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Approved version",
-                "userInitials": "TODO user initials",
+                "change_description": "Approved version",
+                "user_initials": "TODO user initials",
                 "descriptions": [],
                 "aliases": [],
-                "sdtmDomains": [],
-                "activitySubGroups": [],
+                "sdtm_domains": [],
+                "activity_subgroups": [],
                 "items": [
                     {
                         "uid": "OdmItem_000001",
                         "oid": "oid1",
                         "name": "name1",
-                        "orderNumber": 1,
+                        "order_number": 1,
                         "mandatory": "Yes",
-                        "dataEntryRequired": "Yes",
+                        "data_entry_required": "Yes",
                         "sdv": "Yes",
                         "locked": "No",
-                        "keySequence": "None",
-                        "methodOid": "None",
-                        "imputationMethodOid": "None",
+                        "key_sequence": "None",
+                        "method_oid": "None",
+                        "imputation_method_oid": "None",
                         "role": "role1",
-                        "roleCodelistOid": "None",
-                        "collectionExceptionConditionOid": "None"
+                        "role_codelist_oid": "None",
+                        "collection_exception_condition_oid": "None"
                     }
                 ],
-                "xmlExtensionTags": [],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "xml_extension_tags": [],
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test getting UIDs of a specific odm item's active relationships",
+        "name": "Test getting UIDs of a specific ODM Item's active relationships",
         "request": {
             "headers": {},
             "method": "GET",
@@ -2669,6 +2699,31 @@
                     "OdmItemGroup_000001"
                 ]
             }
+        }
+    },
+    {
+        "name": "Test getting all ODM Items that belongs to an ODM Item Groups",
+        "request": {
+            "headers": {},
+            "method": "GET",
+            "request": {},
+            "url": "concepts/odms/items/item-groups"
+        },
+        "response": {
+            "code": 200,
+            "headers": {
+                "content-length": "340",
+                "content-type": "application/json"
+            },
+            "result": [
+                {
+                    "uid": "OdmItem_000001",
+                    "name": "name1",
+                    "parent_uids": [
+                        "OdmItemGroup_000001"
+                    ]
+                }
+            ]
         }
     }
 ]

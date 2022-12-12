@@ -221,11 +221,13 @@ class TimelineAR:
 
         subvisit_sets = {}
         amount_of_subvisits_for_visit = {}
+        special_visit_anchors = {}
         for visit in self._visits:
             if visit.visit_subclass == VisitSubclass.ANCHOR_VISIT_IN_GROUP_OF_SUBV:
                 if visit.uid:
                     subvisit_sets[visit.uid] = [Subvisit(visit, 0)]
-
+            elif visit.visit_class == VisitClass.SPECIAL_VISIT:
+                special_visit_anchors[visit.visit_sublabel_reference] = None
         for order, visit in enumerate(self._visits):
             if visit.timepoint:
                 time_anchor = visit.timepoint.visit_timereference.value
@@ -236,11 +238,13 @@ class TimelineAR:
                     visit.set_anchor_visit(self._visits[order - 1])
             elif time_anchor in anchors and visit.uid != anchors[time_anchor].uid:
                 visit.set_anchor_visit(anchors[time_anchor])
+            if visit.uid in special_visit_anchors:
+                special_visit_anchors[visit.uid] = visit
             if (
                 visit.visit_subclass
                 == VisitSubclass.ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV
             ):
-                visits = subvisit_sets[visit.visit_sub_label_reference]
+                visits = subvisit_sets[visit.visit_sublabel_reference]
                 visit.set_subvisit_anchor(visits[0].visit)
         ordered_visits = sorted(
             self._visits,
@@ -258,6 +262,16 @@ class TimelineAR:
                 visit.set_order_and_number(
                     UNSCHEDULED_VISIT_NUMBER, UNSCHEDULED_VISIT_NUMBER
                 )
+            elif visit.visit_class == VisitClass.SPECIAL_VISIT:
+                anchor_for_special_vis = special_visit_anchors[
+                    visit.visit_sublabel_reference
+                ]
+                visit.set_subvisit_anchor(anchor_for_special_vis)
+                visit.set_order_and_number(
+                    visit.subvisit_anchor.visit_order,
+                    visit.subvisit_anchor.visit_number,
+                )
+                visit.set_subvisit_number(1)
             elif (
                 visit.visit_subclass
                 != VisitSubclass.ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV
@@ -267,10 +281,8 @@ class TimelineAR:
                 visit.visit_subclass
                 == VisitSubclass.ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV
             ):
-                amount_of_subvisits_for_visit[visit.visit_sub_label_reference] = (
-                    amount_of_subvisits_for_visit.get(
-                        visit.visit_sub_label_reference, 0
-                    )
+                amount_of_subvisits_for_visit[visit.visit_sublabel_reference] = (
+                    amount_of_subvisits_for_visit.get(visit.visit_sublabel_reference, 0)
                     + 1
                 )
             else:
@@ -288,9 +300,9 @@ class TimelineAR:
                     visit.subvisit_anchor.visit_order,
                     visit.subvisit_anchor.visit_number,
                 )
-                visits = subvisit_sets[visit.visit_sub_label_reference]
+                visits = subvisit_sets[visit.visit_sublabel_reference]
                 amount_of_subvists = amount_of_subvisits_for_visit[
-                    visit.visit_sub_label_reference
+                    visit.visit_sublabel_reference
                 ]
                 if amount_of_subvists < 10:
                     increment_step = 10
@@ -319,7 +331,13 @@ class TimelineAR:
             # derive timing properties in the end when all subvisits are set
             if visit.timepoint:
                 visit.study_day.value = visit.derive_study_day_number()
+                visit.study_duration_days.value = (
+                    visit.derive_study_duration_days_number()
+                )
                 visit.study_week.value = visit.derive_study_week_number()
+                visit.study_duration_weeks.value = (
+                    visit.derive_study_duration_weeks_number()
+                )
 
         # sort visits that are returned in the end to capture all timing changes
         ordered_visits = sorted(

@@ -59,13 +59,13 @@ class DictionaryTermSubstanceService(
         return DictionaryTermSubstanceAR.from_input_values(
             author=self.user_initials,
             dictionary_term_vo=DictionaryTermSubstanceVO.from_input_values(
-                codelist_uid=term_input.codelistUid,
+                codelist_uid=term_input.codelist_uid,
                 name=term_input.name,
-                dictionary_id=term_input.dictionaryId,
-                name_sentence_case=term_input.nameSentenceCase,
+                dictionary_id=term_input.dictionary_id,
+                name_sentence_case=term_input.name_sentence_case,
                 abbreviation=term_input.abbreviation,
                 definition=term_input.definition,
-                pclass_uid=term_input.pclassUid,
+                pclass_uid=term_input.pclass_uid,
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
@@ -80,15 +80,15 @@ class DictionaryTermSubstanceService(
 
         item.edit_draft(
             author=self.user_initials,
-            change_description=term_input.changeDescription,
+            change_description=term_input.change_description,
             dictionary_term_vo=DictionaryTermSubstanceVO.from_input_values(
                 codelist_uid=item.dictionary_term_vo.codelist_uid,
                 name=term_input.name,
-                dictionary_id=term_input.dictionaryId,
-                name_sentence_case=term_input.nameSentenceCase,
+                dictionary_id=term_input.dictionary_id,
+                name_sentence_case=term_input.name_sentence_case,
                 abbreviation=term_input.abbreviation,
                 definition=term_input.definition,
-                pclass_uid=term_input.pclassUid,
+                pclass_uid=term_input.pclass_uid,
             ),
             term_exists_by_name_callback=self.repository.term_exists_by_name,
         )

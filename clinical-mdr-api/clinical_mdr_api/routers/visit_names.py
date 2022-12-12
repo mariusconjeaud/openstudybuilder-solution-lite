@@ -4,6 +4,7 @@ from typing import Any, List, Optional
 from fastapi import APIRouter, Body, Depends, Path, Query
 from pydantic.types import Json
 
+from clinical_mdr_api import config
 from clinical_mdr_api.models.concept import VisitName, VisitNameInput
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
@@ -40,18 +41,20 @@ Possible errors:
 )
 def get_visit_names(
     library: Optional[str] = Query(None, description="The library name"),
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -59,15 +62,15 @@ def get_visit_names(
     visit_name_service = VisitNameService(user=current_user_id)
     results = visit_name_service.get_all_concepts(
         library=library,
-        sort_by=sortBy,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -89,8 +92,8 @@ def get_visit_names(
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
     library: Optional[str] = Query(None, description="The library name"),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -99,18 +102,18 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     visit_name_service = VisitNameService(user=current_user_id)
     return visit_name_service.get_distinct_values_for_header(
         library=library,
-        field_name=fieldName,
-        search_string=searchString,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
@@ -143,7 +146,7 @@ def get_visit_name(
     summary="Creates new visit name or returns already existing visit name.",
     description="""
 State before:
- - The specified library allows creation of concepts (the 'isEditable' property of the library needs to be true).
+ - The specified library allows creation of concepts (the 'is_editable' property of the library needs to be true).
 
 Business logic:
  - New node is created for the visit name with the set properties.

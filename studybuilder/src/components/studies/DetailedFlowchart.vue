@@ -87,7 +87,7 @@
         <th :style="`top: ${firstHeaderHeight}px`">{{ $t('DetailedFlowchart.visit_short_name') }}</th>
         <template v-if="groupedVisits.length">
           <th v-for="(sv, index) in groupedVisits" :key="`shortName-${index}`" :style="`top: ${firstHeaderHeight}px`">
-            {{ sv.visitShortName }}
+            {{ sv.visit_short_name }}
           </th>
         </template>
         <template v-else>
@@ -98,7 +98,7 @@
         <th :style="`top: ${thirdHeaderRowTop}px`">{{ $t('DetailedFlowchart.study_week') }}</th>
         <template v-if="groupedVisits.length">
           <th v-for="(sv, index) in groupedVisits" :key="`week-${index}`" :style="`top: ${thirdHeaderRowTop}px`">
-            {{ sv.studyWeekNumber }}
+            {{ sv.study_week_number }}
           </th>
         </template>
         <template v-else>
@@ -109,11 +109,11 @@
         <th :style="`top: ${fourthHeaderRowTop}px`">{{ $t('DetailedFlowchart.visit_window') }}</th>
         <template v-if="groupedVisits.length">
           <th v-for="(sv, index) in groupedVisits" :key="`window-${index}`" :style="`top: ${fourthHeaderRowTop}px`">
-            <template v-if="sv.minVisitWindowValue !== sv.maxVisitWindowValue">
-              {{ sv.minVisitWindowValue }}/+{{ sv.maxVisitWindowValue }}
+            <template v-if="sv.min_visit_window_value !== sv.max_visit_window_value">
+              {{ sv.min_visit_window_value }}/+{{ sv.max_visit_window_value }}
             </template>
             <template v-else>
-              &plusmn;{{ sv.maxVisitWindowValue }}
+              &plusmn;{{ sv.max_visit_window_value }}
             </template>
           </th>
         </template>
@@ -202,7 +202,7 @@
                   <td :colspan="groupedVisits.length + 1"></td>
                 </tr>
                 <template v-if="rowsDisplayState[`subgroup-${flGroupIndex}-${groupIndex}-${subgroupIndex}`]">
-                  <tr v-for="studyActivity in studyActivities" :key="studyActivity.studyActivityUid">
+                  <tr v-for="studyActivity in studyActivities" :key="studyActivity.study_activity_uid">
                     <td></td>
                     <td class="activity">
                       <div class="d-flex align-center">
@@ -210,7 +210,7 @@
                           v-if="!readOnly"
                           hide-details
                           @change="value => toggleActivitySelection(studyActivity, value)"
-                          :value="studyActivitySelection.findIndex(item => item.studyActivityUid === studyActivity.studyActivityUid) !== -1"
+                          :value="studyActivitySelection.findIndex(item => item.study_activity_uid === studyActivity.study_activity_uid) !== -1"
                           />
                         {{ studyActivity.activity.name }}
                       </div>
@@ -219,20 +219,20 @@
                       <v-btn
                         v-if="!readOnly"
                         icon
-                        @click="toggleActivityFlowchartDisplay(studyActivity, !studyActivity.showActivityInProtocolFlowchart)"
+                        @click="toggleActivityFlowchartDisplay(studyActivity, !studyActivity.show_activity_in_protocol_flowchart)"
                         :title="$t('DetailedFlowchart.toggle_activity_display')"
                         >
-                        <v-icon v-if="studyActivity.showActivityInProtocolFlowchart" color="success">mdi-eye-outline</v-icon>
+                        <v-icon v-if="studyActivity.show_activity_in_protocol_flowchart" color="success">mdi-eye-outline</v-icon>
                         <v-icon v-else>mdi-eye-off-outline</v-icon>
                       </v-btn>
                     </td>
-                    <td v-for="visit in groupedVisits" :key="`${studyActivity.studyActivityUid}-${visit.uid}`">
+                    <td v-for="visit in groupedVisits" :key="`${studyActivity.study_activity_uid}-${visit.uid}`">
                       <v-checkbox
-                        v-if="!readOnly && currentSelectionMatrix[studyActivity.studyActivityUid][visit.uid]"
-                        v-model="currentSelectionMatrix[studyActivity.studyActivityUid][visit.uid].value"
+                        v-if="!readOnly && currentSelectionMatrix[studyActivity.study_activity_uid][visit.uid]"
+                        v-model="currentSelectionMatrix[studyActivity.study_activity_uid][visit.uid].value"
                         color="success"
-                        @change="value => updateSchedule(value, studyActivity.studyActivityUid, visit)"
-                        :disabled="isCheckboxDisabled(studyActivity.studyActivityUid, visit.uid)"
+                        @change="value => updateSchedule(value, studyActivity.study_activity_uid, visit)"
+                        :disabled="isCheckboxDisabled(studyActivity.study_activity_uid, visit.uid)"
                         hide-details
                         on-icon="mdi-checkbox-marked-circle-outline"
                         off-icon="mdi-checkbox-blank-circle-outline"
@@ -320,6 +320,7 @@ import study from '@/api/study'
 import StudyActivityScheduleBatchEditForm from './StudyActivityScheduleBatchEditForm'
 import studyEpochs from '@/api/studyEpochs'
 import terms from '@/api/controlledTerminology/terms'
+import visitConstants from '@/constants/visits'
 
 export default {
   components: {
@@ -352,28 +353,34 @@ export default {
 
       function createFakeVisit () {
         const fakeVisit = {
-          visitShortName: `${firstVisit.visitShortName}-${previousVisit.visitShortName}`,
-          epochUid: firstVisit.epochUid,
-          studyWeekNumber: `${firstVisit.studyWeekNumber}-${previousVisit.studyWeekNumber}`,
-          minVisitWindowValue: firstVisit.minVisitWindowValue,
-          maxVisitWindowValue: firstVisit.maxVisitWindowValue,
-          consecutiveVisitGroup: firstVisit.consecutiveVisitGroup,
-          uid: firstVisit.consecutiveVisitGroup,
+          visit_short_name: `${firstVisit.visit_short_name}-${previousVisit.visit_short_name}`,
+          epoch_uid: firstVisit.epoch_uid,
+          study_week_number: `${firstVisit.study_week_number}-${previousVisit.study_week_number}`,
+          min_visit_window_value: firstVisit.min_visit_window_value,
+          max_visit_window_value: firstVisit.max_visit_window_value,
+          consecutive_visit_group: firstVisit.consecutive_visit_group,
+          uid: firstVisit.consecutive_visit_group,
           isGroup: true
         }
         result.push(fakeVisit)
       }
 
       for (const visit of this.studyVisits) {
-        if (visit.consecutiveVisitGroup) {
-          if (visit.consecutiveVisitGroup !== currentGroup) {
+        if (visit.study_epoch_name === visitConstants.EPOCH_BASIC) {
+          continue
+        }
+        if (visit.consecutive_visit_group) {
+          if (visit.consecutive_visit_group !== currentGroup) {
             if (currentGroup) {
               createFakeVisit()
             }
             firstVisit = visit
-            currentGroup = visit.consecutiveVisitGroup
+            currentGroup = visit.consecutive_visit_group
           }
         } else {
+          if (currentGroup) {
+            createFakeVisit()
+          }
           currentGroup = null
           result.push(visit)
         }
@@ -406,9 +413,9 @@ export default {
   methods: {
     getEpochName (studyVisit, index) {
       if (this.epochs.length) {
-        if (index === 0 || this.studyVisits[index].epochUid !== this.studyVisits[index - 1].epochUid) {
-          const epoch = this.epochs.find(item => item.termUid === studyVisit.epochUid)
-          return epoch.sponsorPreferredName
+        if (index === 0 || this.studyVisits[index].epoch_uid !== this.studyVisits[index - 1].epoch_uid) {
+          const epoch = this.epochs.find(item => item.term_uid === studyVisit.epoch_uid)
+          return epoch.sponsor_preferred_name
         }
       }
       return ''
@@ -430,7 +437,7 @@ export default {
     getGroupDisplayState (flgroup, group) {
       for (const items of Object.values(this.sortedStudyActivities[flgroup][group])) {
         for (const item of items) {
-          if (item.showActivityGroupInProtocolFlowchart) {
+          if (item.show_activity_group_in_protocol_flowchart) {
             return true
           }
         }
@@ -439,7 +446,7 @@ export default {
     },
     getSubgroupDisplayState (flgroup, group, subgroup) {
       for (const item of this.sortedStudyActivities[flgroup][group][subgroup]) {
-        if (item.showActivitySubGroupInProtocolFlowchart) {
+        if (item.show_activity_subgroup_in_protocol_flowchart) {
           return true
         }
       }
@@ -471,7 +478,7 @@ export default {
         this.studyActivitySelection.push(studyActivity)
       } else {
         for (let i = 0; i < this.studyActivitySelection.length; i++) {
-          if (this.studyActivitySelection[i].studyActivityUid === studyActivity.studyActivityUid) {
+          if (this.studyActivitySelection[i].study_activity_uid === studyActivity.study_activity_uid) {
             this.studyActivitySelection.splice(i, 1)
             break
           }
@@ -479,12 +486,12 @@ export default {
       }
     },
     updateStudyActivity (studyActivity, data) {
-      study.updateStudyActivity(this.selectedStudy.uid, studyActivity.studyActivityUid, data).then(resp => {
-        const fgroup = studyActivity.flowchartGroup.sponsorPreferredName
-        const group = (studyActivity.activity.activityGroup)
-          ? studyActivity.activity.activityGroup.name : ''
-        const subgroup = (studyActivity.activity.activitySubGroup)
-          ? studyActivity.activity.activitySubGroup.name : ''
+      study.updateStudyActivity(this.selectedStudy.uid, studyActivity.study_activity_uid, data).then(resp => {
+        const fgroup = studyActivity.flowchart_group.sponsor_preferred_name
+        const group = (studyActivity.activity.activity_group)
+          ? studyActivity.activity.activity_group.name : ''
+        const subgroup = (studyActivity.activity.activity_subgroup)
+          ? studyActivity.activity.activity_subgroup.name : ''
         this.sortedStudyActivities[fgroup][group][subgroup].filter((item, index) => {
           this.$store.commit('studyActivities/UPDATE_STUDY_ACTIVITY', resp.data)
         })
@@ -499,7 +506,7 @@ export default {
         if (items.length) {
           items.forEach(studyActivity => {
             const data = {
-              showActivityGroupInProtocolFlowchart: !studyActivity.showActivityGroupInProtocolFlowchart
+              show_activity_group_in_protocol_flowchart: !studyActivity.show_activity_group_in_protocol_flowchart
             }
             this.updateStudyActivity(studyActivity, data)
           })
@@ -513,14 +520,14 @@ export default {
     toggleActivitySubgroupFlowchartDisplay (flgroup, group, subgroup) {
       this.sortedStudyActivities[flgroup][group][subgroup].forEach(studyActivity => {
         const data = {
-          showActivitySubGroupInProtocolFlowchart: !studyActivity.showActivitySubGroupInProtocolFlowchart
+          show_activity_subgroup_in_protocol_flowchart: !studyActivity.show_activity_subgroup_in_protocol_flowchart
         }
         this.updateStudyActivity(studyActivity, data)
       })
     },
     toggleActivityFlowchartDisplay (studyActivity) {
       const data = {
-        showActivityInProtocolFlowchart: !studyActivity.showActivityInProtocolFlowchart
+        show_activity_in_protocol_flowchart: !studyActivity.show_activity_in_protocol_flowchart
       }
       this.updateStudyActivity(studyActivity, data)
     },
@@ -528,18 +535,18 @@ export default {
       if (value) {
         const data = []
         for (const iterator of this.studyVisits) {
-          if (iterator.consecutiveVisitGroup === studyVisit.consecutiveVisitGroup) {
+          if (iterator.consecutive_visit_group === studyVisit.consecutive_visit_group) {
             data.push({
               method: 'POST',
               content: {
-                studyActivityUid,
-                studyVisitUid: iterator.uid
+                study_activity_uid: studyActivityUid,
+                study_visit_uid: iterator.uid
               }
             })
           }
         }
         study.studyActivityScheduleBatchOperations(this.selectedStudy.uid, data).then(resp => {
-          const scheduleUids = resp.data.map(item => item.content.studyActivityScheduleUid)
+          const scheduleUids = resp.data.map(item => item.content.study_activity_schedule_uid)
           this.currentSelectionMatrix[studyActivityUid][studyVisit.uid].uid = scheduleUids
         })
       } else {
@@ -564,11 +571,11 @@ export default {
       }
       if (value) {
         const data = {
-          studyActivityUid,
-          studyVisitUid: studyVisit.uid
+          study_activity_uid: studyActivityUid,
+          study_visit_uid: studyVisit.uid
         }
         study.createStudyActivitySchedule(this.selectedStudy.uid, data).then(resp => {
-          this.currentSelectionMatrix[studyActivityUid][studyVisit.uid].uid = resp.data.studyActivityScheduleUid
+          this.currentSelectionMatrix[studyActivityUid][studyVisit.uid].uid = resp.data.study_activity_schedule_uid
         })
       } else {
         const scheduleUid = this.currentSelectionMatrix[studyActivityUid][studyVisit.uid].uid
@@ -594,9 +601,9 @@ export default {
         data.push({
           method: 'PATCH',
           content: {
-            studyActivityUid: item.studyActivityUid,
+            study_activity_uid: item.study_activity_uid,
             content: {
-              showActivityInProtocolFlowchart: value
+              show_activity_in_protocol_flowchart: value
             }
           }
         })
@@ -607,7 +614,7 @@ export default {
           msg: this.$t('DetailedFlowchart.update_success')
         })
         this.studyActivitySelection.forEach(item => {
-          this.$set(item, 'showActivityInProtocolFlowchart', value)
+          this.$set(item, 'show_activity_in_protocol_flowchart', value)
         })
       })
     },
@@ -616,7 +623,7 @@ export default {
         this.studyActivitySelection = this.studyActivitySelection.concat(this.sortedStudyActivities[flgroup][group][subgroup])
       } else {
         for (const studyActivity of this.sortedStudyActivities[flgroup][group][subgroup]) {
-          const index = this.studyActivitySelection.findIndex(item => item.studyActivityUid === studyActivity.studyActivityUid)
+          const index = this.studyActivitySelection.findIndex(item => item.study_activity_uid === studyActivity.study_activity_uid)
           this.studyActivitySelection.splice(index, 1)
         }
       }
@@ -629,24 +636,24 @@ export default {
           })
         })
         resp.data.forEach(schedule => {
-          const visit = this.studyVisits.find(item => item.uid === schedule.studyVisitUid)
-          if (!visit.consecutiveVisitGroup) {
+          const visit = this.studyVisits.find(item => item.uid === schedule.study_visit_uid)
+          if (!visit.consecutive_visit_group) {
             this.$set(
-              this.currentSelectionMatrix[schedule.studyActivityUid],
+              this.currentSelectionMatrix[schedule.study_activity_uid],
               visit.uid,
-              { value: true, uid: schedule.studyActivityScheduleUid }
+              { value: true, uid: schedule.study_activity_schedule_uid }
             )
           } else {
-            const visitUid = visit.consecutiveVisitGroup
-            if (!this.currentSelectionMatrix[schedule.studyActivityUid][visitUid].uid) {
+            const visitUid = visit.consecutive_visit_group
+            if (!this.currentSelectionMatrix[schedule.study_activity_uid][visitUid].uid) {
               this.$set(
-                this.currentSelectionMatrix[schedule.studyActivityUid],
+                this.currentSelectionMatrix[schedule.study_activity_uid],
                 visitUid,
-                { value: true, uid: [schedule.studyActivityScheduleUid] }
+                { value: true, uid: [schedule.study_activity_schedule_uid] }
               )
             } else {
-              this.currentSelectionMatrix[schedule.studyActivityUid][visitUid].uid.push(
-                schedule.studyActivityScheduleUid
+              this.currentSelectionMatrix[schedule.study_activity_uid][visitUid].uid.push(
+                schedule.study_activity_schedule_uid
               )
             }
           }
@@ -670,9 +677,9 @@ export default {
     loadActivities () {
       this.$store.dispatch('studyActivities/fetchStudyActivities', { studyUid: this.selectedStudy.uid }).then(() => {
         for (const studyActivity of this.studyActivities) {
-          this.$set(this.currentSelectionMatrix, studyActivity.studyActivityUid, {})
+          this.$set(this.currentSelectionMatrix, studyActivity.study_activity_uid, {})
         }
-        studyEpochs.getStudyVisits(this.selectedStudy.uid).then(resp => {
+        studyEpochs.getStudyVisits(this.selectedStudy.uid, { page_size: 0 }).then(resp => {
           this.studyVisits = resp.data.items
           this.getStudyActivitySchedules()
         })

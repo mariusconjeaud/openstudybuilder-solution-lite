@@ -44,17 +44,17 @@
             "method": "POST",
             "request": {
                 "name": "name3",
-                "nameSentenceCase": "nameSentenceCase3",
+                "name_sentence_case": "name_sentence_case3",
                 "definition": "definition3",
-                "libraryName": "Sponsor",
-                "activitySubGroup": "activity_sub_group_root_non_existing"
+                "library_name": "Sponsor",
+                "activity_subgroup": "activity_subgroup_root_non_existing"
             },
             "url": "/concepts/activities/activities"
         },
         "response": {
             "code": 400,
             "result": {
-                "message": "Activity tried to connect to non existing ActivitySubGroup identified by uid (activity_sub_group_root_non_existing).",
+                "message": "Activity tried to connect to non existing ActivitySubGroup identified by uid (activity_subgroup_root_non_existing).",
                 "method": "POST",
                 "path": "http://testserver/concepts/activities/activities",
                 "time": "2020-11-10T01:51:17.884429",
@@ -69,10 +69,10 @@
             "method": "POST",
             "request": {
                 "name": "name1",
-                "nameSentenceCase": "nameSentenceCase3",
+                "name_sentence_case": "name_sentence_case3",
                 "definition": "definition3",
-                "libraryName": "Sponsor",
-                "activitySubGroup": "activity_sub_group_root1"
+                "library_name": "Sponsor",
+                "activity_subgroup": "activity_subgroup_root1"
             },
             "url": "/concepts/activities/activities"
         },
@@ -93,15 +93,15 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "changeDescription": "Test change",
-                "activitySubGroup": "activity_sub_group_root_non_existing"
+                "change_description": "Test change",
+                "activity_subgroup": "activity_subgroup_root_non_existing"
             },
             "url": "/concepts/activities/activities/activity_root1"
         },
         "response": {
             "code": 400,
             "result": {
-                "message": "Activity tried to connect to non existing ActivitySubGroup identified by uid (activity_sub_group_root_non_existing).",
+                "message": "Activity tried to connect to non existing ActivitySubGroup identified by uid (activity_subgroup_root_non_existing).",
                 "method": "PATCH",
                 "path": "http://testserver/concepts/activities/activities/activity_root1",
                 "time": "2020-11-10T01:51:17.884429",
@@ -116,7 +116,7 @@
             "method": "PATCH",
             "request": {
                 "name": "name1",
-                "changeDescription": "Test change"
+                "change_description": "Test change"
             },
             "url": "/concepts/activities/activities/activity_root2"
         },

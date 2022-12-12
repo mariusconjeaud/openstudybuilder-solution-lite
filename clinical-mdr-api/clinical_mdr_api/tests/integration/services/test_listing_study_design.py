@@ -23,7 +23,7 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     inject_base_data,
 )
 from clinical_mdr_api.tests.integration.utils.method_library import (
-    add_parent_ctTerm,
+    add_parent_ct_term,
     create_codelist,
     create_ct_term,
     create_library_data,
@@ -65,8 +65,8 @@ class TestTVListing(unittest.TestCase):
                 VISITDY=1,
                 ARMCD=None,
                 ARM=None,
-                TVSTRL="STARTRULE",
-                TVENRL="ENDRULE",
+                TVSTRL="START_RULE",
+                TVENRL="END_RULE",
             ),
             StudyVisitListing(
                 STUDYID="SOME_ID-0",
@@ -76,8 +76,8 @@ class TestTVListing(unittest.TestCase):
                 VISITDY=11,
                 ARMCD=None,
                 ARM=None,
-                TVSTRL="STARTRULE",
-                TVENRL="ENDRULE",
+                TVSTRL="START_RULE",
+                TVENRL="END_RULE",
             ),
             StudyVisitListing(
                 STUDYID="SOME_ID-0",
@@ -87,8 +87,8 @@ class TestTVListing(unittest.TestCase):
                 VISITDY=13,
                 ARMCD=None,
                 ARM=None,
-                TVSTRL="STARTRULE",
-                TVENRL="ENDRULE",
+                TVSTRL="START_RULE",
+                TVENRL="END_RULE",
             ),
             StudyVisitListing(
                 STUDYID="SOME_ID-0",
@@ -98,8 +98,8 @@ class TestTVListing(unittest.TestCase):
                 VISITDY=31,
                 ARMCD=None,
                 ARM=None,
-                TVSTRL="STARTRULE",
-                TVENRL="ENDRULE",
+                TVSTRL="START_RULE",
+                TVENRL="END_RULE",
             ),
             StudyVisitListing(
                 STUDYID="SOME_ID-0",
@@ -109,8 +109,8 @@ class TestTVListing(unittest.TestCase):
                 VISITDY=32,
                 ARMCD=None,
                 ARM=None,
-                TVSTRL="STARTRULE",
-                TVENRL="ENDRULE",
+                TVSTRL="START_RULE",
+                TVENRL="END_RULE",
             ),
             StudyVisitListing(
                 STUDYID="SOME_ID-0",
@@ -120,8 +120,8 @@ class TestTVListing(unittest.TestCase):
                 VISITDY=36,
                 ARMCD=None,
                 ARM=None,
-                TVSTRL="STARTRULE",
-                TVENRL="ENDRULE",
+                TVSTRL="START_RULE",
+                TVENRL="END_RULE",
             ),
         ]
         self.assertCountEqual(output, expected_output)
@@ -144,7 +144,7 @@ class TestTAListing(unittest.TestCase):
             "Element Type", "CTCodelist_ElementType", catalogue_name, library_name
         )
         element_type_term = create_ct_term(
-            element_type_codelist.codelistUid,
+            element_type_codelist.codelist_uid,
             "Element Type",
             "ElementType_0001",
             1,
@@ -152,7 +152,7 @@ class TestTAListing(unittest.TestCase):
             library_name,
         )
         element_type_term_2 = create_ct_term(
-            element_type_codelist.codelistUid,
+            element_type_codelist.codelist_uid,
             "Element Type",
             "ElementType_0002",
             2,
@@ -170,8 +170,8 @@ class TestTAListing(unittest.TestCase):
             catalogue=catalogue_name,
             library=library_name,
         )
-        armType = create_ct_term(
-            codelist=codelist.codelistUid,
+        arm_type = create_ct_term(
+            codelist=codelist.codelist_uid,
             name="Arm Type",
             uid="ArmType_0001",
             order=1,
@@ -182,64 +182,64 @@ class TestTAListing(unittest.TestCase):
         self.arm = create_study_arm(
             study_uid=self.study.uid,
             name="Arm_Name_1",
-            shortName="Arm_Short_Name_1",
+            short_name="Arm_Short_Name_1",
             code="Arm_code_1",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Arm_randomizationGroup",
-            numberOfSubjects=100,
-            armTypeUid=armType.uid,
+            colour_code="colour...",
+            randomization_group="Arm_randomizationGroup",
+            number_of_subjects=100,
+            arm_type_uid=arm_type.uid,
         )
         self.arm = create_study_arm(
             study_uid=self.study.uid,
             name="Arm_Name_2",
-            shortName="Arm_Short_Name_2",
+            short_name="Arm_Short_Name_2",
             code="Arm_code_2",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Arm_randomizationGroup2",
-            numberOfSubjects=100,
-            armTypeUid=armType.uid,
+            colour_code="colour...",
+            randomization_group="Arm_randomizationGroup2",
+            number_of_subjects=100,
+            arm_type_uid=arm_type.uid,
         )
         self.arm = create_study_arm(
             study_uid=self.study.uid,
             name="Arm_Name_3",
-            shortName="Arm_Short_Name_3",
+            short_name="Arm_Short_Name_3",
             code="Arm_code_3",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Arm_randomizationGroup3",
-            numberOfSubjects=100,
-            armTypeUid=armType.uid,
+            colour_code="colour...",
+            randomization_group="Arm_randomizationGroup3",
+            number_of_subjects=100,
+            arm_type_uid=arm_type.uid,
         )
 
         self.arm = create_study_arm(
             study_uid=self.study.uid,
             name="Arm_Name_9",
-            shortName="Arm_Short_Name_9",
+            short_name="Arm_Short_Name_9",
             code="Arm_code_9",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Arm_randomizationGroup9",
-            numberOfSubjects=100,
-            armTypeUid=armType.uid,
+            colour_code="colour...",
+            randomization_group="Arm_randomizationGroup9",
+            number_of_subjects=100,
+            arm_type_uid=arm_type.uid,
         )
 
         self.design_cell = create_study_design_cell(
-            study_element_uid=self.study_elements[0].elementUid,
+            study_element_uid=self.study_elements[0].element_uid,
             study_epoch_uid=self.study_epoch.uid,
             study_arm_uid="StudyArm_000003",
             study_uid=self.study.uid,
         )
         self.design_cell2 = create_study_design_cell(
-            study_element_uid=self.study_elements[0].elementUid,
+            study_element_uid=self.study_elements[0].element_uid,
             study_epoch_uid=self.study_epoch2.uid,
             study_arm_uid="StudyArm_000003",
             study_uid=self.study.uid,
         )
 
         self.design_cell2 = create_study_design_cell(
-            study_element_uid=self.study_elements[1].elementUid,
+            study_element_uid=self.study_elements[1].element_uid,
             study_epoch_uid=self.study_epoch2.uid,
             study_arm_uid="StudyArm_000001",
             study_uid=self.study.uid,
@@ -248,20 +248,20 @@ class TestTAListing(unittest.TestCase):
         self.branch_arm = create_study_branch_arm(
             study_uid=self.study.uid,
             name="Branch_Arm_Name_1",
-            shortName="Branch_Arm_Short_Name_1",
+            short_name="Branch_Arm_Short_Name_1",
             code="Branch_Arm_code_1",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Branch_Arm_randomizationGroup",
-            numberOfSubjects=100,
-            armUid="StudyArm_000003",
+            colour_code="colour...",
+            randomization_group="Branch_Arm_randomizationGroup",
+            number_of_subjects=100,
+            arm_uid="StudyArm_000003",
         )
         self.branch_arm = patch_study_branch_arm(
-            branch_arm_uid=self.branch_arm.branchArmUid, study_uid=self.study.uid
+            branch_arm_uid=self.branch_arm.branch_arm_uid, study_uid=self.study.uid
         )
 
         self.design_cell3 = create_study_design_cell(
-            study_element_uid=self.study_elements[0].elementUid,
+            study_element_uid=self.study_elements[0].element_uid,
             study_epoch_uid=self.study_epoch2.uid,
             study_arm_uid="StudyArm_000005",
             study_uid=self.study.uid,
@@ -270,12 +270,12 @@ class TestTAListing(unittest.TestCase):
         self.cohort = create_study_cohort(
             study_uid=self.study.uid,
             name="Cohort_Name_1",
-            shortName="Cohort_Short_Name_1",
+            short_name="Cohort_Short_Name_1",
             code="Cohort_code_1",
             description="desc...",
-            colourCode="desc...",
-            numberOfSubjects=100,
-            armUids=["StudyArm_000001"],
+            colour_code="desc...",
+            number_of_subjects=100,
+            arm_uids=["StudyArm_000001"],
         )
         # edit an epoch to track if the relationships have been updated
         epoch_service = StudyEpochService()
@@ -283,10 +283,10 @@ class TestTAListing(unittest.TestCase):
         start_rule = "New start rule"
         end_rule = "New end rule"
         edit_input = StudyEpochEditInput(
-            studyUid=epoch.studyUid,
-            startRule=start_rule,
-            endRule=end_rule,
-            changeDescription="rules change",
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
         )
         self.study_epoch3 = epoch_service.edit(
             study_epoch_uid=epoch.uid,
@@ -308,7 +308,7 @@ class TestTAListing(unittest.TestCase):
                 STUDYID="SOME_ID-0",
                 TABRANCH=None,
                 TAETORD="2",
-                TATRANS=None,
+                TATRANS="Transition_Rule_1",
             ),
             # 2
             StudyArmListing(
@@ -321,7 +321,7 @@ class TestTAListing(unittest.TestCase):
                 STUDYID="SOME_ID-0",
                 TABRANCH="Branch_Arm_Name_1_edit",
                 TAETORD="1",
-                TATRANS=None,
+                TATRANS="Transition_Rule_1",
             ),
             # 3
             StudyArmListing(
@@ -334,7 +334,7 @@ class TestTAListing(unittest.TestCase):
                 STUDYID="SOME_ID-0",
                 TABRANCH="Branch_Arm_Name_1_edit",
                 TAETORD="2",
-                TATRANS=None,
+                TATRANS="Transition_Rule_1",
             ),
             # 4
             StudyArmListing(
@@ -347,7 +347,7 @@ class TestTAListing(unittest.TestCase):
                 STUDYID="SOME_ID-0",
                 TABRANCH=None,
                 TAETORD="2",
-                TATRANS=None,
+                TATRANS="Transition_Rule_1",
             ),
         ]
 
@@ -359,24 +359,26 @@ class TestStudyListing(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         inject_and_clear_db("StudyListingTest")
+        TestUtils.create_library(name="UCUM", is_editable=True)
         inject_base_data()
-
+        codelist = TestUtils.create_ct_codelist()
+        TestUtils.create_study_ct_data_map(codelist_uid=codelist.codelist_uid)
         study_service = StudyService(user="some_user")
         studies = study_service.get_all()
         cls.study_uid = studies.items[0].uid
-        cls.study_number = studies.items[0].studyNumber
+        cls.study_number = studies.items[0].study_number
         input_metadata_in_study(cls.study_uid)
 
     def test_registry_identifiers_listing(self):
         study_service = StudyService(user="some_user")
         service_response = study_service.get_by_uid(
             uid=self.study_uid,
-            fields="currentMetadata.identificationMetadata",
+            fields="current_metadata.identification_metadata",
         )
         study_listing_service = StudyListingService()
         output = study_listing_service.get_registry_identifiers(self.study_number)
         expected_output = (
-            service_response.currentMetadata.identificationMetadata.registryIdentifiers
+            service_response.current_metadata.identification_metadata.registry_identifiers
         )
         self.assertCountEqual(output, expected_output)
         self.assertEqual(output, expected_output)
@@ -385,11 +387,11 @@ class TestStudyListing(unittest.TestCase):
         study_service = StudyService(user="some_user")
         service_response = study_service.get_by_uid(
             uid=self.study_uid,
-            fields="currentMetadata.highLevelStudyDesign",
+            fields="current_metadata.high_level_study_design",
         )
         study_listing_service = StudyListingService()
         output = study_listing_service.get_study_type(self.study_number)
-        expected_output = service_response.currentMetadata.highLevelStudyDesign
+        expected_output = service_response.current_metadata.high_level_study_design
         self.assertCountEqual(output, expected_output)
         self.assertEqual(output, expected_output)
 
@@ -397,11 +399,11 @@ class TestStudyListing(unittest.TestCase):
         study_service = StudyService(user="some_user")
         service_response = study_service.get_by_uid(
             uid=self.study_uid,
-            fields="currentMetadata.studyPopulation",
+            fields="current_metadata.study_population",
         )
         study_listing_service = StudyListingService()
         output = study_listing_service.get_study_population(self.study_number)
-        expected_output = service_response.currentMetadata.studyPopulation
+        expected_output = service_response.current_metadata.study_population
         self.assertCountEqual(output, expected_output)
         self.assertEqual(output, expected_output)
 
@@ -437,7 +439,7 @@ class TestTEListing(unittest.TestCase):
                 term_uid=element_subtype_term_uid1,
             )
         )
-        add_parent_ctTerm(element_subtype_term_uid1, element_type_term_uid1)
+        add_parent_ct_term(element_subtype_term_uid1, element_type_term_uid1)
 
         element_subtype_term_uid2 = "ElementSubTypeTermUid_2"
         db.cypher_query(
@@ -448,7 +450,7 @@ class TestTEListing(unittest.TestCase):
                 term_uid=element_subtype_term_uid2,
             )
         )
-        add_parent_ctTerm(element_subtype_term_uid2, element_type_term_uid1)
+        add_parent_ct_term(element_subtype_term_uid2, element_type_term_uid1)
 
         catalogue_name = "catalogue"
         library_name = "Sponsor"
@@ -460,7 +462,7 @@ class TestTEListing(unittest.TestCase):
         )
         ct_term_uid = "hours001"
         hour_term = create_ct_term(
-            codelist=codelist.codelistUid,
+            codelist=codelist.codelist_uid,
             name="hours",
             uid=ct_term_uid,
             order=1,
@@ -474,7 +476,7 @@ class TestTEListing(unittest.TestCase):
             library=library_name,
         )
         study_time_subset = create_ct_term(
-            codelist=subset_codelist.codelistUid,
+            codelist=subset_codelist.codelist_uid,
             name="Study Time",
             uid="StudyTimeSuid",
             order=1,
@@ -483,9 +485,9 @@ class TestTEListing(unittest.TestCase):
         )
         unit_def = TestUtils.create_unit_definition(
             name="hours",
-            libraryName="Sponsor",
-            ctUnits=[hour_term.uid],
-            unitSubsets=[study_time_subset.uid],
+            library_name="Sponsor",
+            ct_units=[hour_term.uid],
+            unit_subsets=[study_time_subset.uid],
         )
 
         self.study_elements = [
@@ -531,6 +533,7 @@ class TestTSListing(unittest.TestCase):
         inject_and_clear_db("SDTMTSListingTest")
         db.cypher_query(STARTUP_STUDY_LIST_CYPHER)
         db.cypher_query(STARTUP_CT_CATALOGUE_CYPHER)
+        TestUtils.create_library(name="UCUM", is_editable=True)
         self.study = generate_study_root()
         # Create an epoch
         create_study_epoch_codelists_ret_cat_and_lib()
@@ -542,7 +545,7 @@ class TestTSListing(unittest.TestCase):
             "Element Type", "CTCodelist_ElementType", catalogue_name, library_name
         )
         element_type_term = create_ct_term(
-            element_type_codelist.codelistUid,
+            element_type_codelist.codelist_uid,
             "Element Type",
             "ElementType_0001",
             1,
@@ -550,7 +553,7 @@ class TestTSListing(unittest.TestCase):
             library_name,
         )
         element_type_term_2 = create_ct_term(
-            element_type_codelist.codelistUid,
+            element_type_codelist.codelist_uid,
             "Element Type",
             "ElementType_0002",
             2,
@@ -568,8 +571,8 @@ class TestTSListing(unittest.TestCase):
             catalogue=catalogue_name,
             library=library_name,
         )
-        armType = create_ct_term(
-            codelist=codelist.codelistUid,
+        arm_type = create_ct_term(
+            codelist=codelist.codelist_uid,
             name="Arm Type",
             uid="ArmType_0001",
             order=1,
@@ -580,64 +583,64 @@ class TestTSListing(unittest.TestCase):
         self.arm = create_study_arm(
             study_uid=self.study.uid,
             name="Arm_Name_1",
-            shortName="Arm_Short_Name_1",
+            short_name="Arm_Short_Name_1",
             code="Arm_code_1",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Arm_randomizationGroup",
-            numberOfSubjects=100,
-            armTypeUid=armType.uid,
+            colour_code="colour...",
+            randomization_group="Arm_randomizationGroup",
+            number_of_subjects=100,
+            arm_type_uid=arm_type.uid,
         )
         self.arm = create_study_arm(
             study_uid=self.study.uid,
             name="Arm_Name_2",
-            shortName="Arm_Short_Name_2",
+            short_name="Arm_Short_Name_2",
             code="Arm_code_2",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Arm_randomizationGroup2",
-            numberOfSubjects=100,
-            armTypeUid=armType.uid,
+            colour_code="colour...",
+            randomization_group="Arm_randomizationGroup2",
+            number_of_subjects=100,
+            arm_type_uid=arm_type.uid,
         )
         self.arm = create_study_arm(
             study_uid=self.study.uid,
             name="Arm_Name_3",
-            shortName="Arm_Short_Name_3",
+            short_name="Arm_Short_Name_3",
             code="Arm_code_3",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Arm_randomizationGroup3",
-            numberOfSubjects=100,
-            armTypeUid=armType.uid,
+            colour_code="colour...",
+            randomization_group="Arm_randomizationGroup3",
+            number_of_subjects=100,
+            arm_type_uid=arm_type.uid,
         )
 
         self.arm = create_study_arm(
             study_uid=self.study.uid,
             name="Arm_Name_9",
-            shortName="Arm_Short_Name_9",
+            short_name="Arm_Short_Name_9",
             code="Arm_code_9",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Arm_randomizationGroup9",
-            numberOfSubjects=100,
-            armTypeUid=armType.uid,
+            colour_code="colour...",
+            randomization_group="Arm_randomizationGroup9",
+            number_of_subjects=100,
+            arm_type_uid=arm_type.uid,
         )
 
         self.design_cell = create_study_design_cell(
-            study_element_uid=self.study_elements[0].elementUid,
+            study_element_uid=self.study_elements[0].element_uid,
             study_epoch_uid=self.study_epoch.uid,
             study_arm_uid="StudyArm_000003",
             study_uid=self.study.uid,
         )
         self.design_cell2 = create_study_design_cell(
-            study_element_uid=self.study_elements[0].elementUid,
+            study_element_uid=self.study_elements[0].element_uid,
             study_epoch_uid=self.study_epoch2.uid,
             study_arm_uid="StudyArm_000003",
             study_uid=self.study.uid,
         )
 
         self.design_cell2 = create_study_design_cell(
-            study_element_uid=self.study_elements[1].elementUid,
+            study_element_uid=self.study_elements[1].element_uid,
             study_epoch_uid=self.study_epoch2.uid,
             study_arm_uid="StudyArm_000001",
             study_uid=self.study.uid,
@@ -646,20 +649,20 @@ class TestTSListing(unittest.TestCase):
         self.branch_arm = create_study_branch_arm(
             study_uid=self.study.uid,
             name="Branch_Arm_Name_1",
-            shortName="Branch_Arm_Short_Name_1",
+            short_name="Branch_Arm_Short_Name_1",
             code="Branch_Arm_code_1",
             description="desc...",
-            colourCode="colour...",
-            randomizationGroup="Branch_Arm_randomizationGroup",
-            numberOfSubjects=100,
-            armUid="StudyArm_000003",
+            colour_code="colour...",
+            randomization_group="Branch_Arm_randomizationGroup",
+            number_of_subjects=100,
+            arm_uid="StudyArm_000003",
         )
         self.branch_arm = patch_study_branch_arm(
-            branch_arm_uid=self.branch_arm.branchArmUid, study_uid=self.study.uid
+            branch_arm_uid=self.branch_arm.branch_arm_uid, study_uid=self.study.uid
         )
 
         self.design_cell3 = create_study_design_cell(
-            study_element_uid=self.study_elements[0].elementUid,
+            study_element_uid=self.study_elements[0].element_uid,
             study_epoch_uid=self.study_epoch2.uid,
             study_arm_uid="StudyArm_000005",
             study_uid=self.study.uid,
@@ -668,12 +671,12 @@ class TestTSListing(unittest.TestCase):
         self.cohort = create_study_cohort(
             study_uid=self.study.uid,
             name="Cohort_Name_1",
-            shortName="Cohort_Short_Name_1",
+            short_name="Cohort_Short_Name_1",
             code="Cohort_code_1",
             description="desc...",
-            colourCode="desc...",
-            numberOfSubjects=100,
-            armUids=["StudyArm_000001"],
+            colour_code="desc...",
+            number_of_subjects=100,
+            arm_uids=["StudyArm_000001"],
         )
         # edit an epoch to track if the relationships have been updated
         epoch_service = StudyEpochService()
@@ -681,10 +684,10 @@ class TestTSListing(unittest.TestCase):
         start_rule = "New start rule"
         end_rule = "New end rule"
         edit_input = StudyEpochEditInput(
-            studyUid=epoch.studyUid,
-            startRule=start_rule,
-            endRule=end_rule,
-            changeDescription="rules change",
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
         )
         self.study_epoch3 = epoch_service.edit(
             study_epoch_uid=epoch.uid,
@@ -698,8 +701,8 @@ class TestTSListing(unittest.TestCase):
             library=library_name,
         )
 
-        armType = create_ct_term(
-            codelist=codelist.codelistUid,
+        arm_type = create_ct_term(
+            codelist=codelist.codelist_uid,
             name="C98771",
             uid="C98771_NARMS",
             code_submission_value="NARMS",
@@ -718,8 +721,8 @@ class TestTSListing(unittest.TestCase):
             library=library_name,
         )
 
-        armType = create_ct_term(
-            codelist=codelist.codelistUid,
+        arm_type = create_ct_term(
+            codelist=codelist.codelist_uid,
             name="C126063",
             uid="C126063_NCOHORT",
             code_submission_value="NCOHORT",

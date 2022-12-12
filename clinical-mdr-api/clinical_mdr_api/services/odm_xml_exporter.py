@@ -1,54 +1,94 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from time import time
 from typing import Dict, Optional, Sequence, Union
 from xml.dom.minidom import Document
 
-from clinical_mdr_api.domain._utils import get_iso_lang_data
+from fastapi import UploadFile
+
+from clinical_mdr_api.domain._utils import ObjectStatus, get_iso_lang_data
 from clinical_mdr_api.domain.concepts.odms.odm_xml_definition import (
-    V1,
-    V2,
+    ODM,
+    Alias,
     Attribute,
+    BasicDefinitions,
+    CodeList,
+    CodeListItem,
+    CodeListRef,
+    ConditionDef,
+    Decode,
+    Description,
+    FormalExpression,
+    FormDef,
+    GlobalVariables,
+    ItemDef,
+    ItemGroupDef,
+    ItemGroupRef,
+    ItemRef,
+    MeasurementUnit,
+    MeasurementUnitRef,
+    MetaDataVersion,
+    OsbDomainColor,
+    ProtocolName,
+    Question,
+    Study,
+    StudyDescription,
+    StudyName,
+    Symbol,
     Tag,
+    TranslatedText,
 )
-from clinical_mdr_api.domain.concepts.utils import OdmExportTo, TargetType
+from clinical_mdr_api.domain.concepts.utils import ENG_LANGUAGE, TargetType
 from clinical_mdr_api.models.odm_form import OdmForm
 from clinical_mdr_api.models.odm_item import OdmItem
 from clinical_mdr_api.models.odm_item_group import OdmItemGroup
 from clinical_mdr_api.services.odm_data_extractor import OdmDataExtractor
+from clinical_mdr_api.services.utils.odm_xml_mapper import map_xml
 
 
 class OdmXmlExporterService:
     odm_data_extractor: OdmDataExtractor
     xml_document: Document
-    odm: Union[V1.ODM, V2.Oam]
-    used_xml_extensions: Optional[Dict[str, dict]] = None
-    allowed_extensions: Optional[Sequence[str]]
+    odm: ODM
+    used_xml_extensions: Dict[str, dict]
+    allowed_extensions: Sequence[str]
 
-    ODM_VERSION = "osb:version"
+    mapper: Optional[UploadFile] = None
+
     XML_LANG = "xml:lang"
+    OSB_VERSION = "osb:version"
+    OSB_LANG = "osb:lang"
+    OSB_INSTRUCTION = "osb:instruction"
+    OSB_SPONSOR_INSTRUCTION = "osb:sponsorInstruction"
 
     def __init__(
         self,
         target_uid: str,
         target_type: TargetType,
-        export_to: OdmExportTo,
-        allowed_extensions: Optional[Sequence[str]],
-        stylesheet: str,
+        status: Sequence[ObjectStatus],
+        allowed_extensions: Sequence[str],
+        stylesheet: Optional[str],
+        mapper: Optional[UploadFile],
         unit_definition_service,
     ):
         self.odm_data_extractor = OdmDataExtractor(
-            target_uid, target_type, unit_definition_service
+            target_uid,
+            target_type,
+            [elm.name for elm in status],
+            unit_definition_service,
         )
+        self.mapper = mapper
         self.allowed_extensions = allowed_extensions
+        self.used_xml_extensions = {}
 
-        if self.used_xml_extensions is None:
-            self.used_xml_extensions = {}
-
-        if not self.allowed_extensions:
-            for uid, ext in self.odm_data_extractor.odm_xml_extensions.items():
+        for uid, ext in self.odm_data_extractor.odm_xml_extensions.items():
+            if not self.allowed_extensions:
                 self.used_xml_extensions[uid] = ext
+            else:
+                for allowed in self.allowed_extensions:
+                    if allowed == ext["prefix"]:
+                        self.used_xml_extensions[uid] = ext
 
-        self.odm = self._create_odm_object(export_to)
+        self.odm = self._create_odm_object()
         self.xml_document = Document()
         if stylesheet:
             self.xml_document.appendChild(
@@ -58,9 +98,11 @@ class OdmXmlExporterService:
             )
 
     def get_odm_xml(self):
-        return self._generate_odm_xml(self.odm, self.xml_document).toprettyxml(
-            encoding="utf-8"
-        )
+        doc = self._generate_odm_xml(self.odm, self.xml_document)
+
+        map_xml(self.xml_document, self.mapper)
+
+        return doc.toprettyxml(encoding="utf-8")
 
     def _generate_odm_xml(self, odm_element, current_xml_element):
         if hasattr(odm_element, "_custom_tag_name") and isinstance(
@@ -78,9 +120,16 @@ class OdmXmlExporterService:
 
         for attribute_name, attribute_value in attributes:
             if isinstance(attribute_value, Attribute):
-                new_xml_element.setAttribute(
-                    attribute_value.Name, str(attribute_value.Value)
-                )
+                attribute_value.value = str(attribute_value.value)
+                if ":" in attribute_value.name:
+                    prefix, _ = attribute_value.name.split(":")
+                    new_xml_element.setAttributeNS(
+                        prefix, attribute_value.name, attribute_value.value
+                    )
+                else:
+                    new_xml_element.setAttribute(
+                        attribute_value.name, attribute_value.value
+                    )
             elif isinstance(attribute_value, str):
                 if attribute_name == "_custom_tag_name":
                     continue
@@ -97,12 +146,8 @@ class OdmXmlExporterService:
 
         return self.xml_document
 
-    def _get_osb_elm_or_none_value(self, elm: Union[Attribute, list, dict]):
+    def _get_osb_elm_or_none_value(self, elm: Union[list, dict]):
         if not self.allowed_extensions or "osb" in self.allowed_extensions:
-            return elm
-
-        if isinstance(elm, Attribute):
-            setattr(elm, "Value", None)
             return elm
 
         if isinstance(elm, list):
@@ -118,9 +163,9 @@ class OdmXmlExporterService:
     ) -> Dict[str, Attribute]:
         attributes = {}
 
-        for xml_extension_attribute in target.xmlExtensionAttributes:
+        for xml_extension_attribute in target.xml_extension_attributes:
             odm_xml_extension = self.odm_data_extractor.odm_xml_extensions[
-                xml_extension_attribute.odmXmlExtensionUid
+                xml_extension_attribute.xml_extension_uid
             ]
             if not self.allowed_extensions or (
                 odm_xml_extension["prefix"] in self.allowed_extensions
@@ -130,10 +175,6 @@ class OdmXmlExporterService:
                     xml_extension_attribute.value,
                 )
 
-                self.used_xml_extensions[
-                    xml_extension_attribute.odmXmlExtensionUid
-                ] = odm_xml_extension
-
         return attributes
 
     def _create_xml_extension_tags_of(
@@ -141,60 +182,74 @@ class OdmXmlExporterService:
     ) -> Dict[str, Tag]:
         tags = {}
 
-        for xml_extension_tag in target.xmlExtensionTags:
+        for xml_extension_tag in target.xml_extension_tags:
             odm_xml_extension_tag = self.odm_data_extractor.odm_xml_extension_tags[
                 xml_extension_tag.uid
-            ]["xmlExtension"]
+            ]["xml_extension"]
             if not self.allowed_extensions or (
                 odm_xml_extension_tag["prefix"] in self.allowed_extensions
             ):
                 tags[xml_extension_tag.name] = Tag(
-                    _custom_tag_name=f"{self.odm_data_extractor.odm_xml_extension_tags[xml_extension_tag.uid]['xmlExtension']['prefix']}"
+                    _custom_tag_name=f"{self.odm_data_extractor.odm_xml_extension_tags[xml_extension_tag.uid]['xml_extension']['prefix']}"
                     f":{xml_extension_tag.name}",
                     _string=xml_extension_tag.value,
                     **{
-                        xmlExtensionTagAttribute.name: Attribute(
+                        xml_extension_tag_attribute.name: Attribute(
                             # pylint:disable=line-too-long
-                            f"{self.odm_data_extractor.odm_xml_extension_tags[xmlExtensionTagAttribute.odmXmlExtensionTagUid]['xmlExtension']['prefix']}:{xmlExtensionTagAttribute.name}",
-                            xmlExtensionTagAttribute.value,
+                            f"{self.odm_data_extractor.odm_xml_extension_tags[xml_extension_tag_attribute.xml_extension_tag_uid]['xml_extension']['prefix']}:{xml_extension_tag_attribute.name}",
+                            xml_extension_tag_attribute.value,
                         )
-                        for xmlExtensionTagAttribute in target.xmlExtensionTagAttributes
-                        if xmlExtensionTagAttribute.odmXmlExtensionTagUid
+                        for xml_extension_tag_attribute in target.xml_extension_tag_attributes
+                        if xml_extension_tag_attribute.xml_extension_tag_uid
                         == xml_extension_tag.uid
                     },
                 )
 
-                self.used_xml_extensions[
-                    odm_xml_extension_tag["uid"]
-                ] = odm_xml_extension_tag
-
         return tags
 
-    def _create_odm_object(self, export_to: OdmExportTo):
-        if export_to == OdmExportTo.V1:
-            return self._create_odm_v1_object()
-        if export_to == OdmExportTo.V2:
-            return self._create_odm_v2_object()
-
-        raise NotImplementedError("Requested export system not supported")
-
-    def _create_odm_v1_object(self):
+    def _create_odm_object(self):
         def create_odm_form_def():
             return [
-                V1.FormDef(
-                    OID=Attribute("OID", form.oid),
-                    Name=Attribute("Name", form.name),
-                    Repeating=Attribute("Repeating", form.repeating),
+                FormDef(
+                    oid=Attribute("OID", form.oid),
+                    name=Attribute("Name", form.name),
+                    repeating=Attribute("Repeating", form.repeating),
                     **self._get_osb_elm_or_none_value(
-                        {"Version": Attribute(self.ODM_VERSION, form.version)}
+                        {
+                            "version": Attribute(self.OSB_VERSION, form.version),
+                            "instruction": Attribute(
+                                self.OSB_INSTRUCTION,
+                                next(
+                                    (
+                                        description.instruction
+                                        for description in form.descriptions
+                                        if description.language == ENG_LANGUAGE
+                                        and description.instruction
+                                    ),
+                                    None,
+                                ),
+                            ),
+                            "sponsor_instruction": Attribute(
+                                self.OSB_SPONSOR_INSTRUCTION,
+                                next(
+                                    (
+                                        description.sponsor_instruction
+                                        for description in form.descriptions
+                                        if description.language == ENG_LANGUAGE
+                                        and description.sponsor_instruction
+                                    ),
+                                    None,
+                                ),
+                            ),
+                        }
                     ),
                     **self._create_xml_extension_attributes_of(form),
                     **self._create_xml_extension_tags_of(form),
-                    Description=V1.Description(
+                    description=Description(
                         [
-                            V1.TranslatedText(
+                            TranslatedText(
                                 description.description,
-                                Lang=Attribute(
+                                lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
                                         q=description.language, return_key="639-1"
@@ -202,8 +257,8 @@ class OdmXmlExporterService:
                                 ),
                                 **self._get_osb_elm_or_none_value(
                                     {
-                                        "Version": Attribute(
-                                            self.ODM_VERSION, description.version
+                                        "version": Attribute(
+                                            self.OSB_VERSION, description.version
                                         )
                                     }
                                 ),
@@ -212,32 +267,32 @@ class OdmXmlExporterService:
                             if description.description
                         ]
                     ),
-                    Alias=[
-                        V1.Alias(
-                            Name=Attribute("Name", alias.name),
-                            Context=Attribute("Context", alias.context),
+                    aliases=[
+                        Alias(
+                            name=Attribute("Name", alias.name),
+                            context=Attribute("Context", alias.context),
                             **self._get_osb_elm_or_none_value(
-                                {"Version": Attribute(self.ODM_VERSION, alias.version)}
+                                {"version": Attribute(self.OSB_VERSION, alias.version)}
                             ),
                         )
                         for alias in form.aliases
                     ],
-                    ItemGroupRef=[
-                        V1.ItemGroupRef(
-                            ItemGroupOID=Attribute("ItemGroupOID", item_group.oid),
-                            Mandatory=Attribute("Mandatory", item_group.mandatory),
-                            OrderNumber=Attribute(
-                                "OrderNumber", item_group.orderNumber
+                    item_group_refs=[
+                        ItemGroupRef(
+                            item_group_oid=Attribute("ItemGroupOID", item_group.oid),
+                            mandatory=Attribute("Mandatory", item_group.mandatory),
+                            order_number=Attribute(
+                                "OrderNumber", item_group.order_number
                             ),
-                            CollectionExceptionConditionOID=Attribute(
+                            collection_exception_condition_oid=Attribute(
                                 "CollectionExceptionConditionOID",
-                                item_group.collectionExceptionConditionOid,
+                                item_group.collection_exception_condition_oid,
                             ),
                             **self._get_osb_elm_or_none_value(
-                                {"Locked": Attribute("osb:locked", item_group.locked)}
+                                {"locked": Attribute("osb:locked", item_group.locked)}
                             ),
                         )
-                        for item_group in form.itemGroups
+                        for item_group in form.item_groups
                     ],
                 )
                 for form in self.odm_data_extractor.odm_forms
@@ -247,45 +302,71 @@ class OdmXmlExporterService:
             SDTM_MSG_COLOURS = ["#bfffff", "#ffff96", "#96ff96", "#ffbf9c"]
 
             return [
-                V1.ItemGroupDef(
-                    OID=Attribute("OID", item_group.oid),
-                    Name=Attribute("Name", item_group.name),
-                    Purpose=Attribute("Purpose", item_group.purpose),
-                    Repeating=Attribute("Repeating", item_group.repeating),
-                    SASDatasetName=Attribute(
-                        "SASDatasetName", item_group.sasDatasetName
+                ItemGroupDef(
+                    oid=Attribute("OID", item_group.oid),
+                    name=Attribute("Name", item_group.name),
+                    purpose=Attribute("Purpose", item_group.purpose),
+                    repeating=Attribute("Repeating", item_group.repeating),
+                    sas_dataset_name=Attribute(
+                        "SASDatasetName", item_group.sas_dataset_name
                     ),
-                    Domain=Attribute(
+                    domain=Attribute(
                         "Domain",
                         "|".join(
                             [
-                                f"{sdtm_domain.codeSubmissionValue}:{sdtm_domain.preferredTerm}"
-                                for sdtm_domain in item_group.sdtmDomains
+                                f"{sdtm_domain.code_submission_value}:{sdtm_domain.preferred_term}"
+                                for sdtm_domain in item_group.sdtm_domains
                             ]
                         ),
                     )
-                    if item_group.sdtmDomains
+                    if item_group.sdtm_domains
                     else "",
                     **self._get_osb_elm_or_none_value(
-                        {"Version": Attribute(self.ODM_VERSION, item_group.version)}
+                        {
+                            "version": Attribute(self.OSB_VERSION, item_group.version),
+                            "instruction": Attribute(
+                                self.OSB_INSTRUCTION,
+                                next(
+                                    (
+                                        description.instruction
+                                        for description in item_group.descriptions
+                                        if description.language == ENG_LANGUAGE
+                                        and description.instruction
+                                    ),
+                                    None,
+                                ),
+                            ),
+                            "sponsor_instruction": Attribute(
+                                self.OSB_SPONSOR_INSTRUCTION,
+                                next(
+                                    (
+                                        description.sponsor_instruction
+                                        for description in item_group.descriptions
+                                        if description.language == ENG_LANGUAGE
+                                        and description.sponsor_instruction
+                                    ),
+                                    None,
+                                ),
+                            ),
+                        }
                     ),
                     **self._create_xml_extension_attributes_of(item_group),
                     **self._create_xml_extension_tags_of(item_group),
-                    osbDomainColor=self._get_osb_elm_or_none_value(
+                    osb_domain_colors=self._get_osb_elm_or_none_value(
                         [
-                            V1.osbDomainColor(
-                                f"{sdtm_domain.codeSubmissionValue}:{SDTM_MSG_COLOURS[idx]};"
+                            OsbDomainColor(
+                                f"{sdtm_domain.code_submission_value}:{SDTM_MSG_COLOURS[idx]};"
                             )
-                            for idx, sdtm_domain in enumerate(item_group.sdtmDomains)
+                            for idx, sdtm_domain in enumerate(item_group.sdtm_domains)
                         ]
                     )
-                    if item_group.sdtmDomains
+                    if item_group.sdtm_domains
                     else [],
-                    Description=V1.Description(
+                    description=Description(
                         [
-                            V1.TranslatedText(
+                            TranslatedText(
                                 description.description,
-                                Lang=Attribute(
+                                lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
                                         q=description.language, return_key="639-1"
@@ -293,8 +374,8 @@ class OdmXmlExporterService:
                                 ),
                                 **self._get_osb_elm_or_none_value(
                                     {
-                                        "Version": Attribute(
-                                            self.ODM_VERSION, description.version
+                                        "version": Attribute(
+                                            self.OSB_VERSION, description.version
                                         )
                                     }
                                 ),
@@ -303,29 +384,34 @@ class OdmXmlExporterService:
                             if description.description
                         ]
                     ),
-                    Alias=[
-                        V1.Alias(
-                            Name=Attribute("Name", alias.name),
-                            Context=Attribute("Context", alias.context),
+                    aliases=[
+                        Alias(
+                            name=Attribute("Name", alias.name),
+                            context=Attribute("Context", alias.context),
                             **self._get_osb_elm_or_none_value(
-                                {"Version": Attribute(self.ODM_VERSION, alias.version)}
+                                {"version": Attribute(self.OSB_VERSION, alias.version)}
                             ),
                         )
                         for alias in item_group.aliases
                     ],
-                    ItemRef=[
-                        V1.ItemRef(
-                            ItemOID=Attribute("ItemOID", item.oid),
-                            Mandatory=Attribute("Mandatory", item.mandatory),
-                            OrderNumber=Attribute("OrderNumber", item.orderNumber),
-                            CollectionExceptionConditionOID=Attribute(
+                    item_refs=[
+                        ItemRef(
+                            item_oid=Attribute("ItemOID", item.oid),
+                            mandatory=Attribute("Mandatory", item.mandatory),
+                            order_number=Attribute("OrderNumber", item.order_number),
+                            method_oid=Attribute("MethodOID", item.method_oid),
+                            collection_exception_condition_oid=Attribute(
                                 "CollectionExceptionConditionOID",
-                                item.collectionExceptionConditionOid,
+                                item.collection_exception_condition_oid,
                             ),
                             **self._get_osb_elm_or_none_value(
                                 {
                                     "Sdv": Attribute("osb:sdv", item.sdv),
                                     "Locked": Attribute("osb:locked", item.locked),
+                                    "DataEntryRequired": Attribute(
+                                        "osb:dataEntryRequired",
+                                        item.data_entry_required,
+                                    ),
                                 }
                             ),
                         )
@@ -337,34 +423,60 @@ class OdmXmlExporterService:
 
         def create_odm_item_def():
             return [
-                V1.ItemDef(
-                    OID=Attribute("OID", item.oid),
-                    Name=Attribute("Name", item.name),
-                    Origin=Attribute("Origin", item.origin),
-                    DataType=Attribute("DataType", item.datatype.lower()),
-                    Length=Attribute("Length", item.length),
-                    SASFieldName=Attribute("SASFieldName", item.sasFieldName),
-                    SDSVarName=Attribute("SDSVarName", item.sdsVarName),
+                ItemDef(
+                    oid=Attribute("OID", item.oid),
+                    name=Attribute("Name", item.name),
+                    origin=Attribute("Origin", item.origin),
+                    datatype=Attribute("DataType", item.datatype.lower()),
+                    length=Attribute("Length", item.length),
+                    sas_field_name=Attribute("SASFieldName", item.sas_field_name),
+                    sds_var_name=Attribute("SDSVarName", item.sds_var_name),
                     **self._get_osb_elm_or_none_value(
-                        {"Version": Attribute(self.ODM_VERSION, item.version)}
+                        {
+                            "version": Attribute(self.OSB_VERSION, item.version),
+                            "instruction": Attribute(
+                                self.OSB_INSTRUCTION,
+                                next(
+                                    (
+                                        description.instruction
+                                        for description in item.descriptions
+                                        if description.language == ENG_LANGUAGE
+                                        and description.instruction
+                                    ),
+                                    None,
+                                ),
+                            ),
+                            "sponsor_instruction": Attribute(
+                                self.OSB_SPONSOR_INSTRUCTION,
+                                next(
+                                    (
+                                        description.sponsor_instruction
+                                        for description in item.descriptions
+                                        if description.language == ENG_LANGUAGE
+                                        and description.sponsor_instruction
+                                    ),
+                                    None,
+                                ),
+                            ),
+                        }
                     ),
                     **self._create_xml_extension_attributes_of(item),
                     **self._create_xml_extension_tags_of(item),
-                    Alias=[
-                        V1.Alias(
-                            Name=Attribute("Name", alias.name),
-                            Context=Attribute("Context", alias.context),
+                    aliases=[
+                        Alias(
+                            name=Attribute("Name", alias.name),
+                            context=Attribute("Context", alias.context),
                             **self._get_osb_elm_or_none_value(
-                                {"Version": Attribute(self.ODM_VERSION, alias.version)}
+                                {"version": Attribute(self.OSB_VERSION, alias.version)}
                             ),
                         )
                         for alias in item.aliases
                     ],
-                    Description=V1.Description(
+                    description=Description(
                         [
-                            V1.TranslatedText(
+                            TranslatedText(
                                 description.description,
-                                Lang=Attribute(
+                                lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
                                         q=description.language, return_key="639-1"
@@ -372,8 +484,8 @@ class OdmXmlExporterService:
                                 ),
                                 **self._get_osb_elm_or_none_value(
                                     {
-                                        "Version": Attribute(
-                                            self.ODM_VERSION, description.version
+                                        "version": Attribute(
+                                            self.OSB_VERSION, description.version
                                         )
                                     }
                                 ),
@@ -382,11 +494,11 @@ class OdmXmlExporterService:
                             if description.description
                         ]
                     ),
-                    Question=V1.Question(
+                    question=Question(
                         [
-                            V1.TranslatedText(
+                            TranslatedText(
                                 description.name,
-                                Lang=Attribute(
+                                lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
                                         q=description.language, return_key="639-1"
@@ -394,8 +506,8 @@ class OdmXmlExporterService:
                                 ),
                                 **self._get_osb_elm_or_none_value(
                                     {
-                                        "Version": Attribute(
-                                            self.ODM_VERSION, description.version
+                                        "version": Attribute(
+                                            self.OSB_VERSION, description.version
                                         )
                                     }
                                 ),
@@ -404,21 +516,21 @@ class OdmXmlExporterService:
                             if description.name
                         ]
                     ),
-                    CodeListRef=V1.CodeListRef(
-                        CodeListOID=Attribute(
+                    codelist_ref=CodeListRef(
+                        codelist_oid=Attribute(
                             "CodeListOID",
-                            f"{item.codelist.submissionValue}@{item.oid}"
+                            f"{item.codelist.submission_value}@{item.oid}"
                             if item.codelist
                             else None,
                         )
                     ),
-                    MeasurementUnitRef=[
-                        V1.MeasurementUnitRef(
-                            MeasurementUnitOID=Attribute(
+                    measurement_unit_refs=[
+                        MeasurementUnitRef(
+                            measurement_unit_oid=Attribute(
                                 "MeasurementUnitOID", unit_definition.name
                             )
                         )
-                        for unit_definition in item.unitDefinitions
+                        for unit_definition in item.unit_definitions
                     ],
                 )
                 for item in self.odm_data_extractor.odm_items
@@ -426,41 +538,41 @@ class OdmXmlExporterService:
 
         def create_odm_condition_def():
             return [
-                V1.ConditionDef(
-                    OID=Attribute("OID", condition.oid),
-                    Name=Attribute("Name", condition.name),
+                ConditionDef(
+                    oid=Attribute("OID", condition.oid),
+                    name=Attribute("Name", condition.name),
                     **self._get_osb_elm_or_none_value(
-                        {"Version": Attribute(self.ODM_VERSION, condition.version)}
+                        {"version": Attribute(self.OSB_VERSION, condition.version)}
                     ),
-                    FormalExpression=[
-                        V1.FormalExpression(
+                    formal_expressions=[
+                        FormalExpression(
                             _string=formal_expression.expression,
-                            Context=Attribute("Context", formal_expression.context),
+                            context=Attribute("Context", formal_expression.context),
                             **self._get_osb_elm_or_none_value(
                                 {
-                                    "Version": Attribute(
-                                        self.ODM_VERSION, formal_expression.version
+                                    "version": Attribute(
+                                        self.OSB_VERSION, formal_expression.version
                                     )
                                 }
                             ),
                         )
-                        for formal_expression in condition.formalExpressions
+                        for formal_expression in condition.formal_expressions
                     ],
-                    Alias=[
-                        V1.Alias(
-                            Name=Attribute("Name", alias.name),
-                            Context=Attribute("Context", alias.context),
+                    aliases=[
+                        Alias(
+                            name=Attribute("Name", alias.name),
+                            context=Attribute("Context", alias.context),
                             **self._get_osb_elm_or_none_value(
-                                {"Version": Attribute(self.ODM_VERSION, alias.version)}
+                                {"version": Attribute(self.OSB_VERSION, alias.version)}
                             ),
                         )
                         for alias in condition.aliases
                     ],
-                    Description=V1.Description(
+                    description=Description(
                         [
-                            V1.TranslatedText(
+                            TranslatedText(
                                 description.description,
-                                Lang=Attribute(
+                                lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
                                         q=description.language, return_key="639-1"
@@ -468,8 +580,8 @@ class OdmXmlExporterService:
                                 ),
                                 **self._get_osb_elm_or_none_value(
                                     {
-                                        "Version": Attribute(
-                                            self.ODM_VERSION, description.version
+                                        "version": Attribute(
+                                            self.OSB_VERSION, description.version
                                         )
                                     }
                                 ),
@@ -487,31 +599,37 @@ class OdmXmlExporterService:
 
             for codelist in self.odm_data_extractor.codelists:
                 items = self.odm_data_extractor.get_items_by_codelist_uid(
-                    codelist.codelistUid
+                    codelist.codelist_uid
                 )
 
                 for item in items:
-                    term_uids = [term.termUid for term in item.terms]
+                    terms_by_uid = {
+                        term.term_uid: {
+                            "mandatory": term.mandatory,
+                            "order": term.order,
+                        }
+                        for term in item.terms
+                    }
 
                     codelists.append(
-                        V1.CodeList(
-                            OID=Attribute(
-                                "OID", f"{codelist.submissionValue}@{item.oid}"
+                        CodeList(
+                            oid=Attribute(
+                                "OID", f"{codelist.submission_value}@{item.oid}"
                             ),
-                            Name=Attribute("Name", codelist.codelistUid),
-                            DataType=Attribute("DataType", "string"),
-                            SASFormatName=Attribute(
-                                "SASFormatName", codelist.submissionValue
+                            name=Attribute("Name", codelist.codelist_uid),
+                            datatype=Attribute("DataType", "string"),
+                            sas_format_name=Attribute(
+                                "SASFormatName", codelist.submission_value
                             ),
-                            CodeListItem=[
-                                V1.CodeListItem(
-                                    CodedValue=Attribute(
+                            codelist_items=[
+                                CodeListItem(
+                                    coded_value=Attribute(
                                         "CodedValue",
-                                        codelist_item["codeSubmissionValue"],
+                                        codelist_item["code_submission_value"],
                                     ),
-                                    Decode=V1.Decode(
-                                        V1.TranslatedText(
-                                            codelist_item["nciPreferredName"],
+                                    decode=Decode(
+                                        TranslatedText(
+                                            codelist_item["nci_preferred_name"],
                                             Attribute(
                                                 self.XML_LANG,
                                                 get_iso_lang_data(
@@ -520,17 +638,30 @@ class OdmXmlExporterService:
                                             ),
                                         )
                                     ),
+                                    order_number=Attribute(
+                                        "OrderNumber",
+                                        terms_by_uid.get(codelist_item["term_uid"]).get(
+                                            "order"
+                                        ),
+                                    ),
+                                    mandatory=Attribute(
+                                        "Mandatory",
+                                        terms_by_uid.get(codelist_item["term_uid"]).get(
+                                            "mandatory"
+                                        ),
+                                    ),
                                     **self._get_osb_elm_or_none_value(
                                         {
                                             "OID": Attribute(
-                                                "osb:OID", codelist_item["termUid"]
+                                                "osb:OID", codelist_item["term_uid"]
                                             )
                                         }
                                     ),
                                 )
                                 for codelist_item in self.odm_data_extractor.ct_terms
-                                if codelist.codelistUid == codelist_item["codelistUid"]
-                                and codelist_item["termUid"] in term_uids
+                                if codelist.codelist_uid
+                                == codelist_item["codelist_uid"]
+                                and codelist_item["term_uid"] in terms_by_uid
                             ],
                         )
                     )
@@ -542,17 +673,17 @@ class OdmXmlExporterService:
             unit_definitions = []
             for unit_definition in self.odm_data_extractor.unit_definitions:
                 if unit_definition.ucum is not None:
-                    if unit_definition.ucum.termUid in unit_definition_uids:
+                    if unit_definition.ucum.term_uid in unit_definition_uids:
                         continue
-                    unit_definition_uids.append(unit_definition.ucum.termUid)
+                    unit_definition_uids.append(unit_definition.ucum.term_uid)
                     unit_definitions.append(
-                        V1.MeasurementUnit(
-                            OID=Attribute("OID", unit_definition.name),
-                            Name=Attribute("Name", unit_definition.ucum.termUid),
-                            Symbol=V1.Symbol(
-                                V1.TranslatedText(
+                        MeasurementUnit(
+                            oid=Attribute("OID", unit_definition.name),
+                            name=Attribute("Name", unit_definition.ucum.term_uid),
+                            symbol=Symbol(
+                                TranslatedText(
                                     unit_definition.name,
-                                    Lang=Attribute(
+                                    lang=Attribute(
                                         self.XML_LANG,
                                         get_iso_lang_data(q="eng", return_key="639-1"),
                                     ),
@@ -563,35 +694,37 @@ class OdmXmlExporterService:
 
             return unit_definitions
 
-        return V1.ODM(
-            OdmNS=Attribute("xmlns:odm", "http://www.cdisc.org/ns/odm/v1.3"),
-            ODMVersion=Attribute("ODMVersion", "1.3.2"),
-            FileType=Attribute("FileType", "Snapshot"),
-            FileOID=Attribute("FileOID", f"OID.{int(time() * 1_000)}"),
-            CreationDateTime=Attribute("CreationDateTime", datetime.now()),
-            Granularity=Attribute("Granularity", "All"),
-            Study=V1.Study(
-                OID=Attribute(
+        return ODM(
+            odm_ns=Attribute("xmlns:odm", "http://www.cdisc.org/ns/odm/v1.3"),
+            odm_version=Attribute("ODMVersion", "1.3.2"),
+            file_type=Attribute("FileType", "Snapshot"),
+            file_oid=Attribute("FileOID", f"OID.{int(time() * 1_000)}"),
+            creation_date_time=Attribute(
+                "CreationDateTime", datetime.now(timezone.utc)
+            ),
+            granularity=Attribute("Granularity", "All"),
+            study=Study(
+                oid=Attribute(
                     "OID",
                     f"{self.odm_data_extractor.target_name}-{self.odm_data_extractor.target_uid}",
                 ),
-                MetaDataVersion=V1.MetaDataVersion(
-                    OID=Attribute("OID", "MDV.0.1"),
-                    Name=Attribute("Name", "MDV.0.1"),
-                    Description=Attribute("Description", "Draft version"),
-                    FormDef=create_odm_form_def(),
-                    ItemGroupDef=create_odm_item_group_def(),
-                    ItemDef=create_odm_item_def(),
-                    ConditionDef=create_odm_condition_def(),
-                    CodeList=create_odm_codelist(),
+                meta_data_version=MetaDataVersion(
+                    oid=Attribute("OID", "MDV.0.1"),
+                    name=Attribute("Name", "MDV.0.1"),
+                    description=Attribute("Description", "Draft version"),
+                    form_defs=create_odm_form_def(),
+                    item_group_defs=create_odm_item_group_def(),
+                    item_defs=create_odm_item_def(),
+                    condition_defs=create_odm_condition_def(),
+                    codelists=create_odm_codelist(),
                 ),
-                BasicDefinitions=V1.BasicDefinitions(
-                    MeasurementUnit=create_odm_measurement_unit()
+                basic_definitions=BasicDefinitions(
+                    measurement_units=create_odm_measurement_unit()
                 ),
-                GlobalVariables=V1.GlobalVariables(
-                    ProtocolName=V1.ProtocolName(self.odm_data_extractor.target_name),
-                    StudyName=V1.StudyName(self.odm_data_extractor.target_name),
-                    StudyDescription=V1.StudyDescription(
+                global_variables=GlobalVariables(
+                    protocol_name=ProtocolName(self.odm_data_extractor.target_name),
+                    study_name=StudyName(self.odm_data_extractor.target_name),
+                    study_description=StudyDescription(
                         self.odm_data_extractor.target_name
                     ),
                 ),
@@ -605,16 +738,4 @@ class OdmXmlExporterService:
                 if not self.allowed_extensions
                 or used_xml_extension["prefix"] in self.allowed_extensions
             },
-        )
-
-    def _create_odm_v2_object(self):
-        return V2.Oam(
-            Aliases=[
-                V2.TranslatedText("XYZ", Attribute("123", "321")),
-                V2.TranslatedText("ZYX", Attribute("123", "321")),
-            ],
-            Texts=[
-                V2.Alias(Attribute("A", "1"), Attribute("B", "2")),
-                V2.Alias(Attribute("C", "3"), Attribute("D", "4")),
-            ],
         )

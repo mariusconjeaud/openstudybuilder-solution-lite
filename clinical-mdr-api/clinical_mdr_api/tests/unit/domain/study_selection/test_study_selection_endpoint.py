@@ -35,16 +35,16 @@ def create_random_valid_vo(
     uid_timeframe = random_str()
     uid_study_objective = "uid_study_objective_000001"
     uid_level = random_str()
-    uid_sub_level = random_str()
-    dt = datetime.datetime.now()
+    uid_sublevel = random_str()
+    dt = datetime.datetime.now(datetime.timezone.utc)
     uid_list.extend(
-        [uid_study_objective, uid_timeframe, uid_endpoint, uid_level, uid_sub_level]
+        [uid_study_objective, uid_timeframe, uid_endpoint, uid_level, uid_sublevel]
     )
     vo = StudySelectionEndpointVO.from_input_values(
         endpoint_level_order=endpoint_order,
         endpoint_uid=uid_endpoint,
         endpoint_level_uid=uid_level,
-        endpoint_sub_level_uid=uid_sub_level,
+        endpoint_sublevel_uid=uid_sublevel,
         unit_separator=random_str(),
         study_objective_uid=uid_study_objective,
         timeframe_uid=uid_timeframe,
@@ -62,7 +62,7 @@ def create_random_valid_vo(
 # test StudySelectionObjectivesVO
 class TestStudySelectionEndpointVO(unittest.TestCase):
     def test__validate__success(self):
-        dt = datetime.datetime.now()
+        dt = datetime.datetime.now(datetime.timezone.utc)
         test_tuples = [
             [
                 "uid_endpoint",
@@ -123,7 +123,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                     endpoint_uid=test_tuple[0],
                     endpoint_level_order=2,
                     endpoint_level_uid=test_tuple[1],
-                    endpoint_sub_level_uid=test_tuple[1],
+                    endpoint_sublevel_uid=test_tuple[1],
                     unit_separator=test_tuple[2],
                     study_objective_uid=test_tuple[3],
                     timeframe_uid=test_tuple[5],
@@ -142,7 +142,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                 )
 
     def test__validate__failure(self):
-        dt = datetime.datetime.now()
+        dt = datetime.datetime.now(datetime.timezone.utc)
         test_tuples = [
             [
                 "wrong_endpoint_uid",
@@ -184,7 +184,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                     endpoint_uid=test_tuple[0],
                     endpoint_level_order=2,
                     endpoint_level_uid=test_tuple[1],
-                    endpoint_sub_level_uid=test_tuple[1],
+                    endpoint_sublevel_uid=test_tuple[1],
                     unit_separator=test_tuple[2],
                     study_objective_uid=test_tuple[3],
                     timeframe_uid=test_tuple[5],
@@ -204,7 +204,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                     )
 
     def test__validate__success_unit_separator_states(self):
-        dt = datetime.datetime.now()
+        dt = datetime.datetime.now(datetime.timezone.utc)
         test_tuples = [
             [
                 "uid_endpoint",
@@ -256,7 +256,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                 study_selection_endpoint = StudySelectionEndpointVO.from_input_values(
                     endpoint_uid=test_tuple[0],
                     endpoint_level_uid=test_tuple[1],
-                    endpoint_sub_level_uid=test_tuple[1],
+                    endpoint_sublevel_uid=test_tuple[1],
                     endpoint_level_order=None,
                     unit_separator=test_tuple[2],
                     study_objective_uid=test_tuple[3],
@@ -276,7 +276,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                 )
 
     def test__validate__failure__unit_separator_states(self):
-        dt = datetime.datetime.now()
+        dt = datetime.datetime.now(datetime.timezone.utc)
         test_tuples = [
             [
                 "uid_endpoint",
@@ -328,7 +328,7 @@ class TestStudySelectionEndpointVO(unittest.TestCase):
                 study_selection_endpoint = StudySelectionEndpointVO.from_input_values(
                     endpoint_uid=test_tuple[0],
                     endpoint_level_uid=test_tuple[1],
-                    endpoint_sub_level_uid=test_tuple[1],
+                    endpoint_sublevel_uid=test_tuple[1],
                     endpoint_level_order=2,
                     unit_separator=test_tuple[2],
                     study_objective_uid=test_tuple[3],

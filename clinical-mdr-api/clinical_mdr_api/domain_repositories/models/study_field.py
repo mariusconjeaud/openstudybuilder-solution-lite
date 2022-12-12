@@ -7,12 +7,14 @@ from neomodel import (
     RelationshipFrom,
     RelationshipTo,
     StringProperty,
+    ZeroOrMore,
     db,
 )
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
+from clinical_mdr_api.domain_repositories.models.dictionary import DictionaryTermRoot
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
     ClinicalMdrRel,
@@ -24,6 +26,12 @@ from clinical_mdr_api.domain_repositories.models.study_audit_trail import StudyA
 
 class StudyField(ClinicalMdrNode):
     has_type = RelationshipTo(CTTermRoot, "HAS_TYPE", model=ClinicalMdrRel)
+    has_dictionary_type = RelationshipTo(
+        DictionaryTermRoot,
+        "HAS_DICTIONARY_TYPE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
+    )
     has_reason_for_null_value = RelationshipTo(
         CTTermRoot, "HAS_REASON_FOR_NULL_VALUE", model=ClinicalMdrRel
     )

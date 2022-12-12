@@ -3,8 +3,8 @@ export const studyMetadataFormMixin = {
     getTermPayload (name) {
       if (this.form[name]) {
         return {
-          termUid: this.form[name].termUid,
-          name: this.form[name].sponsorPreferredName || this.form[name].name
+          term_uid: this.form[name].term_uid,
+          name: this.form[name].sponsor_preferred_name || this.form[name].name
         }
       }
       return null
@@ -16,8 +16,8 @@ export const studyMetadataFormMixin = {
       }
       this.form[name].forEach(term => {
         result.push({
-          termUid: term.termUid,
-          name: term.sponsorPreferredName || term.name
+          term_uid: term.term_uid,
+          name: term.sponsor_preferred_name || term.name
         })
       })
       return result

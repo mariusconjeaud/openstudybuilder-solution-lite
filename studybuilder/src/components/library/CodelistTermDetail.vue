@@ -18,14 +18,6 @@
           </v-icon>
         </v-btn>
       </template>
-      <v-btn
-        class="mx-2"
-        color="secondary"
-        fab
-        small
-        >
-        <v-icon>mdi-history</v-icon>
-      </v-btn>
       <data-table-export-button type="endpoint" dataUrl="" />
       <v-btn
         v-if="codelistAttributes.extensible"
@@ -61,14 +53,14 @@
         <tbody>
           <tr>
             <td>{{ $t('CodeListDetail.sponsor_pref_name') }}</td>
-            <td>{{ termNames.sponsorPreferredName }}</td>
+            <td>{{ termNames.sponsor_preferred_name }}</td>
             <td data-cy="names-status" rowspan="2"><status-chip :status="termNames.status" /></td>
-            <td rowspan="2">{{ termNames.startDate|date }}</td>
+            <td rowspan="2">{{ termNames.start_date|date }}</td>
             <td data-cy="names-version" rowspan="2">{{ termNames.version }}</td>
             <td rowspan="2">
               <v-btn
                 data-cy="edit-sponsor-values"
-                v-if="termNames.possibleActions.find(action => action === 'edit')"
+                v-if="termNames.possible_actions.find(action => action === 'edit')"
                 icon
                 color="primary"
                 :title="$t('CodelistTermDetail.edit_names')"
@@ -78,7 +70,7 @@
               </v-btn>
               <v-btn
                 data-cy="approve-term-sponsor-values"
-                v-if="termNames.possibleActions.find(action => action === 'approve')"
+                v-if="termNames.possible_actions.find(action => action === 'approve')"
                 color="success"
                 icon
                 @click="approveTermNames"
@@ -88,7 +80,7 @@
               </v-btn>
               <v-btn
                 data-cy='create-new-sponsor-values'
-                v-if="termNames.possibleActions.find(action => action === 'newVersion')"
+                v-if="termNames.possible_actions.find(action => action === 'new_version')"
                 color="primary"
                 icon
                 @click="newTermNamesVersion"
@@ -98,7 +90,7 @@
               </v-btn>
               <v-btn
                 color="warning"
-                v-if="termNames.possibleActions.find(action => action === 'inactivate')"
+                v-if="termNames.possible_actions.find(action => action === 'inactivate')"
                 icon
                 :title="$t('CodelistTermDetail.inactivate_names')"
                 @click="inactivateTermNames"
@@ -107,7 +99,7 @@
               </v-btn>
               <v-btn
                 color="primary"
-                v-if="termNames.possibleActions.find(action => action === 'reactivate')"
+                v-if="termNames.possible_actions.find(action => action === 'reactivate')"
                 icon
                 :title="$t('CodelistTermDetail.reactivate_names')"
                 @click="reactivateTermNames"
@@ -115,7 +107,7 @@
                 <v-icon>mdi-undo-variant</v-icon>
               </v-btn>
               <v-btn
-                v-if="termNames.possibleActions.find(action => action === 'delete')"
+                v-if="termNames.possible_actions.find(action => action === 'delete')"
                 icon
                 color="error"
                 @click="deleteTermNames()"
@@ -126,7 +118,7 @@
               <v-btn
                 data-cy="term-sponsor-version-history"
                 icon
-
+                @click="openSponsorValuesHistory"
                 :title="$t('CodeListDetail.history')"
                 >
                 <v-icon>mdi-history</v-icon>
@@ -135,7 +127,7 @@
           </tr>
           <tr>
             <td>{{ $t('CodelistTermDetail.sentence_case_name') }}</td>
-            <td>{{ termNames.sponsorPreferredNameSentenceCase }}</td>
+            <td>{{ termNames.sponsor_preferred_name_sentence_case }}</td>
           </tr>
           <tr>
             <td>{{ $t('CodelistTermDetail.order') }}</td>
@@ -163,13 +155,13 @@
         <tbody>
           <tr>
             <td>{{ $t('CodelistTermDetail.concept_id') }}</td>
-            <td>{{ termAttributes.termUid }}</td>
+            <td>{{ termAttributes.term_uid }}</td>
                         <td data-cy="attributes-status" rowspan="5"><status-chip :status="termAttributes.status" /></td>
-            <td rowspan="5">{{ termAttributes.startDate|date }}</td>
+            <td rowspan="5">{{ termAttributes.start_date|date }}</td>
             <td data-cy="attributes-version" rowspan="5">{{ termAttributes.version }}</td>
             <td rowspan="5">
               <v-btn
-                v-if="termAttributes.possibleActions.find(action => action === 'edit')"
+                v-if="termAttributes.possible_actions.find(action => action === 'edit')"
                 icon
                 color="primary"
                 :title="$t('CodelistTermDetail.edit_attributes')"
@@ -179,7 +171,7 @@
               </v-btn>
               <v-btn
                 data-cy="approve-term-attributes-values"
-                v-if="termAttributes.possibleActions.find(action => action === 'approve')"
+                v-if="termAttributes.possible_actions.find(action => action === 'approve')"
                 color="success"
                 icon
                 @click="approveTermAttributes"
@@ -188,7 +180,7 @@
                 <v-icon>mdi-check-decagram</v-icon>
               </v-btn>
               <v-btn
-                v-if="termAttributes.possibleActions.find(action => action === 'newVersion')"
+                v-if="termAttributes.possible_actions.find(action => action === 'new_version')"
                 color="primary"
                 icon
                 @click="newTermAttributesVersion"
@@ -198,7 +190,7 @@
               </v-btn>
               <v-btn
                 color="warning"
-                v-if="termAttributes.possibleActions.find(action => action === 'inactivate')"
+                v-if="termAttributes.possible_actions.find(action => action === 'inactivate')"
                 icon
                 :title="$t('CodelistTermDetail.inactivate_attributes')"
                 @click="inactivateTermAttributes"
@@ -207,7 +199,7 @@
               </v-btn>
               <v-btn
                 color="primary"
-                v-if="termAttributes.possibleActions.find(action => action === 'reactivate')"
+                v-if="termAttributes.possible_actions.find(action => action === 'reactivate')"
                 icon
                 :title="$t('CodelistTermDetail.reactivate_attributes')"
                 @click="reactivateTermAttributes"
@@ -215,7 +207,7 @@
                 <v-icon>mdi-undo-variant</v-icon>
               </v-btn>
               <v-btn
-                v-if="termAttributes.possibleActions.find(action => action === 'delete')"
+                v-if="termAttributes.possible_actions.find(action => action === 'delete')"
                 icon
                 color="error"
                 @click="deleteTermAttributes()"
@@ -225,7 +217,7 @@
               </v-btn>
               <v-btn
                 icon
-                @click="openTermAttributesHistory"
+                @click="openCTValuesHistory"
                 :title="$t('CodeListDetail.history')"
                 >
                 <v-icon>mdi-history</v-icon>
@@ -234,15 +226,15 @@
           </tr>
           <tr>
             <td>{{ $t('CodelistTermDetail.term_name') }}</td>
-            <td>{{ termAttributes.nameSubmissionValue }}</td>
+            <td>{{ termAttributes.name_submission_value }}</td>
           </tr>
           <tr>
             <td>{{ $t('CodelistTermDetail.submission_value') }}</td>
-            <td>{{ termAttributes.codeSubmissionValue }}</td>
+            <td>{{ termAttributes.code_submission_value }}</td>
           </tr>
           <tr>
             <td>{{ $t('CodelistTermDetail.nci_pref_name') }}</td>
-            <td>{{ termAttributes.nciPreferredName }}</td>
+            <td>{{ termAttributes.nci_preferred_name }}</td>
           </tr>
           <tr>
             <td>{{ $t('_global.definition') }}</td>
@@ -284,10 +276,24 @@
     content-class="top-dialog"
     >
     <codelist-term-creation-form
-      :catalogueName="codelistNames.catalogueName"
-      :codelistUid="codelistNames.codelistUid"
+      :catalogueName="codelistNames.catalogue_name"
+      :codelistUid="codelistNames.codelist_uid"
       @close="showCreationForm = false"
       @created="goToTerm"
+      />
+  </v-dialog>
+  <v-dialog
+    v-model="showHistory"
+    persistent
+    max-width="1200px"
+    >
+    <history-table
+      @close="closeHistory"
+      :type="historyType"
+      url-prefix="terms/"
+      :url-suffix="historyUrlSuffix"
+      :item="term"
+      :title-label="historyTitleLabel"
       />
   </v-dialog>
 </div>
@@ -301,6 +307,7 @@ import CodelistTermAttributesForm from '@/components/library/CodelistTermAttribu
 import CodelistTermCreationForm from '@/components/library/CodelistTermCreationForm'
 import CodelistTermNamesForm from '@/components/library/CodelistTermNamesForm'
 import DataTableExportButton from '@/components/tools/DataTableExportButton'
+import HistoryTable from '@/components/library/HistoryTable'
 import StatusChip from '@/components/tools/StatusChip'
 
 export default {
@@ -310,19 +317,33 @@ export default {
     CodelistTermCreationForm,
     CodelistTermNamesForm,
     DataTableExportButton,
+    HistoryTable,
     StatusChip
   },
   props: ['codelistUid', 'termUid'],
+  computed: {
+    historyTitleLabel () {
+      return (this.historyType === 'termName')
+        ? this.$t('CodelistTermTable.history_label_name')
+        : this.$t('CodelistTermTable.history_label_attributes')
+    },
+    historyUrlSuffix () {
+      return (this.historyType === 'termName') ? 'names' : 'attributes'
+    }
+  },
   data () {
     return {
       actionsMenu: false,
       codelistAttributes: {},
       codelistNames: {},
+      historyType: '',
       showAttributesForm: false,
       showCreationForm: false,
+      showHistory: false,
       showNamesForm: false,
-      termNames: { possibleActions: [] },
-      termAttributes: { possibleActions: [] }
+      term: { term_uid: this.termUid },
+      termNames: { possible_actions: [] },
+      termAttributes: { possible_actions: [] }
     }
   },
   methods: {
@@ -332,31 +353,31 @@ export default {
       })
     },
     newTermNamesVersion () {
-      controlledTerminology.newCodelistTermNamesVersion(this.termNames.termUid).then(resp => {
+      controlledTerminology.newCodelistTermNamesVersion(this.termNames.term_uid).then(resp => {
         this.termNames = resp.data
         bus.$emit('notification', { msg: this.$t('CodelistTermDetail.new_names_version_success') })
       })
     },
     approveTermNames () {
-      controlledTerminology.approveCodelistTermNames(this.termNames.termUid).then(resp => {
+      controlledTerminology.approveCodelistTermNames(this.termNames.term_uid).then(resp => {
         this.termNames = resp.data
         bus.$emit('notification', { msg: this.$t('CodelistTermDetail.approve_names_success') })
       })
     },
     inactivateTermNames () {
-      controlledTerminology.inactivateCodelistTermNames(this.termNames.termUid).then(resp => {
+      controlledTerminology.inactivateCodelistTermNames(this.termNames.term_uid).then(resp => {
         this.termNames = resp.data
         bus.$emit('notification', { msg: this.$t('CodelistTermDetail.inactivate_names_success') })
       })
     },
     reactivateTermNames () {
-      controlledTerminology.reactivateCodelistTermNames(this.termNames.termUid).then(resp => {
+      controlledTerminology.reactivateCodelistTermNames(this.termNames.term_uid).then(resp => {
         this.termNames = resp.data
         bus.$emit('notification', { msg: this.$t('CodelistTermDetail.reactivate_names_success') })
       })
     },
     deleteTermNames () {
-      controlledTerminology.deleteCodelistTermNames(this.termNames.termUid).then(resp => {
+      controlledTerminology.deleteCodelistTermNames(this.termNames.term_uid).then(resp => {
         this.fetchTermNames()
         bus.$emit('notification', { msg: this.$t('CodelistTermDetail.delete_names_success') })
       })
@@ -367,41 +388,50 @@ export default {
       })
     },
     newTermAttributesVersion () {
-      controlledTerminology.newCodelistTermAttributesVersion(this.termAttributes.termUid).then(resp => {
+      controlledTerminology.newCodelistTermAttributesVersion(this.termAttributes.term_uid).then(resp => {
         this.termAttributes = resp.data
         bus.$emit('notification', { msg: this.$t('CodelistTermDetail.new_attributes_version_success') })
       })
     },
     approveTermAttributes () {
-      controlledTerminology.approveCodelistTermAttributes(this.termAttributes.termUid).then(resp => {
+      controlledTerminology.approveCodelistTermAttributes(this.termAttributes.term_uid).then(resp => {
         this.termAttributes = resp.data
         bus.$emit('notification', { msg: this.$t('CodelistTermDetail.approve_attributes_success') })
       })
     },
     inactivateTermAttributes () {
-      controlledTerminology.inactivateCodelistTermAttributes(this.termAttributes.termUid).then(resp => {
+      controlledTerminology.inactivateCodelistTermAttributes(this.termAttributes.term_uid).then(resp => {
         this.termAttributes = resp.data
         bus.$emit('notification', { msg: this.$t('CodelistTermDetail.inactivate_attributes_success') })
       })
     },
     reactivateTermAttributes () {
-      controlledTerminology.reactivateCodelistTermAttributes(this.termAttributes.termUid).then(resp => {
+      controlledTerminology.reactivateCodelistTermAttributes(this.termAttributes.term_uid).then(resp => {
         this.termAttributes = resp.data
         bus.$emit('notification', { msg: this.$t('CodelistTermDetail.reactivate_attributes_success') })
       })
     },
     deleteTermAttributes () {
-      controlledTerminology.deleteCodelistTermAttributes(this.termNames.termUid).then(resp => {
+      controlledTerminology.deleteCodelistTermAttributes(this.termNames.term_uid).then(resp => {
         this.fetchTermAttributes()
         bus.$emit('notification', { msg: this.$t('CodelistTermDetail.delete_attributes_success') })
       })
     },
     goToTerm (term) {
-      this.$router.push({ name: 'CodelistTermDetail', params: { codelistId: term.codelistUid, termId: term.termUid } })
+      this.$router.push({ name: 'CodelistTermDetail', params: { codelist_id: term.codelist_uid, term_id: term.term_uid } })
       bus.$emit('notification', { msg: this.$t('CodelistTermCreationForm.add_success') })
     },
-    openTermAttributesHistory () {
-
+    openSponsorValuesHistory () {
+      this.historyType = 'termName'
+      this.showHistory = true
+    },
+    openCTValuesHistory () {
+      this.historyType = 'termAttributes'
+      this.showHistory = true
+    },
+    closeHistory () {
+      this.showHistory = false
+      this.historyType = ''
     }
   },
   mounted () {

@@ -14,7 +14,6 @@
     @item-expanded="getSubGroups"
     :show-expand="isExpand()"
     :subTables="isExpand()"
-    has-history
     single-expand
     :filters-modify-function="modifyFilters"
     >
@@ -36,12 +35,12 @@
           <actions-menu :actions="actions" :item="item"/>
         </td>
         <td width="41%" :class="'font-weight-bold'">{{ item.name }}</td>
-        <td width="24%">{{ item.startDate | date }}</td>
+        <td width="24%">{{ item.start_date | date }}</td>
         <td width="14%"><status-chip :status="item.status" /></td>
         <td width="10%">{{ item.version }}</td>
       </tr>
     </template>
-    <template v-slot:item.possibleActions="{ item }">
+    <template v-slot:item.possible_actions="{ item }">
       <div class="pr-0 mr-0">
         <actions-menu :actions="actions" :item="item"/>
       </div>
@@ -52,13 +51,13 @@
     <template v-slot:item.status="{ item }">
       <status-chip :status="item.status" />
     </template>
-    <template v-slot:item.startDate="{ item }">
-      {{ item.startDate | date }}
+    <template v-slot:item.start_date="{ item }">
+      {{ item.start_date | date }}
     </template>
-    <template v-slot:item.activityGroups="{ item }">
+    <template v-slot:item.activity_groups="{ item }">
       {{ groupsDisplay(item) }}
     </template>
-    <template v-slot:item.activitySubGroups="{ item }">
+    <template v-slot:item.activity_sub_groups="{ item }">
       {{ subGroupsDisplay(item) }}
     </template>
     <template v-slot:item.activities="{ item }">
@@ -97,7 +96,7 @@
                 <actions-menu :actions="actions" :item="item" :source="'activity-sub-groups'"/>
               </td>
               <td width="41%" class="font-weight-bold">{{ item.name }}</td>
-              <td width="24%">{{ item.startDate | date }}</td>
+              <td width="24%">{{ item.start_date | date }}</td>
               <td width="14%"><status-chip :status="item.status" /></td>
               <td width="10%">{{ item.version }}</td>
             </tr>
@@ -122,7 +121,7 @@
                       <actions-menu :actions="actions" :item="item" :source="'activities'"/>
                     </td>
                     <td width="41%">{{ item.name }}</td>
-                    <td width="24%">{{ item.startDate | date }}</td>
+                    <td width="24%">{{ item.start_date | date }}</td>
                     <td width="14%"><status-chip :status="item.status" /></td>
                     <td width="10%">{{ item.version }}</td>
                   </tr>
@@ -204,78 +203,78 @@ export default {
           label: this.$t('_global.approve'),
           icon: 'mdi-check-decagram',
           iconColor: 'success',
-          condition: (item) => item.possibleActions.find(action => action === 'approve'),
+          condition: (item) => item.possible_actions.find(action => action === 'approve'),
           click: this.approveActivity
         },
         {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'edit'),
+          condition: (item) => item.possible_actions.find(action => action === 'edit'),
           click: this.editActivity
         },
         {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'newVersion'),
+          condition: (item) => item.possible_actions.find(action => action === 'new_version'),
           click: this.newActivityVersion
         },
         {
           label: this.$t('_global.inactivate'),
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'inactivate'),
+          condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
           click: this.inactivateActivity
         },
         {
           label: this.$t('_global.reactivate'),
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'reactivate'),
+          condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
           click: this.reactivateActivity
         },
         {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete',
           iconColor: 'error',
-          condition: (item) => item.possibleActions.find(action => action === 'delete'),
+          condition: (item) => item.possible_actions.find(action => action === 'delete'),
           click: this.deleteActivity
         }
       ],
       activities: [],
       activitiesHeaders: [
-        { text: '', value: 'possibleActions', width: '5%' },
-        { text: this.$t('ActivityTable.activity_group'), value: 'activityGroup.name', externalFilterSource: 'concepts/activities/activity-groups$name' },
-        { text: this.$t('ActivityTable.activity_subgroup'), value: 'activitySubGroup.name', externalFilterSource: 'concepts/activities/activity-sub-groups$name' },
+        { text: '', value: 'possible_actions', width: '5%' },
+        { text: this.$t('ActivityTable.activity_group'), value: 'activity_group.name', externalFilterSource: 'concepts/activities/activity-groups$name' },
+        { text: this.$t('ActivityTable.activity_subgroup'), value: 'activity_subgroup.name', externalFilterSource: 'concepts/activities/activity-sub-groups$name' },
         { text: this.$t('ActivityTable.activity'), value: 'name', externalFilterSource: 'concepts/activities/activities$name' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
       ],
       instantiationsHeaders: [
-        { text: '', value: 'possibleActions', width: '5%' },
-        { text: this.$t('_global.library'), value: 'libraryName' },
+        { text: '', value: 'possible_actions', width: '5%' },
+        { text: this.$t('_global.library'), value: 'library_name' },
         { text: this.$t('ActivityTable.type'), value: 'type' },
         { text: this.$t('ActivityTable.activity'), value: 'activities', externalFilterSource: 'concepts/activities/activities$name' },
         { text: this.$t('ActivityTable.instance'), value: 'name' },
         { text: this.$t('_global.definition'), value: 'definition' },
-        { text: this.$t('ActivityTable.topic_code'), value: 'topicCode' },
-        { text: this.$t('ActivityTable.adam_code'), value: 'adamParamCode' },
-        { text: this.$t('ActivityTable.sdtm_domain'), value: 'sdtmDomain.name' },
-        { text: this.$t('ActivityTable.sdtm_variable'), value: 'sdtmVariable.name' },
-        { text: this.$t('ActivityTable.sdtm_category'), value: 'sdtmCat.name' },
-        { text: this.$t('ActivityTable.sdtm_sub_category'), value: 'sdtmSubcat.name' },
+        { text: this.$t('ActivityTable.topic_code'), value: 'topic_code' },
+        { text: this.$t('ActivityTable.adam_code'), value: 'adam_param_code' },
+        { text: this.$t('ActivityTable.sdtm_domain'), value: 'sdtm_domain.name' },
+        { text: this.$t('ActivityTable.sdtm_variable'), value: 'sdtm_variable.name' },
+        { text: this.$t('ActivityTable.sdtm_category'), value: 'sdtm_cat.name' },
+        { text: this.$t('ActivityTable.sdtm_sub_category'), value: 'sdtm_subcat.name' },
         { text: this.$t('ActivityTable.specimen'), value: 'specimen.name' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
-        { text: this.$t('_global.modified_by'), value: 'userInitials' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
+        { text: this.$t('_global.modified_by'), value: 'user_initials' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
       ],
       groupsHeaders: [
-        { text: '', value: 'possibleActions', width: '5%' },
+        { text: '', value: 'possible_actions', width: '5%' },
         { text: this.$t('ActivityTable.group_or_subgroup'), value: 'name', width: '43%' },
-        { text: this.$t('_global.modified'), value: 'startDate', width: '25%' },
+        { text: this.$t('_global.modified'), value: 'start_date', width: '25%' },
         { text: this.$t('_global.status'), value: 'status', width: '15%' },
         { text: this.$t('_global.version'), value: 'version', width: '10%' }
       ],
@@ -304,30 +303,30 @@ export default {
         this.filters = filters
       }
       const params = {
-        pageNumber: (this.options.page),
-        pageSize: this.options.itemsPerPage,
-        totalCount: true
+        page_number: (this.options.page),
+        page_size: this.options.itemsPerPage,
+        total_count: true
       }
       if (this.filters && this.filters !== undefined && this.filters !== '{}' && this.source === 'activities') {
         const filtersObj = JSON.parse(this.filters)
-        if (filtersObj.activityGroups) {
-          params.activityGroupNames = []
-          filtersObj.activityGroups.v.forEach(value => {
-            params.activityGroupNames.push(value)
+        if (filtersObj.activity_groups) {
+          params.activity_group_names = []
+          filtersObj.activity_groups.v.forEach(value => {
+            params.activity_group_names.push(value)
           })
-          delete filtersObj.activityGroups
+          delete filtersObj.activity_groups
         }
-        if (filtersObj.activitySubGroups) {
-          params.activitySubGroupNames = []
-          filtersObj.activitySubGroups.v.forEach(value => {
-            params.activitySubGroupNames.push(value)
+        if (filtersObj.activity_sub_groups) {
+          params.activity_sub_group_names = []
+          filtersObj.activity_sub_groups.v.forEach(value => {
+            params.activity_sub_group_names.push(value)
           })
-          delete filtersObj.activitySubGroups
+          delete filtersObj.activity_sub_groups
         }
         if (filtersObj.name) {
-          params.activityNames = []
+          params.activity_names = []
           filtersObj.name.v.forEach(value => {
-            params.activityNames.push(value)
+            params.activity_names.push(value)
           })
           delete filtersObj.name
         }
@@ -337,16 +336,16 @@ export default {
       } else if (this.filters && this.filters !== undefined && this.filters !== '{}' && this.source === 'activity-instances') {
         const filtersObj = JSON.parse(this.filters)
         if (filtersObj.activities) {
-          params.activityNames = []
+          params.activity_names = []
           filtersObj.activities.v.forEach(value => {
-            params.activityNames.push(value)
+            params.activity_names.push(value)
           })
           delete filtersObj.activities
         }
         if (filtersObj.specimen) {
-          params.specimenNames = []
+          params.specimen_names = []
           filtersObj.specimen.v.forEach(value => {
-            params.specimenNames.push(value)
+            params.specimen_names.push(value)
           })
           delete filtersObj.specimen
         }
@@ -357,7 +356,7 @@ export default {
         params.filters = filters
       }
       if (this.options.sortBy.length !== 0 && sort !== undefined) {
-        params.sortBy = `{"${this.options.sortBy[0]}":${!sort}}`
+        params.sort_by = `{"${this.options.sortBy[0]}":${!sort}}`
       }
       activities.get(params, this.source).then(resp => {
         this.activities = resp.data.items
@@ -371,38 +370,38 @@ export default {
       })
     },
     modifyFilters (jsonFilter, params) {
-      if (jsonFilter.activityGroups) {
-        params.activityGroupNames = []
-        jsonFilter.activityGroups.v.forEach(value => {
-          params.activityGroupNames.push(value)
+      if (jsonFilter.activity_groups) {
+        params.activity_group_names = []
+        jsonFilter.activity_groups.v.forEach(value => {
+          params.activity_group_names.push(value)
         })
-        delete jsonFilter.activityGroups
+        delete jsonFilter.activity_groups
       }
-      if (jsonFilter.activitySubGroups) {
-        params.activitySubGroupNames = []
-        jsonFilter.activitySubGroups.v.forEach(value => {
-          params.activitySubGroupNames.push(value)
+      if (jsonFilter.activity_sub_groups) {
+        params.activity_sub_group_names = []
+        jsonFilter.activity_sub_groups.v.forEach(value => {
+          params.activity_sub_group_names.push(value)
         })
-        delete jsonFilter.activitySubGroups
+        delete jsonFilter.activity_sub_groups
       }
       if (jsonFilter.name) {
-        params.activityNames = []
+        params.activity_names = []
         jsonFilter.name.v.forEach(value => {
-          params.activityNames.push(value)
+          params.activity_names.push(value)
         })
         delete jsonFilter.name
       }
       if (jsonFilter.activities) {
-        params.activityNames = []
+        params.activity_names = []
         jsonFilter.activities.v.forEach(value => {
-          params.activityNames.push(value)
+          params.activity_names.push(value)
         })
         delete jsonFilter.activities
       }
       if (jsonFilter.specimen) {
-        params.specimenNames = []
+        params.specimen_names = []
         jsonFilter.activities.v.forEach(value => {
-          params.specimenNames.push(value)
+          params.specimen_names.push(value)
         })
         delete jsonFilter.specimen
       }
@@ -417,14 +416,14 @@ export default {
     },
     subGroupsDisplay (item) {
       let display = ''
-      item.activitySubGroups.forEach(element => {
+      item.activity_sub_groups.forEach(element => {
         display += element.name + ', '
       })
       return display.slice(0, -2)
     },
     groupsDisplay (item) {
       let display = ''
-      item.activityGroups.forEach(element => {
+      item.activity_groups.forEach(element => {
         display += element.name + ', '
       })
       return display.slice(0, -2)

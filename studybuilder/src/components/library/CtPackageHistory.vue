@@ -42,27 +42,27 @@
     <v-progress-linear v-if="loading" indeterminate class="mx-4" />
     <template v-else>
       <history-codelist-set
-        :title="$tc('CtPackageHistory.new_codelist', changes.newCodelists.length)"
+        :title="$tc('CtPackageHistory.new_codelist', changes.new_codelists.length)"
         color="primary"
-        :codelists="changes.newCodelists"
+        :codelists="changes.new_codelists"
         :chips-label="display"
         :from-date="fromDate"
         :to-date="toDate"
         />
       <v-divider class="my-4" color="greyBackground" />
       <history-codelist-set
-        :title="$tc('CtPackageHistory.updated_codelist', changes.updatedCodelists.length)"
+        :title="$tc('CtPackageHistory.updated_codelist', changes.updated_codelists.length)"
         color="green"
-        :codelists="changes.updatedCodelists"
+        :codelists="changes.updated_codelists"
         :chips-label="display"
         :from-date="fromDate"
         :to-date="toDate"
         />
       <v-divider class="my-4" color="greyBackground" />
       <history-codelist-set
-        :title="$tc('CtPackageHistory.deleted_codelist', changes.deletedCodelists.length)"
+        :title="$tc('CtPackageHistory.deleted_codelist', changes.deleted_codelists.length)"
         color="red"
-        :codelists="changes.deletedCodelists"
+        :codelists="changes.deleted_codelists"
         :chips-label="display"
         :from-date="fromDate"
         :to-date="toDate"
@@ -95,9 +95,9 @@ export default {
   methods: {
     resetChanges () {
       this.changes = {
-        newCodelists: {},
-        deletedCodelists: {},
-        updatedCodelists: {}
+        new_codelists: {},
+        deleted_codelists: {},
+        updated_codelists: {}
       }
     },
     getDateColor (date) {
@@ -135,7 +135,7 @@ export default {
   mounted () {
     this.resetChanges()
     controlledTerminology.getPackagesDates(this.catalogue.name).then(resp => {
-      this.dates = resp.data.effectiveDates
+      this.dates = resp.data.effective_dates
     })
   }
 }

@@ -11,8 +11,8 @@ from opencensus.trace.tracer import Tracer
 from pydantic import ValidationError
 from starlette_context import context
 
+from clinical_mdr_api.exceptions import NotAuthenticatedException
 from clinical_mdr_api.oauth import config
-from clinical_mdr_api.oauth.exceptions import NotAuthenticatedException
 from clinical_mdr_api.oauth.jwk_service import JWKService
 from clinical_mdr_api.oauth.models import IdTokenClaims, UserInfo
 

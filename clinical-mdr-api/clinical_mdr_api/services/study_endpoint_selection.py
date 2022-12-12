@@ -13,7 +13,6 @@ from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.domain_repositories.study_selection.study_selection_endpoint_repository import (
     SelectionHistoryObject,
 )
-from clinical_mdr_api.exceptions import ForbiddenException, NotFoundException
 from clinical_mdr_api.models.study_selection import (
     EndpointUnits,
     StudySelectionEndpointCreateInput,
@@ -127,13 +126,13 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             endpoint_repo = repos.endpoint_repository
             timeframe_repo = repos.timeframe_repository
 
-            if selection_create_input.endpointUid:
+            if selection_create_input.endpoint_uid:
                 endpoint_ar: EndpointAR = endpoint_repo.find_by_uid_2(
-                    selection_create_input.endpointUid, for_update=True
+                    selection_create_input.endpoint_uid, for_update=True
                 )
                 if endpoint_ar is None:
                     raise exceptions.BusinessLogicException(
-                        f"There is no approved endpoint identified by provided uid ({selection_create_input.endpointUid})"
+                        f"There is no approved endpoint identified by provided uid ({selection_create_input.endpoint_uid})"
                     )
                 # if in draft status - approve
                 if endpoint_ar.item_metadata.status == LibraryItemStatus.DRAFT:
@@ -142,17 +141,17 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 # if in retired then we return a error
                 elif endpoint_ar.item_metadata.status == LibraryItemStatus.RETIRED:
                     raise exceptions.BusinessLogicException(
-                        f"There is no approved endpoint identified by provided uid ({selection_create_input.endpointUid})"
+                        f"There is no approved endpoint identified by provided uid ({selection_create_input.endpoint_uid})"
                     )
             else:
                 endpoint_ar = None
-            if selection_create_input.timeframeUid:
+            if selection_create_input.timeframe_uid:
                 timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid_2(
-                    selection_create_input.timeframeUid, for_update=True
+                    selection_create_input.timeframe_uid, for_update=True
                 )
                 if timeframe_ar is None:
                     raise exceptions.BusinessLogicException(
-                        f"There is no approved timeframe identified by provided uid ({selection_create_input.timeframeUid})"
+                        f"There is no approved timeframe identified by provided uid ({selection_create_input.timeframe_uid})"
                     )
                 # if in draft status - approve
                 if timeframe_ar.item_metadata.status == LibraryItemStatus.DRAFT:
@@ -161,39 +160,39 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 # if in retired then we return a error
                 elif timeframe_ar.item_metadata.status == LibraryItemStatus.RETIRED:
                     raise exceptions.BusinessLogicException(
-                        f"There is no approved timeframe identified by provided uid ({selection_create_input.timeframeUid})"
+                        f"There is no approved timeframe identified by provided uid ({selection_create_input.timeframe_uid})"
                     )
             else:
                 timeframe_ar = None
-            if selection_create_input.endpointUnits is None:
+            if selection_create_input.endpoint_units is None:
                 units = None
                 separator = None
             else:
-                units = selection_create_input.endpointUnits.units
-                separator = selection_create_input.endpointUnits.separator
+                units = selection_create_input.endpoint_units.units
+                separator = selection_create_input.endpoint_units.separator
             # get order from the endpoint level CT term
-            if selection_create_input.endpointLevelUid is not None:
+            if selection_create_input.endpoint_level_uid is not None:
                 endpoint_level_order = (
                     self._repos.ct_term_name_repository.term_specific_order_by_uid(
-                        uid=selection_create_input.endpointLevelUid
+                        uid=selection_create_input.endpoint_level_uid
                     )
                 )
             else:
                 endpoint_level_order = None
             new_selection = StudySelectionEndpointVO.from_input_values(
-                endpoint_uid=selection_create_input.endpointUid,
+                endpoint_uid=selection_create_input.endpoint_uid,
                 endpoint_version=endpoint_ar.item_metadata.version
                 if endpoint_ar
                 else None,
-                endpoint_level_uid=selection_create_input.endpointLevelUid,
-                endpoint_sub_level_uid=selection_create_input.endpointSubLevelUid,
+                endpoint_level_uid=selection_create_input.endpoint_level_uid,
+                endpoint_sublevel_uid=selection_create_input.endpoint_sublevel_uid,
                 endpoint_units=units,
-                timeframe_uid=selection_create_input.timeframeUid,
+                timeframe_uid=selection_create_input.timeframe_uid,
                 timeframe_version=timeframe_ar.item_metadata.version
                 if timeframe_ar
                 else None,
                 unit_separator=separator,
-                study_objective_uid=selection_create_input.studyObjectiveUid,
+                study_objective_uid=selection_create_input.study_objective_uid,
                 generate_uid_callback=repos.study_selection_endpoint_repository.generate_uid,
                 user_initials=self.author,
                 endpoint_level_order=endpoint_level_order,
@@ -240,7 +239,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 # check if name exists
                 endpoint_service = EndpointService()
                 endpoint_ar = endpoint_service.create_ar_from_input_values(
-                    selection_create_input.endpointData
+                    selection_create_input.endpoint_data
                 )
 
                 endpoint_uid = endpoint_ar.uid
@@ -272,15 +271,15 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                         f"There is no approved objective identified by provided uid ({endpoint_uid})"
                     )
 
-                if selection_create_input.timeframeUid:
+                if selection_create_input.timeframe_uid:
                     timeframe_ar: TimeframeAR = (
                         repos.timeframe_repository.find_by_uid_2(
-                            selection_create_input.timeframeUid, for_update=True
+                            selection_create_input.timeframe_uid, for_update=True
                         )
                     )
                     if timeframe_ar is None:
                         raise exceptions.BusinessLogicException(
-                            f"There is no approved timeframe identified by provided uid ({selection_create_input.timeframeUid})"
+                            f"There is no approved timeframe identified by provided uid ({selection_create_input.timeframe_uid})"
                         )
                     # if in draft status - approve
                     if timeframe_ar.item_metadata.status == LibraryItemStatus.DRAFT:
@@ -289,22 +288,22 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                     # if in retired then we return a error
                     elif timeframe_ar.item_metadata.status == LibraryItemStatus.RETIRED:
                         raise exceptions.BusinessLogicException(
-                            f"There is no approved timeframe identified by provided uid ({selection_create_input.timeframeUid})"
+                            f"There is no approved timeframe identified by provided uid ({selection_create_input.timeframe_uid})"
                         )
                 else:
                     timeframe_ar = None
-                if selection_create_input.endpointUnits is None:
+                if selection_create_input.endpoint_units is None:
                     units = None
                     separator = None
                 else:
-                    units = selection_create_input.endpointUnits.units
-                    separator = selection_create_input.endpointUnits.separator
+                    units = selection_create_input.endpoint_units.units
+                    separator = selection_create_input.endpoint_units.separator
 
                 # get order from the Objective level CT term
-                if selection_create_input.endpointLevelUid is not None:
+                if selection_create_input.endpoint_level_uid is not None:
                     endpoint_level_order = (
                         self._repos.ct_term_name_repository.term_specific_order_by_uid(
-                            uid=selection_create_input.endpointLevelUid
+                            uid=selection_create_input.endpoint_level_uid
                         )
                     )
                 else:
@@ -314,15 +313,15 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 new_selection = StudySelectionEndpointVO.from_input_values(
                     endpoint_uid=endpoint_uid,
                     endpoint_version=endpoint_ar.item_metadata.version,
-                    endpoint_level_uid=selection_create_input.endpointLevelUid,
-                    endpoint_sub_level_uid=selection_create_input.endpointSubLevelUid,
+                    endpoint_level_uid=selection_create_input.endpoint_level_uid,
+                    endpoint_sublevel_uid=selection_create_input.endpoint_sublevel_uid,
                     endpoint_units=units,
                     unit_separator=separator,
-                    timeframe_uid=selection_create_input.timeframeUid,
+                    timeframe_uid=selection_create_input.timeframe_uid,
                     timeframe_version=timeframe_ar.item_metadata.version
                     if timeframe_ar
                     else None,
-                    study_objective_uid=selection_create_input.studyObjectiveUid,
+                    study_objective_uid=selection_create_input.study_objective_uid,
                     generate_uid_callback=repos.study_selection_endpoint_repository.generate_uid,
                     user_initials=self.author,
                     endpoint_level_order=endpoint_level_order,
@@ -339,6 +338,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                         ct_term_exists_callback=repos.ct_term_name_repository.term_specific_exists_by_uid,
                         unit_definition_exists_callback=repos.unit_definition_repository.check_exists_final_version,
                     )
+                    selection_aggregate.validate()
                 except ValueError as value_error:
                     raise exceptions.ValidationException(value_error.args[0])
 
@@ -370,7 +370,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 # check if name exists
                 endpoint_service = EndpointService()
                 endpoint_ar = endpoint_service.create_ar_from_input_values(
-                    selection_create_input.endpointData,
+                    selection_create_input.endpoint_data,
                     generate_uid_callback=(lambda: "preview"),
                 )
 
@@ -384,13 +384,13 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 )
 
                 timeframe_repo = repos.timeframe_repository
-                if selection_create_input.timeframeUid:
+                if selection_create_input.timeframe_uid:
                     timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid_2(
-                        selection_create_input.timeframeUid, for_update=True
+                        selection_create_input.timeframe_uid, for_update=True
                     )
                     if timeframe_ar is None:
                         raise exceptions.BusinessLogicException(
-                            f"There is no approved timeframe identified by provided uid ({selection_create_input.timeframeUid})"
+                            f"There is no approved timeframe identified by provided uid ({selection_create_input.timeframe_uid})"
                         )
                     # if in draft status - approve
                     if timeframe_ar.item_metadata.status == LibraryItemStatus.DRAFT:
@@ -399,7 +399,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                     # if in retired then we return a error
                     elif timeframe_ar.item_metadata.status == LibraryItemStatus.RETIRED:
                         raise exceptions.BusinessLogicException(
-                            f"There is no approved timeframe identified by provided uid ({selection_create_input.timeframeUid})"
+                            f"There is no approved timeframe identified by provided uid ({selection_create_input.timeframe_uid})"
                         )
                 else:
                     timeframe_ar = None
@@ -411,15 +411,15 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 new_selection = StudySelectionEndpointVO.from_input_values(
                     endpoint_uid=endpoint_uid,
                     endpoint_version=endpoint_ar.item_metadata.version,
-                    endpoint_level_uid=selection_create_input.endpointLevelUid,
-                    endpoint_sub_level_uid=selection_create_input.endpointSubLevelUid,
+                    endpoint_level_uid=selection_create_input.endpoint_level_uid,
+                    endpoint_sublevel_uid=selection_create_input.endpoint_sublevel_uid,
                     endpoint_units=units,
                     unit_separator=separator,
-                    timeframe_uid=selection_create_input.timeframeUid,
+                    timeframe_uid=selection_create_input.timeframe_uid,
                     timeframe_version=timeframe_ar.item_metadata.version
                     if timeframe_ar
                     else None,
-                    study_objective_uid=selection_create_input.studyObjectiveUid,
+                    study_objective_uid=selection_create_input.study_objective_uid,
                     generate_uid_callback=(lambda: "preview"),
                     user_initials=self.author,
                     endpoint_level_order=None,
@@ -452,10 +452,6 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                         lambda a, b: models.Endpoint.from_endpoint_ar(endpoint_ar)
                     ),
                 )
-        except ForbiddenException as e:
-            raise e
-        except NotFoundException as e:
-            raise e
         finally:
             repos.close()
 
@@ -690,9 +686,9 @@ class StudyEndpointSelectionService(StudySelectionMixin):
 
         endpoint_repo = self._repos.endpoint_repository
         timeframe_repo = self._repos.timeframe_repository
-        if request_study_endpoint.endpointUid:
+        if request_study_endpoint.endpoint_uid:
             endpoint_ar: EndpointAR = endpoint_repo.find_by_uid_2(
-                request_study_endpoint.endpointUid
+                request_study_endpoint.endpoint_uid
             )
         elif current_study_endpoint.endpoint_uid:
             endpoint_ar: EndpointAR = endpoint_repo.find_by_uid_2(
@@ -700,9 +696,9 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             )
         else:
             endpoint_ar = None
-        if request_study_endpoint.timeframeUid:
+        if request_study_endpoint.timeframe_uid:
             timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid_2(
-                request_study_endpoint.timeframeUid
+                request_study_endpoint.timeframe_uid
             )
         elif current_study_endpoint.timeframe_uid:
             timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid_2(
@@ -713,14 +709,14 @@ class StudyEndpointSelectionService(StudySelectionMixin):
 
         # transform current to input model
         transformed_current = StudySelectionEndpointInput(
-            endpointUid=current_study_endpoint.endpoint_uid,
-            endpointLevelUid=current_study_endpoint.endpoint_level_uid,
-            endpointUnits=EndpointUnits(
+            endpoint_uid=current_study_endpoint.endpoint_uid,
+            endpoint_level_uid=current_study_endpoint.endpoint_level_uid,
+            endpoint_units=EndpointUnits(
                 units=current_study_endpoint.endpoint_units,
                 separator=current_study_endpoint.unit_separator,
             ),
-            studyObjectiveUid=current_study_endpoint.study_objective_uid,
-            timeframeUid=current_study_endpoint.timeframe_uid,
+            study_objective_uid=current_study_endpoint.study_objective_uid,
+            timeframe_uid=current_study_endpoint.timeframe_uid,
         )
 
         # fill the missing from the inputs
@@ -730,27 +726,27 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         )
 
         # get order from the endpoint level CT term
-        if request_study_endpoint.endpointLevelUid is not None:
+        if request_study_endpoint.endpoint_level_uid is not None:
             endpoint_level_order = (
                 self._repos.ct_term_name_repository.term_specific_order_by_uid(
-                    uid=request_study_endpoint.endpointLevelUid
+                    uid=request_study_endpoint.endpoint_level_uid
                 )
             )
         else:
             endpoint_level_order = None
 
         return StudySelectionEndpointVO.from_input_values(
-            endpoint_uid=request_study_endpoint.endpointUid,
+            endpoint_uid=request_study_endpoint.endpoint_uid,
             endpoint_version=endpoint_ar.item_metadata.version if endpoint_ar else None,
-            endpoint_level_uid=request_study_endpoint.endpointLevelUid,
-            endpoint_sub_level_uid=request_study_endpoint.endpointSubLevelUid,
-            endpoint_units=request_study_endpoint.endpointUnits.units,
-            timeframe_uid=request_study_endpoint.timeframeUid,
+            endpoint_level_uid=request_study_endpoint.endpoint_level_uid,
+            endpoint_sublevel_uid=request_study_endpoint.endpoint_sublevel_uid,
+            endpoint_units=request_study_endpoint.endpoint_units.units,
+            timeframe_uid=request_study_endpoint.timeframe_uid,
             timeframe_version=timeframe_ar.item_metadata.version
             if timeframe_ar
             else None,
-            unit_separator=request_study_endpoint.endpointUnits.separator,
-            study_objective_uid=request_study_endpoint.studyObjectiveUid,
+            unit_separator=request_study_endpoint.endpoint_units.separator,
+            study_objective_uid=request_study_endpoint.study_objective_uid,
             study_selection_uid=current_study_endpoint.study_selection_uid,
             endpoint_level_order=endpoint_level_order,
             user_initials=self.author,

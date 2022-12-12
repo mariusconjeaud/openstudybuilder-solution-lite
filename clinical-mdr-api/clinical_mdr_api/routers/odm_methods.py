@@ -1,15 +1,10 @@
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, Path, Query
-from pydantic.types import Json, List
+from pydantic.types import Json
 
-from clinical_mdr_api.models import (
-    OdmMethod,
-    OdmMethodPatchInput,
-    OdmMethodPostInput,
-    OdmMethodWithRelationsPatchInput,
-    OdmMethodWithRelationsPostInput,
-)
+from clinical_mdr_api import config
+from clinical_mdr_api.models import OdmMethod, OdmMethodPatchInput, OdmMethodPostInput
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -32,33 +27,35 @@ OdmMethodUID = Path(None, description="The unique id of the ODM Method.")
 )
 def get_all_odm_methods(
     library: Optional[str] = Query(None),
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
 ):
     odm_method_service = OdmMethodService()
     results = odm_method_service.get_all_concepts(
         library=library,
-        sort_by=sortBy,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -78,9 +75,9 @@ def get_all_odm_methods(
     },
 )
 def get_distinct_values_for_header(
-    libraryName: Optional[str] = Query(None),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    library_name: Optional[str] = Query(None),
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -89,18 +86,18 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     odm_method_service = OdmMethodService()
     return odm_method_service.get_distinct_values_for_header(
-        library=libraryName,
-        field_name=fieldName,
-        search_string=searchString,
+        library=library_name,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
@@ -132,14 +129,14 @@ def get_active_relationships(uid: str = OdmMethodUID):
 
 @router.get(
     "/{uid}/versions",
-    summary="List version history for ODM Methods",
+    summary="List version history for ODM Method",
     description="""
 State before:
  - uid must exist.
 
 Business logic:
  - List version history for ODM Methods.
- - The returned versions are ordered by startDate descending (newest entries first).
+ - The returned versions are ordered by start_date descending (newest entries first).
 
 State after:
  - No change
@@ -163,13 +160,13 @@ def get_odm_method_versions(uid: str = OdmMethodUID):
 
 
 @router.post(
-    "/select",
+    "",
     summary="Creates a new Method in 'Draft' status with version 0.1",
     description="",
     response_model=OdmMethod,
     status_code=201,
     responses={
-        201: {"description": "Created - The odm method was successfully created."},
+        201: {"description": "Created - The ODM Method was successfully created."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -183,40 +180,14 @@ def create_odm_method(
     odm_method_create_input: OdmMethodPostInput = Body(None, description="")
 ):
     odm_method_service = OdmMethodService()
-    return odm_method_service.create(concept_input=odm_method_create_input)
-
-
-@router.post(
-    "/create",
-    summary="Creates an ODM Method with relationships",
-    description="",
-    response_model=OdmMethod,
-    status_code=201,
-    responses={
-        201: {"description": "Created - The odm method was successfully created."},
-        403: {
-            "model": ErrorResponse,
-            "description": "Forbidden - Reasons include e.g.: \n"
-            "- The library does not exist.\n"
-            "- The library does not allow to add new items.\n",
-        },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
-    },
-)
-def create_odm_method_with_relations(
-    odm_method_with_relations_post_input: OdmMethodWithRelationsPostInput = Body(
-        None, description=""
-    )
-):
-    odm_method_service = OdmMethodService()
     return odm_method_service.create_with_relations(
-        concept_input=odm_method_with_relations_post_input
+        concept_input=odm_method_create_input
     )
 
 
 @router.patch(
-    "/{uid}/select",
-    summary="Update odm method",
+    "/{uid}",
+    summary="Update ODM Method",
     description="",
     response_model=OdmMethod,
     status_code=200,
@@ -241,47 +212,13 @@ def edit_odm_method(
     odm_method_edit_input: OdmMethodPatchInput = Body(None, description=""),
 ):
     odm_method_service = OdmMethodService()
-    return odm_method_service.edit_draft(
+    return odm_method_service.update_with_relations(
         uid=uid, concept_edit_input=odm_method_edit_input
     )
 
 
-@router.patch(
-    "/{uid}/update",
-    summary="Updates an ODM Method with relationships",
-    description="",
-    response_model=OdmMethod,
-    status_code=200,
-    responses={
-        200: {"description": "OK."},
-        403: {
-            "model": ErrorResponse,
-            "description": "Forbidden - Reasons include e.g.: \n"
-            "- The ODM Method is not in draft status.\n"
-            "- The ODM Method had been in 'Final' status before.\n"
-            "- The library does not allow to edit draft versions.\n",
-        },
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - The ODM Method with the specified 'uid' wasn't found.",
-        },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
-    },
-)
-def edit_odm_method_with_relations(
-    uid: str = OdmMethodUID,
-    odm_method_with_relations_patch_input: OdmMethodWithRelationsPatchInput = Body(
-        None, description=""
-    ),
-):
-    odm_method_service = OdmMethodService()
-    return odm_method_service.update_with_relations(
-        uid=uid, concept_edit_input=odm_method_with_relations_patch_input
-    )
-
-
 @router.post(
-    "/{uid}/new-version",
+    "/{uid}/versions",
     summary=" Create a new version of ODM Method",
     description="""
 State before:

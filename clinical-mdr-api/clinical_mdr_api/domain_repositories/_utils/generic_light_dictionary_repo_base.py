@@ -1,6 +1,6 @@
 import collections.abc
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 from threading import Lock
 from typing import (
     Collection,
@@ -70,7 +70,7 @@ class GenericLightDictionaryRepoBase(Generic[Key, Entity], ABC):
         Here comes the logic which decides whether cached content is too old or not. It may be simple as always False
         (which is the default if superclass does not override the method and means the content will be loaded only once
         at first use of the repository class and every subsequent instance is going to use the same content forever,
-        until application restart), may by just simple last_refresh_date and datetime.today() comparison yielding True
+        until application restart), may by just simple last_refresh_date and datetime.now(timezone.utc) comparison yielding True
         if the difference is too large or even may contain some queries to external resources (which makes sense only
         in case this query has some significant advantage over just retrieving new data).
         It's consulted at most once per repository instance (may be not consulted if repository instance is not used).
@@ -97,7 +97,7 @@ class GenericLightDictionaryRepoBase(Generic[Key, Entity], ABC):
     @classmethod
     def __set_cache(cls, new_cache: MutableMapping[Key, Entity]) -> None:
         cls.__cache = new_cache
-        cls.__cache_refresh_date = datetime.today()
+        cls.__cache_refresh_date = datetime.now(timezone.utc)
 
     @classmethod
     def __get_cache(cls) -> MutableMapping[Key, Entity]:

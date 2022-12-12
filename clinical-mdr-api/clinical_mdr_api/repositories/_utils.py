@@ -3,19 +3,20 @@ import logging
 import re
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from dateutil.parser import isoparse
-from neomodel import Q
+from neo4j.exceptions import CypherSyntaxError
+from neomodel import Q, db
 from pydantic import BaseModel, Field, validator
 from pydantic.types import T, conlist
-from six import class_types
 
 from clinical_mdr_api import exceptions
+from clinical_mdr_api.models.concept import VersionProperties
 from clinical_mdr_api.models.ct_term import SimpleTermModel
 
 # Re-used regex
-nestedRegex = re.compile(r"\.")
+nested_regex = re.compile(r"\.")
 
 log = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ class ComparisonOperator(Enum):
     LESS_THAN = "lt"
     LESS_THAN_OR_EQUAL_TO = "le"
     BETWEEN = "bw"
+    IN = "in"
 
 
 comparison_operator_to_neomodel = {
@@ -39,6 +41,7 @@ comparison_operator_to_neomodel = {
     ComparisonOperator.GREATER_THAN_OR_EQUAL_TO: "__gte",
     ComparisonOperator.LESS_THAN: "__lt",
     ComparisonOperator.LESS_THAN_OR_EQUAL_TO: "__lte",
+    ComparisonOperator.IN: "__in",
 }
 
 
@@ -47,6 +50,7 @@ data_type_filters = {
         ComparisonOperator.EQUALS,
         ComparisonOperator.NOT_EQUALS,
         ComparisonOperator.CONTAINS,
+        ComparisonOperator.IN,
     ],
     int: [
         ComparisonOperator.EQUALS,
@@ -56,6 +60,7 @@ data_type_filters = {
         ComparisonOperator.LESS_THAN,
         ComparisonOperator.LESS_THAN_OR_EQUAL_TO,
         ComparisonOperator.BETWEEN,
+        ComparisonOperator.IN,
     ],
     float: [
         ComparisonOperator.EQUALS,
@@ -65,6 +70,7 @@ data_type_filters = {
         ComparisonOperator.LESS_THAN,
         ComparisonOperator.LESS_THAN_OR_EQUAL_TO,
         ComparisonOperator.BETWEEN,
+        ComparisonOperator.IN,
     ],
     datetime: [
         ComparisonOperator.EQUALS,
@@ -74,8 +80,9 @@ data_type_filters = {
         ComparisonOperator.LESS_THAN,
         ComparisonOperator.LESS_THAN_OR_EQUAL_TO,
         ComparisonOperator.BETWEEN,
+        ComparisonOperator.IN,
     ],
-    bool: [ComparisonOperator.EQUALS],
+    bool: [ComparisonOperator.EQUALS, ComparisonOperator.IN],
 }
 
 
@@ -89,27 +96,26 @@ def get_wildcard_filter(filter_elem, model: BaseModel):
     """
     wildcard_filter = []
     for name, field in model.__fields__.items():
-        source = field.field_info.extra.get("source")
-        if source is not None:
-            if "." in source:
-                field_name = source.replace(".", "__")
-            else:
-                field_name = source
-        else:
-            field_name = name
+        field_source = get_field_path(prop=name, field=field)
+        model_sources = get_version_properties_sources()
+        if field_source in model_sources and field.type_ is str:
+            get_versioning_q_filter(
+                filter_elem=filter_elem, field=field, q_filters=wildcard_filter
+            )
+            continue
         if issubclass(field.type_, BaseModel):
             q_obj = get_wildcard_filter(filter_elem=filter_elem, model=field.type_)
             wildcard_filter.append(q_obj)
-        elif field.type_ is str and not name in ["possibleActions"]:
-            q_obj = Q(**{f"{field_name}__icontains": filter_elem.v[0]})
+        elif field.type_ is str and name not in ["possible_actions"]:
+            q_obj = Q(**{f"{field_source}__icontains": filter_elem.v[0]})
             wildcard_filter.append(q_obj)
     return functools.reduce(lambda filter1, filter2: filter1 | filter2, wildcard_filter)
 
 
 def get_embedded_field(fields: list, model: BaseModel):
     """
-    Return the embedded field to filter by. For instance we can obtain 'flowchartGroup.name' filter clause
-    from the client which means that we want to filter by the name property in the flowchartGroup nested model.
+    Return the embedded field to filter by. For instance we can obtain 'flowchart_group.name' filter clause
+    from the client which means that we want to filter by the name property in the flowchart_group nested model.
     :param fields:
     :param model:
     :return:
@@ -119,32 +125,88 @@ def get_embedded_field(fields: list, model: BaseModel):
     return get_embedded_field(fields[1:], model=model.__fields__.get(fields[0]).type_)
 
 
+def get_field(prop, model):
+    # if property is a nested property, for instance flowchartGroup.name we have to get underlying
+    # 'name' property to filter by.
+    if "." in prop:
+        field = get_embedded_field(fields=prop.split("."), model=model)
+    else:
+        field = model.__fields__.get(prop)
+    return field
+
+
+def get_field_path(prop, field):
+    source = field.field_info.extra.get("source")
+    if source is not None:
+        if "." in source:
+            field_name = source.replace(".", "__")
+        else:
+            field_name = source
+    else:
+        field_name = prop
+    return field_name
+
+
+def get_order_by_clause(sort_by: Optional[dict], model: BaseModel):
+    sort_paths = []
+    if sort_by:
+        for key, value in sort_by.items():
+            path = get_field_path(prop=key, field=get_field(prop=key, model=model))
+            if value is False:
+                path = f"-{path}"
+            sort_paths.append(path)
+    return sort_paths
+
+
+def decrement_page_number(page_number: int) -> int:
+    page_number -= 1
+    return page_number
+
+
+def unwind_versioning_properties(field_source: str):
+    parts = field_source.split("|")
+    prop = parts[-1]
+    field_names = [
+        f"latest_draft|{prop}",
+        f"latest_final|{prop}",
+        f"latest_retired|{prop}",
+    ]
+    return field_names
+
+
+# pylint:disable=unsupported-binary-operation
+def get_versioning_q_filter(filter_elem, field, q_filters: list):
+    q_filters.append(
+        Q(**{f"latest_draft|{field.name}": f"{filter_elem.v[0]}"})
+        | Q(**{f"latest_final|{field.name}": f"{filter_elem.v[0]}"})
+        | Q(**{f"latest_retired|{field.name}": f"{filter_elem.v[0]}"})
+    )
+
+
+def get_version_properties_sources() -> list:
+    return [
+        field.field_info.extra.get("source")
+        for field in VersionProperties.__fields__.values()
+    ]
+
+
 def transform_filters_into_neomodel(filter_by: Union[dict, None], model: BaseModel):
     neomodel_filters = {}
-    wildcard_filters = []
+    q_filters = []
     filters = FilterDict(elements=filter_by)
     for prop, filter_elem in filters.elements.items():
         if prop == "*":
-            wildcard_filters.append(
-                get_wildcard_filter(filter_elem=filter_elem, model=model)
-            )
+            q_filters.append(get_wildcard_filter(filter_elem=filter_elem, model=model))
         else:
-            # if property is a nested property, for instance flowchartGroup.name we have to get underlying
-            # 'name' property to filter by.
-            if "." in prop:
-                field = get_embedded_field(fields=prop.split("."), model=model)
-            else:
-                field = model.__fields__.get(prop)
-
+            field = get_field(prop=prop, model=model)
             if field is not None:
-                source = field.field_info.extra.get("source")
-                if source is not None:
-                    if "." in source:
-                        field_name = source.replace(".", "__")
-                    else:
-                        field_name = source
-                else:
-                    field_name = prop
+                field_name = get_field_path(prop=prop, field=field)
+                model_sources = get_version_properties_sources()
+                if field_name in model_sources:
+                    get_versioning_q_filter(
+                        filter_elem=filter_elem, field=field, q_filters=q_filters
+                    )
+                    continue
 
                 # get the list of possible filters for a given field type
                 possible_filters = data_type_filters.get(field.type_)
@@ -192,15 +254,22 @@ def transform_filters_into_neomodel(filter_by: Union[dict, None], model: BaseMod
                         ):
                             max_bound_value = f"datetime({max_bound_value})"
                         neomodel_filters[max_bound] = max_bound_value
+                    elif filter_elem.op == ComparisonOperator.EQUALS:
+                        neomodel_filter = comparison_operator_to_neomodel.get(
+                            ComparisonOperator.IN
+                        )
+                        filter_name = f"{field_name}{neomodel_filter}"
+                        filter_value = filter_elem.v
+                        q_filters.append(Q(**{filter_name: filter_value}))
+                        # neomodel_filters[filter_name] = filter_value
                     else:
                         raise AttributeError(
                             f"Not valid operator {filter_elem.op.value} for the following property {prop} of type"
                             f"{type(prop)}"
                         )
-
             else:
                 raise AttributeError("Passed wrong filter field name")
-    return neomodel_filters, wildcard_filters
+    return neomodel_filters, q_filters
 
 
 def is_date(string):
@@ -247,6 +316,16 @@ class FilterDictElement(BaseModel):
         description="comparison operator from enum, for operations like =, >=, or <",
     )
 
+    @validator("op", pre=True)
+    # pylint:disable=no-self-argument
+    def _is_op_supported(cls, val):
+        try:
+            return ComparisonOperator(val)
+        except Exception as exc:
+            raise exceptions.ValidationException(
+                f"Unsupported comparison operator: '{val}'"
+            ) from exc
+
 
 class FilterDict(BaseModel):
     elements: Dict[str, FilterDictElement] = Field(
@@ -266,7 +345,7 @@ class FilterDict(BaseModel):
 
 class CypherQueryBuilder:
     """
-    This class builds two queries : items and totalCount with filtering and pagination capabilities.
+    This class builds two queries : items and total_count with filtering and pagination capabilities.
     Important note : To provide the filtering and sorting capabilities, this class
     relies on the use of Cypher aliases. Please read the 'Mandatory inputs' section carefully.
 
@@ -285,7 +364,7 @@ class CypherQueryBuilder:
         page_number : int, number of the page to return. 1-based (will be converted
         to 0-based for Cypher by class methods)
         page_size : int, number of results per page
-        filter_by : dict, keys are fieldNames for filter_variable and values are
+        filter_by : dict, keys are field names for filter_variable and values are
         objects describing the filtering to execute
             * v = list of values to filter against
             * op = filter operator. Expected values : eq, co (contains), ge, gt, le, lt
@@ -325,9 +404,9 @@ class CypherQueryBuilder:
         filter_by: Optional[FilterDict] = None,
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         total_count: bool = False,
-        return_model: class_types = None,
+        return_model: Optional[type] = None,
         wildcard_properties_list: Optional[Sequence[str]] = None,
-        format_filter_sort_keys: Callable = None,
+        format_filter_sort_keys: Optional[Callable] = None,
     ):
         if wildcard_properties_list is None:
             wildcard_properties_list = []
@@ -354,6 +433,8 @@ class CypherQueryBuilder:
         if self.page_size > 0:
             self.build_pagination_clause()
         if self.sort_by:
+            if not isinstance(self.sort_by, dict):
+                raise exceptions.ValidationException("sort_by must be a dict")
             self.build_sort_clause()
 
         # Auto-generate final queries
@@ -429,12 +510,12 @@ class CypherQueryBuilder:
                     )
             else:
                 # If necessary, replace key using return-model-to-cypher fieldname mapping
-                if self.format_filter_sort_keys and not _alias == "*":
+                if self.format_filter_sort_keys and _alias != "*":
                     _alias = self.format_filter_sort_keys(_alias)
                 # An empty _values list means that the returned item's property value should be null
                 if len(_values) == 0:
                     if _alias == "*":
-                        return exceptions.InternalErrorException(
+                        raise exceptions.ValidationException(
                             "Wildcard filtering not supported with null values"
                         )
                     _predicates.append(f"{_alias} IS NULL")
@@ -454,12 +535,13 @@ class CypherQueryBuilder:
                                 elif self.return_model:
                                     for (
                                         attribute,
-                                        attrDesc,
+                                        attr_desc,
                                     ) in self.return_model.__fields__.items():
                                         # Wildcard filtering only searches in properties of type string
-                                        if attrDesc.type_ is str and not attribute in [
-                                            "possibleActions"
-                                        ]:
+                                        if (
+                                            attr_desc.type_ is str
+                                            and attribute not in ["possible_actions"]
+                                        ):
                                             # name=$name_0 with name_0 defined in parameter objects
                                             if self.format_filter_sort_keys:
                                                 attribute = (
@@ -471,7 +553,7 @@ class CypherQueryBuilder:
                                                 f"toLower({attribute}){_parsed_operator}$wildcard_{index}"
                                             )
                                         # Wildcard filtering for SimpleTermModel
-                                        elif attrDesc.type_ is SimpleTermModel:
+                                        elif attr_desc.type_ is SimpleTermModel:
                                             # name=$name_0 with name_0 defined in parameter objects
                                             if self.format_filter_sort_keys:
                                                 attribute = (
@@ -479,7 +561,7 @@ class CypherQueryBuilder:
                                                         attribute
                                                     )
                                                 )
-                                            if attrDesc.sub_fields is None:
+                                            if attr_desc.sub_fields is None:
                                                 # if field is just SimpleTermModel compare wildcard filter
                                                 # with name property of SimpleTermModel
                                                 _predicates.append(
@@ -492,7 +574,7 @@ class CypherQueryBuilder:
                                                 )
                                 # If none are provided, raise an exception
                                 else:
-                                    raise exceptions.InternalErrorException(
+                                    raise exceptions.ValidationException(
                                         "Wildcard filtering not properly covered for this object"
                                     )
                                 self.parameters[f"wildcard_{index}"] = el.lower()
@@ -511,9 +593,9 @@ class CypherQueryBuilder:
                                 and self.return_model.__fields__.get(_alias).type_
                                 is SimpleTermModel
                             ):
-                                attrDesc = self.return_model.__fields__.get(_alias)
+                                attr_desc = self.return_model.__fields__.get(_alias)
                                 # name=$name_0 with name_0 defined in parameter objects
-                                if attrDesc.sub_fields is None:
+                                if attr_desc.sub_fields is None:
                                     # if field is just SimpleTermModel compare wildcard filter
                                     # with name property of SimpleTermModel
                                     _predicates.append(
@@ -560,8 +642,6 @@ class CypherQueryBuilder:
             _filter_clause
             + f" {self.filter_operator.value.upper()} ".join(list(filter_predicates))
         )
-
-        return None
 
     def build_pagination_clause(self) -> None:
         # Set clause
@@ -618,7 +698,7 @@ class CypherQueryBuilder:
             > RETURN results count
         """
         _with_alias_clause = f"WITH {self.alias_clause}"
-        _return_count_clause = "RETURN count(*) AS totalCount"
+        _return_count_clause = "RETURN count(*) AS total_count"
 
         # Set clause
         self.count_query = " ".join(
@@ -661,7 +741,18 @@ class CypherQueryBuilder:
         Escapes alias to prevent Cypher failures.
             * Replaces . for nested properties by _
         """
-        return re.sub(nestedRegex, "_", alias)
+        return re.sub(nested_regex, "_", alias)
+
+    def execute(self) -> Tuple[any, any]:
+        try:
+            result_array, attributes_names = db.cypher_query(
+                query=self.full_query, params=self.parameters
+            )
+        except CypherSyntaxError as _ex:
+            raise exceptions.ValidationException(
+                "Unsupported filtering or sort parameters specified"
+            )
+        return result_array, attributes_names
 
 
 def sb_clear_cache(caches: List[str] = None):

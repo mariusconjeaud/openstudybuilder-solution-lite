@@ -97,12 +97,12 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
     template_repository = None
     object_repository = None
 
-    def __init__(self, methodName="test_concurrent_updates_handled_correctly"):
-        super().__init__(methodName=methodName)
+    def __init__(self, method_name="test_concurrent_updates_handled_correctly"):
+        super().__init__(methodName=method_name)
         inject_and_clear_db("concurrency.studyselections")
         inject_base_data()
 
-    def set_up_base_graph_for_studies(self):
+    def setUp_base_graph_for_studies(self):
         db.cypher_query("MATCH (n) DETACH DELETE n")
         db.cypher_query(STARTUP_STUDY_FIELD_CYPHER)
         db.cypher_query(STARTUP_CT_TERM_ATTRIBUTES_CYPHER)
@@ -129,14 +129,14 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
                     registry_identifiers=RegistryIdentifiersVO.from_input_values(
                         ct_gov_id="CT_GOV_ID",
                         eudract_id="EUDRACT_ID",
-                        universal_trial_number_UTN="UTN",
-                        japanese_trial_registry_id_JAPIC="JAPIC",
-                        investigational_new_drug_application_number_IND="IND",
+                        universal_trial_number_utn="UTN",
+                        japanese_trial_registry_id_japic="JAPIC",
+                        investigational_new_drug_application_number_ind="IND",
                         ct_gov_id_null_value_code=None,
                         eudract_id_null_value_code=None,
-                        universal_trial_number_UTN_null_value_code=None,
-                        japanese_trial_registry_id_JAPIC_null_value_code=None,
-                        investigational_new_drug_application_number_IND_null_value_code=None,
+                        universal_trial_number_utn_null_value_code=None,
+                        japanese_trial_registry_id_japic_null_value_code=None,
+                        investigational_new_drug_application_number_ind_null_value_code=None,
                     ),
                 ),
                 project_exists_callback=(lambda _: True),
@@ -228,7 +228,7 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
             ct_term_name_ar.approve(author="TODO Initials")
             self.ct_term_names_repository.save(ct_term_name_ar)
 
-    def set_up_base_graph_for_objectives_without_clearing_graph(self):
+    def setUp_base_graph_for_objectives_without_clearing_graph(self):
         self.template_uid = "ObjectiveTemplate_000002"
         self.object_uid = "Objective_000001"
         self.template_repository = self._repos.objective_template_repository
@@ -277,8 +277,8 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
         self.object_repository.save(self.object_ar)
 
     def test_study_selection_create_cancelled_on_concurrent_study_release(self):
-        self.set_up_base_graph_for_studies()
-        self.set_up_base_graph_for_objectives_without_clearing_graph()
+        self.setUp_base_graph_for_studies()
+        self.setUp_base_graph_for_objectives_without_clearing_graph()
 
         with self.assertRaises(VersioningException) as message:
             OptimisticLockingValidator().assert_optimistic_locking_ensures_execution_order(
@@ -292,8 +292,8 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
         )
 
     def test_study_selection_reorder_cancelled_on_concurrent_study_release(self):
-        self.set_up_base_graph_for_studies()
-        self.set_up_base_graph_for_objectives_without_clearing_graph()
+        self.setUp_base_graph_for_studies()
+        self.setUp_base_graph_for_objectives_without_clearing_graph()
 
         with db.transaction:
             self.create_study_objective_with_save()

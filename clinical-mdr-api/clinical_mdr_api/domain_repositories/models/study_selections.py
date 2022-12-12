@@ -79,7 +79,7 @@ class StudyEndpoint(StudySelection):
     has_endpoint_level = RelationshipTo(
         CTTermRoot, "HAS_ENDPOINT_LEVEL", model=ClinicalMdrRel
     )
-    has_endpoint_sub_level = RelationshipTo(
+    has_endpoint_sublevel = RelationshipTo(
         CTTermRoot, "HAS_ENDPOINT_SUB_LEVEL", model=ClinicalMdrRel
     )
     has_unit = RelationshipTo(

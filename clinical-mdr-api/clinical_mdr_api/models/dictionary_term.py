@@ -20,65 +20,65 @@ class DictionaryTerm(BaseModel):
         if not dictionary_term_ar:
             return None
         return cls(
-            termUid=dictionary_term_ar.uid,
-            dictionaryId=dictionary_term_ar.dictionary_term_vo.dictionary_id,
+            term_uid=dictionary_term_ar.uid,
+            dictionary_id=dictionary_term_ar.dictionary_term_vo.dictionary_id,
             name=dictionary_term_ar.name,
-            nameSentenceCase=dictionary_term_ar.dictionary_term_vo.name_sentence_case,
+            name_sentence_case=dictionary_term_ar.dictionary_term_vo.name_sentence_case,
             abbreviation=dictionary_term_ar.dictionary_term_vo.abbreviation,
             definition=dictionary_term_ar.dictionary_term_vo.definition,
-            libraryName=Library.from_library_vo(dictionary_term_ar.library).name,
-            startDate=dictionary_term_ar.item_metadata.start_date,
-            endDate=dictionary_term_ar.item_metadata.end_date,
+            library_name=Library.from_library_vo(dictionary_term_ar.library).name,
+            start_date=dictionary_term_ar.item_metadata.start_date,
+            end_date=dictionary_term_ar.item_metadata.end_date,
             status=dictionary_term_ar.item_metadata.status.value,
             version=dictionary_term_ar.item_metadata.version,
-            changeDescription=dictionary_term_ar.item_metadata.change_description,
-            userInitials=dictionary_term_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=dictionary_term_ar.item_metadata.change_description,
+            user_initials=dictionary_term_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 [_.value for _ in dictionary_term_ar.get_possible_actions()]
             ),
         )
 
-    termUid: str
-    dictionaryId: str
+    term_uid: str
+    dictionary_id: str
     name: str
-    nameSentenceCase: str
+    name_sentence_case: str
     abbreviation: Optional[str]
     definition: Optional[str]
 
-    possibleActions: List[str] = Field(
+    possible_actions: List[str] = Field(
         ...,
         description=(
             "Holds those actions that can be performed on the DictionaryTerm. "
-            "Actions are: 'approve', 'edit', 'newVersion'."
+            "Actions are: 'approve', 'edit', 'new_version'."
         ),
     )
 
-    libraryName: str
-    startDate: Optional[datetime] = None
-    endDate: Optional[datetime] = None
+    library_name: str
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     status: Optional[str] = None
     version: Optional[str] = None
-    changeDescription: Optional[str] = None
-    userInitials: Optional[str] = None
+    change_description: Optional[str] = None
+    user_initials: Optional[str] = None
 
 
 class DictionaryTermEditInput(BaseModel):
-    dictionaryId: Optional[str] = None
+    dictionary_id: Optional[str] = None
     name: Optional[str] = None
-    nameSentenceCase: Optional[str] = None
+    name_sentence_case: Optional[str] = None
     abbreviation: Optional[str] = None
     definition: Optional[str] = None
-    changeDescription: str = Field(None, title="changeDescription", description="")
+    change_description: str = Field(None, title="change_description", description="")
 
 
 class DictionaryTermCreateInput(BaseModel):
-    dictionaryId: str
+    dictionary_id: str
     name: str
-    nameSentenceCase: Optional[str] = None
+    name_sentence_case: Optional[str] = None
     abbreviation: Optional[str] = None
     definition: Optional[str] = None
-    codelistUid: str = Field(..., title="codelistUid", description="")
-    libraryName: str
+    codelist_uid: str = Field(..., title="codelist_uid", description="")
+    library_name: str
 
 
 class DictionaryTermSubstance(DictionaryTerm):
@@ -93,24 +93,24 @@ class DictionaryTermSubstance(DictionaryTerm):
         if not dictionary_term_ar:
             return None
         return cls(
-            termUid=dictionary_term_ar.uid,
-            dictionaryId=dictionary_term_ar.dictionary_term_vo.dictionary_id,
+            term_uid=dictionary_term_ar.uid,
+            dictionary_id=dictionary_term_ar.dictionary_term_vo.dictionary_id,
             name=dictionary_term_ar.name,
-            nameSentenceCase=dictionary_term_ar.dictionary_term_vo.name_sentence_case,
+            name_sentence_case=dictionary_term_ar.dictionary_term_vo.name_sentence_case,
             abbreviation=dictionary_term_ar.dictionary_term_vo.abbreviation,
             definition=dictionary_term_ar.dictionary_term_vo.definition,
-            libraryName=Library.from_library_vo(dictionary_term_ar.library).name,
+            library_name=Library.from_library_vo(dictionary_term_ar.library).name,
             pclass=SimpleDictionaryTermModel.from_ct_code(
                 c_code=dictionary_term_ar.dictionary_term_vo.pclass_uid,
                 find_term_by_uid=find_dictionary_term_by_uid,
             ),
-            startDate=dictionary_term_ar.item_metadata.start_date,
-            endDate=dictionary_term_ar.item_metadata.end_date,
+            start_date=dictionary_term_ar.item_metadata.start_date,
+            end_date=dictionary_term_ar.item_metadata.end_date,
             status=dictionary_term_ar.item_metadata.status.value,
             version=dictionary_term_ar.item_metadata.version,
-            changeDescription=dictionary_term_ar.item_metadata.change_description,
-            userInitials=dictionary_term_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=dictionary_term_ar.item_metadata.change_description,
+            user_initials=dictionary_term_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 [_.value for _ in dictionary_term_ar.get_possible_actions()]
             ),
         )
@@ -118,12 +118,12 @@ class DictionaryTermSubstance(DictionaryTerm):
 
 class CompoundSubstance(BaseModel):
 
-    substanceTermUid: str
-    substanceName: str
-    substanceUnii: str
-    pclassTermUid: Optional[str]
-    pclassName: Optional[str]
-    pclassId: Optional[str]
+    substance_term_uid: str
+    substance_name: str
+    substance_unii: str
+    pclass_term_uid: Optional[str]
+    pclass_name: Optional[str]
+    pclass_id: Optional[str]
 
     @classmethod
     def from_term_uid(
@@ -145,23 +145,23 @@ class CompoundSubstance(BaseModel):
                 )
 
                 substance = cls(
-                    substanceTermUid=uid,
-                    substanceName=substance_term.dictionary_term_vo.name,
-                    substanceUnii=substance_term.dictionary_term_vo.dictionary_id,
-                    pclassTermUid=pclass_term.termUid if pclass_term else None,
-                    pclassName=pclass_term.name if pclass_term else None,
-                    pclassId=pclass_term.dictionaryId if pclass_term else None,
+                    substance_term_uid=uid,
+                    substance_name=substance_term.dictionary_term_vo.name,
+                    substance_unii=substance_term.dictionary_term_vo.dictionary_id,
+                    pclass_term_uid=pclass_term.term_uid if pclass_term else None,
+                    pclass_name=pclass_term.name if pclass_term else None,
+                    pclass_id=pclass_term.dictionary_id if pclass_term else None,
                 )
 
         return substance
 
 
 class DictionaryTermSubstanceCreateInput(DictionaryTermCreateInput):
-    pclassUid: Optional[str] = None
+    pclass_uid: Optional[str] = None
 
 
 class DictionaryTermSubstanceEditInput(DictionaryTermEditInput):
-    pclassUid: Optional[str] = None
+    pclass_uid: Optional[str] = None
 
 
 class DictionaryTermVersion(DictionaryTerm):
@@ -173,6 +173,6 @@ class DictionaryTermVersion(DictionaryTerm):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the objective (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )

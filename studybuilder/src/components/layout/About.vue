@@ -132,6 +132,7 @@ export default {
   data () {
     return {
       licenseText: null,
+      licenseTitle: '',
       showLicense: false,
       sbComponents: [
         {

@@ -24,18 +24,18 @@ class CTTermNameTest(api.APITest):
 
         self.test_client = TestClient(main.app)
 
-    def testFiltering(self):
+    def test_filtering(self):
         self.filtering_common_test_scenario(
             test_client=self.test_client,
             path_root="/ct/terms/names",
-            filter_field_name="termUid",
+            filter_field_name="term_uid",
             wildcard_filter_field_name="term",
         )
 
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "ct_term_name.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials"]
+        return ["start_date", "end_date", "user_initials"]
 
 
 class CTTermNameTestNegativeTest(api.APITest):
@@ -52,7 +52,7 @@ class CTTermNameTestNegativeTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "ct_term_name_negative.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time"]
+        return ["start_date", "end_date", "time"]
 
 
 class CTTermAttributesTest(api.APITest):
@@ -65,11 +65,11 @@ class CTTermAttributesTest(api.APITest):
 
         self.test_client = TestClient(main.app)
 
-    def testFiltering(self):
+    def test_filtering(self):
         self.filtering_common_test_scenario(
             test_client=self.test_client,
             path_root="/ct/terms/attributes",
-            filter_field_name="termUid",
+            filter_field_name="term_uid",
             wildcard_filter_field_name="term",
         )
 
@@ -77,12 +77,12 @@ class CTTermAttributesTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "codelistUid",
-            "termUid",
-            "conceptId",
-            "startDate",
-            "endDate",
-            "userInitials",
+            "codelist_uid",
+            "term_uid",
+            "concept_id",
+            "start_date",
+            "end_date",
+            "user_initials",
         ]
 
 
@@ -102,4 +102,4 @@ class CTTermAttributesTestNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time"]
+        return ["start_date", "end_date", "time"]

@@ -13,7 +13,7 @@
           >
           <v-text-field
             data-cy="term-sponsor-preffered-name"
-            v-model="form.sponsorPreferredName"
+            v-model="form.sponsor_preferred_name"
             :label="$t('CodelistTermCreationForm.sponsor_pref_name')"
             :error-messages="errors"
             @blur="setSentenceCase"
@@ -26,7 +26,7 @@
           >
           <v-text-field
             data-cy="term-sponsor-sentence-case-name"
-            v-model="form.sponsorPreferredNameSentenceCase"
+            v-model="form.sponsor_preferred_name_sentence_case"
             :label="$t('CodelistTermCreationForm.sponsor_sentence_case_name')"
             :error-messages="errors"
             clearable
@@ -50,7 +50,7 @@
           >
           <v-textarea
             data-cy="change-description"
-            v-model="form.changeDescription"
+            v-model="form.change_description"
             :label="$t('HistoryTable.change_description')"
             class="white py-2"
             :error-messages="errors"
@@ -106,11 +106,11 @@ export default {
   methods: {
     close () {
       this.$emit('close')
-      this.form.changeDescription = ''
+      this.form.change_description = ''
     },
     setSentenceCase () {
-      if (this.form.sponsorPreferredName) {
-        this.$set(this.form, 'sponsorPreferredNameSentenceCase', this.form.sponsorPreferredName.toLowerCase())
+      if (this.form.sponsor_preferred_name) {
+        this.$set(this.form, 'sponsor_preferred_name_sentence_case', this.form.sponsor_preferred_name.toLowerCase())
       }
     },
     async submit () {
@@ -132,8 +132,8 @@ export default {
       handler (val) {
         if (val) {
           this.form = {
-            sponsorPreferredName: val.sponsorPreferredName,
-            sponsorPreferredNameSentenceCase: val.sponsorPreferredNameSentenceCase,
+            sponsor_preferred_name: val.sponsor_preferred_name,
+            sponsor_preferred_name_sentence_case: val.sponsor_preferred_name_sentence_case,
             order: val.order
           }
         }

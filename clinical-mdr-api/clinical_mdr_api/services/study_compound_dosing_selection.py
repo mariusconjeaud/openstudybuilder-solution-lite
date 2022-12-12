@@ -235,6 +235,22 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
             )
         return result
 
+    @db.transaction
+    def get_all_selection_audit_trail(
+        self, study_uid: str
+    ) -> Sequence[models.StudyCompoundDosing]:
+        try:
+            selection_history = (
+                self._repos.study_compound_dosing_repository.find_selection_history(
+                    study_uid
+                )
+            )
+            return self._transform_history_to_response_model(
+                selection_history, study_uid
+            )
+        finally:
+            self._repos.close()
+
     def get_compound_dosing_audit_trail(
         self, study_uid: str, compound_dosing_uid: str
     ) -> Sequence[models.StudyCompoundDosing]:
@@ -264,18 +280,18 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
                 _order,
             ) = repos.study_selection_compound_repository.find_by_uid(
                 study_uid=study_uid,
-                study_compound_uid=selection_create_input.studyCompoundUid,
+                study_compound_uid=selection_create_input.study_compound_uid,
             )
             new_selection = StudyCompoundDosingVO.from_input_values(
                 study_uid=study_uid,
-                study_element_uid=selection_create_input.studyElementUid,
-                study_compound_uid=selection_create_input.studyCompoundUid,
+                study_element_uid=selection_create_input.study_element_uid,
+                study_compound_uid=selection_create_input.study_compound_uid,
                 compound_uid=study_compound_vo.compound_uid,
                 compound_alias_uid=study_compound_vo.compound_alias_uid,
-                dose_frequency_uid=selection_create_input.doseFrequencyUid,
-                dose_value_uid=selection_create_input.doseValueUid,
+                dose_frequency_uid=selection_create_input.dose_frequency_uid,
+                dose_value_uid=selection_create_input.dose_value_uid,
                 user_initials=self.author,
-                start_date=datetime.datetime.now(),
+                start_date=datetime.datetime.now(datetime.timezone.utc),
                 generate_uid_callback=repos.study_compound_dosing_repository.generate_uid,
             )
             # add VO to aggregate
@@ -338,10 +354,10 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
     ) -> StudyCompoundDosingVO:
         # transform current to input model
         transformed_current = models.StudyCompoundDosingInput(
-            studyCompoundUid=current_study_compound_dosing.study_compound_uid,
-            studyElementUid=current_study_compound_dosing.study_element_uid,
-            doseValueUid=current_study_compound_dosing.dose_value_uid,
-            doseFrequencyUid=current_study_compound_dosing.dose_frequency_uid,
+            study_compound_uid=current_study_compound_dosing.study_compound_uid,
+            study_element_uid=current_study_compound_dosing.study_element_uid,
+            dose_value_uid=current_study_compound_dosing.dose_value_uid,
+            dose_frequency_uid=current_study_compound_dosing.dose_frequency_uid,
         )
 
         # fill the missing from the inputs
@@ -353,12 +369,12 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         return StudyCompoundDosingVO(
             study_uid=current_study_compound_dosing.study_uid,
             study_selection_uid=current_study_compound_dosing.study_selection_uid,
-            study_element_uid=request_study_compound_dosing.studyElementUid,
-            study_compound_uid=request_study_compound_dosing.studyCompoundUid,
-            dose_frequency_uid=request_study_compound_dosing.doseFrequencyUid,
-            dose_value_uid=request_study_compound_dosing.doseValueUid,
+            study_element_uid=request_study_compound_dosing.study_element_uid,
+            study_compound_uid=request_study_compound_dosing.study_compound_uid,
+            dose_frequency_uid=request_study_compound_dosing.dose_frequency_uid,
+            dose_value_uid=request_study_compound_dosing.dose_value_uid,
             user_initials=self.author,
-            start_date=datetime.datetime.now(),
+            start_date=datetime.datetime.now(datetime.timezone.utc),
             compound_uid=current_study_compound_dosing.compound_uid,
             compound_alias_uid=current_study_compound_dosing.compound_alias_uid,
         )

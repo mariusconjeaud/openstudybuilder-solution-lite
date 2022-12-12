@@ -19,8 +19,8 @@ class CTConfigValueVO:
     configured_term_uid: Optional[str]
 
     study_field_grouping: Optional[str]
-    study_field_name_property: Optional[str]
     study_field_name_api: Optional[str]
+    is_dictionary_term: Optional[bool]
 
     @classmethod
     def from_input_values(
@@ -32,8 +32,8 @@ class CTConfigValueVO:
         configured_codelist_uid: Optional[str],
         configured_term_uid: Optional[str],
         study_field_grouping: Optional[str],
-        study_field_name_property: Optional[str],
         study_field_name_api: Optional[str],
+        is_dictionary_term: Optional[bool],
     ) -> "CTConfigValueVO":
         return cls.from_repository_values(
             study_field_name=normalize_string(study_field_name),
@@ -42,8 +42,8 @@ class CTConfigValueVO:
             configured_codelist_uid=configured_codelist_uid,
             configured_term_uid=configured_term_uid,
             study_field_grouping=study_field_grouping,
-            study_field_name_property=study_field_name_property,
             study_field_name_api=study_field_name_api,
+            is_dictionary_term=is_dictionary_term,
         )
 
     @classmethod
@@ -56,8 +56,8 @@ class CTConfigValueVO:
         configured_codelist_uid: Optional[str],
         configured_term_uid: Optional[str],
         study_field_grouping: Optional[str],
-        study_field_name_property: Optional[str],
         study_field_name_api: Optional[str],
+        is_dictionary_term: Optional[bool],
     ) -> "CTConfigValueVO":
         return cls(
             study_field_name=normalize_string(study_field_name),
@@ -66,8 +66,8 @@ class CTConfigValueVO:
             configured_codelist_uid=configured_codelist_uid,
             configured_term_uid=configured_term_uid,
             study_field_grouping=study_field_grouping,
-            study_field_name_property=study_field_name_property,
             study_field_name_api=study_field_name_api,
+            is_dictionary_term=is_dictionary_term,
         )
 
     def validate(

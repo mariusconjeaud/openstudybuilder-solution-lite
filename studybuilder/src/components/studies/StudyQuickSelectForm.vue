@@ -9,14 +9,14 @@
         <v-col cols="6">
           <validation-provider
             v-slot="{ errors }"
-            rules="atleastone:@studyId"
-            vid="studyId"
+            rules="atleastone:@study_id"
+            vid="study_id"
             >
             <v-autocomplete
               v-model="studyById"
               :label="$t('StudyQuickSelectForm.study_id')"
               :items="studiesWithId"
-              item-text="studyId"
+              item-text="study_id"
               return-object
               :error-messages="errors"
               clearable
@@ -27,14 +27,14 @@
         <v-col cols="6">
           <validation-provider
             v-slot="{ errors }"
-            rules="atleastone:@studyAcronym"
-            vid="studyAcronym"
+            rules="atleastone:@study_acronym"
+            vid="study_acronym"
             >
             <v-autocomplete
               v-model="studyByAcronym"
               :label="$t('StudyQuickSelectForm.study_acronym')"
               :items="studiesWithAcronym"
-              item-text="studyAcronym"
+              item-text="study_acronym"
               return-object
               :error-messages="errors"
               clearable
@@ -73,10 +73,10 @@ import study from '@/api/study'
 export default {
   computed: {
     studiesWithId () {
-      return this.studies.filter(study => study.studyId !== null)
+      return this.studies.filter(study => study.study_id !== null)
     },
     studiesWithAcronym () {
-      return this.studies.filter(study => study.studyAcronym !== null)
+      return this.studies.filter(study => study.study_acronym !== null)
     }
   },
   data () {
@@ -106,12 +106,12 @@ export default {
       this.close()
     },
     autoPopulateAcronym (study) {
-      if (study && study.studyAcronym) {
+      if (study && study.study_acronym) {
         this.studyByAcronym = study
       }
     },
     autoPopulateId (study) {
-      if (study && study.studyId) {
+      if (study && study.study_id) {
         this.studyById = study
       }
     }

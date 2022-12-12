@@ -22,7 +22,7 @@
     </validation-observer>
     <v-select
       class="unit-selector ml-4"
-      v-model="form.unitDefinitionUid"
+      v-model="form.unit_definition_uid"
       :label="$t('DurationField.label')"
       :items="units"
       item-text="name"

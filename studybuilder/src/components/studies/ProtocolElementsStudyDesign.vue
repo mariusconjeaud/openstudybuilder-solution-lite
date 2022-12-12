@@ -67,3 +67,8 @@ export default {
   }
 }
 </script>
+<style>
+tspan {
+    font-family: "Open Sans", serif !important;
+}
+</style>

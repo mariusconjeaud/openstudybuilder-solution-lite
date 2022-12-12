@@ -39,41 +39,41 @@ class StudyActivityScheduleTestCase(unittest.TestCase):
 
     def test_create_delete_schedule(self):
         baseline = create_visit_with_update(
-            studyEpochUid=self.epoch1.uid,
-            visitTypeUid="VisitType_0001",
-            timeReferenceUid="VisitSubType_0001",
-            timeValue=0,
-            timeUnitUid=self.DAYUID,
+            study_epoch_uid=self.epoch1.uid,
+            visit_type_uid="VisitType_0001",
+            time_reference_uid="VisitSubType_0001",
+            time_value=0,
+            time_unit_uid=self.DAYUID,
         )
         sa1 = create_study_activity("study_root")
         service = StudyActivityScheduleService("test")
         schedule = service.create(
             "study_root",
             models.StudyActivityScheduleCreateInput(
-                studyActivityUid=sa1.studyActivityUid, studyVisitUid=baseline.uid
+                study_activity_uid=sa1.study_activity_uid, study_visit_uid=baseline.uid
             ),
         )
         schedules = service.get_all_schedules("study_root")
         assert len(schedules) == 1
 
-        service.delete("study_root", schedule.studyActivityScheduleUid)
+        service.delete("study_root", schedule.study_activity_schedule_uid)
         schedules = service.get_all_schedules("study_root")
         assert len(schedules) == 0
 
     def test_batch_operations(self):
         baseline = create_visit_with_update(
-            studyEpochUid=self.epoch1.uid,
-            visitTypeUid="VisitType_0001",
-            timeReferenceUid="VisitSubType_0001",
-            timeValue=0,
-            timeUnitUid=self.DAYUID,
+            study_epoch_uid=self.epoch1.uid,
+            visit_type_uid="VisitType_0001",
+            time_reference_uid="VisitSubType_0001",
+            time_value=0,
+            time_unit_uid=self.DAYUID,
         )
         create_visit_with_update(
-            studyEpochUid=self.epoch1.uid,
-            visitTypeUid="VisitType_0003",
-            timeReferenceUid="VisitSubType_0001",
-            timeValue=4,
-            timeUnitUid=self.DAYUID,
+            study_epoch_uid=self.epoch1.uid,
+            visit_type_uid="VisitType_0003",
+            time_reference_uid="VisitSubType_0001",
+            time_value=4,
+            time_unit_uid=self.DAYUID,
         )
         sa1 = create_study_activity("study_root")
         sa2 = create_study_activity("study_root", activity_uid="activity_root2")
@@ -84,15 +84,15 @@ class StudyActivityScheduleTestCase(unittest.TestCase):
                 models.StudyActivityScheduleBatchInput(
                     method="POST",
                     content=models.StudyActivityScheduleCreateInput(
-                        studyActivityUid=sa1.studyActivityUid,
-                        studyVisitUid=baseline.uid,
+                        study_activity_uid=sa1.study_activity_uid,
+                        study_visit_uid=baseline.uid,
                     ),
                 ),
                 models.StudyActivityScheduleBatchInput(
                     method="POST",
                     content=models.StudyActivityScheduleCreateInput(
-                        studyActivityUid=sa2.studyActivityUid,
-                        studyVisitUid=baseline.uid,
+                        study_activity_uid=sa2.study_activity_uid,
+                        study_visit_uid=baseline.uid,
                     ),
                 ),
             ],
@@ -106,13 +106,13 @@ class StudyActivityScheduleTestCase(unittest.TestCase):
                 models.StudyActivityScheduleBatchInput(
                     method="DELETE",
                     content=models.StudyActivityScheduleDeleteInput(
-                        uid=schedules[0].studyActivityScheduleUid
+                        uid=schedules[0].study_activity_schedule_uid
                     ),
                 ),
                 models.StudyActivityScheduleBatchInput(
                     method="DELETE",
                     content=models.StudyActivityScheduleDeleteInput(
-                        uid=schedules[1].studyActivityScheduleUid
+                        uid=schedules[1].study_activity_schedule_uid
                     ),
                 ),
             ],

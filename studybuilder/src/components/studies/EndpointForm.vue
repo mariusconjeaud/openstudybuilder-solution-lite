@@ -104,9 +104,9 @@
               {{ $t('_global.not_applicable_long') }}
             </template>
           </template>
-          <template v-slot:item.subCategories="{ item }">
-            <template v-if="item.subCategories">
-              {{ item.subCategories|terms }}
+          <template v-slot:item.sub_categories="{ item }">
+            <template v-if="item.sub_categories">
+              {{ item.sub_categories|terms }}
             </template>
             <template v-else>
               {{ $t('_global.not_applicable_long') }}
@@ -146,10 +146,10 @@
         <v-row>
           <v-col cols="5">
             <parameter-value-selector
-              v-if="form.endpointTemplate !== undefined"
+              v-if="form.endpoint_template !== undefined"
               ref="endpointParamSelector"
               :value="endpointTemplateParameters"
-              :template="form.endpointTemplate.name"
+              :template="form.endpoint_template.name"
               color="white"
               :previewText="$t('StudyEndpointForm.endpoint_title')"
               stacked
@@ -159,7 +159,7 @@
             <p class="grey--text text-subtitle-1 font-weight-bold my-2">{{ $t('StudyEndpointForm.selected_endpoint_units') }}</p>
             <v-card flat class="parameterBackground">
               <v-card-text>
-                <n-n-parameter-highlighter :name="unitsDisplay(form.endpointUnits.units)" />
+                <n-n-parameter-highlighter :name="unitsDisplay(form.endpoint_units.units)" />
               </v-card-text>
             </v-card>
             <v-row class="mt-5">
@@ -169,7 +169,7 @@
                   :rules="`requiredIfNotNA:${skipUnits}`"
                   >
                   <multiple-select
-                    v-model="form.endpointUnits.units"
+                    v-model="form.endpoint_units.units"
                     :label="$t('StudyEndpointForm.units')"
                     :items="units"
                     :errors="errors"
@@ -179,9 +179,9 @@
                     />
                 </validation-provider>
               </v-col>
-              <v-col v-if="form.endpointUnits.units && form.endpointUnits.units.length > 1">
+              <v-col v-if="form.endpoint_units.units && form.endpoint_units.units.length > 1">
                 <v-select
-                  v-model="form.endpointUnits.separator"
+                  v-model="form.endpoint_units.separator"
                   :label="$t('StudyEndpointForm.separator')"
                   :items="separators"
                   clearable
@@ -209,15 +209,15 @@
               :value="timeframeTemplateParameters"
               color="white"
               :previewText="$t('StudyEndpointForm.timeframe')"
-              v-if="!form.timeframeTemplate"
+              v-if="!form.timeframe_template"
               />
             <parameter-value-selector
               ref="timeframeParamSelector"
               :value="timeframeTemplateParameters"
-              :template="form.timeframeTemplate.name"
+              :template="form.timeframe_template.name"
               color="white"
               :previewText="$t('StudyEndpointForm.timeframe')"
-              v-if="form.timeframeTemplate && timeframeTemplateParameters.length"
+              v-if="form.timeframe_template && timeframeTemplateParameters.length"
               stacked
               />
             <v-progress-circular
@@ -257,10 +257,10 @@
               rules=""
               >
               <v-autocomplete
-                v-model="form.timeframeTemplate"
+                v-model="form.timeframe_template"
                 :label="$t('StudyEndpointForm.timeframe_template')"
                 :items="timeframeTemplates"
-                item-text="namePlain"
+                item-text="name_plain"
                 return-object
                 :error-messages="errors"
                 clearable
@@ -291,10 +291,10 @@
           rules=""
           >
           <v-select
-            v-model="form.endpointLevel"
+            v-model="form.endpoint_level"
             :label="$t('StudyEndpointForm.endpoint_level')"
             :items="endpointLevels"
-            item-text="sponsorPreferredName"
+            item-text="sponsor_preferred_name"
             return-object
             :error-messages="errors"
             clearable
@@ -303,10 +303,10 @@
         </validation-provider>
       </validation-observer>
       <v-select
-        v-model="form.endpointSubLevel"
+        v-model="form.endpoint_sublevel"
         :label="$t('StudyEndpointForm.endpoint_sub_level')"
         :items="endpointSubLevels"
-        item-text="sponsorPreferredName"
+        item-text="sponsor_preferred_name"
         return-object
         clearable
         style="max-width: 400px"
@@ -346,7 +346,13 @@ export default {
     NNTable,
     NNTemplateInputField
   },
-  props: ['studyEndpoint'],
+  props: {
+    studyEndpoint: Object,
+    cloneMode: {
+      type: Boolean,
+      default: false
+    }
+  },
   computed: {
     ...mapGetters({
       endpointLevels: 'studiesGeneral/endpointLevels',
@@ -361,23 +367,23 @@ export default {
       return this.$t('StudyEndpointForm.add_title')
     },
     studyObjectiveLevel () {
-      if (this.form.studyObjective && this.form.studyObjective.objectiveLevel) {
-        return this.form.studyObjective.objectiveLevel.sponsorPreferredName
+      if (this.form.study_objective && this.form.study_objective.objective_level) {
+        return this.form.study_objective.objective_level.sponsor_preferred_name
       }
       return ''
     },
     selectedStudyObjectiveName () {
-      return (this.form.studyObjective) ? this.form.studyObjective.objective.name : ''
+      return (this.form.study_objective) ? this.form.study_objective.objective.name : ''
     },
     selectedEndpointTemplateName () {
-      return (this.form.endpointTemplate) ? this.form.endpointTemplate.name : ''
+      return (this.form.endpoint_template) ? this.form.endpoint_template.name : ''
     },
     selectedStudyEndpointUnits () {
-      if (this.form.selectedStudyEndpoint) {
-        if (this.form.selectedStudyEndpoint.endpointUnits.units.length > 1) {
-          return this.form.selectedStudyEndpoint.endpointUnits.units.join(this.form.selectedStudyEndpoint.endpointUnits.separator)
+      if (this.form.selected_study_endpoint) {
+        if (this.form.selected_study_endpoint.endpoint_units.units.length > 1) {
+          return this.form.selected_study_endpoint.endpoint_units.units.join(this.form.selected_study_endpoint.endpoint_units.separator)
         }
-        return this.form.selectedStudyEndpoint.endpointUnits.units[0]
+        return this.form.selected_study_endpoint.endpoint_units.units[0]
       }
       return ''
     }
@@ -403,7 +409,7 @@ export default {
       objectiveHeaders: [
         { text: this.$t('_global.actions'), value: 'actions' },
         { text: this.$t('_global.name'), value: 'objective.name' },
-        { text: this.$t('StudyEndpointForm.objective_level'), value: 'objectiveLevel.sponsorPreferredName' }
+        { text: this.$t('StudyEndpointForm.objective_level'), value: 'objective_level.sponsor_preferred_name' }
       ],
       objectives: [],
       parameterTypes: [],
@@ -433,6 +439,10 @@ export default {
         { name: 'endpointDetails', title: this.$t('StudyEndpointForm.step3_title') },
         { name: 'level', title: this.$t('StudyEndpointForm.endpoint_level_title') }
       ],
+      cloneModeSteps: [
+        { name: 'createEndpointTemplate', title: this.$t('StudyEndpointForm.edit_tpl_title') },
+        { name: 'endpointDetails', title: this.$t('StudyEndpointForm.step3_title') }
+      ],
       skipUnits: false,
       timeframeTemplates: [],
       timeframeTemplateParameters: [],
@@ -440,7 +450,7 @@ export default {
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('_global.indications'), value: 'indications', filteringName: 'indications.name' },
         { text: this.$t('EndpointTemplateTable.endpoint_cat'), value: 'categories' },
-        { text: this.$t('EndpointTemplateTable.endpoint_sub_cat'), value: 'subCategories' },
+        { text: this.$t('EndpointTemplateTable.endpoint_sub_cat'), value: 'sub_categories' },
         { text: this.$t('_global.template'), value: 'name', width: '30%' }
       ],
       options: {},
@@ -466,7 +476,7 @@ export default {
     },
     getInitialForm () {
       return {
-        endpointUnits: {}
+        endpoint_units: {}
       }
     },
     close () {
@@ -480,30 +490,52 @@ export default {
       this.endpointTitleWarning = false
     },
     clearUnits () {
-      this.$set(this.form.endpointUnits, 'units', [])
+      this.$set(this.form.endpoint_units, 'units', [])
       this.skipUnits = !this.skipUnits
     },
     getObserver (step) {
       return this.$refs[`observer_${step}`]
     },
     initFromStudyEndpoint (studyEndpoint) {
-      this.steps = this.editSteps
       this.form = JSON.parse(JSON.stringify(studyEndpoint))
-      if (!studyEndpoint.studyObjective) {
-        this.selectLater = true
-      }
-      if (!studyEndpoint.timeframe) {
-        this.selectTimeFrameLater = true
+      if (!this.cloneMode) {
+        this.steps = this.editSteps
+        if (!studyEndpoint.study_objective) {
+          this.selectLater = true
+        }
+        if (!studyEndpoint.timeframe) {
+          this.selectTimeFrameLater = true
+        }
+      } else {
+        this.creationMode = 'clone'
+        this.steps = this.cloneModeSteps
+        this.endpointTemplateForm = { ...studyEndpoint.endpoint.endpoint_template }
       }
     },
     loadEndpointTemplateParameters (template) {
-      this.endpointTemplateParameters = []
       if (template) {
+        if (this.cloneMode) {
+          const parameters = this.$refs.endpointParamSelector.getTemplateParametersFromTemplate(template.name_plain)
+          if (parameters.length === this.endpointTemplateParameters.length) {
+            let differ = false
+            for (let index = 0; index < this.endpointTemplateParameters.length; index++) {
+              if (parameters[index] !== this.endpointTemplateParameters[index].name) {
+                differ = true
+                break
+              }
+            }
+            if (!differ) {
+              return
+            }
+          }
+        }
         this.loadingEndpointParameters = true
         endpointTemplates.getParameters(template.uid).then(resp => {
           this.endpointTemplateParameters = resp.data
           this.loadingEndpointParameters = false
         })
+      } else {
+        this.endpointTemplateParameters = []
       }
     },
     loadTimeframeTemplateParameters (template) {
@@ -518,11 +550,11 @@ export default {
     },
     async getStudyEndpointNamePreview () {
       const endpointData = {
-        endpointTemplateUid: this.form.endpointTemplate.uid,
-        parameterValues: await instances.formatParameterValues(this.endpointTemplateParameters),
-        libraryName: this.form.endpointTemplate.library.name
+        endpoint_template_uid: this.form.endpoint_template.uid,
+        parameter_values: await instances.formatParameterValues(this.endpointTemplateParameters),
+        library_name: this.form.endpoint_template.library.name
       }
-      const resp = await study.getStudyEndpointPreview(this.selectedStudy.uid, { endpointData })
+      const resp = await study.getStudyEndpointPreview(this.selectedStudy.uid, { endpoint_data: endpointData })
       return resp.data.endpoint.name
     },
     async submit () {
@@ -540,29 +572,44 @@ export default {
         action = 'studyEndpoints/addStudyEndpoint'
         notification = 'endpoint_added'
       } else {
-        args = {
-          studyUid: this.selectedStudy.uid,
-          studyEndpointUid: this.studyEndpoint.studyEndpointUid,
-          form: JSON.parse(JSON.stringify(this.form))
+        if (!this.cloneMode) {
+          args = {
+            studyUid: this.selectedStudy.uid,
+            studyEndpointUid: this.studyEndpoint.study_endpoint_uid,
+            form: JSON.parse(JSON.stringify(this.form))
+          }
+          const namePreview = await this.getStudyEndpointNamePreview()
+          if (this.studyEndpoint.endpoint.name !== namePreview) {
+            args.form.endpoint_parameters = this.endpointTemplateParameters
+          }
+          if (
+            !this.studyEndpoint.timeframe ||
+              (this.studyEndpoint.timeframe && (this.studyEndpoint.timeframe.name !== this.$refs.timeframeParamSelector.namePreview))
+          ) {
+            args.form.timeframe_parameters = this.timeframeTemplateParameters
+            args.form.timeframe_name_preview = this.$refs.timeframeParamSelector.namePreview
+          }
+          action = 'studyEndpoints/updateStudyEndpoint'
+          notification = 'endpoint_updated'
+        } else {
+          this.$store.dispatch('studyEndpoints/addStudyEndpoint', {
+            studyUid: this.selectedStudy.uid,
+            data: JSON.parse(JSON.stringify(this.form)),
+            endpointParameters: this.endpointTemplateParameters,
+            timeframeParameters: this.timeframeTemplateParameters
+          })
+          action = 'studyEndpoints/deleteStudyEndpoint'
+          args = {
+            studyUid: this.selectedStudy.uid,
+            studyEndpointUid: this.studyEndpoint.study_endpoint_uid
+          }
+          notification = 'endpoint_updated'
         }
-        const namePreview = await this.getStudyEndpointNamePreview()
-        if (this.studyEndpoint.endpoint.name !== namePreview) {
-          args.form.endpointParameters = this.endpointTemplateParameters
-        }
-        if (
-          !this.studyEndpoint.timeframe ||
-            (this.studyEndpoint.timeframe && (this.studyEndpoint.timeframe.name !== this.$refs.timeframeParamSelector.namePreview))
-        ) {
-          args.form.timeframeParameters = this.timeframeTemplateParameters
-          args.form.timeframeNamePreview = this.$refs.timeframeParamSelector.namePreview
-        }
-        action = 'studyEndpoints/updateStudyEndpoint'
-        notification = 'endpoint_updated'
       }
-      if (this.studyEndpoint) {
-        const endpointLevelChanged = !_isEqual(this.form.endpointLevel, this.studyEndpoint.endpointLevel)
-        const unitsChanged = !_isEqual(this.form.endpointUnits, this.studyEndpoint.endpointUnits)
-        const objectiveDefined = !this.studyObjective && this.form.studyObjective !== undefined
+      if (this.studyEndpoint && !this.cloneMode) {
+        const endpointLevelChanged = !_isEqual(this.form.endpoint_level, this.studyEndpoint.endpoint_level)
+        const unitsChanged = !_isEqual(this.form.endpoint_units, this.studyEndpoint.endpoint_units)
+        const objectiveDefined = !this.studyObjective && this.form.study_objective !== undefined
 
         if (_isEqual(this.form, args.form) && !endpointLevelChanged && !unitsChanged && !objectiveDefined) {
           bus.$emit('notification', { msg: this.$t('_global.no_changes'), type: 'info' })
@@ -581,79 +628,76 @@ export default {
       })
     },
     loadEndpointTemplate () {
-      if (!this.form.endpoint && !this.form.endpointTemplate) {
+      if (!this.form.endpoint && !this.form.endpoint_template) {
         return
       }
-      this.$set(this.form, 'endpointTemplate', this.endpointTemplates.find(
-        item => item.uid === this.form.endpoint.endpointTemplate.uid)
+      this.$set(this.form, 'endpoint_template', this.endpointTemplates.find(
+        item => item.uid === this.form.endpoint.endpoint_template.uid)
       )
       endpoints.getObjectParameters(this.form.endpoint.uid).then(resp => {
         this.endpointTemplateParameters = resp.data
-        instances.loadParameterValues(this.form.endpoint.parameterValues, this.endpointTemplateParameters)
+        instances.loadParameterValues(this.form.endpoint.parameter_values, this.endpointTemplateParameters)
       })
     },
     loadTimeframeTemplate () {
       if (!this.form.timeframe) {
         return
       }
-      this.$set(this.form, 'timeframeTemplate', this.timeframeTemplates.find(
-        item => item.uid === this.form.timeframe.timeframeTemplate.uid)
+      this.$set(this.form, 'timeframe_template', this.timeframeTemplates.find(
+        item => item.uid === this.form.timeframe.timeframe_template.uid)
       )
       timeframes.getObjectParameters(this.form.timeframe.uid, { study_uid: this.selectedStudy.uid }).then(resp => {
         this.timeframeTemplateParameters = resp.data
-        instances.loadParameterValues(this.form.timeframe.parameterValues, this.timeframeTemplateParameters)
+        instances.loadParameterValues(this.form.timeframe.parameter_values, this.timeframeTemplateParameters)
       })
     },
     selectStudyObjective (value) {
-      this.$set(this.form, 'studyObjective', value)
+      this.$set(this.form, 'study_objective', value)
     },
     onSelectLaterChange (value) {
       if (value) {
-        this.$set(this.form, 'studyObjective', null)
+        this.$set(this.form, 'study_objective', null)
       }
     },
     onSelectTimeFrameLaterChange (value) {
       if (value) {
-        this.$set(this.form, 'timeframeTemplate', null)
+        this.$set(this.form, 'timeframe_template', null)
         this.timeframeTemplateParameters = []
       }
     },
     selectEndpointTemplate (template) {
-      this.$set(this.form, 'endpointTemplate', template)
+      this.$set(this.form, 'endpoint_template', template)
       this.loadEndpointTemplateParameters(template)
     },
     selectStudyEndpoint (studyEndpoint) {
-      this.$set(this.form, 'selectedStudyEndpoint', studyEndpoint)
+      this.$set(this.form, 'selected_study_endpoint', studyEndpoint)
     },
     async extraStepValidation (step) {
-      if (this.creationMode === 'scratch') {
-        if (step !== 3) {
-          return true
-        }
-        if (this.form.endpointTemplate && this.form.endpointTemplate.name === this.endpointTemplateForm.name) {
+      if ((this.creationMode === 'scratch' && step === 3) || (this.creationMode === 'clone' && step === 1)) {
+        if (this.form.endpoint_template && this.form.endpoint_template.name === this.endpointTemplateForm.name) {
           return true
         }
         const data = { ...this.endpointTemplateForm, studyUid: this.selectedStudy.uid }
-        data.libraryName = constants.LIBRARY_USER_DEFINED
+        data.library_name = constants.LIBRARY_USER_DEFINED
         try {
           const resp = await endpointTemplates.create(data)
           await endpointTemplates.approve(resp.data.uid)
-          this.$set(this.form, 'endpointTemplate', resp.data)
+          this.$set(this.form, 'endpoint_template', resp.data)
         } catch (error) {
           return false
         }
-        this.loadEndpointTemplateParameters(this.form.endpointTemplate)
+        this.loadEndpointTemplateParameters(this.form.endpoint_template)
         return true
       }
       if (step === 2) {
-        if (this.selectLater || this.form.studyObjective !== undefined) {
+        if (this.selectLater || this.form.study_objective !== undefined) {
           return true
         }
         bus.$emit('notification', { type: 'error', msg: this.$t('StudyEndpointForm.select_objective') })
         return false
       }
       if (step === 3) {
-        if (!this.form.endpointTemplate) {
+        if (!this.form.endpoint_template) {
           bus.$emit('notification', { type: 'error', msg: this.$t('StudyEndpointForm.no_endpoint_template') })
           return false
         }
@@ -735,15 +779,15 @@ export default {
     },
     endpointTemplateParameters (value) {
       value.forEach(el => {
-        if (el.name === 'TextValue' && el.selectedValues && el.selectedValues.length) {
-          value[value.indexOf(el)].selectedValues = el.selectedValues[0].name
+        if (el.name === 'TextValue' && el.selected_values && el.selected_values.length) {
+          value[value.indexOf(el)].selected_values = el.selected_values[0].name
         }
       })
     },
     timeframeTemplateParameters (value) {
       value.forEach(el => {
-        if (el.name === 'TextValue' && el.selectedValues && el.selectedValues.length) {
-          value[value.indexOf(el)].selectedValues = el.selectedValues[0].name
+        if (el.name === 'TextValue' && el.selected_values && el.selected_values.length) {
+          value[value.indexOf(el)].selected_values = el.selected_values[0].name
         }
       })
     }

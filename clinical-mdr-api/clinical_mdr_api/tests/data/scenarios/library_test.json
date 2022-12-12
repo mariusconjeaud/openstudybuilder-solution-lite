@@ -20,7 +20,7 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "isEditable": true,
+                "is_editable": true,
                 "name": "Test library"
             },
             "url": "/libraries"
@@ -32,7 +32,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "isEditable": true,
+                "is_editable": true,
                 "name": "Test library"
             }
         }
@@ -52,7 +52,7 @@
             },
             "result": [
                 {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 }
             ]
@@ -63,7 +63,7 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "isEditable": false,
+                "is_editable": false,
                 "name": "Test library1"
             },
             "url": "/libraries"
@@ -75,7 +75,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "isEditable": false,
+                "is_editable": false,
                 "name": "Test library1"
             }
         }
@@ -95,11 +95,11 @@
             },
             "result": [
                 {
-                    "isEditable": true,
+                    "is_editable": true,
                     "name": "Test library"
                 },
                 {
-                    "isEditable": false,
+                    "is_editable": false,
                     "name": "Test library1"
                 }
             ]
@@ -110,7 +110,7 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "isEditable": false,
+                "is_editable": false,
                 "name": "Test library1"
             },
             "url": "/libraries"
@@ -122,7 +122,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "isEditable": false,
+                "is_editable": false,
                 "name": "Test library1"
             }
         }

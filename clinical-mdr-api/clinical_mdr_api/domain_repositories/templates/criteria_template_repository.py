@@ -88,7 +88,7 @@ class CriteriaTemplateRepository(GenericTemplateRepository[CriteriaTemplateAR]):
         if item.sub_categories:
             for category in item.sub_categories:
                 category = self._get_category(category[0].uid)
-                root.has_sub_category.connect(category)
+                root.has_subcategory.connect(category)
 
         return item
 
@@ -112,3 +112,17 @@ class CriteriaTemplateRepository(GenericTemplateRepository[CriteriaTemplateAR]):
     def _get_criteria_type(self, uid: str) -> CTTermRoot:
         # Finds criteria type in database based on root node uid
         return CTTermRoot.nodes.get(uid=uid)
+
+    def check_exists_by_name_and_type_in_library(
+        self, name: str, library: str, type_uid: str
+    ) -> bool:
+        query = f"""
+            MATCH (:Library {{name: $library}})-[:{self.root_class.LIBRARY_REL_LABEL}]->(root:{self.root_class.__label__})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED|LATEST]->(:{self.value_class.__label__} {{name: $name}})
+            WITH DISTINCT root
+            MATCH (type {{uid: $typeUid}})<-[:HAS_TYPE]-(root)
+            RETURN root
+            """
+        result, _ = db.cypher_query(
+            query, {"name": name, "library": library, "typeUid": type_uid}
+        )
+        return len(result) > 0 and len(result[0]) > 0

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Sequence
 
 from clinical_mdr_api.domain.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.domain.concepts.odms.item import (
@@ -111,36 +111,36 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                 prompt=input_dict.get("prompt"),
                 datatype=input_dict.get("datatype"),
                 length=input_dict.get("length"),
-                significant_digits=input_dict.get("significantDigits"),
-                sas_field_name=input_dict.get("sasFieldName"),
-                sds_var_name=input_dict.get("sdsVarName"),
+                significant_digits=input_dict.get("significant_digits"),
+                sas_field_name=input_dict.get("sas_field_name"),
+                sds_var_name=input_dict.get("sds_var_name"),
                 origin=input_dict.get("origin"),
                 comment=input_dict.get("comment"),
-                description_uids=input_dict.get("descriptionUids"),
-                alias_uids=input_dict.get("aliasUids"),
-                unit_definition_uids=input_dict.get("unitDefinitionUids"),
-                codelist_uid=input_dict.get("codelistUid"),
-                term_uids=input_dict.get("termUids"),
-                activity_uids=input_dict.get("activityUids"),
-                xml_extension_tag_uids=input_dict.get("xmlExtensionTagUids"),
+                description_uids=input_dict.get("description_uids"),
+                alias_uids=input_dict.get("alias_uids"),
+                unit_definition_uids=input_dict.get("unit_definition_uids"),
+                codelist_uid=input_dict.get("codelist_uid"),
+                term_uids=input_dict.get("term_uids"),
+                activity_uids=input_dict.get("activity_uids"),
+                xml_extension_tag_uids=input_dict.get("xml_extension_tag_uids"),
                 xml_extension_attribute_uids=input_dict.get(
-                    "xmlExtensionAttributeUids"
+                    "xml_extension_attribute_uids"
                 ),
                 xml_extension_tag_attribute_uids=input_dict.get(
-                    "xmlExtensionTagAttributeUids"
+                    "xml_extension_tag_attribute_uids"
                 ),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("libraryName"),
+                library_name=input_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: input_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("changeDescription"),
+                change_description=input_dict.get("change_description"),
                 status=LibraryItemStatus(input_dict.get("status")),
-                author=input_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=input_dict.get("startDate")),
+                author=input_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=input_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -149,7 +149,9 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
 
         return odm_item_ar
 
-    def specific_alias_clause(self, only_specific_status: list = None) -> str:
+    def specific_alias_clause(
+        self, only_specific_status: Optional[Sequence[str]] = None
+    ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]
 
@@ -159,31 +161,31 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
         concept_value.prompt as prompt,
         concept_value.datatype as datatype,
         concept_value.length as length,
-        concept_value.significant_digits as significantDigits,
-        concept_value.sas_field_name as sasFieldName,
-        concept_value.sds_var_name as sdsVarName,
+        concept_value.significant_digits as significant_digits,
+        concept_value.sas_field_name as sas_field_name,
+        concept_value.sds_var_name as sds_var_name,
         concept_value.origin as origin,
         concept_value.comment as comment,
 
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[:HAS_DESCRIPTION]->(dr:OdmDescriptionRoot)-[:LATEST]->(dv:OdmDescriptionValue) | {{uid: dr.uid, name: dv.name, language: dv.language, description: dv.description, instruction: dv.instruction}}] AS descriptions,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[:HAS_ALIAS]->(ar:OdmAliasRoot)-[:LATEST]->(av:OdmAliasValue) | {{uid: ar.uid, name: av.name, context: av.context}}] AS aliases,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hud:HAS_UNIT_DEFINITION]->(udr:UnitDefinitionRoot)-[:LATEST]->(udv:UnitDefinitionValue) | {{uid: udr.uid, name: udv.name, mandatory: hud.mandatory, order: hud.order}}] AS unitDefinitions,
-        head([(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[:HAS_CODELIST]->(ctcr:CTCodelistRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTCodelistAttributesRoot)-[:LATEST]->(ctcav:CTCodelistAttributesValue) | ctcr.uid]) AS codelistUid,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hud:HAS_UNIT_DEFINITION]->(udr:UnitDefinitionRoot)-[:LATEST]->(udv:UnitDefinitionValue) | {{uid: udr.uid, name: udv.name, mandatory: hud.mandatory, order: hud.order}}] AS unit_definitions,
+        head([(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[:HAS_CODELIST]->(ctcr:CTCodelistRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTCodelistAttributesRoot)-[:LATEST]->(ctcav:CTCodelistAttributesValue) | ctcr.uid]) AS codelist_uid,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hct:HAS_CODELIST_TERM]->(cttr:CTTermRoot)-[:HAS_NAME_ROOT]->(cttnr:CTTermNameRoot)-[:LATEST]->(cttnv:CTTermNameValue) | {{uid: cttr.uid, name: cttnv.name, mandatory: hct.mandatory, order: hct.order}}] AS terms,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[:HAS_ACTIVITY]->(ar:ActivityRoot)-[:LATEST]->(av:ActivityValue) | {{uid: ar.uid, name: av.name}}] AS activities,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hxet:HAS_XML_EXTENSION_TAG]->(xetr:OdmXmlExtensionTagRoot)-[:LATEST]->(xetv:OdmXmlExtensionTagValue) | {{uid: xetr.uid, name: xetv.name, value: hxet.value}}] AS xmlExtensionTags,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hxea:HAS_XML_EXTENSION_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, value: hxea.value}}] AS xmlExtensionAttributes,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hxeta:HAS_XML_EXTENSION_TAG_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, value: hxeta.value}}] AS xmlExtensionTagAttributes
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hxet:HAS_XML_EXTENSION_TAG]->(xetr:OdmXmlExtensionTagRoot)-[:LATEST]->(xetv:OdmXmlExtensionTagValue) | {{uid: xetr.uid, name: xetv.name, value: hxet.value}}] AS xml_extension_tags,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hxea:HAS_XML_EXTENSION_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, value: hxea.value}}] AS xml_extension_attributes,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hxeta:HAS_XML_EXTENSION_TAG_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, value: hxeta.value}}] AS xml_extension_tag_attributes
 
         WITH *,
-        [description in descriptions | description.uid] AS descriptionUids,
-        [alias in aliases | alias.uid] AS aliasUids,
-        [unitDefinition in unitDefinitions | unitDefinition.uid] AS unitDefinitionUids,
-        [term in terms | term.uid] AS termUids,
-        [activity in activities | activity.uid] AS activityUids,
-        [xmlExtensionTag in xmlExtensionTags | xmlExtensionTag.uid] AS xmlExtensionTagUids,
-        [xmlExtensionAttribute in xmlExtensionAttributes | xmlExtensionAttribute.uid] AS xmlExtensionAttributeUids,
-        [xmlExtensionTagAttribute in xmlExtensionTagAttributes | xmlExtensionTagAttribute.uid] AS xmlExtensionTagAttributeUids
+        [description in descriptions | description.uid] AS description_uids,
+        [alias in aliases | alias.uid] AS alias_uids,
+        [unit_definition in unit_definitions | unit_definition.uid] AS unit_definition_uids,
+        [term in terms | term.uid] AS term_uids,
+        [activity in activities | activity.uid] AS activity_uids,
+        [xml_extension_tag in xml_extension_tags | xml_extension_tag.uid] AS xml_extension_tag_uids,
+        [xml_extension_attribute in xml_extension_attributes | xml_extension_attribute.uid] AS xml_extension_attribute_uids,
+        [xml_extension_tag_attribute in xml_extension_tag_attributes | xml_extension_tag_attribute.uid] AS xml_extension_tag_attribute_uids
         """
 
     def _get_or_create_value(
@@ -193,7 +195,6 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
 
         root.has_description.disconnect_all()
         root.has_alias.disconnect_all()
-        root.has_unit_definition.disconnect_all()
         root.has_codelist.disconnect_all()
 
         if ar.concept_vo.description_uids is not None:
@@ -311,6 +312,7 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                 name=ct_term_name_value.name,
                 mandatory=rel.mandatory,
                 order=rel.order,
+                display_text=rel.display_text,
             )
         return None
 

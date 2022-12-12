@@ -8,30 +8,8 @@
   :column-data-resource="`listings/libraries/all/gcmd/${source}`"
   :server-items-length="total"
   item-key="topic_cd"
-  >
-  <template v-slot:beforeActions="">
-    <v-radio-group
-      v-model="showColumnNames"
-      row
-      dense
-      hide-details
-      >
-      <v-radio
-        :label="$t('ClinicalMetadataTable.column_labels')"
-        :value="false"
-        />
-      <v-radio
-        :label="$t('ClinicalMetadataTable.column_names')"
-        :value="true"
-        />
-    </v-radio-group>
-    <v-spacer />
-  </template>
-  <template v-for="header in headers" v-slot:[`header.${header.value}`]="">
-    <span :key="header.value" v-if="!showColumnNames">{{ header.text }}</span>
-    <span :key="header.value" v-else>{{ header.value }}</span>
-  </template>
-</n-n-table>
+  show-column-names-toggle-button
+  />
 </template>
 
 <script>
@@ -62,7 +40,6 @@ export default {
         { text: this.$t('ClinicalMetadataTable.sub_domain_type'), value: 'sub_domain_type' }
       ],
       items: [],
-      showColumnNames: false,
       options: {},
       total: 0
     }

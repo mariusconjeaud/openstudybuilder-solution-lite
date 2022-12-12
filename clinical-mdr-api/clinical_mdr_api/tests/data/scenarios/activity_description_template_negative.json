@@ -5,12 +5,12 @@
          "headers": {},
          "method": "POST",
          "request": {
-            "libraryName": "test library",
+            "library_name": "test library",
             "name": "test",
-            "activitySubGroupUids": [
-               "activity_sub_group_root1"
+            "activity_subgroup_uids": [
+               "activity_subgroup_root1"
             ],
-            "activityGroupUids": [
+            "activity_group_uids": [
                "activity_group_root1"
             ]
          },
@@ -37,12 +37,12 @@
          "headers": {},
          "method": "POST",
          "request": {
-            "libraryName": "Test library",
+            "library_name": "Test library",
             "name": "test",
-            "activitySubGroupUids": [
-               "activity_sub_group_root1"
+            "activity_subgroup_uids": [
+               "activity_subgroup_root1"
             ],
-            "activityGroupUids": [
+            "activity_group_uids": [
                "activity_group_root1"
             ]
          },

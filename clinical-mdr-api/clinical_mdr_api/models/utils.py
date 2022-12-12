@@ -9,7 +9,7 @@ from pydantic.generics import GenericModel
 from clinical_mdr_api.config import STUDY_TIME_UNIT_SUBSET
 from clinical_mdr_api.domain.unit_definition.unit_definition import UnitDefinitionAR
 
-EXCLUDE_PROPERTY_ATTRIBUTES_FROM_SCHEMA = {"removeFromWildcard", "source"}
+EXCLUDE_PROPERTY_ATTRIBUTES_FROM_SCHEMA = {"remove_from_wildcard", "source"}
 
 BASIC_TYPE_MAP = {
     "StringProperty": str,
@@ -60,7 +60,7 @@ class BaseModel(PydanticBaseModel):
         """
         for name, field in cls.__fields__.items():
             source = field.field_info.extra.get("source")
-            if field.field_info.extra.get("excludeFromOrm"):
+            if field.field_info.extra.get("exclude_from_orm"):
                 continue
             if not source:
                 if issubclass(field.type_, BaseModel):
@@ -80,8 +80,9 @@ class BaseModel(PydanticBaseModel):
                 elif field.field_info.default is Ellipsis and not hasattr(obj, name):
                     setattr(obj, name, None)
                 continue
-            if "." in source:
-                parts = source.split(".")
+            if "." in source or "|" in source:
+                # split by . that implicates property on node or | that indicates property on the relationship
+                parts = re.split(r"\.|\|", source)
                 source = parts[-1]
                 node = obj
                 parts = parts[:-1]
@@ -98,7 +99,10 @@ class BaseModel(PydanticBaseModel):
             else:
                 node = obj
             if node is not None:
-                value = getattr(node, source)
+                if field.sub_fields and isinstance(node, list):
+                    value = [getattr(n, source) for n in node]
+                else:
+                    value = getattr(node, source)
             else:
                 value = None
             if issubclass(field.type_, BaseModel):
@@ -182,20 +186,26 @@ def pydantic_model_factory(neomodel_root: type, neomodel_value: type):
     value_definition = neomodel_value.get_definition()
     pydantic_definition = {}
     for name, value in value_definition.items():
-        camelName = snake_to_camel(name)
-        pydantic_definition[camelName] = (BASIC_TYPE_MAP[value.__class__.__name__], ...)
+        camel_name = snake_to_camel(name)
+        pydantic_definition[camel_name] = (
+            BASIC_TYPE_MAP[value.__class__.__name__],
+            ...,
+        )
 
     create_model_name = neomodel_root.__name__.replace("Root", "CreateInput")
     basic_model_name = neomodel_root.__name__.replace("Root", "Model")
     create_py_model = create_model(create_model_name, **pydantic_definition)
     for name, value in root_definition.items():
-        camelName = snake_to_camel(name)
-        pydantic_definition[camelName] = (BASIC_TYPE_MAP[value.__class__.__name__], ...)
+        camel_name = snake_to_camel(name)
+        pydantic_definition[camel_name] = (
+            BASIC_TYPE_MAP[value.__class__.__name__],
+            ...,
+        )
     pydantic_model = create_model(basic_model_name, **pydantic_definition)
     return pydantic_model, create_py_model
 
 
-def isAttributeInModel(attribute: str, model: BaseModel) -> bool:
+def is_attribute_in_model(attribute: str, model: BaseModel) -> bool:
     """
     Checks if given string is an attribute defined in a model (in the Pydantic sense).
     This works for the model's own attributes and inherited attributes.

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Sequence
 
 from clinical_mdr_api.domain.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.domain.concepts.odms.xml_extension_attribute import (
@@ -55,6 +55,7 @@ class XmlExtensionAttributeRepository(OdmGenericRepository[OdmXmlExtensionAttrib
             uid=root.uid,
             concept_vo=OdmXmlExtensionAttributeVO.from_repository_values(
                 name=value.name,
+                data_type=value.data_type,
                 xml_extension_uid=root.belongs_to_xml_extension.get_or_none().uid
                 if root.belongs_to_xml_extension.get_or_none()
                 else None,
@@ -77,20 +78,21 @@ class XmlExtensionAttributeRepository(OdmGenericRepository[OdmXmlExtensionAttrib
             uid=input_dict.get("uid"),
             concept_vo=OdmXmlExtensionAttributeVO.from_repository_values(
                 name=input_dict.get("name"),
-                xml_extension_uid=input_dict.get("xmlExtensionUid"),
-                xml_extension_tag_uid=input_dict.get("xmlExtensionTagUid"),
+                data_type=input_dict.get("data_type"),
+                xml_extension_uid=input_dict.get("xml_extension_uid"),
+                xml_extension_tag_uid=input_dict.get("xml_extension_tag_uid"),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("libraryName"),
+                library_name=input_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: input_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("changeDescription"),
+                change_description=input_dict.get("change_description"),
                 status=LibraryItemStatus(input_dict.get("status")),
-                author=input_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=input_dict.get("startDate")),
+                author=input_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=input_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -99,20 +101,23 @@ class XmlExtensionAttributeRepository(OdmGenericRepository[OdmXmlExtensionAttrib
 
         return odm_form_ar
 
-    def specific_alias_clause(self, only_specific_status: list = None) -> str:
+    def specific_alias_clause(
+        self, only_specific_status: Optional[Sequence[str]] = None
+    ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]
 
         return f"""
         WITH *,
+        concept_value.data_type AS data_type,
 
-        head([(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmXmlExtensionAttributeRoot)<-[:HAS_XML_EXTENSION_ATTRIBUTE]-(xer:OdmXmlExtensionRoot)-[:LATEST]->(xev:OdmXmlExtensionValue) | {{uid: xer.uid, name: xev.name, prefix: xev.prefix, namespace: xev.namespace}}]) AS xmlExtension,
-        head([(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmXmlExtensionAttributeRoot)<-[:HAS_XML_EXTENSION_ATTRIBUTE]-(xetr:OdmXmlExtensionTagRoot)-[:LATEST]->(xetv:OdmXmlExtensionTagValue) | {{uid: xetr.uid, name: xetv.name}}]) AS xmlExtensionTag
+        head([(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmXmlExtensionAttributeRoot)<-[:HAS_XML_EXTENSION_ATTRIBUTE]-(xer:OdmXmlExtensionRoot)-[:LATEST]->(xev:OdmXmlExtensionValue) | {{uid: xer.uid, name: xev.name, prefix: xev.prefix, namespace: xev.namespace}}]) AS xml_extension,
+        head([(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmXmlExtensionAttributeRoot)<-[:HAS_XML_EXTENSION_ATTRIBUTE]-(xetr:OdmXmlExtensionTagRoot)-[:LATEST]->(xetv:OdmXmlExtensionTagValue) | {{uid: xetr.uid, name: xetv.name}}]) AS xml_extension_tag
 
 
         WITH *,
-        xmlExtension.uid AS xmlExtensionUid,
-        xmlExtensionTag.uid AS xmlExtensionTagUid
+        xml_extension.uid AS xml_extension_uid,
+        xml_extension_tag.uid AS xml_extension_tag_uid
         """
 
     def _get_or_create_value(
@@ -137,6 +142,17 @@ class XmlExtensionAttributeRepository(OdmGenericRepository[OdmXmlExtensionAttrib
 
         return new_value
 
+    def _create_new_value_node(
+        self, ar: OdmXmlExtensionAttributeAR
+    ) -> OdmXmlExtensionAttributeValue:
+        value_node = super()._create_new_value_node(ar=ar)
+
+        value_node.save()
+
+        value_node.data_type = ar.concept_vo.data_type
+
+        return value_node
+
     def _has_data_changed(
         self, ar: OdmXmlExtensionAttributeAR, value: OdmXmlExtensionAttributeValue
     ) -> bool:
@@ -160,7 +176,11 @@ class XmlExtensionAttributeRepository(OdmGenericRepository[OdmXmlExtensionAttrib
             or ar.concept_vo.xml_extension_tag_uid != xml_extension_tag_uid
         )
 
-        return are_concept_properties_changed or are_rels_changed
+        return (
+            are_concept_properties_changed
+            or are_rels_changed
+            or ar.concept_vo.data_type != value.data_type
+        )
 
     def find_by_uid_with_odm_element_relation(
         self,
@@ -207,14 +227,15 @@ class XmlExtensionAttributeRepository(OdmGenericRepository[OdmXmlExtensionAttrib
                     odm_element_root
                 )
         else:
-            raise BusinessLogicException("Invalid odm element type.")
+            raise BusinessLogicException("Invalid ODM element type.")
 
         if xml_extension_tag_attribute:
             return OdmXmlExtensionAttributeTagRelationVO.from_repository_values(
                 uid=uid,
                 name=xml_extension_attribute_value.name,
+                data_type=xml_extension_attribute_value.data_type,
                 value=rel.value,
-                odm_xml_extension_tag_uid=rel.end_node()
+                xml_extension_tag_uid=rel.end_node()
                 .belongs_to_xml_extension_tag.get_or_none()
                 .uid,
             )
@@ -222,8 +243,7 @@ class XmlExtensionAttributeRepository(OdmGenericRepository[OdmXmlExtensionAttrib
         return OdmXmlExtensionAttributeRelationVO.from_repository_values(
             uid=uid,
             name=xml_extension_attribute_value.name,
+            data_type=xml_extension_attribute_value.data_type,
             value=rel.value,
-            odm_xml_extension_uid=rel.end_node()
-            .belongs_to_xml_extension.get_or_none()
-            .uid,
+            xml_extension_uid=rel.end_node().belongs_to_xml_extension.get_or_none().uid,
         )

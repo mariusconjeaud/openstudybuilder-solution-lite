@@ -32,14 +32,14 @@ class ObjectiveTemplatesTest(api.APITest):
         self.test_client = TestClient(main.app)
         self.library = library_service.create(**library_data)
 
-    def testFiltering(self):
+    def test_filtering(self):
         inject_and_clear_db(self.TEST_DB_NAME)
         import clinical_mdr_api.services.libraries as library_service
 
         self.library = library_service.create(**library_data)
         Service = ObjectiveTemplateService
         Service().create(
-            ObjectiveTemplateCreateInput(libraryName=library_data["name"], name="test")
+            ObjectiveTemplateCreateInput(library_name=library_data["name"], name="test")
         )
         self.filtering_common_test_scenario(
             test_client=self.test_client,
@@ -51,7 +51,7 @@ class ObjectiveTemplatesTest(api.APITest):
     SCENARIO_PATHS = ["clinical_mdr_api/tests/data/scenarios/objective_template.json"]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid"]
+        return ["start_date", "end_date", "uid"]
 
 
 # @pytest.mark.skip
@@ -80,7 +80,7 @@ class ObjectiveTemplatesNegativeTest(api.APITest):
         check_objective_templates_empty()
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "uid"]
+        return ["start_date", "end_date", "time", "uid"]
 
 
 # @pytest.mark.skip
@@ -101,4 +101,4 @@ class ObjectiveTemplatesVersioningTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "path", "uid", "content-length"]
+        return ["start_date", "end_date", "time", "path", "uid", "content-length"]

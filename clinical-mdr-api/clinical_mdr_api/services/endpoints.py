@@ -26,8 +26,8 @@ class EndpointService(GenericObjectService[EndpointAR]):
     repository_interface = EndpointRepository
     template_repository_interface = EndpointTemplateRepository
     version_class = EndpointVersion
-    templateUidProperty = "endpointTemplateUid"
-    templateNameProperty = "endpointTemplate"
+    template_uid_property = "endpoint_template_uid"
+    template_name_property = "endpoint_template"
 
     def get_all(
         self,

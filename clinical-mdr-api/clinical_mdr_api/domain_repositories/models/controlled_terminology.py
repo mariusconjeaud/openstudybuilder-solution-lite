@@ -151,8 +151,8 @@ class CodelistTermRelationship(ClinicalMdrRel):
     In the graph, these are persisted as `HAS_TERM`, `HAD_TERM`.
     """
 
-    start_date = ZonedDateTimeProperty(format="%Y-%m-%d %H:%M:%S.%f")
-    end_date = ZonedDateTimeProperty(format="%Y-%m-%d %H:%M:%S.%f")
+    start_date = ZonedDateTimeProperty()
+    end_date = ZonedDateTimeProperty()
     user_initials = StringProperty()
     order = IntegerProperty()
 
@@ -191,7 +191,7 @@ class CTTermRoot(ControlledTerminologyWithUID):
     has_parent_type = RelationshipTo(
         "CTTermRoot", "HAS_PARENT_TYPE", model=ClinicalMdrRel
     )
-    has_parent_sub_type = RelationshipTo(
+    has_parent_subtype = RelationshipTo(
         "CTTermRoot", "HAS_PARENT_SUB_TYPE", model=ClinicalMdrRel
     )
     valid_for_epoch_type = RelationshipTo(

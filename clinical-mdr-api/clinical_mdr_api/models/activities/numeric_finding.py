@@ -20,11 +20,11 @@ from clinical_mdr_api.models.ct_term import SimpleTermModel
 
 
 class NumericFinding(Finding):
-    molecularWeight: Optional[int]
-    convertToSiUnit: Optional[bool]
-    convertToUsConventionalUnit: Optional[bool]
-    unitDimension: Optional[SimpleTermModel]
-    unitDefinition: Optional[SimpleTermModel]
+    molecular_weight: Optional[int]
+    convert_to_si_unit: Optional[bool]
+    convert_to_us_conventional_unit: Optional[bool]
+    unit_dimension: Optional[SimpleTermModel]
+    unit_definition: Optional[SimpleTermModel]
 
     @classmethod
     def from_activity_ar(
@@ -38,7 +38,7 @@ class NumericFinding(Finding):
     ) -> "NumericFinding":
 
         activity_subgroup_uids = [
-            find_activity_hierarchy_by_uid(activity_uid).concept_vo.activity_sub_group
+            find_activity_hierarchy_by_uid(activity_uid).concept_vo.activity_subgroup
             for activity_uid in activity_ar.concept_vo.activity_uids
         ]
         activity_group_uids = [
@@ -46,16 +46,16 @@ class NumericFinding(Finding):
             for subgroup_uid in activity_subgroup_uids
         ]
 
-        sdtmVariable = cls._get_term_model(
+        sdtm_variable = cls._get_term_model(
             activity_ar.concept_vo, "sdtm_variable_uid", "sdtm_variable_name"
         )
-        sdtmSubcat = cls._get_term_model(
+        sdtm_subcat = cls._get_term_model(
             activity_ar.concept_vo, "sdtm_subcat_uid", "sdtm_subcat_name"
         )
-        sdtmCat = cls._get_term_model(
+        sdtm_cat = cls._get_term_model(
             activity_ar.concept_vo, "sdtm_cat_uid", "sdtm_cat_name"
         )
-        sdtmDomain = cls._get_term_model(
+        sdtm_domain = cls._get_term_model(
             activity_ar.concept_vo, "sdtm_domain_uid", "sdtm_domain_name"
         )
         specimen = cls._get_term_model(
@@ -66,16 +66,16 @@ class NumericFinding(Finding):
             uid=activity_ar.uid,
             type=activity_ar.concept_vo.activity_type,
             name=activity_ar.name,
-            nameSentenceCase=activity_ar.concept_vo.name_sentence_case,
+            name_sentence_case=activity_ar.concept_vo.name_sentence_case,
             definition=activity_ar.concept_vo.definition,
             abbreviation=activity_ar.concept_vo.abbreviation,
-            topicCode=activity_ar.concept_vo.topic_code,
-            adamParamCode=activity_ar.concept_vo.adam_param_code,
-            legacyDescription=activity_ar.concept_vo.legacy_description,
-            sdtmVariable=sdtmVariable,
-            sdtmSubcat=sdtmSubcat,
-            sdtmCat=sdtmCat,
-            sdtmDomain=sdtmDomain,
+            topic_code=activity_ar.concept_vo.topic_code,
+            adam_param_code=activity_ar.concept_vo.adam_param_code,
+            legacy_description=activity_ar.concept_vo.legacy_description,
+            sdtm_variable=sdtm_variable,
+            sdtm_subcat=sdtm_subcat,
+            sdtm_cat=sdtm_cat,
+            sdtm_domain=sdtm_domain,
             activities=sorted(
                 [
                     ActivityHierarchySimpleModel.from_activity_uid(
@@ -86,7 +86,7 @@ class NumericFinding(Finding):
                 ],
                 key=lambda item: item.name,
             ),
-            activitySubgroups=sorted(
+            activity_subgroups=sorted(
                 [
                     ActivityHierarchySimpleModel.from_activity_uid(
                         uid=activity_subgroup,
@@ -96,7 +96,7 @@ class NumericFinding(Finding):
                 ],
                 key=lambda item: item.name,
             ),
-            activityGroups=sorted(
+            activity_groups=sorted(
                 [
                     ActivityHierarchySimpleModel.from_activity_uid(
                         uid=activity_group,
@@ -106,50 +106,50 @@ class NumericFinding(Finding):
                 ],
                 key=lambda item: item.name,
             ),
-            valueSasDisplayFormat=activity_ar.concept_vo.value_sas_display_format,
+            value_sas_display_format=activity_ar.concept_vo.value_sas_display_format,
             specimen=specimen,
-            testCode=SimpleTermModel.from_ct_code(
+            test_code=SimpleTermModel.from_ct_code(
                 c_code=activity_ar.concept_vo.test_code_uid,
                 find_term_by_uid=find_term_by_uid,
             ),
-            molecularWeight=activity_ar.concept_vo.molecular_weight,
-            convertToSiUnit=activity_ar.concept_vo.convert_to_si_unit,
-            convertToUsConventionalUnit=activity_ar.concept_vo.convert_to_us_conventional_unit,
-            unitDimension=SimpleTermModel.from_ct_code(
+            molecular_weight=activity_ar.concept_vo.molecular_weight,
+            convert_to_si_unit=activity_ar.concept_vo.convert_to_si_unit,
+            convert_to_us_conventional_unit=activity_ar.concept_vo.convert_to_us_conventional_unit,
+            unit_dimension=SimpleTermModel.from_ct_code(
                 c_code=activity_ar.concept_vo.unit_dimension_uid,
                 find_term_by_uid=find_term_by_uid,
             ),
-            unitDefinition=SimpleTermModel.from_ct_code(
+            unit_definition=SimpleTermModel.from_ct_code(
                 c_code=activity_ar.concept_vo.unit_definition_uid,
                 find_term_by_uid=find_unit_definition_by_uid,
             ),
-            libraryName=Library.from_library_vo(activity_ar.library).name,
-            startDate=activity_ar.item_metadata.start_date,
-            endDate=activity_ar.item_metadata.end_date,
+            library_name=Library.from_library_vo(activity_ar.library).name,
+            start_date=activity_ar.item_metadata.start_date,
+            end_date=activity_ar.item_metadata.end_date,
             status=activity_ar.item_metadata.status.value,
             version=activity_ar.item_metadata.version,
-            changeDescription=activity_ar.item_metadata.change_description,
-            userInitials=activity_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=activity_ar.item_metadata.change_description,
+            user_initials=activity_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 [_.value for _ in activity_ar.get_possible_actions()]
             ),
         )
 
 
 class NumericFindingCreateInput(FindingCreateInput):
-    molecularWeight: Optional[int] = None
-    convertToSiUnit: Optional[bool] = None
-    convertToUsConventionalUnit: Optional[bool] = None
-    unitDimension: Optional[str] = None
-    unitDefinition: Optional[str] = None
+    molecular_weight: Optional[int] = None
+    convert_to_si_unit: Optional[bool] = None
+    convert_to_us_conventional_unit: Optional[bool] = None
+    unit_dimension: Optional[str] = None
+    unit_definition: Optional[str] = None
 
 
 class NumericFindingEditInput(FindingEditInput):
-    molecularWeight: Optional[int]
-    convertToSiUnit: Optional[bool]
-    convertToUsConventionalUnit: Optional[bool]
-    unitDimension: Optional[str]
-    unitDefinition: Optional[str]
+    molecular_weight: Optional[int]
+    convert_to_si_unit: Optional[bool]
+    convert_to_us_conventional_unit: Optional[bool]
+    unit_dimension: Optional[str]
+    unit_definition: Optional[str]
 
 
 class NumericFindingVersion(FindingVersion, NumericFinding):

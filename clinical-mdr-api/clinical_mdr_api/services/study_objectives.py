@@ -1,11 +1,13 @@
-import logging
+from logging import getLogger
 from typing import Dict
 
-import yattag
 from docx.enum.style import WD_STYLE_TYPE
+from yattag.doc import Doc
 
 from clinical_mdr_api.models.unit_definition import UnitDefinitionModel
+from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.services._meta_repository import MetaRepository
+from clinical_mdr_api.services.study import StudyService
 from clinical_mdr_api.services.study_endpoint_selection import (
     StudyEndpointSelectionService,
 )
@@ -14,11 +16,11 @@ from clinical_mdr_api.services.utils.docx_builder import DocxBuilder
 
 
 # TODO LOCALIZATION
-def _(x):
+def _gettext(x):
     return x
 
 
-log = logging.getLogger(__name__)
+log = getLogger(__name__)
 
 # pylint: disable=no-member
 STYLES = {
@@ -52,9 +54,14 @@ class StudyObjectivesService:
         self._units = None
 
     def _get_all_selection(self, study_uid):
+        # Check if study exists
+        StudyService(user=get_current_user_id()).get_by_uid(uid=study_uid)
+
+        # Get Endpoint Selections
         selection = self._study_endpoint_selection_service.get_all_selection(
             study_uid=study_uid, no_brackets=True
         )
+
         return selection.items
 
     def _get_all_units(self) -> Dict[str, UnitDefinitionModel]:
@@ -70,100 +77,104 @@ class StudyObjectivesService:
         return self._units
 
     # Unused but kept for future layout
-    def get_condensed_html(self, study_uid):
+    def get_condensed_html(self, study_uid) -> str:
         selection = self._get_all_selection(study_uid)
         root = self._build_condensed_tree(selection)
         return self._build_condensed_html(root)
 
+    def get_standard_html(self, study_uid) -> str:
+        selection = self._get_all_selection(study_uid)
+        tree = self._build_tree(selection)
+        return self._build_standard_html(tree)
+
     # Not used but kept for future layout
-    def get_condensed_docx(self, study_uid):
+    def get_condensed_docx(self, study_uid) -> DocxBuilder:
         selection = self._get_all_selection(study_uid)
         root = self._build_condensed_tree(selection)
         return self._build_condensed_docx(root)
 
-    def get_standard_docx(self, study_uid):
+    def get_standard_docx(self, study_uid) -> DocxBuilder:
         selection = self._get_all_selection(study_uid)
         tree = self._build_tree(selection)
         return self._build_standard_docx(tree)
 
     @staticmethod
-    def _build_tree(selection):
+    def _build_tree(selection) -> Dict:
         root = {}
 
         for study_selection_endpoint in selection:
             node = root
-            study_objective = study_selection_endpoint.studyObjective
+            study_objective = study_selection_endpoint.study_objective
             if not study_objective:
                 continue
 
-            objective_level = study_objective.objectiveLevel
-            node = node.setdefault(objective_level.termUid, (objective_level, {}))
+            objective_level = study_objective.objective_level
+            node = node.setdefault(objective_level.term_uid, (objective_level, {}))
 
             node = node[1].setdefault(
-                study_objective.studyObjectiveUid, (study_objective, {})
+                study_objective.study_objective_uid, (study_objective, {})
             )
 
-            if study_selection_endpoint.endpointSubLevel:
-                endpoint_level = study_selection_endpoint.endpointSubLevel
+            if study_selection_endpoint.endpoint_sublevel:
+                endpoint_level = study_selection_endpoint.endpoint_sublevel
             else:
-                endpoint_level = study_selection_endpoint.endpointLevel
+                endpoint_level = study_selection_endpoint.endpoint_level
             if not endpoint_level:
                 continue
-            node = node[1].setdefault(endpoint_level.termUid, (endpoint_level, {}))
+            node = node[1].setdefault(endpoint_level.term_uid, (endpoint_level, {}))
 
             node[1].setdefault(
-                study_selection_endpoint.studyEndpointUid, study_selection_endpoint
+                study_selection_endpoint.study_endpoint_uid, study_selection_endpoint
             )
 
         return root
 
     @staticmethod
-    def _build_condensed_tree(selection):
+    def _build_condensed_tree(selection) -> Dict:
         root = {}
 
         for study_selection_endpoint in selection:
             node = root
-            study_objective = study_selection_endpoint.studyObjective
+            study_objective = study_selection_endpoint.study_objective
             if not study_objective:
                 continue
 
-            objective_level = study_objective.objectiveLevel
-            node = node.setdefault(objective_level.termUid, (objective_level, {}, {}))
+            objective_level = study_objective.objective_level
+            node = node.setdefault(objective_level.term_uid, (objective_level, {}, {}))
 
-            node[1].setdefault(study_objective.studyObjectiveUid, study_objective)
+            node[1].setdefault(study_objective.study_objective_uid, study_objective)
 
-            if study_selection_endpoint.endpointSubLevel:
-                endpoint_level = study_selection_endpoint.endpointSubLevel
+            if study_selection_endpoint.endpoint_sublevel:
+                endpoint_level = study_selection_endpoint.endpoint_sublevel
             else:
-                endpoint_level = study_selection_endpoint.endpointLevel
+                endpoint_level = study_selection_endpoint.endpoint_level
             if not endpoint_level:
                 continue
-            node = node[2].setdefault(endpoint_level.termUid, (endpoint_level, {}))
+            node = node[2].setdefault(endpoint_level.term_uid, (endpoint_level, {}))
 
             node[1].setdefault(
-                study_selection_endpoint.studyEndpointUid, study_selection_endpoint
+                study_selection_endpoint.study_endpoint_uid, study_selection_endpoint
             )
 
         return root
 
     @staticmethod
     def _build_condensed_html(tree) -> str:
-        doc, tag, _text, line = yattag.Doc().ttl()
+        doc, tag, _, line = Doc().ttl()
         doc.asis("<!DOCTYPE html>")
 
         with tag("html", lang="en"):
             with tag("head"):
-                line("title", _("Study Objectives"))
+                line("title", _gettext("Study Objectives"))
 
             with tag("body"):
                 with tag("table", id="ObjectivesEndpointsTable"):
 
                     with tag("thead"):
                         with tag("tr"):
-                            line(
-                                "th", _("Objectives")
-                            )  # TODO: Do we have a CTTermName for these?
-                            line("th", _("Endpoints"))
+                            # TODO: Do we have a CTTermName for these?
+                            line("th", _gettext("Objectives"))
+                            line("th", _gettext("Endpoints"))
 
                     with tag("tbody"):
                         for objective_level, objectives, endpoints in sorted(
@@ -174,7 +185,7 @@ class StudyObjectivesService:
                                 with tag("td"):
                                     line(
                                         "p",
-                                        f"{objective_level.sponsorPreferredName}:",
+                                        f"{objective_level.sponsor_preferred_name}:",
                                         klass="objective-level",
                                     )
                                     for study_objective in sorted(
@@ -188,7 +199,7 @@ class StudyObjectivesService:
                                     ):
                                         line(
                                             "p",
-                                            f"{endpoint_level.sponsorPreferredName}:",
+                                            f"{endpoint_level.sponsor_preferred_name}:",
                                             klass="endpoint-level",
                                         )
                                         with tag("ul"):
@@ -203,6 +214,84 @@ class StudyObjectivesService:
 
         return doc.getvalue()
 
+    def _build_standard_html(self, tree) -> str:
+        doc, tag, _, line = Doc().ttl()
+        doc.asis("<!DOCTYPE html>")
+
+        with tag("html", lang="en"):
+            with tag("head"):
+                line("title", _gettext("Study Objectives"))
+
+            with tag("body"):
+                with tag("table", id="ObjectivesEndpointsTable"):
+
+                    with tag("thead"):
+                        with tag("tr"):
+                            # TODO: Do we have a CTTermName for these?
+                            line("th", _gettext("Objectives"))
+                            line("th", _gettext("Endpoints"), colspan=3)
+
+                    with tag("tbody"):
+                        for objective_level, study_objectives in sorted(
+                            tree.values(), key=lambda o: o[0].order
+                        ):
+                            with tag("tr"):
+
+                                line(
+                                    "th",
+                                    objective_level.sponsor_preferred_name,
+                                    klass="objective-level",
+                                )
+                                line("th", _gettext("Title"), klass="header2")
+                                line("th", _gettext("Time frame"), klass="header2")
+                                line("th", _gettext("Unit"), klass="header2")
+
+                            for study_objective, endpoint_levels in sorted(
+                                study_objectives.values(), key=lambda o: o[0].order
+                            ):
+                                for epl_idx, epl_ste in enumerate(
+                                    sorted(
+                                        endpoint_levels.values(),
+                                        key=lambda o: o[0].order,
+                                    )
+                                ):
+                                    endpoint_level, study_endpoints = epl_ste
+
+                                    if epl_idx == 0:
+                                        with tag("tr"):
+                                            with tag(
+                                                "td",
+                                                klass="objective",
+                                                rowspan=(len(endpoint_levels) + 1),
+                                            ):
+                                                doc.asis(study_objective.objective.name)
+                                            line(
+                                                "th",
+                                                endpoint_level.sponsor_preferred_name,
+                                                klass="endpoint-level",
+                                                colspan=3,
+                                            )
+
+                                    for study_endpoint in sorted(
+                                        study_endpoints.values(), key=lambda o: o.order
+                                    ):
+                                        with tag("tr"):
+                                            with tag("td", klass="endpoint"):
+                                                doc.asis(study_endpoint.endpoint.name)
+
+                                            with tag("td", klass="timeframe"):
+                                                if study_endpoint.timeframe:
+                                                    doc.asis(
+                                                        study_endpoint.timeframe.name
+                                                    )
+
+                                            units_text = self._endpoint_units_to_text(
+                                                study_endpoint.endpoint_units
+                                            )
+                                            line("td", units_text, kalss="units")
+
+        return doc.getvalue()
+
     @staticmethod
     def _build_condensed_docx(tree) -> DocxBuilder:
         docx = DocxBuilder(STYLES)
@@ -211,8 +300,8 @@ class StudyObjectivesService:
         row = table.rows[0]
 
         # Header text
-        row.cells[0].text = _("Objectives")
-        row.cells[1].text = _("Endpoints")
+        row.cells[0].text = _gettext("Objectives")
+        row.cells[1].text = _gettext("Endpoints")
 
         # Apply paragraph style on all cells of the header row
         docx.format_row(row, [STYLES["header1"][0]] * len(row.cells))
@@ -227,7 +316,7 @@ class StudyObjectivesService:
 
             cell = row.cells[0]
             cell.add_paragraph(
-                f"{objective_level.sponsorPreferredName}:",
+                f"{objective_level.sponsor_preferred_name}:",
                 style=STYLES["objective-level"][0],
             )
             # Remove first empty paragraph added automatically to cell
@@ -243,7 +332,7 @@ class StudyObjectivesService:
                 endpoints.values(), key=lambda e: e[0].order
             ):
                 cell.add_paragraph(
-                    f"{endpoint_level.sponsorPreferredName}:",
+                    f"{endpoint_level.sponsor_preferred_name}:",
                     style=STYLES["endpoint-level"][0],
                 )
                 for study_endpoint in sorted(
@@ -267,8 +356,8 @@ class StudyObjectivesService:
         row = table.rows[0]
 
         # Header
-        row.cells[0].text = _("Objectives")
-        row.cells[1].text = _("Endpoints")
+        row.cells[0].text = _gettext("Objectives")
+        row.cells[1].text = _gettext("Endpoints")
         # Merge 2nd cell to end of row
         docx.merge_cells(row.cells[1:num_cols])
 
@@ -286,13 +375,13 @@ class StudyObjectivesService:
 
             docx.replace_content(
                 row.cells[0],
-                str(objective_level.sponsorPreferredName),
+                str(objective_level.sponsor_preferred_name),
                 style="objective-level",
             )
             # TODO Do we have CT-terms for these?
-            docx.replace_content(row.cells[1], _("Title"), style="header2")
-            docx.replace_content(row.cells[2], _("Time frame"), style="header2")
-            docx.replace_content(row.cells[3], _("Unit"), style="header2")
+            docx.replace_content(row.cells[1], _gettext("Title"), style="header2")
+            docx.replace_content(row.cells[2], _gettext("Time frame"), style="header2")
+            docx.replace_content(row.cells[3], _gettext("Unit"), style="header2")
 
             for study_objective, endpoint_levels in sorted(
                 study_objectives.values(), key=lambda o: o[0].order
@@ -326,7 +415,7 @@ class StudyObjectivesService:
 
                     docx.replace_content(
                         row.cells[1],
-                        str(endpoint_level.sponsorPreferredName),
+                        str(endpoint_level.sponsor_preferred_name),
                         style="endpoint-level",
                     )
                     # Merge 2nd cell to end of row
@@ -363,7 +452,7 @@ class StudyObjectivesService:
                                 docx.delete_paragraph(row.cells[2].paragraphs[0])
 
                         units_text = self._endpoint_units_to_text(
-                            study_endpoint.endpointUnits
+                            study_endpoint.endpoint_units
                         )
                         docx.replace_content(row.cells[3], units_text, style="units")
 

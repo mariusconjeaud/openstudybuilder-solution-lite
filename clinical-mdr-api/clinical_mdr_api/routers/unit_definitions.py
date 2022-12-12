@@ -5,6 +5,7 @@ from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
 from pydantic.types import Json
 
+from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.unit_definition import (
     UnitDefinitionModel,
@@ -37,13 +38,13 @@ UnitDefinitionUID = Path(None, description="The unique id of unit definition.")
             "content": {
                 "text/csv": {
                     "example": """
-"library","uid","name","startDate","endDate","status","version","changeDescription","userInitials"
+"library","uid","name","start_date","end_date","status","version","change_description","user_initials"
 "Sponsor","826d80a7-0b6a-419d-8ef1-80aa241d7ac7","First  [ComparatorIntervention]","2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
 """
                 },
                 "text/xml": {
                     "example": """
-                    <?xml version="1.0" encoding="UTF-8" ?><root><data type="list"><item type="dict"><uid type="str">e9117175-918f-489e-9a6e-65e0025233a6</uid><name type="str">Alamakota</name><startDate type="str">2020-11-19T11:51:43.000Z</startDate><status type="str">Draft</status><version type="str">0.2</version><changeDescription type="str">Test</changeDescription><userInitials type="str">TODO Initials</userInitials></item></data></root>
+                    <?xml version="1.0" encoding="UTF-8" ?><root><data type="list"><item type="dict"><uid type="str">e9117175-918f-489e-9a6e-65e0025233a6</uid><name type="str">Alamakota</name><start_date type="str">2020-11-19T11:51:43.000Z</start_date><status type="str">Draft</status><version type="str">0.2</version><change_description type="str">Test</change_description><user_initials type="str">TODO Initials</user_initials></item></data></root>
 """
                 },
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
@@ -56,21 +57,21 @@ UnitDefinitionUID = Path(None, description="The unique id of unit definition.")
     {
         "defaults": [
             "uid",
-            "libraryName",
+            "library_name",
             "name",
-            "masterUnit",
-            "displayUnit",
-            "unitSubsets",
+            "master_unit",
+            "display_unit",
+            "unit_subsets",
             "ucum=ucum.name",
-            "ctUnits",
-            "convertibleUnit",
-            "siUnit",
-            "usConventionalUnit",
-            "unitDimension=unitDimension.name",
-            "legacyCode",
-            "molecularWeightConvExpon",
-            "conversionFactorToMaster",
-            "startDate",
+            "ct_units",
+            "convertible_unit",
+            "si_unit",
+            "us_conventional_unit",
+            "unit_dimension=unit_dimension.name",
+            "legacy_code",
+            "molecular_weight_conv_expon",
+            "conversion_factor_to_master",
+            "start_date",
             "status",
             "version",
         ],
@@ -85,7 +86,7 @@ UnitDefinitionUID = Path(None, description="The unique id of unit definition.")
 # pylint: disable=unused-argument
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
-    libraryName: Optional[str] = Query(None),
+    library_name: Optional[str] = Query(None),
     dimension: Optional[str] = Query(
         None,
         description="The code submission value of the unit dimension to filter, for instance 'Dose Unit'.",
@@ -95,35 +96,37 @@ def get_all(
         description="The name of the unit subset to filter, for instance 'Age Unit'.",
     ),
     service: Service = Depends(),
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
 ) -> CustomPage[UnitDefinitionModel]:
     results = service.get_all(
-        library_name=libraryName,
+        library_name=library_name,
         dimension=dimension,
         subset=subset,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        sort_by=sortBy,
+        sort_by=sort_by,
     )
 
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -143,7 +146,7 @@ def get_all(
     },
 )
 def get_distinct_values_for_header(
-    libraryName: Optional[str] = Query(None),
+    library_name: Optional[str] = Query(None),
     dimension: Optional[str] = Query(
         None,
         description="The code submission value of the unit dimension to filter, for instance 'Dose Unit'.",
@@ -153,8 +156,8 @@ def get_distinct_values_for_header(
         description="The name of the unit subset to filter, for instance 'Age Unit'.",
     ),
     service: Service = Depends(),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -163,19 +166,19 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     return service.get_distinct_values_for_header(
-        library_name=libraryName,
+        library_name=library_name,
         dimension=dimension,
         subset=subset,
-        field_name=fieldName,
-        search_string=searchString,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
@@ -197,7 +200,7 @@ def get_distinct_values_for_header(
 )
 def get_by_uid(
     uid: str = UnitDefinitionUID,
-    atSpecifiedDateTime: Optional[datetime] = Query(
+    at_specified_date_time: Optional[datetime] = Query(
         None,
         description="If specified, the latest/newest representation of the unit definition at this point in time is returned.\n"
         "The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: "
@@ -223,7 +226,10 @@ def get_by_uid(
     service: Service = Depends(),
 ) -> UnitDefinitionModel:
     return service.get_by_uid(
-        uid, version=version, status=status, at_specified_datetime=atSpecifiedDateTime
+        uid,
+        version=version,
+        status=status,
+        at_specified_datetime=at_specified_date_time,
     )
 
 
@@ -231,7 +237,7 @@ def get_by_uid(
     "/{uid}/versions",
     summary="Returns the version history of a specific concept identified by 'uid'.",
     description="The returned versions are ordered by\n"
-    "0. startDate descending (newest entries first)",
+    "0. start_date descending (newest entries first)",
     response_model=Sequence[UnitDefinitionModel],
     status_code=200,
     responses={
@@ -239,13 +245,13 @@ def get_by_uid(
             "content": {
                 "text/csv": {
                     "example": """
-"library";"uid";"name";"startDate";"endDate";"status";"version";"changeDescription";"userInitials"
+"library";"uid";"name";"start_date";"end_date";"status";"version";"change_description";"user_initials"
 "Sponsor";"826d80a7-0b6a-419d-8ef1-80aa241d7ac7";"First  [ComparatorIntervention]";"2020-10-22T10:19:29+00:00";;"Draft";"0.1";"Initial version";"NdSJ"
 """
                 },
                 "text/xml": {
                     "example": """
-                    <?xml version="1.0" encoding="UTF-8" ?><root><data type="list"><item type="dict"><name type="str">Alamakota</name><startDate type="str">2020-11-19 11:51:43+00:00</startDate><endDate type="str">None</endDate><status type="str">Draft</status><version type="str">0.2</version><changeDescription type="str">Test</changeDescription><userInitials type="str">TODO Initials</userInitials></item><item type="dict"><name type="str">Alamakota</name><startDate type="str">2020-11-19 11:51:07+00:00</startDate><endDate type="str">2020-11-19 11:51:43+00:00</endDate><status type="str">Draft</status><version type="str">0.1</version><changeDescription type="str">Initial version</changeDescription><userInitials type="str">TODO user initials</userInitials></item></data></root>
+                    <?xml version="1.0" encoding="UTF-8" ?><root><data type="list"><item type="dict"><name type="str">Alamakota</name><start_date type="str">2020-11-19 11:51:43+00:00</start_date><end_date type="str">None</end_date><status type="str">Draft</status><version type="str">0.2</version><change_description type="str">Test</change_description><user_initials type="str">TODO Initials</user_initials></item><item type="dict"><name type="str">Alamakota</name><start_date type="str">2020-11-19 11:51:07+00:00</start_date><end_date type="str">2020-11-19 11:51:43+00:00</end_date><status type="str">Draft</status><version type="str">0.1</version><change_description type="str">Initial version</change_description><user_initials type="str">TODO user initials</user_initials></item></data></root>
 """
                 },
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
@@ -261,24 +267,24 @@ def get_by_uid(
 @decorators.allow_exports(
     {
         "defaults": [
-            "libraryName",
+            "library_name",
             "uid",
             "name",
-            "unitCt",
-            "convertibleUnit",
-            "displayUnit",
-            "masterUnit",
-            "siUnit",
-            "usConventionalUnit",
-            "legacyCode",
-            "molecularWeightConvExpon",
-            "conversionFactorToMaster",
-            "startDate",
-            "endDate",
+            "unit_ct",
+            "convertible_unit",
+            "display_unit",
+            "master_unit",
+            "si_unit",
+            "us_conventional_unit",
+            "legacy_code",
+            "molecular_weight_conv_expon",
+            "conversion_factor_to_master",
+            "start_date",
+            "end_date",
             "status",
             "version",
-            "changeDescription",
-            "userInitials",
+            "change_description",
+            "user_initials",
         ],
         "formats": [
             "text/csv",
@@ -302,11 +308,11 @@ def get_versions(
     response_model=UnitDefinitionModel,
     summary="Creates a new unit definition in 'Draft' status.",
     description="""This request is only valid if the unit definition
-* belongs to a library that allows creating (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows creating (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The status will be automatically set to 'Draft'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will be set to '0.1'.
 * The unit definition template will be linked to a library.
 
@@ -322,7 +328,7 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The library with the specified 'libraryName' could not be found.",
+            "description": "Not Found - The library with the specified 'library_name' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
@@ -341,7 +347,7 @@ def post(
     summary="Updates the unit definition identified by 'uid'.",
     description="""This request is only valid if the unit definition
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The 'version' property will be increased automatically by +0.1.
@@ -377,11 +383,11 @@ def patch(
 
 
 @router.post(
-    "/{uid}/new-version",
+    "/{uid}/versions",
     summary="Creates a new version of the unit definition identified by 'uid'.",
     description="""This request is only valid if the unit definition
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The latest 'Final' or 'Retired' version will remain the same as before.
@@ -417,11 +423,11 @@ def new_version(
     summary="Approves the unit definition identified by 'uid'.",
     description="""This request is only valid if the unit definition
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
     response_model=UnitDefinitionModel,
@@ -455,7 +461,7 @@ def approve(
 
 If the request succeeds:
 * The status will be automatically set to 'Retired'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will remain the same as before.
     """,
     response_model=UnitDefinitionModel,
@@ -488,7 +494,7 @@ def inactivate(
 
 If the request succeeds:
 * The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will remain the same as before.
     """,
     response_model=UnitDefinitionModel,
@@ -519,7 +525,7 @@ def reactivate(
     description="""This request is only valid if \n
 * the unit definition is in 'Draft' status and
 * the unit definition has never been in 'Final' status and
-* the unit definition belongs to a library that allows deleting (the 'isEditable' property of the library needs to be true).""",
+* the unit definition belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
     response_model=None,
     status_code=204,
     responses={

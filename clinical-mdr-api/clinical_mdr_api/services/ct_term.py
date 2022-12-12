@@ -33,8 +33,7 @@ class CTTermService:
     def __del__(self):
         self._repos.close()
 
-    @db.transaction
-    def create(self, term_input: CTTermCreateInput) -> CTTerm:
+    def non_transactional_create(self, term_input: CTTermCreateInput) -> CTTerm:
         """
         Method creates CTTermAttributesAR and saves that object to the database.
         When saving CTTermAttributesAR - CTTermRoot node is created that will become a root node for
@@ -48,17 +47,31 @@ class CTTermService:
         """
 
         if (
-            term_input.libraryName is not None
+            term_input.library_name is not None
             and not self._repos.library_repository.library_exists(
-                normalize_string(term_input.libraryName)
+                normalize_string(term_input.library_name)
             )
         ):
             raise exceptions.BusinessLogicException(
-                f"There is no library identified by provided library name ({term_input.libraryName})"
+                f"There is no library identified by provided library name ({term_input.library_name})"
+            )
+
+        ct_codelist_attributes_ar = (
+            self._repos.ct_codelist_attribute_repository.find_by_uid(
+                codelist_uid=term_input.codelist_uid
+            )
+        )
+
+        if (
+            ct_codelist_attributes_ar is not None
+            and not ct_codelist_attributes_ar.ct_codelist_vo.extensible
+        ):
+            raise exceptions.BusinessLogicException(
+                f"Codelist identified by {term_input.codelist_uid} is not extensible"
             )
 
         library_vo = LibraryVO.from_input_values_2(
-            library_name=term_input.libraryName,
+            library_name=term_input.library_name,
             is_library_editable_callback=(
                 lambda name: self._repos.library_repository.find_by_name(
                     name
@@ -71,11 +84,11 @@ class CTTermService:
             ct_term_attributes_ar = CTTermAttributesAR.from_input_values(
                 author=self.user_initials,
                 ct_term_attributes_vo=CTTermAttributesVO.from_input_values(
-                    codelist_uid=term_input.codelistUid,
-                    catalogue_name=term_input.catalogueName,
-                    code_submission_value=term_input.codeSubmissionValue,
-                    name_submission_value=term_input.nameSubmissionValue,
-                    preferred_term=term_input.nciPreferredName,
+                    codelist_uid=term_input.codelist_uid,
+                    catalogue_name=term_input.catalogue_name,
+                    code_submission_value=term_input.code_submission_value,
+                    name_submission_value=term_input.name_submission_value,
+                    preferred_term=term_input.nci_preferred_name,
                     definition=term_input.definition,
                     codelist_exists_callback=self._repos.ct_codelist_attribute_repository.codelist_exists,
                     catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
@@ -93,10 +106,10 @@ class CTTermService:
             ct_term_name_ar = CTTermNameAR.from_input_values(
                 author=self.user_initials,
                 ct_term_name_vo=CTTermNameVO.from_input_values(
-                    codelist_uid=term_input.codelistUid,
-                    catalogue_name=term_input.catalogueName,
-                    name=term_input.sponsorPreferredName,
-                    name_sentence_case=term_input.sponsorPreferredNameSentenceCase,
+                    codelist_uid=term_input.codelist_uid,
+                    catalogue_name=term_input.catalogue_name,
+                    name=term_input.sponsor_preferred_name,
+                    name_sentence_case=term_input.sponsor_preferred_name_sentence_case,
                     order=term_input.order,
                     codelist_exists_callback=self._repos.ct_codelist_attribute_repository.codelist_exists,
                     catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
@@ -111,6 +124,10 @@ class CTTermService:
             raise exceptions.ValidationException(value_error.args[0])
 
         return CTTerm.from_ct_term_ars(ct_term_name_ar, ct_term_attributes_ar)
+
+    @db.transaction
+    def create(self, term_input: CTTermCreateInput) -> CTTerm:
+        return self.non_transactional_create(term_input)
 
     def get_all_terms(
         self,
@@ -191,13 +208,13 @@ class CTTermService:
             normalize_string(term_uid)
         ):
             raise exceptions.BusinessLogicException(
-                f"There is no CTTermRoot identified by provided termuid ({term_uid})"
+                f"There is no CTTermRoot identified by provided term_uid ({term_uid})"
             )
         if not self._repos.ct_term_name_repository.term_exists(
             normalize_string(parent_uid)
         ):
             raise exceptions.BusinessLogicException(
-                f"There is no CTTermRoot identified by provided termuid ({parent_uid})"
+                f"There is no CTTermRoot identified by provided term_uid ({parent_uid})"
             )
 
         relationship_type = relationship_type.lower()
@@ -237,13 +254,13 @@ class CTTermService:
             normalize_string(term_uid)
         ):
             raise exceptions.BusinessLogicException(
-                f"There is no CTTermRoot identified by provided termuid ({term_uid})"
+                f"There is no CTTermRoot identified by provided term_uid ({term_uid})"
             )
         if not self._repos.ct_term_name_repository.term_exists(
             normalize_string(parent_uid)
         ):
             raise exceptions.BusinessLogicException(
-                f"There is no CTTermRoot identified by provided termuid ({parent_uid})"
+                f"There is no CTTermRoot identified by provided term_uid ({parent_uid})"
             )
 
         if relationship_type == "type":
@@ -319,7 +336,7 @@ class CTTermService:
             normalize_string(codelist_uid)
         ):
             raise exceptions.BusinessLogicException(
-                f"There is no CTCodelistRoot identified by provided codelistuid ({codelist_uid})"
+                f"There is no CTCodelistRoot identified by provided codelist_uid ({codelist_uid})"
             )
 
         ct_term_name_ar = self._repos.ct_term_name_repository.find_by_uid(
@@ -328,7 +345,7 @@ class CTTermService:
 
         if ct_term_name_ar is None:
             raise exceptions.BusinessLogicException(
-                f"There is no CTTermRoot identified by provided termuid ({term_uid})"
+                f"There is no CTTermRoot identified by provided term_uid ({term_uid})"
             )
 
         ct_term_name_ar.set_new_order(codelist_uid=codelist_uid, new_order=new_order)

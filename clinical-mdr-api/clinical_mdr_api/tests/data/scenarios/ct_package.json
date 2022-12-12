@@ -17,37 +17,37 @@
 
          },
          "result":{
-            "fromPackage":"old_package",
-            "toPackage":"new_package",
-            "newCodelists":[
+            "from_package":"old_package",
+            "to_package":"new_package",
+            "new_codelists":[
                {
                   "value_node":{
                      "name":"new_name",
                      "definition":"codelist_added"
                   },
                   "uid":"added_codelist_uid",
-                  "change_date": "2020-06-26T00:00:00",
+                  "change_date": "2020-06-26T00:00:00+00:00",
                   "is_change_of_codelist": true
                }
             ],
-            "deletedCodelists":[
+            "deleted_codelists":[
                {
                   "value_node":{
                      "name":"old_name",
                      "extensible":false
                   },
                   "uid":"deleted_codelist_uid",
-                  "change_date": "2020-03-27T00:00:00",
+                  "change_date": "2020-03-27T00:00:00+00:00",
                   "is_change_of_codelist": true
                }
             ],
-            "updatedCodelists":[
+            "updated_codelists":[
                {
                   "value_node":{
-                     "leftOnly":{
+                     "left_only":{
                         "extensible":false
                      },
-                     "inCommon":{
+                     "in_common":{
 
                      },
                      "different":{
@@ -56,12 +56,12 @@
                            "right":"new_name"
                         }
                      },
-                     "rightOnly":{
+                     "right_only":{
                         "definition":"new_definition"
                      }
                   },
                   "uid":"updated_codelist_uid",
-                  "change_date": "2020-06-26T00:00:00",
+                  "change_date": "2020-06-26T00:00:00+00:00",
                   "is_change_of_codelist": true
                },
                {
@@ -71,13 +71,13 @@
                      "name":"new_name",
                      "definition":"codelist_added"
                   },
-                  "change_date": "2020-06-26T00:00:00"
+                  "change_date": "2020-06-26T00:00:00+00:00"
                }
             ],
-            "newTerms":[
+            "new_terms":[
                {
                   "uid":"added_term_uid",
-                  "change_date": "2020-06-26T00:00:00",
+                  "change_date": "2020-06-26T00:00:00+00:00",
                   "value_node":{
                      "preferred_term":"old_preferred_term",
                      "name_submission_value":"old_submission_value"
@@ -87,10 +87,10 @@
                   ]
                }
             ],
-            "deletedTerms":[
+            "deleted_terms":[
                {
                   "uid":"deleted_term_uid",
-                  "change_date": "2020-03-27T00:00:00",
+                  "change_date": "2020-03-27T00:00:00+00:00",
                   "value_node":{
                      "preferred_term":"old_preferred_term",
                      "name_submission_value":"old_submission_value"
@@ -100,15 +100,15 @@
                   ]
                }
             ],
-            "updatedTerms":[
+            "updated_terms":[
                {
                   "uid":"updated_term_uid",
-                  "change_date": "2020-06-26T00:00:00",
+                  "change_date": "2020-06-26T00:00:00+00:00",
                   "value_node":{
-                     "leftOnly":{
+                     "left_only":{
                         "preferred_term":"old_preferred_term"
                      },
-                     "inCommon":{
+                     "in_common":{
 
                      },
                      "different":{
@@ -117,7 +117,7 @@
                            "right":"new_submission_value"
                         }
                      },
-                     "rightOnly":{
+                     "right_only":{
                         "definition":"new_definition"
                      }
                   },
@@ -147,17 +147,17 @@
 
          },
          "result":{
-            "fromPackage":"old_package",
-            "toPackage":"new_package",
-            "newCodelists":[],
-            "deletedCodelists":[],
-            "updatedCodelists":[
+            "from_package":"old_package",
+            "to_package":"new_package",
+            "new_codelists":[],
+            "deleted_codelists":[],
+            "updated_codelists":[
                {
                   "value_node":{
-                     "leftOnly":{
+                     "left_only":{
                         "extensible":false
                      },
-                     "inCommon":{
+                     "in_common":{
 
                      },
                      "different":{
@@ -166,26 +166,26 @@
                            "right":"new_name"
                         }
                      },
-                     "rightOnly":{
+                     "right_only":{
                         "definition":"new_definition"
                      }
                   },
                   "uid":"updated_codelist_uid",
-                  "change_date": "2020-06-26T00:00:00",
+                  "change_date": "2020-06-26T00:00:00+00:00",
                   "is_change_of_codelist": true
                }
             ],
-            "newTerms":[],
-            "deletedTerms":[],
-            "updatedTerms":[
+            "new_terms":[],
+            "deleted_terms":[],
+            "updated_terms":[
                {
                   "uid":"updated_term_uid",
-                  "change_date": "2020-06-26T00:00:00",
+                  "change_date": "2020-06-26T00:00:00+00:00",
                   "value_node":{
-                     "leftOnly":{
+                     "left_only":{
                         "preferred_term":"old_preferred_term"
                      },
-                     "inCommon":{
+                     "in_common":{
 
                      },
                      "different":{
@@ -194,7 +194,7 @@
                            "right":"new_submission_value"
                         }
                      },
-                     "rightOnly":{
+                     "right_only":{
                         "definition":"new_definition"
                      }
                   },
@@ -203,10 +203,10 @@
                   ]
                }
             ],
-            "notModifiedTerms": [
+            "not_modified_terms": [
                {
                   "uid":"not_modified_term_uid",
-                  "change_date": "2020-03-27T00:00:00",
+                  "change_date": "2020-03-27T00:00:00+00:00",
                   "value_node":{
                      "preferred_term":"not_modified_preferred_term",
                      "name_submission_value":"not_modified_submission_value"
@@ -237,8 +237,8 @@
 
          },
          "result":{
-            "catalogueName":"catalogue",
-            "effectiveDates":[
+            "catalogue_name":"catalogue",
+            "effective_dates":[
                "2020-03-27",
                "2020-06-26"
             ]

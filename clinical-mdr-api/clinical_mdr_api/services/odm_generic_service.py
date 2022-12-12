@@ -10,9 +10,11 @@ from clinical_mdr_api.services.concepts.concept_generic_service import (
 
 
 class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
+    OBJECT_IS_INACTIVE = "The object is inactive"
+
     def fail_if_non_present_tags_are_used_by_current_odm_element_attributes(
         self,
-        attribute_uids: Optional[Sequence[str]],
+        attribute_uids: Sequence[str],
         input_tags: Sequence[OdmXmlExtensionRelationPostInput],
     ):
         (
@@ -27,11 +29,11 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
             for odm_xml_extension_attribute_ar in odm_xml_extension_attribute_ars
         }
 
-        if not odm_xml_extension_attribute_tag_uids <= {
-            input_tag.uid for input_tag in input_tags
-        }:
+        if not odm_xml_extension_attribute_tag_uids.issubset(
+            {input_tag.uid for input_tag in input_tags}
+        ):
             raise BusinessLogicException(
-                "Cannot remove an OdmXmlExtensionTag whose attributes are connected to this ODM element."
+                "Cannot remove an ODM XML Extension Tag whose attributes are connected to this ODM element."
             )
 
     def fail_if_these_attributes_cannot_be_added(
@@ -59,7 +61,7 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
                     not in tag_uids
                 ):
                     raise BusinessLogicException(
-                        f"OdmXmlExtensionAttribute identified by ({odm_xml_extension_attribute_ar.uid})"
+                        f"ODM XML Extension Attribute identified by ({odm_xml_extension_attribute_ar.uid})"
                         " cannot not be added as an xml extension tag attribute."
                     )
 
@@ -68,6 +70,6 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
                     and not odm_xml_extension_attribute_ar.concept_vo.xml_extension_uid
                 ):
                     raise BusinessLogicException(
-                        f"OdmXmlExtensionAttribute identified by ({odm_xml_extension_attribute_ar.uid})"
+                        f"ODM XML Extension Attribute identified by ({odm_xml_extension_attribute_ar.uid})"
                         " cannot not be added as an xml extension attribute."
                     )

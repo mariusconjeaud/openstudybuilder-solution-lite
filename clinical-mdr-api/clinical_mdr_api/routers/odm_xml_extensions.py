@@ -1,8 +1,9 @@
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, Path, Query
-from pydantic.types import Json, List
+from pydantic.types import Json
 
+from clinical_mdr_api import config
 from clinical_mdr_api.models import (
     OdmXmlExtension,
     OdmXmlExtensionPatchInput,
@@ -30,33 +31,35 @@ OdmXmlExtensionUID = Path(None, description="The unique id of the ODM XML Extens
 )
 def get_all_odm_xml_extensions(
     library: Optional[str] = Query(None),
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
 ):
     odm_xml_extension_service = OdmXmlExtensionService()
     results = odm_xml_extension_service.get_all_concepts(
         library=library,
-        sort_by=sortBy,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -76,9 +79,9 @@ def get_all_odm_xml_extensions(
     },
 )
 def get_distinct_values_for_header(
-    libraryName: Optional[str] = Query(None),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    library_name: Optional[str] = Query(None),
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -87,18 +90,18 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     odm_xml_extension_service = OdmXmlExtensionService()
     return odm_xml_extension_service.get_distinct_values_for_header(
-        library=libraryName,
-        field_name=fieldName,
-        search_string=searchString,
+        library=library_name,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
@@ -130,14 +133,14 @@ def get_active_relationships(uid: str = OdmXmlExtensionUID):
 
 @router.get(
     "/{uid}/versions",
-    summary="List version history for ODM XML Extensions",
+    summary="List version history for ODM XML Extension",
     description="""
 State before:
  - uid must exist.
 
 Business logic:
  - List version history for ODM XML Extensions.
- - The returned versions are ordered by startDate descending (newest entries first).
+ - The returned versions are ordered by start_date descending (newest entries first).
 
 State after:
  - No change
@@ -168,7 +171,7 @@ def get_odm_xml_extension_versions(uid: str = OdmXmlExtensionUID):
     status_code=201,
     responses={
         201: {
-            "description": "Created - The odm xml extension was successfully created."
+            "description": "Created - The ODM XML Extension was successfully created."
         },
         403: {
             "model": ErrorResponse,
@@ -192,7 +195,7 @@ def create_odm_xml_extension(
 
 @router.patch(
     "/{uid}",
-    summary="Update odm xml extension",
+    summary="Update ODM XML Extension",
     description="",
     response_model=OdmXmlExtension,
     status_code=200,
@@ -225,7 +228,7 @@ def edit_odm_xml_extension(
 
 
 @router.post(
-    "/{uid}/new-version",
+    "/{uid}/versions",
     summary=" Create a new version of ODM XML Extension",
     description="""
 State before:

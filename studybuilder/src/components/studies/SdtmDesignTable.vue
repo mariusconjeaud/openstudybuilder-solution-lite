@@ -5,7 +5,9 @@
   item-key="uid"
   :server-items-length="total"
   :options.sync="options"
-  :items="items">
+  :items="items"
+  show-column-names-toggle-button
+  >
 </n-n-table>
 </template>
 
@@ -95,9 +97,9 @@ export default {
   methods: {
     fetchData () {
       const params = {
-        pageNumber: (this.options.page),
-        pageSize: this.options.itemsPerPage,
-        totalCount: true
+        page_number: (this.options.page),
+        page_size: this.options.itemsPerPage,
+        total_count: true
       }
       listings.getAllSdtm(this.selectedStudy.uid, params, this.type).then(resp => {
         this.items = resp.data.items

@@ -81,20 +81,20 @@ class NumericValueWithUnitRepository(
                 value=input_dict.get("value"),
                 definition=input_dict.get("definition"),
                 abbreviation=input_dict.get("abbreviation"),
-                is_template_parameter=input_dict.get("templateParameter"),
-                unit_definition_uid=input_dict.get("unitDefinitionUid"),
+                is_template_parameter=input_dict.get("template_parameter"),
+                unit_definition_uid=input_dict.get("unit_definition_uid"),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("libraryName"),
+                library_name=input_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: input_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("changeDescription"),
+                change_description=input_dict.get("change_description"),
                 status=LibraryItemStatus(input_dict.get("status")),
-                author=input_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=input_dict.get("startDate")),
+                author=input_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=input_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -131,14 +131,14 @@ class NumericValueWithUnitRepository(
         return """
         WITH *,
             concept_value.value as value,
-            head([(concept_value)-[:HAS_UNIT_DEFINITION]->(unit_definition:UnitDefinitionRoot) | unit_definition.uid]) AS unitDefinitionUid
+            head([(concept_value)-[:HAS_UNIT_DEFINITION]->(unit_definition:UnitDefinitionRoot) | unit_definition.uid]) AS unit_definition_uid
         """
 
     def find_uid_by_value_and_unit(
         self, value: float, unit_definition_uid: str
     ) -> Optional[str]:
         cypher_query = f"""
-            MATCH (or:{self.root_class.__label__})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED]->(ov:{self.value_class.__label__} {{value: $value}})-[:HAS_UNIT_DEFINITION]->(unitRoot:UnitDefinitionRoot {{uid: $unit_definition_uid}})
+            MATCH (or:{self.root_class.__label__})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED]->(ov:{self.value_class.__label__} {{value: $value}})-[:HAS_UNIT_DEFINITION]->(unit_root:UnitDefinitionRoot {{uid: $unit_definition_uid}})
             RETURN or.uid
         """
         items, _ = db.cypher_query(

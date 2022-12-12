@@ -1,32 +1,32 @@
 [
   {
     "abbreviation": null,
-    "activityGroups": [
+    "activity_groups": [
       {
         "name": "Compliance",
         "uid": "ActivityGroup_000002"
       }
     ],
-    "activitySubGroups": [
+    "activity_subgroups": [
       {
         "name": "GeneralCompliance",
         "uid": "ActivitySubGroup_000035"
       }
     ],
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "endDate": null,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "library_name": "Sponsor",
     "name": "Visit compliance",
-    "nameSentenceCase": "Visit compliance",
-    "possibleActions": [
+    "name_sentence_case": "Visit compliance",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-06-08T06:43:46.940165",
+    "start_date": "2022-06-08T06:43:46.940165",
     "status": "Final",
     "uid": "Activity_000961",
-    "userInitials": "unknown-user",
+    "user_initials": "unknown-user",
     "version": "1.0"
   }
 ]

@@ -43,9 +43,9 @@ objective_template_mapper = {
         "path": "/objective-templates",
         "body": {
             "name": row[headers.index("name")],
-            "libraryName": row[headers.index("library")],
-            "indicationUids": [],
-            "cathegoryUids": [],
+            "library_name": row[headers.index("library")],
+            "indication_uids": [],
+            "category_uids": [],
         },
     }
 }
@@ -54,7 +54,7 @@ objective_mapper = {
     "OBJECTIVE": lambda row, headers: {
         "path": "/objectives",
         "name": row[headers.index("name")],
-        "libraryName": row[headers.index("library")],
+        "library_name": row[headers.index("library")],
         "first_value": row[headers.index("first_value")],
         "first_conjunction": row[headers.index("first_conjunction")],
         "second_value": row[headers.index("second_value")],
@@ -67,7 +67,7 @@ endpoint_template_mapper = {
         "path": "/endpoint-templates",
         "body": {
             "name": row[headers.index("name")],
-            "libraryName": row[headers.index("library")],
+            "library_name": row[headers.index("library")],
         },
     }
 }
@@ -76,7 +76,7 @@ endpoint_mapper = {
     "ENDPOINT": lambda row, headers: {
         "path": "/endpoints",
         "name": row[headers.index("name")],
-        "libraryName": row[headers.index("library")],
+        "library_name": row[headers.index("library")],
         "first_value": row[headers.index("first_value")],
         "first_conjunction": row[headers.index("first_conjunction")],
         "second_value": row[headers.index("second_value")],
@@ -89,7 +89,7 @@ timeframe_template_mapper = {
         "path": "/timeframe-templates",
         "body": {
             "name": row[headers.index("name")],
-            "libraryName": row[headers.index("library")],
+            "library_name": row[headers.index("library")],
         },
     }
 }
@@ -98,7 +98,7 @@ timeframe_mapper = {
     "TIMEFRAME": lambda row, headers: {
         "path": "/timeframes",
         "name": row[headers.index("name")],
-        "libraryName": row[headers.index("library")],
+        "library_name": row[headers.index("library")],
         "first_value": row[headers.index("first_value")],
         "first_conjunction": row[headers.index("first_conjunction")],
         "second_value": row[headers.index("second_value")],
@@ -109,41 +109,41 @@ timeframe_mapper = {
 # Study
 study_mapper = {
     "STUDY": lambda row, headers: {
-        "" "path": "/studies",
+        "path": "/studies",
         "body": {
-            "studyNumber": row[headers.index("IMPACT_NUM")],
-            "studyAcronym": "",  # row[headers.index("TRL_ID")]
-            "projectNumber": row[headers.index("PROJ")],
+            "study_number": row[headers.index("IMPACT_NUM")],
+            "study_acronym": "",  # row[headers.index("TRL_ID")]
+            "project_number": row[headers.index("PROJ")],
         },
         "patch": {
-            "ctGovId": row[headers.index("CLINICAL_TRIALS_GOV")],
-            "eudractId": row[headers.index("EUDRACT_NUM")],
+            "ct_gov_id": row[headers.index("CLINICAL_TRIALS_GOV")],
+            "eudract_id": row[headers.index("EUDRACT_NUM")],
         },
     },
     "STUDY_TYPE": lambda row, headers: {
         "patch": {
-            "studyNumber": row[headers.index("IMPACT_NUM")],
-            "studyDefineParamName": row[headers.index("TSPARAM")],
-            "cValue": row[headers.index("TSVAL")],
-            "cCode": row[headers.index("TSVALCD")],
+            "study_number": row[headers.index("IMPACT_NUM")],
+            "study_define_param_name": row[headers.index("TSPARAM")],
+            "c_value": row[headers.index("TSVAL")],
+            "c_code": row[headers.index("TSVALCD")],
         },
-        "componentMappings": {
-            "Intervention Model": "studyIntervention",
-            "Trial is Randomized": "studyIntervention",
-            "Trial Blinding Schema": "studyIntervention",
-            "Control Type Response": "studyIntervention",
-            "Trial Title": "studyDescription",
-            "Trial Phase Classification": "highLevelStudyDesign",
-            "Trial Type Response": "highLevelStudyDesign",
+        "component_mappings": {
+            "Intervention Model": "study_intervention",
+            "Trial is Randomized": "study_intervention",
+            "Trial Blinding Schema": "study_intervention",
+            "Control Type Response": "study_intervention",
+            "Trial Title": "study_description",
+            "Trial Phase Classification": "high_level_study_design",
+            "Trial Type Response": "high_level_study_design",
         },
-        "parameterMappings": {
-            "Intervention Model": "interventionModelCode",
-            "Trial is Randomized": "isTrialRandomised",
-            "Trial Blinding Schema": "trialBlindingSchemaCode",
-            "Control Type Response": "controlTypeCode",
-            "Trial Title": "studyTitle",
-            "Trial Phase Classification": "trialPhaseCode",
-            "Trial Type Response": "trialTypeCodes",
+        "parameter_mappings": {
+            "Intervention Model": "intervention_model_code",
+            "Trial is Randomized": "is_trial_randomised",
+            "Trial Blinding Schema": "trial_blinding_schema_code",
+            "Control Type Response": "control_type_code",
+            "Trial Title": "study_title",
+            "Trial Phase Classification": "trial_phase_code",
+            "Trial Type Response": "trial_type_codes",
         },
     },
 }
@@ -152,14 +152,14 @@ study_mapper = {
 # project
 project_mapper = {
     "PROJECT": lambda row, headers: {
-        "" "path": "/projects",
+        "path": "/projects",
         "clinical_programme_path": "/clinical-programmes",
         "body": {
-            "projectNumber": row[headers.index("project_code")],
+            "project_number": row[headers.index("project_code")],
             "name": row[headers.index("project_name")],
-            "brandName": row[headers.index("brand_name")],
+            "brand_name": row[headers.index("brand_name")],
             "description": row[headers.index("description")],
-            "clinicalProgrammeUid": "temp",
+            "clinical_programme_uid": "temp",
         },
         "clinical_programme_body": {
             "name": row[headers.index("clinical_programme_name")]
@@ -263,12 +263,12 @@ class Mockdata(BaseImporter):
                     {"values": values, "conjunction": conjunction, "position": 2}
                 )
             body = {
-                "parameterValues": parameter_values,
-                f"{objecttype}TemplateUid": template["uid"],
-                "libraryName": data["libraryName"],
+                "parameter_values": parameter_values,
+                f"{objecttype}_template_uid": template["uid"],
+                "library_name": data["library_name"],
             }
             self.log.info(
-                f"Adding '{objecttype}' with name '{data['name']}' to library '{data['libraryName']}'"
+                f"Adding '{objecttype}' with name '{data['name']}' to library '{data['library_name']}'"
             )
             res = self.api.post_to_api({"body": body, "path": data["path"]})
             if res is not None:
@@ -280,7 +280,7 @@ class Mockdata(BaseImporter):
                     self.metrics.icrement(data["path"] + "--ApproveError")
             else:
                 self.log.error(
-                    f"Failed to add '{objecttype}' with name '{data['name']}' to library '{data['libraryName']}'"
+                    f"Failed to add '{objecttype}' with name '{data['name']}' to library '{data['library_name']}'"
                 )
 
     def create_values(self, all_values, value_type):
@@ -311,7 +311,7 @@ class Mockdata(BaseImporter):
         readCSV = csv.reader(csvfile, delimiter=",")
         headers = next(readCSV)
         snomed_uid = self.api.find_dictionary_uid("SNOMED")
-        all_cathegories = self.api.get_terms_for_codelist_name("Objective Category")
+        all_categories = self.api.get_terms_for_codelist_name("Objective Category")
 
         for row in readCSV:
             data = mapper(row, headers)
@@ -320,23 +320,23 @@ class Mockdata(BaseImporter):
                 for ind in indications.split("|"):
                     uid = self.api.find_dictionary_item_uid_from_name(snomed_uid, ind)
                     if uid is not None:
-                        data["body"]["indicationUids"].append(uid)
+                        data["body"]["indication_uids"].append(uid)
                     else:
                         self.log.warning(f"Unable to find indication {ind}")
 
-            cathegories = row[headers.index("cathegory")]
-            if cathegories != "":
-                for cat in cathegories.split("|"):
-                    uid = self.get_uid_for_sponsor_preferred_name(all_cathegories, cat)
+            categories = row[headers.index("category")]
+            if categories != "":
+                for cat in categories.split("|"):
+                    uid = self.get_uid_for_sponsor_preferred_name(all_categories, cat)
                     if uid is not None:
-                        data["body"]["cathegoryUids"].append(uid)
+                        data["body"]["category_uids"].append(uid)
                     else:
-                        self.log.warning(f"Unable to find cathegory {cat}")
+                        self.log.warning(f"Unable to find category {cat}")
             testing = row[headers.index("testing")]
             if testing.lower() == "yes":
-                data["body"]["confirmatoryTesting"] = True
+                data["body"]["confirmatory_testing"] = True
             elif testing.lower() == "no":
-                data["body"]["confirmatoryTesting"] = False
+                data["body"]["confirmatory_testing"] = False
             self.log.info(f"Adding template '{data['body']['name']}'")
             res = self.api.post_to_api(data)
             if res is not None:
@@ -392,7 +392,7 @@ class Mockdata(BaseImporter):
             else:
                 self.log.warning("Study with Study Id '%s' is not found", study_id)
                 self.metrics.icrement(
-                    "/study-objectives/select/" + "--STUDY_ID_DOES_NOT_EXISTS"
+                    "/study-objectives/" + "--STUDY_ID_DOES_NOT_EXISTS"
                 )
                 continue
             objective_name = row[headers.index("objective")]
@@ -402,12 +402,12 @@ class Mockdata(BaseImporter):
             else:
                 objective_uid = objective["uid"]
             objective_level = row[headers.index("objective_level")]
-            body = {"objectiveUid": objective_uid, "objectiveLevelUid": objective_level}
+            body = {"objective_uid": objective_uid, "objective_level_uid": objective_level}
             self.log.info(
                 f"Add study objective '{objective_name}' for study id '{study_id}'"
             )
-            path = "/study/" + study["uid"] + "/study-objectives/select"
-            self.api.simple_post_to_api(path, body, "/study-objectives/select")
+            path = "/studies/" + study["uid"] + "/study-objectives"
+            self.api.simple_post_to_api(path, body, "/study-objectives")
 
     # Study endpoints
     @open_file()
@@ -423,44 +423,44 @@ class Mockdata(BaseImporter):
             else:
                 self.log.warning("Study with Study Id '%s' is not found", study_id)
                 self.metrics.icrement(
-                    "/study-endpoints/select/" + "--STUDY_ID_DOES_NOT_EXISTS"
+                    "/study-endpoints/" + "--STUDY_ID_DOES_NOT_EXISTS"
                 )
                 continue
             endpoint_name = row[headers.index("endpoint")]
             endpoint = self.api.find_object_by_name(endpoint_name, "/endpoints")
             if endpoint is not None:
-                body["endpointUid"] = endpoint["uid"]
+                body["endpoint_uid"] = endpoint["uid"]
             timeframe_name = row[headers.index("timeframe")]
             timeframe = self.api.find_object_by_name(timeframe_name, "/timeframes")
             if timeframe is not None:
-                body["timeframeUid"] = timeframe["uid"]
+                body["timeframe_uid"] = timeframe["uid"]
             units = row[headers.index("units")].split("+")
             if not len(units) == 1 and units[0] == 1:
                 separator = row[headers.index("unit_seperator")]
-                body["endpointUnits"] = {"units": units, "separator": separator}
+                body["endpoint_units"] = {"units": units, "separator": separator}
             endpoint_level = row[headers.index("endpoint_level")]
             if endpoint_level != "":
-                body["endpointLevel"] = endpoint_level
+                body["endpoint_level"] = endpoint_level
             # study objective
             all_study_objectives = self.api.get_study_objectives_for_study(study["uid"])
             study_objective = row[headers.index("study_objective")]
             if study_objective in all_study_objectives:
-                body["studyObjectiveUid"] = all_study_objectives[study_objective]
-            path = "/study/" + study["uid"] + "/study-endpoints/select"
+                body["study_objective_uid"] = all_study_objectives[study_objective]
+            path = "/studies/" + study["uid"] + "/study-endpoints"
             self.log.info(
                 f"Add study endpoint '{endpoint_name}' for study id '{study_id}'"
             )
-            self.api.simple_post_to_api(path, body, "/study-endpoints/select")
+            self.api.simple_post_to_api(path, body, "/study-endpoints")
 
     def update_data(
         self, patch, study_data
     ):  # smarter solution for this when I know more about the data to patch
-        study_data["currentMetadata"]["identificationMetadata"]["registryIdentifiers"][
-            "ctGovId"
-        ] = patch["ctGovId"]
-        study_data["currentMetadata"]["identificationMetadata"]["registryIdentifiers"][
-            "eudractId"
-        ] = patch["eudractId"]
+        study_data["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "ct_gov_id"
+        ] = patch["ct_gov_id"]
+        study_data["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eudract_id"
+        ] = patch["eudract_id"]
 
     @open_file()
     def handle_study(self, csvfile):
@@ -468,7 +468,7 @@ class Mockdata(BaseImporter):
         study_headers = next(readCSV)
         # Fetching existing data
         all_studies = self.api.get_all_identifiers(
-            self.api.get_all_from_api("/studies"), "studyNumber"
+            self.api.get_all_from_api("/studies"), "study_number"
         )
         for row in readCSV:
             # only for not empty rows
@@ -476,8 +476,8 @@ class Mockdata(BaseImporter):
                 _class = "STUDY"
                 data = study_mapper[_class](row, study_headers)
                 # Checking if study already exists by study number
-                if data["body"]["studyNumber"] not in all_studies:
-                    all_studies.append(data["body"]["studyNumber"])
+                if data["body"]["study_number"] not in all_studies:
+                    all_studies.append(data["body"]["study_number"])
                     study_data = self.api.post_to_api(data)
                     # Patch the update information
                     if study_data is not None:
@@ -489,52 +489,52 @@ class Mockdata(BaseImporter):
                         patched_data.update(data["patch"])
                         with open(
                             MDR_MIGRATION_STUDY_TYPE, encoding="utf-8", errors="ignore"
-                        ) as studyTypeCsvFile:
+                        ) as study_type_csv_file:
                             readStudyTypeCSV = csv.reader(
-                                studyTypeCsvFile, delimiter=","
+                                study_type_csv_file, delimiter=","
                             )
                             study_type_headers = next(readStudyTypeCSV)
-                            for studyTypeRow in readStudyTypeCSV:
+                            for study_type_row in readStudyTypeCSV:
                                 # only for not empty rows
-                                if studyTypeRow:
+                                if study_type_row:
                                     # have to prepare structure here, as /studies POST request returns actually only
                                     # identification metadata and version metadata
                                     study_data_template = study_data
-                                    study_data_template["currentMetadata"][
-                                        "highLevelStudyDesign"
+                                    study_data_template["current_metadata"][
+                                        "high_level_study_design"
                                     ] = {}
-                                    study_data_template["currentMetadata"][
-                                        "studyIntervention"
+                                    study_data_template["current_metadata"][
+                                        "study_intervention"
                                     ] = {}
-                                    study_data_template["currentMetadata"][
-                                        "studyDescription"
+                                    study_data_template["current_metadata"][
+                                        "study_description"
                                     ] = {}
                                     _class = "STUDY_TYPE"
                                     study_patch_data = study_mapper[_class](
-                                        studyTypeRow, study_type_headers
+                                        study_type_row, study_type_headers
                                     )
                                     if (
-                                        data["body"]["studyNumber"]
-                                        == study_patch_data["patch"]["studyNumber"]
+                                        data["body"]["study_number"]
+                                        == study_patch_data["patch"]["study_number"]
                                     ):
                                         parameter_name = study_patch_data["patch"][
-                                            "studyDefineParamName"
+                                            "study_define_param_name"
                                         ]
                                         component_name = study_patch_data[
-                                            "componentMappings"
+                                            "component_mappings"
                                         ][parameter_name]
                                         api_param_name = study_patch_data[
-                                            "parameterMappings"
+                                            "parameter_mappings"
                                         ][parameter_name]
                                         data_to_patch = study_patch_data["patch"][
-                                            "cCode"
+                                            "c_code"
                                         ]
                                         if api_param_name.endswith("Codes"):
                                             if api_param_name not in patched_data:
                                                 dict_to_patch = {
-                                                    "termUid": data_to_patch
+                                                    "term_uid": data_to_patch
                                                 }
-                                                study_data_template["currentMetadata"][
+                                                study_data_template["current_metadata"][
                                                     component_name
                                                 ][api_param_name] = [dict_to_patch]
                                                 patched_data[api_param_name] = [
@@ -542,33 +542,33 @@ class Mockdata(BaseImporter):
                                                 ]
                                             else:
                                                 dict_to_patch = {
-                                                    "termUid": data_to_patch
+                                                    "term_uid": data_to_patch
                                                 }
                                                 existingCodes = patched_data[
                                                     api_param_name
                                                 ]
                                                 existingCodes.append(dict_to_patch)
-                                                study_data_template["currentMetadata"][
+                                                study_data_template["current_metadata"][
                                                     component_name
                                                 ][api_param_name] = existingCodes
                                                 patched_data[
                                                     api_param_name
                                                 ] = existingCodes
-                                        elif api_param_name.endswith("Code"):
-                                            dict_to_patch = {"termUid": data_to_patch}
-                                            study_data_template["currentMetadata"][
+                                        elif api_param_name.endswith("_code"):
+                                            dict_to_patch = {"term_uid": data_to_patch}
+                                            study_data_template["current_metadata"][
                                                 component_name
                                             ][api_param_name] = dict_to_patch
-                                        elif api_param_name == "isTrialRandomised":
+                                        elif api_param_name == "is_trial_randomised":
                                             data_to_patch = map_boolean(
-                                                study_patch_data["patch"]["cValue"]
+                                                study_patch_data["patch"]["c_value"]
                                             )
-                                            study_data_template["currentMetadata"][
+                                            study_data_template["current_metadata"][
                                                 component_name
                                             ][api_param_name] = data_to_patch
                                             patched_data[api_param_name] = data_to_patch
                                         else:
-                                            study_data_template["currentMetadata"][
+                                            study_data_template["current_metadata"][
                                                 component_name
                                             ][api_param_name] = data_to_patch
                                             patched_data[api_param_name] = data_to_patch
@@ -611,7 +611,7 @@ class Mockdata(BaseImporter):
 
             if data["body"]["name"] not in all_projects:
                 all_projects.append(data["body"]["name"])
-                data["body"]["clinicalProgrammeUid"] = uid
+                data["body"]["clinical_programme_uid"] = uid
                 self.api.post_to_api(data)
             else:
                 self.metrics.icrement(data["path"] + "--AlreadyExist")

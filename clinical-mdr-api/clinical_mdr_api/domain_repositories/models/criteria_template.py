@@ -75,4 +75,4 @@ class CriteriaTemplateRoot(VersionRoot):
     has_type = RelationshipTo(CTTermRoot, "HAS_TYPE", cardinality=cardinality.One)
     has_indication = RelationshipTo(DictionaryTermRoot, "HAS_DISEASE_DISORDER_TERM")
     has_category = RelationshipTo(CTTermRoot, "HAS_CATEGORY")
-    has_sub_category = RelationshipTo(CTTermRoot, "HAS_SUB_CATEGORY")
+    has_subcategory = RelationshipTo(CTTermRoot, "HAS_SUB_CATEGORY")

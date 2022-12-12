@@ -4,10 +4,11 @@
     :headers="headers"
     :items="units"
     item-key="uid"
-    sort-by="startDate"
+    sort-by="start_date"
     sort-desc
     has-api
     export-data-url="concepts/unit-definitions"
+    export-object-label="Units"
     column-data-resource="concepts/unit-definitions"
     :options.sync="options"
     :server-items-length="total"
@@ -28,42 +29,42 @@
         </v-icon>
       </v-btn>
     </template>
-    <template v-slot:item.masterUnit="{ item }">
-      {{ item.masterUnit|yesno }}
+    <template v-slot:item.master_unit="{ item }">
+      {{ item.master_unit|yesno }}
     </template>
-    <template v-slot:item.displayUnit="{ item }">
-      {{ item.displayUnit|yesno }}
+    <template v-slot:item.display_unit="{ item }">
+      {{ item.display_unit|yesno }}
     </template>
-    <template v-slot:item.unitSubsets="{ item }">
-      {{ displayList(item.unitSubsets) }}
+    <template v-slot:item.unit_subsets="{ item }">
+      {{ displayList(item.unit_subsets) }}
     </template>
-    <template v-slot:item.ctUnits="{ item }">
-      {{ displayList(item.ctUnits) }}
+    <template v-slot:item.ct_units="{ item }">
+      {{ displayList(item.ct_units) }}
     </template>
-    <template v-slot:item.convertibleUnit="{ item }">
-      {{ item.convertibleUnit|yesno }}
+    <template v-slot:item.convertible_unit="{ item }">
+      {{ item.convertible_unit|yesno }}
     </template>
-    <template v-slot:item.siUnit="{ item }">
-      {{ item.siUnit|yesno }}
+    <template v-slot:item.si_unit="{ item }">
+      {{ item.si_unit|yesno }}
     </template>
-    <template v-slot:item.usConventionalUnit="{ item }">
-      {{ item.usConventionalUnit|yesno }}
+    <template v-slot:item.us_conventional_unit="{ item }">
+      {{ item.us_conventional_unit|yesno }}
     </template>
     <template v-slot:item.status="{ item }">
       <status-chip :status="item.status" />
     </template>
-    <template v-slot:item.startDate="{ item }">
-      {{ item.startDate | date }}
+    <template v-slot:item.start_date="{ item }">
+      {{ item.start_date | date }}
     </template>
-    <template v-slot:item.ucumUnit="{ item }">
+    <template v-slot:item.ucum_unit="{ item }">
       <v-edit-dialog
-        :return-value.sync="item.ucumUnit"
+        :return-value.sync="item.ucum_unit"
         >
-        <span v-if="item.ucumUnit">{{ item.ucumUnit.code }}</span>
+        <span v-if="item.ucum_unit">{{ item.ucum_unit.code }}</span>
         <v-icon v-else>mdi-table-search</v-icon>
         <template v-slot:input>
           <ucum-unit-field
-            v-model="item.ucumUnit"
+            v-model="item.ucum_unit"
             />
         </template>
       </v-edit-dialog>
@@ -99,21 +100,21 @@ export default {
     return {
       headers: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('_global.library'), value: 'libraryName' },
+        { text: this.$t('_global.library'), value: 'library_name' },
         { text: this.$t('_global.name'), value: 'name' },
-        { text: this.$t('UnitTable.master_unit'), value: 'masterUnit' },
-        { text: this.$t('UnitTable.display_unit'), value: 'displayUnit' },
-        { text: this.$t('UnitTable.unit_subsets'), value: 'unitSubsets' },
+        { text: this.$t('UnitTable.master_unit'), value: 'master_unit' },
+        { text: this.$t('UnitTable.display_unit'), value: 'display_unit' },
+        { text: this.$t('UnitTable.unit_subsets'), value: 'unit_subsets' },
         { text: this.$t('UnitTable.ucum_unit'), value: 'ucum.name' },
-        { text: this.$t('UnitTable.ct_units'), value: 'ctUnits', width: '10%' },
-        { text: this.$t('UnitTable.convertible_unit'), value: 'convertibleUnit' },
-        { text: this.$t('UnitTable.si_unit'), value: 'siUnit' },
-        { text: this.$t('UnitTable.us_conventional_unit'), value: 'usConventionalUnit' },
-        { text: this.$t('UnitTable.unit_dimension'), value: 'unitDimension.name' },
-        { text: this.$t('UnitTable.legacy_code'), value: 'legacyCode' },
-        { text: this.$t('UnitTable.molecular_weight'), value: 'molecularWeightConvExpon' },
-        { text: this.$t('UnitTable.conversion_factor'), value: 'conversionFactorToMaster' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
+        { text: this.$t('UnitTable.ct_units'), value: 'ct_units', width: '10%' },
+        { text: this.$t('UnitTable.convertible_unit'), value: 'convertible_unit' },
+        { text: this.$t('UnitTable.si_unit'), value: 'si_unit' },
+        { text: this.$t('UnitTable.us_conventional_unit'), value: 'us_conventional_unit' },
+        { text: this.$t('UnitTable.unit_dimension'), value: 'unit_dimension.name' },
+        { text: this.$t('UnitTable.legacy_code'), value: 'legacy_code' },
+        { text: this.$t('UnitTable.molecular_weight'), value: 'molecular_weight_conv_expon' },
+        { text: this.$t('UnitTable.conversion_factor'), value: 'conversion_factor_to_master' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
       ],
@@ -177,9 +178,9 @@ export default {
       this.filters = filters
       let data
       const params = {
-        pageNumber: (this.options.page),
-        pageSize: this.options.itemsPerPage,
-        totalCount: true
+        page_number: (this.options.page),
+        page_size: this.options.itemsPerPage,
+        total_count: true
       }
       if (filtersUpdated) {
         /* Filters have changed, reset page number */
@@ -192,9 +193,9 @@ export default {
         }
       }
       if (this.options.sortBy.length !== 0 && sort !== undefined) {
-        params.sortBy = `{"${this.options.sortBy[0]}":${!sort}}`
+        params.sort_by = `{"${this.options.sortBy[0]}":${!sort}}`
       } else {
-        params.sortBy = `{"startDate":${false}}`
+        params.sort_by = `{"start_date":${false}}`
       }
       this.$store.dispatch('units/fetchUnits', { params }).then((resp) => {
         data = this.$store.getters['units/units']

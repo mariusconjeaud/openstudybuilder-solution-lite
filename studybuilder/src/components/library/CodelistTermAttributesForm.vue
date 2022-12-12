@@ -69,7 +69,7 @@
           rules="required"
           >
           <v-textarea
-            v-model="form.changeDescription"
+            v-model="form.change_description"
             :label="$t('HistoryTable.change_description')"
             :error-messages="errors"
             :rows="1"
@@ -145,7 +145,7 @@ export default {
     close () {
       this.$emit('close')
       this.$store.commit('form/CLEAR_FORM')
-      this.form.changeDescription = ''
+      this.form.change_description = ''
     },
     async submit () {
       const isValid = await this.$refs.observer.validate()

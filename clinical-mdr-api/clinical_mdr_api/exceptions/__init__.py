@@ -1,6 +1,8 @@
 """Custom exceptions."""
+from typing import Optional
 
 from fastapi import status
+from fastapi.security import SecurityScopes
 from starlette.datastructures import MutableHeaders
 
 
@@ -34,9 +36,20 @@ class BusinessLogicException(MDRApiBaseException):
     status_code = status.HTTP_400_BAD_REQUEST
 
 
-class InternalErrorException(MDRApiBaseException):
-    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-
-
 class ConflictErrorException(MDRApiBaseException):
     status_code = status.HTTP_409_CONFLICT
+
+
+class NotAuthenticatedException(MDRApiBaseException):
+    """The client must authenticate itself, or get a fresh token"""
+
+    status_code = status.HTTP_401_UNAUTHORIZED
+
+    def __init__(self, msg: str, security_scopes: Optional[SecurityScopes] = None):
+        super().__init__(msg)
+        if security_scopes.scopes:
+            self.headers[
+                "WWW-Authenticate"
+            ] = f'Bearer scope="{security_scopes.scope_str}"'
+        else:
+            self.headers["WWW-Authenticate"] = "Bearer"

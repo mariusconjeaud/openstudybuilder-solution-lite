@@ -5,7 +5,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/concepts/activities/activity-instances?library=Sponsor&totalCount=true"
+            "url": "/concepts/activities/activity-instances?library=Sponsor&total_count=true"
         },
         "response": {
             "code": 200,
@@ -16,30 +16,30 @@
                         "uid": "activity_instance_root1",
                         "type": "reminders",
                         "name": "name1",
-                        "nameSentenceCase": "name_sentence_case1",
+                        "name_sentence_case": "name_sentence_case1",
                         "definition": "definition1",
                         "abbreviation": "abbv",
-                        "topicCode": "topic_code1",
-                        "adamParamCode": "adam_param_code1",
-                        "legacyDescription": "legacy_description1",
-                        "sdtmVariable": {
-                            "termUid": "sdtm_variable_uid1",
+                        "topic_code": "topic_code1",
+                        "adam_param_code": "adam_param_code1",
+                        "legacy_description": "legacy_description1",
+                        "sdtm_variable": {
+                            "term_uid": "sdtm_variable_uid1",
                             "name": "sdtm_variable_name1"
                         },
-                        "sdtmSubcat": {
-                            "termUid": "sdtm_subcat_uid1",
+                        "sdtm_subcat": {
+                            "term_uid": "sdtm_subcat_uid1",
                             "name": "sdtm_subcat_name1"
                         },
-                        "sdtmCat": {
-                            "termUid": "sdtm_cat_uid1",
+                        "sdtm_cat": {
+                            "term_uid": "sdtm_cat_uid1",
                             "name": "sdtm_cat_name1"
                         },
-                        "sdtmDomain": {
-                            "termUid": "sdtm_domain_uid1",
+                        "sdtm_domain": {
+                            "term_uid": "sdtm_domain_uid1",
                             "name": "sdtm_domain_name1"
                         },
                         "specimen": {
-                            "termUid": "specimen_uid1",
+                            "term_uid": "specimen_uid1",
                             "name": "specimen_name1"
                         },
                         "activities": [
@@ -48,58 +48,58 @@
                                 "name": "name1"
                             }
                         ],
-                        "activitySubgroups": [
+                        "activity_subgroups": [
                             {
-                                "uid": "activity_sub_group_root1",
+                                "uid": "activity_subgroup_root1",
                                 "name": "name1"
                             }
                         ],
-                        "activityGroups": [
+                        "activity_groups": [
                             {
                                 "uid": "activity_group_root1",
                                 "name": "name1"
                             }
                         ],
-                        "libraryName": "Sponsor",
-                        "startDate": "2021-03-18T11:54:20.898Z",
-                        "endDate": null,
+                        "library_name": "Sponsor",
+                        "start_date": "2021-03-18T11:54:20.898Z",
+                        "end_date": null,
                         "status": "Final",
                         "version": "1.0",
-                        "changeDescription": "Approved version",
-                        "userInitials": "TODO user initials",
-                        "possibleActions": [
+                        "change_description": "Approved version",
+                        "user_initials": "TODO user initials",
+                        "possible_actions": [
                             "inactivate",
-                            "newVersion"
+                            "new_version"
                         ]
                     },
                     {
                         "uid": "activity_instance_root2",
                         "type": "reminders",
                         "name": "name2",
-                        "nameSentenceCase": "name_sentence_case2",
+                        "name_sentence_case": "name_sentence_case2",
                         "definition": "definition2",
                         "abbreviation": "abbv",
-                        "topicCode": "topic_code2",
-                        "adamParamCode": "adam_param_code2",
-                        "legacyDescription": "legacy_description2",
-                        "sdtmVariable": {
-                            "termUid": "sdtm_variable_uid2",
+                        "topic_code": "topic_code2",
+                        "adam_param_code": "adam_param_code2",
+                        "legacy_description": "legacy_description2",
+                        "sdtm_variable": {
+                            "term_uid": "sdtm_variable_uid2",
                             "name": "sdtm_variable_name2"
                         },
-                        "sdtmSubcat": {
-                            "termUid": "sdtm_subcat_uid2",
+                        "sdtm_subcat": {
+                            "term_uid": "sdtm_subcat_uid2",
                             "name": "sdtm_subcat_name2"
                         },
-                        "sdtmCat": {
-                            "termUid": "sdtm_cat_uid2",
+                        "sdtm_cat": {
+                            "term_uid": "sdtm_cat_uid2",
                             "name": "sdtm_cat_name2"
                         },
-                        "sdtmDomain": {
-                            "termUid": "sdtm_domain_uid2",
+                        "sdtm_domain": {
+                            "term_uid": "sdtm_domain_uid2",
                             "name": "sdtm_domain_name2"
                         },
                         "specimen": {
-                            "termUid": "specimen_uid2",
+                            "term_uid": "specimen_uid2",
                             "name": "specimen_name2"
                         },
                         "activities": [
@@ -108,26 +108,26 @@
                                 "name": "name2"
                             }
                         ],
-                        "activitySubgroups": [
+                        "activity_subgroups": [
                             {
-                                "uid": "activity_sub_group_root2",
+                                "uid": "activity_subgroup_root2",
                                 "name": "name2"
                             }
                         ],
-                        "activityGroups": [
+                        "activity_groups": [
                             {
                                 "uid": "activity_group_root2",
                                 "name": "name2"
                             }
                         ],
-                        "libraryName": "Sponsor",
-                        "startDate": "2021-03-18T11:54:20.898Z",
-                        "endDate": null,
+                        "library_name": "Sponsor",
+                        "start_date": "2021-03-18T11:54:20.898Z",
+                        "end_date": null,
                         "status": "Draft",
                         "version": "0.1",
-                        "changeDescription": "New draft version",
-                        "userInitials": "TODO user initials",
-                        "possibleActions": [
+                        "change_description": "New draft version",
+                        "user_initials": "TODO user initials",
+                        "possible_actions": [
                             "approve",
                             "delete",
                             "edit"
@@ -136,17 +136,17 @@
                 ],
                 "total": 2,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
     {
-        "name": "Test POST new-version activity instance",
+        "name": "Test POST /versions activity instance",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/concepts/activities/activity-instances/activity_instance_root1/new-version"
+            "url": "/concepts/activities/activity-instances/activity_instance_root1/versions"
         },
         "response": {
             "code": 201,
@@ -155,30 +155,30 @@
                 "uid": "activity_instance_root1",
                 "type": "reminders",
                 "name": "name1",
-                "nameSentenceCase": "name_sentence_case1",
+                "name_sentence_case": "name_sentence_case1",
                 "definition": "definition1",
                 "abbreviation": "abbv",
-                "topicCode": "topic_code1",
-                "adamParamCode": "adam_param_code1",
-                "legacyDescription": "legacy_description1",
-                "sdtmVariable": {
-                    "termUid": "sdtm_variable_uid1",
+                "topic_code": "topic_code1",
+                "adam_param_code": "adam_param_code1",
+                "legacy_description": "legacy_description1",
+                "sdtm_variable": {
+                    "term_uid": "sdtm_variable_uid1",
                     "name": "sdtm_variable_name1"
                 },
-                "sdtmSubcat": {
-                    "termUid": "sdtm_subcat_uid1",
+                "sdtm_subcat": {
+                    "term_uid": "sdtm_subcat_uid1",
                     "name": "sdtm_subcat_name1"
                 },
-                "sdtmCat": {
-                    "termUid": "sdtm_cat_uid1",
+                "sdtm_cat": {
+                    "term_uid": "sdtm_cat_uid1",
                     "name": "sdtm_cat_name1"
                 },
-                "sdtmDomain": {
-                    "termUid": "sdtm_domain_uid1",
+                "sdtm_domain": {
+                    "term_uid": "sdtm_domain_uid1",
                     "name": "sdtm_domain_name1"
                 },
                 "specimen": {
-                    "termUid": "specimen_uid1",
+                    "term_uid": "specimen_uid1",
                     "name": "specimen_name1"
                 },
                 "activities": [
@@ -187,26 +187,26 @@
                         "name": "name1"
                     }
                 ],
-                "activitySubgroups": [
+                "activity_subgroups": [
                     {
-                        "uid": "activity_sub_group_root1",
+                        "uid": "activity_subgroup_root1",
                         "name": "name1"
                     }
                 ],
-                "activityGroups": [
+                "activity_groups": [
                     {
                         "uid": "activity_group_root1",
                         "name": "name1"
                     }
                 ],
-                "libraryName": "Sponsor",
-                "startDate": "2021-03-18T11:54:20.898Z",
-                "endDate": null,
+                "library_name": "Sponsor",
+                "start_date": "2021-03-18T11:54:20.898Z",
+                "end_date": null,
                 "status": "Draft",
                 "version": "1.1",
-                "changeDescription": "New draft created",
-                "userInitials": "TODO user initials",
-                "possibleActions": [
+                "change_description": "New draft created",
+                "user_initials": "TODO user initials",
+                "possible_actions": [
                     "approve",
                     "edit"
                 ]
@@ -228,30 +228,30 @@
                 "uid": "activity_instance_root2",
                 "type": "reminders",
                 "name": "name2",
-                "nameSentenceCase": "name_sentence_case2",
+                "name_sentence_case": "name_sentence_case2",
                 "definition": "definition2",
                 "abbreviation": "abbv",
-                "topicCode": "topic_code2",
-                "adamParamCode": "adam_param_code2",
-                "legacyDescription": "legacy_description2",
-                "sdtmVariable": {
-                    "termUid": "sdtm_variable_uid2",
+                "topic_code": "topic_code2",
+                "adam_param_code": "adam_param_code2",
+                "legacy_description": "legacy_description2",
+                "sdtm_variable": {
+                    "term_uid": "sdtm_variable_uid2",
                     "name": "sdtm_variable_name2"
                 },
-                "sdtmSubcat": {
-                    "termUid": "sdtm_subcat_uid2",
+                "sdtm_subcat": {
+                    "term_uid": "sdtm_subcat_uid2",
                     "name": "sdtm_subcat_name2"
                 },
-                "sdtmCat": {
-                    "termUid": "sdtm_cat_uid2",
+                "sdtm_cat": {
+                    "term_uid": "sdtm_cat_uid2",
                     "name": "sdtm_cat_name2"
                 },
-                "sdtmDomain": {
-                    "termUid": "sdtm_domain_uid2",
+                "sdtm_domain": {
+                    "term_uid": "sdtm_domain_uid2",
                     "name": "sdtm_domain_name2"
                 },
                 "specimen": {
-                    "termUid": "specimen_uid2",
+                    "term_uid": "specimen_uid2",
                     "name": "specimen_name2"
                 },
                 "activities": [
@@ -260,28 +260,28 @@
                         "name": "name2"
                     }
                 ],
-                "activitySubgroups": [
+                "activity_subgroups": [
                     {
-                        "uid": "activity_sub_group_root2",
+                        "uid": "activity_subgroup_root2",
                         "name": "name2"
                     }
                 ],
-                "activityGroups": [
+                "activity_groups": [
                     {
                         "uid": "activity_group_root2",
                         "name": "name2"
                     }
                 ],
-                "libraryName": "Sponsor",
-                "startDate": "2021-03-18T11:54:20.898Z",
-                "endDate": null,
+                "library_name": "Sponsor",
+                "start_date": "2021-03-18T11:54:20.898Z",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Approved version",
-                "userInitials": "TODO user initials",
-                "possibleActions": [
+                "change_description": "Approved version",
+                "user_initials": "TODO user initials",
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
@@ -301,30 +301,30 @@
                 "uid": "activity_instance_root2",
                 "type": "reminders",
                 "name": "name2",
-                "nameSentenceCase": "name_sentence_case2",
+                "name_sentence_case": "name_sentence_case2",
                 "definition": "definition2",
                 "abbreviation": "abbv",
-                "topicCode": "topic_code2",
-                "adamParamCode": "adam_param_code2",
-                "legacyDescription": "legacy_description2",
-                "sdtmVariable": {
-                    "termUid": "sdtm_variable_uid2",
+                "topic_code": "topic_code2",
+                "adam_param_code": "adam_param_code2",
+                "legacy_description": "legacy_description2",
+                "sdtm_variable": {
+                    "term_uid": "sdtm_variable_uid2",
                     "name": "sdtm_variable_name2"
                 },
-                "sdtmSubcat": {
-                    "termUid": "sdtm_subcat_uid2",
+                "sdtm_subcat": {
+                    "term_uid": "sdtm_subcat_uid2",
                     "name": "sdtm_subcat_name2"
                 },
-                "sdtmCat": {
-                    "termUid": "sdtm_cat_uid2",
+                "sdtm_cat": {
+                    "term_uid": "sdtm_cat_uid2",
                     "name": "sdtm_cat_name2"
                 },
-                "sdtmDomain": {
-                    "termUid": "sdtm_domain_uid2",
+                "sdtm_domain": {
+                    "term_uid": "sdtm_domain_uid2",
                     "name": "sdtm_domain_name2"
                 },
                 "specimen": {
-                    "termUid": "specimen_uid2",
+                    "term_uid": "specimen_uid2",
                     "name": "specimen_name2"
                 },
                 "activities": [
@@ -333,26 +333,26 @@
                         "name": "name2"
                     }
                 ],
-                "activitySubgroups": [
+                "activity_subgroups": [
                     {
-                        "uid": "activity_sub_group_root2",
+                        "uid": "activity_subgroup_root2",
                         "name": "name2"
                     }
                 ],
-                "activityGroups": [
+                "activity_groups": [
                     {
                         "uid": "activity_group_root2",
                         "name": "name2"
                     }
                 ],
-                "libraryName": "Sponsor",
-                "startDate": "2021-03-18T11:54:20.898Z",
-                "endDate": null,
+                "library_name": "Sponsor",
+                "start_date": "2021-03-18T11:54:20.898Z",
+                "end_date": null,
                 "status": "Retired",
                 "version": "1.0",
-                "changeDescription": "Deactivated version",
-                "userInitials": "TODO user initials",
-                "possibleActions": [
+                "change_description": "Deactivated version",
+                "user_initials": "TODO user initials",
+                "possible_actions": [
                     "reactivate"
                 ]
             }
@@ -373,30 +373,30 @@
                 "uid": "activity_instance_root2",
                 "type": "reminders",
                 "name": "name2",
-                "nameSentenceCase": "name_sentence_case2",
+                "name_sentence_case": "name_sentence_case2",
                 "definition": "definition2",
                 "abbreviation": "abbv",
-                "topicCode": "topic_code2",
-                "adamParamCode": "adam_param_code2",
-                "legacyDescription": "legacy_description2",
-                "sdtmVariable": {
-                    "termUid": "sdtm_variable_uid2",
+                "topic_code": "topic_code2",
+                "adam_param_code": "adam_param_code2",
+                "legacy_description": "legacy_description2",
+                "sdtm_variable": {
+                    "term_uid": "sdtm_variable_uid2",
                     "name": "sdtm_variable_name2"
                 },
-                "sdtmSubcat": {
-                    "termUid": "sdtm_subcat_uid2",
+                "sdtm_subcat": {
+                    "term_uid": "sdtm_subcat_uid2",
                     "name": "sdtm_subcat_name2"
                 },
-                "sdtmCat": {
-                    "termUid": "sdtm_cat_uid2",
+                "sdtm_cat": {
+                    "term_uid": "sdtm_cat_uid2",
                     "name": "sdtm_cat_name2"
                 },
-                "sdtmDomain": {
-                    "termUid": "sdtm_domain_uid2",
+                "sdtm_domain": {
+                    "term_uid": "sdtm_domain_uid2",
                     "name": "sdtm_domain_name2"
                 },
                 "specimen": {
-                    "termUid": "specimen_uid2",
+                    "term_uid": "specimen_uid2",
                     "name": "specimen_name2"
                 },
                 "activities": [
@@ -405,28 +405,28 @@
                         "name": "name2"
                     }
                 ],
-                "activitySubgroups": [
+                "activity_subgroups": [
                     {
-                        "uid": "activity_sub_group_root2",
+                        "uid": "activity_subgroup_root2",
                         "name": "name2"
                     }
                 ],
-                "activityGroups": [
+                "activity_groups": [
                     {
                         "uid": "activity_group_root2",
                         "name": "name2"
                     }
                 ],
-                "libraryName": "Sponsor",
-                "startDate": "2021-03-18T11:54:20.898Z",
-                "endDate": null,
+                "library_name": "Sponsor",
+                "start_date": "2021-03-18T11:54:20.898Z",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO user initials",
-                "possibleActions": [
+                "change_description": "Reactivated version",
+                "user_initials": "TODO user initials",
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }

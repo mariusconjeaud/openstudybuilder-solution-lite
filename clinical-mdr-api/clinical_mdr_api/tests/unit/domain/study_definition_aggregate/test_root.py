@@ -1,6 +1,6 @@
 import random
 import unittest
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Callable, Mapping, Optional, Sequence
 from unittest.mock import patch
 
@@ -180,15 +180,15 @@ def make_random_study_metadata_edit(
         registry_identifiers=RegistryIdentifiersVO(
             ct_gov_id=new_id_metadata.registry_identifiers.ct_gov_id,
             eudract_id=new_id_metadata.registry_identifiers.eudract_id,
-            universal_trial_number_UTN=new_id_metadata.registry_identifiers.universal_trial_number_UTN,
-            japanese_trial_registry_id_JAPIC=new_id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC,
-            investigational_new_drug_application_number_IND=new_id_metadata.registry_identifiers.investigational_new_drug_application_number_IND,
+            universal_trial_number_utn=new_id_metadata.registry_identifiers.universal_trial_number_utn,
+            japanese_trial_registry_id_japic=new_id_metadata.registry_identifiers.japanese_trial_registry_id_japic,
+            investigational_new_drug_application_number_ind=new_id_metadata.registry_identifiers.investigational_new_drug_application_number_ind,
             ct_gov_id_null_value_code=new_id_metadata.registry_identifiers.ct_gov_id_null_value_code,
             eudract_id_null_value_code=new_id_metadata.registry_identifiers.eudract_id_null_value_code,
-            universal_trial_number_UTN_null_value_code=new_id_metadata.registry_identifiers.universal_trial_number_UTN_null_value_code,
-            japanese_trial_registry_id_JAPIC_null_value_code=new_id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC_null_value_code,
-            investigational_new_drug_application_number_IND_null_value_code=(
-                new_id_metadata.registry_identifiers.investigational_new_drug_application_number_IND_null_value_code
+            universal_trial_number_utn_null_value_code=new_id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code,
+            japanese_trial_registry_id_japic_null_value_code=new_id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code,
+            investigational_new_drug_application_number_ind_null_value_code=(
+                new_id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code
             ),
         ),
     )
@@ -308,7 +308,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
         cls.patcher.start()
 
     @classmethod
-    def tearDownClass(cls) -> None:
+    def tear_down_class(cls) -> None:
         cls.patcher.stop()
 
     def test__study_ar_from_initial_values__no_proper_callback_for_project_num_provided__failure(
@@ -358,17 +358,17 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=None,
                         eudract_id=None,
-                        universal_trial_number_UTN=None,
-                        japanese_trial_registry_id_JAPIC=None,
-                        investigational_new_drug_application_number_IND=None,
+                        universal_trial_number_utn=None,
+                        japanese_trial_registry_id_japic=None,
+                        investigational_new_drug_application_number_ind=None,
                         ct_gov_id_null_value_code=None,
                         eudract_id_null_value_code=None,
-                        universal_trial_number_UTN_null_value_code=None,
-                        japanese_trial_registry_id_JAPIC_null_value_code=None,
-                        investigational_new_drug_application_number_IND_null_value_code=None,
+                        universal_trial_number_utn_null_value_code=None,
+                        japanese_trial_registry_id_japic_null_value_code=None,
+                        investigational_new_drug_application_number_ind_null_value_code=None,
                     ),
                 )
-                start_timestamp = datetime.today()
+                start_timestamp = datetime.now(timezone.utc)
 
                 # when
                 study: StudyDefinitionAR = StudyDefinitionAR.from_initial_values(
@@ -381,7 +381,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 )
 
                 # then
-                end_timestamp = datetime.today()
+                end_timestamp = datetime.now(timezone.utc)
                 self.assertGreaterEqual(
                     study.current_metadata.ver_metadata.version_timestamp,
                     start_timestamp,
@@ -403,21 +403,21 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         registry_identifiers=RegistryIdentifiersVO(
                             ct_gov_id=study_id_metadata.registry_identifiers.ct_gov_id,
                             eudract_id=study_id_metadata.registry_identifiers.eudract_id,
-                            universal_trial_number_UTN=study_id_metadata.registry_identifiers.universal_trial_number_UTN,
-                            japanese_trial_registry_id_JAPIC=study_id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC,
-                            investigational_new_drug_application_number_IND=(
-                                study_id_metadata.registry_identifiers.investigational_new_drug_application_number_IND
+                            universal_trial_number_utn=study_id_metadata.registry_identifiers.universal_trial_number_utn,
+                            japanese_trial_registry_id_japic=study_id_metadata.registry_identifiers.japanese_trial_registry_id_japic,
+                            investigational_new_drug_application_number_ind=(
+                                study_id_metadata.registry_identifiers.investigational_new_drug_application_number_ind
                             ),
                             ct_gov_id_null_value_code=study_id_metadata.registry_identifiers.ct_gov_id_null_value_code,
                             eudract_id_null_value_code=study_id_metadata.registry_identifiers.eudract_id_null_value_code,
-                            universal_trial_number_UTN_null_value_code=(
-                                study_id_metadata.registry_identifiers.universal_trial_number_UTN_null_value_code
+                            universal_trial_number_utn_null_value_code=(
+                                study_id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code
                             ),
-                            japanese_trial_registry_id_JAPIC_null_value_code=(
-                                study_id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC_null_value_code
+                            japanese_trial_registry_id_japic_null_value_code=(
+                                study_id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code
                             ),
-                            investigational_new_drug_application_number_IND_null_value_code=(
-                                study_id_metadata.registry_identifiers.investigational_new_drug_application_number_IND_null_value_code
+                            investigational_new_drug_application_number_ind_null_value_code=(
+                                study_id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code
                             ),
                         ),
                     ),
@@ -488,7 +488,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         drug_study_indication_null_value_code=None,
                         device_study_indication=None,
                         device_study_indication_null_value_code=None,
-                        trial_intent_type_codes=[],
+                        trial_intent_types_codes=[],
                         trial_intent_type_null_value_code=None,
                     ),
                     ver_metadata=StudyVersionMetadataVO(
@@ -642,7 +642,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 # given
                 given_study_metadata = study.current_metadata
                 given_study_latest_locked_metadata = study.latest_locked_metadata
-                start_timestamp = datetime.today()
+                start_timestamp = datetime.now(timezone.utc)
 
                 # when
                 study.release()
@@ -650,7 +650,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 study_short_title = None
 
                 # then
-                end_timestamp = datetime.today()
+                end_timestamp = datetime.now(timezone.utc)
                 self.assertGreaterEqual(
                     study.latest_released_or_locked_metadata.ver_metadata.version_timestamp,
                     start_timestamp,
@@ -738,7 +738,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 # given
                 given_study_metadata = study.current_metadata
                 given_latest_locked_metadata = study.latest_locked_metadata
-                start_timestamp = datetime.today()
+                start_timestamp = datetime.now(timezone.utc)
                 version_author = str(random_str())
                 version_info = str(random_str())
                 study_title = None
@@ -750,7 +750,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 )
 
                 # then
-                end_timestamp = datetime.today()
+                end_timestamp = datetime.now(timezone.utc)
                 expected_locked_version_number = (
                     given_latest_locked_metadata.ver_metadata.locked_version_number + 1
                     if given_latest_locked_metadata is not None
@@ -825,14 +825,14 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 given_study_latest_locked_metadata = (
                     study.latest_released_or_locked_metadata
                 )
-                start_timestamp = datetime.today()
+                start_timestamp = datetime.now(timezone.utc)
                 study_title = None
                 study_short_title = None
                 # when
                 study.unlock()
 
                 # then
-                end_timestamp = datetime.today()
+                end_timestamp = datetime.now(timezone.utc)
                 self.assertGreaterEqual(
                     study.current_metadata.ver_metadata.version_timestamp,
                     start_timestamp,
@@ -903,20 +903,20 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=str(random_str()),
                         eudract_id=str(random_str()),
-                        universal_trial_number_UTN=str(random_str()),
-                        japanese_trial_registry_id_JAPIC=str(random_str()),
-                        investigational_new_drug_application_number_IND=str(
+                        universal_trial_number_utn=str(random_str()),
+                        japanese_trial_registry_id_japic=str(random_str()),
+                        investigational_new_drug_application_number_ind=str(
                             random_str()
                         ),
                         ct_gov_id_null_value_code=None,
                         eudract_id_null_value_code=None,
-                        universal_trial_number_UTN_null_value_code=None,
-                        japanese_trial_registry_id_JAPIC_null_value_code=None,
-                        investigational_new_drug_application_number_IND_null_value_code=None,
+                        universal_trial_number_utn_null_value_code=None,
+                        japanese_trial_registry_id_japic_null_value_code=None,
+                        investigational_new_drug_application_number_ind_null_value_code=None,
                     ),
                     project_number=str(random_str()),
                 )
-                start_timestamp = datetime.today()
+                start_timestamp = datetime.now(timezone.utc)
 
                 # when
                 study.edit_metadata(
@@ -925,7 +925,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 )
 
                 # then
-                end_timestamp = datetime.today()
+                end_timestamp = datetime.now(timezone.utc)
                 expected_current_id_prefix = (
                     new_id_metadata.project_number
                     if study.latest_locked_metadata is None
@@ -940,19 +940,19 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=new_id_metadata.registry_identifiers.ct_gov_id,
                         eudract_id=new_id_metadata.registry_identifiers.eudract_id,
-                        universal_trial_number_UTN=new_id_metadata.registry_identifiers.universal_trial_number_UTN,
-                        japanese_trial_registry_id_JAPIC=new_id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC,
-                        investigational_new_drug_application_number_IND=(
-                            new_id_metadata.registry_identifiers.investigational_new_drug_application_number_IND
+                        universal_trial_number_utn=new_id_metadata.registry_identifiers.universal_trial_number_utn,
+                        japanese_trial_registry_id_japic=new_id_metadata.registry_identifiers.japanese_trial_registry_id_japic,
+                        investigational_new_drug_application_number_ind=(
+                            new_id_metadata.registry_identifiers.investigational_new_drug_application_number_ind
                         ),
                         ct_gov_id_null_value_code=new_id_metadata.registry_identifiers.ct_gov_id_null_value_code,
                         eudract_id_null_value_code=new_id_metadata.registry_identifiers.eudract_id_null_value_code,
-                        universal_trial_number_UTN_null_value_code=new_id_metadata.registry_identifiers.universal_trial_number_UTN_null_value_code,
-                        japanese_trial_registry_id_JAPIC_null_value_code=(
-                            new_id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC_null_value_code
+                        universal_trial_number_utn_null_value_code=new_id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code,
+                        japanese_trial_registry_id_japic_null_value_code=(
+                            new_id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code
                         ),
-                        investigational_new_drug_application_number_IND_null_value_code=(
-                            new_id_metadata.registry_identifiers.investigational_new_drug_application_number_IND_null_value_code
+                        investigational_new_drug_application_number_ind_null_value_code=(
+                            new_id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code
                         ),
                     ),
                 )
@@ -994,21 +994,21 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=study.current_metadata.id_metadata.registry_identifiers.ct_gov_id,
                         eudract_id=study.current_metadata.id_metadata.registry_identifiers.eudract_id,
-                        universal_trial_number_UTN=study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN,
-                        japanese_trial_registry_id_JAPIC=study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC,
-                        investigational_new_drug_application_number_IND=(
-                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND
+                        universal_trial_number_utn=study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn,
+                        japanese_trial_registry_id_japic=study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic,
+                        investigational_new_drug_application_number_ind=(
+                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind
                         ),
                         ct_gov_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.ct_gov_id_null_value_code,
                         eudract_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.eudract_id_null_value_code,
-                        universal_trial_number_UTN_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN_null_value_code
+                        universal_trial_number_utn_null_value_code=(
+                            study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code
                         ),
-                        japanese_trial_registry_id_JAPIC_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC_null_value_code
+                        japanese_trial_registry_id_japic_null_value_code=(
+                            study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code
                         ),
-                        investigational_new_drug_application_number_IND_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND_null_value_code
+                        investigational_new_drug_application_number_ind_null_value_code=(
+                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code
                         ),
                     ),
                 )
@@ -1036,21 +1036,21 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=study.current_metadata.id_metadata.registry_identifiers.ct_gov_id,
                         eudract_id=study.current_metadata.id_metadata.registry_identifiers.eudract_id,
-                        universal_trial_number_UTN=study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN,
-                        japanese_trial_registry_id_JAPIC=study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC,
-                        investigational_new_drug_application_number_IND=(
-                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND
+                        universal_trial_number_utn=study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn,
+                        japanese_trial_registry_id_japic=study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic,
+                        investigational_new_drug_application_number_ind=(
+                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind
                         ),
                         ct_gov_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.ct_gov_id_null_value_code,
                         eudract_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.eudract_id_null_value_code,
-                        universal_trial_number_UTN_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN_null_value_code
+                        universal_trial_number_utn_null_value_code=(
+                            study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code
                         ),
-                        japanese_trial_registry_id_JAPIC_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC_null_value_code
+                        japanese_trial_registry_id_japic_null_value_code=(
+                            study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code
                         ),
-                        investigational_new_drug_application_number_IND_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND_null_value_code
+                        investigational_new_drug_application_number_ind_null_value_code=(
+                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code
                         ),
                     ),
                     project_number=str(random_str()),
@@ -1079,21 +1079,21 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=study.current_metadata.id_metadata.registry_identifiers.ct_gov_id,
                         eudract_id=study.current_metadata.id_metadata.registry_identifiers.eudract_id,
-                        universal_trial_number_UTN=study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN,
-                        japanese_trial_registry_id_JAPIC=study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC,
-                        investigational_new_drug_application_number_IND=(
-                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND
+                        universal_trial_number_utn=study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn,
+                        japanese_trial_registry_id_japic=study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic,
+                        investigational_new_drug_application_number_ind=(
+                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind
                         ),
                         ct_gov_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.ct_gov_id_null_value_code,
                         eudract_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.eudract_id_null_value_code,
-                        universal_trial_number_UTN_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN_null_value_code
+                        universal_trial_number_utn_null_value_code=(
+                            study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code
                         ),
-                        japanese_trial_registry_id_JAPIC_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC_null_value_code
+                        japanese_trial_registry_id_japic_null_value_code=(
+                            study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code
                         ),
-                        investigational_new_drug_application_number_IND_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND_null_value_code
+                        investigational_new_drug_application_number_ind_null_value_code=(
+                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code
                         ),
                     ),
                     project_number=study.current_metadata.id_metadata.project_number,
@@ -1186,21 +1186,21 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=study.current_metadata.id_metadata.registry_identifiers.ct_gov_id,
                         eudract_id=study.current_metadata.id_metadata.registry_identifiers.eudract_id,
-                        universal_trial_number_UTN=study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN,
-                        japanese_trial_registry_id_JAPIC=study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC,
-                        investigational_new_drug_application_number_IND=(
-                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND
+                        universal_trial_number_utn=study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn,
+                        japanese_trial_registry_id_japic=study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic,
+                        investigational_new_drug_application_number_ind=(
+                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind
                         ),
                         ct_gov_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.ct_gov_id_null_value_code,
                         eudract_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.eudract_id_null_value_code,
-                        universal_trial_number_UTN_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN_null_value_code
+                        universal_trial_number_utn_null_value_code=(
+                            study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code
                         ),
-                        japanese_trial_registry_id_JAPIC_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC_null_value_code
+                        japanese_trial_registry_id_japic_null_value_code=(
+                            study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code
                         ),
-                        investigational_new_drug_application_number_IND_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND_null_value_code
+                        investigational_new_drug_application_number_ind_null_value_code=(
+                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code
                         ),
                     ),
                     project_number=str(random_str()),
@@ -1220,19 +1220,19 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=new_id_metadata.registry_identifiers.ct_gov_id,
                         eudract_id=new_id_metadata.registry_identifiers.eudract_id,
-                        universal_trial_number_UTN=new_id_metadata.registry_identifiers.universal_trial_number_UTN,
-                        japanese_trial_registry_id_JAPIC=new_id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC,
-                        investigational_new_drug_application_number_IND=(
-                            new_id_metadata.registry_identifiers.investigational_new_drug_application_number_IND
+                        universal_trial_number_utn=new_id_metadata.registry_identifiers.universal_trial_number_utn,
+                        japanese_trial_registry_id_japic=new_id_metadata.registry_identifiers.japanese_trial_registry_id_japic,
+                        investigational_new_drug_application_number_ind=(
+                            new_id_metadata.registry_identifiers.investigational_new_drug_application_number_ind
                         ),
                         ct_gov_id_null_value_code=new_id_metadata.registry_identifiers.ct_gov_id_null_value_code,
                         eudract_id_null_value_code=new_id_metadata.registry_identifiers.eudract_id_null_value_code,
-                        universal_trial_number_UTN_null_value_code=new_id_metadata.registry_identifiers.universal_trial_number_UTN_null_value_code,
-                        japanese_trial_registry_id_JAPIC_null_value_code=(
-                            new_id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC_null_value_code
+                        universal_trial_number_utn_null_value_code=new_id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code,
+                        japanese_trial_registry_id_japic_null_value_code=(
+                            new_id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code
                         ),
-                        investigational_new_drug_application_number_IND_null_value_code=(
-                            new_id_metadata.registry_identifiers.investigational_new_drug_application_number_IND_null_value_code
+                        investigational_new_drug_application_number_ind_null_value_code=(
+                            new_id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code
                         ),
                     ),
                     project_number=new_id_metadata.project_number,
@@ -1259,21 +1259,21 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=study.current_metadata.id_metadata.registry_identifiers.ct_gov_id,
                         eudract_id=study.current_metadata.id_metadata.registry_identifiers.eudract_id,
-                        universal_trial_number_UTN=study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN,
-                        japanese_trial_registry_id_JAPIC=study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC,
-                        investigational_new_drug_application_number_IND=(
-                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND
+                        universal_trial_number_utn=study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn,
+                        japanese_trial_registry_id_japic=study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic,
+                        investigational_new_drug_application_number_ind=(
+                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind
                         ),
                         ct_gov_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.ct_gov_id_null_value_code,
                         eudract_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.eudract_id_null_value_code,
-                        universal_trial_number_UTN_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN_null_value_code
+                        universal_trial_number_utn_null_value_code=(
+                            study.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code
                         ),
-                        japanese_trial_registry_id_JAPIC_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC_null_value_code
+                        japanese_trial_registry_id_japic_null_value_code=(
+                            study.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code
                         ),
-                        investigational_new_drug_application_number_IND_null_value_code=(
-                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND_null_value_code
+                        investigational_new_drug_application_number_ind_null_value_code=(
+                            study.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code
                         ),
                     ),
                     project_number=str(random_str()),
@@ -1293,24 +1293,24 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=study.latest_locked_metadata.id_metadata.registry_identifiers.ct_gov_id,
                         eudract_id=study.latest_locked_metadata.id_metadata.registry_identifiers.eudract_id,
-                        universal_trial_number_UTN=study.latest_locked_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN,
-                        japanese_trial_registry_id_JAPIC=(
-                            study.latest_locked_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC
+                        universal_trial_number_utn=study.latest_locked_metadata.id_metadata.registry_identifiers.universal_trial_number_utn,
+                        japanese_trial_registry_id_japic=(
+                            study.latest_locked_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic
                         ),
-                        investigational_new_drug_application_number_IND=(
-                            study.latest_locked_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND
+                        investigational_new_drug_application_number_ind=(
+                            study.latest_locked_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind
                         ),
                         ct_gov_id_null_value_code=study.latest_locked_metadata.id_metadata.registry_identifiers.ct_gov_id_null_value_code,
                         eudract_id_null_value_code=study.latest_locked_metadata.id_metadata.registry_identifiers.eudract_id_null_value_code,
-                        universal_trial_number_UTN_null_value_code=(
-                            study.latest_locked_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN_null_value_code
+                        universal_trial_number_utn_null_value_code=(
+                            study.latest_locked_metadata.id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code
                         ),
-                        japanese_trial_registry_id_JAPIC_null_value_code=(
-                            study.latest_locked_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC_null_value_code
+                        japanese_trial_registry_id_japic_null_value_code=(
+                            study.latest_locked_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code
                         ),
-                        investigational_new_drug_application_number_IND_null_value_code=(
+                        investigational_new_drug_application_number_ind_null_value_code=(
                             # pylint:disable=line-too-long
-                            study.latest_locked_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND_null_value_code
+                            study.latest_locked_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code
                         ),
                     ),
                     project_number=new_id_metadata.project_number,
@@ -1346,14 +1346,14 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=None,
                         eudract_id=None,
-                        universal_trial_number_UTN=None,
-                        japanese_trial_registry_id_JAPIC=None,
-                        investigational_new_drug_application_number_IND=None,
+                        universal_trial_number_utn=None,
+                        japanese_trial_registry_id_japic=None,
+                        investigational_new_drug_application_number_ind=None,
                         ct_gov_id_null_value_code=None,
                         eudract_id_null_value_code=None,
-                        universal_trial_number_UTN_null_value_code=None,
-                        japanese_trial_registry_id_JAPIC_null_value_code=None,
-                        investigational_new_drug_application_number_IND_null_value_code=None,
+                        universal_trial_number_utn_null_value_code=None,
+                        japanese_trial_registry_id_japic_null_value_code=None,
+                        investigational_new_drug_application_number_ind_null_value_code=None,
                     ),
                     project_number=test_tuple[2],
                 )

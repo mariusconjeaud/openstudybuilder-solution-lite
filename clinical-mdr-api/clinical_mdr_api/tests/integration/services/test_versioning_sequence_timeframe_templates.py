@@ -26,7 +26,7 @@ class TestCreate(TestCase):
         cls.library = library_service.create(**library_data)
 
     def test_create(self):
-        data = {"name": template_data["name"], "libraryName": self.library["name"]}
+        data = {"name": template_data["name"], "library_name": self.library["name"]}
         timeframe_template = models.TimeframeTemplateCreateInput(**data)
         result = service.create(timeframe_template)
         self.assertIsInstance(result, models.TimeframeTemplate)
@@ -50,7 +50,7 @@ class TestDraftEdit(TestCase):
     def test_edit(self):
         data = {
             "name": template_data["name"] + " edited",
-            "changeDescription": "tested",
+            "change_description": "tested",
         }
         ot = models.TimeframeTemplateEditInput(**data)
         assert isinstance(self.ot, models.TimeframeTemplate)
@@ -62,7 +62,7 @@ class TestDraftEdit(TestCase):
 
         data = {
             "name": template_data["name"] + " edited again",
-            "changeDescription": "tested",
+            "change_description": "tested",
         }
         ot = models.TimeframeTemplateEditInput(**data)
         result = service.edit_draft(self.ot.uid, ot)

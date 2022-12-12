@@ -6,26 +6,26 @@
          "method": "POST",
          "request": {
             "name": "textual_finding_name1",
-            "dictionaryId": null,
-            "nameSentenceCase": "textual_finding_name_sentence_case1",
+            "dictionary_id": null,
+            "name_sentence_case": "textual_finding_name_sentence_case1",
             "definition": "textual_finding_definition1",
             "abbreviation": "abbv",
-            "topicCode": "textual_finding_topic_code1",
-            "adamParamCode": "textual_finding_adam_param_code1",
-            "legacyDescription": "textual_finding_legacy_description",
-            "sdtmVariable": "sdtm_variable_uid1",
-            "sdtmSubcat": "sdtm_subcat_uid1",
-            "sdtmCat": "sdtm_cat_uid1",
-            "sdtmDomain": "sdtm_domain_uid1",
+            "topic_code": "textual_finding_topic_code1",
+            "adam_param_code": "textual_finding_adam_param_code1",
+            "legacy_description": "textual_finding_legacy_description",
+            "sdtm_variable": "sdtm_variable_uid1",
+            "sdtm_subcat": "sdtm_subcat_uid1",
+            "sdtm_cat": "sdtm_cat_uid1",
+            "sdtm_domain": "sdtm_domain_uid1",
             "activities": [
                "activity_root1"
             ],
-            "valueSasDisplayFormat": "textual_finding_value_sas_display_format",
+            "value_sas_display_format": "textual_finding_value_sas_display_format",
             "specimen": "specimen_uid1",
-            "testCode": "test_code_uid1",
-            "maxTextLength": 7,
-            "splitTextInSuppQual": true,
-            "libraryName": "Sponsor"
+            "test_code": "test_code_uid1",
+            "max_text_length": 7,
+            "split_text_in_supp_qual": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/activities/textual-findings"
       },
@@ -35,26 +35,26 @@
          "result": {
             "uid": "TextualFinding_000001",
             "name": "textual_finding_name1",
-            "nameSentenceCase": "textual_finding_name_sentence_case1",
+            "name_sentence_case": "textual_finding_name_sentence_case1",
             "definition": "textual_finding_definition1",
             "abbreviation": "abbv",
-            "topicCode": "textual_finding_topic_code1",
-            "adamParamCode": "textual_finding_adam_param_code1",
-            "legacyDescription": "textual_finding_legacy_description",
-            "sdtmVariable": {
-               "termUid": "sdtm_variable_uid1",
+            "topic_code": "textual_finding_topic_code1",
+            "adam_param_code": "textual_finding_adam_param_code1",
+            "legacy_description": "textual_finding_legacy_description",
+            "sdtm_variable": {
+               "term_uid": "sdtm_variable_uid1",
                "name": null
             },
-            "sdtmSubcat": {
-               "termUid": "sdtm_subcat_uid1",
+            "sdtm_subcat": {
+               "term_uid": "sdtm_subcat_uid1",
                "name": null
             },
-            "sdtmCat": {
-               "termUid": "sdtm_cat_uid1",
+            "sdtm_cat": {
+               "term_uid": "sdtm_cat_uid1",
                "name": null
             },
-            "sdtmDomain": {
-               "termUid": "sdtm_domain_uid1",
+            "sdtm_domain": {
+               "term_uid": "sdtm_domain_uid1",
                "name": null
             },
             "activities": [
@@ -63,38 +63,38 @@
                   "name": "name1"
                }
             ],
-            "activitySubgroups": [
+            "activity_subgroups": [
                {
-                  "uid": "activity_sub_group_root1",
+                  "uid": "activity_subgroup_root1",
                   "name": "name1"
                }
             ],
-            "activityGroups": [
+            "activity_groups": [
                {
                   "uid": "activity_group_root1",
                   "name": "name1"
                }
             ],
-            "valueSasDisplayFormat": "textual_finding_value_sas_display_format",
+            "value_sas_display_format": "textual_finding_value_sas_display_format",
             "specimen": {
-               "termUid": "specimen_uid1",
+               "term_uid": "specimen_uid1",
                "name": null
             },
-            "testCode": {
-               "termUid": "test_code_uid1",
+            "test_code": {
+               "term_uid": "test_code_uid1",
                "name": "test_code_name1"
             },
-            "maxTextLength": 7,
-            "splitTextInSuppQual": true,
-            "libraryName": "Sponsor",
+            "max_text_length": 7,
+            "split_text_in_supp_qual": true,
+            "library_name": "Sponsor",
             "type": "textual-findings",
-            "startDate": "2021-03-18T11:54:20.898Z",
-            "endDate": null,
+            "start_date": "2021-03-18T11:54:20.898Z",
+            "end_date": null,
             "status": "Draft",
             "version": "0.1",
-            "changeDescription": "Initial version",
-            "userInitials": "TODO user initials",
-            "possibleActions": [
+            "change_description": "Initial version",
+            "user_initials": "TODO user initials",
+            "possible_actions": [
                "approve",
                "delete",
                "edit"
@@ -108,7 +108,7 @@
          "headers": {},
          "method": "GET",
          "request": {},
-         "url": "/concepts/activities/textual-findings?totalCount=true"
+         "url": "/concepts/activities/textual-findings?total_count=true"
       },
       "response": {
          "code": 200,
@@ -118,26 +118,26 @@
                {
                   "uid": "TextualFinding_000001",
                   "name": "textual_finding_name1",
-                  "nameSentenceCase": "textual_finding_name_sentence_case1",
+                  "name_sentence_case": "textual_finding_name_sentence_case1",
                   "definition": "textual_finding_definition1",
                   "abbreviation": "abbv",
-                  "topicCode": "textual_finding_topic_code1",
-                  "adamParamCode": "textual_finding_adam_param_code1",
-                  "legacyDescription": "textual_finding_legacy_description",
-                  "sdtmVariable": {
-                     "termUid": "sdtm_variable_uid1",
+                  "topic_code": "textual_finding_topic_code1",
+                  "adam_param_code": "textual_finding_adam_param_code1",
+                  "legacy_description": "textual_finding_legacy_description",
+                  "sdtm_variable": {
+                     "term_uid": "sdtm_variable_uid1",
                      "name": "sdtm_variable_name1"
                   },
-                  "sdtmSubcat": {
-                     "termUid": "sdtm_subcat_uid1",
+                  "sdtm_subcat": {
+                     "term_uid": "sdtm_subcat_uid1",
                      "name": "sdtm_subcat_name1"
                   },
-                  "sdtmCat": {
-                     "termUid": "sdtm_cat_uid1",
+                  "sdtm_cat": {
+                     "term_uid": "sdtm_cat_uid1",
                      "name": "sdtm_cat_name1"
                   },
-                  "sdtmDomain": {
-                     "termUid": "sdtm_domain_uid1",
+                  "sdtm_domain": {
+                     "term_uid": "sdtm_domain_uid1",
                      "name": "sdtm_domain_name1"
                   },
                   "activities": [
@@ -146,38 +146,38 @@
                         "name": "name1"
                      }
                   ],
-                  "activitySubgroups": [
+                  "activity_subgroups": [
                      {
-                        "uid": "activity_sub_group_root1",
+                        "uid": "activity_subgroup_root1",
                         "name": "name1"
                      }
                   ],
-                  "activityGroups": [
+                  "activity_groups": [
                      {
                         "uid": "activity_group_root1",
                         "name": "name1"
                      }
                   ],
-                  "valueSasDisplayFormat": "textual_finding_value_sas_display_format",
+                  "value_sas_display_format": "textual_finding_value_sas_display_format",
                   "specimen": {
-                     "termUid": "specimen_uid1",
+                     "term_uid": "specimen_uid1",
                      "name": "specimen_name1"
                   },
-                  "testCode": {
-                     "termUid": "test_code_uid1",
+                  "test_code": {
+                     "term_uid": "test_code_uid1",
                      "name": "test_code_name1"
                   },
-                  "maxTextLength": 7,
-                  "splitTextInSuppQual": true,
-                  "libraryName": "Sponsor",
+                  "max_text_length": 7,
+                  "split_text_in_supp_qual": true,
+                  "library_name": "Sponsor",
                   "type": "textual-findings",
-                  "startDate": "2021-03-18T11:54:20.898Z",
-                  "endDate": null,
+                  "start_date": "2021-03-18T11:54:20.898Z",
+                  "end_date": null,
                   "status": "Draft",
                   "version": "0.1",
-                  "changeDescription": "Initial version",
-                  "userInitials": "TODO user initials",
-                  "possibleActions": [
+                  "change_description": "Initial version",
+                  "user_initials": "TODO user initials",
+                  "possible_actions": [
                      "approve",
                      "delete",
                      "edit"
@@ -186,7 +186,7 @@
             ],
             "total": 1,
             "page": 1,
-            "size": 0
+            "size": 10
          }
       }
    },
@@ -204,30 +204,30 @@
          "result": {
             "uid": "TextualFinding_000001",
             "name": "textual_finding_name1",
-            "nameSentenceCase": "textual_finding_name_sentence_case1",
+            "name_sentence_case": "textual_finding_name_sentence_case1",
             "definition": "textual_finding_definition1",
             "abbreviation": "abbv",
-            "topicCode": "textual_finding_topic_code1",
-            "adamParamCode": "textual_finding_adam_param_code1",
-            "legacyDescription": "textual_finding_legacy_description",
-            "sdtmVariable": {
-               "termUid": "sdtm_variable_uid1",
+            "topic_code": "textual_finding_topic_code1",
+            "adam_param_code": "textual_finding_adam_param_code1",
+            "legacy_description": "textual_finding_legacy_description",
+            "sdtm_variable": {
+               "term_uid": "sdtm_variable_uid1",
                "name": "sdtm_variable_name1"
             },
-            "sdtmSubcat": {
-               "termUid": "sdtm_subcat_uid1",
+            "sdtm_subcat": {
+               "term_uid": "sdtm_subcat_uid1",
                "name": "sdtm_subcat_name1"
             },
-            "sdtmCat": {
-               "termUid": "sdtm_cat_uid1",
+            "sdtm_cat": {
+               "term_uid": "sdtm_cat_uid1",
                "name": "sdtm_cat_name1"
             },
-            "sdtmDomain": {
-               "termUid": "sdtm_domain_uid1",
+            "sdtm_domain": {
+               "term_uid": "sdtm_domain_uid1",
                "name": "sdtm_domain_name1"
             },
             "specimen": {
-               "termUid": "specimen_uid1",
+               "term_uid": "specimen_uid1",
                "name": "specimen_name1"
             },
             "activities": [
@@ -236,40 +236,40 @@
                   "name": "name1"
                }
             ],
-            "activitySubgroups": [
+            "activity_subgroups": [
                {
-                  "uid": "activity_sub_group_root1",
+                  "uid": "activity_subgroup_root1",
                   "name": "name1"
                }
             ],
-            "activityGroups": [
+            "activity_groups": [
                {
                   "uid": "activity_group_root1",
                   "name": "name1"
                }
             ],
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
             "type": "textual-findings",
-            "startDate": "2021-03-18T11:54:20.898Z",
-            "endDate": null,
+            "start_date": "2021-03-18T11:54:20.898Z",
+            "end_date": null,
             "status": "Final",
             "version": "1.0",
-            "changeDescription": "Approved version",
-            "userInitials": "TODO user initials",
-            "possibleActions": [
+            "change_description": "Approved version",
+            "user_initials": "TODO user initials",
+            "possible_actions": [
                "inactivate",
-               "newVersion"
+               "new_version"
             ]
          }
       }
    },
    {
-      "name": "Test POST new-version textual finding",
+      "name": "Test POST /versions textual finding",
       "request": {
          "headers": {},
          "method": "POST",
          "request": {},
-         "url": "/concepts/activities/activity-instances/TextualFinding_000001/new-version"
+         "url": "/concepts/activities/activity-instances/TextualFinding_000001/versions"
       },
       "response": {
          "code": 201,
@@ -277,30 +277,30 @@
          "result": {
             "uid": "TextualFinding_000001",
             "name": "textual_finding_name1",
-            "nameSentenceCase": "textual_finding_name_sentence_case1",
+            "name_sentence_case": "textual_finding_name_sentence_case1",
             "definition": "textual_finding_definition1",
             "abbreviation": "abbv",
-            "topicCode": "textual_finding_topic_code1",
-            "adamParamCode": "textual_finding_adam_param_code1",
-            "legacyDescription": "textual_finding_legacy_description",
-            "sdtmVariable": {
-               "termUid": "sdtm_variable_uid1",
+            "topic_code": "textual_finding_topic_code1",
+            "adam_param_code": "textual_finding_adam_param_code1",
+            "legacy_description": "textual_finding_legacy_description",
+            "sdtm_variable": {
+               "term_uid": "sdtm_variable_uid1",
                "name": "sdtm_variable_name1"
             },
-            "sdtmSubcat": {
-               "termUid": "sdtm_subcat_uid1",
+            "sdtm_subcat": {
+               "term_uid": "sdtm_subcat_uid1",
                "name": "sdtm_subcat_name1"
             },
-            "sdtmCat": {
-               "termUid": "sdtm_cat_uid1",
+            "sdtm_cat": {
+               "term_uid": "sdtm_cat_uid1",
                "name": "sdtm_cat_name1"
             },
-            "sdtmDomain": {
-               "termUid": "sdtm_domain_uid1",
+            "sdtm_domain": {
+               "term_uid": "sdtm_domain_uid1",
                "name": "sdtm_domain_name1"
             },
             "specimen": {
-               "termUid": "specimen_uid1",
+               "term_uid": "specimen_uid1",
                "name": "specimen_name1"
             },
             "activities": [
@@ -309,27 +309,27 @@
                   "name": "name1"
                }
             ],
-            "activitySubgroups": [
+            "activity_subgroups": [
                {
-                  "uid": "activity_sub_group_root1",
+                  "uid": "activity_subgroup_root1",
                   "name": "name1"
                }
             ],
-            "activityGroups": [
+            "activity_groups": [
                {
                   "uid": "activity_group_root1",
                   "name": "name1"
                }
             ],
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
             "type": "textual-findings",
-            "startDate": "2021-03-18T11:54:20.898Z",
-            "endDate": null,
+            "start_date": "2021-03-18T11:54:20.898Z",
+            "end_date": null,
             "status": "Draft",
             "version": "1.1",
-            "changeDescription": "New draft created",
-            "userInitials": "TODO user initials",
-            "possibleActions": [
+            "change_description": "New draft created",
+            "user_initials": "TODO user initials",
+            "possible_actions": [
                "approve",
                "edit"
             ]
@@ -344,20 +344,20 @@
          "request": {
             "name": "new_textual_finding_name",
             "definition": "new_textual_finding_definition",
-            "sdtmVariable": "sdtm_variable_uid2",
-            "sdtmSubcat": "sdtm_subcat_uid2",
-            "sdtmCat": "sdtm_cat_uid2",
-            "sdtmDomain": "sdtm_domain_uid2",
+            "sdtm_variable": "sdtm_variable_uid2",
+            "sdtm_subcat": "sdtm_subcat_uid2",
+            "sdtm_cat": "sdtm_cat_uid2",
+            "sdtm_domain": "sdtm_domain_uid2",
             "activities": [
                "activity_root1",
                "activity_root2"
             ],
-            "valueSasDisplayFormat": "new_textual_finding_value_sas_display_format",
+            "value_sas_display_format": "new_textual_finding_value_sas_display_format",
             "specimen": "specimen_uid2",
-            "testCode": "test_code_uid2",
-            "maxTextLength": 77,
-            "splitTextInSuppQual": false,
-            "changeDescription": "textual_finding_patch"
+            "test_code": "test_code_uid2",
+            "max_text_length": 77,
+            "split_text_in_supp_qual": false,
+            "change_description": "textual_finding_patch"
          },
          "url": "/concepts/activities/textual-findings/TextualFinding_000001"
       },
@@ -367,26 +367,26 @@
          "result": {
             "uid": "TextualFinding_000001",
             "name": "new_textual_finding_name",
-            "nameSentenceCase": "textual_finding_name_sentence_case1",
+            "name_sentence_case": "textual_finding_name_sentence_case1",
             "definition": "new_textual_finding_definition",
             "abbreviation": "abbv",
-            "topicCode": "textual_finding_topic_code1",
-            "adamParamCode": "textual_finding_adam_param_code1",
-            "legacyDescription": "textual_finding_legacy_description",
-            "sdtmVariable": {
-               "termUid": "sdtm_variable_uid2",
+            "topic_code": "textual_finding_topic_code1",
+            "adam_param_code": "textual_finding_adam_param_code1",
+            "legacy_description": "textual_finding_legacy_description",
+            "sdtm_variable": {
+               "term_uid": "sdtm_variable_uid2",
                "name": null
             },
-            "sdtmSubcat": {
-               "termUid": "sdtm_subcat_uid2",
+            "sdtm_subcat": {
+               "term_uid": "sdtm_subcat_uid2",
                "name": null
             },
-            "sdtmCat": {
-               "termUid": "sdtm_cat_uid2",
+            "sdtm_cat": {
+               "term_uid": "sdtm_cat_uid2",
                "name": null
             },
-            "sdtmDomain": {
-               "termUid": "sdtm_domain_uid2",
+            "sdtm_domain": {
+               "term_uid": "sdtm_domain_uid2",
                "name": null
             },
             "activities": [
@@ -399,17 +399,17 @@
                   "name": "name2"
                }
             ],
-            "activitySubgroups": [
+            "activity_subgroups": [
                {
-                  "uid": "activity_sub_group_root1",
+                  "uid": "activity_subgroup_root1",
                   "name": "name1"
                },
                {
-                  "uid": "activity_sub_group_root2",
+                  "uid": "activity_subgroup_root2",
                   "name": "name2"
                }
             ],
-            "activityGroups": [
+            "activity_groups": [
                {
                   "uid": "activity_group_root1",
                   "name": "name1"
@@ -419,26 +419,26 @@
                   "name": "name2"
                }
             ],
-            "valueSasDisplayFormat": "new_textual_finding_value_sas_display_format",
+            "value_sas_display_format": "new_textual_finding_value_sas_display_format",
             "specimen": {
-               "termUid": "specimen_uid2",
+               "term_uid": "specimen_uid2",
                "name": null
             },
-            "testCode": {
-               "termUid": "test_code_uid2",
+            "test_code": {
+               "term_uid": "test_code_uid2",
                "name": "test_code_name2"
             },
-            "maxTextLength": 77,
-            "splitTextInSuppQual": false,
-            "libraryName": "Sponsor",
+            "max_text_length": 77,
+            "split_text_in_supp_qual": false,
+            "library_name": "Sponsor",
             "type": "textual-findings",
-            "startDate": "2021-03-18T11:54:20.898Z",
-            "endDate": null,
+            "start_date": "2021-03-18T11:54:20.898Z",
+            "end_date": null,
             "status": "Draft",
             "version": "1.2",
-            "changeDescription": "textual_finding_patch",
-            "userInitials": "TODO user initials",
-            "possibleActions": [
+            "change_description": "textual_finding_patch",
+            "user_initials": "TODO user initials",
+            "possible_actions": [
                "approve",
                "edit"
             ]
@@ -459,30 +459,30 @@
          "result": {
             "uid": "TextualFinding_000001",
             "name": "new_textual_finding_name",
-            "nameSentenceCase": "textual_finding_name_sentence_case1",
+            "name_sentence_case": "textual_finding_name_sentence_case1",
             "definition": "new_textual_finding_definition",
             "abbreviation": "abbv",
-            "topicCode": "textual_finding_topic_code1",
-            "adamParamCode": "textual_finding_adam_param_code1",
-            "legacyDescription": "textual_finding_legacy_description",
-            "sdtmVariable": {
-               "termUid": "sdtm_variable_uid2",
+            "topic_code": "textual_finding_topic_code1",
+            "adam_param_code": "textual_finding_adam_param_code1",
+            "legacy_description": "textual_finding_legacy_description",
+            "sdtm_variable": {
+               "term_uid": "sdtm_variable_uid2",
                "name": "sdtm_variable_name2"
             },
-            "sdtmSubcat": {
-               "termUid": "sdtm_subcat_uid2",
+            "sdtm_subcat": {
+               "term_uid": "sdtm_subcat_uid2",
                "name": "sdtm_subcat_name2"
             },
-            "sdtmCat": {
-               "termUid": "sdtm_cat_uid2",
+            "sdtm_cat": {
+               "term_uid": "sdtm_cat_uid2",
                "name": "sdtm_cat_name2"
             },
-            "sdtmDomain": {
-               "termUid": "sdtm_domain_uid2",
+            "sdtm_domain": {
+               "term_uid": "sdtm_domain_uid2",
                "name": "sdtm_domain_name2"
             },
             "specimen": {
-               "termUid": "specimen_uid2",
+               "term_uid": "specimen_uid2",
                "name": "specimen_name2"
             },
             "activities": [
@@ -495,17 +495,17 @@
                   "name": "name2"
                }
             ],
-            "activitySubgroups": [
+            "activity_subgroups": [
                {
-                  "uid": "activity_sub_group_root1",
+                  "uid": "activity_subgroup_root1",
                   "name": "name1"
                },
                {
-                  "uid": "activity_sub_group_root2",
+                  "uid": "activity_subgroup_root2",
                   "name": "name2"
                }
             ],
-            "activityGroups": [
+            "activity_groups": [
                {
                   "uid": "activity_group_root1",
                   "name": "name1"
@@ -515,17 +515,17 @@
                   "name": "name2"
                }
             ],
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
             "type": "textual-findings",
-            "startDate": "2021-03-18T11:54:20.898Z",
-            "endDate": null,
+            "start_date": "2021-03-18T11:54:20.898Z",
+            "end_date": null,
             "status": "Final",
             "version": "2.0",
-            "changeDescription": "Approved version",
-            "userInitials": "TODO user initials",
-            "possibleActions": [
+            "change_description": "Approved version",
+            "user_initials": "TODO user initials",
+            "possible_actions": [
                "inactivate",
-               "newVersion"
+               "new_version"
             ]
          }
       }
@@ -544,30 +544,30 @@
          "result": {
             "uid": "TextualFinding_000001",
             "name": "new_textual_finding_name",
-            "nameSentenceCase": "textual_finding_name_sentence_case1",
+            "name_sentence_case": "textual_finding_name_sentence_case1",
             "definition": "new_textual_finding_definition",
             "abbreviation": "abbv",
-            "topicCode": "textual_finding_topic_code1",
-            "adamParamCode": "textual_finding_adam_param_code1",
-            "legacyDescription": "textual_finding_legacy_description",
-            "sdtmVariable": {
-               "termUid": "sdtm_variable_uid2",
+            "topic_code": "textual_finding_topic_code1",
+            "adam_param_code": "textual_finding_adam_param_code1",
+            "legacy_description": "textual_finding_legacy_description",
+            "sdtm_variable": {
+               "term_uid": "sdtm_variable_uid2",
                "name": "sdtm_variable_name2"
             },
-            "sdtmSubcat": {
-               "termUid": "sdtm_subcat_uid2",
+            "sdtm_subcat": {
+               "term_uid": "sdtm_subcat_uid2",
                "name": "sdtm_subcat_name2"
             },
-            "sdtmCat": {
-               "termUid": "sdtm_cat_uid2",
+            "sdtm_cat": {
+               "term_uid": "sdtm_cat_uid2",
                "name": "sdtm_cat_name2"
             },
-            "sdtmDomain": {
-               "termUid": "sdtm_domain_uid2",
+            "sdtm_domain": {
+               "term_uid": "sdtm_domain_uid2",
                "name": "sdtm_domain_name2"
             },
             "specimen": {
-               "termUid": "specimen_uid2",
+               "term_uid": "specimen_uid2",
                "name": "specimen_name2"
             },
             "activities": [
@@ -580,17 +580,17 @@
                   "name": "name2"
                }
             ],
-            "activitySubgroups": [
+            "activity_subgroups": [
                {
-                  "uid": "activity_sub_group_root1",
+                  "uid": "activity_subgroup_root1",
                   "name": "name1"
                },
                {
-                  "uid": "activity_sub_group_root2",
+                  "uid": "activity_subgroup_root2",
                   "name": "name2"
                }
             ],
-            "activityGroups": [
+            "activity_groups": [
                {
                   "uid": "activity_group_root1",
                   "name": "name1"
@@ -600,15 +600,15 @@
                   "name": "name2"
                }
             ],
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
             "type": "textual-findings",
-            "startDate": "2021-03-18T11:54:20.898Z",
-            "endDate": null,
+            "start_date": "2021-03-18T11:54:20.898Z",
+            "end_date": null,
             "status": "Retired",
             "version": "2.0",
-            "changeDescription": "Deactivated version",
-            "userInitials": "TODO user initials",
-            "possibleActions": [
+            "change_description": "Deactivated version",
+            "user_initials": "TODO user initials",
+            "possible_actions": [
                "reactivate"
             ]
          }
@@ -628,30 +628,30 @@
          "result": {
             "uid": "TextualFinding_000001",
             "name": "new_textual_finding_name",
-            "nameSentenceCase": "textual_finding_name_sentence_case1",
+            "name_sentence_case": "textual_finding_name_sentence_case1",
             "definition": "new_textual_finding_definition",
             "abbreviation": "abbv",
-            "topicCode": "textual_finding_topic_code1",
-            "adamParamCode": "textual_finding_adam_param_code1",
-            "legacyDescription": "textual_finding_legacy_description",
-            "sdtmVariable": {
-               "termUid": "sdtm_variable_uid2",
+            "topic_code": "textual_finding_topic_code1",
+            "adam_param_code": "textual_finding_adam_param_code1",
+            "legacy_description": "textual_finding_legacy_description",
+            "sdtm_variable": {
+               "term_uid": "sdtm_variable_uid2",
                "name": "sdtm_variable_name2"
             },
-            "sdtmSubcat": {
-               "termUid": "sdtm_subcat_uid2",
+            "sdtm_subcat": {
+               "term_uid": "sdtm_subcat_uid2",
                "name": "sdtm_subcat_name2"
             },
-            "sdtmCat": {
-               "termUid": "sdtm_cat_uid2",
+            "sdtm_cat": {
+               "term_uid": "sdtm_cat_uid2",
                "name": "sdtm_cat_name2"
             },
-            "sdtmDomain": {
-               "termUid": "sdtm_domain_uid2",
+            "sdtm_domain": {
+               "term_uid": "sdtm_domain_uid2",
                "name": "sdtm_domain_name2"
             },
             "specimen": {
-               "termUid": "specimen_uid2",
+               "term_uid": "specimen_uid2",
                "name": "specimen_name2"
             },
             "activities": [
@@ -664,17 +664,17 @@
                   "name": "name2"
                }
             ],
-            "activitySubgroups": [
+            "activity_subgroups": [
                {
-                  "uid": "activity_sub_group_root1",
+                  "uid": "activity_subgroup_root1",
                   "name": "name1"
                },
                {
-                  "uid": "activity_sub_group_root2",
+                  "uid": "activity_subgroup_root2",
                   "name": "name2"
                }
             ],
-            "activityGroups": [
+            "activity_groups": [
                {
                   "uid": "activity_group_root1",
                   "name": "name1"
@@ -684,17 +684,17 @@
                   "name": "name2"
                }
             ],
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
             "type": "textual-findings",
-            "startDate": "2021-03-18T11:54:20.898Z",
-            "endDate": null,
+            "start_date": "2021-03-18T11:54:20.898Z",
+            "end_date": null,
             "status": "Final",
             "version": "2.0",
-            "changeDescription": "Reactivated version",
-            "userInitials": "TODO user initials",
-            "possibleActions": [
+            "change_description": "Reactivated version",
+            "user_initials": "TODO user initials",
+            "possible_actions": [
                "inactivate",
-               "newVersion"
+               "new_version"
             ]
          }
       }
@@ -706,26 +706,26 @@
          "method": "POST",
          "request": {
             "name": "textual_finding_name2",
-            "dictionaryId": null,
-            "nameSentenceCase": "textual_finding_name_sentence_case2",
+            "dictionary_id": null,
+            "name_sentence_case": "textual_finding_name_sentence_case2",
             "definition": "textual_finding_definition2",
             "abbreviation": "abbv",
-            "topicCode": "textual_finding_topic_code2",
-            "adamParamCode": "textual_finding_adam_param_code2",
-            "legacyDescription": "textual_finding_legacy_description2",
-            "sdtmVariable": "sdtm_variable_uid1",
-            "sdtmSubcat": "sdtm_subcat_uid1",
-            "sdtmCat": "sdtm_cat_uid1",
-            "sdtmDomain": "sdtm_domain_uid1",
+            "topic_code": "textual_finding_topic_code2",
+            "adam_param_code": "textual_finding_adam_param_code2",
+            "legacy_description": "textual_finding_legacy_description2",
+            "sdtm_variable": "sdtm_variable_uid1",
+            "sdtm_subcat": "sdtm_subcat_uid1",
+            "sdtm_cat": "sdtm_cat_uid1",
+            "sdtm_domain": "sdtm_domain_uid1",
             "activities": [
                "activity_root1"
             ],
-            "valueSasDisplayFormat": "textual_finding_value_sas_display_format",
+            "value_sas_display_format": "textual_finding_value_sas_display_format",
             "specimen": "specimen_uid1",
-            "testCode": "test_code_uid1",
-            "maxTextLength": 77,
-            "splitTextInSuppQual": false,
-            "libraryName": "Sponsor"
+            "test_code": "test_code_uid1",
+            "max_text_length": 77,
+            "split_text_in_supp_qual": false,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/activities/textual-findings"
       },
@@ -735,26 +735,26 @@
          "result": {
             "uid": "TextualFinding_000002",
             "name": "textual_finding_name2",
-            "nameSentenceCase": "textual_finding_name_sentence_case2",
+            "name_sentence_case": "textual_finding_name_sentence_case2",
             "definition": "textual_finding_definition2",
             "abbreviation": "abbv",
-            "topicCode": "textual_finding_topic_code2",
-            "adamParamCode": "textual_finding_adam_param_code2",
-            "legacyDescription": "textual_finding_legacy_description2",
-            "sdtmVariable": {
-               "termUid": "sdtm_variable_uid1",
+            "topic_code": "textual_finding_topic_code2",
+            "adam_param_code": "textual_finding_adam_param_code2",
+            "legacy_description": "textual_finding_legacy_description2",
+            "sdtm_variable": {
+               "term_uid": "sdtm_variable_uid1",
                "name": null
             },
-            "sdtmSubcat": {
-               "termUid": "sdtm_subcat_uid1",
+            "sdtm_subcat": {
+               "term_uid": "sdtm_subcat_uid1",
                "name": null
             },
-            "sdtmCat": {
-               "termUid": "sdtm_cat_uid1",
+            "sdtm_cat": {
+               "term_uid": "sdtm_cat_uid1",
                "name": null
             },
-            "sdtmDomain": {
-               "termUid": "sdtm_domain_uid1",
+            "sdtm_domain": {
+               "term_uid": "sdtm_domain_uid1",
                "name": null
             },
             "activities": [
@@ -763,38 +763,38 @@
                   "name": "name1"
                }
             ],
-            "activitySubgroups": [
+            "activity_subgroups": [
                {
-                  "uid": "activity_sub_group_root1",
+                  "uid": "activity_subgroup_root1",
                   "name": "name1"
                }
             ],
-            "activityGroups": [
+            "activity_groups": [
                {
                   "uid": "activity_group_root1",
                   "name": "name1"
                }
             ],
-            "valueSasDisplayFormat": "textual_finding_value_sas_display_format",
+            "value_sas_display_format": "textual_finding_value_sas_display_format",
             "specimen": {
-               "termUid": "specimen_uid1",
+               "term_uid": "specimen_uid1",
                "name": null
             },
-            "testCode": {
-               "termUid": "test_code_uid1",
+            "test_code": {
+               "term_uid": "test_code_uid1",
                "name": null
             },
-            "maxTextLength": 77,
-            "splitTextInSuppQual": false,
-            "libraryName": "Sponsor",
+            "max_text_length": 77,
+            "split_text_in_supp_qual": false,
+            "library_name": "Sponsor",
             "type": "textual-findings",
-            "startDate": "2021-03-18T11:54:20.898Z",
-            "endDate": null,
+            "start_date": "2021-03-18T11:54:20.898Z",
+            "end_date": null,
             "status": "Draft",
             "version": "0.1",
-            "changeDescription": "Initial version",
-            "userInitials": "TODO user initials",
-            "possibleActions": [
+            "change_description": "Initial version",
+            "user_initials": "TODO user initials",
+            "possible_actions": [
                "approve",
                "delete",
                "edit"

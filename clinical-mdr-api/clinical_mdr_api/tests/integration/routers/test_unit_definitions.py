@@ -34,7 +34,7 @@ class UnitDefinitionTest(api.APITest):
             "CT Unit", "CTCodelist_000001", catalogue_name, library_name
         )
         create_ct_term(
-            ct_unit_cod.codelistUid,
+            ct_unit_cod.codelist_uid,
             "CT Unit term 1",
             "unit1-ct-uid",
             1,
@@ -42,7 +42,7 @@ class UnitDefinitionTest(api.APITest):
             library_name,
         )
         create_ct_term(
-            ct_unit_cod.codelistUid,
+            ct_unit_cod.codelist_uid,
             "CT Unit term 2",
             "unit1-ct-uid-patched",
             2,
@@ -50,7 +50,7 @@ class UnitDefinitionTest(api.APITest):
             library_name,
         )
         create_ct_term(
-            ct_unit_cod.codelistUid,
+            ct_unit_cod.codelist_uid,
             "CT Unit term 3",
             "unit1-ct-uid-2",
             3,
@@ -58,7 +58,7 @@ class UnitDefinitionTest(api.APITest):
             library_name,
         )
         create_ct_term(
-            ct_unit_cod.codelistUid,
+            ct_unit_cod.codelist_uid,
             "CT Unit term 4",
             "unit1-ct-uid-3",
             4,
@@ -69,7 +69,7 @@ class UnitDefinitionTest(api.APITest):
             "CT Unit Dimension", "CTCodelist_000002", catalogue_name, library_name
         )
         create_ct_term(
-            ct_unit_dim_cod.codelistUid,
+            ct_unit_dim_cod.codelist_uid,
             "CT Unit Dim term 1",
             "unit1-dimension",
             1,
@@ -77,7 +77,7 @@ class UnitDefinitionTest(api.APITest):
             library_name,
         )
         create_ct_term(
-            ct_unit_dim_cod.codelistUid,
+            ct_unit_dim_cod.codelist_uid,
             "CT Unit Dim term 2",
             "unit1-dimension-2",
             2,
@@ -85,7 +85,7 @@ class UnitDefinitionTest(api.APITest):
             library_name,
         )
         create_ct_term(
-            ct_unit_dim_cod.codelistUid,
+            ct_unit_dim_cod.codelist_uid,
             "CT Unit Dim term 3",
             "unit1-dimension-patched",
             3,
@@ -93,7 +93,7 @@ class UnitDefinitionTest(api.APITest):
             library_name,
         )
         create_ct_term(
-            ct_unit_dim_cod.codelistUid,
+            ct_unit_dim_cod.codelist_uid,
             "CT Unit Dim term 4",
             "unit1-dimension-patched-2",
             4,
@@ -101,7 +101,7 @@ class UnitDefinitionTest(api.APITest):
             library_name,
         )
         create_ct_term(
-            ct_unit_dim_cod.codelistUid,
+            ct_unit_dim_cod.codelist_uid,
             "CT Unit Dim term 5",
             "other-dimension",
             5,
@@ -112,7 +112,7 @@ class UnitDefinitionTest(api.APITest):
             "CT Unit Subset", "CTCodelist_000003", catalogue_name, library_name
         )
         create_ct_term(
-            ct_unit_subset.codelistUid,
+            ct_unit_subset.codelist_uid,
             "CT Unit Subset term 1",
             "unit-subset-uid-1",
             1,
@@ -120,7 +120,7 @@ class UnitDefinitionTest(api.APITest):
             library_name,
         )
         create_ct_term(
-            ct_unit_subset.codelistUid,
+            ct_unit_subset.codelist_uid,
             "CT Unit Subset term 2",
             "unit-subset-uid-2",
             2,
@@ -132,10 +132,10 @@ class UnitDefinitionTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
+            "start_date",
+            "end_date",
             "uid",
-            "userInitials",
+            "user_initials",
             "time",
             "path",
             "message",

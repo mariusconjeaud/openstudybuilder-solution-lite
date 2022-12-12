@@ -83,14 +83,16 @@ class TextualFindingRepository(ActivityInstanceRepository):
     ) -> TextualFindingAR:
         major, minor = input_dict.get("version").split(".")
         sdtm_variable_name, sdtm_variable_uid = self._get_item_name_and_uid(
-            input_dict, "sdtmVariable"
+            input_dict, "sdtm_variable"
         )
         sdtm_subcat_name, sdtm_subcat_uid = self._get_item_name_and_uid(
-            input_dict, "sdtmSubcat"
+            input_dict, "sdtm_subcat"
         )
-        sdtm_cat_name, sdtm_cat_uid = self._get_item_name_and_uid(input_dict, "sdtmCat")
+        sdtm_cat_name, sdtm_cat_uid = self._get_item_name_and_uid(
+            input_dict, "sdtm_cat"
+        )
         sdtm_domain_name, sdtm_domain_uid = self._get_item_name_and_uid(
-            input_dict, "sdtmDomain"
+            input_dict, "sdtm_domain"
         )
         specimen_name, specimen_uid = self._get_item_name_and_uid(
             input_dict, "specimen"
@@ -99,13 +101,13 @@ class TextualFindingRepository(ActivityInstanceRepository):
             uid=input_dict.get("uid"),
             concept_vo=TextualFindingVO.from_repository_values(
                 name=input_dict.get("name"),
-                name_sentence_case=input_dict.get("nameSentenceCase"),
+                name_sentence_case=input_dict.get("name_sentence_case"),
                 activity_type=input_dict.get("type"),
                 definition=input_dict.get("definition"),
                 abbreviation=input_dict.get("abbreviation"),
-                topic_code=input_dict.get("topicCode"),
-                adam_param_code=input_dict.get("adamParamCode"),
-                legacy_description=input_dict.get("legacyDescription"),
+                topic_code=input_dict.get("topic_code"),
+                adam_param_code=input_dict.get("adam_param_code"),
+                legacy_description=input_dict.get("legacy_description"),
                 sdtm_variable_uid=sdtm_variable_uid,
                 sdtm_variable_name=sdtm_variable_name,
                 sdtm_subcat_uid=sdtm_subcat_uid,
@@ -115,24 +117,24 @@ class TextualFindingRepository(ActivityInstanceRepository):
                 sdtm_domain_uid=sdtm_domain_uid,
                 sdtm_domain_name=sdtm_domain_name,
                 activity_uids=input_dict.get("activities"),
-                value_sas_display_format=input_dict.get("valueSasDisplayFormat"),
+                value_sas_display_format=input_dict.get("value_sas_display_format"),
                 specimen_uid=specimen_uid,
                 specimen_name=specimen_name,
-                test_code_uid=input_dict.get("testCode"),
-                max_text_length=input_dict.get("maxTextLength"),
-                split_text_in_supp_qual=input_dict.get("splitTextInSuppQual"),
+                test_code_uid=input_dict.get("test_code"),
+                max_text_length=input_dict.get("max_text_length"),
+                split_text_in_supp_qual=input_dict.get("split_text_in_supp_qual"),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("libraryName"),
+                library_name=input_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: input_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("changeDescription"),
+                change_description=input_dict.get("change_description"),
                 status=LibraryItemStatus(input_dict.get("status")),
-                author=input_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=input_dict.get("startDate")),
+                author=input_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=input_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -194,11 +196,11 @@ class TextualFindingRepository(ActivityInstanceRepository):
             activity_instance_specific
             + """
         WITH *,
-            concept_value.value_sas_display_format AS valueSasDisplayFormat,
-            concept_value.max_text_length AS maxTextLength,
-            concept_value.split_text_in_supp_qual AS splitTextInSuppQual,
+            concept_value.value_sas_display_format AS value_sas_display_format,
+            concept_value.max_text_length AS max_text_length,
+            concept_value.split_text_in_supp_qual AS split_text_in_supp_qual,
 
-            head([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_TEST_CODE]->(test_code) | test_code.uid]) AS testCode
+            head([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_TEST_CODE]->(test_code) | test_code.uid]) AS test_code
         """
         )
 

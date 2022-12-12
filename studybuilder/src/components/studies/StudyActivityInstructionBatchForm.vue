@@ -40,7 +40,7 @@
             :label="$t('StudySelectionTable.select_studies')"
             :items="studies"
             :error-messages="errors"
-            item-text="studyId"
+            item-text="study_id"
             clearable
             multiple
             class="pt-10"
@@ -56,9 +56,9 @@
         :headers="selectedInstructionsHeaders"
         :items="selectedInstructions"
         >
-        <template v-slot:item.activityInstructionName="{ item }">
+        <template v-slot:item.activity_instruction_name="{ item }">
           <n-n-parameter-highlighter
-            :name="item.activityInstructionName"
+            :name="item.activity_instruction_name"
             :show-prefix-and-postfix="false"
             />
         </template>
@@ -66,7 +66,7 @@
           <v-btn
             icon
             color="red"
-            @click="unselectInstruction(item)"
+            @click="unselectStudyActivityInstruction(item)"
             >
             <v-icon>mdi-delete</v-icon>
           </v-btn>
@@ -83,9 +83,9 @@
           @item-selected="selectStudyActivityInstruction"
           :studies="selectedStudies"
           >
-          <template v-slot:item.activityInstructionName="{ item }">
+          <template v-slot:item.activity_instruction_name="{ item }">
             <n-n-parameter-highlighter
-              :name="item.activityInstructionName"
+              :name="item.activity_instruction_name"
               :show-prefix-and-postfix="false"
               />
           </template>
@@ -140,14 +140,14 @@
               {{ $t('_global.not_applicable_long') }}
             </template>
           </template>
-          <template v-slot:item.activityGroups.name="{ item }">
-            <template v-if="item.activityGroups.length">
-              {{ item.activityGroups[0].name }}
+          <template v-slot:item.activity_groups.name="{ item }">
+            <template v-if="item.activity_groups.length">
+              {{ item.activity_groups[0].name }}
             </template>
           </template>
-          <template v-slot:item.activitySubGroups.name="{ item }">
-            <template v-if="item.activitySubGroups.length">
-              {{ item.activitySubGroups[0].name }}
+          <template v-slot:item.activity_subgroups.name="{ item }">
+            <template v-if="item.activity_subgroups.length">
+              {{ item.activity_subgroups[0].name }}
             </template>
           </template>
           <template v-slot:item.activities.name="{ item }">
@@ -203,11 +203,11 @@
           color="secondary"
           />
 
-        <template v-if="form.activityInstructionTemplate !== undefined">
+        <template v-if="form.activity_instruction_template !== undefined">
           <parameter-value-selector
             ref="paramSelector"
             :value="parameters"
-            :template="form.activityInstructionTemplate.name"
+            :template="form.activity_instruction_template.name"
             color="white"
             />
         </template>
@@ -259,34 +259,38 @@ export default {
       selectedStudy: 'studiesGeneral/selectedStudy'
     }),
     selectedTemplateName () {
-      return (this.form.activityInstructionTemplate) ? this.form.activityInstructionTemplate.name : ''
+      return (this.form.activity_instruction_template) ? this.form.activity_instruction_template.name : ''
     },
     selectedActivityGroups () {
       const result = []
-      for (const studyActivity of this.studyActivities) {
-        result.push(studyActivity.activity.activityGroup)
+      if (!this.noTemplateAvailableAtAll) {
+        for (const studyActivity of this.studyActivities) {
+          result.push(studyActivity.activity.activity_group)
+        }
       }
       return result
     },
     selectedActivitySubGroups () {
       const result = []
-      for (const studyActivity of this.studyActivities) {
-        result.push(studyActivity.activity.activitySubGroup)
+      if (!this.noTemplateAvailableAtAll) {
+        for (const studyActivity of this.studyActivities) {
+          result.push(studyActivity.activity.activity_subgroup)
+        }
       }
       return result
     },
     prefilteredTplHeaders () {
       return {
-        'activityGroups.name': this.selectedActivityGroups.map(item => item.name),
-        'activitySubGroups.name': this.selectedActivitySubGroups.map(item => item.name)
+        'activity_groups.name': this.selectedActivityGroups.map(item => item.name),
+        'activity_subgroups.name': this.selectedActivitySubGroups.map(item => item.name)
       }
     }
   },
   data () {
     return {
       activityInstructionHeaders: [
-        { text: this.$t('Study.study_id'), value: 'studyUid' },
-        { text: this.$t('StudyActivityInstructionBatchForm.instruction_text'), value: 'activityInstructionName' },
+        { text: this.$t('Study.study_id'), value: 'study_uid' },
+        { text: this.$t('StudyActivityInstructionBatchForm.instruction_text'), value: 'activity_instruction_name' },
         { text: this.$t('_global.actions'), value: 'actions', width: '5%' }
       ],
       creationMode: 'select',
@@ -295,12 +299,13 @@ export default {
       },
       form: {},
       loadingParameters: false,
+      noTemplateAvailableAtAll: false,
       parameters: [],
       parameterTypes: [],
       selectedInstructions: [],
       selectedInstructionsHeaders: [
-        { text: this.$t('Study.study_id'), value: 'studyId' },
-        { text: this.$t('StudyActivityInstructionBatchForm.instruction_text'), value: 'activityInstructionName' },
+        { text: this.$t('Study.study_id'), value: 'study_id' },
+        { text: this.$t('StudyActivityInstructionBatchForm.instruction_text'), value: 'activity_instruction_name' },
         { text: this.$t('_global.actions'), value: 'actions', width: '5%' }
       ],
       selectedStudies: [],
@@ -322,14 +327,15 @@ export default {
       steps: [],
       studies: [],
       templateForm: {},
+      templatesFetched: false,
       templates: [],
       templatesTotal: 0,
       templatesFilters: {},
       templatesOptions: {},
       tplHeaders: [
         { text: this.$t('_global.indications'), value: 'indications.name' },
-        { text: this.$t('StudyActivity.activity_group'), value: 'activityGroups.name' },
-        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activitySubGroups.name' },
+        { text: this.$t('StudyActivity.activity_group'), value: 'activity_groups.name' },
+        { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity_subgroups.name' },
         { text: this.$t('StudyActivity.activity'), value: 'activities.name' },
         { text: this.$t('_global.template'), value: 'name', width: '30%' },
         { text: this.$t('_global.actions'), value: 'actions', width: '5%' }
@@ -342,6 +348,7 @@ export default {
       this.$refs.stepper.reset()
       this.$emit('close')
       this.templateForm = {}
+      this.form = {}
     },
     getObserver (step) {
       return this.$refs[`observer_${step}`]
@@ -371,31 +378,39 @@ export default {
         this.templatesOptions, filters, sort, filtersUpdated)
       params.status = statuses.FINAL
       const newFilters = (filters) ? JSON.parse(filters) : {}
-      newFilters['activityGroups.uid'] = { v: this.selectedActivityGroups.map(item => item.uid) }
-      newFilters['activitySubGroups.uid'] = { v: this.selectedActivitySubGroups.map(item => item.uid) }
+      newFilters['activity_groups.uid'] = { v: this.selectedActivityGroups.map(item => item.uid) }
+      newFilters['activity_subgroups.uid'] = { v: this.selectedActivitySubGroups.map(item => item.uid) }
       params.filters = JSON.stringify(newFilters)
       params.operator = 'or'
-      activityDescriptionTemplates.get(params).then(resp => {
+      return activityDescriptionTemplates.get(params).then(resp => {
         // Apply filtering on library here because we cannot mix operators in API queries...
         this.templates = resp.data.items.filter(item => item.library.name === libraryConstants.LIBRARY_SPONSOR)
         this.templatesTotal = resp.data.total
+        if (!this.templatesFetched) {
+          // It was the first time we fetched templates, if there is
+          // no result we empty pre-defined filters to avoid confusion
+          if (this.templates.length === 0) {
+            this.noTemplateAvailableAtAll = true
+          }
+          this.templatesFetched = true
+        }
       })
     },
     async selectTemplate (template) {
       await this.loadParameters(template)
-      this.$set(this.form, 'activityInstructionTemplate', {})
-      this.$set(this.form, 'activityInstructionTemplate', template)
+      this.$set(this.form, 'activity_instruction_template', {})
+      this.$set(this.form, 'activity_instruction_template', template)
     },
     selectStudyActivityInstruction (studyActivityInstruction) {
       this.selectedInstructions.push(studyActivityInstruction)
     },
     unselectStudyActivityInstruction (studyActivityInstruction) {
-      this.selectedInstructions = this.selectedInstructions.filter(item => item.activyInstructionName !== studyActivityInstruction.activyInstructionName)
+      this.selectedInstructions = this.selectedInstructions.filter(item => item.activy_instruction_name !== studyActivityInstruction.activy_instruction_name)
     },
     isStudyActivityInstructionSelected (studyActivityInstruction) {
-      let selected = this.selectedInstructions.find(item => item.activityInstructionUid === studyActivityInstruction.activityInstructionUid)
+      let selected = this.selectedInstructions.find(item => item.activity_instruction_uid === studyActivityInstruction.activity_instruction_uid)
       if (!selected && this.currentStudyActivityInstructions.length) {
-        selected = this.currentStudyActivityInstructions.find(item => item.activyInstructionUid === studyActivityInstruction.activyInstructionUid)
+        selected = this.currentStudyActivityInstructions.find(item => item.activy_instruction_uid === studyActivityInstruction.activy_instruction_uid)
       }
       return selected !== undefined
     },
@@ -406,35 +421,35 @@ export default {
       if (this.creationMode !== 'scratch' || step !== 2) {
         return true
       }
-      if (this.form.activityInstructionTemplate && this.form.activityInstructionTemplate.name === this.templateForm.name) {
+      if (this.form.activity_instruction_template && this.form.activity_instruction_template.name === this.templateForm.name) {
         return true
       }
-      const data = { ...this.templateForm, studyUid: this.selectedStudy.uid }
-      data.libraryName = libraryConstants.LIBRARY_USER_DEFINED
+      const data = { ...this.templateForm, study_uid: this.selectedStudy.uid }
+      data.library_name = libraryConstants.LIBRARY_USER_DEFINED
       if (data.indications) {
-        data.indicationUids = data.indications.map(indication => indication.termUid)
+        data.indication_uids = data.indications.map(indication => indication.term_uid)
         delete data.indications
       }
-      if (data.activityGroup) {
-        data.activityGroupUids = [data.activityGroup]
-        delete data.activityGroup
+      if (data.activity_group) {
+        data.activity_group_uids = [data.activity_group]
+        delete data.activity_group
       }
-      if (data.activitySubGroups) {
-        data.activitySubGroupUids = data.activitySubGroups
-        delete data.activitySubGroups
+      if (data.activity_subgroups) {
+        data.activity_subgroup_uids = data.activity_subgroups
+        delete data.activity_subgroups
       }
       if (data.activities) {
-        data.activityUids = data.activities.map(activity => activity.uid)
+        data.activity_uids = data.activities.map(activity => activity.uid)
         delete data.activities
       }
       try {
         const resp = await activityDescriptionTemplates.create(data)
         await activityDescriptionTemplates.approve(resp.data.uid)
-        this.$set(this.form, 'activityInstructionTemplate', resp.data)
+        this.$set(this.form, 'activity_instruction_template', resp.data)
       } catch (error) {
         return false
       }
-      this.loadParameters(this.form.activityInstructionTemplate)
+      this.loadParameters(this.form.activity_instruction_template)
       return true
     },
     async submit () {
@@ -444,12 +459,12 @@ export default {
           operations.push({
             method: 'POST',
             content: {
-              activityInstructionData: {
-                activityInstructionTemplateUid: this.form.activityInstructionTemplate.uid,
-                parameterValues: await instances.formatParameterValues(this.parameters),
-                libraryName: this.form.activityInstructionTemplate.library.name
+              activity_instruction_data: {
+                activity_instruction_template_uid: this.form.activity_instruction_template.uid,
+                parameter_values: await instances.formatParameterValues(this.parameters),
+                library_name: this.form.activity_instruction_template.library.name
               },
-              studyActivityUid: studyActivity.studyActivityUid
+              study_activity_uid: studyActivity.study_activity_uid
             }
           })
         }
@@ -459,8 +474,8 @@ export default {
             operations.push({
               method: 'POST',
               content: {
-                activityInstructionUid: studyActivityInstruction.activityInstructionUid,
-                studyActivityUid: studyActivity.studyActivityUid
+                activity_instruction_uid: studyActivityInstruction.activity_instruction_uid,
+                study_activity_uid: studyActivity.study_activity_uid
               }
             })
           }
@@ -482,7 +497,7 @@ export default {
   },
   mounted () {
     this.getTemplates()
-    study.get({ hasStudyActivityInstruction: true }).then(resp => {
+    study.get({ has_study_activity_instruction: true }).then(resp => {
       this.studies = resp.data.items.filter(study => study.uid !== this.selectedStudy.uid)
     })
     templateParameterTypes.getTypes().then(resp => {

@@ -1,7 +1,7 @@
 <template>
 <div class="px-4">
   <div class="page-title d-flex align-center">
-    {{ $t('SdtmSpecificationsView.title') }}
+    {{ $t('Sidebar.study.sdtm_study') }}
     <help-button :help-text="$t('_help.SdtmSpecificationTable.general')" />
   </div>
   <v-tabs v-model="tab">

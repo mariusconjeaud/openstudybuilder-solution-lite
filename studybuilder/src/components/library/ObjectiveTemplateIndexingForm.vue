@@ -18,8 +18,8 @@
             v-model="form.categories"
             :label="$t('ObjectiveTemplateForm.objective_category')"
             :items="objectiveCategories"
-            item-text="sponsorPreferredName"
-            item-value="termUid"
+            item-text="sponsor_preferred_name"
+            item-value="term_uid"
             :disabled="notApplicable"
             :errors="errors"
             />
@@ -27,7 +27,7 @@
       </template>
     </not-applicable-field>
     <not-applicable-field
-      :checked="template && (template.confirmatoryTesting === null || template.confirmatoryTesting === undefined)"
+      :checked="template && (template.confirmatory_testing === null || template.confirmatory_testing === undefined)"
       :clean-function="(value) => cleanConfirmatoryTesting(form, value)"
       >
       <template v-slot:mainField="{ notApplicable }">
@@ -37,7 +37,7 @@
           :rules="`requiredIfNotNA:${notApplicable}`"
           >
           <yes-no-field
-            v-model="form.confirmatoryTesting"
+            v-model="form.confirmatory_testing"
             :label="$t('ObjectiveTemplateForm.confirmatory_testing')"
             :disabled="notApplicable"
             :error-messages="errors"
@@ -85,15 +85,15 @@ export default {
     },
     preparePayload (form) {
       const result = {
-        confirmatoryTesting: form.confirmatoryTesting,
-        categoryUids: []
+        confirmatory_testing: form.confirmatory_testing,
+        category_uids: []
       }
       if (form.categories) {
         for (const category of form.categories) {
           if (typeof category === 'string') {
-            result.categoryUids.push(category)
+            result.category_uids.push(category)
           } else {
-            result.categoryUids.push(category.termUid)
+            result.category_uids.push(category.term_uid)
           }
         }
       }

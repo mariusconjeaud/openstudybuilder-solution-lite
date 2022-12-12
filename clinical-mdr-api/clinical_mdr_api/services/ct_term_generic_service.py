@@ -51,8 +51,7 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
         assert self._repos is not None
         return self.repository_interface()
 
-    @db.transaction
-    def get_all_ct_terms(
+    def non_transactional_get_all_ct_terms(
         self,
         codelist_uid: Optional[str] = None,
         codelist_name: Optional[str] = None,
@@ -90,6 +89,33 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
 
         return all_ct_terms
 
+    @db.transaction
+    def get_all_ct_terms(
+        self,
+        codelist_uid: Optional[str] = None,
+        codelist_name: Optional[str] = None,
+        library: Optional[str] = None,
+        package: Optional[str] = None,
+        sort_by: Optional[dict] = None,
+        page_number: int = 1,
+        page_size: int = 0,
+        filter_by: Optional[dict] = None,
+        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        total_count: bool = False,
+    ) -> GenericFilteringReturn[BaseModel]:
+        return self.non_transactional_get_all_ct_terms(
+            codelist_uid,
+            codelist_name,
+            library,
+            package,
+            sort_by,
+            page_number,
+            page_size,
+            filter_by,
+            filter_operator,
+            total_count,
+        )
+
     def get_distinct_values_for_header(
         self,
         codelist_uid: Optional[str],
@@ -123,7 +149,7 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
     @db.transaction
     def get_term_attributes_by_codelist_uids(
         self, codelist_uids: Sequence[str]
-    ) -> BaseModel:
+    ) -> list:
         items, prop_names = self.repository.get_term_attributes_by_codelist_uids(
             codelist_uids
         )
@@ -206,8 +232,7 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
     def edit_draft(self, term_uid: str, term_input: BaseModel) -> BaseModel:
         raise NotImplementedError()
 
-    @db.transaction
-    def approve(self, term_uid: str) -> BaseModel:
+    def non_transactional_approve(self, term_uid: str) -> BaseModel:
         try:
             item = self._find_by_uid_or_raise_not_found(
                 term_uid=term_uid, for_update=True
@@ -217,6 +242,10 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
             return self._transform_aggregate_root_to_pydantic_model(item)
         except VersioningException as e:
             raise exceptions.BusinessLogicException(e.msg)
+
+    @db.transaction
+    def approve(self, term_uid: str) -> BaseModel:
+        return self.non_transactional_approve(term_uid)
 
     @db.transaction
     def inactivate_final(self, term_uid: str) -> BaseModel:

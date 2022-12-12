@@ -3,13 +3,16 @@
   <n-n-table
     @filter="fetchStudyArms"
     :headers="headers"
-    item-key="uid"
+    item-key="arm_uid"
     :server-items-length="total"
     :options.sync="options"
     :export-data-url="exportDataUrl"
+    export-object-label="StudyArms"
     :items="arms"
     has-api
-    :column-data-resource="`study/${selectedStudy.uid}/study-arms`"
+    :column-data-resource="`studies/${selectedStudy.uid}/study-arms`"
+    :history-data-fetcher="fetchArmsHistory"
+    :history-title="$t('StudyArmsTable.global_history_title')"
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -42,27 +45,29 @@
             </v-icon>
             {{ item.order }}
           </td>
-          <td width="10%">{{ item.armType.sponsorPreferredName }}</td>
+          <td width="10%">{{ item.arm_type.sponsor_preferred_name }}</td>
           <td width="10%">{{ item.name }}</td>
-          <td width="10%">{{ item.shortName }}</td>
-          <td width="10%">{{ item.randomizationGroup }}</td>
+          <td width="10%">{{ item.short_name }}</td>
+          <td width="10%">{{ item.randomization_group }}</td>
           <td width="5%">{{ item.code }}</td>
-          <td width="5%">{{ item.numberOfSubjects }}</td>
+          <td width="5%">{{ item.number_of_subjects }}</td>
           <td width="10%">{{ item.description }}</td>
-          <td width="10%"><v-chip :color="item.armColour" small /></td>
-          <td width="15%">{{ item.startDate | date }}</td>
-          <td width="10%">{{ item.userInitials }}</td>
+          <td width="10%"><v-chip :color="item.arm_colour" small /></td>
+          <td width="15%">{{ item.start_date | date }}</td>
+          <td width="10%">{{ item.user_initials }}</td>
         </tr>
       </draggable>
     </template>
-    <template v-slot:item.startDate="{ item }">
-      {{ item.startDate|date }}
+    <template v-slot:item.start_date="{ item }">
+      {{ item.start_date|date }}
     </template>
-    <template v-slot:item.armConnectedBranchArms="{ item }">
-      {{ item.armConnectedBranchArms|names }}
+    <template v-slot:item.arm_connected_branch_arms="{ item }">
+      <template v-if="item.arm_connected_branch_arms">
+        {{ item.arm_connected_branch_arms|names }}
+      </template>
     </template>
-    <template v-slot:item.armColour="{ item }">
-      <v-chip :color="item.armColour" small />
+    <template v-slot:item.arm_colour="{ item }">
+      <v-chip :color="item.arm_colour" small />
     </template>
     <template v-slot:item.actions="{ item }">
       <actions-menu :actions="actions" :item="item" />
@@ -81,32 +86,26 @@
           mdi-plus
         </v-icon>
       </v-btn>
-      <v-btn
-        fab
-        dark
-        class="ml-2"
-        small
-        color="secondary"
-        :title="$t('NNTableTooltips.history')"
-        @click="openStudyArmsHistory()"
-        >
-        <v-icon dark>
-          mdi-history
-        </v-icon>
-      </v-btn>
     </template>
   </n-n-table>
   <study-arms-form
     :open="showArmsForm"
     @close="closeForm"
-    :editedArm="armToEdit"/>
+    :editedArm="armToEdit"
+    />
+  <v-dialog
+    v-model="showArmHistory"
+    persistent
+    max-width="1200px"
+    >
+    <history-table
+      :title="studyArmHistoryTitle"
+      @close="closeArmHistory"
+      :headers="headers"
+      :items="armHistoryItems"
+      />
+  </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-  <v-dialog v-model="showArmHistory">
-    <history-table @close="closeArmHistory" :item="selectedArm" type="studyArm" :title-label="$t('StudyArmsTable.study_arm')" />
-  </v-dialog>
-  <v-dialog v-model="showStudyArmsHistory">
-    <summary-history-table @close="closeStudyArmsHistory" type="studyArms" :title-label="$t('StudyDesignTable.study_arms')" />
-  </v-dialog>
 </div>
 </template>
 
@@ -121,8 +120,8 @@ import { bus } from '@/main'
 import draggable from 'vuedraggable'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import filteringParameters from '@/utils/filteringParameters'
-import HistoryTable from '@/components/library/HistoryTable'
-import SummaryHistoryTable from '@/components/tools/SummaryHistoryTable'
+import studyEpochs from '@/api/studyEpochs'
+import HistoryTable from '@/components/tools/HistoryTable'
 
 export default {
   components: {
@@ -131,15 +130,22 @@ export default {
     ActionsMenu,
     draggable,
     ConfirmDialog,
-    HistoryTable,
-    SummaryHistoryTable
+    HistoryTable
   },
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy'
     }),
     exportDataUrl () {
-      return `study/${this.selectedStudy.uid}/study-arms`
+      return `studies/${this.selectedStudy.uid}/study-arms`
+    },
+    studyArmHistoryTitle () {
+      if (this.selectedArm) {
+        return this.$t(
+          'StudyArmsTable.study_arm_history_title',
+          { armUid: this.selectedArm.arm_uid })
+      }
+      return ''
     }
   },
   data () {
@@ -147,17 +153,17 @@ export default {
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: '#', value: 'order', width: '5%' },
-        { text: this.$t('StudyArmsTable.type'), value: 'armType.sponsorPreferredName', width: '7%' },
+        { text: this.$t('StudyArmsTable.type'), value: 'arm_type.sponsor_preferred_name', width: '7%' },
         { text: this.$t('StudyArmsTable.name'), value: 'name' },
-        { text: this.$t('StudyArmsTable.short_name'), value: 'shortName' },
-        { text: this.$t('StudyArmsTable.randomisation_group'), value: 'randomizationGroup' },
+        { text: this.$t('StudyArmsTable.short_name'), value: 'short_name' },
+        { text: this.$t('StudyArmsTable.randomisation_group'), value: 'randomization_group' },
         { text: this.$t('StudyArmsTable.code'), value: 'code' },
-        { text: this.$t('StudyArmsTable.number_of_subjects'), value: 'numberOfSubjects' },
-        { text: this.$t('StudyArmsTable.connected_branches'), value: 'armConnectedBranchArms' },
+        { text: this.$t('StudyArmsTable.number_of_subjects'), value: 'number_of_subjects' },
+        { text: this.$t('StudyArmsTable.connected_branches'), value: 'arm_connected_branch_arms' },
         { text: this.$t('StudyArmsTable.description'), value: 'description' },
-        { text: this.$t('StudyBranchArms.colour'), value: 'armColour' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
-        { text: this.$t('_global.modified_by'), value: 'userInitials' }
+        { text: this.$t('StudyBranchArms.colour'), value: 'arm_colour' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
+        { text: this.$t('_global.modified_by'), value: 'user_initials' }
       ],
       actions: [
         {
@@ -185,16 +191,15 @@ export default {
       armToEdit: {},
       sortMode: false,
       showArmHistory: false,
+      armHistoryItems: [],
       selectedArm: null,
       showStudyArmsHistory: false
     }
   },
   methods: {
-    openStudyArmsHistory () {
-      this.showStudyArmsHistory = true
-    },
-    closeStudyArmsHistory () {
-      this.showStudyArmsHistory = false
+    async fetchArmsHistory () {
+      const resp = await studyEpochs.getStudyArmsVersions(this.selectedStudy.uid)
+      return resp.data
     },
     fetchStudyArms (filters, sort, filtersUpdated) {
       const params = filteringParameters.prepareParameters(
@@ -214,23 +219,25 @@ export default {
       this.armToEdit = item
       this.showArmsForm = true
     },
-    openArmHistory (item) {
+    async openArmHistory (arm) {
+      this.selectedArm = arm
+      const resp = await studyEpochs.getStudyArmVersions(this.selectedStudy.uid, arm.arm_uid)
+      this.armHistoryItems = resp.data
       this.showArmHistory = true
-      this.selectedArm = item
     },
-    closeArmHistory (item) {
+    closeArmHistory () {
       this.showArmHistory = false
       this.selectedArm = null
     },
     async deleteArm (item) {
       let relatedItems = 0
-      await arms.getAllBranchesForArm(this.selectedStudy.uid, item.armUid).then(resp => {
+      await arms.getAllBranchesForArm(this.selectedStudy.uid, item.arm_uid).then(resp => {
         relatedItems += resp.data.length
       })
-      await arms.getAllCohortsForArm(this.selectedStudy.uid, item.armUid).then(resp => {
+      await arms.getAllCohortsForArm(this.selectedStudy.uid, item.arm_uid).then(resp => {
         relatedItems += resp.data.items.length
       })
-      await arms.getAllCellsForArm(this.selectedStudy.uid, item.armUid).then(resp => {
+      await arms.getAllCellsForArm(this.selectedStudy.uid, item.arm_uid).then(resp => {
         relatedItems += resp.data.length
       })
       const options = {
@@ -239,12 +246,12 @@ export default {
         agreeLabel: this.$t('_global.continue')
       }
       if (relatedItems === 0) {
-        arms.delete(this.selectedStudy.uid, item.armUid).then(resp => {
+        arms.delete(this.selectedStudy.uid, item.arm_uid).then(resp => {
           bus.$emit('notification', { msg: this.$t('StudyArmsTable.arm_deleted') })
           this.fetchStudyArms()
         })
       } else if (await this.$refs.confirm.open(this.$t('StudyArmsTable.arm_delete_notification'), options)) {
-        arms.delete(this.selectedStudy.uid, item.armUid).then(resp => {
+        arms.delete(this.selectedStudy.uid, item.arm_uid).then(resp => {
           bus.$emit('notification', { msg: this.$t('StudyArmsTable.arm_deleted') })
           this.fetchStudyArms()
         })
@@ -255,7 +262,7 @@ export default {
       const newOrder = {
         new_order: this.arms[event.moved.newIndex].order
       }
-      arms.updateArmOrder(this.selectedStudy.uid, arm.armUid, newOrder).then(resp => {
+      arms.updateArmOrder(this.selectedStudy.uid, arm.arm_uid, newOrder).then(resp => {
         this.fetchStudyArms()
       })
     }

@@ -268,17 +268,17 @@ E.g.
 - /event-registration**s**
 
 #### Query Parameters
-Parameter names and variables should be specified in **camelCase**. 
+Parameter names and variables should be specified in **snake_case**. 
 In general, we stick to the convention that query parameters are single words.
 
 E.g.
-- [GET] /studies?**pageNumber**=0&**pageSize**=100
+- [GET] /studies?**page_number**=0&**page_size**=100
 
-Parameter abbreviations, like “ID” or “UID” are written in camelCase format, e.g.: “StudyUid”.
+Parameter abbreviations, like “ID” or “UID” are written in snake_case format, e.g.: “study_uid”.
 Each parameter field must also have a short, one sentence description.
 
 #### Query Body
-Query body parameters should be specified in  **camelCase**. 
+Query body parameters should be specified in  **snake_case**. 
 
 ### Future Unified Endpoint Names
 In a future iteration of the project, endpoints will be naming uniformly by category. These categories are (for now), documented [here](https://docs.google.com/document/d/1DdFhcBRa-YtKy-SUjlEuvXU3m1zeVdrs1OlqmFs0Zwk/edit?usp=sharing).

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Callable, Optional
 
 from clinical_mdr_api.domain.concepts.concept_base import _AggregateRootType
@@ -113,7 +113,7 @@ class LagTimeAR(NumericValueWithUnitAR):
             _change_description="Initial version",
             _status=LibraryItemStatus.FINAL,
             _author=author,
-            _start_date=datetime.now(),
+            _start_date=datetime.now(timezone.utc),
             _end_date=None,
             _major_version=1,
             _minor_version=0,

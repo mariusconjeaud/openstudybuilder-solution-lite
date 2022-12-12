@@ -79,6 +79,6 @@ class ActivityDescriptionTemplateRoot(VersionRoot):
     has_indication = RelationshipTo(DictionaryTermRoot, "HAS_DISEASE_DISORDER_TERM")
     has_activity = RelationshipTo(ActivityRoot, "HAS_ACTIVITY")
     has_activity_group = RelationshipTo(ActivityGroupRoot, "HAS_ACTIVITY_GROUP")
-    has_activity_sub_group = RelationshipTo(
+    has_activity_subgroup = RelationshipTo(
         ActivitySubGroupRoot, "HAS_ACTIVITY_SUB_GROUP"
     )

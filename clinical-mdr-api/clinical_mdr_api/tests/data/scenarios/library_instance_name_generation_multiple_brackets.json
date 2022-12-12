@@ -5,10 +5,10 @@
       "headers": {},
       "method": "POST",
       "request": {
-        "libraryName": "Test library",
+        "library_name": "Test library",
         "name": "Test objective",
-        "objectiveTemplateUid": "{otuid}",
-        "parameterValues": [
+        "objective_template_uid": "{otuid}",
+        "parameter_values": [
           {
             "position": 1,
             "conjunction": "and",
@@ -34,25 +34,25 @@
       "result": {
         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
         "name": "To investigate [][]",
-        "namePlain": "To investigate ",
-        "startDate": "2020-11-11T01:06:37+00:00",
-        "endDate": null,
+        "name_plain": "To investigate ",
+        "start_date": "2020-11-11T01:06:37+00:00",
+        "end_date": null,
         "status": "Draft",
-        "studyCount": null,
+        "study_count": null,
         "version": "0.1",
-        "changeDescription": "Initial version",
-        "userInitials": "TEST_USER",
-        "possibleActions": [
+        "change_description": "Initial version",
+        "user_initials": "TEST_USER",
+        "possible_actions": [
           "approve",
           "delete",
           "edit"
         ],
-        "objectiveTemplate": {
+        "objective_template": {
           "name": "{otname}",
-          "namePlain": "{otname}",
+          "name_plain": "{otname}",
           "uid": "{otuid}"
         },
-        "parameterValues": [
+        "parameter_values": [
           {
             "position": 1,
             "conjunction": "and",
@@ -68,7 +68,7 @@
         ],
         "library": {
           "name": "Test library",
-          "isEditable": true
+          "is_editable": true
         }
       }
     }
@@ -79,10 +79,10 @@
       "headers": {},
       "method": "POST",
       "request": {
-        "libraryName": "Test library",
+        "library_name": "Test library",
         "name": "Test objective",
-        "objectiveTemplateUid": "{otuid}",
-        "parameterValues": [
+        "objective_template_uid": "{otuid}",
+        "parameter_values": [
           {
             "position": 1,
             "conjunction": "and",
@@ -114,25 +114,25 @@
       "result": {
         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
         "name": "To investigate [type 2 diabetes][]",
-        "namePlain": "To investigate type 2 diabetes",
-        "startDate": "2020-11-11T01:06:37+00:00",
-        "endDate": null,
+        "name_plain": "To investigate type 2 diabetes",
+        "start_date": "2020-11-11T01:06:37+00:00",
+        "end_date": null,
         "status": "Draft",
-        "studyCount": null,
+        "study_count": null,
         "version": "0.1",
-        "changeDescription": "Initial version",
-        "userInitials": "TEST_USER",
-        "possibleActions": [
+        "change_description": "Initial version",
+        "user_initials": "TEST_USER",
+        "possible_actions": [
           "approve",
           "delete",
           "edit"
         ],
-        "objectiveTemplate": {
+        "objective_template": {
           "name": "{otname}",
-          "namePlain": "{otname}",
+          "name_plain": "{otname}",
           "uid": "{otuid}"
         },
-        "parameterValues": [
+        "parameter_values": [
           {
             "position": 1,
             "conjunction": "and",
@@ -154,7 +154,7 @@
         ],
         "library": {
           "name": "Test library",
-          "isEditable": true
+          "is_editable": true
         }
       }
     }
@@ -165,10 +165,10 @@
       "headers": {},
       "method": "POST",
       "request": {
-        "libraryName": "Test library",
+        "library_name": "Test library",
         "name": "Test objective",
-        "objectiveTemplateUid": "{otuid}",
-        "parameterValues": [
+        "objective_template_uid": "{otuid}",
+        "parameter_values": [
           {
             "position": 1,
             "conjunction": "and",
@@ -206,25 +206,25 @@
       "result": {
         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
         "name": "To investigate [type 2 diabetes and coronary heart disease][]",
-        "namePlain": "To investigate type 2 diabetes and coronary heart disease",
-        "startDate": "2020-11-11T01:06:37+00:00",
-        "endDate": null,
+        "name_plain": "To investigate type 2 diabetes and coronary heart disease",
+        "start_date": "2020-11-11T01:06:37+00:00",
+        "end_date": null,
         "status": "Draft",
-        "studyCount": null,
+        "study_count": null,
         "version": "0.1",
-        "changeDescription": "Initial version",
-        "userInitials": "TEST_USER",
-        "possibleActions": [
+        "change_description": "Initial version",
+        "user_initials": "TEST_USER",
+        "possible_actions": [
           "approve",
           "delete",
           "edit"
         ],
-        "objectiveTemplate": {
+        "objective_template": {
           "name": "{otname}",
-          "namePlain": "{otname}",
+          "name_plain": "{otname}",
           "uid": "{otuid}"
         },
-        "parameterValues": [
+        "parameter_values": [
           {
             "position": 1,
             "conjunction": "and",
@@ -252,7 +252,7 @@
         ],
         "library": {
           "name": "Test library",
-          "isEditable": true
+          "is_editable": true
         }
       }
     }
@@ -263,10 +263,10 @@
       "headers": {},
       "method": "POST",
       "request": {
-        "libraryName": "Test library",
+        "library_name": "Test library",
         "name": "Test objective",
-        "objectiveTemplateUid": "{otuid}",
-        "parameterValues": [
+        "objective_template_uid": "{otuid}",
+        "parameter_values": [
           {
             "position": 1,
             "conjunction": "and",
@@ -310,25 +310,25 @@
       "result": {
         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
         "name": "To investigate [type 2 diabetes, coronary heart disease and breathing problems][]",
-        "namePlain": "To investigate type 2 diabetes, coronary heart disease and breathing problems",
-        "startDate": "2020-11-11T01:06:37+00:00",
-        "endDate": null,
+        "name_plain": "To investigate type 2 diabetes, coronary heart disease and breathing problems",
+        "start_date": "2020-11-11T01:06:37+00:00",
+        "end_date": null,
         "status": "Draft",
-        "studyCount": null,
+        "study_count": null,
         "version": "0.1",
-        "changeDescription": "Initial version",
-        "userInitials": "TEST_USER",
-        "possibleActions": [
+        "change_description": "Initial version",
+        "user_initials": "TEST_USER",
+        "possible_actions": [
           "approve",
           "delete",
           "edit"
         ],
-        "objectiveTemplate": {
+        "objective_template": {
           "name": "{otname}",
-          "namePlain": "{otname}",
+          "name_plain": "{otname}",
           "uid": "{otuid}"
         },
-        "parameterValues": [
+        "parameter_values": [
           {
             "position": 1,
             "conjunction": "and",
@@ -362,7 +362,7 @@
         ],
         "library": {
           "name": "Test library",
-          "isEditable": true
+          "is_editable": true
         }
       }
     }
@@ -373,10 +373,10 @@
       "headers": {},
       "method": "POST",
       "request": {
-        "libraryName": "Test library",
+        "library_name": "Test library",
         "name": "Test objective",
-        "objectiveTemplateUid": "{otuid}",
-        "parameterValues": [
+        "objective_template_uid": "{otuid}",
+        "parameter_values": [
           {
             "position": 1,
             "conjunction": "and",
@@ -408,25 +408,25 @@
       "result": {
         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
         "name": "To investigate []([Metformin])",
-        "namePlain": "To investigate (Metformin)",
-        "startDate": "2020-11-11T01:06:37+00:00",
-        "endDate": null,
+        "name_plain": "To investigate (Metformin)",
+        "start_date": "2020-11-11T01:06:37+00:00",
+        "end_date": null,
         "status": "Draft",
-        "studyCount": null,
+        "study_count": null,
         "version": "0.1",
-        "changeDescription": "Initial version",
-        "userInitials": "TEST_USER",
-        "possibleActions": [
+        "change_description": "Initial version",
+        "user_initials": "TEST_USER",
+        "possible_actions": [
           "approve",
           "delete",
           "edit"
         ],
-        "objectiveTemplate": {
+        "objective_template": {
           "name": "{otname}",
-          "namePlain": "{otname}",
+          "name_plain": "{otname}",
           "uid": "{otuid}"
         },
-        "parameterValues": [
+        "parameter_values": [
           {
             "position": 1,
             "conjunction": "and",
@@ -448,7 +448,7 @@
         ],
         "library": {
           "name": "Test library",
-          "isEditable": true
+          "is_editable": true
         }
       }
     }
@@ -459,10 +459,10 @@
       "headers": {},
       "method": "POST",
       "request": {
-        "libraryName": "Test library",
+        "library_name": "Test library",
         "name": "Test objective",
-        "objectiveTemplateUid": "{otuid}",
-        "parameterValues": [
+        "objective_template_uid": "{otuid}",
+        "parameter_values": [
           {
             "position": 1,
             "conjunction": "and",
@@ -500,25 +500,25 @@
       "result": {
         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
         "name": "To investigate [type 2 diabetes] ([Metformin])",
-        "namePlain": "To investigate type 2 diabetes (Metformin)",
-        "startDate": "2020-11-11T01:06:37+00:00",
-        "endDate": null,
+        "name_plain": "To investigate type 2 diabetes (Metformin)",
+        "start_date": "2020-11-11T01:06:37+00:00",
+        "end_date": null,
         "status": "Draft",
-        "studyCount": null,
+        "study_count": null,
         "version": "0.1",
-        "changeDescription": "Initial version",
-        "userInitials": "TEST_USER",
-        "possibleActions": [
+        "change_description": "Initial version",
+        "user_initials": "TEST_USER",
+        "possible_actions": [
           "approve",
           "delete",
           "edit"
         ],
-        "objectiveTemplate": {
+        "objective_template": {
           "name": "{otname}",
-          "namePlain": "{otname}",
+          "name_plain": "{otname}",
           "uid": "{otuid}"
         },
-        "parameterValues": [
+        "parameter_values": [
           {
             "position": 1,
             "conjunction": "and",
@@ -546,7 +546,7 @@
         ],
         "library": {
           "name": "Test library",
-          "isEditable": true
+          "is_editable": true
         }
       }
     }
@@ -557,10 +557,10 @@
       "headers": {},
       "method": "POST",
       "request": {
-        "libraryName": "Test library",
+        "library_name": "Test library",
         "name": "Test objective",
-        "objectiveTemplateUid": "{otuid}",
-        "parameterValues": [
+        "objective_template_uid": "{otuid}",
+        "parameter_values": [
           {
             "position": 1,
             "conjunction": "and",
@@ -604,25 +604,25 @@
       "result": {
         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
         "name": "To investigate [type 2 diabetes and coronary heart disease] ([Metformin])",
-        "namePlain": "To investigate type 2 diabetes and coronary heart disease (Metformin)",
-        "startDate": "2020-11-11T01:06:37+00:00",
-        "endDate": null,
+        "name_plain": "To investigate type 2 diabetes and coronary heart disease (Metformin)",
+        "start_date": "2020-11-11T01:06:37+00:00",
+        "end_date": null,
         "status": "Draft",
-        "studyCount": null,
+        "study_count": null,
         "version": "0.1",
-        "changeDescription": "Initial version",
-        "userInitials": "TEST_USER",
-        "possibleActions": [
+        "change_description": "Initial version",
+        "user_initials": "TEST_USER",
+        "possible_actions": [
           "approve",
           "delete",
           "edit"
         ],
-        "objectiveTemplate": {
+        "objective_template": {
           "name": "{otname}",
-          "namePlain": "{otname}",
+          "name_plain": "{otname}",
           "uid": "{otuid}"
         },
-        "parameterValues": [
+        "parameter_values": [
           {
             "position": 1,
             "conjunction": "and",
@@ -656,7 +656,7 @@
         ],
         "library": {
           "name": "Test library",
-          "isEditable": true
+          "is_editable": true
         }
       }
     }
@@ -667,10 +667,10 @@
       "headers": {},
       "method": "POST",
       "request": {
-        "libraryName": "Test library",
+        "library_name": "Test library",
         "name": "Test objective",
-        "objectiveTemplateUid": "{otuid}",
-        "parameterValues": [
+        "objective_template_uid": "{otuid}",
+        "parameter_values": [
           {
             "position": 1,
             "conjunction": "and",
@@ -720,25 +720,25 @@
       "result": {
         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
         "name": "To investigate [type 2 diabetes, coronary heart disease and breathing problems] ([Metformin])",
-        "namePlain": "To investigate type 2 diabetes, coronary heart disease and breathing problems (Metformin)",
-        "startDate": "2020-11-11T01:06:37+00:00",
-        "endDate": null,
+        "name_plain": "To investigate type 2 diabetes, coronary heart disease and breathing problems (Metformin)",
+        "start_date": "2020-11-11T01:06:37+00:00",
+        "end_date": null,
         "status": "Draft",
-        "studyCount": null,
+        "study_count": null,
         "version": "0.1",
-        "changeDescription": "Initial version",
-        "userInitials": "TEST_USER",
-        "possibleActions": [
+        "change_description": "Initial version",
+        "user_initials": "TEST_USER",
+        "possible_actions": [
           "approve",
           "delete",
           "edit"
         ],
-        "objectiveTemplate": {
+        "objective_template": {
           "name": "{otname}",
-          "namePlain": "{otname}",
+          "name_plain": "{otname}",
           "uid": "{otuid}"
         },
-        "parameterValues": [
+        "parameter_values": [
           {
             "position": 1,
             "conjunction": "and",
@@ -778,7 +778,7 @@
         ],
         "library": {
           "name": "Test library",
-          "isEditable": true
+          "is_editable": true
         }
       }
     }

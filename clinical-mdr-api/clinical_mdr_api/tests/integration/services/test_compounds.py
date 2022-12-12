@@ -108,11 +108,11 @@ class TestCompoundsService(unittest.TestCase):
     def test_delete_compound(self):
         # Create a compound with two aliases
         compound: Compound = TestUtils.create_compound(name="name-AAA")
-        compoundAlias1 = TestUtils.create_compound_alias(
-            name=f"Alias1 for {compound.name}", compoundUid=compound.uid
+        compound_alias1 = TestUtils.create_compound_alias(
+            name=f"Alias1 for {compound.name}", compound_uid=compound.uid
         )
-        compoundAlias2 = TestUtils.create_compound_alias(
-            name=f"Alias2 for {compound.name}", compoundUid=compound.uid
+        compound_alias2 = TestUtils.create_compound_alias(
+            name=f"Alias2 for {compound.name}", compound_uid=compound.uid
         )
 
         CompoundService().soft_delete(compound.uid)
@@ -122,13 +122,13 @@ class TestCompoundsService(unittest.TestCase):
             CompoundService().get_by_uid(compound.uid)
 
         with self.assertRaises(exceptions.NotFoundException):
-            CompoundAliasService().get_by_uid(compoundAlias1.uid)
+            CompoundAliasService().get_by_uid(compound_alias1.uid)
 
         with self.assertRaises(exceptions.NotFoundException):
-            CompoundAliasService().get_by_uid(compoundAlias2.uid)
+            CompoundAliasService().get_by_uid(compound_alias2.uid)
 
         results: GenericFilteringReturn = CompoundAliasService().get_all_concepts(
-            library="Sponsor", filter_by={"compoundUid": {"v": [compound.uid]}}
+            library="Sponsor", filter_by={"compound_uid": {"v": [compound.uid]}}
         )
         assert len(results.items) == 0
 
@@ -137,10 +137,10 @@ class TestCompoundsService(unittest.TestCase):
         compound_name = "name-AAA"
         dose_frequency_uid = "dose_frequency_uid1"
         compound: Compound = TestUtils.create_compound(
-            name=compound_name, doseFrequencyUids=[dose_frequency_uid]
+            name=compound_name, dose_frequency_uids=[dose_frequency_uid]
         )
-        compoundAlias1: CompoundAlias = TestUtils.create_compound_alias(
-            name=f"Alias1 for {compound.name}", compoundUid=compound.uid
+        compound_alias1: CompoundAlias = TestUtils.create_compound_alias(
+            name=f"Alias1 for {compound.name}", compound_uid=compound.uid
         )
 
         # Update compound, then fetch it and assert that the updated name is returned
@@ -148,25 +148,25 @@ class TestCompoundsService(unittest.TestCase):
             uid=compound.uid,
             concept_edit_input=CompoundEditInput(
                 name=f"{compound_name}-UPDATED",
-                doseFrequencyUids=[dose_frequency_uid],
-                changeDescription="Update name",
+                dose_frequency_uids=[dose_frequency_uid],
+                change_description="Update name",
             ),
         )
         compound = CompoundService().get_by_uid(compound.uid)
         assert compound.name == f"{compound_name}-UPDATED"
-        assert compound.doseFrequencies[0].termUid == dose_frequency_uid
-        assert compound.doseFrequencies[0].name == "dose_frequency_name1"
+        assert compound.dose_frequencies[0].term_uid == dose_frequency_uid
+        assert compound.dose_frequencies[0].name == "dose_frequency_name1"
 
         # Update compound alias, then fetch it and assert that the updated name is returned
         CompoundAliasService().edit_draft(
-            uid=compoundAlias1.uid,
+            uid=compound_alias1.uid,
             concept_edit_input=CompoundAliasEditInput(
                 name=f"{compound_name}-UPDATED",
-                compoundUid=compound.uid,
-                changeDescription="Update name",
+                compound_uid=compound.uid,
+                change_description="Update name",
             ),
         )
-        compound_alias = CompoundAliasService().get_by_uid(compoundAlias1.uid)
+        compound_alias = CompoundAliasService().get_by_uid(compound_alias1.uid)
         assert compound_alias.name == f"{compound_name}-UPDATED"
 
         # Update CTterm that the compound links to, then fetch compound
@@ -175,11 +175,11 @@ class TestCompoundsService(unittest.TestCase):
         CTTermNameService().edit_draft(
             term_uid=dose_frequency_uid,
             term_input=CTTermNameEditInput(
-                sponsorPreferredName="dosage-freq-updated",
-                sponsorPreferredNameSentenceCase="dosage-freq-updated",
-                changeDescription="Update to CTTerm name",
+                sponsor_preferred_name="dosage-freq-updated",
+                sponsor_preferred_name_sentence_case="dosage-freq-updated",
+                change_description="Update to CTTerm name",
             ),
         )
         compound = CompoundService().get_by_uid(compound.uid)
-        assert compound.doseFrequencies[0].termUid == dose_frequency_uid
-        assert compound.doseFrequencies[0].name == "dosage-freq-updated"
+        assert compound.dose_frequencies[0].term_uid == dose_frequency_uid
+        assert compound.dose_frequencies[0].name == "dosage-freq-updated"

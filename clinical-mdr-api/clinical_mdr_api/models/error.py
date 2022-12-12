@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import Request
 from pydantic import Field
 
+from clinical_mdr_api import config
 from clinical_mdr_api.models.utils import BaseModel
 
 
@@ -19,7 +20,7 @@ class ErrorResponse(BaseModel):
         super().__init__(
             type=type(exception).__name__,
             message=str(getattr(exception, "msg", None) or exception),
-            time=datetime.now(),
+            time=datetime.utcnow().strftime(config.DATE_TIME_FORMAT),
             path=str(request.url),
             method=request.method,
             **data
@@ -34,5 +35,5 @@ class BatchErrorResponse(BaseModel):
 
     def __init__(self, **data) -> None:
         if "time" not in data:
-            data["time"] = datetime.now()
+            data["time"] = datetime.now(timezone.utc)
         super().__init__(**data)

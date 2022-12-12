@@ -3,282 +3,298 @@ clinical_programme = {"name": "string"}
 brands = {"name": "string"}
 
 project = {
-    "projectNumber": "string",
+    "project_number": "string",
     "name": "string",
     "description": "string",
-    "clinicalProgrammeUid": "string",
+    "clinical_programme_uid": "string",
 }
 
 study = {
-    "studyNumber": "string",
-    "studyAcronym": "string",
-    "projectNumber": "string",
+    "study_number": "string",
+    "study_acronym": "string",
+    "project_number": "string",
 }
 
 
 study_patch = {
-    "currentMetadata": {
-        "identificationMetadata": {
-            "studyNumber": "string",
-            "studyAcronym": "string",
-            "projectNumber": "string",
-            "projectName": "string",
-            "clinicalProgrammeName": "string",
-            "studyId": "string",
-            "registryIdentifiers": {
-                "ctGovId": "string",
-                "ctGovIdNullValueCode": {"termUid": "string", "name": "string"},
-                "eudractId": "string",
-                "eudractIdNullValueCode": {"termUid": "string", "name": "string"},
-                "universalTrialNumberUTN": "string",
-                "universalTrialNumberUTNNullValueCode": {
-                    "termUid": "string",
+    "current_metadata": {
+        "identification_metadata": {
+            "study_number": "string",
+            "study_acronym": "string",
+            "project_number": "string",
+            "project_name": "string",
+            "clinical_programme_name": "string",
+            "study_id": "string",
+            "registry_identifiers": {
+                "ct_gov_id": "string",
+                "ct_gov_id_null_value_code": {"term_uid": "string", "name": "string"},
+                "eudract_id": "string",
+                "eudract_id_null_value_code": {"term_uid": "string", "name": "string"},
+                "universal_trial_number_utn": "string",
+                "universal_trial_number_utn_null_value_code": {
+                    "term_uid": "string",
                     "name": "string",
                 },
-                "japaneseTrialRegistryIdJAPIC": "string",
-                "japaneseTrialRegistryIdJAPICNullValueCode": {
-                    "termUid": "string",
+                "japanese_trial_registry_id_japic": "string",
+                "japanese_trial_registry_id_japic_null_value_code": {
+                    "term_uid": "string",
                     "name": "string",
                 },
-                "investigationalNewDrugApplicationNumberIND": "string",
-                "investigationalNewDrugApplicationNumberINDNullValueCode": {
-                    "termUid": "string",
+                "investigational_new_drug_application_number_ind": "string",
+                "investigational_new_drug_application_number_ind_null_value_code": {
+                    "term_uid": "string",
                     "name": "string",
                 },
             },
         },
-        "versionMetadata": {
-            "studyStatus": "string",
-            "lockedVersionNumber": 0,
-            "versionTimestamp": "2022-06-10T13:15:22.182Z",
-            "lockedVersionAuthor": "string",
-            "lockedVersionInfo": "string",
+        "version_metadata": {
+            "study_status": "string",
+            "locked_version_number": 0,
+            "version_timestamp": "2022-06-10T13:15:22.182Z",
+            "locked_version_author": "string",
+            "locked_version_info": "string",
         },
-        "highLevelStudyDesign": {
-            "studyTypeCode": {"termUid": "string", "name": "string"},
-            "studyTypeNullValueCode": {"termUid": "string", "name": "string"},
-            "trialTypesCodes": [{"termUid": "string", "name": "string"}],
-            "trialTypesNullValueCode": {"termUid": "string", "name": "string"},
-            "trialPhaseCode": {"termUid": "string", "name": "string"},
-            "trialPhaseNullValueCode": {"termUid": "string", "name": "string"},
-            "isExtensionTrial": True,
-            "isExtensionTrialNullValueCode": {"termUid": "string", "name": "string"},
-            "isAdaptiveDesign": True,
-            "isAdaptiveDesignNullValueCode": {"termUid": "string", "name": "string"},
-            "studyStopRules": "string",
-            "studyStopRulesNullValueCode": {"termUid": "string", "name": "string"},
-            "confirmedResponseMinimumDuration": {
-                "durationValue": 0,
-                "durationUnitCode": {"termUid": "string", "name": "string"},
+        "high_level_study_design": {
+            "study_type_code": {"term_uid": "string", "name": "string"},
+            "study_type_null_value_code": {"term_uid": "string", "name": "string"},
+            "trial_types_codes": [{"term_uid": "string", "name": "string"}],
+            "trial_types_null_value_code": {"term_uid": "string", "name": "string"},
+            "trial_phase_code": {"term_uid": "string", "name": "string"},
+            "trial_phase_null_value_code": {"term_uid": "string", "name": "string"},
+            "is_extension_trial": True,
+            "is_extension_trial_null_value_code": {"term_uid": "string", "name": "string"},
+            "is_adaptive_design": True,
+            "is_adaptive_design_null_value_code": {"term_uid": "string", "name": "string"},
+            "study_stop_rules": "string",
+            "study_stop_rules_null_value_code": {"term_uid": "string", "name": "string"},
+            "confirmed_response_minimum_duration": {
+                "duration_value": 0,
+                "duration_unit_code": {"uid": "string", "name": "string"},
             },
-            "confirmedResponseMinimumDurationNullValueCode": {
-                "termUid": "string",
+            "confirmed_response_minimum_duration_null_value_code": {
+                "term_uid": "string",
                 "name": "string",
             },
-            "postAuthIndicator": True,
-            "postAuthIndicatorNullValueCode": {"termUid": "string", "name": "string"},
+            "post_auth_indicator": True,
+            "post_auth_indicator_null_value_code": {"term_uid": "string", "name": "string"},
         },
-        "studyPopulation": {
-            "therapeuticAreasCodes": [{"termUid": "string", "name": "string"}],
-            "therapeuticAreasNullValueCode": {"termUid": "string", "name": "string"},
-            "diseaseConditionsOrIndicationsCodes": [
-                {"termUid": "string", "name": "string"}
+        "study_population": {
+            "therapeutic_areas_codes": [{"term_uid": "string", "name": "string"}],
+            "therapeutic_areas_null_value_code": {"term_uid": "string", "name": "string"},
+            "disease_conditions_or_indications_codes": [
+                {"term_uid": "string", "name": "string"}
             ],
-            "diseaseConditionsOrIndicationsNullValueCode": {
-                "termUid": "string",
+            "disease_conditions_or_indications_null_value_code": {
+                "term_uid": "string",
                 "name": "string",
             },
-            "diagnosisGroupsCodes": [{"termUid": "string", "name": "string"}],
-            "diagnosisGroupsNullValueCode": {"termUid": "string", "name": "string"},
-            "sexOfParticipantsCode": {"termUid": "string", "name": "string"},
-            "sexOfParticipantsNullValueCode": {"termUid": "string", "name": "string"},
-            "rareDiseaseIndicator": True,
-            "rareDiseaseIndicatorNullValueCode": {
-                "termUid": "string",
+            "diagnosis_groups_codes": [{"term_uid": "string", "name": "string"}],
+            "diagnosis_groups_null_value_code": {"term_uid": "string", "name": "string"},
+            "sex_of_participants_code": {"term_uid": "string", "name": "string"},
+            "sex_of_participants_null_value_code": {"term_uid": "string", "name": "string"},
+            "rare_disease_indicator": True,
+            "rare_disease_indicator_null_value_code": {
+                "term_uid": "string",
                 "name": "string",
             },
-            "healthySubjectIndicator": True,
-            "healthySubjectIndicatorNullValueCode": {
-                "termUid": "string",
+            "healthy_subject_indicator": True,
+            "healthy_subject_indicator_null_value_code": {
+                "term_uid": "string",
                 "name": "string",
             },
-            "plannedMinimumAgeOfSubjects": {
-                "durationValue": 0,
-                "durationUnitCode": {"termUid": "string", "name": "string"},
+            "planned_minimum_age_of_subjects": {
+                "duration_value": 0,
+                "duration_unit_code": {"uid": "string", "name": "string"},
             },
-            "plannedMinimumAgeOfSubjectsNullValueCode": {
-                "termUid": "string",
+            "planned_minimum_age_of_subjects_null_value_code": {
+                "term_uid": "string",
                 "name": "string",
             },
-            "plannedMaximumAgeOfSubjects": {
-                "durationValue": 0,
-                "durationUnitCode": {"termUid": "string", "name": "string"},
+            "planned_maximum_age_of_subjects": {
+                "duration_value": 0,
+                "duration_unit_code": {"uid": "string", "name": "string"},
             },
-            "plannedMaximumAgeOfSubjectsNullValueCode": {
-                "termUid": "string",
+            "planned_maximum_age_of_subjects_null_value_code": {
+                "term_uid": "string",
                 "name": "string",
             },
-            "stableDiseaseMinimumDuration": {
-                "durationValue": 0,
-                "durationUnitCode": {"termUid": "string", "name": "string"},
+            "stable_disease_minimum_duration": {
+                "duration_value": 0,
+                "duration_unit_code": {"uid": "string", "name": "string"},
             },
-            "stableDiseaseMinimumDurationNullValueCode": {
-                "termUid": "string",
+            "stable_disease_minimum_duration_null_value_code": {
+                "term_uid": "string",
                 "name": "string",
             },
-            "pediatricStudyIndicator": True,
-            "pediatricStudyIndicatorNullValueCode": {
-                "termUid": "string",
+            "pediatric_study_indicator": True,
+            "pediatric_study_indicator_null_value_code": {
+                "term_uid": "string",
                 "name": "string",
             },
-            "pediatricPostmarketStudyIndicator": True,
-            "pediatricPostmarketStudyIndicatorNullValueCode": {
-                "termUid": "string",
+            "pediatric_postmarket_study_indicator": True,
+            "pediatric_postmarket_study_indicator_null_value_code": {
+                "term_uid": "string",
                 "name": "string",
             },
-            "pediatricInvestigationPlanIndicator": True,
-            "pediatricInvestigationPlanIndicatorNullValueCode": {
-                "termUid": "string",
+            "pediatric_investigation_plan_indicator": True,
+            "pediatric_investigation_plan_indicator_null_value_code": {
+                "term_uid": "string",
                 "name": "string",
             },
-            "relapseCriteria": "string",
-            "relapseCriteriaNullValueCode": {"termUid": "string", "name": "string"},
+            "relapse_criteria": "string",
+            "relapse_criteria_null_value_code": {"term_uid": "string", "name": "string"},
         },
-        "studyIntervention": {
-            "interventionTypeCode": {"termUid": "string", "name": "string"},
-            "interventionTypeNullValueCode": {"termUid": "string", "name": "string"},
-            "addOnToExistingTreatments": True,
-            "addOnToExistingTreatmentsNullValueCode": {
-                "termUid": "string",
+        "study_intervention": {
+            "intervention_type_code": {"term_uid": "string", "name": "string"},
+            "intervention_type_null_value_code": {"term_uid": "string", "name": "string"},
+            "add_on_to_existing_treatments": True,
+            "add_on_to_existing_treatments_null_value_code": {
+                "term_uid": "string",
                 "name": "string",
             },
-            "controlTypeCode": {"termUid": "string", "name": "string"},
-            "controlTypeNullValueCode": {"termUid": "string", "name": "string"},
-            "interventionModelCode": {"termUid": "string", "name": "string"},
-            "interventionModelNullValueCode": {"termUid": "string", "name": "string"},
-            "isTrialRandomised": True,
-            "isTrialRandomisedNullValueCode": {"termUid": "string", "name": "string"},
-            "stratificationFactor": "string",
-            "stratificationFactorNullValueCode": {
-                "termUid": "string",
+            "control_type_code": {"term_uid": "string", "name": "string"},
+            "control_type_null_value_code": {"term_uid": "string", "name": "string"},
+            "intervention_model_code": {"term_uid": "string", "name": "string"},
+            "intervention_model_null_value_code": {"term_uid": "string", "name": "string"},
+            "is_trial_randomised": True,
+            "is_trial_randomised_null_value_code": {"term_uid": "string", "name": "string"},
+            "stratification_factor": "string",
+            "stratification_factor_null_value_code": {
+                "term_uid": "string",
                 "name": "string",
             },
-            "trialBlindingSchemaCode": {"termUid": "string", "name": "string"},
-            "trialBlindingSchemaNullValueCode": {"termUid": "string", "name": "string"},
-            "plannedStudyLength": {
-                "durationValue": 0,
-                "durationUnitCode": {"termUid": "string", "name": "string"},
+            "trial_blinding_schema_code": {"term_uid": "string", "name": "string"},
+            "trial_blinding_schema_null_value_code": {"term_uid": "string", "name": "string"},
+            "planned_study_length": {
+                "duration_value": 0,
+                "duration_unit_code": {"uid": "string", "name": "string"},
             },
-            "plannedStudyLengthNullValueCode": {"termUid": "string", "name": "string"},
-            "drugStudyIndication": True,
-            "drugStudyIndicationNullValueCode": {"termUid": "string", "name": "string"},
-            "deviceStudyIndication": "string",
-            "deviceStudyIndicationNullValueCode": {
-                "termUid": "string",
+            "planned_study_length_null_value_code": {"term_uid": "string", "name": "string"},
+            "drug_study_indication": True,
+            "drug_study_indication_null_value_code": {"term_uid": "string", "name": "string"},
+            "device_study_indication": "string",
+            "device_study_indication_null_value_code": {
+                "term_uid": "string",
                 "name": "string",
             },
-            "trialIntentTypesCodes": [{"termUid": "string", "name": "string"}],
-            "trialIntentTypesNullValueCode": {"termUid": "string", "name": "string"},
+            "trial_intent_types_codes": [{"term_uid": "string", "name": "string"}],
+            "trial_intent_types_null_value_code": {"term_uid": "string", "name": "string"},
         },
-        "studyDescription": {"studyTitle": "string"},
+        "study_description": {"study_title": "string"},
     }
 }
 
 study_arm = {
     "name": "string",
-    "shortName": "string",
+    "short_name": "string",
     "code": "string",
     "description": "string",
-    "randomizationGroup": "string",
-    "numberOfSubjects": 0,
-    "armTypeUid": "string",
+    "arm_colour": "string",
+    "randomization_group": "string",
+    "number_of_subjects": 0,
+    "arm_type_uid": "string",
+}
+
+study_cohort = {
+  "name": "string",
+  "short_name": "string",
+  "code": "string",
+  "description": "string",
+  "colour_code": "string",
+  "number_of_subjects": 0,
+  "branch_arm_uids": [
+    "string"
+  ],
+  "arm_uids": [
+    "string"
+  ]
 }
 
 study_element = {
     "name": "string",
-    "shortName": "string",
+    "short_name": "string",
     "code": "string",
     "description": "string",
-    "plannedDuration": {
-        "durationValue": 0,
-        "durationUnitCode": {"termUid": "string", "name": "string"},
+    "planned_duration": {
+        "duration_value": 0,
+        "duration_unit_code": {"uid": "string", "name": "string"},
     },
-    "startRule": "string",
-    "endRule": "string",
-    "elementColour": "string",
-    "elementSubTypeUid": "string",
+    "start_rule": "string",
+    "end_rule": "string",
+    "element_colour": "string",
+    "element_subtype_uid": "string",
 }
 
 study_epoch = {
-    "studyUid": "string",
-    "startRule": "string",
-    "endRule": "string",
+    "study_uid": "string",
+    "start_rule": "string",
+    "end_rule": "string",
     "epoch": "string",
-    "epochSubType": "string",
-    "durationUnit": "string",
+    "epoch_subtype": "string",
+    "duration_unit": "string",
     "order": 0,
     "description": "string",
     "duration": 0,
-    "colorHash": "string",
+    "color_hash": "string",
 }
 
 study_visit = {
-    "studyEpochUid": "string",
-    "visitTypeUid": "string",
-    "timeReferenceUid": "string",
-    "timeValue": 0,
-    "timeUnitUid": "string",
-    "visitSubLabelCodelistUid": "string",
-    "visitSubLabelReference": "string",
-    "legacyVisitId": "string",
-    "legacyVisitTypeAlias": "string",
-    "legacyName": "string",
-    "legacySubName": "string",
-    "consecutiveVisitGroup": "string",
-    "showVisit": True,
-    "minVisitWindowValue": 0,
-    "maxVisitWindowValue": 0,
-    "visitWindowUnitUid": "string",
+    "study_epoch_uid": "string",
+    "visit_type_uid": "string",
+    "time_reference_uid": "string",
+    "time_value": 0,
+    "time_unit_uid": "string",
+    "visit_sublabel_codelist_uid": "string",
+    "visit_sublabel_reference": "string",
+    "legacy_visit_id": "string",
+    "legacy_visit_type_alias": "string",
+    "legacy_name": "string",
+    "legacy_subname": "string",
+    "consecutive_visit_group": "string",
+    "show_visit": True,
+    "min_visit_window_value": 0,
+    "max_visit_window_value": 0,
+    "visit_window_unit_uid": "string",
     "description": "string",
-    "startRule": "string",
-    "endRule": "string",
+    "start_rule": "string",
+    "end_rule": "string",
     "note": "string",
-    "visitContactModeUid": "string",
-    "visitClass": "string",
-    "visitSubclass": "string",
-    "isGlobalAnchorVisit": False,
+    "visit_contact_mode_uid": "string",
+    "visit_class": "string",
+    "visit_subclass": "string",
+    "is_global_anchor_visit": False,
 }
 
 study_design_cell = {
-    "studyArmUid": "string",
-    "studyEpochUid": "string",
-    "studyElementUid": "string",
-    "transitionRule": "string",
+    "study_arm_uid": "string",
+    "study_epoch_uid": "string",
+    "study_element_uid": "string",
+    "transition_rule": "string",
     "order": 0,
 }
 
 study_branch = {
     "name": "string",
-    "shortName": "string",
+    "short_name": "string",
     "code": "string",
     "description": "string",
-    "colourCode": "string",
-    "randomizationGroup": "string",
-    "numberOfSubjects": 0,
-    "armUid": "string",
+    "colour_code": "string",
+    "randomization_group": "string",
+    "number_of_subjects": 0,
+    "arm_uid": "string",
 }
 
 study_activity = {
-    "flowchartGroupUid": "string",
-    "activityUid": "string",
-    "activityInstanceUid": "string",
+    "flowchart_group_uid": "string",
+    "activity_uid": "string",
+    "activity_instance_uid": "string",
 }
 
 objective_template = {
     "name": "string",
-    "guidanceText": "string",
-    "libraryName": "Sponsor",
-    "defaultParameterValues": [
+    "guidance_text": "string",
+    "library_name": "Sponsor",
+    "default_parameter_values": [
         {
             "position": 0,
             "conjunction": "string",
@@ -287,17 +303,17 @@ objective_template = {
             ],
         }
     ],
-    "editableInstance": False,
-    "indicationUids": ["string"],
-    "confirmatoryTesting": True,
-    "categoryUids": ["string"],
+    "editable_instance": False,
+    "indication_uids": ["string"],
+    "confirmatory_testing": True,
+    "category_uids": ["string"],
 }
 
 criteria_template = {
     "name": "string",
-    "guidanceText": "string",
-    "libraryName": "Sponsor",
-    "defaultParameterValues": [
+    "guidance_text": "string",
+    "library_name": "Sponsor",
+    "default_parameter_values": [
         {
             "position": 0,
             "conjunction": "string",
@@ -306,25 +322,25 @@ criteria_template = {
             ],
         }
     ],
-    "editableInstance": False,
-    "typeUid": "string",
-    "indicationUids": ["string"],
-    "categoryUids": ["string"],
-    "subCategoryUids": ["string"],
+    "editable_instance": False,
+    "type_uid": "string",
+    "indication_uids": ["string"],
+    "category_uids": ["string"],
+    "sub_category_uids": ["string"],
 }
 
 timeframe_template = {
     "name": "string",
-    "guidanceText": "string",
-    "libraryName": "Sponsor",
-    "editableInstance": False,
+    "guidance_text": "string",
+    "library_name": "Sponsor",
+    "editable_instance": False,
 }
 
 endpoint_template = {
     "name": "string",
-    "guidanceText": "string",
-    "libraryName": "Sponsor",
-    "defaultParameterValues": [
+    "guidance_text": "string",
+    "library_name": "Sponsor",
+    "default_parameter_values": [
         {
             "position": 0,
             "conjunction": "string",
@@ -333,17 +349,17 @@ endpoint_template = {
             ],
         }
     ],
-    "editableInstance": False,
-    "indicationUids": ["string"],
-    "categoryUids": ["string"],
-    "subCategoryUids": ["string"],
+    "editable_instance": False,
+    "indication_uids": ["string"],
+    "category_uids": ["string"],
+    "sub_category_uids": ["string"],
 }
 
 activity_description_template = {
     "name": "string",
-    "guidanceText": "string",
-    "libraryName": "Sponsor",
-    "defaultParameterValues": [
+    "guidance_text": "string",
+    "library_name": "Sponsor",
+    "default_parameter_values": [
         {
             "position": 0,
             "conjunction": "string",
@@ -352,17 +368,17 @@ activity_description_template = {
             ],
         }
     ],
-    "editableInstance": False,
-    "indicationUids": ["string"],
-    "activityUids": ["string"],
-    "activityGroupUids": ["string"],
-    "activitySubGroupUids": ["string"],
+    "editable_instance": False,
+    "indication_uids": ["string"],
+    "activity_uids": ["string"],
+    "activity_group_uids": ["string"],
+    "activity_subgroup_uids": ["string"],
 }
 
 study_objective = {
-    "objectiveLevelUid": "string",
-    "objectiveData": {
-        "parameterValues": [
+    "objective_level_uid": "string",
+    "objective_data": {
+        "parameter_values": [
             {
                 "values": [
                     {"uid": "string", "name": "string", "type": "string", "index": 0}
@@ -372,18 +388,18 @@ study_objective = {
                 "conjunction": "string",
             }
         ],
-        "objectiveTemplateUid": "string",
-        "nameOverride": "string",
-        "libraryName": "string",
+        "objective_template_uid": "string",
+        "name_override": "string",
+        "library_name": "string",
     },
 }
 
 study_endpoint = {
-    "studyObjectiveUid": "string",
-    "endpointLevelUid": "string",
-    "endpointSubLevelUid": "string",
-    "endpointData": {
-        "parameterValues": [
+    "study_objective_uid": "string",
+    "endpoint_level_uid": "string",
+    "endpoint_sublevel_uid": "string",
+    "endpoint_data": {
+        "parameter_values": [
             {
                 "values": [
                     {"uid": "string", "name": "string", "type": "string", "index": 0}
@@ -393,17 +409,17 @@ study_endpoint = {
                 "conjunction": "string",
             }
         ],
-        "endpointTemplateUid": "string",
-        "nameOverride": "string",
-        "libraryName": "string",
+        "endpoint_template_uid": "string",
+        "name_override": "string",
+        "library_name": "string",
     },
-    "endpointUnits": {"units": ["string"], "separator": "string"},
-    "timeframeUid": "string",
+    "endpoint_units": {"units": ["string"], "separator": "string"},
+    "timeframe_uid": "string",
 }
 
 study_criteria = {
-    "criteriaData": {
-        "parameterValues": [
+    "criteria_data": {
+        "parameter_values": [
             {
                 "values": [
                     {"uid": "string", "name": "string", "type": "string", "index": 0}
@@ -413,20 +429,20 @@ study_criteria = {
                 "conjunction": "string",
             }
         ],
-        "criteriaTemplateUid": "string",
-        "nameOverride": "string",
-        "libraryName": "string",
+        "criteria_template_uid": "string",
+        "name_override": "string",
+        "library_name": "string",
     }
 }
 
 study_activity_schedule = {
-  "studyActivityUid": "string",
-  "studyVisitUid": "string",
+  "study_activity_uid": "string",
+  "study_visit_uid": "string",
   "note": "string"
 }
 
 timeframes = {
-    "parameterValues": [
+    "parameter_values": [
         {
             "values": [
                 {"uid": "string", "name": "string", "type": "string", "index": 0}
@@ -436,148 +452,228 @@ timeframes = {
             "conjunction": "string",
         }
     ],
-    "timeframeTemplateUid": "string",
-    "nameOverride": "string",
-    "libraryName": "string",
+    "timeframe_template_uid": "string",
+    "name_override": "string",
+    "library_name": "string",
 }
 
 compound_alias = {
     "name": "string",
-    "nameSentenceCase": "string",
+    "name_sentence_case": "string",
     "definition": "string",
     "abbreviation": "string",
-    "libraryName": "string",
-    "compoundUid": "string",
-    "isPreferredSynonym": False,
+    "library_name": "string",
+    "compound_uid": "string",
+    "is_preferred_synonym": False,
 }
 
 compound = {
     "name": "string",
-    "nameSentenceCase": "string",
+    "name_sentence_case": "string",
     "definition": "string",
     "abbreviation": "string",
-    "libraryName": "string",
-    "analyteNumber": "string",
-    "nncShortNumber": "string",
-    "nncLongNumber": "string",
-    "isSponsorCompound": True,
-    "isNameInn": True,
-    "substanceTermsUids": [],
-    "doseValuesUids": [],
-    "strengthValuesUids": [],
-    "lagTimesUids": [],
-    "deliveryDevicesUids": [],
-    "dispensersUids": [],
-    "projectsUids": [],
-    "brandsUids": [],
-    "doseFrequencyUids": [],
-    "dosageFormUids": [],
-    "routeOfAdministrationUids": [],
-    "halfLifeUid": "string",
+    "library_name": "string",
+    "analyte_number": "string",
+    "nnc_short_number": "string",
+    "nnc_long_number": "string",
+    "is_sponsor_compound": True,
+    "is_name_inn": True,
+    "substance_terms_uids": [],
+    "dose_values_uids": [],
+    "strength_values_uids": [],
+    "lag_times_uids": [],
+    "delivery_devices_uids": [],
+    "dispensers_uids": [],
+    "projects_uids": [],
+    "brands_uids": [],
+    "dose_frequency_uids": [],
+    "dosage_form_uids": [],
+    "route_of_administration_uids": [],
+    "half_life_uid": "string",
+}
+
+numeric_value = {
+  "name": "string",
+  "name_sentence_case": "string",
+  "definition": "string",
+  "abbreviation": "string",
+  "library_name": "string",
+  "template_parameter": False,
+  "value": 0
 }
 
 numeric_value_with_unit = {
     "name": "string",
-    "nameSentenceCase": "string",
+    "name_sentence_case": "string",
     "definition": "string",
     "abbreviation": "string",
-    "libraryName": "string",
-    "templateParameter": False,
+    "library_name": "string",
+    "template_parameter": False,
     "value": 0,
-    "unitDefinitionUid": "string",
+    "unit_definition_uid": "string",
+}
+
+text_value = {
+  "name": "string",
+  "name_sentence_case": "string",
+  "definition": "string",
+  "abbreviation": "string",
+  "library_name": "string",
+  "template_parameter": False
+}
+
+visit_name = {
+  "name": "string",
+  "name_sentence_case": "string",
+  "definition": "string",
+  "abbreviation": "string",
+  "library_name": "string",
+  "template_parameter": False
+}
+
+study_day = {
+  "name": "string",
+  "name_sentence_case": "string",
+  "definition": "string",
+  "abbreviation": "string",
+  "library_name": "string",
+  "template_parameter": False,
+  "value": 0
+}
+
+study_week = {
+  "name": "string",
+  "name_sentence_case": "string",
+  "definition": "string",
+  "abbreviation": "string",
+  "library_name": "string",
+  "template_parameter": False,
+  "value": 0
+}
+
+study_duration_days = {
+  "name": "string",
+  "name_sentence_case": "string",
+  "definition": "string",
+  "abbreviation": "string",
+  "library_name": "string",
+  "template_parameter": False,
+  "value": 0
+}
+
+study_duration_weeks = {
+  "name": "string",
+  "name_sentence_case": "string",
+  "definition": "string",
+  "abbreviation": "string",
+  "library_name": "string",
+  "template_parameter": False,
+  "value": 0
+}
+
+time_point = {
+  "name": "string",
+  "name_sentence_case": "string",
+  "definition": "string",
+  "abbreviation": "string",
+  "library_name": "string",
+  "template_parameter": False,
+  "numeric_value_uid": "string",
+  "unit_definition_uid": "string",
+  "time_reference_uid": "string"
 }
 
 lag_time = {
     "name": "string",
-    "nameSentenceCase": "string",
+    "name_sentence_case": "string",
     "definition": "string",
     "abbreviation": "string",
-    "libraryName": "string",
-    "templateParameter": False,
+    "library_name": "string",
+    "template_parameter": False,
     "value": 0,
-    "unitDefinitionUid": "string",
-    "sdtmDomainUid": "string",
+    "unit_definition_uid": "string",
+    "sdtm_domain_uid": "string",
 }
 
 study_compound = {
-    "compoundAliasUid": "string",
-    "typeOfTreatmentUid": "string",
-    "routeOfAdministrationUid": "string",
-    "strengthValueUid": "string",
-    "dosageFormUid": "string",
-    "dispensedInUid": "string",
-    "deviceUid": "string",
-    "formulationUid": "string",
-    "otherInfo": "string",
-    "reasonForMissingNullValueUid": "string",
+    "compound_alias_uid": "string",
+    "type_of_treatment_uid": "string",
+    "route_of_administration_uid": "string",
+    "strength_value_uid": "string",
+    "dosage_form_uid": "string",
+    "dispensed_in_uid": "string",
+    "device_uid": "string",
+    "formulation_uid": "string",
+    "other_info": "string",
+    "reason_for_missing_null_value_uid": "string",
 }
 
 unit_definition = {
     "name": "string",
-    "libraryName": "Sponsor",
-    "convertibleUnit": True,
-    "displayUnit": True,
-    "masterUnit": True,
-    "siUnit": True,
-    "usConventionalUnit": True,
-    "ctUnits": ["string"],
-    "unitSubsets": [],
+    "library_name": "Sponsor",
+    "convertible_unit": True,
+    "display_unit": True,
+    "master_unit": True,
+    "si_unit": True,
+    "us_conventional_unit": True,
+    "ct_units": ["string"],
+    "unit_subsets": [],
     "ucum": "string",
-    "unitDimension": "string",
-    "legacyCode": "string",
-    "molecularWeightConvExpon": 0,
-    "conversionFactorToMaster": 0,
+    "unit_dimension": "string",
+    "legacy_code": "string",
+    "molecular_weight_conv_expon": 0,
+    "conversion_factor_to_master": 0,
     "comment": "string",
     "order": 0,
     "definition": "string",
-    "templateParameter": False,
+    "template_parameter": False,
 }
 
 activity = {
     "name": "string",
-    "nameSentenceCase": "string",
+    "name_sentence_case": "string",
     "definition": "string",
     "abbreviation": "string",
-    "libraryName": "string",
-    "activitySubGroup": "string",
+    "library_name": "string",
+    "activity_subgroup": "string",
 }
 
 activity_groups = {
   "name": "string",
-  "nameSentenceCase": "string",
+  "name_sentence_case": "string",
   "definition": "string",
   "abbreviation": "string",
-  "libraryName": "string"
+  "library_name": "string"
 }
 
-activity_sub_groups = {
+activity_subgroups = {
   "name": "string",
-  "nameSentenceCase": "string",
+  "name_sentence_case": "string",
   "definition": "string",
   "abbreviation": "string",
-  "libraryName": "string",
-  "activityGroup": "string"
+  "library_name": "string",
+  "activity_group": "string"
 }
 
 ct_term = {
-  "catalogueName": "string",
-  "codelistUid": "string",
-  "codeSubmissionValue": "string",
-  "nameSubmissionValue": "string",
-  "nciPreferredName": "string",
+  "catalogue_name": "string",
+  "codelist_uid": "string",
+  "code_submission_value": "string",
+  "name_submission_value": "string",
+  "nci_preferred_name": "string",
   "definition": "string",
-  "sponsorPreferredName": "string",
-  "sponsorPreferredNameSentenceCase": "string",
+  "sponsor_preferred_name": "string",
+  "sponsor_preferred_name_sentence_case": "string",
   "order": None,
-  "libraryName": "string"
+  "library_name": "string"
 }
 
 dictionary_term = {
-  "dictionaryId": "string",
+  "dictionary_id": "string",
   "name": "string",
-  "nameSentenceCase": "string",
+  "name_sentence_case": "string",
   "abbreviation": "string",
   "definition": "string",
-  "codelistUid": "string",
-  "libraryName": "string"
+  "codelist_uid": "string",
+  "library_name": "string"
 }

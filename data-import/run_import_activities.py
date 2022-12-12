@@ -67,27 +67,27 @@ class Activities(BaseImporter):
                 "approve_path": "/concepts/activities/activity-groups",
                 "body": {
                     "name": row[headers.index("std_assm_grp")],
-                    "nameSentenceCase": row[headers.index("std_assm_grp")].lower(),
+                    "name_sentence_case": row[headers.index("std_assm_grp")].lower(),
                     "definition": "Definition not provided",
-                    "libraryName": "Sponsor",
+                    "library_name": "Sponsor",
                 },
             }
             if not existing_rows.get(data["body"]["name"]):
                 self.log.info(
-                    f"Add activity group '{data['body']['name']}' to library '{data['body']['libraryName']}'"
+                    f"Add activity group '{data['body']['name']}' to library '{data['body']['library_name']}'"
                 )
                 api_tasks.append(
                     self.api.post_then_approve(data=data, session=session, approve=True)
                 )  # TODO Verify if activity groups can be approved?
             else:
                 self.log.info(
-                    f"Item '{data['body']['name']}' already exists in library '{data['body']['libraryName']}'"
+                    f"Item '{data['body']['name']}' already exists in library '{data['body']['library_name']}'"
                 )
         await asyncio.gather(*api_tasks)
         # await session.close()
 
     @open_file_async()
-    async def handle_activity_sub_groups(self, csvfile, session):
+    async def handle_activity_subgroups(self, csvfile, session):
         # Populate then activity subgroups in sponsor library
         readCSV = csv.reader(csvfile, delimiter=",")
         headers = next(readCSV)
@@ -108,7 +108,7 @@ class Activities(BaseImporter):
         ):
             existing_sub_groups[item["name"]] = {
                 "uid": item["uid"],
-                "activityGroup": item["activityGroup"],
+                "activity_group": item["activity_group"],
             }
 
         api_tasks = []
@@ -132,7 +132,7 @@ class Activities(BaseImporter):
             # Check if subgroup exists
             if sub_group_name in existing_sub_groups:
                 # If the subgroup has the wrong group, patch it
-                if existing_sub_groups[sub_group_name]["activityGroup"]["name"] == group_name:
+                if existing_sub_groups[sub_group_name]["activity_group"]["name"] == group_name:
                     self.log.info(f"Subgroup '{sub_group_name}' already exists for group '{group_name}'")
                     continue
                 data = {
@@ -141,13 +141,13 @@ class Activities(BaseImporter):
                     + existing_sub_groups[sub_group_name]["uid"],
                     "new_path": "/concepts/activities/activity-sub-groups/"
                     + existing_sub_groups[sub_group_name]["uid"]
-                    + "/new-version",
+                    + "/versions",
                     "approve_path": "/concepts/activities/activity-sub-groups",
                     "body": {
                         "name": sub_group_name,
-                        "nameSentenceCase": sub_group_name.lower(),
-                        "libraryName": "Sponsor",
-                        "activityGroup": existing_groups[group_name]
+                        "name_sentence_case": sub_group_name.lower(),
+                        "library_name": "Sponsor",
+                        "activity_group": existing_groups[group_name]
                     },
                 }
                 self.log.info(
@@ -165,9 +165,9 @@ class Activities(BaseImporter):
                     "approve_path": "/concepts/activities/activity-sub-groups",
                     "body": {
                         "name": sub_group_name,
-                        "nameSentenceCase": sub_group_name.lower(),
-                        "libraryName": "Sponsor",
-                        "activityGroup": existing_groups[group_name]
+                        "name_sentence_case": sub_group_name.lower(),
+                        "library_name": "Sponsor",
+                        "activity_group": existing_groups[group_name]
                     },
                 }
                 self.log.info(
@@ -198,7 +198,7 @@ class Activities(BaseImporter):
         for item in self.api.get_all_activity_objects("activities"):
             existing_activities[item["name"]] = {
                 "uid": item["uid"],
-                "activitySubGroup": item["activitySubGroup"],
+                "activity_subgroup": item["activity_subgroup"],
             }
 
         api_tasks = []
@@ -222,7 +222,7 @@ class Activities(BaseImporter):
             # Check if activity exists
             if activity_name in existing_activities:
                 # If the activity does not already have all groups -> patch it
-                if existing_activities[activity_name]["activitySubGroup"]["name"] == sub_group_name:
+                if existing_activities[activity_name]["activity_subgroup"]["name"] == sub_group_name:
                     self.log.info(f"Activity '{activity_name}' already exists for subgroup '{sub_group_name}'")
                     continue
                 data = {
@@ -230,13 +230,13 @@ class Activities(BaseImporter):
                     "patch_path": "/concepts/activities/activities",
                     "new_path": "/concepts/activities/activities/"
                     + existing_activities[activity_name]["uid"]
-                    + "/new-version",
+                    + "/versions",
                     "approve_path": "/concepts/activities/activities",
                     "body": {
                         "name": activity_name,
-                        "nameSentenceCase": activity_name.lower(),
-                        "libraryName": "Sponsor",
-                        "activitySubGroup": existing_sub_groups[sub_group_name] 
+                        "name_sentence_case": activity_name.lower(),
+                        "library_name": "Sponsor",
+                        "activity_subgroup": existing_sub_groups[sub_group_name] 
                     },
                 }
                 self.log.info(
@@ -255,9 +255,9 @@ class Activities(BaseImporter):
                     "approve_path": "/concepts/activities/activities",
                     "body": {
                         "name": activity_name,
-                        "nameSentenceCase": activity_name.lower(),
-                        "libraryName": "Sponsor",
-                        "activitySubGroup": existing_sub_groups[sub_group_name]
+                        "name_sentence_case": activity_name.lower(),
+                        "library_name": "Sponsor",
+                        "activity_subgroup": existing_sub_groups[sub_group_name]
                     },
                 }
                 self.log.info(
@@ -332,12 +332,12 @@ class Activities(BaseImporter):
                 "approve_path": "/concepts/activities/activity-instances",
                 "body": {
                     "name": activity_name,
-                    "nameSentenceCase": activity_name.lower(),
-                    "adamParamCode": row[headers.index("adam_param_code")],
+                    "name_sentence_case": activity_name.lower(),
+                    "adam_param_code": row[headers.index("adam_param_code")],
                     "activities": activity_uids,
-                    "legacyDescription": row[headers.index("legacy_description")],
-                    "topicCode": row[headers.index("TOPIC_CD")],
-                    "libraryName": "Sponsor",
+                    "legacy_description": row[headers.index("legacy_description")],
+                    "topic_code": row[headers.index("TOPIC_CD")],
+                    "library_name": "Sponsor",
                 },
             }
             if row[headers.index("specimen")] != "":
@@ -365,7 +365,7 @@ class Activities(BaseImporter):
                     in self.cache.all_terms_name_submission_values
                 ):
                     data["body"][
-                        "sdtmDomain"
+                        "sdtm_domain"
                     ] = self.cache.all_terms_name_submission_values[
                         row[headers.index("SDTM_DOMAIN")]
                     ]
@@ -374,7 +374,7 @@ class Activities(BaseImporter):
                     in self.cache.all_terms_code_submission_values
                 ):
                     data["body"][
-                        "sdtmDomain"
+                        "sdtm_domain"
                     ] = self.cache.all_terms_code_submission_values[
                         row[headers.index("SDTM_DOMAIN")]
                     ]
@@ -396,7 +396,7 @@ class Activities(BaseImporter):
         conn = aiohttp.TCPConnector(limit=4, force_close=True)
         async with aiohttp.ClientSession(timeout=timeout, connector=conn) as session:
             await self.handle_activity_groups(MDR_MIGRATION_ACTIVITY_GROUPS, session)
-            await self.handle_activity_sub_groups(
+            await self.handle_activity_subgroups(
                 MDR_MIGRATION_ACTIVITY_SUB_GROUPS, session
             )
             await self.handle_activities(MDR_MIGRATION_ACTIVITIES, session)

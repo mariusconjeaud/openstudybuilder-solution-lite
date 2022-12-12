@@ -35,7 +35,7 @@ class NumericValueService(SimpleConceptGenericService[NumericValueAR]):
                 value=concept_input.value,
                 definition=concept_input.definition,
                 abbreviation=concept_input.abbreviation,
-                is_template_parameter=concept_input.templateParameter,
+                is_template_parameter=concept_input.template_parameter,
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,

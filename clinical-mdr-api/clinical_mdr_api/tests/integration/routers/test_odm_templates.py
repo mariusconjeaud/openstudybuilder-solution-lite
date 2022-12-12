@@ -25,9 +25,9 @@ class OdmTemplateTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
-            "userInitials",
+            "start_date",
+            "end_date",
+            "user_initials",
         ]
 
 
@@ -46,8 +46,8 @@ class OdmTemplateNegativeTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
-            "userInitials",
+            "start_date",
+            "end_date",
+            "user_initials",
             "time",
         ]

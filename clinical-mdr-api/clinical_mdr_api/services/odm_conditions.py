@@ -14,23 +14,18 @@ from clinical_mdr_api.models.odm_condition import (
     OdmConditionPatchInput,
     OdmConditionPostInput,
     OdmConditionVersion,
-    OdmConditionWithRelationsPatchInput,
-    OdmConditionWithRelationsPostInput,
 )
 from clinical_mdr_api.models.odm_description import OdmDescriptionBatchPatchInput
 from clinical_mdr_api.models.odm_formal_expression import (
     OdmFormalExpressionBatchPatchInput,
 )
 from clinical_mdr_api.services._utils import get_input_or_new_value
-from clinical_mdr_api.services.concepts.concept_generic_service import (
-    ConceptGenericService,
-    _AggregateRootType,
-)
 from clinical_mdr_api.services.odm_descriptions import OdmDescriptionService
 from clinical_mdr_api.services.odm_formal_expressions import OdmFormalExpressionService
+from clinical_mdr_api.services.odm_generic_service import OdmGenericService
 
 
-class OdmConditionService(ConceptGenericService[OdmConditionAR]):
+class OdmConditionService(OdmGenericService[OdmConditionAR]):
     aggregate_class = OdmConditionAR
     version_class = OdmConditionVersion
     repository_interface = ConditionRepository
@@ -47,15 +42,15 @@ class OdmConditionService(ConceptGenericService[OdmConditionAR]):
 
     def _create_aggregate_root(
         self, concept_input: OdmConditionPostInput, library
-    ) -> _AggregateRootType:
+    ) -> OdmConditionAR:
         return OdmConditionAR.from_input_values(
             author=self.user_initials,
             concept_vo=OdmConditionVO.from_repository_values(
                 oid=get_input_or_new_value(concept_input.oid, "C.", concept_input.name),
                 name=concept_input.name,
-                formal_expression_uids=concept_input.formalExpressionUids,
-                description_uids=concept_input.descriptionUids,
-                alias_uids=concept_input.aliasUids,
+                formal_expression_uids=concept_input.formal_expressions,
+                description_uids=concept_input.descriptions,
+                alias_uids=concept_input.alias_uids,
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
@@ -70,13 +65,13 @@ class OdmConditionService(ConceptGenericService[OdmConditionAR]):
     ) -> OdmConditionAR:
         item.edit_draft(
             author=self.user_initials,
-            change_description=concept_edit_input.changeDescription,
+            change_description=concept_edit_input.change_description,
             concept_vo=OdmConditionVO.from_repository_values(
                 oid=concept_edit_input.oid,
                 name=concept_edit_input.name,
-                formal_expression_uids=concept_edit_input.formalExpressionUids,
-                description_uids=concept_edit_input.descriptionUids,
-                alias_uids=concept_edit_input.aliasUids,
+                formal_expression_uids=concept_edit_input.formal_expressions,
+                description_uids=concept_edit_input.descriptions,
+                alias_uids=concept_edit_input.alias_uids,
             ),
             concept_exists_by_callback=self._repos.odm_condition_repository.exists_by,
             find_odm_formal_expression_callback=self._repos.odm_formal_expression_repository.find_by_uid_2,
@@ -87,8 +82,8 @@ class OdmConditionService(ConceptGenericService[OdmConditionAR]):
 
     @db.transaction
     def create_with_relations(
-        self, concept_input: OdmConditionWithRelationsPostInput
-    ) -> _AggregateRootType:
+        self, concept_input: OdmConditionPostInput
+    ) -> OdmCondition:
         description_uids = [
             description
             if isinstance(description, str)
@@ -104,26 +99,32 @@ class OdmConditionService(ConceptGenericService[OdmConditionAR]):
             else OdmFormalExpressionService()
             .non_transactional_create(concept_input=formal_expression)
             .uid
-            for formal_expression in concept_input.formalExpressions
+            for formal_expression in concept_input.formal_expressions
         ]
 
-        return self.non_transactional_create(
+        condition = self.non_transactional_create(
             concept_input=OdmConditionPostInput(
-                library=concept_input.libraryName,
+                library=concept_input.library_name,
                 oid=get_input_or_new_value(concept_input.oid, "C.", concept_input.name),
                 name=concept_input.name,
-                formalExpressionUids=formal_expression_uids,
-                descriptionUids=description_uids,
-                aliasUids=concept_input.aliasUids,
+                formal_expressions=formal_expression_uids,
+                descriptions=description_uids,
+                alias_uids=concept_input.alias_uids,
             )
+        )
+
+        return self._transform_aggregate_root_to_pydantic_model(
+            self._repos.odm_condition_repository.find_by_uid_2(condition.uid)
         )
 
     @db.transaction
     def update_with_relations(
-        self, uid: str, concept_edit_input: OdmConditionWithRelationsPatchInput
-    ) -> _AggregateRootType:
+        self, uid: str, concept_edit_input: OdmConditionPatchInput
+    ) -> OdmCondition:
         description_uids = [
-            OdmDescriptionService()
+            description
+            if isinstance(description, str)
+            else OdmDescriptionService()
             .non_transactional_edit(uid=description.uid, concept_edit_input=description)
             .uid
             if isinstance(description, OdmDescriptionBatchPatchInput)
@@ -134,7 +135,9 @@ class OdmConditionService(ConceptGenericService[OdmConditionAR]):
         ]
 
         formal_expression_uids = [
-            OdmFormalExpressionService()
+            formal_expression
+            if isinstance(formal_expression, str)
+            else OdmFormalExpressionService()
             .non_transactional_edit(
                 uid=formal_expression.uid, concept_edit_input=formal_expression
             )
@@ -143,19 +146,23 @@ class OdmConditionService(ConceptGenericService[OdmConditionAR]):
             else OdmFormalExpressionService()
             .non_transactional_create(concept_input=formal_expression)
             .uid
-            for formal_expression in concept_edit_input.formalExpressions
+            for formal_expression in concept_edit_input.formal_expressions
         ]
 
-        return self.non_transactional_edit(
+        condition = self.non_transactional_edit(
             uid=uid,
             concept_edit_input=OdmConditionPatchInput(
-                changeDescription=concept_edit_input.changeDescription,
+                change_description=concept_edit_input.change_description,
                 name=concept_edit_input.name,
                 oid=concept_edit_input.oid,
-                formalExpressionUids=formal_expression_uids,
-                descriptionUids=description_uids,
-                aliasUids=concept_edit_input.aliasUids,
+                formal_expressions=formal_expression_uids,
+                descriptions=description_uids,
+                alias_uids=concept_edit_input.alias_uids,
             ),
+        )
+
+        return self._transform_aggregate_root_to_pydantic_model(
+            self._repos.odm_condition_repository.find_by_uid_2(condition.uid)
         )
 
     @db.transaction
@@ -182,7 +189,7 @@ class OdmConditionService(ConceptGenericService[OdmConditionAR]):
     def get_active_relationships(self, uid: str):
         if not self._repos.odm_condition_repository.exists_by("uid", uid, True):
             raise exceptions.NotFoundException(
-                f"Odm Condition with uid {uid} does not exist."
+                f"ODM Condition identified by uid ({uid}) does not exist."
             )
 
         return self._repos.odm_condition_repository.get_active_relationships(uid, [])

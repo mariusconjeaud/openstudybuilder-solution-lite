@@ -5,7 +5,7 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "test library",
+                "library_name": "test library",
                 "name": "test"
             },
             "url": "/timeframe-templates"
@@ -31,7 +31,7 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library1",
+                "library_name": "Test library1",
                 "name": "test"
             },
             "url": "/timeframe-templates"

@@ -26,8 +26,8 @@ class ObjectiveService(GenericObjectService[ObjectiveAR]):
     repository_interface = ObjectiveRepository
     template_repository_interface = ObjectiveTemplateRepository
     version_class = ObjectiveVersion
-    templateUidProperty = "objectiveTemplateUid"
-    templateNameProperty = "objectiveTemplate"
+    template_uid_property = "objective_template_uid"
+    template_name_property = "objective_template"
 
     def get_all(
         self,

@@ -47,8 +47,8 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
     CREATE (l:Library{name: 'Sponsor', is_editable: true});
     """
 
-    def __init__(self, methodName="test_concurrent_updates_handled_correctly"):
-        super().__init__(methodName=methodName)
+    def __init__(self, method_name="test_concurrent_updates_handled_correctly"):
+        super().__init__(methodName=method_name)
         inject_and_clear_db("concurrency.templates")
         db.cypher_query(self.INIT_TEST_DATA)
 

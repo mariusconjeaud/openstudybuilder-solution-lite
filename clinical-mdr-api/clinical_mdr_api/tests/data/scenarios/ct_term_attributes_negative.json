@@ -28,11 +28,11 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "codeSubmissionValue": "codeSubmissionValue",
-                "nameSubmissionValue": "nameSubmissionValue",
-                "nciPreferredName": "nciPreferredName",
+                "code_submission_value": "code_submission_value",
+                "name_submission_value": "name_submission_value",
+                "nci_preferred_name": "nci_preferred_name",
                 "definition": "definition",
-                "changeDescription": "changeDescription"
+                "change_description": "change_description"
             },
             "url": "/ct/terms/term_root_final/attributes"
         },
@@ -53,11 +53,11 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "codeSubmissionValue": "codeSubmissionValue",
-                "nameSubmissionValue": "nameSubmissionValue",
-                "nciPreferredName": "nciPreferredName",
+                "code_submission_value": "code_submission_value",
+                "name_submission_value": "name_submission_value",
+                "nci_preferred_name": "nci_preferred_name",
                 "definition": "definition",
-                "changeDescription": "changeDescription"
+                "change_description": "change_description"
             },
             "url": "/ct/terms/term_root_draft_non_edit/attributes"
         },
@@ -78,11 +78,11 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "codeSubmissionValue": "codeSubmissionValue",
-                "nameSubmissionValue": "name_submission_value1",
-                "nciPreferredName": "nciPreferredName",
+                "code_submission_value": "code_submission_value",
+                "name_submission_value": "name_submission_value1",
+                "nci_preferred_name": "nci_preferred_name",
                 "definition": "definition",
-                "changeDescription": "changeDescription"
+                "change_description": "change_description"
             },
             "url": "/ct/terms/term_root_draft/attributes"
         },
@@ -103,11 +103,11 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "codeSubmissionValue": "code_submission_value1",
-                "nameSubmissionValue": "nameSubmissionValue",
-                "nciPreferredName": "nciPreferredName",
+                "code_submission_value": "code_submission_value1",
+                "name_submission_value": "name_submission_value",
+                "nci_preferred_name": "nci_preferred_name",
                 "definition": "definition",
-                "changeDescription": "changeDescription"
+                "change_description": "change_description"
             },
             "url": "/ct/terms/term_root_draft/attributes"
         },
@@ -123,19 +123,19 @@
         }
     },
     {
-        "name": "Test POST attributes new-version non editable library",
+        "name": "Test POST /attributes/versions non editable library",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/ct/terms/term_root_draft_non_edit/attributes/new-version"
+            "url": "/ct/terms/term_root_draft_non_edit/attributes/versions"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "Library is not editable.",
                 "method": "POST",
-                "path": "http://testserver/ct/terms/term_root_draft_non_edit/attributes/new-version",
+                "path": "http://testserver/ct/terms/term_root_draft_non_edit/attributes/versions",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }
@@ -242,26 +242,26 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/ct/terms/term_root_final/add-parent?parent_uid=term_root_final&relationship_type=type"
+            "url": "/ct/terms/term_root_final/parents?parent_uid=term_root_final&relationship_type=type"
         },
         "response": {
             "code": 201,
             "result": {
-                "termUid": "term_root_final",
-                "catalogueName": "SDTM CT",
-                "codelistUid": "editable_cr",
-                "conceptId": null,
-                "codeSubmissionValue": "code_submission_value1",
-                "nameSubmissionValue": "name_submission_value1",
-                "nciPreferredName": "preferred_term",
+                "term_uid": "term_root_final",
+                "catalogue_name": "SDTM CT",
+                "codelist_uid": "editable_cr",
+                "concept_id": null,
+                "code_submission_value": "code_submission_value1",
+                "name_submission_value": "name_submission_value1",
+                "nci_preferred_name": "preferred_term",
                 "definition": "definition",
-                "sponsorPreferredName": "term_value_name1",
-                "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                "sponsor_preferred_name": "term_value_name1",
+                "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                 "order": 1,
-                "libraryName": "Sponsor",
-                "possibleActions": [
+                "library_name": "Sponsor",
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
@@ -272,14 +272,14 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/ct/terms/term_root_final/add-parent?parent_uid=term_root_final&relationship_type=type"
+            "url": "/ct/terms/term_root_final/parents?parent_uid=term_root_final&relationship_type=type"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "The term identified by (term_root_final) already has a parent type node identified by (term_root_final) with the relationship of type (type)",
                 "method": "POST",
-                "path": "http://testserver/ct/terms/term_root_final/add-parent?parent_uid=term_root_final&relationship_type=type",
+                "path": "http://testserver/ct/terms/term_root_final/parents?parent_uid=term_root_final&relationship_type=type",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "ValidationException"
             }
@@ -289,16 +289,16 @@
         "name": "Test remove parent node when the term has no defined parent node of given type",
         "request": {
             "headers": {},
-            "method": "POST",
+            "method": "DELETE",
             "request": {},
-            "url": "/ct/terms/term_root_final/remove-parent?parent_uid=term_root_final&relationship_type=subtype"
+            "url": "/ct/terms/term_root_final/parents?parent_uid=term_root_final&relationship_type=subtype"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "The term identified by (term_root_final) has no defined parent type node identified by (term_root_final) with the relationship of type (subtype)",
-                "method": "POST",
-                "path": "http://testserver/ct/terms/term_root_final/remove-parent?parent_uid=term_root_final&relationship_type=subtype",
+                "method": "DELETE",
+                "path": "http://testserver/ct/terms/term_root_final/parents?parent_uid=term_root_final&relationship_type=subtype",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "ValidationException"
             }
@@ -310,14 +310,14 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/ct/terms/term_root_final/add-parent?parent_uid=term_root_final&relationship_type=wrong_type"
+            "url": "/ct/terms/term_root_final/parents?parent_uid=term_root_final&relationship_type=wrong_type"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "The following type (wrong_type) is not valid relationship type.",
                 "method": "POST",
-                "path": "http://testserver/ct/terms/term_root_final/add-parent?parent_uid=term_root_final&relationship_type=wrong_type",
+                "path": "http://testserver/ct/terms/term_root_final/parents?parent_uid=term_root_final&relationship_type=wrong_type",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }
@@ -327,16 +327,16 @@
         "name": "Test remove parent node wrong relationship type passed",
         "request": {
             "headers": {},
-            "method": "POST",
+            "method": "DELETE",
             "request": {},
-            "url": "/ct/terms/term_root_final/remove-parent?parent_uid=term_root_final&relationship_type=wrong_type"
+            "url": "/ct/terms/term_root_final/parents?parent_uid=term_root_final&relationship_type=wrong_type"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "The following type (wrong_type) is not valid relationship type.",
-                "method": "POST",
-                "path": "http://testserver/ct/terms/term_root_final/remove-parent?parent_uid=term_root_final&relationship_type=wrong_type",
+                "method": "DELETE",
+                "path": "http://testserver/ct/terms/term_root_final/parents?parent_uid=term_root_final&relationship_type=wrong_type",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }

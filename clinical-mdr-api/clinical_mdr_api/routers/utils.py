@@ -6,18 +6,20 @@ from fastapi import Path
 
 studyUID = Path(None, description="The unique id of the study.")
 
-studySelectionUid = Path(None, description="The unique id of the study selection.")
+study_selection_uid = Path(None, description="The unique id of the study selection.")
 
-studyDesignCellUid = Path(None, description="The unique id of the study design cell.")
+study_design_cell_uid = Path(
+    None, description="The unique id of the study design cell."
+)
 
-studyActivityScheduleUid = Path(
+study_activity_schedule_uid = Path(
     None, description="The unique id of the study activity schedule."
 )
 
-studyActivityInstructionUid = Path(
+study_activity_instruction_uid = Path(
     None, description="The unique id of the study activity instruction."
 )
 
-studyCompoundDosingUid = Path(
+study_compound_dosing_uid = Path(
     None, description="The unique id of the study compound dosing."
 )

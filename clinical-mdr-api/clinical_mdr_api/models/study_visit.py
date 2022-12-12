@@ -26,39 +26,39 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class StudyVisitCreateInput(BaseModel):
-    study_epoch_uid: str = Field(alias="studyEpochUid")
+    study_epoch_uid: str = Field(alias="study_epoch_uid")
 
-    visitTypeUid: str = Field(source="has_visit_type.uid")
-    timeReferenceUid: Optional[str]
-    timeValue: Optional[int]
-    timeUnitUid: Optional[str]
+    visit_type_uid: str = Field(source="has_visit_type.uid")
+    time_reference_uid: Optional[str]
+    time_value: Optional[int]
+    time_unit_uid: Optional[str]
 
-    visitSubLabelCodelistUid: Optional[str]
-    visitSubLabelReference: Optional[str]
+    visit_sublabel_codelist_uid: Optional[str]
+    visit_sublabel_reference: Optional[str]
 
-    legacyVisitId: Optional[str]
-    legacyVisitTypeAlias: Optional[str]
-    legacyName: Optional[str]
-    legacySubName: Optional[str]
+    legacy_visit_id: Optional[str]
+    legacy_visit_type_alias: Optional[str]
+    legacy_name: Optional[str]
+    legacy_subname: Optional[str]
 
-    consecutiveVisitGroup: Optional[str]
+    consecutive_visit_group: Optional[str]
 
-    show_visit: bool = Field(alias="showVisit")
+    show_visit: bool = Field(alias="show_visit")
 
-    minVisitWindowValue: Optional[int] = -9999
-    maxVisitWindowValue: Optional[int] = 9999
-    visitWindowUnitUid: Optional[str]
+    min_visit_window_value: Optional[int] = -9999
+    max_visit_window_value: Optional[int] = 9999
+    visit_window_unit_uid: Optional[str]
 
     description: Optional[str]
 
-    startRule: Optional[str]
-    endRule: Optional[str]
+    start_rule: Optional[str]
+    end_rule: Optional[str]
     note: Optional[str]
-    visitContactModeUid: str
-    epochAllocationUid: Optional[str]
-    visitClass: str
-    visitSubclass: Optional[str]
-    isGlobalAnchorVisit: bool
+    visit_contact_mode_uid: str
+    epoch_allocation_uid: Optional[str]
+    visit_class: str
+    visit_subclass: Optional[str]
+    is_global_anchor_visit: bool
 
 
 class StudyVisitEditInput(StudyVisitCreateInput):
@@ -83,7 +83,7 @@ class TimeUnit(BaseModel):
         description="Uid of visit unit",
         source="has_timepoint.has_latest_value.has_unit_definition.has_latest_value.conversion_factor_to_master",
     )
-    from_timedelta: Optional[Callable] = Field(None, excludeFromOrm=True)
+    from_timedelta: Optional[Callable] = Field(None, exclude_from_orm=True)
 
     @validator("from_timedelta", always=True)
     # pylint:disable=no-self-argument,unused-argument
@@ -107,7 +107,7 @@ class WindowTimeUnit(BaseModel):
         description="Uid of visit unit",
         source="has_window_unit.has_latest_value.conversion_factor_to_master",
     )
-    from_timedelta: Optional[Callable] = Field(None, excludeFromOrm=True)
+    from_timedelta: Optional[Callable] = Field(None, exclude_from_orm=True)
 
     @validator("from_timedelta", always=True)
     # pylint:disable=no-self-argument,unused-argument
@@ -353,7 +353,7 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
 
     visit_type: StudyVisitType = Field(
         ...,
-        title="visitUnitUid",
+        title="visit_unit_uid",
         description="Uid of visit unit",
         source="has_visit_type.uid",
     )
@@ -371,7 +371,7 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
     )
     start_date: Optional[datetime] = Field(
         ...,
-        title="startDate",
+        title="start_date",
         description="The most recent point in time when the study visit was edited."
         "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
         source="has_after.date",
@@ -437,11 +437,11 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
     legacy_name: Optional[str] = Field(
         ..., title="Legacy name", description="Legacy name", source="legacy_name"
     )
-    legacy_sub_name: Optional[str] = Field(
+    legacy_subname: Optional[str] = Field(
         ...,
         title="Legacy sub name",
         description="Legacy sub name",
-        source="legacy_sub_name",
+        source="legacy_subname",
     )
 
     visit_number: int = Field(
@@ -496,20 +496,20 @@ class StudyVisitOGM(BaseModel, StudyVisitVO):
         source="is_deleted",
     )
 
-    visit_sub_label: Optional[str] = Field(
-        ..., title="Status", description="Study visit status", source="visit_sub_label"
+    visit_sublabel: Optional[str] = Field(
+        ..., title="Status", description="Study visit status", source="visit_sublabel"
     )
-    visit_sub_label_reference: Optional[str] = Field(
+    visit_sublabel_reference: Optional[str] = Field(
         None,
         title="Status",
         description="Study visit status",
-        source="visit_sub_label_reference",
+        source="visit_sublabel_reference",
     )
-    visit_sub_label_uid: Optional[str] = Field(
+    visit_sublabel_uid: Optional[str] = Field(
         ...,
         title="Status",
         description="Study visit status",
-        source="visit_sub_label_uid",
+        source="visit_sublabel_uid",
     )
 
 
@@ -522,13 +522,13 @@ class SimpleStudyVisit(BaseModel):
         orm_mode = True
 
     uid: str = Field(..., title="Uid", description="Uid of the visit", source="uid")
-    visitName: str = Field(
+    visit_name: str = Field(
         ...,
         title="Visit name",
         description="Name of the visit",
         source="has_visit_name.has_latest_value.name",
     )
-    visitTypeName: str = Field(
+    visit_type_name: str = Field(
         ...,
         title="Visit type name",
         description="Name of the visit type",
@@ -541,10 +541,10 @@ class StudyVisit(StudyVisitEditInput):
         allow_population_by_field_name = True
         orm_mode = True
 
-    studyUid: str
-    studyEpochName: str
-    # studyEpochName can be calculated from uid
-    epochUid: str = Field(
+    study_uid: str
+    study_epoch_name: str
+    # study_epoch_name can be calculated from uid
+    epoch_uid: str = Field(
         ...,
         title="The uid of the study epoch",
         description="The uid of the study epoch",
@@ -552,55 +552,55 @@ class StudyVisit(StudyVisitEditInput):
 
     order: int
 
-    visitTypeName: str
+    visit_type_name: str
 
-    timeReferenceUid: Optional[str]
-    timeReferenceName: Optional[str]
-    timeValue: Optional[int]
-    timeUnitUid: Optional[str]
-    timeUnitName: Optional[str]
-    visitContactModeUid: str
-    visitContactModeName: str
-    epochAllocationUid: Optional[str]
-    epochAllocationName: Optional[str]
+    time_reference_uid: Optional[str]
+    time_reference_name: Optional[str]
+    time_value: Optional[int]
+    time_unit_uid: Optional[str]
+    time_unit_name: Optional[str]
+    visit_contact_mode_uid: str
+    visit_contact_mode_name: str
+    epoch_allocation_uid: Optional[str]
+    epoch_allocation_name: Optional[str]
 
-    durationTime: Optional[float]
-    durationTimeUnit: Optional[str]
+    duration_time: Optional[float]
+    duration_time_unit: Optional[str]
 
-    studyDayNumber: Optional[int]
-    studyDurationDaysLabel: Optional[str]
-    studyDayLabel: Optional[str]
-    studyWeekNumber: Optional[int]
-    studyDurationWeeksLabel: Optional[str]
-    studyWeekLabel: Optional[str]
+    study_day_number: Optional[int]
+    study_duration_days_label: Optional[str]
+    study_day_label: Optional[str]
+    study_week_number: Optional[int]
+    study_duration_weeks_label: Optional[str]
+    study_week_label: Optional[str]
 
-    visit_number: int = Field(alias="visitNumber")
-    visitSubNumber: int
+    visit_number: int = Field(alias="visit_number")
+    visit_subnumber: int
 
-    unique_visit_number: int = Field(alias="uniqueVisitNumber")
-    visitSubName: str
-    visit_sub_label: Optional[str] = Field(alias="visitSubLabel")
+    unique_visit_number: int = Field(alias="unique_visit_number")
+    visit_subname: str
+    visit_sublabel: Optional[str] = Field(alias="visit_sublabel")
 
-    visitName: str
-    visitShortName: str
+    visit_name: str
+    visit_short_name: str
 
-    visitWindowUnitName: Optional[str]
-    visitClass: str
-    visitSubclass: Optional[str]
-    isGlobalAnchorVisit: bool
+    visit_window_unit_name: Optional[str]
+    visit_class: str
+    visit_subclass: Optional[str]
+    is_global_anchor_visit: bool
     status: str = Field(..., title="Status", description="Study Visit status")
-    startDate: str = Field(
+    start_date: str = Field(
         ..., title="Creation Date", description="Study Visit creation date"
     )
-    userInitials: str = Field(
+    user_initials: str = Field(
         ...,
         title="User Initials",
         description="Initials of user that created last modification",
     )
-    possibleActions: List[str] = Field(
+    possible_actions: List[str] = Field(
         ..., title="Possible actions", description="List of actions to perform on item"
     )
-    studyActivityCount: Optional[int] = Field(
+    study_activity_count: Optional[int] = Field(
         None, description="Count of Study Activities assigned to Study Visit"
     )
 
@@ -619,5 +619,5 @@ class AllowedVisitTypesForEpochType(BaseModel):
 
 
 class AllowedTimeReferences(BaseModel):
-    timeReferenceUid: str
-    timeReferenceName: str
+    time_reference_uid: str
+    time_reference_name: str

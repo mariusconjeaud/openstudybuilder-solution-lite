@@ -31,11 +31,14 @@ settings = Settings()
 CACHE_MAX_SIZE = 1000
 CACHE_TTL = 3600
 
+DEFAULT_PAGE_SIZE = 10
 MAX_PAGE_SIZE = 1000
 NON_VISIT_NUMBER = 29500
 UNSCHEDULED_VISIT_NUMBER = 29999
 FIXED_WEEK_PERIOD = 7
 
+CT_UID_BOOLEAN_YES = "C49488_Y"
+CT_UID_BOOLEAN_NO = "C49487_N"
 STUDY_EPOCH_TYPE_NAME = "Epoch Type"
 STUDY_EPOCH_SUBTYPE_NAME = "Epoch Sub Type"
 STUDY_EPOCH_EPOCH_NAME = "Epoch"
@@ -52,12 +55,13 @@ STUDY_VISIT_TIMEREF_NAME = "Time Point Reference"
 STUDY_ELEMENT_SUBTYPE_NAME = "Element Sub Type"
 GLOBAL_ANCHOR_VISIT_NAME = "Global anchor visit"
 PREVIOUS_VISIT_NAME = "Previous Visit"
+ANCHOR_VISIT_IN_VISIT_GROUP = "Anchor visit in visit group"
 STUDY_ENDPOINT_TP_NAME = "StudyEndpoint"
 
 STUDY_VISIT_SUBLABEL = "Visit Sub Label"
 STUDY_VISIT_CONTACT_MODE_NAME = "Visit Contact Mode"
 STUDY_VISIT_EPOCH_ALLOCATION_NAME = "Epoch Allocation"
-TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+DATE_TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
 
 DAY_UNIT_NAME = "day"
 # conversion to second which is master unit for time units

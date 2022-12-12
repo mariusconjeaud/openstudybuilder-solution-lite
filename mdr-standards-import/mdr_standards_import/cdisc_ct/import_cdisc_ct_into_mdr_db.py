@@ -1143,7 +1143,24 @@ def sponsor_specific_parse_term_name(codelist, term):
         newname =  re.sub(r'^Dosage Form for', 'For', newname)
         newname =  re.sub(r'(\sDosage Form($|(?=\s))|^Dosage Form\s)', '', newname)
 
-    elif codelist["concept_id"] in ("C71620", "C78417", "C78422", "C78428", "C78427", "C78429", "C78421", "C78423", "C78430"):
+    elif codelist["concept_id"] in (
+        "C71620",
+        "C78417",
+        "C78422",
+        "C78428",
+        "C78427",
+        "C78429",
+        "C78421",
+        "C78423",
+        "C78430",
+        "C66770",
+        "C66781",
+        "C85494",
+        "C128685",
+        "C128686",
+        "C128684",
+        "C128683",
+    ):
         # Main codelist:
         # - Unit, C71620
         # Subsets:
@@ -1155,6 +1172,14 @@ def sponsor_specific_parse_term_name(codelist, term):
         # - Unit of Drug Dispensed or Returned, C78421
         # - Units for Exposure, C78423
         # - Units for Planned Exposure, C78430
+        # - Units for Vital Signs Results, C66770
+        # - Age Unit, C66781
+        # - PK Units of Measure, C85494
+        # - PK Units of Measure - Dose mg, C128685
+        # - PK Units of Measure - Dose ug, C128686
+        # - PK Units of Measure - Weight g, C128684
+        # - PK Units of Measure - Weight kg, C128683
+
 
         # Use code submission value as name
         newname = term["code_submission_value"]

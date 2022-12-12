@@ -135,7 +135,7 @@ class APITest(TestCase):
         self.assertAlmostEqual(expected, actual, 5)
 
     def _dict_diff(self, expected, actual):
-        print("EXPECTED", expected)
+        print("\nEXPECTED", expected)
         print("ACTUAL", actual)
         for key, val in expected.items():
             self.assertIn(key, actual)
@@ -227,7 +227,7 @@ class APITest(TestCase):
     def get_url(self, request):
         url = request.get("url", "")
         if "{" in url:
-            found_item = re.search("{[a-zA-Z0-9]+}", url)
+            found_item = re.search(r"{\w+}", url)
             replacement = found_item.group()
             data_item = replacement.replace("{", "").replace("}", "")
             data = self.data.get(data_item)
@@ -371,21 +371,24 @@ class APITest(TestCase):
                 Defaults to "test".
         """
         headers_path = f"{path_root}/headers"
-        headers_data = {"fieldName": filter_field_name}
+        headers_data = {"field_name": filter_field_name}
         headers = test_client.get(headers_path, params=headers_data)
         assert len(headers.json()) > 0
         header_value = headers.json()[0]
 
         filter_element = {"v": [header_value]}
         filters = {filter_field_name: filter_element}
-        get_all_data = {"filters": json.dumps(filters), "totalCount": True}
+        get_all_data = {"filters": json.dumps(filters), "total_count": True}
         get_all_filtered = test_client.get(path_root, params=get_all_data)
         assert get_all_filtered.json()["total"] > 0
         assert len(get_all_filtered.json()["items"]) == get_all_filtered.json()["total"]
 
         wildcard_filter_element = {"v": [wildcard_filter_field_name]}
         wildcard_filter = {"*": wildcard_filter_element}
-        get_wildcard_data = {"filters": json.dumps(wildcard_filter), "totalCount": True}
+        get_wildcard_data = {
+            "filters": json.dumps(wildcard_filter),
+            "total_count": True,
+        }
         get_wildcard_filtered = test_client.get(path_root, params=get_wildcard_data)
         assert get_wildcard_filtered.json()["total"] > 0
         assert (

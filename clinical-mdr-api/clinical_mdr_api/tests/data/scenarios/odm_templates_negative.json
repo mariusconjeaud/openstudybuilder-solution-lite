@@ -1,15 +1,15 @@
 [
     {
-        "name": "Create a new odm template",
+        "name": "Create a new ODM Template",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
                 "description": "description1"
             },
             "url": "concepts/odms/templates"
@@ -22,20 +22,20 @@
             },
             "result": {
                 "uid": "OdmTemplate_000001",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
                 "description": "description1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
                 "forms": [],
-                "possibleActions": [
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -44,17 +44,17 @@
         }
     },
     {
-        "name": "Test cannot create a new odm template with existing name",
+        "name": "Test cannot create a new ODM Template with existing name",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
-                "formUids": []
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
+                "form_uids": []
             },
             "url": "concepts/odms/templates"
         },
@@ -65,7 +65,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "OdmTemplate with name (name1) already exists.",
+                "message": "ODM Template with name (name1) already exists.",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/templates",
                 "method": "POST",
@@ -74,7 +74,7 @@
         }
     },
     {
-        "name": "Test getting error for retrieving non existing odm template",
+        "name": "Test getting error for retrieving non existing ODM Template",
         "request": {
             "headers": {},
             "method": "GET",
@@ -97,7 +97,7 @@
         }
     },
     {
-        "name": "Test cannot inactivate an odm template that is in Draft status",
+        "name": "Test cannot inactivate an ODM Template that is in Draft status",
         "request": {
             "headers": {},
             "method": "POST",
@@ -120,7 +120,7 @@
         }
     },
     {
-        "name": "Test cannot reactivate an odm template that is not retired",
+        "name": "Test cannot reactivate an ODM Template that is not retired",
         "request": {
             "headers": {},
             "method": "POST",
@@ -143,7 +143,7 @@
         }
     },
     {
-        "name": "Approve odm template",
+        "name": "Approve ODM Template",
         "request": {
             "headers": {},
             "method": "POST",
@@ -157,29 +157,29 @@
                 "content-type": "application/json"
             },
             "result": {
-                "startDate": "2022-09-28T13:09:05.052653",
-                "endDate": null,
+                "start_date": "2022-09-28T13:09:05.052653",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "userInitials": "TODO user initials",
-                "changeDescription": "Approved version",
+                "user_initials": "TODO user initials",
+                "change_description": "Approved version",
                 "uid": "OdmTemplate_000001",
                 "name": "name1",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "oid": "oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
                 "description": "description1",
                 "forms": [],
-                "possibleActions": [
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Inactivate odm template",
+        "name": "Inactivate ODM Template",
         "request": {
             "headers": {},
             "method": "POST",
@@ -193,21 +193,21 @@
                 "content-type": "application/json"
             },
             "result": {
-                "startDate": "2022-09-28T13:15:41.238896",
-                "endDate": null,
+                "start_date": "2022-09-28T13:15:41.238896",
+                "end_date": null,
                 "status": "Retired",
                 "version": "1.0",
-                "userInitials": "TODO user initials",
-                "changeDescription": "Deactivated version",
+                "user_initials": "TODO user initials",
+                "change_description": "Deactivated version",
                 "uid": "OdmTemplate_000001",
                 "name": "name1",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "oid": "oid1",
-                "effectiveDate": "2022-04-21",
-                "retiredDate": "2022-04-21",
+                "effective_date": "2022-04-21",
+                "retired_date": "2022-04-21",
                 "description": "description1",
                 "forms": [],
-                "possibleActions": [
+                "possible_actions": [
                     "delete",
                     "reactivate"
                 ]
@@ -215,20 +215,20 @@
         }
     },
     {
-        "name": "Test cannot add odm forms to an odm template that is in Retired status",
+        "name": "Test cannot add ODM Forms to an ODM Template that is in Retired status",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
                     "uid": "odm_form1",
-                    "orderNumber": 1,
+                    "order_number": 1,
                     "mandatory": "Yes",
                     "locked": "No",
-                    "collectionExceptionConditionOid": "None"
+                    "collection_exception_condition_oid": "None"
                 }
             ],
-            "url": "concepts/odms/templates/OdmTemplate_000001/add-forms"
+            "url": "concepts/odms/templates/OdmTemplate_000001/forms"
         },
         "response": {
             "code": 400,
@@ -239,7 +239,7 @@
             "result": {
                 "message": "The object is inactive",
                 "time": "2022-03-07T12:30:50.195156",
-                "path": "http://testserver/concepts/odms/templates/OdmTemplate_000001/add-forms",
+                "path": "http://testserver/concepts/odms/templates/OdmTemplate_000001/forms",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }

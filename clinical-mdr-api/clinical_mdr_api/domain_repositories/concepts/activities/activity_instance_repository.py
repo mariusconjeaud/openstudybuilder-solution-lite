@@ -150,14 +150,16 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
     ) -> ActivityInstanceAR:
         major, minor = input_dict.get("version").split(".")
         sdtm_variable_name, sdtm_variable_uid = self._get_item_name_and_uid(
-            input_dict, "sdtmVariable"
+            input_dict, "sdtm_variable"
         )
         sdtm_subcat_name, sdtm_subcat_uid = self._get_item_name_and_uid(
-            input_dict, "sdtmSubcat"
+            input_dict, "sdtm_subcat"
         )
-        sdtm_cat_name, sdtm_cat_uid = self._get_item_name_and_uid(input_dict, "sdtmCat")
+        sdtm_cat_name, sdtm_cat_uid = self._get_item_name_and_uid(
+            input_dict, "sdtm_cat"
+        )
         sdtm_domain_name, sdtm_domain_uid = self._get_item_name_and_uid(
-            input_dict, "sdtmDomain"
+            input_dict, "sdtm_domain"
         )
         specimen_name, specimen_uid = self._get_item_name_and_uid(
             input_dict, "specimen"
@@ -166,13 +168,13 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
             uid=input_dict.get("uid"),
             concept_vo=self.value_object_class.from_repository_values(
                 name=input_dict.get("name"),
-                name_sentence_case=input_dict.get("nameSentenceCase"),
+                name_sentence_case=input_dict.get("name_sentence_case"),
                 activity_type=input_dict.get("type"),
                 definition=input_dict.get("definition"),
                 abbreviation=input_dict.get("abbreviation"),
-                topic_code=input_dict.get("topicCode"),
-                adam_param_code=input_dict.get("adamParamCode"),
-                legacy_description=input_dict.get("legacyDescription"),
+                topic_code=input_dict.get("topic_code"),
+                adam_param_code=input_dict.get("adam_param_code"),
+                legacy_description=input_dict.get("legacy_description"),
                 sdtm_variable_uid=sdtm_variable_uid,
                 sdtm_variable_name=sdtm_variable_name,
                 sdtm_subcat_uid=sdtm_subcat_uid,
@@ -186,16 +188,16 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                 specimen_name=specimen_name,
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("libraryName"),
+                library_name=input_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: input_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("changeDescription"),
+                change_description=input_dict.get("change_description"),
                 status=LibraryItemStatus(input_dict.get("status")),
-                author=input_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=input_dict.get("startDate")),
+                author=input_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=input_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -250,14 +252,14 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
     def specific_alias_clause(self) -> str:
         return """
         WITH *,
-            concept_value.topic_code AS topicCode,
-            concept_value.adam_param_code AS adamParamCode,
-            concept_value.legacy_description AS legacyDescription,
+            concept_value.topic_code AS topic_code,
+            concept_value.adam_param_code AS adam_param_code,
+            concept_value.legacy_description AS legacy_description,
             
-            head([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:TABULATED_IN]->(sdtm_variable_term)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) | {uid:sdtm_variable_term.uid, name: value.name}]) AS sdtmVariable,
-            head([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SDTM_SUBCAT]->(sdtm_subcat_term)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) | {uid:sdtm_subcat_term.uid, name: value.name}]) AS sdtmSubcat,
-            head([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SDTM_CAT]->(sdtm_cat_term)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) | {uid:sdtm_cat_term.uid, name: value.name}]) AS sdtmCat,
-            head([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SDTM_DOMAIN]->(sdtm_domain_term)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) | {uid:sdtm_domain_term.uid, name: value.name}]) AS sdtmDomain,
+            head([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:TABULATED_IN]->(sdtm_variable_term)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) | {uid:sdtm_variable_term.uid, name: value.name}]) AS sdtm_variable,
+            head([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SDTM_SUBCAT]->(sdtm_subcat_term)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) | {uid:sdtm_subcat_term.uid, name: value.name}]) AS sdtm_subcat,
+            head([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SDTM_CAT]->(sdtm_cat_term)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) | {uid:sdtm_cat_term.uid, name: value.name}]) AS sdtm_cat,
+            head([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SDTM_DOMAIN]->(sdtm_domain_term)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) | {uid:sdtm_domain_term.uid, name: value.name}]) AS sdtm_domain,
             head([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SPECIMEN]->(specimen_term)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) | {uid:specimen_term.uid, name: value.name}]) AS specimen,
             [(concept_value)-[:IN_HIERARCHY]->(activity_hierarchy_value)<-[:LATEST]-(activity_hierarchy_root) 
                 | activity_hierarchy_root.uid] AS activities
@@ -271,39 +273,39 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
             filter_query_parameters,
         ) = super().create_query_filter_statement(library=library)
         filter_parameters = []
-        # TODO Add sdtmDomain, sdtmVariable, sdtmCat, sdtmSubcat
-        if kwargs.get("activityNames") is not None:
-            activity_names = kwargs.get("activityNames")
+        # TODO Add sdtm_domain, sdtm_variable, sdtm_cat, sdtm_subcat
+        if kwargs.get("activity_names") is not None:
+            activity_names = kwargs.get("activity_names")
             filter_by_activity_names = """
             size([(concept_value)-[:IN_HIERARCHY]->(activity_hierarchy_value) WHERE activity_hierarchy_value.name IN $activity_names | activity_hierarchy_value.name]) > 0"""
             filter_parameters.append(filter_by_activity_names)
             filter_query_parameters["activity_names"] = activity_names
-        if kwargs.get("specimenNames") is not None:
-            specimen_names = kwargs.get("specimenNames")
+        if kwargs.get("specimen_names") is not None:
+            specimen_names = kwargs.get("specimen_names")
             filter_by_specimen_names = """
             size([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SPECIMEN]->(sp)-[:HAS_NAME_ROOT]->(nameroot)-[:LATEST]->(name) WHERE name.name IN $specimen_names | name.name]) > 0"""
             filter_parameters.append(filter_by_specimen_names)
             filter_query_parameters["specimen_names"] = specimen_names
-        if kwargs.get("sdtmVariableNames") is not None:
-            sdtm_variable_names = kwargs.get("sdtmVariableNames")
+        if kwargs.get("sdtm_variable_names") is not None:
+            sdtm_variable_names = kwargs.get("sdtm_variable_names")
             filter_by_sdtm_variable_names = """
             size([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:TABULATED_IN]->(sdtm_var)-[:HAS_NAME_ROOT]->(nameroot)-[:LATEST]->(name) WHERE name.name IN $sdtm_variable_names | name.name]) > 0"""
             filter_parameters.append(filter_by_sdtm_variable_names)
             filter_query_parameters["sdtm_variable_names"] = sdtm_variable_names
-        if kwargs.get("sdtmCatergoryNames") is not None:
-            sdtm_category_names = kwargs.get("sdtmCatergoryNames")
+        if kwargs.get("sdtm_catergory_names") is not None:
+            sdtm_category_names = kwargs.get("sdtm_catergory_names")
             filter_by_sdtm_category_names = """
             size([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SDTM_CAT]->(sdtm_cat)-[:HAS_NAME_ROOT]->(nameroot)-[:LATEST]->(name) WHERE name.name IN $sdtm_category_names | name.name]) > 0"""
             filter_parameters.append(filter_by_sdtm_category_names)
             filter_query_parameters["sdtm_category_names"] = sdtm_category_names
-        if kwargs.get("sdtmSubCatergoryNames") is not None:
-            sdtm_sub_category_names = kwargs.get("sdtmSubCatergoryNames")
-            filter_by_sdtm_sub_category_names = """
-            size([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SDTM_SUBCAT]->(sdtm_cat)-[:HAS_NAME_ROOT]->(nameroot)-[:LATEST]->(name) WHERE name.name IN $sdtm_sub_category_names | name.name]) > 0"""
-            filter_parameters.append(filter_by_sdtm_sub_category_names)
-            filter_query_parameters["sdtm_sub_category_names"] = sdtm_sub_category_names
-        if kwargs.get("sdtmDomainNames") is not None:
-            sdtm_domain_names = kwargs.get("sdtmDomainNames")
+        if kwargs.get("sdtm_subcategory_names") is not None:
+            sdtm_subcategory_names = kwargs.get("sdtm_subcategory_names")
+            filter_by_sdtm_subcategory_names = """
+            size([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SDTM_SUBCAT]->(sdtm_cat)-[:HAS_NAME_ROOT]->(nameroot)-[:LATEST]->(name) WHERE name.name IN $sdtm_subcategory_names | name.name]) > 0"""
+            filter_parameters.append(filter_by_sdtm_subcategory_names)
+            filter_query_parameters["sdtm_subcategory_names"] = sdtm_subcategory_names
+        if kwargs.get("sdtm_domain_names") is not None:
+            sdtm_domain_names = kwargs.get("sdtm_domain_names")
             filter_by_sdtm_domain_names = """
             size([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SDTM_DOMAIN]->(sdtm_domain)-[:HAS_NAME_ROOT]->(nameroot)-[:LATEST]->(name) WHERE name.name IN $sdtm_domain_names | name.name]) > 0"""
             filter_parameters.append(filter_by_sdtm_domain_names)

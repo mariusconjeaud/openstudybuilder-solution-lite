@@ -17,7 +17,7 @@ class TimeframeTemplateName(BaseModel):
             referenced by simple strings in square brackets [].
             """,
     )
-    namePlain: Optional[str] = Field(
+    name_plain: Optional[str] = Field(
         None,
         description="The plain text version of the name property, stripped of HTML tags",
     )
@@ -28,11 +28,11 @@ class TimeframeTemplateNameUid(TimeframeTemplateName):
 
 
 class TimeframeTemplate(TimeframeTemplateNameUid):
-    editableInstance: bool = Field(
+    editable_instance: bool = Field(
         ...,
         description="Indicates if the name of this template's instances can be edited.",
     )
-    startDate: Optional[datetime] = Field(
+    start_date: Optional[datetime] = Field(
         default_factory=datetime.utcnow,
         description="""
             Part of the metadata: The point in time when the
@@ -41,7 +41,7 @@ class TimeframeTemplate(TimeframeTemplateNameUid):
             for October 31, 2020 at 6pm in UTC+2 timezone.
             """,
     )
-    endDate: Optional[datetime] = Field(
+    end_date: Optional[datetime] = Field(
         default_factory=datetime.utcnow,
         description="Part of the metadata: The point in time when the version of the timeframe template was closed (and a new one was created). "
         "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
@@ -56,21 +56,21 @@ class TimeframeTemplate(TimeframeTemplateNameUid):
         description="The version number of the (version of the) timeframe template. "
         "The format is: <major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0', ...",
     )
-    changeDescription: Optional[str] = Field(
+    change_description: Optional[str] = Field(
         None,
         description="A short description about what has changed compared to the previous version.",
     )
-    userInitials: Optional[str] = Field(
+    user_initials: Optional[str] = Field(
         None,
         description="The initials of the user that triggered the change of the timeframe template.",
     )
 
     # TODO use the standard _link/name approach
-    possibleActions: Optional[List[str]] = Field(
+    possible_actions: Optional[List[str]] = Field(
         None,
         description=(
             "Holds those actions that can be performed on the timeframe template. "
-            "Actions are: 'approve', 'edit', 'newVersion', 'inactivate', 'reactivate' and 'delete'."
+            "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
         ),
     )
     parameters: Optional[List[TemplateParameter]] = Field(
@@ -86,16 +86,16 @@ class TimeframeTemplate(TimeframeTemplateNameUid):
     ) -> "TimeframeTemplate":
         return cls(
             uid=timeframe_template_ar.uid,
-            editableInstance=timeframe_template_ar.editable_instance,
+            editable_instance=timeframe_template_ar.editable_instance,
             name=timeframe_template_ar.name,
-            namePlain=timeframe_template_ar.name_plain,
-            startDate=timeframe_template_ar.item_metadata.start_date,
-            endDate=timeframe_template_ar.item_metadata.end_date,
+            name_plain=timeframe_template_ar.name_plain,
+            start_date=timeframe_template_ar.item_metadata.start_date,
+            end_date=timeframe_template_ar.item_metadata.end_date,
             status=timeframe_template_ar.item_metadata.status.value,
             version=timeframe_template_ar.item_metadata.version,
-            changeDescription=timeframe_template_ar.item_metadata.change_description,
-            userInitials=timeframe_template_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=timeframe_template_ar.item_metadata.change_description,
+            user_initials=timeframe_template_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 [_.value for _ in timeframe_template_ar.get_possible_actions()]
             ),
             library=Library.from_library_vo(timeframe_template_ar.library),
@@ -135,7 +135,7 @@ class TimeframeTemplateVersion(TimeframeTemplate):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the timeframe template (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the timeframe template (e.g. name, start_date, ..)."
         ),
     )
 
@@ -145,27 +145,27 @@ class TimeframeTemplateNameInput(BaseModel):
         ...,
         description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
     )
-    guidanceText: Optional[str] = Field(
+    guidance_text: Optional[str] = Field(
         None, description="Optional guidance text for using the template."
     )
 
 
 class TimeframeTemplateCreateInput(TimeframeTemplateNameInput):
-    libraryName: Optional[str] = Field(
+    library_name: Optional[str] = Field(
         "Sponsor",
         description="If specified: The name of the library to which the timeframe template will be linked. The following rules apply: \n"
         "* The library needs to be present, it will not be created with this request. The *[GET] /libraries* endpoint can help. And \n"
-        "* The library needs to allow the creation: The 'isEditable' property of the library needs to be true.",
+        "* The library needs to allow the creation: The 'is_editable' property of the library needs to be true.",
     )
 
-    editableInstance: Optional[bool] = Field(
+    editable_instance: Optional[bool] = Field(
         False,
         description="Indicates if the name of this template's instances can be edited. Defaults to False.",
     )
 
 
 class TimeframeTemplateEditInput(TimeframeTemplateNameInput):
-    changeDescription: str = Field(
+    change_description: str = Field(
         ...,
         description="A short description about what has changed compared to the previous version.",
     )

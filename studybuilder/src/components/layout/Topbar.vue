@@ -47,11 +47,11 @@
       {{ $t('Topbar.select_study') }}
     </v-btn>
     <v-chip v-if="selectedStudy" data-cy="topbar-selected-study" class="ma-2" color="green">
-      {{ selectedStudy.studyId || selectedStudy.studyAcronym }}
+      {{ selectedStudy.study_id || selectedStudy.study_acronym }}
       <v-icon
         right
         small
-        v-if="selectedStudy.currentMetadata.versionMetadata.studyStatus === 'DRAFT'"
+        v-if="selectedStudy.current_metadata.version_metadata.study_status === 'DRAFT'"
       >
         mdi-lock-open-outline
       </v-icon>

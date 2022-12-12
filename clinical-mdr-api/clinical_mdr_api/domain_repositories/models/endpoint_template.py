@@ -74,4 +74,4 @@ class EndpointTemplateRoot(VersionRoot):
 
     has_indication = RelationshipTo(DictionaryTermRoot, "HAS_DISEASE_DISORDER_TERM")
     has_category = RelationshipTo(CTTermRoot, "HAS_CATEGORY")
-    has_sub_category = RelationshipTo(CTTermRoot, "HAS_SUB_CATEGORY")
+    has_subcategory = RelationshipTo(CTTermRoot, "HAS_SUB_CATEGORY")

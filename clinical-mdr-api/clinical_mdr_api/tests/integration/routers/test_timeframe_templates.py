@@ -32,7 +32,7 @@ class TimeframeTemplatesTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "timeframe_template.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid"]
+        return ["start_date", "end_date", "uid"]
 
     def post_test(self):
         def check_template_parameters():
@@ -89,7 +89,7 @@ class TimeframeTemplatesNegativeTest(TimeframeTemplatesTest):
         check_timeframe_templates_empty()
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "uid"]
+        return ["start_date", "end_date", "time", "uid"]
 
 
 class TimeframeTemplatesVersioningTest(TimeframeTemplatesTest):
@@ -100,4 +100,4 @@ class TimeframeTemplatesVersioningTest(TimeframeTemplatesTest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "path", "uid", "content-length"]
+        return ["start_date", "end_date", "time", "path", "uid", "content-length"]

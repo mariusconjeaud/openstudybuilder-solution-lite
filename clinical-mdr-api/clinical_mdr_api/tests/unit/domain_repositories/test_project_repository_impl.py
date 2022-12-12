@@ -35,38 +35,38 @@ def create_random_project_node() -> Project:
 
 class TestProjectRepositoryImpl(unittest.TestCase):
     @patch(ProjectRepository.__module__ + ".Project")
-    def test__project_number_exists_mocked_project_exist(self, projectMock):
+    def test__project_number_exists_mocked_project_exist(self, project_mock):
         # given
         repo = ProjectRepository()
         project: Project = create_random_project_node()
-        projectMock.nodes.first_or_none.return_value = project
+        project_mock.nodes.first_or_none.return_value = project
 
         # when
-        doesProjectNumberExist: bool = repo.project_number_exists(
+        does_project_number_exist: bool = repo.project_number_exists(
             project.project_number
         )
 
         # then
-        self.assertTrue(doesProjectNumberExist)
+        self.assertTrue(does_project_number_exist)
 
     @patch(ProjectRepository.__module__ + ".Project")
-    def test__project_number_exists_mocked_project_not_exist(self, projectMock):
+    def test__project_number_exists_mocked_project_not_exist(self, project_mock):
         # given
         repo = ProjectRepository()
-        projectMock.nodes.first_or_none.return_value = None
+        project_mock.nodes.first_or_none.return_value = None
 
         # when
-        doesProjectNumberExist: bool = repo.project_number_exists(random_str())
+        does_project_number_exist: bool = repo.project_number_exists(random_str())
 
         # then
-        self.assertFalse(doesProjectNumberExist)
+        self.assertFalse(does_project_number_exist)
 
     @patch(ProjectRepository.__module__ + ".Project")
-    def test__find_by_uid_mocked_project_exist(self, projectMock):
+    def test__find_by_uid_mocked_project_exist(self, project_mock):
         # given
         repo = ProjectRepository()
         project: Project = create_random_project_node()
-        projectMock.nodes.get_or_none.return_value = project
+        project_mock.nodes.get_or_none.return_value = project
         # when
         projectAR: Optional[ProjectAR] = repo.find_by_uid(project.uid)
 
@@ -80,10 +80,10 @@ class TestProjectRepositoryImpl(unittest.TestCase):
         self.assertEqual(project.description, projectAR.description)
 
     @patch(ProjectRepository.__module__ + ".Project")
-    def test__find_by_uid_mocked_project_not_exist(self, projectMock):
+    def test__find_by_uid_mocked_project_not_exist(self, project_mock):
         # given
         repo = ProjectRepository()
-        projectMock.nodes.get_or_none.return_value = None
+        project_mock.nodes.get_or_none.return_value = None
 
         # when
         projectAR: Optional[ProjectAR] = repo.find_by_uid(random_str())
@@ -92,11 +92,11 @@ class TestProjectRepositoryImpl(unittest.TestCase):
         self.assertIsNone(projectAR)
 
     @patch(ProjectRepository.__module__ + ".Project")
-    def test__find_all_mocked_projects_exist(self, projectMock):
+    def test__find_all_mocked_projects_exist(self, project_mock):
         # given
         repo = ProjectRepository()
         projects: Sequence[Project] = [create_random_project_node() for _ in range(10)]
-        projectMock.nodes.all.return_value = projects
+        project_mock.nodes.all.return_value = projects
 
         # when
         projectARs: Collection[ProjectAR] = repo.find_all()
@@ -113,11 +113,11 @@ class TestProjectRepositoryImpl(unittest.TestCase):
                 self.assertEqual(project.description, projectAR.description)
 
     @patch(ProjectRepository.__module__ + ".Project")
-    def test__find_all_mocked_project_not_exist(self, projectMock):
+    def test__find_all_mocked_project_not_exist(self, project_mock):
         # given
         repo = ProjectRepository()
         projects: Sequence[Project] = []
-        projectMock.nodes.all.return_value = projects
+        project_mock.nodes.all.return_value = projects
 
         # when
         projectARs: Collection[ProjectAR] = repo.find_all()

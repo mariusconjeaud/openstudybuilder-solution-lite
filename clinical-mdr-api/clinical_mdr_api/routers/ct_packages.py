@@ -43,12 +43,12 @@ def get_packages_changes_between_codelists_and_terms(
     old_package_date: date = Query(
         ...,
         description="The date for the old package, for instance '2020-03-27'"
-        "\nThe possible dates for given catalogue_name can be retrieved by the /ct/packages/dates endpoint",
+        "\n_the possible dates for given catalogue_name can be retrieved by the /ct/packages/dates endpoint",
     ),
     new_package_date: date = Query(
         ...,
         description="The datetime for the new package, for instance '2020-06-26'"
-        "\nThe possible dates for given catalogue_name can be retrieved by the /ct/packages/dates endpoint",
+        "\n_the possible dates for given catalogue_name can be retrieved by the /ct/packages/dates endpoint",
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
@@ -61,7 +61,7 @@ def get_packages_changes_between_codelists_and_terms(
 
 
 @router.get(
-    "/packages/{codelistuid}/changes",
+    "/packages/{codelist_uid}/changes",
     summary="Returns changes from given codelist and all associated terms inside two different packages.",
     response_model=models.CTPackageChangesSpecificCodelist,
     status_code=200,
@@ -69,16 +69,16 @@ def get_packages_changes_between_codelists_and_terms(
 )
 def get_packages_changes_between_codelist_and_all_associated_terms(
     catalogue_name: str,
-    codelistuid: str = CTCodelistUid,
+    codelist_uid: str = CTCodelistUid,
     old_package_date: date = Query(
         ...,
         description="The date for the old package, for instance '2020-03-27'"
-        "\nThe possible dates for given catalogue_name can be retrieved by the /ct/packages/dates endpoint",
+        "\n_the possible dates for given catalogue_name can be retrieved by the /ct/packages/dates endpoint",
     ),
     new_package_date: date = Query(
         ...,
         description="The date for the new package, for instance '2020-06-26'"
-        "\nThe possible dates for given catalogue_name can be retrieved by the /ct/packages/dates endpoint",
+        "\n_the possible dates for given catalogue_name can be retrieved by the /ct/packages/dates endpoint",
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
@@ -87,7 +87,7 @@ def get_packages_changes_between_codelist_and_all_associated_terms(
         catalogue_name=catalogue_name,
         old_package_date=old_package_date,
         new_package_date=new_package_date,
-        codelist_uid=codelistuid,
+        codelist_uid=codelist_uid,
     )
 
 

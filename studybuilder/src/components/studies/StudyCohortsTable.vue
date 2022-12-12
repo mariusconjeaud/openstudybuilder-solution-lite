@@ -3,10 +3,15 @@
   <n-n-table
     @filter="fetchStudyCohorts"
     :headers="headers"
-    item-key=""
+    item-key="cohort_uid"
     :server-items-length="total"
     :options.sync="options"
-    :items="cohorts">
+    :items="cohorts"
+    :history-data-fetcher="fetchCohortsHistory"
+    :history-title="$t('StudyCohorts.global_history_title')"
+    :export-data-url="exportDataUrl"
+    export-object-label="StudyCohors"
+    >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
         <v-switch
@@ -24,24 +29,11 @@
         small
         color="primary"
         @click.stop="showForm()"
-        title="Add Study Cohort"
+        :title="$t('StudyCohorts.add_study_cohort')"
         data-cy="add-study-cohort"
         >
         <v-icon dark>
           mdi-plus
-        </v-icon>
-      </v-btn>
-      <v-btn
-        fab
-        dark
-        small
-        class="ml-2"
-        color="secondary"
-        :title="$t('NNTableTooltips.history')"
-        @click="openStudyCohortsHistory()"
-        >
-        <v-icon dark>
-          mdi-history
         </v-icon>
       </v-btn>
     </template>
@@ -66,30 +58,30 @@
             </v-icon>
             {{ item.order }}
           </td>
-          <td width="10%">{{ item.armRoots|names }}</td>
-          <td width="10%">{{ item.branchArmRoots|names }}</td>
+          <td width="10%">{{ item.arm_roots|names }}</td>
+          <td width="10%">{{ item.branch_arm_roots|names }}</td>
           <td width="10%">{{ item.name }}</td>
-          <td width="10%">{{ item.shortName }}</td>
+          <td width="10%">{{ item.short_name }}</td>
           <td width="10%">{{ item.code }}</td>
-          <td width="5%">{{ item.numberOfSubjects }}</td>
+          <td width="5%">{{ item.number_of_subjects }}</td>
           <td width="10%">{{ item.description }}</td>
-          <td width="10%"><v-chip :color="item.colourCode" small /></td>
-          <td width="10%">{{ item.startDate | date }}</td>
-          <td width="10%">{{ item.userInitials }}</td>
+          <td width="10%"><v-chip :color="item.colour_code" small /></td>
+          <td width="10%">{{ item.start_date | date }}</td>
+          <td width="10%">{{ item.user_initials }}</td>
         </tr>
       </draggable>
     </template>
-    <template v-slot:item.armRoots="{ item }">
-      {{ item.armRoots|names }}
+    <template v-slot:item.arm_roots="{ item }">
+      {{ item.arm_roots|names }}
     </template>
-    <template v-slot:item.branchArmRoots="{ item }">
-      {{ item.branchArmRoots|names }}
+    <template v-slot:item.branch_arm_roots="{ item }">
+      {{ (item.branch_arm_roots !== null)?item.branch_arm_roots:[]|names }}
     </template>
-    <template v-slot:item.colourCode="{ item }">
-      <v-chip :data-cy="'color='+item.colourCode" :color="item.colourCode" small />
+    <template v-slot:item.colour_code="{ item }">
+      <v-chip :data-cy="'color='+item.colour_code" :color="item.colour_code" small />
     </template>
-    <template v-slot:item.startDate="{ item }">
-      {{ item.startDate|date }}
+    <template v-slot:item.start_date="{ item }">
+      {{ item.start_date|date }}
     </template>
     <template v-slot:item.actions="{ item }">
       <actions-menu :actions="actions" :item="item" />
@@ -101,13 +93,19 @@
     :editedCohort="cohortToEdit"
     :arms="arms"
     :branches="branches"/>
+  <v-dialog
+    v-model="showCohortHistory"
+    persistent
+    max-width="1200px"
+    >
+    <history-table
+      :title="studyCohortHistoryTitle"
+      @close="closeCohortHistory"
+      :headers="headers"
+      :items="cohortHistoryItems"
+      />
+  </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-  <v-dialog v-model="showCohortHistory">
-    <history-table @close="closeCohortHistory" :item="selectedCohort" type="studyCohort"  :title-label="$t('StudyCohorts.study_cohort')"/>
-  </v-dialog>
-  <v-dialog v-model="showStudyCohortsHistory">
-    <summary-history-table @close="closeStudyCohortsHistory" type="studyCohorts" :title-label="$t('StudyDesignTable.study_cohorts')" />
-  </v-dialog>
 </div>
 </template>
 
@@ -121,8 +119,7 @@ import ActionsMenu from '@/components/tools/ActionsMenu'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import { bus } from '@/main'
 import draggable from 'vuedraggable'
-import HistoryTable from '@/components/library/HistoryTable'
-import SummaryHistoryTable from '@/components/tools/SummaryHistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable'
 
 export default {
   components: {
@@ -131,29 +128,39 @@ export default {
     ActionsMenu,
     ConfirmDialog,
     draggable,
-    HistoryTable,
-    SummaryHistoryTable
+    HistoryTable
   },
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy'
-    })
+    }),
+    studyCohortHistoryTitle () {
+      if (this.selectedCohort) {
+        return this.$t(
+          'StudyCohorts.study_arm_history_title',
+          { cohortUid: this.selectedCohort.cohort_uid })
+      }
+      return ''
+    },
+    exportDataUrl () {
+      return `studies/${this.selectedStudy.uid}/study-cohorts`
+    }
   },
   data () {
     return {
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: '#', value: 'order', width: '5%' },
-        { text: this.$t('StudyCohorts.arm_name'), value: 'armRoots' },
-        { text: this.$t('StudyCohorts.branch_arm_name'), value: 'branchArmRoots' },
+        { text: this.$t('StudyCohorts.arm_name'), value: 'arm_roots' },
+        { text: this.$t('StudyCohorts.branch_arm_name'), value: 'branch_arm_roots' },
         { text: this.$t('StudyCohorts.cohort_name'), value: 'name' },
-        { text: this.$t('StudyCohorts.cohort_short_name'), value: 'shortName' },
+        { text: this.$t('StudyCohorts.cohort_short_name'), value: 'short_name' },
         { text: this.$t('StudyCohorts.cohort_code'), value: 'code' },
-        { text: this.$t('StudyCohorts.number_of_subjects'), value: 'numberOfSubjects' },
+        { text: this.$t('StudyCohorts.number_of_subjects'), value: 'number_of_subjects' },
         { text: this.$t('_global.description'), value: 'description' },
-        { text: this.$t('StudyCohorts.colour'), value: 'colourCode' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
-        { text: this.$t('_global.modified_by'), value: 'userInitials' }
+        { text: this.$t('StudyCohorts.colour'), value: 'colour_code' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
+        { text: this.$t('_global.modified_by'), value: 'user_initials' }
       ],
       actions: [
         {
@@ -183,6 +190,7 @@ export default {
       branches: [],
       cohortToEdit: {},
       showCohortHistory: false,
+      cohortHistoryItems: [],
       selectedCohort: null,
       showStudyCohortsHistory: false
     }
@@ -192,15 +200,14 @@ export default {
     this.fetchStudyArmsAndBranches()
   },
   methods: {
-    openStudyCohortsHistory () {
-      this.showStudyCohortsHistory = true
-    },
-    closeStudyCohortsHistory () {
-      this.showStudyCohortsHistory = false
+    async fetchCohortsHistory () {
+      const resp = await arms.getStudyCohortsVersions(this.selectedStudy.uid)
+      return resp.data
     },
     fetchStudyArmsAndBranches () {
       const params = {
-        totalCount: true
+        total_count: true,
+        page_size: 0
       }
       arms.getAllForStudy(this.selectedStudy.uid, params).then(resp => {
         this.arms = resp.data.items
@@ -211,9 +218,9 @@ export default {
     },
     fetchStudyCohorts () {
       const params = {
-        pageNumber: (this.options.page),
-        pageSize: this.options.itemsPerPage,
-        totalCount: true
+        page_number: (this.options.page),
+        page_size: this.options.itemsPerPage,
+        total_count: true
       }
       arms.getAllCohorts(this.selectedStudy.uid, params).then(resp => {
         this.cohorts = resp.data.items
@@ -232,16 +239,18 @@ export default {
       this.cohortToEdit = item
       this.form = true
     },
-    openCohortHistory (item) {
+    async openCohortHistory (cohort) {
+      this.selectedCohort = cohort
+      const resp = await arms.getStudyCohortVersions(this.selectedStudy.uid, cohort.cohort_uid)
+      this.cohortHistoryItems = resp.data
       this.showCohortHistory = true
-      this.selectedCohort = item
     },
-    closeCohortHistory (item) {
+    closeCohortHistory () {
       this.showCohortHistory = false
       this.selectedCohort = null
     },
     deleteCohort (item) {
-      arms.deleteCohort(this.selectedStudy.uid, item.cohortUid).then(resp => {
+      arms.deleteCohort(this.selectedStudy.uid, item.cohort_uid).then(resp => {
         this.fetchStudyCohorts()
         bus.$emit('notification', { msg: this.$t('StudyCohorts.cohort_deleted') })
       })
@@ -251,7 +260,7 @@ export default {
       const newOrder = {
         new_order: this.cohorts[event.moved.newIndex].order
       }
-      arms.updateCohortOrder(this.selectedStudy.uid, cohort.cohortUid, newOrder).then(resp => {
+      arms.updateCohortOrder(this.selectedStudy.uid, cohort.cohort_uid, newOrder).then(resp => {
         this.fetchStudyCohorts()
       })
     }

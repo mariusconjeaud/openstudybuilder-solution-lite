@@ -28,7 +28,7 @@ class DictionaryTermsTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "dictionary_terms.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials"]
+        return ["start_date", "end_date", "user_initials"]
 
 
 class DictionaryTermsNegativeTest(api.APITest):
@@ -48,4 +48,4 @@ class DictionaryTermsNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "userInitials"]
+        return ["start_date", "end_date", "time", "user_initials"]

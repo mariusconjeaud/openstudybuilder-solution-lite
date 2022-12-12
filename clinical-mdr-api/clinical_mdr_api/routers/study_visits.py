@@ -7,6 +7,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 import clinical_mdr_api.models
+from clinical_mdr_api import config
 from clinical_mdr_api.models import study_epoch
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
@@ -14,12 +15,12 @@ from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers import study_router as router
-from clinical_mdr_api.routers.study_epochs import studyUID, studyVisitUidDescription
+from clinical_mdr_api.routers.study_epochs import study_visit_uid_description, studyUID
 from clinical_mdr_api.services.study_visit import StudyVisitService
 
 
 @router.get(
-    "/{uid}/study-visits",
+    "/studies/{uid}/study-visits",
     summary="List all study visits currently defined for the study",
     description="""
 State before:
@@ -52,26 +53,26 @@ Possible errors:
     {
         "defaults": [
             "uid",
-            "studyEpochUid",
-            "studyEpochName",
-            "visitTypeName",
-            "visitContactModeName",
+            "study_epoch_uid",
+            "study_epoch_name",
+            "visit_type_name",
+            "visit_contact_mode_name",
             "order",
-            "uniqueVisitNumber",
-            "visitName",
-            "visitShortName",
-            "studyDayLabel",
-            "studyWeekLabel",
-            "visitWindow",
-            "timeReferenceName",
-            "timeValue",
-            "consecutiveVisitGroup",
-            "showVisit",
+            "unique_visit_number",
+            "visit_name",
+            "visit_short_name",
+            "study_day_label",
+            "study_week_label",
+            "visit_window",
+            "time_reference_name",
+            "time_value",
+            "consecutive_visit_group",
+            "show_visit",
             "description",
-            "startRule",
-            "endRule",
-            "modifiedDate",
-            "userInitials",
+            "start_rule",
+            "end_rule",
+            "modified_date",
+            "user_initials",
         ],
         "formats": [
             "text/csv",
@@ -85,18 +86,20 @@ Possible errors:
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator,
     uid: str = studyUID,
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -104,20 +107,20 @@ def get_all(
     service = StudyVisitService(current_user_id)
     results = service.get_all_visits(
         study_uid=uid,
-        sort_by=sortBy,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
 @router.get(
-    "/{uid}/study-visits/headers",
+    "/studies/{uid}/study-visits/headers",
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
@@ -134,8 +137,8 @@ def get_all(
 def get_distinct_values_for_header(
     uid: str = studyUID,
     current_user_id: str = Depends(get_current_user_id),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -144,22 +147,22 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     return StudyVisitService(current_user_id).get_distinct_values_for_header(
         study_uid=uid,
-        field_name=fieldName,
-        search_string=searchString,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
 @router.get(
-    "/{uid}/study-visits-references",
+    "/studies/{uid}/study-visits-references",
     summary="Returns all study visit references for study currently selected",
     response_model=Sequence[clinical_mdr_api.models.study_visit.StudyVisit],
     response_model_exclude_unset=True,
@@ -176,7 +179,7 @@ def get_all_references(
 
 
 @router.post(
-    "/{uid}/study-visits",
+    "/studies/{uid}/study-visits",
     summary="Add a study visit to a study",
     description="""
 
@@ -258,7 +261,7 @@ def post_new_visit_create(
 
 
 @router.post(
-    "/{uid}/study-visits/preview",
+    "/studies/{uid}/study-visits/preview",
     summary="Preview a study visit",
     response_model=clinical_mdr_api.models.study_visit.StudyVisit,
     response_model_exclude_unset=True,
@@ -283,7 +286,7 @@ def post_preview_visit(
 
 
 @router.patch(
-    "/{uid}/study-visits/{studyVisitUid}",
+    "/studies/{uid}/study-visits/{study_visit_uid}",
     summary="Edit a study visit",
     description="""
 State before:
@@ -297,7 +300,7 @@ State after:
  - Add new entry in the audit trail for the update of the study-visit .
 
 Possible errors:
- - Invalid study-uid or studyVisitUidDescription .
+ - Invalid study-uid or study_visit_uid_description .
     """,
     response_model=clinical_mdr_api.models.study_visit.StudyVisit,
     response_model_exclude_unset=True,
@@ -312,7 +315,7 @@ Possible errors:
 )
 def patch_update_visit(
     uid: str = studyUID,
-    studyVisitUid: str = studyVisitUidDescription,
+    study_visit_uid: str = study_visit_uid_description,
     selection: clinical_mdr_api.models.study_visit.StudyVisitEditInput = Body(
         None, description="Related parameters of the selection that shall be created."
     ),
@@ -320,17 +323,17 @@ def patch_update_visit(
 ) -> study_epoch.StudyEpoch:
     service = StudyVisitService(current_user_id)
     return service.edit(
-        study_uid=uid, study_visit_uid=studyVisitUid, study_visit_input=selection
+        study_uid=uid, study_visit_uid=study_visit_uid, study_visit_input=selection
     )
 
 
 @router.delete(
-    "/{uid}/study-visits/{studyVisitUid}",
+    "/studies/{uid}/study-visits/{study_visit_uid}",
     summary="Delete a study visit",
     description=""""
 State before:
  - Study must exist and study status must be in draft.
- - studyVisitUid must exist. 
+ - study_visit_uid must exist. 
 
 Business logic:
  - Remove specified study-visit from the study.
@@ -342,7 +345,7 @@ State after:
  - Added new entry in the audit trail for the deletion of the study-visit .
  
 Possible errors:
- - Invalid study-uid or studyVisitUid.
+ - Invalid study-uid or study_visit_uid.
     """,
     response_model=None,
     status_code=204,
@@ -357,16 +360,16 @@ Possible errors:
 )
 def delete_study_visit(
     uid: str = studyUID,
-    studyVisitUid: str = studyVisitUidDescription,
+    study_visit_uid: str = study_visit_uid_description,
     current_user_id: str = Depends(get_current_user_id),
 ):
     service = StudyVisitService(current_user_id)
-    service.delete(study_uid=uid, study_visit_uid=studyVisitUid)
+    service.delete(study_uid=uid, study_visit_uid=study_visit_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
-    "/{uid}/study-visits/{studyVisitUid}/audit-trail/",
+    "/studies/{uid}/study-visits/{study_visit_uid}/audit-trail",
     summary="List audit trail related to definition of a specific study visit.",
     description="""
 State before:
@@ -396,15 +399,15 @@ Possible errors:
 # pylint: disable=unused-argument
 def get_study_visit_audit_trail(
     uid: str = studyUID,
-    studyVisitUid: str = studyVisitUidDescription,
+    study_visit_uid: str = study_visit_uid_description,
     current_user_id: str = Depends(get_current_user_id),
 ) -> Sequence[clinical_mdr_api.models.study_visit.StudyVisitVersion]:
     service = StudyVisitService(current_user_id)
-    return service.audit_trail(studyVisitUid, study_uid=uid)
+    return service.audit_trail(study_visit_uid, study_uid=uid)
 
 
 @router.get(
-    "/{uid}/study-visit/audit-trail/",
+    "/studies/{uid}/study-visit/audit-trail",
     summary="List audit trail related to definition of all study visits within the specified study-uid.",
     description="""
 State before:
@@ -440,7 +443,7 @@ def get_study_visits_all_audit_trail(
 
 
 @router.get(
-    "/{uid}/study-visits/{studyVisitUid}",
+    "/studies/{uid}/study-visits/{study_visit_uid}",
     summary="List all definitions for a specific study visit",
     description="""
 State before:
@@ -458,7 +461,7 @@ State after:
  - no change
  
 Possible errors:
- - Invalid study-uid or studyVisitUid.
+ - Invalid study-uid or study_visit_uid.
     """,
     response_model=clinical_mdr_api.models.study_visit.StudyVisit,
     response_model_exclude_unset=True,
@@ -474,11 +477,11 @@ Possible errors:
 # pylint: disable=unused-argument
 def get_study_visit(
     uid: str = studyUID,
-    studyVisitUid: str = studyVisitUidDescription,
+    study_visit_uid: str = study_visit_uid_description,
     current_user_id: str = Depends(get_current_user_id),
 ) -> clinical_mdr_api.models.study_visit.StudyVisit:
     service = StudyVisitService(current_user_id)
-    return service.find_by_uid(studyVisitUid)
+    return service.find_by_uid(study_visit_uid)
 
 
 @router.get(
@@ -527,7 +530,7 @@ def get_allowed_time_references_for_given_study(
 
 
 @router.get(
-    "/{uid}/get-amount-of-visits-in-epoch/{studyEpochUid}",
+    "/studies/{uid}/get-amount-of-visits-in-epoch/{study_epoch_uid}",
     summary="Counts amount of visits in a specified study epoch",
     description="""
 State before:
@@ -540,8 +543,8 @@ State after:
  - no change.
 
 Possible errors:
- - Invalid studyUid.
- - Invalid studyEpochUid.
+ - Invalid study_uid.
+ - Invalid study_epoch_uid.
     """,
     response_model=int,
     response_model_exclude_unset=True,
@@ -553,16 +556,16 @@ Possible errors:
 def get_amount_of_visits_in_given_epoch(
     uid: str = studyUID,
     current_user_id: str = Depends(get_current_user_id),
-    studyEpochUid: str = Path(..., description="The unique uid of the study epoch"),
+    study_epoch_uid: str = Path(..., description="The unique uid of the study epoch"),
 ) -> int:
     service = StudyVisitService(current_user_id)
     return service.get_amount_of_visits_in_given_epoch(
-        study_uid=uid, study_epoch_uid=studyEpochUid
+        study_uid=uid, study_epoch_uid=study_epoch_uid
     )
 
 
 @router.get(
-    "/{uid}/global-anchor-visit",
+    "/studies/{uid}/global-anchor-visit",
     summary="List global anchor visit study visits for selected study referenced by 'uid' ",
     description="""
 State before:
@@ -592,7 +595,7 @@ def get_global_anchor_visit(
 
 
 @router.get(
-    "/{uid}/anchor-visits-in-group-of-subvisits",
+    "/studies/{uid}/anchor-visits-in-group-of-subvisits",
     summary="List all anchor visits for group of subvisits for selected study referenced by 'uid' ",
     description="""
 State before:
@@ -619,3 +622,33 @@ def get_anchor_visits_in_group_of_subvisits(
 ) -> Sequence[clinical_mdr_api.models.study_visit.SimpleStudyVisit]:
     service = StudyVisitService(current_user_id)
     return service.get_anchor_visits_in_a_group_of_subvisits(study_uid=uid)
+
+
+@router.get(
+    "/studies/{uid}/anchor-visits-for-special-visit",
+    summary="List all visits that can be anchor visits for special visit for a selected study referenced by 'uid' ",
+    description="""
+State before:
+- Study must exist.
+
+Business logic:
+ - Looks for a study visits that can be anchor visits for a special visit.
+
+State after:
+ - no change.
+
+Possible errors:
+ - Invalid study-uid.
+    """,
+    response_model=Sequence[clinical_mdr_api.models.study_visit.SimpleStudyVisit],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def get_anchor_visits_for_special_visit(
+    uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
+) -> Sequence[clinical_mdr_api.models.study_visit.SimpleStudyVisit]:
+    service = StudyVisitService(current_user_id)
+    return service.get_anchor_for_special_visit(study_uid=uid)

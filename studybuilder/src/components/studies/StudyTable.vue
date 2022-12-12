@@ -11,7 +11,6 @@
     column-data-resource="studies"
     @filter="fetchStudies"
     :server-items-length="total"
-    has-history
     >
     <template v-slot:actions="">
       <v-btn
@@ -28,13 +27,13 @@
         </v-icon>
       </v-btn>
     </template>
-    <template v-slot:item.brandName="{ item }">
+    <template v-slot:item.brand_name="{ item }">
       {{ getBrandName(item) }}
     </template>
-    <template v-slot:item.currentMetadata.versionMetadata.versionTimestamp="{ item }">
-      {{ item.currentMetadata.versionMetadata.versionTimestamp | date }}
+    <template v-slot:item.current_metadata.version_metadata.version_timestamp="{ item }">
+      {{ item.current_metadata.version_metadata.version_timestamp | date }}
     </template>
-    <template v-slot:item.currentMetadata.versionMetadata.lockedVersionAuthor>
+    <template v-slot:item.current_metadata.version_metadata.locked_version_author>
       {{ $t('_global.unknown_user') }}
     </template>
     <template v-slot:item.actions="{ item }">
@@ -97,17 +96,17 @@ export default {
       ],
       headers: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('StudyTable.clinical_programme'), value: 'currentMetadata.identificationMetadata.clinicalProgrammeName' },
-        { text: this.$t('StudyTable.project_id'), value: 'currentMetadata.identificationMetadata.projectNumber' },
-        { text: this.$t('StudyTable.project_name'), value: 'currentMetadata.identificationMetadata.projectName' },
-        { text: this.$t('StudyTable.brand_name'), value: 'brandName' },
-        { text: this.$t('StudyTable.number'), value: 'currentMetadata.identificationMetadata.studyNumber' },
-        { text: this.$t('StudyTable.id'), value: 'currentMetadata.identificationMetadata.studyId' },
-        { text: this.$t('StudyTable.acronym'), value: 'currentMetadata.identificationMetadata.studyAcronym' },
-        { text: this.$t('StudyTable.title'), value: 'currentMetadata.studyDescription.studyTitle' },
-        { text: this.$t('_global.status'), value: 'currentMetadata.versionMetadata.studyStatus' },
-        { text: this.$t('_global.modified'), value: 'currentMetadata.versionMetadata.versionTimestamp' },
-        { text: this.$t('_global.modified_by'), value: 'currentMetadata.versionMetadata.lockedVersionAuthor' }
+        { text: this.$t('StudyTable.clinical_programme'), value: 'current_metadata.identification_metadata.clinical_programme_name' },
+        { text: this.$t('StudyTable.project_id'), value: 'current_metadata.identification_metadata.project_number' },
+        { text: this.$t('StudyTable.project_name'), value: 'current_metadata.identification_metadata.project_name' },
+        { text: this.$t('StudyTable.brand_name'), value: 'brand_name' },
+        { text: this.$t('StudyTable.number'), value: 'current_metadata.identification_metadata.study_number' },
+        { text: this.$t('StudyTable.id'), value: 'current_metadata.identification_metadata.study_id' },
+        { text: this.$t('StudyTable.acronym'), value: 'current_metadata.identification_metadata.study_acronym' },
+        { text: this.$t('StudyTable.title'), value: 'current_metadata.study_description.study_title' },
+        { text: this.$t('_global.status'), value: 'current_metadata.version_metadata.study_status' },
+        { text: this.$t('_global.modified'), value: 'current_metadata.version_metadata.version_timestamp' },
+        { text: this.$t('_global.modified_by'), value: 'current_metadata.version_metadata.locked_version_author' }
       ],
       showForm: false,
       activeStudy: null,
@@ -141,11 +140,11 @@ export default {
       this.showForm = true
     },
     getBrandName (study) {
-      const project = this.getProjectByNumber(study.currentMetadata.identificationMetadata.projectNumber)
+      const project = this.getProjectByNumber(study.current_metadata.identification_metadata.projectNumber)
       return (project !== undefined) ? project.brandName : ''
     },
     initialSortByDate () {
-      this.options.sortBy = ['currentMetadata.versionMetadata.versionTimestamp']
+      this.options.sortBy = ['current_metadata.version_metadata.version_timestamp']
       this.options.sortDesc = [true]
     }
   },

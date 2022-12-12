@@ -5,7 +5,7 @@
         "headers": {},
         "method": "GET",
         "request": {},
-        "url": "/listings/libraries/all/gcmd/cdisc_ct_val?sortBy=%7B%22ct_scope%22%3Atrue%2C%20%22ct_ver%22%3Atrue%2C%20%22pkg_nm%22%3Atrue%2C%20%22ct_cd_list_submval%22%3Atrue%2C%20%22ct_cd%22%3Atrue%7D"
+        "url": "/listings/libraries/all/gcmd/cdisc-ct-val?sort_by=%7B%22ct_scope%22%3Atrue%2C%20%22ct_ver%22%3Atrue%2C%20%22pkg_nm%22%3Atrue%2C%20%22ct_cd_list_submval%22%3Atrue%2C%20%22ct_cd%22%3Atrue%7D"
     },
     "response": {
         "code": 200,
@@ -84,7 +84,7 @@
           ],
           "total": 0,
           "page": 1,
-          "size": 0
+          "size": 10
         }
     }
   },
@@ -94,7 +94,7 @@
         "headers": {},
         "method": "GET",
         "request": {},
-        "url": "/listings/libraries/all/gcmd/cdisc_ct_val?cataloguename=catalogue2,catalogue3&sortBy=%7B%22ct_scope%22%3Atrue%2C%20%22ct_ver%22%3Atrue%2C%20%22pkg_nm%22%3Atrue%2C%20%22ct_cd_list_submval%22%3Atrue%2C%20%22ct_cd%22%3Atrue%7D"
+        "url": "/listings/libraries/all/gcmd/cdisc-ct-val?catalogue_name=catalogue2,catalogue3&sort_by=%7B%22ct_scope%22%3Atrue%2C%20%22ct_ver%22%3Atrue%2C%20%22pkg_nm%22%3Atrue%2C%20%22ct_cd_list_submval%22%3Atrue%2C%20%22ct_cd%22%3Atrue%7D"
     },
     "response": {
         "code": 200,
@@ -129,7 +129,7 @@
           ],
           "total": 0,
           "page": 1,
-          "size": 0
+          "size": 10
         }
     }
   },
@@ -139,7 +139,7 @@
         "headers": {},
         "method": "GET",
         "request": {},
-        "url": "/listings/libraries/all/gcmd/cdisc_ct_val?package=new_package&sortBy=%7B%22ct_scope%22%3Atrue%2C%20%22ct_ver%22%3Atrue%2C%20%22pkg_nm%22%3Atrue%2C%20%22ct_cd_list_submval%22%3Atrue%2C%20%22ct_cd%22%3Atrue%7D"
+        "url": "/listings/libraries/all/gcmd/cdisc-ct-val?package=new_package&sort_by=%7B%22ct_scope%22%3Atrue%2C%20%22ct_ver%22%3Atrue%2C%20%22pkg_nm%22%3Atrue%2C%20%22ct_cd_list_submval%22%3Atrue%2C%20%22ct_cd%22%3Atrue%7D"
     },
     "response": {
         "code": 200,
@@ -174,7 +174,7 @@
           ],
           "total": 0,
           "page": 1,
-          "size": 0
+          "size": 10
         }
     }
   }

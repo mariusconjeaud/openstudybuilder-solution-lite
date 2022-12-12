@@ -111,7 +111,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
                 design_cells_on_branch_arm = self._repos.study_design_cell_repository.get_design_cells_connected_to_branch_arm(
                     study_uid=study_uid, study_branch_arm_uid=study_selection_uid
                 )
-                # if the studyBranchArm is the last StudyBranchArm of its StudyArm root
+                # if the study_branch_arm is the last StudyBranchArm of its StudyArm root
                 if repos.study_selection_branch_arm_repository.branch_arm_specific_is_last_on_arm_root(
                     study_uid=study_uid,
                     arm_root_uid=selection_to_delete.arm_root_uid,
@@ -120,7 +120,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
                     # switch all the study designcells to the study branch arm
                     cascade_deletion_last_branch = True
 
-                # else the studyBranchArm is not last StudyBranchArm of its StudyArm root
+                # else the study_branch_arm is not last StudyBranchArm of its StudyArm root
                 else:
                     for i_design_cell in design_cells_on_branch_arm:
                         study_design_cell = (
@@ -300,8 +300,8 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
             StudyDesignCellBatchInput(
                 method="PATCH",
                 content=StudyDesignCellEditInput(
-                    studyDesignCellUid=i_design_cell.uid,
-                    studyBranchArmUid=study_branch_arm_uid,
+                    study_design_cell_uid=i_design_cell.uid,
+                    study_branch_arm_uid=study_branch_arm_uid,
                 ),
             )
             for i_design_cell in design_cells_on_arm
@@ -329,13 +329,13 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
                     study_uid=study_uid,
                     user_initials=self.author,
                     name=selection_create_input.name,
-                    short_name=selection_create_input.shortName,
+                    short_name=selection_create_input.short_name,
                     code=selection_create_input.code,
                     description=selection_create_input.description,
-                    colour_code=selection_create_input.colourCode,
-                    randomization_group=selection_create_input.randomizationGroup,
-                    number_of_subjects=selection_create_input.numberOfSubjects,
-                    arm_root_uid=selection_create_input.armUid,
+                    colour_code=selection_create_input.colour_code,
+                    randomization_group=selection_create_input.randomization_group,
+                    number_of_subjects=selection_create_input.number_of_subjects,
+                    arm_root_uid=selection_create_input.arm_uid,
                     generate_uid_callback=repos.study_selection_branch_arm_repository.generate_uid,
                 )
                 # add VO to aggregate
@@ -398,15 +398,15 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
     ) -> StudySelectionBranchArmVO:
         # transform current to input model
         transformed_current = models.StudySelectionBranchArmEditInput(
-            branchArmUid=current_study_branch_arm.study_selection_uid,
+            branch_arm_uid=current_study_branch_arm.study_selection_uid,
             name=current_study_branch_arm.name,
-            shortName=current_study_branch_arm.short_name,
+            short_name=current_study_branch_arm.short_name,
             code=current_study_branch_arm.code,
             description=current_study_branch_arm.description,
-            colourCode=current_study_branch_arm.colour_code,
-            randomizationGroup=current_study_branch_arm.randomization_group,
-            numberOfSubjects=current_study_branch_arm.number_of_subjects,
-            armUid=current_study_branch_arm.arm_root_uid,
+            colour_code=current_study_branch_arm.colour_code,
+            randomization_group=current_study_branch_arm.randomization_group,
+            number_of_subjects=current_study_branch_arm.number_of_subjects,
+            arm_uid=current_study_branch_arm.arm_root_uid,
         )
 
         # fill the missing from the inputs
@@ -418,13 +418,13 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
         return StudySelectionBranchArmVO.from_input_values(
             study_uid=current_study_branch_arm.study_uid,
             name=request_study_branch_arm.name,
-            short_name=request_study_branch_arm.shortName,
+            short_name=request_study_branch_arm.short_name,
             code=request_study_branch_arm.code,
             description=request_study_branch_arm.description,
-            colour_code=request_study_branch_arm.colourCode,
-            randomization_group=request_study_branch_arm.randomizationGroup,
-            number_of_subjects=request_study_branch_arm.numberOfSubjects,
-            arm_root_uid=request_study_branch_arm.armUid,
+            colour_code=request_study_branch_arm.colour_code,
+            randomization_group=request_study_branch_arm.randomization_group,
+            number_of_subjects=request_study_branch_arm.number_of_subjects,
+            arm_root_uid=request_study_branch_arm.arm_uid,
             study_selection_uid=current_study_branch_arm.study_selection_uid,
             user_initials=self.author,
         )
@@ -436,7 +436,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
         selection_update_input: models.StudySelectionBranchArmEditInput,
     ) -> models.StudySelectionBranchArm:
         repos = self._repos
-        study_selection_uid = selection_update_input.branchArmUid  # to delete
+        study_selection_uid = selection_update_input.branch_arm_uid  # to delete
         try:
             # Load aggregate
             selection_aggregate: StudySelectionBranchArmAR = (
@@ -450,7 +450,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
             # Load the current VO for updates
             try:
                 current_vo, order = selection_aggregate.get_specific_object_selection(
-                    study_selection_uid=selection_update_input.branchArmUid
+                    study_selection_uid=selection_update_input.branch_arm_uid
                 )
             except ValueError as value_error:
                 raise exceptions.NotFoundException(value_error.args[0])

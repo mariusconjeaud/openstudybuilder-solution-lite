@@ -16,17 +16,17 @@ class ActivityGroup(ActivityBase):
         return cls(
             uid=activity_group_ar.uid,
             name=activity_group_ar.name,
-            nameSentenceCase=activity_group_ar.concept_vo.name_sentence_case,
+            name_sentence_case=activity_group_ar.concept_vo.name_sentence_case,
             definition=activity_group_ar.concept_vo.definition,
             abbreviation=activity_group_ar.concept_vo.abbreviation,
-            libraryName=Library.from_library_vo(activity_group_ar.library).name,
-            startDate=activity_group_ar.item_metadata.start_date,
-            endDate=activity_group_ar.item_metadata.end_date,
+            library_name=Library.from_library_vo(activity_group_ar.library).name,
+            start_date=activity_group_ar.item_metadata.start_date,
+            end_date=activity_group_ar.item_metadata.end_date,
             status=activity_group_ar.item_metadata.status.value,
             version=activity_group_ar.item_metadata.version,
-            changeDescription=activity_group_ar.item_metadata.change_description,
-            userInitials=activity_group_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=activity_group_ar.item_metadata.change_description,
+            user_initials=activity_group_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 [_.value for _ in activity_group_ar.get_possible_actions()]
             ),
         )
@@ -37,11 +37,11 @@ class ActivityGroupInput(ActivityCommonInput):
 
 
 class ActivityGroupEditInput(ActivityGroupInput):
-    changeDescription: str = Field(None, title="changeDescription", description="")
+    change_description: str = Field(None, title="change_description", description="")
 
 
 class ActivityGroupCreateInput(ActivityGroupInput):
-    libraryName: str
+    library_name: str
 
 
 class ActivityGroupVersion(ActivityGroupInput):
@@ -53,6 +53,6 @@ class ActivityGroupVersion(ActivityGroupInput):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the objective (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )

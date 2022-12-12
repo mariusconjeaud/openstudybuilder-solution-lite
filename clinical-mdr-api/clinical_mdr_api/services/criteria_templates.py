@@ -89,7 +89,7 @@ class CriteriaTemplateService(GenericTemplateService[CriteriaTemplateAR]):
     ) -> CriteriaTemplateAR:
         default_parameter_values = self._create_default_parameter_entries(
             template_name=template.name,
-            default_parameter_values=template.defaultParameterValues,
+            default_parameter_values=template.default_parameter_values,
         )
 
         template_vo, library_vo = self._create_template_vo(
@@ -108,7 +108,7 @@ class CriteriaTemplateService(GenericTemplateService[CriteriaTemplateAR]):
                     template=template
                 ),
                 author=self.user_initials,
-                editable_instance=template.editableInstance,
+                editable_instance=template.editable_instance,
                 template=template_vo,
                 library=library_vo,
                 generate_uid_callback=self.repository.generate_uid_callback,
@@ -122,6 +122,13 @@ class CriteriaTemplateService(GenericTemplateService[CriteriaTemplateAR]):
 
         return item
 
+    def get_check_exists_callback(self, template: BaseModel):
+        return lambda _template_vo: self.repository.check_exists_by_name_and_type_in_library(
+            name=_template_vo.name,
+            library=template.library_name,
+            type_uid=template.type_uid,
+        )
+
     @db.transaction
     def edit_draft(
         self, uid: str, template: CriteriaTemplateEditInput
@@ -129,15 +136,24 @@ class CriteriaTemplateService(GenericTemplateService[CriteriaTemplateAR]):
         try:
             item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
 
+            if self.repository.check_exists_by_name_and_type_in_library(
+                name=template.name,
+                library=item.library.name,
+                type_uid=self.repository.get_criteria_type_uid(uid),
+            ):
+                raise ValueError(
+                    f"Duplicate templates not allowed - template exists: {template.name}"
+                )
+
             template_vo = TemplateVO.from_input_values_2(
                 template_name=template.name,
-                template_guidance_text=template.guidanceText,
+                template_guidance_text=template.guidance_text,
                 parameter_name_exists_callback=self._parameter_name_exists,
             )
 
             item.edit_draft(
                 author=self.user_initials,
-                change_description=template.changeDescription,
+                change_description=template.change_description,
                 template=template_vo,
             )
 
@@ -153,12 +169,12 @@ class CriteriaTemplateService(GenericTemplateService[CriteriaTemplateAR]):
         self, uid: str, groupings: CriteriaTemplateEditGroupingsInput
     ) -> CriteriaTemplate:
         try:
-            if groupings.indicationUids is not None:
-                self.repository.patch_indications(uid, groupings.indicationUids)
-            if groupings.categoryUids is not None:
-                self.repository.patch_categories(uid, groupings.categoryUids)
-            if groupings.subCategoryUids is not None:
-                self.repository.patch_sub_categories(uid, groupings.subCategoryUids)
+            if groupings.indication_uids is not None:
+                self.repository.patch_indications(uid, groupings.indication_uids)
+            if groupings.category_uids is not None:
+                self.repository.patch_categories(uid, groupings.category_uids)
+            if groupings.sub_category_uids is not None:
+                self.repository.patch_subcategories(uid, groupings.sub_category_uids)
         finally:
             self.repository.close()
 
@@ -187,7 +203,7 @@ class CriteriaTemplateService(GenericTemplateService[CriteriaTemplateAR]):
             _indications=item.indications,
             _type=item.type,
             _categories=item.categories,
-            _sub_categories=item.sub_categories,
+            _subcategories=item.sub_categories,
             _template=TemplateVO(
                 name=item.template_value.name,
                 name_plain=item.template_value.name_plain,
@@ -248,17 +264,17 @@ class CriteriaTemplateService(GenericTemplateService[CriteriaTemplateAR]):
             ]
         # Get sub_categories
         sub_category_names = (
-            self._repos.ct_term_name_repository.get_template_sub_categories(
+            self._repos.ct_term_name_repository.get_template_subcategories(
                 self.root_node_class, item.uid
             )
         )
         sub_category_attributes = (
-            self._repos.ct_term_attributes_repository.get_template_sub_categories(
+            self._repos.ct_term_attributes_repository.get_template_subcategories(
                 self.root_node_class, item.uid
             )
         )
         if sub_category_names and sub_category_attributes:
-            item.subCategories = [
+            item.sub_categories = [
                 CTTermNameAndAttributes.from_ct_term_ars(
                     ct_term_name_ar=category_name,
                     ct_term_attributes_ar=category_attribute,
@@ -281,8 +297,8 @@ class CriteriaTemplateService(GenericTemplateService[CriteriaTemplateAR]):
         categories: Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]] = []
         sub_categories: Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]] = []
 
-        if hasattr(template, "typeUid") and template.typeUid is not None:
-            criteria_type_term_uid = template.typeUid
+        if hasattr(template, "type_uid") and template.type_uid is not None:
+            criteria_type_term_uid = template.type_uid
         else:
             criteria_type_term_uid = (
                 self._repos.criteria_template_repository.get_criteria_type_uid(
@@ -300,15 +316,15 @@ class CriteriaTemplateService(GenericTemplateService[CriteriaTemplateAR]):
             )
             criteria_type = (criteria_type_name, criteria_type_attributes)
 
-        if template.indicationUids and len(template.indicationUids) > 0:
-            for uid in template.indicationUids:
+        if template.indication_uids and len(template.indication_uids) > 0:
+            for uid in template.indication_uids:
                 indication = self._repos.dictionary_term_generic_repository.find_by_uid(
                     term_uid=uid
                 )
                 indications.append(indication)
 
-        if template.categoryUids and len(template.categoryUids) > 0:
-            for uid in template.categoryUids:
+        if template.category_uids and len(template.category_uids) > 0:
+            for uid in template.category_uids:
                 category_name = self._repos.ct_term_name_repository.find_by_uid(
                     term_uid=uid
                 )
@@ -318,8 +334,8 @@ class CriteriaTemplateService(GenericTemplateService[CriteriaTemplateAR]):
                 category = (category_name, category_attributes)
                 categories.append(category)
 
-        if template.subCategoryUids and len(template.subCategoryUids) > 0:
-            for uid in template.subCategoryUids:
+        if template.sub_category_uids and len(template.sub_category_uids) > 0:
+            for uid in template.sub_category_uids:
                 category_name = self._repos.ct_term_name_repository.find_by_uid(
                     term_uid=uid
                 )

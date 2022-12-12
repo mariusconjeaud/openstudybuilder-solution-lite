@@ -27,9 +27,9 @@ class OdmXmlExtensionTagTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
-            "userInitials",
+            "start_date",
+            "end_date",
+            "user_initials",
         ]
 
 
@@ -50,8 +50,8 @@ class OdmXmlExtensionTagNegativeTest(api.APITest):
 
     def ignored_fields(self):
         return [
-            "startDate",
-            "endDate",
-            "userInitials",
+            "start_date",
+            "end_date",
+            "user_initials",
             "time",
         ]

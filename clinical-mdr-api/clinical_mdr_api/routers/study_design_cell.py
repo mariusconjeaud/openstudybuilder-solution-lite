@@ -11,7 +11,7 @@ from clinical_mdr_api.services.study_design_cell import StudyDesignCellService
 
 
 @router.get(
-    "/{uid}/study-design-cells",
+    "/studies/{uid}/study-design-cells",
     summary="List all study design cells currently defined for the study",
     response_model=Sequence[models.StudyDesignCell],
     response_model_exclude_unset=True,
@@ -33,7 +33,7 @@ def get_all_design_cells(
 
 
 @router.post(
-    "/{uid}/study-design-cells",
+    "/studies/{uid}/study-design-cells",
     summary="Add a study design cell to a study",
     response_model=models.StudyDesignCell,
     response_model_exclude_unset=True,
@@ -62,7 +62,7 @@ def post_new_design_cell_create(
 
 
 @router.patch(
-    "/{uid}/study-design-cells/{studydesigncelluid}",
+    "/studies/{uid}/study-design-cells/{study_design_cell_uid}",
     summary="Update a study design cell",
     description="""
     The StudyDesignCell has the following properties:
@@ -94,7 +94,7 @@ def post_new_design_cell_create(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study design cell with the specified 'studydesigncelluid' could not be found.",
+            "description": "Not Found - The study design cell with the specified 'study_design_cell_uid' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
@@ -102,7 +102,7 @@ def post_new_design_cell_create(
 #  pylint: disable=unused-argument
 def edit_design_cell(
     uid: str = utils.studyUID,
-    studydesigncelluid: str = utils.studyDesignCellUid,
+    study_design_cell_uid: str = utils.study_design_cell_uid,
     selection: models.StudyDesignCellEditInput = Body(
         None, description="Related parameters of the selection that shall be updated."
     ),
@@ -117,7 +117,7 @@ def edit_design_cell(
 
 
 @router.delete(
-    "/{uid}/study-design-cells/{studydesigncelluid}",
+    "/studies/{uid}/study-design-cells/{study_design_cell_uid}",
     summary="Delete a study design cell",
     response_model=None,
     status_code=204,
@@ -132,21 +132,21 @@ def edit_design_cell(
 )
 def delete_design_cell(
     uid: str = utils.studyUID,
-    studydesigncelluid: str = utils.studyDesignCellUid,
+    study_design_cell_uid: str = utils.study_design_cell_uid,
     current_user_id: str = Depends(get_current_user_id),
 ):
     service = StudyDesignCellService(author=current_user_id)
-    service.delete(study_uid=uid, design_cell_uid=studydesigncelluid)
+    service.delete(study_uid=uid, design_cell_uid=study_design_cell_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
-    "/{uid}/study-design-cells/audit-trail/",
+    "/studies/{uid}/study-design-cells/audit-trail/",
     summary="List full audit trail related to definition of all study design cells.",
     description="""
 The following values should be returned for all study design cells:
-- dateTime
-- userInitials
+- date_time
+- user_initials
 - action
 - activity
 - order
@@ -166,7 +166,7 @@ def get_all_design_cells_audit_trail(
 
 
 @router.get(
-    "/{uid}/study-design-cells/{studydesigncelluid}/audit-trail/",
+    "/studies/{uid}/study-design-cells/{study_design_cell_uid}/audit-trail/",
     summary="List audit trail related to definition of a specific study design cell.",
     response_model=Sequence[models.StudyDesignCellVersion],
     response_model_exclude_unset=True,
@@ -181,17 +181,17 @@ def get_all_design_cells_audit_trail(
 )
 def get_specific_schedule_audit_trail(
     uid: str = utils.studyUID,
-    studydesigncelluid: str = utils.studyDesignCellUid,
+    study_design_cell_uid: str = utils.study_design_cell_uid,
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudyDesignCellVersion:
     service = StudyDesignCellService(author=current_user_id)
     return service.get_specific_selection_audit_trail(
-        study_uid=uid, design_cell_uid=studydesigncelluid
+        study_uid=uid, design_cell_uid=study_design_cell_uid
     )
 
 
 @router.post(
-    "/{uid}/study-design-cells/batch",
+    "/studies/{uid}/study-design-cells/batch",
     summary="Batch operations (create, delete) for study design cells",
     response_model=Sequence[models.StudyDesignCellBatchOutput],
     status_code=200,
@@ -209,8 +209,8 @@ def design_cell_batch_operations(
 
 
 @router.get(
-    "/{uid}/study-design-cells/arm/{armUid}",
-    summary="""List all study desing-cells currently selected for study with provided uid that are connected to an StudyArm with armUid""",
+    "/studies/{uid}/study-design-cells/arm/{arm_uid}",
+    summary="""List all study desing-cells currently selected for study with provided uid that are connected to an StudyArm with arm_uid""",
     description="""
     State before:
     - Study must exist.
@@ -237,16 +237,16 @@ def design_cell_batch_operations(
     },
 )
 def get_all_selected_desing_cells_connected_arm(
-    uid: str, armUid: str, current_user_id: str = Depends(get_current_user_id)
+    uid: str, arm_uid: str, current_user_id: str = Depends(get_current_user_id)
 ) -> Sequence[models.StudyDesignCell]:
     service = StudyDesignCellService(author=current_user_id)
-    return service.get_all_selection_within_arm(study_uid=uid, study_arm_uid=armUid)
+    return service.get_all_selection_within_arm(study_uid=uid, study_arm_uid=arm_uid)
 
 
 @router.get(
-    "/{uid}/study-design-cells/branch-arm/{branchArmUid}",
+    "/studies/{uid}/study-design-cells/branch-arm/{branch_arm_uid}",
     summary="""List all study desing-cells currently selected for study with provided
-    uid that are connected to an StudyBranchArm with branchArmUid""",
+    uid that are connected to an StudyBranchArm with branch_arm_uid""",
     description="""
     State before:
     - Study must exist.
@@ -276,17 +276,17 @@ def get_all_selected_desing_cells_connected_arm(
     },
 )
 def get_all_selected_desing_cells_connected_branch_arm(
-    uid: str, branchArmUid: str, current_user_id: str = Depends(get_current_user_id)
+    uid: str, branch_arm_uid: str, current_user_id: str = Depends(get_current_user_id)
 ) -> Sequence[models.StudyDesignCell]:
     service = StudyDesignCellService(author=current_user_id)
     return service.get_all_selection_within_branch_arm(
-        study_uid=uid, study_branch_arm_uid=branchArmUid
+        study_uid=uid, study_branch_arm_uid=branch_arm_uid
     )
 
 
 @router.get(
-    "/{uid}/study-design-cells/study-epochs/{epochUid}",
-    summary="""List all study desing-cells currently selected for study with provided uid that are connected to an StudyEpoch with epochUid""",
+    "/studies/{uid}/study-design-cells/study-epochs/{epoch_uid}",
+    summary="""List all study desing-cells currently selected for study with provided uid that are connected to an StudyEpoch with epoch_uid""",
     description="""
     State before:
     - Study must exist.
@@ -313,9 +313,9 @@ def get_all_selected_desing_cells_connected_branch_arm(
     },
 )
 def get_all_selected_desing_cells_connected_epoch(
-    uid: str, epochUid: str, current_user_id: str = Depends(get_current_user_id)
+    uid: str, epoch_uid: str, current_user_id: str = Depends(get_current_user_id)
 ) -> Sequence[models.StudyDesignCell]:
     service = StudyDesignCellService(author=current_user_id)
     return service.get_all_selection_within_epoch(
-        study_uid=uid, study_epoch_uid=epochUid
+        study_uid=uid, study_epoch_uid=epoch_uid
     )

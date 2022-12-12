@@ -7,11 +7,11 @@ export default {
     return repository.get(`${resource}`, params)
   },
   getByDimension (dimension) {
-    const params = { dimension: dimension }
+    const params = { dimension: dimension, page_size: 0 }
     return repository.get(`${resource}`, { params })
   },
   getBySubset (subset) {
-    const params = { subset: subset, sortBy: { conversionFactorToMaster: true } }
+    const params = { subset: subset, sort_by: { conversion_factor_to_master: true }, page_size: 0 }
     return repository.get(`${resource}`, { params })
   },
   create (data) {
@@ -24,7 +24,7 @@ export default {
     return repository.delete(`${resource}/${uid}`)
   },
   newVersion (uid) {
-    return repository.post(`${resource}/${uid}/new-version`)
+    return repository.post(`${resource}/${uid}/versions`)
   },
   approve (uid) {
     return repository.post(`${resource}/${uid}/approve`)

@@ -35,7 +35,7 @@
             rules="required"
             >
             <v-textarea
-              v-model="form.changeDescription"
+              v-model="form.change_description"
               :label="$t('HistoryTable.change_description')"
               :error-messages="errors"
               rows="1"
@@ -229,12 +229,12 @@ export default {
     },
     addTemplate () {
       const data = { ...this.form }
-      data.typeUid = this.typeUid
+      data.type_uid = this.typeUid
       if (data.indications && data.indications.length > 0) {
         if (this.template !== null && _isEqual(data.indications, this.template.indications)) {
-          data.indicationUids = data.indications.map(item => item.termUid)
+          data.indication_uids = data.indications.map(item => item.term_uid)
         } else {
-          data.indicationUids = data.indications.map(item => item.termUid)
+          data.indication_uids = data.indications.map(item => item.term_uid)
         }
       }
       if (this.preparePayloadFunction) {
@@ -260,7 +260,7 @@ export default {
     updateTemplate () {
       const data = { ...this.form }
       if (data.indications && data.indications.length > 0) {
-        data.indicationUids = data.indications.map(item => item.termUid)
+        data.indication_uids = data.indications.map(item => item.term_uid)
         delete data.indications
       }
       if (this.preparePayloadFunction) {
@@ -333,7 +333,7 @@ export default {
         indications: this.template ? this.template.indications : null
       }
       if (this.template.status === statuses.DRAFT) {
-        this.$set(this.form, 'changeDescription', this.$t('_global.work_in_progress'))
+        this.$set(this.form, 'change_description', this.$t('_global.work_in_progress'))
       }
       if (this.loadFormFunction) {
         this.loadFormFunction(this.form)

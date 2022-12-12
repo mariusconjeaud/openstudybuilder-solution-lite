@@ -12,17 +12,17 @@
       <v-container>
         <not-applicable-field
           :clean-function="clearCtGovId"
-          :checked="form.ctGovIdNullValueCode ? true : false">
+          :checked="form.ct_gov_id_null_value_code ? true : false">
           <template v-slot:mainField="{ notApplicable }">
             <validation-provider
               v-slot="{ errors }"
               name="CTGovID"
               >
               <v-text-field
-                id="ctGovId"
+                id="ct_gov_id"
                 :data-cy="$t('RegistryIdentifiersForm.ctgovid')"
                 :label="$t('RegistryIdentifiersForm.ctgovid')"
-                v-model="form.ctGovId"
+                v-model="form.ct_gov_id"
                 :error-messages="errors"
                 dense
                 clearable
@@ -34,17 +34,17 @@
         </not-applicable-field>
         <not-applicable-field
           :clean-function="clearEudractId"
-          :checked="form.eudractIdNullValueCode ? true : false">
+          :checked="form.eudract_id_null_value_code ? true : false">
           <template v-slot:mainField="{ notApplicable }">
             <validation-provider
               v-slot="{ errors }"
               name="EUDRACTID"
               >
               <v-text-field
-                id="eudractId"
+                id="eudract_id"
                 :data-cy="$t('RegistryIdentifiersForm.eudractid')"
                 :label="$t('RegistryIdentifiersForm.eudractid')"
-                v-model="form.eudractId"
+                v-model="form.eudract_id"
                 :error-messages="errors"
                 dense
                 clearable
@@ -56,7 +56,7 @@
         </not-applicable-field>
         <not-applicable-field
           :clean-function="clearUniversalTrialNumberUTN"
-          :checked="form.universalTrialNumberUTNNullValueCode ? true : false">
+          :checked="form.universal_trial_number_utn_null_value_code ? true : false">
           <template v-slot:mainField="{ notApplicable }">
             <validation-provider
               v-slot="{ errors }"
@@ -66,7 +66,7 @@
                 id="utn"
                 :data-cy="$t('RegistryIdentifiersForm.utn')"
                 :label="$t('RegistryIdentifiersForm.utn')"
-                v-model="form.universalTrialNumberUTN"
+                v-model="form.universal_trial_number_utn"
                 :error-messages="errors"
                 dense
                 clearable
@@ -78,7 +78,7 @@
         </not-applicable-field>
         <not-applicable-field
           :clean-function="clearJapaneseTrialRegistryIdJAPIC"
-          :checked="form.japaneseTrialRegistryIdJAPICNullValueCode ? true : false">
+          :checked="form.japanese_trial_registry_id_japic_null_value_code ? true : false">
           <template v-slot:mainField="{ notApplicable }">
             <validation-provider
               v-slot="{ errors }"
@@ -88,7 +88,7 @@
                 id="japic"
                 :data-cy="$t('RegistryIdentifiersForm.japic')"
                 :label="$t('RegistryIdentifiersForm.japic')"
-                v-model="form.japaneseTrialRegistryIdJAPIC"
+                v-model="form.japanese_trial_registry_id_japic"
                 :error-messages="errors"
                 dense
                 clearable
@@ -100,7 +100,7 @@
         </not-applicable-field>
         <not-applicable-field
           :clean-function="clearInvestigationalNewDrugApplicationNumberIND"
-          :checked="form.investigationalNewDrugApplicationNumberINDNullValueCode ? true : false">
+          :checked="form.investigational_new_drug_application_number_ind_null_value_code ? true : false">
           <template v-slot:mainField="{ notApplicable }">
             <validation-provider
               v-slot="{ errors }"
@@ -110,7 +110,7 @@
                 id="ind"
                 :data-cy="$t('RegistryIdentifiersForm.ind')"
                 :label="$t('RegistryIdentifiersForm.ind')"
-                v-model="form.investigationalNewDrugApplicationNumberIND"
+                v-model="form.investigational_new_drug_application_number_ind"
                 :error-messages="errors"
                 dense
                 clearable
@@ -166,43 +166,43 @@ export default {
   },
   methods: {
     clearCtGovId () {
-      this.$set(this.form, 'ctGovId', '')
-      if (this.form.ctGovIdNullValueCode) {
-        this.$set(this.form, 'ctGovIdNullValueCode', null)
+      this.$set(this.form, 'ct_gov_id', '')
+      if (this.form.ct_gov_id_null_value_code) {
+        this.$set(this.form, 'ct_gov_id_null_value_code', null)
       } else {
-        this.$set(this.form, 'ctGovIdNullValueCode', { termUid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
+        this.$set(this.form, 'ct_gov_id_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
       }
     },
     clearEudractId () {
-      this.$set(this.form, 'eudractId', '')
-      if (this.form.eudractIdNullValueCode) {
-        this.$set(this.form, 'eudractIdNullValueCode', null)
+      this.$set(this.form, 'eudract_id', '')
+      if (this.form.eudract_id_null_value_code) {
+        this.$set(this.form, 'eudract_id_null_value_code', null)
       } else {
-        this.$set(this.form, 'eudractIdNullValueCode', { termUid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
+        this.$set(this.form, 'eudract_id_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
       }
     },
     clearUniversalTrialNumberUTN () {
-      this.$set(this.form, 'universalTrialNumberUTN', '')
-      if (this.form.universalTrialNumberUTNNullValueCode) {
-        this.$set(this.form, 'universalTrialNumberUTNNullValueCode', null)
+      this.$set(this.form, 'universal_trial_number_utn', '')
+      if (this.form.universal_trial_number_utn_null_value_code) {
+        this.$set(this.form, 'universal_trial_number_utn_null_value_code', null)
       } else {
-        this.$set(this.form, 'universalTrialNumberUTNNullValueCode', { termUid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
+        this.$set(this.form, 'universal_trial_number_utn_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
       }
     },
     clearJapaneseTrialRegistryIdJAPIC () {
-      this.$set(this.form, 'japaneseTrialRegistryIdJAPIC', '')
-      if (this.form.japaneseTrialRegistryIdJAPICNullValueCode) {
-        this.$set(this.form, 'japaneseTrialRegistryIdJAPICNullValueCode', null)
+      this.$set(this.form, 'japanese_trial_registry_id_japic', '')
+      if (this.form.japanese_trial_registry_id_japic_null_value_code) {
+        this.$set(this.form, 'japanese_trial_registry_id_japic_null_value_code', null)
       } else {
-        this.$set(this.form, 'japaneseTrialRegistryIdJAPICNullValueCode', { termUid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
+        this.$set(this.form, 'japanese_trial_registry_id_japic_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
       }
     },
     clearInvestigationalNewDrugApplicationNumberIND () {
-      this.$set(this.form, 'investigationalNewDrugApplicationNumberIND', '')
-      if (this.form.investigationalNewDrugApplicationNumberINDNullValueCode) {
-        this.$set(this.form, 'investigationalNewDrugApplicationNumberINDNullValueCode', null)
+      this.$set(this.form, 'investigational_new_drug_application_number_ind', '')
+      if (this.form.investigational_new_drug_application_number_ind_null_value_code) {
+        this.$set(this.form, 'investigational_new_drug_application_number_ind_null_value_code', null)
       } else {
-        this.$set(this.form, 'investigationalNewDrugApplicationNumberINDNullValueCode', { termUid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
+        this.$set(this.form, 'investigational_new_drug_application_number_ind_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
       }
     },
     close () {
@@ -224,11 +224,11 @@ export default {
       }
     },
     unsetValues () {
-      this.$set(this.form, 'ctGovId', null)
-      this.$set(this.form, 'eudractId', null)
-      this.$set(this.form, 'universalTrialNumberUTN', null)
-      this.$set(this.form, 'japaneseTrialRegistryIdJAPIC', null)
-      this.$set(this.form, 'investigationalNewDrugApplicationNumberIND', null)
+      this.$set(this.form, 'ct_gov_id', null)
+      this.$set(this.form, 'eudract_id', null)
+      this.$set(this.form, 'universal_trial_number_utn', null)
+      this.$set(this.form, 'japanese_trial_registry_id_japic', null)
+      this.$set(this.form, 'investigational_new_drug_application_number_ind', null)
     },
     async submit () {
       if (_isEqual(this.identifiers, this.form)) {
@@ -241,7 +241,7 @@ export default {
         return
       }
       const data = {
-        registryIdentifiers: this.form
+        registry_identifiers: this.form
       }
       this.$refs.form.working = true
       try {

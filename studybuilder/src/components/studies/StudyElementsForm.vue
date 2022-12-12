@@ -37,7 +37,7 @@
             rules="required"
             >
             <v-autocomplete
-              v-model="form.elementSubTypeUid"
+              v-model="form.element_subtype_uid"
               :label="$t('StudyElements.el_sub_type')"
               item-text="subtype_name"
               item-value="subtype"
@@ -72,7 +72,7 @@
             rules="required|max:20"
             >
             <v-text-field
-              v-model="form.shortName"
+              v-model="form.short_name"
               :label="$t('StudyElements.el_short_name')"
               :error-messages="errors"
               clearable
@@ -81,9 +81,7 @@
         </v-col>
       </v-row>
       <duration-field
-        v-model="form.plannedDuration"
-        numericFieldName="durationValue"
-        unitFieldName="durationUnitCode"
+        v-model="form.planned_duration"
         />
       <validation-provider
         v-slot="{ errors }"
@@ -93,7 +91,7 @@
             <v-textarea
               id="startRule"
               :label="$t('StudyElements.el_start_rule')"
-              v-model="form.startRule"
+              v-model="form.start_rule"
               rows="1"
               auto-grow
               :error-messages="errors"
@@ -109,7 +107,7 @@
             <v-textarea
               id="endRule"
               :label="$t('StudyElements.el_end_rule')"
-              v-model="form.endRule"
+              v-model="form.end_rule"
               rows="1"
               auto-grow
               :error-messages="errors"
@@ -171,7 +169,7 @@ export default {
   data () {
     return {
       form: {
-        plannedDuration: {}
+        planned_duration: {}
       },
       helpItems: [
         'StudyElements.el_name',
@@ -192,10 +190,10 @@ export default {
       return this.metadata ? this.$t('StudyElements.edit_el') : this.$t('StudyElements.add_el')
     },
     elementTypes () {
-      if (!this.form.elementSubTypeUid) {
+      if (!this.form.element_subtype_uid) {
         return this.allowedConfigs
       } else {
-        return this.allowedConfigs.filter(element => element.subtype === this.form.elementSubTypeUid)
+        return this.allowedConfigs.filter(element => element.subtype === this.form.element_subtype_uid)
       }
     },
     elementSubTypes () {
@@ -236,11 +234,11 @@ export default {
         return
       }
       if (this.colorHash) {
-        this.form.elementColour = this.colorHash.hexa !== undefined ? this.colorHash.hexa : this.colorHash
+        this.form.element_colour = this.colorHash.hexa !== undefined ? this.colorHash.hexa : this.colorHash
       }
       this.$refs.form.working = true
       if (this.metadata) {
-        arms.editStudyElement(this.selectedStudy.uid, this.metadata.elementUid, this.form).then(resp => {
+        arms.editStudyElement(this.selectedStudy.uid, this.metadata.element_uid, this.form).then(resp => {
           bus.$emit('notification', { msg: this.$t('StudyElements.el_edited') })
           this.$refs.form.working = false
           this.close()
@@ -260,13 +258,15 @@ export default {
     })
     if (this.metadata) {
       this.form = this.metadata
-      if (this.form.elementColour) {
-        this.colorHash = this.form.elementColour
+      if (this.form.element_colour) {
+        this.colorHash = this.form.element_colour
       }
-      if (!this.form.plannedDuration) {
-        this.form.plannedDuration = {}
+      if (!this.form.planned_duration) {
+        this.form.planned_duration = {}
       }
-      this.$set(this.form, 'elementSubTypeUid', this.metadata.elementSubType.termUid)
+      if (this.metadata.element_subtype) {
+        this.$set(this.form, 'element_subtype_uid', this.metadata.element_subtype.term_uid)
+      }
       this.$store.commit('form/SET_FORM', this.form)
     }
   },
@@ -274,13 +274,15 @@ export default {
     metadata () {
       if (this.metadata) {
         this.form = this.metadata
-        if (this.form.elementColour) {
-          this.colorHash = this.form.elementColour
+        if (this.form.element_colour) {
+          this.colorHash = this.form.element_colour
         }
-        if (!this.form.plannedDuration) {
-          this.form.plannedDuration = {}
+        if (!this.form.planned_duration) {
+          this.form.planned_duration = {}
         }
-        this.$set(this.form, 'elementSubTypeUid', this.metadata.elementSubType.termUid)
+        if (this.metadata.element_subtype) {
+          this.$set(this.form, 'element_subtype_uid', this.metadata.element_subtype.term_uid)
+        }
         this.$store.commit('form/SET_FORM', this.form)
       }
     }

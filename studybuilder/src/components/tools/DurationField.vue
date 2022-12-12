@@ -4,7 +4,7 @@
     <validation-observer ref="observer">
       <validation-provider
         v-slot="{ errors }"
-        :rules="`min_value:${min}|max_value:${max}`"
+        :rules="durationRules"
         vid="manualInput"
         >
         <v-text-field
@@ -50,6 +50,24 @@
 import { mapGetters } from 'vuex'
 
 export default {
+  computed: {
+    ...mapGetters({
+      units: 'studiesGeneral/units'
+    }),
+    durationRules () {
+      let result = ''
+      if (this.min_value !== undefined) {
+        result += `min_value:${this.min}`
+      }
+      if (this.max_value !== undefined) {
+        if (result !== '') {
+          result += '|'
+        }
+        result += `max_value:${this.max}`
+      }
+      return result
+    }
+  },
   data () {
     return {
       select_focused: false,
@@ -63,11 +81,11 @@ export default {
     errors: Array,
     numericFieldName: {
       type: String,
-      default: () => 'durationValue'
+      default: () => 'duration_value'
     },
     unitFieldName: {
       type: String,
-      default: () => 'durationUnitCode'
+      default: () => 'duration_unit_code'
     },
     withUnit: {
       type: Boolean,
@@ -89,11 +107,6 @@ export default {
       type: Boolean,
       default: false
     }
-  },
-  computed: {
-    ...mapGetters({
-      units: 'studiesGeneral/units'
-    })
   },
   methods: {
     update (key, val) {

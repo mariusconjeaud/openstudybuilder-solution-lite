@@ -86,7 +86,7 @@ class ObjectiveTemplateService(GenericTemplateService[ObjectiveTemplateAR]):
     ) -> ObjectiveTemplateAR:
         default_parameter_values = self._create_default_parameter_entries(
             template_name=template.name,
-            default_parameter_values=template.defaultParameterValues,
+            default_parameter_values=template.default_parameter_values,
         )
 
         template_vo, library_vo = self._create_template_vo(
@@ -103,11 +103,11 @@ class ObjectiveTemplateService(GenericTemplateService[ObjectiveTemplateAR]):
                     template=template
                 ),
                 author=self.user_initials,
-                editable_instance=template.editableInstance,
+                editable_instance=template.editable_instance,
                 template=template_vo,
                 library=library_vo,
                 generate_uid_callback=self.repository.generate_uid_callback,
-                confirmatory_testing=template.confirmatoryTesting,
+                confirmatory_testing=template.confirmatory_testing,
                 indications=indications,
                 categories=categories,
             )
@@ -121,12 +121,12 @@ class ObjectiveTemplateService(GenericTemplateService[ObjectiveTemplateAR]):
         self, uid: str, groupings: ObjectiveTemplateEditGroupingsInput
     ) -> ObjectiveTemplate:
         try:
-            if groupings.indicationUids is not None:
-                self.repository.patch_indications(uid, groupings.indicationUids)
-            if groupings.categoryUids is not None:
-                self.repository.patch_categories(uid, groupings.categoryUids)
+            if groupings.indication_uids is not None:
+                self.repository.patch_indications(uid, groupings.indication_uids)
+            if groupings.category_uids is not None:
+                self.repository.patch_categories(uid, groupings.category_uids)
             self.repository.patch_confirmatory_testing(
-                uid, groupings.confirmatoryTesting
+                uid, groupings.confirmatory_testing
             )
         finally:
             self.repository.close()
@@ -207,8 +207,8 @@ class ObjectiveTemplateService(GenericTemplateService[ObjectiveTemplateAR]):
 
         # Fetch the indication objects with corresponding uid from the database
         # It will be needed to save the template, and in the return model
-        if template.indicationUids and len(template.indicationUids) > 0:
-            for uid in template.indicationUids:
+        if template.indication_uids and len(template.indication_uids) > 0:
+            for uid in template.indication_uids:
                 indication = self._repos.dictionary_term_generic_repository.find_by_uid(
                     term_uid=uid
                 )
@@ -216,8 +216,8 @@ class ObjectiveTemplateService(GenericTemplateService[ObjectiveTemplateAR]):
 
         # Fetch the category objects with corresponding uid from the database
         # It will be needed to save the template, and in the return model
-        if template.categoryUids and len(template.categoryUids) > 0:
-            for uid in template.categoryUids:
+        if template.category_uids and len(template.category_uids) > 0:
+            for uid in template.category_uids:
                 category_name = self._repos.ct_term_name_repository.find_by_uid(
                     term_uid=uid
                 )

@@ -1,5 +1,5 @@
 """CTCatalogue router."""
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query
@@ -64,7 +64,7 @@ def get_catalogues_changes(
     current_user_id: str = Depends(get_current_user_id),
 ):
     if end_datetime is None:
-        end_datetime = datetime.now()
+        end_datetime = datetime.now(timezone.utc)
     ct_catalogue_service = CTCatalogueService(current_user_id)
     return ct_catalogue_service.get_ct_catalogues_changes(
         library_name=library_name,

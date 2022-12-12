@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Optional, cast
 
+from neomodel import db
+
 from clinical_mdr_api.domain.library.criteria import CriteriaAR, CriteriaTemplateVO
 from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.domain_repositories.library.generic_template_object_repository import (
@@ -57,7 +59,7 @@ class CriteriaRepository(GenericTemplateBasedObjectRepository[CriteriaAR]):
         library: Library,
         relationship: VersionRelationship,
         value: VersionValue,
-        study_count: Optional[int] = None
+        study_count: Optional[int] = None,
     ) -> CriteriaAR:
         return cast(
             CriteriaAR,
@@ -74,3 +76,14 @@ class CriteriaRepository(GenericTemplateBasedObjectRepository[CriteriaAR]):
                 study_count=study_count,
             ),
         )
+
+    def check_exists_by_name_for_type(self, name: str, criteria_type_uid: str) -> bool:
+        query = f"""
+            MATCH (type WHERE type.uid=$type_uid)<-[:HAS_TYPE]-(:CriteriaTemplateRoot)-->(:{self.root_class.__label__})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED|LATEST]->(v:{self.value_class.__label__} WHERE v.name=$name)
+            RETURN count(DISTINCT v)
+            """
+
+        result, _ = db.cypher_query(
+            query, {"type_uid": criteria_type_uid, "name": name}
+        )
+        return len(result) > 0 and result[0][0] > 0

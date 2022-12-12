@@ -31,7 +31,7 @@
             :label="$t('StudySelectionTable.studies')"
             :items="studies"
             :error-messages="errors"
-            item-text="studyId"
+            item-text="study_id"
             clearable
             multiple
             return-object
@@ -280,7 +280,7 @@ export default {
       selectedStudy: 'studiesGeneral/selectedStudy'
     }),
     title () {
-      return this.$t('_global.add') + ' ' + this.criteriaType.sponsorPreferredNameSentenceCase
+      return this.$t('_global.add') + ' ' + this.criteriaType.sponsor_preferred_name_sentence_case
     }
   },
   data () {
@@ -300,13 +300,13 @@ export default {
       creationMode: 'select',
       extraDataFetcherFilters: {
         'criteria.library.name': { v: ['Sponsor'] },
-        'criteriaType.sponsorPreferredName': { v: [this.criteriaType.sponsorPreferredName] }
+        'criteria_type.sponsor_preferred_name': { v: [this.criteriaType.sponsor_preferred_name] }
       },
       tplHeaders: [
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('_global.indications'), value: 'indications', filteringName: 'indications.name' },
-        { text: this.$t('EligibilityCriteriaForm.criterion_cat'), value: 'categories', filteringName: 'categories.name.sponsorPreferredName' },
-        { text: this.$t('EligibilityCriteriaForm.criterion_sub_cat'), value: 'subCategories', filteringName: 'subCategories.name.sponsorPreferredName' },
+        { text: this.$t('EligibilityCriteriaForm.criterion_cat'), value: 'categories', filteringName: 'categories.name.sponsor_preferred_name' },
+        { text: this.$t('EligibilityCriteriaForm.criterion_sub_cat'), value: 'subCategories', filteringName: 'subCategories.name.sponsor_preferred_name' },
         { text: this.$t('EligibilityCriteriaForm.criteria_template'), value: 'name' },
         { text: this.$t('EligibilityCriteriaForm.guidance_text'), value: 'guidanceText' }
       ],
@@ -380,7 +380,7 @@ export default {
       } else {
         params.filters = {}
       }
-      Object.assign(params.filters, { 'type.name.sponsorPreferredNameSentenceCase': { v: [this.criteriaType.sponsorPreferredNameSentenceCase] } })
+      Object.assign(params.filters, { 'type.name.sponsor_preferred_name_sentence_case': { v: [this.criteriaType.sponsor_preferred_name_sentence_case] } })
       criteriaTemplates.get(params).then(resp => {
         this.criteriaTemplates = resp.data.items
         this.total = resp.data.total
@@ -393,7 +393,7 @@ export default {
       this.selectedCriteria = this.selectedCriteria.filter(item => item.name !== template.name)
     },
     unselectStudyCriteria (studyCriteria) {
-      this.selectedCriteria = this.selectedCriteria.filter(item => item.studyCriteriaUid !== studyCriteria.studyCriteriaUid)
+      this.selectedCriteria = this.selectedCriteria.filter(item => item.study_criteria_uid !== studyCriteria.study_criteria_uid)
     },
     async loadParameters (template) {
       if (template) {
@@ -411,9 +411,9 @@ export default {
       }
       const data = {
         ...this.form,
-        libraryName: 'User Defined',
-        typeUid: this.criteriaType.termUid,
-        studyUid: this.selectedStudy.uid
+        library_name: 'User Defined',
+        type_uid: this.criteriaType.term_uid,
+        study_uid: this.selectedStudy.uid
       }
       try {
         const resp = await criteriaTemplates.create(data)
@@ -422,7 +422,7 @@ export default {
       } catch (error) {
         return false
       }
-      this.loadParameters(this.form.criteriaTemplate)
+      this.loadParameters(this.form.criteria_template)
       return true
     },
     async submit () {
@@ -434,25 +434,25 @@ export default {
           const data = []
           for (const criteria of this.selectedCriteria) {
             data.push({
-              criteriaTemplateUid: criteria.uid,
-              libraryName: criteria.library.name
+              criteria_template_uid: criteria.uid,
+              library_name: criteria.library.name
             })
           }
           await study.batchCreateStudyCriteria(this.selectedStudy.uid, data)
         } else {
           const data = []
           for (const studyCriteria of this.selectedCriteria) {
-            if (studyCriteria.criteriaTemplate) {
+            if (studyCriteria.criteria_template) {
               data.push({
-                criteriaTemplateUid: studyCriteria.criteriaTemplate.uid,
-                libraryName: studyCriteria.criteriaTemplate.library.name
+                criteria_template_uid: studyCriteria.criteria_template.uid,
+                library_name: studyCriteria.criteria_template.library.name
               })
             } else {
               const payload = {
-                criteriaData: {
-                  parameterValues: studyCriteria.criteria.parameterValues,
-                  criteriaTemplateUid: studyCriteria.criteria.criteriaTemplate.uid,
-                  libraryName: studyCriteria.criteria.library.name
+                criteria_data: {
+                  parameter_values: studyCriteria.criteria.parameter_values,
+                  criteria_template_uid: studyCriteria.criteria.criteria_template.uid,
+                  library_name: studyCriteria.criteria.library.name
                 }
               }
               await study.createStudyCriteria(this.selectedStudy.uid, payload)
@@ -463,9 +463,9 @@ export default {
       } else {
         const data = {
           criteriaData: {
-            criteriaTemplateUid: this.form.criteriaTemplate.uid,
-            parameterValues: await instances.formatParameterValues(this.parameters),
-            libraryName: 'Sponsor' // FIXME
+            criteria_template_uid: this.form.criteria_template.uid,
+            parameter_values: await instances.formatParameterValues(this.parameters),
+            library_name: 'Sponsor' // FIXME
           }
         }
         await study.createStudyCriteria(this.selectedStudy.uid, data)

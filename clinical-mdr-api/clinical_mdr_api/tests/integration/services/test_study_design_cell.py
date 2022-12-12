@@ -43,7 +43,7 @@ class StudyDesignCellTestCase(unittest.TestCase):
             "Arm Type", "CTCodelist_ArmType", catalogue_name, library_name
         )
         arm_type_term = create_ct_term(
-            arm_type_codelist.codelistUid,
+            arm_type_codelist.codelist_uid,
             "Arm Type",
             "ArmType_0001",
             1,
@@ -54,35 +54,35 @@ class StudyDesignCellTestCase(unittest.TestCase):
             create_study_arm(
                 study_uid=self.study.uid,
                 name="Arm_Name_1",
-                shortName="Arm_Short_Name_1",
+                short_name="Arm_Short_Name_1",
                 code="Arm_code_1",
                 description="desc...",
-                colourCode="colour...",
-                randomizationGroup="Randomization_Group_1",
-                numberOfSubjects=1,
-                armTypeUid=arm_type_term.uid,
+                colour_code="colour...",
+                randomization_group="Randomization_Group_1",
+                number_of_subjects=1,
+                arm_type_uid=arm_type_term.uid,
             ),
             create_study_arm(
                 study_uid=self.study.uid,
                 name="Arm_Name_2",
-                shortName="Arm_Short_Name_2",
+                short_name="Arm_Short_Name_2",
                 code="Arm_code_2",
                 description="desc...",
-                colourCode="colour...",
-                randomizationGroup="Randomization_Group_2",
-                numberOfSubjects=1,
-                armTypeUid=arm_type_term.uid,
+                colour_code="colour...",
+                randomization_group="Randomization_Group_2",
+                number_of_subjects=1,
+                arm_type_uid=arm_type_term.uid,
             ),
             create_study_arm(
                 study_uid=self.study.uid,
                 name="Arm_Name_3",
-                shortName="Arm_Short_Name_3",
+                short_name="Arm_Short_Name_3",
                 code="Arm_code_3",
                 description="desc...",
-                colourCode="colour...",
-                randomizationGroup="Randomization_Group_3",
-                numberOfSubjects=3,
-                armTypeUid=arm_type_term.uid,
+                colour_code="colour...",
+                randomization_group="Randomization_Group_3",
+                number_of_subjects=3,
+                arm_type_uid=arm_type_term.uid,
             ),
         ]
 
@@ -91,7 +91,7 @@ class StudyDesignCellTestCase(unittest.TestCase):
             "Element Type", "CTCodelist_ElementType", catalogue_name, library_name
         )
         element_type_term = create_ct_term(
-            element_type_codelist.codelistUid,
+            element_type_codelist.codelist_uid,
             "Element Type",
             "ElementType_0001",
             1,
@@ -99,7 +99,7 @@ class StudyDesignCellTestCase(unittest.TestCase):
             library_name,
         )
         element_type_term_2 = create_ct_term(
-            element_type_codelist.codelistUid,
+            element_type_codelist.codelist_uid,
             "Element Type",
             "ElementType_0002",
             2,
@@ -116,24 +116,24 @@ class StudyDesignCellTestCase(unittest.TestCase):
             create_study_branch_arm(
                 self.study.uid,
                 name="BranchArm_Name_1",
-                shortName="BranchArm_Short_Name_1",
+                short_name="BranchArm_Short_Name_1",
                 code="BranchArm_code_1",
                 description="desc...",
-                colourCode="desc...",
-                randomizationGroup="Randomization_Group_1",
-                numberOfSubjects=1,
-                armUid=self.study_arms[0].armUid,
+                colour_code="desc...",
+                randomization_group="Randomization_Group_1",
+                number_of_subjects=1,
+                arm_uid=self.study_arms[0].arm_uid,
             ),
             create_study_branch_arm(
                 self.study.uid,
                 name="BranchArm_Name_2",
-                shortName="BranchArm_Short_Name_2",
+                short_name="BranchArm_Short_Name_2",
                 code="BranchArm_code_2",
                 description="desc...",
-                colourCode="desc...",
-                randomizationGroup="BranchArm_Randomization_Group_2",
-                numberOfSubjects=1,
-                armUid=self.study_arms[1].armUid,
+                colour_code="desc...",
+                randomization_group="BranchArm_Randomization_Group_2",
+                number_of_subjects=1,
+                arm_uid=self.study_arms[1].arm_uid,
             ),
         ]
 
@@ -145,10 +145,10 @@ class StudyDesignCellTestCase(unittest.TestCase):
             design_cell = service.create(
                 self.study.uid,
                 models.StudyDesignCellCreateInput(
-                    studyArmUid=self.study_arms[0].armUid,
-                    studyEpochUid=self.study_epoch.uid,
-                    studyElementUid=self.study_elements[0].elementUid,
-                    transitionRule="Transition_Rule_2",
+                    study_arm_uid=self.study_arms[0].arm_uid,
+                    study_epoch_uid=self.study_epoch.uid,
+                    study_element_uid=self.study_elements[0].element_uid,
+                    transition_rule="Transition_Rule_2",
                 ),
             )
 
@@ -156,10 +156,10 @@ class StudyDesignCellTestCase(unittest.TestCase):
         design_cell = service.create(
             self.study.uid,
             models.StudyDesignCellCreateInput(
-                studyArmUid=self.study_arms[2].armUid,
-                studyEpochUid=self.study_epoch.uid,
-                studyElementUid=self.study_elements[0].elementUid,
-                transitionRule="Transition_Rule_2",
+                study_arm_uid=self.study_arms[2].arm_uid,
+                study_epoch_uid=self.study_epoch.uid,
+                study_element_uid=self.study_elements[0].element_uid,
+                transition_rule="Transition_Rule_2",
             ),
         )
 
@@ -168,61 +168,65 @@ class StudyDesignCellTestCase(unittest.TestCase):
 
         # Patch a design cell - patch on study arm and study element
         # Will return a 204 no content
-        designCellUid = design_cells[0].designCellUid
+        design_cell_uid = design_cells[0].design_cell_uid
         service.patch(
             self.study.uid,
             models.StudyDesignCellEditInput(
-                studyDesignCellUid=designCellUid,
-                studyArmUid=self.study_arms[2].armUid,
-                studyElementUid=self.study_elements[1].elementUid,
+                study_design_cell_uid=design_cell_uid,
+                study_arm_uid=self.study_arms[2].arm_uid,
+                study_element_uid=self.study_elements[1].element_uid,
             ),
         )
         # Get the updated design cell
         # This will also test the get specific design cell
-        design_cell = service.get_specific_design_cell(self.study.uid, designCellUid)
-        assert design_cell.studyElementUid == self.study_elements[1].elementUid
-        assert design_cell.studyArmUid == self.study_arms[2].armUid
+        design_cell = service.get_specific_design_cell(self.study.uid, design_cell_uid)
+        assert design_cell.study_element_uid == self.study_elements[1].element_uid
+        assert design_cell.study_arm_uid == self.study_arms[2].arm_uid
 
         # Patch a design cell - switching between study arm and study branch arm
         # Will return a 204 no content
-        designCellUid = design_cells[0].designCellUid
+        design_cell_uid = design_cells[0].design_cell_uid
         service.patch(
             self.study.uid,
             models.StudyDesignCellEditInput(
-                studyDesignCellUid=designCellUid,
-                studyBranchArmUid=self.study_branch_arms[0].branchArmUid,
+                study_design_cell_uid=design_cell_uid,
+                study_branch_arm_uid=self.study_branch_arms[0].branch_arm_uid,
             ),
         )
         # Get the updated design cell
         # This will also test the get specific design cell
-        design_cell = service.get_specific_design_cell(self.study.uid, designCellUid)
-        assert design_cell.studyArmUid is None
-        assert design_cell.studyBranchArmUid == self.study_branch_arms[0].branchArmUid
+        design_cell = service.get_specific_design_cell(self.study.uid, design_cell_uid)
+        assert design_cell.study_arm_uid is None
+        assert (
+            design_cell.study_branch_arm_uid == self.study_branch_arms[0].branch_arm_uid
+        )
 
         # Patch a design cell - patch on study branch arm
         # Will return a 204 no content
-        designCellUid = design_cells[0].designCellUid
+        design_cell_uid = design_cells[0].design_cell_uid
         service.patch(
             self.study.uid,
             models.StudyDesignCellEditInput(
-                studyDesignCellUid=designCellUid,
-                studyBranchArmUid=self.study_branch_arms[1].branchArmUid,
+                study_design_cell_uid=design_cell_uid,
+                study_branch_arm_uid=self.study_branch_arms[1].branch_arm_uid,
             ),
         )
         # Get the updated design cell
         # This will also test the get specific design cell
-        design_cell = service.get_specific_design_cell(self.study.uid, designCellUid)
-        assert design_cell.studyArmUid is None
-        assert design_cell.studyBranchArmUid == self.study_branch_arms[1].branchArmUid
+        design_cell = service.get_specific_design_cell(self.study.uid, design_cell_uid)
+        assert design_cell.study_arm_uid is None
+        assert (
+            design_cell.study_branch_arm_uid == self.study_branch_arms[1].branch_arm_uid
+        )
 
         # Create a design cell -- Branch Specified
         design_cell = service.create(
             self.study.uid,
             models.StudyDesignCellCreateInput(
-                studyBranchArmUid=self.study_branch_arms[0].branchArmUid,
-                studyEpochUid=self.study_epoch.uid,
-                studyElementUid=self.study_elements[0].elementUid,
-                transitionRule="Transition_Rule_1",
+                study_branch_arm_uid=self.study_branch_arms[0].branch_arm_uid,
+                study_epoch_uid=self.study_epoch.uid,
+                study_element_uid=self.study_elements[0].element_uid,
+                transition_rule="Transition_Rule_1",
             ),
         )
         design_cells = service.get_all_design_cells(self.study.uid)
@@ -230,56 +234,59 @@ class StudyDesignCellTestCase(unittest.TestCase):
 
         # Patch a design cell - patch on study arm and study element
         # Will return a 204 no content
-        designCellUid = design_cells[0].designCellUid
+        design_cell_uid = design_cells[0].design_cell_uid
         service.patch(
             self.study.uid,
             models.StudyDesignCellEditInput(
-                studyDesignCellUid=designCellUid,
-                studyBranchArmUid=self.study_branch_arms[1].branchArmUid,
-                studyElementUid=self.study_elements[1].elementUid,
+                study_design_cell_uid=design_cell_uid,
+                study_branch_arm_uid=self.study_branch_arms[1].branch_arm_uid,
+                study_element_uid=self.study_elements[1].element_uid,
             ),
         )
         # Get the updated design cell
         # This will also test the get specific design cell
-        design_cell = service.get_specific_design_cell(self.study.uid, designCellUid)
-        assert design_cell.studyArmUid is None
-        assert design_cell.studyBranchArmUid == self.study_branch_arms[1].branchArmUid
+        design_cell = service.get_specific_design_cell(self.study.uid, design_cell_uid)
+        assert design_cell.study_arm_uid is None
+        assert (
+            design_cell.study_branch_arm_uid == self.study_branch_arms[1].branch_arm_uid
+        )
 
         # Patch a design cell - switching between study branch arm and study arm
         # Will return a 204 no content
-        designCellUid = design_cells[0].designCellUid
+        design_cell_uid = design_cells[0].design_cell_uid
         service.patch(
             self.study.uid,
             models.StudyDesignCellEditInput(
-                studyDesignCellUid=designCellUid,
-                studyArmUid=self.study_arms[2].armUid,
-                studyBranchArmUid=None,
+                study_design_cell_uid=design_cell_uid,
+                study_arm_uid=self.study_arms[2].arm_uid,
+                study_branch_arm_uid=None,
             ),
         )
         # Get the updated design cell
         # This will also test the get specific design cell
-        design_cell = service.get_specific_design_cell(self.study.uid, designCellUid)
-        assert design_cell.studyElementUid == self.study_elements[1].elementUid
-        assert design_cell.studyArmUid == self.study_arms[2].armUid
-        assert design_cell.studyBranchArmUid is None
+        design_cell = service.get_specific_design_cell(self.study.uid, design_cell_uid)
+        assert design_cell.study_element_uid == self.study_elements[1].element_uid
+        assert design_cell.study_arm_uid == self.study_arms[2].arm_uid
+        assert design_cell.study_branch_arm_uid is None
 
         # Patch a design cell - patch on study arm and study element
         # Will return a 204 no content
-        designCellUid = design_cells[0].designCellUid
+        design_cell_uid = design_cells[0].design_cell_uid
         service.patch(
             self.study.uid,
             models.StudyDesignCellEditInput(
-                studyDesignCellUid=designCellUid, studyArmUid=self.study_arms[2].armUid
+                study_design_cell_uid=design_cell_uid,
+                study_arm_uid=self.study_arms[2].arm_uid,
             ),
         )
         # Get the updated design cell
         # This will also test the get specific design cell
-        design_cell = service.get_specific_design_cell(self.study.uid, designCellUid)
-        assert design_cell.studyArmUid == self.study_arms[2].armUid
-        assert design_cell.studyBranchArmUid is None
+        design_cell = service.get_specific_design_cell(self.study.uid, design_cell_uid)
+        assert design_cell.study_arm_uid == self.study_arms[2].arm_uid
+        assert design_cell.study_branch_arm_uid is None
 
         # Delete a design cell
-        service.delete(self.study.uid, designCellUid)
+        service.delete(self.study.uid, design_cell_uid)
         design_cells = service.get_all_design_cells(self.study.uid)
         assert len(design_cells) == 1
 
@@ -293,37 +300,37 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 models.StudyDesignCellBatchInput(
                     method="POST",
                     content=models.StudyDesignCellCreateInput(
-                        studyArmUid=self.study_arms[2].armUid,
-                        studyEpochUid=self.study_epoch.uid,
-                        studyElementUid=self.study_elements[0].elementUid,
-                        transitionRule="Transition_Rule_1",
+                        study_arm_uid=self.study_arms[2].arm_uid,
+                        study_epoch_uid=self.study_epoch.uid,
+                        study_element_uid=self.study_elements[0].element_uid,
+                        transition_rule="Transition_Rule_1",
                     ),
                 ),
                 models.StudyDesignCellBatchInput(
                     method="POST",
                     content=models.StudyDesignCellCreateInput(
-                        studyArmUid=self.study_arms[2].armUid,
-                        studyEpochUid=self.study_epoch.uid,
-                        studyElementUid=self.study_elements[1].elementUid,
-                        transitionRule="Transition_Rule_2",
+                        study_arm_uid=self.study_arms[2].arm_uid,
+                        study_epoch_uid=self.study_epoch.uid,
+                        study_element_uid=self.study_elements[1].element_uid,
+                        transition_rule="Transition_Rule_2",
                     ),
                 ),
                 models.StudyDesignCellBatchInput(
                     method="POST",
                     content=models.StudyDesignCellCreateInput(
-                        studyBranchArmUid=self.study_branch_arms[0].branchArmUid,
-                        studyEpochUid=self.study_epoch.uid,
-                        studyElementUid=self.study_elements[0].elementUid,
-                        transitionRule="Transition_Rule_3",
+                        study_branch_arm_uid=self.study_branch_arms[0].branch_arm_uid,
+                        study_epoch_uid=self.study_epoch.uid,
+                        study_element_uid=self.study_elements[0].element_uid,
+                        transition_rule="Transition_Rule_3",
                     ),
                 ),
                 models.StudyDesignCellBatchInput(
                     method="POST",
                     content=models.StudyDesignCellCreateInput(
-                        studyBranchArmUid=self.study_branch_arms[1].branchArmUid,
-                        studyEpochUid=self.study_epoch.uid,
-                        studyElementUid=self.study_elements[1].elementUid,
-                        transitionRule="Transition_Rule_4",
+                        study_branch_arm_uid=self.study_branch_arms[1].branch_arm_uid,
+                        study_epoch_uid=self.study_epoch.uid,
+                        study_element_uid=self.study_elements[1].element_uid,
+                        transition_rule="Transition_Rule_4",
                     ),
                 ),
             ],
@@ -339,58 +346,62 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 models.StudyDesignCellBatchInput(
                     method="PATCH",
                     content=models.StudyDesignCellEditInput(
-                        studyDesignCellUid=design_cells[0].designCellUid,
-                        studyElementUid=self.study_elements[1].elementUid,
-                        studyArmUid=self.study_arms[2].armUid,
-                        studyBranchArmUid=None,
+                        study_design_cell_uid=design_cells[0].design_cell_uid,
+                        study_element_uid=self.study_elements[1].element_uid,
+                        study_arm_uid=self.study_arms[2].arm_uid,
+                        study_branch_arm_uid=None,
                     ),
                 ),
                 models.StudyDesignCellBatchInput(
                     method="PATCH",
                     content=models.StudyDesignCellEditInput(
-                        studyDesignCellUid=design_cells[1].designCellUid,
-                        studyElementUid=self.study_elements[0].elementUid,
-                        studyBranchArmUid=self.study_branch_arms[0].branchArmUid,
+                        study_design_cell_uid=design_cells[1].design_cell_uid,
+                        study_element_uid=self.study_elements[0].element_uid,
+                        study_branch_arm_uid=self.study_branch_arms[0].branch_arm_uid,
                     ),
                 ),
                 models.StudyDesignCellBatchInput(
                     method="PATCH",
                     content=models.StudyDesignCellEditInput(
-                        studyDesignCellUid=design_cells[2].designCellUid,
-                        studyBranchArmUid=self.study_branch_arms[1].branchArmUid,
+                        study_design_cell_uid=design_cells[2].design_cell_uid,
+                        study_branch_arm_uid=self.study_branch_arms[1].branch_arm_uid,
                     ),
                 ),
                 models.StudyDesignCellBatchInput(
                     method="PATCH",
                     content=models.StudyDesignCellEditInput(
-                        studyDesignCellUid=design_cells[3].designCellUid,
-                        studyArmUid=self.study_arms[2].armUid,
+                        study_design_cell_uid=design_cells[3].design_cell_uid,
+                        study_arm_uid=self.study_arms[2].arm_uid,
                     ),
                 ),
             ],
         )
         design_cell = service.get_specific_design_cell(
-            self.study.uid, design_cells[0].designCellUid
+            self.study.uid, design_cells[0].design_cell_uid
         )
-        assert design_cell.studyElementUid == self.study_elements[1].elementUid
-        assert design_cell.studyArmUid == self.study_arms[2].armUid
-        assert design_cell.studyBranchArmUid is None
+        assert design_cell.study_element_uid == self.study_elements[1].element_uid
+        assert design_cell.study_arm_uid == self.study_arms[2].arm_uid
+        assert design_cell.study_branch_arm_uid is None
         design_cell = service.get_specific_design_cell(
-            self.study.uid, design_cells[1].designCellUid
+            self.study.uid, design_cells[1].design_cell_uid
         )
-        assert design_cell.studyElementUid == self.study_elements[0].elementUid
-        assert design_cell.studyArmUid is None
-        assert design_cell.studyBranchArmUid == self.study_branch_arms[0].branchArmUid
+        assert design_cell.study_element_uid == self.study_elements[0].element_uid
+        assert design_cell.study_arm_uid is None
+        assert (
+            design_cell.study_branch_arm_uid == self.study_branch_arms[0].branch_arm_uid
+        )
         design_cell = service.get_specific_design_cell(
-            self.study.uid, design_cells[2].designCellUid
+            self.study.uid, design_cells[2].design_cell_uid
         )
-        assert design_cell.studyArmUid is None
-        assert design_cell.studyBranchArmUid == self.study_branch_arms[1].branchArmUid
+        assert design_cell.study_arm_uid is None
+        assert (
+            design_cell.study_branch_arm_uid == self.study_branch_arms[1].branch_arm_uid
+        )
         design_cell = service.get_specific_design_cell(
-            self.study.uid, design_cells[3].designCellUid
+            self.study.uid, design_cells[3].design_cell_uid
         )
-        assert design_cell.studyArmUid == self.study_arms[2].armUid
-        assert design_cell.studyBranchArmUid is None
+        assert design_cell.study_arm_uid == self.study_arms[2].arm_uid
+        assert design_cell.study_branch_arm_uid is None
 
         # delete
         design_cells = service.get_all_design_cells(self.study.uid)
@@ -400,25 +411,25 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 models.StudyDesignCellBatchInput(
                     method="DELETE",
                     content=models.StudyDesignCellDeleteInput(
-                        uid=design_cells[0].designCellUid
+                        uid=design_cells[0].design_cell_uid
                     ),
                 ),
                 models.StudyDesignCellBatchInput(
                     method="DELETE",
                     content=models.StudyDesignCellDeleteInput(
-                        uid=design_cells[1].designCellUid
+                        uid=design_cells[1].design_cell_uid
                     ),
                 ),
                 models.StudyDesignCellBatchInput(
                     method="DELETE",
                     content=models.StudyDesignCellDeleteInput(
-                        uid=design_cells[2].designCellUid
+                        uid=design_cells[2].design_cell_uid
                     ),
                 ),
                 models.StudyDesignCellBatchInput(
                     method="DELETE",
                     content=models.StudyDesignCellDeleteInput(
-                        uid=design_cells[3].designCellUid
+                        uid=design_cells[3].design_cell_uid
                     ),
                 ),
             ],

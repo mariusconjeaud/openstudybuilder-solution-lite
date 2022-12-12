@@ -17,7 +17,7 @@
       :template="selectedObject"
       />
   </template>
-  <template v-slot:item.categories.name.sponsorPreferredName="{ item }">
+  <template v-slot:item.categories.name.sponsor_preferred_name="{ item }">
     <template v-if="item.categories">
       {{ item.categories|terms }}
     </template>
@@ -25,18 +25,19 @@
       {{ $t('_global.not_applicable_long') }}
     </template>
   </template>
-  <template v-slot:item.subCategories.name.sponsorPreferredName="{ item }">
-    <template v-if="item.subCategories">
-      {{ item.subCategories|terms }}
+  <template v-slot:item.sub_categories.name.sponsor_preferred_name="{ item }">
+    <template v-if="item.sub_categories">
+      {{ item.sub_categories|terms }}
     </template>
     <template v-else>
       {{ $t('_global.not_applicable_long') }}
     </template>
   </template>
-  <template v-slot:indexingDialog="{ closeDialog, template }">
+  <template v-slot:indexingDialog="{ closeDialog, template, show }">
     <template-indexing-dialog
       @close="closeDialog"
       @updated="refreshTable"
+      :show="show"
       :template="template"
       :prepare-payload-func="prepareIndexingPayload"
       :url-prefix="urlPrefix"
@@ -76,10 +77,10 @@ export default {
           width: '5%'
         },
         { text: this.$t('_global.indications'), value: 'indications.name' },
-        { text: this.$t('EndpointTemplateTable.endpoint_cat'), value: 'categories.name.sponsorPreferredName' },
-        { text: this.$t('EndpointTemplateTable.endpoint_sub_cat'), value: 'subCategories.name.sponsorPreferredName' },
+        { text: this.$t('EndpointTemplateTable.endpoint_cat'), value: 'categories.name.sponsor_preferred_name' },
+        { text: this.$t('EndpointTemplateTable.endpoint_sub_cat'), value: 'sub_categories.name.sponsor_preferred_name' },
         { text: this.$t('_global.template'), value: 'name', width: '30%' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
       ],

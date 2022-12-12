@@ -94,12 +94,12 @@ class TestStudyService(unittest.TestCase):
         cls.patcher.start()
 
     @classmethod
-    def tearDownClass(cls) -> None:
+    def tear_down_class(cls) -> None:
         cls.patcher.stop()
 
     @staticmethod
     def get_field_or_simple_term_uid(field):
-        return field if field is None else field.termUid
+        return field if field is None else field.term_uid
 
     @staticmethod
     def get_field_or_unit_def_uid(field):
@@ -157,7 +157,7 @@ class TestStudyService(unittest.TestCase):
                 study_service = StudyService(user="PIWQ")
                 service_response = study_service.get_by_uid(
                     uid=sample_study_definition.uid,
-                    fields="+currentMetadata.studyPopulation",
+                    fields="+current_metadata.study_population",
                 )
 
                 # then
@@ -165,133 +165,137 @@ class TestStudyService(unittest.TestCase):
                 _ref_study_population = (
                     sample_study_definition.current_metadata.study_population
                 )
-                _res_study_population = service_response.currentMetadata.studyPopulation
+                _res_study_population = (
+                    service_response.current_metadata.study_population
+                )
 
                 self.assertEqual(
                     list(_ref_study_population.therapeutic_area_codes),
                     [
                         self.get_field_or_simple_term_uid(therapeutic_area_code)
-                        for therapeutic_area_code in _res_study_population.therapeuticAreasCodes
+                        for therapeutic_area_code in _res_study_population.therapeutic_areas_codes
                     ],
                 )
                 self.assertEqual(
                     _ref_study_population.therapeutic_area_null_value_code,
                     self.get_field_or_simple_term_uid(
-                        _res_study_population.therapeuticAreasNullValueCode
+                        _res_study_population.therapeutic_areas_null_value_code
                     ),
                 )
                 self.assertEqual(
                     list(_ref_study_population.disease_condition_or_indication_codes),
                     [
                         self.get_field_or_simple_term_uid(disease_or_indication_code)
-                        for disease_or_indication_code in _res_study_population.diseaseConditionsOrIndicationsCodes
+                        for disease_or_indication_code in _res_study_population.disease_conditions_or_indications_codes
                     ],
                 )
                 self.assertEqual(
                     _ref_study_population.disease_condition_or_indication_null_value_code,
                     self.get_field_or_simple_term_uid(
-                        _res_study_population.diseaseConditionsOrIndicationsNullValueCode
+                        _res_study_population.disease_conditions_or_indications_null_value_code
                     ),
                 )
                 self.assertEqual(
                     list(_ref_study_population.diagnosis_group_codes),
                     [
                         self.get_field_or_simple_term_uid(diagnosis_group_code)
-                        for diagnosis_group_code in _res_study_population.diagnosisGroupsCodes
+                        for diagnosis_group_code in _res_study_population.diagnosis_groups_codes
                     ],
                 )
                 self.assertEqual(
                     _ref_study_population.diagnosis_group_null_value_code,
                     self.get_field_or_simple_term_uid(
-                        _res_study_population.diagnosisGroupsNullValueCode
+                        _res_study_population.diagnosis_groups_null_value_code
                     ),
                 )
                 self.assertEqual(
                     _ref_study_population.sex_of_participants_code,
                     self.get_field_or_simple_term_uid(
-                        _res_study_population.sexOfParticipantsCode
+                        _res_study_population.sex_of_participants_code
                     ),
                 )
                 self.assertEqual(
                     _ref_study_population.sex_of_participants_null_value_code,
                     self.get_field_or_simple_term_uid(
-                        _res_study_population.sexOfParticipantsNullValueCode
+                        _res_study_population.sex_of_participants_null_value_code
                     ),
                 )
                 self.assertEqual(
                     _ref_study_population.rare_disease_indicator,
-                    _res_study_population.rareDiseaseIndicator,
+                    _res_study_population.rare_disease_indicator,
                 )
                 self.assertEqual(
                     _ref_study_population.rare_disease_indicator_null_value_code,
                     self.get_field_or_simple_term_uid(
-                        _res_study_population.rareDiseaseIndicatorNullValueCode
+                        _res_study_population.rare_disease_indicator_null_value_code
                     ),
                 )
                 self.assertEqual(
                     _ref_study_population.healthy_subject_indicator,
-                    _res_study_population.healthySubjectIndicator,
+                    _res_study_population.healthy_subject_indicator,
                 )
                 self.assertEqual(
                     _ref_study_population.healthy_subject_indicator_null_value_code,
                     self.get_field_or_simple_term_uid(
-                        _res_study_population.healthySubjectIndicatorNullValueCode
+                        _res_study_population.healthy_subject_indicator_null_value_code
                     ),
                 )
                 self.assertEqual(
                     _ref_study_population.planned_minimum_age_of_subjects_null_value_code,
                     self.get_field_or_simple_term_uid(
-                        _res_study_population.plannedMinimumAgeOfSubjectsNullValueCode
+                        _res_study_population.planned_minimum_age_of_subjects_null_value_code
                     ),
                 )
                 self.assertEqual(
                     _ref_study_population.planned_maximum_age_of_subjects_null_value_code,
                     self.get_field_or_simple_term_uid(
-                        _res_study_population.plannedMaximumAgeOfSubjectsNullValueCode
+                        _res_study_population.planned_maximum_age_of_subjects_null_value_code
                     ),
                 )
                 self.assertEqual(
                     _ref_study_population.pediatric_study_indicator,
-                    _res_study_population.pediatricStudyIndicator,
+                    _res_study_population.pediatric_study_indicator,
                 )
                 self.assertEqual(
                     _ref_study_population.pediatric_study_indicator_null_value_code,
                     self.get_field_or_simple_term_uid(
-                        _res_study_population.pediatricStudyIndicatorNullValueCode
+                        _res_study_population.pediatric_study_indicator_null_value_code
                     ),
                 )
                 self.assertEqual(
                     _ref_study_population.pediatric_postmarket_study_indicator,
-                    _res_study_population.pediatricPostmarketStudyIndicator,
+                    _res_study_population.pediatric_postmarket_study_indicator,
                 )
                 self.assertEqual(
                     _ref_study_population.pediatric_postmarket_study_indicator_null_value_code,
                     self.get_field_or_simple_term_uid(
-                        _res_study_population.pediatricPostmarketStudyIndicatorNullValueCode
+                        _res_study_population.pediatric_postmarket_study_indicator_null_value_code
                     ),
                 )
                 self.assertEqual(
                     _ref_study_population.pediatric_investigation_plan_indicator,
-                    _res_study_population.pediatricInvestigationPlanIndicator,
+                    _res_study_population.pediatric_investigation_plan_indicator,
                 )
                 self.assertEqual(
                     _ref_study_population.pediatric_investigation_plan_indicator_null_value_code,
                     self.get_field_or_simple_term_uid(
-                        _res_study_population.pediatricInvestigationPlanIndicatorNullValueCode
+                        _res_study_population.pediatric_investigation_plan_indicator_null_value_code
                     ),
                 )
                 self.assertEqual(
                     _ref_study_population.number_of_expected_subjects_null_value_code,
                     self.get_field_or_simple_term_uid(
-                        _res_study_population.numberOfExpectedSubjectsNullValueCode
+                        _res_study_population.number_of_expected_subjects_null_value_code
                     ),
                 )
 
                 if _ref_study_population.planned_minimum_age_of_subjects is None:
-                    self.assertIsNone(_res_study_population.plannedMinimumAgeOfSubjects)
+                    self.assertIsNone(
+                        _res_study_population.planned_minimum_age_of_subjects
+                    )
                 else:
                     self.assertIsNotNone(
-                        _res_study_population.plannedMinimumAgeOfSubjects
+                        _res_study_population.planned_minimum_age_of_subjects
                     )
                     value, unit = from_duration_object_to_value_and_unit(
                         _ref_study_population.planned_minimum_age_of_subjects,
@@ -300,24 +304,26 @@ class TestStudyService(unittest.TestCase):
                     print("unit", unit)
                     print(
                         "durationunitcode",
-                        _res_study_population.plannedMinimumAgeOfSubjects.durationUnitCode,
+                        _res_study_population.planned_minimum_age_of_subjects.duration_unit_code,
                     )
                     self.assertEqual(
                         value,
-                        _res_study_population.plannedMinimumAgeOfSubjects.durationValue,
+                        _res_study_population.planned_minimum_age_of_subjects.duration_value,
                     )
                     self.assertEqual(
                         unit.uid,
                         self.get_field_or_unit_def_uid(
-                            _res_study_population.plannedMinimumAgeOfSubjects.durationUnitCode
+                            _res_study_population.planned_minimum_age_of_subjects.duration_unit_code
                         ),
                     )
 
                 if _ref_study_population.planned_maximum_age_of_subjects is None:
-                    self.assertIsNone(_res_study_population.plannedMaximumAgeOfSubjects)
+                    self.assertIsNone(
+                        _res_study_population.planned_maximum_age_of_subjects
+                    )
                 else:
                     self.assertIsNotNone(
-                        _res_study_population.plannedMaximumAgeOfSubjects
+                        _res_study_population.planned_maximum_age_of_subjects
                     )
                     value, unit = from_duration_object_to_value_and_unit(
                         _ref_study_population.planned_maximum_age_of_subjects,
@@ -327,16 +333,16 @@ class TestStudyService(unittest.TestCase):
                     print("unit", unit)
                     print(
                         "durationunitcode",
-                        _res_study_population.plannedMaximumAgeOfSubjects.durationUnitCode,
+                        _res_study_population.planned_maximum_age_of_subjects.duration_unit_code,
                     )
                     self.assertEqual(
                         value,
-                        _res_study_population.plannedMaximumAgeOfSubjects.durationValue,
+                        _res_study_population.planned_maximum_age_of_subjects.duration_value,
                     )
                     self.assertEqual(
                         unit.uid,
                         self.get_field_or_unit_def_uid(
-                            _res_study_population.plannedMaximumAgeOfSubjects.durationUnitCode
+                            _res_study_population.planned_maximum_age_of_subjects.duration_unit_code
                         ),
                     )
 
@@ -384,38 +390,38 @@ class TestStudyService(unittest.TestCase):
         study_service = StudyService(user="PIWQ")
         service_response = study_service.get_by_uid(
             uid=sample_study_definition.uid,
-            fields=" - currentMetadata . identificationMetadata , "
-            " + currentMetadata . highLevelStudyDesign   ",
+            fields=" - current_metadata . identification_metadata , "
+            " + current_metadata . high_level_study_design   ",
         )
 
         # then
 
         # no id metadata in response
-        self.assertIsNone(service_response.currentMetadata.identificationMetadata)
+        self.assertIsNone(service_response.current_metadata.identification_metadata)
         self.assertNotIn(
-            "identificationMetadata", service_response.currentMetadata.__fields_set__
+            "identification_metadata", service_response.current_metadata.__fields_set__
         )
 
         # correct values of ver metadata
         self.assertEqual(
             sample_study_definition.current_metadata.ver_metadata.study_status.value,
-            service_response.currentMetadata.versionMetadata.studyStatus,
+            service_response.current_metadata.version_metadata.study_status,
         )
         self.assertEqual(
             sample_study_definition.current_metadata.ver_metadata.locked_version_number,
-            service_response.currentMetadata.versionMetadata.lockedVersionNumber,
+            service_response.current_metadata.version_metadata.locked_version_number,
         )
         self.assertEqual(
             sample_study_definition.current_metadata.ver_metadata.locked_version_info,
-            service_response.currentMetadata.versionMetadata.lockedVersionInfo,
+            service_response.current_metadata.version_metadata.locked_version_info,
         )
         self.assertEqual(
             sample_study_definition.current_metadata.ver_metadata.locked_version_author,
-            service_response.currentMetadata.versionMetadata.lockedVersionAuthor,
+            service_response.current_metadata.version_metadata.locked_version_author,
         )
         self.assertEqual(
             sample_study_definition.current_metadata.ver_metadata.version_timestamp,
-            service_response.currentMetadata.versionMetadata.versionTimestamp,
+            service_response.current_metadata.version_metadata.version_timestamp,
         )
 
         # correct values of high level study design
@@ -423,73 +429,73 @@ class TestStudyService(unittest.TestCase):
             sample_study_definition.current_metadata.high_level_study_design
         )
         _res_high_level_study_design = (
-            service_response.currentMetadata.highLevelStudyDesign
+            service_response.current_metadata.high_level_study_design
         )
 
         self.assertEqual(
             self.get_field_or_simple_term_uid(
-                _res_high_level_study_design.studyTypeNullValueCode
+                _res_high_level_study_design.study_type_null_value_code
             ),
             _ref_high_level_study_design.study_type_null_value_code,
         )
         self.assertEqual(
             self.get_field_or_simple_term_uid(
-                _res_high_level_study_design.studyTypeCode
+                _res_high_level_study_design.study_type_code
             ),
             _ref_high_level_study_design.study_type_code,
         )
         self.assertEqual(
             self.get_field_or_simple_term_uid(
-                _res_high_level_study_design.isExtensionTrialNullValueCode
+                _res_high_level_study_design.is_extension_trial_null_value_code
             ),
             _ref_high_level_study_design.is_extension_trial_null_value_code,
         )
         self.assertEqual(
-            _res_high_level_study_design.isExtensionTrial,
+            _res_high_level_study_design.is_extension_trial,
             _ref_high_level_study_design.is_extension_trial,
         )
         self.assertEqual(
-            _res_high_level_study_design.isAdaptiveDesign,
+            _res_high_level_study_design.is_adaptive_design,
             _ref_high_level_study_design.is_adaptive_design,
         )
         self.assertEqual(
             self.get_field_or_simple_term_uid(
-                _res_high_level_study_design.isAdaptiveDesignNullValueCode
+                _res_high_level_study_design.is_adaptive_design_null_value_code
             ),
             _ref_high_level_study_design.is_adaptive_design_null_value_code,
         )
         self.assertEqual(
-            _res_high_level_study_design.studyStopRules,
+            _res_high_level_study_design.study_stop_rules,
             _ref_high_level_study_design.study_stop_rules,
         )
         self.assertEqual(
             self.get_field_or_simple_term_uid(
-                _res_high_level_study_design.studyStopRulesNullValueCode
+                _res_high_level_study_design.study_stop_rules_null_value_code
             ),
             _ref_high_level_study_design.study_stop_rules_null_value_code,
         )
         self.assertEqual(
             self.get_field_or_simple_term_uid(
-                _res_high_level_study_design.trialPhaseCode
+                _res_high_level_study_design.trial_phase_code
             ),
             _ref_high_level_study_design.trial_phase_code,
         )
         self.assertEqual(
             self.get_field_or_simple_term_uid(
-                _res_high_level_study_design.trialPhaseNullValueCode
+                _res_high_level_study_design.trial_phase_null_value_code
             ),
             _ref_high_level_study_design.trial_phase_null_value_code,
         )
         self.assertEqual(
             [
-                self.get_field_or_simple_term_uid(trialTypeCode)
-                for trialTypeCode in _res_high_level_study_design.trialTypesCodes
+                self.get_field_or_simple_term_uid(trial_type_code)
+                for trial_type_code in _res_high_level_study_design.trial_types_codes
             ],
             list(_ref_high_level_study_design.trial_type_codes),
         )
         self.assertEqual(
             self.get_field_or_simple_term_uid(
-                _res_high_level_study_design.trialTypesNullValueCode
+                _res_high_level_study_design.trial_types_null_value_code
             ),
             _ref_high_level_study_design.trial_type_null_value_code,
         )
@@ -534,8 +540,8 @@ class TestStudyService(unittest.TestCase):
         )
         study_service = StudyService(user="PIWQ")
         service_response = study_service.get_all(
-            fields=" - currentMetadata . identificationMetadata , "
-            " + currentMetadata . highLevelStudyDesign   "
+            fields=" - current_metadata . identification_metadata , "
+            " + current_metadata . high_level_study_design   "
         ).items
 
         # then
@@ -552,33 +558,33 @@ class TestStudyService(unittest.TestCase):
 
             # no id metadata in response
             self.assertIsNone(
-                service_response_item.currentMetadata.identificationMetadata
+                service_response_item.current_metadata.identification_metadata
             )
             self.assertNotIn(
-                "identificationMetadata",
-                service_response_item.currentMetadata.__fields_set__,
+                "identification_metadata",
+                service_response_item.current_metadata.__fields_set__,
             )
 
             # correct values of ver metadata
             self.assertEqual(
                 sample_study_definition.current_metadata.ver_metadata.study_status.value,
-                service_response_item.currentMetadata.versionMetadata.studyStatus,
+                service_response_item.current_metadata.version_metadata.study_status,
             )
             self.assertEqual(
                 sample_study_definition.current_metadata.ver_metadata.locked_version_number,
-                service_response_item.currentMetadata.versionMetadata.lockedVersionNumber,
+                service_response_item.current_metadata.version_metadata.locked_version_number,
             )
             self.assertEqual(
                 sample_study_definition.current_metadata.ver_metadata.locked_version_info,
-                service_response_item.currentMetadata.versionMetadata.lockedVersionInfo,
+                service_response_item.current_metadata.version_metadata.locked_version_info,
             )
             self.assertEqual(
                 sample_study_definition.current_metadata.ver_metadata.locked_version_author,
-                service_response_item.currentMetadata.versionMetadata.lockedVersionAuthor,
+                service_response_item.current_metadata.version_metadata.locked_version_author,
             )
             self.assertEqual(
                 sample_study_definition.current_metadata.ver_metadata.version_timestamp,
-                service_response_item.currentMetadata.versionMetadata.versionTimestamp,
+                service_response_item.current_metadata.version_metadata.version_timestamp,
             )
 
             # correct values of high level study design
@@ -586,73 +592,73 @@ class TestStudyService(unittest.TestCase):
                 sample_study_definition.current_metadata.high_level_study_design
             )
             _res_high_level_study_design = (
-                service_response_item.currentMetadata.highLevelStudyDesign
+                service_response_item.current_metadata.high_level_study_design
             )
 
             self.assertEqual(
                 self.get_field_or_simple_term_uid(
-                    _res_high_level_study_design.studyTypeNullValueCode
+                    _res_high_level_study_design.study_type_null_value_code
                 ),
                 _ref_high_level_study_design.study_type_null_value_code,
             )
             self.assertEqual(
                 self.get_field_or_simple_term_uid(
-                    _res_high_level_study_design.studyTypeCode
+                    _res_high_level_study_design.study_type_code
                 ),
                 _ref_high_level_study_design.study_type_code,
             )
             self.assertEqual(
                 self.get_field_or_simple_term_uid(
-                    _res_high_level_study_design.isExtensionTrialNullValueCode
+                    _res_high_level_study_design.is_extension_trial_null_value_code
                 ),
                 _ref_high_level_study_design.is_extension_trial_null_value_code,
             )
             self.assertEqual(
-                _res_high_level_study_design.isExtensionTrial,
+                _res_high_level_study_design.is_extension_trial,
                 _ref_high_level_study_design.is_extension_trial,
             )
             self.assertEqual(
-                _res_high_level_study_design.isAdaptiveDesign,
+                _res_high_level_study_design.is_adaptive_design,
                 _ref_high_level_study_design.is_adaptive_design,
             )
             self.assertEqual(
                 self.get_field_or_simple_term_uid(
-                    _res_high_level_study_design.isAdaptiveDesignNullValueCode
+                    _res_high_level_study_design.is_adaptive_design_null_value_code
                 ),
                 _ref_high_level_study_design.is_adaptive_design_null_value_code,
             )
             self.assertEqual(
-                _res_high_level_study_design.studyStopRules,
+                _res_high_level_study_design.study_stop_rules,
                 _ref_high_level_study_design.study_stop_rules,
             )
             self.assertEqual(
                 self.get_field_or_simple_term_uid(
-                    _res_high_level_study_design.studyStopRulesNullValueCode
+                    _res_high_level_study_design.study_stop_rules_null_value_code
                 ),
                 _ref_high_level_study_design.study_stop_rules_null_value_code,
             )
             self.assertEqual(
                 self.get_field_or_simple_term_uid(
-                    _res_high_level_study_design.trialPhaseCode
+                    _res_high_level_study_design.trial_phase_code
                 ),
                 _ref_high_level_study_design.trial_phase_code,
             )
             self.assertEqual(
                 self.get_field_or_simple_term_uid(
-                    _res_high_level_study_design.trialPhaseNullValueCode
+                    _res_high_level_study_design.trial_phase_null_value_code
                 ),
                 _ref_high_level_study_design.trial_phase_null_value_code,
             )
             self.assertEqual(
                 list(
-                    self.get_field_or_simple_term_uid(trialType)
-                    for trialType in _res_high_level_study_design.trialTypesCodes
+                    self.get_field_or_simple_term_uid(trial_type)
+                    for trial_type in _res_high_level_study_design.trial_types_codes
                 ),
                 list(_ref_high_level_study_design.trial_type_codes),
             )
             self.assertEqual(
                 self.get_field_or_simple_term_uid(
-                    _res_high_level_study_design.trialTypesNullValueCode
+                    _res_high_level_study_design.trial_types_null_value_code
                 ),
                 _ref_high_level_study_design.trial_type_null_value_code,
             )
@@ -682,7 +688,7 @@ class TestStudyService(unittest.TestCase):
             # pylint:disable=unnecessary-lambda
             create_random_clinical_programme(generate_uid_callback=lambda: random_str())
         )
-        study_create_input = StudyCreateInput(studyAcronym="ACRONYM")
+        study_create_input = StudyCreateInput(study_acronym="ACRONYM")
         study_service = StudyService(user="PIWQ")
 
         # when
@@ -701,15 +707,15 @@ class TestStudyService(unittest.TestCase):
             )
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.study_acronym,
-                study_create_input.studyAcronym,
+                study_create_input.study_acronym,
             )
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.study_number,
-                study_create_input.studyNumber,
+                study_create_input.study_number,
             )
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.project_number,
-                study_create_input.projectNumber,
+                study_create_input.project_number,
             )
 
     @patch(StudyService.__module__ + ".MetaRepository.ct_term_name_repository")
@@ -762,15 +768,15 @@ class TestStudyService(unittest.TestCase):
         )
         self.assertEqual(
             sample_study_definition.current_metadata.id_metadata.study_acronym,
-            service_response.currentMetadata.identificationMetadata.studyAcronym,
+            service_response.current_metadata.identification_metadata.study_acronym,
         )
         self.assertEqual(
             sample_study_definition.current_metadata.id_metadata.study_number,
-            service_response.currentMetadata.identificationMetadata.studyNumber,
+            service_response.current_metadata.identification_metadata.study_number,
         )
         self.assertEqual(
             sample_study_definition.current_metadata.id_metadata.project_number,
-            service_response.currentMetadata.identificationMetadata.projectNumber,
+            service_response.current_metadata.identification_metadata.project_number,
         )
         self.assertEqual(sample_study_definition.uid, service_response.uid)
 
@@ -800,14 +806,14 @@ class TestStudyService(unittest.TestCase):
                     registry_identifiers=RegistryIdentifiersVO.from_input_values(
                         ct_gov_id=None,
                         eudract_id=None,
-                        universal_trial_number_UTN=None,
-                        japanese_trial_registry_id_JAPIC=None,
-                        investigational_new_drug_application_number_IND=None,
+                        universal_trial_number_utn=None,
+                        japanese_trial_registry_id_japic=None,
+                        investigational_new_drug_application_number_ind=None,
                         ct_gov_id_null_value_code=None,
                         eudract_id_null_value_code=None,
-                        universal_trial_number_UTN_null_value_code=None,
-                        japanese_trial_registry_id_JAPIC_null_value_code=None,
-                        investigational_new_drug_application_number_IND_null_value_code=None,
+                        universal_trial_number_utn_null_value_code=None,
+                        japanese_trial_registry_id_japic_null_value_code=None,
+                        investigational_new_drug_application_number_ind_null_value_code=None,
                     ),
                 ),
                 study_title_exists_callback=(lambda _, study_number: False),
@@ -848,35 +854,35 @@ class TestStudyService(unittest.TestCase):
             ][0]
             self.assertEqual(
                 sample_study_definition.current_metadata.ver_metadata.study_status.value,
-                service_response_item.currentMetadata.versionMetadata.studyStatus,
+                service_response_item.current_metadata.version_metadata.study_status,
             )
             self.assertEqual(
                 sample_study_definition.current_metadata.id_metadata.study_acronym,
-                service_response_item.currentMetadata.identificationMetadata.studyAcronym,
+                service_response_item.current_metadata.identification_metadata.study_acronym,
             )
             self.assertEqual(
                 sample_study_definition.current_metadata.id_metadata.study_number,
-                service_response_item.currentMetadata.identificationMetadata.studyNumber,
+                service_response_item.current_metadata.identification_metadata.study_number,
             )
             self.assertEqual(
                 sample_study_definition.current_metadata.id_metadata.project_number,
-                service_response_item.currentMetadata.identificationMetadata.projectNumber,
+                service_response_item.current_metadata.identification_metadata.project_number,
             )
             self.assertEqual(
                 sample_study_definition.current_metadata.ver_metadata.locked_version_number,
-                service_response_item.currentMetadata.versionMetadata.lockedVersionNumber,
+                service_response_item.current_metadata.version_metadata.locked_version_number,
             )
             self.assertEqual(
                 sample_study_definition.current_metadata.ver_metadata.locked_version_info,
-                service_response_item.currentMetadata.versionMetadata.lockedVersionInfo,
+                service_response_item.current_metadata.version_metadata.locked_version_info,
             )
             self.assertEqual(
                 sample_study_definition.current_metadata.ver_metadata.locked_version_author,
-                service_response_item.currentMetadata.versionMetadata.lockedVersionAuthor,
+                service_response_item.current_metadata.version_metadata.locked_version_author,
             )
             self.assertEqual(
                 sample_study_definition.current_metadata.ver_metadata.version_timestamp,
-                service_response_item.currentMetadata.versionMetadata.versionTimestamp,
+                service_response_item.current_metadata.version_metadata.version_timestamp,
             )
 
     @patch(f"{StudyService.__module__}.MetaRepository.ct_term_name_repository")
@@ -911,7 +917,7 @@ class TestStudyService(unittest.TestCase):
         # Then
         self.assertEqual(
             sample_study_definition.current_metadata.id_metadata.registry_identifiers.eudract_id,
-            result.eudractId,
+            result.eudract_id,
         )
 
     @patch(StudyService.__module__ + ".MetaRepository.clinical_programme_repository")
@@ -949,14 +955,14 @@ class TestStudyService(unittest.TestCase):
                 registry_identifiers=RegistryIdentifiersVO.from_input_values(
                     ct_gov_id=None,
                     eudract_id=None,
-                    universal_trial_number_UTN=None,
-                    japanese_trial_registry_id_JAPIC=None,
-                    investigational_new_drug_application_number_IND=None,
+                    universal_trial_number_utn=None,
+                    japanese_trial_registry_id_japic=None,
+                    investigational_new_drug_application_number_ind=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
-                    universal_trial_number_UTN_null_value_code=None,
-                    japanese_trial_registry_id_JAPIC_null_value_code=None,
-                    investigational_new_drug_application_number_IND_null_value_code=None,
+                    universal_trial_number_utn_null_value_code=None,
+                    japanese_trial_registry_id_japic_null_value_code=None,
+                    investigational_new_drug_application_number_ind_null_value_code=None,
                 ),
             ),
             initial_high_level_study_design=HighLevelStudyDesignVO.from_input_values(
@@ -984,17 +990,17 @@ class TestStudyService(unittest.TestCase):
         prepare_repo.close()
 
         high_level_study_design = HighLevelStudyDesignJsonModel(
-            studyStopRules="Other study stop rules."
+            study_stop_rules="Other study stop rules."
         )
         current_metadata = StudyMetadataJsonModel(
-            highLevelStudyDesign=high_level_study_design
+            high_level_study_design=high_level_study_design
         )
         study_patch_request = StudyPatchRequestJsonModel(
-            currentMetadata=current_metadata
+            current_metadata=current_metadata
         )
 
-        assert study_patch_request.currentMetadata is not None
-        assert study_patch_request.currentMetadata.highLevelStudyDesign is not None
+        assert study_patch_request.current_metadata is not None
+        assert study_patch_request.current_metadata.high_level_study_design is not None
 
         test_repo = StudyDefinitionRepositoryFake(test_db)
         study_definition_repository_property_mock.return_value = test_repo
@@ -1030,7 +1036,7 @@ class TestStudyService(unittest.TestCase):
                 study_definition_ar.current_metadata.high_level_study_design,
                 sample_study_definition.current_metadata.high_level_study_design.fix_some_values(
                     study_stop_rules=(
-                        study_patch_request.currentMetadata.highLevelStudyDesign.studyStopRules
+                        study_patch_request.current_metadata.high_level_study_design.study_stop_rules
                     )
                 ),
             )
@@ -1070,14 +1076,14 @@ class TestStudyService(unittest.TestCase):
                 registry_identifiers=RegistryIdentifiersVO.from_input_values(
                     ct_gov_id=None,
                     eudract_id=None,
-                    universal_trial_number_UTN=None,
-                    japanese_trial_registry_id_JAPIC=None,
-                    investigational_new_drug_application_number_IND=None,
+                    universal_trial_number_utn=None,
+                    japanese_trial_registry_id_japic=None,
+                    investigational_new_drug_application_number_ind=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
-                    universal_trial_number_UTN_null_value_code=None,
-                    japanese_trial_registry_id_JAPIC_null_value_code=None,
-                    investigational_new_drug_application_number_IND_null_value_code=None,
+                    universal_trial_number_utn_null_value_code=None,
+                    japanese_trial_registry_id_japic_null_value_code=None,
+                    investigational_new_drug_application_number_ind_null_value_code=None,
                 ),
             ),
             study_title_exists_callback=(lambda _, study_number: False),
@@ -1086,18 +1092,18 @@ class TestStudyService(unittest.TestCase):
         prepare_repo.save(sample_study_definition)
         prepare_repo.close()
 
-        # patching without registryIdentifiers
+        # patching without registry_identifiers
         identification_metadata = StudyIdentificationMetadataJsonModel()
-        identification_metadata.studyAcronym = "OTHER_ACRONYM"
+        identification_metadata.study_acronym = "OTHER_ACRONYM"
         current_metadata = StudyMetadataJsonModel(
-            identificationMetadata=identification_metadata
+            identification_metadata=identification_metadata
         )
         study_patch_request = StudyPatchRequestJsonModel(
-            currentMetadata=current_metadata
+            current_metadata=current_metadata
         )
 
-        assert study_patch_request.currentMetadata is not None
-        assert study_patch_request.currentMetadata.identificationMetadata is not None
+        assert study_patch_request.current_metadata is not None
+        assert study_patch_request.current_metadata.identification_metadata is not None
 
         test_repo = StudyDefinitionRepositoryFake(test_db)
         study_definition_repository_property_mock.return_value = test_repo
@@ -1125,7 +1131,7 @@ class TestStudyService(unittest.TestCase):
             )
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.study_acronym,
-                study_patch_request.currentMetadata.identificationMetadata.studyAcronym,
+                study_patch_request.current_metadata.identification_metadata.study_acronym,
             )
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.study_number,
@@ -1140,16 +1146,16 @@ class TestStudyService(unittest.TestCase):
                 sample_study_definition.current_metadata.id_metadata.registry_identifiers.ct_gov_id,
             )
             self.assertEqual(
-                study_definition_ar.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC,
-                sample_study_definition.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC,
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic,
             )
             self.assertEqual(
-                study_definition_ar.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN,
-                sample_study_definition.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN,
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn,
             )
             self.assertEqual(
-                study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND,
-                sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND,
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind,
             )
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.registry_identifiers.eudract_id_null_value_code,
@@ -1160,18 +1166,18 @@ class TestStudyService(unittest.TestCase):
                 sample_study_definition.current_metadata.id_metadata.registry_identifiers.ct_gov_id_null_value_code,
             )
             self.assertEqual(
-                study_definition_ar.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC_null_value_code,
-                sample_study_definition.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC_null_value_code,
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code,
             )
             self.assertEqual(
-                study_definition_ar.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN_null_value_code,
-                sample_study_definition.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN_null_value_code,
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code,
             )
             self.assertEqual(
                 # pylint:disable=line-too-long
-                study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND_null_value_code,
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code,
                 # pylint:disable=line-too-long
-                sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code,
             )
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.project_number,
@@ -1213,14 +1219,14 @@ class TestStudyService(unittest.TestCase):
                 registry_identifiers=RegistryIdentifiersVO.from_input_values(
                     ct_gov_id=None,
                     eudract_id=None,
-                    universal_trial_number_UTN=None,
-                    japanese_trial_registry_id_JAPIC=None,
-                    investigational_new_drug_application_number_IND=None,
+                    universal_trial_number_utn=None,
+                    japanese_trial_registry_id_japic=None,
+                    investigational_new_drug_application_number_ind=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
-                    universal_trial_number_UTN_null_value_code=None,
-                    japanese_trial_registry_id_JAPIC_null_value_code=None,
-                    investigational_new_drug_application_number_IND_null_value_code=None,
+                    universal_trial_number_utn_null_value_code=None,
+                    japanese_trial_registry_id_japic_null_value_code=None,
+                    investigational_new_drug_application_number_ind_null_value_code=None,
                 ),
             ),
             study_title_exists_callback=(lambda _, study_number: False),
@@ -1230,23 +1236,23 @@ class TestStudyService(unittest.TestCase):
         prepare_repo.close()
 
         ri_metadata = RegistryIdentifiersJsonModel()
-        ri_metadata.ctGovId = "ct_gov_has_value"
+        ri_metadata.ct_gov_id = "ct_gov_has_value"
         # removing part data model to ensure we can patch without complete model being submitted
-        del ri_metadata.eudractId
+        del ri_metadata.eudract_id
         identification_metadata = StudyIdentificationMetadataJsonModel(
-            registryIdentifiers=ri_metadata
+            registry_identifiers=ri_metadata
         )
         current_metadata = StudyMetadataJsonModel(
-            identificationMetadata=identification_metadata
+            identification_metadata=identification_metadata
         )
         study_patch_request = StudyPatchRequestJsonModel(
-            currentMetadata=current_metadata
+            current_metadata=current_metadata
         )
 
-        assert study_patch_request.currentMetadata is not None
-        assert study_patch_request.currentMetadata.identificationMetadata is not None
+        assert study_patch_request.current_metadata is not None
+        assert study_patch_request.current_metadata.identification_metadata is not None
         assert (
-            study_patch_request.currentMetadata.identificationMetadata.registryIdentifiers
+            study_patch_request.current_metadata.identification_metadata.registry_identifiers
             is not None
         )
 
@@ -1289,7 +1295,7 @@ class TestStudyService(unittest.TestCase):
 
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.study_acronym,
-                study_patch_request.currentMetadata.identificationMetadata.studyAcronym,
+                study_patch_request.current_metadata.identification_metadata.study_acronym,
             )
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.study_number,
@@ -1304,34 +1310,34 @@ class TestStudyService(unittest.TestCase):
                 sample_study_definition.current_metadata.id_metadata.study_acronym,
             )
             self.assertEqual(
-                study_definition_ar.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC,
-                sample_study_definition.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC,
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic,
             )
             self.assertEqual(
-                study_definition_ar.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN,
-                sample_study_definition.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN,
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn,
             )
             self.assertEqual(
-                study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND,
-                sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND,
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind,
             )
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.registry_identifiers.eudract_id_null_value_code,
                 sample_study_definition.current_metadata.id_metadata.registry_identifiers.eudract_id_null_value_code,
             )
             self.assertEqual(
-                study_definition_ar.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC_null_value_code,
-                sample_study_definition.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_JAPIC_null_value_code,
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.japanese_trial_registry_id_japic_null_value_code,
             )
             self.assertEqual(
-                study_definition_ar.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN_null_value_code,
-                sample_study_definition.current_metadata.id_metadata.registry_identifiers.universal_trial_number_UTN_null_value_code,
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code,
             )
             self.assertEqual(
                 # pylint:disable=line-too-long
-                study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND_null_value_code,
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code,
                 # pylint:disable=line-too-long
-                sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_IND_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind_null_value_code,
             )
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.project_number,
@@ -1366,14 +1372,14 @@ class TestStudyService(unittest.TestCase):
                 registry_identifiers=RegistryIdentifiersVO.from_input_values(
                     ct_gov_id=ct_gov_id,
                     eudract_id=None,
-                    universal_trial_number_UTN=None,
-                    japanese_trial_registry_id_JAPIC=None,
-                    investigational_new_drug_application_number_IND=None,
+                    universal_trial_number_utn=None,
+                    japanese_trial_registry_id_japic=None,
+                    investigational_new_drug_application_number_ind=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
-                    universal_trial_number_UTN_null_value_code=None,
-                    japanese_trial_registry_id_JAPIC_null_value_code=None,
-                    investigational_new_drug_application_number_IND_null_value_code=None,
+                    universal_trial_number_utn_null_value_code=None,
+                    japanese_trial_registry_id_japic_null_value_code=None,
+                    investigational_new_drug_application_number_ind_null_value_code=None,
                 ),
             ),
             study_title_exists_callback=(lambda _, study_number: False),
@@ -1384,25 +1390,25 @@ class TestStudyService(unittest.TestCase):
 
         unit_definitions, _ = unit_definition_test_repo.find_all()
         study_population = StudyPopulationJsonModel(
-            plannedMinimumAgeOfSubjects=DurationJsonModel(
+            planned_minimum_age_of_subjects=DurationJsonModel(
                 # some positive number
-                durationValue=random.randint(0, 100),
+                duration_value=random.randint(0, 100),
                 # one of the values in age unit test repo
-                durationUnitCode={
+                duration_unit_code={
                     "uid": random.choice([_.uid for _ in unit_definitions])
                 },
             ),
-            rareDiseaseIndicator=random.choice([True, False]),
+            rare_disease_indicator=random.choice([True, False]),
         )
-        current_metadata = StudyMetadataJsonModel(studyPopulation=study_population)
+        current_metadata = StudyMetadataJsonModel(study_population=study_population)
         study_patch_request = StudyPatchRequestJsonModel(
-            currentMetadata=current_metadata
+            current_metadata=current_metadata
         )
 
-        assert study_patch_request.currentMetadata is not None
-        assert study_patch_request.currentMetadata.studyPopulation is not None
+        assert study_patch_request.current_metadata is not None
+        assert study_patch_request.current_metadata.study_population is not None
         assert (
-            study_patch_request.currentMetadata.studyPopulation.plannedMinimumAgeOfSubjects
+            study_patch_request.current_metadata.study_population.planned_minimum_age_of_subjects
             is not None
         )
 
@@ -1460,21 +1466,21 @@ class TestStudyService(unittest.TestCase):
 
             # we check whether new high_level_study_design is as expected
             assert (
-                study_population.plannedMinimumAgeOfSubjects is not None
+                study_population.planned_minimum_age_of_subjects is not None
             )  # for linter to be happy
             self.assertEqual(
                 study_definition_ar.current_metadata.study_population,
                 sample_study_definition.current_metadata.study_population.fix_some_values(
                     planned_minimum_age_of_subjects=create_duration_object_from_api_input(
-                        value=study_population.plannedMinimumAgeOfSubjects.durationValue,
+                        value=study_population.planned_minimum_age_of_subjects.duration_value,
                         unit=(
-                            study_population.plannedMinimumAgeOfSubjects.durationUnitCode.uid
+                            study_population.planned_minimum_age_of_subjects.duration_unit_code.uid
                         ),
                         find_duration_name_by_code=lambda _: unit_definition_test_repo.find_by_uid_2(
-                            study_population.plannedMinimumAgeOfSubjects.durationUnitCode.uid
+                            study_population.planned_minimum_age_of_subjects.duration_unit_code.uid
                         ),
                     ),
-                    rare_disease_indicator=study_population.rareDiseaseIndicator,
+                    rare_disease_indicator=study_population.rare_disease_indicator,
                 ),
             )
 
@@ -1506,14 +1512,14 @@ class TestStudyService(unittest.TestCase):
                 registry_identifiers=RegistryIdentifiersVO.from_input_values(
                     ct_gov_id=ct_gov_id,
                     eudract_id=None,
-                    universal_trial_number_UTN=None,
-                    japanese_trial_registry_id_JAPIC=None,
-                    investigational_new_drug_application_number_IND=None,
+                    universal_trial_number_utn=None,
+                    japanese_trial_registry_id_japic=None,
+                    investigational_new_drug_application_number_ind=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
-                    universal_trial_number_UTN_null_value_code=None,
-                    japanese_trial_registry_id_JAPIC_null_value_code=None,
-                    investigational_new_drug_application_number_IND_null_value_code=None,
+                    universal_trial_number_utn_null_value_code=None,
+                    japanese_trial_registry_id_japic_null_value_code=None,
+                    investigational_new_drug_application_number_ind_null_value_code=None,
                 ),
             ),
             study_title_exists_callback=(lambda _, study_number: False),
@@ -1523,25 +1529,25 @@ class TestStudyService(unittest.TestCase):
         prepare_repo.close()
         unit_definitions, _ = unit_definition_test_repo.find_all()
         study_intervention = StudyInterventionJsonModel(
-            plannedStudyLength=DurationJsonModel(
+            planned_study_length=DurationJsonModel(
                 # some positive number
-                durationValue=random.randint(0, 100),
+                duration_value=random.randint(0, 100),
                 # one of the values in age unit test repo
-                durationUnitCode={
+                duration_unit_code={
                     "uid": random.choice([_.uid for _ in unit_definitions])
                 },
             ),
-            isTrialRandomised=random.choice([True, False]),
+            is_trial_randomised=random.choice([True, False]),
         )
-        current_metadata = StudyMetadataJsonModel(studyIntervention=study_intervention)
+        current_metadata = StudyMetadataJsonModel(study_intervention=study_intervention)
         study_patch_request = StudyPatchRequestJsonModel(
-            currentMetadata=current_metadata
+            current_metadata=current_metadata
         )
 
-        assert study_patch_request.currentMetadata is not None
-        assert study_patch_request.currentMetadata.studyIntervention is not None
+        assert study_patch_request.current_metadata is not None
+        assert study_patch_request.current_metadata.study_intervention is not None
         assert (
-            study_patch_request.currentMetadata.studyIntervention.plannedStudyLength
+            study_patch_request.current_metadata.study_intervention.planned_study_length
             is not None
         )
 
@@ -1598,21 +1604,21 @@ class TestStudyService(unittest.TestCase):
 
             # we check whether new high_level_study_design is as expected
             assert (
-                study_intervention.plannedStudyLength is not None
+                study_intervention.planned_study_length is not None
             )  # for linter to be happy
             self.assertEqual(
                 study_definition_ar.current_metadata.study_intervention,
                 sample_study_definition.current_metadata.study_intervention.fix_some_values(
                     planned_study_length=create_duration_object_from_api_input(
-                        value=study_intervention.plannedStudyLength.durationValue,
+                        value=study_intervention.planned_study_length.duration_value,
                         unit=(
-                            study_intervention.plannedStudyLength.durationUnitCode.uid
+                            study_intervention.planned_study_length.duration_unit_code.uid
                         ),
                         find_duration_name_by_code=lambda _: unit_definition_test_repo.find_by_uid_2(
-                            study_intervention.plannedStudyLength.durationUnitCode.uid
+                            study_intervention.planned_study_length.duration_unit_code.uid
                         ),
                     ),
-                    is_trial_randomised=study_intervention.isTrialRandomised,
+                    is_trial_randomised=study_intervention.is_trial_randomised,
                 ),
             )
 
@@ -1646,14 +1652,14 @@ class TestStudyService(unittest.TestCase):
                 registry_identifiers=RegistryIdentifiersVO.from_input_values(
                     ct_gov_id=None,
                     eudract_id=None,
-                    universal_trial_number_UTN=None,
-                    japanese_trial_registry_id_JAPIC=None,
-                    investigational_new_drug_application_number_IND=None,
+                    universal_trial_number_utn=None,
+                    japanese_trial_registry_id_japic=None,
+                    investigational_new_drug_application_number_ind=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
-                    universal_trial_number_UTN_null_value_code=None,
-                    japanese_trial_registry_id_JAPIC_null_value_code=None,
-                    investigational_new_drug_application_number_IND_null_value_code=None,
+                    universal_trial_number_utn_null_value_code=None,
+                    japanese_trial_registry_id_japic_null_value_code=None,
+                    investigational_new_drug_application_number_ind_null_value_code=None,
                 ),
             ),
             study_title_exists_callback=(lambda _, study_number: False),
@@ -1665,17 +1671,18 @@ class TestStudyService(unittest.TestCase):
         study_title = random_str()
         study_short_title = random_str()
         study_description = StudyDescriptionJsonModel(
-            studyTitle=str(study_title), studyShortTitle=str(study_short_title)
+            study_title=str(study_title), study_short_title=str(study_short_title)
         )
-        current_metadata = StudyMetadataJsonModel(studyDescription=study_description)
+        current_metadata = StudyMetadataJsonModel(study_description=study_description)
         study_patch_request = StudyPatchRequestJsonModel(
-            currentMetadata=current_metadata
+            current_metadata=current_metadata
         )
 
-        assert study_patch_request.currentMetadata is not None
-        assert study_patch_request.currentMetadata.studyDescription is not None
+        assert study_patch_request.current_metadata is not None
+        assert study_patch_request.current_metadata.study_description is not None
         assert (
-            study_patch_request.currentMetadata.studyDescription.studyTitle is not None
+            study_patch_request.current_metadata.study_description.study_title
+            is not None
         )
 
         test_repo = StudyDefinitionRepositoryFake(test_db)
@@ -1725,11 +1732,11 @@ class TestStudyService(unittest.TestCase):
             )
 
             # we check whether new study_description is as expected
-            assert study_description.studyTitle is not None  # for linter to be happy
+            assert study_description.study_title is not None  # for linter to be happy
             self.assertEqual(
                 study_definition_ar.current_metadata.study_description,
                 sample_study_definition.current_metadata.study_description.fix_some_values(
-                    study_title=study_description.studyTitle,
-                    study_short_title=study_description.studyShortTitle,
+                    study_title=study_description.study_title,
+                    study_short_title=study_description.study_short_title,
                 ),
             )

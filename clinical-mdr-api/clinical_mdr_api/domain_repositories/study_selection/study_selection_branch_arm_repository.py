@@ -251,7 +251,7 @@ class StudySelectionBranchArmRepository:
         self, study_uid: str, study_arm_uid: str, for_update: bool = False
     ) -> Optional[StudySelectionBranchArmAR]:
         """
-        Finds all the selected study branch arms for a given studyArm
+        Finds all the selected study branch arms for a given study_arm
         :param study_uid:
         :param study_arm_uid:
         :param for_update:
@@ -356,7 +356,7 @@ class StudySelectionBranchArmRepository:
         )
         return sorted(
             [i_th[0] for i_th in sdc_nodes],
-            key=lambda branchArm: branchArm.order,
+            key=lambda branch_arm: branch_arm.order,
             reverse=False,
         )
 
@@ -581,7 +581,7 @@ class StudySelectionBranchArmRepository:
         author: str,
     ) -> StudyAction:
         audit_node.user_initials = author
-        audit_node.date = datetime.datetime.now()
+        audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
         study_selection_node.has_before.connect(audit_node)
@@ -598,8 +598,8 @@ class StudySelectionBranchArmRepository:
         branch_arm_with_connected_design_cell_with_diff_arm_root = (
             StudyBranchArm.nodes.has(has_design_cell=True)
             .filter(
-                # If it matches a branchArm with a different arm_root, then it would
-                # mean that it is trying to change its arm_root, even though it's having designCells connected to the BranchArm.
+                # If it matches a branch_arm with a different arm_root, then it would
+                # mean that it is trying to change its arm_root, even though it's having design_cells connected to the BranchArm.
                 arm_root__uid__ne=branch_arm_vo.arm_root_uid,
                 study_value__study_root__uid=branch_arm_vo.study_uid,
                 has_design_cell__study_value__study_root__uid=branch_arm_vo.study_uid,

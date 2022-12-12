@@ -10,14 +10,14 @@ const getters = {
   sortedStudyActivities: state => {
     const result = {}
     for (const studyActivity of state.studyActivities) {
-      const fgroup = studyActivity.flowchartGroup.sponsorPreferredName
+      const fgroup = studyActivity.flowchart_group.sponsor_preferred_name
       if (!result[fgroup]) {
         Vue.set(result, fgroup, {})
       }
-      const group = (studyActivity.activity.activityGroup)
-        ? studyActivity.activity.activityGroup.name : ''
-      const subgroup = (studyActivity.activity.activitySubGroup)
-        ? studyActivity.activity.activitySubGroup.name : ''
+      const group = (studyActivity.activity.activity_group)
+        ? studyActivity.activity.activity_group.name : ''
+      const subgroup = (studyActivity.activity.activity_subgroup)
+        ? studyActivity.activity.activity_subgroup.name : ''
       if (!result[fgroup][group]) {
         Vue.set(result[fgroup], group, {})
       }
@@ -36,7 +36,7 @@ const mutations = {
   },
   UPDATE_STUDY_ACTIVITY (state, studyActivity) {
     state.studyActivities.filter((item, pos) => {
-      if (item.studyActivityUid === studyActivity.studyActivityUid) {
+      if (item.study_activity_uid === studyActivity.study_activity_uid) {
         Vue.set(state.studyActivities, pos, studyActivity)
       }
     })
@@ -45,7 +45,15 @@ const mutations = {
 
 const actions = {
   fetchStudyActivities ({ commit }, params) {
-    return study.getStudyActivities(params.studyUid, params).then(resp => {
+    const studyUid = params.studyUid
+    delete params.studyUid
+    if (!Object.prototype.hasOwnProperty.call(params, 'page_size')) {
+      params.page_size = 0
+    }
+    if (!Object.prototype.hasOwnProperty.call(params, 'page_number')) {
+      params.page_number = 1
+    }
+    return study.getStudyActivities(studyUid, params).then(resp => {
       commit('SET_STUDY_ACTIVITIES', resp.data.items)
       return resp
     })

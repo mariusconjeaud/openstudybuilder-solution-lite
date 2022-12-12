@@ -48,7 +48,7 @@ import controlledTerminology from '@/api/controlledTerminology'
 
 export default {
   props: {
-    catalogueName: String,
+    catalogue_name: String,
     codelistUid: String,
     fromDate: String,
     toDate: String
@@ -108,7 +108,7 @@ export default {
     controlledTerminology.getCodelistAttributes(this.codelistUid).then(resp => {
       this.codelistAttributes = resp.data
     })
-    controlledTerminology.getPackagesCodelistChanges(this.codelistUid, this.catalogueName, this.fromDate, this.toDate).then(resp => {
+    controlledTerminology.getPackagesCodelistChanges(this.codelistUid, this.catalogue_name, this.fromDate, this.toDate).then(resp => {
       this.loading = false
       resp.data.newCodelists.forEach(item => {
         this.addCodelistChange(item, 'added')

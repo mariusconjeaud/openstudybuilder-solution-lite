@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Sequence
 
 from clinical_mdr_api.domain.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.domain.concepts.odms.form import (
@@ -99,32 +99,32 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
             concept_vo=OdmFormVO.from_repository_values(
                 oid=input_dict.get("oid"),
                 name=input_dict.get("name"),
-                sdtm_version=input_dict.get("sdtmVersion"),
+                sdtm_version=input_dict.get("sdtm_version"),
                 repeating=input_dict.get("repeating"),
-                scope_uid=input_dict.get("scopeUid"),
-                description_uids=input_dict.get("descriptionUids"),
-                alias_uids=input_dict.get("aliasUids"),
-                activity_group_uids=input_dict.get("activityGroupUids"),
-                item_group_uids=input_dict.get("itemGroupUids"),
-                xml_extension_tag_uids=input_dict.get("xmlExtensionTagUids"),
+                scope_uid=input_dict.get("scope_uid"),
+                description_uids=input_dict.get("description_uids"),
+                alias_uids=input_dict.get("alias_uids"),
+                activity_group_uids=input_dict.get("activity_group_uids"),
+                item_group_uids=input_dict.get("item_group_uids"),
+                xml_extension_tag_uids=input_dict.get("xml_extension_tag_uids"),
                 xml_extension_attribute_uids=input_dict.get(
-                    "xmlExtensionAttributeUids"
+                    "xml_extension_attribute_uids"
                 ),
                 xml_extension_tag_attribute_uids=input_dict.get(
-                    "xmlExtensionTagAttributeUids"
+                    "xml_extension_tag_attribute_uids"
                 ),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("libraryName"),
+                library_name=input_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: input_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("changeDescription"),
+                change_description=input_dict.get("change_description"),
                 status=LibraryItemStatus(input_dict.get("status")),
-                author=input_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=input_dict.get("startDate")),
+                author=input_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=input_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -133,7 +133,9 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
 
         return odm_form_ar
 
-    def specific_alias_clause(self, only_specific_status: list = None) -> str:
+    def specific_alias_clause(
+        self, only_specific_status: Optional[Sequence[str]] = None
+    ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]
 
@@ -141,25 +143,25 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
         WITH *,
         concept_value.oid AS oid,
         concept_value.repeating AS repeating,
-        concept_value.sdtm_version AS sdtmVersion,
+        concept_value.sdtm_version AS sdtm_version,
 
-        head([(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[:HAS_SCOPE]->(tr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(tav:CTTermAttributesValue) | tr.uid]) AS scopeUid,
+        head([(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[:HAS_SCOPE]->(tr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(tav:CTTermAttributesValue) | tr.uid]) AS scope_uid,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[:HAS_DESCRIPTION]->(dr:OdmDescriptionRoot)-[:LATEST]->(dv:OdmDescriptionValue) | {{uid: dr.uid, name: dv.name, language: dv.language, description: dv.description, instruction: dv.instruction}}] AS descriptions,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[:HAS_ALIAS]->(ar:OdmAliasRoot)-[:LATEST]->(av:OdmAliasValue) | {{uid: ar.uid, name: av.name, context: av.context}}] AS aliases,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[:HAS_ACTIVITY_GROUP]->(agr:ActivityGroupRoot)-[:LATEST]->(agv:ActivityGroupValue) | {{uid: agr.uid, name: agv.name}}] AS activityGroups,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[igref:ITEM_GROUP_REF]->(igr:OdmItemGroupRoot)-[:LATEST]->(igv:OdmItemGroupValue) | {{uid: igr.uid, name: igv.name, order: igref.order, mandatory: igref.mandatory}}] AS itemGroups,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[hxet:HAS_XML_EXTENSION_TAG]->(xetr:OdmXmlExtensionTagRoot)-[:LATEST]->(xetv:OdmXmlExtensionTagValue) | {{uid: xetr.uid, name: xetv.name, value: hxet.value}}] AS xmlExtensionTags,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[hxea:HAS_XML_EXTENSION_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, value: hxea.value}}] AS xmlExtensionAttributes,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[hxeta:HAS_XML_EXTENSION_TAG_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, value: hxeta.value}}] AS xmlExtensionTagAttributes
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[:HAS_ACTIVITY_GROUP]->(agr:ActivityGroupRoot)-[:LATEST]->(agv:ActivityGroupValue) | {{uid: agr.uid, name: agv.name}}] AS activity_groups,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[igref:ITEM_GROUP_REF]->(igr:OdmItemGroupRoot)-[:LATEST]->(igv:OdmItemGroupValue) | {{uid: igr.uid, name: igv.name, order: igref.order, mandatory: igref.mandatory}}] AS item_groups,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[hxet:HAS_XML_EXTENSION_TAG]->(xetr:OdmXmlExtensionTagRoot)-[:LATEST]->(xetv:OdmXmlExtensionTagValue) | {{uid: xetr.uid, name: xetv.name, value: hxet.value}}] AS xml_extension_tags,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[hxea:HAS_XML_EXTENSION_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, value: hxea.value}}] AS xml_extension_attributes,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[hxeta:HAS_XML_EXTENSION_TAG_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, value: hxeta.value}}] AS xml_extension_tag_attributes
 
         WITH *,
-        [description in descriptions | description.uid] AS descriptionUids,
-        [alias in aliases | alias.uid] AS aliasUids,
-        [activityGroup in activityGroups | activityGroup.uid] AS activityGroupUids,
-        [itemGroup in itemGroups | itemGroup.uid] AS itemGroupUids,
-        [xmlExtensionTag in xmlExtensionTags | xmlExtensionTag.uid] AS xmlExtensionTagUids,
-        [xmlExtensionAttribute in xmlExtensionAttributes | xmlExtensionAttribute.uid] AS xmlExtensionAttributeUids,
-        [xmlExtensionTagAttribute in xmlExtensionTagAttributes | xmlExtensionTagAttribute.uid] AS xmlExtensionTagAttributeUids
+        [description in descriptions | description.uid] AS description_uids,
+        [alias in aliases | alias.uid] AS alias_uids,
+        [activity_group in activity_groups | activity_group.uid] AS activity_group_uids,
+        [item_group in item_groups | item_group.uid] AS item_group_uids,
+        [xml_extension_tag in xml_extension_tags | xml_extension_tag.uid] AS xml_extension_tag_uids,
+        [xml_extension_attribute in xml_extension_attributes | xml_extension_attribute.uid] AS xml_extension_attribute_uids,
+        [xml_extension_tag_attribute in xml_extension_tag_attributes | xml_extension_tag_attribute.uid] AS xml_extension_tag_attribute_uids
         """
 
     def _get_or_create_value(

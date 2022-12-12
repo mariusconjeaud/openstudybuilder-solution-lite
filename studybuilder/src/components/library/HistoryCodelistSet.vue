@@ -79,8 +79,8 @@ export default {
       this.$router.push({
         name: 'CtPackageCodelistHistory',
         params: {
-          catalogueName: this.$route.params.catalogueName,
-          codelistId: codelist.uid
+          catalogue_name: this.$route.params.catalogue_name,
+          codelist_id: codelist.uid
         },
         query: {
           fromDate: this.fromDate,

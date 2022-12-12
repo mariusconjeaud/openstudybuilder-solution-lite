@@ -62,7 +62,7 @@ class StudySelectionActivityRepository:
         project_name: Optional[str] = None,
         project_number: Optional[str] = None,
         activity_names: Optional[Sequence[str]] = None,
-        activity_sub_group_names: Optional[Sequence[str]] = None,
+        activity_subgroup_names: Optional[Sequence[str]] = None,
         activity_group_names: Optional[Sequence[str]] = None,
     ) -> Sequence[StudySelectionActivityVO]:
         query = ""
@@ -99,18 +99,18 @@ class StudySelectionActivityRepository:
         if (
             activity_names is not None
             or activity_group_names is not None
-            or activity_sub_group_names is not None
+            or activity_subgroup_names is not None
         ):
             query += " WHERE "
             filter_list = []
             if activity_names is not None:
                 filter_list.append("av.name IN $activity_names")
                 query_parameters["activity_names"] = activity_names
-            if activity_sub_group_names is not None:
+            if activity_subgroup_names is not None:
                 filter_list.append(
-                    "size([(av)-[:IN_SUB_GROUP]->(v:ActivitySubGroupValue) WHERE v.name IN $activity_sub_group_names | v.name]) > 0"
+                    "size([(av)-[:IN_SUB_GROUP]->(v:ActivitySubGroupValue) WHERE v.name IN $activity_subgroup_names | v.name]) > 0"
                 )
-                query_parameters["activity_sub_group_names"] = activity_sub_group_names
+                query_parameters["activity_subgroup_names"] = activity_subgroup_names
             if activity_group_names is not None:
                 filter_list.append(
                     """size([(concept_value)-[:IN_SUB_GROUP]->(:ActivitySubGroupValue)
@@ -179,7 +179,7 @@ class StudySelectionActivityRepository:
         project_name: Optional[str] = None,
         project_number: Optional[str] = None,
         activity_names: Optional[Sequence[str]] = None,
-        activity_sub_group_names: Optional[Sequence[str]] = None,
+        activity_subgroup_names: Optional[Sequence[str]] = None,
         activity_group_names: Optional[Sequence[str]] = None,
     ) -> Optional[Sequence[StudySelectionActivityAR]]:
         """
@@ -190,7 +190,7 @@ class StudySelectionActivityRepository:
             project_name=project_name,
             project_number=project_number,
             activity_names=activity_names,
-            activity_sub_group_names=activity_sub_group_names,
+            activity_subgroup_names=activity_subgroup_names,
             activity_group_names=activity_group_names,
         )
         # Create a dictionary, with study_uid as key, and list of selections as value
@@ -343,7 +343,7 @@ class StudySelectionActivityRepository:
         author: str,
     ) -> StudyAction:
         audit_node.user_initials = author
-        audit_node.date = datetime.datetime.now()
+        audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
         study_activity_selection_node.has_before.connect(audit_node)
@@ -426,7 +426,7 @@ class StudySelectionActivityRepository:
               MATCH (av) <-[ver]-(ar:ActivityRoot)
               WHERE ver.status = "Final"
               RETURN ver as ver, ar as ar
-              ORDER BY ver.startDate DESC
+              ORDER BY ver.start_date DESC
               LIMIT 1
             }
 

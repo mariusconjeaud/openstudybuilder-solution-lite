@@ -1,9 +1,9 @@
 
 function prepareParameters (options, filters, sort, filtersUpdated) {
   const params = {
-    pageNumber: (options.page),
-    pageSize: options.itemsPerPage,
-    totalCount: true
+    page_number: (options.page),
+    page_size: options.itemsPerPage,
+    total_count: true
   }
   if (filtersUpdated) {
     /* Filters changed, reset page number */
@@ -13,7 +13,7 @@ function prepareParameters (options, filters, sort, filtersUpdated) {
     params.filters = filters
   }
   if (options.sortBy && options.sortBy.length !== 0 && sort !== undefined) {
-    params.sortBy = `{"${options.sortBy[0]}":${!sort}}`
+    params.sort_by = `{"${options.sortBy[0]}":${!sort}}`
   }
   return params
 }

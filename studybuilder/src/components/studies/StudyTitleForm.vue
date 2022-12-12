@@ -33,7 +33,7 @@
           rules="required">
           <v-textarea
             :data-cy="$t('StudyTitleForm.title_label')"
-            v-model="form.studyTitle"
+            v-model="form.study_title"
             :maxlength="maxTitleLength"
             :hint="$t('StudyTitleForm.title_hint')"
             persistent-hint
@@ -52,7 +52,7 @@
           v-slot="{ errors }"
           rules="required">
           <v-textarea
-            v-model="form.studyShortTitle"
+            v-model="form.study_short_title"
             :maxlength="maxTitleLength/2"
             persistent-hint
             rows="1"
@@ -108,18 +108,18 @@ export default {
       selectedStudy: 'studiesGeneral/selectedStudy'
     }),
     studyId () {
-      return (this.selectedStudy.studyNumber !== undefined && this.selectedStudy.studyNumber !== null)
-        ? this.selectedStudy.studyId : this.selectedStudy.studyAcronym
+      return (this.selectedStudy.study_number !== undefined && this.selectedStudy.study_number !== null)
+        ? this.selectedStudy.study_id : this.selectedStudy.study_acronym
     },
     currentTitleLength () {
-      if (this.form.studyTitle) {
-        return this.form.studyTitle.length
+      if (this.form.study_title) {
+        return this.form.study_title.length
       }
       return 0
     },
     currentShortTitleLength () {
-      if (this.form.studyShortTitle) {
-        return this.form.studyShortTitle.length
+      if (this.form.study_short_title) {
+        return this.form.study_short_title.length
       }
       return 0
     }
@@ -129,11 +129,11 @@ export default {
       form: {},
       headers: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('StudyTitleForm.project_id'), value: 'currentMetadata.identificationMetadata.projectNumber' },
-        { text: this.$t('StudyTitleForm.project_name'), value: 'currentMetadata.identificationMetadata.projectName' },
-        { text: this.$t('StudyTitleForm.study_id'), value: 'currentMetadata.identificationMetadata.studyId' },
-        { text: this.$t('StudyTitleForm.study_title'), value: 'currentMetadata.studyDescription.studyTitle' },
-        { text: this.$t('StudyTitleForm.short_title'), value: 'currentMetadata.studyDescription.studyShortTitle' }
+        { text: this.$t('StudyTitleForm.project_id'), value: 'current_metadata.identification_metadata.project_number' },
+        { text: this.$t('StudyTitleForm.project_name'), value: 'current_metadata.identification_metadata.project_name' },
+        { text: this.$t('StudyTitleForm.study_id'), value: 'current_metadata.identification_metadata.study_id' },
+        { text: this.$t('StudyTitleForm.study_title'), value: 'current_metadata.study_description.study_title' },
+        { text: this.$t('StudyTitleForm.short_title'), value: 'current_metadata.study_description.study_short_title' }
       ],
       maxTitleLength: 600,
       studies: [],
@@ -164,8 +164,8 @@ export default {
       }
     },
     copyTitle (study) {
-      this.form.studyTitle = study.currentMetadata.studyDescription.studyTitle
-      this.form.studyShortTitle = study.currentMetadata.studyDescription.studyShortTitle
+      this.form.study_title = study.current_metadata.study_description.study_title
+      this.form.study_short_title = study.current_metadata.study_description.study_short_title
     },
     async submit () {
       const isValid = await this.$refs.observer.validate()

@@ -6,27 +6,27 @@
          "method": "POST",
          "request": {
             "name": "numeric_finding_name1",
-            "nameSentenceCase": "numeric_finding_name_sentence_case1",
+            "name_sentence_case": "numeric_finding_name_sentence_case1",
             "definition": "numeric_finding_definition1",
             "abbreviation": "abbv",
-            "topicCode": "numeric_finding_topic_code1",
-            "adamParamCode": "numeric_finding_adam_param_code1",
-            "legacyDescription": "numeric_finding_legacy_description",
-            "sdtmVariable": "sdtm_variable_uid1",
-            "sdtmSubcat": "sdtm_subcat_uid1",
-            "sdtmCat": "sdtm_cat_uid1",
-            "sdtmDomain": "sdtm_domain_uid1",
+            "topic_code": "numeric_finding_topic_code1",
+            "adam_param_code": "numeric_finding_adam_param_code1",
+            "legacy_description": "numeric_finding_legacy_description",
+            "sdtm_variable": "sdtm_variable_uid1",
+            "sdtm_subcat": "sdtm_subcat_uid1",
+            "sdtm_cat": "sdtm_cat_uid1",
+            "sdtm_domain": "sdtm_domain_uid1",
             "activities": [
                "activity_root1"
             ],
-            "valueSasDisplayFormat": "numeric_finding_value_sas_display_format",
+            "value_sas_display_format": "numeric_finding_value_sas_display_format",
             "specimen": "specimen_uid1",
-            "testCode": "test_code_uid1",
-            "molecularWeight": 7,
-            "convertToSiUnit": true,
-            "convertToUsConventionalUnit": true,
-            "unitDimension": "unit_dimension_uid1",
-            "libraryName": "Sponsor"
+            "test_code": "test_code_uid1",
+            "molecular_weight": 7,
+            "convert_to_si_unit": true,
+            "convert_to_us_conventional_unit": true,
+            "unit_dimension": "unit_dimension_uid1",
+            "library_name": "Sponsor"
          },
          "url": "/concepts/activities/numeric-findings"
       },
@@ -36,26 +36,26 @@
          "result": {
             "uid": "NumericFinding_000001",
             "name": "numeric_finding_name1",
-            "nameSentenceCase": "numeric_finding_name_sentence_case1",
+            "name_sentence_case": "numeric_finding_name_sentence_case1",
             "definition": "numeric_finding_definition1",
             "abbreviation": "abbv",
-            "topicCode": "numeric_finding_topic_code1",
-            "adamParamCode": "numeric_finding_adam_param_code1",
-            "legacyDescription": "numeric_finding_legacy_description",
-            "sdtmVariable": {
-               "termUid": "sdtm_variable_uid1",
+            "topic_code": "numeric_finding_topic_code1",
+            "adam_param_code": "numeric_finding_adam_param_code1",
+            "legacy_description": "numeric_finding_legacy_description",
+            "sdtm_variable": {
+               "term_uid": "sdtm_variable_uid1",
                "name": null
             },
-            "sdtmSubcat": {
-               "termUid": "sdtm_subcat_uid1",
+            "sdtm_subcat": {
+               "term_uid": "sdtm_subcat_uid1",
                "name": null
             },
-            "sdtmCat": {
-               "termUid": "sdtm_cat_uid1",
+            "sdtm_cat": {
+               "term_uid": "sdtm_cat_uid1",
                "name": null
             },
-            "sdtmDomain": {
-               "termUid": "sdtm_domain_uid1",
+            "sdtm_domain": {
+               "term_uid": "sdtm_domain_uid1",
                "name": null
             },
             "activities": [
@@ -64,44 +64,44 @@
                   "name": "name1"
                }
             ],
-            "activitySubgroups": [
+            "activity_subgroups": [
                {
-                  "uid": "activity_sub_group_root1",
+                  "uid": "activity_subgroup_root1",
                   "name": "name1"
                }
             ],
-            "activityGroups": [
+            "activity_groups": [
                {
                   "uid": "activity_group_root1",
                   "name": "name1"
                }
             ],
-            "valueSasDisplayFormat": "numeric_finding_value_sas_display_format",
+            "value_sas_display_format": "numeric_finding_value_sas_display_format",
             "specimen": {
-               "termUid": "specimen_uid1",
+               "term_uid": "specimen_uid1",
                "name": null
             },
-            "testCode": {
-               "termUid": "test_code_uid1",
+            "test_code": {
+               "term_uid": "test_code_uid1",
                "name": "test_code_name1"
             },
-            "molecularWeight": 7,
-            "convertToSiUnit": true,
-            "convertToUsConventionalUnit": true,
-            "unitDimension": {
-               "termUid": "unit_dimension_uid1",
+            "molecular_weight": 7,
+            "convert_to_si_unit": true,
+            "convert_to_us_conventional_unit": true,
+            "unit_dimension": {
+               "term_uid": "unit_dimension_uid1",
                "name": "unit_dimension_name1"
             },
-            "unitDefinition": null,
-            "libraryName": "Sponsor",
+            "unit_definition": null,
+            "library_name": "Sponsor",
             "type": "numeric-findings",
-            "startDate": "2021-03-18T11:54:20.898Z",
-            "endDate": null,
+            "start_date": "2021-03-18T11:54:20.898Z",
+            "end_date": null,
             "status": "Draft",
             "version": "0.1",
-            "changeDescription": "Initial version",
-            "userInitials": "TODO user initials",
-            "possibleActions": [
+            "change_description": "Initial version",
+            "user_initials": "TODO user initials",
+            "possible_actions": [
                "approve",
                "delete",
                "edit"
@@ -115,8 +115,8 @@
          "headers": {},
          "method": "PATCH",
          "request": {
-            "sdtmVariable": "sdtm_variables_non_existing",
-            "changeDescription": "Changing numeric finding"
+            "sdtm_variable": "sdtm_variables_non_existing",
+            "change_description": "Changing numeric finding"
          },
          "url": "/concepts/activities/numeric-findings/NumericFinding_000001"
       },
@@ -140,7 +140,7 @@
             "activities": [
                "activity_non_existing_uid"
             ],
-            "changeDescription": "Changing numeric finding"
+            "change_description": "Changing numeric finding"
          },
          "url": "/concepts/activities/numeric-findings/NumericFinding_000001"
       },
@@ -162,7 +162,7 @@
          "method": "PATCH",
          "request": {
             "specimen": "specimen_non_existing_uid",
-            "changeDescription": "Changing numeric finding"
+            "change_description": "Changing numeric finding"
          },
          "url": "/concepts/activities/numeric-findings/NumericFinding_000001"
       },
@@ -183,8 +183,8 @@
          "headers": {},
          "method": "PATCH",
          "request": {
-            "unitDimension": "unit_dimension_non_existing_uid",
-            "changeDescription": "Changing numeric finding"
+            "unit_dimension": "unit_dimension_non_existing_uid",
+            "change_description": "Changing numeric finding"
          },
          "url": "/concepts/activities/numeric-findings/NumericFinding_000001"
       },
@@ -205,8 +205,8 @@
          "headers": {},
          "method": "PATCH",
          "request": {
-            "unitDefinition": "unit_definition_non_existing_uid",
-            "changeDescription": "Changing numeric finding"
+            "unit_definition": "unit_definition_non_existing_uid",
+            "change_description": "Changing numeric finding"
          },
          "url": "/concepts/activities/numeric-findings/NumericFinding_000001"
       },
@@ -228,26 +228,26 @@
          "method": "POST",
          "request": {
             "name": "numeric_finding_name1",
-            "nameSentenceCase": "numeric_finding_name_sentence_case1",
+            "name_sentence_case": "numeric_finding_name_sentence_case1",
             "definition": "numeric_finding_definition1",
-            "topicCode": "numeric_finding_topic_code1",
-            "adamParamCode": "numeric_finding_adam_param_code1",
-            "legacyDescription": "numeric_finding_legacy_description",
-            "sdtmVariable": "sdtm_variable_uid1",
-            "sdtmSubcat": "sdtm_subcat_uid1",
-            "sdtmCat": "sdtm_cat_uid1",
-            "sdtmDomain": "sdtm_domain_uid1",
+            "topic_code": "numeric_finding_topic_code1",
+            "adam_param_code": "numeric_finding_adam_param_code1",
+            "legacy_description": "numeric_finding_legacy_description",
+            "sdtm_variable": "sdtm_variable_uid1",
+            "sdtm_subcat": "sdtm_subcat_uid1",
+            "sdtm_cat": "sdtm_cat_uid1",
+            "sdtm_domain": "sdtm_domain_uid1",
             "activities": [
                "activity_root1"
             ],
-            "valueSasDisplayFormat": "numeric_finding_value_sas_display_format",
+            "value_sas_display_format": "numeric_finding_value_sas_display_format",
             "specimen": "specimen_uid1",
-            "testCode": "test_code_uid1",
-            "molecularWeight": 7,
-            "convertToSiUnit": true,
-            "convertToUsConventionalUnit": true,
-            "unitDimension": "unit_dimension_uid1",
-            "libraryName": "Sponsor"
+            "test_code": "test_code_uid1",
+            "molecular_weight": 7,
+            "convert_to_si_unit": true,
+            "convert_to_us_conventional_unit": true,
+            "unit_dimension": "unit_dimension_uid1",
+            "library_name": "Sponsor"
          },
          "url": "/concepts/activities/numeric-findings"
       },

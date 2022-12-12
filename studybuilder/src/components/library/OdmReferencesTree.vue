@@ -145,9 +145,9 @@ export default {
         this.graphKey += 1
         return
       }
-      this.forms = this.forms.filter(form => this.groups.some(group => form.itemGroups.some(g => g.uid === group.uid)))
+      this.forms = this.forms.filter(form => this.groups.some(group => form.item_groups.some(g => g.uid === group.uid)))
       for (const form of this.forms) {
-        this.forms[this.forms.indexOf(form)].children = this.forms[this.forms.indexOf(form)].itemGroups.map(group => this.groups.find(el => el.uid === group.uid))
+        this.forms[this.forms.indexOf(form)].children = this.forms[this.forms.indexOf(form)].item_groups.map(group => this.groups.find(el => el.uid === group.uid))
         this.forms[this.forms.indexOf(form)].children = this.forms[this.forms.indexOf(form)].children.filter(function (val) { return val !== undefined })
       }
       if (this.forms.length > 0) {
@@ -204,7 +204,7 @@ export default {
         const params = {
           filters: {
             uid:
-              { v: Array.from(form.itemGroups.map(f => f.uid ? f.uid : f)) }
+              { v: Array.from(form.item_groups.map(f => f.uid ? f.uid : f)) }
           }
         }
         await crfs.get('item-groups', { params }).then((resp) => {

@@ -35,7 +35,7 @@ class TopicCddefTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "listings_topiccddef.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid"]
+        return ["start_date", "end_date", "uid"]
 
 
 class CdiscCtVerTest(api.APITest):
@@ -52,7 +52,7 @@ class CdiscCtVerTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "listing_cdisc_ct_ver.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class CdiscCtPkgTest(api.APITest):
@@ -69,7 +69,7 @@ class CdiscCtPkgTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "listing_cdisc_ct_pkg.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class CdiscCtListTest(api.APITest):
@@ -86,7 +86,7 @@ class CdiscCtListTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "listing_cdisc_ct_list.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class CdiscCtValTest(api.APITest):
@@ -103,4 +103,4 @@ class CdiscCtValTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "listing_cdisc_ct_val.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]

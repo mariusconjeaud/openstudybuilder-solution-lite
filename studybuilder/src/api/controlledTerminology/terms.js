@@ -59,7 +59,7 @@ export default {
   getByCodelist (name) {
     const codelist = knownCodelists[name]
     if (codelist !== undefined) {
-      const params = { size: 100 }
+      const params = { page_size: 100 }
       params[codelist.attribute] = codelist.value
       return repository.get(`${resource}/names`, { params })
     }
@@ -68,7 +68,7 @@ export default {
   getAttributesByCodelist (name) {
     const codelist = knownCodelists[name]
     if (codelist !== undefined) {
-      const params = { size: 100 }
+      const params = { page_size: 100 }
       params[codelist.attribute] = codelist.value
       return repository.get(`${resource}/attributes`, { params })
     }

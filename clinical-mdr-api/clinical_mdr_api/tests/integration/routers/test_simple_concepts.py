@@ -32,7 +32,7 @@ class NumericValueTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "numeric_value.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class NumericValueWithUnitTest(api.APITest):
@@ -51,7 +51,7 @@ class NumericValueWithUnitTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "numeric_value_with_unit.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class TextValueTest(api.APITest):
@@ -69,7 +69,7 @@ class TextValueTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "text_value.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class VisitNameTest(api.APITest):
@@ -87,7 +87,7 @@ class VisitNameTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "visit_name.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class StudyDayTest(api.APITest):
@@ -105,7 +105,7 @@ class StudyDayTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "study_day.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class StudyWeekTest(api.APITest):
@@ -123,7 +123,7 @@ class StudyWeekTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "study_week.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class StudyDurationDaysTest(api.APITest):
@@ -141,7 +141,7 @@ class StudyDurationDaysTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "study_duration_days.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class StudyDurationWeeksTest(api.APITest):
@@ -159,7 +159,7 @@ class StudyDurationWeeksTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "study_duration_weeks.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class TimePointTest(api.APITest):
@@ -179,7 +179,7 @@ class TimePointTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "time_point.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class TimePointNegativeTest(api.APITest):
@@ -199,7 +199,7 @@ class TimePointNegativeTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "time_point_negative.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class LagTimesTest(api.APITest):
@@ -219,4 +219,4 @@ class LagTimesTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "lag_time.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]

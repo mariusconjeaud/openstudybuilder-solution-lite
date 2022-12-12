@@ -23,11 +23,11 @@ class Configuration(BaseImporter):
         r = csv.DictReader(file)
         for line in r:
             path = "/configurations"
-            data = camel_case_data(line)
+            data = line
+            #data = camel_case_data(line)
             # TODO check why simple_path="study_fields_configuration"
-            # self.api.simple_post_to_api(body=data, path=path, simple_path="study_fields_configuration")
             self.log.info(
-                f"Adding study field '{data['studyFieldName']}' to codelist '{data['configuredCodelistName']}', field '{data['studyFieldNameProperty']}'"
+                f"Adding study field '{data['study_field_name']}' to codelist '{data['configured_codelist_name']}'"
             )
             self.api.simple_post_to_api(body=data, path=path, simple_path=path)
 

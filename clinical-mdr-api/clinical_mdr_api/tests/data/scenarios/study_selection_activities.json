@@ -5,7 +5,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study_root/study-activities"
+            "url": "/studies/study_root/study-activities"
         },
         "response": {
             "code": 200,
@@ -17,7 +17,7 @@
                 "items": [],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
@@ -27,7 +27,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study-activities"
+            "url": "/study-activities"
         },
         "response": {
             "code": 200,
@@ -39,7 +39,7 @@
                 "items": [],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
@@ -49,10 +49,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "activityUid": "activity_root1",
-                "flowchartGroupUid": "term_efficacy_uid"
+                "activity_uid": "activity_root1",
+                "flowchart_group_uid": "term_efficacy_uid"
             },
-            "url": "/study/study_root/study-activities/create"
+            "url": "/studies/study_root/study-activities"
         },
         "response": {
             "code": 201,
@@ -61,65 +61,65 @@
                 "content-type": "application/json"
             },
             "result": {
-                "studyUid": "study_root",
+                "study_uid": "study_root",
                 "order": 1,
-                "studyActivityUid": "StudyActivity_000001",
-                "showActivityGroupInProtocolFlowchart": true,
-                "showActivitySubGroupInProtocolFlowchart": true,
-                "showActivityInProtocolFlowchart": false,
+                "study_activity_uid": "StudyActivity_000001",
+                "show_activity_group_in_protocol_flowchart": true,
+                "show_activity_subgroup_in_protocol_flowchart": true,
+                "show_activity_in_protocol_flowchart": false,
                 "note": null,
                 "activity": {
                     "uid": "activity_root1",
                     "name": "name1",
-                    "nameSentenceCase": "name_sentence_case1",
+                    "name_sentence_case": "name_sentence_case1",
                     "definition": "definition1",
                     "abbreviation": "abbv",
-                    "libraryName": "Sponsor",
-                    "startDate": "2021-10-26T12:13:11.513000",
-                    "endDate": null,
+                    "library_name": "Sponsor",
+                    "start_date": "2021-10-26T12:13:11.513000",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ],
-                    "activitySubGroup": {
-                            "uid": "activity_sub_group_root1",
+                    "activity_subgroup": {
+                            "uid": "activity_subgroup_root1",
                             "name": "name1"
                     },
-                    "activityGroup": {
+                    "activity_group": {
                             "uid": "activity_group_root1",
                             "name": "name1"
                     }
                 },
-                "flowchartGroup": {
-                    "termUid": "term_efficacy_uid",
-                    "catalogueName": "SDTM CT",
-                    "codelistUid": "ct_codelist_root1",
-                    "sponsorPreferredName": "EFFICACY",
-                    "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                "flowchart_group": {
+                    "term_uid": "term_efficacy_uid",
+                    "catalogue_name": "SDTM CT",
+                    "codelist_uid": "ct_codelist_root1",
+                    "sponsor_preferred_name": "EFFICACY",
+                    "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                     "order": null,
-                    "libraryName": "Sponsor",
-                    "startDate": "2020-06-26T00:00:00",
-                    "endDate": null,
+                    "library_name": "Sponsor",
+                    "start_date": "2020-06-26T00:00:00",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ]
                 },
-                "startDate": "2021-10-06T14:39:31.561994",
-                "userInitials": "unknown-user",
-                "latestActivity": null,
-                "acceptedVersion": false
+                "start_date": "2021-10-06T14:39:31.561994",
+                "user_initials": "unknown-user",
+                "latest_activity": null,
+                "accepted_version": false
             },
             "save": {
-                "studyActivityUid": "studyActivityUid"
+                "study_activity_uid": "study_activity_uid"
             }
         }
     },
@@ -129,7 +129,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study_root/study-activities"
+            "url": "/studies/study_root/study-activities"
         },
         "response": {
             "code": 200,
@@ -140,67 +140,67 @@
             "result": {
                 "items": [
                     {
-                        "studyUid": "study_root",
+                        "study_uid": "study_root",
                         "order": 1,
-                        "studyActivityUid": "StudyActivity_000001",
-                        "showActivityGroupInProtocolFlowchart": true,
-                        "showActivitySubGroupInProtocolFlowchart": true,
-                        "showActivityInProtocolFlowchart": false,
+                        "study_activity_uid": "StudyActivity_000001",
+                        "show_activity_group_in_protocol_flowchart": true,
+                        "show_activity_subgroup_in_protocol_flowchart": true,
+                        "show_activity_in_protocol_flowchart": false,
                         "note": null,
                         "activity": {
                             "uid": "activity_root1",
                             "name": "name1",
-                            "nameSentenceCase": "name_sentence_case1",
+                            "name_sentence_case": "name_sentence_case1",
                             "definition": "definition1",
                             "abbreviation": "abbv",
-                            "libraryName": "Sponsor",
-                            "startDate": "2021-10-26T12:13:11.513000",
-                            "endDate": null,
+                            "library_name": "Sponsor",
+                            "start_date": "2021-10-26T12:13:11.513000",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate",
-                                "newVersion"
+                                "new_version"
                             ],
-                            "activitySubGroup": {
-                                "uid": "activity_sub_group_root1",
+                            "activity_subgroup": {
+                                "uid": "activity_subgroup_root1",
                                 "name": "name1"
                             },
-                            "activityGroup": {
+                            "activity_group": {
                                 "uid": "activity_group_root1",
                                 "name": "name1"
                             }
                         },
-                        "flowchartGroup": {
-                            "termUid": "term_efficacy_uid",
-                            "catalogueName": "SDTM CT",
-                            "codelistUid": "ct_codelist_root1",
-                            "sponsorPreferredName": "EFFICACY",
-                            "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                        "flowchart_group": {
+                            "term_uid": "term_efficacy_uid",
+                            "catalogue_name": "SDTM CT",
+                            "codelist_uid": "ct_codelist_root1",
+                            "sponsor_preferred_name": "EFFICACY",
+                            "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                             "order": null,
-                            "libraryName": "Sponsor",
-                            "startDate": "2020-06-26T00:00:00",
-                            "endDate": null,
+                            "library_name": "Sponsor",
+                            "start_date": "2020-06-26T00:00:00",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate",
-                                "newVersion"
+                                "new_version"
                             ]
                         },
-                        "startDate": "2021-10-06T14:39:31.561994",
-                        "userInitials": "unknown-user",
-                        "latestActivity": null,
-                        "acceptedVersion": false
+                        "start_date": "2021-10-06T14:39:31.561994",
+                        "user_initials": "unknown-user",
+                        "latest_activity": null,
+                        "accepted_version": false
                     }
                 ],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
@@ -210,7 +210,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study-activities"
+            "url": "/study-activities"
         },
         "response": {
             "code": 200,
@@ -221,65 +221,65 @@
             "result": {
                 "total": 0,
                 "page": 1,
-                "size": 0,
+                "size": 10,
                 "items": [
                     {
-                        "studyUid": "study_root",
+                        "study_uid": "study_root",
                         "order": 1,
-                        "studyActivityUid": "StudyActivity_000001",
-                        "showActivityGroupInProtocolFlowchart": true,
-                        "showActivitySubGroupInProtocolFlowchart": true,
-                        "showActivityInProtocolFlowchart": false,
+                        "study_activity_uid": "StudyActivity_000001",
+                        "show_activity_group_in_protocol_flowchart": true,
+                        "show_activity_subgroup_in_protocol_flowchart": true,
+                        "show_activity_in_protocol_flowchart": false,
                         "note": null,
                         "activity": {
                             "uid": "activity_root1",
                             "name": "name1",
-                            "nameSentenceCase": "name_sentence_case1",
+                            "name_sentence_case": "name_sentence_case1",
                             "definition": "definition1",
                             "abbreviation": "abbv",
-                            "libraryName": "Sponsor",
-                            "startDate": "2021-10-26T12:13:11.513000",
-                            "endDate": null,
+                            "library_name": "Sponsor",
+                            "start_date": "2021-10-26T12:13:11.513000",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate",
-                                "newVersion"
+                                "new_version"
                             ],
-                            "activitySubGroup": {
-                                "uid": "activity_sub_group_root1",
+                            "activity_subgroup": {
+                                "uid": "activity_subgroup_root1",
                                 "name": "name1"
                             },
-                            "activityGroup": {
+                            "activity_group": {
                                 "uid": "activity_group_root1",
                                 "name": "name1"
                             }
                         },
-                        "flowchartGroup": {
-                            "termUid": "term_efficacy_uid",
-                            "catalogueName": "SDTM CT",
-                            "codelistUid": "ct_codelist_root1",
-                            "sponsorPreferredName": "EFFICACY",
-                            "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                        "flowchart_group": {
+                            "term_uid": "term_efficacy_uid",
+                            "catalogue_name": "SDTM CT",
+                            "codelist_uid": "ct_codelist_root1",
+                            "sponsor_preferred_name": "EFFICACY",
+                            "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                             "order": null,
-                            "libraryName": "Sponsor",
-                            "startDate": "2020-06-26T00:00:00",
-                            "endDate": null,
+                            "library_name": "Sponsor",
+                            "start_date": "2020-06-26T00:00:00",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate",
-                                "newVersion"
+                                "new_version"
                             ]
                         },
-                        "startDate": "2021-10-06T14:39:31.561994",
-                        "userInitials": "unknown-user",
-                        "latestActivity": null,
-                        "acceptedVersion": false
+                        "start_date": "2021-10-06T14:39:31.561994",
+                        "user_initials": "unknown-user",
+                        "latest_activity": null,
+                        "accepted_version": false
                     }
                 ]
             }
@@ -291,7 +291,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study-activities?activityNames=name1"
+            "url": "/study-activities?activity_names=name1"
         },
         "response": {
             "code": 200,
@@ -302,65 +302,65 @@
             "result": {
                 "total": 0,
                 "page": 1,
-                "size": 0,
+                "size": 10,
                 "items": [
                     {
-                        "studyUid": "study_root",
+                        "study_uid": "study_root",
                         "order": 1,
-                        "studyActivityUid": "StudyActivity_000001",
-                        "showActivityGroupInProtocolFlowchart": true,
-                        "showActivitySubGroupInProtocolFlowchart": true,
-                        "showActivityInProtocolFlowchart": false,
+                        "study_activity_uid": "StudyActivity_000001",
+                        "show_activity_group_in_protocol_flowchart": true,
+                        "show_activity_subgroup_in_protocol_flowchart": true,
+                        "show_activity_in_protocol_flowchart": false,
                         "note": null,
                         "activity": {
                             "uid": "activity_root1",
                             "name": "name1",
-                            "nameSentenceCase": "name_sentence_case1",
+                            "name_sentence_case": "name_sentence_case1",
                             "definition": "definition1",
                             "abbreviation": "abbv",
-                            "libraryName": "Sponsor",
-                            "startDate": "2021-10-26T12:13:11.513000",
-                            "endDate": null,
+                            "library_name": "Sponsor",
+                            "start_date": "2021-10-26T12:13:11.513000",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate",
-                                "newVersion"
+                                "new_version"
                             ],
-                            "activitySubGroup": {
-                                "uid": "activity_sub_group_root1",
+                            "activity_subgroup": {
+                                "uid": "activity_subgroup_root1",
                                 "name": "name1"
                             },
-                            "activityGroup": {
+                            "activity_group": {
                                 "uid": "activity_group_root1",
                                 "name": "name1"
                             }
                         },
-                        "flowchartGroup": {
-                            "termUid": "term_efficacy_uid",
-                            "catalogueName": "SDTM CT",
-                            "codelistUid": "ct_codelist_root1",
-                            "sponsorPreferredName": "EFFICACY",
-                            "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                        "flowchart_group": {
+                            "term_uid": "term_efficacy_uid",
+                            "catalogue_name": "SDTM CT",
+                            "codelist_uid": "ct_codelist_root1",
+                            "sponsor_preferred_name": "EFFICACY",
+                            "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                             "order": null,
-                            "libraryName": "Sponsor",
-                            "startDate": "2020-06-26T00:00:00",
-                            "endDate": null,
+                            "library_name": "Sponsor",
+                            "start_date": "2020-06-26T00:00:00",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate",
-                                "newVersion"
+                                "new_version"
                             ]
                         },
-                        "startDate": "2021-10-06T14:39:31.561994",
-                        "userInitials": "unknown-user",
-                        "latestActivity": null,
-                        "acceptedVersion": false
+                        "start_date": "2021-10-06T14:39:31.561994",
+                        "user_initials": "unknown-user",
+                        "latest_activity": null,
+                        "accepted_version": false
                     }
                 ]
             }
@@ -372,7 +372,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study-activities?activitySubGroupNames=name1"
+            "url": "/study-activities?activity_subgroup_names=name1"
         },
         "response": {
             "code": 200,
@@ -383,65 +383,65 @@
             "result": {
                 "total": 0,
                 "page": 1,
-                "size": 0,
+                "size": 10,
                 "items": [
                     {
-                        "studyUid": "study_root",
+                        "study_uid": "study_root",
                         "order": 1,
-                        "studyActivityUid": "StudyActivity_000001",
-                        "showActivityGroupInProtocolFlowchart": true,
-                        "showActivitySubGroupInProtocolFlowchart": true,
-                        "showActivityInProtocolFlowchart": false,
+                        "study_activity_uid": "StudyActivity_000001",
+                        "show_activity_group_in_protocol_flowchart": true,
+                        "show_activity_subgroup_in_protocol_flowchart": true,
+                        "show_activity_in_protocol_flowchart": false,
                         "note": null,
                         "activity": {
                             "uid": "activity_root1",
                             "name": "name1",
-                            "nameSentenceCase": "name_sentence_case1",
+                            "name_sentence_case": "name_sentence_case1",
                             "definition": "definition1",
                             "abbreviation": "abbv",
-                            "libraryName": "Sponsor",
-                            "startDate": "2021-10-26T12:13:11.513000",
-                            "endDate": null,
+                            "library_name": "Sponsor",
+                            "start_date": "2021-10-26T12:13:11.513000",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate",
-                                "newVersion"
+                                "new_version"
                             ],
-                            "activitySubGroup": {
-                                "uid": "activity_sub_group_root1",
+                            "activity_subgroup": {
+                                "uid": "activity_subgroup_root1",
                                 "name": "name1"
                             },
-                            "activityGroup": {
+                            "activity_group": {
                                 "uid": "activity_group_root1",
                                 "name": "name1"
                             }
                         },
-                        "flowchartGroup": {
-                            "termUid": "term_efficacy_uid",
-                            "catalogueName": "SDTM CT",
-                            "codelistUid": "ct_codelist_root1",
-                            "sponsorPreferredName": "EFFICACY",
-                            "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                        "flowchart_group": {
+                            "term_uid": "term_efficacy_uid",
+                            "catalogue_name": "SDTM CT",
+                            "codelist_uid": "ct_codelist_root1",
+                            "sponsor_preferred_name": "EFFICACY",
+                            "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                             "order": null,
-                            "libraryName": "Sponsor",
-                            "startDate": "2020-06-26T00:00:00",
-                            "endDate": null,
+                            "library_name": "Sponsor",
+                            "start_date": "2020-06-26T00:00:00",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate",
-                                "newVersion"
+                                "new_version"
                             ]
                         },
-                        "startDate": "2021-10-06T14:39:31.561994",
-                        "userInitials": "unknown-user",
-                        "latestActivity": null,
-                        "acceptedVersion": false
+                        "start_date": "2021-10-06T14:39:31.561994",
+                        "user_initials": "unknown-user",
+                        "latest_activity": null,
+                        "accepted_version": false
                     }
                 ]
             }
@@ -453,7 +453,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study-activities?activityGroupNames=name1"
+            "url": "/study-activities?activity_group_names=name1"
         },
         "response": {
             "code": 200,
@@ -464,65 +464,65 @@
             "result": {
                 "total": 0,
                 "page": 1,
-                "size": 0,
+                "size": 10,
                 "items": [
                     {
-                        "studyUid": "study_root",
+                        "study_uid": "study_root",
                         "order": 1,
-                        "studyActivityUid": "StudyActivity_000001",
-                        "showActivityGroupInProtocolFlowchart": true,
-                        "showActivitySubGroupInProtocolFlowchart": true,
-                        "showActivityInProtocolFlowchart": false,
+                        "study_activity_uid": "StudyActivity_000001",
+                        "show_activity_group_in_protocol_flowchart": true,
+                        "show_activity_subgroup_in_protocol_flowchart": true,
+                        "show_activity_in_protocol_flowchart": false,
                         "note": null,
                         "activity": {
                             "uid": "activity_root1",
                             "name": "name1",
-                            "nameSentenceCase": "name_sentence_case1",
+                            "name_sentence_case": "name_sentence_case1",
                             "definition": "definition1",
                             "abbreviation": "abbv",
-                            "libraryName": "Sponsor",
-                            "startDate": "2021-10-26T12:13:11.513000",
-                            "endDate": null,
+                            "library_name": "Sponsor",
+                            "start_date": "2021-10-26T12:13:11.513000",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate",
-                                "newVersion"
+                                "new_version"
                             ],
-                            "activitySubGroup": {
-                                "uid": "activity_sub_group_root1",
+                            "activity_subgroup": {
+                                "uid": "activity_subgroup_root1",
                                 "name": "name1"
                             },
-                            "activityGroup": {
+                            "activity_group": {
                                 "uid": "activity_group_root1",
                                 "name": "name1"
                             }
                         },
-                        "flowchartGroup": {
-                            "termUid": "term_efficacy_uid",
-                            "catalogueName": "SDTM CT",
-                            "codelistUid": "ct_codelist_root1",
-                            "sponsorPreferredName": "EFFICACY",
-                            "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                        "flowchart_group": {
+                            "term_uid": "term_efficacy_uid",
+                            "catalogue_name": "SDTM CT",
+                            "codelist_uid": "ct_codelist_root1",
+                            "sponsor_preferred_name": "EFFICACY",
+                            "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                             "order": null,
-                            "libraryName": "Sponsor",
-                            "startDate": "2020-06-26T00:00:00",
-                            "endDate": null,
+                            "library_name": "Sponsor",
+                            "start_date": "2020-06-26T00:00:00",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate",
-                                "newVersion"
+                                "new_version"
                             ]
                         },
-                        "startDate": "2021-10-06T14:39:31.561994",
-                        "userInitials": "unknown-user",
-                        "latestActivity": null,
-                        "acceptedVersion": false
+                        "start_date": "2021-10-06T14:39:31.561994",
+                        "user_initials": "unknown-user",
+                        "latest_activity": null,
+                        "accepted_version": false
                     }
                 ]
             }
@@ -535,9 +535,9 @@
             "method": "PATCH",
             "request": {
                 "note": "This is a note",
-                "flowchartGroupUid": "term_efficacy_uid"
+                "flowchart_group_uid": "term_efficacy_uid"
             },
-            "url": "/study/study_root/study-activities/{studyActivityUid}"
+            "url": "/studies/study_root/study-activities/{study_activity_uid}"
         },
         "response": {
             "code": 200,
@@ -546,62 +546,62 @@
                 "content-type": "application/json"
             },
             "result": {
-                "studyUid": "study_root",
+                "study_uid": "study_root",
                 "order": 1,
-                "studyActivityUid": "StudyActivity_000001",
-                "showActivityGroupInProtocolFlowchart": true,
-                "showActivitySubGroupInProtocolFlowchart": true,
-                "showActivityInProtocolFlowchart": false,
+                "study_activity_uid": "StudyActivity_000001",
+                "show_activity_group_in_protocol_flowchart": true,
+                "show_activity_subgroup_in_protocol_flowchart": true,
+                "show_activity_in_protocol_flowchart": false,
                 "note": "This is a note",
                 "activity": {
                     "uid": "activity_root1",
                     "name": "name1",
-                    "nameSentenceCase": "name_sentence_case1",
+                    "name_sentence_case": "name_sentence_case1",
                     "definition": "definition1",
                     "abbreviation": "abbv",
-                    "libraryName": "Sponsor",
-                    "startDate": "2021-10-26T12:13:11.513000",
-                    "endDate": null,
+                    "library_name": "Sponsor",
+                    "start_date": "2021-10-26T12:13:11.513000",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ],
-                    "activitySubGroup": {
-                        "uid": "activity_sub_group_root1",
+                    "activity_subgroup": {
+                        "uid": "activity_subgroup_root1",
                         "name": "name1"
                     },
-                    "activityGroup": {
+                    "activity_group": {
                         "uid": "activity_group_root1",
                         "name": "name1"
                     }
                 },
-                "flowchartGroup": {
-                    "termUid": "term_efficacy_uid",
-                    "catalogueName": "SDTM CT",
-                    "codelistUid": "ct_codelist_root1",
-                    "sponsorPreferredName": "EFFICACY",
-                    "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                "flowchart_group": {
+                    "term_uid": "term_efficacy_uid",
+                    "catalogue_name": "SDTM CT",
+                    "codelist_uid": "ct_codelist_root1",
+                    "sponsor_preferred_name": "EFFICACY",
+                    "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                     "order": null,
-                    "libraryName": "Sponsor",
-                    "startDate": "2020-06-26T00:00:00",
-                    "endDate": null,
+                    "library_name": "Sponsor",
+                    "start_date": "2020-06-26T00:00:00",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ]
                 },
-                "startDate": "2021-10-06T14:39:31.561994",
-                "userInitials": "unknown-user",
-                "latestActivity": null,
-                "acceptedVersion": false
+                "start_date": "2021-10-06T14:39:31.561994",
+                "user_initials": "unknown-user",
+                "latest_activity": null,
+                "accepted_version": false
             }
         }
     },
@@ -611,7 +611,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study_root/study-activities/{studyActivityUid}/audit-trail/"
+            "url": "/studies/study_root/study-activities/{study_activity_uid}/audit-trail/"
         },
         "response": {
             "code": 200,
@@ -621,120 +621,120 @@
             },
             "result": [
                 {
-                    "studyUid": "study_root",
+                    "study_uid": "study_root",
                     "order": 1,
-                    "studyActivityUid": "StudyActivity_000001",
+                    "study_activity_uid": "StudyActivity_000001",
                     "activity": {
                         "uid": "activity_root1",
                         "name": "name1",
-                        "nameSentenceCase": "name_sentence_case1",
+                        "name_sentence_case": "name_sentence_case1",
                         "definition": "definition1",
                         "abbreviation": "abbv",
-                        "libraryName": "Sponsor",
-                        "startDate": "2021-10-26T12:43:37.326000",
-                        "endDate": null,
+                        "library_name": "Sponsor",
+                        "start_date": "2021-10-26T12:43:37.326000",
+                        "end_date": null,
                         "status": "Final",
                         "version": "1.0",
-                        "changeDescription": "Approved version",
-                        "userInitials": "TODO initials",
-                        "possibleActions": [
+                        "change_description": "Approved version",
+                        "user_initials": "TODO initials",
+                        "possible_actions": [
                             "inactivate",
-                            "newVersion"
+                            "new_version"
                         ],
-                        "activitySubGroup": {
-                            "uid": "activity_sub_group_root1",
+                        "activity_subgroup": {
+                            "uid": "activity_subgroup_root1",
                             "name": "name1"
                         },
-                        "activityGroup": {
+                        "activity_group": {
                             "uid": "activity_group_root1",
                             "name": "name1"
                         }
                     },
-                    "flowchartGroup": {
-                        "termUid": "term_efficacy_uid",
-                        "catalogueName": "SDTM CT",
-                        "codelistUid": "ct_codelist_root1",
-                        "sponsorPreferredName": "EFFICACY",
-                        "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                    "flowchart_group": {
+                        "term_uid": "term_efficacy_uid",
+                        "catalogue_name": "SDTM CT",
+                        "codelist_uid": "ct_codelist_root1",
+                        "sponsor_preferred_name": "EFFICACY",
+                        "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                         "order": null,
-                        "libraryName": "Sponsor",
-                        "startDate": "2020-06-26T00:00:00",
-                        "endDate": null,
+                        "library_name": "Sponsor",
+                        "start_date": "2020-06-26T00:00:00",
+                        "end_date": null,
                         "status": "Final",
                         "version": "1.0",
-                        "changeDescription": "Approved version",
-                        "userInitials": "TODO initials",
-                        "possibleActions": [
+                        "change_description": "Approved version",
+                        "user_initials": "TODO initials",
+                        "possible_actions": [
                             "inactivate",
-                            "newVersion"
+                            "new_version"
                         ]
                     },
-                    "showActivityGroupInProtocolFlowchart": true,
-                    "showActivitySubGroupInProtocolFlowchart": true,
-                    "showActivityInProtocolFlowchart": false,
+                    "show_activity_group_in_protocol_flowchart": true,
+                    "show_activity_subgroup_in_protocol_flowchart": true,
+                    "show_activity_in_protocol_flowchart": false,
                     "note": "This is a note",
-                    "startDate": "2021-10-26T14:43:38.283186",
-                    "userInitials": "TEST_USER",
-                    "endDate": null,
-                    "changeType": "Edit"
+                    "start_date": "2021-10-26T14:43:38.283186",
+                    "user_initials": "TEST_USER",
+                    "end_date": null,
+                    "change_type": "Edit"
                 },
                 {
-                    "studyUid": "study_root",
+                    "study_uid": "study_root",
                     "order": 1,
-                    "studyActivityUid": "StudyActivity_000001",
+                    "study_activity_uid": "StudyActivity_000001",
                     "activity": {
                         "uid": "activity_root1",
                         "name": "name1",
-                        "nameSentenceCase": "name_sentence_case1",
+                        "name_sentence_case": "name_sentence_case1",
                         "definition": "definition1",
                         "abbreviation": "abbv",
-                        "libraryName": "Sponsor",
-                        "startDate": "2021-10-26T12:47:20.037000",
-                        "endDate": null,
+                        "library_name": "Sponsor",
+                        "start_date": "2021-10-26T12:47:20.037000",
+                        "end_date": null,
                         "status": "Final",
                         "version": "1.0",
-                        "changeDescription": "Approved version",
-                        "userInitials": "TODO initials",
-                        "possibleActions": [
+                        "change_description": "Approved version",
+                        "user_initials": "TODO initials",
+                        "possible_actions": [
                             "inactivate",
-                            "newVersion"
+                            "new_version"
                         ],
-                        "activitySubGroup": {
-                            "uid": "activity_sub_group_root1",
+                        "activity_subgroup": {
+                            "uid": "activity_subgroup_root1",
                             "name": "name1"
                         },
-                        "activityGroup": {
+                        "activity_group": {
                             "uid": "activity_group_root1",
                             "name": "name1"
                         }
                     },
-                    "flowchartGroup": {
-                        "termUid": "term_efficacy_uid",
-                        "catalogueName": "SDTM CT",
-                        "codelistUid": "ct_codelist_root1",
-                        "sponsorPreferredName": "EFFICACY",
-                        "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                    "flowchart_group": {
+                        "term_uid": "term_efficacy_uid",
+                        "catalogue_name": "SDTM CT",
+                        "codelist_uid": "ct_codelist_root1",
+                        "sponsor_preferred_name": "EFFICACY",
+                        "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                         "order": null,
-                        "libraryName": "Sponsor",
-                        "startDate": "2020-06-26T00:00:00",
-                        "endDate": null,
+                        "library_name": "Sponsor",
+                        "start_date": "2020-06-26T00:00:00",
+                        "end_date": null,
                         "status": "Final",
                         "version": "1.0",
-                        "changeDescription": "Approved version",
-                        "userInitials": "TODO initials",
-                        "possibleActions": [
+                        "change_description": "Approved version",
+                        "user_initials": "TODO initials",
+                        "possible_actions": [
                             "inactivate",
-                            "newVersion"
+                            "new_version"
                         ]
                     },
-                    "showActivityGroupInProtocolFlowchart": true,
-                    "showActivitySubGroupInProtocolFlowchart": true,
-                    "showActivityInProtocolFlowchart": false,
+                    "show_activity_group_in_protocol_flowchart": true,
+                    "show_activity_subgroup_in_protocol_flowchart": true,
+                    "show_activity_in_protocol_flowchart": false,
                     "note": null,
-                    "startDate": "2021-10-26T14:47:20.439545",
-                    "userInitials": "TEST_USER",
-                    "endDate": "2021-10-26T14:47:21.016095",
-                    "changeType": "Create"
+                    "start_date": "2021-10-26T14:47:20.439545",
+                    "user_initials": "TEST_USER",
+                    "end_date": "2021-10-26T14:47:21.016095",
+                    "change_type": "Create"
                 }
             ]
         }
@@ -745,10 +745,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "activityUid": "activity_root2",
-                "flowchartGroupUid": "term_efficacy_uid"
+                "activity_uid": "activity_root2",
+                "flowchart_group_uid": "term_efficacy_uid"
             },
-            "url": "/study/study_root/study-activities/create"
+            "url": "/studies/study_root/study-activities"
         },
         "response": {
             "code": 201,
@@ -757,62 +757,62 @@
                 "content-type": "application/json"
             },
             "result": {
-                "studyUid": "study_root",
+                "study_uid": "study_root",
                 "order": 2,
-                "studyActivityUid": "StudyActivity_000002",
-                "showActivityGroupInProtocolFlowchart": true,
-                "showActivitySubGroupInProtocolFlowchart": true,
-                "showActivityInProtocolFlowchart": false,
+                "study_activity_uid": "StudyActivity_000002",
+                "show_activity_group_in_protocol_flowchart": true,
+                "show_activity_subgroup_in_protocol_flowchart": true,
+                "show_activity_in_protocol_flowchart": false,
                 "note": null,
                 "activity": {
                     "uid": "activity_root2",
                     "name": "name2",
-                    "nameSentenceCase": "name_sentence_case2",
+                    "name_sentence_case": "name_sentence_case2",
                     "definition": "definition2",
                     "abbreviation": "abbv",
-                    "libraryName": "Sponsor",
-                    "startDate": "2021-10-26T12:13:11.513000",
-                    "endDate": null,
+                    "library_name": "Sponsor",
+                    "start_date": "2021-10-26T12:13:11.513000",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ],
-                    "activitySubGroup": {
-                        "uid": "activity_sub_group_root2",
+                    "activity_subgroup": {
+                        "uid": "activity_subgroup_root2",
                         "name": "name2"
                     },
-                    "activityGroup": {
+                    "activity_group": {
                         "uid": "activity_group_root2",
                         "name": "name2"
                     }
                 },
-                "flowchartGroup": {
-                    "termUid": "term_efficacy_uid",
-                    "catalogueName": "SDTM CT",
-                    "codelistUid": "ct_codelist_root1",
-                    "sponsorPreferredName": "EFFICACY",
-                    "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                "flowchart_group": {
+                    "term_uid": "term_efficacy_uid",
+                    "catalogue_name": "SDTM CT",
+                    "codelist_uid": "ct_codelist_root1",
+                    "sponsor_preferred_name": "EFFICACY",
+                    "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                     "order": null,
-                    "libraryName": "Sponsor",
-                    "startDate": "2020-06-26T00:00:00",
-                    "endDate": null,
+                    "library_name": "Sponsor",
+                    "start_date": "2020-06-26T00:00:00",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ]
                 },
-                "startDate": "2021-10-06T14:39:31.561994",
-                "userInitials": "unknown-user",
-                "latestActivity": null,
-                "acceptedVersion": false
+                "start_date": "2021-10-06T14:39:31.561994",
+                "user_initials": "unknown-user",
+                "latest_activity": null,
+                "accepted_version": false
             }
         }
     },
@@ -822,7 +822,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study_root/study-activities/{studyActivityUid}"
+            "url": "/studies/study_root/study-activities/{study_activity_uid}"
         },
         "response": {
             "code": 200,
@@ -831,62 +831,62 @@
                 "content-type": "application/json"
             },
             "result": {
-                "studyUid": "study_root",
+                "study_uid": "study_root",
                 "order": 1,
-                "studyActivityUid": "StudyActivity_000001",
-                "showActivityGroupInProtocolFlowchart": true,
-                "showActivitySubGroupInProtocolFlowchart": true,
-                "showActivityInProtocolFlowchart": false,
+                "study_activity_uid": "StudyActivity_000001",
+                "show_activity_group_in_protocol_flowchart": true,
+                "show_activity_subgroup_in_protocol_flowchart": true,
+                "show_activity_in_protocol_flowchart": false,
                 "note": null,
                 "activity": {
                     "uid": "activity_root1",
                     "name": "name1",
-                    "nameSentenceCase": "name_sentence_case1",
+                    "name_sentence_case": "name_sentence_case1",
                     "definition": "definition1",
                     "abbreviation": "abbv",
-                    "libraryName": "Sponsor",
-                    "startDate": "2021-10-26T12:13:11.513000",
-                    "endDate": null,
+                    "library_name": "Sponsor",
+                    "start_date": "2021-10-26T12:13:11.513000",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ],
-                    "activitySubGroup": {
-                        "uid": "activity_sub_group_root1",
+                    "activity_subgroup": {
+                        "uid": "activity_subgroup_root1",
                         "name": "name1"
                     },
-                    "activityGroup": {
+                    "activity_group": {
                         "uid": "activity_group_root1",
                         "name": "name1"
                     }
                 },
-                "flowchartGroup": {
-                    "termUid": "term_efficacy_uid",
-                    "catalogueName": "SDTM CT",
-                    "codelistUid": "ct_codelist_root1",
-                    "sponsorPreferredName": "EFFICACY",
-                    "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                "flowchart_group": {
+                    "term_uid": "term_efficacy_uid",
+                    "catalogue_name": "SDTM CT",
+                    "codelist_uid": "ct_codelist_root1",
+                    "sponsor_preferred_name": "EFFICACY",
+                    "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                     "order": null,
-                    "libraryName": "Sponsor",
-                    "startDate": "2020-06-26T00:00:00",
-                    "endDate": null,
+                    "library_name": "Sponsor",
+                    "start_date": "2020-06-26T00:00:00",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ]
                 },
-                "startDate": "2021-10-06T14:39:31.561994",
-                "userInitials": "unknown-user",
-                "latestActivity": null,
-                "acceptedVersion": false
+                "start_date": "2021-10-06T14:39:31.561994",
+                "user_initials": "unknown-user",
+                "latest_activity": null,
+                "accepted_version": false
             }
         }
     },
@@ -898,7 +898,7 @@
             "request": {
                 "new_order": 2
             },
-            "url": "/study/study_root/study-activities/{studyActivityUid}/order"
+            "url": "/studies/study_root/study-activities/{study_activity_uid}/order"
         },
         "response": {
             "code": 200,
@@ -907,62 +907,62 @@
                 "content-type": "application/json"
             },
             "result": {
-                "studyUid": "study_root",
+                "study_uid": "study_root",
                 "order": 2,
-                "studyActivityUid": "StudyActivity_000001",
-                "showActivityGroupInProtocolFlowchart": true,
-                "showActivitySubGroupInProtocolFlowchart": true,
-                "showActivityInProtocolFlowchart": false,
+                "study_activity_uid": "StudyActivity_000001",
+                "show_activity_group_in_protocol_flowchart": true,
+                "show_activity_subgroup_in_protocol_flowchart": true,
+                "show_activity_in_protocol_flowchart": false,
                 "note": null,
                 "activity": {
                     "uid": "activity_root1",
                     "name": "name1",
-                    "nameSentenceCase": "name_sentence_case1",
+                    "name_sentence_case": "name_sentence_case1",
                     "definition": "definition1",
                     "abbreviation": "abbv",
-                    "libraryName": "Sponsor",
-                    "startDate": "2021-10-26T12:13:11.513000",
-                    "endDate": null,
+                    "library_name": "Sponsor",
+                    "start_date": "2021-10-26T12:13:11.513000",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ],
-                    "activitySubGroup": {
-                        "uid": "activity_sub_group_root1",
+                    "activity_subgroup": {
+                        "uid": "activity_subgroup_root1",
                         "name": "name1"
                     },
-                    "activityGroup": {
+                    "activity_group": {
                         "uid": "activity_group_root1",
                         "name": "name1"
                     }
                 },
-                "flowchartGroup": {
-                    "termUid": "term_efficacy_uid",
-                    "catalogueName": "SDTM CT",
-                    "codelistUid": "ct_codelist_root1",
-                    "sponsorPreferredName": "EFFICACY",
-                    "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                "flowchart_group": {
+                    "term_uid": "term_efficacy_uid",
+                    "catalogue_name": "SDTM CT",
+                    "codelist_uid": "ct_codelist_root1",
+                    "sponsor_preferred_name": "EFFICACY",
+                    "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                     "order": null,
-                    "libraryName": "Sponsor",
-                    "startDate": "2020-06-26T00:00:00",
-                    "endDate": null,
+                    "library_name": "Sponsor",
+                    "start_date": "2020-06-26T00:00:00",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ]
                 },
-                "startDate": "2021-10-06T14:39:31.561994",
-                "userInitials": "unknown-user",
-                "latestActivity": null,
-                "acceptedVersion": false
+                "start_date": "2021-10-06T14:39:31.561994",
+                "user_initials": "unknown-user",
+                "latest_activity": null,
+                "accepted_version": false
             }
         }
     },
@@ -971,7 +971,7 @@
         "request": {
             "headers": {},
             "method": "DELETE",
-            "url": "/study/study_root/study-activities/{studyActivityUid}"
+            "url": "/studies/study_root/study-activities/{study_activity_uid}"
         },
         "response": {
             "code": 204

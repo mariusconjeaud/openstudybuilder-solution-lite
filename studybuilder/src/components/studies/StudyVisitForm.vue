@@ -21,7 +21,7 @@
           <v-row>
             <v-col>
               <v-radio-group
-                v-model="form.visitClass"
+                v-model="form.visit_class"
                 :error-messages="errors"
                 >
                 <v-radio
@@ -50,12 +50,12 @@
                 data-cy="study-period"
                 :label="$t('StudyVisitForm.period')"
                 :items="filteredPeriods"
-                item-text="epochName"
+                item-text="epoch_name"
                 item-value="uid"
                 :error-messages="errors"
                 clearable
                 :loading="loading"
-                :disabled="studyVisit"
+                :disabled="studyVisit !== undefined && studyVisit !== null"
                 />
             </v-col>
           </v-row>
@@ -84,9 +84,9 @@
 
         </v-row>
         <v-row>
-          <v-col cols="12" v-if="form.visitClass === visitConstants.CLASS_SINGLE_VISIT">
+          <v-col cols="12" v-if="form.visit_class === visitConstants.CLASS_SINGLE_VISIT">
             <v-radio-group
-              v-model="form.visitSubclass"
+              v-model="form.visit_subclass"
               row
               hide-details
             >
@@ -115,7 +115,7 @@
               rules="required"
               >
               <v-autocomplete
-                v-model="form.visitTypeUid"
+                v-model="form.visit_type_uid"
                 :label="$t('StudyVisitForm.visit_type')"
                 data-cy="visit-type"
                 :items="visitTypes"
@@ -123,7 +123,7 @@
                 item-value="visit_type_uid"
                 :error-messages="errors"
                 clearable
-                :disabled="form.visitClass !== visitConstants.CLASS_SINGLE_VISIT"
+                :disabled="form.visit_class !== visitConstants.CLASS_SINGLE_VISIT && form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT"
                 />
             </validation-provider>
           </v-col>
@@ -133,23 +133,23 @@
               rules="required"
               >
               <v-autocomplete
-                v-model="form.visitContactModeUid"
+                v-model="form.visit_contact_mode_uid"
                 :label="$t('StudyVisitForm.contact_mode')"
                 data-cy="contact-mode"
                 :items="contactModes"
-                item-text="sponsorPreferredName"
-                item-value="termUid"
+                item-text="sponsor_preferred_name"
+                item-value="term_uid"
                 :error-messages="errors"
                 @change="getVisitPreview"
                 clearable
                 />
             </validation-provider>
           </v-col>
-          <v-col cols="4">
+          <v-col cols="4" v-if="form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT">
             <div class="d-flex">
               <v-checkbox
                 v-if="displayAnchorVisitFlag"
-                v-model="form.isGlobalAnchorVisit"
+                v-model="form.is_global_anchor_visit"
                 :label="$t('StudyVisitForm.anchor_visit')"
                 data-cy="anchor-visit-checkbox"
                 :hint="$t('StudyVisitForm.anchor_visit_hint')"
@@ -166,44 +166,44 @@
             </div>
           </v-col>
         </v-row>
-        <v-row v-if="form.visitClass === visitConstants.CLASS_SINGLE_VISIT">
+        <v-row v-if="form.visit_class === visitConstants.CLASS_SINGLE_VISIT || form.visit_class === visitConstants.CLASS_SPECIAL_VISIT">
           <v-col cols="4">
             <validation-provider
               v-slot="{ errors }"
               rules="required"
               >
               <v-autocomplete
-                v-if="form.visitSubclass !== visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV"
-                v-model="form.timeReferenceUid"
+                v-if="form.visit_subclass !== visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV && form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT"
+                v-model="form.time_reference_uid"
                 :label="$t('StudyVisitForm.time_reference')"
                 data-cy="time-reference"
                 :items="timeReferences"
-                item-text="sponsorPreferredName"
-                item-value="termUid"
+                item-text="sponsor_preferred_name"
+                item-value="term_uid"
                 :error-messages="errors"
                 clearable
                 @change="getVisitPreview"
                 />
               <v-autocomplete
                 v-else
-                v-model="form.visitSubLabelReference"
+                v-model="form.visit_sublabel_reference"
                 :label="$t('StudyVisitForm.time_reference')"
                 data-cy="time-reference"
-                :items="anchorVisitsInSubgroup"
-                item-text="visitName"
+                :items="timerefVisits"
+                item-text="visit_name"
                 item-value="uid"
                 :error-messages="errors"
                 clearable
                 />
             </validation-provider>
           </v-col>
-          <v-col cols="4">
+          <v-col cols="4" v-if="form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT">
             <validation-provider
               v-slot="{ errors }"
               rules="required"
               >
               <v-text-field
-                v-model="form.timeValue"
+                v-model="form.time_value"
                 type="number"
                 :label="$t('StudyVisitForm.time_dist')"
                 data-cy="visit-timing"
@@ -214,13 +214,13 @@
                 />
             </validation-provider>
           </v-col>
-          <v-col cols="4">
+          <v-col cols="4" v-if="form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT">
             <validation-provider
               v-slot="{ errors }"
               rules="required"
               >
               <v-autocomplete
-                v-model="form.timeUnitUid"
+                v-model="form.time_unit_uid"
                 :label="$t('StudyVisitForm.time_unit_name')"
                 data-cy="time-unit"
                 :items="timeUnits"
@@ -236,7 +236,7 @@
         <v-row>
           <v-col cols="3">
             <v-text-field
-              v-model="form.visitName"
+              v-model="form.visit_name"
               :label="$t('StudyVisitForm.visit_name')"
               data-cy="visit-name"
               readonly
@@ -246,7 +246,7 @@
           </v-col>
           <v-col cols="3">
             <v-text-field
-              v-model="form.visitShortName"
+              v-model="form.visit_short_name"
               :label="$t('StudyVisitForm.visit_short_name')"
               data-cy="visit-short-name"
               readonly
@@ -254,9 +254,9 @@
               :loading="previewLoading"
               />
           </v-col>
-          <v-col cols="3" v-if="form.visitClass === visitConstants.CLASS_SINGLE_VISIT">
+          <v-col cols="3" v-if="form.visit_class === visitConstants.CLASS_SINGLE_VISIT">
             <v-text-field
-              v-model="form.studyDayLabel"
+              v-model="form.study_day_label"
               :label="$t('StudyVisitForm.study_day_label')"
               data-cy="study-day-label"
               readonly
@@ -264,9 +264,9 @@
               :loading="previewLoading"
               />
           </v-col>
-          <v-col cols="3" v-if="form.visitClass === visitConstants.CLASS_SINGLE_VISIT">
+          <v-col cols="3" v-if="form.visit_class === visitConstants.CLASS_SINGLE_VISIT">
             <v-text-field
-              v-model="form.studyWeekLabel"
+              v-model="form.study_week_label"
               :label="$t('StudyVisitForm.study_week_label')"
               data-cy="study-week-label"
               readonly
@@ -275,7 +275,7 @@
               />
           </v-col>
         </v-row>
-        <template v-if="form.visitClass === visitConstants.CLASS_SINGLE_VISIT">
+        <template v-if="form.visit_class === visitConstants.CLASS_SINGLE_VISIT">
           <div class="sub-title">{{ $t('StudyVisitForm.visit_window') }}</div>
           <div class="d-flex align-center">
             <div class="mr-2">
@@ -286,7 +286,7 @@
                 <v-row>
                   <v-col>
                     <v-text-field
-                      v-model="form.minVisitWindowValue"
+                      v-model="form.min_visit_window_value"
                       :label="$t('StudyVisitForm.visit_win_min')"
                       data-cy="visit-win-min"
                       clearable
@@ -306,7 +306,7 @@
                 <v-row>
                   <v-col>
                     <v-text-field
-                      v-model="form.maxVisitWindowValue"
+                      v-model="form.max_visit_window_value"
                       :label="$t('StudyVisitForm.visit_win_max')"
                       data-cy="visit-win-max"
                       clearable
@@ -325,7 +325,7 @@
                 <v-row>
                   <v-col>
                     <v-autocomplete
-                      v-model="form.visitWindowUnitUid"
+                      v-model="form.visit_window_unit_uid"
                       :label="$t('StudyVisitForm.visit_win_unit')"
                       data-cy="visit-win-unit"
                       :items="timeUnits"
@@ -355,12 +355,12 @@
         <v-row>
           <v-col cols="6">
             <v-autocomplete
-              v-model="form.epochAllocationUid"
+              v-model="form.epoch_allocation_uid"
               :label="$t('StudyVisitForm.epoch_allocation')"
               data-cy="epoch-allocation-rule"
               :items="epochAllocations"
-              item-text="sponsorPreferredName"
-              item-value="termUid"
+              item-text="sponsor_preferred_name"
+              item-value="term_uid"
               clearable
               />
           </v-col>
@@ -372,7 +372,7 @@
               rules=""
               >
               <v-textarea
-                v-model="form.startRule"
+                v-model="form.start_rule"
                 :label="$t('StudyVisitForm.visit_start_rule')"
                 data-cy="visit-start-rule"
                 clearable
@@ -384,7 +384,7 @@
           </v-col>
           <v-col cols="6">
             <v-textarea
-              v-model="form.endRule"
+              v-model="form.end_rule"
               :label="$t('StudyVisitForm.visit_stop_rule')"
               data-cy="visit-end-rule"
               clearable
@@ -407,7 +407,7 @@
           <v-col cols="6" class="d-flex align-center">
             <div class="mr-2">
               <v-combobox
-                v-model="form.consecutiveVisitGroup"
+                v-model="form.consecutive_visit_group"
                 :label="$t('StudyVisitForm.consecutive_visit')"
                 :items="visitGroups"
                 item-text="name"
@@ -416,7 +416,7 @@
                 />
             </div>
             <v-checkbox
-              v-model="form.showVisit"
+              v-model="form.show_visit"
               default="true"
               :label="$t('StudyVisitForm.show_visit')"
               />
@@ -437,6 +437,7 @@ import codelists from '@/api/controlledTerminology/terms'
 import { mapGetters } from 'vuex'
 import { bus } from '@/main'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
+import unitConstants from '@/constants/units'
 import visitConstants from '@/constants/visits'
 
 export default {
@@ -461,18 +462,27 @@ export default {
       groups: 'studyEpochs/allowedConfigs'
     }),
     filteredPeriods () {
-      if (this.form.visitClass === visitConstants.CLASS_SINGLE_VISIT) {
-        return this.periods
+      if (this.form.visit_class === visitConstants.CLASS_SPECIAL_VISIT || this.form.visit_class === visitConstants.CLASS_SINGLE_VISIT) {
+        return this.periods.filter(item => item.epoch_name !== visitConstants.EPOCH_BASIC)
       }
       if (this.periods) {
-        return this.periods.filter(item => item.epochName === visitConstants.EPOCH_BASIC)
+        return this.periods.filter(item => item.epoch_name === visitConstants.EPOCH_BASIC)
       }
       return []
+    },
+    timerefVisits () {
+      if (this.form.visit_subclass === visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV) {
+        return this.anchorVisitsInSubgroup
+      } else if (this.form.visit_class === visitConstants.CLASS_SPECIAL_VISIT) {
+        return this.anchorVisitsForSpecialVisit
+      }
+      return this.studyVisits
     }
   },
   data () {
     return {
       anchorVisitsInSubgroup: [],
+      anchorVisitsForSpecialVisit: [],
       batchCreateVisits: false,
       currentAnchorVisit: null,
       disableTimeValue: false,
@@ -521,11 +531,13 @@ export default {
       contactModes: [],
       epochAllocations: [],
       studyEpoch: '',
+      studyVisits: [],
       visitCount: 1,
       visitClasses: [
         { label: this.$t('StudyVisitForm.scheduled_visit'), value: visitConstants.CLASS_SINGLE_VISIT },
         { label: this.$t('StudyVisitForm.unscheduled_visit'), value: visitConstants.CLASS_UNSCHEDULED_VISIT },
-        { label: this.$t('StudyVisitForm.non_visit'), value: visitConstants.CLASS_NON_VISIT }
+        { label: this.$t('StudyVisitForm.non_visit'), value: visitConstants.CLASS_NON_VISIT },
+        { label: this.$t('StudyVisitForm.special_visit'), value: visitConstants.CLASS_SPECIAL_VISIT }
       ],
       visitSubClasses: [
         { label: this.$t('StudyVisitForm.single_visit'), value: visitConstants.SUBCLASS_SINGLE_VISIT },
@@ -552,12 +564,12 @@ export default {
       }
       this.studyEpoch = ''
       return {
-        isGlobalAnchorVisit: false,
-        visitClass: visitConstants.CLASS_SINGLE_VISIT,
-        showVisit: true,
-        minVisitWindowValue: 0,
-        maxVisitWindowValue: 0,
-        visitSubclass: visitConstants.CLASS_SINGLE_VISIT
+        is_global_anchor_visit: false,
+        visit_class: visitConstants.CLASS_SINGLE_VISIT,
+        show_visit: true,
+        min_visit_window_value: 0,
+        max_visit_window_value: 0,
+        visit_subclass: visitConstants.CLASS_SINGLE_VISIT
       }
     },
     async submit () {
@@ -584,14 +596,14 @@ export default {
     },
     async addObject () {
       const data = JSON.parse(JSON.stringify(this.form))
-      if (data.visitSubclass === visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV) {
-        data.timeReferenceUid = this.timeReferences.find(item => item.sponsorPreferredName === visitConstants.TIMEREF_GLOBAL_ANCHOR_VISIT).termUid
-      } else if (data.visitClass !== visitConstants.CLASS_SINGLE_VISIT) {
-        delete data.timeValue
-        delete data.timeReferenceUid
-        delete data.minVisitWindowValue
-        delete data.maxVisitWindowValue
-        delete data.timeUnitUid
+      if (data.visit_class === visitConstants.CLASS_SPECIAL_VISIT || data.visit_subclass === visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV) {
+        data.time_reference_uid = this.timeReferences.find(item => item.sponsor_preferred_name === visitConstants.TIMEREF_ANCHOR_VISIT_IN_VISIT_GROUP).term_uid
+      } else if (data.visit_class !== visitConstants.CLASS_SINGLE_VISIT) {
+        delete data.time_value
+        delete data.time_reference_uid
+        delete data.min_visit_window_value
+        delete data.max_visit_window_value
+        delete data.time_unit_uid
       }
       await this.$store.dispatch('studyEpochs/addStudyVisit', { studyUid: this.selectedStudy.uid, input: data })
       this.$store.dispatch('studyEpochs/fetchStudyVisits', this.selectedStudy.uid)
@@ -608,9 +620,9 @@ export default {
       if (this.studyVisit) {
         return
       }
-      const mandatoryFields = ['visitTypeUid', 'visitContactModeUid']
-      if (this.form.visitClass === visitConstants.CLASS_SINGLE_VISIT) {
-        mandatoryFields.push('timeReferenceUid', 'timeValue')
+      const mandatoryFields = ['visit_type_uid', 'visit_contact_mode_uid']
+      if (this.form.visit_class === visitConstants.CLASS_SINGLE_VISIT) {
+        mandatoryFields.push('time_reference_uid', 'time_value')
       }
       for (const field of mandatoryFields) {
         if (this.form[field] === undefined || this.form[field] === null) {
@@ -618,14 +630,14 @@ export default {
         }
       }
       const payload = { ...this.form }
-      if (payload.visitClass !== visitConstants.CLASS_SINGLE_VISIT) {
-        payload.timeReferenceUid = this.timeReferences.find(item => item.sponsorPreferredName === visitConstants.TIMEREF_GLOBAL_ANCHOR_VISIT).termUid
-        payload.timeValue = 0
+      if (payload.visit_class !== visitConstants.CLASS_SINGLE_VISIT) {
+        payload.time_reference_uid = this.timeReferences.find(item => item.sponsor_preferred_name === visitConstants.TIMEREF_GLOBAL_ANCHOR_VISIT).term_uid
+        payload.time_value = 0
       }
-      payload.isGlobalAnchorVisit = false
+      payload.is_global_anchor_visit = false
       this.previewLoading = true
       epochs.getStudyVisitPreview(this.selectedStudy.uid, payload).then(resp => {
-        for (const field of ['visitName', 'visitShortName', 'studyDayLabel', 'studyWeekLabel']) {
+        for (const field of ['visit_name', 'visit_short_name', 'study_day_label', 'study_week_label']) {
           this.$set(this.form, field, resp.data[field])
         }
       }).finally(() => {
@@ -637,11 +649,14 @@ export default {
       epochs.getGlobalAnchorVisit(this.selectedStudy.uid).then(resp => {
         this.globalAnchorVisit = resp.data
         if (this.globalAnchorVisit) {
-          this.currentAnchorVisit = this.globalAnchorVisit.visitTypeName
+          this.currentAnchorVisit = this.globalAnchorVisit.visit_type_name
         }
       })
       epochs.getAnchorVisitsInGroupOfSubvisits(this.selectedStudy.uid).then(resp => {
         this.anchorVisitsInSubgroup = resp.data
+      })
+      epochs.getAnchorVisitsForSpecialVisit(this.selectedStudy.uid).then(resp => {
+        this.anchorVisitsForSpecialVisit = resp.data
       })
       codelists.getByCodelist('epochs').then(resp => {
         this.loading = true
@@ -650,13 +665,13 @@ export default {
           this.periods = resp.data.items
           this.periods.forEach(item => {
             this.epochsData.forEach(epochDef => {
-              if (epochDef.termUid === item.epoch) {
-                item.epochName = epochDef.sponsorPreferredName
+              if (epochDef.term_uid === item.epoch) {
+                item.epoch_name = epochDef.sponsor_preferred_name
               }
             })
           })
           if (this.studyVisit) {
-            this.studyEpoch = this.studyVisit.studyEpochUid
+            this.studyEpoch = this.studyVisit.study_epoch_uid
           }
           this.loading = false
         })
@@ -664,12 +679,12 @@ export default {
       codelists.getByCodelist('contactModes').then(resp => {
         this.contactModes = resp.data.items
       })
-      units.getBySubset('Study Time').then(resp => {
+      units.getBySubset(unitConstants.TIME_UNIT_SUBSET_STUDY_TIME).then(resp => {
         this.timeUnits = resp.data.items
         if (!this.studyVisit) {
           const defaultUnit = this.timeUnits.find(unit => unit.name === 'days')
-          this.form.timeUnitUid = defaultUnit.uid
-          this.form.visitWindowUnitUid = defaultUnit.uid
+          this.form.time_unit_uid = defaultUnit.uid
+          this.form.visit_window_unit_uid = defaultUnit.uid
         }
       })
       epochs.getGroups(this.selectedStudy.uid).then(resp => {
@@ -677,6 +692,9 @@ export default {
       })
       codelists.getByCodelist('epochAllocations').then(resp => {
         this.epochAllocations = resp.data.items
+      })
+      epochs.getStudyVisits(this.selectedStudy.uid).then(resp => {
+        this.studyVisits = resp.data.items
       })
     },
     onTabChange (number) {
@@ -686,13 +704,13 @@ export default {
     },
     setVisitType (value) {
       if (this.visitTypes.length) {
-        this.$set(this.form, 'visitTypeUid', this.visitTypes.find(item => item.visit_type_name === value).visit_type_uid)
+        this.$set(this.form, 'visit_type_uid', this.visitTypes.find(item => item.visit_type_name === value).visit_type_uid)
         this.getVisitPreview()
       }
     },
     setEpochAllocationRule (value) {
       if (this.epochAllocations.length) {
-        this.$set(this.form, 'epochAllocationUid', this.epochAllocations.find(item => item.sponsorPreferredName === value).termUid)
+        this.$set(this.form, 'epoch_allocation_uid', this.epochAllocations.find(item => item.sponsor_preferred_name === value).term_uid)
       }
     },
     setStudyEpochToBasic () {
@@ -700,26 +718,26 @@ export default {
         return
       }
       if (this.periods.length) {
-        this.studyEpoch = this.periods.find(item => item.epochName === visitConstants.EPOCH_BASIC)
+        this.studyEpoch = this.periods.find(item => item.epoch_name === visitConstants.EPOCH_BASIC)
         if (this.studyEpoch) {
           this.studyEpoch = this.studyEpoch.uid
         }
       }
       if (!this.studyEpoch) {
         const subType = this.groups.find(item => item.subtype_name === visitConstants.EPOCH_BASIC)
-        const payload = { epochSubType: subType.subtype, studyUid: this.selectedStudy.uid }
+        const payload = { epoch_subtype: subType.subtype, study_uid: this.selectedStudy.uid }
         epochs.getPreviewEpoch(this.selectedStudy.uid, payload).then(resp => {
           const data = {
-            studyUid: this.selectedStudy.uid,
+            study_uid: this.selectedStudy.uid,
             epoch: resp.epoch,
-            epochType: subType.type,
-            epochSubType: subType.subtype,
-            colorHash: '#FFFFFF'
+            epoch_type: subType.type,
+            epoch_subtype: subType.subtype,
+            color_hash: '#FFFFFF'
           }
           epochs.addStudyEpoch(this.selectedStudy.uid, data).then(resp => {
             epochs.getStudyEpochs(this.selectedStudy.uid).then(resp => {
               this.periods = resp.data.items
-              this.studyEpoch = this.periods.find(item => item.epochName === visitConstants.EPOCH_BASIC).uid
+              this.studyEpoch = this.periods.find(item => item.epoch_name === visitConstants.EPOCH_BASIC).uid
             })
           })
         })
@@ -745,28 +763,28 @@ export default {
       if (!value) {
         return
       }
-      this.$set(this.form, 'studyEpochUid', value)
+      this.$set(this.form, 'study_epoch_uid', value)
       const data = {
         study_uid: this.selectedStudy.uid,
-        epoch_type_uid: this.periods.find(el => el.uid === value).epochType
+        epoch_type_uid: this.periods.find(el => el.uid === value).epoch_type
       }
       epochs.getAllowedVisitTypes(data).then(resp => {
         this.visitTypes = resp.data
         codelists.getByCodelist('timepointReferences').then(resp => {
           this.timeReferences = resp.data.items
-          if (this.form.visitClass === visitConstants.CLASS_UNSCHEDULED_VISIT && this.visitTypes.length) {
+          if (this.form.visit_class === visitConstants.CLASS_UNSCHEDULED_VISIT && this.visitTypes.length) {
             this.setVisitType(visitConstants.VISIT_TYPE_UNSCHEDULED)
           }
-          if (this.form.visitClass === visitConstants.CLASS_NON_VISIT && this.visitTypes.length) {
+          if (this.form.visit_class === visitConstants.CLASS_NON_VISIT && this.visitTypes.length) {
             this.setVisitType(visitConstants.VISIT_TYPE_NON_VISIT)
           }
         })
       })
-      if (this.form.visitClass === visitConstants.CLASS_NON_VISIT || this.form.visitClass === visitConstants.CLASS_UNSCHEDULED_VISIT) {
+      if (this.form.visit_class === visitConstants.CLASS_NON_VISIT || this.form.visit_class === visitConstants.CLASS_UNSCHEDULED_VISIT) {
         this.setEpochAllocationRule(visitConstants.DATE_CURRENT_VISIT)
       } else {
         const studyEpoch = this.periods.find(item => item.uid === value)
-        if (studyEpoch.epochName === visitConstants.EPOCH_TREATMENT || studyEpoch.epochName === visitConstants.EPOCH_TREATMENT_1) {
+        if (studyEpoch.epoch_name === visitConstants.EPOCH_TREATMENT || studyEpoch.epoch_name === visitConstants.EPOCH_TREATMENT_1) {
           epochs.getAmountOfVisitsInStudyEpoch(this.selectedStudy.uid, studyEpoch.uid).then(resp => {
             const amountOfVisitsInTreatment = resp.data
             if (amountOfVisitsInTreatment === 0) {
@@ -782,27 +800,27 @@ export default {
     },
     batchCreateVisits (value) {
       if (value) {
-        const timeRef = this.timeReferences.find(timeRef => timeRef.sponsorPreferredName === visitConstants.TIMEREF_PREVIOUS_VISIT)
+        const timeRef = this.timeReferences.find(timeRef => timeRef.sponsor_preferred_name === visitConstants.TIMEREF_PREVIOUS_VISIT)
         if (timeRef) {
-          this.$set(this.form, 'timeReferenceUid', timeRef.termUid)
+          this.$set(this.form, 'time_reference_uid', timeRef.term_uid)
         }
       }
     },
-    'form.isGlobalAnchorVisit' (value) {
+    'form.is_global_anchor_visit' (value) {
       if (value) {
-        this.$set(this.form, 'timeValue', 0)
+        this.$set(this.form, 'time_value', 0)
         this.disableTimeValue = true
       } else {
-        this.$set(this.form, 'timeValue', null)
+        this.$set(this.form, 'time_value', null)
         this.disableTimeValue = false
       }
     },
-    'form.visitClass' (value) {
-      if (value !== visitConstants.CLASS_SINGLE_VISIT) {
+    'form.visit_class' (value) {
+      if (value !== visitConstants.CLASS_SINGLE_VISIT && value !== visitConstants.CLASS_SPECIAL_VISIT) {
         this.setStudyEpochToBasic()
-        const contactMode = this.contactModes.find(item => item.sponsorPreferredName === visitConstants.CONTACT_MODE_VIRTUAL_VISIT)
+        const contactMode = this.contactModes.find(item => item.sponsor_preferred_name === visitConstants.CONTACT_MODE_VIRTUAL_VISIT)
         if (contactMode) {
-          this.$set(this.form, 'visitContactModeUid', contactMode.termUid)
+          this.$set(this.form, 'visit_contact_mode_uid', contactMode.term_uid)
         }
       }
       if (value === visitConstants.CLASS_UNSCHEDULED_VISIT && this.visitTypes.length) {
@@ -813,7 +831,7 @@ export default {
       }
     },
     periods (value) {
-      if (value && value.length && this.form.visitClass !== visitConstants.CLASS_SINGLE_VISIT) {
+      if (value && value.length && this.form.visit_class !== visitConstants.CLASS_SINGLE_VISIT) {
         this.setStudyEpochToBasic()
       }
     }

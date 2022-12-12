@@ -14,7 +14,7 @@
       :headers="headers"
       :items="history"
       dense
-      sort-by="startDate"
+      sort-by="start_date"
       >
       <template v-slot:item="{ item }">
         <tr>
@@ -76,12 +76,12 @@ export default {
           { text: this.$t('_global.name'), value: 'name' },
           { text: this.$t('HistoryTable.short_name'), value: 'shortName' },
           { text: this.$t('HistoryTable.arm_type'), value: 'armType' },
-          { text: this.$t('HistoryTable.number_of_subj'), value: 'numberOfSubjects' },
+          { text: this.$t('HistoryTable.number_of_subj'), value: 'number_of_subjects' },
           { text: this.$t('_global.order'), value: 'order' },
           { text: this.$t('_global.description'), value: 'description' },
           { text: this.$t('HistoryTable.change_type'), value: 'changeType' },
-          { text: this.$t('_global.user'), value: 'userInitials' },
-          { text: this.$t('HistoryTable.valid_from'), value: 'startDate' },
+          { text: this.$t('_global.user'), value: 'user_initials' },
+          { text: this.$t('HistoryTable.valid_from'), value: 'start_date' },
           { text: this.$t('HistoryTable.valid_to'), value: 'endDate' }
         ]
       }
@@ -90,13 +90,13 @@ export default {
           { text: this.$t('_global.name'), value: 'name' },
           { text: this.$t('HistoryTable.short_name'), value: 'shortName' },
           { text: this.$t('HistoryTable.branch_code'), value: 'code' },
-          { text: this.$t('HistoryTable.planned_number'), value: 'numberOfSubjects' },
-          { text: this.$t('HistoryTable.rand_group'), value: 'randomizationGroup' },
+          { text: this.$t('HistoryTable.planned_number'), value: 'number_of_subjects' },
+          { text: this.$t('HistoryTable.rand_group'), value: 'randomization_group' },
           { text: this.$t('_global.order'), value: 'order' },
           { text: this.$t('_global.description'), value: 'description' },
           { text: this.$t('HistoryTable.change_type'), value: 'changeType' },
-          { text: this.$t('_global.user'), value: 'userInitials' },
-          { text: this.$t('HistoryTable.valid_from'), value: 'startDate' },
+          { text: this.$t('_global.user'), value: 'user_initials' },
+          { text: this.$t('HistoryTable.valid_from'), value: 'start_date' },
           { text: this.$t('HistoryTable.valid_to'), value: 'endDate' }
         ]
       }
@@ -107,12 +107,12 @@ export default {
           { text: this.$t('HistoryTable.branch_code'), value: 'code' },
           { text: this.$t('HistoryTable.arms_uids'), value: 'armRootsUids' },
           { text: this.$t('HistoryTable.branches_uids'), value: 'branchArmRootsUids' },
-          { text: this.$t('HistoryTable.planned_number'), value: 'numberOfSubjects' },
+          { text: this.$t('HistoryTable.planned_number'), value: 'number_of_subjects' },
           { text: this.$t('_global.order'), value: 'order' },
           { text: this.$t('_global.description'), value: 'description' },
           { text: this.$t('HistoryTable.change_type'), value: 'changeType' },
-          { text: this.$t('_global.user'), value: 'userInitials' },
-          { text: this.$t('HistoryTable.valid_from'), value: 'startDate' },
+          { text: this.$t('_global.user'), value: 'user_initials' },
+          { text: this.$t('HistoryTable.valid_from'), value: 'start_date' },
           { text: this.$t('HistoryTable.valid_to'), value: 'endDate' }
         ]
       }
@@ -120,40 +120,72 @@ export default {
         return [
           { text: this.$t('_global.name'), value: 'name' },
           { text: this.$t('HistoryTable.short_name'), value: 'shortName' },
-          { text: this.$t('HistoryTable.element_subtype'), value: 'elementSubType.sponsorPreferredName' },
+          { text: this.$t('HistoryTable.element_subtype'), value: 'elementSubType.sponsor_preferred_name' },
           { text: this.$t('HistoryTable.planned_duration'), value: 'plannedDuration' },
           { text: this.$t('HistoryTable.start_rule'), value: 'startRule' },
           { text: this.$t('HistoryTable.end_rule'), value: 'endRule' },
           { text: this.$t('_global.order'), value: 'order' },
           { text: this.$t('_global.description'), value: 'description' },
           { text: this.$t('HistoryTable.change_type'), value: 'changeType' },
-          { text: this.$t('_global.user'), value: 'userInitials' },
-          { text: this.$t('HistoryTable.valid_from'), value: 'startDate' },
+          { text: this.$t('_global.user'), value: 'user_initials' },
+          { text: this.$t('HistoryTable.valid_from'), value: 'start_date' },
           { text: this.$t('HistoryTable.valid_to'), value: 'endDate' }
+        ]
+      }
+      if (this.type === 'studyEpochs') {
+        return [
+          { text: this.$t('_global.uid'), value: 'uid' },
+          { text: this.$t('_global.name'), value: 'epoch_name' },
+          { text: this.$t('HistoryTable.change_description'), value: 'change_description' },
+          { text: this.$t('StudyEpochTable.number'), value: 'order', width: '5%' },
+          { text: this.$t('StudyEpochTable.name'), value: 'epoch_name' },
+          { text: this.$t('StudyEpochTable.type'), value: 'epoch_type' },
+          { text: this.$t('StudyEpochTable.sub_type'), value: 'epoch_subtype' },
+          { text: this.$t('StudyEpochTable.start_rule'), value: 'start_rule' },
+          { text: this.$t('StudyEpochTable.end_rule'), value: 'end_rule' },
+          { text: this.$t('StudyEpochTable.description'), value: 'description', width: '20%' },
+          { text: this.$t('StudyEpochTable.visit_count'), value: 'study_visit_count' },
+          { text: this.$t('StudyEpochTable.colour'), value: 'color_hash' },
+          { text: this.$t('_global.user'), value: 'user_initials' },
+          { text: this.$t('HistoryTable.start_date'), value: 'start_date' }
         ]
       }
       if (this.type === 'studyVisits') {
         return [
           { text: this.$t('_global.uid'), value: 'uid' },
-          { text: this.$t('_global.name'), value: 'name' },
-          { text: this.$t('HistoryTable.change_description'), value: 'changeDescription' },
-          { text: this.$t('_global.status'), value: 'status' },
-          { text: this.$t('_global.order'), value: 'order' },
-          { text: this.$t('HistoryTable.change_type'), value: 'changeType' },
-          { text: this.$t('_global.user'), value: 'userInitials' },
-          { text: this.$t('HistoryTable.valid_from'), value: 'creationDate' },
-          { text: this.$t('HistoryTable.valid_to'), value: 'modificationDate' }
+          { text: this.$t('StudyVisitForm.study_epoch'), value: 'study_epoch_name' },
+          { text: this.$t('StudyVisitsTimeline.visit_type'), value: 'visit_type_name' },
+          { text: this.$t('StudyVisitForm.visit_class'), value: 'visit_class' },
+          { text: this.$t('StudyVisitForm.anchor_visit_in_group'), value: 'visit_subclass' },
+          { text: this.$t('StudyVisitForm.visit_group'), value: 'visit_subname' },
+          { text: this.$t('StudyVisitForm.global_anchor_visit'), value: 'is_global_anchor_visit' },
+          { text: this.$t('StudyVisitForm.contact_mode'), value: 'visit_contact_mode_name' },
+          { text: this.$t('StudyVisitForm.time_reference'), value: 'time_reference_name' },
+          { text: this.$t('StudyVisitForm.time_value'), value: 'time_value' },
+          { text: this.$t('StudyVisitForm.visit_name'), value: 'visit_name' },
+          { text: this.$t('StudyVisitForm.visit_short_name'), value: 'visit_short_name' },
+          { text: this.$t('StudyVisitForm.study_day_label'), value: 'study_day_label' },
+          { text: this.$t('StudyVisitForm.study_week_label'), value: 'study_week_label' },
+          { text: this.$t('StudyVisitForm.visit_window'), value: 'visit_window' },
+          { text: this.$t('StudyVisitForm.consecutive_visit'), value: 'consecutive_visit_group' },
+          { text: this.$t('StudyVisitForm.show_wisit'), value: 'show_visit' },
+          { text: this.$t('StudyVisitForm.visit_description'), value: 'description' },
+          { text: this.$t('StudyVisitForm.epoch_allocation'), value: 'epoch_allocation_name' },
+          { text: this.$t('StudyVisitForm.visit_start_rule'), value: 'start_rule' },
+          { text: this.$t('StudyVisitForm.visit_stop_rule'), value: 'end_rule' },
+          { text: this.$t('_global.modified'), value: 'start_date' },
+          { text: this.$t('_global.user'), value: 'user_initials' }
         ]
       }
       return [
-        { text: this.$t('_global.library'), value: 'libraryName' },
+        { text: this.$t('_global.library'), value: 'library_name' },
         { text: this.$t('_global.name'), value: 'name' },
-        { text: this.$t('HistoryTable.change_description'), value: 'changeDescription' },
+        { text: this.$t('HistoryTable.change_description'), value: 'change_description' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' },
         { text: this.$t('HistoryTable.change_type'), value: 'changeType' },
-        { text: this.$t('_global.user'), value: 'userInitials' },
-        { text: this.$t('HistoryTable.valid_from'), value: 'startDate' },
+        { text: this.$t('_global.user'), value: 'user_initials' },
+        { text: this.$t('HistoryTable.valid_from'), value: 'start_date' },
         { text: this.$t('HistoryTable.valid_to'), value: 'endDate' }
       ]
     }
@@ -175,6 +207,8 @@ export default {
         resp = await arms.getStudyCohortsVersions(this.selectedStudy.uid)
       } else if (this.type === 'studyElements') {
         resp = await arms.getStudyElementsVersions(this.selectedStudy.uid)
+      } else if (this.type === 'studyEpochs') {
+        resp = await studyEpochs.getStudyEpochsVersions(this.selectedStudy.uid)
       } else if (this.type === 'studyVisits') {
         resp = await studyEpochs.getStudyVisitsVersions(this.selectedStudy.uid)
       }
@@ -208,7 +242,7 @@ export default {
         }
         if (accessor.indexOf('armType') !== -1) {
           if (value) {
-            value = value.sponsorPreferredName
+            value = value.sponsor_preferred_name
           }
         }
         if (accessor.indexOf('armRootsUids') !== -1) {

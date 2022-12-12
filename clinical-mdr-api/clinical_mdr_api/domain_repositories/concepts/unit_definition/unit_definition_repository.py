@@ -46,22 +46,22 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
     def specific_alias_clause(self) -> str:
         return """
         WITH *,
-            concept_value.si_unit as siUnit,
-            concept_value.display_unit AS displayUnit,
-            concept_value.master_unit as masterUnit,
-            concept_value.convertible_unit as convertibleUnit,
-            concept_value.us_conventional_unit as usConventionalUnit,
-            concept_value.molecular_weight_conv_expon AS molecularWeightConvExpon,
-            concept_value.legacy_code AS legacyCode,
-            concept_value.conversion_factor_to_master as conversionFactorToMaster,
+            concept_value.si_unit as si_unit,
+            concept_value.display_unit AS display_unit,
+            concept_value.master_unit as master_unit,
+            concept_value.convertible_unit as convertible_unit,
+            concept_value.us_conventional_unit as us_conventional_unit,
+            concept_value.molecular_weight_conv_expon AS molecular_weight_conv_expon,
+            concept_value.legacy_code AS legacy_code,
+            concept_value.conversion_factor_to_master as conversion_factor_to_master,
             concept_value.order as order,
             concept_value.comment as comment,
             [(concept_value)-[:HAS_CT_UNIT]->(term_root)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) 
-                | {uid:term_root.uid, name: value.name}] AS ctUnits,
+                | {uid:term_root.uid, name: value.name}] AS ct_units,
             [(concept_value)-[:HAS_UNIT_SUBSET]->(term_root)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) 
-                | {uid:term_root.uid, name: value.name}] AS unitSubsets,
+                | {uid:term_root.uid, name: value.name}] AS unit_subsets,
             head([(concept_value)-[:HAS_CT_DIMENSION]->(term_root)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) 
-                | {uid:term_root.uid, name: value.name}]) AS unitDimension,
+                | {uid:term_root.uid, name: value.name}]) AS unit_dimension,
             head([(concept_value)-[:HAS_UCUM_TERM]->(ucum_term_root)-[:LATEST_FINAL]->(value) 
                 | {uid:ucum_term_root.uid, name:value.name}]) AS ucum
         """
@@ -171,15 +171,15 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
         major, minor = input_dict.get("version").split(".")
 
         ct_units = []
-        for ct_unit in input_dict.get("ctUnits"):
+        for ct_unit in input_dict.get("ct_units"):
             ct_units.append(CTTerm(uid=ct_unit.get("uid"), name=ct_unit.get("name")))
         unit_subsets = []
-        for unit_subset in input_dict.get("unitSubsets"):
+        for unit_subset in input_dict.get("unit_subsets"):
             unit_subsets.append(
                 CTTerm(uid=unit_subset.get("uid"), name=unit_subset.get("name"))
             )
 
-        unit_dimension = input_dict.get("unitDimension")
+        unit_dimension = input_dict.get("unit_dimension")
         unit_dimension_uid = unit_dimension.get("uid") if unit_dimension else None
         unit_dimension_name = unit_dimension.get("name") if unit_dimension else None
 
@@ -191,14 +191,18 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
             unit_definition_value=UnitDefinitionValueVO.from_repository_values(
                 name=input_dict.get("name"),
                 definition=input_dict.get("definition"),
-                si_unit=input_dict.get("siUnit"),
-                display_unit=input_dict.get("displayUnit"),
-                master_unit=input_dict.get("masterUnit"),
-                convertible_unit=input_dict.get("convertibleUnit"),
-                us_conventional_unit=input_dict.get("usConventionalUnit"),
-                molecular_weight_conv_expon=input_dict.get("molecularWeightConvExpon"),
-                legacy_code=input_dict.get("legacyCode"),
-                conversion_factor_to_master=input_dict.get("conversionFactorToMaster"),
+                si_unit=input_dict.get("si_unit"),
+                display_unit=input_dict.get("display_unit"),
+                master_unit=input_dict.get("master_unit"),
+                convertible_unit=input_dict.get("convertible_unit"),
+                us_conventional_unit=input_dict.get("us_conventional_unit"),
+                molecular_weight_conv_expon=input_dict.get(
+                    "molecular_weight_conv_expon"
+                ),
+                legacy_code=input_dict.get("legacy_code"),
+                conversion_factor_to_master=input_dict.get(
+                    "conversion_factor_to_master"
+                ),
                 ct_units=ct_units,
                 unit_subsets=unit_subsets,
                 unit_dimension_uid=unit_dimension_uid,
@@ -207,19 +211,19 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
                 unit_dimension_name=unit_dimension_name,
                 order=input_dict.get("order"),
                 comment=input_dict.get("comment"),
-                is_template_parameter=input_dict.get("templateParameter"),
+                is_template_parameter=input_dict.get("template_parameter"),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("libraryName"),
+                library_name=input_dict.get("library_name"),
                 is_library_editable_callback=(
                     lambda _: input_dict.get("is_library_editable")
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("changeDescription"),
+                change_description=input_dict.get("change_description"),
                 status=LibraryItemStatus(input_dict.get("status")),
-                author=input_dict.get("userInitials"),
-                start_date=convert_to_datetime(value=input_dict.get("startDate")),
+                author=input_dict.get("user_initials"),
+                start_date=convert_to_datetime(value=input_dict.get("start_date")),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),

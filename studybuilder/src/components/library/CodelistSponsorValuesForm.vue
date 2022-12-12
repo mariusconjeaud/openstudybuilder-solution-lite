@@ -27,7 +27,7 @@
       <v-row>
         <v-col cols="6">
           <v-switch
-            v-model="form.templateParameter"
+            v-model="form.template_parameter"
             :label="$t('CodelistSponsorValuesForm.tpl_parameter')"
             />
         </v-col>
@@ -40,7 +40,7 @@
             >
             <v-textarea
               data-cy="change-description"
-              v-model="form.changeDescription"
+              v-model="form.change_description"
               :label="$t('HistoryTable.change_description')"
               :error-messages="errors"
               rows="1"
@@ -124,10 +124,10 @@ export default {
       if (!isValid) return
       this.working = true
       try {
-        const resp = await controlledTerminology.updateCodelistNames(this.value.codelistUid, this.form)
+        const resp = await controlledTerminology.updateCodelistNames(this.value.codelist_uid, this.form)
         this.$emit('input', resp.data)
         bus.$emit('notification', { msg: this.$t('CodelistSponsorValuesForm.update_success') })
-        delete this.form.changeDescription
+        delete this.form.change_description
         this.close()
       } finally {
         this.working = false

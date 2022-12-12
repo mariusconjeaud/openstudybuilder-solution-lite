@@ -1,11 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
 from neomodel import db
 
-from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain.concepts.concept_base import ConceptARBase
-from clinical_mdr_api.domain.concepts.utils import RelationType
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -18,27 +16,11 @@ from clinical_mdr_api.domain_repositories.library_item_repository import (
 from clinical_mdr_api.domain_repositories.models._utils import (
     format_generic_header_values,
 )
-from clinical_mdr_api.domain_repositories.models.activities import (
-    ActivityGroupRoot,
-    ActivityRoot,
-    ActivitySubGroupRoot,
-)
-from clinical_mdr_api.domain_repositories.models.concepts import UnitDefinitionRoot
-from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
-    CTTermRoot,
-)
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
     VersionRoot,
     VersionValue,
-)
-from clinical_mdr_api.domain_repositories.models.odm import (
-    OdmFormRoot,
-    OdmItemGroupRoot,
-    OdmItemRoot,
-    OdmXmlExtensionAttributeRoot,
-    OdmXmlExtensionTagRoot,
 )
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameterValueRoot,
@@ -50,7 +32,6 @@ from clinical_mdr_api.repositories._utils import (
     FilterOperator,
     sb_clear_cache,
 )
-from clinical_mdr_api.services._utils import strip_suffix
 
 
 class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType], ABC):
@@ -121,7 +102,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
             WITH
                 concept_root.uid AS uid,
                 concept_value as concept_value,
-                library.name AS libraryName,
+                library.name AS library_name,
                 library.is_editable AS is_library_editable,
                 ld, lf, lr, hv
                 CALL apoc.case(
@@ -150,17 +131,17 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
                     when (concept_value:EventValue) then "events"
                     else ""
                 end as type,
-                concept_value.name_sentence_case AS nameSentenceCase,
+                concept_value.name_sentence_case AS name_sentence_case,
                 concept_value.definition AS definition,
                 concept_value.abbreviation AS abbreviation,
-                CASE WHEN concept_value:TemplateParameterValue THEN true ELSE false END AS templateParameter,
-                libraryName,
+                CASE WHEN concept_value:TemplateParameterValue THEN true ELSE false END AS template_parameter,
+                library_name,
                 is_library_editable,
-                value.version_rel.start_date AS startDate,
+                value.version_rel.start_date AS start_date,
                 value.version_rel.status AS status,
                 value.version_rel.version AS version,
-                value.version_rel.change_description AS changeDescription,
-                value.version_rel.user_initials AS userInitials,
+                value.version_rel.change_description AS change_description,
+                value.version_rel.user_initials AS user_initials,
                 concept_value
         """
 
@@ -229,9 +210,9 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         )
 
         query.parameters.update(filter_query_parameters)
-        result_array, attributes_names = db.cypher_query(
-            query=query.full_query, params=query.parameters
-        )
+
+        result_array, attributes_names = query.execute()
+
         extracted_items = self._retrieve_concepts_from_cypher_res(
             result_array, attributes_names
         )
@@ -326,10 +307,10 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
 
         query.parameters.update(filter_query_parameters)
 
-        header_query = query.build_header_query(
+        query.full_query = query.build_header_query(
             header_alias=field_name, result_count=result_count
         )
-        result_array, _ = db.cypher_query(query=header_query, params=query.parameters)
+        result_array, _ = query.execute()
 
         return (
             format_generic_header_values(result_array[0][0])
@@ -437,147 +418,3 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
                     },
                 )
                 TemplateParameterValueRoot.generate_node_uids_if_not_present()
-
-    @classmethod
-    def _get_origin_and_relation_node(
-        cls, uid: str, relation_uid: Optional[str], relationship_type: RelationType
-    ):
-        root_class_node = cls.root_class.nodes.get_or_none(uid=uid)
-
-        if relationship_type == RelationType.ACTIVITY_GROUP:
-            relation_node = ActivityGroupRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.has_activity_group
-        elif relationship_type == RelationType.ACTIVITY_SUB_GROUP:
-            relation_node = ActivitySubGroupRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.has_activity_sub_group
-        elif relationship_type == RelationType.ACTIVITY:
-            relation_node = ActivityRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.has_activity
-        elif relationship_type == RelationType.ITEM_GROUP:
-            relation_node = OdmItemGroupRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.item_group_ref
-        elif relationship_type == RelationType.ITEM:
-            relation_node = OdmItemRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.item_ref
-        elif relationship_type == RelationType.FORM:
-            relation_node = OdmFormRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.form_ref
-        elif relationship_type == RelationType.TERM:
-            relation_node = CTTermRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.has_codelist_term
-        elif relationship_type == RelationType.UNIT_DEFINITION:
-            relation_node = UnitDefinitionRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.has_unit_definition
-        elif relationship_type == RelationType.XML_EXTENSION_TAG:
-            relation_node = OdmXmlExtensionTagRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.has_xml_extension_tag
-        elif relationship_type == RelationType.XML_EXTENSION_ATTRIBUTE:
-            relation_node = OdmXmlExtensionAttributeRoot.nodes.get_or_none(
-                uid=relation_uid
-            )
-            origin = root_class_node.has_xml_extension_attribute
-        elif relationship_type == RelationType.XML_EXTENSION_TAG_ATTRIBUTE:
-            relation_node = OdmXmlExtensionAttributeRoot.nodes.get_or_none(
-                uid=relation_uid
-            )
-            origin = root_class_node.has_xml_extension_tag_attribute
-        else:
-            raise exceptions.BusinessLogicException("Invalid relation type.")
-
-        if not relation_node and relation_uid:
-            raise exceptions.BusinessLogicException(
-                f"The object with uid ({relation_uid}) does not exist."
-            )
-
-        return origin, relation_node
-
-    @sb_clear_cache(caches=["cache_store_item_by_uid"])
-    def add_relation(
-        self,
-        uid: str,
-        relation_uid: str,
-        relationship_type: RelationType,
-        parameters: dict = None,
-    ) -> None:
-        origin, relation_node = self.__class__._get_origin_and_relation_node(
-            uid, relation_uid, relationship_type
-        )
-
-        origin.disconnect(relation_node)
-
-        if isinstance(parameters, dict):
-            origin.connect(relation_node, parameters)
-        else:
-            origin.connect(relation_node)
-
-    @sb_clear_cache(caches=["cache_store_item_by_uid"])
-    def remove_relation(
-        self,
-        uid: str,
-        relation_uid: Optional[str],
-        relationship_type: RelationType,
-        disconnect_all: bool = False,
-    ) -> None:
-        origin, relation_node = self.__class__._get_origin_and_relation_node(
-            uid, relation_uid, relationship_type
-        )
-
-        if disconnect_all:
-            origin.disconnect_all()
-        else:
-            origin.disconnect(relation_node)
-
-    def has_active_relationships(
-        self, uid: str, relationships: list, all_exist: bool = False
-    ) -> bool:
-        """
-        Checks if the node has active relationships.
-
-        :param uid: The uid of the node to check relationships on.
-        :param relationships: A list of relationship names to check the existence of.
-        :param all_exist: If True, all provided relationships must exist on the node. If False, at least one of the provided relationships must exist.
-        :return: Returns True, if the relationships exist, otherwise False.
-        """
-        root = self.root_class.nodes.get_or_none(uid=uid)
-
-        try:
-            if not all_exist:
-                for relationship in relationships:
-                    if getattr(root, relationship):
-                        return True
-
-                return False
-            for relationship in relationships:
-                if not getattr(root, relationship):
-                    return False
-
-            return True
-        except AttributeError as exc:
-            raise AttributeError(f"{relationship} relationship was not found.") from exc
-
-    def get_active_relationships(
-        self, uid: str, relationships: list
-    ) -> Dict[str, List[str]]:
-        """
-        Returns a key-pair value of target node's name and a list of uids of nodes connected to source node.
-
-        :param uid: The uid of the source node to check relationships on.
-        :param relationships: A list of relationship names to check the existence of.
-        :return: Returns a dict.
-        """
-        source_node = self.root_class.nodes.get_or_none(uid=uid)
-
-        try:
-            rs: dict[str, List[str]] = {}
-            for relationship in relationships:
-                rel = getattr(source_node, relationship)
-                if rel:
-                    for target_node in rel.all():
-                        target_node_without_suffix = strip_suffix(target_node.__label__)
-                        if target_node_without_suffix not in rs:
-                            rs[target_node_without_suffix] = [target_node.uid]
-                        else:
-                            rs[target_node_without_suffix].append(target_node.uid)
-            return rs
-        except AttributeError as exc:
-            raise AttributeError(f"{relationship} relationship was not found.") from exc

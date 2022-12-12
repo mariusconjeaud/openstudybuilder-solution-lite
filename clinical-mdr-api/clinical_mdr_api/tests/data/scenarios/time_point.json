@@ -5,14 +5,14 @@
          "headers": {},
          "method": "POST",
          "request": {
-            "nameSentenceCase": "time_point_name_sentence_case1",
+            "name_sentence_case": "time_point_name_sentence_case1",
             "definition": "time_point_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor",
-            "numericValueUid": "NumericValue_000001",
-            "unitDefinitionUid": "UnitDefinition_000001",
-            "timeReferenceUid": "term_root_final"
+            "template_parameter": true,
+            "library_name": "Sponsor",
+            "numeric_value_uid": "NumericValue_000001",
+            "unit_definition_uid": "UnitDefinition_000001",
+            "time_reference_uid": "term_root_final"
          },
          "url": "/concepts/time-points"
       },
@@ -22,20 +22,20 @@
          "result": {
             "uid": "TimePoint_000001",
             "name": "1.23 name_1 after term_value_name1",
-            "nameSentenceCase": "time_point_name_sentence_case1",
+            "name_sentence_case": "time_point_name_sentence_case1",
             "definition": "time_point_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor",
+            "template_parameter": true,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null,
-            "numericValueUid": "NumericValue_000001",
-            "unitDefinitionUid": "UnitDefinition_000001",
-            "timeReferenceUid": "term_root_final"
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null,
+            "numeric_value_uid": "NumericValue_000001",
+            "unit_definition_uid": "UnitDefinition_000001",
+            "time_reference_uid": "term_root_final"
          }
       }
    },
@@ -45,14 +45,14 @@
          "headers": {},
          "method": "POST",
          "request": {
-            "nameSentenceCase": "time_point_name_sentence_case1",
+            "name_sentence_case": "time_point_name_sentence_case1",
             "definition": "time_point_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor",
-            "numericValueUid": "NumericValue_000001",
-            "unitDefinitionUid": "UnitDefinition_000001",
-            "timeReferenceUid": "term_root_final"
+            "template_parameter": true,
+            "library_name": "Sponsor",
+            "numeric_value_uid": "NumericValue_000001",
+            "unit_definition_uid": "UnitDefinition_000001",
+            "time_reference_uid": "term_root_final"
          },
          "url": "/concepts/time-points"
       },
@@ -62,20 +62,20 @@
          "result": {
             "uid": "TimePoint_000001",
             "name": "1.23 name_1 after term_value_name1",
-            "nameSentenceCase": "time_point_name_sentence_case1",
+            "name_sentence_case": "time_point_name_sentence_case1",
             "definition": "time_point_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor",
+            "template_parameter": true,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null,
-            "numericValueUid": "NumericValue_000001",
-            "unitDefinitionUid": "UnitDefinition_000001",
-            "timeReferenceUid": "term_root_final"
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null,
+            "numeric_value_uid": "NumericValue_000001",
+            "unit_definition_uid": "UnitDefinition_000001",
+            "time_reference_uid": "term_root_final"
          }
       }
    },
@@ -85,14 +85,14 @@
          "headers": {},
          "method": "POST",
          "request": {
-            "nameSentenceCase": "time_point_name_sentence_case2",
+            "name_sentence_case": "time_point_name_sentence_case2",
             "definition": "time_point_definition2",
             "abbreviation": "abbv",
-            "templateParameter": false,
-            "libraryName": "Sponsor",
-            "numericValueUid": "NumericValue_000002",
-            "unitDefinitionUid": "UnitDefinition_000001",
-            "timeReferenceUid": "term_root_final"
+            "template_parameter": false,
+            "library_name": "Sponsor",
+            "numeric_value_uid": "NumericValue_000002",
+            "unit_definition_uid": "UnitDefinition_000001",
+            "time_reference_uid": "term_root_final"
          },
          "url": "/concepts/time-points"
       },
@@ -102,20 +102,20 @@
          "result": {
             "uid": "TimePoint_000002",
             "name": "3.21 name_1 after term_value_name1",
-            "nameSentenceCase": "time_point_name_sentence_case2",
+            "name_sentence_case": "time_point_name_sentence_case2",
             "definition": "time_point_definition2",
             "abbreviation": "abbv",
-            "templateParameter": false,
-            "libraryName": "Sponsor",
+            "template_parameter": false,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null,
-            "numericValueUid": "NumericValue_000002",
-            "unitDefinitionUid": "UnitDefinition_000001",
-            "timeReferenceUid": "term_root_final"
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null,
+            "numeric_value_uid": "NumericValue_000002",
+            "unit_definition_uid": "UnitDefinition_000001",
+            "time_reference_uid": "term_root_final"
          }
       }
    },
@@ -125,7 +125,7 @@
          "headers": {},
          "method": "GET",
          "request": {},
-         "url": "/concepts/time-points?totalCount=true"
+         "url": "/concepts/time-points?total_count=true"
       },
       "response": {
          "code": 200,
@@ -135,43 +135,43 @@
                {
                   "uid": "TimePoint_000001",
                   "name": "1.23 name_1 after term_value_name1",
-                  "nameSentenceCase": "time_point_name_sentence_case1",
+                  "name_sentence_case": "time_point_name_sentence_case1",
                   "definition": "time_point_definition1",
                   "abbreviation": "abbv",
-                  "templateParameter": true,
-                  "libraryName": "Sponsor",
+                  "template_parameter": true,
+                  "library_name": "Sponsor",
                   "status": null,
                   "version": null,
-                  "changeDescription": null,
-                  "userInitials": null,
-                  "startDate": null,
-                  "endDate": null,
-                  "numericValueUid": "NumericValue_000001",
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "timeReferenceUid": "term_root_final"
+                  "change_description": null,
+                  "user_initials": null,
+                  "start_date": null,
+                  "end_date": null,
+                  "numeric_value_uid": "NumericValue_000001",
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "time_reference_uid": "term_root_final"
                },
                {
                   "uid": "TimePoint_000002",
                   "name": "3.21 name_1 after term_value_name1",
-                  "nameSentenceCase": "time_point_name_sentence_case2",
+                  "name_sentence_case": "time_point_name_sentence_case2",
                   "definition": "time_point_definition2",
                   "abbreviation": "abbv",
-                  "templateParameter": false,
-                  "libraryName": "Sponsor",
+                  "template_parameter": false,
+                  "library_name": "Sponsor",
                   "status": null,
                   "version": null,
-                  "changeDescription": null,
-                  "userInitials": null,
-                  "startDate": null,
-                  "endDate": null,
-                  "numericValueUid": "NumericValue_000002",
-                  "unitDefinitionUid": "UnitDefinition_000001",
-                  "timeReferenceUid": "term_root_final"
+                  "change_description": null,
+                  "user_initials": null,
+                  "start_date": null,
+                  "end_date": null,
+                  "numeric_value_uid": "NumericValue_000002",
+                  "unit_definition_uid": "UnitDefinition_000001",
+                  "time_reference_uid": "term_root_final"
                }
             ],
             "total": 2,
             "page": 1,
-            "size": 0
+            "size": 10
          }
       }
    }

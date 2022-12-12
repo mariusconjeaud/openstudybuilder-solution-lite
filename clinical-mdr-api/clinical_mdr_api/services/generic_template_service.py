@@ -259,7 +259,7 @@ class GenericLibraryItemServiceBase(Generic[_AggregateRootType], abc.ABC):
 
             item.create_new_version(
                 author=self.user_initials,
-                change_description=template.changeDescription,
+                change_description=template.change_description,
                 template=template_vo,
             )
             self.repository.save(item)
@@ -363,12 +363,13 @@ class GenericTemplateService(
         return self.object_repository_interface()
 
     def get_check_exists_callback(self, template: BaseModel):
-        if hasattr(template, "studyUid") and template.studyUid:
+        if hasattr(template, "study_uid") and template.study_uid:
             return lambda _template_vo: self.repository.check_exists_by_name_in_study(
-                name=_template_vo.name, study_uid=template.studyUid
+                name=_template_vo.name, study_uid=template.study_uid
             )
+
         return lambda _template_vo: self.repository.check_exists_by_name_in_library(
-            name=_template_vo.name, library=template.libraryName
+            name=_template_vo.name, library=template.library_name
         )
 
     def _create_ar_from_input_values(
@@ -385,7 +386,7 @@ class GenericTemplateService(
                 author=self.user_initials,
                 template=template_vo,
                 library=library_vo,
-                editable_instance=template.editableInstance,
+                editable_instance=template.editable_instance,
                 generate_uid_callback=self.repository.generate_uid_callback,
             )
         except ValueError as e:
@@ -407,7 +408,7 @@ class GenericTemplateService(
             return self._transform_aggregate_root_to_pydantic_model(item)
         except core.DoesNotExist as exc:
             raise NotFoundException(
-                f"The library with the name='{template.libraryName}' could not be found."
+                f"The library with the name='{template.library_name}' could not be found."
             ) from exc
         except VersioningException as e:
             raise BusinessLogicException(e.msg) from e
@@ -420,8 +421,8 @@ class GenericTemplateService(
         # Create TemplateVO
         template_vo = TemplateVO.from_input_values_2(
             template_name=template.name,
-            template_guidance_text=template.guidanceText
-            if hasattr(template, "guidanceText")
+            template_guidance_text=template.guidance_text
+            if hasattr(template, "guidance_text")
             else None,
             parameter_name_exists_callback=self._parameter_name_exists,
             default_parameter_values=default_parameter_values,
@@ -430,7 +431,7 @@ class GenericTemplateService(
         # Fetch library
         try:
             library_vo = LibraryVO.from_input_values_2(
-                library_name=template.libraryName,
+                library_name=template.library_name,
                 is_library_editable_callback=(
                     lambda name: (
                         cast(
@@ -443,7 +444,7 @@ class GenericTemplateService(
             )
         except ValueError as exc:
             raise NotFoundException(
-                f"The library with the name='{template.libraryName}' could not be found."
+                f"The library with the name='{template.library_name}' could not be found."
             ) from exc
 
         return template_vo, library_vo
@@ -549,13 +550,13 @@ class GenericTemplateService(
 
             template_vo = TemplateVO.from_input_values_2(
                 template_name=template.name,
-                template_guidance_text=template.guidanceText,
+                template_guidance_text=template.guidance_text,
                 parameter_name_exists_callback=self._parameter_name_exists,
             )  # noqa: E501
 
             item.create_new_version(
                 author=self.user_initials,
-                change_description=template.changeDescription,
+                change_description=template.change_description,
                 template=template_vo,
             )
             self.repository.save(item)
@@ -615,7 +616,7 @@ class GenericTemplateService(
 
             item.edit_draft(
                 author=self.user_initials,
-                change_description=template.changeDescription,
+                change_description=template.change_description,
                 template=template_vo,
             )
             self.repository.save(item)

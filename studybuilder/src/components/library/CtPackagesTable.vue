@@ -1,12 +1,13 @@
 <template>
 <package-timeline
-  :catalogueName="catalogueName"
-  :packageName="packageName"
+  :catalogue-name="catalogueName"
+  :package-name="packageName"
   @catalogueChanged="updateUrl"
   @packageChanged="updateUrl"
   >
-  <template v-slot:default="{ catalogueName, selectedPackage }">
+  <template v-slot:default="{ catalogue_name, selectedPackage }">
     <codelist-table
+      :catalogue="catalogue_name"
       :package="selectedPackage"
       table-height="50vh"
       read-only
@@ -18,7 +19,7 @@
           class="mx-2"
           fab
           small
-          @click="goToPackagesHistory(catalogueName)"
+          @click="goToPackagesHistory(catalogue_name)"
           >
           <v-icon>mdi-calendar-clock</v-icon>
         </v-btn>
@@ -39,22 +40,26 @@ export default {
     PackageTimeline
   },
   methods: {
-    openCodelistTerms ({ codelist, packageName }) {
+    openCodelistTerms ({ codelist, catalogueName, packageName }) {
       this.$router.push({
         name: 'CtPackageTerms',
-        params: { codelistId: codelist.codelistUid, packageName: packageName }
+        params: {
+          codelist_id: codelist.codelist_uid,
+          catalogue_name: catalogueName,
+          package_name: packageName
+        }
       })
     },
     updateUrl (catalogueName, packageName) {
       this.$router.push({
         name: 'CtPackages',
-        params: { catalogueName: catalogueName, packageName: packageName }
+        params: { catalogue_name: catalogueName, package_name: packageName }
       })
     },
     goToPackagesHistory (catalogueName) {
       this.$router.push({
         name: 'CtPackagesHistory',
-        params: { catalogueName }
+        params: { catalogue_name: catalogueName }
       })
     }
   }

@@ -1,9 +1,7 @@
 <template>
-  <div v-resize="onResize">
-    <div ref="resizingDiv">
-      <slot name="resizing-area" :area-height="areaHeight" />
-    </div>
-  </div>
+<div v-resize="onResize" ref="resizingDiv">
+  <slot name="resizing-area" :area-height="areaHeight" />
+</div>
 </template>
 
 <script>
@@ -32,10 +30,10 @@ export default {
     }
   },
   updated () {
-    const areaHeight = this.getHeight()
-    if (areaHeight !== this.areaHeight) {
-      this.areaHeight = areaHeight
-    }
+    // const areaHeight = this.getHeight()
+    // if (areaHeight !== this.areaHeight) {
+    //   this.areaHeight = areaHeight
+    // }
   }
 }
 </script>

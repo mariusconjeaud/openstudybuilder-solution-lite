@@ -4,15 +4,16 @@
     key="objectiveTable"
     :headers="headers"
     :items="studyObjectives"
-    item-key="studyObjectiveUid"
+    item-key="study_objective_uid"
     has-api
-    :column-data-resource="`study/${selectedStudy.uid}/study-objectives`"
+    :column-data-resource="`studies/${selectedStudy.uid}/study-objectives`"
     export-object-label="StudyObjectives"
     :export-data-url="exportDataUrl"
-    has-history
     :options.sync="options"
     :server-items-length="total"
     @filter="fetchObjectives"
+    :history-data-fetcher="fetchObjectivesHistory"
+    :history-title="$t('StudyObjectivesTable.global_history_title')"
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -68,7 +69,7 @@
             </v-icon>
             {{ item.order }}
           </td>
-          <td v-if="item.objectiveLevel">{{ item.objectiveLevel.sponsorPreferredName }}</td>
+          <td v-if="item.objective_level">{{ item.objective_level.sponsor_preferred_name }}</td>
           <td v-else></td>
           <td>
             <n-n-parameter-highlighter
@@ -76,9 +77,9 @@
               :show-prefix-and-postfix="false"
               />
           </td>
-          <td>{{ item.endpointCount }}</td>
-          <td>{{ item.startDate | date }}</td>
-          <td>{{ item.userInitials }}</td>
+          <td>{{ item.endpoint_count }}</td>
+          <td>{{ item.start_date | date }}</td>
+          <td>{{ item.user_initials }}</td>
         </tr>
       </draggable>
     </template>
@@ -88,8 +89,8 @@
         :show-prefix-and-postfix="false"
         />
     </template>
-    <template v-slot:item.startDate="{ item }">
-      {{ item.startDate | date }}
+    <template v-slot:item.start_date="{ item }">
+      {{ item.start_date | date }}
     </template>
     <template v-slot:item.actions="{ item }">
       <actions-menu
@@ -108,6 +109,7 @@
       @close="closeForm"
       :current-study-objectives="studyObjectives"
       :study-objective="selectedObjective"
+      :clone-mode="cloneMode"
       class="fullscreen-dialog"
       />
   </v-dialog>
@@ -115,11 +117,10 @@
             persistent
             max-width="1200px">
     <history-table
+      :title="studyObjectiveHistoryTitle"
       @close="closeHistory"
-      :type="'studyObjective'"
-      :item="selectedStudyObjective"
-      :title-label="'Study Objective'"
-      :headers="historyHeaders"
+      :headers="headers"
+      :items="objectiveHistoryItems"
       />
   </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
@@ -143,7 +144,7 @@ import ActionsMenu from '@/components/tools/ActionsMenu'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
 import NNTable from '@/components/tools/NNTable'
 import ObjectiveForm from '@/components/studies/ObjectiveForm'
-import HistoryTable from '@/components/library/HistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import statuses from '@/constants/statuses'
 import filteringParameters from '@/utils/filteringParameters'
@@ -164,7 +165,15 @@ export default {
       studyObjectives: 'studyObjectives/studyObjectives'
     }),
     exportDataUrl () {
-      return `study/${this.selectedStudy.uid}/study-objectives`
+      return `studies/${this.selectedStudy.uid}/study-objectives`
+    },
+    studyObjectiveHistoryTitle () {
+      if (this.selectedStudyObjective) {
+        return this.$t(
+          'StudyObjectivesTable.study_objective_history_title',
+          { studyObjectiveUid: this.selectedStudyObjective.study_objective_uid })
+      }
+      return ''
     }
   },
   data () {
@@ -190,6 +199,12 @@ export default {
           click: this.editObjective
         },
         {
+          label: this.$t('StudyObjectivesTable.edit_template_text'),
+          icon: 'mdi-pencil',
+          iconColor: 'primary',
+          click: this.cloneObjective
+        },
+        {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete',
           iconColor: 'error',
@@ -201,28 +216,20 @@ export default {
           click: this.openHistory
         }
       ],
+      cloneMode: false,
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('StudyObjectivesTable.order'), value: 'order', width: '3%' },
         {
           text: this.$t('StudyObjectivesTable.objective_level'),
-          value: 'objectiveLevel.sponsorPreferredName'
+          value: 'objective_level.sponsor_preferred_name'
         },
         { text: this.$t('_global.objective'), value: 'objective.name', width: '30%' },
-        { text: this.$t('StudyObjectivesTable.endpoint_count'), value: 'endpointCount' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
-        { text: this.$t('_global.modified_by'), value: 'userInitials' }
+        { text: this.$t('StudyObjectivesTable.endpoint_count'), value: 'endpoint_count' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
+        { text: this.$t('_global.modified_by'), value: 'user_initials' }
       ],
-      historyHeaders: [
-        { text: this.$t('StudyObjectivesTable.objective'), value: 'objective.name' },
-        { text: this.$t('StudyObjectivesTable.objective_level'), value: 'objectiveLevel.sponsorPreferredName' },
-        { text: this.$t('StudyObjectivesTable.order'), value: 'order' },
-        { text: this.$t('HistoryTable.change_description'), value: 'changeType' },
-        { text: this.$t('_global.status'), value: 'status' },
-        { text: this.$t('_global.user'), value: 'userInitials' },
-        { text: this.$t('HistoryTable.start_date'), value: 'startDate' },
-        { text: this.$t('HistoryTable.end_date'), value: 'endDate' }
-      ],
+      objectiveHistoryItems: [],
       selectedObjective: null,
       selectedStudyObjective: null,
       showForm: false,
@@ -246,10 +253,14 @@ export default {
         this.total = resp.data.total
       })
     },
+    async fetchObjectivesHistory () {
+      const resp = await study.getStudyObjectivesAuditTrail(this.selectedStudy.uid)
+      return resp.data
+    },
     needUpdate (item) {
-      if (item.latestObjective) {
+      if (item.latest_objective) {
         if (!this.isLatestRetired(item)) {
-          return item.objective.version !== item.latestObjective.version
+          return item.objective.version !== item.latest_objective.version
         }
       }
       return false
@@ -264,11 +275,11 @@ export default {
       return null
     },
     objectiveUpdateAborted (item) {
-      return item.acceptedVersion ? '' : 'error'
+      return item.accepted_version ? '' : 'error'
     },
     isLatestRetired (item) {
-      if (item.latestObjective) {
-        return item.latestObjective.status === statuses.RETIRED
+      if (item.latest_objective) {
+        return item.latest_objective.status === statuses.RETIRED
       }
       return false
     },
@@ -280,12 +291,12 @@ export default {
         agreeLabel: this.$t('StudyObjectivesTable.use_new_version')
       }
       const message = this.$t('StudyObjectivesTable.update_version_alert') + this.$t('StudyObjectivesTable.previous_version') + item.objective.name +
-      ' ' + this.$t('StudyObjectivesTable.new_version') + ' ' + item.latestObjective.name
+      ' ' + this.$t('StudyObjectivesTable.new_version') + ' ' + item.latest_objective.name
 
       if (await this.$refs.confirm.open(message, options)) {
         const args = {
-          studyUid: item.studyUid,
-          studyObjectiveUid: item.studyObjectiveUid
+          studyUid: item.study_uid,
+          studyObjectiveUid: item.study_objective_uid
         }
         this.$store.dispatch('studyObjectives/updateStudyObjectiveLatestVersion', args).then(resp => {
           bus.$emit('notification', { msg: this.$t('StudyObjectivesTable.update_version_successful') })
@@ -295,8 +306,8 @@ export default {
       } else {
         this.abortConfirm = true
         const args = {
-          studyUid: item.studyUid,
-          studyObjectiveUid: item.studyObjectiveUid
+          studyUid: item.study_uid,
+          studyObjectiveUid: item.study_objective_uid
         }
         this.$store.dispatch('studyObjectives/updateStudyObjectiveAcceptVersion', args).then(resp => {
         }).catch(error => {
@@ -306,6 +317,7 @@ export default {
     },
     closeForm () {
       this.showForm = false
+      this.cloneMode = false
       this.selectedObjective = null
     },
     async deleteStudyObjective (studyObjective) {
@@ -316,7 +328,7 @@ export default {
       if (await this.$refs.confirm.open(this.$t('StudyObjectivesTable.confirm_delete', { objective }), options)) {
         this.$store.dispatch('studyObjectives/deleteStudyObjective', {
           studyUid: this.selectedStudy.uid,
-          studyObjectiveUid: studyObjective.studyObjectiveUid
+          studyObjectiveUid: studyObjective.study_objective_uid
         }).then(resp => {
           bus.$emit('notification', { msg: this.$t('StudyObjectivesTable.delete_objective_success') })
         })
@@ -326,20 +338,27 @@ export default {
       this.selectedObjective = objective
       this.showForm = true
     },
+    cloneObjective (objective) {
+      this.selectedObjective = objective
+      this.cloneMode = true
+      this.showForm = true
+    },
     closeHistory () {
       this.selectedStudyObjective = null
       this.showHistory = false
     },
-    openHistory (studyObjective) {
+    async openHistory (studyObjective) {
       this.selectedStudyObjective = studyObjective
+      const resp = await study.getStudyObjectiveAuditTrail(this.selectedStudy.uid, studyObjective.study_objective_uid)
+      this.objectiveHistoryItems = resp.data
       this.showHistory = true
     },
     /*
     ** Prevent dragging between different objective levels
     */
     checkObjectiveLevel (event) {
-      const leftOrder = event.draggedContext.element.objectiveLevel ? event.draggedContext.element.objectiveLevel.order : null
-      const rightOrder = event.relatedContext.element.objectiveLevel ? event.relatedContext.element.objectiveLevel.order : null
+      const leftOrder = event.draggedContext.element.objective_level ? event.draggedContext.element.objective_level.order : null
+      const rightOrder = event.relatedContext.element.objective_level ? event.relatedContext.element.objective_level.order : null
       const result = leftOrder === rightOrder
       this.snackbar = !result
       return result
@@ -347,7 +366,7 @@ export default {
     onOrderChange (event) {
       const studyObjective = event.moved.element
       const replacedStudyObjective = this.studyObjectives[event.moved.newIndex]
-      study.updateStudyObjectiveOrder(studyObjective.studyUid, studyObjective.studyObjectiveUid, replacedStudyObjective.order).then(resp => {
+      study.updateStudyObjectiveOrder(studyObjective.study_uid, studyObjective.study_objective_uid, replacedStudyObjective.order).then(resp => {
         this.$store.dispatch('studyObjectives/fetchStudyObjectives', { studyUid: this.selectedStudy.uid }).then(() => {
           this.sortStudyObjectives()
         })
@@ -370,12 +389,10 @@ export default {
       })
       this.sortStudyObjectives()
       if (value) {
-        this.headers.unshift({ text: '', value: 'order', sortable: false, width: '5px' })
         this.sortBy = null
         this.sortStudyObjectives()
       } else {
         this.sortBy = null
-        this.headers.splice(0, 1)
       }
     },
     studyObjectives (value) {

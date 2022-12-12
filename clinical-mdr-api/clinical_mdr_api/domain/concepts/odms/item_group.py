@@ -16,53 +16,42 @@ from clinical_mdr_api.models.utils import booltostr
 
 @dataclass(frozen=True)
 class OdmItemGroupVO(ConceptVO):
-    oid: str
+    oid: Optional[str]
     repeating: bool
-    is_reference_data: bool
-    sas_dataset_name: str
-    origin: str
-    purpose: str
+    is_reference_data: Optional[bool]
+    sas_dataset_name: Optional[str]
+    origin: Optional[str]
+    purpose: Optional[str]
     comment: Optional[str]
     description_uids: Sequence[str]
-    alias_uids: Optional[Sequence[str]]
-    sdtm_domain_uids: Optional[Sequence[str]]
-    activity_sub_group_uids: Optional[Sequence[str]]
-    item_uids: Optional[Sequence[str]]
-    xml_extension_attribute_uids: Optional[Sequence[str]]
-    xml_extension_tag_uids: Optional[Sequence[str]]
-    xml_extension_tag_attribute_uids: Optional[Sequence[str]]
+    alias_uids: Sequence[str]
+    sdtm_domain_uids: Sequence[str]
+    activity_subgroup_uids: Sequence[str]
+    item_uids: Sequence[str]
+    xml_extension_attribute_uids: Sequence[str]
+    xml_extension_tag_uids: Sequence[str]
+    xml_extension_tag_attribute_uids: Sequence[str]
 
     @classmethod
     def from_repository_values(
         cls,
-        oid: str,
+        oid: Optional[str],
         name: str,
         repeating: bool,
-        is_reference_data: bool,
-        sas_dataset_name: str,
-        origin: str,
-        purpose: str,
+        is_reference_data: Optional[bool],
+        sas_dataset_name: Optional[str],
+        origin: Optional[str],
+        purpose: Optional[str],
         comment: Optional[str],
         description_uids: Sequence[str],
-        alias_uids: Optional[Sequence[str]],
-        sdtm_domain_uids: Optional[Sequence[str]],
-        activity_sub_group_uids: Optional[Sequence[str]] = None,
-        item_uids: Optional[Sequence[str]] = None,
-        xml_extension_tag_uids: Optional[Sequence[str]] = None,
-        xml_extension_attribute_uids: Optional[Sequence[str]] = None,
-        xml_extension_tag_attribute_uids: Optional[Sequence[str]] = None,
+        alias_uids: Sequence[str],
+        sdtm_domain_uids: Sequence[str],
+        activity_subgroup_uids: Sequence[str],
+        item_uids: Sequence[str],
+        xml_extension_tag_uids: Sequence[str],
+        xml_extension_attribute_uids: Sequence[str],
+        xml_extension_tag_attribute_uids: Sequence[str],
     ) -> "OdmItemGroupVO":
-        if activity_sub_group_uids is None:
-            activity_sub_group_uids = []
-        if item_uids is None:
-            item_uids = []
-        if xml_extension_tag_uids is None:
-            xml_extension_tag_uids = []
-        if xml_extension_attribute_uids is None:
-            xml_extension_attribute_uids = []
-        if xml_extension_tag_attribute_uids is None:
-            xml_extension_tag_attribute_uids = []
-
         return cls(
             oid=oid,
             name=name,
@@ -75,7 +64,7 @@ class OdmItemGroupVO(ConceptVO):
             description_uids=description_uids,
             alias_uids=alias_uids,
             sdtm_domain_uids=sdtm_domain_uids,
-            activity_sub_group_uids=activity_sub_group_uids,
+            activity_subgroup_uids=activity_subgroup_uids,
             item_uids=item_uids,
             xml_extension_tag_uids=xml_extension_tag_uids,
             xml_extension_attribute_uids=xml_extension_attribute_uids,
@@ -88,41 +77,44 @@ class OdmItemGroupVO(ConceptVO):
 
     def validate(
         self,
-        concept_exists_by_callback: Callable[[str, str, bool], bool],
+        concept_exists_by_callback: Callable[[str, str], bool],
         odm_description_exists_by_callback: Callable[[str, str, bool], bool],
         odm_alias_exists_by_callback: Callable[[str, str, bool], bool],
-        find_term_callback: Callable[[str], CTTermAttributesAR],
+        find_term_callback: Callable[[str], Optional[CTTermAttributesAR]],
         previous_name: Optional[str] = None,
         previous_oid: Optional[str] = None,
     ) -> None:
 
         if concept_exists_by_callback("name", self.name) and previous_name != self.name:
             raise BusinessLogicException(
-                f"OdmItemGroup with name ({self.name}) already exists."
+                f"ODM Item Group with name ({self.name}) already exists."
             )
 
-        if concept_exists_by_callback("oid", self.oid) and previous_oid != self.oid:
+        if (
+            self.oid
+            and concept_exists_by_callback("oid", self.oid)
+            and previous_oid != self.oid
+        ):
             raise BusinessLogicException(
-                f"OdmItemGroup with OID ({self.oid}) already exists."
+                f"ODM Item Group with OID ({self.oid}) already exists."
             )
 
         for description_uid in self.description_uids:
-            desc = odm_description_exists_by_callback("uid", description_uid, True)
-            if not desc:
+            if not odm_description_exists_by_callback("uid", description_uid, True):
                 raise BusinessLogicException(
-                    f"OdmItemGroup tried to connect to non existing OdmDescription identified by uid ({description_uid})."
+                    f"ODM Item Group tried to connect to non existing ODM Description identified by uid ({description_uid})."
                 )
 
         for alias_uid in self.alias_uids:
             if not odm_alias_exists_by_callback("uid", alias_uid, True):
                 raise BusinessLogicException(
-                    f"OdmItemGroup tried to connect to non existing OdmAlias identified by uid ({alias_uid})."
+                    f"ODM Item Group tried to connect to non existing ODM Alias identified by uid ({alias_uid})."
                 )
 
         for sdtm_domain_uid in self.sdtm_domain_uids:
             if not find_term_callback(sdtm_domain_uid):
                 raise BusinessLogicException(
-                    f"OdmItemGroup tried to connect to non existing CTTerm identified by uid ({sdtm_domain_uid})."
+                    f"ODM Item Group tried to connect to non existing SDTM Domain identified by uid ({sdtm_domain_uid})."
                 )
 
 
@@ -160,14 +152,16 @@ class OdmItemGroupAR(OdmARBase):
         concept_vo: OdmItemGroupVO,
         library: LibraryVO,
         generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        concept_exists_by_callback: Callable[[str, str, bool], bool] = lambda _: True,
+        concept_exists_by_callback: Callable[[str, str], bool] = lambda x, y: True,
         odm_description_exists_by_callback: Callable[
             [str, str, bool], bool
-        ] = lambda _: False,
+        ] = lambda x, y, z: True,
         odm_alias_exists_by_callback: Callable[
             [str, str, bool], bool
-        ] = lambda _: False,
-        find_term_callback: Callable[[str], CTTermAttributesAR] = lambda _: False,
+        ] = lambda x, y, z: True,
+        find_term_callback: Callable[
+            [str], Optional[CTTermAttributesAR]
+        ] = lambda _: None,
     ) -> "OdmItemGroupAR":
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
@@ -190,11 +184,17 @@ class OdmItemGroupAR(OdmARBase):
         author: str,
         change_description: Optional[str],
         concept_vo: OdmItemGroupVO,
-        concept_exists_by_name_callback: Callable[[str], bool] = None,
-        concept_exists_by_callback: Callable[[str, str, bool], bool] = None,
-        odm_description_exists_by_callback: Callable[[str, str, bool], bool] = None,
-        odm_alias_exists_by_callback: Callable[[str, str, bool], bool] = None,
-        find_term_callback: Callable[[str], CTTermAttributesAR] = None,
+        concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
+        concept_exists_by_callback: Callable[[str, str], bool] = lambda x, y: True,
+        odm_description_exists_by_callback: Callable[
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
+        odm_alias_exists_by_callback: Callable[
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
+        find_term_callback: Callable[
+            [str], Optional[CTTermAttributesAR]
+        ] = lambda _: None,
     ) -> None:
         """
         Creates a new draft version for the object.
@@ -220,8 +220,8 @@ class OdmItemGroupRefVO:
     name: str
     form_uid: str
     order_number: int
-    mandatory: bool
-    locked: bool
+    mandatory: str
+    locked: str
     collection_exception_condition_oid: Optional[str]
 
     @classmethod

@@ -68,6 +68,10 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
             name=f"Test [{self.TPR_LABEL}]",
             name_plain=f"Test {self.TPR_LABEL}",
         )
+        self.ntv = TemplateVO(
+            name=f"Changed Test [{self.TPR_LABEL}]",
+            name_plain=f"Changed Test {self.TPR_LABEL}",
+        )
         self.im = LibraryItemMetadataVO.get_initial_item_metadata(author="Test")
         self.ar = ObjectiveTemplateAR(
             _uid=self.tfr.root_class.get_next_free_uid_and_increment_counter(),
@@ -90,16 +94,14 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
         self.ar.create_new_version(
             author="TEST", change_description="Change", template=self.tv
         )
+        self.ar.approve(author="TEST")
         self.tfr.save(self.ar)
 
+    def modify_objective_template(self):
         self.ar: ObjectiveTemplateAR = self.tfr.find_by_uid_2(
             self.ar.uid, for_update=True
         )
-        self.ntv = TemplateVO(
-            name=f"Changed Test [{self.TPR_LABEL}]",
-            name_plain=f"Changed Test {self.TPR_LABEL}",
-        )
-        self.ar.edit_draft(
+        self.ar.create_new_version(
             author="TEST", change_description="Change", template=self.ntv
         )
         self.tfr.save(self.ar)
@@ -120,7 +122,7 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
     def create_objectives(self, count=100, approved=False, retired=False):
         for i in range(count):
             pv = TemplateParameterMultiSelectInput(
-                templateParameter=self.TPR_LABEL,
+                template_parameter=self.TPR_LABEL,
                 conjunction="",
                 values=[
                     {
@@ -133,9 +135,9 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
                 ],
             )
             template = ObjectiveCreateInput(
-                objectiveTemplateUid=self.ar.uid,
-                libraryName="Library",
-                parameterValues=[pv],
+                objective_template_uid=self.ar.uid,
+                library_name="Library",
+                parameter_values=[pv],
             )
 
             item = self.objective_service.create(template)
@@ -150,35 +152,36 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
         self.create_objectives(count=10, approved=True)
         study_service = StudyObjectiveSelectionService(author="TEST_USER")
         study_selection_objective_input = StudySelectionObjectiveInput(
-            objectiveUid="Objective_000010"
+            objective_uid="Objective_000010"
         )
         selection: StudySelectionObjective = study_service.make_selection(
             "study_root", study_selection_objective_input
         )
 
-        self.assertIsNone(selection.latestObjective)
+        self.assertIsNone(selection.latest_objective)
 
+        self.modify_objective_template()
         self.objective_template_service.approve_cascade(self.ar.uid)
 
         selection: StudySelectionObjective = study_service.get_specific_selection(
-            study_uid="study_root", study_selection_uid=selection.studyObjectiveUid
+            study_uid="study_root", study_selection_uid=selection.study_objective_uid
         )
 
         self.assertNotEqual(
-            selection.objective.version, selection.latestObjective.version
+            selection.objective.version, selection.latest_objective.version
         )
         # when
 
         response = study_service.update_selection_to_latest_version(
-            "study_root", selection.studyObjectiveUid
+            "study_root", selection.study_objective_uid
         )
 
-        self.assertIsNone(response.latestObjective)
+        self.assertIsNone(response.latest_objective)
         # then
         selection: StudySelectionObjective = study_service.get_specific_selection(
-            study_uid="study_root", study_selection_uid=selection.studyObjectiveUid
+            study_uid="study_root", study_selection_uid=selection.study_objective_uid
         )
-        self.assertIsNone(selection.latestObjective)
+        self.assertIsNone(selection.latest_objective)
 
     def test__upversion_retired__update(self):
         # given
@@ -186,33 +189,34 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
         self.create_objectives(count=10, approved=True)
         study_service = StudyObjectiveSelectionService(author="TEST_USER")
         study_selection_objective_input = StudySelectionObjectiveInput(
-            objectiveUid="Objective_000010"
+            objective_uid="Objective_000010"
         )
         selection: StudySelectionObjective = study_service.make_selection(
             "study_root", study_selection_objective_input
         )
 
-        self.assertIsNone(selection.latestObjective)
+        self.assertIsNone(selection.latest_objective)
 
+        self.modify_objective_template()
         self.objective_template_service.approve_cascade(self.ar.uid)
         self.objective_service.inactivate_final("Objective_000010")
 
         # when
         selection: StudySelectionObjective = study_service.get_specific_selection(
-            study_uid="study_root", study_selection_uid=selection.studyObjectiveUid
+            study_uid="study_root", study_selection_uid=selection.study_objective_uid
         )
         # then
         self.assertNotEqual(
-            selection.objective.version, selection.latestObjective.version
+            selection.objective.version, selection.latest_objective.version
         )
-        self.assertEqual(selection.latestObjective.status, "Retired")
+        self.assertEqual(selection.latest_objective.status, "Retired")
 
         self.objective_service.reactivate_retired("Objective_000010")
 
         selection: StudySelectionObjective = study_service.get_specific_selection(
-            study_uid="study_root", study_selection_uid=selection.studyObjectiveUid
+            study_uid="study_root", study_selection_uid=selection.study_objective_uid
         )
 
         self.assertNotEqual(
-            selection.objective.version, selection.latestObjective.version
+            selection.objective.version, selection.latest_objective.version
         )

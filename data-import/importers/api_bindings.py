@@ -10,6 +10,63 @@ import sys
 import json
 import time
 
+# CDISC codelists
+CODELIST_STUDY_TYPE = "Study Type"
+CODELIST_TRIAL_INDICATION_TYPE = "Trial Indication Type"
+CODELIST_TRIAL_TYPE = "Trial Type"
+CODELIST_TRIAL_PHASE = "Trial Phase"
+CODELIST_INTERVENTION_TYPE = "Intervention Type"
+CODELIST_CONTROL_TYPE = "Control Type"
+CODELIST_INTERVENTION_MODEL = "Intervention Model"
+CODELIST_TRIAL_BLINDING_SCHEMA = "Trial Blinding Schema"
+CODELIST_AGE_UNIT = "Age Unit"
+CODELIST_ROUTE_OF_ADMINISTRATION = "Route of Administration"
+CODELIST_DOSAGE_FORM = "Pharmaceutical Dosage Form"
+CODELIST_FREQUENCY = "Frequency"
+CODELIST_SDTM_DOMAIN_ABBREVIATION = "SDTM Domain Abbreviation"
+CODELIST_UNIT = "Unit"
+
+# Sponsor defined codelists
+CODELIST_DELIVERY_DEVICE = "Delivery Device"
+CODELIST_COMPOUND_DISPENSED_IN = "Compound Dispensed In"
+CODELIST_FLOWCHART_GROUP = "Flowchart Group"
+CODELIST_EPOCH_SUBTYPE = "Epoch Sub Type"
+CODELIST_VISIT_TYPE = "VisitType"
+CODELIST_TIMEPOINT_REFERENCE = "Time Point Reference"
+CODELIST_VISIT_CONTACT_MODE = "Visit Contact Mode"
+CODELIST_ARM_TYPE = "Arm Type"
+CODELIST_ELEMENT_TYPE = "Element Type"
+CODELIST_ELEMENT_SUBTYPE = "Element Sub Type"
+CODELIST_NULL_FLAVOR = "Null Flavor"
+CODELIST_UNIT_SUBSET = "Unit Subset"
+CODELIST_UNIT_DIMENSION = "Unit Dimension"
+CODELIST_OBJECTIVE_CATEGORY = "Objective Category"
+CODELIST_CRITERIA_CATEGORY = "Criteria Category"
+CODELIST_CRITERIA_SUBCATEGORY = "Criteria Sub Category"
+CODELIST_CRITERIA_TYPE = "Criteria Type"
+CODELIST_ENDPOINT_CATEGORY = "Endpoint Category"
+CODELIST_OBJECTIVE_LEVEL = "Objective Level"
+CODELIST_ENDPOINT_LEVEL = "Endpoint Level"
+CODELIST_ENDPOINT_SUBLEVEL = "Endpoint Sub Level"
+CODELIST_TYPE_OF_TREATMENT = "Type of Treatment"
+
+CODELIST_NAME_MAP = {
+    CODELIST_STUDY_TYPE: "C99077",
+    CODELIST_TRIAL_INDICATION_TYPE: "C66736",
+    CODELIST_TRIAL_TYPE: "C66739",
+    CODELIST_TRIAL_PHASE: "C66737",
+    CODELIST_INTERVENTION_TYPE: "C99078",
+    CODELIST_CONTROL_TYPE: "C66785",
+    CODELIST_INTERVENTION_MODEL: "C99076",
+    CODELIST_TRIAL_BLINDING_SCHEMA: "C66735",
+    CODELIST_AGE_UNIT: "C66781",
+    CODELIST_ROUTE_OF_ADMINISTRATION: "C66729",
+    CODELIST_DOSAGE_FORM: "C66726",
+    CODELIST_FREQUENCY: "C71113",
+    CODELIST_SDTM_DOMAIN_ABBREVIATION: "C66734",
+    CODELIST_UNIT: "C71620"
+}
+
 # ---------------------------------------------------------------
 # Api bindings
 # ---------------------------------------------------------------
@@ -53,20 +110,15 @@ class ApiBinding:
         packages = self.get_all_from_api("/ct/packages")
         package_names = set()
         for package in packages:
-            package_names.add(package.get("catalogueName"))
-        mandatory_packages = {
-            "ADAM CT",
-            "CDASH CT",
-            "DEFINE-XML CT",
-            "SDTM CT"
-        }
+            package_names.add(package.get("catalogue_name"))
+        mandatory_packages = {"ADAM CT", "CDASH CT", "DEFINE-XML CT", "SDTM CT"}
         optional_packages = {
             "COA CT",
             "GLOSSARY CT",
             "PROTOCOL CT",
             "QRS CT",
             "QS-FT CT",
-            "SEND CT"
+            "SEND CT",
         }
         missing = mandatory_packages - package_names
         if len(missing) > 0:
@@ -76,9 +128,7 @@ class ApiBinding:
             sys.exit(1)
         missing = optional_packages - package_names
         if len(missing) > 0:
-            self.log.warning(
-                f"Missing optional CT packages: {','.join(missing)}."
-            )
+            self.log.warning(f"Missing optional CT packages: {','.join(missing)}.")
 
     def simple_post_to_api(self, path, body, simple_path=None):
         if simple_path is None:
@@ -123,9 +173,7 @@ class ApiBinding:
             response = requests.post(
                 self.api_base_url + path, headers=self.api_headers, json=body
             )
-        short_path = "".join(
-                [i for i in path if not i.isdigit()]
-            )
+        short_path = "".join([i for i in path if not i.isdigit()])
 
         if response.ok:
             self.metrics.icrement(short_path + "--POST")
@@ -145,14 +193,17 @@ class ApiBinding:
                 or "Duplicate template" in response.json()["message"]
                 or "already has" in response.json()["message"]
             ):
-                self.log.warning("Post to %s failed: %s", path, response.json()["message"])
+                self.log.warning(
+                    "Post to %s failed: %s", path, response.json()["message"]
+                )
                 self.metrics.icrement(short_path + "--AlreadyExists")
-            elif (
-                "message" in response.json()
-                and ("not found" in response.json()["message"]
-                or "does not exist" in response.json()["message"])
+            elif "message" in response.json() and (
+                "not found" in response.json()["message"]
+                or "does not exist" in response.json()["message"]
             ):
-                self.log.warning("Post to %s failed: %s", path, response.json()["message"])
+                self.log.warning(
+                    "Post to %s failed: %s", path, response.json()["message"]
+                )
                 self.metrics.icrement(short_path + "--NotFound")
             else:
                 self.log.warning("Post to %s failed: %s", path, response.text)
@@ -201,19 +252,34 @@ class ApiBinding:
             self.log.warning("Failed to approve names %s %s", uid, response.content)
             return False
         response = requests.post(
-            self.api_base_url + url + uid + "/attributes/approve", headers=self.api_headers
+            self.api_base_url + url + uid + "/attributes/approve",
+            headers=self.api_headers,
         )
         if not response.ok:
-            self.log.warning("Failed to approve attributes %s %s", uid, response.content)
+            self.log.warning(
+                "Failed to approve attributes %s %s", uid, response.content
+            )
             return False
         else:
             return True
 
     def get_all_from_api(self, path, params=None, items_only=True):
         # print(self.api_base_url + path, params, self.api_headers)
+        if params is None:
+            params = {
+                "page_number": 1,
+                "page_size": 0,
+            }
+        else:
+            if "page_size" not in params:
+                params["page_size"] = 0
+            if "page_number" not in params:
+                params["page_number"] = 1
+
         response = requests.get(
             self.api_base_url + path, params=params, headers=self.api_headers
         )
+
         if response.ok:
             res = response.json()
             if "items" in res and items_only:
@@ -266,9 +332,9 @@ class ApiBinding:
         )
         response.raise_for_status()
         libs = response.json()
-        libNames = [lib["name"] for lib in libs]
-        self.log.info("Existing libraries: %s", libNames)
-        return libNames
+        lib_names = [lib["name"] for lib in libs]
+        self.log.info("Existing libraries: %s", lib_names)
+        return lib_names
 
     def create_library(self, object):
         self.metrics.icrement("/libraries")
@@ -279,9 +345,13 @@ class ApiBinding:
 
     # Get all terms from a codelist identified by codelist name
     def get_terms_for_codelist_name(self, codelist_name: str):
+        if codelist_name in CODELIST_NAME_MAP:
+            params={"codelist_uid": CODELIST_NAME_MAP[codelist_name], "page_number": 1, "page_size": 0}
+        else:
+            params={"codelist_name": codelist_name, "page_number": 1, "page_size": 0}
         response = requests.get(
             self.api_base_url + f"/ct/terms",
-            params={"codelist_name": codelist_name, "page": 1, "size": 0},
+            params=params,
             headers=self.api_headers,
         )
         response.raise_for_status()
@@ -292,7 +362,7 @@ class ApiBinding:
     def get_terms_for_codelist_uid(self, codelist_uid: str):
         response = requests.get(
             self.api_base_url + f"/ct/terms",
-            params={"codelist_uid": codelist_uid, "page": 1, "size": 0},
+            params={"codelist_uid": codelist_uid, "page_number": 1, "page_size": 0},
             headers=self.api_headers,
         )
         response.raise_for_status()
@@ -302,14 +372,14 @@ class ApiBinding:
     # Get all dictionary mapping all codelist names to a uid
     def get_code_lists_uids(self):
         response = requests.get(
-            self.api_base_url + "/ct/codelists/names?page=0&size=10000",
+            self.api_base_url + "/ct/codelists/names?page_number=1&page_size=0",
             headers=self.api_headers,
         )
         response.raise_for_status()
         result = response.json()
         codelists_uids = {}
         for res in result["items"]:
-            codelists_uids[res["name"]] = res["codelistUid"]
+            codelists_uids[res["name"]] = res["codelist_uid"]
         return codelists_uids
 
     def get_all_activity_objects(self, object_type):
@@ -317,12 +387,12 @@ class ApiBinding:
         page_size = 100
         total_count = True
         params = {
-            "pageNumber": page_number,
-            "pageSize": page_size,
-            "totalCount": total_count,
+            "page_number": page_number,
+            "page_size": page_size,
+            "total_count": total_count,
         }
         self.log.info(
-            f"Getting {object_type} page:{page_number}, page_size:{page_size}"
+            f"Getting {object_type} page_number:{page_number}, page_size:{page_size}"
         )
         all_activities_initial = self.get_all_from_api(
             f"/concepts/activities/{object_type}", params=params, items_only=False
@@ -334,17 +404,16 @@ class ApiBinding:
             all_activity_objects = []
             count = 0
 
-
         while page_size * page_number < count:
             page_number += 1
             total_count = False
             params = {
-                "pageNumber": page_number,
-                "pageSize": page_size,
-                "totalCount": total_count,
+                "page_number": page_number,
+                "page_size": page_size,
+                "total_count": total_count,
             }
             self.log.info(
-                f"Getting {object_type} page:{page_number}, page_size:{page_size}, total:{count}"
+                f"Getting {object_type} page_number:{page_number}, page_size:{page_size}, total:{count}"
             )
             all_activity_objects += self.get_all_from_api(
                 f"/concepts/activities/{object_type}", params=params, items_only=True
@@ -352,19 +421,28 @@ class ApiBinding:
         return all_activity_objects
 
     def get_study_objectives_for_study(self, study_uid):
+        params = {
+            "page_number": 1,
+            "page_size": 0,
+        }
         response = requests.get(
-            self.api_base_url + "/study/" + study_uid + "/study-objectives",
+            self.api_base_url + "/studies/" + study_uid + "/study-objectives",
             headers=self.api_headers,
+            params=params,
         )
         response.raise_for_status()
         result = response.json()
         temp_dict = {}
         for res in result["items"]:
-            temp_dict[res["objective"]["name"]] = res["studyObjectiveUid"]
+            temp_dict[res["objective"]["name"]] = res["study_objective_uid"]
         return temp_dict
 
     def get_templates_as_dict(self, path):
-        response = requests.get(self.api_base_url + path, headers=self.api_headers)
+        params = {
+            "page_number": 1,
+            "page_size": 0,
+        }
+        response = requests.get(self.api_base_url + path, headers=self.api_headers, params=params)
         response.raise_for_status()
         result = response.json()
         objective_temp_dict = {}
@@ -374,11 +452,14 @@ class ApiBinding:
         return objective_temp_dict
 
     def find_object_by_name(self, name, path):
+        params = {"filters": '{"name":{"v":["' + name + '"],"op":"eq"}}'}
         response = requests.get(
-            self.api_base_url + path + "/get-by-name/" + name, headers=self.api_headers
+            self.api_base_url + path,
+            params=params,
+            headers=self.api_headers,
         )
-        if response.ok:
-            return response.json()
+        if response.ok and len(response.json()["items"]):
+            return response.json()["items"][0]
         else:
             return None
 
@@ -390,7 +471,7 @@ class ApiBinding:
         )
         if response.ok:
             # This assumes there is only one version, do we need to handle multiple?
-            return response.json()["items"][0]["codelistUid"]
+            return response.json()["items"][0]["codelist_uid"]
         else:
             return None
 
@@ -401,24 +482,28 @@ class ApiBinding:
             params={
                 "codelist_uid": dict_uid,
                 "filters": json.dumps({"name": {"v": [name]}}),
-                "page": 1,
-                "size": 0,
+                "page_number": 1,
+                "page_size": 0,
             },
             headers=self.api_headers,
         )
         if response.ok:
             if len(response.json()["items"]) > 0:
                 # This assumes there is only one version, do we need to handle multiple?
-                return response.json()["items"][0]["termUid"]
+                return response.json()["items"][0]["term_uid"]
         return None
 
     def get_studies_as_dict(self, path="/studies"):
-        response = requests.get(self.api_base_url + path, headers=self.api_headers)
+        params = {
+            "page_number": 1,
+            "page_size": 0,
+        }
+        response = requests.get(self.api_base_url + path, headers=self.api_headers, params=params)
         response.raise_for_status()
         result = response.json()
         temp_dict = {}
         for res in result["items"]:
-            temp_dict[res["studyId"]] = res
+            temp_dict[res["study_id"]] = res
         return temp_dict
 
     def simple_approve(self, path: str):

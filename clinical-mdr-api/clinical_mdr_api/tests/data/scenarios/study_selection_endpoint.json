@@ -5,7 +5,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study_root/study-endpoints"
+            "url": "/studies/study_root/study-endpoints"
         },
         "response": {
             "code": 200,
@@ -25,7 +25,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study-endpoints"
+            "url": "/study-endpoints"
         },
         "response": {
             "code": 200,
@@ -37,7 +37,7 @@
                 "items": [],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
@@ -47,20 +47,20 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "endpointLevelUid": "term_root_final",
-                "endpointSubLevelUid": "term_root_final_non_edit",
-                "endpointUid": "Endpoint_000001",
-                "endpointUnits": {
+                "endpoint_level_uid": "term_root_final",
+                "endpoint_sublevel_uid": "term_root_final_non_edit",
+                "endpoint_uid": "Endpoint_000001",
+                "endpoint_units": {
                     "separator": "string",
                     "units": [
                         "unit 1",
                         "unit 2"
                     ]
                 },
-                "studyObjectiveUid": "StudyObjective_000001",
-                "timeframeUid": "Timeframe_000001"
+                "study_objective_uid": "StudyObjective_000001",
+                "timeframe_uid": "Timeframe_000001"
             },
-            "url": "/study/study_root/study-endpoints/select"
+            "url": "/studies/study_root/study-endpoints"
         },
         "response": {
             "code": 201,
@@ -70,150 +70,150 @@
             },
             "result": {
                 "endpoint": {
-                    "changeDescription": "Approved version",
-                    "endDate": null,
-                    "endpointTemplate": {
+                    "change_description": "Approved version",
+                    "end_date": null,
+                    "endpoint_template": {
                         "name": "endpoint_1",
-                        "namePlain": "endpoint_1",
+                        "name_plain": "endpoint_1",
                         "uid": null
                     },
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Sponsor"
                     },
                     "name": "endpoint_1",
-                    "namePlain": "endpoint_1",
-                    "parameterValues": [],
-                    "possibleActions": [
+                    "name_plain": "endpoint_1",
+                    "parameter_values": [],
+                    "possible_actions": [
                         "inactivate"
                     ],
-                    "startDate": "2021-03-02T11:44:54.690000",
+                    "start_date": "2021-03-02T11:44:54.690000",
                     "status": "Final",
-                    "studyCount": null,
+                    "study_count": null,
                     "uid": "Endpoint_000001",
-                    "userInitials": "TODO Initials",
+                    "user_initials": "TODO Initials",
                     "version": "1.0"
                 },
-                "endpointLevel": {
-                    "termUid": "term_root_final",
-                    "catalogueName": "SDTM CT",
-                    "codelistUid": "ct_codelist_root_endpoint",
-                    "sponsorPreferredName": "term_value_name1",
-                    "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                "endpoint_level": {
+                    "term_uid": "term_root_final",
+                    "catalogue_name": "SDTM CT",
+                    "codelist_uid": "ct_codelist_root_endpoint",
+                    "sponsor_preferred_name": "term_value_name1",
+                    "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                     "order": 1,
-                    "libraryName": "Sponsor",
-                    "startDate": "2021-06-07T11:41:14.430000",
-                    "endDate": null,
+                    "library_name": "Sponsor",
+                    "start_date": "2021-06-07T11:41:14.430000",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ]
                 },
-                "endpointSubLevel": {
-                    "termUid": "term_root_final_non_edit",
-                    "catalogueName": "SDTM CT",
-                    "codelistUid": "non_editable_cr",
-                    "sponsorPreferredName": "term_value_name3",
-                    "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                "endpoint_sublevel": {
+                    "term_uid": "term_root_final_non_edit",
+                    "catalogue_name": "SDTM CT",
+                    "codelist_uid": "non_editable_cr",
+                    "sponsor_preferred_name": "term_value_name3",
+                    "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                     "order": 3,
-                    "libraryName": "CDISC",
-                    "startDate": "2021-06-07T11:41:14.430000",
-                    "endDate": null,
+                    "library_name": "CDISC",
+                    "start_date": "2021-06-07T11:41:14.430000",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ]
                 },
-                "latestEndpoint": null,
-                "latestTimeframe": null,
-                "endpointUnits": {
+                "latest_endpoint": null,
+                "latest_timeframe": null,
+                "endpoint_units": {
                     "separator": "string",
                     "units": [
                         "unit 1",
                         "unit 2"
                     ]
                 },
-                "startDate": "2021-04-08T07:54:04.733562",
-                "userInitials": "TODO Initials",
+                "start_date": "2021-04-08T07:54:04.733562",
+                "user_initials": "TODO Initials",
                 "order": 1,
-                "projectNumber": null,
-                "projectName": null,
-                "studyEndpointUid": "StudyEndpoint_000001",
-                "studyObjective": {
-                    "endpointCount": 1,
-                    "startDate": "2021-03-23T10:42:33.882531",
-                    "userInitials": "TODO User initials",
+                "project_number": null,
+                "project_name": null,
+                "study_endpoint_uid": "StudyEndpoint_000001",
+                "study_objective": {
+                    "endpoint_count": 1,
+                    "start_date": "2021-03-23T10:42:33.882531",
+                    "user_initials": "TODO User initials",
                     "objective": {
-                        "changeDescription": "Approved version",
-                        "endDate": null,
+                        "change_description": "Approved version",
+                        "end_date": null,
                         "library": {
-                            "isEditable": true,
+                            "is_editable": true,
                             "name": "Sponsor"
                         },
                         "name": "objective_1",
-                        "namePlain": "objective_1",
-                        "objectiveTemplate": {
+                        "name_plain": "objective_1",
+                        "objective_template": {
                             "name": "objective_1",
-                            "namePlain": "objective_1",
+                            "name_plain": "objective_1",
                             "uid": null
                         },
-                        "parameterValues": [],
-                        "possibleActions": [
+                        "parameter_values": [],
+                        "possible_actions": [
                             "inactivate"
                         ],
-                        "startDate": "2021-03-03T10:52:43.858000",
+                        "start_date": "2021-03-03T10:52:43.858000",
                         "status": "Final",
-                        "studyCount": null,
+                        "study_count": null,
                         "uid": "Objective_000001",
-                        "userInitials": "TODO Initials",
+                        "user_initials": "TODO Initials",
                         "version": "1.0"
                     },
-                    "latestObjective": null,
-                    "objectiveLevel": null,
+                    "latest_objective": null,
+                    "objective_level": null,
                     "order": 1,
-                    "projectNumber": null,
-                    "projectName": null,
-                    "studyObjectiveUid": "StudyObjective_000001",
-                    "acceptedVersion": false,
-                    "studyUid": "study_root"
+                    "project_number": null,
+                    "project_name": null,
+                    "study_objective_uid": "StudyObjective_000001",
+                    "accepted_version": false,
+                    "study_uid": "study_root"
                 },
-                "studyUid": "study_root",
-                "acceptedVersion": false,
+                "study_uid": "study_root",
+                "accepted_version": false,
                 "timeframe": {
-                    "changeDescription": "Approved version",
-                    "endDate": null,
+                    "change_description": "Approved version",
+                    "end_date": null,
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Sponsor"
                     },
                     "name": "timeframe_1",
-                    "namePlain": "timeframe_1",
-                    "parameterValues": [],
-                    "possibleActions": [
+                    "name_plain": "timeframe_1",
+                    "parameter_values": [],
+                    "possible_actions": [
                         "inactivate"
                     ],
-                    "startDate": "2021-03-02T11:44:54.690000",
+                    "start_date": "2021-03-02T11:44:54.690000",
                     "status": "Final",
-                    "timeframeTemplate": {
+                    "timeframe_template": {
                         "name": "timeframe_1",
-                        "namePlain": "timeframe_1",
+                        "name_plain": "timeframe_1",
                         "uid": null
                     },
                     "uid": "Timeframe_000001",
-                    "userInitials": "TODO Initials",
+                    "user_initials": "TODO Initials",
                     "version": "1.0"
                 }
             },
             "save": {
-                "studyEndpointUid": "studyEndpointUid"
+                "study_endpoint_uid": "study_endpoint_uid"
             }
         }
     },
@@ -223,7 +223,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study_root/study-endpoints"
+            "url": "/studies/study_root/study-endpoints"
         },
         "response": {
             "code": 200,
@@ -234,146 +234,146 @@
             "result": {
                 "items": [
                     {
-                        "latestEndpoint": null,
-                        "latestTimeframe": null,
+                        "latest_endpoint": null,
+                        "latest_timeframe": null,
                         "endpoint": {
-                            "changeDescription": "Approved version",
-                            "endDate": null,
-                            "endpointTemplate": {
+                            "change_description": "Approved version",
+                            "end_date": null,
+                            "endpoint_template": {
                                 "name": "endpoint_1",
-                                "namePlain": "endpoint_1",
+                                "name_plain": "endpoint_1",
                                 "uid": null
                             },
                             "library": {
-                                "isEditable": true,
+                                "is_editable": true,
                                 "name": "Sponsor"
                             },
                             "name": "endpoint_1",
-                            "namePlain": "endpoint_1",
-                            "parameterValues": [],
-                            "possibleActions": [
+                            "name_plain": "endpoint_1",
+                            "parameter_values": [],
+                            "possible_actions": [
                                 "inactivate"
                             ],
-                            "startDate": "2021-03-02T11:44:54.690000",
+                            "start_date": "2021-03-02T11:44:54.690000",
                             "status": "Final",
-                            "studyCount": null,
+                            "study_count": null,
                             "uid": "Endpoint_000001",
-                            "userInitials": "TODO Initials",
+                            "user_initials": "TODO Initials",
                             "version": "1.0"
                         },
-                        "endpointLevel": {
-                            "termUid": "term_root_final",
-                            "catalogueName": "SDTM CT",
-                            "codelistUid": "ct_codelist_root_endpoint",
-                            "sponsorPreferredName": "term_value_name1",
-                            "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                        "endpoint_level": {
+                            "term_uid": "term_root_final",
+                            "catalogue_name": "SDTM CT",
+                            "codelist_uid": "ct_codelist_root_endpoint",
+                            "sponsor_preferred_name": "term_value_name1",
+                            "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                             "order": 1,
-                            "libraryName": "Sponsor",
-                            "startDate": "2021-06-07T11:41:14.430000",
-                            "endDate": null,
+                            "library_name": "Sponsor",
+                            "start_date": "2021-06-07T11:41:14.430000",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate",
-                                "newVersion"
+                                "new_version"
                             ]
                         },
-                        "endpointSubLevel": {
-                            "termUid": "term_root_final_non_edit",
-                            "catalogueName": "SDTM CT",
-                            "codelistUid": "non_editable_cr",
-                            "sponsorPreferredName": "term_value_name3",
-                            "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                        "endpoint_sublevel": {
+                            "term_uid": "term_root_final_non_edit",
+                            "catalogue_name": "SDTM CT",
+                            "codelist_uid": "non_editable_cr",
+                            "sponsor_preferred_name": "term_value_name3",
+                            "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                             "order": 3,
-                            "libraryName": "CDISC",
-                            "startDate": "2021-06-07T11:41:14.430000",
-                            "endDate": null,
+                            "library_name": "CDISC",
+                            "start_date": "2021-06-07T11:41:14.430000",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate",
-                                "newVersion"
+                                "new_version"
                             ]
                         },
-                        "endpointUnits": {
+                        "endpoint_units": {
                             "separator": "string",
                             "units": [
                                 "unit 1",
                                 "unit 2"
                             ]
                         },
-                        "startDate": "2021-04-08T07:54:04.733562",
-                        "userInitials": "TODO Initials",
+                        "start_date": "2021-04-08T07:54:04.733562",
+                        "user_initials": "TODO Initials",
                         "order": 1,
-                        "projectNumber": "123",
-                        "projectName": "Project ABC",
-                        "studyEndpointUid": "StudyEndpoint_000001",
-                        "acceptedVersion": false,
-                        "studyObjective": {
-                            "endpointCount": 1,
-                            "acceptedVersion": false,
-                            "startDate": "2021-03-23T10:42:33.882531",
-                            "userInitials": "TODO User initials",
-                            "latestObjective": null,
+                        "project_number": "123",
+                        "project_name": "Project ABC",
+                        "study_endpoint_uid": "StudyEndpoint_000001",
+                        "accepted_version": false,
+                        "study_objective": {
+                            "endpoint_count": 1,
+                            "accepted_version": false,
+                            "start_date": "2021-03-23T10:42:33.882531",
+                            "user_initials": "TODO User initials",
+                            "latest_objective": null,
                             "objective": {
-                                "changeDescription": "Approved version",
-                                "endDate": null,
+                                "change_description": "Approved version",
+                                "end_date": null,
                                 "library": {
-                                    "isEditable": true,
+                                    "is_editable": true,
                                     "name": "Sponsor"
                                 },
                                 "name": "objective_1",
-                                "namePlain": "objective_1",
-                                "objectiveTemplate": {
+                                "name_plain": "objective_1",
+                                "objective_template": {
                                     "name": "objective_1",
-                                    "namePlain": "objective_1",
+                                    "name_plain": "objective_1",
                                     "uid": null
                                 },
-                                "parameterValues": [],
-                                "possibleActions": [
+                                "parameter_values": [],
+                                "possible_actions": [
                                     "inactivate"
                                 ],
-                                "startDate": "2021-03-03T10:52:43.858000",
+                                "start_date": "2021-03-03T10:52:43.858000",
                                 "status": "Final",
-                                "studyCount": null,
+                                "study_count": null,
                                 "uid": "Objective_000001",
-                                "userInitials": "TODO Initials",
+                                "user_initials": "TODO Initials",
                                 "version": "1.0"
                             },
-                            "objectiveLevel": null,
+                            "objective_level": null,
                             "order": 1,
-                            "projectNumber": null,
-                            "projectName": null,
-                            "studyObjectiveUid": "StudyObjective_000001",
-                            "studyUid": "study_root"
+                            "project_number": null,
+                            "project_name": null,
+                            "study_objective_uid": "StudyObjective_000001",
+                            "study_uid": "study_root"
                         },
-                        "studyUid": "study_root",
+                        "study_uid": "study_root",
                         "timeframe": {
-                            "changeDescription": "Approved version",
-                            "endDate": null,
+                            "change_description": "Approved version",
+                            "end_date": null,
                             "library": {
-                                "isEditable": true,
+                                "is_editable": true,
                                 "name": "Sponsor"
                             },
                             "name": "timeframe_1",
-                            "namePlain": "timeframe_1",
-                            "parameterValues": [],
-                            "possibleActions": [
+                            "name_plain": "timeframe_1",
+                            "parameter_values": [],
+                            "possible_actions": [
                                 "inactivate"
                             ],
-                            "startDate": "2021-03-02T11:44:54.690000",
+                            "start_date": "2021-03-02T11:44:54.690000",
                             "status": "Final",
-                            "timeframeTemplate": {
+                            "timeframe_template": {
                                 "name": "timeframe_1",
-                                "namePlain": "timeframe_1",
+                                "name_plain": "timeframe_1",
                                 "uid": null
                             },
                             "uid": "Timeframe_000001",
-                            "userInitials": "TODO Initials",
+                            "user_initials": "TODO Initials",
                             "version": "1.0"
                         }
                     }
@@ -388,7 +388,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study-endpoints"
+            "url": "/study-endpoints"
         },
         "response": {
             "code": 200,
@@ -399,91 +399,91 @@
             "result": {
                 "total": 0,
                 "page": 1,
-                "size": 0,
+                "size": 10,
                 "items": [
                     {
-                        "studyUid": "study_root",
+                        "study_uid": "study_root",
                         "order": 1,
-                        "projectNumber": "123",
-                        "projectName": "Project ABC",
-                        "studyEndpointUid": "StudyEndpoint_000001",
-                        "studyObjective": {
-                            "studyUid": "study_root",
+                        "project_number": "123",
+                        "project_name": "Project ABC",
+                        "study_endpoint_uid": "StudyEndpoint_000001",
+                        "study_objective": {
+                            "study_uid": "study_root",
                             "order": 1,
-                            "projectNumber": null,
-                            "projectName": null,
-                            "studyObjectiveUid": "StudyObjective_000001",
-                            "objectiveLevel": null,
+                            "project_number": null,
+                            "project_name": null,
+                            "study_objective_uid": "StudyObjective_000001",
+                            "objective_level": null,
                             "objective": {
                                 "uid": "Objective_000001",
                                 "name": "objective_1",
-                                "namePlain": "objective_1",
-                                "startDate": "2021-10-12T07:20:26.321000",
-                                "endDate": null,
+                                "name_plain": "objective_1",
+                                "start_date": "2021-10-12T07:20:26.321000",
+                                "end_date": null,
                                 "status": "Final",
                                 "version": "1.0",
-                                "changeDescription": "Approved version",
-                                "userInitials": "TODO initials",
-                                "possibleActions": [
+                                "change_description": "Approved version",
+                                "user_initials": "TODO initials",
+                                "possible_actions": [
                                     "inactivate"
                                 ],
-                                "objectiveTemplate": {
+                                "objective_template": {
                                     "name": "objective_1",
-                                    "namePlain": "objective_1",
+                                    "name_plain": "objective_1",
                                     "uid": "ObjectiveTemplate_000001"
                                 },
-                                "parameterValues": [],
+                                "parameter_values": [],
                                 "library": {
                                     "name": "Sponsor",
-                                    "isEditable": true
+                                    "is_editable": true
                                 },
-                                "studyCount": null
+                                "study_count": null
                             },
-                            "startDate": "2021-10-12T07:20:26.321000",
-                            "userInitials": "TODO user initials",
-                            "endpointCount": 1,
-                            "latestObjective": null,
-                            "acceptedVersion": false
+                            "start_date": "2021-10-12T07:20:26.321000",
+                            "user_initials": "TODO user initials",
+                            "endpoint_count": 1,
+                            "latest_objective": null,
+                            "accepted_version": false
                         },
-                        "endpointLevel": {
-                            "termUid": "term_root_final",
-                            "catalogueName": "SDTM CT",
-                            "codelistUid": "ct_codelist_root_endpoint",
-                            "sponsorPreferredName": "term_value_name1",
-                            "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                        "endpoint_level": {
+                            "term_uid": "term_root_final",
+                            "catalogue_name": "SDTM CT",
+                            "codelist_uid": "ct_codelist_root_endpoint",
+                            "sponsor_preferred_name": "term_value_name1",
+                            "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                             "order": 1,
-                            "libraryName": "Sponsor",
-                            "startDate": "2021-10-12T07:20:25.398000",
-                            "endDate": null,
+                            "library_name": "Sponsor",
+                            "start_date": "2021-10-12T07:20:25.398000",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate",
-                                "newVersion"
+                                "new_version"
                             ]
                         },
-                        "endpointSubLevel": {
-                            "termUid": "term_root_final_non_edit",
-                            "catalogueName": "SDTM CT",
-                            "codelistUid": "non_editable_cr",
-                            "sponsorPreferredName": "term_value_name3",
-                            "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                        "endpoint_sublevel": {
+                            "term_uid": "term_root_final_non_edit",
+                            "catalogue_name": "SDTM CT",
+                            "codelist_uid": "non_editable_cr",
+                            "sponsor_preferred_name": "term_value_name3",
+                            "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                             "order": 3,
-                            "libraryName": "CDISC",
-                            "startDate": "2021-06-07T11:41:14.430000",
-                            "endDate": null,
+                            "library_name": "CDISC",
+                            "start_date": "2021-06-07T11:41:14.430000",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate",
-                                "newVersion"
+                                "new_version"
                             ]
                         },
-                        "endpointUnits": {
+                        "endpoint_units": {
                             "units": [
                                 "unit 1",
                                 "unit 2"
@@ -493,57 +493,57 @@
                         "endpoint": {
                             "uid": "Endpoint_000001",
                             "name": "endpoint_1",
-                            "namePlain": "endpoint_1",
-                            "startDate": "2021-10-12T07:20:26.321000",
-                            "endDate": null,
+                            "name_plain": "endpoint_1",
+                            "start_date": "2021-10-12T07:20:26.321000",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate"
                             ],
-                            "endpointTemplate": {
+                            "endpoint_template": {
                                 "name": "endpoint_1",
-                                "namePlain": "endpoint_1",
+                                "name_plain": "endpoint_1",
                                 "uid": "EndpointTemplate_000001"
                             },
-                            "parameterValues": [],
+                            "parameter_values": [],
                             "library": {
                                 "name": "Sponsor",
-                                "isEditable": true
+                                "is_editable": true
                             },
-                            "studyCount": null
+                            "study_count": null
                         },
                         "timeframe": {
                             "uid": "Timeframe_000001",
                             "name": "timeframe_1",
-                            "namePlain": "timeframe_1",
-                            "startDate": "2021-10-12T07:20:26.321000",
-                            "endDate": null,
+                            "name_plain": "timeframe_1",
+                            "start_date": "2021-10-12T07:20:26.321000",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate"
                             ],
-                            "timeframeTemplate": {
+                            "timeframe_template": {
                                 "name": "timeframe_1",
-                                "namePlain": "timeframe_1",
+                                "name_plain": "timeframe_1",
                                 "uid": "TimeframeTemplate_000001"
                             },
-                            "parameterValues": [],
+                            "parameter_values": [],
                             "library": {
                                 "name": "Sponsor",
-                                "isEditable": true
+                                "is_editable": true
                             }
                         },
-                        "latestEndpoint": null,
-                        "latestTimeframe": null,
-                        "startDate": "2021-10-12T09:20:38.112697",
-                        "userInitials": "TEST_USER",
-                        "acceptedVersion": false
+                        "latest_endpoint": null,
+                        "latest_timeframe": null,
+                        "start_date": "2021-10-12T09:20:38.112697",
+                        "user_initials": "TEST_USER",
+                        "accepted_version": false
                     }
                 ]
             }
@@ -555,7 +555,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study_root/study-endpoints/audit-trail"
+            "url": "/studies/study_root/study-endpoints/audit-trail"
         },
         "response": {
             "code": 200,
@@ -566,143 +566,143 @@
             "result": [
                 {
                     "endpoint": {
-                        "changeDescription": "Approved version",
-                        "endDate": null,
-                        "endpointTemplate": {
+                        "change_description": "Approved version",
+                        "end_date": null,
+                        "endpoint_template": {
                             "name": "endpoint_1",
-                            "namePlain": "endpoint_1",
+                            "name_plain": "endpoint_1",
                             "uid": null
                         },
                         "library": {
-                            "isEditable": true,
+                            "is_editable": true,
                             "name": "Sponsor"
                         },
                         "name": "endpoint_1",
-                        "namePlain": "endpoint_1",
-                        "parameterValues": [],
-                        "possibleActions": [
+                        "name_plain": "endpoint_1",
+                        "parameter_values": [],
+                        "possible_actions": [
                             "inactivate"
                         ],
-                        "startDate": "2021-03-02T11:44:54.690000",
+                        "start_date": "2021-03-02T11:44:54.690000",
                         "status": "Final",
-                        "studyCount": null,
+                        "study_count": null,
                         "uid": "Endpoint_000001",
-                        "userInitials": "TODO Initials",
+                        "user_initials": "TODO Initials",
                         "version": "1.0"
                     },
-                    "endpointLevel": {
-                        "termUid": "term_root_final",
-                        "catalogueName": "SDTM CT",
-                        "codelistUid": "ct_codelist_root_endpoint",
-                        "sponsorPreferredName": "term_value_name1",
-                        "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                    "endpoint_level": {
+                        "term_uid": "term_root_final",
+                        "catalogue_name": "SDTM CT",
+                        "codelist_uid": "ct_codelist_root_endpoint",
+                        "sponsor_preferred_name": "term_value_name1",
+                        "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                         "order": 1,
-                        "libraryName": "Sponsor",
-                        "startDate": "2021-06-07T11:41:14.430000",
-                        "endDate": null,
+                        "library_name": "Sponsor",
+                        "start_date": "2021-06-07T11:41:14.430000",
+                        "end_date": null,
                         "status": "Final",
                         "version": "1.0",
-                        "changeDescription": "Approved version",
-                        "userInitials": "TODO initials",
-                        "possibleActions": [
+                        "change_description": "Approved version",
+                        "user_initials": "TODO initials",
+                        "possible_actions": [
                             "inactivate",
-                            "newVersion"
+                            "new_version"
                         ]
                     },
-                    "endpointSubLevel": {
-                        "termUid": "term_root_final_non_edit",
-                        "catalogueName": "SDTM CT",
-                        "codelistUid": "non_editable_cr",
-                        "sponsorPreferredName": "term_value_name3",
-                        "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                    "endpoint_sublevel": {
+                        "term_uid": "term_root_final_non_edit",
+                        "catalogue_name": "SDTM CT",
+                        "codelist_uid": "non_editable_cr",
+                        "sponsor_preferred_name": "term_value_name3",
+                        "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                         "order": 3,
-                        "libraryName": "CDISC",
-                        "startDate": "2021-06-07T11:41:14.430000",
-                        "endDate": null,
+                        "library_name": "CDISC",
+                        "start_date": "2021-06-07T11:41:14.430000",
+                        "end_date": null,
                         "status": "Final",
                         "version": "1.0",
-                        "changeDescription": "Approved version",
-                        "userInitials": "TODO initials",
-                        "possibleActions": [
+                        "change_description": "Approved version",
+                        "user_initials": "TODO initials",
+                        "possible_actions": [
                             "inactivate",
-                            "newVersion"
+                            "new_version"
                         ]
                     },
-                    "endpointUnits": {
+                    "endpoint_units": {
                         "separator": "string",
                         "units": [
                             "unit 1",
                             "unit 2"
                         ]
                     },
-                    "startDate": "2021-04-08T07:54:04.733562",
-                    "userInitials": "TODO Initials",
-                    "endDate": null,
+                    "start_date": "2021-04-08T07:54:04.733562",
+                    "user_initials": "TODO Initials",
+                    "end_date": null,
                     "status": null,
-                    "changeType": "Create",
+                    "change_type": "Create",
                     "order": 1,
-                    "studyEndpointUid": "StudyEndpoint_000001",
-                    "studyObjective": {
-                        "endpointCount": 1,
-                        "acceptedVersion": false,
-                        "startDate": "2021-03-23T10:42:33.882531",
-                        "userInitials": "TODO User initials",
-                        "latestObjective": null,
+                    "study_endpoint_uid": "StudyEndpoint_000001",
+                    "study_objective": {
+                        "endpoint_count": 1,
+                        "accepted_version": false,
+                        "start_date": "2021-03-23T10:42:33.882531",
+                        "user_initials": "TODO User initials",
+                        "latest_objective": null,
                         "objective": {
-                            "changeDescription": "Approved version",
-                            "endDate": null,
+                            "change_description": "Approved version",
+                            "end_date": null,
                             "library": {
-                                "isEditable": true,
+                                "is_editable": true,
                                 "name": "Sponsor"
                             },
                             "name": "objective_1",
-                            "namePlain": "objective_1",
-                            "objectiveTemplate": {
+                            "name_plain": "objective_1",
+                            "objective_template": {
                                 "name": "objective_1",
-                                "namePlain": "objective_1",
+                                "name_plain": "objective_1",
                                 "uid": null
                             },
-                            "parameterValues": [],
-                            "possibleActions": [
+                            "parameter_values": [],
+                            "possible_actions": [
                                 "inactivate"
                             ],
-                            "startDate": "2021-03-03T10:52:43.858000",
+                            "start_date": "2021-03-03T10:52:43.858000",
                             "status": "Final",
-                            "studyCount": null,
+                            "study_count": null,
                             "uid": "Objective_000001",
-                            "userInitials": "TODO Initials",
+                            "user_initials": "TODO Initials",
                             "version": "1.0"
                         },
-                        "objectiveLevel": null,
+                        "objective_level": null,
                         "order": 1,
-                        "projectNumber": null,
-                        "projectName": null,
-                        "studyObjectiveUid": "StudyObjective_000001",
-                        "studyUid": "study_root"
+                        "project_number": null,
+                        "project_name": null,
+                        "study_objective_uid": "StudyObjective_000001",
+                        "study_uid": "study_root"
                     },
-                    "studyUid": "study_root",
+                    "study_uid": "study_root",
                     "timeframe": {
-                        "changeDescription": "Approved version",
-                        "endDate": null,
+                        "change_description": "Approved version",
+                        "end_date": null,
                         "library": {
-                            "isEditable": true,
+                            "is_editable": true,
                             "name": "Sponsor"
                         },
                         "name": "timeframe_1",
-                        "namePlain": "timeframe_1",
-                        "parameterValues": [],
-                        "possibleActions": [
+                        "name_plain": "timeframe_1",
+                        "parameter_values": [],
+                        "possible_actions": [
                             "inactivate"
                         ],
-                        "startDate": "2021-03-02T11:44:54.690000",
+                        "start_date": "2021-03-02T11:44:54.690000",
                         "status": "Final",
-                        "timeframeTemplate": {
+                        "timeframe_template": {
                             "name": "timeframe_1",
-                            "namePlain": "timeframe_1",
+                            "name_plain": "timeframe_1",
                             "uid": null
                         },
                         "uid": "Timeframe_000001",
-                        "userInitials": "TODO Initials",
+                        "user_initials": "TODO Initials",
                         "version": "1.0"
                     }
                 }
@@ -710,15 +710,15 @@
         }
     },
     {
-        "name": "Test add selection 2, no endpointLevel and endpointSubLevel set",
+        "name": "Test add selection 2, no endpoint_level and endpoint_sublevel set",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "studyObjectiveUid": "StudyObjective_000001",
-                "timeframeUid": "Timeframe_000001"
+                "study_objective_uid": "StudyObjective_000001",
+                "timeframe_uid": "Timeframe_000001"
             },
-            "url": "/study/study_root/study-endpoints/select"
+            "url": "/studies/study_root/study-endpoints"
         },
         "response": {
             "code": 201,
@@ -727,85 +727,85 @@
                 "content-type": "application/json"
             },
             "result": {
-                "latestEndpoint": null,
-                "latestTimeframe": null,
-                "acceptedVersion": false,
+                "latest_endpoint": null,
+                "latest_timeframe": null,
+                "accepted_version": false,
                 "endpoint": null,
-                "endpointLevel": null,
-                "endpointSubLevel": null,
-                "endpointUnits": null,
-                "startDate": "2021-04-08T07:54:04.733562",
-                "userInitials": "TODO Initials",
+                "endpoint_level": null,
+                "endpoint_sublevel": null,
+                "endpoint_units": null,
+                "start_date": "2021-04-08T07:54:04.733562",
+                "user_initials": "TODO Initials",
                 "order": 2,
-                "projectNumber": null,
-                "projectName": null,
-                "studyEndpointUid": "StudyEndpoint_000003",
-                "studyObjective": {
-                    "endpointCount": 2,
-                    "startDate": "2021-03-23T10:42:33.882531",
-                    "userInitials": "TODO User initials",
-                    "acceptedVersion": false,
+                "project_number": null,
+                "project_name": null,
+                "study_endpoint_uid": "StudyEndpoint_000003",
+                "study_objective": {
+                    "endpoint_count": 2,
+                    "start_date": "2021-03-23T10:42:33.882531",
+                    "user_initials": "TODO User initials",
+                    "accepted_version": false,
                     "objective": {
-                        "changeDescription": "Approved version",
-                        "endDate": null,
+                        "change_description": "Approved version",
+                        "end_date": null,
                         "library": {
-                            "isEditable": true,
+                            "is_editable": true,
                             "name": "Sponsor"
                         },
                         "name": "objective_1",
-                        "namePlain": "objective_1",
-                        "objectiveTemplate": {
+                        "name_plain": "objective_1",
+                        "objective_template": {
                             "name": "objective_1",
-                            "namePlain": "objective_1",
+                            "name_plain": "objective_1",
                             "uid": null
                         },
-                        "parameterValues": [],
-                        "possibleActions": [
+                        "parameter_values": [],
+                        "possible_actions": [
                             "inactivate"
                         ],
-                        "startDate": "2021-03-03T10:52:43.858000",
+                        "start_date": "2021-03-03T10:52:43.858000",
                         "status": "Final",
-                        "studyCount": null,
+                        "study_count": null,
                         "uid": "Objective_000001",
-                        "userInitials": "TODO Initials",
+                        "user_initials": "TODO Initials",
                         "version": "1.0"
                     },
-                    "latestObjective": null,
-                    "objectiveLevel": null,
+                    "latest_objective": null,
+                    "objective_level": null,
                     "order": 1,
-                    "projectNumber": null,
-                    "projectName": null,
-                    "studyObjectiveUid": "StudyObjective_000001",
-                    "studyUid": "study_root"
+                    "project_number": null,
+                    "project_name": null,
+                    "study_objective_uid": "StudyObjective_000001",
+                    "study_uid": "study_root"
                 },
-                "studyUid": "study_root",
+                "study_uid": "study_root",
                 "timeframe": {
-                    "changeDescription": "Approved version",
-                    "endDate": null,
+                    "change_description": "Approved version",
+                    "end_date": null,
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Sponsor"
                     },
                     "name": "timeframe_1",
-                    "namePlain": "timeframe_1",
-                    "parameterValues": [],
-                    "possibleActions": [
+                    "name_plain": "timeframe_1",
+                    "parameter_values": [],
+                    "possible_actions": [
                         "inactivate"
                     ],
-                    "startDate": "2021-03-02T11:44:54.690000",
+                    "start_date": "2021-03-02T11:44:54.690000",
                     "status": "Final",
-                    "timeframeTemplate": {
+                    "timeframe_template": {
                         "name": "timeframe_1",
-                        "namePlain": "timeframe_1",
+                        "name_plain": "timeframe_1",
                         "uid": null
                     },
                     "uid": "Timeframe_000001",
-                    "userInitials": "TODO Initials",
+                    "user_initials": "TODO Initials",
                     "version": "1.0"
                 }
             },
             "save": {
-                "studyEndpointUid": "studyEndpointUid"
+                "study_endpoint_uid": "study_endpoint_uid"
             }
         }
     },
@@ -815,10 +815,10 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "endpointUid": "Endpoint_000001",
-                "studyObjectiveUid": "StudyObjective_000001"
+                "endpoint_uid": "Endpoint_000001",
+                "study_objective_uid": "StudyObjective_000001"
             },
-            "url": "/study/study_root/study-endpoints/select"
+            "url": "/studies/study_root/study-endpoints"
         },
         "response": {
             "code": 201,
@@ -827,86 +827,86 @@
                 "content-type": "application/json"
             },
             "result": {
-                "latestEndpoint": null,
-                "latestTimeframe": null,
+                "latest_endpoint": null,
+                "latest_timeframe": null,
                 "endpoint": {
-                    "changeDescription": "Approved version",
-                    "endDate": null,
-                    "endpointTemplate": {
+                    "change_description": "Approved version",
+                    "end_date": null,
+                    "endpoint_template": {
                         "name": "endpoint_1",
-                        "namePlain": "endpoint_1",
+                        "name_plain": "endpoint_1",
                         "uid": null
                     },
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Sponsor"
                     },
                     "name": "endpoint_1",
-                    "namePlain": "endpoint_1",
-                    "parameterValues": [],
-                    "possibleActions": [
+                    "name_plain": "endpoint_1",
+                    "parameter_values": [],
+                    "possible_actions": [
                         "inactivate"
                     ],
-                    "startDate": "2021-03-02T11:44:54.690000",
+                    "start_date": "2021-03-02T11:44:54.690000",
                     "status": "Final",
-                    "studyCount": null,
+                    "study_count": null,
                     "uid": "Endpoint_000001",
-                    "userInitials": "TODO Initials",
+                    "user_initials": "TODO Initials",
                     "version": "1.0"
                 },
-                "endpointLevel": null,
-                "endpointSubLevel": null,
-                "endpointUnits": null,
-                "startDate": "2021-04-08T07:54:04.733562",
-                "userInitials": "TODO Initials",
+                "endpoint_level": null,
+                "endpoint_sublevel": null,
+                "endpoint_units": null,
+                "start_date": "2021-04-08T07:54:04.733562",
+                "user_initials": "TODO Initials",
                 "order": 3,
-                "projectNumber": null,
-                "projectName": null,
-                "studyEndpointUid": "StudyEndpoint_000005",
-                "acceptedVersion": false,
-                "studyObjective": {
-                    "endpointCount": 3,
-                    "acceptedVersion": false,
-                    "startDate": "2021-03-23T10:42:33.882531",
-                    "userInitials": "TODO User initials",
+                "project_number": null,
+                "project_name": null,
+                "study_endpoint_uid": "StudyEndpoint_000005",
+                "accepted_version": false,
+                "study_objective": {
+                    "endpoint_count": 3,
+                    "accepted_version": false,
+                    "start_date": "2021-03-23T10:42:33.882531",
+                    "user_initials": "TODO User initials",
                     "objective": {
-                        "changeDescription": "Approved version",
-                        "endDate": null,
+                        "change_description": "Approved version",
+                        "end_date": null,
                         "library": {
-                            "isEditable": true,
+                            "is_editable": true,
                             "name": "Sponsor"
                         },
                         "name": "objective_1",
-                        "namePlain": "objective_1",
-                        "objectiveTemplate": {
+                        "name_plain": "objective_1",
+                        "objective_template": {
                             "name": "objective_1",
-                            "namePlain": "objective_1",
+                            "name_plain": "objective_1",
                             "uid": null
                         },
-                        "parameterValues": [],
-                        "possibleActions": [
+                        "parameter_values": [],
+                        "possible_actions": [
                             "inactivate"
                         ],
-                        "startDate": "2021-03-03T10:52:43.858000",
+                        "start_date": "2021-03-03T10:52:43.858000",
                         "status": "Final",
-                        "studyCount": null,
+                        "study_count": null,
                         "uid": "Objective_000001",
-                        "userInitials": "TODO Initials",
+                        "user_initials": "TODO Initials",
                         "version": "1.0"
                     },
-                    "latestObjective": null,
-                    "objectiveLevel": null,
+                    "latest_objective": null,
+                    "objective_level": null,
                     "order": 1,
-                    "projectNumber": null,
-                    "projectName": null,
-                    "studyObjectiveUid": "StudyObjective_000001",
-                    "studyUid": "study_root"
+                    "project_number": null,
+                    "project_name": null,
+                    "study_objective_uid": "StudyObjective_000001",
+                    "study_uid": "study_root"
                 },
-                "studyUid": "study_root",
+                "study_uid": "study_root",
                 "timeframe": null
             },
             "save": {
-                "studyEndpointUid": "studyEndpointUid"
+                "study_endpoint_uid": "study_endpoint_uid"
             }
         }
     },
@@ -916,7 +916,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/study/study_root/study-endpoints/select"
+            "url": "/studies/study_root/study-endpoints"
         },
         "response": {
             "code": 201,
@@ -925,25 +925,25 @@
                 "content-type": "application/json"
             },
             "result": {
-                "latestEndpoint": null,
-                "latestTimeframe": null,
-                "acceptedVersion": false,
+                "latest_endpoint": null,
+                "latest_timeframe": null,
+                "accepted_version": false,
                 "endpoint": null,
-                "endpointLevel": null,
-                "endpointSubLevel": null,
-                "endpointUnits": null,
-                "startDate": "2021-04-08T07:54:04.733562",
-                "userInitials": "TODO Initials",
+                "endpoint_level": null,
+                "endpoint_sublevel": null,
+                "endpoint_units": null,
+                "start_date": "2021-04-08T07:54:04.733562",
+                "user_initials": "TODO Initials",
                 "order": 4,
-                "projectNumber": null,
-                "projectName": null,
-                "studyEndpointUid": "StudyEndpoint_000007",
-                "studyObjective": null,
-                "studyUid": "study_root",
+                "project_number": null,
+                "project_name": null,
+                "study_endpoint_uid": "StudyEndpoint_000007",
+                "study_objective": null,
+                "study_uid": "study_root",
                 "timeframe": null
             },
             "save": {
-                "studyEndpointUid": "studyEndpointUid"
+                "study_endpoint_uid": "study_endpoint_uid"
             }
         }
     },
@@ -953,7 +953,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study_root/study-endpoints"
+            "url": "/studies/study_root/study-endpoints"
         },
         "response": {
             "code": 200,
@@ -964,322 +964,322 @@
             "result": {
                 "items": [
                     {
-                        "latestEndpoint": null,
-                        "latestTimeframe": null,
-                        "acceptedVersion": false,
+                        "latest_endpoint": null,
+                        "latest_timeframe": null,
+                        "accepted_version": false,
                         "endpoint": {
-                            "changeDescription": "Approved version",
-                            "endDate": null,
-                            "endpointTemplate": {
+                            "change_description": "Approved version",
+                            "end_date": null,
+                            "endpoint_template": {
                                 "name": "endpoint_1",
-                                "namePlain": "endpoint_1",
+                                "name_plain": "endpoint_1",
                                 "uid": null
                             },
                             "library": {
-                                "isEditable": true,
+                                "is_editable": true,
                                 "name": "Sponsor"
                             },
                             "name": "endpoint_1",
-                            "namePlain": "endpoint_1",
-                            "parameterValues": [],
-                            "possibleActions": [
+                            "name_plain": "endpoint_1",
+                            "parameter_values": [],
+                            "possible_actions": [
                                 "inactivate"
                             ],
-                            "startDate": "2021-03-02T11:44:54.690000",
+                            "start_date": "2021-03-02T11:44:54.690000",
                             "status": "Final",
-                            "studyCount": null,
+                            "study_count": null,
                             "uid": "Endpoint_000001",
-                            "userInitials": "TODO Initials",
+                            "user_initials": "TODO Initials",
                             "version": "1.0"
                         },
-                        "endpointLevel": {
-                            "termUid": "term_root_final",
-                            "catalogueName": "SDTM CT",
-                            "codelistUid": "ct_codelist_root_endpoint",
-                            "sponsorPreferredName": "term_value_name1",
-                            "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                        "endpoint_level": {
+                            "term_uid": "term_root_final",
+                            "catalogue_name": "SDTM CT",
+                            "codelist_uid": "ct_codelist_root_endpoint",
+                            "sponsor_preferred_name": "term_value_name1",
+                            "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                             "order": 1,
-                            "libraryName": "Sponsor",
-                            "startDate": "2021-06-07T11:41:14.430000",
-                            "endDate": null,
+                            "library_name": "Sponsor",
+                            "start_date": "2021-06-07T11:41:14.430000",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate",
-                                "newVersion"
+                                "new_version"
                             ]
                         },
-                        "endpointSubLevel": {
-                            "termUid": "term_root_final_non_edit",
-                            "catalogueName": "SDTM CT",
-                            "codelistUid": "non_editable_cr",
-                            "sponsorPreferredName": "term_value_name3",
-                            "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                        "endpoint_sublevel": {
+                            "term_uid": "term_root_final_non_edit",
+                            "catalogue_name": "SDTM CT",
+                            "codelist_uid": "non_editable_cr",
+                            "sponsor_preferred_name": "term_value_name3",
+                            "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                             "order": 3,
-                            "libraryName": "CDISC",
-                            "startDate": "2021-06-07T11:41:14.430000",
-                            "endDate": null,
+                            "library_name": "CDISC",
+                            "start_date": "2021-06-07T11:41:14.430000",
+                            "end_date": null,
                             "status": "Final",
                             "version": "1.0",
-                            "changeDescription": "Approved version",
-                            "userInitials": "TODO initials",
-                            "possibleActions": [
+                            "change_description": "Approved version",
+                            "user_initials": "TODO initials",
+                            "possible_actions": [
                                 "inactivate",
-                                "newVersion"
+                                "new_version"
                             ]
                         },
-                        "endpointUnits": {
+                        "endpoint_units": {
                             "separator": "string",
                             "units": [
                                 "unit 1",
                                 "unit 2"
                             ]
                         },
-                        "startDate": "2021-04-08T07:54:04.733562",
-                        "userInitials": "TODO Initials",
+                        "start_date": "2021-04-08T07:54:04.733562",
+                        "user_initials": "TODO Initials",
                         "order": 1,
-                        "projectNumber": "123",
-                        "projectName": "Project ABC",
-                        "studyEndpointUid": "StudyEndpoint_000001",
-                        "studyObjective": {
-                            "endpointCount": 3,
-                            "acceptedVersion": false,
-                            "startDate": "2021-03-23T10:42:33.882531",
-                            "userInitials": "TODO User initials",
+                        "project_number": "123",
+                        "project_name": "Project ABC",
+                        "study_endpoint_uid": "StudyEndpoint_000001",
+                        "study_objective": {
+                            "endpoint_count": 3,
+                            "accepted_version": false,
+                            "start_date": "2021-03-23T10:42:33.882531",
+                            "user_initials": "TODO User initials",
                             "objective": {
-                                "changeDescription": "Approved version",
-                                "endDate": null,
+                                "change_description": "Approved version",
+                                "end_date": null,
                                 "library": {
-                                    "isEditable": true,
+                                    "is_editable": true,
                                     "name": "Sponsor"
                                 },
                                 "name": "objective_1",
-                                "namePlain": "objective_1",
-                                "objectiveTemplate": {
+                                "name_plain": "objective_1",
+                                "objective_template": {
                                     "name": "objective_1",
-                                    "namePlain": "objective_1",
+                                    "name_plain": "objective_1",
                                     "uid": null
                                 },
-                                "parameterValues": [],
-                                "possibleActions": [
+                                "parameter_values": [],
+                                "possible_actions": [
                                     "inactivate"
                                 ],
-                                "startDate": "2021-03-03T10:52:43.858000",
+                                "start_date": "2021-03-03T10:52:43.858000",
                                 "status": "Final",
-                                "studyCount": null,
+                                "study_count": null,
                                 "uid": "Objective_000001",
-                                "userInitials": "TODO Initials",
+                                "user_initials": "TODO Initials",
                                 "version": "1.0"
                             },
-                            "latestObjective": null,
-                            "objectiveLevel": null,
+                            "latest_objective": null,
+                            "objective_level": null,
                             "order": 1,
-                            "projectNumber": null,
-                            "projectName": null,
-                            "studyObjectiveUid": "StudyObjective_000001",
-                            "studyUid": "study_root"
+                            "project_number": null,
+                            "project_name": null,
+                            "study_objective_uid": "StudyObjective_000001",
+                            "study_uid": "study_root"
                         },
-                        "studyUid": "study_root",
+                        "study_uid": "study_root",
                         "timeframe": {
-                            "changeDescription": "Approved version",
-                            "endDate": null,
+                            "change_description": "Approved version",
+                            "end_date": null,
                             "library": {
-                                "isEditable": true,
+                                "is_editable": true,
                                 "name": "Sponsor"
                             },
                             "name": "timeframe_1",
-                            "namePlain": "timeframe_1",
-                            "parameterValues": [],
-                            "possibleActions": [
+                            "name_plain": "timeframe_1",
+                            "parameter_values": [],
+                            "possible_actions": [
                                 "inactivate"
                             ],
-                            "startDate": "2021-03-02T11:44:54.690000",
+                            "start_date": "2021-03-02T11:44:54.690000",
                             "status": "Final",
-                            "timeframeTemplate": {
+                            "timeframe_template": {
                                 "name": "timeframe_1",
-                                "namePlain": "timeframe_1",
+                                "name_plain": "timeframe_1",
                                 "uid": null
                             },
                             "uid": "Timeframe_000001",
-                            "userInitials": "TODO Initials",
+                            "user_initials": "TODO Initials",
                             "version": "1.0"
                         }
                     },
                     {
-                        "latestEndpoint": null,
-                        "latestTimeframe": null,
+                        "latest_endpoint": null,
+                        "latest_timeframe": null,
                         "endpoint": null,
-                        "endpointLevel": null,
-                        "endpointSubLevel": null,
-                        "endpointUnits": null,
-                        "startDate": "2021-04-08T07:54:04.733562",
-                        "userInitials": "TODO Initials",
+                        "endpoint_level": null,
+                        "endpoint_sublevel": null,
+                        "endpoint_units": null,
+                        "start_date": "2021-04-08T07:54:04.733562",
+                        "user_initials": "TODO Initials",
                         "order": 2,
-                        "projectNumber": "123",
-                        "projectName": "Project ABC",
-                        "studyEndpointUid": "StudyEndpoint_000003",
-                        "acceptedVersion": false,
-                        "studyObjective": {
-                            "endpointCount": 3,
-                            "acceptedVersion": false,
-                            "startDate": "2021-03-23T10:42:33.882531",
-                            "userInitials": "TODO User initials",
+                        "project_number": "123",
+                        "project_name": "Project ABC",
+                        "study_endpoint_uid": "StudyEndpoint_000003",
+                        "accepted_version": false,
+                        "study_objective": {
+                            "endpoint_count": 3,
+                            "accepted_version": false,
+                            "start_date": "2021-03-23T10:42:33.882531",
+                            "user_initials": "TODO User initials",
                             "objective": {
-                                "changeDescription": "Approved version",
-                                "endDate": null,
+                                "change_description": "Approved version",
+                                "end_date": null,
                                 "library": {
-                                    "isEditable": true,
+                                    "is_editable": true,
                                     "name": "Sponsor"
                                 },
                                 "name": "objective_1",
-                                "namePlain": "objective_1",
-                                "objectiveTemplate": {
+                                "name_plain": "objective_1",
+                                "objective_template": {
                                     "name": "objective_1",
-                                    "namePlain": "objective_1",
+                                    "name_plain": "objective_1",
                                     "uid": null
                                 },
-                                "parameterValues": [],
-                                "possibleActions": [
+                                "parameter_values": [],
+                                "possible_actions": [
                                     "inactivate"
                                 ],
-                                "startDate": "2021-03-03T10:52:43.858000",
+                                "start_date": "2021-03-03T10:52:43.858000",
                                 "status": "Final",
-                                "studyCount": null,
+                                "study_count": null,
                                 "uid": "Objective_000001",
-                                "userInitials": "TODO Initials",
+                                "user_initials": "TODO Initials",
                                 "version": "1.0"
                             },
-                            "latestObjective": null,
-                            "objectiveLevel": null,
+                            "latest_objective": null,
+                            "objective_level": null,
                             "order": 1,
-                            "projectNumber": null,
-                            "projectName": null,
-                            "studyObjectiveUid": "StudyObjective_000001",
-                            "studyUid": "study_root"
+                            "project_number": null,
+                            "project_name": null,
+                            "study_objective_uid": "StudyObjective_000001",
+                            "study_uid": "study_root"
                         },
-                        "studyUid": "study_root",
+                        "study_uid": "study_root",
                         "timeframe": {
-                            "changeDescription": "Approved version",
-                            "endDate": null,
+                            "change_description": "Approved version",
+                            "end_date": null,
                             "library": {
-                                "isEditable": true,
+                                "is_editable": true,
                                 "name": "Sponsor"
                             },
                             "name": "timeframe_1",
-                            "namePlain": "timeframe_1",
-                            "parameterValues": [],
-                            "possibleActions": [
+                            "name_plain": "timeframe_1",
+                            "parameter_values": [],
+                            "possible_actions": [
                                 "inactivate"
                             ],
-                            "startDate": "2021-03-02T11:44:54.690000",
+                            "start_date": "2021-03-02T11:44:54.690000",
                             "status": "Final",
-                            "timeframeTemplate": {
+                            "timeframe_template": {
                                 "name": "timeframe_1",
-                                "namePlain": "timeframe_1",
+                                "name_plain": "timeframe_1",
                                 "uid": null
                             },
                             "uid": "Timeframe_000001",
-                            "userInitials": "TODO Initials",
+                            "user_initials": "TODO Initials",
                             "version": "1.0"
                         }
                     },
                     {
-                        "latestEndpoint": null,
-                        "latestTimeframe": null,
+                        "latest_endpoint": null,
+                        "latest_timeframe": null,
                         "endpoint": {
-                            "changeDescription": "Approved version",
-                            "endDate": null,
-                            "endpointTemplate": {
+                            "change_description": "Approved version",
+                            "end_date": null,
+                            "endpoint_template": {
                                 "name": "endpoint_1",
-                                "namePlain": "endpoint_1",
+                                "name_plain": "endpoint_1",
                                 "uid": null
                             },
                             "library": {
-                                "isEditable": true,
+                                "is_editable": true,
                                 "name": "Sponsor"
                             },
                             "name": "endpoint_1",
-                            "namePlain": "endpoint_1",
-                            "parameterValues": [],
-                            "possibleActions": [
+                            "name_plain": "endpoint_1",
+                            "parameter_values": [],
+                            "possible_actions": [
                                 "inactivate"
                             ],
-                            "startDate": "2021-03-02T11:44:54.690000",
+                            "start_date": "2021-03-02T11:44:54.690000",
                             "status": "Final",
-                            "studyCount": null,
+                            "study_count": null,
                             "uid": "Endpoint_000001",
-                            "userInitials": "TODO Initials",
+                            "user_initials": "TODO Initials",
                             "version": "1.0"
                         },
-                        "endpointLevel": null,
-                        "endpointSubLevel": null,
-                        "endpointUnits": null,
-                        "startDate": "2021-04-08T07:54:04.733562",
-                        "userInitials": "TODO Initials",
+                        "endpoint_level": null,
+                        "endpoint_sublevel": null,
+                        "endpoint_units": null,
+                        "start_date": "2021-04-08T07:54:04.733562",
+                        "user_initials": "TODO Initials",
                         "order": 3,
-                        "projectNumber": "123",
-                        "projectName": "Project ABC",
-                        "studyEndpointUid": "StudyEndpoint_000005",
-                        "acceptedVersion": false,
-                        "studyObjective": {
-                            "endpointCount": 3,
-                            "acceptedVersion": false,
-                            "startDate": "2021-03-23T10:42:33.882531",
-                            "userInitials": "TODO User initials",
+                        "project_number": "123",
+                        "project_name": "Project ABC",
+                        "study_endpoint_uid": "StudyEndpoint_000005",
+                        "accepted_version": false,
+                        "study_objective": {
+                            "endpoint_count": 3,
+                            "accepted_version": false,
+                            "start_date": "2021-03-23T10:42:33.882531",
+                            "user_initials": "TODO User initials",
                             "objective": {
-                                "changeDescription": "Approved version",
-                                "endDate": null,
+                                "change_description": "Approved version",
+                                "end_date": null,
                                 "library": {
-                                    "isEditable": true,
+                                    "is_editable": true,
                                     "name": "Sponsor"
                                 },
                                 "name": "objective_1",
-                                "namePlain": "objective_1",
-                                "objectiveTemplate": {
+                                "name_plain": "objective_1",
+                                "objective_template": {
                                     "name": "objective_1",
-                                    "namePlain": "objective_1",
+                                    "name_plain": "objective_1",
                                     "uid": null
                                 },
-                                "parameterValues": [],
-                                "possibleActions": [
+                                "parameter_values": [],
+                                "possible_actions": [
                                     "inactivate"
                                 ],
-                                "startDate": "2021-03-03T10:52:43.858000",
+                                "start_date": "2021-03-03T10:52:43.858000",
                                 "status": "Final",
-                                "studyCount": null,
+                                "study_count": null,
                                 "uid": "Objective_000001",
-                                "userInitials": "TODO Initials",
+                                "user_initials": "TODO Initials",
                                 "version": "1.0"
                             },
-                            "latestObjective": null,
-                            "objectiveLevel": null,
+                            "latest_objective": null,
+                            "objective_level": null,
                             "order": 1,
-                            "projectNumber": null,
-                            "projectName": null,
-                            "studyObjectiveUid": "StudyObjective_000001",
-                            "studyUid": "study_root"
+                            "project_number": null,
+                            "project_name": null,
+                            "study_objective_uid": "StudyObjective_000001",
+                            "study_uid": "study_root"
                         },
-                        "studyUid": "study_root",
+                        "study_uid": "study_root",
                         "timeframe": null
                     },
                     {
-                        "latestEndpoint": null,
-                        "latestTimeframe": null,
+                        "latest_endpoint": null,
+                        "latest_timeframe": null,
                         "endpoint": null,
-                        "endpointLevel": null,
-                        "endpointSubLevel": null,
-                        "endpointUnits": null,
-                        "startDate": "2021-04-08T07:54:04.733562",
-                        "userInitials": "TODO Initials",
+                        "endpoint_level": null,
+                        "endpoint_sublevel": null,
+                        "endpoint_units": null,
+                        "start_date": "2021-04-08T07:54:04.733562",
+                        "user_initials": "TODO Initials",
                         "order": 4,
-                        "projectNumber": "123",
-                        "projectName": "Project ABC",
-                        "studyEndpointUid": "StudyEndpoint_000007",
-                        "acceptedVersion": false,
-                        "studyObjective": null,
-                        "studyUid": "study_root",
+                        "project_number": "123",
+                        "project_name": "Project ABC",
+                        "study_endpoint_uid": "StudyEndpoint_000007",
+                        "accepted_version": false,
+                        "study_objective": null,
+                        "study_uid": "study_root",
                         "timeframe": null
                     }
                 ],
@@ -1293,7 +1293,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/study/study_root/study-endpoints/{studyEndpointUid}"
+            "url": "/studies/study_root/study-endpoints/{study_endpoint_uid}"
         },
         "response": {
             "code": 200,
@@ -1302,21 +1302,21 @@
                 "content-type": "application/json"
             },
             "result": {
-                "latestEndpoint": null,
-                "latestTimeframe": null,
+                "latest_endpoint": null,
+                "latest_timeframe": null,
                 "endpoint": null,
-                "endpointLevel": null,
-                "endpointSubLevel": null,
-                "endpointUnits": null,
-                "startDate": "2021-04-08T07:54:04.733562",
-                "userInitials": "TODO Initials",
+                "endpoint_level": null,
+                "endpoint_sublevel": null,
+                "endpoint_units": null,
+                "start_date": "2021-04-08T07:54:04.733562",
+                "user_initials": "TODO Initials",
                 "order": 4,
-                "projectNumber": null,
-                "projectName": null,
-                "studyEndpointUid": "StudyEndpoint_000007",
-                "acceptedVersion": false,
-                "studyObjective": null,
-                "studyUid": "study_root",
+                "project_number": null,
+                "project_name": null,
+                "study_endpoint_uid": "StudyEndpoint_000007",
+                "accepted_version": false,
+                "study_objective": null,
+                "study_uid": "study_root",
                 "timeframe": null
             }
         }
@@ -1329,7 +1329,7 @@
             "request": {
                 "new_order": 5
             },
-            "url": "/study/study_root/study-endpoints/{studyEndpointUid}/order"
+            "url": "/studies/study_root/study-endpoints/{study_endpoint_uid}/order"
         },
         "response": {
             "code": 200,
@@ -1338,21 +1338,21 @@
                 "content-type": "application/json"
             },
             "result": {
-                "latestEndpoint": null,
-                "latestTimeframe": null,
+                "latest_endpoint": null,
+                "latest_timeframe": null,
                 "endpoint": null,
-                "endpointLevel": null,
-                "endpointSubLevel": null,
-                "endpointUnits": null,
-                "startDate": "2021-04-08T07:54:04.733562",
-                "userInitials": "TODO Initials",
+                "endpoint_level": null,
+                "endpoint_sublevel": null,
+                "endpoint_units": null,
+                "start_date": "2021-04-08T07:54:04.733562",
+                "user_initials": "TODO Initials",
                 "order": 4,
-                "projectNumber": null,
-                "projectName": null,
-                "studyEndpointUid": "StudyEndpoint_000007",
-                "acceptedVersion": false,
-                "studyObjective": null,
-                "studyUid": "study_root",
+                "project_number": null,
+                "project_name": null,
+                "study_endpoint_uid": "StudyEndpoint_000007",
+                "accepted_version": false,
+                "study_objective": null,
+                "study_uid": "study_root",
                 "timeframe": null
             }
         }
@@ -1363,9 +1363,9 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "endpointLevelUid": "term_root_final"
+                "endpoint_level_uid": "term_root_final"
             },
-            "url": "/study/study_root/study-endpoints/{studyEndpointUid}"
+            "url": "/studies/study_root/study-endpoints/{study_endpoint_uid}"
         },
         "response": {
             "code": 200,
@@ -1374,39 +1374,39 @@
                 "content-type": "application/json"
             },
             "result": {
-                "latestEndpoint": null,
-                "latestTimeframe": null,
+                "latest_endpoint": null,
+                "latest_timeframe": null,
                 "endpoint": null,
-                "endpointLevel": {
-                    "termUid": "term_root_final",
-                    "catalogueName": "SDTM CT",
-                    "codelistUid": "ct_codelist_root_endpoint",
-                    "sponsorPreferredName": "term_value_name1",
-                    "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                "endpoint_level": {
+                    "term_uid": "term_root_final",
+                    "catalogue_name": "SDTM CT",
+                    "codelist_uid": "ct_codelist_root_endpoint",
+                    "sponsor_preferred_name": "term_value_name1",
+                    "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                     "order": 1,
-                    "libraryName": "Sponsor",
-                    "startDate": "2021-06-07T11:41:14.430000",
-                    "endDate": null,
+                    "library_name": "Sponsor",
+                    "start_date": "2021-06-07T11:41:14.430000",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ]
                 },
-                "endpointSubLevel": null,
-                "endpointUnits": null,
-                "startDate": "2021-04-08T07:54:04.733562",
-                "userInitials": "TODO Initials",
+                "endpoint_sublevel": null,
+                "endpoint_units": null,
+                "start_date": "2021-04-08T07:54:04.733562",
+                "user_initials": "TODO Initials",
                 "order": 4,
-                "projectNumber": null,
-                "projectName": null,
-                "studyEndpointUid": "StudyEndpoint_000007",
-                "acceptedVersion": false,
-                "studyObjective": null,
-                "studyUid": "study_root",
+                "project_number": null,
+                "project_name": null,
+                "study_endpoint_uid": "StudyEndpoint_000007",
+                "accepted_version": false,
+                "study_objective": null,
+                "study_uid": "study_root",
                 "timeframe": null
             }
         }
@@ -1417,9 +1417,9 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "studyObjectiveUid": "StudyObjective_000001"
+                "study_objective_uid": "StudyObjective_000001"
             },
-            "url": "/study/study_root/study-endpoints/{studyEndpointUid}"
+            "url": "/studies/study_root/study-endpoints/{study_endpoint_uid}"
         },
         "response": {
             "code": 200,
@@ -1428,76 +1428,76 @@
                 "content-type": "application/json"
             },
             "result": {
-                "latestEndpoint": null,
-                "latestTimeframe": null,
+                "latest_endpoint": null,
+                "latest_timeframe": null,
                 "endpoint": null,
-                "endpointLevel": {
-                    "termUid": "term_root_final",
-                    "catalogueName": "SDTM CT",
-                    "codelistUid": "ct_codelist_root_endpoint",
-                    "sponsorPreferredName": "term_value_name1",
-                    "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                "endpoint_level": {
+                    "term_uid": "term_root_final",
+                    "catalogue_name": "SDTM CT",
+                    "codelist_uid": "ct_codelist_root_endpoint",
+                    "sponsor_preferred_name": "term_value_name1",
+                    "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                     "order": 1,
-                    "libraryName": "Sponsor",
-                    "startDate": "2021-06-07T11:41:14.430000",
-                    "endDate": null,
+                    "library_name": "Sponsor",
+                    "start_date": "2021-06-07T11:41:14.430000",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ]
                 },
-                "endpointSubLevel": null,
-                "endpointUnits": null,
-                "startDate": "2021-04-08T07:54:04.733562",
-                "userInitials": "TODO Initials",
+                "endpoint_sublevel": null,
+                "endpoint_units": null,
+                "start_date": "2021-04-08T07:54:04.733562",
+                "user_initials": "TODO Initials",
                 "order": 2,
-                "projectNumber": null,
-                "projectName": null,
-                "studyEndpointUid": "StudyEndpoint_000007",
-                "acceptedVersion": false,
-                "studyObjective": {
-                    "acceptedVersion": false,
-                    "endpointCount": 4,
-                    "startDate": "2021-03-23T10:42:33.882531",
-                    "userInitials": "TODO User initials",
-                    "latestObjective": null,
+                "project_number": null,
+                "project_name": null,
+                "study_endpoint_uid": "StudyEndpoint_000007",
+                "accepted_version": false,
+                "study_objective": {
+                    "accepted_version": false,
+                    "endpoint_count": 4,
+                    "start_date": "2021-03-23T10:42:33.882531",
+                    "user_initials": "TODO User initials",
+                    "latest_objective": null,
                     "objective": {
-                        "changeDescription": "Approved version",
-                        "endDate": null,
+                        "change_description": "Approved version",
+                        "end_date": null,
                         "library": {
-                            "isEditable": true,
+                            "is_editable": true,
                             "name": "Sponsor"
                         },
                         "name": "objective_1",
-                        "namePlain": "objective_1",
-                        "objectiveTemplate": {
+                        "name_plain": "objective_1",
+                        "objective_template": {
                             "name": "objective_1",
-                            "namePlain": "objective_1",
+                            "name_plain": "objective_1",
                             "uid": null
                         },
-                        "parameterValues": [],
-                        "possibleActions": [
+                        "parameter_values": [],
+                        "possible_actions": [
                             "inactivate"
                         ],
-                        "startDate": "2021-03-03T10:52:43.858000",
+                        "start_date": "2021-03-03T10:52:43.858000",
                         "status": "Final",
-                        "studyCount": null,
+                        "study_count": null,
                         "uid": "Objective_000001",
-                        "userInitials": "TODO Initials",
+                        "user_initials": "TODO Initials",
                         "version": "1.0"
                     },
-                    "objectiveLevel": null,
+                    "objective_level": null,
                     "order": 1,
-                    "projectNumber": null,
-                    "projectName": null,
-                    "studyObjectiveUid": "StudyObjective_000001",
-                    "studyUid": "study_root"
+                    "project_number": null,
+                    "project_name": null,
+                    "study_objective_uid": "StudyObjective_000001",
+                    "study_uid": "study_root"
                 },
-                "studyUid": "study_root",
+                "study_uid": "study_root",
                 "timeframe": null
             }
         }
@@ -1508,9 +1508,9 @@
             "headers": {},
             "method": "PATCH",
             "request": {
-                "studyObjectiveUid": null
+                "study_objective_uid": null
             },
-            "url": "/study/study_root/study-endpoints/{studyEndpointUid}"
+            "url": "/studies/study_root/study-endpoints/{study_endpoint_uid}"
         },
         "response": {
             "code": 200,
@@ -1519,39 +1519,39 @@
                 "content-type": "application/json"
             },
             "result": {
-                "latestEndpoint": null,
-                "latestTimeframe": null,
+                "latest_endpoint": null,
+                "latest_timeframe": null,
                 "endpoint": null,
-                "endpointLevel": {
-                    "termUid": "term_root_final",
-                    "catalogueName": "SDTM CT",
-                    "codelistUid": "ct_codelist_root_endpoint",
-                    "sponsorPreferredName": "term_value_name1",
-                    "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                "endpoint_level": {
+                    "term_uid": "term_root_final",
+                    "catalogue_name": "SDTM CT",
+                    "codelist_uid": "ct_codelist_root_endpoint",
+                    "sponsor_preferred_name": "term_value_name1",
+                    "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                     "order": 1,
-                    "libraryName": "Sponsor",
-                    "startDate": "2021-06-07T11:41:14.430000",
-                    "endDate": null,
+                    "library_name": "Sponsor",
+                    "start_date": "2021-06-07T11:41:14.430000",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ]
                 },
-                "endpointSubLevel": null,
-                "endpointUnits": null,
-                "startDate": "2021-04-08T07:54:04.733562",
-                "userInitials": "TODO Initials",
+                "endpoint_sublevel": null,
+                "endpoint_units": null,
+                "start_date": "2021-04-08T07:54:04.733562",
+                "user_initials": "TODO Initials",
                 "order": 4,
-                "projectNumber": null,
-                "projectName": null,
-                "studyEndpointUid": "StudyEndpoint_000007",
-                "acceptedVersion": false,
-                "studyObjective": null,
-                "studyUid": "study_root",
+                "project_number": null,
+                "project_name": null,
+                "study_endpoint_uid": "StudyEndpoint_000007",
+                "accepted_version": false,
+                "study_objective": null,
+                "study_uid": "study_root",
                 "timeframe": null
             }
         }
@@ -1562,7 +1562,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/endpoints?totalCount=True"
+            "url": "/endpoints?total_count=True"
         },
         "response": {
             "code": 200,
@@ -1575,32 +1575,32 @@
                     {
                         "uid": "Endpoint_000001",
                         "name": "endpoint_1",
-                        "namePlain": "endpoint_1",
-                        "startDate": "2021-07-07T13:43:26.689000",
-                        "endDate": null,
+                        "name_plain": "endpoint_1",
+                        "start_date": "2021-07-07T13:43:26.689000",
+                        "end_date": null,
                         "status": "Final",
                         "version": "1.0",
-                        "changeDescription": "Approved version",
-                        "userInitials": "TODO Initials",
-                        "possibleActions": [
+                        "change_description": "Approved version",
+                        "user_initials": "TODO Initials",
+                        "possible_actions": [
                             "inactivate"
                         ],
-                        "endpointTemplate": {
+                        "endpoint_template": {
                             "name": "endpoint_1",
-                            "namePlain": "endpoint_1",
+                            "name_plain": "endpoint_1",
                             "uid": "EndpointTemplate_000001"
                         },
-                        "parameterValues": [],
+                        "parameter_values": [],
                         "library": {
                             "name": "Sponsor",
-                            "isEditable": true
+                            "is_editable": true
                         },
-                        "studyCount": 1
+                        "study_count": 1
                     }
                 ],
                 "total": 1,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
@@ -1610,23 +1610,23 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "endpointData": {
-                    "libraryName": "Sponsor",
-                    "endpointTemplateUid": "EndpointTemplate_000002",
-                    "parameterValues": []
+                "endpoint_data": {
+                    "library_name": "Sponsor",
+                    "endpoint_template_uid": "EndpointTemplate_000002",
+                    "parameter_values": []
                 },
-                "endpointLevelUid": "term_root_final",
-                "endpointUnits": {
+                "endpoint_level_uid": "term_root_final",
+                "endpoint_units": {
                     "separator": "string",
                     "units": [
                         "unit 1",
                         "unit 2"
                     ]
                 },
-                "studyObjectiveUid": "StudyObjective_000001",
-                "timeframeUid": "Timeframe_000001"
+                "study_objective_uid": "StudyObjective_000001",
+                "timeframe_uid": "Timeframe_000001"
             },
-            "url": "/study/study_root/study-endpoints/create/preview"
+            "url": "/studies/study_root/study-endpoints/preview"
         },
         "response": {
             "code": 200,
@@ -1636,71 +1636,71 @@
             },
             "result": {
                 "order": null,
-                "projectNumber": null,
-                "projectName": null,
-                "studyUid": "study_root",
-                "studyEndpointUid": "preview",
-                "studyObjective": null,
-                "endpointLevel": null,
-                "endpointSubLevel": null,
-                "endpointUnits": null,
+                "project_number": null,
+                "project_name": null,
+                "study_uid": "study_root",
+                "study_endpoint_uid": "preview",
+                "study_objective": null,
+                "endpoint_level": null,
+                "endpoint_sublevel": null,
+                "endpoint_units": null,
                 "endpoint": {
-                    "changeDescription": "Approved version",
-                    "endDate": null,
-                    "endpointTemplate": {
+                    "change_description": "Approved version",
+                    "end_date": null,
+                    "endpoint_template": {
                         "name": "endpoint_template_2",
-                        "namePlain": "endpoint_template_2",
+                        "name_plain": "endpoint_template_2",
                         "uid": "EndpointTemplate_000002"
                     },
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Sponsor"
                     },
                     "name": "endpoint_template_2",
-                    "namePlain": "endpoint_template_2",
-                    "parameterValues": [],
-                    "possibleActions": [
+                    "name_plain": "endpoint_template_2",
+                    "parameter_values": [],
+                    "possible_actions": [
                         "inactivate"
                     ],
-                    "startDate": "2021-03-02T11:44:54.690000",
+                    "start_date": "2021-03-02T11:44:54.690000",
                     "status": "Final",
-                    "studyCount": null,
+                    "study_count": null,
                     "uid": "preview",
-                    "userInitials": "TODO Initials",
+                    "user_initials": "TODO Initials",
                     "version": "1.0"
                 },
                 "timeframe": {
-                    "changeDescription": "Approved version",
-                    "endDate": null,
+                    "change_description": "Approved version",
+                    "end_date": null,
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Sponsor"
                     },
                     "name": "timeframe_1",
-                    "namePlain": "timeframe_1",
-                    "parameterValues": [],
-                    "possibleActions": [
+                    "name_plain": "timeframe_1",
+                    "parameter_values": [],
+                    "possible_actions": [
                         "inactivate"
                     ],
-                    "startDate": "2021-03-02T11:44:54.690000",
+                    "start_date": "2021-03-02T11:44:54.690000",
                     "status": "Final",
-                    "timeframeTemplate": {
+                    "timeframe_template": {
                         "name": "timeframe_1",
-                        "namePlain": "timeframe_1",
+                        "name_plain": "timeframe_1",
                         "uid": null
                     },
                     "uid": "Timeframe_000001",
-                    "userInitials": "TODO Initials",
+                    "user_initials": "TODO Initials",
                     "version": "1.0"
                 },
-                "latestEndpoint": null,
-                "latestTimeframe": null,
-                "startDate": "2021-04-08T07:54:04.733562",
-                "userInitials": "TODO Initials",
-                "acceptedVersion": false
+                "latest_endpoint": null,
+                "latest_timeframe": null,
+                "start_date": "2021-04-08T07:54:04.733562",
+                "user_initials": "TODO Initials",
+                "accepted_version": false
             },
             "save": {
-                "studyEndpointUid": "studyEndpointUid"
+                "study_endpoint_uid": "study_endpoint_uid"
             }
         }
     },
@@ -1710,23 +1710,23 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "endpointData": {
-                    "libraryName": "Sponsor",
-                    "endpointTemplateUid": "EndpointTemplate_000002",
-                    "parameterValues": []
+                "endpoint_data": {
+                    "library_name": "Sponsor",
+                    "endpoint_template_uid": "EndpointTemplate_000002",
+                    "parameter_values": []
                 },
-                "endpointLevelUid": "term_root_final",
-                "endpointUnits": {
+                "endpoint_level_uid": "term_root_final",
+                "endpoint_units": {
                     "separator": "string",
                     "units": [
                         "unit 1",
                         "unit 2"
                     ]
                 },
-                "studyObjectiveUid": "StudyObjective_000001",
-                "timeframeUid": "Timeframe_000001"
+                "study_objective_uid": "StudyObjective_000001",
+                "timeframe_uid": "Timeframe_000001"
             },
-            "url": "/study/study_root/study-endpoints/create"
+            "url": "/studies/study_root/study-endpoints?create_endpoint=true"
         },
         "response": {
             "code": 201,
@@ -1736,69 +1736,69 @@
             },
             "result": {
                 "order": 2,
-                "projectNumber": null,
-                "projectName": null,
-                "studyUid": "study_root",
-                "studyEndpointUid": "StudyEndpoint_000016",
-                "studyObjective": {
-                    "endpointCount": 4,
-                    "acceptedVersion": false,
-                    "startDate": "2021-03-23T10:42:33.882531",
-                    "userInitials": "TODO User initials",
+                "project_number": null,
+                "project_name": null,
+                "study_uid": "study_root",
+                "study_endpoint_uid": "StudyEndpoint_000016",
+                "study_objective": {
+                    "endpoint_count": 4,
+                    "accepted_version": false,
+                    "start_date": "2021-03-23T10:42:33.882531",
+                    "user_initials": "TODO User initials",
                     "objective": {
-                        "changeDescription": "Approved version",
-                        "endDate": null,
+                        "change_description": "Approved version",
+                        "end_date": null,
                         "library": {
-                            "isEditable": true,
+                            "is_editable": true,
                             "name": "Sponsor"
                         },
                         "name": "objective_1",
-                        "namePlain": "objective_1",
-                        "objectiveTemplate": {
+                        "name_plain": "objective_1",
+                        "objective_template": {
                             "name": "objective_1",
-                            "namePlain": "objective_1",
+                            "name_plain": "objective_1",
                             "uid": "ObjectiveTemplate_000001"
                         },
-                        "parameterValues": [],
-                        "possibleActions": [
+                        "parameter_values": [],
+                        "possible_actions": [
                             "inactivate"
                         ],
-                        "startDate": "2021-03-03T10:52:43.858000",
+                        "start_date": "2021-03-03T10:52:43.858000",
                         "status": "Final",
-                        "studyCount": null,
+                        "study_count": null,
                         "uid": "Objective_000001",
-                        "userInitials": "TODO Initials",
+                        "user_initials": "TODO Initials",
                         "version": "1.0"
                     },
-                    "latestObjective": null,
-                    "objectiveLevel": null,
+                    "latest_objective": null,
+                    "objective_level": null,
                     "order": 1,
-                    "projectNumber": null,
-                    "projectName": null,
-                    "studyObjectiveUid": "StudyObjective_000001",
-                    "studyUid": "study_root"
+                    "project_number": null,
+                    "project_name": null,
+                    "study_objective_uid": "StudyObjective_000001",
+                    "study_uid": "study_root"
                 },
-                "endpointLevel": {
-                    "termUid": "term_root_final",
-                    "catalogueName": "SDTM CT",
-                    "codelistUid": "ct_codelist_root_endpoint",
-                    "sponsorPreferredName": "term_value_name1",
-                    "sponsorPreferredNameSentenceCase": "term_value_name_sentence_case",
+                "endpoint_level": {
+                    "term_uid": "term_root_final",
+                    "catalogue_name": "SDTM CT",
+                    "codelist_uid": "ct_codelist_root_endpoint",
+                    "sponsor_preferred_name": "term_value_name1",
+                    "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
                     "order": 1,
-                    "libraryName": "Sponsor",
-                    "startDate": "2021-06-07T11:41:14.430000",
-                    "endDate": null,
+                    "library_name": "Sponsor",
+                    "start_date": "2021-06-07T11:41:14.430000",
+                    "end_date": null,
                     "status": "Final",
                     "version": "1.0",
-                    "changeDescription": "Approved version",
-                    "userInitials": "TODO initials",
-                    "possibleActions": [
+                    "change_description": "Approved version",
+                    "user_initials": "TODO initials",
+                    "possible_actions": [
                         "inactivate",
-                        "newVersion"
+                        "new_version"
                     ]
                 },
-                "endpointSubLevel": null,
-                "endpointUnits": {
+                "endpoint_sublevel": null,
+                "endpoint_units": {
                     "separator": "string",
                     "units": [
                         "unit 1",
@@ -1806,62 +1806,62 @@
                     ]
                 },
                 "endpoint": {
-                    "changeDescription": "Approved version",
-                    "endDate": null,
-                    "endpointTemplate": {
+                    "change_description": "Approved version",
+                    "end_date": null,
+                    "endpoint_template": {
                         "name": "endpoint_template_2",
-                        "namePlain": "endpoint_template_2",
+                        "name_plain": "endpoint_template_2",
                         "uid": "EndpointTemplate_000002"
                     },
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Sponsor"
                     },
                     "name": "endpoint_template_2",
-                    "namePlain": "endpoint_template_2",
-                    "parameterValues": [],
-                    "possibleActions": [
+                    "name_plain": "endpoint_template_2",
+                    "parameter_values": [],
+                    "possible_actions": [
                         "inactivate"
                     ],
-                    "startDate": "2021-03-02T11:44:54.690000",
+                    "start_date": "2021-03-02T11:44:54.690000",
                     "status": "Final",
-                    "studyCount": null,
+                    "study_count": null,
                     "uid": "Endpoint_000001",
-                    "userInitials": "TODO Initials",
+                    "user_initials": "TODO Initials",
                     "version": "1.0"
                 },
                 "timeframe": {
-                    "changeDescription": "Approved version",
-                    "endDate": null,
+                    "change_description": "Approved version",
+                    "end_date": null,
                     "library": {
-                        "isEditable": true,
+                        "is_editable": true,
                         "name": "Sponsor"
                     },
                     "name": "timeframe_1",
-                    "namePlain": "timeframe_1",
-                    "parameterValues": [],
-                    "possibleActions": [
+                    "name_plain": "timeframe_1",
+                    "parameter_values": [],
+                    "possible_actions": [
                         "inactivate"
                     ],
-                    "startDate": "2021-03-02T11:44:54.690000",
+                    "start_date": "2021-03-02T11:44:54.690000",
                     "status": "Final",
-                    "timeframeTemplate": {
+                    "timeframe_template": {
                         "name": "timeframe_1",
-                        "namePlain": "timeframe_1",
+                        "name_plain": "timeframe_1",
                         "uid": null
                     },
                     "uid": "Timeframe_000001",
-                    "userInitials": "TODO Initials",
+                    "user_initials": "TODO Initials",
                     "version": "1.0"
                 },
-                "latestEndpoint": null,
-                "latestTimeframe": null,
-                "startDate": "2021-04-08T07:54:04.733562",
-                "userInitials": "TODO Initials",
-                "acceptedVersion": false
+                "latest_endpoint": null,
+                "latest_timeframe": null,
+                "start_date": "2021-04-08T07:54:04.733562",
+                "user_initials": "TODO Initials",
+                "accepted_version": false
             },
             "save": {
-                "studyEndpointUid": "studyEndpointUid"
+                "study_endpoint_uid": "study_endpoint_uid"
             }
         }
     },
@@ -1870,7 +1870,7 @@
         "request": {
             "headers": {},
             "method": "DELETE",
-            "url": "/study/study_root/study-endpoints/{studyEndpointUid}"
+            "url": "/studies/study_root/study-endpoints/{study_endpoint_uid}"
         },
         "response": {
             "code": 204,

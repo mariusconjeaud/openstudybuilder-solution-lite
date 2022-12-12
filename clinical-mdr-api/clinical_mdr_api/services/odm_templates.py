@@ -18,13 +18,10 @@ from clinical_mdr_api.models.odm_template import (
     OdmTemplateVersion,
 )
 from clinical_mdr_api.services._utils import get_input_or_new_value, normalize_string
-from clinical_mdr_api.services.concepts.concept_generic_service import (
-    ConceptGenericService,
-    _AggregateRootType,
-)
+from clinical_mdr_api.services.odm_generic_service import OdmGenericService
 
 
-class OdmTemplateService(ConceptGenericService[OdmTemplateAR]):
+class OdmTemplateService(OdmGenericService[OdmTemplateAR]):
     aggregate_class = OdmTemplateAR
     version_class = OdmTemplateVersion
     repository_interface = TemplateRepository
@@ -39,15 +36,16 @@ class OdmTemplateService(ConceptGenericService[OdmTemplateAR]):
 
     def _create_aggregate_root(
         self, concept_input: OdmTemplatePostInput, library
-    ) -> _AggregateRootType:
+    ) -> OdmTemplateAR:
         return OdmTemplateAR.from_input_values(
             author=self.user_initials,
             concept_vo=OdmTemplateVO.from_repository_values(
                 name=concept_input.name,
                 oid=get_input_or_new_value(concept_input.oid, "T.", concept_input.name),
-                effective_date=concept_input.effectiveDate,
-                retired_date=concept_input.retiredDate,
+                effective_date=concept_input.effective_date,
+                retired_date=concept_input.retired_date,
                 description=concept_input.description,
+                form_uids=[],
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
@@ -59,13 +57,14 @@ class OdmTemplateService(ConceptGenericService[OdmTemplateAR]):
     ) -> OdmTemplateAR:
         item.edit_draft(
             author=self.user_initials,
-            change_description=concept_edit_input.changeDescription,
+            change_description=concept_edit_input.change_description,
             concept_vo=OdmTemplateVO.from_repository_values(
                 name=concept_edit_input.name,
                 oid=concept_edit_input.oid,
-                effective_date=concept_edit_input.effectiveDate,
-                retired_date=concept_edit_input.retiredDate,
+                effective_date=concept_edit_input.effective_date,
+                retired_date=concept_edit_input.retired_date,
                 description=concept_edit_input.description,
+                form_uids=[],
             ),
             concept_exists_by_name_callback=self._repos.odm_template_repository.concept_exists_by_name,
         )
@@ -81,7 +80,7 @@ class OdmTemplateService(ConceptGenericService[OdmTemplateAR]):
         odm_template_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         if odm_template_ar.item_metadata.status == LibraryItemStatus.RETIRED:
-            raise exceptions.BusinessLogicException("The object is inactive")
+            raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
 
         if override:
             self._repos.odm_template_repository.remove_relation(
@@ -98,10 +97,10 @@ class OdmTemplateService(ConceptGenericService[OdmTemplateAR]):
                     relation_uid=form.uid,
                     relationship_type=RelationType.FORM,
                     parameters={
-                        "order_number": form.orderNumber,
+                        "order_number": form.order_number,
                         "mandatory": strtobool(form.mandatory),
                         "locked": strtobool(form.locked),
-                        "collection_exception_condition_oid": form.collectionExceptionConditionOid,
+                        "collection_exception_condition_oid": form.collection_exception_condition_oid,
                     },
                 )
         except ValueError as exception:
@@ -115,7 +114,7 @@ class OdmTemplateService(ConceptGenericService[OdmTemplateAR]):
     def get_active_relationships(self, uid: str):
         if not self._repos.odm_template_repository.exists_by("uid", uid, True):
             raise exceptions.NotFoundException(
-                f"Odm Template with uid {uid} does not exist."
+                f"ODM Template identified by uid ({uid}) does not exist."
             )
 
         return self._repos.odm_template_repository.get_active_relationships(uid, [])

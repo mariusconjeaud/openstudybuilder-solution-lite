@@ -20,13 +20,13 @@ from clinical_mdr_api.services.study_element_selection import (
 )
 
 
-def create_study_element(element_sub_type_uid: str, study_uid: str):
+def create_study_element(element_subtype_uid: str, study_uid: str):
     study_selection_element_create_input = StudySelectionElementCreateInput(
         name="Element_Name_1",
-        shortName="Element_Short_Name_1",
+        short_name="Element_Short_Name_1",
         code="Element_code_1",
         description="desc...",
-        elementSubTypeUid=element_sub_type_uid,
+        element_subtype_uid=element_subtype_uid,
     )
     item = StudyElementSelectionService(author="test").make_selection(
         study_uid, selection_create_input=study_selection_element_create_input
@@ -34,7 +34,7 @@ def create_study_element(element_sub_type_uid: str, study_uid: str):
     return item
 
 
-def add_parent_ctTerm(element_subtype_term_uid1, element_type_term_uid1):
+def add_parent_ct_term(element_subtype_term_uid1, element_type_term_uid1):
     CTTermService().add_parent(
         term_uid=element_subtype_term_uid1,
         parent_uid=element_type_term_uid1,
@@ -43,21 +43,21 @@ def add_parent_ctTerm(element_subtype_term_uid1, element_type_term_uid1):
 
 
 def create_study_element_with_planned_duration(
-    element_sub_type_uid: str, study_uid: str, unit_definition_uid: str
+    element_subtype_uid: str, study_uid: str, unit_definition_uid: str
 ):
 
     study_selection_element_create_input = StudySelectionElementCreateInput(
         name="Element_Name_1",
-        shortName="Element_Short_Name_1",
+        short_name="Element_Short_Name_1",
         code="Element_code_1",
         description="desc...",
-        startRule="start_rule",
-        endRule="stop_rule",
-        plannedDuration=DurationJsonModel(
-            durationValue=70,
-            durationUnitCode=UnitDefinitionSimpleModel(uid=unit_definition_uid),
+        start_rule="start_rule",
+        end_rule="stop_rule",
+        planned_duration=DurationJsonModel(
+            duration_value=70,
+            duration_unit_code=UnitDefinitionSimpleModel(uid=unit_definition_uid),
         ),
-        elementSubTypeUid=element_sub_type_uid,
+        element_subtype_uid=element_subtype_uid,
     )
     item = StudyElementSelectionService(author="test").make_selection(
         study_uid, selection_create_input=study_selection_element_create_input
@@ -68,23 +68,23 @@ def create_study_element_with_planned_duration(
 def create_study_arm(
     study_uid: str,
     name,
-    shortName,
+    short_name,
     code,
     description,
-    colourCode,
-    randomizationGroup,
-    numberOfSubjects,
-    armTypeUid,
+    colour_code,
+    randomization_group,
+    number_of_subjects,
+    arm_type_uid,
 ):
     study_selection_arm_create_input = StudySelectionArmCreateInput(
         name=name,
-        shortName=shortName,
+        short_name=short_name,
         code=code,
         description=description,
-        colourCode=colourCode,
-        randomizationGroup=randomizationGroup,
-        numberOfSubjects=numberOfSubjects,
-        armTypeUid=armTypeUid,
+        colour_code=colour_code,
+        randomization_group=randomization_group,
+        number_of_subjects=number_of_subjects,
+        arm_type_uid=arm_type_uid,
     )
     item = StudyArmSelectionService(author="test").make_selection(
         study_uid, selection_create_input=study_selection_arm_create_input
@@ -95,23 +95,23 @@ def create_study_arm(
 def create_study_branch_arm(
     study_uid: str,
     name,
-    shortName,
+    short_name,
     code,
     description,
-    colourCode,
-    randomizationGroup,
-    numberOfSubjects,
-    armUid,
+    colour_code,
+    randomization_group,
+    number_of_subjects,
+    arm_uid,
 ):
     study_selection_branch_arm_create_input = StudySelectionBranchArmCreateInput(
         name=name,
-        shortName=shortName,
+        short_name=short_name,
         code=code,
         description=description,
-        colourCode=colourCode,
-        randomizationGroup=randomizationGroup,
-        numberOfSubjects=numberOfSubjects,
-        armUid=armUid,
+        colour_code=colour_code,
+        randomization_group=randomization_group,
+        number_of_subjects=number_of_subjects,
+        arm_uid=arm_uid,
     )
     item = StudyBranchArmSelectionService(author="test").make_selection(
         study_uid, selection_create_input=study_selection_branch_arm_create_input
@@ -121,7 +121,7 @@ def create_study_branch_arm(
 
 def patch_study_branch_arm(branch_arm_uid: str, study_uid: str):
     study_selection_branch_arm_edit_input = StudySelectionBranchArmEditInput(
-        branchArmUid=branch_arm_uid,
+        branch_arm_uid=branch_arm_uid,
         name="Branch_Arm_Name_1_edit",
     )
     item = StudyBranchArmSelectionService(author="test").patch_selection(
@@ -134,21 +134,21 @@ def patch_study_branch_arm(branch_arm_uid: str, study_uid: str):
 def create_study_cohort(
     study_uid: str,
     name,
-    shortName,
+    short_name,
     code,
     description,
-    colourCode,
-    numberOfSubjects,
-    armUids,
+    colour_code,
+    number_of_subjects,
+    arm_uids,
 ):
     study_selection_cohort_create_input = StudySelectionCohortCreateInput(
         name=name,
-        shortName=shortName,
+        short_name=short_name,
         code=code,
         description=description,
-        colourCode=colourCode,
-        numberOfSubjects=numberOfSubjects,
-        armUids=armUids,
+        colour_code=colour_code,
+        number_of_subjects=number_of_subjects,
+        arm_uids=arm_uids,
     )
     item = StudyCohortSelectionService(author="test").make_selection(
         study_uid, selection_create_input=study_selection_cohort_create_input
@@ -163,10 +163,10 @@ def create_study_design_cell(
     study_uid: str,
 ):
     study_design_cell_create_input = StudyDesignCellCreateInput(
-        studyArmUid=study_arm_uid,
-        studyEpochUid=study_epoch_uid,
-        studyElementUid=study_element_uid,
-        transitionRule="Transition_Rule_1",
+        study_arm_uid=study_arm_uid,
+        study_epoch_uid=study_epoch_uid,
+        study_element_uid=study_element_uid,
+        transition_rule="Transition_Rule_1",
     )
     # Create a design cell -- Arm Specified
     item = StudyDesignCellService(author="test").create(

@@ -18,10 +18,10 @@
             rules="required"
             >
             <v-select
-              v-model="form.projectNumber"
+              v-model="form.project_number"
               :label="$t('StudyForm.project_id')"
               :items="projects"
-              item-text="projectNumber"
+              item-text="project_number"
               @change="updateProject($event)"
               return-object
               :error-messages="errors"
@@ -48,7 +48,7 @@
         <v-col cols="12">
           <v-text-field
             :label="$t('StudyForm.brand_name')"
-            :value="project.brandName"
+            :value="project.brand_name"
             disabled
             filled
             hide-details
@@ -66,7 +66,7 @@
             <v-text-field
               id="studyNumber"
               :label="$t('StudyForm.number')"
-              v-model="form.studyNumber"
+              v-model="form.study_number"
               :error-messages="errors"
               dense
               clearable
@@ -85,7 +85,7 @@
             <v-text-field
               id="studyAcronym"
               :label="$t('StudyForm.acronym')"
-              v-model="form.studyAcronym"
+              v-model="form.study_acronym"
               :error-messages="errors"
               dense
               clearable
@@ -151,8 +151,8 @@ export default {
       return (this.editedStudy) ? this.$t('StudyForm.edit_title') : this.$t('StudyForm.add_title')
     },
     studyId () {
-      if (this.project.projectNumber && this.form.studyNumber) {
-        return `${this.project.projectNumber}-${this.form.studyNumber}`
+      if (this.project.project_number && this.form.study_number) {
+        return `${this.project.project_number}-${this.form.study_number}`
       }
       return ''
     }
@@ -178,18 +178,18 @@ export default {
     },
     initForm (value) {
       this.form = {
-        projectNumber: value.currentMetadata.identificationMetadata.projectNumber,
-        studyNumber: value.currentMetadata.identificationMetadata.studyNumber,
-        studyAcronym: value.currentMetadata.identificationMetadata.studyAcronym
+        project_number: value.current_metadata.identification_metadata.project_number,
+        study_number: value.current_metadata.identification_metadata.study_number,
+        study_acronym: value.current_metadata.identification_metadata.study_acronym
       }
-      this.project = this.getProjectByNumber(this.form.projectNumber)
+      this.project = this.getProjectByNumber(this.form.project_number)
     },
     updateProject (target) {
       this.project = target
     },
     addStudy () {
       const data = JSON.parse(JSON.stringify(this.form))
-      data.projectNumber = this.project.projectNumber
+      data.project_number = this.project.project_number
       return this.$store.dispatch('manageStudies/addStudy', data).then(resp => {
         bus.$emit('notification', { msg: this.$t('StudyForm.add_success') })
         this.$store.commit('studiesGeneral/SELECT_STUDY', resp.data)
@@ -197,7 +197,7 @@ export default {
       })
     },
     hasChanged () {
-      if ((!_isEmpty(this.form) && this.editedStudy === null) || (!_isEmpty(this.form) && (this.editedStudy && (!_isEqual(this.form.projectNumber, this.editedStudy.projectNumber) || !_isEqual(this.form.studyAcronym, this.editedStudy.studyAcronym) || !_isEqual(this.form.studyNumber, this.editedStudy.studyNumber))))) {
+      if ((!_isEmpty(this.form) && this.editedStudy === null) || (!_isEmpty(this.form) && (this.editedStudy && (!_isEqual(this.form.project_number, this.editedStudy.project_number) || !_isEqual(this.form.study_acronym, this.editedStudy.study_acronym) || !_isEqual(this.form.study_number, this.editedStudy.study_number))))) {
         return true
       } else {
         return false
@@ -209,7 +209,7 @@ export default {
         return
       }
       const data = JSON.parse(JSON.stringify(this.form))
-      data.projectNumber = this.project.projectNumber
+      data.project_number = this.project.project_number
       return this.$store.dispatch('manageStudies/editStudyIdentification', [this.editedStudy.uid, data]).then(resp => {
         if (this.selectedStudy && (this.editedStudy.uid === this.selectedStudy.uid)) {
           this.$store.commit('studiesGeneral/SELECT_STUDY', resp.data)

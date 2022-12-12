@@ -7,26 +7,26 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class StudyEpochCreateInput(BaseModel):
-    studyUid: str = Field(
+    study_uid: str = Field(
         ...,
-        title="studyUid",
+        title="study_uid",
         description="The uid of the study",
     )
-    startRule: Optional[str] = Field(
+    start_rule: Optional[str] = Field(
         None, title="Start Description", description="Study Epoch Start description"
     )
 
-    endRule: Optional[str] = Field(
+    end_rule: Optional[str] = Field(
         None, title="End Description", description="Study Epoch end description"
     )
 
     epoch: Optional[str] = Field(None, title="Epoch", description="Study Epoch epoch")
 
-    epochSubType: str = Field(
+    epoch_subtype: str = Field(
         ..., title="Epoch Sub Type", description="Study Epoch sub type"
     )
 
-    durationUnit: Optional[str] = Field(
+    duration_unit: Optional[str] = Field(
         None, title="Duration Unit", description="Study Epoch duration preferred unit"
     )
 
@@ -42,17 +42,17 @@ class StudyEpochCreateInput(BaseModel):
     duration: Optional[int] = Field(
         None, title="Epoch Duration", description="Calculated epoch duration"
     )
-    colorHash: Optional[str] = Field(
+    color_hash: Optional[str] = Field(
         "#FFFFFF", title="Epoch Color Hash", description="Epoch Color for display"
     )
 
 
 class StudyEpochEditInput(StudyEpochCreateInput):
     # Override epoch from Create Input to make it Optional
-    epochSubType: Optional[str] = Field(
+    epoch_subtype: Optional[str] = Field(
         None, title="Epoch Sub Type", description="Study Epoch sub type"
     )
-    changeDescription: str = Field(
+    change_description: str = Field(
         ..., title="Change Description", description="Description of change reasons"
     )
 
@@ -65,7 +65,7 @@ class StudyEpochOGM(BaseModel):
         orm_mode = True
 
     uid: str = Field(..., title="Uid", description="Uid of the Epoch", source="uid")
-    studyUid: str = Field(
+    study_uid: str = Field(
         ...,
         title="Uid",
         description="Uid of the study",
@@ -77,16 +77,16 @@ class StudyEpochOGM(BaseModel):
         description="Name of the epoch based on CT term",
         source="has_epoch.uid",
     )
-    epochSubType: str = Field(
+    epoch_subtype: str = Field(
         ...,
         title="Epoch sub type name",
         description="Name of the epoch sub type based on CT term",
         source="has_epoch_subtype.uid",
     )
-    epochType: str = Field(
+    epoch_type: str = Field(
         ..., title="Type", description="Study Epoch type", source="has_epoch_type.uid"
     )
-    durationUnit: Optional[str] = Field(
+    duration_unit: Optional[str] = Field(
         None,
         title="Duration Unit",
         description="Study Epoch duration preferred unit",
@@ -100,20 +100,20 @@ class StudyEpochOGM(BaseModel):
         None, title="Description", description="Epoch description", source="description"
     )
 
-    colorHash: Optional[str] = Field(
+    color_hash: Optional[str] = Field(
         None,
         title="Epoch Color Hash",
         description="Epoch Color for display",
         source="color_hash",
     )
-    startRule: Optional[str] = Field(
+    start_rule: Optional[str] = Field(
         None,
         title="Start Description",
         description="Study Epoch Start description",
         source="start_rule",
     )
 
-    endRule: Optional[str] = Field(
+    end_rule: Optional[str] = Field(
         None,
         title="End Description",
         description="Study Epoch end description",
@@ -122,14 +122,14 @@ class StudyEpochOGM(BaseModel):
     status: str = Field(
         ..., title="Status", description="Study Epoch status", source="status"
     )
-    startDate: Optional[datetime] = Field(
+    start_date: Optional[datetime] = Field(
         ...,
-        title="startDate",
+        title="start_date",
         description="The most recent point in time when the study epoch was edited."
         "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
         source="has_after.date",
     )
-    userInitials: str = Field(
+    user_initials: str = Field(
         ...,
         title="User Initials",
         description="Initials of user that created last modification",
@@ -138,7 +138,7 @@ class StudyEpochOGM(BaseModel):
 
 
 class StudyEpochOGMVer(StudyEpochOGM):
-    studyUid: str = Field(
+    study_uid: str = Field(
         ...,
         title="Uid",
         description="Uid of the study",
@@ -152,37 +152,37 @@ class StudyEpoch(StudyEpochCreateInput):
         title="Uid",
         description="Uid of the Epoch",
     )
-    epochName: str = Field(
+    epoch_name: str = Field(
         ..., title="Epoch name", description="Name of the epoch based on CT term"
     )
-    epochSubTypeName: str = Field(
+    epoch_subtype_name: str = Field(
         ...,
         title="Epoch sub type name",
         description="Name of the epoch sub type based on CT term",
     )
-    epochType: str = Field(..., title="Type", description="Study Epoch type")
-    startDay: Optional[int] = Field(
+    epoch_type: str = Field(..., title="Type", description="Study Epoch type")
+    start_day: Optional[int] = Field(
         None, title="Start Day", description="Study Epoch start day"
     )
-    endDay: Optional[int] = Field(
+    end_day: Optional[int] = Field(
         None, title="End Day", description="Study Epoch end day"
     )
-    startDate: str = Field(
+    start_date: str = Field(
         ..., title="Modification date", description="Study Epoch last modification date"
     )
     status: str = Field(..., title="Status", description="Study Epoch status")
-    userInitials: str = Field(
+    user_initials: str = Field(
         ...,
         title="User Initials",
         description="Initials of user that created last modification",
     )
-    possibleActions: List[str] = Field(
+    possible_actions: List[str] = Field(
         ..., title="Possible actions", description="List of actions to perform on item"
     )
-    changeDescription: Optional[str] = Field(
+    change_description: Optional[str] = Field(
         "", title="Change Description", description="Description of change reasons"
     )
-    studyVisitCount: Optional[int] = Field(
+    study_visit_count: Optional[int] = Field(
         None, description="Count of Study Visits assigned to Study Epoch"
     )
 

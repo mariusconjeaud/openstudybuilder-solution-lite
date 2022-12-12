@@ -39,7 +39,7 @@ class TestCTCodelistRepository(unittest.TestCase):
         cls.codelist_names_repo = CTCodelistNameRepository()
 
     @classmethod
-    def tearDownClass(cls) -> None:
+    def tear_down_class(cls) -> None:
         cls.codelist_attributes_repo.close()
         cls.codelist_names_repo.close()
 

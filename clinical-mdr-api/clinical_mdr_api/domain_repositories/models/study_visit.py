@@ -34,15 +34,15 @@ class StudyVisit(StudySelection):
     legacy_visit_id = StringProperty()
     legacy_visit_type_alias = StringProperty()
     legacy_name = StringProperty()
-    legacy_sub_name = StringProperty()
+    legacy_subname = StringProperty()
 
     visit_number = IntegerProperty()
 
     has_visit_type = RelationshipTo(CTTermRoot, "HAS_VISIT_TYPE")
 
-    visit_sub_label = StringProperty()
-    visit_sub_label_uid = StringProperty()
-    visit_sub_label_reference = StringProperty()
+    visit_sublabel = StringProperty()
+    visit_sublabel_uid = StringProperty()
+    visit_sublabel_reference = StringProperty()
 
     visit_name_label = StringProperty()
     short_visit_label = StringProperty()

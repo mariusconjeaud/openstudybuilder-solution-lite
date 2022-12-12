@@ -29,9 +29,9 @@
     rounded
     >
     {{$t('StudyTitleView.title')}}<br>
-    <span data-cy="study-title-field" class="text-body-1 mb-3">{{ description.studyTitle }}</span><br><br>
+    <span data-cy="study-title-field" class="text-body-1 mb-3">{{ description.study_title }}</span><br><br>
     {{$t('StudyTitleView.short_title')}}<br>
-    <span data-cy="study-title-field" class="text-body-1">{{ description.studyShortTitle }}</span>
+    <span data-cy="study-title-field" class="text-body-1">{{ description.study_short_title }}</span>
   </v-sheet>
   <v-dialog
     v-model="showForm"
@@ -71,7 +71,7 @@ export default {
   methods: {
     fetchStudyDescription () {
       study.getStudyDescriptionMetadata(this.selectedStudy.uid).then(resp => {
-        this.description = resp.data.currentMetadata.studyDescription
+        this.description = resp.data.current_metadata.study_description
       })
     }
   },

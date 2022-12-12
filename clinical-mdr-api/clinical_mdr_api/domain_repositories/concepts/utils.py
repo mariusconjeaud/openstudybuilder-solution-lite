@@ -12,13 +12,13 @@ def list_concept_wildcard_properties(target_model: BaseModel = None) -> Sequence
     """
     property_list = []
 
-    for attribute, attrDesc in target_model.__fields__.items():
+    for attribute, attr_desc in target_model.__fields__.items():
         # Wildcard filtering only searches in properties of type string
         if (
-            attrDesc.type_ is str
-            and not attribute in ["possibleActions"]
+            attr_desc.type_ is str
+            and not attribute in ["possible_actions"]
             # remove fields that shouldn't be included in wildcard filter
-            and not attrDesc.field_info.extra.get("removeFromWildcard", False)
+            and not attr_desc.field_info.extra.get("remove_from_wildcard", False)
         ):
             property_list.append(attribute)
     return list(set(property_list))

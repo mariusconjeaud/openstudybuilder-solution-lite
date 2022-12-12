@@ -10,21 +10,21 @@ from clinical_mdr_api.models.ct_term import SimpleTermModel
 
 
 class Finding(ActivityInstance):
-    valueSasDisplayFormat: Optional[str]
+    value_sas_display_format: Optional[str]
     specimen: Optional[SimpleTermModel]
-    testCode: Optional[SimpleTermModel]
+    test_code: Optional[SimpleTermModel]
 
 
 class FindingCreateInput(ActivityInstanceCreateInput):
-    valueSasDisplayFormat: Optional[str] = None
+    value_sas_display_format: Optional[str] = None
     specimen: Optional[str] = None
-    testCode: Optional[str] = None
+    test_code: Optional[str] = None
 
 
 class FindingEditInput(ActivityInstanceEditInput):
-    valueSasDisplayFormat: Optional[str]
+    value_sas_display_format: Optional[str]
     specimen: Optional[str]
-    testCode: Optional[str]
+    test_code: Optional[str]
 
 
 class FindingVersion(ActivityInstanceVersion, Finding):

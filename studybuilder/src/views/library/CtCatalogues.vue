@@ -5,7 +5,7 @@
     <help-button :help-text="$t('_help.CtCataloguesTable.general')" />
   </div>
   <ct-catalogues-table
-    :catalogueName="$route.params.catalogueName"
+    :catalogue_name="$route.params.catalogue_name"
     @catalogueChanged="updateCatalogue"
     />
 </div>
@@ -28,24 +28,24 @@ export default {
     updateCatalogue (catalogueName) {
       this.$router.push({
         name: 'CtCatalogues',
-        params: { catalogueName }
+        params: { catalogue_name: catalogueName }
       })
     }
   },
   mounted () {
-    if (this.$route.params.catalogueName) {
+    if (this.$route.params.catalogue_name) {
       this.addBreadcrumbsLevel({
-        text: this.$route.params.catalogueName,
+        text: this.$route.params.catalogue_name,
         to: { name: 'CtCatalogues', params: this.$route.params },
         index: 3
       })
     }
   },
   watch: {
-    '$route.params.catalogueName' (value) {
+    '$route.params.catalogue_name' (value) {
       this.addBreadcrumbsLevel({
         text: value,
-        to: { name: 'CtCatalogues', params: { catalogueName: value } },
+        to: { name: 'CtCatalogues', params: { catalogue_name: value } },
         index: 3,
         replace: true
       })

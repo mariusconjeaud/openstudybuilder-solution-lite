@@ -70,8 +70,8 @@ class CTConfigRepository(LibraryItemRepositoryImplBase[CTConfigAR]):
                 if configured_term is not None
                 else None,
                 study_field_grouping=ar_value.study_field_grouping,
-                study_field_name_property=ar_value.study_field_name_property,
                 study_field_name_api=ar_value.study_field_name_api,
+                is_dictionary_term=ar_value.is_dictionary_term,
             ),
         )
         return result
@@ -90,8 +90,8 @@ class CTConfigRepository(LibraryItemRepositoryImplBase[CTConfigAR]):
             study_field_data_type=ar.value.study_field_data_type,
             study_field_null_value_code=ar.value.study_field_null_value_code,
             study_field_grouping=ar.value.study_field_grouping,
-            study_field_name_property=ar.value.study_field_name_property,
             study_field_name_api=ar.value.study_field_name_api,
+            is_dictionary_term=ar.value.is_dictionary_term,
         )
         self._db_save_node(node=value)
         if ar.value.configured_codelist_uid is not None:

@@ -32,17 +32,17 @@ epoch_sub_type = {
         "path": "/ct/terms",
         "codelist": "GEN_EPOCH_SUB_TYPE",
         "body": {
-            "catalogueName": "SDTM CT",
-            "codeSubmissionValue": row[headers.index("GEN_EPOCH_SUB_TYPE_CD")],
-            "nameSubmissionValue": row[headers.index("GEN_EPOCH_SUB_TYPE_CD")],
-            "nciPreferredName": "UNK",
+            "catalogue_name": "SDTM CT",
+            "code_submission_value": row[headers.index("GEN_EPOCH_SUB_TYPE_CD")],
+            "name_submission_value": row[headers.index("GEN_EPOCH_SUB_TYPE_CD")],
+            "nci_preferred_name": "UNK",
             "definition": "",
-            "sponsorPreferredName": row[headers.index("GEN_EPOCH_SUB_TYPE")],
-            "sponsorPreferredNameSentenceCase": row[
+            "sponsor_preferred_name": row[headers.index("GEN_EPOCH_SUB_TYPE")],
+            "sponsor_preferred_name_sentence_case": row[
                 headers.index("GEN_EPOCH_SUB_TYPE")
             ].lower(),
             "order": row[headers.index("CD_VAL_SORT_SEQ")],
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
         },
     }
 }
@@ -52,17 +52,17 @@ epoch = {
         "path": "/ct/terms",
         "codelist": "Epoch",
         "body": {
-            "catalogueName": "SDTM CT",
-            "codeSubmissionValue": row[headers.index("GEN_EPOCH_CD")],
-            "nameSubmissionValue": row[headers.index("GEN_EPOCH_CD")],
-            "nciPreferredName": "UNK",
+            "catalogue_name": "SDTM CT",
+            "code_submission_value": row[headers.index("GEN_EPOCH_CD")],
+            "name_submission_value": row[headers.index("GEN_EPOCH_CD")],
+            "nci_preferred_name": "UNK",
             "definition": "",
-            "sponsorPreferredName": row[headers.index("GEN_EPOCH_LB")],
-            "sponsorPreferredNameSentenceCase": row[
+            "sponsor_preferred_name": row[headers.index("GEN_EPOCH_LB")],
+            "sponsor_preferred_name_sentence_case": row[
                 headers.index("GEN_EPOCH_LB")
             ].lower(),
             "order": row[headers.index("CD_VAL_SORT_SEQ")],
-            "libraryName": "Sponsor",
+            "library_name": "Sponsor",
         },
     }
 }
@@ -74,9 +74,9 @@ endpoint_level = {
         "uid": row[headers.index("CT_CD")],
         "body": {
             "order": row[headers.index("CD_VAL_SORT_SEG")],
-            "sponsorPreferredName": row[headers.index("CD_VAL_LB")],
-            "sponsorPreferredNameSentenceCase": row[headers.index("CD_VAL_LB_LC")],
-            "changeDescription": "Migration",
+            "sponsor_preferred_name": row[headers.index("CD_VAL_LB")],
+            "sponsor_preferred_name_sentence_case": row[headers.index("CD_VAL_LB_LC")],
+            "change_description": "Migration",
         },
     }
 }
@@ -89,9 +89,9 @@ objective_level = {
         "uid": row[headers.index("CT_CD")],
         "body": {
             "order": row[headers.index("CD_VAL_SORT_SEG")],
-            "sponsorPreferredName": row[headers.index("CD_VAL_LB")],
-            "sponsorPreferredNameSentenceCase": row[headers.index("CD_VAL_LB_LC")],
-            "changeDescription": "Migration",
+            "sponsor_preferred_name": row[headers.index("CD_VAL_LB")],
+            "sponsor_preferred_name_sentence_case": row[headers.index("CD_VAL_LB_LC")],
+            "change_description": "Migration",
         },
     }
 }
@@ -100,7 +100,7 @@ time_units = {
     "COMMON_MAPPING": lambda row, headers: {
         "path": "/ct/terms",
         "codelist": row[headers.index("CODELIST_NAME")],
-        "termUid": row[headers.index("CT_CD")],
+        "term_uid": row[headers.index("CT_CD")],
     }
 }
 
@@ -170,7 +170,7 @@ class StandardCodelistTerms1(BaseImporter):
         headers = next(readCSV)
         parent_type_terms = self.api.get_terms_for_codelist_name("Epoch Type")
         for row in readCSV:
-            parentTermUid = find_term_by_name(
+            parent_term_uid = find_term_by_name(
                 row[headers.index("GEN_EPOCH_TYPE")], parent_type_terms
             )
 
@@ -184,71 +184,71 @@ class StandardCodelistTerms1(BaseImporter):
                     f"Epoch subtype '{row[headers.index('CD_LIST_ID')]}' not found in legacy name map, skipping"
                 )
                 self.metrics.icrement(
-                    data["path"] + "-Names Epoch Sub Type - SkippedASMissingCodelistUid"
+                    data["path"] + "-Names Epoch Sub Type - SkippedASMissingcodelist_uid"
                 )
                 continue
             codelist_name = self.sponsor_codelist_legacy_name_map["GEN_EPOCH_SUB_TYPE"]
             if codelist_name in self.code_lists_uids:
-                data["body"]["codelistUid"] = self.code_lists_uids[codelist_name]
+                data["body"]["codelist_uid"] = self.code_lists_uids[codelist_name]
             else:
                 self.log.error(f"Codelist '{codelist_name}' not found, skipping")
                 self.metrics.icrement(
-                    data["path"] + "-Names Epoch Sub Type - SkippedASMissingCodelistUid"
+                    data["path"] + "-Names Epoch Sub Type - SkippedASMissingcodelist_uid"
                 )
                 continue
             reused_item = False
             # connect cdisc epoch sub type term with a sponsor epoch sub type term
-            if row[headers.index("CT_CD")].startswith("C") and parentTermUid:
+            if row[headers.index("CT_CD")].startswith("C") and parent_term_uid:
                 reused_item = True
-                termUid = f"{row[headers.index('CT_CD')]}_{row[headers.index('GEN_EPOCH_SUB_TYPE_CD')]}"
+                term_uid = f"{row[headers.index('CT_CD')]}_{row[headers.index('GEN_EPOCH_SUB_TYPE_CD')]}"
             else:
                 res = self.api.post_to_api(data)
                 subtype = row[headers.index("GEN_EPOCH_SUB_TYPE")]
                 subtype_code = row[headers.index("GEN_EPOCH_SUB_TYPE_CD")]
                 if res is not None:
-                    termUid = res["termUid"]
+                    term_uid = res["term_uid"]
                     self.cache.added_terms[subtype] = res
                     # Approve Names
                     self.api.simple_approve2(
-                        data["path"], f"/{termUid}/names/approve", label="Names"
+                        data["path"], f"/{term_uid}/names/approve", label="Names"
                     )
                     # Approve attributes
                     self.api.simple_approve2(
                         "/ct/terms",
-                        f"/{termUid}/attributes/approve",
+                        f"/{term_uid}/attributes/approve",
                         label="Attributes",
                     )
                 else:
-                    termUid = None
+                    term_uid = None
                     if subtype in self.cache.added_terms:
-                        termUid = self.cache.added_terms[subtype]["termUid"]
+                        term_uid = self.cache.added_terms[subtype]["term_uid"]
                     elif subtype_code in self.cache.all_terms_code_submission_values:
-                        termUid = self.cache.all_terms_code_submission_values[
+                        term_uid = self.cache.all_terms_code_submission_values[
                             subtype_code
                         ]
                     elif subtype_code in self.cache.all_terms_name_submission_values:
-                        termUid = self.cache.all_terms_name_submission_values[
+                        term_uid = self.cache.all_terms_name_submission_values[
                             subtype_code
                         ]
                     elif subtype in self.cache.all_term_name_values:
-                        termUid = self.cache.all_term_name_values[subtype]["termUid"]
+                        term_uid = self.cache.all_term_name_values[subtype]["term_uid"]
                     reused_item = True
 
-            if termUid and parentTermUid:
+            if term_uid and parent_term_uid:
                 self.api.post_to_api(
                     {
-                        "path": f"/ct/terms/{termUid}/add-parent?parent_uid={parentTermUid}&relationship_type=type",
+                        "path": f"/ct/terms/{term_uid}/parents?parent_uid={parent_term_uid}&relationship_type=type",
                         "body": {},
                     }
                 )
                 if reused_item:
-                    codelist_uid = data["body"]["codelistUid"]
+                    codelist_uid = data["body"]["codelist_uid"]
                     # add a term to the epoch sub type codelist
                     self.api.post_to_api(
                         {
-                            "path": "/ct/codelists/" + codelist_uid + "/add-term",
+                            "path": "/ct/codelists/" + codelist_uid + "/terms",
                             "body": {
-                                "termUid": termUid,
+                                "term_uid": term_uid,
                                 "order": data["body"]["order"],
                             },
                         }
@@ -256,20 +256,20 @@ class StandardCodelistTerms1(BaseImporter):
                     # Start a new version
                     self.api.post_to_api(
                         {
-                            "path": "/ct/terms/" + termUid + "/names/new-version",
+                            "path": "/ct/terms/" + term_uid + "/names/versions",
                             "body": {},
                         }
                     )
                     # patch the names
-                    data["body"]["changeDescription"] = "Migration modification"
+                    data["body"]["change_description"] = "Migration modification"
                     res = self.api.simple_patch(
                         data["body"],
-                        "/ct/terms/" + termUid + "/names",
+                        "/ct/terms/" + term_uid + "/names",
                         "/ct/terms/names",
                     )
                     # Approve Names
                     self.api.simple_approve2(
-                        "/ct/terms", f"/{termUid}/names/approve", label="Names"
+                        "/ct/terms", f"/{term_uid}/names/approve", label="Names"
                     )
 
     @open_file()
@@ -278,49 +278,49 @@ class StandardCodelistTerms1(BaseImporter):
         headers = next(readCSV)
         parent_sub_type_terms = self.api.get_terms_for_codelist_name("Epoch Sub Type")
         for row in readCSV:
-            parentTermUid = find_term_by_name(
+            parent_term_uid = find_term_by_name(
                 row[headers.index("GEN_EPOCH_SUB_TYPE")], parent_sub_type_terms
             )
 
             _class = "EPOCH"
             data = epoch[_class](row, headers)
-            data["body"]["codelistUid"] = "C99079"
-            termUid = (
+            data["body"]["codelist_uid"] = "C99079"
+            term_uid = (
                 f"{row[headers.index('CT_CD')]}_{row[headers.index('GEN_EPOCH_CD')]}"
             )
 
-            if termUid and parentTermUid:
+            if term_uid and parent_term_uid:
                 self.api.post_to_api(
                     {
-                        "path": f"/ct/terms/{termUid}/add-parent?parent_uid={parentTermUid}&relationship_type=subtype",
+                        "path": f"/ct/terms/{term_uid}/parents?parent_uid={parent_term_uid}&relationship_type=subtype",
                         "body": {},
                     }
                 )
-                codelist_uid = data["body"]["codelistUid"]
+                codelist_uid = data["body"]["codelist_uid"]
                 # add a term to the epoch codelist
                 self.api.post_to_api(
                     {
-                        "path": "/ct/codelists/" + codelist_uid + "/add-term",
-                        "body": {"termUid": termUid, "order": data["body"]["order"]},
+                        "path": "/ct/codelists/" + codelist_uid + "/terms",
+                        "body": {"term_uid": term_uid, "order": data["body"]["order"]},
                     }
                 )
                 # Start a new version
                 self.api.post_to_api(
-                    {"path": "/ct/terms/" + termUid + "/names/new-version", "body": {}}
+                    {"path": "/ct/terms/" + term_uid + "/names/versions", "body": {}}
                 )
                 # patch the names
-                data["body"]["changeDescription"] = "Migration modification"
+                data["body"]["change_description"] = "Migration modification"
                 res = self.api.simple_patch(
-                    data["body"], "/ct/terms/" + termUid + "/names", "/ct/terms/names"
+                    data["body"], "/ct/terms/" + term_uid + "/names", "/ct/terms/names"
                 )
                 self.api.simple_patch(
-                    {"codelistUid": codelist_uid, "newOrder": data["body"]["order"]},
-                    "/ct/terms/" + termUid + "/order",
+                    {"codelist_uid": codelist_uid, "new_order": data["body"]["order"]},
+                    "/ct/terms/" + term_uid + "/order",
                     "/ct/terms/order",
                 )
                 # Approve Names
                 self.api.simple_approve2(
-                    "/ct/terms", f"/{termUid}/names/approve", label="Names"
+                    "/ct/terms", f"/{term_uid}/names/approve", label="Names"
                 )
 
     @open_file()
@@ -337,22 +337,22 @@ class StandardCodelistTerms1(BaseImporter):
                 not in self.sponsor_codelist_legacy_name_map
             ):
                 self.metrics.icrement(
-                    data["path"] + "-Names Endpoint Level- SkippedASMissingCodelistUid"
+                    data["path"] + "-Names Endpoint Level- SkippedASMissingcodelist_uid"
                 )
                 continue
             codelist_name = self.sponsor_codelist_legacy_name_map[
                 row[headers.index("CD_LIST_ID")]
             ]
             if codelist_name in self.code_lists_uids:
-                data["body"]["codelistUid"] = self.code_lists_uids[codelist_name]
+                data["body"]["codelist_uid"] = self.code_lists_uids[codelist_name]
             else:
                 self.metrics.icrement(
-                    data["path"] + "-Names Visit Day Type - SkippedASMissingCodelistUid"
+                    data["path"] + "-Names Visit Day Type - SkippedASMissingcodelist_uid"
                 )
                 continue
             # Start a new version
             self.api.post_to_api(
-                {"path": "/ct/terms/" + data["uid"] + "/names/new-version", "body": {}}
+                {"path": "/ct/terms/" + data["uid"] + "/names/versions", "body": {}}
             )
             # path the names
             res = self.api.simple_patch(
@@ -362,15 +362,15 @@ class StandardCodelistTerms1(BaseImporter):
             if res is not None:
                 # Approve Names
                 if self.api.simple_approve2(
-                    "/ct/terms", f"/{res['termUid']}/names/approve", label="Names"
+                    "/ct/terms", f"/{res['term_uid']}/names/approve", label="Names"
                 ):
                     # add the term to the sponsor list
-                    codelist_uid = data["body"]["codelistUid"]
+                    codelist_uid = data["body"]["codelist_uid"]
                     self.api.post_to_api(
                         {
-                            "path": "/ct/codelists/" + codelist_uid + "/add-term",
+                            "path": "/ct/codelists/" + codelist_uid + "/terms",
                             "body": {
-                                "termUid": res["termUid"],
+                                "term_uid": res["term_uid"],
                                 "order": row[headers.index("CD_VAL_SORT_SEG")],
                             },
                         }
@@ -397,24 +397,24 @@ class StandardCodelistTerms1(BaseImporter):
                     f"Codelist '{row[headers.index('CD_LIST_ID')]} not found in legacy map, skipping'"
                 )
                 self.metrics.icrement(
-                    data["path"] + "-Names Objective Level- SkippedASMissingCodelistUid"
+                    data["path"] + "-Names Objective Level- SkippedASMissingcodelist_uid"
                 )
                 continue
             codelist_name = self.sponsor_codelist_legacy_name_map[
                 row[headers.index("CD_LIST_ID")]
             ]
             if codelist_name in self.code_lists_uids:
-                data["body"]["codelistUid"] = self.code_lists_uids[codelist_name]
+                data["body"]["codelist_uid"] = self.code_lists_uids[codelist_name]
             else:
                 self.log.warning(f"Codelist '{codelist_name} not found, skipping'")
                 self.metrics.icrement(
                     data["path"]
-                    + "-Names Objective Level - SkippedASMissingCodelistUid"
+                    + "-Names Objective Level - SkippedASMissingcodelist_uid"
                 )
                 continue
             # Start a new version
             self.api.post_to_api(
-                {"path": "/ct/terms/" + data["uid"] + "/names/new-version", "body": {}}
+                {"path": "/ct/terms/" + data["uid"] + "/names/versions", "body": {}}
             )
             # path the names
             res = self.api.simple_patch(
@@ -424,15 +424,15 @@ class StandardCodelistTerms1(BaseImporter):
             if res is not None:
                 # Approve Names
                 if self.api.simple_approve2(
-                    "/ct/terms", f"/{res['termUid']}/names/approve", label="Names"
+                    "/ct/terms", f"/{res['term_uid']}/names/approve", label="Names"
                 ):
                     # add the term to the sponsor list
-                    codelist_uid = data["body"]["codelistUid"]
+                    codelist_uid = data["body"]["codelist_uid"]
                     self.api.post_to_api(
                         {
-                            "path": "/ct/codelists/" + codelist_uid + "/add-term",
+                            "path": "/ct/codelists/" + codelist_uid + "/terms",
                             "body": {
-                                "termUid": res["termUid"],
+                                "term_uid": res["term_uid"],
                                 "order": row[headers.index("CD_VAL_SORT_SEG")],
                             },
                         }
@@ -455,44 +455,44 @@ class StandardCodelistTerms1(BaseImporter):
                     f"Codelist id '{row[headers.index('CD_LIST_ID')]}' not found in legacy map, skipping."
                 )
                 self.metrics.icrement(
-                    "/ct/codelists/-Names Epoch Type - SkippedASMissingCodelistUid"
+                    "/ct/codelists/-Names Epoch Type - SkippedASMissingcodelist_uid"
                 )
                 continue
             else:
                 codelist_name = self.sponsor_codelist_legacy_name_map[
                     row[headers.index("CD_LIST_ID")]
                 ]
-            codelistUid = ""
+            codelist_uid = ""
             if codelist_name in self.code_lists_uids:
-                codelistUid = self.code_lists_uids[codelist_name]
+                codelist_uid = self.code_lists_uids[codelist_name]
             else:
                 self.log.warning(
                     f"Codelist '{codelist_name}' not found in provided list, skipping."
                 )
-                # self.metrics.icrement(data["path"] + "-Names Epoch Type - SkippedASMissingCodelistUid")
+                # self.metrics.icrement(data["path"] + "-Names Epoch Type - SkippedASMissingcodelist_uid")
                 continue
             data = {
                 "codelist": row[headers.index("CD_LIST_ID")],
-                "termName": row[headers.index("CD_VAL_LB")],
-                "termUid": row[headers.index("CT_CD")],
+                "term_name": row[headers.index("CD_VAL_LB")],
+                "term_uid": row[headers.index("CT_CD")],
                 "body": {
-                    "catalogueName": "SDTM CT",
-                    "codelistUid": codelistUid,
-                    "codeSubmissionValue": row[headers.index("CD_VAL")],
-                    "nameSubmissionValue": row[headers.index("CD_VAL")],
-                    "nciPreferredName": "UNK",
+                    "catalogue_name": "SDTM CT",
+                    "codelist_uid": codelist_uid,
+                    "code_submission_value": row[headers.index("CD_VAL")],
+                    "name_submission_value": row[headers.index("CD_VAL")],
+                    "nci_preferred_name": "UNK",
                     "definition": "",
-                    "sponsorPreferredName": row[headers.index("CD_VAL_LB")],
-                    "sponsorPreferredNameSentenceCase": row[
+                    "sponsor_preferred_name": row[headers.index("CD_VAL_LB")],
+                    "sponsor_preferred_name_sentence_case": row[
                         headers.index("CD_VAL_LB")
                     ].lower(),
-                    "libraryName": "Sponsor",
+                    "library_name": "Sponsor",
                     "order": row[headers.index("CD_VAL_SORT_SEQ")],
                 },
             }
             # TODO check if already exists
             self.log.info(
-                f"Adding epoch type '{data['termName']}' to codelist '{data['codelist']}'"
+                f"Adding epoch type '{data['term_name']}' to codelist '{data['codelist']}'"
             )
             api_tasks.append(self.process_epoc_type(data=data, session=session))
         await asyncio.gather(*api_tasks)
@@ -515,30 +515,30 @@ class StandardCodelistTerms1(BaseImporter):
                 extensible = False
             try:
                 idx = headers.index("template_parameter")
-                templateParameter = map_boolean_exc(row[idx])
+                template_parameter = map_boolean_exc(row[idx])
             except ValueError as e:
                 self.log.warning(
                     f"Error parsing boolean at index {idx} in line\n{row}\nerror: {e}\nDefaulting to False"
                 )
-                templateParameter = False
+                template_parameter = False
             data = {
                 "path": "/ct/codelists",
                 "body": {
-                    "catalogueName": "SDTM CT",
+                    "catalogue_name": "SDTM CT",
                     "name": new_codelist_name,
-                    "submissionValue": row[headers.index("submission_value")],
-                    "nciPreferredName": row[headers.index("preferred_term")],
+                    "submission_value": row[headers.index("submission_value")],
+                    "nci_preferred_name": row[headers.index("preferred_term")],
                     "definition": row[headers.index("definition")],
                     "extensible": extensible,
-                    "sponsorPreferredName": row[headers.index("new_codelist_name")],
-                    "templateParameter": templateParameter,
-                    "libraryName": row[headers.index("library")],
+                    "sponsor_preferred_name": row[headers.index("new_codelist_name")],
+                    "template_parameter": template_parameter,
+                    "library_name": row[headers.index("library")],
                     "terms": [],
                 },
             }
             # TODO Add check if we already have the code list
             self.log.info(
-                f"Adding codelist name '{new_codelist_name}' to library '{data['body']['libraryName']}'"
+                f"Adding codelist name '{new_codelist_name}' to library '{data['body']['library_name']}'"
             )
             api_tasks.append(
                 self.post_codelist_approve_name_or_attribute(data=data, session=session)
@@ -556,15 +556,15 @@ class StandardCodelistTerms1(BaseImporter):
             url = (
                 "/ct/codelists/" + row[headers.index("CODELIST_CONCEPT_ID")] + "/names"
             )
-            changeDescription = f"Marking {row[headers.index('DESCRIPTION')]} as TemplateParameter in the migration"
+            change_description = f"Marking {row[headers.index('DESCRIPTION')]} as TemplateParameter in the migration"
             data = {
                 "get_path": url,
-                "path": url + "/new-version",
+                "path": url + "/versions",
                 "patch_path": url,
                 "approve_path": url + "/approve",
                 "body": {
-                    "templateParameter": True,
-                    "changeDescription": changeDescription,
+                    "template_parameter": True,
+                    "change_description": change_description,
                 },
             }
             # TODO check if already exists
@@ -583,7 +583,7 @@ class StandardCodelistTerms1(BaseImporter):
         status, response = await self.api.post_to_api_async(
             url=data["path"], body=data["body"], session=session
         )
-        uid = response.get("codelistUid")
+        uid = response.get("codelist_uid")
         if uid != None:
             # Give the backend a little time before approving, otherwise approve may fail.
             # Seems to be a problem only when running locally.
@@ -630,7 +630,7 @@ class StandardCodelistTerms1(BaseImporter):
         ) as response:
             status = response.status
             get_result = await response.json()
-        if get_result is not None and get_result.get("templateParameter") is True:
+        if get_result is not None and get_result.get("template_parameter") is True:
             self.metrics.icrement("/ct/codelists-AlreadyIsTemplateParameter")
             return get_result
         status, post_result = await self.api.post_to_api_async(
@@ -650,14 +650,14 @@ class StandardCodelistTerms1(BaseImporter):
 
     async def process_epoc_type(self, data: dict, session: aiohttp.ClientSession):
         self.ensure_cache()
-        termName = data["termName"]
-        # if termUid starts with C it means that we should take existing CDISC term and add it to the Epoch Type codelist
-        if data["termUid"].startswith("C"):
-            termUid = f"{data['termUid']}_{data['body']['codeSubmissionValue']}"
-            codelist_uid = data["body"]["codelistUid"]
+        term_name = data["term_name"]
+        # if term_uid starts with C it means that we should take existing CDISC term and add it to the Epoch Type codelist
+        if data["term_uid"].startswith("C"):
+            term_uid = f"{data['term_uid']}_{data['body']['code_submission_value']}"
+            codelist_uid = data["body"]["codelist_uid"]
             result = await self.api.post_to_api_async(
-                url="/ct/codelists/" + codelist_uid + "/add-term",
-                body={"termUid": termUid, "order": data["body"]["order"]},
+                url="/ct/codelists/" + codelist_uid + "/terms",
+                body={"term_uid": term_uid, "order": data["body"]["order"]},
                 session=session,
             )
             return result
@@ -666,9 +666,9 @@ class StandardCodelistTerms1(BaseImporter):
                 url="/ct/terms", body=data["body"], session=session
             )
             if post_status == 201:
-                self.cache.added_terms[termName] = post_result
+                self.cache.added_terms[term_name] = post_result
                 status, result = await self.api.approve_async(
-                    "/ct/terms/" + post_result["termUid"] + "/names/approve",
+                    "/ct/terms/" + post_result["term_uid"] + "/names/approve",
                     session=session,
                 )
                 if status != 201:
@@ -676,7 +676,7 @@ class StandardCodelistTerms1(BaseImporter):
                 else:
                     self.metrics.icrement("/ct/terms-NamesApprove")
                 status, result = await self.api.approve_async(
-                    "/ct/terms/" + post_result["termUid"] + "/attributes/approve",
+                    "/ct/terms/" + post_result["term_uid"] + "/attributes/approve",
                     session=session,
                 )
                 if status != 201:

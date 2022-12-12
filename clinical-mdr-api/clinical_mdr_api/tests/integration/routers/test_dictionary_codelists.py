@@ -28,7 +28,7 @@ class DictionaryCodelistsTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "dictionary_codelists.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials"]
+        return ["start_date", "end_date", "user_initials"]
 
 
 class DictionaryCodelistsNegativeTest(api.APITest):
@@ -48,4 +48,4 @@ class DictionaryCodelistsNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "time", "userInitials"]
+        return ["start_date", "end_date", "time", "user_initials"]

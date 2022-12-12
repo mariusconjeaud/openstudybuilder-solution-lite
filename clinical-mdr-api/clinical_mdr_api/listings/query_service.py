@@ -139,9 +139,7 @@ class QueryService:
 
         if at_specific_date:
             query.parameters.update({"at_specific_date": at_specific_date})
-        result_array, attributes_names = db.cypher_query(
-            query=query.full_query, params=query.parameters
-        )
+        result_array, attributes_names = query.execute()
 
         res = (result_array, attributes_names)
         result = helpers.db_result_to_list(res)
@@ -196,10 +194,7 @@ class QueryService:
         )
 
         query.parameters.update(filter_query_parameters)
-        result_array, attributes_names = db.cypher_query(
-            query=query.full_query, params=query.parameters
-        )
-
+        result_array, attributes_names = query.execute()
         res = (result_array, attributes_names)
         result = helpers.db_result_to_list(res)
 
@@ -251,9 +246,7 @@ class QueryService:
         )
 
         query.parameters.update(filter_query_parameters)
-        result_array, attributes_names = db.cypher_query(
-            query=query.full_query, params=query.parameters
-        )
+        result_array, attributes_names = query.execute()
 
         res = (result_array, attributes_names)
         result = helpers.db_result_to_list(res)
@@ -324,9 +317,7 @@ class QueryService:
         )
 
         query.parameters.update(filter_query_parameters)
-        result_array, attributes_names = db.cypher_query(
-            query=query.full_query, params=query.parameters
-        )
+        result_array, attributes_names = query.execute()
 
         res = (result_array, attributes_names)
         result = helpers.db_result_to_list(res)
@@ -395,9 +386,7 @@ class QueryService:
         )
 
         query.parameters.update(filter_query_parameters)
-        result_array, attributes_names = db.cypher_query(
-            query=query.full_query, params=query.parameters
-        )
+        result_array, attributes_names = query.execute()
 
         res = (result_array, attributes_names)
         result = helpers.db_result_to_list(res)
@@ -531,33 +520,39 @@ class QueryService:
         OPTIONAL MATCH (sf)-->(dtr:DictionaryTermRoot)-->(dtv:DictionaryTermValue)
         WITH *,
         CASE sf.field_name
-            WHEN 'IsAdaptiveDesign' THEN 'C146995_ADAPT'
-            WHEN 'StudyStopRules' THEN 'C49698_STOPRULE'
-            WHEN 'TrialPhaseCode' THEN 'C48281_TPHASE'
-            WHEN 'RareDiseaseIndicator' THEN 'C126070_RDIND'
-            WHEN 'StudyTitle' THEN 'C49802_TITLE'
-            WHEN 'StudyTypeCode' THEN 'C142175_STYPE'
-            WHEN 'TrialTypeCodes' THEN 'C49660_TTYPE'
-            WHEN 'IsExtensionTrial' THEN 'C139274_EXTTIND'
-            WHEN 'HealthySubjectIndicator' THEN 'C98737_HLTSUBJI'
-            WHEN 'PediatricInvestigationPlanIndicator' THEN 'C126069_PIPIND'
-            WHEN 'PediatricStudyIndicator' THEN 'C123632_PDSTIND'
-            WHEN 'PediatricPostmarketStudyIndicator' THEN 'C123631_PDPSTIND'
-            WHEN 'TherapeuticAreaCodes' THEN 'C101302_THERAREA'
-            WHEN 'DiagnosisGroupCodes' THEN 'C49650_TDIGRP'
-            WHEN 'PlannedMaximumAgeOfSubjects' THEN 'C49694_AGEMAX'
-            WHEN 'PlannedMinimumAgeOfSubjects' THEN 'C49693_AGEMIN'
-            WHEN 'NumberOfExpectedSubjects' THEN 'C49692_PLANSUB'
-            WHEN 'ControlTypeCode' THEN 'C49647_TCNTRL'
-            WHEN 'TrialBlindingSchemaCode' THEN 'C49658_TBLIND'
-            WHEN 'InterventionModelCode' THEN 'C98746_INTMODEL'
-            WHEN 'IsTrialRandomised' THEN 'C25196_RANDOM'
-            WHEN 'AddOnToExistingTreatments' THEN 'C49703_ADDON'
-            WHEN 'TrialIntentTypes' THEN 'C49652_TINDTP'
-            WHEN 'PlannedStudyLength' THEN 'C49697_LENGTH'
-            WHEN 'InterventionType' THEN 'C98747_INTTYPE'
+            WHEN 'is_adaptive_design' THEN 'C146995_ADAPT'
+            WHEN 'study_stop_rules' THEN 'C49698_STOPRULE'
+            WHEN 'trial_phase_code' THEN 'C48281_TPHASE'
+            WHEN 'rare_disease_indicator' THEN 'C126070_RDIND'
+            WHEN 'study_title' THEN 'C49802_TITLE'
+            WHEN 'study_type_code' THEN 'C142175_STYPE'
+            WHEN 'trial_type_codes' THEN 'C49660_TTYPE'
+            WHEN 'is_extension_trial' THEN 'C139274_EXTTIND'
+            WHEN 'healthy_subject_indicator' THEN 'C98737_HLTSUBJI'
+            WHEN 'pediatric_investigation_plan_indicator' THEN 'C126069_PIPIND'
+            WHEN 'pediatric_study_indicator' THEN 'C123632_PDSTIND'
+            WHEN 'pediatric_postmarket_study_indicator' THEN 'C123631_PDPSTIND'
+            WHEN 'therapeutic_area_codes' THEN 'C101302_THERAREA'
+            WHEN 'diagnosis_group_codes' THEN 'C49650_TDIGRP'
+            WHEN 'planned_maximum_age_of_subjects' THEN 'C49694_AGEMAX'
+            WHEN 'planned_minimum_age_of_subjects' THEN 'C49693_AGEMIN'
+            WHEN 'number_of_expected_subjects' THEN 'C49692_PLANSUB'
+            WHEN 'control_type_code' THEN 'C49647_TCNTRL'
+            WHEN 'trial_blinding_schema_code' THEN 'C49658_TBLIND'
+            WHEN 'intervention_model_code' THEN 'C98746_INTMODEL'
+            WHEN 'is_trial_randomised' THEN 'C25196_RANDOM'
+            WHEN 'add_on_to_existing_treatments' THEN 'C49703_ADDON'
+            WHEN 'trial_intent_types_codes' THEN 'C49652_TINDTP'
+            WHEN 'planned_study_length' THEN 'C49697_LENGTH'
+            WHEN 'intervention_type_code' THEN 'C98747_INTTYPE'
         END AS term_uid,
         CASE
+            // for StudyTimeFields and StudyIntFields we want to display
+            // actual value that is stored in the StudyField node
+            WHEN sf:StudyTimeField
+                THEN 'Not Controlled TimeField'
+            WHEN sf:StudyIntField
+                THEN 'Not Controlled IntField'
             WHEN ctr IS NOT NULL
                 THEN 'CDISC'
             WHEN dtv IS NOT NULL
@@ -574,14 +569,23 @@ class QueryService:
         CASE controlled_by
         WHEN 'CDISC' THEN ctav.code_submission_value
         WHEN 'Dictionary' THEN dtv.name
-        WHEN 'Not Controlled' THEN sf.value
+        ELSE sf.value
         END AS TSVAL,
         '' AS TSVALNF,
-        '' AS TSVALCD,
-        '' AS TSVCDREF,
+        CASE controlled_by
+        WHEN 'CDISC' THEN ctr.concept_id
+        WHEN 'Dictionary' THEN dtv.dictionary_id
+        ELSE ''
+        END AS TSVALCD,
+        CASE controlled_by
+        WHEN 'Not Controlled TimeField' THEN 'ISO8601'
+        WHEN 'CDISC' THEN 'CDISC'
+        WHEN 'Dictionary' THEN head([(library:Library)-[:CONTAINS_DICTIONARY_TERM]->(dtr) | library.name])
+        ELSE ''
+        END AS TSVCDREF,
         '' AS TSVCDVER
         UNION
-        MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_OBJECTIVE]->(so:StudyObjective)-[:HAS_OBJECTIVE_LEVEL]->(objlv)-->(octar:CTTermAttributesRoot)-[:LATEST_FINAL]->(octav:CTTermAttributesValue) 
+        MATCH (sr:StudyRoot {uid:$study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_OBJECTIVE]->(so:StudyObjective)-[:HAS_OBJECTIVE_LEVEL]->(objlv)-->(octar:CTTermAttributesRoot)-[:LATEST_FINAL]->(octav:CTTermAttributesValue)
         MATCH (so)-[:HAS_SELECTED_OBJECTIVE]->(obj)
         RETURN
         sv.study_id_prefix+'-'+sv.study_number AS STUDYID,
@@ -658,6 +662,51 @@ class QueryService:
             '' AS TSVALCD,
             '' AS TSVCDREF,
             '' AS TSVCDVER
+        UNION
+            MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_COMPOUND]->(sc:StudyCompound)-[:HAS_TYPE_OF_TREATMENT]->(cttr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(ctar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ctav:CTTermAttributesValue)
+            MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(cav:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)-[:LATEST_FINAL]->(cv:CompoundValue)-[:HAS_UNII_VALUE]->(uniir:UNIITermRoot)-[:LATEST_FINAL]->(uniiv:UNIITermValue)
+            MATCH (uniir)<-[:CONTAINS_DICTIONARY_TERM]-(lib:Library)
+            with sv,uniiv,lib,ctav
+            MATCH (tr1:CTTermRoot {uid:'C41161_TRT'})-->(tar1:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav1:CTTermAttributesValue) 
+            MATCH (tr2:CTTermRoot {uid:'C68612_COMPTRT'})-->(tar2:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav2:CTTermAttributesValue) 
+            MATCH (tr3:CTTermRoot {uid:'C85582_CURTRT'})-->(tar3:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav3:CTTermAttributesValue)
+            with tav1,tav2,tav3 , sv, uniiv, lib,
+            case ctav.code_submission_value
+                WHEN 'INVESTIGATIONAL PRODUCT TYPE OF TREATMENT' THEN
+                    tav1 
+                WHEN 'COMPARATIVE TREATMENT TYPE OF TREATMENT' THEN
+                    tav2 
+                WHEN 'CURRENT TREATMENT TYPE OF TREATMENT' THEN
+                    tav3 
+            end as tav
+            RETURN
+                sv.study_id_prefix+'-'+sv.study_number as STUDYID,
+                'TS' as DOMAIN,
+                tav.code_submission_value as TSPARMCD,
+                tav.name_submission_value as TSPARM,
+                '' AS controlled_by,
+                uniiv.name as TSVAL,
+                '' AS TSVALNF,
+                uniiv.dictionary_id as TSVALCD,
+                lib.name as TSVCDREF,
+                '' AS TSVCDVER
+        UNION 
+            MATCH (ctav:CTTermAttributesValue {code_submission_value:'INVESTIGATIONAL PRODUCT TYPE OF TREATMENT'})
+            match (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_COMPOUND]->(sc:StudyCompound)-[:HAS_TYPE_OF_TREATMENT]->(cttr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(ctar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ctav)
+            match (sc)-[:HAS_SELECTED_COMPOUND]->(cav:CompoundAliasValue)
+            match (cav)-[:IS_COMPOUND]->(cr:CompoundRoot)-[:LATEST_FINAL]->(cv:CompoundValue)-[:HAS_UNII_VALUE]->(uniir:UNIITermRoot)-[:LATEST_FINAL]->(uniiv:UNIITermValue)-[:HAS_PCLASS]->(pclass_root:DictionaryTermRoot)-[:LATEST_FINAL]->(medrt:DictionaryTermValue)
+            match (pclass_root)<-[:CONTAINS_DICTIONARY_TERM]-(lib:Library)
+            match (tr:CTTermRoot {uid:'C98768_PCLAS'})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue) 
+            RETURN sv.study_id_prefix+'-'+sv.study_number as STUDYID,
+                'TS' as DOMAIN,
+                tav.code_submission_value as TSPARMCD,
+                tav.name_submission_value as TSPARM,
+                '' AS controlled_by,
+                medrt.name as TSVAL,
+                '' AS TSVALNF,
+                medrt.dictionary_id as TSVALCD,
+                lib.name as TSVCDREF,
+                '' AS TSVCDVER
         }
         RETURN *
         ORDER BY TSPARMCD

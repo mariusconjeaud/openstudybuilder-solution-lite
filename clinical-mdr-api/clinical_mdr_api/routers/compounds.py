@@ -4,6 +4,7 @@ from typing import Any, List, Optional
 from fastapi import APIRouter, Body, Depends, Path, Query
 from pydantic.types import Json
 
+from clinical_mdr_api import config
 from clinical_mdr_api.models.compound import (
     Compound,
     CompoundCreateInput,
@@ -46,18 +47,20 @@ Possible errors:
 )
 def get_compounds(
     library: Optional[str] = Query(None, description="The library name"),
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -65,15 +68,15 @@ def get_compounds(
     compound_service = CompoundService(user=current_user_id)
     results = compound_service.get_all_concepts(
         library=library,
-        sort_by=sortBy,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -98,18 +101,20 @@ Possible errors:
 )
 def get_compounds_simple(
     library: Optional[str] = Query(None, description="The library name"),
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -117,15 +122,15 @@ def get_compounds_simple(
     compound_service = CompoundSimpleService(user=current_user_id)
     results = compound_service.get_all_concepts(
         library=library,
-        sort_by=sortBy,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -147,8 +152,8 @@ def get_compounds_simple(
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
     library: Optional[str] = Query(None, description="The library name"),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -157,18 +162,18 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     compound_service = CompoundService(user=current_user_id)
     return compound_service.get_distinct_values_for_header(
         library=library,
-        field_name=fieldName,
-        search_string=searchString,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
@@ -180,7 +185,7 @@ State before:
  - a compound with uid must exist.
 
 Business logic:
- - If parameter atSpecifiedDateTime is specified then the latest/newest representation of the concept at this point in time is returned. The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: '2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. If the timezone is ommitted, UTC�0 is assumed.
+ - If parameter at_specified_date_time is specified then the latest/newest representation of the concept at this point in time is returned. The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: '2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. If the timezone is ommitted, UTC�0 is assumed.
  - If parameter status is specified then the representation of the concept in that status is returned (if existent). This is useful if the concept has a status 'Draft' and a status 'Final'.
  - If parameter version is specified then the latest/newest representation of the concept in that version is returned. Only exact matches are considered. The version is specified in the following format: <major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0', ...
 
@@ -188,7 +193,7 @@ State after:
  - No change
 
 Possible errors:
- - Invalid uid, atSpecifiedDateTime, status or version.
+ - Invalid uid, at_specified_date_time, status or version.
  """,
     response_model=Compound,
     status_code=200,
@@ -210,7 +215,7 @@ State before:
 
 Business logic:
  - List version history for compounds.
- - The returned versions are ordered by startDate descending (newest entries first).
+ - The returned versions are ordered by start_date descending (newest entries first).
 
 State after:
  - No change
@@ -240,7 +245,7 @@ def get_versions(
     summary="Creates new compound.",
     description="""
 State before:
- - The specified library allows creation of concepts (the 'isEditable' property of the library needs to be true).
+ - The specified library allows creation of concepts (the 'is_editable' property of the library needs to be true).
  - The specified CT term uids must exist, and the term names are in a final state.
 
 Business logic:
@@ -249,7 +254,7 @@ Business logic:
  - relationships to specified activity parent are created (as in the model)
  - The status of the new created version will be automatically set to 'Draft'.
  - The 'version' property of the new version will be automatically set to 0.1.
- - The 'changeDescription' property will be set automatically to 'Initial version'.
+ - The 'change_description' property will be set automatically to 'Initial version'.
 
 State after:
  - compounds is created in status Draft and assigned an initial minor version number as 0.1.
@@ -285,7 +290,7 @@ def create(
     description="""
 State before:
  - uid must exist and compound must exist in status draft.
- - The compound must belongs to a library that allows deleting (the 'isEditable' property of the library needs to be true).
+ - The compound must belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).
 
 Business logic:
  - If compound exist in status draft then attributes are updated.
@@ -338,7 +343,7 @@ Business logic:
  - The latest 'Draft' version will remain the same as before.
  - The status of the new approved version will be automatically set to 'Final'.
  - The 'version' property of the new version will be automatically set to the version of the latest 'Final' version increased by +1.0.
- - The 'changeDescription' property will be set automatically to 'Approved version'.
+ - The 'change_description' property will be set automatically to 'Approved version'.
  
 State after:
  - Compound changed status to Final and assigned a new major version number.
@@ -372,7 +377,7 @@ def approve(
 
 
 @router.post(
-    "/compounds/{uid}/new-version",
+    "/compounds/{uid}/versions",
     summary=" Create a new version of a compound",
     description="""
 State before:
@@ -423,7 +428,7 @@ State before:
 Business logic:
  - The latest 'Final' version will remain the same as before.
  - The status will be automatically set to 'Retired'.
- - The 'changeDescription' property will be set automatically.
+ - The 'change_description' property will be set automatically.
  - The 'version' property will remain the same as before.
  
 State after:
@@ -466,7 +471,7 @@ State before:
 Business logic:
  - The latest 'Retired' version will remain the same as before.
  - The status will be automatically set to 'Final'.
- - The 'changeDescription' property will be set automatically.
+ - The 'change_description' property will be set automatically.
  - The 'version' property will remain the same as before.
 
 State after:
@@ -506,7 +511,7 @@ def reactivate(
 State before:
  - uid must exist
  - The concept must be in status Draft in a version less then 1.0 (never been approved).
- - The concept must belongs to a library that allows deleting (the 'isEditable' property of the library needs to be true).
+ - The concept must belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).
  
 Business logic:
  - The draft concept is deleted.

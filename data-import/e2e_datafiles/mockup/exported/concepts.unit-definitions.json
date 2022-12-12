@@ -1,37 +1,37 @@
 [
   {
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "comment": "0",
-    "conversionFactorToMaster": 1.602177e-16,
-    "convertibleUnit": true,
-    "ctUnits": [
+    "conversion_factor_to_master": 1.602177e-16,
+    "convertible_unit": true,
+    "ct_units": [
       {
         "name": "keV",
-        "termUid": "C67276_keV"
+        "term_uid": "C67276_keV"
       }
     ],
     "definition": "A unit of energy equal to 1000 electronvolts, or (approximately) 1,602 177 x 10-16 joule. The unit is accepted for use with SI units.",
-    "displayUnit": true,
-    "endDate": null,
-    "legacyCode": "keV",
-    "libraryName": "Sponsor",
-    "masterUnit": false,
-    "molecularWeightConvExpon": null,
+    "display_unit": true,
+    "end_date": null,
+    "legacy_code": "keV",
+    "library_name": "Sponsor",
+    "master_unit": false,
+    "molecular_weight_conv_expon": null,
     "name": "keV",
     "order": 52,
-    "siUnit": false,
-    "startDate": "2022-06-08T08:16:18.252761",
+    "si_unit": false,
+    "start_date": "2022-06-08T08:16:18.252761",
     "status": "Final",
-    "templateParameter": false,
+    "template_parameter": false,
     "ucum": null,
     "uid": "UnitDefinition_000080",
-    "unitDimension": {
+    "unit_dimension": {
       "name": "Energy",
-      "termUid": "CTTerm_000201"
+      "term_uid": "CTTerm_000201"
     },
-    "unitSubsets": [],
-    "usConventionalUnit": true,
-    "userInitials": "unknown-user",
+    "unit_subsets": [],
+    "us_conventional_unit": true,
+    "user_initials": "unknown-user",
     "version": "1.0"
   }
 ]

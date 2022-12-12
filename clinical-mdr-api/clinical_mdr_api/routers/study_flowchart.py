@@ -13,7 +13,7 @@ from clinical_mdr_api.services.study_flowchart import StudyFlowchartService
 
 StudyUID = Path(None, description="The unique id of the study.")
 
-timeUnit = Query(
+time_unit_query = Query(
     "days",
     regex="^(weeks|days)$",
     description="The preferred time unit, either days or weeks.",
@@ -29,7 +29,7 @@ timeUnit = Query(
 )
 def get_study_flowchart(
     uid: str = StudyUID,
-    time_unit: Optional[str] = timeUnit,
+    time_unit: Optional[str] = time_unit_query,
     current_user_id: str = Depends(get_current_user_id),
 ) -> TableWithHeaders:
     return StudyFlowchartService(current_user_id=current_user_id).get_table(
@@ -46,7 +46,7 @@ def get_study_flowchart(
 )
 def get_study_flowchart_html(
     uid: str = StudyUID,
-    time_unit: Optional[str] = timeUnit,
+    time_unit: Optional[str] = time_unit_query,
     current_user_id: str = Depends(get_current_user_id),
 ) -> str:
     return StudyFlowchartService(current_user_id=current_user_id).get_html_document(
@@ -62,7 +62,7 @@ def get_study_flowchart_html(
 )
 def get_study_flowchart_docx(
     uid: str = StudyUID,
-    time_unit: Optional[str] = timeUnit,
+    time_unit: Optional[str] = time_unit_query,
     current_user_id: str = Depends(get_current_user_id),
 ) -> StreamingResponse:
     docx = StudyFlowchartService(current_user_id=current_user_id).get_docx_document(

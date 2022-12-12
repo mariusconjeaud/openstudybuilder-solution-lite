@@ -97,6 +97,6 @@ Feature: ODM Descriptions API
 
     Scenario: Create a new version of an ODM Description
         Given the ODM Description is in 'Final' status
-        When a 'POST' request is sent to 'concepts/odms/descriptions/OdmDescription_000001/new-version'
+        When a 'POST' request is sent to 'concepts/odms/descriptions/OdmDescription_000001/versions'
         Then a response with json body is received with the newly created version of the ODM Description
         And the response has status code '201'

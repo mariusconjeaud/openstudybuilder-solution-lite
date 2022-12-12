@@ -2,8 +2,8 @@
 <div class="px-4">
   <div class="page-title">{{ $t('CtPackageCodelistHistoryView.title') }}</div>
   <ct-package-codelist-history
-    :catalogue-name="$route.params.catalogueName"
-    :codelist-uid="$route.params.codelistId"
+    :catalogue-name="$route.params.catalogue_name"
+    :codelist-uid="$route.params.codelist_id"
     :from-date="$route.query.fromDate"
     :to-date="$route.query.toDate"
     />
@@ -25,7 +25,7 @@ export default {
   },
   mounted () {
     this.addBreadcrumbsLevel({
-      text: this.$route.params.codelistId
+      text: this.$route.params.codelist_id
     })
   }
 }

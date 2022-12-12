@@ -6,11 +6,11 @@
          "method": "POST",
          "request": {
             "value": 7.5,
-            "unitDefinitionUid": "unit_definition_root1",
+            "unit_definition_uid": "unit_definition_root1",
             "definition": "numeric_value_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor"
+            "template_parameter": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/numeric-values-with-unit"
       },
@@ -21,18 +21,18 @@
             "uid": "NumericValueWithUnit_000001",
             "name": "7.5 [unit_definition_root1]",
             "value": 7.5,
-            "unitDefinitionUid": "unit_definition_root1",
-            "nameSentenceCase": "7.5",
+            "unit_definition_uid": "unit_definition_root1",
+            "name_sentence_case": "7.5",
             "definition": "numeric_value_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor",
+            "template_parameter": true,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null
          }
       }
    },
@@ -43,11 +43,11 @@
          "method": "POST",
          "request": {
             "value": 7.5,
-            "unitDefinitionUid": "unit_definition_root1",
+            "unit_definition_uid": "unit_definition_root1",
             "definition": "numeric_value_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor"
+            "template_parameter": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/numeric-values-with-unit"
       },
@@ -58,18 +58,18 @@
             "uid": "NumericValueWithUnit_000001",
             "name": "7.5 [unit_definition_root1]",
             "value": 7.5,
-            "unitDefinitionUid": "unit_definition_root1",
-            "nameSentenceCase": "7.5",
+            "unit_definition_uid": "unit_definition_root1",
+            "name_sentence_case": "7.5",
             "definition": "numeric_value_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor",
+            "template_parameter": true,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null
          }
       }
    },
@@ -80,11 +80,11 @@
          "method": "POST",
          "request": {
             "value": 9.12,
-            "unitDefinitionUid": "unit_definition_root1",
+            "unit_definition_uid": "unit_definition_root1",
             "definition": "numeric_value_definition2",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor"
+            "template_parameter": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/numeric-values-with-unit"
       },
@@ -95,18 +95,18 @@
             "uid": "NumericValueWithUnit_000002",
             "name": "9.12 [unit_definition_root1]",
             "value": 9.12,
-            "unitDefinitionUid": "unit_definition_root1",
-            "nameSentenceCase": "9.12",
+            "unit_definition_uid": "unit_definition_root1",
+            "name_sentence_case": "9.12",
             "definition": "numeric_value_definition2",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor",
+            "template_parameter": true,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null
          }
       }
    },
@@ -116,7 +116,7 @@
          "headers": {},
          "method": "GET",
          "request": {},
-         "url": "/concepts/numeric-values-with-unit?totalCount=true"
+         "url": "/concepts/numeric-values-with-unit?total_count=true"
       },
       "response": {
          "code": 200,
@@ -127,40 +127,40 @@
                   "uid": "NumericValueWithUnit_000001",
                   "name": "7.5",
                   "value": 7.5,
-                  "unitDefinitionUid": "unit_definition_root1",
-                  "nameSentenceCase": "7.5",
+                  "unit_definition_uid": "unit_definition_root1",
+                  "name_sentence_case": "7.5",
                   "definition": "numeric_value_definition1",
                   "abbreviation": "abbv",
-                  "templateParameter": true,
-                  "libraryName": "Sponsor",
+                  "template_parameter": true,
+                  "library_name": "Sponsor",
                   "status": null,
                   "version": null,
-                  "changeDescription": null,
-                  "userInitials": null,
-                  "startDate": null,
-                  "endDate": null
+                  "change_description": null,
+                  "user_initials": null,
+                  "start_date": null,
+                  "end_date": null
                },
                {
                   "uid": "NumericValueWithUnit_000002",
                   "name": "9.12",
                   "value": 9.12,
-                  "unitDefinitionUid": "unit_definition_root1",
-                  "nameSentenceCase": "9.12",
+                  "unit_definition_uid": "unit_definition_root1",
+                  "name_sentence_case": "9.12",
                   "definition": "numeric_value_definition2",
                   "abbreviation": "abbv",
-                  "templateParameter": true,
-                  "libraryName": "Sponsor",
+                  "template_parameter": true,
+                  "library_name": "Sponsor",
                   "status": null,
                   "version": null,
-                  "changeDescription": null,
-                  "userInitials": null,
-                  "startDate": null,
-                  "endDate": null
+                  "change_description": null,
+                  "user_initials": null,
+                  "start_date": null,
+                  "end_date": null
                }
             ],
             "total": 2,
             "page": 1,
-            "size": 0
+            "size": 10
          }
       }
    },
@@ -171,11 +171,11 @@
          "method": "POST",
          "request": {
             "value": 8.43,
-            "unitDefinitionUid": "non-existing-uid",
+            "unit_definition_uid": "non-existing-uid",
             "definition": "numeric_value_definition2",
             "abbreviation": "abbv",
-            "templateParameter": false,
-            "libraryName": "Sponsor"
+            "template_parameter": false,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/numeric-values-with-unit"
       },

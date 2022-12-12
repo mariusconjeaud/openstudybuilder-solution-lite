@@ -21,7 +21,7 @@ router = APIRouter()
     responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
 )
 def get_stats(
-    latestCount: Optional[int] = Query(
+    latest_count: Optional[int] = Query(
         3, description="Optional, number of latest codelists to return"
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -29,10 +29,10 @@ def get_stats(
     ct_stats_service = CTStatsService()
 
     # Get latest codelists from codelist service
-    # Use get_all method from codelist repo with order by startDate desc and pageSize = latestCount
+    # Use get_all method from codelist repo with order by start_date desc and page_size = latest_count
     ct_codelist_service = CTCodelistService(user=current_user_id)
     latest_codelists = ct_codelist_service.get_all_codelists(
-        sort_by={"name.startDate": True}, page_number=1, page_size=latestCount
+        sort_by={"name.start_date": True}, page_number=1, page_size=latest_count
     )
 
     return ct_stats_service.get_stats(latest_codelists=latest_codelists.items)

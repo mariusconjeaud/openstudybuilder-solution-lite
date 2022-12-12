@@ -17,15 +17,15 @@ class Project(BaseModel):
         description="The unique id of the Project.",
     )
 
-    projectNumber: Optional[str] = Field(
+    project_number: Optional[str] = Field(
         ...,
-        title="projectNumber",
+        title="project_number",
         description="",
     )
 
-    clinicalProgramme: ClinicalProgramme = Field(
+    clinical_programme: ClinicalProgramme = Field(
         ...,
-        title="clinicalProgramme",
+        title="clinical_programme",
         description="",
     )
 
@@ -65,9 +65,9 @@ class Project(BaseModel):
     ) -> "Project":
         return Project(
             uid=project_ar.uid,
-            projectNumber=project_ar.project_number,
+            project_number=project_ar.project_number,
             name=project_ar.name,
-            clinicalProgramme=ClinicalProgramme(
+            clinical_programme=ClinicalProgramme(
                 uid=project_ar.clinical_programme_uid,
                 name=find_clinical_programme_by_uid(
                     project_ar.clinical_programme_uid
@@ -78,9 +78,9 @@ class Project(BaseModel):
 
 
 class ProjectCreateInput(BaseModel):
-    projectNumber: Optional[str] = Field(
+    project_number: Optional[str] = Field(
         ...,
-        title="projectNumber",
+        title="project_number",
         description="",
     )
 
@@ -96,8 +96,8 @@ class ProjectCreateInput(BaseModel):
         description="",
     )
 
-    clinicalProgrammeUid: str = Field(
+    clinical_programme_uid: str = Field(
         ...,
-        title="clinicalProgrammeUid",
+        title="clinical_programme_uid",
         description="",
     )

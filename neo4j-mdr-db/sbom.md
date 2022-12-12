@@ -107,7 +107,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 ### License for 3rd party library pip
 ```
-Copyright (c) 2008-present The pip developers (see AUTHORS.txt file)
+Copyright (c) 2008-2021 The pip developers (see AUTHORS.txt file)
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

@@ -1,51 +1,82 @@
-SORT_BY = (
-    "Optionally, a dictionary of fieldNames and isAscending boolean.\n\n"
-    "Default: {} (no sorting)\n\n"
-    "Functionality: sorts the results. First by first key with direction indicated by value, then second key, etc...\n\n"
-    'Example: {"topicCode": true, "name": false}'
-)
+from clinical_mdr_api import config
 
-PAGE_NUMBER = (
-    "Optionally, the page number of the results to display.\n\n"
-    "Functionality : provided together with pageSize, selects a page to retrieve for paginated results."
-    "Errors: pageSize not provided, pageNumber must be equal or greater than 1."
-)
+SORT_BY = """
+JSON dictionary of field names and boolean flags specifying the sort order. Supported values for sort order are:
+- `true` - ascending order\n
+- `false` - descending order\n
 
-PAGE_SIZE = (
-    "Optionally, the number of results to display per page.\n\n"
-    "Default: 0 (all data)\n\n"
-    "Functionality: provided together with pageNumber, selects the number of results per page.\n\n"
-    "Errors: pageNumber not provided."
-)
+Default: `{}` (no sorting).
 
-FILTERS = (
-    "Optionally, a dictionary of fieldNames and searchStrings with a choice of operators.\n\n"
-    "Default: {} (no filtering)\n\n"
-    "Functionality: filters the return values based on the provided search strings and operators.\n\n"
-    """The expected format is the following :
-    {"labelName":{"v":[list of values to filter against], "op":"comparison operator"}, "otherLabelName":{...}}\n\n"""
-    "If a list of values is provided for a given labelName, it will execute an OR on these values.\n\n"
-    """Supported comparison operators are the following : eq (default, =), ne (not equals), co (string contains), ge (greater or equal to),
-    gt (greater than), le (less or equal to), lt (less than), bw (between - exactly two values are required).\n\n"""
-    'Note that this is not just for string filtering. For example, this works as filter : {"isGlobalStandard": {"v": [false]}}\n\n'
-    """Wildcard filtering is also supported. To do this, provide * as labelName, with
-    the same structure for values and operator : {"*":{"v":["searchString"]}}\n\n"""
-    "Wildcard only supports searching strings, on labels of type string ; with a contains operator (set as default in this case).\n\n"
-    'Finally, you can filter on items that have an empty value for a field. To achieve this, just set the "v" list to the empty array [].\n\n'
-)
+Format: `{"field_1": true, "field_2": false, ...}`.
+
+Functionality: Sorts the results by `field_1` with sort order indicated by its boolean value, then by `field_2` etc.
+
+Example: `{"topic_code": true, "name": false}` sorts the returned list by `topic_code ascending`, then by `name descending`.
+"""
+
+PAGE_NUMBER = """
+Page number of the returned list of entities.\n
+Functionality : provided together with `page_size`, selects a page to retrieve for paginated results.\n
+Errors: `page_size` not provided, `page_number` must be equal or greater than 1.
+"""
+
+PAGE_SIZE = f"""
+Number of items to be returned per page.\n
+Default: {config.DEFAULT_PAGE_SIZE}\n
+Functionality: Provided together with `page_number`, selects the number of results per page.\n
+In case the value is set to `0`, all rows will be returned.\n
+Errors: `page_number` not provided.
+"""
+
+FILTERS = """
+JSON dictionary of field names and search strings, with a choice of operators for building complex filtering queries.
+
+Default: `{}` (no filtering).
+
+Functionality: filters the queried entities based on the provided search strings and operators.
+
+Format:
+`{"field_name":{"v":["search_str_1", "search_str_1"], "op":"comparison_operator"}, "other_field_name":{...}}`
+
+- `v` specifies the list of values to match against the specified `field_name` field\n
+    - If multiple values are provided in the `v` list, a logical OR filtering operation will be performed using these values.
+
+- `op` specifies the type of string match/comparison operation to perform on the specified `field_name` field. Supported values are:\n
+    - `eq` (default, equals)\n
+    - `ne` (not equals)\n
+    - `co` (string contains)\n
+    - `ge` (greater or equal to)\n
+    - `gt` (greater than)\n
+    - `le` (less or equal to)\n
+    - `lt` (less than)\n
+    - `bw` (between - exactly two values are required)\n
+    - `in` (value in list).\n
+
+Note that filtering can also be performed on non-string field types. 
+For example, this works as filter on a boolean field: `{"is_global_standard": {"v": [false]}}`.\n
+
+Wildcard filtering is also supported. To do this, provide `*` value for `field_name`, for example: `{"*":{"v":["search_string"]}}`.
+
+Wildcard only supports string search (with implicit `contains` operator) on fields of type string.\n
+
+Finally, you can filter on items that have an empty value for a field. To achieve this, set the value of `v` list to an empty array - `[]`.\n
+
+Complex filtering example:\n
+`{"name":{"v": ["Jimbo", "Jumbo"], "op": "co"}, "start_date": {"v": ["2021-04-01T12:00:00+00.000"], "op": "ge"}, "*":{"v": ["wildcard_search"], "op": "co"}}`
+
+"""
 
 OPERATOR = (
-    "Optionally, if the filter must be done on several fields, the and/or operator to use.\n\n"
-    "Default: and (all field names have to match their filter).\n\n"
-    "Functionality: and/or apply to all fields. 'and' will require filters to match, 'or' will require any filters to match.\n\n"
+    "Specifies which logical operation - `and` or `or` - should be used in case filtering is done on several fields.\n\n"
+    "Default: `and` (all fields have to match their filter).\n\n"
+    "Functionality: `and` will return entities having all filters matching, `or` will return entities with any matches.\n\n"
 )
 
-FILTERS_EXAMPLE = """{"name":{ "v": ["Jimbo", "Jumbo"], "op": "co" },
-"startDate": {"v": ["2021-04-01T12:00:00+00.000"], "op": "ge"}, "*":{ "v": ["wildcardSearch"], "op": "co" }}"""
+FILTERS_EXAMPLE = """{"*":{ "v": [""], "op": "co"}}"""
 
 TOTAL_COUNT = (
-    "Optionally, a boolean.\n\n"
-    "Functionality: retrieve a total count of the number of returned elements in the context of paginated results.\n\n"
+    "Boolean value specifying whether total count of entities should be included in the reponse.\n\n"
+    "Functionality: retrieve total count of queried entities.\n\n"
 )
 
 HEADER_FIELD_NAME = (

@@ -15,7 +15,7 @@
       <not-applicable-field
         ref="naField"
         :clean-function="cleanTypeOfTreatment"
-        :disabled="typeOfTreatmentUidNADisabled"
+        :disabled="typeOfTreatment_uidNADisabled"
         :checked="studyCompound && !studyCompound.compound"
         >
         <template v-slot:mainField="{ notApplicable }">
@@ -25,12 +25,12 @@
             :rules="`requiredIfNotNA:${notApplicable}`"
             >
             <v-autocomplete
-              v-model="form.typeOfTreatment"
+              v-model="form.type_of_treatment"
               :data-cy="$t('StudyCompoundForm.type_of_treatment')"
               :label="$t('StudyCompoundForm.type_of_treatment')"
               :items="typeOfTreatments"
-              item-text="sponsorPreferredName"
-              item-value="termUid"
+              item-text="sponsor_preferred_name"
+              item-value="term_uid"
               return-object
               :error-messages="errors"
               dense
@@ -50,7 +50,7 @@
             v-slot="{ errors }"
             >
             <v-autocomplete
-              v-model.lazy="form.compoundSimple"
+              v-model="form.compoundSimple"
               :label="$t('StudyCompoundForm.compound')"
               :items="compounds"
               item-text="name"
@@ -68,7 +68,7 @@
             v-slot="{ errors }"
             >
             <v-autocomplete
-              v-model="form.compoundAlias"
+              v-model="form.compound_alias"
               :label="$t('StudyCompoundForm.compound_alias')"
               :items="compoundAliases"
               item-text="name"
@@ -85,16 +85,16 @@
         <v-row>
           <v-col cols="6">
             <yes-no-field
-              v-model="form.compound.isSponsorCompound"
+              v-model="form.compound.is_sponsor_compound"
               :label="$t('StudyCompoundForm.sponsor_compound')"
               row
               disabled
               hide-details
               />
           </v-col>
-          <v-col cols="6" v-if="form.compoundAlias">
+          <v-col cols="6" v-if="form.compound_alias">
             <yes-no-field
-              v-model="form.compoundAlias.isPreferredSynonym"
+              v-model="form.compound_alias.is_preferred_synonym"
               :label="$t('StudyCompoundForm.is_preferred_synonym')"
               row
               disabled
@@ -105,7 +105,7 @@
         <v-row>
           <v-col cols="6">
             <v-text-field
-              v-model="form.compound.nncLongNumber"
+              v-model="form.compound.nnc_long_number"
               :label="$t('CompoundForm.long_number')"
               dense
               disabled
@@ -115,7 +115,7 @@
           </v-col>
           <v-col cols="6">
             <v-text-field
-              v-model="form.compound.nncShortNumber"
+              v-model="form.compound.nnc_short_number"
               :label="$t('CompoundForm.short_number')"
               dense
               disabled
@@ -137,10 +137,10 @@
               hide-details
               />
           </v-col>
-          <v-col cols="6" v-if="form.compoundAlias">
+          <v-col cols="6" v-if="form.compound_alias">
             <v-textarea
               :label="$t('StudyCompoundForm.alias_definition')"
-              v-model="form.compoundAlias.definition"
+              v-model="form.compound_alias.definition"
               dense
               auto-grow
               rows="1"
@@ -182,11 +182,11 @@
       <v-row>
         <v-col>
           <v-autocomplete
-            v-model="form.dosageFormUid"
+            v-model="form.dosage_form_uid"
             :label="$t('StudyCompoundForm.dosage_form')"
-            :items="form.compound.dosageForms"
+            :items="form.compound.dosage_forms"
             item-text="name"
-            item-value="termUid"
+            item-value="term_uid"
             dense
             clearable
             />
@@ -195,10 +195,10 @@
       <v-row>
         <v-col>
           <v-autocomplete
-            v-model="form.strengthValueUid"
+            v-model="form.strength_value_uid"
             :label="$t('StudyCompoundForm.compound_strength_value')"
-            :items="form.compound.strengthValues"
-            :item-text="(item) => `${item.value} ${item.unitLabel}`"
+            :items="form.compound.strength_values"
+            :item-text="(item) => `${item.value} ${item.unit_label}`"
             item-value="uid"
             dense
             clearable
@@ -209,11 +209,11 @@
         <v-col>
           <v-autocomplete
             :data-cy="$t('StudyCompoundForm.route_of_admin')"
-            v-model="form.routeOfAdministrationUid"
+            v-model="form.route_of_administration_uid"
             :label="$t('StudyCompoundForm.route_of_admin')"
-            :items="form.compound.routesOfAdministration"
+            :items="form.compound.routes_of_administration"
             item-text="name"
-            item-value="termUid"
+            item-value="term_uid"
             dense
             clearable
             />
@@ -223,11 +223,11 @@
         <v-col>
           <v-autocomplete
             :data-cy="$t('StudyCompoundForm.dispensed_in')"
-            v-model="form.dispensedInUid"
+            v-model="form.dispensed_in_uid"
             :label="$t('StudyCompoundForm.dispensed_in')"
             :items="form.compound.dispensers"
             item-text="name"
-            item-value="termUid"
+            item-value="term_uid"
             dense
             clearable
             />
@@ -237,11 +237,11 @@
         <v-col>
           <v-autocomplete
             :data-cy="$t('StudyCompoundForm.device')"
-            v-model="form.deviceUid"
+            v-model="form.device_uid"
             :label="$t('StudyCompoundForm.device')"
-            :items="form.compound.deliveryDevices"
+            :items="form.compound.delivery_devices"
             item-text="name"
-            item-value="termUid"
+            item-value="term_uid"
             dense
             clearable
             />
@@ -251,7 +251,7 @@
         <v-col>
           <v-textarea
             :data-cy="$t('StudyCompoundForm.other')"
-            v-model="form.otherInfo"
+            v-model="form.other_info"
             :label="$t('StudyCompoundForm.other')"
             auto-grow
             rows="1"
@@ -295,13 +295,13 @@ export default {
     }),
     substances () {
       if (this.form.compound && this.form.compound.substances && this.form.compound.substances.length) {
-        return this.form.compound.substances.map(item => `${item.substanceName} (${item.substanceUnii})`).join(', ')
+        return this.form.compound.substances.map(item => `${item.substance_name} (${item.substance_unii})`).join(', ')
       }
       return ''
     },
     pharmacologicalClass () {
       if (this.form.compound && this.form.compound.substances && this.form.compound.substances.length) {
-        return this.form.compound.substances.map(item => item.pclassName).filter(pclass => pclass !== undefined && pclass !== null).join(', ')
+        return this.form.compound.substances.map(item => item.pclass_name).filter(pclass => pclass !== undefined && pclass !== null).join(', ')
       }
       return ''
     },
@@ -311,11 +311,11 @@ export default {
       }
       return this.$t('StudyCompoundForm.add_title')
     },
-    typeOfTreatmentUidNADisabled () {
+    typeOfTreatment_uidNADisabled () {
       if ((this.$refs.naField && this.$refs.naField.notApplicable) || (this.studyCompound && !this.studyCompound.compound)) {
         return false
       }
-      if (!this.form.typeOfTreatment) {
+      if (!this.form.type_of_treatment) {
         return true
       }
       const types = [
@@ -323,14 +323,14 @@ export default {
         constants.TYPE_OF_TREATMENT_CURRENT_TREATMENT,
         constants.TYPE_OF_TREATMENT_COMPARATIVE_TREATMENT
       ]
-      if (!types.find(item => item === this.form.typeOfTreatment.sponsorPreferredName)) {
+      if (!types.find(item => item === this.form.type_of_treatment.sponsor_preferred_name)) {
         return true
       }
-      const studyCompounds = this.getStudyCompoundsByTypeOfTreatment(this.form.typeOfTreatment.termUid)
+      const studyCompounds = this.getStudyCompoundsByTypeOfTreatment(this.form.type_of_treatment.term_uid)
       if (studyCompounds.length) {
         return true
       }
-      const NAstudyCompounds = this.getNAStudyCompoundsByTypeOfTreatment(this.form.typeOfTreatment.termUid)
+      const NAstudyCompounds = this.getNAStudyCompoundsByTypeOfTreatment(this.form.type_of_treatment.term_uid)
       if (NAstudyCompounds.length) {
         return true
       }
@@ -371,14 +371,14 @@ export default {
       return {
         compound: {},
         compoundSimple: {},
-        compoundAlias: {},
-        typeOfTreatment: {},
-        dosageFormUid: null,
-        strengthValueUid: null,
-        routeOfAdministrationUid: null,
-        dispensedInUid: null,
-        deviceUid: null,
-        otherInfo: null
+        compound_alias: {},
+        type_of_treatment: {},
+        dosage_form_uid: null,
+        strength_value_uid: null,
+        route_of_administration_uid: null,
+        dispensed_in_uid: null,
+        device_uid: null,
+        other_info: null
       }
     },
     getInitialSteps () {
@@ -402,13 +402,13 @@ export default {
     },
     async submit () {
       const data = JSON.parse(JSON.stringify(this.form))
-      data.typeOfTreatmentUid = data.typeOfTreatment.termUid
-      delete data.typeOfTreatment
+      data.type_of_treatment_uid = data.type_of_treatment.term_uid
+      delete data.type_of_treatment
       delete data.compound
-      if (data.compoundAlias) {
-        data.compoundAliasUid = data.compoundAlias.uid || null
+      if (data.compound_alias) {
+        data.compound_alias_uid = data.compound_alias.uid || null
       } else {
-        data.reasonForMissingNullValueUid = studyConstants.TERM_NOT_APPLICABLE
+        data.reason_for_missing_null_value_uid = studyConstants.TERM_NOT_APPLICABLE
       }
 
       let action = null
@@ -423,7 +423,7 @@ export default {
         notification = 'update_success'
         args = {
           studyUid: this.selectedStudy.uid,
-          studyCompoundUid: this.studyCompound.studyCompoundUid,
+          studyCompoundUid: this.studyCompound.study_compound_uid,
           data
         }
       }
@@ -451,16 +451,16 @@ export default {
     studyCompound: {
       handler: function (val) {
         if (val) {
-          this.form.typeOfTreatment = val.typeOfTreatment
-          this.form.otherInfo = val.otherInfo
+          this.form.type_of_treatment = val.type_of_treatment
+          this.form.other_info = val.other_info
           if (val.compound) {
             this.form.compound = val.compound
-            this.form.compoundSimple = {
+            this.$set(this.form, 'compoundSimple', {
               uid: val.compound.uid,
               name: val.compound.name
-            }
+            })
             const filters = {
-              compoundUid: { v: [val.compound.uid] },
+              compound_uid: { v: [val.compound.uid] },
               status: { v: [statuses.FINAL] }
             }
             compoundAliases.getFiltered({ filters }).then(resp => {
@@ -471,23 +471,23 @@ export default {
               { name: 'type_of_treatment', title: this.$t('StudyCompoundForm.step1_title') }
             ]
           }
-          if (val.compoundAlias) {
-            this.form.compoundAlias = val.compoundAlias
+          if (val.compound_alias) {
+            this.form.compound_alias = val.compound_alias
           }
-          if (val.dosageForm) {
-            this.form.dosageFormUid = val.dosageForm.termUid
+          if (val.dosage_form) {
+            this.form.dosage_form_uid = val.dosage_form.term_uid
           }
-          if (val.routeOfAdministration) {
-            this.form.routeOfAdministrationUid = val.routeOfAdministration.termUid
+          if (val.route_of_administration) {
+            this.form.route_of_administration_uid = val.route_of_administration.term_uid
           }
-          if (val.dispensedIn) {
-            this.form.dispensedInUid = val.dispensedIn.termUid
+          if (val.dispensed_in) {
+            this.form.dispensed_in_uid = val.dispensed_in.term_uid
           }
           if (val.device) {
-            this.form.deviceUid = val.device.termUid
+            this.form.device_uid = val.device.term_uid
           }
-          if (val.strengthValue) {
-            this.form.strengthValueUid = val.strengthValue.uid
+          if (val.strength_value) {
+            this.form.strength_value_uid = val.strength_value.uid
           }
         }
       },
@@ -496,10 +496,10 @@ export default {
     'form.compoundSimple' (newValue, oldValue) {
       if (newValue) {
         if (!this.studyCompound || this.studyCompound.compound.uid !== newValue.uid) {
-          this.$set(this.form, 'compoundAlias', null)
+          this.$set(this.form, 'compound_alias', null)
         }
         const filters = {
-          compoundUid: { v: [newValue.uid] },
+          compound_uid: { v: [newValue.uid] },
           status: { v: [statuses.FINAL] }
         }
         compoundAliases.getFiltered({ filters }).then(resp => {

@@ -171,7 +171,15 @@
                       </xsl:for-each>
                     </xsl:when>
                     <xsl:otherwise>
-                      <input type="{@DataType}" class="form-control" id="{@OID}" name="{@Name}" min="4" max="40" size="{@Length}"/>
+                      <xsl:choose>
+                        <xsl:when test="@DataType = 'boolean'">
+                          <input type="checkbox" id="item{@OID}" name="{@Name}" aria-describedby="basic-addon2"/>
+                          <!-- &#160;<label for="{@name}"><xsl:value-of select="@Name" /></label> -->
+                        </xsl:when>
+                        <xsl:otherwise>
+                          <input type="{@DataType}" class="form-control" id="item{@OID}" name="{@Name}" min="4" max="40" size="{@Length}"/>
+                        </xsl:otherwise>
+                      </xsl:choose>
                     </xsl:otherwise>
                   </xsl:choose>
                 </div>

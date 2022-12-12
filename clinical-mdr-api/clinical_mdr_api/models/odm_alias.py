@@ -14,7 +14,7 @@ from clinical_mdr_api.models.error import BatchErrorResponse
 
 class OdmAlias(ConceptModel):
     context: str
-    possibleActions: List[str]
+    possible_actions: List[str]
 
     @classmethod
     def from_odm_alias_ar(cls, odm_alias_ar: OdmAliasAR) -> "OdmAlias":
@@ -22,14 +22,14 @@ class OdmAlias(ConceptModel):
             uid=odm_alias_ar._uid,
             name=odm_alias_ar.name,
             context=odm_alias_ar.concept_vo.context,
-            libraryName=odm_alias_ar.library.name,
-            startDate=odm_alias_ar.item_metadata.start_date,
-            endDate=odm_alias_ar.item_metadata.end_date,
+            library_name=odm_alias_ar.library.name,
+            start_date=odm_alias_ar.item_metadata.start_date,
+            end_date=odm_alias_ar.item_metadata.end_date,
             status=odm_alias_ar.item_metadata.status.value,
             version=odm_alias_ar.item_metadata.version,
-            changeDescription=odm_alias_ar.item_metadata.change_description,
-            userInitials=odm_alias_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=odm_alias_ar.item_metadata.change_description,
+            user_initials=odm_alias_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 [_.value for _ in odm_alias_ar.get_possible_actions()]
             ),
         )
@@ -85,9 +85,9 @@ class OdmAliasBatchInput(BaseModel):
 
 
 class OdmAliasBatchOutput(BaseModel):
-    responseCode: int = Field(
+    response_code: int = Field(
         ...,
-        title="responseCode",
+        title="response_code",
         description="The HTTP response code related to input operation",
     )
     content: Union[OdmAlias, None, BatchErrorResponse]
@@ -102,6 +102,6 @@ class OdmAliasVersion(OdmAlias):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the objective (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )

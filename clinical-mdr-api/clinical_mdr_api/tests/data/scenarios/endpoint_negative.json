@@ -5,11 +5,11 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "endpointTemplateUid": "{etuid}",
-                "libraryName": "non existent library",
+                "endpoint_template_uid": "{etuid}",
+                "library_name": "non existent library",
                 "name": "Test objective",
-                "objectiveUid": "{ouid}",
-                "parameterValues": []
+                "objective_uid": "{ouid}",
+                "parameter_values": []
             },
             "url": "/endpoints"
         },
@@ -34,11 +34,11 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "endpointTemplateUid": "wrong-uid",
-                "libraryName": "Test library",
+                "endpoint_template_uid": "wrong-uid",
+                "library_name": "Test library",
                 "name": "Test objective",
-                "objectiveUid": "{ouid}",
-                "parameterValues": []
+                "objective_uid": "{ouid}",
+                "parameter_values": []
             },
             "url": "/endpoints"
         },
@@ -58,39 +58,16 @@
         }
     },
     {
-        "name": "Check get by name returns 404",
-        "request": {
-            "headers": {},
-            "method": "GET",
-            "request": {},
-            "url": "/endpoints/get-by-name/test"
-        },
-        "response": {
-            "code": 404,
-            "headers": {
-                "content-length": "192",
-                "content-type": "application/json"
-            },
-            "result": {
-                "message": "Not Found - The object with the specified 'name' wasn't found.",
-                "method": "GET",
-                "path": "http://testserver/endpoints/get-by-name/test",
-                "time": "2020-11-10T01:52:30.985556",
-                "type": "NotFoundException"
-            }
-        }
-    },
-    {
         "name": "Check endpoint template not in final version ",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "endpointTemplateUid": "{otuidna}",
-                "libraryName": "Test library",
+                "endpoint_template_uid": "{otuidna}",
+                "library_name": "Test library",
                 "name": "Test objective",
-                "objectiveUid": "{ouid}",
-                "parameterValues": []
+                "objective_uid": "{ouid}",
+                "parameter_values": []
             },
             "url": "/endpoints"
         },
@@ -115,11 +92,11 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Test library",
-                "endpointTemplateUid": "{etuid}",
-                "nameOverride": "Name not approved - edited instance name",
-                "objectiveUid": "{ouid}",
-                "parameterValues": []
+                "library_name": "Test library",
+                "endpoint_template_uid": "{etuid}",
+                "name_override": "Name not approved - edited instance name",
+                "objective_uid": "{ouid}",
+                "parameter_values": []
             },
             "url": "/endpoints"
         },

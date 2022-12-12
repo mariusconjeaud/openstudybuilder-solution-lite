@@ -37,7 +37,7 @@ RUN echo dbms.memory.heap.initial_size=2g >> /var/lib/neo4j/conf/neo4j.conf \
 
 # --- Prod stage ----
 # Copy database directory from build-stage to the official neo4j docker image
-FROM neo4j:4.4.8-enterprise as production-stage
+FROM neo4j:4.4.12-enterprise as production-stage
 COPY --from=build-stage /var/lib/neo4j/data /var/lib/neo4j/data 
 
 ## Install packages

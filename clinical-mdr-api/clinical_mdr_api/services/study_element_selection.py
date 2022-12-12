@@ -158,24 +158,24 @@ class StudyElementSelectionService(
                     study_uid=study_uid,
                     user_initials=self.author,
                     name=selection_create_input.name,
-                    short_name=selection_create_input.shortName,
+                    short_name=selection_create_input.short_name,
                     code=selection_create_input.code,
                     description=selection_create_input.description,
                     planned_duration=(
                         create_duration_object_from_api_input(
-                            value=selection_create_input.plannedDuration.durationValue,
+                            value=selection_create_input.planned_duration.duration_value,
                             unit=get_unit_def_uid_or_none(
-                                selection_create_input.plannedDuration.durationUnitCode
+                                selection_create_input.planned_duration.duration_unit_code
                             ),
                             find_duration_name_by_code=self._repos.unit_definition_repository.find_by_uid_2,
                         )
-                        if selection_create_input.plannedDuration is not None
+                        if selection_create_input.planned_duration is not None
                         else None
                     ),
-                    start_rule=selection_create_input.startRule,
-                    end_rule=selection_create_input.endRule,
-                    element_colour=selection_create_input.elementColour,
-                    element_subtype_uid=selection_create_input.elementSubTypeUid,
+                    start_rule=selection_create_input.start_rule,
+                    end_rule=selection_create_input.end_rule,
+                    element_colour=selection_create_input.element_colour,
+                    element_subtype_uid=selection_create_input.element_subtype_uid,
                     study_compound_dosing_count=0,
                     generate_uid_callback=repos.study_selection_element_repository.generate_uid,
                 )
@@ -346,24 +346,24 @@ class StudyElementSelectionService(
         return StudySelectionElementVO.from_input_values(
             study_uid=current_study_element.study_uid,
             name=request_study_element.name,
-            short_name=request_study_element.shortName,
+            short_name=request_study_element.short_name,
             code=request_study_element.code,
             description=request_study_element.description,
             planned_duration=(
                 create_duration_object_from_api_input(
-                    value=request_study_element.plannedDuration.durationValue,
+                    value=request_study_element.planned_duration.duration_value,
                     unit=get_unit_def_uid_or_none(
-                        request_study_element.plannedDuration.durationUnitCode
+                        request_study_element.planned_duration.duration_unit_code
                     ),
                     find_duration_name_by_code=find_duration_name_by_code,
                 )
-                if request_study_element.plannedDuration is not None
+                if request_study_element.planned_duration is not None
                 else None
             ),
-            start_rule=request_study_element.startRule,
-            end_rule=request_study_element.endRule,
-            element_colour=request_study_element.elementColour,
-            element_subtype_uid=request_study_element.elementSubTypeUid,
+            start_rule=request_study_element.start_rule,
+            end_rule=request_study_element.end_rule,
+            element_colour=request_study_element.element_colour,
+            element_subtype_uid=request_study_element.element_subtype_uid,
             study_compound_dosing_count=current_study_element.study_compound_dosing_count,
             study_selection_uid=current_study_element.study_selection_uid,
             user_initials=self.author,

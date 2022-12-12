@@ -41,8 +41,8 @@ class StudyFieldConfigurationEntry:
     configured_term_uid: Optional[str]
     study_field_grouping: str  # stores name of value object in study AR
     study_value_object_class: type
-    study_field_name_property: str  # stores name of value in neomodel
     study_field_name_api: str
+    is_dictionary_term: bool
 
 
 fieldnames = [
@@ -52,8 +52,8 @@ fieldnames = [
     "study_field_null_value_code",
     "configured_term_uid",
     "study_field_grouping",
-    "study_field_name_property",
     "study_field_name_api",
+    "is_dictionary_term",
 ]
 
 

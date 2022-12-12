@@ -9,6 +9,8 @@ from dict2xml import dict2xml
 from fastapi.responses import StreamingResponse
 from openpyxl import Workbook
 
+from clinical_mdr_api.models import utils
+
 REGISTERED_EXPORT_FORMATS = {}
 
 
@@ -39,11 +41,13 @@ def _convert_headers_to_dict(headers: list) -> dict:
 
 def _extract_values_from_data(data: dict, headers: dict):
     """Extract required values from data."""
+    if isinstance(data, (utils.CustomPage, utils.GenericFilteringReturn)):
+        data = data.items
     for item in data:
         result = {}
+        if not isinstance(item, dict):
+            item = item.dict()
         for header, target in headers.items():
-            if not isinstance(item, dict):
-                item = item.dict()
             if "." in target:
                 value = item
                 for path in target.split("."):
@@ -137,7 +141,7 @@ def export(export_format: str, data: dict, export_definition: dict, *args, **kwa
     else:
         headers = export_definition["defaults"]
     if export_format in REGISTERED_EXPORT_FORMATS:
-        if isinstance(data, dict):
+        if isinstance(data, (utils.CustomPage, utils.GenericFilteringReturn)):
             data = data.items
         result = REGISTERED_EXPORT_FORMATS[export_format](
             data, headers, *args, **kwargs

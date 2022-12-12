@@ -7,7 +7,7 @@ from clinical_mdr_api.routers.activity_instances import (
     router as activity_instances_router,
 )
 from clinical_mdr_api.routers.activity_sub_groups import (
-    router as activity_sub_groups_router,
+    router as activity_subgroups_router,
 )
 from clinical_mdr_api.routers.admin import router as admin_router
 from clinical_mdr_api.routers.brands import router as brands_router
@@ -43,6 +43,7 @@ from clinical_mdr_api.routers.ct_term_attributes import (
 )
 from clinical_mdr_api.routers.ct_term_names import router as ct_term_names_router
 from clinical_mdr_api.routers.ct_terms import router as ct_terms_router
+from clinical_mdr_api.routers.ctr_xml import router as ctr_xml_router
 from clinical_mdr_api.routers.dictionary_codelists import (
     router as dictionary_codelists_router,
 )
@@ -95,6 +96,12 @@ from clinical_mdr_api.routers.projects import router as projects_router
 from clinical_mdr_api.routers.rating_scales import router as rating_scales_router
 from clinical_mdr_api.routers.reminders import router as reminders_router
 from clinical_mdr_api.routers.special_purposes import router as special_purposes_router
+from clinical_mdr_api.routers.standard_data_models.data_model_igs import (
+    router as data_model_igs_router,
+)
+from clinical_mdr_api.routers.standard_data_models.data_models import (
+    router as data_models_router,
+)
 from clinical_mdr_api.routers.studies import router as studies_router
 from clinical_mdr_api.routers.study import router as study_router
 from clinical_mdr_api.routers.study_activity_instructions import (
@@ -165,7 +172,7 @@ __all__ = [
     "numeric_findings_router",
     "textual_findings_router",
     "events_router",
-    "activity_sub_groups_router",
+    "activity_subgroups_router",
     "activity_groups_router",
     "numeric_values_router",
     "numeric_values_with_unit_router",
@@ -182,6 +189,7 @@ __all__ = [
     "ct_term_names_router",
     "ct_term_attributes_router",
     "ct_stats_router",
+    "ctr_xml_router",
     "dictionary_codelists_router",
     "dictionary_terms_router",
     "activity_description_templates_router",
@@ -222,4 +230,6 @@ __all__ = [
     "study_flowchart_router",
     "study_compound_dosing_router",
     "visit_names_router",
+    "data_models_router",
+    "data_model_igs_router",
 ]

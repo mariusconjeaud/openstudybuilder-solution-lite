@@ -4,6 +4,7 @@ from fastapi import APIRouter, Body, Depends, Path, Query
 from pydantic.types import Json
 from starlette.requests import Request
 
+from clinical_mdr_api import config
 from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
     StudyComponentEnum,
 )
@@ -41,16 +42,16 @@ StudyUID = Path(None, description="The unique id of the study.")
     {
         "defaults": [
             "uid",
-            "currentMetadata.identificationMetadata.clinicalProgrammeName",
-            "currentMetadata.identificationMetadata.projectNumber",
-            "currentMetadata.identificationMetadata.projectName",
-            "currentMetadata.identificationMetadata.studyNumber",
-            "currentMetadata.identificationMetadata.studyId",
-            "currentMetadata.identificationMetadata.studyAcronym",
-            "currentMetadata.studyDescription.studyTitle",
-            "currentMetadata.versionMetadata.studyStatus",
-            "currentMetadata.versionMetadata.versionTimestamp",
-            "currentMetadata.versionMetadata.lockedVersionAuthor",
+            "current_metadata.identification_metadata.clinical_programme_name",
+            "current_metadata.identification_metadata.project_number",
+            "current_metadata.identification_metadata.project_name",
+            "current_metadata.identification_metadata.study_number",
+            "current_metadata.identification_metadata.study_id",
+            "current_metadata.identification_metadata.study_acronym",
+            "current_metadata.study_description.study_title",
+            "current_metadata.version_metadata.study_status",
+            "current_metadata.version_metadata.version_timestamp",
+            "current_metadata.version_metadata.locked_version_author",
         ],
         "formats": [
             "text/csv",
@@ -66,7 +67,7 @@ def get_all(
     fields: Optional[str] = Query(
         default=None,
         description="Parameter specifies which parts of the whole Study Definition representation to retrieve."
-        " This endpoint won't return underlying metadata parts like highLevelStudyDesign or studyIntervention"
+        " This endpoint won't return underlying metadata parts like high_level_study_design or study_intervention"
         " even if they will be prefixed with a `+` because it was set to return only the most important part of the information"
         " like identification metadata."
         " In the form of comma separated name of the fields prefixed by (optional) `+` "
@@ -75,44 +76,46 @@ def get_all(
         " If not specified identification metadata and version metadata are retrieved."
         " If value starts with `+` or `-` above default is extended or reduced by the specified fields"
         " otherwise (if not started with `+` or `-`) provided fields specification"
-        " replaces the default. The `uid` and `studyStatus` fields will be always returned"
+        " replaces the default. The `uid` and `study_status` fields will be always returned"
         " as they are mandatory fields for the Study API model. Currently supported fields are"
-        " `currentMetadata.identificationMetadata`, `currentMetadata.highLevelStudyDesign`"
-        " , `currentMetadata.studyPopulation` and `currentMetadata.studyIntervention`"
-        " , `currentMetadata.studyDescription`.",
+        " `current_metadata.identification_metadata`, `current_metadata.high_level_study_design`"
+        " , `current_metadata.study_population` and `current_metadata.study_intervention`"
+        " , `current_metadata.study_description`.",
     ),
-    hasStudyObjective: Optional[bool] = Query(
+    has_study_objective: Optional[bool] = Query(
         default=None,
         description="Optionaly, filter studies based on the existence of related study objectives or not",
     ),
-    hasStudyEndpoint: Optional[bool] = Query(
+    has_study_endpoint: Optional[bool] = Query(
         default=None,
         description="Optionaly, filter studies based on the existence of related study endpoints or not",
     ),
-    hasStudyCriteria: Optional[bool] = Query(
+    has_study_criteria: Optional[bool] = Query(
         default=None,
         description="Optionaly, filter studies based on the existence of related study criteria or not",
     ),
-    hasStudyActivity: Optional[bool] = Query(
+    has_study_activity: Optional[bool] = Query(
         default=None,
         description="Optionaly, filter studies based on the existence of related study activities or not",
     ),
-    hasStudyActivityInstruction: Optional[bool] = Query(
+    has_study_activity_instruction: Optional[bool] = Query(
         default=None,
         description="Optionaly, filter studies based on the existence of related study activity instruction or not",
     ),
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -120,21 +123,21 @@ def get_all(
     study_service = StudyService(user=current_user_id)
     results = study_service.get_all(
         fields=fields,
-        has_study_objective=hasStudyObjective,
-        has_study_endpoint=hasStudyEndpoint,
-        has_study_criteria=hasStudyCriteria,
-        has_study_activity=hasStudyActivity,
-        has_study_activity_instruction=hasStudyActivityInstruction,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        has_study_objective=has_study_objective,
+        has_study_endpoint=has_study_endpoint,
+        has_study_criteria=has_study_criteria,
+        has_study_activity=has_study_activity,
+        has_study_activity_instruction=has_study_activity_instruction,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        sort_by=sortBy,
+        sort_by=sort_by,
     )
 
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -155,8 +158,8 @@ def get_all(
 )
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -165,17 +168,17 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     study_service = StudyService(user=current_user_id)
     return study_service.get_distinct_values_for_header(
-        field_name=fieldName,
-        search_string=searchString,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
@@ -184,7 +187,7 @@ def get_distinct_values_for_header(
     summary="Request to change some aspects (parts) of a specific study definition identified by 'uid'.",
     description="The request to change (some aspect) of the state of current aggregate. "
     "There are some special cases and considerations:\n"
-    "* patching studyStatus in currentMetadata.versionMetadata is considered as the request for"
+    "* patching study_status in current_metadata.version_metadata is considered as the request for"
     "  locking/unlocking/releasing the study definition and should not be combined with any other"
     "  changes\n"
     "* there are many business rules that apply in different patching scenario or state of the"
@@ -259,14 +262,14 @@ def get(
         " If not specified identification metadata and version metadata are retrieved."
         " If value starts with `+` or `-` above default is extended or reduced by the specified fields"
         " otherwise (if not started with `+` or `-`) provided fields specification"
-        " replaces the default. The `uid` and `studyStatus` fields will be always returned"
+        " replaces the default. The `uid` and `study_status` fields will be always returned"
         " as they are mandatory fields for the Study API model. Currently supported fields are"
-        " `currentMetadata.identificationMetadata`, `currentMetadata.highLevelStudyDesign`"
-        " ,`currentMetadata.studyPopulation` and `currentMetadata.studyIntervention`"
-        " , `currentMetadata.studyDescription`.",
+        " `current_metadata.identification_metadata`, `current_metadata.high_level_study_design`"
+        " ,`current_metadata.study_population` and `current_metadata.study_intervention`"
+        " , `current_metadata.study_description`.",
     ),
     current_user_id: str = Depends(get_current_user_id)
-    # atSpecifiedDateTime: Optional[datetime] = Query(
+    # at_specified_date_time: Optional[datetime] = Query(
     #     None,
     #     description="If specified, the latest/newest representation of the study at"
     #                                                               " this point in time is returned.\n"
@@ -397,12 +400,12 @@ def get_protocol_title(
     description="""
 State before:
  - uid must exist
- - referenceStudyUid must exist
+ - reference_study_uid must exist
 
 Business logic:
  - if overwrite is set to false, then the projection of the copy will be returned
- - if overwrite is set to true, then the component referenced as a componentToCopy will be copied
- from the study referenced by referenceStudyUid to the study referenced by uid.
+ - if overwrite is set to true, then the component referenced as a component_to_copy will be copied
+ from the study referenced by reference_study_uid to the study referenced by uid.
 
 State after:
  - The specific form is copied or projected into a study referenced by uid 'uid'.
@@ -420,10 +423,10 @@ State after:
 )
 def copy_simple_form_from_another_study(
     uid: str = StudyUID,
-    referenceStudyUid: str = Query(
+    reference_study_uid: str = Query(
         ..., description="The uid of the study to copy component from"
     ),
-    componentToCopy: StudyComponentEnum = Query(
+    component_to_copy: StudyComponentEnum = Query(
         ..., description="The uid of the study to copy component from"
     ),
     overwrite: bool = Query(
@@ -436,7 +439,7 @@ def copy_simple_form_from_another_study(
     study_service = StudyService(user=current_user_id)
     return study_service.copy_component_from_another_study(
         uid=uid,
-        reference_study_uid=referenceStudyUid,
-        component_to_copy=componentToCopy,
+        reference_study_uid=reference_study_uid,
+        component_to_copy=component_to_copy,
         overwrite=overwrite,
     )

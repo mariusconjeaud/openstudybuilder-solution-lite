@@ -18,10 +18,10 @@
       <protocol-title-page />
     </v-tab-item>
     <v-tab-item id="tab-1">
-      <protocol-flowchart :study-uid="selectedStudy.uid"  :update="updateProtocol" />
+      <protocol-flowchart :study-uid="selectedStudy.uid"  :update="updateFlowchart" />
     </v-tab-item>
     <v-tab-item id="tab-2">
-      <protocol-elements-objective-table />
+      <protocol-elements-objective-table :study-uid="selectedStudy.uid" :update="updateObjectives"/>
     </v-tab-item>
      <v-tab-item id="tab-3">
        <protocol-elements-study-design :study-uid="selectedStudy.uid" :update="updateDesign"/>
@@ -65,7 +65,8 @@ export default {
   data () {
     return {
       tab: null,
-      updateProtocol: 0,
+      updateFlowchart: 0,
+      updateObjectives: 0,
       updateDesign: 0,
       updateInterventions: 0
     }
@@ -78,7 +79,10 @@ export default {
       localStorage.setItem('templatesTab', value)
       switch (value) {
         case 'tab-1':
-          this.updateProtocol++
+          this.updateFlowchart++
+          break
+        case 'tab-2':
+          this.updateObjectives++
           break
         case 'tab-3':
           this.updateDesign++

@@ -89,7 +89,7 @@
               <v-col>
                 <v-textarea
                   :label="$t('HistoryTable.change_description')"
-                  v-model="form.changeDescription"
+                  v-model="form.change_description"
                   :error-messages="errors"
                   :rows="1"
                   class="white"
@@ -169,7 +169,7 @@ export default {
       storeEndpointAdd: 'endpoints/addEndpoint',
       storeEndpointUpdate: 'endpoints/updateEndpoint',
       translationLabel: 'EndpointForm',
-      objectTemplateUidLabel: 'endpointTemplateUid',
+      objectTemplateUidLabel: 'endpoint_template_uid',
       objectTemplateUidResultLabel: 'endpointTemplate'
     }
   },
@@ -196,7 +196,7 @@ export default {
     libraries.get(1).then(resp => {
       this.libraries = resp.data
     })
-    endpointTemplates.get({ status: statuses.FINAL }).then(resp => {
+    endpointTemplates.get({ status: statuses.FINAL, page_size: 0 }).then(resp => {
       this.templates = resp.data.items
     })
     if (this.endpoint) {

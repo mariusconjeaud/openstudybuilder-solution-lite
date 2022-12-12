@@ -32,14 +32,14 @@ class CTCodelistNameService(CTCodelistGenericService[CTCodelistNameAR]):
             item = self._find_by_uid_or_raise_not_found(codelist_uid, for_update=True)
             item.edit_draft(
                 author=self.user_initials,
-                change_description=codelist_input.changeDescription,
+                change_description=codelist_input.change_description,
                 ct_codelist_vo=CTCodelistNameVO.from_input_values(
                     name=self.get_input_or_previous_property(
                         codelist_input.name, item.name
                     ),
                     catalogue_name=item.ct_codelist_vo.catalogue_name,
                     is_template_parameter=self.get_input_or_previous_property(
-                        codelist_input.templateParameter,
+                        codelist_input.template_parameter,
                         item.ct_codelist_vo.is_template_parameter,
                     ),
                     # passing always True callbacks, as we can't change catalogue

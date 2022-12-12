@@ -1,8 +1,14 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, Sequence
 
 from pydantic import BaseModel, Field
 
 from clinical_mdr_api.domain.concepts.concept_base import ConceptARBase
+
+
+class OdmElementWithParentUid(BaseModel):
+    uid: str
+    name: str
+    parent_uids: Sequence[str]
 
 
 class OdmXmlExtensionRelationPostInput(BaseModel):
@@ -30,7 +36,7 @@ class OdmXmlExtensionSimpleModel(BaseModel):
                 )
             else:
                 simple_odm_xml_extension_model = cls(
-                    uid=uid, name=None, prefix=None, namespeace=None
+                    uid=uid, name=None, prefix=None, namespace=None
                 )
         else:
             simple_odm_xml_extension_model = None

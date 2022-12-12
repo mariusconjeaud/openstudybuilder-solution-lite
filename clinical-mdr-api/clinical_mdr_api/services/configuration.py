@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Callable, Optional, Sequence, cast
 
-from fastapi import Depends
 from neomodel import db
 from pydantic.main import BaseModel
 
@@ -23,18 +22,7 @@ from clinical_mdr_api.models.configuration import (
     CTConfigPatchInput,
     CTConfigPostInput,
 )
-from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.services._meta_repository import MetaRepository
-
-
-def _get_current_user_id(current_user_id: str = Depends(get_current_user_id)) -> str:
-    return current_user_id
-
-
-def _get_meta_repository(
-    user_id: str = Depends(_get_current_user_id),
-) -> MetaRepository:
-    return MetaRepository(user=user_id)
 
 
 class CTConfigService:
@@ -44,10 +32,9 @@ class CTConfigService:
     def __init__(
         self,
         *,
-        user_id: str = Depends(_get_current_user_id),
-        meta_repository: MetaRepository = Depends(_get_meta_repository)
+        user_id: str = "TEST_USER",
     ):
-        self._repos = meta_repository
+        self._repos = MetaRepository()
         self._user_id = user_id
 
     @db.transaction
@@ -65,7 +52,7 @@ class CTConfigService:
         *,
         at_specified_datetime: Optional[datetime],
         status: Optional[str],
-        version: Optional[str]
+        version: Optional[str],
     ) -> CTConfigModel:
 
         status_as_enum = LibraryItemStatus(status) if status is not None else None
@@ -121,7 +108,7 @@ class CTConfigService:
             )
             ct_config_ar.edit_draft(
                 author=self._user_id,
-                change_description=patch_input.changeDescription,
+                change_description=patch_input.change_description,
                 new_ct_config_value=new_value,
                 ct_configuration_exists_by_name_callback=self._repos.ct_config_repository.check_exists_by_name,
             )
@@ -195,25 +182,25 @@ class CTConfigService:
     def _post_input_to_codelist_config_value_vo(
         self, post_input: CTConfigPostInput
     ) -> CTConfigValueVO:
-        if post_input.configuredCodelistName is not None:
+        if post_input.configured_codelist_name is not None:
             all_codelists: Sequence[
                 CTCodelistNameAR
             ] = self._repos.ct_codelist_name_repository.find_all(
                 library="Sponsor"
             ).items
             for codelist in all_codelists:
-                if codelist.ct_codelist_vo.name == post_input.configuredCodelistName:
-                    post_input.configuredCodelistUid = codelist.uid
+                if codelist.ct_codelist_vo.name == post_input.configured_codelist_name:
+                    post_input.configured_codelist_uid = codelist.uid
 
         return CTConfigValueVO.from_input_values(
-            study_field_name=post_input.studyFieldName,
-            study_field_data_type=post_input.studyFieldDataType,
-            study_field_null_value_code=post_input.studyFieldNullValueCode,
-            configured_codelist_uid=post_input.configuredCodelistUid,
-            configured_term_uid=post_input.configuredTermUid,
-            study_field_grouping=post_input.studyFieldGrouping,
-            study_field_name_property=post_input.studyFieldNameProperty,
-            study_field_name_api=post_input.studyFieldNameApi,
+            study_field_name=post_input.study_field_name,
+            study_field_data_type=post_input.study_field_data_type,
+            study_field_null_value_code=post_input.study_field_null_value_code,
+            configured_codelist_uid=post_input.configured_codelist_uid,
+            configured_term_uid=post_input.configured_term_uid,
+            study_field_grouping=post_input.study_field_grouping,
+            study_field_name_api=post_input.study_field_name_api,
+            is_dictionary_term=post_input.is_dictionary_term,
         )
 
     @staticmethod
@@ -251,12 +238,12 @@ class CTConfigService:
             reference_base_model=codelist_config_model,
         )
         return CTConfigValueVO.from_input_values(
-            study_field_name=patch_input.studyFieldName,
-            study_field_data_type=patch_input.studyFieldDataType,
-            study_field_null_value_code=patch_input.studyFieldNullValueCode,
-            configured_codelist_uid=patch_input.configuredCodelistUid,
-            configured_term_uid=patch_input.configuredTermUid,
-            study_field_grouping=patch_input.studyFieldGrouping,
-            study_field_name_property=patch_input.studyFieldNameProperty,
-            study_field_name_api=patch_input.studyFieldNameApi,
+            study_field_name=patch_input.study_field_name,
+            study_field_data_type=patch_input.study_field_data_type,
+            study_field_null_value_code=patch_input.study_field_null_value_code,
+            configured_codelist_uid=patch_input.configured_codelist_uid,
+            configured_term_uid=patch_input.configured_term_uid,
+            study_field_grouping=patch_input.study_field_grouping,
+            study_field_name_api=patch_input.study_field_name_api,
+            is_dictionary_term=patch_input.is_dictionary_term,
         )

@@ -100,7 +100,7 @@ class StudyCompoundDosingRepository:
         author: str,
     ) -> StudyAction:
         audit_node.user_initials = author
-        audit_node.date = datetime.datetime.now()
+        audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
         study_selection_node.has_before.connect(audit_node)

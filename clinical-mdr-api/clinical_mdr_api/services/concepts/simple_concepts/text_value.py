@@ -29,10 +29,10 @@ class TextValueService(SimpleConceptGenericService[TextValueAR]):
             author=self.user_initials,
             simple_concept_vo=self.value_object_class.from_repository_values(
                 name=concept_input.name,
-                name_sentence_case=concept_input.nameSentenceCase,
+                name_sentence_case=concept_input.name_sentence_case,
                 definition=concept_input.definition,
                 abbreviation=concept_input.abbreviation,
-                is_template_parameter=concept_input.templateParameter,
+                is_template_parameter=concept_input.template_parameter,
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,

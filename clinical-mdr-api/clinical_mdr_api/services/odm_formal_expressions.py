@@ -14,13 +14,10 @@ from clinical_mdr_api.models.odm_formal_expression import (
     OdmFormalExpressionPostInput,
     OdmFormalExpressionVersion,
 )
-from clinical_mdr_api.services.concepts.concept_generic_service import (
-    ConceptGenericService,
-    _AggregateRootType,
-)
+from clinical_mdr_api.services.odm_generic_service import OdmGenericService
 
 
-class OdmFormalExpressionService(ConceptGenericService[OdmFormalExpressionAR]):
+class OdmFormalExpressionService(OdmGenericService[OdmFormalExpressionAR]):
     aggregate_class = OdmFormalExpressionAR
     version_class = OdmFormalExpressionVersion
     repository_interface = FormalExpressionRepository
@@ -34,7 +31,7 @@ class OdmFormalExpressionService(ConceptGenericService[OdmFormalExpressionAR]):
 
     def _create_aggregate_root(
         self, concept_input: OdmFormalExpressionPostInput, library
-    ) -> _AggregateRootType:
+    ) -> OdmFormalExpressionAR:
         return OdmFormalExpressionAR.from_input_values(
             author=self.user_initials,
             concept_vo=OdmFormalExpressionVO.from_repository_values(
@@ -52,7 +49,7 @@ class OdmFormalExpressionService(ConceptGenericService[OdmFormalExpressionAR]):
     ) -> OdmFormalExpressionAR:
         item.edit_draft(
             author=self.user_initials,
-            change_description=concept_edit_input.changeDescription,
+            change_description=concept_edit_input.change_description,
             concept_vo=OdmFormalExpressionVO.from_repository_values(
                 context=concept_edit_input.context,
                 expression=concept_edit_input.expression,
@@ -63,7 +60,7 @@ class OdmFormalExpressionService(ConceptGenericService[OdmFormalExpressionAR]):
     def soft_delete(self, uid: str) -> None:
         if not self._repos.odm_formal_expression_repository.exists_by("uid", uid, True):
             raise NotFoundException(
-                f"Odm Formal Expression with uid {uid} does not exist."
+                f"ODM Formal Expression identified by uid ({uid}) does not exist."
             )
 
         if self._repos.odm_formal_expression_repository.has_active_relationships(
@@ -77,7 +74,7 @@ class OdmFormalExpressionService(ConceptGenericService[OdmFormalExpressionAR]):
     def get_active_relationships(self, uid: str):
         if not self._repos.odm_formal_expression_repository.exists_by("uid", uid, True):
             raise NotFoundException(
-                f"Odm Formal Expression with uid {uid} does not exist."
+                f"ODM Formal Expression identified by uid ({uid}) does not exist."
             )
 
         return self._repos.odm_formal_expression_repository.get_active_relationships(

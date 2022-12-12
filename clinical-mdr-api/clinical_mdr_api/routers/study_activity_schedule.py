@@ -13,7 +13,7 @@ from clinical_mdr_api.services.study_activity_schedule import (
 
 
 @router.get(
-    "/{uid}/study-activity-schedules",
+    "/studies/{uid}/study-activity-schedules",
     summary="List all study activity schedules currently defined for the study",
     response_model=Sequence[models.StudyActivitySchedule],
     response_model_exclude_unset=True,
@@ -34,7 +34,7 @@ def get_all_selected_activities(
 
 
 @router.post(
-    "/{uid}/study-activity-schedules",
+    "/studies/{uid}/study-activity-schedules",
     summary="Add a study activity schedule to a study",
     response_model=models.StudyActivitySchedule,
     response_model_exclude_unset=True,
@@ -63,7 +63,7 @@ def post_new_activity_schedule_create(
 
 
 @router.delete(
-    "/{uid}/study-activity-schedules/{studyactivitiescheduleuid}",
+    "/studies/{uid}/study-activity-schedules/{study_activity_schedule_uid}",
     summary="Delete a study activity schedule",
     response_model=None,
     status_code=204,
@@ -78,21 +78,21 @@ def post_new_activity_schedule_create(
 )
 def delete_activity_schedule(
     uid: str = utils.studyUID,
-    studyactivitiescheduleuid: str = utils.studyActivityScheduleUid,
+    study_activity_schedule_uid: str = utils.study_activity_schedule_uid,
     current_user_id: str = Depends(get_current_user_id),
 ):
     service = StudyActivityScheduleService(author=current_user_id)
-    service.delete(study_uid=uid, schedule_uid=studyactivitiescheduleuid)
+    service.delete(study_uid=uid, schedule_uid=study_activity_schedule_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
-    "/{uid}/study-activity-schedules/audit-trail/",
+    "/studies/{uid}/study-activity-schedules/audit-trail/",
     summary="List full audit trail related to definition of all study activity schedules.",
     description="""
 The following values should be returned for all study activities:
-- dateTime
-- userInitials
+- date_time
+- user_initials
 - action
 - activity
 - order
@@ -112,7 +112,7 @@ def get_all_schedules_audit_trail(
 
 
 @router.post(
-    "/{uid}/study-activity-schedules/batch",
+    "/studies/{uid}/study-activity-schedules/batch",
     summary="Batch operations (create, delete) for study activity schedules",
     response_model=Sequence[models.StudyActivityScheduleBatchOutput],
     status_code=200,

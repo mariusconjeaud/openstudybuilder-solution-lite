@@ -12,7 +12,7 @@ from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.domain_repositories.study_selection.study_selection_objective_repository import (
     SelectionHistory,
 )
-from clinical_mdr_api.exceptions import ForbiddenException, NotFoundException
+from clinical_mdr_api.exceptions import NotFoundException
 from clinical_mdr_api.models.study_selection import (
     StudySelectionObjectiveCreateInput,
     StudySelectionObjectiveInput,
@@ -176,27 +176,27 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             )
             objective_repo = repos.objective_repository
             selected_objective: ObjectiveAR = objective_repo.find_by_uid_2(
-                selection_create_input.objectiveUid, status=LibraryItemStatus.FINAL
+                selection_create_input.objective_uid, status=LibraryItemStatus.FINAL
             )
             if selected_objective is None:
                 raise exceptions.BusinessLogicException(
-                    f"There is no approved objective identified by provided uid ({selection_create_input.objectiveUid})"
+                    f"There is no approved objective identified by provided uid ({selection_create_input.objective_uid})"
                 )
 
             # load the order of the Objective level CT term
-            if selection_create_input.objectiveLevelUid is not None:
+            if selection_create_input.objective_level_uid is not None:
                 objective_level_order = (
                     self._repos.ct_term_name_repository.term_specific_order_by_uid(
-                        uid=selection_create_input.objectiveLevelUid
+                        uid=selection_create_input.objective_level_uid
                     )
                 )
             else:
                 objective_level_order = None
             # create new VO to add
             new_selection = StudySelectionObjectiveVO.from_input_values(
-                objective_uid=selection_create_input.objectiveUid,
+                objective_uid=selection_create_input.objective_uid,
                 objective_version=selected_objective.item_metadata.version,
-                objective_level_uid=selection_create_input.objectiveLevelUid,
+                objective_level_uid=selection_create_input.objective_level_uid,
                 objective_level_order=objective_level_order,
                 generate_uid_callback=repos.study_selection_objective_repository.generate_uid,
                 user_initials=self.author,
@@ -272,7 +272,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 # check if name exists
                 objective_service = ObjectiveService()
                 objective_ar = objective_service.create_ar_from_input_values(
-                    selection_create_input.objectiveData,
+                    selection_create_input.objective_data,
                     study_uid=study_uid,
                     include_study_endpoints=True,
                 )
@@ -310,10 +310,10 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                     )
 
                 # get order from the Objective level CT term
-                if selection_create_input.objectiveLevelUid is not None:
+                if selection_create_input.objective_level_uid is not None:
                     objective_level_order = (
                         self._repos.ct_term_name_repository.term_specific_order_by_uid(
-                            uid=selection_create_input.objectiveLevelUid
+                            uid=selection_create_input.objective_level_uid
                         )
                     )
                 else:
@@ -324,7 +324,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                     user_initials=self.author,
                     objective_uid=objective_uid,
                     objective_version=objective_ar.item_metadata.version,
-                    objective_level_uid=selection_create_input.objectiveLevelUid,
+                    objective_level_uid=selection_create_input.objective_level_uid,
                     objective_level_order=objective_level_order,
                     generate_uid_callback=repos.study_selection_objective_repository.generate_uid,
                 )
@@ -366,10 +366,6 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                     ),
                     find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
                 )
-        except ForbiddenException as e:
-            raise e
-        except NotFoundException as e:
-            raise e
         finally:
             repos.close()
 
@@ -383,7 +379,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                 # check if name exists
                 objective_service = ObjectiveService()
                 objective_ar = objective_service.create_ar_from_input_values(
-                    selection_create_input.objectiveData,
+                    selection_create_input.objective_data,
                     generate_uid_callback=(lambda: "preview"),
                     study_uid=study_uid,
                     include_study_endpoints=True,
@@ -401,7 +397,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                     user_initials=self.author,
                     objective_uid=objective_uid,
                     objective_version=objective_ar.item_metadata.version,
-                    objective_level_uid=selection_create_input.objectiveLevelUid,
+                    objective_level_uid=selection_create_input.objective_level_uid,
                     objective_level_order=None,
                     generate_uid_callback=(lambda: "preview"),
                 )
@@ -436,10 +432,6 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                     ),
                     find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
                 )
-        except ForbiddenException as e:
-            raise e
-        except NotFoundException as e:
-            raise e
         finally:
             repos.close()
 
@@ -737,8 +729,8 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
     ) -> StudySelectionObjectiveVO:
         # transform current to input model
         transformed_current = models.StudySelectionObjectiveInput(
-            objectiveUid=current_study_objective.objective_uid,
-            objectiveLevelUid=current_study_objective.objective_level_uid,
+            objective_uid=current_study_objective.objective_uid,
+            objective_level_uid=current_study_objective.objective_level_uid,
         )
 
         # fill the missing from the inputs
@@ -748,20 +740,20 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
         )
 
         # get order from the Objective level CT term
-        if request_study_objective.objectiveLevelUid is not None:
+        if request_study_objective.objective_level_uid is not None:
             objective_level_order = (
                 self._repos.ct_term_name_repository.term_specific_order_by_uid(
-                    uid=request_study_objective.objectiveLevelUid
+                    uid=request_study_objective.objective_level_uid
                 )
             )
         else:
             objective_level_order = None
 
         return StudySelectionObjectiveVO.from_input_values(
-            objective_uid=request_study_objective.objectiveUid,
+            objective_uid=request_study_objective.objective_uid,
             objective_version=current_study_objective.objective_version,
             objective_level_order=objective_level_order,
-            objective_level_uid=request_study_objective.objectiveLevelUid,
+            objective_level_uid=request_study_objective.objective_level_uid,
             study_selection_uid=current_study_objective.study_selection_uid,
             user_initials=self.author,
         )
@@ -804,8 +796,8 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             # if there is a new objective we have to check the state
             objective_repo = self._repos.objective_repository
             if (
-                selection_update_input.objectiveUid
-                and selection_update_input.objectiveUid != current_vo.objective_uid
+                selection_update_input.objective_uid
+                and selection_update_input.objective_uid != current_vo.objective_uid
             ):
                 objective_ar = objective_repo.find_by_uid_2(
                     updated_selection.objective_uid, for_update=True

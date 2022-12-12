@@ -17,13 +17,10 @@ from clinical_mdr_api.models.odm_alias import (
     OdmAliasPostInput,
     OdmAliasVersion,
 )
-from clinical_mdr_api.services.concepts.concept_generic_service import (
-    ConceptGenericService,
-    _AggregateRootType,
-)
+from clinical_mdr_api.services.odm_generic_service import OdmGenericService
 
 
-class OdmAliasService(ConceptGenericService[OdmAliasAR]):
+class OdmAliasService(OdmGenericService[OdmAliasAR]):
     aggregate_class = OdmAliasAR
     version_class = OdmAliasVersion
     repository_interface = AliasRepository
@@ -35,7 +32,7 @@ class OdmAliasService(ConceptGenericService[OdmAliasAR]):
 
     def _create_aggregate_root(
         self, concept_input: OdmAliasPostInput, library
-    ) -> _AggregateRootType:
+    ) -> OdmAliasAR:
         return OdmAliasAR.from_input_values(
             author=self.user_initials,
             concept_vo=OdmAliasVO.from_repository_values(
@@ -52,7 +49,7 @@ class OdmAliasService(ConceptGenericService[OdmAliasAR]):
     ) -> OdmAliasAR:
         item.edit_draft(
             author=self.user_initials,
-            change_description=concept_edit_input.changeDescription,
+            change_description=concept_edit_input.change_description,
             concept_vo=OdmAliasVO.from_repository_values(
                 name=concept_edit_input.name,
                 context=concept_edit_input.context,
@@ -63,7 +60,9 @@ class OdmAliasService(ConceptGenericService[OdmAliasAR]):
 
     def soft_delete(self, uid: str) -> None:
         if not self._repos.odm_alias_repository.exists_by("uid", uid, True):
-            raise NotFoundException(f"Odm Alias with uid {uid} does not exist.")
+            raise NotFoundException(
+                f"ODM Alias identified by uid ({uid}) does not exist."
+            )
 
         if self._repos.odm_alias_repository.has_active_relationships(
             uid,
@@ -89,10 +88,10 @@ class OdmAliasService(ConceptGenericService[OdmAliasAR]):
                     item = self.edit_draft(operation.content.uid, operation.content)
                     response_code = status.HTTP_200_OK
             except exceptions.MDRApiBaseException as error:
-                result["responseCode"] = error.status_code
+                result["response_code"] = error.status_code
                 result["content"] = models.error.BatchErrorResponse(message=str(error))
             else:
-                result["responseCode"] = response_code
+                result["response_code"] = response_code
                 if item:
                     result["content"] = item.dict()
             finally:
@@ -103,7 +102,7 @@ class OdmAliasService(ConceptGenericService[OdmAliasAR]):
     def get_active_relationships(self, uid: str):
         if not self._repos.odm_alias_repository.exists_by("uid", uid, True):
             raise exceptions.NotFoundException(
-                f"Odm Alias with uid {uid} does not exist."
+                f"ODM Alias identified by uid ({uid}) does not exist."
             )
 
         return self._repos.odm_alias_repository.get_active_relationships(

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Callable, Optional, Sequence, Tuple
 
 from clinical_mdr_api.domain.concepts.concept_base import ConceptVO
 from clinical_mdr_api.domain.concepts.odms.odm_ar_base import OdmARBase
@@ -14,6 +14,7 @@ from clinical_mdr_api.exceptions import BusinessLogicException
 
 @dataclass(frozen=True)
 class OdmXmlExtensionAttributeVO(ConceptVO):
+    data_type: str
     xml_extension_uid: Optional[str]
     xml_extension_tag_uid: Optional[str]
 
@@ -21,12 +22,14 @@ class OdmXmlExtensionAttributeVO(ConceptVO):
     def from_repository_values(
         cls,
         name: str,
+        data_type: str,
         xml_extension_uid: Optional[str],
         xml_extension_tag_uid: Optional[str],
     ) -> "OdmXmlExtensionAttributeVO":
 
         return cls(
             name=name,
+            data_type=data_type,
             xml_extension_uid=xml_extension_uid,
             xml_extension_tag_uid=xml_extension_tag_uid,
             name_sentence_case=None,
@@ -37,20 +40,43 @@ class OdmXmlExtensionAttributeVO(ConceptVO):
 
     def validate(
         self,
-        find_odm_xml_extension_callback: Callable[[str], OdmXmlExtensionAR],
-        find_odm_xml_extension_tag_callback: Callable[[str], OdmXmlExtensionTagAR],
+        find_odm_xml_extension_callback: Callable[[str], Optional[OdmXmlExtensionAR]],
+        find_odm_xml_extension_tag_callback: Callable[
+            [str], Optional[OdmXmlExtensionTagAR]
+        ],
+        find_odm_xml_extension_attribute_callback: Callable[
+            [dict], Optional[Tuple[Sequence["OdmXmlExtensionAttributeAR"], int]]
+        ],
     ) -> None:
 
         if self.xml_extension_uid is not None:
             if not find_odm_xml_extension_callback(self.xml_extension_uid):
                 raise BusinessLogicException(
-                    f"OdmXmlExtensionAttribute tried to connect to non existing OdmXmlExtension identified by uid ({self.xml_extension_uid})."
+                    f"ODM XML Extension Attribute tried to connect to non existing ODM XML Extension identified by uid ({self.xml_extension_uid})."
                 )
 
         if self.xml_extension_tag_uid is not None:
             if not find_odm_xml_extension_tag_callback(self.xml_extension_tag_uid):
                 raise BusinessLogicException(
-                    f"OdmXmlExtensionAttribute tried to connect to non existing OdmXmlExtensionTag identified by uid ({self.xml_extension_tag_uid})."
+                    "ODM XML Extension Attribute tried to connect to non existing"
+                    f" ODM XML Extension Tag identified by uid ({self.xml_extension_tag_uid})."
+                )
+
+        odm_xml_extension_attributes, _ = find_odm_xml_extension_attribute_callback(
+            filter_by={"name": {"v": [self.name], "op": "eq"}}
+        )
+        for odm_xml_extension_attribute in odm_xml_extension_attributes:
+            if (
+                self.xml_extension_uid is not None
+                and odm_xml_extension_attribute.concept_vo.xml_extension_uid
+                == self.xml_extension_uid
+            ) or (
+                self.xml_extension_tag_uid is not None
+                and odm_xml_extension_attribute.concept_vo.xml_extension_tag_uid
+                == self.xml_extension_tag_uid
+            ):
+                raise BusinessLogicException(
+                    f"ODM XML Extension Attribute with name ({self.name}) already exists."
                 )
 
 
@@ -90,16 +116,20 @@ class OdmXmlExtensionAttributeAR(OdmARBase):
         generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
         find_odm_xml_extension_callback: Callable[
             [str], Optional[OdmXmlExtensionAR]
-        ] = lambda _: False,
+        ] = lambda _: None,
         find_odm_xml_extension_tag_callback: Callable[
             [str], Optional[OdmXmlExtensionTagAR]
-        ] = lambda _: False,
+        ] = lambda _: None,
+        find_odm_xml_extension_attribute_callback: Callable[
+            [dict], Optional[Tuple[Sequence["OdmXmlExtensionAttributeAR"], int]]
+        ] = lambda _: None,
     ) -> "OdmXmlExtensionAttributeAR":
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
         concept_vo.validate(
             find_odm_xml_extension_callback=find_odm_xml_extension_callback,
             find_odm_xml_extension_tag_callback=find_odm_xml_extension_tag_callback,
+            find_odm_xml_extension_attribute_callback=find_odm_xml_extension_attribute_callback,
         )
 
         return cls(
@@ -114,7 +144,7 @@ class OdmXmlExtensionAttributeAR(OdmARBase):
         author: str,
         change_description: Optional[str],
         concept_vo: OdmXmlExtensionAttributeVO,
-        concept_exists_by_name_callback: Callable[[str], bool] = None,
+        concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
     ) -> None:
         """
         Creates a new draft version for the object.
@@ -129,22 +159,25 @@ class OdmXmlExtensionAttributeAR(OdmARBase):
 class OdmXmlExtensionAttributeRelationVO:
     uid: str
     name: str
+    data_type: str
     value: str
-    odm_xml_extension_uid: str
+    xml_extension_uid: str
 
     @classmethod
     def from_repository_values(
         cls,
         uid: str,
         name: str,
+        data_type: str,
         value: str,
-        odm_xml_extension_uid: str,
+        xml_extension_uid: str,
     ) -> "OdmXmlExtensionAttributeRelationVO":
         return cls(
             uid=uid,
             name=name,
+            data_type=data_type,
             value=value,
-            odm_xml_extension_uid=odm_xml_extension_uid,
+            xml_extension_uid=xml_extension_uid,
         )
 
 
@@ -152,20 +185,23 @@ class OdmXmlExtensionAttributeRelationVO:
 class OdmXmlExtensionAttributeTagRelationVO:
     uid: str
     name: str
+    data_type: str
     value: str
-    odm_xml_extension_tag_uid: str
+    xml_extension_tag_uid: str
 
     @classmethod
     def from_repository_values(
         cls,
         uid: str,
         name: str,
+        data_type: str,
         value: str,
-        odm_xml_extension_tag_uid: str,
+        xml_extension_tag_uid: str,
     ) -> "OdmXmlExtensionAttributeTagRelationVO":
         return cls(
             uid=uid,
             name=name,
+            data_type=data_type,
             value=value,
-            odm_xml_extension_tag_uid=odm_xml_extension_tag_uid,
+            xml_extension_tag_uid=xml_extension_tag_uid,
         )

@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Callable, Optional
 
 from pydantic import Field
-from pydantic.main import BaseModel
 
 from clinical_mdr_api.domain.concepts.simple_concepts.lag_time import LagTimeAR
 from clinical_mdr_api.domain.concepts.simple_concepts.numeric_value import (
@@ -17,15 +16,16 @@ from clinical_mdr_api.domain.concepts.simple_concepts.time_point import TimePoin
 from clinical_mdr_api.domain.controlled_terminology.ct_term_name import CTTermNameAR
 from clinical_mdr_api.domain.unit_definition.unit_definition import UnitDefinitionAR
 from clinical_mdr_api.models.library import Library
+from clinical_mdr_api.models.utils import BaseModel
 
 
 class NoLibraryConceptModelNoName(BaseModel, ABC):
-    startDate: datetime
-    endDate: Optional[datetime]
+    start_date: datetime
+    end_date: Optional[datetime]
     status: str
     version: str
-    userInitials: str
-    changeDescription: str
+    user_initials: str
+    change_description: str
     uid: str
 
 
@@ -38,43 +38,91 @@ class NoLibraryConceptPostInput(BaseModel, ABC):
 
 
 class ConceptModel(NoLibraryConceptModel):
-    libraryName: str
+    library_name: str
 
 
 class ConceptPostInput(NoLibraryConceptPostInput):
-    libraryName: str = "Sponsor"
+    library_name: str = "Sponsor"
 
 
 class ConceptPatchInput(BaseModel, ABC):
-    changeDescription: str
+    change_description: str
     name: Optional[str] = None
 
 
-class Concept(BaseModel):
+class VersionProperties(BaseModel):
+    start_date: Optional[datetime] = Field(
+        None,
+        title="startDate",
+        description="The most recent point in time when the study epoch was edited."
+        "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
+        source="latest_version|start_date",
+    )
+    end_date: Optional[datetime] = Field(
+        None,
+        title="endDate",
+        description="The most recent point in time when the study epoch was edited."
+        "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
+        source="latest_version|end_date",
+    )
+    status: Optional[str] = Field(
+        None,
+        title="status",
+        description="",
+        source="latest_version|status",
+    )
+    version: Optional[str] = Field(
+        None,
+        title="version",
+        description="",
+        source="latest_version|version",
+    )
+    change_description: Optional[str] = Field(
+        None,
+        title="changeDescription",
+        description="",
+        source="latest_version|change_description",
+    )
+    user_initials: Optional[str] = Field(
+        None,
+        title="userInitials",
+        description="",
+        source="latest_version|user_initials",
+    )
+
+
+class Concept(VersionProperties):
+    class Config:
+        orm_mode = True
+
     uid: str
     name: str = Field(
         ...,
         title="name",
         description="The name or the actual value. E.g. 'Systolic Blood Pressure', 'Body Temperature', 'Metformin', ...",
+        source="has_latest_value.name",
     )
-    nameSentenceCase: Optional[str] = Field(
+    name_sentence_case: Optional[str] = Field(
         None,
-        title="nameSentenceCase",
+        title="name_sentence_case",
         description="",
+        source="has_latest_value.name_sentence_case",
     )
     definition: Optional[str] = Field(
-        None,
-        title="definition",
-        description="",
+        None, title="definition", description="", source="has_latest_value.definition"
     )
-    abbreviation: Optional[str] = None
-    libraryName: str
-    startDate: Optional[datetime] = None
-    endDate: Optional[datetime] = None
-    status: Optional[str] = None
-    version: Optional[str] = None
-    changeDescription: Optional[str] = None
-    userInitials: Optional[str] = None
+    abbreviation: Optional[str] = Field(
+        None,
+        title="abbreviation",
+        description="",
+        source="has_latest_value.abbreviation",
+    )
+    library_name: str = Field(
+        None,
+        title="libraryName",
+        description="",
+        source="has_library.name",
+    )
 
 
 class ConceptInput(BaseModel):
@@ -83,9 +131,9 @@ class ConceptInput(BaseModel):
         title="name",
         description="The name or the actual value. E.g. 'Systolic Blood Pressure', 'Body Temperature', 'Metformin', ...",
     )
-    nameSentenceCase: Optional[str] = Field(
+    name_sentence_case: Optional[str] = Field(
         None,
-        title="nameSentenceCase",
+        title="name_sentence_case",
         description="",
     )
     definition: Optional[str] = Field(
@@ -94,15 +142,15 @@ class ConceptInput(BaseModel):
         description="",
     )
     abbreviation: Optional[str] = None
-    libraryName: Optional[str] = None
+    library_name: Optional[str] = None
 
 
 class SimpleConcept(Concept):
-    templateParameter: bool
+    template_parameter: bool
 
 
 class SimpleConceptInput(ConceptInput):
-    templateParameter: Optional[bool] = False
+    template_parameter: Optional[bool] = False
 
 
 class TextValue(SimpleConcept):
@@ -110,18 +158,18 @@ class TextValue(SimpleConcept):
     def from_concept_ar(cls, text_value: TextValueAR) -> "TextValue":
         return cls(
             uid=text_value.uid,
-            libraryName=Library.from_library_vo(text_value.library).name,
+            library_name=Library.from_library_vo(text_value.library).name,
             name=text_value.concept_vo.name,
-            nameSentenceCase=text_value.concept_vo.name_sentence_case,
+            name_sentence_case=text_value.concept_vo.name_sentence_case,
             definition=text_value.concept_vo.definition,
             abbreviation=text_value.concept_vo.abbreviation,
-            templateParameter=text_value.concept_vo.is_template_parameter,
+            template_parameter=text_value.concept_vo.is_template_parameter,
         )
 
 
 class TextValueInput(SimpleConceptInput):
     name: str
-    nameSentenceCase: Optional[str] = None
+    name_sentence_case: Optional[str] = None
 
 
 class VisitName(TextValue):
@@ -140,13 +188,13 @@ class NumericValue(SimpleConcept):
     def from_concept_ar(cls, numeric_value: NumericValueAR) -> "NumericValue":
         return cls(
             uid=numeric_value.uid,
-            libraryName=Library.from_library_vo(numeric_value.library).name,
+            library_name=Library.from_library_vo(numeric_value.library).name,
             name=numeric_value.concept_vo.name,
             value=numeric_value.concept_vo.value,
-            nameSentenceCase=numeric_value.concept_vo.name_sentence_case,
+            name_sentence_case=numeric_value.concept_vo.name_sentence_case,
             definition=numeric_value.concept_vo.definition,
             abbreviation=numeric_value.concept_vo.abbreviation,
-            templateParameter=numeric_value.concept_vo.is_template_parameter,
+            template_parameter=numeric_value.concept_vo.is_template_parameter,
         )
 
 
@@ -155,7 +203,7 @@ class NumericValueInput(SimpleConceptInput):
 
 
 class NumericValueWithUnit(NumericValue):
-    unitDefinitionUid: str
+    unit_definition_uid: str
 
     @classmethod
     def from_concept_ar(
@@ -163,26 +211,26 @@ class NumericValueWithUnit(NumericValue):
     ) -> "NumericValueWithUnit":
         return cls(
             uid=numeric_value.uid,
-            libraryName=Library.from_library_vo(numeric_value.library).name,
+            library_name=Library.from_library_vo(numeric_value.library).name,
             name=numeric_value.concept_vo.name,
             value=numeric_value.concept_vo.value,
-            nameSentenceCase=numeric_value.concept_vo.name_sentence_case,
+            name_sentence_case=numeric_value.concept_vo.name_sentence_case,
             definition=numeric_value.concept_vo.definition,
             abbreviation=numeric_value.concept_vo.abbreviation,
-            templateParameter=numeric_value.concept_vo.is_template_parameter,
-            unitDefinitionUid=numeric_value.concept_vo.unit_definition_uid,
+            template_parameter=numeric_value.concept_vo.is_template_parameter,
+            unit_definition_uid=numeric_value.concept_vo.unit_definition_uid,
         )
 
 
 class NumericValueWithUnitInput(NumericValueInput):
-    unitDefinitionUid: str
+    unit_definition_uid: str
 
 
 class SimpleNumericValueWithUnit(BaseModel):
     uid: str
     value: float
-    unitDefinitionUid: str
-    unitLabel: str
+    unit_definition_uid: str
+    unit_label: str
 
     @classmethod
     def from_concept_uid(
@@ -202,43 +250,43 @@ class SimpleNumericValueWithUnit(BaseModel):
 
                 concept = cls(
                     uid=val.uid,
-                    unitDefinitionUid=val.concept_vo.unit_definition_uid,
+                    unit_definition_uid=val.concept_vo.unit_definition_uid,
                     value=val.concept_vo.value,
-                    unitLabel=unit.concept_vo.name,
+                    unit_label=unit.concept_vo.name,
                 )
 
         return concept
 
 
 class LagTime(NumericValueWithUnit):
-    sdtmDomainUid: str
+    sdtm_domain_uid: str
 
     @classmethod
     def from_concept_ar(cls, numeric_value: LagTimeAR) -> "LagTime":
         return cls(
             uid=numeric_value.uid,
-            libraryName=Library.from_library_vo(numeric_value.library).name,
+            library_name=Library.from_library_vo(numeric_value.library).name,
             name=numeric_value.concept_vo.name,
             value=numeric_value.concept_vo.value,
-            nameSentenceCase=numeric_value.concept_vo.name_sentence_case,
+            name_sentence_case=numeric_value.concept_vo.name_sentence_case,
             definition=numeric_value.concept_vo.definition,
             abbreviation=numeric_value.concept_vo.abbreviation,
-            templateParameter=numeric_value.concept_vo.is_template_parameter,
-            unitDefinitionUid=numeric_value.concept_vo.unit_definition_uid,
-            sdtmDomainUid=numeric_value.concept_vo.sdtm_domain_uid,
+            template_parameter=numeric_value.concept_vo.is_template_parameter,
+            unit_definition_uid=numeric_value.concept_vo.unit_definition_uid,
+            sdtm_domain_uid=numeric_value.concept_vo.sdtm_domain_uid,
         )
 
 
 class LagTimeInput(NumericValueWithUnitInput):
-    sdtmDomainUid: str
+    sdtm_domain_uid: str
 
 
 class SimpleLagTime(BaseModel):
     value: float
-    unitDefinitionUid: str
-    unitLabel: str
-    sdtmDomainUid: str
-    sdtmDomainLabel: str
+    unit_definition_uid: str
+    unit_label: str
+    sdtm_domain_uid: str
+    sdtm_domain_label: str
 
     @classmethod
     def from_concept_uid(
@@ -263,42 +311,42 @@ class SimpleLagTime(BaseModel):
 
                 concept = cls(
                     value=val.concept_vo.value,
-                    unitDefinitionUid=val.concept_vo.unit_definition_uid,
-                    unitLabel=unit.concept_vo.name,
-                    sdtmDomainUid=val.concept_vo.sdtm_domain_uid,
-                    sdtmDomainLabel=sdtm_domain.ct_term_vo.name,
+                    unit_definition_uid=val.concept_vo.unit_definition_uid,
+                    unit_label=unit.concept_vo.name,
+                    sdtm_domain_uid=val.concept_vo.sdtm_domain_uid,
+                    sdtm_domain_label=sdtm_domain.ct_term_vo.name,
                 )
 
         return concept
 
 
 class TimePoint(SimpleConcept):
-    numericValueUid: str
-    unitDefinitionUid: str
-    timeReferenceUid: str
+    numeric_value_uid: str
+    unit_definition_uid: str
+    time_reference_uid: str
 
     @classmethod
     def from_concept_ar(cls, time_point: TimePointAR) -> "TimePoint":
         return cls(
             uid=time_point.uid,
-            libraryName=Library.from_library_vo(time_point.library).name,
+            library_name=Library.from_library_vo(time_point.library).name,
             name=time_point.concept_vo.name,
-            nameSentenceCase=time_point.concept_vo.name_sentence_case,
+            name_sentence_case=time_point.concept_vo.name_sentence_case,
             definition=time_point.concept_vo.definition,
             abbreviation=time_point.concept_vo.abbreviation,
-            templateParameter=time_point.concept_vo.is_template_parameter,
-            numericValueUid=time_point.concept_vo.numeric_value_uid,
-            unitDefinitionUid=time_point.concept_vo.unit_definition_uid,
-            timeReferenceUid=time_point.concept_vo.time_reference_uid,
+            template_parameter=time_point.concept_vo.is_template_parameter,
+            numeric_value_uid=time_point.concept_vo.numeric_value_uid,
+            unit_definition_uid=time_point.concept_vo.unit_definition_uid,
+            time_reference_uid=time_point.concept_vo.time_reference_uid,
         )
 
 
 class TimePointInput(SimpleConceptInput):
-    nameSentenceCase: Optional[str] = Field(
+    name_sentence_case: Optional[str] = Field(
         None,
-        title="nameSentenceCase",
+        title="name_sentence_case",
         description="",
     )
-    numericValueUid: str
-    unitDefinitionUid: str
-    timeReferenceUid: str
+    numeric_value_uid: str
+    unit_definition_uid: str
+    time_reference_uid: str

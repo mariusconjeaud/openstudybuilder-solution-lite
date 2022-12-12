@@ -63,13 +63,13 @@ class StudyActivityScheduleService(StudySelectionMixin):
     ) -> StudyActivityScheduleVO:
         return StudyActivityScheduleVO(
             study_uid=study_uid,
-            study_activity_uid=schedule_input.studyActivityUid,
+            study_activity_uid=schedule_input.study_activity_uid,
             study_activity_name=None,
-            study_visit_uid=schedule_input.studyVisitUid,
+            study_visit_uid=schedule_input.study_visit_uid,
             study_visit_name=None,
             note=schedule_input.note,
             user_initials=self.author,
-            start_date=datetime.datetime.now(),
+            start_date=datetime.datetime.now(datetime.timezone.utc),
         )
 
     @db.transaction
@@ -97,10 +97,10 @@ class StudyActivityScheduleService(StudySelectionMixin):
         for history in study_selection_history:
             result.append(
                 models.StudyActivityScheduleHistory(
-                    studyUid=study_uid,
-                    studyActivityScheduleUid=history.study_selection_uid,
-                    studyActivityUid=history.study_activity_uid,
-                    studyVisitUid=history.study_visit_uid,
+                    study_uid=study_uid,
+                    study_activity_schedule_uid=history.study_selection_uid,
+                    study_activity_uid=history.study_activity_uid,
+                    study_visit_uid=history.study_visit_uid,
                     note=history.note,
                     modified=history.start_date,
                 )
@@ -166,10 +166,10 @@ class StudyActivityScheduleService(StudySelectionMixin):
                     self.delete(study_uid, operation.content.uid)
                     response_code = status.HTTP_204_NO_CONTENT
             except exceptions.MDRApiBaseException as error:
-                result["responseCode"] = error.status_code
+                result["response_code"] = error.status_code
                 result["content"] = models.error.BatchErrorResponse(error)
             else:
-                result["responseCode"] = response_code
+                result["response_code"] = response_code
                 if item:
                     result["content"] = item.dict()
             finally:

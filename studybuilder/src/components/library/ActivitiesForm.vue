@@ -18,7 +18,7 @@
             <v-autocomplete
               :label="$t('ActivityForms.activity_subgroup')"
               :items="subGroups"
-              v-model="form.activitySubGroup"
+              v-model="form.activity_subgroup"
               item-text="name"
               item-value="uid"
               :error-messages="errors"
@@ -70,7 +70,7 @@
           <v-col>
             <label class="v-label">{{ $t('ActivityForms.reason_for_change') }}</label>
             <v-textarea
-              v-model="form.changeDescription"
+              v-model="form.change_description"
               :error-messages="errors"
               dense
               clearable
@@ -123,14 +123,14 @@ export default {
     initForm (value) {
       this.form = {
         name: value.name,
-        nameSentenceCase: '',
+        name_sentence_case: '',
         definition: value.definition,
-        changeDescription: value.changeDescription,
-        libraryName: value.libraryName
+        change_description: value.change_description,
+        library_name: value.library_name
       }
       if (!_isEmpty(value)) {
-        this.form.nameSentenceCase = value.name.charAt(0).toUpperCase() + value.name.slice(1)
-        this.form.activitySubGroup = value.activitySubGroup
+        this.form.name_sentence_case = value.name.charAt(0).toUpperCase() + value.name.slice(1)
+        this.form.activity_subgroup = value.activity_subgroup
       }
       this.$store.commit('form/SET_FORM', this.form)
     },
@@ -155,8 +155,8 @@ export default {
       this.$refs.observer.reset()
     },
     async submit () {
-      this.form.libraryName = 'Sponsor' // Hardcoded for now at the Sinna and Mikkel request
-      this.form.nameSentenceCase = this.form.name.charAt(0).toUpperCase() + this.form.name.slice(1)
+      this.form.library_name = 'Sponsor' // Hardcoded for now at the Sinna and Mikkel request
+      this.form.name_sentence_case = this.form.name.charAt(0).toUpperCase() + this.form.name.slice(1)
       if (!this.editedActivity) {
         activities.create(this.form, 'activities').then(resp => {
           bus.$emit('notification', { msg: this.$t('ActivityForms.activity_created') })
@@ -170,7 +170,7 @@ export default {
       }
     },
     getSubGroups () {
-      activities.get({}, 'activity-sub-groups').then(resp => {
+      activities.get({ page_size: 0 }, 'activity-sub-groups').then(resp => {
         this.subGroups = resp.data.items
       })
     }

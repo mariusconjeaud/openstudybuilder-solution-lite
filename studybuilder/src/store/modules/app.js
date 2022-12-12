@@ -294,6 +294,11 @@ const state = {
               studyRequired: true
             },
             {
+              title: i18n.t('Sidebar.study.registry_ids'),
+              url: { name: 'StudyRegistryIdentifiers' },
+              studyRequired: true
+            },
+            {
               title: i18n.t('Sidebar.study.study_properties'),
               url: { name: 'StudyProperties' },
               studyRequired: true
@@ -301,11 +306,6 @@ const state = {
             {
               title: i18n.t('Sidebar.study.study_structure'),
               url: { name: 'StudyStructure' },
-              studyRequired: true
-            },
-            {
-              title: i18n.t('Sidebar.study.registry_ids'),
-              url: { name: 'StudyRegistryIdentifiers' },
               studyRequired: true
             },
             {
@@ -359,8 +359,8 @@ const state = {
               url: { name: 'CrfSpecifications' }
             },
             {
-              title: i18n.t('Sidebar.study.pharma_cm_spec'),
-              url: { name: 'PharmaCmSpecifications' }
+              title: i18n.t('Sidebar.study.study_disclosure'),
+              url: { name: 'StudyDisclosure' }
             },
             {
               title: i18n.t('Sidebar.study.trial_supplies_spec'),

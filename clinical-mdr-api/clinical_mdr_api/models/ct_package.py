@@ -5,7 +5,7 @@ from pydantic import Field
 
 from clinical_mdr_api.domain.controlled_terminology.ct_package import CTPackageAR
 from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
-from clinical_mdr_api.models.utils import BaseModel
+from clinical_mdr_api.models.utils import BaseModel, snake_case_data
 
 
 class CTPackage(BaseModel):
@@ -13,16 +13,16 @@ class CTPackage(BaseModel):
     def from_ct_package_ar(cls, ct_package_ar: CTPackageAR) -> "CTPackage":
         return cls(
             uid=ct_package_ar.uid,
-            catalogueName=ct_package_ar.catalogue_name,
+            catalogue_name=ct_package_ar.catalogue_name,
             name=ct_package_ar.name,
             label=ct_package_ar.label,
             description=ct_package_ar.description,
             href=ct_package_ar.href,
-            registrationStatus=ct_package_ar.registration_status,
+            registration_status=ct_package_ar.registration_status,
             source=ct_package_ar.source,
-            importDate=ct_package_ar.import_date,
-            effectiveDate=ct_package_ar.effective_date,
-            userInitials=ct_package_ar.user_initials,
+            import_date=ct_package_ar.import_date,
+            effective_date=ct_package_ar.effective_date,
+            user_initials=ct_package_ar.user_initials,
         )
 
     uid: str = Field(
@@ -31,9 +31,9 @@ class CTPackage(BaseModel):
         description="",
     )
 
-    catalogueName: str = Field(
+    catalogue_name: str = Field(
         ...,
-        title="catalogueName",
+        title="catalogue_name",
         description="",
     )
     name: str = Field(
@@ -56,9 +56,9 @@ class CTPackage(BaseModel):
         title="href",
         description="",
     )
-    registrationStatus: Optional[str] = Field(
+    registration_status: Optional[str] = Field(
         None,
-        title="registrationStatus",
+        title="registration_status",
         description="",
     )
     source: Optional[str] = Field(
@@ -66,19 +66,19 @@ class CTPackage(BaseModel):
         title="source",
         description="",
     )
-    importDate: datetime = Field(
+    import_date: datetime = Field(
         ...,
-        title="importDate",
+        title="import_date",
         description="",
     )
-    effectiveDate: date = Field(
+    effective_date: date = Field(
         ...,
-        title="effectiveDate",
+        title="effective_date",
         description="",
     )
-    userInitials: str = Field(
+    user_initials: str = Field(
         ...,
-        title="userInitials",
+        title="user_initials",
         description="",
     )
 
@@ -93,7 +93,7 @@ class CodelistChangeItem(BaseModel):
     def from_repository_output(cls, query_output) -> "CodelistChangeItem":
         return cls(
             uid=query_output["uid"],
-            value_node=query_output["value_node"],
+            value_node=snake_case_data(query_output["value_node"]),
             change_date=convert_to_datetime(value=query_output["change_date"]),
             is_change_of_codelist=query_output.get("is_change_of_codelist", True),
         )
@@ -109,51 +109,51 @@ class TermChangeItem(BaseModel):
     def from_repository_output(cls, query_output) -> "TermChangeItem":
         return cls(
             uid=query_output["uid"],
-            value_node=query_output["value_node"],
+            value_node=snake_case_data(query_output["value_node"]),
             change_date=convert_to_datetime(value=query_output["change_date"]),
             codelists=query_output["codelists"],
         )
 
 
 class CTPackageChanges(BaseModel):
-    fromPackage: str
-    toPackage: str
-    newCodelists: Sequence[CodelistChangeItem]
-    deletedCodelists: Sequence[CodelistChangeItem]
-    updatedCodelists: Sequence[CodelistChangeItem]
+    from_package: str
+    to_package: str
+    new_codelists: Sequence[CodelistChangeItem]
+    deleted_codelists: Sequence[CodelistChangeItem]
+    updated_codelists: Sequence[CodelistChangeItem]
 
-    newTerms: Sequence[TermChangeItem]
-    deletedTerms: Sequence[TermChangeItem]
-    updatedTerms: Sequence[TermChangeItem]
+    new_terms: Sequence[TermChangeItem]
+    deleted_terms: Sequence[TermChangeItem]
+    updated_terms: Sequence[TermChangeItem]
 
     @classmethod
     def from_repository_output(
         cls, old_package_name: str, new_package_name: str, query_output
     ) -> "CTPackageChanges":
         return cls(
-            fromPackage=old_package_name,
-            toPackage=new_package_name,
-            newCodelists=[
+            from_package=old_package_name,
+            to_package=new_package_name,
+            new_codelists=[
                 CodelistChangeItem.from_repository_output(item)
                 for item in query_output["new_codelists"]
             ],
-            updatedCodelists=[
+            updated_codelists=[
                 CodelistChangeItem.from_repository_output(item)
                 for item in query_output["updated_codelists"]
             ],
-            deletedCodelists=[
+            deleted_codelists=[
                 CodelistChangeItem.from_repository_output(item)
                 for item in query_output["deleted_codelists"]
             ],
-            newTerms=[
+            new_terms=[
                 TermChangeItem.from_repository_output(item)
                 for item in query_output["new_terms"]
             ],
-            updatedTerms=[
+            updated_terms=[
                 TermChangeItem.from_repository_output(item)
                 for item in query_output["updated_terms"]
             ],
-            deletedTerms=[
+            deleted_terms=[
                 TermChangeItem.from_repository_output(item)
                 for item in query_output["deleted_terms"]
             ],
@@ -161,40 +161,40 @@ class CTPackageChanges(BaseModel):
 
 
 class CTPackageChangesSpecificCodelist(CTPackageChanges):
-    notModifiedTerms: Sequence[TermChangeItem]
+    not_modified_terms: Sequence[TermChangeItem]
 
     @classmethod
     def from_repository_output(
         cls, old_package_name: str, new_package_name: str, query_output
     ) -> "CTPackageChangesSpecificCodelist":
         return cls(
-            fromPackage=old_package_name,
-            toPackage=new_package_name,
-            newCodelists=[
+            from_package=old_package_name,
+            to_package=new_package_name,
+            new_codelists=[
                 CodelistChangeItem.from_repository_output(item)
                 for item in query_output["new_codelists"]
             ],
-            updatedCodelists=[
+            updated_codelists=[
                 CodelistChangeItem.from_repository_output(item)
                 for item in query_output["updated_codelists"]
             ],
-            deletedCodelists=[
+            deleted_codelists=[
                 CodelistChangeItem.from_repository_output(item)
                 for item in query_output["deleted_codelists"]
             ],
-            newTerms=[
+            new_terms=[
                 TermChangeItem.from_repository_output(item)
                 for item in query_output["new_terms"]
             ],
-            updatedTerms=[
+            updated_terms=[
                 TermChangeItem.from_repository_output(item)
                 for item in query_output["updated_terms"]
             ],
-            deletedTerms=[
+            deleted_terms=[
                 TermChangeItem.from_repository_output(item)
                 for item in query_output["deleted_terms"]
             ],
-            notModifiedTerms=[
+            not_modified_terms=[
                 TermChangeItem.from_repository_output(item)
                 for item in query_output["not_modified_terms"]
             ],
@@ -207,11 +207,13 @@ class CTPackageDates(BaseModel):
         cls, catalogue_name: str, effective_dates: Sequence[date]
     ) -> "CTPackageDates":
 
-        return cls(catalogueName=catalogue_name, effectiveDates=effective_dates)
+        return cls(catalogue_name=catalogue_name, effective_dates=effective_dates)
 
-    catalogueName: str = Field(
+    catalogue_name: str = Field(
         ...,
-        title="catalogueName",
+        title="catalogue_name",
         description="",
     )
-    effectiveDates: Sequence[date] = Field(..., title="effectiveDates", description="")
+    effective_dates: Sequence[date] = Field(
+        ..., title="effective_dates", description=""
+    )

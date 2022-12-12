@@ -116,33 +116,33 @@ class StudyEpochService:
 
         return StudyEpoch(
             uid=epoch.uid,
-            studyUid=epoch.study_uid,
+            study_uid=epoch.study_uid,
             order=epoch.order,
             description=epoch.description,
-            startRule=epoch.start_rule,
-            endRule=epoch.end_rule,
+            start_rule=epoch.start_rule,
+            end_rule=epoch.end_rule,
             duration=epoch.calculated_duration
             if epoch.subtype.value != settings.BASIC_EPOCH_NAME
             else None,
-            durationUnit=epoch.duration_unit,
+            duration_unit=epoch.duration_unit,
             epoch=epoch.epoch.name,
-            epochName=epoch.epoch.value,
-            epochSubType=epoch.subtype.name,
-            epochSubTypeName=epoch.subtype.value,
-            epochType=epoch.epoch_type.name,
+            epoch_name=epoch.epoch.value,
+            epoch_subtype=epoch.subtype.name,
+            epoch_subtype_name=epoch.subtype.value,
+            epoch_type=epoch.epoch_type.name,
             status=epoch.status.value,
-            startDay=epoch.get_start_day()
+            start_day=epoch.get_start_day()
             if epoch.subtype.value != settings.BASIC_EPOCH_NAME
             else None,
-            endDay=epoch.get_end_day()
+            end_day=epoch.get_end_day()
             if epoch.subtype.value != settings.BASIC_EPOCH_NAME
             else None,
-            startDate=epoch.start_date.strftime(settings.TIME_FORMAT),
-            userInitials=epoch.author,
-            possibleActions=epoch.possible_actions,
-            changeDescription=epoch.change_description,
-            colorHash=epoch.color_hash,
-            studyVisitCount=study_visit_count,
+            start_date=epoch.start_date.strftime(settings.DATE_TIME_FORMAT),
+            user_initials=epoch.author,
+            possible_actions=epoch.possible_actions,
+            change_description=epoch.change_description,
+            color_hash=epoch.color_hash,
+            study_visit_count=study_visit_count,
         )
 
     def _instantiate_epoch_items(
@@ -151,12 +151,12 @@ class StudyEpochService:
         study_epoch_create_input: StudyEpochCreateInput,
         preview: bool,
     ):
-        subtype = StudyEpochSubType[study_epoch_create_input.epochSubType]
+        subtype = StudyEpochSubType[study_epoch_create_input.epoch_subtype]
         epoch_type = self._get_epoch_type_object(subtype=subtype.name)
         all_epochs_in_study = self.repo.find_all_epochs_by_study(study_uid)
         epochs_in_subtype = self._get_list_of_epochs_in_subtype(
             all_epochs=all_epochs_in_study,
-            epoch_sub_type=study_epoch_create_input.epochSubType,
+            epoch_subtype=study_epoch_create_input.epoch_subtype,
         )
         # if epoch was previously calculated in preview call then we can just take it from the study_epoch_create_input
         # but we need to synchronize the orders because we don't synchronize them in a preview call
@@ -236,15 +236,15 @@ class StudyEpochService:
             repos.close()
 
     def _validate_creation(self, epoch_input: StudyEpochCreateInput):
-        if epoch_input.epochSubType not in [i.name for i in StudyEpochSubType]:
+        if epoch_input.epoch_subtype not in [i.name for i in StudyEpochSubType]:
             raise ValueError("Invalid value for study epoch sub type")
-        epoch_subtype_name = StudyEpochSubType[epoch_input.epochSubType].value
+        epoch_subtype_name = StudyEpochSubType[epoch_input.epoch_subtype].value
         if epoch_subtype_name == settings.BASIC_EPOCH_NAME:
-            if self.repo.get_basic_epoch(study_uid=epoch_input.studyUid):
+            if self.repo.get_basic_epoch(study_uid=epoch_input.study_uid):
                 raise ValueError("There can exist only one Supplemental Study Epoch.")
 
     def _validate_update(self, epoch_input: StudyEpochCreateInput):
-        if epoch_input.epochSubType is not None and epoch_input.epochSubType not in [
+        if epoch_input.epoch_subtype is not None and epoch_input.epoch_subtype not in [
             i.name for i in StudyEpochSubType
         ]:
             raise ValueError("Invalid value for study epoch sub type")
@@ -310,15 +310,15 @@ class StudyEpochService:
                 epoch = StudyEpochEpoch[epoch_uid]
             # the epoch ct term was not found and we have to create sponsor defined ct term
             else:
-                epoch_sub_type_term = (
+                epoch_subtype_term = (
                     self._repos.ct_term_attributes_repository.find_by_uid(
                         term_uid=subtype.name
                     )
                 )
-                if epoch_sub_type_term.ct_term_vo.name_submission_value is None:
+                if epoch_subtype_term.ct_term_vo.name_submission_value is None:
                     name_subm_value = None
                 else:
-                    name_subm_value = f"{epoch_sub_type_term.ct_term_vo.name_submission_value} {str(epoch_order)}"
+                    name_subm_value = f"{epoch_subtype_term.ct_term_vo.name_submission_value} {str(epoch_order)}"
                 lib = self._repos.library_repository.find_by_name(name="Sponsor")
                 library = LibraryVO.from_input_values_2(
                     library_name=lib.library_name,
@@ -328,11 +328,11 @@ class StudyEpochService:
                     author=self.author,
                     ct_term_attributes_vo=CTTermAttributesVO.from_input_values(
                         codelist_uid=STUDY_EPOCH_EPOCH_UID,
-                        catalogue_name=epoch_sub_type_term.ct_term_vo.catalogue_name,
-                        code_submission_value=f"{epoch_sub_type_term.ct_term_vo.code_submission_value} {str(epoch_order)}",
+                        catalogue_name=epoch_subtype_term.ct_term_vo.catalogue_name,
+                        code_submission_value=f"{epoch_subtype_term.ct_term_vo.code_submission_value} {str(epoch_order)}",
                         name_submission_value=name_subm_value,
-                        preferred_term=epoch_sub_type_term.ct_term_vo.preferred_term,
-                        definition=epoch_sub_type_term.ct_term_vo.definition,
+                        preferred_term=epoch_subtype_term.ct_term_vo.preferred_term,
+                        definition=epoch_subtype_term.ct_term_vo.definition,
                         codelist_exists_callback=self._repos.ct_codelist_attribute_repository.codelist_exists,
                         catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
                         term_exists_by_name_callback=self._repos.ct_term_attributes_repository.term_specific_exists_by_name,
@@ -363,7 +363,7 @@ class StudyEpochService:
                 # connecting the created epoch to the corresponding epoch sub type
                 self._repos.ct_term_attributes_repository.add_parent(
                     term_uid=ct_term_attributes_ar.uid,
-                    parent_uid=epoch_sub_type_term.uid,
+                    parent_uid=epoch_subtype_term.uid,
                     relationship_type=TermParentType.PARENT_SUB_TYPE,
                 )
                 # adding newly created sponsor defined epoch term
@@ -425,17 +425,17 @@ class StudyEpochService:
 
         return StudyEpochVO(
             study_uid=study_uid,
-            start_rule=study_epoch_create_input.startRule,
-            end_rule=study_epoch_create_input.endRule,
+            start_rule=study_epoch_create_input.start_rule,
+            end_rule=study_epoch_create_input.end_rule,
             description=study_epoch_create_input.description,
             epoch=epoch,
             subtype=subtype,
             epoch_type=epoch_type,
             order=study_epoch_create_input.order,
-            start_date=datetime.datetime.now(),
+            start_date=datetime.datetime.now(datetime.timezone.utc),
             status=StudyStatus.DRAFT,
             author=self.author,
-            color_hash=study_epoch_create_input.colorHash,
+            color_hash=study_epoch_create_input.color_hash,
         )
 
     def _edit_study_epoch_vo(
@@ -449,15 +449,15 @@ class StudyEpochService:
 
         # if the epoch subtype wasn't changed in the PATCH payload then we don't have to derive all epoch objects
         # and we can take the epoch, epoch subtype and epoch type from the value object that is being patched
-        if study_epoch_to_edit.subtype.name != study_epoch_edit_input.epochSubType:
+        if study_epoch_to_edit.subtype.name != study_epoch_edit_input.epoch_subtype:
             all_epochs_in_study = self.repo.find_all_epochs_by_study(
                 study_epoch_to_edit.study_uid
             )
             epochs_in_subtype = self._get_list_of_epochs_in_subtype(
                 all_epochs=all_epochs_in_study,
-                epoch_sub_type=study_epoch_edit_input.epochSubType,
+                epoch_subtype=study_epoch_edit_input.epoch_subtype,
             )
-            subtype = StudyEpochSubType[study_epoch_edit_input.epochSubType]
+            subtype = StudyEpochSubType[study_epoch_edit_input.epoch_subtype]
             epoch_type = self._get_epoch_type_object(subtype=subtype.name)
             if study_epoch_edit_input.epoch is not None:
                 epoch = StudyEpochEpoch[study_epoch_edit_input.epoch]
@@ -471,7 +471,7 @@ class StudyEpochService:
             )
             epochs_in_previous_subtype = self._get_list_of_epochs_in_subtype(
                 all_epochs=all_epochs_in_study,
-                epoch_sub_type=study_epoch_to_edit.subtype.name,
+                epoch_subtype=study_epoch_to_edit.subtype.name,
             )
             # if epoch subtype was modified we have to synchronize the new epoch subtype group
             self._synchronize_epoch_orders(
@@ -480,15 +480,15 @@ class StudyEpochService:
             )
 
         study_epoch_to_edit.edit_core_properties(
-            start_rule=study_epoch_edit_input.startRule,
-            end_rule=study_epoch_edit_input.endRule,
+            start_rule=study_epoch_edit_input.start_rule,
+            end_rule=study_epoch_edit_input.end_rule,
             description=study_epoch_edit_input.description,
             epoch=epoch if epoch else study_epoch_to_edit.epoch,
             subtype=subtype if subtype else study_epoch_to_edit.subtype,
             epoch_type=epoch_type if epoch_type else study_epoch_to_edit.epoch_type,
             order=study_epoch_edit_input.order,
-            change_description=study_epoch_edit_input.changeDescription,
-            color_hash=study_epoch_edit_input.colorHash,
+            change_description=study_epoch_edit_input.change_description,
+            color_hash=study_epoch_edit_input.color_hash,
         )
 
     def _synchronize_epoch_orders(
@@ -535,15 +535,15 @@ class StudyEpochService:
                 self.repo.save(epoch)
 
     def _get_list_of_epochs_in_subtype(
-        self, all_epochs: Sequence[StudyEpochVO], epoch_sub_type: str
+        self, all_epochs: Sequence[StudyEpochVO], epoch_subtype: str
     ) -> Sequence[StudyEpochVO]:
         """
         Returns the list of all epochs within specific epoch sub type.
         :param all_epochs:
-        :param epoch_sub_type:
+        :param epoch_subtype:
         :return:
         """
-        return [epoch for epoch in all_epochs if epoch_sub_type == epoch.subtype.name]
+        return [epoch for epoch in all_epochs if epoch_subtype == epoch.subtype.name]
 
     def _get_order_of_epoch_in_subtype(
         self, study_epoch_uid: str, all_epochs: Sequence[StudyEpochVO]
@@ -667,7 +667,7 @@ class StudyEpochService:
         self.repo.save(epoch)
         study_epochs = self.repo.find_all_epochs_by_study(epoch.study_uid)
         epochs_in_subtype = self._get_list_of_epochs_in_subtype(
-            all_epochs=study_epochs, epoch_sub_type=epoch.subtype.name
+            all_epochs=study_epochs, epoch_subtype=epoch.subtype.name
         )
         if len(epochs_in_subtype) > 1:
             # After reordering we need to synchronize the epochs in a given epoch subtype
@@ -734,7 +734,7 @@ class StudyEpochService:
         self.repo.save(study_epoch)
         all_epochs_in_study = self.repo.find_all_epochs_by_study(study_uid)
         epochs_in_subtype = self._get_list_of_epochs_in_subtype(
-            all_epochs=all_epochs_in_study, epoch_sub_type=study_epoch.subtype.name
+            all_epochs=all_epochs_in_study, epoch_subtype=study_epoch.subtype.name
         )
         # After deletion we need to synchronize the epochs in a given epoch subtype
         self._synchronize_epoch_orders(

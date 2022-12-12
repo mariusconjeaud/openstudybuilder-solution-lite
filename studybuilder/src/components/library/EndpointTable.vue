@@ -6,9 +6,8 @@
     export-object-label="Endpoints"
     export-data-url="/endpoints"
     item-key="uid"
-    sort-by="startDate"
+    sort-by="start_date"
     sort-desc
-    has-history
     has-api
     @filter="fetchEndpoints"
     column-data-resource="endpoints"
@@ -34,8 +33,8 @@
     <template v-slot:item.endpointTemplate.name="{ item }">
       <n-n-parameter-highlighter :name="item.endpointTemplate.name" default-color="orange" />
     </template>
-    <template v-slot:item.startDate="{ item }">
-      {{ item.startDate | date }}
+    <template v-slot:item.start_date="{ item }">
+      {{ item.start_date | date }}
     </template>
     <template v-slot:item.status="{ item }">
       <status-chip :status="item.status" />
@@ -89,35 +88,35 @@ export default {
           label: this.$t('_global.approve'),
           icon: 'mdi-check-decagram',
           iconColor: 'success',
-          condition: (item) => item.possibleActions.find(action => action === 'approve'),
+          condition: (item) => item.possible_actions.find(action => action === 'approve'),
           click: this.approveEndpoint
         },
         {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'edit'),
+          condition: (item) => item.possible_actions.find(action => action === 'edit'),
           click: this.editEndpoint
         },
         {
           label: this.$t('_global.inactivate'),
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'inactivate'),
+          condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
           click: this.inactivateEndpoint
         },
         {
           label: this.$t('_global.reactivate'),
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
-          condition: (item) => item.possibleActions.find(action => action === 'reactivate'),
+          condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
           click: this.reactivateEndpoint
         },
         {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete',
           iconColor: 'error',
-          condition: (item) => item.possibleActions.find(action => action === 'delete'),
+          condition: (item) => item.possible_actions.find(action => action === 'delete'),
           click: this.deleteEndpoint
         },
         {
@@ -134,13 +133,13 @@ export default {
           width: '5%'
         },
         { text: this.$t('_global.library'), value: 'library.name' },
-        { text: this.$t('_global.template'), value: 'endpointTemplate.name', width: '30%' },
+        { text: this.$t('_global.template'), value: 'endpoint_template.name', width: '30%' },
         { text: this.$t('_global.endpoint'), value: 'name' },
-        { text: this.$t('_global.modified'), value: 'startDate' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.modified_by'), value: 'fixme' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' },
-        { text: this.$t('EndpointTable.studies_count'), value: 'studyCount' }
+        { text: this.$t('EndpointTable.studies_count'), value: 'study_count' }
       ],
       showForm: false,
       showHistory: false,

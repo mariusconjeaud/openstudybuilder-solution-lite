@@ -5,8 +5,8 @@
     <help-button :help-text="$t('_help.CtPackagesTable.general')" />
   </div>
   <ct-packages-table
-    :catalogueName="$route.params.catalogueName"
-    :packageName="$route.params.packageName"
+    :catalogue-name="$route.params.catalogue_name"
+    :package-name="$route.params.package_name"
     />
 </div>
 </template>
@@ -28,7 +28,7 @@ export default {
     updateCatalogueInBreadcrumbs (catalogueName, replace) {
       this.addBreadcrumbsLevel({
         text: catalogueName,
-        to: { name: 'CtPackages', params: { catalogueName } },
+        to: { name: 'CtPackages', params: { catalogue_name: catalogueName } },
         index: 3,
         replace
       })
@@ -36,27 +36,27 @@ export default {
     updatePackageInBreadcrumbs (packageName, catalogueName, replace) {
       this.addBreadcrumbsLevel({
         text: packageName,
-        to: { name: 'CtPackages', params: { catalogueName, packageName } },
+        to: { name: 'CtPackages', params: { catalogue_name: catalogueName, package_name: packageName } },
         index: 4,
         replace
       })
     }
   },
   mounted () {
-    if (this.$route.params.catalogueName) {
-      this.updateCatalogueInBreadcrumbs(this.$route.params.catalogueName)
+    if (this.$route.params.catalogue_name) {
+      this.updateCatalogueInBreadcrumbs(this.$route.params.catalogue_name)
     }
-    if (this.$route.params.packageName) {
-      this.updatePackageInBreadcrumbs(this.$route.params.packageName, this.$route.params.catalogueName)
+    if (this.$route.params.package_name) {
+      this.updatePackageInBreadcrumbs(this.$route.params.package_name, this.$route.params.catalogue_name)
     }
   },
   watch: {
-    '$route.params.catalogueName' (value) {
+    '$route.params.catalogue_name' (value) {
       this.updateCatalogueInBreadcrumbs(value, true)
     },
-    '$route.params.packageName' (value) {
+    '$route.params.package_name' (value) {
       if (value) {
-        this.updatePackageInBreadcrumbs(value, this.$route.params.catalogueName, true)
+        this.updatePackageInBreadcrumbs(value, this.$route.params.catalogue_name, true)
       } else {
         this.$store.commit('app/TRUNCATE_BREADCRUMBS_FROM_LEVEL', 4)
       }

@@ -1,8 +1,8 @@
 [
   {
     "categories": null,
-    "changeDescription": "Approved version",
-    "defaultParameterValues": {
+    "change_description": "Approved version",
+    "default_parameter_values": {
       "0": [
         {
           "conjunction": "",
@@ -11,37 +11,37 @@
         }
       ]
     },
-    "editableInstance": false,
-    "endDate": null,
+    "editable_instance": false,
+    "end_date": null,
     "indications": null,
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "User Defined"
     },
     "name": "test user defined [ActivityInstance]",
-    "namePlain": "test user defined [ActivityInstance]",
+    "name_plain": "test user defined [ActivityInstance]",
     "parameters": [
       {
         "name": "ActivityInstance",
         "values": null
       }
     ],
-    "possibleActions": [
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-05-23T12:12:07.464898",
+    "start_date": "2022-05-23T12:12:07.464898",
     "status": "Final",
-    "studyCount": 0,
-    "subCategories": null,
+    "study_count": 0,
+    "sub_categories": null,
     "uid": "EndpointTemplate_000003",
-    "userInitials": "unknown-user",
+    "user_initials": "unknown-user",
     "version": "1.0"
   },
   {
     "categories": null,
-    "changeDescription": "Approved version",
-    "defaultParameterValues": {
+    "change_description": "Approved version",
+    "default_parameter_values": {
       "0": [
         {
           "conjunction": "",
@@ -55,15 +55,15 @@
         }
       ]
     },
-    "editableInstance": false,
-    "endDate": null,
+    "editable_instance": false,
+    "end_date": null,
     "indications": null,
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "Sponsor"
     },
     "name": "test [ActivityInstance] and [DiseaseDisorder]",
-    "namePlain": "test [ActivityInstance] and [DiseaseDisorder]",
+    "name_plain": "test [ActivityInstance] and [DiseaseDisorder]",
     "parameters": [
       {
         "name": "ActivityInstance",
@@ -74,22 +74,22 @@
         "values": null
       }
     ],
-    "possibleActions": [
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-05-23T12:12:07.285346",
+    "start_date": "2022-05-23T12:12:07.285346",
     "status": "Final",
-    "studyCount": 0,
-    "subCategories": null,
+    "study_count": 0,
+    "sub_categories": null,
     "uid": "EndpointTemplate_000002",
-    "userInitials": "unknown-user",
+    "user_initials": "unknown-user",
     "version": "1.0"
   },
   {
     "categories": null,
-    "changeDescription": "Approved version",
-    "defaultParameterValues": {
+    "change_description": "Approved version",
+    "default_parameter_values": {
       "0": [
         {
           "conjunction": "",
@@ -98,31 +98,31 @@
         }
       ]
     },
-    "editableInstance": false,
-    "endDate": null,
+    "editable_instance": false,
+    "end_date": null,
     "indications": null,
     "library": {
-      "isEditable": true,
+      "is_editable": true,
       "name": "Sponsor"
     },
     "name": "test [ActivityInstance]",
-    "namePlain": "test [ActivityInstance]",
+    "name_plain": "test [ActivityInstance]",
     "parameters": [
       {
         "name": "ActivityInstance",
         "values": null
       }
     ],
-    "possibleActions": [
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-05-23T12:12:06.861423",
+    "start_date": "2022-05-23T12:12:06.861423",
     "status": "Final",
-    "studyCount": 1,
-    "subCategories": null,
+    "study_count": 1,
+    "sub_categories": null,
     "uid": "EndpointTemplate_000001",
-    "userInitials": "unknown-user",
+    "user_initials": "unknown-user",
     "version": "1.0"
   }
 ]

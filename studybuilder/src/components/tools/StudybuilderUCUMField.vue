@@ -4,7 +4,7 @@
     :label="$t('UCUMUnitField.label')"
     :value="value"
     :items="ucumUnits"
-    item-value="termUid"
+    item-value="term_uid"
     item-text="name"
     return-object
     dense
@@ -29,7 +29,7 @@ export default {
   mounted () {
     dictionaries.getCodelists('UCUM').then(resp => {
       const params = {
-        codelist_uid: resp.data.items[0].codelistUid
+        codelist_uid: resp.data.items[0].codelist_uid
       }
       dictionaries.getTerms(params).then(resp => {
         this.ucumUnits = resp.data.items

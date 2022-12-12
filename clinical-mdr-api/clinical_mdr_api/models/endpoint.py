@@ -17,16 +17,16 @@ from clinical_mdr_api.models.utils import BaseModel
 class Endpoint(BaseModel):
     uid: str
     name: Optional[str] = None
-    namePlain: Optional[str] = None
+    name_plain: Optional[str] = None
 
-    startDate: Optional[datetime] = None
-    endDate: Optional[datetime] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     status: Optional[str] = None
     version: Optional[str] = None
-    changeDescription: Optional[str] = None
-    userInitials: Optional[str] = None
+    change_description: Optional[str] = None
+    user_initials: Optional[str] = None
 
-    possibleActions: Optional[Sequence[str]] = Field(
+    possible_actions: Optional[Sequence[str]] = Field(
         None,
         description=(
             "Holds those actions that can be performed on the endpoint. "
@@ -34,15 +34,15 @@ class Endpoint(BaseModel):
         ),
     )
 
-    endpointTemplate: Optional[EndpointTemplateNameUid]
-    parameterValues: Optional[Sequence[MultiTemplateParameterValue]] = Field(
+    endpoint_template: Optional[EndpointTemplateNameUid]
+    parameter_values: Optional[Sequence[MultiTemplateParameterValue]] = Field(
         None,
         description="Holds the parameter values that are used within the endpoint. The values are ordered as they occur in the endpoint name.",
     )
     # objective: Optional[Objective] = None
     library: Optional[Library] = None
 
-    studyCount: Optional[int] = Field(
+    study_count: Optional[int] = Field(
         None, description="Count of studies referencing endpoint"
     )
 
@@ -70,24 +70,24 @@ class Endpoint(BaseModel):
         return cls(
             uid=endpoint_ar.uid,
             name=endpoint_ar.name,
-            namePlain=endpoint_ar.name_plain,
-            startDate=endpoint_ar.item_metadata.start_date,
-            endDate=endpoint_ar.item_metadata.end_date,
+            name_plain=endpoint_ar.name_plain,
+            start_date=endpoint_ar.item_metadata.start_date,
+            end_date=endpoint_ar.item_metadata.end_date,
             status=endpoint_ar.item_metadata.status.value,
             version=endpoint_ar.item_metadata.version,
-            changeDescription=endpoint_ar.item_metadata.change_description,
-            userInitials=endpoint_ar.item_metadata.user_initials,
-            possibleActions=sorted(
+            change_description=endpoint_ar.item_metadata.change_description,
+            user_initials=endpoint_ar.item_metadata.user_initials,
+            possible_actions=sorted(
                 {_.value for _ in endpoint_ar.get_possible_actions()}
             ),
-            endpointTemplate=EndpointTemplateNameUid(
+            endpoint_template=EndpointTemplateNameUid(
                 name=endpoint_ar.template_name,
-                namePlain=endpoint_ar.template_name_plain,
+                name_plain=endpoint_ar.template_name_plain,
                 uid=endpoint_ar.template_uid,
             ),
             library=Library.from_library_vo(endpoint_ar.library),
-            studyCount=endpoint_ar.study_count,
-            parameterValues=parameter_values,
+            study_count=endpoint_ar.study_count,
+            parameter_values=parameter_values,
         )
 
 
@@ -96,42 +96,42 @@ class EndpointVersion(Endpoint):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the endpoint (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the endpoint (e.g. name, start_date, ..)."
         ),
     )
 
 
 class EndpointParameterInput(BaseModel):
-    parameterValues: List[TemplateParameterMultiSelectInput] = Field(
+    parameter_values: List[TemplateParameterMultiSelectInput] = Field(
         ...,
-        title="parameterValues",
+        title="parameter_values",
         description="An ordered list of selected parameter values that are used to replace the parameters of the endpoint template.",
     )
 
 
 class EndpointEditInput(EndpointParameterInput):
-    changeDescription: str = Field(
+    change_description: str = Field(
         ...,
         description="A short description about what has changed compared to the previous version.",
     )
 
 
 class EndpointCreateInput(EndpointParameterInput):
-    endpointTemplateUid: str = Field(
+    endpoint_template_uid: str = Field(
         ...,
-        title="endpointTemplateUid",
+        title="endpoint_template_uid",
         description="The unique id of the endpoint template that is used as the basis for the new endpoint.",
     )
-    nameOverride: Optional[str] = Field(
+    name_override: Optional[str] = Field(
         None,
         title="name",
         description="Optionally, a name to override the name inherited from the template.",
     )
-    libraryName: str = Field(
+    library_name: str = Field(
         None,
-        title="libraryName",
+        title="library_name",
         description="If specified: The name of the library to which the endpoint will be linked. The following rules apply: \n"
         "* The library needs to be present, it will not be created with this request. The *[GET] /libraries* endpoint can help. And \n"
-        "* The library needs to allow the creation: The 'isEditable' property of the library needs to be true. \n\n"
+        "* The library needs to allow the creation: The 'is_editable' property of the library needs to be true. \n\n"
         "If not specified: The library of the endpoint template will be used.",
     )

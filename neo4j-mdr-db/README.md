@@ -32,11 +32,8 @@ Clone the Neo4j repository on your local instance
 
 ---
 ### Setup environment variables
-Create `.env` file (in the root of cloned repository) with a following content (adjust accodingly):
+Create `.env` file (in the root of cloned repository) with a following content (adjust accordingly):
 ```
-#
-# Neo4j Database
-#
 NEO4J_MDR_HTTP_PORT=5074
 NEO4J_MDR_BOLT_PORT=5078
 NEO4J_MDR_HTTPS_PORT=443
@@ -44,7 +41,6 @@ NEO4J_MDR_HOST=localhost
 NEO4J_MDR_AUTH_USER=neo4j
 NEO4J_MDR_AUTH_PASSWORD=test1234
 NEO4J_MDR_DATABASE=neo4j
-
 NEO4J_MDR_CLEAR_DATABASE=false
 NEO4J_MDR_BACKUP_DATABASE=false
 ```
@@ -56,14 +52,15 @@ NEO4J_MDR_BOLT_PORT=7687
 ```
 ---
 ### Create container
-Create/re-create the `neo4j_local`container with (after `cd neo4j-mdr-db`)
+Create/re-create and start the `neo4j_local`container with (after `cd neo4j-mdr-db`)
 
-```
+```sh
 $ ./create_neo4j_local.sh
-$ docker start neo4j_local
 ```
 
-**Note:** Start or stop the neo4j database using `docker start neo4j_local` and `docker stop neo4j_local`
+The `create_neo4j_local.sh` script uses variables from the `.env` file.
+
+**Note:** After creating the database container, it can be started and stopped with `docker start neo4j_local` and `docker stop neo4j_local`.
 
 **Note:**
 On very first run of `create_neo4j_local.sh` at the beginning of command output you may see an error message `Error: No such container: neo4j_local` which is perfectly normal at very first run.
@@ -75,15 +72,33 @@ Then you will have to change them back before working with the neo4j_local!
 ---
 ### Verify container is running
 In order to verify that the neo4j_local docker is running, you can run the following:
-
-`$ docker ps`
-
+```sh
+$ docker ps
+```
 You will get a docker table of running container
+
+### Reading container logs
+The standard output from the container can be read with the logs command:
+```sh
+$ docker logs neo4j_local
+```
+
+The log can be followed by adding the `--follow` flag:
+```sh
+$ docker logs neo4j_local --follow
+```
+Stop following with ctrl-C.
+
+Other log files are stored inside the container and can be read like this (assuming the container is running):
+```sh
+$ docker exec neo4j_local cat /var/lib/neo4j/logs/debug.log | less
+```
+See the neo4j documentation for what log files are available.
 
 ---
 ### Folders mounted in the docker container
 
-The `create_neo4j_local.sh` script creates and mounts two directories in the container.
+The `create_neo4j_local.sh` script creates and mounts several directories in the container.
 
 - `import_files`: Files placed here become available for loading with Cypher queries such as:
 
@@ -92,6 +107,8 @@ The `create_neo4j_local.sh` script creates and mounts two directories in the con
 - `load_scripts`. Place .cypher files here to make them available for running with `cypher-shell`:
 
    ```docker exec neo4j_local bin/cypher-shell --file load_scripts/my_script.cypher --database neo4j --user neo4j --password test1234 --fail-at-end```.
+
+- `db_import` and `db_export`: Used to export and import databases backups. 
 
 ## Initial setup - After installation of Docker
 ---
@@ -179,3 +196,25 @@ Populating the database consists of two steps that must be performed in order:
    This step performs the import by calling the StudyBuilder api,
    and thus the backend must be running.
    See the instructions in the `clinical-mdr-api` repository.
+
+---
+
+# Exporting a database backup
+
+The script `export_db_backup.sh` can be used to back the contents of a database.
+For example, connect to the container `neo4j_local` and export the database `neo4j` to the file `./my_backup.tar.gz`.
+```sh
+$ export $(grep -v '^#' .env | xargs)
+$ ./export_db_backup.sh neo4j_local neo4j my_backup.tar.gz
+```
+This creates the file `./my_backup.tar.gz` in the current folder.
+
+# Importing a database backup
+
+The script `import_backup_db.sh` can be used to import a backup into a database.
+For example, connect to the container `neo4j_local` and import the file `./my_backup.tar.gz` into the database `neo4j`.
+```sh
+$ export $(grep -v '^#' .env | xargs)
+$ ./import_db_backup.sh neo4j_local neo4j my_backup.tar.gz
+```
+This replaces any existing content in the database `neo4j` with the backup in the file `./my_backup.tar.gz`.

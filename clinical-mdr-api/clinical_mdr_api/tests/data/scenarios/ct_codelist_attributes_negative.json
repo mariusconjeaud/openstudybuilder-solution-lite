@@ -5,15 +5,15 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "catalogueName": "SDTM CT",
+                "catalogue_name": "SDTM CT",
                 "name": "name",
-                "submissionValue": "Submission value",
-                "nciPreferredName": "Nci preferred name",
+                "submission_value": "Submission value",
+                "nci_preferred_name": "Nci preferred name",
                 "definition": "definition",
                 "extensible": true,
-                "sponsorPreferredName": "Sponsor preferred name",
-                "templateParameter": true,
-                "libraryName": "CDISC",
+                "sponsor_preferred_name": "Sponsor preferred name",
+                "template_parameter": true,
+                "library_name": "CDISC",
                 "terms": []
             },
             "url": "/ct/codelists"
@@ -35,7 +35,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/ct/codelists/attributes?cataloguename=SDTM%20CTM"
+            "url": "/ct/codelists/attributes?catalogue_name=SDTM%20CTM"
         },
         "response": {
             "code": 400,
@@ -46,7 +46,7 @@
             "result": {
                 "message": "There is no catalogue identified by provided catalogue name (SDTM CTM)",
                 "method": "GET",
-                "path": "http://testserver/ct/codelists/attributes?cataloguename=SDTM%20CTM",
+                "path": "http://testserver/ct/codelists/attributes?catalogue_name=SDTM%20CTM",
                 "time": "2020-11-03T23:42:41.518146",
                 "type": "BusinessLogicException"
             }
@@ -59,11 +59,11 @@
             "method": "PATCH",
             "request": {
                 "name": "codelist new name",
-                "submissionValue": "new codelist submission value",
-                "nciPreferredName": "new codelist preferred term",
+                "submission_value": "new codelist submission value",
+                "nci_preferred_name": "new codelist preferred term",
                 "definition": "new codelist definition",
                 "extensible": true,
-                "changeDescription": "changing codelist name"
+                "change_description": "changing codelist name"
             },
             "url": "/ct/codelists/ct_codelist_root1/attributes"
         },
@@ -85,11 +85,11 @@
             "method": "PATCH",
             "request": {
                 "name": "codelist new name",
-                "submissionValue": "new codelist submission value",
-                "nciPreferredName": "new codelist preferred term",
+                "submission_value": "new codelist submission value",
+                "nci_preferred_name": "new codelist preferred term",
                 "definition": "new codelist definition",
                 "extensible": true,
-                "changeDescription": "changing codelist name"
+                "change_description": "changing codelist name"
             },
             "url": "/ct/codelists/ct_codelist_root2/attributes"
         },
@@ -111,11 +111,11 @@
             "method": "PATCH",
             "request": {
                 "name": "codelist attributes value1",
-                "submissionValue": "new codelist submission value",
-                "nciPreferredName": "new codelist preferred term",
+                "submission_value": "new codelist submission value",
+                "nci_preferred_name": "new codelist preferred term",
                 "definition": "new codelist definition",
                 "extensible": true,
-                "changeDescription": "changing codelist name"
+                "change_description": "changing codelist name"
             },
             "url": "/ct/codelists/ct_codelist_root3/attributes"
         },
@@ -137,11 +137,11 @@
             "method": "PATCH",
             "request": {
                 "name": "new codelist name",
-                "submissionValue": "codelist submission value1",
-                "nciPreferredName": "new codelist preferred term",
+                "submission_value": "codelist submission value1",
+                "nci_preferred_name": "new codelist preferred term",
                 "definition": "new codelist definition",
                 "extensible": true,
-                "changeDescription": "changing codelist name"
+                "change_description": "changing codelist name"
             },
             "url": "/ct/codelists/ct_codelist_root3/attributes"
         },
@@ -157,19 +157,19 @@
         }
     },
     {
-        "name": "Test POST new-version non editable library",
+        "name": "Test POST /versions non editable library",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/ct/codelists/ct_codelist_root2/attributes/new-version"
+            "url": "/ct/codelists/ct_codelist_root2/attributes/versions"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "Library is not editable.",
                 "method": "POST",
-                "path": "http://testserver/ct/codelists/ct_codelist_root2/attributes/new-version",
+                "path": "http://testserver/ct/codelists/ct_codelist_root2/attributes/versions",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }
@@ -219,16 +219,16 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "catalogueName": "SDTM CT",
+                "catalogue_name": "SDTM CT",
                 "name": "name with parent",
-                "parentCodelistUid": "ct_codelist_root3",
-                "submissionValue": "Submission value with parent",
-                "nciPreferredName": "Nci preferred name with parent",
+                "parent_codelist_uid": "ct_codelist_root3",
+                "submission_value": "Submission value with parent",
+                "nci_preferred_name": "Nci preferred name with parent",
                 "definition": "definition",
                 "extensible": true,
-                "sponsorPreferredName": "Sponsor preferred name with parent",
-                "templateParameter": true,
-                "libraryName": "Sponsor",
+                "sponsor_preferred_name": "Sponsor preferred name with parent",
+                "template_parameter": true,
+                "library_name": "Sponsor",
                 "terms": []
             },
             "url": "/ct/codelists"
@@ -237,19 +237,19 @@
             "code": 201,
             "headers": {},
             "result": {
-                "catalogueName": "SDTM CT",
-                "codelistUid": "CTCodelist_000001",
-                "parentCodelistUid": "ct_codelist_root3",
-                "childCodelistUids": [],
+                "catalogue_name": "SDTM CT",
+                "codelist_uid": "CTCodelist_000001",
+                "parent_codelist_uid": "ct_codelist_root3",
+                "child_codelist_uids": [],
                 "name": "name with parent",
-                "submissionValue": "Submission value with parent",
-                "nciPreferredName": "Nci preferred name with parent",
+                "submission_value": "Submission value with parent",
+                "nci_preferred_name": "Nci preferred name with parent",
                 "definition": "definition",
                 "extensible": true,
-                "sponsorPreferredName": "Sponsor preferred name with parent",
-                "templateParameter": true,
-                "libraryName": "Sponsor",
-                "possibleActions": [
+                "sponsor_preferred_name": "Sponsor preferred name with parent",
+                "template_parameter": true,
+                "library_name": "Sponsor",
+                "possible_actions": [
                     "approve",
                     "edit"
                 ]
@@ -262,9 +262,9 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "termUid": "term1"
+                "term_uid": "term1"
             },
-            "url": "/ct/codelists/CTCodelist_000001/add-term"
+            "url": "/ct/codelists/CTCodelist_000001/terms"
         },
         "response": {
             "code": 400,
@@ -272,7 +272,7 @@
             "result": {
                 "message": "The term identifed by (term1) is not in use by parent codelist identifed by (ct_codelist_root3)",
                 "time": "2022-06-10T11:18:54.056131",
-                "path": "http://testserver/ct/codelists/CTCodelist_000001/add-term",
+                "path": "http://testserver/ct/codelists/CTCodelist_000001/terms",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }

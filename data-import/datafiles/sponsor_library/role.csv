@@ -1,0 +1,11 @@
+"CT_CD_LIST_SUBMVAL","CT_SUBMVAL","CT_NAME","NAME_SENTENSE_CASE","ORDER","DEFINITION","CD_CT"
+"ROLE","IDENTIFIER","Identifier","identifier","1","Sponsor terminology for Identifier role",
+"ROLE","TOPIC","Topic","topic","2","Sponsor terminology for Topic role",
+"ROLE","TIMING","Timing","timing","3","Sponsor terminology for Timing role",
+"ROLE","GROUQUAL","Grouping Qualifier","grouping qualifier","4","Sponsor terminology for Grouping Qualifier role",
+"ROLE","RECOQUAL","Record Qualifier","record qualifier","4","Sponsor terminology for Record Qualifier role",
+"ROLE","VARIQUAL","Variable Qualifier","variable qualifier","5","Sponsor terminology for Variable Qualifier role",
+"ROLE","RESUQUAL","Result Qualifier","result qualifier","6","Sponsor terminology for Result Qualifier role",
+"ROLE","RULEVARI","Rule Variable Qualifier","rule variable qualifier","7","Sponsor terminology for Rule Variable Qualifier role",
+"ROLE","SYNOQUAL","Synonym Qualifier","synonym qualifier","8","Sponsor terminology for Synonym Qualifier role",
+"ROLE","TIMING","Timing Variable","timing variable","9","Sponsor terminology for Timing Variable role",

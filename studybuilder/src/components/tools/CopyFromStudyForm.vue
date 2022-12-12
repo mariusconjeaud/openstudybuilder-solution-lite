@@ -17,7 +17,7 @@
               :label="$t('StudyQuickSelectForm.study_id')"
               :items="studies"
               data-cy="study-id"
-              item-text="studyId"
+              item-text="study_id"
               item-value="uid"
               return-object
               :error-messages="errors"
@@ -35,7 +35,7 @@
               v-model="study"
               :label="$t('StudyQuickSelectForm.study_acronym')"
               :items="studies"
-              item-text="studyAcronym"
+              item-text="study_acronym"
               item-value="uid"
               return-object
               :error-messages="errors"
@@ -49,7 +49,7 @@
         <v-col cols="6">
           <v-text-field
             v-if="study"
-            v-model="study.studyStatus"
+            v-model="study.study_status"
             readonly
             filled
             />
@@ -123,20 +123,20 @@ export default {
     },
     select () {
       const form = {
-        referenceStudyUid: this.study.uid,
-        componentToCopy: this.component,
+        reference_study_uid: this.study.uid,
+        component_to_copy: this.component,
         overwrite: this.overwrite
       }
       study.copyFromStudy(this.selectedStudy.uid, form).then(resp => {
         switch (this.component) {
-          case 'highLevelStudyDesign':
-            this.$emit('apply', resp.data.currentMetadata.highLevelStudyDesign)
+          case 'high_level_study_design':
+            this.$emit('apply', resp.data.current_metadata.high_level_study_design)
             break
-          case 'studyIntervention':
-            this.$emit('apply', resp.data.currentMetadata.studyIntervention)
+          case 'study_intervention':
+            this.$emit('apply', resp.data.current_metadata.study_intervention)
             break
-          case 'studyPopulation':
-            this.$emit('apply', resp.data.currentMetadata.studyPopulation)
+          case 'study_population':
+            this.$emit('apply', resp.data.current_metadata.study_population)
             break
         }
         this.close()

@@ -1,278 +1,94 @@
 [
   {
     "abbreviation": null,
-    "changeDescription": "Approved version",
-    "compound": {
-      "name": "Semaglutide",
-      "uid": "Compound_000001"
-    },
-    "definition": null,
-    "endDate": null,
-    "isPreferredSynonym": true,
-    "libraryName": "Sponsor",
-    "name": "Semaglutide",
-    "nameSentenceCase": "semaglutide",
-    "possibleActions": [
-      "inactivate",
-      "newVersion"
-    ],
-    "startDate": "2022-10-18T13:18:09.047956",
-    "status": "Final",
-    "uid": "CompoundAlias_000001",
-    "userInitials": "MT",
-    "version": "1.0"
-  },
-  {
-    "abbreviation": null,
-    "changeDescription": "Approved version",
-    "compound": {
-      "name": "Insulin Glargine",
-      "uid": "Compound_000002"
-    },
-    "definition": null,
-    "endDate": null,
-    "isPreferredSynonym": true,
-    "libraryName": "Sponsor",
-    "name": "Insulin Glargine",
-    "nameSentenceCase": "insulin glargine",
-    "possibleActions": [
-      "inactivate",
-      "newVersion"
-    ],
-    "startDate": "2022-10-18T13:18:13.063125",
-    "status": "Final",
-    "uid": "CompoundAlias_000002",
-    "userInitials": "MT",
-    "version": "1.0"
-  },
-  {
-    "abbreviation": null,
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "compound": {
       "name": "Metformin",
       "uid": "Compound_000003"
     },
     "definition": null,
-    "endDate": null,
-    "isPreferredSynonym": true,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "is_preferred_synonym": true,
+    "library_name": "Sponsor",
     "name": "Metformin",
-    "nameSentenceCase": "metformin",
-    "possibleActions": [
+    "name_sentence_case": "metformin",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-10-18T13:18:16.956538",
+    "start_date": "2022-10-18T13:18:16.956538",
     "status": "Final",
     "uid": "CompoundAlias_000003",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "changeDescription": "Approved version",
-    "compound": {
-      "name": "Degludec",
-      "uid": "Compound_000004"
-    },
-    "definition": null,
-    "endDate": null,
-    "isPreferredSynonym": true,
-    "libraryName": "Sponsor",
-    "name": "Degludec",
-    "nameSentenceCase": "degludec",
-    "possibleActions": [
-      "inactivate",
-      "newVersion"
-    ],
-    "startDate": "2022-10-18T13:18:25.251922",
-    "status": "Final",
-    "uid": "CompoundAlias_000004",
-    "userInitials": "MT",
-    "version": "1.0"
-  },
-  {
-    "abbreviation": null,
-    "changeDescription": "Approved version",
-    "compound": {
-      "name": "IcoSema",
-      "uid": "Compound_000005"
-    },
-    "definition": null,
-    "endDate": null,
-    "isPreferredSynonym": true,
-    "libraryName": "Sponsor",
-    "name": "IcoSema",
-    "nameSentenceCase": "icosema",
-    "possibleActions": [
-      "inactivate",
-      "newVersion"
-    ],
-    "startDate": "2022-10-18T13:18:27.873053",
-    "status": "Final",
-    "uid": "CompoundAlias_000005",
-    "userInitials": "MT",
-    "version": "1.0"
-  },
-  {
-    "abbreviation": null,
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "compound": {
       "name": "NPH Insulin",
       "uid": "Compound_000006"
     },
     "definition": null,
-    "endDate": null,
-    "isPreferredSynonym": true,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "is_preferred_synonym": true,
+    "library_name": "Sponsor",
     "name": "NPH Insulin",
-    "nameSentenceCase": "nph insulin",
-    "possibleActions": [
+    "name_sentence_case": "nph insulin",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-10-18T13:18:30.506299",
+    "start_date": "2022-10-18T13:18:30.506299",
     "status": "Final",
     "uid": "CompoundAlias_000006",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "changeDescription": "Approved version",
-    "compound": {
-      "name": "Cagrilintide",
-      "uid": "Compound_000007"
-    },
-    "definition": null,
-    "endDate": null,
-    "isPreferredSynonym": true,
-    "libraryName": "Sponsor",
-    "name": "Cagrilintide",
-    "nameSentenceCase": "cagrilintide",
-    "possibleActions": [
-      "inactivate",
-      "newVersion"
-    ],
-    "startDate": "2022-10-18T13:18:33.440149",
-    "status": "Final",
-    "uid": "CompoundAlias_000007",
-    "userInitials": "MT",
-    "version": "1.0"
-  },
-  {
-    "abbreviation": null,
-    "changeDescription": "Approved version",
-    "compound": {
-      "name": "CagriSema",
-      "uid": "Compound_000008"
-    },
-    "definition": null,
-    "endDate": null,
-    "isPreferredSynonym": true,
-    "libraryName": "Sponsor",
-    "name": "CagriSema",
-    "nameSentenceCase": "cagrisema",
-    "possibleActions": [
-      "inactivate",
-      "newVersion"
-    ],
-    "startDate": "2022-10-18T13:18:35.228021",
-    "status": "Final",
-    "uid": "CompoundAlias_000008",
-    "userInitials": "MT",
-    "version": "1.0"
-  },
-  {
-    "abbreviation": null,
-    "changeDescription": "Approved version",
-    "compound": {
-      "name": "Insulin Icodec",
-      "uid": "Compound_000009"
-    },
-    "definition": null,
-    "endDate": null,
-    "isPreferredSynonym": true,
-    "libraryName": "Sponsor",
-    "name": "Insulin Icodec",
-    "nameSentenceCase": "insulin icodec",
-    "possibleActions": [
-      "inactivate",
-      "newVersion"
-    ],
-    "startDate": "2022-10-18T13:18:38.054104",
-    "status": "Final",
-    "uid": "CompoundAlias_000009",
-    "userInitials": "MT",
-    "version": "1.0"
-  },
-  {
-    "abbreviation": null,
-    "changeDescription": "Approved version",
-    "compound": {
-      "name": "NNC0363-0845",
-      "uid": "Compound_000010"
-    },
-    "definition": null,
-    "endDate": null,
-    "isPreferredSynonym": true,
-    "libraryName": "Sponsor",
-    "name": "NNC0363-0845",
-    "nameSentenceCase": "nnc0363-0845",
-    "possibleActions": [
-      "inactivate",
-      "newVersion"
-    ],
-    "startDate": "2022-10-18T13:18:40.429946",
-    "status": "Final",
-    "uid": "CompoundAlias_000010",
-    "userInitials": "MT",
-    "version": "1.0"
-  },
-  {
-    "abbreviation": null,
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "compound": {
       "name": "Metformin",
       "uid": "Compound_000003"
     },
     "definition": "Some typical generic Metformin",
-    "endDate": null,
-    "isPreferredSynonym": false,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "is_preferred_synonym": false,
+    "library_name": "Sponsor",
     "name": "Generic Metformin",
-    "nameSentenceCase": "generic metformin",
-    "possibleActions": [
+    "name_sentence_case": "generic metformin",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-10-18T13:22:41.907973",
+    "start_date": "2022-10-18T13:22:41.907973",
     "status": "Final",
     "uid": "CompoundAlias_000011",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "compound": {
       "name": "Metformin",
       "uid": "Compound_000003"
     },
     "definition": "A better drug based on Metformin",
-    "endDate": null,
-    "isPreferredSynonym": false,
-    "libraryName": "Sponsor",
+    "end_date": null,
+    "is_preferred_synonym": false,
+    "library_name": "Sponsor",
     "name": "Improved Metformin",
-    "nameSentenceCase": "improved metformin",
-    "possibleActions": [
+    "name_sentence_case": "improved metformin",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-10-18T13:22:42.383958",
+    "start_date": "2022-10-18T13:22:42.383958",
     "status": "Final",
     "uid": "CompoundAlias_000012",
-    "userInitials": "MT",
+    "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
   }
 ]

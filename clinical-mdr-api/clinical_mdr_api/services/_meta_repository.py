@@ -362,7 +362,7 @@ class MetaRepository:
         return ActivityRepository()
 
     @property
-    def activity_sub_group_repository(self) -> ActivitySubGroupRepository:
+    def activity_subgroup_repository(self) -> ActivitySubGroupRepository:
         return ActivitySubGroupRepository()
 
     @property

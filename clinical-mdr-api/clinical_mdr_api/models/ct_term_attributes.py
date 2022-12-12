@@ -16,24 +16,24 @@ class CTTermAttributes(BaseModel):
         cls, ct_term_attributes_ar: CTTermAttributesAR
     ) -> "CTTermAttributes":
         return cls(
-            termUid=ct_term_attributes_ar.uid,
-            catalogueName=ct_term_attributes_ar.ct_term_vo.catalogue_name,
-            codelistUid=ct_term_attributes_ar.ct_term_vo.codelist_uid,
-            conceptId=ct_term_attributes_ar.ct_term_vo.concept_id,
-            codeSubmissionValue=ct_term_attributes_ar.ct_term_vo.code_submission_value,
-            nameSubmissionValue=ct_term_attributes_ar.ct_term_vo.name_submission_value,
-            nciPreferredName=ct_term_attributes_ar.ct_term_vo.preferred_term,
+            term_uid=ct_term_attributes_ar.uid,
+            catalogue_name=ct_term_attributes_ar.ct_term_vo.catalogue_name,
+            codelist_uid=ct_term_attributes_ar.ct_term_vo.codelist_uid,
+            concept_id=ct_term_attributes_ar.ct_term_vo.concept_id,
+            code_submission_value=ct_term_attributes_ar.ct_term_vo.code_submission_value,
+            name_submission_value=ct_term_attributes_ar.ct_term_vo.name_submission_value,
+            nci_preferred_name=ct_term_attributes_ar.ct_term_vo.preferred_term,
             definition=ct_term_attributes_ar.ct_term_vo.definition,
-            libraryName=Library.from_library_vo(ct_term_attributes_ar.library).name,
-            possibleActions=sorted(
+            library_name=Library.from_library_vo(ct_term_attributes_ar.library).name,
+            possible_actions=sorted(
                 [_.value for _ in ct_term_attributes_ar.get_possible_actions()]
             ),
-            startDate=ct_term_attributes_ar.item_metadata.start_date,
-            endDate=ct_term_attributes_ar.item_metadata.end_date,
+            start_date=ct_term_attributes_ar.item_metadata.start_date,
+            end_date=ct_term_attributes_ar.item_metadata.end_date,
             status=ct_term_attributes_ar.item_metadata.status.value,
             version=ct_term_attributes_ar.item_metadata.version,
-            changeDescription=ct_term_attributes_ar.item_metadata.change_description,
-            userInitials=ct_term_attributes_ar.item_metadata.user_initials,
+            change_description=ct_term_attributes_ar.item_metadata.change_description,
+            user_initials=ct_term_attributes_ar.item_metadata.user_initials,
         )
 
     @classmethod
@@ -41,80 +41,80 @@ class CTTermAttributes(BaseModel):
         cls, ct_term_attributes_ar: CTTermAttributesAR
     ) -> "CTTermAttributes":
         return cls(
-            conceptId=ct_term_attributes_ar.ct_term_vo.concept_id,
-            codeSubmissionValue=ct_term_attributes_ar.ct_term_vo.code_submission_value,
-            nameSubmissionValue=ct_term_attributes_ar.ct_term_vo.name_submission_value,
-            nciPreferredName=ct_term_attributes_ar.ct_term_vo.preferred_term,
+            concept_id=ct_term_attributes_ar.ct_term_vo.concept_id,
+            code_submission_value=ct_term_attributes_ar.ct_term_vo.code_submission_value,
+            name_submission_value=ct_term_attributes_ar.ct_term_vo.name_submission_value,
+            nci_preferred_name=ct_term_attributes_ar.ct_term_vo.preferred_term,
             definition=ct_term_attributes_ar.ct_term_vo.definition,
-            possibleActions=sorted(
+            possible_actions=sorted(
                 [_.value for _ in ct_term_attributes_ar.get_possible_actions()]
             ),
-            startDate=ct_term_attributes_ar.item_metadata.start_date,
-            endDate=ct_term_attributes_ar.item_metadata.end_date,
+            start_date=ct_term_attributes_ar.item_metadata.start_date,
+            end_date=ct_term_attributes_ar.item_metadata.end_date,
             status=ct_term_attributes_ar.item_metadata.status.value,
             version=ct_term_attributes_ar.item_metadata.version,
-            changeDescription=ct_term_attributes_ar.item_metadata.change_description,
-            userInitials=ct_term_attributes_ar.item_metadata.user_initials,
+            change_description=ct_term_attributes_ar.item_metadata.change_description,
+            user_initials=ct_term_attributes_ar.item_metadata.user_initials,
         )
 
-    termUid: Optional[str] = Field(
+    term_uid: Optional[str] = Field(
         None,
-        title="termUid",
+        title="term_uid",
         description="",
     )
 
-    catalogueName: Optional[str] = Field(
+    catalogue_name: Optional[str] = Field(
         None,
-        title="catalogueName",
+        title="catalogue_name",
         description="",
     )
 
-    codelistUid: Optional[str] = Field(
+    codelist_uid: Optional[str] = Field(
         None,
-        title="codelistUid",
+        title="codelist_uid",
         description="",
     )
 
-    conceptId: Optional[str] = Field(
+    concept_id: Optional[str] = Field(
         ...,
-        title="conceptId",
+        title="concept_id",
         description="",
     )
 
-    codeSubmissionValue: Optional[str] = Field(
+    code_submission_value: Optional[str] = Field(
         ...,
-        title="codeSubmissionValue",
+        title="code_submission_value",
         description="",
     )
 
-    nameSubmissionValue: Optional[str] = Field(
+    name_submission_value: Optional[str] = Field(
         ...,
-        title="nameSubmissionValue",
+        title="name_submission_value",
         description="",
     )
 
-    nciPreferredName: str = Field(
+    nci_preferred_name: str = Field(
         ...,
-        title="nciPreferredName",
+        title="nci_preferred_name",
         description="",
     )
 
     definition: str = Field(
-        ..., title="definition", description="", removeFromWildcard=True
+        ..., title="definition", description="", remove_from_wildcard=True
     )
 
-    libraryName: Optional[str] = None
-    startDate: Optional[datetime] = None
-    endDate: Optional[datetime] = None
+    library_name: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     status: Optional[str] = None
     version: Optional[str] = None
-    changeDescription: Optional[str] = None
-    userInitials: Optional[str] = None
-    possibleActions: Optional[List[str]] = Field(
+    change_description: Optional[str] = None
+    user_initials: Optional[str] = None
+    possible_actions: Optional[List[str]] = Field(
         None,
         description=(
             "Holds those actions that can be performed on the CTTermAttributes. "
-            "Actions are: 'approve', 'edit', 'newVersion'."
+            "Actions are: 'approve', 'edit', 'new_version'."
         ),
     )
 
@@ -128,28 +128,28 @@ class CTTermAttributesVersion(CTTermAttributes):
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
-            "The field names in this object here refer to the field names of the objective (e.g. name, startDate, ..)."
+            "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )
 
 
 class CTTermAttributesInput(BaseModel):
 
-    codeSubmissionValue: Optional[str] = Field(
+    code_submission_value: Optional[str] = Field(
         None,
-        title="codeSubmissionValue",
+        title="code_submission_value",
         description="",
     )
 
-    nameSubmissionValue: Optional[str] = Field(
+    name_submission_value: Optional[str] = Field(
         None,
-        title="nameSubmissionValue",
+        title="name_submission_value",
         description="",
     )
 
-    nciPreferredName: Optional[str] = Field(
+    nci_preferred_name: Optional[str] = Field(
         None,
-        title="nciPreferredName",
+        title="nci_preferred_name",
         description="",
     )
 
@@ -161,4 +161,4 @@ class CTTermAttributesInput(BaseModel):
 
 
 class CTTermAttributesEditInput(CTTermAttributesInput):
-    changeDescription: str = Field(None, title="changeDescription", description="")
+    change_description: str = Field(None, title="change_description", description="")

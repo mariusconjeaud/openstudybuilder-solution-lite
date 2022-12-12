@@ -1,11 +1,9 @@
-import csv
 import sys
 import unittest
 from typing import Dict
 
 from neomodel import db  # type: ignore
 
-from clinical_mdr_api.config import DEFAULT_STUDY_FIELD_CONFIG_FILE
 from clinical_mdr_api.domain.study_definition_aggregate.root import StudyDefinitionAR
 from clinical_mdr_api.domain_repositories.clinical_programme.clinical_programme_repository import (
     ClinicalProgrammeRepository,
@@ -16,10 +14,6 @@ from clinical_mdr_api.domain_repositories.project.project_repository import (
 from clinical_mdr_api.domain_repositories.study_definition.study_definition_repository_impl import (
     StudyDefinitionRepositoryImpl,
 )
-from clinical_mdr_api.models.configuration import CTConfigPostInput
-from clinical_mdr_api.models.utils import camel_case_data
-from clinical_mdr_api.services._meta_repository import MetaRepository
-from clinical_mdr_api.services.configuration import CTConfigService
 from clinical_mdr_api.tests.integration.domain_repositories._utils import (
     wipe_study_definition_repository,  # type: ignore
 )
@@ -32,6 +26,7 @@ from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_PARAMETERS_CYPHER,
 )
+from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.unit.domain.clinical_programme_aggregate.test_clinical_programme import (
     create_random_clinical_programme,
 )
@@ -41,9 +36,6 @@ from clinical_mdr_api.tests.unit.domain.project_aggregate.test_project import (
 from clinical_mdr_api.tests.unit.domain.study_definition_aggregate.test_root import (
     create_random_study,
     make_random_study_metadata_edit,
-)
-from clinical_mdr_api.tests.unit.domain.study_definition_aggregate.test_study_metadata import (
-    initialize_ct_data_map,
 )
 from clinical_mdr_api.tests.unit.domain.utils import random_str
 
@@ -79,50 +71,12 @@ class TestStudyDefinitionRepository(unittest.TestCase):
         )
         project_repo.save(cls.project_to_amend)
 
-        for _, value in initialize_ct_data_map.items():
-            if isinstance(value, list):
-                for uid, name in value:
-                    db.cypher_query(
-                        """CREATE (:CTTermRoot {uid: $uid})-[:HAS_NAME_ROOT]->(term_ver_root:CTTermNameRoot)-
-                    [:LATEST]->(term_ver_value:CTTermNameValue {name: $name})
-                    CREATE (term_ver_root)-[:LATEST_FINAL]->(term_ver_value)
-                    """,
-                        {"uid": uid, "name": name},
-                    )
-            else:
-                db.cypher_query(
-                    """CREATE (:CTTermRoot {uid: $uid})-[:HAS_NAME_ROOT]->(term_ver_root:CTTermNameRoot)-
-                [:LATEST]->(term_ver_value:CTTermNameValue {name: $name})
-                CREATE (term_ver_root)-[:LATEST_FINAL]->(term_ver_value)""",
-                    {"uid": value[0], "name": value[1]},
-                )
-
-        cls.config_service = CTConfigService(
-            user_id="TEST_IMPORT", meta_repository=MetaRepository()
-        )
-        with open(DEFAULT_STUDY_FIELD_CONFIG_FILE, encoding="UTF-8") as f:
-            r = csv.DictReader(f)
-            for line in r:
-                data = camel_case_data(line)
-                if data.get("configuredCodelistUid") != "":
-                    db.cypher_query(
-                        """
-                    MERGE (lib:Library {name:"CDISC", is_editable:false})
-                    MERGE (catalogue:CTCatalogue {name:"SDTM"})
-                    CREATE (codelist:CTCodelistRoot {uid: $uid})-[:HAS_NAME_ROOT]->(codelist_ver_root:CTCodelistNameRoot)-
-                    [:LATEST]->(codelist_ver_value:CTCodelistNameValue {name: $uid + 'name'})
-                    CREATE (codelist_ver_root)-[lf:LATEST_FINAL]->(codelist_ver_value)
-                    set lf.change_description = "Approved version"
-                    set lf.start_date = datetime("2020-06-26T00:00:00")
-                    set lf.status = "Final"
-                    set lf.user_initials = "TODO initials"
-                    set lf.version = '1.0'
-                    MERGE (lib)-[:CONTAINS_CODELIST]->(codelist)
-                    MERGE (catalogue)-[:HAS_CODELIST]->(codelist)""",
-                        {"uid": data.get("configuredCodelistUid")},
-                    )
-                input_data = CTConfigPostInput(**data)
-                cls.config_service.post(input_data)
+        TestUtils.create_library()
+        TestUtils.create_library(name="UCUM", is_editable=True)
+        TestUtils.create_ct_catalogue()
+        codelist = TestUtils.create_ct_codelist()
+        TestUtils.create_study_ct_data_map(codelist_uid=codelist.codelist_uid)
+        TestUtils.create_study_fields_configuration()
 
     def test__find_by_uid__non_existing_uid__returns_none(self):
         with db.transaction:

@@ -15,5 +15,5 @@ class TimepointService(GenericObjectService[TimeframeAR]):
 
     aggregate_class = TimepointAR
     version_class = TimepointVersion
-    templateUidProperty = "timepointTemplateUid"
-    templateNameProperty = "timepointTemplate"
+    template_uid_property = "timepoint_template_uid"
+    template_name_property = "timepoint_template"

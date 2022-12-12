@@ -1,4 +1,4 @@
-"library","name","first_value","first_conjunction","second_value","second_conjunction","indication","cathegory","testing"
+"library","name","first_value","first_conjunction","second_value","second_conjunction","indication","category","testing"
 "Sponsor","test [ActivityInstance]","Body Weight",,,,,,
 "Sponsor","test [ActivityInstance]","Body Weight+Body Temperature","and",,,,,
 "Sponsor","test [ActivityInstance] and [DiseaseDisorder]","Body Temperature",,"Growth Hormone Deficiency Children",,,,

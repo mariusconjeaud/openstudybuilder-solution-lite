@@ -83,11 +83,11 @@ export default {
       if (this.extraDataFetcherFilters) {
         Object.assign(params.filters, { ...this.extraDataFetcherFilters })
       }
-      params.filters.studyUid = { v: studiesUids }
+      params.filters.study_uid = { v: studiesUids }
       study[this.dataFetcherName](params).then(resp => {
         this.studySelectionItems = resp.data.items
         this.studySelectionItems.forEach(el => {
-          el.studyId = this.studies[this.studies.findIndex((study) => study.uid === el.studyUid)].studyId
+          el.study_id = this.studies[this.studies.findIndex((study) => study.uid === el.study_uid)].study_id
         })
         this.total = resp.data.total
       })

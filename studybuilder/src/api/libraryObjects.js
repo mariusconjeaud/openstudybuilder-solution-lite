@@ -3,11 +3,13 @@ import repository from './repository'
 export default (basePath) => {
   return {
     get (status) {
-      let url = `${basePath}`
-      if (status) {
-        url += `?status=${status}`
+      const params = {
+        page_size: 0
       }
-      return repository.get(url)
+      if (status) {
+        params.status = status
+      }
+      return repository.get(`${basePath}`, { params })
     },
     getFiltered (params) {
       return repository.get(`${basePath}`, { params })
@@ -16,8 +18,16 @@ export default (basePath) => {
       return repository.get(`${basePath}/${uid}`)
     },
     getObjectByName (name) {
-      const encodedName = encodeURIComponent(encodeURIComponent(name))
-      return repository.get(`${basePath}/get-by-name/${encodedName}`, { ignoreErrors: true })
+      const params = {
+        page_size: 0,
+        filters: {
+          name: {
+            v: [name],
+            op: 'eq'
+          }
+        }
+      }
+      return repository.get(`${basePath}`, { params })
     },
     getObjectParameters (uid, params) {
       return repository.get(`${basePath}/${uid}/parameters`, { params })
@@ -44,7 +54,7 @@ export default (basePath) => {
       return repository.post(`${basePath}/${uid}/reactivate`)
     },
     newVersion (uid) {
-      return repository.post(`${basePath}/${uid}/new-version`)
+      return repository.post(`${basePath}/${uid}/versions`)
     }
   }
 }

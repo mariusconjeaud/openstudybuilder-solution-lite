@@ -65,10 +65,10 @@ class DictionaryTermGenericService(Generic[_AggregateRootType], ABC):
         return DictionaryTermAR.from_input_values(
             author=self.user_initials,
             dictionary_term_vo=DictionaryTermVO.from_input_values(
-                codelist_uid=term_input.codelistUid,
+                codelist_uid=term_input.codelist_uid,
                 name=term_input.name,
-                dictionary_id=term_input.dictionaryId,
-                name_sentence_case=term_input.nameSentenceCase,
+                dictionary_id=term_input.dictionary_id,
+                name_sentence_case=term_input.name_sentence_case,
                 abbreviation=term_input.abbreviation,
                 definition=term_input.definition,
             ),
@@ -82,12 +82,12 @@ class DictionaryTermGenericService(Generic[_AggregateRootType], ABC):
     ) -> _AggregateRootType:
         item.edit_draft(
             author=self.user_initials,
-            change_description=term_input.changeDescription,
+            change_description=term_input.change_description,
             dictionary_term_vo=DictionaryTermVO.from_input_values(
                 codelist_uid=item.dictionary_term_vo.codelist_uid,
                 name=term_input.name,
-                dictionary_id=term_input.dictionaryId,
-                name_sentence_case=term_input.nameSentenceCase,
+                dictionary_id=term_input.dictionary_id,
+                name_sentence_case=term_input.name_sentence_case,
                 abbreviation=term_input.abbreviation,
                 definition=term_input.definition,
             ),
@@ -137,7 +137,7 @@ class DictionaryTermGenericService(Generic[_AggregateRootType], ABC):
 
         # First, check that attributes provided for filtering exist in the return class
         # Properties can be nested => check if root property exists in class
-        if not models.utils.isAttributeInModel(
+        if not models.utils.is_attribute_in_model(
             field_name.split(".")[0], DictionaryTerm
         ):
             raise exceptions.NotFoundException(
@@ -190,21 +190,21 @@ class DictionaryTermGenericService(Generic[_AggregateRootType], ABC):
     @db.transaction
     def create(self, term_input: BaseModel) -> BaseModel:
         if not self._repos.dictionary_codelist_generic_repository.codelist_exists(
-            normalize_string(term_input.codelistUid)
+            normalize_string(term_input.codelist_uid)
         ):
             raise exceptions.BusinessLogicException(
-                f"There is no dictionary codelist identified by provided uid ({term_input.codelistUid})"
+                f"There is no dictionary codelist identified by provided uid ({term_input.codelist_uid})"
             )
 
         if not self._repos.library_repository.library_exists(
-            normalize_string(term_input.libraryName)
+            normalize_string(term_input.library_name)
         ):
             raise exceptions.BusinessLogicException(
-                f"There is no library identified by provided library name ({term_input.libraryName})"
+                f"There is no library identified by provided library name ({term_input.library_name})"
             )
 
         library_vo = LibraryVO.from_input_values_2(
-            library_name=term_input.libraryName,
+            library_name=term_input.library_name,
             is_library_editable_callback=(
                 lambda name: self._repos.library_repository.find_by_name(
                     name

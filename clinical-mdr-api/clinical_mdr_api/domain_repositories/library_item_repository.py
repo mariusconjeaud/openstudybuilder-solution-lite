@@ -274,7 +274,7 @@ class LibraryItemRepositoryImplBase(
                 self._recreate_relationship(
                     root, root.latest_draft, new_value, versioning_data
                 )
-                # self._close_relationship(root, root.latest_final, versioning_data)
+                self._close_relationship(root, root.latest_final, versioning_data)
 
             elif versioned_object.item_metadata.status == LibraryItemStatus.FINAL:
                 self._recreate_relationship(
@@ -826,8 +826,19 @@ class LibraryItemRepositoryImplBase(
                     relationship_manager_to_use = root.latest_draft
                 value_for_retrieve = relationship_manager_to_use.get_or_none()
                 if value_for_retrieve is None:
-                    value_for_retrieve = root.has_version.match(status=status.value)
-                    return None
+                    value_for_retrieve = root.has_version.match(
+                        status=status.value
+                    ).all()
+                    if not value_for_retrieve:
+                        return None
+                    end_dates = {
+                        root.has_version.relationship(node).end_date: node
+                        for node in value_for_retrieve
+                    }
+                    last_date = max(end_dates.keys())
+                    value_for_retrieve = end_dates[last_date]
+                    relationship_manager_to_use = root.has_version
+
                 relationship_for_retrieve = relationship_manager_to_use.relationship(
                     value_for_retrieve
                 )

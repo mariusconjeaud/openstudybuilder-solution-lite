@@ -188,9 +188,9 @@ export default {
       let jsonFilter = JSON.parse(this.filters)
       delete jsonFilter[value]
       let params = {
-        fieldName: (this.item.externalFilterSource ? this.item.externalFilterSource.substring(this.item.externalFilterSource.indexOf('$') + 1) : (this.item.filteringName ? this.item.filteringName : value)),
-        searchString: this.searchString,
-        resultCount: 10
+        field_name: (this.item.externalFilterSource ? this.item.externalFilterSource.substring(this.item.externalFilterSource.indexOf('$') + 1) : (this.item.filteringName ? this.item.filteringName : value)),
+        search_string: this.searchString,
+        result_count: 10
       }
       if (this.parameters) {
         params = Object.assign(params, this.parameters)

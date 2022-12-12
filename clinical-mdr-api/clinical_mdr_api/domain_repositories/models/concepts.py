@@ -15,6 +15,7 @@ from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
 )
 from clinical_mdr_api.domain_repositories.models.dictionary import UCUMTermRoot
 from clinical_mdr_api.domain_repositories.models.generic import (
+    ClinicalMdrRel,
     Library,
     VersionRelationship,
     VersionRoot,
@@ -34,7 +35,7 @@ class ConceptRoot(VersionRoot):
     __optional_labels__ = ["TemplateParameterValueRoot"]
     LIBRARY_REL_LABEL = "CONTAINS_CONCEPT"
 
-    has_library = RelationshipFrom(Library, LIBRARY_REL_LABEL)
+    has_library = RelationshipFrom(Library, LIBRARY_REL_LABEL, model=ClinicalMdrRel)
 
 
 class UnitDefinitionValue(ConceptValue):

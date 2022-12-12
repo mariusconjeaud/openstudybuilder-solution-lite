@@ -101,7 +101,8 @@
         "mandatory": "Mandatory",
         "view": "View",
         "relations": "Relations",
-        "duplicate":"Duplicate"
+        "duplicate": "Duplicate",
+        "edit_element": "Edit element"
     },
     "_errors": {
         "exclusive_select": "Field and Null Flavor can't be selected at the same time.",
@@ -116,6 +117,9 @@
         "no_parameter_values_selected": "No value(s) selected"
     },
     "_help": {
+        "CrfTemplates": {
+            "retired_date": "help text for retired date"
+        },
         "GenericTemplateForm": {
             "study_indication": "Indications, conditions, diseases or disorders in scope for the template. Select NA (not applicable), if template is generic not targeted specific studies.",
             "study_phase": "Study phases in scope for the template. Select NA (not applicable), if template is generic not targeted specific studies."
@@ -666,7 +670,7 @@
         "dashboard_description": "A simple graphical presentation of the current status and historical trends of the metadata stored in the Library",
         "codelist_description": "Find the CDISC controlled terminology, including the code lists, the valid values and associated definitions for each code list and the evolution in packages and terms over time. Sponsor defined list and terms are also included.",
         "dictionaries_description": "Find relevant external dictionaries and thesaurus for clinical development such as SNOMED, MedDRA, MED-RT, UNII, LOINC, UCUM. Since some of these dictionaries are very large, only selected terms relevant for the Novo Nordisk pipeline are included.",
-        "concepts_description": "Find controlled listings of the terms to use for generic concepts such as units, activities and activities.",
+        "concepts_description": "Find controlled listings of the terms to use for generic concepts such as units, activities, compounds and CRFs.",
         "syntax_templates_description": "View (or manage) the different syntax templates used for specifying the objectives, the endpoints, the eligibility, randomisation, dosing and other criteria for the individual studies. Only templates in status Final can be used under Studies.",
         "template_instantiations_description": "See how the different templates are used in the studies, including number of studies using a specific syntax and which studies.",
         "template_collections_description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud",
@@ -802,7 +806,11 @@
             "study_criteria": "Study Criteria",
             "study_interventions": "Study Interventions",
             "eligibility_criteria": "Eligibility Criteria",
-            "pharma_cm_spec": "PharmaCM Specifications",
+            "study_disclosure": "Study Disclosure",
+            "cdisc_ctr": "CDISC CTR",
+            "clinical_trials_gov": "ClinicalTrials.gov",
+            "eudra_ct": "EudraCT",
+            "who_ictrp": "WHO ICTRP",
             "trial_supplies_spec": "Trial Supplies Specifications",
             "randomisation_criteria": "Randomisation Criteria",
             "standarisation_plan": "Standarisation Plan",
@@ -883,7 +891,8 @@
     "GenericTemplateTable": {
         "sponsor_tab": "Sponsor Standards",
         "user_tab": "User Defined Templates",
-        "confirm_parameter_values_delete": "You are about to delete default parameter values"
+        "confirm_parameter_values_delete": "You are about to delete default parameter values",
+        "template_history_title":"History for template [{templateUid}]"
     },
     "GenericTemplateForm": {
         "study_indication": "Indication or disorder",
@@ -1032,7 +1041,18 @@
         "branches_uids": "Branch Arm Roots Uids",
         "planned_duration": "Planned duration",
         "for_study": "for Study",
-        "history": "history"
+        "history": "history",
+        "catalogue_name": "Catalogue Name",
+        "sponsor_pref_name": "Sponsored Preferred Name",
+        "code_submission_value": "Code Submission Value",
+        "name_submission_value": "Name Submission Value",
+        "nci_pref_name": "NCI Preferred Name",
+        "action": "Action",
+        "date": "Date",
+        "field": "Field",
+        "value_before": "Previous value",
+        "value_after": "New value",
+        "fields": "fields"
     },
     "DataTableExportButton": {
         "export": "Export",
@@ -1184,6 +1204,15 @@
         "design_matrix": "Design Matrix",
         "edit_visit_tableview": "Tabular Study Visits edit"
     },
+    "StudyStructureOverview": {
+        "arms": "Arms",
+        "branch_arms": "Branch arms",
+        "number_of_subjects": "Number of subjects",
+        "epochs": "Epochs",
+        "arms_number": "Number of arms:",
+        "planned_subjects": "Planned number of subjects:",
+        "study_design_class": "Study Design Class:"
+    },
     "NullFlavorSelect": {
         "label": "Reason for missing"
     },
@@ -1252,7 +1281,10 @@
         "update_version_retired_tooltip": "Template retired",
         "keep_old_version": "Keep old version",
         "use_new_version": "Use new version",
-        "confirm_delete": "The objective '{objective}' will be deleted"
+        "confirm_delete": "The objective '{objective}' will be deleted",
+        "edit_template_text": "Edit template text",
+        "global_history_title": "Study objectives history",
+        "study_objective_history_title": "History for study objective [{studyObjectiveUid}]"
     },
     "StudyObjectiveForm": {
         "add_title": "Add study objective",
@@ -1261,6 +1293,7 @@
         "step3_title": "Select objective level",
         "select_tpl_title": "Select objective template",
         "create_template_title": "Create template",
+        "edit_template_title": "Edit template",
         "step_edit_title": "Edit objective",
         "create_from_tpl_title": "Create study objective from template",
         "creation_mode_label": "Select method",
@@ -1311,8 +1344,8 @@
         "objective": "Objective",
         "time_frame": "Time frame",
         "units": "Unit",
-        "endpoint_level": "Level",
-        "endpoint_sub_level": "Sub-level",
+        "endpoint_level": "Endpoint level",
+        "endpoint_sub_level": "Endpoint sub-level",
         "objective_level": "Objective level",
         "add_endpoint": "Add new study endpoint",
         "delete_endpoint": "Delete study endpoint",
@@ -1338,7 +1371,10 @@
         "history_title": "Study Endpoint",
         "history": "Show study endpoint history",
         "confirm_delete": "The endpoint '{endpoint}' will be deleted",
-        "sort_help_msg": "You can only sort study endpoints of the same level"
+        "sort_help_msg": "You can only sort study endpoints of the same level",
+        "edit_template_text": "Edit template text",
+        "global_history_title": "Study endpoints history",
+        "study_endpoint_history_title": "History for study endpoint [{studyEndpointUid}]"
     },
     "StudyEndpointForm": {
         "add_title": "Add new study endpoint",
@@ -1353,6 +1389,7 @@
         "step3_title": "Define endpoint details",
         "step4_title": "Create time frame",
         "create_tpl_title": "Create endpoint title template",
+        "edit_tpl_title": "Edit endpoint title template",
         "endpoint_level_title": "Select endpoint level",
         "selected_endpoint": "Selected endpoint title",
         "selected_endpoint_template": "Selected endpoint title template",
@@ -1445,7 +1482,9 @@
         "confirm_delete": "The study compound '{compound}' will be removed",
         "confirm_delete_cascade": "The study compound '{compound}' and {compoundDosings} study compound dosing(s) will be removed",
         "confirm_delete_na": "The study compound will be removed",
-        "delete_compound_success": "Study compound deleted"
+        "delete_compound_success": "Study compound deleted",
+        "study_compound_history_title": "History for study compound [{studyCompoundUid}]",
+        "global_history_title": "Study compounds history"
     },
     "StudyCompoundForm": {
         "add_title": "Add study compound",
@@ -1481,7 +1520,9 @@
         "dose_value": "Dose Value",
         "dose_frequency": "Dose Frequency",
         "confirm_delete": "The study compound dosing '{element} / {compound}' will be removed",
-        "delete_success": "Study compound dosing deleted"
+        "delete_success": "Study compound dosing deleted",
+        "study_compound_dosing_history_title": "History for study compound dosing [{studyCompoundDosingUid}]",
+        "global_history_title": "Study compound dosings history"
     },
     "StudyCompoundDosingForm": {
         "add_title": "Add study compound dosing",
@@ -1619,8 +1660,6 @@
     },
     "ClinicalMetadataTable": {
         "label": "Label",
-        "column_names": "Column names",
-        "column_labels": "Column labels",
         "topic_code": "Topic code",
         "short_topic_code": "Short topic code",
         "convert_to_si_unit": "Convert to SI Unit",
@@ -1666,12 +1705,13 @@
         "title": "Objectives and Endpoints",
         "downloading": "Download in progress...",
         "download_docx": "Download DOCX",
-        "loading": "Loading Objectives and Endpoints..."
+        "loading": "Reloading Objectives and Endpoints..."
     },
     "ActivityTemplatesView": {
         "title": "Activity Templates"
     },
     "ActivityTemplateTable": {
+        "singular_title": "Activity template",
         "add_template": "Add a new activity template",
         "activity_group": "Activity group",
         "activity_subgroup": "Activity subgroup",
@@ -1768,7 +1808,14 @@
         "code_submission_value": "Code submission value",
         "subject_trial_status": "Subject Trial Status"
     },
+    "CodelistTermTable": {
+        "open_sponsor_history": "Sponsor values history",
+        "open_ct_history": "CT values history",
+        "history_label_name": "term sponsor values",
+        "history_label_attributes": "term CT values"
+    },
     "CodelistTermDetail": {
+        "add_term": "Add term",
         "term_detail": "Term Detail",
         "concept_id": "Concept ID",
         "sponsor_title": "For the term sponsor values",
@@ -1895,7 +1942,8 @@
     },
     "CrfFormTable": {
         "repeating": "Repeating",
-        "singular_title": "CRF Form"
+        "singular_title": "CRF Form",
+        "form_history_title": "History for form [{formUid}]"
     },
     "CrfTemplate": {
         "add_title": "Add CRF Template"
@@ -2087,7 +2135,9 @@
         "add_to_filter": "Add to filter",
         "remove_from_filter": "Remove from filter",
         "hide_column": "Hide column",
-        "no_data": "No data available"
+        "no_data": "No data available",
+        "column_names": "Column names",
+        "column_labels": "Column labels"
     },
     "NNTableTooltips": {
         "filters": "Filters",
@@ -2113,7 +2163,9 @@
         "add_criteria": "Add criteria",
         "criteria": "criteria",
         "confirm_delete": "The criterion: '{criterion}' will be deleted",
-        "delete_success": "Study criteria deleted"
+        "delete_success": "Study criteria deleted",
+        "global_history_title": "Study criteria history",
+        "study_criteria_history_title": "History for study criteria [{studyCriteriaUid}]"
     },
     "EligibilityCriteriaForm": {
         "add_inclusion_criteria": "Add inclusion criteria",
@@ -2235,6 +2287,8 @@
         "visit_start_rule": "Visit start rule",
         "visit_stop_rule": "Visit end rule",
         "modified_user": "Modified by",
+        "study_duration_days": "Study duration days label",
+        "study_duration_weeks": "Study duration weeks label",
         "change_description": "Reason",
         "visit_short_name": "Visit short name",
         "visit_name": "Visit name",
@@ -2274,7 +2328,8 @@
         "visit_duplicated": "Visit duplicated",
         "duplicate_visit": "Duplicate Study Visit",
         "visit_class": "Visit Class",
-        "visit_group": "Visit group"
+        "visit_group": "Visit group",
+        "special_visit": "Special visit"
     },
     "HelpMessages": {
         "units": "Note that this table is providing the UCUM tool that allow the end user to verify and link a unit with one existing in the UCUM referential system. You just need to start entering few first letters and the UCUM engine will provide you with some suggestion. In order to keep the validated unit in the UCUM referential, just click on it in the list and the result will be kept with the corresponding unit.",
@@ -2293,7 +2348,9 @@
         "history_title": "Study Epoch",
         "colour": "Assigned colour",
         "delete_success": "Epoch deleted",
-        "epoch_linked_to_visits_warning": "Epoch '{epoch}' cannot be deleted since one or more visits have already been assigned to the epoch"
+        "epoch_linked_to_visits_warning": "Epoch '{epoch}' cannot be deleted since one or more visits have already been assigned to the epoch",
+        "global_history_title": "Study epochs history",
+        "study_epoch_history_title":"History for study epoch [{epochUid}]"
     },
     "StudyEpochForm": {
         "add_title": "Add study epoch",
@@ -2323,11 +2380,6 @@
         "study_id": "Study ID",
         "study_acronym": "Study acronym",
         "help_message": "Select study ID (or acronym if ID is not available)"
-    },
-    "FiltersForm": {
-        "title": "Edit filters",
-        "conditional_filters": "Conditional filters",
-        "clear_all": "Clear filters"
     },
     "DictionaryTermTable": {
         "lower_case_name": "Lower case name",
@@ -2368,16 +2420,6 @@
         "sdtm_ta": "SDTM TA",
         "sdtm_ti": "SDTM TI",
         "sdtm_td": "SDTM TD"
-    },
-    "SdtmTable": {
-        "studyid": "STUDYID",
-        "tsparm": "TSPARM",
-        "tsparmcd": "TSPARMCD",
-        "tsval": "TSVAL",
-        "tsvalnf": "TSVALNF",
-        "tsvalcd": "TSVALCD",
-        "tsvcdref": "TSVCDREF",
-        "tsvcdver": "TSVCDVER"
     },
     "SdtmDesignTable": {
         "trial_arm": "Trial Arm",
@@ -2434,7 +2476,10 @@
         "delete_success": "Visit deleted",
         "study_day": "Study Day",
         "study_week": "Study Week",
-        "duplicate": "Duplicate"
+        "duplicate": "Duplicate",
+        "close_edit_mode": "Close edit mode",
+        "global_history_title": "Study visits history",
+        "study_visit_history_title":"History for study visit [{visitUid}]"
     },
     "StudyVisitTimeline": {
         "history": "History",
@@ -2478,13 +2523,6 @@
         "detailed_flowchart": "Detailed Flowchart",
         "protocol_flowchart": "Protocol Flowchart",
         "activity_instructions": "Activity Instructions"
-    },
-    "ObjectiveTemplateFiltersForm": {
-        "title": "Select template filters",
-        "category": "Objective category",
-        "confirmatory_testing": "Confirmatory testing",
-        "indication": "Indication or disorder",
-        "study_phase": "Study phase"
     },
     "License": {
         "title": "License"
@@ -2570,7 +2608,9 @@
         "confirm_delete_side_effect": "Removing this study activity will impact protocol flowchart display",
         "delete_success": "Study activity deleted",
         "batch_edit_no_selection": "Select the items (rows) in scope for Batch Editing. Use the Select rows switch button to activate the row-selection boxes. Then select the rows in scope for the editing. You can batch select rows by using search or filters to zoom in on the relevant rows and then select all by using the tick-box in the header row.",
-        "edit_activity_selection": "Batch edit selected rows"
+        "edit_activity_selection": "Batch edit selected rows",
+        "global_history_title": "Study activities history",
+        "study_activity_history_title": "History for study activity [{studyActivityUid}]"
     },
     "StudyActivity": {
         "activity_group": "Activity group",
@@ -2671,7 +2711,9 @@
         "description": "Description",
         "arm_deleted": "Arm deleted",
         "arm_delete_notification": "There are some Branch arms, Design Cells or Cohorts related to this Arm. Are you sure you want to delete it?",
-        "study_arm": "Study arm"
+        "study_arm": "Study arm",
+        "global_history_title": "Study arms history",
+        "study_arm_history_title": "History for study arm [{armUid}]"
     },
     "StudyArmsForm": {
         "connected_branches": "Connected Branches",
@@ -2808,7 +2850,9 @@
         "el_edited": "Study element edited",
         "body_measurements": "Body Measurements",
         "confirm_delete": "The study element '{element}' will be removed",
-        "confirm_delete_cascade": "The study element '{element}' and {compoundDosings} study compound dosing(s) will be removed"
+        "confirm_delete_cascade": "The study element '{element}' and {compoundDosings} study compound dosing(s) will be removed",
+        "global_history_title": "Study elements history",
+        "study_element_history_title": "History for study element [{elementUid}]"
     },
     "DesignMatrix": {
         "global_help": "For each of the Study Arms, select the relevant elements in the given epochs. If a study element is missing then go back to the Study Elements tab to create/update the elments",
@@ -2852,7 +2896,9 @@
         "display": "Display",
         "annotations": "Annotations and reporting",
         "delete_warning_1": "This Form is used in",
-        "delete_warning_2": "Templates. Are you sure you want to delete it?"
+        "delete_warning_2": "Templates. Are you sure you want to delete it?",
+        "impl_notes": "Implementation Notes",
+        "compl_instructions": "Completion Instructions"
     },
     "CRFItemGroups": {
         "add_group": "Add CRF Item Group",
@@ -2886,7 +2932,10 @@
         "displayed_text": "Displayed text",
         "help_for_site": "Help for site",
         "delete_warning_1": "This Item Group is used in",
-        "delete_warning_2": "Forms. Are you sure you want to delete it?"
+        "delete_warning_2": "Forms. Are you sure you want to delete it?",
+        "impl_notes": "Implementation Notes",
+        "compl_instructions": "Completion Instructions",
+        "group_history_title": "History for item group [{groupUid}]"
     },
     "CRFItems": {
         "type": "Type",
@@ -2920,7 +2969,10 @@
         "codelist_subset": "Code list subset",
         "multiple_choice": "Multiple choice",
         "delete_warning_1": "This Item is used in",
-        "delete_warning_2": "Item Groups. Are you sure you want to delete it?"
+        "delete_warning_2": "Item Groups. Are you sure you want to delete it?",
+        "impl_notes": "Implementation Notes",
+        "compl_instructions": "Completion Instructions",
+        "item_history_title": "History for item [{itemUid}]"
     },
     "StudyBranchArms": {
         "no_data": "No data available - Create Study Arm first",
@@ -2944,10 +2996,12 @@
         "add_arm": "Add study arm",
         "colour": "Colour",
         "study_branch_arm": "Study Branch Arm",
-        "subjects_exceeded": "The total number of Subjects in branch Arms to the Study Arm is exceeding the number os subjects in the main Study Arm. Please adjust.",
+        "subjects_exceeded": "The total number of Subjects in branch Arms to the Study Arm is exceeding the number of subjects in the main Study Arm. Please adjust.",
         "value_less_then": "Value must be less than",
         "number_of_subjects_exceeds": "Number of subjects in a branch cannot exceed total number of subject in the study",
-        "branch_delete_notification": "There are some Design Cells related to this Branch. Are you sure you want to delete it?"
+        "branch_delete_notification": "There are some Design Cells related to this Branch. Are you sure you want to delete it?",
+        "global_history_title": "Study branch arms history",
+        "study_branch_history_title": "History for study branch arm [{branchUid}]"
     },
     "StudyCohorts": {
         "code": "Code",
@@ -2969,7 +3023,10 @@
         "add_arm": "Add study arm",
         "value_less_then": "Value must be less than",
         "number_of_subjects_exceeds": "Number of subjects in a cohort cannot exceed total number of subject in the study",
-        "study_cohort": "Study cohort"
+        "study_cohort": "Study cohort",
+        "add_study_cohort": "Add Study Cohort",
+        "global_history_title":"Study cohorts history",
+        "study_arm_history_title": "History for study cohort [{cohortUid}]"
     },
     "DefaultParameterValuesSetForm": {
         "add_title": "Add default parameter values",
@@ -2985,7 +3042,8 @@
         "effective_date": "Effective",
         "retired_date": "Obsolete",
         "template_updated": "Template updated",
-        "template_created": "Template created"
+        "template_created": "Template created",
+        "template_history_title": "History for template [{templateUid}]"
     },
     "CrfTree": {
         "link": "Link",
@@ -3005,7 +3063,18 @@
         "expand_all": "Expand All",
         "reorder": "Reorder content",
         "link_existing": "Link existing element",
-        "create_and_link": "Create and link new element"
+        "create_and_link": "Create and link new element",
+        "locked": "Locked",
+        "sdv": "SDV",
+        "ref_data": "Referential Data",
+        "ref_attr": "Reference attributes",
+        "def_attr": "Definition attributes",
+        "preview_odm": "Preview ODM",
+        "go_to_def": "Go to definition",
+        "expand": "Expand All",
+        "entry_required": "Data Entry Required",
+        "data_type": " Data Type",
+        "impl_notes":"Implementation Notes"
     },
     "CrfConditionForm": {
         "set_condition": "Set a Condition",
@@ -3036,12 +3105,18 @@
         "sdtm": "SDTM Annotation",
         "specific": "Specific",
         "provide_uri": "Provide URI",
-        "template": "CRF Template",
         "stylesheet": "Stylesheet",
         "loading_message": "Please be patient, we are creating your ODM-XML document",
         "load": "Load",
         "load_another": "Reload",
-        "odm_references": "ODM References"
+        "odm_references": "ODM References",
+        "odm_element_type": "ODM Element Type",
+        "odm_element_name": "ODM Element Name",
+        "template": "Template",
+        "form": "Form",
+        "item_group": "Item Group",
+        "item": "Item",
+        "include_draft": "Include Draft Elements"
     },
     "TemplateIndexingDialog": {
         "title": "Edit indexing properties",
@@ -3050,6 +3125,17 @@
     "CrfDuplicationForm": {
         "duplicate": "Duplicate element",
         "include": "Include relations",
-        "attributes": "Attributes of duplicates"
+        "attributes": "Attributes of duplicates",
+        "item_to_link": "Item To Link To"
+    },
+    "CrfReferencesForm": {
+        "locked": "Locked",
+        "mandatory": "Mandatory",
+        "sdv": "SDV",
+        "data_entry": "Data Entry Required",
+        "title": "Reference attributes of ",
+        "warning_1": "You are about to change a property that will affect ",
+        "warning_forms": " other forms. Are you sure you want to continue?",
+        "warning_templ": " other templates. Are you sure you want to continue?"
     }
 }

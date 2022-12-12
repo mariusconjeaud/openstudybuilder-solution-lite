@@ -32,7 +32,7 @@ export default (basePath) => {
       return repository.post(`${basePath}/${uid}/approve?cascade=${cascade}`)
     },
     createNewVersion (uid, data) {
-      return repository.post(`${basePath}/${uid}/new-version`, data)
+      return repository.post(`${basePath}/${uid}/versions`, data)
     },
     inactivate (uid) {
       return repository.post(`${basePath}/${uid}/inactivate`)

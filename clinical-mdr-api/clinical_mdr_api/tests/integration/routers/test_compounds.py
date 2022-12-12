@@ -39,7 +39,7 @@ class CompoundTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "compound.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "changeDescription"]
+        return ["start_date", "end_date", "user_initials", "change_description"]
 
 
 class CompoundNegativeTest(api.APITest):
@@ -61,7 +61,7 @@ class CompoundNegativeTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "compound_negative.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time", "userInitials"]
+        return ["start_date", "end_date", "uid", "time", "user_initials"]
 
 
 class CompoundAliasTest(api.APITest):
@@ -83,7 +83,7 @@ class CompoundAliasTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "compound_alias.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials"]
+        return ["start_date", "end_date", "user_initials"]
 
 
 class CompoundAliasNegativeTest(api.APITest):
@@ -105,4 +105,4 @@ class CompoundAliasNegativeTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "compound_alias_negative.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time", "userInitials"]
+        return ["start_date", "end_date", "uid", "time", "user_initials"]

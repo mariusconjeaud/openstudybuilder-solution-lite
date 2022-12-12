@@ -5,31 +5,26 @@ from collections import defaultdict
 from typing import Sequence
 
 import neo4j
-from neomodel import match, match_q, properties, relationship_manager
+from neomodel import AliasProperty, match, match_q, properties, relationship_manager
 from neomodel.core import db
 from opencensus.trace import execution_context
 
 
 def convert_to_tz_aware_datetime(value: datetime.datetime):
     # Function created to properly adjust timezone part in Python datetime
-    # TODO: this is to be removed - we need to start time
-    # zone aware datetimes. astimezone returns date with UTC tz
-    return value.astimezone()
+    return value.astimezone(tz=datetime.timezone.utc)
 
 
 def convert_to_datetime(value: neo4j.time.DateTime):
     # Function created to properly represent the DateTime from database as Python datetime
     # Workaround for improper default rounding in to_native method
-
     dt: datetime.datetime = value.to_native()
     if hasattr(dt, "second"):
         subseconds, _ = math.modf(value.second)
         # Subseconds are between 0.0 and 0.999 999 999
         # thats why to get microseconds it is needed to multiply by 1000000
         microseconds: int = round(subseconds * 1000000)
-        # TODO: this is to be removed - we need to start time
-        # zone aware datetimes.
-        return dt.replace(microsecond=microseconds).replace(tzinfo=None)
+        return dt.replace(microsecond=microseconds).replace(tzinfo=dt.tzinfo)
     return dt
 
 
@@ -49,28 +44,35 @@ def process_filter_args(cls, kwargs):
 
     for key, value in kwargs.items():
         current_class = cls
-        prop = ""
+        current_rel_model = None
         leaf_prop = None
         operator = "="
-        for part in key.split("__"):
+        is_rel_property = "|" in key
+        prop = key
+        for part in re.split(r"__|\|", key):
             defined_props = current_class.defined_properties(rels=True)
+            # update defined props dictionary with relationship properties if
+            # we are filtering by property
+            if is_rel_property and current_rel_model:
+                defined_props.update(current_rel_model.defined_properties(rels=True))
             if part in defined_props:
                 if isinstance(
                     defined_props[part], relationship_manager.RelationshipDefinition
                 ):
                     defined_props[part]._lookup_node_class()
                     current_class = defined_props[part].definition["node_class"]
-                if prop:
-                    prop += "__"
-                prop += part
+                    current_rel_model = defined_props[part].definition["model"]
             elif part in match.OPERATOR_TABLE:
                 operator = match.OPERATOR_TABLE[part]
+                prop, _ = prop.rsplit("__", 1)
                 continue
             else:
                 raise ValueError(f"No such property {part} on {cls.__name__}")
             leaf_prop = part
-
-        property_obj = getattr(current_class, leaf_prop)
+        if is_rel_property and current_rel_model:
+            property_obj = getattr(current_rel_model, leaf_prop)
+        else:
+            property_obj = getattr(current_class, leaf_prop)
 
         if isinstance(property_obj, properties.AliasProperty):
             prop = property_obj.aliased_to()
@@ -107,7 +109,6 @@ def process_filter_args(cls, kwargs):
         db_property = prop
 
         output[db_property] = (operator, deflated_value)
-
     return output
 
 
@@ -190,15 +191,39 @@ class CustomQueryBuilder(match.QueryBuilder):
             self.build_traversal_from_path(
                 rel_name, self.node_set.source, optional_traversal=True
             )
-
+        for rel_name in self.node_set._optional_relations_to_fetch_and_collect:
+            self.build_traversal_from_path(
+                rel_name,
+                self.node_set.source,
+                optional_traversal=True,
+                collect_variables=True,
+            )
+        for item in self.node_set._optional_relations_to_fetch_into_one:
+            for rel_name, name_to_map in item.items():
+                self.build_traversal_from_path(
+                    rel_name,
+                    self.node_set.source,
+                    optional_traversal=True,
+                    include_rel_in_return=True,
+                    new_name_for_variable=name_to_map,
+                )
+        self.build_case_clause_from_variable_to_merge()
         self.build_source(self.node_set)
 
-        if hasattr(self.node_set, "skip"):
-            self._ast["skip"] = self.node_set.skip
-        if hasattr(self.node_set, "limit"):
-            self._ast["limit"] = self.node_set.limit
+        if hasattr(self.node_set, "_skip_nodes"):
+            self._ast["_skip_nodes"] = self.node_set._skip_nodes
+        if hasattr(self.node_set, "_limit_nodes"):
+            self._ast["_limit_nodes"] = self.node_set._limit_nodes
 
         return self
+
+    def _add_to_merge_clause(self, name, new_name):
+        if "variables_to_merge" not in self._ast:
+            self._ast["variables_to_merge"] = {}
+        if new_name not in self._ast["variables_to_merge"]:
+            self._ast["variables_to_merge"][new_name] = []
+        if name not in self._ast["variables_to_merge"][new_name]:
+            self._ast["variables_to_merge"][new_name].append(name)
 
     def _add_to_return_set(self, name):
         if "return_set" not in self._ast:
@@ -206,19 +231,41 @@ class CustomQueryBuilder(match.QueryBuilder):
         if name not in self._ast["return_set"] and name != self._ast.get("return"):
             self._ast["return_set"].append(name)
 
+    def _add_to_collect_set(self, name):
+        if "collect" not in self._ast:
+            self._ast["collect"] = []
+        if name not in self._ast["collect"] and name != self._ast.get("collect"):
+            self._ast["collect"].append(name)
+
+    def build_case_clause_from_variable_to_merge(self):
+        if "variables_to_merge" in self._ast:
+            self._ast["case"] = []
+            for new_variable_name, old_names in self._ast["variables_to_merge"].items():
+                case = ""
+                for old_name in old_names:
+                    case += f" WHEN {old_name} IS NOT NULL THEN {old_name} "
+                case += f" END AS {new_variable_name}"
+                self._ast["case"].append(case)
+                self._add_to_return_set(new_variable_name)
+
     def build_traversal_from_path(
         self,
         path: str,
         source_class,
         include_nodes_in_return=True,
+        include_rel_in_return=False,
         optional_traversal=False,
+        is_rel_filtering=False,
+        new_name_for_variable=None,
+        collect_variables=False,
     ):
         src_class = source_class
         stmt = ""
         relation_tree_map = self._ast["relation_tree_map"]
-        for part in path.split("__"):
+        splitted_path = re.split(r"__|\|", path)
+        last_rel = splitted_path[-1]
+        for part in splitted_path:
             relationship = getattr(src_class, part)
-
             # build source
             if "node_class" not in relationship.definition:
                 relationship._lookup_node_class()
@@ -228,9 +275,11 @@ class CustomQueryBuilder(match.QueryBuilder):
             self.node_counter[rel_reference] += 1
             rhs_name = f"{rhs_label.lower()}_{part}_{self.node_counter[rel_reference]}"
             rhs_ident = f"{rhs_name}:{rhs_label}"
-            if include_nodes_in_return:
+            # we want to collect only last node on the requested traversal
+            if collect_variables and last_rel == part:
+                self._add_to_collect_set(rhs_name)
+            elif include_nodes_in_return:
                 self._add_to_return_set(rhs_name)
-
             if not stmt:
                 lhs_label = src_class.__label__
                 lhs_name = lhs_label.lower()
@@ -243,17 +292,32 @@ class CustomQueryBuilder(match.QueryBuilder):
                     self._ast["match"].remove(f"({lhs_ident}")
             else:
                 lhs_ident = stmt
+
+            rel_ident = self.create_ident()
+            if is_rel_filtering:
+                rhs_name = rel_ident
+            if new_name_for_variable:
+                self._add_to_merge_clause(rel_ident, new_name_for_variable)
             if part not in relation_tree_map:
                 relation_tree_map[part] = {
                     "target": relationship.definition["node_class"],
                     "children": {},
                     "variable_name": rhs_name,
+                    "rel_variable_name": rel_ident,
                 }
-
+            if new_name_for_variable and new_name_for_variable not in relation_tree_map:
+                relation_tree_map[new_name_for_variable] = {
+                    "target": relationship.definition["node_class"],
+                    "children": {},
+                    "variable_name": new_name_for_variable,
+                    "rel_variable_name": new_name_for_variable,
+                }
             # FIXME: is it useful?
             # self._ast['result_class'] = relationship.definition['node_class']
 
-            rel_ident = self.create_ident()
+            # add relationship variable to the return set
+            if include_rel_in_return:
+                self._add_to_return_set(rel_ident)
             stmt = _rel_helper(
                 lhs=lhs_ident,
                 rhs=rhs_ident,
@@ -278,16 +342,22 @@ class CustomQueryBuilder(match.QueryBuilder):
         # Instead of using only one MATCH statement for every relation
         # to follow, we use one MATCH per relation (to avoid cartesian
         # product issues...). This part will need some refinement!
-        query += " MATCH "
-        query += " MATCH ".join(i for i in self._ast["match"])
-
-        if "where" in self._ast and self._ast["where"]:
-            query += " WHERE "
-            query += " AND ".join(self._ast["where"])
+        if len(self._ast["match"]) > 0:
+            query += " MATCH "
+            query += " MATCH ".join(i for i in self._ast["match"])
 
         if len(self._ast["optional match"]) > 0:
             query += " OPTIONAL MATCH "
             query += " OPTIONAL MATCH ".join(i for i in self._ast["optional match"])
+
+        query += " WITH * "
+        if "case" in self._ast and self._ast["case"]:
+            for case in self._ast["case"]:
+                query += f", CASE {case}"
+
+        if "where" in self._ast and self._ast["where"]:
+            query += " WHERE "
+            query += " AND ".join(self._ast["where"])
 
         if "with" in self._ast and self._ast["with"]:
             query += " WITH "
@@ -301,16 +371,21 @@ class CustomQueryBuilder(match.QueryBuilder):
             if "return" in self._ast:
                 query += ", "
             query += ", ".join(self._ast["return_set"])
+        if "collect" in self._ast:
+            if "return_set" in self._ast:
+                query += ","
+            query += ", ".join(f"collect({c}) as {c}" for c in self._ast["collect"])
 
         if "order_by" in self._ast and self._ast["order_by"]:
             query += " ORDER BY "
             query += ", ".join(self._ast["order_by"])
 
-        if "skip" in self._ast:
-            query += f" SKIP {self._ast['skip']:d}"
+        # add pagination clause if requested page size is greater than 0
+        if self._ast["_limit_nodes"] and self._ast["_limit_nodes"] > 0:
+            if self._ast["_skip_nodes"]:
+                query += f" SKIP {self._ast['_skip_nodes']:d}"
 
-        if "limit" in self._ast:
-            query += f" LIMIT {self._ast['limit']:d}"
+            query += f" LIMIT {self._ast['_limit_nodes']:d}"
 
         return query
 
@@ -327,11 +402,24 @@ class CustomQueryBuilder(match.QueryBuilder):
 
     def _build_filter_statements(self, ident, filters, target, source_class):
         for prop, op_and_val in filters.items():
-            if "__" in prop:
-                path, prop = prop.rsplit("__", 1)
-                ident = self.build_traversal_from_path(
-                    path, source_class, include_nodes_in_return=True
-                )
+            if "__" in prop or "|" in prop:
+                is_rel_filter = "|" in prop
+                ident = self.lookup_query_variable(prop)
+                if is_rel_filter:
+                    path, prop = prop.rsplit("|", 1)
+                else:
+                    path, prop = prop.rsplit("__", 1)
+                if not ident:
+                    optional_traversal = False
+                    if is_rel_filter:
+                        optional_traversal = True
+                    ident = self.build_traversal_from_path(
+                        path,
+                        source_class,
+                        include_nodes_in_return=True,
+                        optional_traversal=optional_traversal,
+                        is_rel_filtering=is_rel_filter,
+                    )
             op, val = op_and_val
             if op in match._UNARY_OPERATORS:
                 # unary operators do not have a parameter
@@ -361,7 +449,7 @@ class CustomQueryBuilder(match.QueryBuilder):
 
     def _execute(self, lazy=False, dict_output=False):
         """
-        Overidde of the original method.
+        Override of the original method.
         Mostly a copy/paste except we change the results format.
         """
         if lazy:
@@ -387,6 +475,60 @@ class CustomQueryBuilder(match.QueryBuilder):
             return [n[0] for n in results]
         return results
 
+    def _count(self):
+        self._ast["return"] = f"count({self._ast['return']})"
+        self._ast.pop("return_set", None)
+        # drop order_by, results in an invalid query
+        self._ast.pop("order_by", None)
+        query = self.build_query()
+        results, _ = db.cypher_query(query, self._query_params)
+        return int(results[0][0])
+
+    def build_order_by(self, ident, source):
+        if "?" in source._order_by:
+            self._ast["with"] = f"{ident}, rand() as r"
+            self._ast["order_by"] = "r"
+        else:
+            order_by = []
+            for p in source._order_by:
+                is_rel_property = "|" in p
+                if "__" not in p and not is_rel_property:
+                    order_by.append(f"{ident}.{p}")
+                else:
+                    prop = (
+                        p.split("__")[-1] if not is_rel_property else p.split("|")[-1]
+                    )
+                    order_by_clause = self.lookup_query_variable(p)
+                    order_by.append(f"{order_by_clause}.{prop}")
+            self._ast["order_by"] = order_by
+
+    def lookup_query_variable(self, prop):
+        relation_tree_map = self._ast["relation_tree_map"]
+        if not relation_tree_map:
+            return None
+        is_rel_property = "|" in prop
+        traversals = re.split(r"__|\|", prop)
+        if len(traversals) == 0:
+            raise ValueError("Can only lookup traversal variables")
+        if traversals[0] not in relation_tree_map:
+            return None
+        relation_tree_map = relation_tree_map[traversals[0]]
+        variable_to_return = None
+        last_property = traversals[-1]
+        for part in traversals[1:]:
+            if part in relation_tree_map["children"]:
+                relation_tree_map = relation_tree_map["children"][part]
+            elif part == last_property:
+                # if last part of prop is the last traversal
+                # we are safe to lookup the variable from the query
+                if is_rel_property:
+                    variable_to_return = f"{relation_tree_map['rel_variable_name']}"
+                else:
+                    variable_to_return = f"{relation_tree_map['variable_name']}"
+            else:
+                break
+        return variable_to_return
+
 
 class CustomNodeSet(match.NodeSet):
 
@@ -397,6 +539,11 @@ class CustomNodeSet(match.NodeSet):
 
         self._relations_to_fetch = []
         self._optional_relations_to_fetch = []
+        self._optional_relations_to_fetch_and_collect = []
+        self._optional_relations_to_fetch_into_one = {}
+        self._limit_nodes = None
+        self._skip_nodes = None
+        self._order_by = []
 
     def all(self, lazy=False, dict_output=False):
         """
@@ -418,15 +565,52 @@ class CustomNodeSet(match.NodeSet):
         self._optional_relations_to_fetch = relation_names
         return self
 
+    def fetch_optional_relations_and_collect(self, *relation_names):
+        """Custom method to specify a set of extra optional relations to return in collection."""
+        self._optional_relations_to_fetch_and_collect = relation_names
+        return self
+
+    def fetch_optional_relations_into_one_variable(self, *relation_names):
+        """Custom method to specify a set of extra optional relations to return that are stored in one query variable.
+        Only one of the requested relations won't be None and this relationship will be stored as variable in cypher query"""
+        self._optional_relations_to_fetch_into_one = relation_names
+        return self
+
+    def limit_results(self, limit):
+        """Custom method to specify a limit clause added to the query."""
+        self._limit_nodes = limit
+        return self
+
+    def skip_results(self, skip):
+        """Custom method to specify a skip clause added to the query."""
+        self._skip_nodes = skip
+        return self
+
     def _to_relation_tree(self, root_node, other_nodes, relation_tree_map):
         """Recursive method to build root_node's relation tree from relation_tree_map."""
         root_node._relations = {}
         for name, relation_def in relation_tree_map.items():
             for var_name, node in other_nodes.items():
-                if var_name == relation_def["variable_name"] and node is not None:
-                    root_node._relations[name] = self._to_relation_tree(
-                        node, other_nodes, relation_def["children"]
-                    )
+                if (
+                    var_name
+                    in [
+                        relation_def["variable_name"],
+                        relation_def["rel_variable_name"],
+                    ]
+                    and node is not None
+                ):
+                    if isinstance(node, list):
+                        root_node._relations[name] = []
+                        for n in node:
+                            root_node._relations[name].append(
+                                self._to_relation_tree(
+                                    n, other_nodes, relation_def["children"]
+                                )
+                            )
+                    else:
+                        root_node._relations[name] = self._to_relation_tree(
+                            node, other_nodes, relation_def["children"]
+                        )
         return root_node
 
     def to_relation_trees(self):
@@ -454,11 +638,43 @@ class CustomNodeSet(match.NodeSet):
                 if node.__class__ is self.source:
                     root_node = node
                 else:
-                    other_nodes[name] = node
+                    if isinstance(node, list) and isinstance(node[0], list):
+                        other_nodes[name] = node[0]
+                    else:
+                        other_nodes[name] = node
             results.append(
                 self._to_relation_tree(root_node, other_nodes, relation_tree_map)
             )
         return results
+
+    def order_by(self, *props):
+        """
+        Order by properties. Prepend with minus to do descending. Pass None to
+        remove ordering.
+        """
+        should_remove = len(props) == 1 and props[0] is None
+        if not hasattr(self, "_order_by") or should_remove:
+            self._order_by = []
+            if should_remove:
+                return self
+        if "?" in props:
+            self._order_by.append("?")
+        else:
+            for prop in props:
+                prop = prop.strip()
+                if prop.startswith("-"):
+                    prop = prop[1:]
+                    desc = True
+                else:
+                    desc = False
+
+                if prop in self.source_class.defined_properties(rels=False):
+                    property_obj = getattr(self.source_class, prop)
+                    if isinstance(property_obj, AliasProperty):
+                        prop = property_obj.aliased_to()
+
+                self._order_by.append(prop + (" DESC" if desc else ""))
+        return self
 
 
 def classproperty(f) -> CustomNodeSet:

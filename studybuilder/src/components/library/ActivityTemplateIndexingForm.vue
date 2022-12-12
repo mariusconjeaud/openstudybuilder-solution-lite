@@ -11,7 +11,7 @@
       <v-row>
         <v-col cols="11">
           <v-autocomplete
-            v-model="form.activityGroup"
+            v-model="form.activity_group"
             :label="$t('ActivityDescriptionTemplateForm.group')"
             :items="groups"
             item-text="name"
@@ -31,7 +31,7 @@
       <v-row>
         <v-col cols="11">
           <v-autocomplete
-            v-model="form.activitySubGroups"
+            v-model="form.activity_subgroups"
             :label="$t('ActivityDescriptionTemplateForm.sub_group')"
             :items="subGroups"
             item-text="name"
@@ -102,14 +102,14 @@ export default {
   methods: {
     preparePayload (form) {
       const result = {}
-      result.activityGroupUids = [form.activityGroup]
-      result.activitySubGroupUids = []
-      for (const item of form.activitySubGroups) {
+      result.activity_group_uids = [form.activity_group]
+      result.activity_subgroup_uids = []
+      for (const item of form.activity_subgroups) {
         const itemUid = (typeof item !== 'string') ? item.uid : item
-        result.activitySubGroupUids.push(itemUid)
+        result.activity_subgroup_uids.push(itemUid)
       }
       if (form.activities) {
-        result.activityUids = form.activities.map(item => item.uid)
+        result.activity_uids = form.activities.map(item => item.uid)
       }
       return result
     },
@@ -119,13 +119,14 @@ export default {
         this.subGroups = resp.data.items
       }
       if (!noSubgroupReset) {
-        this.$set(this.form, 'activitySubGroups', [])
+        this.$set(this.form, 'activity_subgroups', [])
       }
     },
-    setActivities (subgroup) {
-      if (subgroup.length) {
-        activities.getSubGroupActivities(subgroup[0].uid).then(resp => {
-          this.activities = resp.data.items
+    setActivities (subgroupUids) {
+      this.activities = []
+      for (const sg of subgroupUids) {
+        activities.getSubGroupActivities(sg).then(resp => {
+          this.activities = this.activities.concat(resp.data.items)
         })
       }
     }
@@ -138,14 +139,19 @@ export default {
   watch: {
     template: {
       handler: async function (value) {
-        if (value && value.activityGroups && value.activityGroups.length) {
-          const activityGroupUid = (typeof this.template.activityGroups[0] !== 'string')
-            ? this.template.activityGroups[0].uid
-            : this.template.activityGroups[0]
-          this.$set(this.form, 'activityGroup', activityGroupUid)
-          await this.setSubGroups(this.form.activityGroup, true)
-          if (!this.form.activitySubGroups) {
-            this.$set(this.form, 'activitySubGroups', value.activitySubGroups)
+        if (value && value.activity_groups && value.activity_groups.length) {
+          const activityGroupUid = (typeof this.template.activity_groups[0] !== 'string')
+            ? this.template.activity_groups[0].uid
+            : this.template.activity_groups[0]
+          this.$set(this.form, 'activity_group', activityGroupUid)
+          await this.setSubGroups(this.form.activity_group, true)
+          if (!this.form.activity_subgroups) {
+            this.$set(this.form, 'activity_subgroups', value.activity_subgroups)
+          }
+          const subgroupUids = this.form.activity_subgroups.map(g => g.uid)
+          await this.setActivities(subgroupUids, true)
+          if (!this.form.activities) {
+            this.$set(this.form, 'activities', value.activities)
           }
         }
       },

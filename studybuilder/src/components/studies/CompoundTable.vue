@@ -2,15 +2,17 @@
 <div>
   <n-n-table
     :headers="headers"
-    :items="studyCompounds"
-    item-key="studyCompoundUid"
+    :items="formatedStudyCompounds"
+    item-key="study_compound_uid"
     export-object-label="StudyCompounds"
     :export-data-url="exportDataUrl"
-    :column-data-resource="`study/${selectedStudy.uid}/study-compounds`"
+    :column-data-resource="`studies/${selectedStudy.uid}/study-compounds`"
     has-api
     :options.sync="options"
     :server-items-length="total"
     @filter="fetchCompounds"
+    :history-data-fetcher="fetchCompoundsHistory"
+    :history-title="$t('StudyCompoundTable.global_history_title')"
     >
     <template v-slot:actions="">
       <v-btn
@@ -25,46 +27,6 @@
           mdi-plus
         </v-icon>
       </v-btn>
-    </template>
-    <template v-slot:item.compound.isSponsorCompound="{ item }">
-      <template v-if="item.compound">
-        {{ item.compound.isSponsorCompound|yesno }}
-      </template>
-    </template>
-    <template v-slot:item.compound.isNameInn="{ item }">
-      <template v-if="item.compound">
-        {{ item.compound.isNameInn|yesno }}
-      </template>
-    </template>
-    <template v-slot:item.halfLife="{ item }">
-      <template v-if="item.compound && item.compound.halfLife">
-        {{ item.compound.halfLife.value }} {{ item.compound.halfLife.unitLabel }}
-      </template>
-    </template>
-    <template v-slot:item.substances="{ item }">
-      <template v-if="item.compound">
-        {{ item.compound.substances|substances }}
-      </template>
-    </template>
-    <template v-slot:item.pharmacologicalClasses="{ item }">
-      <template v-if="item.compound">
-        {{ item.compound.substances|pharmacologicalClasses }}
-      </template>
-    </template>
-    <template v-slot:item.lagTimes="{ item }">
-      <template v-if="item.compound && item.compound.lagTimes">
-        {{ item.compound.lagTimes|lagTimes }}
-      </template>
-    </template>
-    <template v-slot:item.compoundAlias.isPreferredSynonym="{ item }">
-      <template v-if="item.compoundAlias">
-        {{ item.compoundAlias.isPreferredSynonym|yesno }}
-      </template>
-    </template>
-    <template v-slot:item.strengthValue="{ item }">
-      <template v-if="item.strengthValue">
-        {{ item.strengthValue.value }} {{ item.strengthValue.unitLabel }}
-      </template>
     </template>
     <template v-slot:item.actions="{ item }">
       <actions-menu :actions="actions" :item="item" />
@@ -82,6 +44,18 @@
       :study-compound="selectedStudyCompound"
       />
   </v-dialog>
+  <v-dialog
+    v-model="showCompoundHistory"
+    persistent
+    max-width="1200px"
+    >
+    <history-table
+      :title="studyCompoundHistoryTitle"
+      @close="closeStudyCompoundHistory"
+      :headers="headers"
+      :items="compoundHistoryItems"
+      />
+  </v-dialog>
 </div>
 </template>
 
@@ -91,14 +65,18 @@ import { bus } from '@/main'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import CompoundForm from './CompoundForm'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
-import NNTable from '@/components/tools/NNTable'
+import dataFormating from '@/utils/dataFormating'
 import filteringParameters from '@/utils/filteringParameters'
+import HistoryTable from '@/components/tools/HistoryTable'
+import NNTable from '@/components/tools/NNTable'
+import study from '@/api/study'
 
 export default {
   components: {
     ActionsMenu,
     CompoundForm,
     ConfirmDialog,
+    HistoryTable,
     NNTable
   },
   computed: {
@@ -108,7 +86,18 @@ export default {
       studyCompounds: 'studyCompounds/studyCompounds'
     }),
     exportDataUrl () {
-      return `study/${this.selectedStudy.uid}/study-compounds`
+      return `studies/${this.selectedStudy.uid}/study-compounds`
+    },
+    studyCompoundHistoryTitle () {
+      if (this.selectedStudyCompound) {
+        return this.$t(
+          'StudyCompoundTable.study_compound_history_title',
+          { studyCompoundUid: this.selectedStudyCompound.study_compound_uid })
+      }
+      return ''
+    },
+    formatedStudyCompounds () {
+      return this.transformItems(this.studyCompounds)
     }
   },
   data () {
@@ -128,35 +117,38 @@ export default {
         },
         {
           label: this.$t('_global.history'),
-          icon: 'mdi-history'
+          icon: 'mdi-history',
+          click: this.openStudyCompoundHistory
         }
       ],
+      compoundHistoryItems: [],
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: '#', value: 'order' },
-        { text: this.$t('StudyCompoundTable.type_of_treatment'), value: 'typeOfTreatment.name' },
-        { text: this.$t('StudyCompoundTable.reason_for_missing'), value: 'reasonForMissingNullValue.name' },
+        { text: this.$t('StudyCompoundTable.type_of_treatment'), value: 'type_of_treatment.name' },
+        { text: this.$t('StudyCompoundTable.reason_for_missing'), value: 'reason_for_missing_null_value.name' },
         { text: this.$t('StudyCompoundTable.compound'), value: 'compound.name' },
-        { text: this.$t('StudyCompoundTable.sponsor_compound'), value: 'compound.isSponsorCompound' },
-        { text: this.$t('StudyCompoundTable.is_name_inn'), value: 'compound.isNameInn' },
+        { text: this.$t('StudyCompoundTable.sponsor_compound'), value: 'compound.is_sponsor_compound' },
+        { text: this.$t('StudyCompoundTable.is_name_inn'), value: 'compound.is_name_inn' },
         { text: this.$t('StudyCompoundTable.substance'), value: 'substances' },
-        { text: this.$t('StudyCompoundTable.pharma_class'), value: 'pharmacologicalClasses' },
-        { text: this.$t('StudyCompoundTable.compound_alias'), value: 'compoundAlias.name' },
-        { text: this.$t('StudyCompoundTable.preferred_alias'), value: 'compoundAlias.isPreferredSynonym' },
-        { text: this.$t('StudyCompoundTable.strength'), value: 'strengthValue' },
-        { text: this.$t('StudyCompoundTable.dosage_form'), value: 'dosageForm.name' },
-        { text: this.$t('StudyCompoundTable.route_of_admin'), value: 'routeOfAdministration.name' },
-        { text: this.$t('StudyCompoundTable.dispensed_in'), value: 'dispensedIn.name' },
+        { text: this.$t('StudyCompoundTable.pharma_class'), value: 'pharmacological_classes' },
+        { text: this.$t('StudyCompoundTable.compound_alias'), value: 'compound_alias.name' },
+        { text: this.$t('StudyCompoundTable.preferred_alias'), value: 'compound_alias.is_preferred_synonym' },
+        { text: this.$t('StudyCompoundTable.strength'), value: 'strength_value' },
+        { text: this.$t('StudyCompoundTable.dosage_form'), value: 'dosage_form.name' },
+        { text: this.$t('StudyCompoundTable.route_of_admin'), value: 'route_of_administration.name' },
+        { text: this.$t('StudyCompoundTable.dispensed_in'), value: 'dispensed_in.name' },
         { text: this.$t('StudyCompoundTable.device'), value: 'device.name' },
-        { text: this.$t('StudyCompoundTable.half_life'), value: 'halfLife' },
-        { text: this.$t('StudyCompoundTable.lag_time'), value: 'lagTimes' },
-        { text: this.$t('StudyCompoundTable.nnc_number_long'), value: 'nncLongNumber' },
-        { text: this.$t('StudyCompoundTable.nnc_number_short'), value: 'nncShortNumber' },
-        { text: this.$t('StudyCompoundTable.analyte_number'), value: 'analyteNumber' },
+        { text: this.$t('StudyCompoundTable.half_life'), value: 'half_life' },
+        { text: this.$t('StudyCompoundTable.lag_time'), value: 'lag_times' },
+        { text: this.$t('StudyCompoundTable.nnc_number_long'), value: 'nnc_long_number' },
+        { text: this.$t('StudyCompoundTable.nnc_number_short'), value: 'nnc_short_number' },
+        { text: this.$t('StudyCompoundTable.analyte_number'), value: 'analyte_number' },
         { text: this.$t('StudyCompoundTable.compound_definition'), value: 'compound.definition' },
-        { text: this.$t('StudyCompoundTable.alias_definition'), value: 'compoundAlias.definition' }
+        { text: this.$t('StudyCompoundTable.alias_definition'), value: 'compound_alias.definition' }
       ],
       selectedStudyCompound: null,
+      showCompoundHistory: false,
       showForm: false,
       total: 0,
       options: {}
@@ -171,14 +163,18 @@ export default {
         this.total = resp.data.total
       })
     },
+    async fetchCompoundsHistory () {
+      const resp = await study.getStudyCompoundsAuditTrail(this.selectedStudy.uid)
+      return this.transformItems(resp.data)
+    },
     async deleteStudyCompound (studyCompound) {
       const options = { type: 'warning' }
       let msg
       if (studyCompound.compound) {
         const compound = studyCompound.compound.name
         const context = { compound }
-        if (studyCompound.studyCompoundDosingCount) {
-          context.compoundDosings = studyCompound.studyCompoundDosingCount
+        if (studyCompound.study_compound_dosing_count) {
+          context.compoundDosings = studyCompound.study_compound_dosing_count
           msg = this.$t('StudyCompoundTable.confirm_delete_cascade', context)
         } else {
           msg = this.$t('StudyCompoundTable.confirm_delete', context)
@@ -191,7 +187,7 @@ export default {
       }
       this.$store.dispatch('studyCompounds/deleteStudyCompound', {
         studyUid: this.selectedStudy.uid,
-        studyCompoundUid: studyCompound.studyCompoundUid
+        studyCompoundUid: studyCompound.study_compound_uid
       }).then(resp => {
         bus.$emit('notification', { msg: this.$t('StudyCompoundTable.delete_compound_success') })
       })
@@ -200,9 +196,45 @@ export default {
       this.selectedStudyCompound = studyCompound
       this.showForm = true
     },
+    async openStudyCompoundHistory (studyCompound) {
+      this.selectedStudyCompound = studyCompound
+      const resp = await study.getStudyCompoundAuditTrail(this.selectedStudy.uid, studyCompound.study_compound_uid)
+      this.compoundHistoryItems = this.transformItems(resp.data)
+      this.showCompoundHistory = true
+    },
+    closeStudyCompoundHistory () {
+      this.selectedStudyCompound = null
+      this.showCompoundHistory = false
+    },
     closeForm () {
       this.showForm = false
       this.selectedStudyCompound = null
+    },
+    transformItems (items) {
+      const result = []
+      for (const item of items) {
+        const newItem = { ...item }
+        if (newItem.compound) {
+          newItem.compound.is_sponsor_compound = dataFormating.yesno(newItem.compound.is_sponsor_compound)
+          newItem.compound.is_name_inn = dataFormating.yesno(newItem.compound.is_name_inn)
+          newItem.substances = dataFormating.substances(newItem.compound.substances)
+          newItem.pharmacological_classes = dataFormating.pharmacologicalClasses(newItem.compound.substances)
+          if (newItem.compound.half_life) {
+            newItem.compound.half_life = dataFormating.numericValue(newItem.compound.half_life)
+          }
+          if (newItem.compound.lag_times) {
+            newItem.lag_times = dataFormating.lagTimes(newItem.compound.lag_times)
+          }
+        }
+        if (newItem.compound_alias) {
+          newItem.compound_alias.is_preferred_synonym = dataFormating.yesno(newItem.is_preferred_synonym)
+        }
+        if (newItem.strength_value) {
+          newItem.strength_value = dataFormating.numericValue(newItem.strength_value)
+        }
+        result.push(newItem)
+      }
+      return result
     }
   },
   mounted () {

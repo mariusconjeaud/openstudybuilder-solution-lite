@@ -11,7 +11,7 @@ class Library(BaseModel):
         ...,
         description="The name of the library and at the same time the unique identifier for a library entity.",
     )
-    isEditable: Optional[bool] = Field(
+    is_editable: Optional[bool] = Field(
         None,
         description="Denotes whether or not the library allows to \n\n"
         "* create new entities (e.g. objective templates, objectives, ...) and \n"
@@ -20,7 +20,7 @@ class Library(BaseModel):
 
     @classmethod
     def from_library_vo(cls, library_vo: LibraryVO) -> "Library":
-        return cls(name=library_vo.name, isEditable=library_vo.is_editable)
+        return cls(name=library_vo.name, is_editable=library_vo.is_editable)
 
 
 class ItemCounts(BaseModel):

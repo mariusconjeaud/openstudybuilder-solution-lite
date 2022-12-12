@@ -1,12 +1,11 @@
 from datetime import datetime
 from typing import Any, List, Optional
-from urllib.parse import unquote
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
 from pydantic.types import Json
 
-from clinical_mdr_api import models
+from clinical_mdr_api import config, models
 from clinical_mdr_api.domain_repositories.models.objective import ObjectiveValue
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study import Study
@@ -34,7 +33,7 @@ ObjectiveUID = Path(None, description="The unique id of the objective.")
             "content": {
                 "text/csv": {
                     "example": """
-"library","objectiveTemplate","uid","objective","startDate","endDate","status","version","changeDescription","userInitials"
+"library","objective_template","uid","objective","start_date","end_date","status","version","change_description","user_initials"
 "Sponsor","First  [ComparatorIntervention]","826d80a7-0b6a-419d-8ef1-80aa241d7ac7",First Intervention,"2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
 """
                 },
@@ -48,15 +47,15 @@ ObjectiveUID = Path(None, description="The unique id of the objective.")
     {
         "defaults": [
             "library=library.name",
-            "objectiveTemplate=objectiveTemplate.name",
+            "objective_template=objective_template.name",
             "uid",
             "objective=name",
-            "startDate",
-            "endDate",
+            "start_date",
+            "end_date",
             "status",
             "version",
-            "changeDescription",
-            "userInitials",
+            "change_description",
+            "user_initials",
         ],
         "formats": [
             "text/csv",
@@ -69,37 +68,39 @@ ObjectiveUID = Path(None, description="The unique id of the objective.")
 # pylint: disable=unused-argument
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
     all_items = Service(current_user_id).get_all(
         return_study_count=True,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        sort_by=sortBy,
+        sort_by=sort_by,
     )
 
     return CustomPage.create(
         items=all_items.items,
         total=all_items.total_count,
-        page=pageNumber,
-        size=pageSize,
+        page=page_number,
+        size=page_size,
     )
 
 
@@ -129,8 +130,8 @@ def get_distinct_values_for_header(
         "and you are interested in the 'Final' or 'Retired' status.\n"
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -139,17 +140,17 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     return Service(current_user_id).get_distinct_values_for_header(
         status=status,
-        field_name=fieldName,
-        search_string=searchString,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
@@ -172,7 +173,7 @@ def get_distinct_values_for_header(
 # TODO: Investigate which query params should be supported
 def get(
     uid: str = ObjectiveUID,
-    atSpecifiedDateTime: Optional[datetime] = Query(
+    at_specified_date_time: Optional[datetime] = Query(
         None,
         description="If specified, the latest/newest representation of the objective at this point in time is returned.\n"
         "The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: "
@@ -197,35 +198,17 @@ def get(
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    # return Service(current_user_id).get_by_uid(uid=uid, at_specific_date=atSpecifiedDateTime, status=status, version=version)
+    # return Service(current_user_id).get_by_uid(uid=uid, at_specific_date=at_specified_date_time, status=status, version=version)
     return Service(current_user_id).get_by_uid(
         uid=uid
-    )  # TODO: specifica date, at_specific_date=atSpecifiedDateTime, status=status, version=version)
-
-
-@router.get(
-    "/get-by-name/{name}",
-    summary="Returns the latest/newest version of a specific objective identified by 'name'.",
-    description="Gets an object by name - uses LATEST_DRAFT and LATEST_FINAL relations",
-    response_model=Optional[models.Objective],
-    status_code=200,
-    responses={
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - objective with the specified 'name' wasn't found.",
-        },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
-    },
-)
-def get_by_name(name: str, current_user_id: str = Depends(get_current_user_id)):
-    return Service(current_user_id).find_by(name=unquote(name))  # type: ignore
+    )  # TODO: specifica date, at_specific_date=at_specified_date_time, status=status, version=version)
 
 
 @router.get(
     "/{uid}/versions",
     summary="Returns the version history of a specific objective identified by 'uid'.",
     description="The returned versions are ordered by\n"
-    "0. startDate descending (newest entries first)",
+    "0. start_date descending (newest entries first)",
     response_model=List[models.ObjectiveVersion],
     status_code=200,
     responses={
@@ -269,9 +252,9 @@ def get_studies(
         " If value starts with `+` or `-` above default is extended or reduced by the specified fields"
         " otherwise (if not started with `+` or `-`) provided fields specification"
         " replaces the default. Currently supported fields are"
-        " `currentMetadata.identificationMetadata`, `currentMetadata.highLevelStudyDesign`"
-        " , `currentMetadata.studyPopulation` and `currentMetadata.studyIntervention`"
-        " , `currentMetadata.studyDescription`.",
+        " `current_metadata.identification_metadata`, `current_metadata.high_level_study_design`"
+        " , `current_metadata.study_population` and `current_metadata.study_intervention`"
+        " , `current_metadata.study_description`.",
     ),
 ):
     return Service(current_user_id).get_referencing_studies(
@@ -284,12 +267,12 @@ def get_studies(
     summary="Creates a new objective in 'Draft' status.",
     description="""This request is only valid if
 * the specified objective template is in 'Final' status and
-* the specified library allows creating objectives (the 'isEditable' property of the library needs to be true) and
+* the specified library allows creating objectives (the 'is_editable' property of the library needs to be true) and
 * the objective does not yet exist (no objective with the same content in 'Final' or 'Draft' status).
 
 If the request succeeds:
 * The status will be automatically set to 'Draft'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will be set to '0.1'.
 """,
     response_model=models.Objective,
@@ -306,8 +289,8 @@ If the request succeeds:
         404: {
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
-            "- The library with the specified 'libraryName' could not be found.\n"
-            "- The objective template with the specified 'objectiveTemplateUid' could not be found.",
+            "- The library with the specified 'library_name' could not be found.\n"
+            "- The objective template with the specified 'objective_template_uid' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
@@ -326,7 +309,7 @@ def create(
     summary="Previews the creation of a new objective.",
     description="""This request is only valid if
 * the specified objective template is in 'Final' status and
-* the specified library allows creating objectives (the 'isEditable' property of the library needs to be true) and
+* the specified library allows creating objectives (the 'is_editable' property of the library needs to be true) and
 * the objective does not yet exist (no objective with the same content in 'Final' or 'Draft' status).
 
 If the request succeeds:
@@ -346,8 +329,8 @@ If the request succeeds:
         404: {
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
-            "- The library with the specified 'libraryName' could not be found.\n"
-            "- The objective template with the specified 'objectiveTemplateUid' could not be found.",
+            "- The library with the specified 'library_name' could not be found.\n"
+            "- The objective template with the specified 'objective_template_uid' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
@@ -366,7 +349,7 @@ def preview(
     summary="Updates the objective identified by 'uid'.",
     description="""This request is only valid if the objective
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true). 
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
 
 If the request succeeds:
 * The 'version' property will be increased automatically by +0.1.
@@ -408,11 +391,11 @@ def edit(
     summary="Approves the objective identified by 'uid'.",
     description="""This request is only valid if the objective
 * is in 'Draft' status and
-* belongs to a library that allows editing (the 'isEditable' property of the library needs to be true).
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
 
 If the request succeeds:
 * The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically.
+* The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
     response_model=models.Objective,
@@ -446,7 +429,7 @@ def approve(
 
 If the request succeeds:
 * The status will be automatically set to 'Retired'.
-* The 'changeDescription' property will be set automatically. 
+* The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
     response_model=models.Objective,
@@ -480,7 +463,7 @@ def inactivate(
 
 If the request succeeds:
 * The status will be automatically set to 'Final'.
-* The 'changeDescription' property will be set automatically. 
+* The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
     response_model=models.Objective,
@@ -511,7 +494,7 @@ def reactivate(
     description="""This request is only valid if \n
 * the objective is in 'Draft' status and
 * the objective has never been in 'Final' status and
-* the objective belongs to a library that allows deleting (the 'isEditable' property of the library needs to be true).""",
+* the objective belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
     response_model=None,
     status_code=204,
     responses={

@@ -64,66 +64,66 @@ class TestStudyCompoundsService(unittest.TestCase):
 
         compound1: Compound = TestUtils.create_compound(
             name="name-AAA",
-            dosageFormUids=["dosage_form_uid1"],
-            deliveryDevicesUids=["delivery_device_uid1"],
-            dispensersUids=["dispenser_uid1"],
-            routeOfAdministrationUids=["route_of_administration_uid1"],
-            strengthValuesUids=["NumericValueWithUnit_000001"],
-            doseFrequencyUids=["dose_frequency_uid1"],
-            doseValuesUids=["NumericValueWithUnit_000001"],
+            dosage_form_uids=["dosage_form_uid1"],
+            delivery_devices_uids=["delivery_device_uid1"],
+            dispensers_uids=["dispenser_uid1"],
+            route_of_administration_uids=["route_of_administration_uid1"],
+            strength_values_uids=["NumericValueWithUnit_000001"],
+            dose_frequency_uids=["dose_frequency_uid1"],
+            dose_values_uids=["NumericValueWithUnit_000001"],
         )
-        compoundAlias1a: CompoundAlias = TestUtils.create_compound_alias(
-            compoundUid=compound1.uid
+        compound_alias1a: CompoundAlias = TestUtils.create_compound_alias(
+            compound_uid=compound1.uid
         )
-        compoundAlias1b: CompoundAlias = TestUtils.create_compound_alias(
-            compoundUid=compound1.uid
+        compound_alias1b: CompoundAlias = TestUtils.create_compound_alias(
+            compound_uid=compound1.uid
         )
 
         compound2: Compound = TestUtils.create_compound(
             name="name-BBB",
-            dosageFormUids=["dosage_form_uid1"],
-            deliveryDevicesUids=["delivery_device_uid1"],
-            dispensersUids=["dispenser_uid1"],
-            routeOfAdministrationUids=["route_of_administration_uid1"],
-            strengthValuesUids=["NumericValueWithUnit_000001"],
-            doseFrequencyUids=["dose_frequency_uid1"],
-            doseValuesUids=["NumericValueWithUnit_000001"],
+            dosage_form_uids=["dosage_form_uid1"],
+            delivery_devices_uids=["delivery_device_uid1"],
+            dispensers_uids=["dispenser_uid1"],
+            route_of_administration_uids=["route_of_administration_uid1"],
+            strength_values_uids=["NumericValueWithUnit_000001"],
+            dose_frequency_uids=["dose_frequency_uid1"],
+            dose_values_uids=["NumericValueWithUnit_000001"],
         )
-        compoundAlias2a: CompoundAlias = TestUtils.create_compound_alias(
-            compoundUid=compound1.uid
+        compound_alias2a: CompoundAlias = TestUtils.create_compound_alias(
+            compound_uid=compound1.uid
         )
-        compoundAlias2b: CompoundAlias = TestUtils.create_compound_alias(
-            compoundUid=compound1.uid
+        compound_alias2b: CompoundAlias = TestUtils.create_compound_alias(
+            compound_uid=compound1.uid
         )
 
         CompoundService().approve(compound1.uid)
         CompoundService().approve(compound2.uid)
-        CompoundAliasService().approve(compoundAlias1a.uid)
-        CompoundAliasService().approve(compoundAlias2a.uid)
-        CompoundAliasService().approve(compoundAlias1b.uid)
-        CompoundAliasService().approve(compoundAlias2b.uid)
+        CompoundAliasService().approve(compound_alias1a.uid)
+        CompoundAliasService().approve(compound_alias2a.uid)
+        CompoundAliasService().approve(compound_alias1b.uid)
+        CompoundAliasService().approve(compound_alias2b.uid)
 
         study_selection_element: StudySelectionElement = StudyElementSelectionService(
             "test"
         ).make_selection(
             study_uid=STUDY_UID,
             selection_create_input=StudySelectionElementCreateInput(
-                name="Elem1", shortName="el1", elementSubTypeUid="term1"
+                name="Elem1", short_name="el1", element_subtype_uid="term1"
             ),
         )
 
-        # Make a compound selection with compound alias 'compoundAlias1a'
+        # Make a compound selection with compound alias 'compound_alias1a'
         study_compound_created1: StudySelectionCompound = (
             TestUtils.create_study_compound(
-                compoundAliasUid=compoundAlias1a.uid,
-                dosageFormUid="dosage_form_uid1",
-                deviceUid="delivery_device_uid1",
-                dispensedInUid="dispenser_uid1",
-                routeOfAdministrationUid="route_of_administration_uid1",
-                strengthValueUid="NumericValueWithUnit_000001",
+                compound_alias_uid=compound_alias1a.uid,
+                dosage_form_uid="dosage_form_uid1",
+                device_uid="delivery_device_uid1",
+                dispensed_in_uid="dispenser_uid1",
+                route_of_administration_uid="route_of_administration_uid1",
+                strength_value_uid="NumericValueWithUnit_000001",
             )
         )
-        assert study_compound_created1.studyCompoundUid == "StudyCompound_000001"
+        assert study_compound_created1.study_compound_uid == "StudyCompound_000001"
 
         # Make a compound selection with another compound alias, while keeping all other details the same
         study_compound_created2: StudySelectionCompound = StudyCompoundSelectionService(
@@ -131,27 +131,27 @@ class TestStudyCompoundsService(unittest.TestCase):
         ).make_selection(
             study_uid=STUDY_UID,
             selection_create_input=StudySelectionCompoundInput(
-                compoundAliasUid=compoundAlias2a.uid,
-                dosageFormUid="dosage_form_uid1",
-                deviceUid="delivery_device_uid1",
-                dispensedInUid="dispenser_uid1",
-                routeOfAdministrationUid="route_of_administration_uid1",
-                strengthValueUid="NumericValueWithUnit_000001",
+                compound_alias_uid=compound_alias2a.uid,
+                dosage_form_uid="dosage_form_uid1",
+                device_uid="delivery_device_uid1",
+                dispensed_in_uid="dispenser_uid1",
+                route_of_administration_uid="route_of_administration_uid1",
+                strength_value_uid="NumericValueWithUnit_000001",
             ),
         )
-        assert study_compound_created2.studyCompoundUid == "StudyCompound_000003"
+        assert study_compound_created2.study_compound_uid == "StudyCompound_000003"
 
-        # Try to make a compound selection with the same compound alias 'compoundAlias1a' and all other details
+        # Try to make a compound selection with the same compound alias 'compound_alias1a' and all other details
         with self.assertRaises(exceptions.BusinessLogicException) as context:
             StudyCompoundSelectionService("test").make_selection(
                 study_uid=STUDY_UID,
                 selection_create_input=StudySelectionCompoundInput(
-                    compoundAliasUid=compoundAlias1a.uid,
-                    dosageFormUid="dosage_form_uid1",
-                    deviceUid="delivery_device_uid1",
-                    dispensedInUid="dispenser_uid1",
-                    routeOfAdministrationUid="route_of_administration_uid1",
-                    strengthValueUid="NumericValueWithUnit_000001",
+                    compound_alias_uid=compound_alias1a.uid,
+                    dosage_form_uid="dosage_form_uid1",
+                    device_uid="delivery_device_uid1",
+                    dispensed_in_uid="dispenser_uid1",
+                    route_of_administration_uid="route_of_administration_uid1",
+                    strength_value_uid="NumericValueWithUnit_000001",
                 ),
             )
         msg = (
@@ -165,16 +165,16 @@ class TestStudyCompoundsService(unittest.TestCase):
             StudyCompoundDosingSelectionService("test").make_selection(
                 study_uid=STUDY_UID,
                 selection_create_input=StudyCompoundDosingInput(
-                    studyCompoundUid=study_compound_created1.studyCompoundUid,
-                    doseFrequencyUid="dose_frequency_uid1",
-                    doseValueUid="NumericValueWithUnit_000001",
-                    studyElementUid=study_selection_element.elementUid,
+                    study_compound_uid=study_compound_created1.study_compound_uid,
+                    dose_frequency_uid="dose_frequency_uid1",
+                    dose_value_uid="NumericValueWithUnit_000001",
+                    study_element_uid=study_selection_element.element_uid,
                 ),
             )
         )
 
         assert (
-            study_compound_dosing_created1.studyCompoundDosingUid
+            study_compound_dosing_created1.study_compound_dosing_uid
             == "StudyCompoundDosing_000001"
         )
 
@@ -183,15 +183,15 @@ class TestStudyCompoundsService(unittest.TestCase):
             StudyCompoundDosingSelectionService("test").make_selection(
                 study_uid=STUDY_UID,
                 selection_create_input=StudyCompoundDosingInput(
-                    studyCompoundUid=study_compound_created2.studyCompoundUid,
-                    doseFrequencyUid="dose_frequency_uid1",
-                    doseValueUid="NumericValueWithUnit_000001",
-                    studyElementUid=study_selection_element.elementUid,
+                    study_compound_uid=study_compound_created2.study_compound_uid,
+                    dose_frequency_uid="dose_frequency_uid1",
+                    dose_value_uid="NumericValueWithUnit_000001",
+                    study_element_uid=study_selection_element.element_uid,
                 ),
             )
         )
         assert (
-            study_compound_dosing_created2.studyCompoundDosingUid
+            study_compound_dosing_created2.study_compound_dosing_uid
             == "StudyCompoundDosing_000002"
         )
 
@@ -200,10 +200,10 @@ class TestStudyCompoundsService(unittest.TestCase):
             StudyCompoundDosingSelectionService("test").make_selection(
                 study_uid=STUDY_UID,
                 selection_create_input=StudyCompoundDosingInput(
-                    studyCompoundUid=study_compound_created1.studyCompoundUid,
-                    doseFrequencyUid="dose_frequency_uid1",
-                    doseValueUid="NumericValueWithUnit_000001",
-                    studyElementUid=study_selection_element.elementUid,
+                    study_compound_uid=study_compound_created1.study_compound_uid,
+                    dose_frequency_uid="dose_frequency_uid1",
+                    dose_value_uid="NumericValueWithUnit_000001",
+                    study_element_uid=study_selection_element.element_uid,
                 ),
             )
         msg = "Compound dosing selection with the specified compound, dose value and dose frequency already exists."
@@ -219,8 +219,8 @@ class TestStudyCompoundsService(unittest.TestCase):
             StudyCompoundSelectionService("test").make_selection(
                 study_uid=STUDY_UID,
                 selection_create_input=StudySelectionCompoundInput(
-                    compoundAliasUid=compoundAlias1a.uid,
-                    dosageFormUid="dosage_form_uidXYZ",
+                    compound_alias_uid=compound_alias1a.uid,
+                    dosage_form_uid="dosage_form_uidXYZ",
                 ),
             )
         msg = (
@@ -232,8 +232,8 @@ class TestStudyCompoundsService(unittest.TestCase):
             StudyCompoundSelectionService("test").make_selection(
                 study_uid=STUDY_UID,
                 selection_create_input=StudySelectionCompoundInput(
-                    compoundAliasUid=compoundAlias1a.uid,
-                    deviceUid="delivery_device_uidXYZ",
+                    compound_alias_uid=compound_alias1a.uid,
+                    device_uid="delivery_device_uidXYZ",
                 ),
             )
         msg = "Selected delivery device is not valid for compound 'name-AAA'."
@@ -243,8 +243,8 @@ class TestStudyCompoundsService(unittest.TestCase):
             StudyCompoundSelectionService("test").make_selection(
                 study_uid=STUDY_UID,
                 selection_create_input=StudySelectionCompoundInput(
-                    compoundAliasUid=compoundAlias1a.uid,
-                    dispensedInUid="dispenser_uidXYZ",
+                    compound_alias_uid=compound_alias1a.uid,
+                    dispensed_in_uid="dispenser_uidXYZ",
                 ),
             )
         msg = "Selected dispenser is not valid for compound 'name-AAA'."
@@ -254,8 +254,8 @@ class TestStudyCompoundsService(unittest.TestCase):
             StudyCompoundSelectionService("test").make_selection(
                 study_uid=STUDY_UID,
                 selection_create_input=StudySelectionCompoundInput(
-                    compoundAliasUid=compoundAlias1a.uid,
-                    routeOfAdministrationUid="route_of_administration_uidXYZ",
+                    compound_alias_uid=compound_alias1a.uid,
+                    route_of_administration_uid="route_of_administration_uidXYZ",
                 ),
             )
         msg = "Selected route of administration is not valid for compound 'name-AAA'."
@@ -265,8 +265,8 @@ class TestStudyCompoundsService(unittest.TestCase):
             StudyCompoundSelectionService("test").make_selection(
                 study_uid=STUDY_UID,
                 selection_create_input=StudySelectionCompoundInput(
-                    compoundAliasUid=compoundAlias1a.uid,
-                    strengthValueUid="NumericValueWithUnit_00000XYZ",
+                    compound_alias_uid=compound_alias1a.uid,
+                    strength_value_uid="NumericValueWithUnit_00000XYZ",
                 ),
             )
         msg = "Selected strength value is not valid for compound 'name-AAA'."
@@ -279,9 +279,9 @@ class TestStudyCompoundsService(unittest.TestCase):
             StudyCompoundDosingSelectionService("test").make_selection(
                 study_uid=STUDY_UID,
                 selection_create_input=StudyCompoundDosingInput(
-                    studyCompoundUid=study_compound_created1.studyCompoundUid,
-                    doseValueUid="NumericValueWithUnit_00000XYZ",
-                    studyElementUid=study_selection_element.elementUid,
+                    study_compound_uid=study_compound_created1.study_compound_uid,
+                    dose_value_uid="NumericValueWithUnit_00000XYZ",
+                    study_element_uid=study_selection_element.element_uid,
                 ),
             )
         msg = "Selected dose value is not valid for compound 'name-AAA'."
@@ -291,10 +291,150 @@ class TestStudyCompoundsService(unittest.TestCase):
             StudyCompoundDosingSelectionService("test").make_selection(
                 study_uid=STUDY_UID,
                 selection_create_input=StudyCompoundDosingInput(
-                    studyCompoundUid=study_compound_created1.studyCompoundUid,
-                    doseFrequencyUid="dose_frequency_uidXYZ",
-                    studyElementUid=study_selection_element.elementUid,
+                    study_compound_uid=study_compound_created1.study_compound_uid,
+                    dose_frequency_uid="dose_frequency_uidXYZ",
+                    study_element_uid=study_selection_element.element_uid,
                 ),
             )
         msg = "Selected dose frequency is not valid for compound 'name-AAA'."
         assert context.exception.msg == msg
+
+    def test_audit_trail(self):
+        compound1: Compound = TestUtils.create_compound(
+            name="name-AAA",
+            dosage_form_uids=["dosage_form_uid1"],
+            delivery_devices_uids=["delivery_device_uid1"],
+            dispensers_uids=["dispenser_uid1"],
+            route_of_administration_uids=["route_of_administration_uid1"],
+            strength_values_uids=["NumericValueWithUnit_000001"],
+            dose_frequency_uids=["dose_frequency_uid1"],
+            dose_values_uids=["NumericValueWithUnit_000001"],
+        )
+        compound_alias1a: CompoundAlias = TestUtils.create_compound_alias(
+            compound_uid=compound1.uid
+        )
+        compound_alias1b: CompoundAlias = TestUtils.create_compound_alias(
+            compound_uid=compound1.uid
+        )
+
+        compound2: Compound = TestUtils.create_compound(
+            name="name-BBB",
+            dosage_form_uids=["dosage_form_uid1"],
+            delivery_devices_uids=["delivery_device_uid1"],
+            dispensers_uids=["dispenser_uid1"],
+            route_of_administration_uids=["route_of_administration_uid1"],
+            strength_values_uids=["NumericValueWithUnit_000001"],
+            dose_frequency_uids=["dose_frequency_uid1"],
+            dose_values_uids=["NumericValueWithUnit_000001"],
+        )
+        compound_alias2a: CompoundAlias = TestUtils.create_compound_alias(
+            compound_uid=compound1.uid
+        )
+        compound_alias2b: CompoundAlias = TestUtils.create_compound_alias(
+            compound_uid=compound1.uid
+        )
+
+        CompoundService().approve(compound1.uid)
+        CompoundService().approve(compound2.uid)
+        CompoundAliasService().approve(compound_alias1a.uid)
+        CompoundAliasService().approve(compound_alias2a.uid)
+        CompoundAliasService().approve(compound_alias1b.uid)
+        CompoundAliasService().approve(compound_alias2b.uid)
+
+        study_selection_element: StudySelectionElement = StudyElementSelectionService(
+            "test"
+        ).make_selection(
+            study_uid=STUDY_UID,
+            selection_create_input=StudySelectionElementCreateInput(
+                name="Elem1", short_name="el1", element_subtype_uid="term1"
+            ),
+        )
+
+        # Make a compound selection with compound alias 'compound_alias1a'
+        study_compound_created1: StudySelectionCompound = (
+            TestUtils.create_study_compound(
+                compound_alias_uid=compound_alias1a.uid,
+                dosage_form_uid="dosage_form_uid1",
+                device_uid="delivery_device_uid1",
+                dispensed_in_uid="dispenser_uid1",
+                route_of_administration_uid="route_of_administration_uid1",
+                strength_value_uid="NumericValueWithUnit_000001",
+            )
+        )
+        assert study_compound_created1.study_compound_uid == "StudyCompound_000001"
+
+        # Make a compound selection with another compound alias, while keeping all other details the same
+        study_compound_created2: StudySelectionCompound = StudyCompoundSelectionService(
+            "test"
+        ).make_selection(
+            study_uid=STUDY_UID,
+            selection_create_input=StudySelectionCompoundInput(
+                compound_alias_uid=compound_alias2a.uid,
+                dosage_form_uid="dosage_form_uid1",
+                device_uid="delivery_device_uid1",
+                dispensed_in_uid="dispenser_uid1",
+                route_of_administration_uid="route_of_administration_uid1",
+                strength_value_uid="NumericValueWithUnit_000001",
+            ),
+        )
+        assert study_compound_created2.study_compound_uid == "StudyCompound_000003"
+
+        # Try to make a compound selection with the same compound alias 'compound_alias1a' and all other details
+        with self.assertRaises(exceptions.BusinessLogicException) as context:
+            StudyCompoundSelectionService("test").make_selection(
+                study_uid=STUDY_UID,
+                selection_create_input=StudySelectionCompoundInput(
+                    compound_alias_uid=compound_alias1a.uid,
+                    dosage_form_uid="dosage_form_uid1",
+                    device_uid="delivery_device_uid1",
+                    dispensed_in_uid="dispenser_uid1",
+                    route_of_administration_uid="route_of_administration_uid1",
+                    strength_value_uid="NumericValueWithUnit_000001",
+                ),
+            )
+        msg = (
+            "Compound selection with the specified combination of compound, "
+            + "pharmaceutical dosage form, strength, route of administration, dispenser and delivery device already exists."
+        )
+        assert context.exception.msg == msg
+
+        # Make a compound dosing selection with just-created study compound 'study_compound_created1'
+        study_compound_dosing_created1: StudyCompoundDosing = (
+            StudyCompoundDosingSelectionService("test").make_selection(
+                study_uid=STUDY_UID,
+                selection_create_input=StudyCompoundDosingInput(
+                    study_compound_uid=study_compound_created1.study_compound_uid,
+                    dose_frequency_uid="dose_frequency_uid1",
+                    dose_value_uid="NumericValueWithUnit_000001",
+                    study_element_uid=study_selection_element.element_uid,
+                ),
+            )
+        )
+
+        assert (
+            study_compound_dosing_created1.study_compound_dosing_uid
+            == "StudyCompoundDosing_000001"
+        )
+
+        # Make a compound dosing selection with another study compound, while keeping all other details the same
+        study_compound_dosing_created2: StudyCompoundDosing = (
+            StudyCompoundDosingSelectionService("test").make_selection(
+                study_uid=STUDY_UID,
+                selection_create_input=StudyCompoundDosingInput(
+                    study_compound_uid=study_compound_created2.study_compound_uid,
+                    dose_frequency_uid="dose_frequency_uid1",
+                    dose_value_uid="NumericValueWithUnit_000001",
+                    study_element_uid=study_selection_element.element_uid,
+                ),
+            )
+        )
+        assert (
+            study_compound_dosing_created2.study_compound_dosing_uid
+            == "StudyCompoundDosing_000002"
+        )
+
+        # Now call audit trail
+        items = StudyCompoundDosingSelectionService(
+            "test"
+        ).get_all_selection_audit_trail(STUDY_UID)
+        assert len(items) == 2

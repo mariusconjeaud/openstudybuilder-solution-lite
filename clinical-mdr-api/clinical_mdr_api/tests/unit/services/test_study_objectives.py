@@ -24,47 +24,47 @@ DATETIME_874 = datetime.datetime(2022, 9, 14, 15, 28, 16, 236874)
 DATETIME_668 = datetime.datetime(2022, 9, 14, 15, 41, 34, 287668)
 
 TERM_PRIMARY = CTTermName(
-    termUid="CTTerm_000053",
-    sponsorPreferredName="Primary",
-    sponsorPreferredNameSentenceCase="primary",
+    term_uid="CTTerm_000053",
+    sponsor_preferred_name="Primary",
+    sponsor_preferred_name_sentence_case="primary",
 )
 TERM_PRI_OBJ = CTTermName(
-    termUid="C85826_OBJPRIM",
-    sponsorPreferredName="Primary Objective",
-    sponsorPreferredNameSentenceCase="primary objective",
+    term_uid="C85826_OBJPRIM",
+    sponsor_preferred_name="Primary Objective",
+    sponsor_preferred_name_sentence_case="primary objective",
     order=1,
 )
 TERM_PRI_END = CTTermName(
-    termUid="C98772_OUTMSPRI",
-    sponsorPreferredName="Primary Endpoint",
-    sponsorPreferredNameSentenceCase="primary endpoint",
+    term_uid="C98772_OUTMSPRI",
+    sponsor_preferred_name="Primary Endpoint",
+    sponsor_preferred_name_sentence_case="primary endpoint",
 )
 TERM_SEC_END = CTTermName(
-    termUid="C98781_OUTMSSEC",
-    sponsorPreferredName="Secondary Endpoint",
-    sponsorPreferredNameSentenceCase="secondary endpoint",
+    term_uid="C98781_OUTMSSEC",
+    sponsor_preferred_name="Secondary Endpoint",
+    sponsor_preferred_name_sentence_case="secondary endpoint",
 )
 
 TIMEFRAME_1 = Timeframe(
     uid="Timeframe_000001",
     name="<p>Time Frame: through study completion, an average of 2 year</p>",
-    namePlain="Time Frame: through study completion, an average of 2 year",
+    name_plain="Time Frame: through study completion, an average of 2 year",
 )
 TIMEFRAME_2 = Timeframe(
     uid="Timeframe_000002",
     name="test 25-Hydroxyvitamin D",
-    namePlain="test 25-Hydroxyvitamin D",
+    name_plain="test 25-Hydroxyvitamin D",
 )
 
 ENDPOINT_4 = Endpoint(
     uid="Endpoint_000004",
     name="<p>Disease control rate of Actrapid + Empagliflozin cohort</p>",
-    namePlain="Disease control rate of Actrapid + Empagliflozin cohort",
+    name_plain="Disease control rate of Actrapid + Empagliflozin cohort",
 )
 ENDPOINT_3 = Endpoint(
     uid="Endpoint_000003",
     name="<p>Mean Change from Baseline in 25-Hydroxyvitamin D</p>",
-    namePlain="Mean Change from Baseline in 25-Hydroxyvitamin D",
+    name_plain="Mean Change from Baseline in 25-Hydroxyvitamin D",
 )
 
 ENDPOINT_UNITS_ = EndpointUnits(units=[], separator=None)
@@ -74,60 +74,60 @@ ENDPOINT_UNITS_6 = EndpointUnits(units=["UnitDefinition_000006"], separator=None
 OBJECTIVE_3 = Objective(
     uid="Objective_000003",
     name="To compare the effect of Actrapid relative to BYETTA on 25-Hydroxyvitamin D",
-    namePlain="To compare the effect of Actrapid relative to BYETTA on 25-Hydroxyvitamin D",
+    name_plain="To compare the effect of Actrapid relative to BYETTA on 25-Hydroxyvitamin D",
 )
 
 STUDY_OBJECTIVE_3 = StudySelectionObjective(
-    studyUid=STUDY_UID,
+    study_uid=STUDY_UID,
     order=1,
-    studyObjectiveUid="StudyObjective_000003",
-    objectiveLevel=TERM_PRI_OBJ,
+    study_objective_uid="StudyObjective_000003",
+    objective_level=TERM_PRI_OBJ,
     objective=OBJECTIVE_3,
-    startDate=DATETIME_874,
-    userInitials=USER_INITIALS,
-    latestObjective=None,
+    start_date=DATETIME_874,
+    user_initials=USER_INITIALS,
+    latest_objective=None,
 )
 
 STUDY_OBJECTIVES = (STUDY_OBJECTIVE_3,)
 
 STUDY_ENDPOINT_1 = StudySelectionEndpoint(
-    studyUid=STUDY_UID,
+    study_uid=STUDY_UID,
     order=3,
-    studyEndpointUid="StudyEndpoint_000001",
-    studyObjective=None,
-    endpointLevel=None,
-    endpointSubLevel=None,
-    endpointUnits=ENDPOINT_UNITS_,
+    study_endpoint_uid="StudyEndpoint_000001",
+    study_objective=None,
+    endpoint_level=None,
+    endpoint_sublevel=None,
+    endpoint_units=ENDPOINT_UNITS_,
     endpoint=None,
     timeframe=None,
-    startDate=DATETIME_799,
-    userInitials=USER_INITIALS,
+    start_date=DATETIME_799,
+    user_initials=USER_INITIALS,
 )
 STUDY_ENDPOINT_20 = StudySelectionEndpoint(
-    studyUid=STUDY_UID,
+    study_uid=STUDY_UID,
     order=2,
-    studyEndpointUid="StudyEndpoint_000020",
-    studyObjective=STUDY_OBJECTIVE_3,
-    endpointLevel=TERM_SEC_END,
-    endpointSubLevel=None,
-    endpointUnits=ENDPOINT_UNITS_6,
+    study_endpoint_uid="StudyEndpoint_000020",
+    study_objective=STUDY_OBJECTIVE_3,
+    endpoint_level=TERM_SEC_END,
+    endpoint_sublevel=None,
+    endpoint_units=ENDPOINT_UNITS_6,
     endpoint=ENDPOINT_4,
     timeframe=TIMEFRAME_2,
-    startDate=DATETIME_811,
-    userInitials=USER_INITIALS,
+    start_date=DATETIME_811,
+    user_initials=USER_INITIALS,
 )
 STUDY_ENDPOINT_17 = StudySelectionEndpoint(
-    studyUid=STUDY_UID,
+    study_uid=STUDY_UID,
     order=1,
-    studyEndpointUid="StudyEndpoint_000017",
-    studyObjective=STUDY_OBJECTIVE_3,
-    endpointLevel=TERM_PRI_END,
-    endpointSubLevel=TERM_PRIMARY,
-    endpointUnits=ENDPOINT_UNITS_2,
+    study_endpoint_uid="StudyEndpoint_000017",
+    study_objective=STUDY_OBJECTIVE_3,
+    endpoint_level=TERM_PRI_END,
+    endpoint_sublevel=TERM_PRIMARY,
+    endpoint_units=ENDPOINT_UNITS_2,
     endpoint=ENDPOINT_3,
     timeframe=TIMEFRAME_1,
-    startDate=DATETIME_668,
-    userInitials=USER_INITIALS,
+    start_date=DATETIME_668,
+    user_initials=USER_INITIALS,
 )
 
 STUDY_ENDPOINTS = (
@@ -137,34 +137,34 @@ STUDY_ENDPOINTS = (
 )
 
 UNIT_ATTRS = dict(
-    startDate=DATETIME_799,
+    start_date=DATETIME_799,
     status="Final",
     version="1.0",
-    userInitials=USER_INITIALS,
-    changeDescription="Approved version",
-    libraryName="Sponsor",
-    convertibleUnit=True,
-    displayUnit=True,
-    masterUnit=True,
-    usConventionalUnit=True,
-    unitSubsets=[],
-    templateParameter=False,
+    user_initials=USER_INITIALS,
+    change_description="Approved version",
+    library_name="Sponsor",
+    convertible_unit=True,
+    display_unit=True,
+    master_unit=True,
+    us_conventional_unit=True,
+    unit_subsets=[],
+    template_parameter=False,
 )
 
 UNITS = {
     "UnitDefinition_000002": UnitDefinitionModel(
         uid="UnitDefinition_000002",
         name="beats/min",
-        siUnit=False,
-        ctUnits=[SimpleTermModel(termUid="C49673_beats/min", name="beats/min")],
+        si_unit=False,
+        ct_units=[SimpleTermModel(term_uid="C49673_beats/min", name="beats/min")],
         **UNIT_ATTRS,
     ),
     "UnitDefinition_000006": UnitDefinitionModel(
         uid="UnitDefinition_000006",
         name="kg/m^2",
-        siUnit=True,
-        ctUnits=[
-            SimpleTermModel(termUid="C49671_kg/m2", name="Kilogram per Square Meter")
+        si_unit=True,
+        ct_units=[
+            SimpleTermModel(term_uid="C49671_kg/m2", name="Kilogram per Square Meter")
         ],
         **UNIT_ATTRS,
     ),
@@ -237,11 +237,30 @@ def test_build_condensed_html(study_objectives_service):
     # Search for objective text in document
     for objective in STUDY_OBJECTIVES:
         assert (
-            objective.objectiveLevel.sponsorPreferredName in doc
-        ), f'objective level "{objective.objectiveLevel.sponsorPreferredName}" was not found in document'
+            objective.objective_level.sponsor_preferred_name in doc
+        ), f'objective level "{objective.objective_level.sponsor_preferred_name}" was not found in document'
         assert (
-            objective.objective.namePlain in doc
-        ), f'objective "{objective.objective.namePlain}" was not found in document'
+            objective.objective.name_plain in doc
+        ), f'objective "{objective.objective.name_plain}" was not found in document'
+
+    assert_patterns_in_document(doc)
+
+
+def test_build_standard_html(study_objectives_service):
+    doc = study_objectives_service._build_standard_html(STANDARD_TREE)
+
+    # Check that document is HTML and has table data (not only headers)
+    assert "</body>" in doc, "document has no </body>"
+    assert "</td>" in doc, "document has no </td>"
+
+    # Search for objective text in document
+    for objective in STUDY_OBJECTIVES:
+        assert (
+            objective.objective_level.sponsor_preferred_name in doc
+        ), f'objective level "{objective.objective_level.sponsor_preferred_name}" was not found in document'
+        assert (
+            objective.objective.name_plain in doc
+        ), f'objective "{objective.objective.name_plain}" was not found in document'
 
     assert_patterns_in_document(doc)
 
@@ -280,22 +299,22 @@ def assert_patterns_in_document(doc: str):
     # Search for objective text in document
     for objective in STUDY_OBJECTIVES:
         assert (
-            objective.objectiveLevel.sponsorPreferredName in doc
-        ), f'objective level "{objective.objectiveLevel.sponsorPreferredName}" was not found in document'
+            objective.objective_level.sponsor_preferred_name in doc
+        ), f'objective level "{objective.objective_level.sponsor_preferred_name}" was not found in document'
         assert (
-            objective.objective.namePlain in doc
-        ), f'objective "{objective.objective.namePlain}" was not found in document'
+            objective.objective.name_plain in doc
+        ), f'objective "{objective.objective.name_plain}" was not found in document'
 
     # Search for endpoints text in document
     for endpoint in STUDY_ENDPOINTS:
         if not endpoint.endpoint:
             continue
-        if endpoint.endpointSubLevel:
+        if endpoint.endpoint_sublevel:
             assert (
-                endpoint.endpointSubLevel.sponsorPreferredName in doc
-            ), f'endpoint sub-level "{endpoint.endpointSubLevel.sponsorPreferredName}" was not found in document'
-        elif endpoint.endpointLevel:
+                endpoint.endpoint_sublevel.sponsor_preferred_name in doc
+            ), f'endpoint sub-level "{endpoint.endpoint_sublevel.sponsor_preferred_name}" was not found in document'
+        elif endpoint.endpoint_level:
             assert (
-                endpoint.endpointLevel.sponsorPreferredName in doc
-            ), f'endpoint level "{endpoint.endpointLevel.sponsorPreferredName}" was not found in document'
-        assert endpoint.endpoint.namePlain in doc
+                endpoint.endpoint_level.sponsor_preferred_name in doc
+            ), f'endpoint level "{endpoint.endpoint_level.sponsor_preferred_name}" was not found in document'
+        assert endpoint.endpoint.name_plain in doc

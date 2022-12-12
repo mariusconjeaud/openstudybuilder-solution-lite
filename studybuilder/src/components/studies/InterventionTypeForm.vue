@@ -18,11 +18,11 @@
             >
             <v-autocomplete
               :data-cy="$t('StudyInterventionTypeForm.intervention_type')"
-              v-model="form.interventionTypeCode"
+              v-model="form.intervention_type_code"
               :label="$t('StudyInterventionTypeForm.intervention_type')"
               :items="interventionTypes"
-              item-text="sponsorPreferredName"
-              item-value="termUid"
+              item-text="sponsor_preferred_name"
+              item-value="term_uid"
               return-object
               :error-messages="errors"
               dense
@@ -33,16 +33,16 @@
       </v-row>
       <not-applicable-field
         :clean-function="setNullValueTrialIntentTypesCodes"
-        :checked="form.trialIntentTypesNullValueCode ? true : false"
+        :checked="form.trial_intent_types_null_value_code ? true : false"
         >
         <template v-slot:mainField="{ notApplicable }">
           <multiple-select
             :data-cy="$t('StudyDefineForm.studyintent')"
-            v-model="form.trialIntentTypesCodes"
+            v-model="form.trial_intent_types_codes"
             :label="$t('StudyDefineForm.studyintent')"
             :items="trialIntentTypes"
-            item-text="sponsorPreferredName"
-            item-value="termUid"
+            item-text="sponsor_preferred_name"
+            item-value="term_uid"
             return-object
             :disabled="notApplicable"
             dense
@@ -58,11 +58,11 @@
             >
             <v-autocomplete
               :data-cy="$t('StudyInterventionTypeForm.control_type')"
-              v-model="form.controlTypeCode"
+              v-model="form.control_type_code"
               :label="$t('StudyInterventionTypeForm.control_type')"
               :items="controlTypes"
-              item-text="sponsorPreferredName"
-              item-value="termUid"
+              item-text="sponsor_preferred_name"
+              item-value="term_uid"
               return-object
               :error-messages="errors"
               dense
@@ -79,11 +79,11 @@
             >
             <v-autocomplete
               :data-cy="$t('StudyInterventionTypeForm.intervention_model')"
-              v-model="form.interventionModelCode"
+              v-model="form.intervention_model_code"
               :label="$t('StudyInterventionTypeForm.intervention_model')"
               :items="interventionModels"
-              item-text="sponsorPreferredName"
-              item-value="termUid"
+              item-text="sponsor_preferred_name"
+              item-value="term_uid"
               return-object
               :error-messages="errors"
               dense
@@ -100,7 +100,7 @@
             >
             <yes-no-field
               :data-cy="$t('StudyInterventionTypeForm.randomised')"
-              v-model="form.isTrialRandomised"
+              v-model="form.is_trial_randomised"
               :error-messages="errors"
               :label="$t('StudyInterventionTypeForm.randomised')"
               />
@@ -113,7 +113,7 @@
             >
             <yes-no-field
               :data-cy="$t('StudyInterventionTypeForm.added_to_et')"
-              v-model="form.addOnToExistingTreatments"
+              v-model="form.add_on_to_existing_treatments"
               :error-messages="errors"
               :label="$t('StudyInterventionTypeForm.added_to_et')"
               />
@@ -128,11 +128,11 @@
             >
             <v-autocomplete
               :data-cy="$t('StudyInterventionTypeForm.blinding_schema')"
-              v-model="form.trialBlindingSchemaCode"
+              v-model="form.trial_blinding_schema_code"
               :label="$t('StudyInterventionTypeForm.blinding_schema')"
               :items="trialBlindingSchemas"
-              item-text="sponsorPreferredName"
-              item-value="termUid"
+              item-text="sponsor_preferred_name"
+              item-value="term_uid"
               return-object
               :error-messages="errors"
               dense
@@ -143,14 +143,14 @@
       </v-row>
       <not-applicable-field
         :clean-function="setNullValueStratificationFactor"
-        :checked="form.stratificationFactorNullValueCode ? true : false"
+        :checked="form.stratification_factor_null_value_code ? true : false"
         >
         <template v-slot:mainField="{ notApplicable }">
           <v-text-field
             :data-cy="$t('StudyInterventionTypeForm.strfactor')"
             :label="$t('StudyInterventionTypeForm.strfactor')"
             :disabled="notApplicable"
-            v-model="form.stratificationFactor"
+            v-model="form.stratification_factor"
             dense
             clearable
             ></v-text-field>
@@ -161,14 +161,14 @@
           <label class="v-label theme--light">{{ $t('StudyInterventionTypeForm.planned_st_length') }}</label>
           <validation-provider
             v-slot="{ errors }"
-            name="PlannedStudyLength"
+            name="planned_study_length"
             >
             <duration-field
               data-cy="planned-study-length"
-              v-model="form.plannedStudyLength"
+              v-model="form.planned_study_length"
               :errors="errors"
-              numericFieldName="durationValue"
-              unitFieldName="durationUnitCode"
+              numericFieldName="duration_value"
+              unitFieldName="duration_unit_code"
               :max="1000"
               />
           </validation-provider>
@@ -232,19 +232,19 @@ export default {
   },
   methods: {
     setNullValueTrialIntentTypesCodes () {
-      this.$set(this.form, 'trialIntentTypesCodes', [])
-      if (this.form.trialIntentTypesNullValueCode) {
-        this.$set(this.form, 'trialIntentTypesNullValueCode', null)
+      this.$set(this.form, 'trial_intent_types_codes', [])
+      if (this.form.trial_intent_types_null_value_code) {
+        this.$set(this.form, 'trial_intent_types_null_value_code', null)
       } else {
-        this.$set(this.form, 'trialIntentTypesNullValueCode', { termUid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
+        this.$set(this.form, 'trial_intent_types_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
       }
     },
     setNullValueStratificationFactor () {
-      this.$set(this.form, 'stratificationFactor', '')
-      if (this.form.diseaseConditionsOrIndicationsNullValueCode) {
-        this.$set(this.form, 'stratificationFactorNullValueCode', null)
+      this.$set(this.form, 'stratification_factor', '')
+      if (this.form.disease_conditions_or_indications_null_value_code) {
+        this.$set(this.form, 'stratification_factor_null_value_code', null)
       } else {
-        this.$set(this.form, 'stratificationFactorNullValueCode', { termUid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
+        this.$set(this.form, 'stratification_factor_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
       }
     },
     close () {
@@ -268,14 +268,14 @@ export default {
     },
     prepareRequestPayload () {
       const data = JSON.parse(JSON.stringify(this.form))
-      if (data.plannedStudyLength.durationValue === undefined) {
-        data.plannedStudyLength = null
+      if (data.planned_study_length.duration_value === undefined) {
+        data.planned_study_length = null
       }
-      data.controlTypeCode = this.getTermPayload('controlTypeCode')
-      data.interventionModelCode = this.getTermPayload('interventionModelCode')
-      data.trialBlindingSchemaCode = this.getTermPayload('trialBlindingSchemaCode')
-      data.interventionTypeCode = this.getTermPayload('interventionTypeCode')
-      data.trialIntentTypesCodes = this.getTermsPayload('trialIntentTypesCodes')
+      data.control_type_code = this.getTermPayload('control_type_code')
+      data.intervention_model_code = this.getTermPayload('intervention_model_code')
+      data.trial_blinding_schema_code = this.getTermPayload('trial_blinding_schema_code')
+      data.intervention_type_code = this.getTermPayload('intervention_type_code')
+      data.trial_intent_types_codes = this.getTermsPayload('trial_intent_types_codes')
       return data
     },
     async submit () {
@@ -299,11 +299,11 @@ export default {
     data: {
       handler: function (value) {
         this.form = JSON.parse(JSON.stringify(value))
-        if (!this.form.plannedStudyLength) {
-          this.form.plannedStudyLength = {}
+        if (!this.form.planned_study_length) {
+          this.form.planned_study_length = {}
         }
-        if (!this.metadata.plannedStudyLength) {
-          this.metadata.plannedStudyLength = null
+        if (!this.metadata.planned_study_length) {
+          this.metadata.planned_study_length = null
         }
         this.$store.commit('form/SET_FORM', this.form)
       },

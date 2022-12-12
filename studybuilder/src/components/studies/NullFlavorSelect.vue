@@ -4,8 +4,8 @@
     :label="$t('NullFlavorSelect.label')"
     :value="value"
     :items="nullValues"
-    item-text="sponsorPreferredName"
-    item-value="termUid"
+    item-text="sponsor_preferred_name"
+    item-value="term_uid"
     return-object
     :error-messages="errors"
     @input="update"
@@ -30,8 +30,8 @@ export default {
   methods: {
     update (val) {
       const newValue = {
-        termUid: val.termUid,
-        name: val.sponsorPreferredName || val.name
+        term_uid: val.term_uid,
+        name: val.sponsor_preferred_name || val.name
       }
       this.$emit('input', newValue)
     }

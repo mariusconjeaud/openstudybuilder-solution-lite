@@ -55,7 +55,7 @@ class ComplexParameterTemplateService(GenericTemplateService[ParameterTemplateAR
 
                 try:
                     library_vo = LibraryVO.from_input_values_2(
-                        library_name=template.libraryName,
+                        library_name=template.library_name,
                         is_library_editable_callback=(
                             lambda name: (
                                 cast(
@@ -70,12 +70,12 @@ class ComplexParameterTemplateService(GenericTemplateService[ParameterTemplateAR
                     )
                 except ValueError as exc:
                     raise NotFoundException(
-                        f"The library with the name='{template.libraryName}' could not be found."
+                        f"The library with the name='{template.library_name}' could not be found."
                     ) from exc
                 try:
                     item = ParameterTemplateAR.from_input_values(
                         author=self.user_initials,
-                        parameter_name=template.parameterName,
+                        parameter_name=template.parameter_name,
                         library=library_vo,
                         template=template_vo,
                     )
@@ -104,7 +104,7 @@ class ComplexParameterTemplateService(GenericTemplateService[ParameterTemplateAR
 
             item.edit_draft(
                 author=self.user_initials,
-                change_description=template.changeDescription,
+                change_description=template.change_description,
                 template=template_vo,
             )
             self.repository.save(item)

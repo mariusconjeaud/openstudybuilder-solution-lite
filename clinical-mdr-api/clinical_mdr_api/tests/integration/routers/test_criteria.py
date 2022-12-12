@@ -1,8 +1,8 @@
 import os
 
+from fastapi.testclient import TestClient
 from neomodel import db
 from pydantic import BaseModel
-from starlette.testclient import TestClient
 
 from clinical_mdr_api.services.criteria_templates import CriteriaTemplateService
 from clinical_mdr_api.tests.integration.utils import api
@@ -48,4 +48,4 @@ class CriteriaTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "criteria.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time"]
+        return ["start_date", "end_date", "uid", "time"]

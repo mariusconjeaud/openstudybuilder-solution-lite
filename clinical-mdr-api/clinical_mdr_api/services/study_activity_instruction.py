@@ -112,10 +112,10 @@ class StudyActivityInstructionService(StudySelectionMixin):
     ) -> StudyActivityInstructionVO:
         return StudyActivityInstructionVO(
             study_uid=study_uid,
-            study_activity_uid=study_activity_instruction_input.studyActivityUid,
+            study_activity_uid=study_activity_instruction_input.study_activity_uid,
             activity_instruction_uid=activity_instruction_uid,
             user_initials=self.author,
-            start_date=datetime.datetime.now(),
+            start_date=datetime.datetime.now(datetime.timezone.utc),
         )
 
     @db.transaction
@@ -125,16 +125,16 @@ class StudyActivityInstructionService(StudySelectionMixin):
         study_activity_instruction_input: models.StudyActivityInstructionCreateInput,
     ) -> models.StudyActivityInstruction:
         """Create a new study activity instruction."""
-        if study_activity_instruction_input.activityInstructionData:
+        if study_activity_instruction_input.activity_instruction_data:
             # Create a new activity instruction first
             activity_instruction_ar = self._create_activity_instruction(
-                study_activity_instruction_input.activityInstructionData
+                study_activity_instruction_input.activity_instruction_data
             )
             activity_instruction_uid = activity_instruction_ar.uid
         else:
             # Link to an existing activity instruction
             activity_instruction_uid = (
-                study_activity_instruction_input.activityInstructionUid
+                study_activity_instruction_input.activity_instruction_uid
             )
         instruction_vo = self._repos.study_activity_instruction_repository.save(
             self._from_input_values(
@@ -168,14 +168,14 @@ class StudyActivityInstructionService(StudySelectionMixin):
                     response_code = status.HTTP_201_CREATED
                 else:
                     self.delete(
-                        study_uid, operation.content.studyActivityInstructionUid
+                        study_uid, operation.content.study_activity_instruction_uid
                     )
                     response_code = status.HTTP_204_NO_CONTENT
             except exceptions.MDRApiBaseException as error:
-                result["responseCode"] = error.status_code
+                result["response_code"] = error.status_code
                 result["content"] = models.error.BatchErrorResponse(error)
             else:
-                result["responseCode"] = response_code
+                result["response_code"] = response_code
                 if item:
                     result["content"] = item.dict()
             finally:

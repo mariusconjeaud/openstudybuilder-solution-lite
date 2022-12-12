@@ -1,59 +1,59 @@
 [
   {
     "abbreviation": null,
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "dictionaryId": "9100L32L2N",
-    "endDate": null,
-    "libraryName": "UNII",
+    "dictionary_id": "9100L32L2N",
+    "end_date": null,
+    "library_name": "UNII",
     "name": "METFORMIN",
-    "nameSentenceCase": "metformin",
-    "possibleActions": [
+    "name_sentence_case": "metformin",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-20T10:53:23.919167",
+    "start_date": "2022-09-20T10:53:23.919167",
     "status": "Final",
-    "termUid": "DictionaryTerm_000918",
-    "userInitials": "unknown-user",
+    "term_uid": "DictionaryTerm_000918",
+    "user_initials": "unknown-user",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "dictionaryId": "362O9ITL9D",
-    "endDate": null,
-    "libraryName": "UNII",
+    "dictionary_id": "362O9ITL9D",
+    "end_date": null,
+    "library_name": "UNII",
     "name": "PARACETAMOL",
-    "nameSentenceCase": "paracetamol",
-    "possibleActions": [
+    "name_sentence_case": "paracetamol",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-20T10:53:23.817292",
+    "start_date": "2022-09-20T10:53:23.817292",
     "status": "Final",
-    "termUid": "DictionaryTerm_000917",
-    "userInitials": "unknown-user",
+    "term_uid": "DictionaryTerm_000917",
+    "user_initials": "unknown-user",
     "version": "1.0"
   },
   {
     "abbreviation": null,
-    "changeDescription": "Approved version",
+    "change_description": "Approved version",
     "definition": null,
-    "dictionaryId": "1Y17CTI5SR",
-    "endDate": null,
-    "libraryName": "UNII",
+    "dictionary_id": "1Y17CTI5SR",
+    "end_date": null,
+    "library_name": "UNII",
     "name": "INSULIN HUMAN",
-    "nameSentenceCase": "insulin human",
-    "possibleActions": [
+    "name_sentence_case": "insulin human",
+    "possible_actions": [
       "inactivate",
       "newVersion"
     ],
-    "startDate": "2022-09-20T10:53:23.687130",
+    "start_date": "2022-09-20T10:53:23.687130",
     "status": "Final",
-    "termUid": "DictionaryTerm_000916",
-    "userInitials": "unknown-user",
+    "term_uid": "DictionaryTerm_000916",
+    "user_initials": "unknown-user",
     "version": "1.0"
   }
 ]

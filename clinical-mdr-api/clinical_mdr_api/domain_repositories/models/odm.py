@@ -107,7 +107,7 @@ class OdmConditionRoot(ConceptRoot):
 
 class OdmMethodValue(ConceptValue):
     oid = StringProperty()
-    type = StringProperty()
+    method_type = StringProperty()
 
 
 class OdmMethodRoot(ConceptRoot):
@@ -244,7 +244,7 @@ class OdmItemGroupRoot(ConceptRoot):
     has_description = RelationshipTo(OdmDescriptionRoot, "HAS_DESCRIPTION")
     has_alias = RelationshipTo(OdmAliasRoot, "HAS_ALIAS")
     has_sdtm_domain = RelationshipTo(CTTermRoot, "HAS_SDTM_DOMAIN")
-    has_activity_sub_group = RelationshipTo(
+    has_activity_subgroup = RelationshipTo(
         ActivitySubGroupRoot, "HAS_ACTIVITY_SUB_GROUP"
     )
     item_group_ref = RelationshipFrom(
@@ -284,6 +284,7 @@ class OdmItemGroupRoot(ConceptRoot):
 class OdmItemTermRelationship(ClinicalMdrRel):
     mandatory = BooleanProperty()
     order = IntegerProperty()
+    display_text = StringProperty()
 
 
 class OdmItemUnitDefinitionRelationship(ClinicalMdrRel):
@@ -400,7 +401,7 @@ class OdmXmlExtensionRoot(ConceptRoot):
 
 
 class OdmXmlExtensionAttributeValue(ConceptValue):
-    ...
+    data_type = StringProperty()
 
 
 class OdmXmlExtensionAttributeRoot(ConceptRoot):
@@ -429,9 +430,6 @@ class OdmXmlExtensionAttributeRoot(ConceptRoot):
     )
     belongs_to_tag_item = RelationshipFrom(
         "OdmItemRoot", "HAS_XML_EXTENSION_TAG_ATTRIBUTE", model=OdmXmlExtensionRelation
-    )
-    has_parent_xml_extension_tag = RelationshipTo(
-        "OdmXmlExtensionTagRoot", "HAS_PARENT_XML_EXTENSION_ATTRIBUTE"
     )
 
     has_version = RelationshipTo(
@@ -465,12 +463,6 @@ class OdmXmlExtensionTagRoot(ConceptRoot):
     )
     belongs_to_item = RelationshipFrom(
         "OdmItemRoot", "HAS_XML_EXTENSION_TAG", model=OdmXmlExtensionRelation
-    )
-    has_parent_xml_extension_tag = RelationshipTo(
-        "OdmXmlExtensionTagRoot", "HAS_PARENT_XML_EXTENSION_TAG"
-    )
-    has_child_xml_extension_tag = RelationshipFrom(
-        "OdmXmlExtensionTagRoot", "HAS_PARENT_XML_EXTENSION_TAG"
     )
     has_xml_extension_attribute = RelationshipTo(
         "OdmXmlExtensionAttributeRoot", "HAS_XML_EXTENSION_ATTRIBUTE"

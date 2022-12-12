@@ -150,7 +150,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         query = """
             MATCH (codelist:CTCodelistRoot)-[:HAS_TERM]->(term_root:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(term_attr_root:CTTermAttributesRoot)-[:LATEST]->(term_attr_value:CTTermAttributesValue)
             WHERE codelist.uid in $codelist_uids
-            RETURN term_root.uid as termUid, codelist.uid as codelistUid, term_attr_value.code_submission_value as codeSubmissionValue, term_attr_value.preferred_term as nciPreferredName
+            RETURN term_root.uid as term_uid, codelist.uid as codelist_uid, term_attr_value.code_submission_value as code_submission_value, term_attr_value.preferred_term as nci_preferred_name
             """
 
         items, prop_names = db.cypher_query(query, {"codelist_uids": codelist_uids})
@@ -224,9 +224,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             format_filter_sort_keys=format_term_filter_sort_keys,
         )
         query.parameters.update(filter_query_parameters)
-        result_array, attributes_names = db.cypher_query(
-            query=query.full_query, params=query.parameters
-        )
+        result_array, attributes_names = query.execute()
         extracted_items = self._retrieve_term_from_cypher_res(
             result_array, attributes_names
         )
@@ -293,13 +291,13 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             format_filter_sort_keys=format_term_filter_sort_keys,
         )
 
-        header_query = query.build_header_query(
+        query.full_query = query.build_header_query(
             header_alias=format_term_filter_sort_keys(field_name),
             result_count=result_count,
         )
 
         query.parameters.update(filter_query_parameters)
-        result_array, _ = db.cypher_query(query=header_query, params=query.parameters)
+        result_array, _ = query.execute()
 
         return (
             format_generic_header_values(result_array[0][0])
@@ -362,7 +360,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             return sorted(categories, key=lambda c: c.uid)
         return None
 
-    def get_template_sub_categories(
+    def get_template_subcategories(
         self, root_class: type, template_uid: str
     ) -> Optional[Sequence[_AggregateRootType]]:
         """
@@ -373,7 +371,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         :return Sequence[_AggregateRootType]:
         """
         template = root_class.nodes.get(uid=template_uid)
-        sub_category_nodes = template.has_sub_category.all()
+        sub_category_nodes = template.has_subcategory.all()
         if sub_category_nodes:
             sub_categories = []
             for node in sub_category_nodes:
@@ -480,7 +478,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
                 uid=parent_uid
             )
         else:
-            parent_node = ct_term_root_node.has_parent_sub_type.get_or_none()
+            parent_node = ct_term_root_node.has_parent_subtype.get_or_none()
 
         if parent_node is not None:
             raise ValueError(
@@ -496,7 +494,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         elif relationship_type == TermParentType.VALID_FOR_EPOCH_TYPE:
             ct_term_root_node.valid_for_epoch_type.connect(ct_term_root_parent_node)
         else:
-            ct_term_root_node.has_parent_sub_type.connect(ct_term_root_parent_node)
+            ct_term_root_node.has_parent_subtype.connect(ct_term_root_parent_node)
 
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def remove_parent(
@@ -520,7 +518,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
                 uid=parent_uid
             )
         else:
-            parent_node = ct_term_root_node.has_parent_sub_type.get_or_none()
+            parent_node = ct_term_root_node.has_parent_subtype.get_or_none()
 
         if parent_node is None:
             raise ValueError(
@@ -532,7 +530,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         elif relationship_type == TermParentType.VALID_FOR_EPOCH_TYPE:
             ct_term_root_node.valid_for_epoch_type.disconnect(parent_node)
         else:
-            ct_term_root_node.has_parent_sub_type.disconnect(parent_node)
+            ct_term_root_node.has_parent_subtype.disconnect(parent_node)
 
     @abstractmethod
     def is_repository_related_to_attributes(self) -> bool:

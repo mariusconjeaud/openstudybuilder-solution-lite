@@ -74,7 +74,7 @@ class ObjectAction(Enum):
     APPROVE = "approve"
     EDIT = "edit"
     DELETE = "delete"
-    NEWVERSION = "newVersion"
+    NEWVERSION = "new_version"
     INACTIVATE = "inactivate"
     REACTIVATE = "reactivate"
 
@@ -102,7 +102,7 @@ class LibraryItemMetadataVO:
             _change_description="Initial version",
             _status=LibraryItemStatus.DRAFT,
             _author=author,
-            _start_date=datetime.datetime.now(),
+            _start_date=datetime.datetime.now(datetime.timezone.utc),
             _end_date=None,
             _major_version=0,
             _minor_version=1,
@@ -210,7 +210,7 @@ class LibraryItemMetadataVO:
             major, minor = self._get_new_version(LibraryItemStatus.DRAFT)
             return replace(
                 self,
-                _start_date=datetime.datetime.now(),
+                _start_date=datetime.datetime.now(datetime.timezone.utc),
                 _end_date=None,
                 _status=LibraryItemStatus.DRAFT,
                 _major_version=major,
@@ -230,7 +230,7 @@ class LibraryItemMetadataVO:
             major, minor = self._get_new_version(LibraryItemStatus.FINAL)
             return replace(
                 self,
-                _start_date=datetime.datetime.now(),
+                _start_date=datetime.datetime.now(datetime.timezone.utc),
                 _end_date=None,
                 _status=LibraryItemStatus.FINAL,
                 _major_version=major,
@@ -250,7 +250,7 @@ class LibraryItemMetadataVO:
             major, minor = self._get_new_version(LibraryItemStatus.RETIRED)
             return replace(
                 self,
-                _start_date=datetime.datetime.now(),
+                _start_date=datetime.datetime.now(datetime.timezone.utc),
                 _end_date=None,
                 _status=LibraryItemStatus.RETIRED,
                 _major_version=major,
@@ -525,7 +525,6 @@ class TemplateVO:
         default_parameter_values: Optional[Sequence[ParameterValueEntryVO]] = None,
         template_guidance_text: Optional[str] = None,
     ) -> "TemplateVO":
-        # TODO: rename method after removing from_input_values
         if not is_syntax_of_template_name_correct(template_name):
             raise ValueError(f"Template string syntax incorrect: {template_name}")
         result = cls(
@@ -717,7 +716,7 @@ class TemplateAggregateRootBase(LibraryItemAggregateRootBase):
                     "The template parameters cannot be modified after being a final version, only the plain text can be modified"
                 )
             raise VersioningException(
-                "You cannot change number or order of template parameters."
+                "You cannot change number or order of template parameters for a previously approved template."
             )
         if self._template != template:
             super()._edit_draft(change_description=change_description, author=author)

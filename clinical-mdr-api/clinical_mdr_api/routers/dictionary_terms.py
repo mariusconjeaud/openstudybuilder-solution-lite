@@ -4,8 +4,7 @@ from typing import Any, List, Optional
 from fastapi import APIRouter, Body, Depends, Path, Query, Response, status
 from pydantic.types import Json
 
-from clinical_mdr_api import config as settings
-from clinical_mdr_api import models
+from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id
@@ -29,7 +28,7 @@ DictionaryTermUID = Path(None, description="The unique id of the DictionaryTerm"
     description="""
 Business logic:
  - List dictionary terms in the repository for the dictionary codelist (being a subset of terms)
- - The term uid property is the dictionary conceptId.
+ - The term uid property is the dictionary concept_id.
  
 State after:
  - No change
@@ -45,18 +44,20 @@ def get_terms(
     codelist_uid: str = Query(
         ..., description="The unique id of the DictionaryCodelist"
     ),
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -64,15 +65,15 @@ def get_terms(
     dictionary_term_service = DictionaryTermGenericService(user=current_user_id)
     results = dictionary_term_service.get_all_dictionary_terms(
         codelist_uid=codelist_uid,
-        sort_by=sortBy,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -96,8 +97,8 @@ def get_distinct_values_for_header(
     codelist_uid: str = Query(
         ..., description="The unique id of the DictionaryCodelist"
     ),
-    fieldName: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    searchString: Optional[str] = Query(
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
     filters: Optional[Json] = Query(
@@ -106,18 +107,18 @@ def get_distinct_values_for_header(
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    resultCount: Optional[int] = Query(
+    result_count: Optional[int] = Query(
         10, description=_generic_descriptions.HEADER_RESULT_COUNT
     ),
 ):
     dictionary_term_service = DictionaryTermGenericService(user=current_user_id)
     return dictionary_term_service.get_distinct_values_for_header(
         codelist_uid=codelist_uid,
-        field_name=fieldName,
-        search_string=searchString,
+        field_name=field_name,
+        search_string=search_string,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        result_count=resultCount,
+        result_count=result_count,
     )
 
 
@@ -188,7 +189,7 @@ State before:
  
 Business logic:
  - List version history for a dictionary term.
- - The returned versions are ordered by startDate descending (newest entries first).
+ - The returned versions are ordered by start_date descending (newest entries first).
  
 State after:
  - No change
@@ -227,7 +228,7 @@ Business logic:
  - The individual values for name and uid must all be unique values within the dictionary codelist.
  - The status of the updated version will continue to be 'Draft'.
  - The 'version' property of the version will automatically be incremented with +0.1.
- - The 'changeDescription' property is required.
+ - The 'change_description' property is required.
  
 State after:
  - Attribute are updated for the dictionary term.
@@ -270,7 +271,7 @@ def edit(
 
 
 @router.post(
-    "/terms/{uid}/new-version",
+    "/terms/{uid}/versions",
     summary=" Create a new version of a dictionary term",
     description="""
 State before:
@@ -280,7 +281,7 @@ Business logic:
  - The latest 'Final' version will remain the same as before.
  - The status of the new created version will be automatically set to 'Draft'.
  - The 'version' property of the new version will be automatically set to the version of the latest 'Final' or 'Retired' version increased by +0.1.
- - The 'changeDescription' property will be set automatically to 'New version'.
+ - The 'change_description' property will be set automatically to 'New version'.
  
 State after:
  - Dictionary term changed status to Draft and assigned a new minor version number.
@@ -326,7 +327,7 @@ Business logic:
  - The latest 'Draft' version will remain the same as before.
  - The status of the new approved version will be automatically set to 'Final'.
  - The 'version' property of the new version will be automatically set to the version of the latest 'Final' version increased by +1.0.
- - The 'changeDescription' property will be set automatically 'Approved version'.
+ - The 'change_description' property will be set automatically 'Approved version'.
  
 State after:
  - dictionary term changed status to Final and assigned a new major version number.
@@ -370,7 +371,7 @@ State before:
 Business logic:
  - The latest 'Final' version will remain the same as before.
  - The status will be automatically set to 'Retired'.
- - The 'changeDescription' property will be set automatically.
+ - The 'change_description' property will be set automatically.
  - The 'version' property will remain the same as before.
  
 State after:
@@ -414,7 +415,7 @@ State before:
 Business logic:
  - The latest 'Retired' version will remain the same as before.
  - The status will be automatically set to 'Final'.
- - The 'changeDescription' property will be set automatically.
+ - The 'change_description' property will be set automatically.
  - The 'version' property will remain the same as before.
 
 State after:
@@ -567,18 +568,20 @@ Possible errors:
     responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
 )
 def get_substances(
-    sortBy: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    pageNumber: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
-    pageSize: Optional[int] = Query(0, description=_generic_descriptions.PAGE_SIZE),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
     filters: Optional[Json] = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
     operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    totalCount: Optional[bool] = Query(
+    total_count: Optional[bool] = Query(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -586,16 +589,16 @@ def get_substances(
 
     dictionary_term_service = DictionaryTermSubstanceService(user=current_user_id)
     results = dictionary_term_service.get_all_dictionary_terms(
-        codelist_name=settings.LIBRARY_SUBSTANCES_CODELIST_NAME,
-        sort_by=sortBy,
-        page_number=pageNumber,
-        page_size=pageSize,
-        total_count=totalCount,
+        codelist_name=config.LIBRARY_SUBSTANCES_CODELIST_NAME,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=pageNumber, size=pageSize
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -611,7 +614,7 @@ Business logic:
  - The individual values for name and uid must all be unique values within the dictionary codelist.
  - The status of the updated version will continue to be 'Draft'.
  - The 'version' property of the version will automatically be incremented with +0.1.
- - The 'changeDescription' property is required.
+ - The 'change_description' property is required.
  
 State after:
  - Attribute are updated for the dictionary term.

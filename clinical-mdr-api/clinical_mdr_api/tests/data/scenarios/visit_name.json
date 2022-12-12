@@ -6,11 +6,11 @@
          "method": "POST",
          "request": {
             "name": "Visit_name_name",
-            "nameSentenceCase": "visit_name_name",
+            "name_sentence_case": "visit_name_name",
             "definition": "visit_name_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor"
+            "template_parameter": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/visit-names"
       },
@@ -20,17 +20,17 @@
          "result": {
             "uid": "VisitName_000001",
             "name": "Visit_name_name",
-            "nameSentenceCase": "visit_name_name",
+            "name_sentence_case": "visit_name_name",
             "definition": "visit_name_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor",
+            "template_parameter": true,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null
          }
       }
    },
@@ -41,11 +41,11 @@
          "method": "POST",
          "request": {
             "name": "Visit_name_name",
-            "nameSentenceCase": "visit_name_name",
+            "name_sentence_case": "visit_name_name",
             "definition": "visit_name_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor"
+            "template_parameter": true,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/visit-names"
       },
@@ -55,17 +55,17 @@
          "result": {
             "uid": "VisitName_000001",
             "name": "Visit_name_name",
-            "nameSentenceCase": "visit_name_name",
+            "name_sentence_case": "visit_name_name",
             "definition": "visit_name_definition1",
             "abbreviation": "abbv",
-            "templateParameter": true,
-            "libraryName": "Sponsor",
+            "template_parameter": true,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null
          }
       }
    },
@@ -76,11 +76,11 @@
          "method": "POST",
          "request": {
             "name": "Visit_name_name2",
-            "nameSentenceCase": "visit_name_name2",
+            "name_sentence_case": "visit_name_name2",
             "definition": "visit_name_definition2",
             "abbreviation": "abbv",
-            "templateParameter": false,
-            "libraryName": "Sponsor"
+            "template_parameter": false,
+            "library_name": "Sponsor"
          },
          "url": "/concepts/visit-names"
       },
@@ -90,17 +90,17 @@
          "result": {
             "uid": "VisitName_000002",
             "name": "Visit_name_name2",
-            "nameSentenceCase": "visit_name_name2",
+            "name_sentence_case": "visit_name_name2",
             "definition": "visit_name_definition2",
             "abbreviation": "abbv",
-            "templateParameter": false,
-            "libraryName": "Sponsor",
+            "template_parameter": false,
+            "library_name": "Sponsor",
             "status": null,
             "version": null,
-            "changeDescription": null,
-            "userInitials": null,
-            "startDate": null,
-            "endDate": null
+            "change_description": null,
+            "user_initials": null,
+            "start_date": null,
+            "end_date": null
          }
       }
    },
@@ -110,7 +110,7 @@
          "headers": {},
          "method": "GET",
          "request": {},
-         "url": "/concepts/visit-names?totalCount=true"
+         "url": "/concepts/visit-names?total_count=true"
       },
       "response": {
          "code": 200,
@@ -120,37 +120,37 @@
                {
                   "uid": "VisitName_000001",
                   "name": "Visit_name_name",
-                  "nameSentenceCase": "visit_name_name",
+                  "name_sentence_case": "visit_name_name",
                   "definition": "visit_name_definition1",
                   "abbreviation": "abbv",
-                  "templateParameter": true,
-                  "libraryName": "Sponsor",
+                  "template_parameter": true,
+                  "library_name": "Sponsor",
                   "status": null,
                   "version": null,
-                  "changeDescription": null,
-                  "userInitials": null,
-                  "startDate": null,
-                  "endDate": null
+                  "change_description": null,
+                  "user_initials": null,
+                  "start_date": null,
+                  "end_date": null
                },
                {
                   "uid": "VisitName_000002",
                   "name": "Visit_name_name2",
-                  "nameSentenceCase": "visit_name_name2",
+                  "name_sentence_case": "visit_name_name2",
                   "definition": "visit_name_definition2",
                   "abbreviation": "abbv",
-                  "templateParameter": false,
-                  "libraryName": "Sponsor",
+                  "template_parameter": false,
+                  "library_name": "Sponsor",
                   "status": null,
                   "version": null,
-                  "changeDescription": null,
-                  "userInitials": null,
-                  "startDate": null,
-                  "endDate": null
+                  "change_description": null,
+                  "user_initials": null,
+                  "start_date": null,
+                  "end_date": null
                }
             ],
             "total": 2,
             "page": 1,
-            "size": 0
+            "size": 10
          }
       }
    }

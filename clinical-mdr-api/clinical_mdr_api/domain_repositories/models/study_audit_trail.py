@@ -11,7 +11,7 @@ class StudyAction(ClinicalMdrNode):
     audit_trail = RelationshipFrom(
         ".study.StudyRoot", "AUDIT_TRAIL", model=ClinicalMdrRel
     )
-    date = ZonedDateTimeProperty(format="%Y-%m-%d %H:%M:%S.%f")
+    date = ZonedDateTimeProperty()
     status = StringProperty()
     user_initials = StringProperty()
 

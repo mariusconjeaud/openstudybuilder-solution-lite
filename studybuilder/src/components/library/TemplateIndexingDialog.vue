@@ -2,6 +2,7 @@
 <simple-form-dialog
   ref="form"
   :title="$t('TemplateIndexingDialog.title')"
+  :open="show"
   @submit="submit"
   @close="close"
   v-bind="$attrs"
@@ -31,7 +32,8 @@ export default {
   props: {
     preparePayloadFunc: Function,
     template: Object,
-    urlPrefix: String
+    urlPrefix: String,
+    show: Boolean
   },
   data () {
     return {
@@ -49,7 +51,7 @@ export default {
         return
       }
       const data = {
-        indicationUids: (this.form.indications) ? this.form.indications.map(item => item.termUid) : [],
+        indication_uids: (this.form.indications) ? this.form.indications.map(item => item.term_uid) : [],
         ...this.preparePayloadFunc(this.form)
       }
       const api = templates(this.urlPrefix)

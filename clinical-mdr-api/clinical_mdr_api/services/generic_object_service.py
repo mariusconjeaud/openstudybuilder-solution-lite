@@ -30,7 +30,6 @@ from clinical_mdr_api.domain_repositories.library.template_parameters_repository
 )
 from clinical_mdr_api.exceptions import (
     BusinessLogicException,
-    InternalErrorException,
     NotFoundException,
     ValidationException,
 )
@@ -55,15 +54,15 @@ class GenericObjectService(GenericLibraryItemServiceBase[_AggregateRootType], ab
     aggregate_class - a class of Aggregate root that supports selected object
     repository_interface - repository interface for selected object
     template_repository_interface - repository for template object that selected object is created from
-    templateUidProperty - name of template uid property from pydantic models supporting selected object
-    templateNameProperty - template name property that service is supposed to return with pydantic object
+    template_uid_property - name of template uid property from pydantic models supporting selected object
+    template_name_property - template name property that service is supposed to return with pydantic object
     """
 
     aggregate_class: type
     repository_interface: type
     template_repository_interface: type
-    templateUidProperty: str
-    templateNameProperty: str
+    template_uid_property: str
+    template_name_property: str
     parametrized_template_vo_class: type = ParametrizedTemplateVO
     _allowed_parameters = None
 
@@ -96,18 +95,18 @@ class GenericObjectService(GenericLibraryItemServiceBase[_AggregateRootType], ab
             study_uid=study_uid,
             include_study_endpoints=include_study_endpoints,
         )
-        template_uid = getattr(template, self.templateUidProperty)
+        template_uid = getattr(template, self.template_uid_property)
         template_vo = self.parametrized_template_vo_class.from_input_values_2(
             template_uid=template_uid,
             parameter_values=parameter_values,
-            name_override=getattr(template, "nameOverride", None),
+            name_override=getattr(template, "name_override", None),
             get_final_template_vo_by_template_uid_callback=self._get_template_vo_by_template_uid,
             is_instance_editable_callback=self.template_repository.is_template_instance_editable,
         )
 
         try:
             library_vo = LibraryVO.from_input_values_2(
-                library_name=template.libraryName,
+                library_name=template.library_name,
                 is_library_editable_callback=(
                     lambda name: (
                         cast(
@@ -120,7 +119,7 @@ class GenericObjectService(GenericLibraryItemServiceBase[_AggregateRootType], ab
             )
         except ValueError as exc:
             raise NotFoundException(
-                f"The library with the name='{template.libraryName}' could not be found."
+                f"The library with the name='{template.library_name}' could not be found."
             ) from exc
 
         item = self.aggregate_class.from_input_values(
@@ -149,11 +148,6 @@ class GenericObjectService(GenericLibraryItemServiceBase[_AggregateRootType], ab
                 item = self.create_ar_from_input_values(template)
                 rep = self.repository
 
-                if item is None:
-                    raise InternalErrorException(
-                        "Unable to create template instance AR object."
-                    )
-
                 if rep.check_exists_by_name(item.name):
                     raise BusinessLogicException("The specified object already exists.")
                 if not preview:
@@ -162,7 +156,7 @@ class GenericObjectService(GenericLibraryItemServiceBase[_AggregateRootType], ab
             return self._transform_aggregate_root_to_pydantic_model(item_ar=item)
         except core.DoesNotExist as exc:
             raise NotFoundException(
-                f"The library with the name='{template.libraryName}' could not be found."
+                f"The library with the name='{template.library_name}' could not be found."
             ) from exc
         except ValueError as e:
             raise ValidationException(e.args[0]) from e
@@ -207,7 +201,7 @@ class GenericObjectService(GenericLibraryItemServiceBase[_AggregateRootType], ab
                 raise ValidationException(e.args[0]) from e
             item.edit_draft(
                 author=self.user_initials,
-                change_description=template.changeDescription,
+                change_description=template.change_description,
                 template=template_vo,
             )
             self.repository.save(item)
@@ -255,7 +249,7 @@ class GenericObjectService(GenericLibraryItemServiceBase[_AggregateRootType], ab
         parameter name, conjunctions, uids, and values of parameters
         """
         if template_uid is None:
-            template_uid = getattr(template, self.templateUidProperty)
+            template_uid = getattr(template, self.template_uid_property)
         parameter_values = []
         self._allowed_parameters = (
             self.template_repository.get_parameters_including_values(
@@ -273,14 +267,14 @@ class GenericObjectService(GenericLibraryItemServiceBase[_AggregateRootType], ab
                 param_names = extract_parameters(allowed_parameter["template"])
                 params = []
                 for param_name in param_names:
-                    parameter = template.parameterValues[idx]
+                    parameter = template.parameter_values[idx]
                     if param_name != "NumericValue":
                         tp = SimpleParameterValueVO(
                             uid=parameter.values[0].uid, value=parameter.values[0].name
                         )
                     else:
                         tp = NumericParameterValueVO(
-                            uid="", value=template.parameterValues[idx].value
+                            uid="", value=template.parameter_values[idx].value
                         )
                     idx += 1
                     params.append(tp)
@@ -292,7 +286,7 @@ class GenericObjectService(GenericLibraryItemServiceBase[_AggregateRootType], ab
                     )
                 )
             else:
-                parameter = template.parameterValues[idx]
+                parameter = template.parameter_values[idx]
                 uids = []
 
                 if len(parameter.values) == 0:

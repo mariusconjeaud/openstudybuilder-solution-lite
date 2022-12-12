@@ -43,13 +43,13 @@ export default {
         { text: this.$t('UCUM.description'), value: 'definition' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' },
-        { text: this.$t('_global.modified'), value: 'startDate' }
+        { text: this.$t('_global.modified'), value: 'start_date' }
       ]
     }
   },
   mounted () {
     dictionaries.getCodelists(this.dictionaryName).then(resp => {
-      this.codelistUid = resp.data.items[0].codelistUid
+      this.codelistUid = resp.data.items[0].codelist_uid
     })
   }
 }

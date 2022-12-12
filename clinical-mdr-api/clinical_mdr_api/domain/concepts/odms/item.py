@@ -17,57 +17,48 @@ from clinical_mdr_api.models.utils import GenericFilteringReturn, booltostr
 
 @dataclass(frozen=True)
 class OdmItemVO(ConceptVO):
-    oid: str
-    prompt: str
-    datatype: str
-    length: int
-    significant_digits: int
-    sas_field_name: str
-    sds_var_name: str
-    origin: str
+    oid: Optional[str]
+    prompt: Optional[str]
+    datatype: Optional[str]
+    length: Optional[int]
+    significant_digits: Optional[int]
+    sas_field_name: Optional[str]
+    sds_var_name: Optional[str]
+    origin: Optional[str]
     comment: Optional[str]
     description_uids: Sequence[str]
-    alias_uids: Optional[Sequence[str]]
-    unit_definition_uids: Optional[Sequence[str]]
+    alias_uids: Sequence[str]
+    unit_definition_uids: Sequence[str]
     codelist_uid: Optional[str]
-    term_uids: Optional[Sequence[str]]
-    activity_uids: Optional[Sequence[str]]
-    xml_extension_attribute_uids: Optional[Sequence[str]]
-    xml_extension_tag_uids: Optional[Sequence[str]]
-    xml_extension_tag_attribute_uids: Optional[Sequence[str]]
+    term_uids: Sequence[str]
+    activity_uids: Sequence[str]
+    xml_extension_attribute_uids: Sequence[str]
+    xml_extension_tag_uids: Sequence[str]
+    xml_extension_tag_attribute_uids: Sequence[str]
 
     @classmethod
     def from_repository_values(
         cls,
-        oid: str,
+        oid: Optional[str],
         name: str,
-        prompt: str,
-        datatype: str,
-        length: int,
-        significant_digits: int,
-        sas_field_name: str,
-        sds_var_name: str,
-        origin: str,
+        prompt: Optional[str],
+        datatype: Optional[str],
+        length: Optional[int],
+        significant_digits: Optional[int],
+        sas_field_name: Optional[str],
+        sds_var_name: Optional[str],
+        origin: Optional[str],
         comment: Optional[str],
         description_uids: Sequence[str],
-        alias_uids: Optional[Sequence[str]],
-        unit_definition_uids: Optional[Sequence[str]],
+        alias_uids: Sequence[str],
+        unit_definition_uids: Sequence[str],
         codelist_uid: Optional[str],
-        term_uids: Optional[Sequence[str]],
-        activity_uids: Optional[Sequence[str]] = None,
-        xml_extension_tag_uids: Optional[Sequence[str]] = None,
-        xml_extension_attribute_uids: Optional[Sequence[str]] = None,
-        xml_extension_tag_attribute_uids: Optional[Sequence[str]] = None,
+        term_uids: Sequence[str],
+        activity_uids: Sequence[str],
+        xml_extension_tag_uids: Sequence[str],
+        xml_extension_attribute_uids: Sequence[str],
+        xml_extension_tag_attribute_uids: Sequence[str],
     ) -> "OdmItemVO":
-        if activity_uids is None:
-            activity_uids = []
-        if xml_extension_tag_uids is None:
-            xml_extension_tag_uids = []
-        if xml_extension_attribute_uids is None:
-            xml_extension_attribute_uids = []
-        if xml_extension_tag_attribute_uids is None:
-            xml_extension_tag_attribute_uids = []
-
         return cls(
             oid=oid,
             name=name,
@@ -96,55 +87,60 @@ class OdmItemVO(ConceptVO):
 
     def validate(
         self,
-        concept_exists_by_callback: Callable[[str, str, bool], bool],
+        concept_exists_by_callback: Callable[[str, str], bool],
         odm_description_exists_by_callback: Callable[[str, str, bool], bool],
         odm_alias_exists_by_callback: Callable[[str, str, bool], bool],
         unit_definition_exists_by_callback: Callable[[str, str, bool], bool],
-        find_codelist_attribute_callback: Callable[[str], CTTermAttributesAR],
-        find_all_terms_callback: Callable[[str], GenericFilteringReturn[CTTermNameAR]],
+        find_codelist_attribute_callback: Callable[[str], Optional[CTTermAttributesAR]],
+        find_all_terms_callback: Callable[
+            [str], Optional[GenericFilteringReturn[CTTermNameAR]]
+        ],
         previous_name: Optional[str] = None,
         previous_oid: Optional[str] = None,
     ) -> None:
 
         if concept_exists_by_callback("name", self.name) and previous_name != self.name:
             raise BusinessLogicException(
-                f"OdmItem with name ({self.name}) already exists."
+                f"ODM Item with name ({self.name}) already exists."
             )
 
-        if concept_exists_by_callback("oid", self.oid) and previous_oid != self.oid:
+        if (
+            self.oid
+            and concept_exists_by_callback("oid", self.oid)
+            and previous_oid != self.oid
+        ):
             raise BusinessLogicException(
-                f"OdmItem with OID ({self.oid}) already exists."
+                f"ODM Item with OID ({self.oid}) already exists."
             )
 
         for description_uid in self.description_uids:
-            desc = odm_description_exists_by_callback("uid", description_uid, True)
-            if not desc:
+            if not odm_description_exists_by_callback("uid", description_uid, True):
                 raise BusinessLogicException(
-                    f"OdmItem tried to connect to non existing OdmDescription identified by uid ({description_uid})."
+                    f"ODM Item tried to connect to non existing ODM Description identified by uid ({description_uid})."
                 )
 
         for alias_uid in self.alias_uids:
             if not odm_alias_exists_by_callback("uid", alias_uid, True):
                 raise BusinessLogicException(
-                    f"OdmItem tried to connect to non existing OdmAlias identified by uid ({alias_uid})."
+                    f"ODM Item tried to connect to non existing ODM Alias identified by uid ({alias_uid})."
                 )
 
         for unit_definition_uid in self.unit_definition_uids:
             if not unit_definition_exists_by_callback("uid", unit_definition_uid, True):
                 raise BusinessLogicException(
-                    f"OdmItem tried to connect to non existing UnitDefinition identified by uid ({unit_definition_uid})."
+                    f"ODM Item tried to connect to non existing Unit Definition identified by uid ({unit_definition_uid})."
                 )
 
         if self.codelist_uid is not None:
             if not find_codelist_attribute_callback(self.codelist_uid):
                 raise BusinessLogicException(
-                    f"OdmItem tried to connect to non existing Codelist identified by uid ({self.codelist_uid})."
+                    f"ODM Item tried to connect to non existing Codelist identified by uid ({self.codelist_uid})."
                 )
 
         if self.term_uids:
             if not self.codelist_uid:
                 raise BusinessLogicException(
-                    "To add terms you need to specify a codelist"
+                    "To add terms you need to specify a codelist."
                 )
 
             codelist_term_uids = [
@@ -152,12 +148,12 @@ class OdmItemVO(ConceptVO):
                 for term in find_all_terms_callback(
                     codelist_uid=self.codelist_uid
                 ).items
+                if self.term_uids
             ]
-
             for term_uid in self.term_uids:
                 if term_uid not in codelist_term_uids:
                     raise BusinessLogicException(
-                        f"The term identified by uid ({term_uid}) doesn't belong to the specified codelist identified by uid ({self.codelist_uid})"
+                        f"The term identified by uid ({term_uid}) doesn't belong to the specified codelist identified by uid ({self.codelist_uid})."
                     )
 
 
@@ -195,22 +191,22 @@ class OdmItemAR(OdmARBase):
         concept_vo: OdmItemVO,
         library: LibraryVO,
         generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        concept_exists_by_callback: Callable[[str, str, bool], bool] = lambda _: True,
+        concept_exists_by_callback: Callable[[str, str], bool] = lambda x, y: True,
         odm_description_exists_by_callback: Callable[
             [str, str, bool], bool
-        ] = lambda _: False,
+        ] = lambda x, y, z: True,
         odm_alias_exists_by_callback: Callable[
             [str, str, bool], bool
-        ] = lambda _: False,
+        ] = lambda x, y, z: True,
         unit_definition_exists_by_callback: Callable[
             [str, str, bool], bool
-        ] = lambda _: False,
+        ] = lambda x, y, z: True,
         find_codelist_attribute_callback: Callable[
-            [str], CTTermAttributesAR
-        ] = lambda _: False,
+            [str], Optional[CTTermAttributesAR]
+        ] = lambda _: None,
         find_all_terms_callback: Callable[
-            [str], GenericFilteringReturn[CTTermNameAR]
-        ] = lambda _: False,
+            [str], Optional[GenericFilteringReturn[CTTermNameAR]]
+        ] = lambda _: None,
     ) -> "OdmItemAR":
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
@@ -235,15 +231,23 @@ class OdmItemAR(OdmARBase):
         author: str,
         change_description: Optional[str],
         concept_vo: OdmItemVO,
-        concept_exists_by_name_callback: Callable[[str], bool] = None,
-        concept_exists_by_callback: Callable[[str, str, bool], bool] = None,
-        odm_description_exists_by_callback: Callable[[str, str, bool], bool] = None,
-        odm_alias_exists_by_callback: Callable[[str, str, bool], bool] = None,
-        unit_definition_exists_by_callback: Callable[[str, str, bool], bool] = None,
-        find_codelist_attribute_callback: Callable[[str], CTTermAttributesAR] = None,
+        concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
+        concept_exists_by_callback: Callable[[str, str], bool] = lambda x, y: True,
+        odm_description_exists_by_callback: Callable[
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
+        odm_alias_exists_by_callback: Callable[
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
+        unit_definition_exists_by_callback: Callable[
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
+        find_codelist_attribute_callback: Callable[
+            [str], Optional[CTTermAttributesAR]
+        ] = lambda _: None,
         find_all_terms_callback: Callable[
-            [str], GenericFilteringReturn[CTTermNameAR]
-        ] = None,
+            [str], Optional[GenericFilteringReturn[CTTermNameAR]]
+        ] = lambda _: None,
     ) -> None:
         """
         Creates a new draft version for the object.
@@ -271,10 +275,10 @@ class OdmItemRefVO:
     name: str
     item_group_uid: str
     order_number: int
-    mandatory: bool
-    data_entry_required: bool
-    sdv: bool
-    locked: bool
+    mandatory: str
+    data_entry_required: str
+    sdv: str
+    locked: str
     key_sequence: str
     method_oid: str
     imputation_method_oid: str
@@ -326,12 +330,19 @@ class OdmItemTermVO:
     name: str
     mandatory: bool
     order: int
+    display_text: str
 
     @classmethod
     def from_repository_values(
-        cls, uid: str, name: str, mandatory: bool, order: int
+        cls, uid: str, name: str, mandatory: bool, order: int, display_text: str
     ) -> "OdmItemTermVO":
-        return cls(uid=uid, name=name, mandatory=mandatory, order=order)
+        return cls(
+            uid=uid,
+            name=name,
+            mandatory=mandatory,
+            order=order,
+            display_text=display_text,
+        )
 
 
 @dataclass(frozen=True)

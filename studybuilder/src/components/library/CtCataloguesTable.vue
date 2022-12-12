@@ -33,7 +33,7 @@ export default {
   components: {
     CodelistTable
   },
-  props: ['catalogueName'],
+  props: ['catalogue_name'],
   computed: {
     ...mapGetters({
       catalogues: 'ctCatalogues/catalogues'
@@ -53,17 +53,17 @@ export default {
     openCodelistTerms ({ codelist, catalogueName }) {
       this.$router.push({
         name: 'CodelistTerms',
-        params: { codelistId: codelist.codelistUid }
+        params: { codelist_id: codelist.codelist_uid, catalogue_name: catalogueName }
       })
     }
   },
   mounted () {
-    this.originalCatalogue = this.catalogueName
+    this.originalCatalogue = this.catalogue_name
     this.$store.dispatch('ctCatalogues/fetchCatalogues')
   },
   watch: {
     tab (newValue, oldValue) {
-      if (newValue !== this.catalogueName) {
+      if (newValue !== this.catalogue_name) {
         this.$store.commit('ctCatalogues/SET_CURRENT_CATALOGUE_PAGE', 1)
       }
       this.$emit('catalogueChanged', newValue)

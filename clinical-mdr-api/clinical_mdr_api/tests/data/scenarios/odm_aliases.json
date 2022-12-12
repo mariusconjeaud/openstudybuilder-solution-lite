@@ -1,6 +1,6 @@
 [
     {
-        "name": "Test getting empty list of odm aliases",
+        "name": "Test getting empty list of ODM Aliases",
         "request": {
             "headers": {},
             "method": "GET",
@@ -17,17 +17,17 @@
                 "items": [],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
     {
-        "name": "Test creating a new odm alias",
+        "name": "Test creating a new ODM Alias",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "context": "context1"
             },
@@ -42,15 +42,15 @@
             "result": {
                 "uid": "OdmAlias_000001",
                 "name": "name1",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
-                "possibleActions": [
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -59,7 +59,7 @@
         }
     },
     {
-        "name": "Test getting non empty list of odm aliases",
+        "name": "Test getting non empty list of ODM Aliases",
         "request": {
             "headers": {},
             "method": "GET",
@@ -77,15 +77,15 @@
                     {
                         "uid": "OdmAlias_000001",
                         "name": "name1",
-                        "libraryName": "Sponsor",
+                        "library_name": "Sponsor",
                         "context": "context1",
-                        "startDate": "2022-03-03T11:17:56.799074",
-                        "endDate": null,
+                        "start_date": "2022-03-03T11:17:56.799074",
+                        "end_date": null,
                         "status": "Draft",
                         "version": "0.1",
-                        "changeDescription": "Initial version",
-                        "userInitials": "TODO user initials",
-                        "possibleActions": [
+                        "change_description": "Initial version",
+                        "user_initials": "TODO user initials",
+                        "possible_actions": [
                             "approve",
                             "delete",
                             "edit"
@@ -94,17 +94,17 @@
                 ],
                 "total": 0,
                 "page": 1,
-                "size": 0
+                "size": 10
             }
         }
     },
     {
-        "name": "Test getting possible header values of odm aliases",
+        "name": "Test getting possible header values of ODM Aliases",
         "request": {
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "concepts/odms/aliases/headers?fieldName=name"
+            "url": "concepts/odms/aliases/headers?field_name=name"
         },
         "response": {
             "code": 200,
@@ -118,7 +118,7 @@
         }
     },
     {
-        "name": "Test getting versions of a specific odm alias",
+        "name": "Test getting versions of a specific ODM Alias",
         "request": {
             "headers": {},
             "method": "GET",
@@ -135,15 +135,15 @@
                 {
                     "uid": "OdmAlias_000001",
                     "name": "name1",
-                    "libraryName": "Sponsor",
+                    "library_name": "Sponsor",
                     "context": "context1",
-                    "startDate": "2022-03-03T11:17:56.799074",
-                    "endDate": null,
+                    "start_date": "2022-03-03T11:17:56.799074",
+                    "end_date": null,
                     "status": "Draft",
                     "version": "0.1",
-                    "changeDescription": "Initial version",
-                    "userInitials": "TODO user initials",
-                    "possibleActions": [
+                    "change_description": "Initial version",
+                    "user_initials": "TODO user initials",
+                    "possible_actions": [
                         "approve",
                         "delete",
                         "edit"
@@ -153,15 +153,15 @@
         }
     },
     {
-        "name": "Test updating an existing odm alias",
+        "name": "Test updating an existing ODM Alias",
         "request": {
             "headers": {},
             "method": "PATCH",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "new name",
                 "context": "context1",
-                "changeDescription": "name changed"
+                "change_description": "name changed"
             },
             "url": "concepts/odms/aliases/OdmAlias_000001"
         },
@@ -174,15 +174,15 @@
             "result": {
                 "uid": "OdmAlias_000001",
                 "name": "new name",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.2",
-                "changeDescription": "name changed",
-                "userInitials": "TODO user initials",
-                "possibleActions": [
+                "change_description": "name changed",
+                "user_initials": "TODO user initials",
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -191,7 +191,7 @@
         }
     },
     {
-        "name": "Test approving an odm alias",
+        "name": "Test approving an ODM Alias",
         "request": {
             "headers": {},
             "method": "POST",
@@ -207,23 +207,23 @@
             "result": {
                 "uid": "OdmAlias_000001",
                 "name": "new name",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Approved version",
-                "userInitials": "TODO initials",
-                "possibleActions": [
+                "change_description": "Approved version",
+                "user_initials": "TODO initials",
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test inactivating a specific odm alias",
+        "name": "Test inactivating a specific ODM Alias",
         "request": {
             "headers": {},
             "method": "POST",
@@ -239,15 +239,15 @@
             "result": {
                 "uid": "OdmAlias_000001",
                 "name": "new name",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Retired",
                 "version": "1.0",
-                "changeDescription": "Deactivated version",
-                "userInitials": "TODO initials",
-                "possibleActions": [
+                "change_description": "Deactivated version",
+                "user_initials": "TODO initials",
+                "possible_actions": [
                     "delete",
                     "reactivate"
                 ]
@@ -255,7 +255,7 @@
         }
     },
     {
-        "name": "Test reactivating a specific odm alias",
+        "name": "Test reactivating a specific ODM Alias",
         "request": {
             "headers": {},
             "method": "POST",
@@ -271,28 +271,28 @@
             "result": {
                 "uid": "OdmAlias_000001",
                 "name": "new name",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context1",
-                "startDate": "2022-03-03T13:18:03.230000",
-                "endDate": null,
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
                 "status": "Final",
                 "version": "1.0",
-                "changeDescription": "Reactivated version",
-                "userInitials": "TODO initials",
-                "possibleActions": [
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
+                "possible_actions": [
                     "inactivate",
-                    "newVersion"
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test creating a new odm alias version",
+        "name": "Test creating a new ODM Alias version",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/odms/aliases/OdmAlias_000001/new-version"
+            "url": "concepts/odms/aliases/OdmAlias_000001/versions"
         },
         "response": {
             "code": 201,
@@ -303,15 +303,15 @@
             "result": {
                 "uid": "OdmAlias_000001",
                 "name": "new name",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "1.1",
-                "changeDescription": "New draft created",
-                "userInitials": "TODO user initials",
-                "possibleActions": [
+                "change_description": "New draft created",
+                "user_initials": "TODO user initials",
+                "possible_actions": [
                     "approve",
                     "edit"
                 ]
@@ -319,13 +319,13 @@
         }
     },
     {
-        "name": "Create a new odm alias for batch and delete",
+        "name": "Create a new ODM Alias for batch and delete",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
                 "name": "batch name",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "context": "context1"
             },
             "url": "concepts/odms/aliases"
@@ -338,16 +338,16 @@
             },
             "result": {
                 "uid": "OdmAlias_000002",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "batch name",
                 "context": "context1",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
-                "possibleActions": [
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -356,7 +356,7 @@
         }
     },
     {
-        "name": "Test batch opreations for odm alias",
+        "name": "Test batch opreations for ODM Alias",
         "request": {
             "headers": {},
             "method": "POST",
@@ -373,7 +373,7 @@
                     "content": {
                         "uid": "OdmAlias_000002",
                         "context": "new context",
-                        "changeDescription": "context changed"
+                        "change_description": "context changed"
                     }
                 }
             ],
@@ -387,19 +387,19 @@
             },
             "result": [
                 {
-                    "responseCode": 201,
+                    "response_code": 201,
                     "content": {
-                        "startDate": "2022-03-21T16:09:29.582953",
-                        "endDate": null,
+                        "start_date": "2022-03-21T16:09:29.582953",
+                        "end_date": null,
                         "status": "Draft",
                         "version": "0.1",
-                        "userInitials": "TODO user initials",
-                        "changeDescription": "Initial version",
+                        "user_initials": "TODO user initials",
+                        "change_description": "Initial version",
                         "uid": "OdmAlias_000003",
                         "name": "new batch name",
                         "context": "new batch context",
-                        "libraryName": "Sponsor",
-                        "possibleActions": [
+                        "library_name": "Sponsor",
+                        "possible_actions": [
                             "approve",
                             "delete",
                             "edit"
@@ -407,19 +407,19 @@
                     }
                 },
                 {
-                    "responseCode": 200,
+                    "response_code": 200,
                     "content": {
                         "uid": "OdmAlias_000002",
-                        "libraryName": "Sponsor",
+                        "library_name": "Sponsor",
                         "name": "batch name",
                         "context": "new context",
-                        "startDate": "2022-03-03T11:17:56.799074",
-                        "endDate": null,
+                        "start_date": "2022-03-03T11:17:56.799074",
+                        "end_date": null,
                         "status": "Draft",
                         "version": "0.2",
-                        "changeDescription": "context changed",
-                        "userInitials": "TODO user initials",
-                        "possibleActions": [
+                        "change_description": "context changed",
+                        "user_initials": "TODO user initials",
+                        "possible_actions": [
                             "approve",
                             "delete",
                             "edit"
@@ -430,7 +430,7 @@
         }
     },
     {
-        "name": "Test deleting a specific odm alias",
+        "name": "Test deleting a specific ODM Alias",
         "request": {
             "headers": {},
             "method": "DELETE",
@@ -447,23 +447,23 @@
         }
     },
     {
-        "name": "Create a new odm form with relation to odm alias",
+        "name": "Create a new ODM Form with relation to ODM Alias",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
-                "sdtmVersion": "0.1",
+                "sdtm_version": "0.1",
                 "repeating": "No",
-                "scopeUid": null,
-                "descriptionUids": [],
-                "aliasUids": [
+                "scope_uid": null,
+                "descriptions": [],
+                "alias_uids": [
                     "OdmAlias_000001"
                 ]
             },
-            "url": "concepts/odms/forms/select"
+            "url": "concepts/odms/forms"
         },
         "response": {
             "code": 201,
@@ -474,16 +474,16 @@
             "result": {
                 "uid": "OdmForm_000001",
                 "name": "name1",
-                "libraryName": "Sponsor",
+                "library_name": "Sponsor",
                 "oid": "oid1",
-                "sdtmVersion": "0.1",
+                "sdtm_version": "0.1",
                 "repeating": "No",
-                "startDate": "2022-03-03T11:17:56.799074",
-                "endDate": null,
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
                 "status": "Draft",
                 "version": "0.1",
-                "changeDescription": "Initial version",
-                "userInitials": "TODO user initials",
+                "change_description": "Initial version",
+                "user_initials": "TODO user initials",
                 "scope": null,
                 "descriptions": [],
                 "aliases": [
@@ -494,12 +494,12 @@
                         "version": "1.1"
                     }
                 ],
-                "activityGroups": [],
-                "itemGroups": [],
-                "xmlExtensionTags": [],
-                "xmlExtensionAttributes": [],
-                "xmlExtensionTagAttributes": [],
-                "possibleActions": [
+                "activity_groups": [],
+                "item_groups": [],
+                "xml_extension_tags": [],
+                "xml_extension_attributes": [],
+                "xml_extension_tag_attributes": [],
+                "possible_actions": [
                     "approve",
                     "delete",
                     "edit"
@@ -508,7 +508,7 @@
         }
     },
     {
-        "name": "Test getting UIDs of a specific odm alias' active relationships",
+        "name": "Test getting UIDs of a specific ODM Alias' active relationships",
         "request": {
             "headers": {},
             "method": "GET",

@@ -1,7 +1,7 @@
 import random
 import string
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Iterable, List, Mapping, Optional, Sequence, Union
 
 import pytest
@@ -79,60 +79,57 @@ initialize_ct_data_map = {
         ("C48660", "Not Applicable"),
         ("C49686", "Phase IIa Trial"),
     ],
-    "StudyStopRules": ("C49698", "Study Stop Rule"),
-    "IsExtensionTrial": ("C139274", "Extension Trial Indicator"),
-    "IsAdaptiveDesign": ("C146995", "Adaptive Study Design Indicator"),
-    "PostAuthIndicator": ("C139275", "Post Authorization Safety Study Indicator"),
+    "StudyStopRules": ("C49698_STOPRULE", "Study Stop Rule"),
+    "IsExtensionTrial": [("C49488_Y", "Y"), ("C49487_N", "N")],
+    "IsAdaptiveDesign": [("C49488_Y", "Y"), ("C49487_N", "N")],
+    "PostAuthIndicator": (
+        "C139275_PASSIND",
+        "Post Authorization Safety Study Indicator",
+    ),
     "TherapeuticAreas": [
-        (random_str(), "Therapeutic Area1"),
-        (random_str(), "Therapeutic Area2"),
-        (random_str(), "Therapeutic Area3"),
-        (random_str(), "Therapeutic Area4"),
-        (random_str(), "Therapeutic Area5"),
+        ("DictionaryTerm_000001", "Therapeutic Area1"),
+        ("DictionaryTerm_000002", "Therapeutic Area2"),
+        ("DictionaryTerm_000003", "Therapeutic Area3"),
+        ("DictionaryTerm_000004", "Therapeutic Area4"),
+        ("DictionaryTerm_000005", "Therapeutic Area5"),
     ],
     "DiseaseConditionOrIndications": [
-        (random_str(), "DiseaseConditionOrIndication1"),
-        (random_str(), "DiseaseConditionOrIndication2"),
-        (random_str(), "DiseaseConditionOrIndication3"),
-        (random_str(), "DiseaseConditionOrIndication4"),
-        (random_str(), "DiseaseConditionOrIndication5"),
+        ("DictionaryTerm_000001", "DiseaseConditionOrIndication1"),
+        ("DictionaryTerm_000002", "DiseaseConditionOrIndication2"),
+        ("DictionaryTerm_000003", "DiseaseConditionOrIndication3"),
+        ("DictionaryTerm_000004", "DiseaseConditionOrIndication4"),
+        ("DictionaryTerm_000005", "DiseaseConditionOrIndication5"),
     ],
     "DiagnosisGroups": [
-        (random_str(), "DiagnosisGroup1"),
-        (random_str(), "DiagnosisGroup2"),
-        (random_str(), "DiagnosisGroup3"),
-        (random_str(), "DiagnosisGroup4"),
-        (random_str(), "DiagnosisGroup5"),
+        ("DictionaryTerm_000001", "DiagnosisGroup1"),
+        ("DictionaryTerm_000002", "DiagnosisGroup2"),
+        ("DictionaryTerm_000003", "DiagnosisGroup3"),
+        ("DictionaryTerm_000004", "DiagnosisGroup4"),
+        ("DictionaryTerm_000005", "DiagnosisGroup5"),
     ],
     "SexOfParticipants": [("C16576", "Female"), ("C20197", "Male"), ("C49636", "Both")],
-    "StableDiseaseMinimumDuration": ("C98783", "Stable Disease Minimum Duration"),
-    "RareDiseaseIndicator": ("C126070", "Rare Disease Indicator"),  # SDTM catalogue
-    "HealthySubjectIndicator": (
-        "C98737",
-        "Healthy Subject Indicator",
-    ),  # SDTM catalogue
+    "StableDiseaseMinimumDuration": (
+        "C98783_SDMDUR",
+        "Stable Disease Minimum Duration",
+    ),
+    "RareDiseaseIndicator": [("C49488_Y", "Y"), ("C49487_N", "N")],  # SDTM catalogue
+    "HealthySubjectIndicator": [("C49488_Y", "Y"), ("C49487_N", "N")],  # SDTM catalogue
     "PlannedMinimumAgeOfSubject": (
-        "C49693",
+        "C49693_AGEMIN",
         "Planned Minimum Age of Subjects",
     ),  # SDTM catalogue
     "PlannedMaximumAgeOfSubject": (
-        "C49694",
+        "C49694_AGEMAX",
         "Planned Maximum Age of Subjects",
     ),  # SDTM catalogue
-    "PediatricStudyIndicator": (
-        "C123632",
-        "Pediatric Study Indicator",
-    ),  # SDTM catalogue
-    "PediatricPostmarketStudyIndicator": (
-        "C123631",
-        "Pediatric Postmarket Study Indicator",
-    ),  # SDTM catalogue
-    "PediatricInvestigationPlanIndicator": (
-        "C126059",
-        "EMA Decision Number for Pediatric Investigation Plan",
-    ),
+    "PediatricStudyIndicator": [("C49488_Y", "Y"), ("C49487_N", "N")],  # SDTM catalogue
+    "PediatricPostmarketStudyIndicator": [
+        ("C49488_Y", "Y"),
+        ("C49487_N", "N"),
+    ],  # SDTM catalogue
+    "PediatricInvestigationPlanIndicator": [("C49488_Y", "Y"), ("C49487_N", "N")],
     # SDTM catalogue
-    "RelapseCriteria": ("C117961", "Relapse Criteria"),
+    "RelapseCriteria": ("C117961_RLPSCRIT", "Relapse Criteria"),
     "InterventionType": [
         ("C127574", "MJDIAEVS"),
         ("C122086", "Augmentation Pressure Point P2"),
@@ -142,7 +139,10 @@ initialize_ct_data_map = {
         ("C127535", "Annular a' Velocity"),
         ("C147156", "Pressure Half Time"),
     ],
-    "AddOnToExistingTreatments": ("C49703", "ADDON"),  # SDTM catalogue
+    "AddOnToExistingTreatments": [
+        ("C49488_Y", "Y"),
+        ("C49487_N", "N"),
+    ],  # SDTM catalogue
     "ControlType": [
         ("C120841", "Dose Response Control"),
         ("C41132", "None"),
@@ -156,22 +156,25 @@ initialize_ct_data_map = {
         ("C82639", "Parallel Study"),
         ("C82640", "Single Group Study"),
     ],
-    "IsTrialRandomised": ("C25196", "Randomization"),  # SDTM catalogue
-    "StratificationFactor": ("C16153", "Stratification Factors"),  # SDTM catalogue
+    "IsTrialRandomised": [("C49488_Y", "Y"), ("C49487_N", "N")],  # SDTM catalogue
+    "StratificationFactor": (
+        "C16153_STRATFCT",
+        "Stratification Factors",
+    ),  # SDTM catalogue
     "TrialBlindingSchema": [
         ("C15228", "Double Blind Study"),
         ("C49659", "Open Label Study"),
         ("C156592", "OPEN LABEL TO TREATMENT AND DOUBLE BLIND TO IMP DOSE"),
         ("C28233", "Single Blind Study"),
     ],
-    "PlannedStudyLength": ("C49697", "Trial Length"),  # SDTM catalogue
+    "PlannedStudyLength": ("C49697_LENGTH", "Trial Length"),  # SDTM catalogue
     "ConfirmedResponseMinimumDuration": (
-        "C98715",
+        "C98715_CRMDUR",
         "ConfirmedResponseMinimumDuration",
     ),  # SDTM catalogue
-    "DrugStudyIndication": ("C123630", "DrugStudyIndication"),  # SDTM catalogue
-    "DeviceStudyIndication": ("C123629", "DeviceStudyIndication"),  # SDTM catalogue
-    "StudyTitle": ("C49802", "Trial Title"),  # SDTM catalogue
+    "DrugStudyIndication": [("C49488_Y", "Y"), ("C49487_N", "N")],  # SDTM catalogue
+    "DeviceStudyIndication": [("C49488_Y", "Y"), ("C49487_N", "N")],  # SDTM catalogue
+    "StudyTitle": ("C49802_TITLE", "Trial Title"),  # SDTM catalogue
 }
 
 
@@ -646,14 +649,14 @@ def random_valid_id_metadata(
             registry_identifiers=RegistryIdentifiersVO(
                 ct_gov_id=None,
                 eudract_id=None,
-                universal_trial_number_UTN=None,
-                japanese_trial_registry_id_JAPIC=None,
-                investigational_new_drug_application_number_IND=None,
+                universal_trial_number_utn=None,
+                japanese_trial_registry_id_japic=None,
+                investigational_new_drug_application_number_ind=None,
                 ct_gov_id_null_value_code=None,
                 eudract_id_null_value_code=None,
-                universal_trial_number_UTN_null_value_code=None,
-                japanese_trial_registry_id_JAPIC_null_value_code=None,
-                investigational_new_drug_application_number_IND_null_value_code=None,
+                universal_trial_number_utn_null_value_code=None,
+                japanese_trial_registry_id_japic_null_value_code=None,
+                investigational_new_drug_application_number_ind_null_value_code=None,
             ),
         )
         if condition is None or condition(result):
@@ -699,14 +702,14 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=None,
                         eudract_id=None,
-                        universal_trial_number_UTN=None,
-                        japanese_trial_registry_id_JAPIC=None,
-                        investigational_new_drug_application_number_IND=None,
+                        universal_trial_number_utn=None,
+                        japanese_trial_registry_id_japic=None,
+                        investigational_new_drug_application_number_ind=None,
                         ct_gov_id_null_value_code=None,
                         eudract_id_null_value_code=None,
-                        universal_trial_number_UTN_null_value_code=None,
-                        japanese_trial_registry_id_JAPIC_null_value_code=None,
-                        investigational_new_drug_application_number_IND_null_value_code=None,
+                        universal_trial_number_utn_null_value_code=None,
+                        japanese_trial_registry_id_japic_null_value_code=None,
+                        investigational_new_drug_application_number_ind_null_value_code=None,
                     ),
                 )
                 # when
@@ -737,14 +740,14 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                     registry_identifiers=RegistryIdentifiersVO(
                         ct_gov_id=None,
                         eudract_id=None,
-                        universal_trial_number_UTN=None,
-                        japanese_trial_registry_id_JAPIC=None,
-                        investigational_new_drug_application_number_IND=None,
+                        universal_trial_number_utn=None,
+                        japanese_trial_registry_id_japic=None,
+                        investigational_new_drug_application_number_ind=None,
                         ct_gov_id_null_value_code=None,
                         eudract_id_null_value_code=None,
-                        universal_trial_number_UTN_null_value_code=None,
-                        japanese_trial_registry_id_JAPIC_null_value_code=None,
-                        investigational_new_drug_application_number_IND_null_value_code=None,
+                        universal_trial_number_utn_null_value_code=None,
+                        japanese_trial_registry_id_japic_null_value_code=None,
+                        investigational_new_drug_application_number_ind_null_value_code=None,
                     ),
                 )
 
@@ -764,14 +767,14 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                 registry_identifiers=RegistryIdentifiersVO(
                     ct_gov_id=None,
                     eudract_id=None,
-                    universal_trial_number_UTN=None,
-                    japanese_trial_registry_id_JAPIC=None,
-                    investigational_new_drug_application_number_IND=None,
+                    universal_trial_number_utn=None,
+                    japanese_trial_registry_id_japic=None,
+                    investigational_new_drug_application_number_ind=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
-                    universal_trial_number_UTN_null_value_code=None,
-                    japanese_trial_registry_id_JAPIC_null_value_code=None,
-                    investigational_new_drug_application_number_IND_null_value_code=None,
+                    universal_trial_number_utn_null_value_code=None,
+                    japanese_trial_registry_id_japic_null_value_code=None,
+                    investigational_new_drug_application_number_ind_null_value_code=None,
                 ),
             )
 
@@ -1409,7 +1412,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
             generators={
                 "study_type_code": None,
                 "trial_type_codes": [],
-                "trial_intent_type_codes": [],
+                "trial_intent_types_codes": [],
                 "trial_phase_code": None,
                 "is_extension_trial": None,
                 "is_adaptive_design": None,
@@ -1446,7 +1449,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
             generators={
                 "study_type_code": None,
                 "trial_type_codes": [],
-                "trial_intent_type_codes": [],
+                "trial_intent_types_codes": [],
                 "trial_phase_code": None,
                 "is_extension_trial": None,
                 "is_adaptive_design": None,
@@ -1606,7 +1609,11 @@ def random_ver_metadata(
             locked_version_info=random_opt_str(),
             locked_version_author=random_opt_str(),
             version_timestamp=random.choice(
-                [None, datetime.today() + timedelta(days=random.randint(-1000, 1000))]
+                [
+                    None,
+                    datetime.now(timezone.utc)
+                    + timedelta(days=random.randint(-1000, 1000)),
+                ]
             ),
             study_status=random.choice(
                 [StudyStatus.DRAFT, StudyStatus.RELEASED, StudyStatus.LOCKED]
@@ -1786,7 +1793,7 @@ def random_valid_study_intervention(
         )
 
         use_trial_intent_type = random.choice([True, False])
-        trial_intent_type_codes = (
+        trial_intent_types_codes = (
             [random.choice(initialize_ct_data_map["TrialIntentType"])[0]]
             + list(random_c_code_sequence(initialize_ct_data_map["TrialIntentType"]))
             if use_trial_intent_type
@@ -1819,7 +1826,7 @@ def random_valid_study_intervention(
             device_study_indication=device_study_indication,
             drug_study_indication_null_value_code=drug_study_indication_null_value_code,
             device_study_indication_null_value_code=device_study_indication_null_value_code,
-            trial_intent_type_codes=trial_intent_type_codes,
+            trial_intent_types_codes=trial_intent_types_codes,
             trial_intent_type_null_value_code=trial_intent_type_null_value_code,
         )
 

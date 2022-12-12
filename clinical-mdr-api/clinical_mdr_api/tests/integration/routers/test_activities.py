@@ -33,7 +33,7 @@ class ActivityTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "activity.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials"]
+        return ["start_date", "end_date", "user_initials"]
 
 
 class ActivityNegativeTest(api.APITest):
@@ -52,7 +52,7 @@ class ActivityNegativeTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "activity_negative.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class ActivitySubGroupTest(api.APITest):
@@ -71,7 +71,7 @@ class ActivitySubGroupTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "activity_sub_group.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials"]
+        return ["start_date", "end_date", "user_initials"]
 
 
 class ActivitySubGroupTestNegativeTest(api.APITest):
@@ -92,7 +92,7 @@ class ActivitySubGroupTestNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class ActivityGroupTest(api.APITest):
@@ -111,7 +111,7 @@ class ActivityGroupTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "activity_group.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials"]
+        return ["start_date", "end_date", "user_initials"]
 
 
 class ActivityGroupNegativeTest(api.APITest):
@@ -130,7 +130,7 @@ class ActivityGroupNegativeTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "activity_group_negative.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class ActivityInstanceTest(api.APITest):
@@ -152,7 +152,7 @@ class ActivityInstanceTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "activity_instance.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials"]
+        return ["start_date", "end_date", "user_initials"]
 
 
 class ActivityInstanceNegativeTest(api.APITest):
@@ -175,7 +175,7 @@ class ActivityInstanceNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "time"]
+        return ["start_date", "end_date", "user_initials", "time"]
 
 
 class NewCategoricFindingTest(api.APITest):
@@ -199,7 +199,7 @@ class NewCategoricFindingTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials"]
+        return ["start_date", "end_date", "user_initials"]
 
 
 class NewCategoricFindingNegativeTest(api.APITest):
@@ -225,7 +225,7 @@ class NewCategoricFindingNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time", "userInitials"]
+        return ["start_date", "end_date", "uid", "time", "user_initials"]
 
 
 class NewNumericFindingTest(api.APITest):
@@ -249,7 +249,7 @@ class NewNumericFindingTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials"]
+        return ["start_date", "end_date", "user_initials"]
 
 
 class NewNumericFindingNegativeTest(api.APITest):
@@ -275,7 +275,7 @@ class NewNumericFindingNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time", "userInitials"]
+        return ["start_date", "end_date", "uid", "time", "user_initials"]
 
 
 class NewTextualNumericFindingTest(api.APITest):
@@ -299,7 +299,7 @@ class NewTextualNumericFindingTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials"]
+        return ["start_date", "end_date", "user_initials"]
 
 
 class NewTextualFindingNegativeTest(api.APITest):
@@ -325,7 +325,7 @@ class NewTextualFindingNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time", "userInitials"]
+        return ["start_date", "end_date", "uid", "time", "user_initials"]
 
 
 class NewCompoundDosingTest(api.APITest):
@@ -349,7 +349,7 @@ class NewCompoundDosingTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "specimen"]
+        return ["start_date", "end_date", "user_initials", "specimen"]
 
 
 class NewCompoundDosingNegativeTest(api.APITest):
@@ -375,7 +375,7 @@ class NewCompoundDosingNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time", "userInitials", "specimen"]
+        return ["start_date", "end_date", "uid", "time", "user_initials", "specimen"]
 
 
 class NewEventTest(api.APITest):
@@ -397,7 +397,7 @@ class NewEventTest(api.APITest):
     SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "activity_sub_types/event.json")]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "specimen"]
+        return ["start_date", "end_date", "user_initials", "specimen"]
 
 
 class NewEventNegativeTest(api.APITest):
@@ -421,7 +421,7 @@ class NewEventNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time", "userInitials", "specimen"]
+        return ["start_date", "end_date", "uid", "time", "user_initials", "specimen"]
 
 
 class NewReminderTest(api.APITest):
@@ -445,7 +445,7 @@ class NewReminderTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials", "specimen"]
+        return ["start_date", "end_date", "user_initials", "specimen"]
 
 
 class NewReminderNegativeTest(api.APITest):
@@ -469,7 +469,7 @@ class NewReminderNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time", "userInitials", "specimen"]
+        return ["start_date", "end_date", "uid", "time", "user_initials", "specimen"]
 
 
 class NewSpecialPurposeTest(api.APITest):
@@ -493,7 +493,7 @@ class NewSpecialPurposeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials"]
+        return ["start_date", "end_date", "user_initials"]
 
 
 class NewSpecialPurposeNegativeTest(api.APITest):
@@ -519,7 +519,7 @@ class NewSpecialPurposeNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time", "userInitials"]
+        return ["start_date", "end_date", "uid", "time", "user_initials"]
 
 
 class NewLaboratoryActivityTest(api.APITest):
@@ -543,7 +543,7 @@ class NewLaboratoryActivityTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials"]
+        return ["start_date", "end_date", "user_initials"]
 
 
 class NewLaboratoryActivityNegativeTest(api.APITest):
@@ -570,7 +570,7 @@ class NewLaboratoryActivityNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time", "userInitials"]
+        return ["start_date", "end_date", "uid", "time", "user_initials"]
 
 
 class NewRatingScaleNegativeTest(api.APITest):
@@ -596,7 +596,7 @@ class NewRatingScaleNegativeTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "uid", "time", "userInitials"]
+        return ["start_date", "end_date", "uid", "time", "user_initials"]
 
 
 class NewRatingScaleTest(api.APITest):
@@ -620,4 +620,4 @@ class NewRatingScaleTest(api.APITest):
     ]
 
     def ignored_fields(self):
-        return ["startDate", "endDate", "userInitials"]
+        return ["start_date", "end_date", "user_initials"]

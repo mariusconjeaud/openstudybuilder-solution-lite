@@ -69,20 +69,20 @@ def map_boolean_exc(bool_str: str) -> bool:
 
 
 def find_term_by_name(term_name: str, all_terms: Sequence[dict]) -> Optional[str]:
-    termUid = None
+    term_uid = None
     for term in all_terms:
-        if term["name"]["sponsorPreferredName"].lower() == term_name.lower():
-            termUid = term["termUid"]
+        if term["name"]["sponsor_preferred_name"].lower() == term_name.lower():
+            term_uid = term["term_uid"]
             break
-        elif term["attributes"]["codeSubmissionValue"] is not None:
-            if term["attributes"]["codeSubmissionValue"].lower() == term_name.lower():
-                termUid = term["termUid"]
+        elif term["attributes"]["code_submission_value"] is not None:
+            if term["attributes"]["code_submission_value"].lower() == term_name.lower():
+                term_uid = term["term_uid"]
                 break
-        elif term["attributes"]["nameSubmissionValue"] is not None:
-            if term["attributes"]["nameSubmissionValue"].lower() == term_name.lower():
-                termUid = term["termUid"]
+        elif term["attributes"]["name_submission_value"] is not None:
+            if term["attributes"]["name_submission_value"].lower() == term_name.lower():
+                term_uid = term["term_uid"]
                 break
-    return termUid
+    return term_uid
 
 
 def update_uid_list_dict(key: str, dictionary: dict, value_to_add: Any):
