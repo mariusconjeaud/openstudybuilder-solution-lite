@@ -56,7 +56,7 @@ class ParameterTemplateRepository(GenericTemplateRepository[ParameterTemplateAR]
                 library_name=library.name,
                 is_library_editable_callback=(lambda _: library.is_editable),
             ),
-            template=self._get_template(root, value),
+            template=self._get_template(value),
         )
 
     def _get_or_create_value(

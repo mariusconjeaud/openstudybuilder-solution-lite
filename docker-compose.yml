@@ -25,6 +25,9 @@ services:
     build: 
       context: ./
       dockerfile: apidockerfile
+      args:
+        - UVICORN_PORT=5003
+        - UVICORN_ROOT_PATH="/api"
     container_name: api
     restart: always
     environment:
@@ -42,6 +45,10 @@ services:
       - OIDC_METADATA_DOCUMENT=abc
       - SERVER_AUDIENCE=abc
       - USER_ID_CLAIM=abc
+      - UVICORN_PORT=5003
+      - UVICORN_ROOT_PATH=/api
+    expose:
+      - 5003
     ports:
       - "5003:5003"
     depends_on:

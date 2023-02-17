@@ -1,9 +1,7 @@
 from neo4j import GraphDatabase
-from os import listdir, truncate
 from os import environ
-from neo4j.work.result import Result
-from string import Template
 from neo4j.work.transaction import Transaction
+from db_schema import SCHEMA_CLEAR_QUERY, build_schema_queries
 
 from datetime import datetime
 
@@ -15,25 +13,35 @@ CLEAR_DATABASE = NEO4J_MDR_CLEAR_DATABASE.lower() == "true"
 BACKUP_DATABASE = NEO4J_MDR_BACKUP_DATABASE.lower() == "true"
 
 uri = "neo4j://{}:{}".format(
-    environ.get("NEO4J_MDR_HOST"),
-    environ.get("NEO4J_MDR_BOLT_PORT")
+    environ.get("NEO4J_MDR_HOST"), environ.get("NEO4J_MDR_BOLT_PORT")
 )
-driver = GraphDatabase.driver(uri, auth=(
-    environ.get("NEO4J_MDR_AUTH_USER"),
-    environ.get("NEO4J_MDR_AUTH_PASSWORD")
-))
+driver = GraphDatabase.driver(
+    uri,
+    auth=(environ.get("NEO4J_MDR_AUTH_USER"), environ.get("NEO4J_MDR_AUTH_PASSWORD")),
+)
 
 
 def run_querystring(tx: Transaction, query: str) -> None:
     tx.run(query).consume()
 
+
 def run_querystring_read(tx: Transaction, query: str):
     result = tx.run(query)
     return result.data()
 
+
+def run_querystring(tx: Transaction, query: str) -> None:
+    tx.run(query).consume()
+
+
+def run_querystring_read(tx: Transaction, query: str):
+    result = tx.run(query)
+    return result.data()
+
+
 # Using merge so it wont fail if init is run multiple times
 # Used as the default set of Template Parameter allowing the end user to create Objectif Template for example
-def pre_load_template_parameter_tree(tx:Transaction):
+def pre_load_template_parameter_tree(tx: Transaction):
     cypher = """
         // activity
         MERGE (activity:TemplateParameter {name: "Activity"})
@@ -146,16 +154,22 @@ def create_special_template_parameters(tx: Transaction):
     """
     run_querystring(tx, cypher)
 
+
 def make_db_name():
-    if DATABASE_DBNAME is None or DATABASE_DBNAME.lower() == "" or DATABASE_DBNAME.lower().startswith("auto"):
+    if (
+        DATABASE_DBNAME is None
+        or DATABASE_DBNAME.lower() == ""
+        or DATABASE_DBNAME.lower().startswith("auto")
+    ):
         now = datetime.now()
         date_str = now.strftime("%Y.%m.%d-%H.%M")
-        db_name = "{}-{}".format(DATABASE,date_str)
+        db_name = "{}-{}".format(DATABASE, date_str)
         print(f"Using auto-generated database name: '{db_name}'")
     else:
         db_name = DATABASE_DBNAME
         print(f"Using provided database name: '{db_name}'")
     return db_name
+
 
 print("\n-- Clear and backup --")
 print(f"Clear database: {CLEAR_DATABASE}")
@@ -163,10 +177,14 @@ print(f"Keep backup of database: {BACKUP_DATABASE}")
 # Clear database if requested
 if CLEAR_DATABASE:
     with driver.session(database="system") as session:
-        querystring = "SHOW ALIASES FOR DATABASE YIELD * WHERE name='{}' RETURN database".format(DATABASE)
+        querystring = (
+            "SHOW ALIASES FOR DATABASE YIELD * WHERE name='{}' RETURN database".format(
+                DATABASE
+            )
+        )
         db_name_reply = session.read_transaction(run_querystring_read, querystring)
         if db_name_reply:
-            db_name = db_name_reply[0]["database"] 
+            db_name = db_name_reply[0]["database"]
             print(f"Dropping alias '{DATABASE}' for database '{db_name}'")
             querystring = "DROP ALIAS `{}` IF EXISTS FOR DATABASE".format(DATABASE)
             session.write_transaction(run_querystring, querystring)
@@ -180,10 +198,14 @@ if CLEAR_DATABASE:
         else:
             querystring = "SHOW DATABASE `{}`".format(DATABASE)
             existing = session.read_transaction(run_querystring_read, querystring)
-            if len(existing)>0:
-                print("Database '{}' already exists but is not an alias".format(DATABASE))
+            if len(existing) > 0:
+                print(
+                    "Database '{}' already exists but is not an alias".format(DATABASE)
+                )
                 if BACKUP_DATABASE:
-                    raise RuntimeError("Unable to keep a backup since the database is not an alias")
+                    raise RuntimeError(
+                        "Unable to keep a backup since the database is not an alias"
+                    )
                 else:
                     querystring = "DROP DATABASE `{}` IF EXISTS".format(DATABASE)
                     print("Dropping database '{}'".format(DATABASE))
@@ -194,121 +216,52 @@ print("\n-- Creating database and alias --")
 with driver.session(database="system") as session:
     querystring = "SHOW DATABASE `{}`".format(DATABASE)
     existing = session.read_transaction(run_querystring_read, querystring)
-    if len(existing)>0:
-        print("Database (or alias) '{}' already exists, skipping create step".format(DATABASE))
+    if len(existing) > 0:
+        print(
+            "Database (or alias) '{}' already exists, skipping create step".format(
+                DATABASE
+            )
+        )
     else:
         new_db_name = make_db_name()
         if new_db_name.lower() == DATABASE.lower():
-            raise RuntimeError("Database name and alias must be different. Provided db name: {new_db_name}, alias: {DATABASE}")
+            raise RuntimeError(
+                "Database name and alias must be different. Provided db name: {new_db_name}, alias: {DATABASE}"
+            )
         print("Creating database '{}'".format(new_db_name))
         querystring = "CREATE DATABASE `{}` IF NOT EXISTS".format(new_db_name)
         session.write_transaction(run_querystring, querystring)
         print("Creating alias '{}' for database '{}'".format(DATABASE, new_db_name))
-        querystring = "CREATE ALIAS `{}` IF NOT EXISTS FOR DATABASE `{}`".format(DATABASE, new_db_name)
+        querystring = "CREATE ALIAS `{}` IF NOT EXISTS FOR DATABASE `{}`".format(
+            DATABASE, new_db_name
+        )
         session.write_transaction(run_querystring, querystring)
 
 # Todo: Additional system db operations (set up roles and permissions)
 
-# TODO consider adding CALL apoc.schema.assert({},{})
 # Create indexes and constraints
 print("\n-- Setting up indexes and constraints on specific nodes --")
 with driver.session(database=DATABASE) as session:
-    for querystring in [
-        # clinical-mdr-api
-        # -----------------------------------------------------------------------------------------------------------------------
-        "CREATE INDEX index_ActivityDescriptionTemplateValue IF NOT EXISTS FOR (n:ActivityDescriptionTemplateValue) ON (n.name)",
-        "CREATE INDEX index_CriteriaTemplateValue IF NOT EXISTS FOR (n:CriteriaTemplateValue) ON (n.name)",
-        "CREATE INDEX index_CriteriaValue IF NOT EXISTS FOR (n:CriteriaValue) ON (n.name)",
-        "CREATE INDEX index_ObjectiveTemplateValue IF NOT EXISTS FOR (n:ObjectiveTemplateValue) ON (n.name)",
-        "CREATE INDEX index_ObjectiveValue IF NOT EXISTS FOR (n:ObjectiveValue) ON (n.name)",
-        "CREATE INDEX index_EndpointTemplateValue IF NOT EXISTS FOR (n:EndpointTemplateValue) ON (n.name)",
-        "CREATE INDEX index_EndpointValue IF NOT EXISTS FOR (n:EndpointValue) ON (n.name)",
-        "CREATE INDEX index_TimeframeTemplateValue IF NOT EXISTS FOR (n:TimeframeTemplateValue) ON (n.name)",
-        "CREATE INDEX index_TimeframeValue IF NOT EXISTS FOR (n:TimeframeValue) ON (n.name)",
-        "CREATE INDEX index_TemplateParameterValue IF NOT EXISTS FOR (n:TemplateParameterValue) ON (n.name)",
-        "CREATE INDEX index_CTCodelistAttributesValue IF NOT EXISTS FOR (n:CTCodelistAttributesValue) ON (n.name)",
-        "CREATE INDEX index_CTCodelistNameValue IF NOT EXISTS FOR (n:CTCodelistNameValue) ON (n.name)",
-        "CREATE INDEX index_CTTermAttributesValue_code IF NOT EXISTS FOR (n:CTTermAttributesValue) ON (n.code_submission_value)",
-        "CREATE INDEX index_CTTermAttributesValue_name IF NOT EXISTS FOR (n:CTTermAttributesValue) ON (n.name_submission_value)",
-        "CREATE INDEX index_CTTermNameValue IF NOT EXISTS FOR (n:CTTermNameValue) ON (n.name)",
-        "CREATE INDEX index_OdmTemplateName IF NOT EXISTS FOR (n:OdmTemplateValue) ON (n.name)",
-        "CREATE INDEX index_OdmFormName IF NOT EXISTS FOR (n:OdmFormValue) ON (n.name)",
-        "CREATE INDEX index_OdmItemGroupName IF NOT EXISTS FOR (n:OdmItemGroupValue) ON (n.name)",
-        "CREATE INDEX index_OdmItemName IF NOT EXISTS FOR (n:OdmItemValue) ON (n.name)",
-        "CREATE INDEX index_OdmDescriptionName IF NOT EXISTS FOR (n:OdmDescriptionValue) ON (n.name)",
-        "CREATE INDEX index_OdmAliasName IF NOT EXISTS FOR (n:OdmAliasValue) ON (n.name)",
-        "CREATE INDEX index_ActivityName IF NOT EXISTS FOR (n:ActivityValue) ON (n.name)",
-        "CREATE INDEX index_ActivitySubGroupName IF NOT EXISTS FOR (n:ActivitySubGroupValue) ON (n.name)",
-        "CREATE INDEX index_ActivityGroupName IF NOT EXISTS FOR (n:ActivityGroupValue) ON (n.name)",
-        "CREATE INDEX index_ActivityInstanceName IF NOT EXISTS FOR (n:ActivityInstanceValue) ON (n.name)",
-        "CREATE INDEX index_StudyFieldName IF NOT EXISTS FOR (n:StudyField) ON (n.field_name)",
-        "CREATE INDEX index_CTConfigRoot IF NOT EXISTS FOR (n:CTConfigRoot) ON (n.uid)",
-        "CREATE INDEX index_ClinicalProgramme IF NOT EXISTS FOR (n:ClinicalProgramme) ON (n.uid)",
-        "CREATE INDEX index_Project IF NOT EXISTS FOR (n:Project) ON (n.uid)",
-        "CREATE INDEX index_StudyRoot IF NOT EXISTS FOR (n:StudyRoot) ON (n.uid)",
-        "CREATE INDEX index_StudyArm IF NOT EXISTS FOR (n:StudyArm) ON (n.uid)",
-        "CREATE INDEX index_StudyCompound IF NOT EXISTS FOR (n:StudyCompound) ON (n.uid)",
-        "CREATE INDEX index_StudyDesignCell IF NOT EXISTS FOR (n:StudyDesignCell) ON (n.uid)",
-        "CREATE INDEX index_StudyElement IF NOT EXISTS FOR (n:StudyElement) ON (n.uid)",
-        "CREATE INDEX index_StudyEndpoint IF NOT EXISTS FOR (n:StudyEndpoint) ON (n.uid)",
-        "CREATE INDEX index_StudyEpoch IF NOT EXISTS FOR (n:StudyEpoch) ON (n.uid)",
-        "CREATE INDEX index_StudyObjective IF NOT EXISTS FOR (n:StudyObjective) ON (n.uid)",
-        "CREATE INDEX index_StudyVisit IF NOT EXISTS FOR (n:StudyVisit) ON (n.uid)",
-        "CREATE INDEX index_CompoundRoot IF NOT EXISTS FOR (n:CompoundRoot) ON (n.uid)",
-        "CREATE INDEX index_CompoundAliasRoot IF NOT EXISTS FOR (n:CompoundAliasRoot) ON (n.uid)",
-        "CREATE INDEX index_ConceptRoot IF NOT EXISTS FOR (n:ConceptRoot) ON (n.uid)",
-        "CREATE INDEX index_DictionaryCodelistRoot IF NOT EXISTS FOR (n:DictionaryCodelistRoot) ON (n.uid)",
-        "CREATE INDEX index_DictionaryTermRoot IF NOT EXISTS FOR (n:DictionaryTermRoot) ON (n.uid)",
-        "CREATE INDEX index_TimePointRoot IF NOT EXISTS FOR (n:TimePointRoot) ON (n.uid)",
-        "CREATE INDEX index_VisitNameRoot IF NOT EXISTS FOR (n:VisitNameRoot) ON (n.uid)",
-        "CREATE INDEX index_ActivityRoot IF NOT EXISTS FOR (n:ActivityRoot) ON (n.uid)",
-        "CREATE INDEX index_ActivityGroupRoot IF NOT EXISTS FOR (n:ActivityGroupRoot) ON (n.uid)",
-        "CREATE INDEX index_ActivitySubGroupRoot IF NOT EXISTS FOR (n:ActivitySubGroupRoot) ON (n.uid)",
-        "CREATE INDEX index_ActivityInstanceRoot IF NOT EXISTS FOR (n:ActivityInstanceRoot) ON (n.uid)",
-        "CREATE INDEX index_UnitDefinitionRoot IF NOT EXISTS FOR (n:UnitDefinitionRoot) ON (n.uid)",
-        "CREATE INDEX index_NumericValueRoot IF NOT EXISTS FOR (n:NumericValueRoot) ON (n.uid)",
-        "CREATE INDEX index_NumericValueWithUnitRoot IF NOT EXISTS FOR (n:NumericValueWithUnitRoot) ON (n.uid)",
 
+    print(SCHEMA_CLEAR_QUERY)
+    session.write_transaction(run_querystring, SCHEMA_CLEAR_QUERY)
 
-        "CREATE CONSTRAINT constraint_Library IF NOT EXISTS ON (n:Library) ASSERT (n.name) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_ActivityDescriptionTemplateRoot IF NOT EXISTS ON (n:ActivityDescriptionTemplateRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_CriteriaTemplateRoot IF NOT EXISTS ON (n:CriteriaTemplateRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_CriteriaRoot IF NOT EXISTS ON (n:CriteriaRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_ObjectiveTemplateRoot IF NOT EXISTS ON (n:ObjectiveTemplateRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_ObjectiveRoot IF NOT EXISTS ON (n:ObjectiveRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_EndpointTemplateRoot IF NOT EXISTS ON (n:EndpointTemplateRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_EndpointRoot IF NOT EXISTS ON (n:EndpointRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_TimeframeTemplateRoot IF NOT EXISTS ON (n:TimeframeTemplateRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_TimeframeRoot IF NOT EXISTS ON (n:TimeframeRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_TemplateParameter IF NOT EXISTS ON (n:TemplateParameter) ASSERT (n.name) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_TemplateParameterValueRoot IF NOT EXISTS ON (n:TemplateParameterValueRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_CTCatalogue IF NOT EXISTS ON (n:CTCatalogue) ASSERT (n.name) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_CTPackage IF NOT EXISTS ON (n:CTPackage) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_CTPackageCodelist IF NOT EXISTS ON (n:CTPackageCodelist) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_CTCodelistRoot IF NOT EXISTS ON (n:CTCodelistRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_CTPackageTerm IF NOT EXISTS ON (n:CTPackageTerm) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_CTTermRoot IF NOT EXISTS ON (n:CTTermRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_OdmDescriptionRoot IF NOT EXISTS ON (n:OdmDescriptionRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_OdmAliasRoot IF NOT EXISTS ON (n:OdmAliasRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_OdmTemplateRoot IF NOT EXISTS ON (n:OdmTemplateRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_OdmFormRoot IF NOT EXISTS ON (n:OdmFormRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_OdmItemGroupRoot IF NOT EXISTS ON (n:OdmItemGroupRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_OdmItemRoot IF NOT EXISTS ON (n:OdmItemRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_OdmConditionRoot IF NOT EXISTS ON (n:OdmConditionRoot) ASSERT (n.uid) IS NODE KEY",
-        "CREATE CONSTRAINT constraint_OdmFormalExpressionRoot IF NOT EXISTS ON (n:OdmFormalExpressionRoot) ASSERT (n.uid) IS NODE KEY",
-    ]:
-        session.write_transaction(run_querystring, querystring)
+    for query in build_schema_queries():
+        print(query)
+        session.write_transaction(run_querystring, query)
 
-    print("\n-- Preloading TemplateParameter tree (Activity, Activity Group, Findings, Dose unit...) --")
+    print(
+        "\n-- Preloading TemplateParameter tree (Activity, Activity Group, Findings, Dose unit...) --"
+    )
     with session.begin_transaction() as tx:
         pre_load_template_parameter_tree(tx)
 
-    session.write_transaction(lambda tx: tx.run("CREATE CONSTRAINT IF NOT EXISTS ON (c:Counter) ASSERT (c.counterId) IS NODE KEY"))
-
-    print("\n-- Creating special query parameters (NA...) --")
+    print("\n-- Creating special template parameters (NA...) --")
     with session.begin_transaction() as tx:
         create_special_template_parameters(tx)
 
     session.close()
 
 driver.close()
+
+# %%

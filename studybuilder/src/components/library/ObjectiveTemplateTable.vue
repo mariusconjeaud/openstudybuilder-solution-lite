@@ -7,6 +7,7 @@
   :headers="headers"
   has-api
   column-data-resource="objective-templates"
+  :history-formating-func="formatHistoryItem"
   fullscreen-form
   >
   <template v-slot:editform="{ closeForm, selectedObject, filter, updateTemplate }">
@@ -59,6 +60,7 @@
 </template>
 
 <script>
+import dataFormating from '@/utils/dataFormating'
 import ObjectiveTemplateForm from '@/components/library/ObjectiveTemplateForm'
 import ObjectiveTemplateIndexingForm from './ObjectiveTemplateIndexingForm'
 import StudybuilderTemplateTable from '@/components/library/StudybuilderTemplateTable'
@@ -83,7 +85,7 @@ export default {
         { text: this.$t('_global.indications'), value: 'indications.name' },
         { text: this.$t('ObjectiveTemplateTable.objective_cat'), value: 'categories.name.sponsor_preferred_name' },
         { text: this.$t('ObjectiveTemplateTable.confirmatory_testing'), value: 'confirmatory_testing' },
-        { text: this.$t('_global.template'), value: 'name', width: '30%' },
+        { text: this.$t('_global.template'), value: 'name', width: '30%', filteringName: 'name_plain' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
@@ -97,6 +99,16 @@ export default {
     },
     refreshTable () {
       this.$refs.table.$refs.sponsorTable.filter()
+    },
+    formatHistoryItem (item) {
+      if (item.confirmatory_testing !== null) {
+        item.confirmatory_testing = dataFormating.yesno(item.confirmatory_testing)
+      }
+      if (item.categories && item.categories.length) {
+        item.categories = { name: { sponsor_preferred_name: dataFormating.terms(item.categories) } }
+      } else {
+        item.categories = { name: { sponsor_preferred_name: this.$t('_global.not_applicable_long') } }
+      }
     }
   }
 }

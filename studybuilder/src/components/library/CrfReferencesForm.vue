@@ -11,14 +11,6 @@
           <v-row>
             <v-col>
               <v-switch
-                v-model="form.locked"
-                :label="$t('CrfReferencesForm.locked')"
-                true-value="Yes"
-                false-value="No"
-              ></v-switch>
-            </v-col>
-            <v-col>
-              <v-switch
                 v-model="form.mandatory"
                 :label="$t('CrfReferencesForm.mandatory')"
                 true-value="Yes"
@@ -27,20 +19,9 @@
             </v-col>
             <v-col>
               <v-switch
-                v-model="form.sdv"
-                v-if="form.parentGroupUid"
-                :label="$t('CrfReferencesForm.sdv')"
-                true-value="Yes"
-                false-value="No"
-              ></v-switch>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <v-switch
-                v-model="form.data_entry_required"
-                v-if="form.parentGroupUid"
-                :label="$t('CrfReferencesForm.data_entry')"
+                v-model="form.locked"
+                v-if="form.parentTemplateUid"
+                :label="$t('CrfReferencesForm.locked')"
                 true-value="Yes"
                 false-value="No"
               ></v-switch>

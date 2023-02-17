@@ -111,7 +111,7 @@ def delete_activity_instructon(
     "/studies/{uid}/study-activity-instructions/batch",
     summary="Batch operations (create, delete) for study activity instructions",
     response_model=Sequence[models.StudyActivityInstructionBatchOutput],
-    status_code=200,
+    status_code=207,
     responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
 )
 def activity_instruction_batch_operations(

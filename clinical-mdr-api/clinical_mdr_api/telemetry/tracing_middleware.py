@@ -45,7 +45,7 @@ class TracingMiddleware:
         if scope["type"] not in ("http", "websocket"):  # pragma: no cover
             log.debug(
                 "Bypassing middleware %s because of request type is {scope['type']}",
-                self.__class__.__name__,
+                type(self).__name__,
             )
             await self.app(scope, receive, send)
             return
@@ -57,7 +57,7 @@ class TracingMiddleware:
         if host in self.exclude_hosts or host.split(":", 1)[0] in self.exclude_hosts:
             log.debug(
                 "Bypassing middleware %s because '%s' is in exclude list: %s",
-                self.__class__.__name__,
+                type(self).__name__,
                 host,
                 self.exclude_hosts,
             )

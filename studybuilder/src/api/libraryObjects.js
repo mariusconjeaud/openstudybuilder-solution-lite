@@ -35,6 +35,9 @@ export default (basePath) => {
     getVersions (uid) {
       return repository.get(`${basePath}/${uid}/versions`)
     },
+    getStudies (uid) {
+      return repository.get(`${basePath}/${uid}/studies`)
+    },
     create (data) {
       return repository.post(`${basePath}`, data)
     },
@@ -45,13 +48,13 @@ export default (basePath) => {
       return repository.delete(`${basePath}/${uid}`)
     },
     approve (uid) {
-      return repository.post(`${basePath}/${uid}/approve`)
+      return repository.post(`${basePath}/${uid}/approvals`)
     },
     inactivate (uid) {
-      return repository.post(`${basePath}/${uid}/inactivate`)
+      return repository.delete(`${basePath}/${uid}/activations`)
     },
     reactivate (uid) {
-      return repository.post(`${basePath}/${uid}/reactivate`)
+      return repository.post(`${basePath}/${uid}/activations`)
     },
     newVersion (uid) {
       return repository.post(`${basePath}/${uid}/versions`)

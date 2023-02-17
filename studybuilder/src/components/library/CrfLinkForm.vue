@@ -34,7 +34,10 @@
         hide-export-button
         hide-default-switches
         column-data-resource="ct/codelists"
-        additional-margin>
+        additional-margin
+        :options.sync="options"
+        :server-items-length="total"
+        @filter="getItems">
           <template v-slot:item.desc="{ item }">
             <div v-html="getDescription(item)"></div>
           </template>
@@ -64,6 +67,8 @@ import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
 import crfs from '@/api/crfs'
 import constants from '@/constants/parameters'
 import NNTable from '@/components/tools/NNTable'
+import filteringParameters from '@/utils/filteringParameters'
+import _isEmpty from 'lodash/isEmpty'
 
 export default {
   components: {
@@ -94,7 +99,9 @@ export default {
         { text: this.$t('_global.description'), value: 'desc', width: '35%' },
         { text: this.$t('CrfTree.impl_notes'), value: 'notes', width: '35%' },
         { text: '', value: 'add', width: '5%' }
-      ]
+      ],
+      options: {},
+      total: 0
     }
   },
   methods: {
@@ -115,7 +122,8 @@ export default {
           mandatory: el.mandatory ? el.mandatory : false,
           data_entry_required: el.data_entry_required ? el.data_entry_required : 'No',
           sdv: el.sdv ? el.sdv : 'No',
-          collection_exception_condition_oid: el.collection_exception_condition_oid ? el.collection_exception_condition_oid : null
+          collection_exception_condition_oid: el.collection_exception_condition_oid ? el.collection_exception_condition_oid : null,
+          vendor: { attributes: [] }
         })
       })
       switch (this.itemsType) {
@@ -145,20 +153,12 @@ export default {
     addItem (item) {
       if (!this.choosenItems.some(el => el.uid === item.uid)) {
         this.choosenItems.push(item)
-        this.items = this.items.filter(el => el.uid !== item.uid)
+        this.getItems()
       }
     },
     removeItem (item) {
       this.choosenItems = this.choosenItems.filter(el => el.uid !== item.uid)
-      let check = false
-      this.items.forEach(el => {
-        if (el.name === item.name) {
-          check = true
-        }
-      })
-      if (!check) {
-        this.items.push(item)
-      }
+      this.getItems()
     },
     close () {
       this.form = {}
@@ -168,10 +168,33 @@ export default {
     },
     initForm () {
       this.choosenItems = Array.from(new Set(this.itemToLink.forms || this.itemToLink.item_groups || this.itemToLink.items))
+      this.getItems()
+    },
+    getItems (filters, sort, filtersUpdated) {
       if (this.itemsType) {
-        crfs.get(this.itemsType).then((resp) => {
+        const parameters = filteringParameters.prepareParameters(
+          this.options, filters, sort, filtersUpdated)
+        if (!_isEmpty(this.choosenItems)) {
+          const linkedItemsFilter =
+            {
+              uid: {
+                v: this.choosenItems.map(item => item.uid),
+                op: 'ne'
+              }
+            }
+          if (filters) {
+            parameters.filters = { ...JSON.parse(filters), ...linkedItemsFilter }
+          } else {
+            parameters.filters = linkedItemsFilter
+          }
+        } else if (filters) {
+          parameters.filters = JSON.parse(filters)
+        }
+        const params = {}
+        params.params = parameters
+        crfs.get(this.itemsType, params).then((resp) => {
           this.items = resp.data.items
-          this.items = this.items.filter(ar => !this.choosenItems.find(rm => (rm.uid === ar.uid)))
+          this.total = resp.data.total
         })
       }
     }

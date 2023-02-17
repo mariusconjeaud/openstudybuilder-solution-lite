@@ -5,6 +5,7 @@ from clinical_mdr_api.tests.integration.utils.data_library import library_data
 # pylint:disable=unused-wildcard-import,wildcard-import
 from clinical_mdr_api.tests.integration.utils.factory_activity import *
 from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology import *
+from clinical_mdr_api.tests.integration.utils.factory_disease_milestone import *
 from clinical_mdr_api.tests.integration.utils.factory_epoch import *
 from clinical_mdr_api.tests.integration.utils.factory_metadata import *
 from clinical_mdr_api.tests.integration.utils.factory_study_design import *

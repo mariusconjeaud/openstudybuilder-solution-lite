@@ -214,7 +214,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/odms/descriptions/OdmDescription_000001/approve"
+            "url": "concepts/odms/descriptions/OdmDescription_000001/approvals"
         },
         "response": {
             "code": 201,
@@ -247,12 +247,12 @@
         "name": "Test inactivating a specific ODM Description",
         "request": {
             "headers": {},
-            "method": "POST",
+            "method": "DELETE",
             "request": {},
-            "url": "concepts/odms/descriptions/OdmDescription_000001/inactivate"
+            "url": "concepts/odms/descriptions/OdmDescription_000001/activations"
         },
         "response": {
-            "code": 201,
+            "code": 200,
             "headers": {
                 "content-length": "459",
                 "content-type": "application/json"
@@ -269,7 +269,7 @@
                 "end_date": null,
                 "status": "Retired",
                 "version": "1.0",
-                "change_description": "Deactivated version",
+                "change_description": "Inactivated version",
                 "user_initials": "TODO initials",
                 "possible_actions": [
                     "delete",
@@ -284,10 +284,10 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/odms/descriptions/OdmDescription_000001/reactivate"
+            "url": "concepts/odms/descriptions/OdmDescription_000001/activations"
         },
         "response": {
-            "code": 201,
+            "code": 200,
             "headers": {
                 "content-length": "459",
                 "content-type": "application/json"
@@ -419,7 +419,7 @@
             "url": "concepts/odms/descriptions/batch"
         },
         "response": {
-            "code": 201,
+            "code": 207,
             "headers": {
                 "content-length": "459",
                 "content-type": "application/json"
@@ -544,9 +544,9 @@
                 "aliases": [],
                 "activity_groups": [],
                 "item_groups": [],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "approve",
                     "delete",

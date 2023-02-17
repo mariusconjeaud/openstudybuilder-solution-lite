@@ -39,6 +39,9 @@ from clinical_mdr_api.domain.study_selection.study_selection_element import (
     StudySelectionElementVO,
 )
 from clinical_mdr_api.domain.study_selection.study_selection_endpoint import (
+    EndpointUnitItem,
+    EndpointUnits,
+    StudyEndpointSelectionHistory,
     StudySelectionEndpointsAR,
     StudySelectionEndpointVO,
 )
@@ -69,9 +72,6 @@ from clinical_mdr_api.domain_repositories.study_selection.study_selection_criter
 )
 from clinical_mdr_api.domain_repositories.study_selection.study_selection_element_repository import (
     SelectionHistoryElement,
-)
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_endpoint_repository import (
-    SelectionHistoryObject as StudyEndpointSelectionHistory,
 )
 from clinical_mdr_api.domain_repositories.study_selection.study_selection_objective_repository import (
     SelectionHistory as StudyObjectiveSelectionHistory,
@@ -345,17 +345,17 @@ class StudySelectionObjectiveNewOrder(BaseModel):
 """
 
 
-class EndpointUnits(BaseModel):
+class EndpointUnitsInput(BaseModel):
     units: Optional[List[str]] = Field(
         ...,
         title="units",
-        description="the endpoint units selected for the study endpoint",
+        description="list of uids of the endpoint units selected for the study endpoint",
     )
 
     separator: Optional[str] = Field(
         None,
         title="separator",
-        description="the endpoint units selected for the study endpoint",
+        description="separator if more than one endpoint units selected for the study endpoint",
     )
 
 
@@ -520,7 +520,9 @@ class StudySelectionEndpoint(StudySelection):
             accepted_version=accepted_version,
             study_endpoint_uid=study_selection.study_selection_uid,
             endpoint_units=EndpointUnits(
-                units=study_selection.endpoint_units,
+                units=tuple(
+                    EndpointUnitItem(**u) for u in study_selection.endpoint_units
+                ),
                 separator=study_selection.unit_separator,
             ),
             endpoint_level=endpoint_level,
@@ -577,16 +579,29 @@ class StudySelectionEndpoint(StudySelection):
             )
         else:
             endpoint_sublevel = None
+
+        units = None
+        if study_selection_history.endpoint_units:
+            units = tuple(
+                EndpointUnitItem(**u)
+                for u in study_selection_history.endpoint_units
+                if u.get("uid")
+            )
+        if units:
+            units = EndpointUnits(
+                units=units,
+                separator=study_selection_history.unit_separator,
+            )
+        else:
+            units = None
+
         return cls(
             study_uid=study_uid,
             study_endpoint_uid=study_selection_history.study_selection_uid,
             study_objective=study_objective,
             endpoint_level=endpoint_level,
             endpoint_sublevel=endpoint_sublevel,
-            endpoint_units=EndpointUnits(
-                units=study_selection_history.endpoint_units,
-                separator=study_selection_history.unit_separator,
-            ),
+            endpoint_units=units,
             endpoint=endpoint,
             timeframe=timeframe,
             start_date=study_selection_history.start_date,
@@ -617,10 +632,10 @@ class StudySelectionEndpointCreateInput(BaseModel):
     endpoint_data: EndpointCreateInput = Field(
         ..., title="endpoint_data", description="endpoint data to create new endpoint"
     )
-    endpoint_units: Optional[EndpointUnits] = Field(
+    endpoint_units: Optional[EndpointUnitsInput] = Field(
         None,
         title="endpoint_units",
-        description="hold the units used in the study endpoint",
+        description="endpoint units used in the study endpoint",
     )
     timeframe_uid: Optional[str] = Field(
         None,
@@ -658,7 +673,7 @@ class StudySelectionEndpointInput(BaseModel):
         description="uid for a timeframe",
     )
 
-    endpoint_units: Optional[EndpointUnits] = Field(
+    endpoint_units: Optional[EndpointUnitsInput] = Field(
         None,
         title="endpoint_units",
         description="hold the units used in the study endpoint",
@@ -1439,6 +1454,14 @@ class StudySelectionActivityInput(CommonStudyActivity):
 
     note: Optional[str] = Field(
         None, title="note", description="Foot note to display in flowchart"
+    )
+
+
+class StudySelectionActivityRequestUpdate(StudySelectionActivityInput):
+    replaced_activity_uid: str = Field(
+        ...,
+        title="replaced_activity_uid",
+        description="The uid of the Activity that replaced Activity Request",
     )
 
 

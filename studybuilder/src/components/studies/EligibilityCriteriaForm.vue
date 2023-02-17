@@ -46,9 +46,9 @@
         :items="selectedCriteria"
         >
         <template v-slot:item.name="{ item }">
-          <template v-if="item.criteriaTemplate">
+          <template v-if="item.criteria_template">
             <n-n-parameter-highlighter
-              :name="item.criteriaTemplate.name"
+              :name="item.criteria_template.name"
               default-color="orange"
               />
           </template>
@@ -59,12 +59,12 @@
               />
           </template>
         </template>
-        <template v-slot:item.guidanceText="{ item }">
-          <template v-if="item.criteriaTemplate">
-            <span v-html="item.criteriaTemplate.guidanceText" />
+        <template v-slot:item.guidance_text="{ item }">
+          <template v-if="item.criteria_template">
+            <span v-html="item.criteria_template.guidance_text" />
           </template>
           <template v-else>
-            <span v-html="item.criteria.criteriaTemplate.guidanceText" />
+            <span v-html="item.criteria.criteria_template.guidance_text" />
           </template>
         </template>
         <template v-slot:item.actions="{ item }">
@@ -89,9 +89,9 @@
           :extra-data-fetcher-filters="extraDataFetcherFilters"
           >
           <template v-slot:item.name="{ item }">
-            <template v-if="item.criteriaTemplate">
+            <template v-if="item.criteria_template">
               <n-n-parameter-highlighter
-                :name="item.criteriaTemplate.name"
+                :name="item.criteria_template.name"
                 default-color="orange"
                 />
             </template>
@@ -102,12 +102,12 @@
                 />
             </template>
           </template>
-          <template v-slot:item.guidanceText="{ item }">
-            <template v-if="item.criteriaTemplate">
-              <span v-html="item.criteriaTemplate.guidanceText" />
+          <template v-slot:item.guidance_text="{ item }">
+            <template v-if="item.criteria_template">
+              <span v-html="item.criteria_template.guidance_text" />
             </template>
             <template v-else>
-              <span v-html="item.criteria.guidanceText" />
+              <span v-html="item.criteria.guidance_text" />
             </template>
           </template>
         </study-selection-table>
@@ -124,8 +124,8 @@
             default-color="orange"
             />
         </template>
-        <template v-slot:item.guidanceText="{ item }">
-          <span v-html="item.guidanceText" />
+        <template v-slot:item.guidance_text="{ item }">
+          <span v-html="item.guidance_text" />
         </template>
         <template v-slot:item.actions="{ item }">
           <v-btn
@@ -182,8 +182,8 @@
           <template v-slot:item.name="{ item }">
             <n-n-parameter-highlighter :name="item.name" default-color="orange" />
           </template>
-          <template v-slot:item.guidanceText="{ item }">
-            <span v-html="item.guidanceText" />
+          <template v-slot:item.guidance_text="{ item }">
+            <span v-html="item.guidance_text" />
           </template>
           <template v-slot:item.actions="{ item }">
             <v-btn
@@ -223,7 +223,7 @@
           <vue-editor
             ref="editor"
             id="editor"
-            v-model="form.guidanceText"
+            v-model="form.guidance_text"
             :editor-toolbar="customToolbar"
             :placeholder="$t('CriteriaTemplateForm.guidance_text')"
             class="pt-4"
@@ -234,9 +234,9 @@
     <template v-slot:step.createCriteria="{ step }">
       <validation-observer :ref="`observer_${step}`">
         <parameter-value-selector
-          v-if="form.criteriaTemplate"
+          v-if="form.criteria_template"
           :value="parameters"
-          :template="form.criteriaTemplate.name"
+          :template="form.criteria_template.name"
           color="white"
           />
       </validation-observer>
@@ -308,7 +308,7 @@ export default {
         { text: this.$t('EligibilityCriteriaForm.criterion_cat'), value: 'categories', filteringName: 'categories.name.sponsor_preferred_name' },
         { text: this.$t('EligibilityCriteriaForm.criterion_sub_cat'), value: 'subCategories', filteringName: 'subCategories.name.sponsor_preferred_name' },
         { text: this.$t('EligibilityCriteriaForm.criteria_template'), value: 'name' },
-        { text: this.$t('EligibilityCriteriaForm.guidance_text'), value: 'guidanceText' }
+        { text: this.$t('EligibilityCriteriaForm.guidance_text'), value: 'guidance_text' }
       ],
       criteriaTemplates: [],
       form: {},
@@ -331,13 +331,13 @@ export default {
       selectionHeaders: [
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('EligibilityCriteriaForm.criteria_text'), value: 'name', class: 'text-center' },
-        { text: this.$t('EligibilityCriteriaForm.guidance_text'), value: 'guidanceText' }
+        { text: this.$t('EligibilityCriteriaForm.guidance_text'), value: 'guidance_text' }
       ],
       stdHeaders: [
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('Study.study_id'), value: 'studyUid' },
         { text: this.$t('EligibilityCriteriaForm.criteria_text'), value: 'name' },
-        { text: this.$t('EligibilityCriteriaForm.guidance_text'), value: 'guidanceText' }
+        { text: this.$t('EligibilityCriteriaForm.guidance_text'), value: 'guidance_text' }
       ],
       options: {},
       total: 0
@@ -418,7 +418,7 @@ export default {
       try {
         const resp = await criteriaTemplates.create(data)
         await criteriaTemplates.approve(resp.data.uid)
-        this.$set(this.form, 'criteriaTemplate', resp.data)
+        this.$set(this.form, 'criteria_template', resp.data)
       } catch (error) {
         return false
       }
@@ -427,10 +427,12 @@ export default {
     },
     async submit () {
       if (this.creationMode !== 'scratch') {
-        if (!this.selectedCriteria.length) {
-          return
-        }
         if (this.creationMode === 'template') {
+          if (!this.selectedCriteria.length) {
+            bus.$emit('notification', { msg: this.$t('EligibilityCriteriaForm.no_template_error'), type: 'error' })
+            this.$refs.stepper.loading = false
+            return
+          }
           const data = []
           for (const criteria of this.selectedCriteria) {
             data.push({
@@ -440,6 +442,11 @@ export default {
           }
           await study.batchCreateStudyCriteria(this.selectedStudy.uid, data)
         } else {
+          if (!this.selectedCriteria.length) {
+            bus.$emit('notification', { msg: this.$t('EligibilityCriteriaForm.no_criteria_error'), type: 'error' })
+            this.$refs.stepper.loading = false
+            return
+          }
           const data = []
           for (const studyCriteria of this.selectedCriteria) {
             if (studyCriteria.criteria_template) {
@@ -462,7 +469,7 @@ export default {
         }
       } else {
         const data = {
-          criteriaData: {
+          criteria_data: {
             criteria_template_uid: this.form.criteria_template.uid,
             parameter_values: await instances.formatParameterValues(this.parameters),
             library_name: 'Sponsor' // FIXME

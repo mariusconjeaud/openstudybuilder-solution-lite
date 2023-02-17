@@ -1,6 +1,6 @@
 from typing import Optional, Sequence, Tuple
 
-from neomodel import Q
+from neomodel import Q, db
 
 from clinical_mdr_api.domain.concepts.activities.activity import ActivityAR, ActivityVO
 from clinical_mdr_api.domain.versioned_object_aggregate import (
@@ -28,6 +28,7 @@ from clinical_mdr_api.repositories._utils import (
     FilterOperator,
     decrement_page_number,
     get_order_by_clause,
+    merge_q_query_filters,
     transform_filters_into_neomodel,
 )
 
@@ -50,6 +51,8 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 definition=input_dict.get("definition"),
                 abbreviation=input_dict.get("abbreviation"),
                 activity_subgroup=input_dict.get("activity_subgroup").get("uid"),
+                request_rationale=input_dict.get("request_rationale"),
+                replaced_by_activity=input_dict.get("replacing_activity_uid"),
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=input_dict.get("library_name"),
@@ -78,6 +81,9 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         sub_group_value = value.in_subgroup.get_or_none()
         if sub_group_value is not None:
             sub_group = sub_group_value.has_latest_value.get_or_none().uid
+        else:
+            sub_group = None
+        replaced_activity = value.replaced_by_activity.get_or_none()
         return ActivityAR.from_repository_values(
             uid=root.uid,
             concept_vo=ActivityVO.from_repository_values(
@@ -86,6 +92,10 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 definition=value.definition,
                 abbreviation=value.abbreviation,
                 activity_subgroup=sub_group,
+                request_rationale=value.request_rationale,
+                replaced_by_activity=replaced_activity.uid
+                if replaced_activity
+                else None,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -101,21 +111,22 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         page_number: int = 1,
         page_size: int = 0,
         filter_by: Optional[dict] = None,
-        # pylint:disable=unused-argument
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         total_count: bool = False,
         **kwargs,
     ) -> Tuple[Sequence[ActivityORM], int]:
-        (neomodel_filter, q_filters) = self.create_query_filter_statement_neomodel(
+        q_filters = self.create_query_filter_statement_neomodel(
             library=library, filter_by=filter_by, **kwargs
         )
+        q_filters = merge_q_query_filters(q_filters, filter_operator=filter_operator)
         sort_paths = get_order_by_clause(sort_by=sort_by, model=ActivityORM)
         page_number = decrement_page_number(page_number)
         nodes = (
-            ActivityRoot.nodes.fetch_relations(
-                "has_library",
+            ActivityRoot.nodes.fetch_relations("has_library", "has_latest_value")
+            .fetch_optional_relations(
                 "has_latest_value__in_subgroup__has_latest_value",
                 "has_latest_value__in_subgroup__in_group__has_latest_value",
+                "has_latest_value__replaced_by_activity",
             )
             .fetch_optional_relations_into_one_variable(
                 {
@@ -125,31 +136,36 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 }
             )
             .order_by(sort_paths[0] if len(sort_paths) > 0 else "uid")
-            .filter(*q_filters, **neomodel_filter)
-            .limit_results(page_size)
+            .filter(*q_filters)
+        )
+        if total_count:
+            all_nodes = len(nodes)
+        paginated_nodes = (
+            nodes.limit_results(page_size)
             .skip_results(page_number * page_size)
             .to_relation_trees()
         )
         all_activities = [
-            ActivityORM.from_orm(activity_node) for activity_node in nodes
+            ActivityORM.from_orm(activity_node) for activity_node in paginated_nodes
         ]
-        if total_count:
-            len_query = ActivityRoot.nodes.filter(*q_filters, **neomodel_filter)
-            all_nodes = len(len_query)
         return all_activities, all_nodes if total_count else 0
 
     def create_query_filter_statement_neomodel(
         self, library: Optional[str] = None, filter_by: Optional[dict] = None, **kwargs
     ) -> Tuple[dict, Sequence[Q]]:
-        neomodel_filter, q_filters = transform_filters_into_neomodel(
+        q_filters = transform_filters_into_neomodel(
             filter_by=filter_by, model=ActivityORM
         )
         if library:
-            neomodel_filter["has_library__name"] = library
+            q_filters.append(Q(has_library__name=library))
         if kwargs.get("activity_subgroup_uid") is not None:
-            neomodel_filter[
-                "has_latest_value__in_subgroup__has_latest_value__uid"
-            ] = kwargs.get("activity_subgroup_uid")
+            q_filters.append(
+                Q(
+                    has_latest_value__in_subgroup__has_latest_value__uid=kwargs.get(
+                        "activity_subgroup_uid"
+                    )
+                )
+            )
         if kwargs.get("activity_names") is not None:
             q_filters.append(Q(has_latest_value__name__in=kwargs.get("activity_names")))
         if kwargs.get("activity_subgroup_names") is not None:
@@ -168,26 +184,29 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                     )
                 )
             )
-        return neomodel_filter, q_filters
+        return q_filters
 
     def _create_new_value_node(self, ar: ActivityAR) -> ActivityValue:
         value_node = super()._create_new_value_node(ar=ar)
+        value_node.request_rationale = ar.concept_vo.request_rationale
         value_node.save()
-        sub_group_root = ActivitySubGroupRoot.nodes.get_or_none(
-            uid=ar.concept_vo.activity_subgroup
-        )
-        sub_group_value = sub_group_root.has_latest_value.get_or_none()
-        value_node.in_subgroup.connect(sub_group_value)
+        if ar.concept_vo.activity_subgroup:
+            sub_group_root = ActivitySubGroupRoot.nodes.get_or_none(
+                uid=ar.concept_vo.activity_subgroup
+            )
+            sub_group_value = sub_group_root.has_latest_value.get_or_none()
+            value_node.in_subgroup.connect(sub_group_value)
         return value_node
 
     def _has_data_changed(self, ar: ActivityAR, value: ActivityValue) -> bool:
         are_concept_properties_changed = super()._has_data_changed(ar=ar, value=value)
+        are_props_changed = ar.concept_vo.request_rationale != value.request_rationale
         are_rels_changed = False
         sub_group = value.in_subgroup.get_or_none()
         if sub_group is not None:
             sub_group_uid = sub_group.has_latest_value.get_or_none().uid
             are_rels_changed = ar.concept_vo.activity_subgroup != sub_group_uid
-        return are_concept_properties_changed or are_rels_changed
+        return are_concept_properties_changed or are_rels_changed or are_props_changed
 
     def get_template_activities(
         self, root_class: type, template_uid: str
@@ -217,5 +236,40 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             head([(concept_value)-[:IN_SUB_GROUP]->(activity_sub_group_value:ActivitySubGroupValue)<-[:LATEST]-
             (activity_sub_group_root:ActivitySubGroupRoot) | {uid:activity_sub_group_root.uid, name:activity_sub_group_value.name}]) AS activity_subgroup,
             head([(concept_value)-[:IN_SUB_GROUP]->(:ActivitySubGroupValue)-[:IN_GROUP]->(activity_group_value:ActivityGroupValue)<-[:LATEST]-
-            (activity_group_root:ActivityGroupRoot) | {uid:activity_group_root.uid, name:activity_group_value.name}]) AS activity_group
+            (activity_group_root:ActivityGroupRoot) | {uid:activity_group_root.uid, name:activity_group_value.name}]) AS activity_group,
+            head([(concept_value)-[:REPLACED_BY_ACTIVITY]->(replacing_activity_root:ActivityRoot) | replacing_activity_root.uid]) AS replacing_activity_uid
         """
+
+    def replace_request_with_sponsor_activity(
+        self, activity_request_uid: str, sponsor_activity_uid: str
+    ) -> None:
+        replace_activity_request_with_sponsor_activity_query = """
+            MATCH (:ActivityRoot {uid: $activity_request_uid})-[:LATEST]->(activity_request_value:ActivityValue)
+            MATCH (replacing_activity_root:ActivityRoot {uid: $sponsor_activity_uid})
+            WITH activity_request_value, replacing_activity_root
+            MERGE (activity_request_value)-[:REPLACED_BY_ACTIVITY]->(replacing_activity_root)
+        """
+        db.cypher_query(
+            replace_activity_request_with_sponsor_activity_query,
+            {
+                "activity_request_uid": activity_request_uid,
+                "sponsor_activity_uid": sponsor_activity_uid,
+            },
+        )
+
+    def final_or_replaced_retired_activity_exists(self, uid: str) -> bool:
+        query = f"""
+            MATCH (concept_root:{self.root_class.__label__} {{uid: $uid}})-[:LATEST_FINAL]->(concept_value)
+            RETURN concept_root
+            """
+        result, _ = db.cypher_query(query, {"uid": uid})
+        exists = len(result) > 0 and len(result[0]) > 0
+        if not exists:
+            query = f"""
+                MATCH (concept_root:{self.root_class.__label__} {{uid: $uid}})-[:LATEST_RETIRED]->(concept_value)
+                -[:REPLACED_BY_ACTIVITY]->(:ActivityRoot)
+                RETURN concept_root
+                """
+            result, _ = db.cypher_query(query, {"uid": uid})
+            exists = len(result) > 0 and len(result[0]) > 0
+        return exists

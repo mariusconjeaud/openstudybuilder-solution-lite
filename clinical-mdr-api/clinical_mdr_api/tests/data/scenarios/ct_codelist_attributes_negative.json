@@ -181,14 +181,14 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/ct/codelists/ct_codelist_root1/attributes/approve"
+            "url": "/ct/codelists/ct_codelist_root1/attributes/approvals"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "The object is not in draft status.",
                 "method": "POST",
-                "path": "http://testserver/ct/codelists/ct_codelist_root1/attributes/approve",
+                "path": "http://testserver/ct/codelists/ct_codelist_root1/attributes/approvals",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }
@@ -200,14 +200,14 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/ct/codelists/ct_codelist_root2/attributes/approve"
+            "url": "/ct/codelists/ct_codelist_root2/attributes/approvals"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "Library is not editable.",
                 "method": "POST",
-                "path": "http://testserver/ct/codelists/ct_codelist_root2/attributes/approve",
+                "path": "http://testserver/ct/codelists/ct_codelist_root2/attributes/approvals",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }
@@ -270,7 +270,7 @@
             "code": 400,
             "headers": {},
             "result": {
-                "message": "The term identifed by (term1) is not in use by parent codelist identifed by (ct_codelist_root3)",
+                "message": "The term identified by (term1) is not in use by parent codelist identified by (ct_codelist_root3)",
                 "time": "2022-06-10T11:18:54.056131",
                 "path": "http://testserver/ct/codelists/CTCodelist_000001/terms",
                 "method": "POST",

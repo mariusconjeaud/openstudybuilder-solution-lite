@@ -53,7 +53,6 @@ import ActionsMenu from '@/components/tools/ActionsMenu'
 import NNTable from '@/components/tools/NNTable'
 import StudyForm from '@/components/studies/StudyForm'
 import study from '@/api/study'
-import constants from '@/constants/study'
 import filteringParameters from '@/utils/filteringParameters'
 
 export default {
@@ -90,7 +89,7 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil',
           iconColor: 'primary',
-          condition: (item) => item.studyStatus === 'DRAFT',
+          condition: (item) => item.study_status === 'DRAFT',
           click: this.editStudy
         }
       ],
@@ -119,7 +118,6 @@ export default {
     fetchStudies (filters, sort, filtersUpdated) {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
-      params.fields = `${constants.IDENTIFICATION_METADATA}, ${constants.VERSION_METADATA}, ${constants.DESCRIPTION_METADATA}`
       study.get(params).then(resp => {
         this.studies.items = resp.data.items
         this.total = resp.data.total
@@ -140,8 +138,8 @@ export default {
       this.showForm = true
     },
     getBrandName (study) {
-      const project = this.getProjectByNumber(study.current_metadata.identification_metadata.projectNumber)
-      return (project !== undefined) ? project.brandName : ''
+      const project = this.getProjectByNumber(study.current_metadata.identification_metadata.project_number)
+      return (project !== undefined) ? project.brand_name : ''
     },
     initialSortByDate () {
       this.options.sortBy = ['current_metadata.version_metadata.version_timestamp']

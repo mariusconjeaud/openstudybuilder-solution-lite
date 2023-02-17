@@ -43,7 +43,7 @@ export default {
     return repository.post(`${resource}/codelists/${codelistUid}/names/versions`)
   },
   approveCodelistNames (codelistUid) {
-    return repository.post(`${resource}/codelists/${codelistUid}/names/approve`)
+    return repository.post(`${resource}/codelists/${codelistUid}/names/approvals`)
   },
   getCodelistAttributes (codelistUid) {
     return repository.get(`${resource}/codelists/${codelistUid}/attributes`)
@@ -55,7 +55,7 @@ export default {
     return repository.post(`${resource}/codelists/${codelistUid}/attributes/versions`)
   },
   approveCodelistAttributes (codelistUid) {
-    return repository.post(`${resource}/codelists/${codelistUid}/attributes/approve`)
+    return repository.post(`${resource}/codelists/${codelistUid}/attributes/approvals`)
   },
   getCodelistTerms (params) {
     return repository.get(`${resource}/terms`, { params })
@@ -73,13 +73,13 @@ export default {
     return repository.post(`${resource}/terms/${termUid}/names/versions`)
   },
   approveCodelistTermNames (termUid) {
-    return repository.post(`${resource}/terms/${termUid}/names/approve`)
+    return repository.post(`${resource}/terms/${termUid}/names/approvals`)
   },
   inactivateCodelistTermNames (termUid) {
-    return repository.post(`${resource}/terms/${termUid}/names/inactivate`)
+    return repository.delete(`${resource}/terms/${termUid}/names/activations`)
   },
   reactivateCodelistTermNames (termUid) {
-    return repository.post(`${resource}/terms/${termUid}/names/reactivate`)
+    return repository.post(`${resource}/terms/${termUid}/names/activations`)
   },
   deleteCodelistTermNames (termUid) {
     return repository.delete(`${resource}/terms/${termUid}/names`)
@@ -101,13 +101,13 @@ export default {
     return repository.post(`${resource}/terms/${termUid}/attributes/versions`)
   },
   approveCodelistTermAttributes (termUid) {
-    return repository.post(`${resource}/terms/${termUid}/attributes/approve`)
+    return repository.post(`${resource}/terms/${termUid}/attributes/approvals`)
   },
   inactivateCodelistTermAttributes (termUid) {
-    return repository.post(`${resource}/terms/${termUid}/attributes/inactivate`)
+    return repository.delete(`${resource}/terms/${termUid}/attributes/activations`)
   },
   reactivateCodelistTermAttributes (termUid) {
-    return repository.post(`${resource}/terms/${termUid}/attributes/reactivate`)
+    return repository.post(`${resource}/terms/${termUid}/attributes/activations`)
   },
   deleteCodelistTermAttributes (termUid) {
     return repository.delete(`${resource}/terms/${termUid}/attributes`)

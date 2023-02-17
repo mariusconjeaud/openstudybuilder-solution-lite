@@ -137,6 +137,12 @@ class StudyEpochService:
             end_day=epoch.get_end_day()
             if epoch.subtype.value != settings.BASIC_EPOCH_NAME
             else None,
+            start_week=epoch.get_start_week()
+            if epoch.subtype.value != settings.BASIC_EPOCH_NAME
+            else None,
+            end_week=epoch.get_end_week()
+            if epoch.subtype.value != settings.BASIC_EPOCH_NAME
+            else None,
             start_date=epoch.start_date.strftime(settings.DATE_TIME_FORMAT),
             user_initials=epoch.author,
             possible_actions=epoch.possible_actions,

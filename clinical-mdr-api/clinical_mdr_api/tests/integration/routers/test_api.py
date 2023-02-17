@@ -80,6 +80,10 @@ class TestApi(TestCase):
                         self.assertIn(response.status_code, [422])
                     elif path == "/system/check/secured":
                         self.assertIn(response.status_code, [401, 501])
+                    elif (
+                        path == "/concepts/odms/metadata/xmls/stylesheets/{stylesheet}"
+                    ):
+                        self.assertEqual(response.status_code, 400)
                     else:
                         self.assertEqual(response.status_code, 200)
                 except Exception as e:

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Optional, Sequence
+from typing import Callable, List, Optional
 
 from clinical_mdr_api.domain.concepts.concept_base import ConceptVO
 from clinical_mdr_api.domain.concepts.odms.odm_ar_base import OdmARBase
@@ -17,40 +17,40 @@ from clinical_mdr_api.models.utils import booltostr
 @dataclass(frozen=True)
 class OdmItemGroupVO(ConceptVO):
     oid: Optional[str]
-    repeating: bool
-    is_reference_data: Optional[bool]
+    repeating: Optional[str]
+    is_reference_data: Optional[str]
     sas_dataset_name: Optional[str]
     origin: Optional[str]
     purpose: Optional[str]
     comment: Optional[str]
-    description_uids: Sequence[str]
-    alias_uids: Sequence[str]
-    sdtm_domain_uids: Sequence[str]
-    activity_subgroup_uids: Sequence[str]
-    item_uids: Sequence[str]
-    xml_extension_attribute_uids: Sequence[str]
-    xml_extension_tag_uids: Sequence[str]
-    xml_extension_tag_attribute_uids: Sequence[str]
+    description_uids: List[str]
+    alias_uids: List[str]
+    sdtm_domain_uids: List[str]
+    activity_subgroup_uids: List[str]
+    item_uids: List[str]
+    vendor_attribute_uids: List[str]
+    vendor_element_uids: List[str]
+    vendor_element_attribute_uids: List[str]
 
     @classmethod
     def from_repository_values(
         cls,
         oid: Optional[str],
         name: str,
-        repeating: bool,
-        is_reference_data: Optional[bool],
+        repeating: Optional[str],
+        is_reference_data: Optional[str],
         sas_dataset_name: Optional[str],
         origin: Optional[str],
         purpose: Optional[str],
         comment: Optional[str],
-        description_uids: Sequence[str],
-        alias_uids: Sequence[str],
-        sdtm_domain_uids: Sequence[str],
-        activity_subgroup_uids: Sequence[str],
-        item_uids: Sequence[str],
-        xml_extension_tag_uids: Sequence[str],
-        xml_extension_attribute_uids: Sequence[str],
-        xml_extension_tag_attribute_uids: Sequence[str],
+        description_uids: List[str],
+        alias_uids: List[str],
+        sdtm_domain_uids: List[str],
+        activity_subgroup_uids: List[str],
+        item_uids: List[str],
+        vendor_element_uids: List[str],
+        vendor_attribute_uids: List[str],
+        vendor_element_attribute_uids: List[str],
     ) -> "OdmItemGroupVO":
         return cls(
             oid=oid,
@@ -66,9 +66,9 @@ class OdmItemGroupVO(ConceptVO):
             sdtm_domain_uids=sdtm_domain_uids,
             activity_subgroup_uids=activity_subgroup_uids,
             item_uids=item_uids,
-            xml_extension_tag_uids=xml_extension_tag_uids,
-            xml_extension_attribute_uids=xml_extension_attribute_uids,
-            xml_extension_tag_attribute_uids=xml_extension_tag_attribute_uids,
+            vendor_element_uids=vendor_element_uids,
+            vendor_attribute_uids=vendor_attribute_uids,
+            vendor_element_attribute_uids=vendor_element_attribute_uids,
             name_sentence_case=None,
             definition=None,
             abbreviation=None,
@@ -221,8 +221,8 @@ class OdmItemGroupRefVO:
     form_uid: str
     order_number: int
     mandatory: str
-    locked: str
     collection_exception_condition_oid: Optional[str]
+    vendor: dict
 
     @classmethod
     def from_repository_values(
@@ -233,7 +233,7 @@ class OdmItemGroupRefVO:
         form_uid: str,
         order_number: int,
         mandatory: bool,
-        locked: bool,
+        vendor: dict,
         collection_exception_condition_oid: Optional[str] = None,
     ) -> "OdmItemGroupRefVO":
         return cls(
@@ -243,6 +243,6 @@ class OdmItemGroupRefVO:
             form_uid=form_uid,
             order_number=order_number,
             mandatory=booltostr(mandatory),
-            locked=booltostr(locked),
             collection_exception_condition_oid=collection_exception_condition_oid,
+            vendor=vendor,
         )

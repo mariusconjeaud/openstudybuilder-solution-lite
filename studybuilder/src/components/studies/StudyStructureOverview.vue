@@ -7,17 +7,17 @@
     type="table-heading, table-thead, table-tbody"
     />
   <template v-else>
-    <table class="mt-4">
+    <table class="mt-4" :aria-label="$t('StudyStructureOverview.table_caption')">
       <thead>
         <tr>
-          <th colspan="3"></th>
-          <th :colspan="studyEpochs.length">{{ $t('StudyStructureOverview.epochs') }}</th>
+          <th colspan="3" scope="col"></th>
+          <th :colspan="studyEpochs.length" scope="col">{{ $t('StudyStructureOverview.epochs') }}</th>
         </tr>
         <tr>
-          <th>{{ $t('StudyStructureOverview.arms') }}</th>
-          <th>{{ $t('StudyStructureOverview.branch_arms') }}</th>
-          <th>{{ $t('StudyStructureOverview.number_of_subjects') }}</th>
-          <td v-for="studyEpoch in studyEpochs" :key="studyEpoch.uid">
+          <th scope="col">{{ $t('StudyStructureOverview.arms') }}</th>
+          <th scope="col">{{ $t('StudyStructureOverview.branch_arms') }}</th>
+          <th scope="col">{{ $t('StudyStructureOverview.number_of_subjects') }}</th>
+          <td v-for="studyEpoch in visibleStudyEpochs" :key="studyEpoch.uid">
             {{ studyEpoch.epoch_name }}
           </td>
         </tr>
@@ -33,7 +33,7 @@
                 {{ branchArm.name }}
               </td>
               <td>{{ branchArm.number_of_subjects }}</td>
-              <td v-for="studyEpoch in studyEpochs" :key="`${studyEpoch.uid}-${branchArm.branch_arm_uid}`">
+              <td v-for="studyEpoch in visibleStudyEpochs" :key="`${studyEpoch.uid}-${branchArm.branch_arm_uid}`">
                 {{ getDesignCellByBranch(studyEpoch.uid, branchArm.branch_arm_uid) }}
               </td>
             </tr>
@@ -43,7 +43,7 @@
               <td>{{ arm.name }}</td>
               <td></td>
               <td>{{ arm.number_of_subjects }}</td>
-              <td v-for="studyEpoch in studyEpochs" :key="`${studyEpoch.uid}-${arm.arm_uid}`">
+              <td v-for="studyEpoch in visibleStudyEpochs" :key="`${studyEpoch.uid}-${arm.arm_uid}`">
                 {{ getDesignCellByArm(studyEpoch.uid, arm.arm_uid) }}
               </td>
             </tr>
@@ -84,6 +84,7 @@
 import arms from '@/api/arms'
 import { mapGetters } from 'vuex'
 import study from '@/api/study'
+import visitConstants from '@/constants/visits'
 
 export default {
   computed: {
@@ -97,6 +98,9 @@ export default {
         result += arm.number_of_subjects
       }
       return result
+    },
+    visibleStudyEpochs () {
+      return this.studyEpochs.filter(studyEpoch => studyEpoch.epoch_name !== visitConstants.EPOCH_BASIC)
     }
   },
   data () {

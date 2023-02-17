@@ -47,6 +47,7 @@ echo "- Creating and starting container neo4j_local"
 docker run -d \
     --user="$USER_AND_GROUP" \
     --name neo4j_local \
+    --ulimit nofile=10000:10000 \
     -p"$NEO4J_MDR_HTTP_PORT":"$NEO4J_MDR_HTTP_PORT" -p"$NEO4J_MDR_HTTPS_PORT":"$NEO4J_MDR_HTTPS_PORT" -p"$NEO4J_MDR_BOLT_PORT":"$NEO4J_MDR_BOLT_PORT" \
     -v "$DATA":/data \
     -v "$PLUGINS":/plugins \
@@ -63,13 +64,13 @@ docker run -d \
     -e NEO4J_dbms_memory_heap_max__size=2g \
     -e NEO4J_dbms_memory_pagecache_size=4g \
     -e NEO4J_dbms_allow__upgrade=true\
+    -e NEO4J_dbms_max__databases=1000 \
     -e NEO4J_dbms_connector_bolt_advertised__address="$NEO4J_MDR_HOST":"$NEO4J_MDR_BOLT_PORT" \
     -e NEO4J_dbms_connector_http_advertised__address="$NEO4J_MDR_HOST":"$NEO4J_MDR_HTTP_PORT" \
     -e NEO4J_dbms_connector_https_advertised__address="$NEO4J_MDR_HOST":"$NEO4J_MDR_HTTPS_PORT" \
     -e NEO4J_dbms_connector_bolt_listen__address=:"$NEO4J_MDR_BOLT_PORT" \
     -e NEO4J_dbms_connector_http_listen__address=:"$NEO4J_MDR_HTTP_PORT" \
     -e NEO4J_dbms_connector_https_listen__address=:"$NEO4J_MDR_HTTPS_PORT" \
-    -e NEO4J_metrics_prometheus_enabled=true \
-    -e NEO4J_metrics_prometheus_endpoint=0.0.0.0:2004 \
+    -e NEO4J_metrics_enabled=false \
     --env=NEO4JLABS_PLUGINS='["apoc"]' \
     neo4j:4.4.12-enterprise

@@ -268,3 +268,54 @@ def get_te(
         page=page_number,
         size=page_size,
     )
+
+
+@router.get(
+    "/studies/all/sdtm/tdm/{study_uid}",
+    summary="SDTM TDM domain listing",
+    response_model=CustomPage[models.StudyDiseaseMilestoneListing],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def get_tdm(
+    study_uid: str = Path(
+        None,
+        description="Return study disease milestone data of a given study number in SDTM TDM domain format.",
+    ),
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
+        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
+    ),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
+    filters: Optional[Json] = Query(
+        None,
+        description=_generic_descriptions.FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: Optional[bool] = Query(
+        False, description=_generic_descriptions.TOTAL_COUNT
+    ),
+):
+    service = ListingsService()
+    all_items = service.list_tdm(
+        study_uid=study_uid,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        sort_by=sort_by,
+    )
+
+    return CustomPage.create(
+        items=all_items.items,
+        total=all_items.total_count,
+        page=page_number,
+        size=page_size,
+    )

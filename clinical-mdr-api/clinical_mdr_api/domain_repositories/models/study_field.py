@@ -11,6 +11,7 @@ from neomodel import (
     db,
 )
 
+from clinical_mdr_api.domain_repositories.models.concepts import UnitDefinitionRoot
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
@@ -109,3 +110,12 @@ class StudyBooleanField(StudyField):
 class StudyTimeField(StudyField):
     value = StringProperty()
     field_name = StringProperty()
+    has_unit_definition = RelationshipTo(
+        UnitDefinitionRoot,
+        "HAS_UNIT_DEFINITION",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
+    )
+    has_time_field = RelationshipFrom(
+        ".study.StudyValue", "HAS_TIME_FIELD", model=ClinicalMdrRel
+    )

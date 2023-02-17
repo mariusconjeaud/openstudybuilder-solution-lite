@@ -70,9 +70,9 @@
                 ],
                 "activity_groups": [],
                 "item_groups": [],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "approve",
                     "delete",
@@ -82,17 +82,73 @@
         }
     },
     {
-        "name": "Add ODM XML Extension Tag to an ODM Form",
+        "name": "Test cannot add ODM Vendor Attribute with an invalid value to an ODM Form",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
-                    "uid": "odm_xml_extension_tag1",
+                    "uid": "odm_vendor_attribute3",
+                    "value": "3423"
+                }
+            ],
+            "url": "concepts/odms/forms/OdmForm_000001/vendor-attributes"
+        },
+        "response": {
+            "code": 400,
+            "headers": {
+                "content-length": "459",
+                "content-type": "application/json"
+            },
+            "result": {
+                "type": "BusinessLogicException",
+                "message": "Provided values for following attributes don't match their regex pattern:\n\n{'odm_vendor_attribute3': '^[a-zA-Z]+$'}",
+                "time": "2022-12-07T07: 23: 26.057208",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/vendor-attributes",
+                "method": "POST"
+            }
+        }
+    },
+    {
+        "name": "Test cannot add ODM Vendor Element Attribute with an invalid value to an ODM Form",
+        "request": {
+            "headers": {},
+            "method": "POST",
+            "request": [
+                {
+                    "uid": "odm_vendor_attribute1",
+                    "value": "3423"
+                }
+            ],
+            "url": "concepts/odms/forms/OdmForm_000001/vendor-element-attributes"
+        },
+        "response": {
+            "code": 400,
+            "headers": {
+                "content-length": "459",
+                "content-type": "application/json"
+            },
+            "result": {
+                "type": "BusinessLogicException",
+                "message": "Provided values for following attributes don't match their regex pattern:\n\n{'odm_vendor_attribute1': '^[a-zA-Z]+$'}",
+                "time": "2022-12-07T07: 23: 26.057208",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/vendor-element-attributes",
+                "method": "POST"
+            }
+        }
+    },
+    {
+        "name": "Add ODM Vendor Element to an ODM Form",
+        "request": {
+            "headers": {},
+            "method": "POST",
+            "request": [
+                {
+                    "uid": "odm_vendor_element1",
                     "value": "value1"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/xml-extension-tags"
+            "url": "concepts/odms/forms/OdmForm_000001/vendor-elements"
         },
         "response": {
             "code": 201,
@@ -144,15 +200,15 @@
                 ],
                 "activity_groups": [],
                 "item_groups": [],
-                "xml_extension_tags": [
+                "vendor_elements": [
                     {
-                        "uid": "odm_xml_extension_tag1",
+                        "uid": "odm_vendor_element1",
                         "name": "nameOne",
                         "value": "value1"
                     }
                 ],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "approve",
                     "delete",
@@ -162,17 +218,17 @@
         }
     },
     {
-        "name": "Add ODM XML Extension Tag Attribute to an ODM Form",
+        "name": "Add ODM Vendor Element Attribute to an ODM Form",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
-                    "uid": "odm_xml_extension_attribute1",
-                    "value": "value1"
+                    "uid": "odm_vendor_attribute1",
+                    "value": "valueOne"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/xml-extension-tag-attributes"
+            "url": "concepts/odms/forms/OdmForm_000001/vendor-element-attributes"
         },
         "response": {
             "code": 201,
@@ -224,21 +280,22 @@
                 ],
                 "activity_groups": [],
                 "item_groups": [],
-                "xml_extension_tags": [
+                "vendor_elements": [
                     {
-                        "uid": "odm_xml_extension_tag1",
+                        "uid": "odm_vendor_element1",
                         "name": "nameOne",
                         "value": "value1"
                     }
                 ],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [
+                "vendor_attributes": [],
+                "vendor_element_attributes": [
                     {
-                        "uid": "odm_xml_extension_attribute1",
+                        "uid": "odm_vendor_attribute1",
                         "name": "nameOne",
                         "data_type": "string",
-                        "value": "value1",
-                        "xml_extension_tag_uid": "odm_xml_extension_tag1"
+                        "value_regex": "^[a-zA-Z]+$",
+                        "value": "valueOne",
+                        "vendor_element_uid": "odm_vendor_element1"
                     }
                 ],
                 "possible_actions": [
@@ -440,9 +497,9 @@
         "name": "Test cannot inactivate an ODM Form that is in Draft status",
         "request": {
             "headers": {},
-            "method": "POST",
+            "method": "DELETE",
             "request": {},
-            "url": "concepts/odms/forms/OdmForm_000001/inactivate"
+            "url": "concepts/odms/forms/OdmForm_000001/activations"
         },
         "response": {
             "code": 400,
@@ -453,8 +510,8 @@
             "result": {
                 "message": "Cannot retire draft version.",
                 "time": "2022-03-07T12:24:39.980123",
-                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/inactivate",
-                "method": "POST",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/activations",
+                "method": "DELETE",
                 "type": "BusinessLogicException"
             }
         }
@@ -465,7 +522,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/odms/forms/OdmForm_000001/reactivate"
+            "url": "concepts/odms/forms/OdmForm_000001/activations"
         },
         "response": {
             "code": 400,
@@ -476,24 +533,24 @@
             "result": {
                 "message": "Only RETIRED version can be reactivated.",
                 "time": "2022-03-07T12:27:17.572613",
-                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/reactivate",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/activations",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test cannot override ODM XML Extension Tag that has attributes connected this ODM Form",
+        "name": "Test cannot override ODM Vendor Element that has attributes connected this ODM Form",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
-                    "uid": "odm_xml_extension_tag2",
+                    "uid": "odm_vendor_element2",
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/xml-extension-tags?override=true"
+            "url": "concepts/odms/forms/OdmForm_000001/vendor-elements?override=true"
         },
         "response": {
             "code": 400,
@@ -502,26 +559,26 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "Cannot remove an ODM XML Extension Tag whose attributes are connected to this ODM element.",
+                "message": "Cannot remove an ODM Vendor Element whose attributes are connected to this ODM element.",
                 "time": "2022-03-07T12:30:50.195156",
-                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/xml-extension-tags?override=true",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/vendor-elements?override=true",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test cannot add ODM XML Extension Tag Attribute to an ODM Form as an xml extension attribute",
+        "name": "Test cannot add ODM Vendor Element Attribute to an ODM Form as an ODM Vendor Attribute",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
-                    "uid": "odm_xml_extension_attribute1",
+                    "uid": "odm_vendor_attribute1",
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/xml-extension-attributes"
+            "url": "concepts/odms/forms/OdmForm_000001/vendor-attributes"
         },
         "response": {
             "code": 400,
@@ -530,26 +587,26 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM XML Extension Attribute identified by (odm_xml_extension_attribute1) cannot not be added as an xml extension attribute.",
+                "message": "ODM Vendor Attribute identified by (odm_vendor_attribute1) cannot not be added as an Vendor Attribute.",
                 "time": "2022-03-07T12:30:50.195156",
-                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/xml-extension-attributes",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/vendor-attributes",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test cannot add ODM XML Extension Attribute to an ODM Form as an xml extension tag attribute",
+        "name": "Test cannot add ODM Vendor Attribute to an ODM Form as an ODM Vendor Element Attribute",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
-                    "uid": "odm_xml_extension_attribute3",
+                    "uid": "odm_vendor_attribute3",
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/xml-extension-tag-attributes"
+            "url": "concepts/odms/forms/OdmForm_000001/vendor-element-attributes"
         },
         "response": {
             "code": 400,
@@ -558,9 +615,9 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM XML Extension Attribute identified by (odm_xml_extension_attribute3) cannot not be added as an xml extension tag attribute.",
+                "message": "ODM Vendor Attribute identified by (odm_vendor_attribute3) cannot not be added as an Vendor Element Attribute.",
                 "time": "2022-03-07T12:30:50.195156",
-                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/xml-extension-tag-attributes",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/vendor-element-attributes",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }
@@ -572,7 +629,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/odms/forms/OdmForm_000001/approve"
+            "url": "concepts/odms/forms/OdmForm_000001/approvals"
         },
         "response": {
             "code": 201,
@@ -624,21 +681,22 @@
                 ],
                 "activity_groups": [],
                 "item_groups": [],
-                "xml_extension_tags": [
+                "vendor_elements": [
                     {
-                        "uid": "odm_xml_extension_tag1",
+                        "uid": "odm_vendor_element1",
                         "name": "nameOne",
                         "value": "value1"
                     }
                 ],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [
+                "vendor_attributes": [],
+                "vendor_element_attributes": [
                     {
-                        "uid": "odm_xml_extension_attribute1",
+                        "uid": "odm_vendor_attribute1",
                         "name": "nameOne",
                         "data_type": "string",
-                        "value": "value1",
-                        "xml_extension_tag_uid": "odm_xml_extension_tag1"
+                        "value_regex": "^[a-zA-Z]+$",
+                        "value": "valueOne",
+                        "vendor_element_uid": "odm_vendor_element1"
                     }
                 ],
                 "possible_actions": [
@@ -649,15 +707,121 @@
         }
     },
     {
-        "name": "Inactivate ODM Form",
+        "name": "Test cannot add ODM Item Groups with an invalid value to an ODM Form",
         "request": {
             "headers": {},
             "method": "POST",
-            "request": {},
-            "url": "concepts/odms/forms/OdmForm_000001/inactivate"
+            "request": [
+                {
+                    "uid": "odm_item_group1",
+                    "order_number": 1,
+                    "mandatory": "Yes",
+                    "locked": "Yes",
+                    "collection_exception_condition_oid": "collection_exception_condition_oid1",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "odm_vendor_attribute3",
+                                "value": "3423"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "url": "concepts/odms/forms/OdmForm_000001/item-groups"
         },
         "response": {
-            "code": 201,
+            "code": 400,
+            "headers": {
+                "content-length": "459",
+                "content-type": "application/json"
+            },
+            "result": {
+                "type": "BusinessLogicException",
+                "message": "Provided values for following attributes don't match their regex pattern:\n\n{'odm_vendor_attribute3': '^[a-zA-Z]+$'}",
+                "time": "2022-12-07T07: 23: 26.057208",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/item-groups",
+                "method": "POST"
+            }
+        }
+    },
+    {
+        "name": "Test cannot add anon-compatible ODM Vendor Attribute to an ODM Form",
+        "request": {
+            "headers": {},
+            "method": "POST",
+            "request": [
+                {
+                    "uid": "odm_vendor_attribute5",
+                    "value": "value"
+                }
+            ],
+            "url": "concepts/odms/forms/OdmForm_000001/vendor-attributes"
+        },
+        "response": {
+            "code": 400,
+            "headers": {
+                "content-length": "459",
+                "content-type": "application/json"
+            },
+            "result": {
+                "message": "Trying to add non-compatible ODM Vendor:\n\n{'odm_vendor_attribute5': ['NonCompatibleVendor']}",
+                "time": "2022-03-07T12:30:50.195156",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/vendor-attributes",
+                "method": "POST",
+                "type": "BusinessLogicException"
+            }
+        }
+    },
+    {
+        "name": "Test cannot add ODM Item Groups with non-compatible ODM Vendor Attribute to a specific ODM Form",
+        "request": {
+            "headers": {},
+            "method": "POST",
+            "request": [
+                {
+                    "uid": "odm_item_group1",
+                    "order_number": 1,
+                    "mandatory": "Yes",
+                    "locked": "No",
+                    "collection_exception_condition_oid": "collection_exception_condition_oid1",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "odm_vendor_attribute5",
+                                "value": "No"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "url": "concepts/odms/forms/OdmForm_000001/item-groups"
+        },
+        "response": {
+            "code": 400,
+            "headers": {
+                "content-length": "459",
+                "content-type": "application/json"
+            },
+            "result": {
+                "message": "Trying to add non-compatible ODM Vendor:\n\n{'odm_vendor_attribute5': ['NonCompatibleVendor']}",
+                "time": "2022-03-07T12:30:50.195156",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/item-groups",
+                "method": "POST",
+                "type": "BusinessLogicException"
+            }
+        }
+    },
+    {
+        "name": "Inactivate ODM Form",
+        "request": {
+            "headers": {},
+            "method": "DELETE",
+            "request": {},
+            "url": "concepts/odms/forms/OdmForm_000001/activations"
+        },
+        "response": {
+            "code": 200,
             "headers": {
                 "content-length": "459",
                 "content-type": "application/json"
@@ -672,7 +836,7 @@
                 "end_date": null,
                 "status": "Retired",
                 "version": "1.0",
-                "change_description": "Deactivated version",
+                "change_description": "Inactivated version",
                 "user_initials": "TODO user initials",
                 "sdtm_version": "0.1",
                 "scope": null,
@@ -706,21 +870,22 @@
                 ],
                 "activity_groups": [],
                 "item_groups": [],
-                "xml_extension_tags": [
+                "vendor_elements": [
                     {
-                        "uid": "odm_xml_extension_tag1",
+                        "uid": "odm_vendor_element1",
                         "name": "nameOne",
                         "value": "value1"
                     }
                 ],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [
+                "vendor_attributes": [],
+                "vendor_element_attributes": [
                     {
-                        "uid": "odm_xml_extension_attribute1",
+                        "uid": "odm_vendor_attribute1",
                         "name": "nameOne",
                         "data_type": "string",
-                        "value": "value1",
-                        "xml_extension_tag_uid": "odm_xml_extension_tag1"
+                        "value_regex": "^[a-zA-Z]+$",
+                        "value": "valueOne",
+                        "vendor_element_uid": "odm_vendor_element1"
                     }
                 ],
                 "possible_actions": [
@@ -741,7 +906,10 @@
                     "order_number": 1,
                     "mandatory": "Yes",
                     "locked": "Yes",
-                    "collection_exception_condition_oid": "collection_exception_condition_oid1"
+                    "collection_exception_condition_oid": "collection_exception_condition_oid1",
+                    "vendor": {
+                        "attributes": []
+                    }
                 }
             ],
             "url": "concepts/odms/forms/OdmForm_000001/item-groups"
@@ -789,17 +957,17 @@
         }
     },
     {
-        "name": "Test cannot add ODM XML Extension Tag to an ODM Form that is in Retired status",
+        "name": "Test cannot add ODM Vendor Element to an ODM Form that is in Retired status",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
-                    "uid": "odm_xml_extension_tag1",
+                    "uid": "odm_vendor_element1",
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/xml-extension-tags"
+            "url": "concepts/odms/forms/OdmForm_000001/vendor-elements"
         },
         "response": {
             "code": 400,
@@ -810,24 +978,24 @@
             "result": {
                 "message": "The object is inactive",
                 "time": "2022-03-07T12:30:50.195156",
-                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/xml-extension-tags",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/vendor-elements",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test cannot add ODM XML Extension Attribute to an ODM Form that is in Retired status",
+        "name": "Test cannot add ODM Vendor Attribute to an ODM Form that is in Retired status",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
-                    "uid": "odm_xml_extension_attribute1",
+                    "uid": "odm_vendor_attribute1",
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/xml-extension-attributes"
+            "url": "concepts/odms/forms/OdmForm_000001/vendor-attributes"
         },
         "response": {
             "code": 400,
@@ -838,24 +1006,24 @@
             "result": {
                 "message": "The object is inactive",
                 "time": "2022-03-07T12:30:50.195156",
-                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/xml-extension-attributes",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/vendor-attributes",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test cannot add ODM XML Extension Tag Attribute to an ODM Form that is in Retired status",
+        "name": "Test cannot add ODM Vendor Element Attribute to an ODM Form that is in Retired status",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
-                    "uid": "odm_xml_extension_attribute1",
+                    "uid": "odm_vendor_attribute1",
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/forms/OdmForm_000001/xml-extension-tag-attributes"
+            "url": "concepts/odms/forms/OdmForm_000001/vendor-element-attributes"
         },
         "response": {
             "code": 400,
@@ -866,7 +1034,7 @@
             "result": {
                 "message": "The object is inactive",
                 "time": "2022-03-07T12:30:50.195156",
-                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/xml-extension-tag-attributes",
+                "path": "http://testserver/concepts/odms/forms/OdmForm_000001/vendor-element-attributes",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }

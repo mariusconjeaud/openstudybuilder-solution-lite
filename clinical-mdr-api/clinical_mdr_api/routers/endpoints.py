@@ -494,7 +494,7 @@ def edit(
 
 
 @router.post(
-    "/{uid}/approve",
+    "/{uid}/approvals",
     summary="Approves the endpoint identified by 'uid'.",
     description="""This request is only valid if the endpoint
 * is in 'Draft' status and
@@ -529,8 +529,8 @@ def approve(
     # return service.approve_draft(uid)
 
 
-@router.post(
-    "/{uid}/inactivate",
+@router.delete(
+    "/{uid}/activations",
     summary="Inactivates/deactivates the endpoint identified by 'uid'.",
     description="""This request is only valid if the endpoint
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -541,9 +541,9 @@ If the request succeeds:
 * The 'version' property will remain the same as before.
     """,
     response_model=models.Endpoint,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -565,7 +565,7 @@ def inactivate(
 
 # TODO check if * there is no other endpoint with the same name (it may be that one had been created after inactivating this one here)
 @router.post(
-    "/{uid}/reactivate",
+    "/{uid}/activations",
     summary="Reactivates the endpoint identified by 'uid'.",
     description="""This request is only valid if the endpoint
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -576,9 +576,9 @@ If the request succeeds:
 * The 'version' property will remain the same as before.
     """,
     response_model=models.Endpoint,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"

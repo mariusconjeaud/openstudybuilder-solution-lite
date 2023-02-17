@@ -274,7 +274,7 @@ def create(
 
 
 @router.post(
-    "/terms/{term_uid}/names/approve",
+    "/terms/{term_uid}/names/approvals",
     summary="Approves the term identified by 'term_uid'.",
     description="""This request is only valid if the term
 * is in 'Draft' status and
@@ -309,8 +309,8 @@ def approve(
     return ct_term_name_service.approve(term_uid=term_uid)
 
 
-@router.post(
-    "/terms/{term_uid}/names/inactivate",
+@router.delete(
+    "/terms/{term_uid}/names/activations",
     summary="Inactivates/deactivates the term identified by 'term_uid'.",
     description="""This request is only valid if the term
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -321,9 +321,9 @@ If the request succeeds:
 * The 'version' property will remain the same as before.
     """,
     response_model=models.CTTermName,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -344,7 +344,7 @@ def inactivate(
 
 
 @router.post(
-    "/terms/{term_uid}/names/reactivate",
+    "/terms/{term_uid}/names/activations",
     summary="Reactivates the term identified by 'term_uid'.",
     description="""This request is only valid if the term
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -355,9 +355,9 @@ If the request succeeds:
 * The 'version' property will remain the same as before.
     """,
     response_model=models.CTTermName,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"

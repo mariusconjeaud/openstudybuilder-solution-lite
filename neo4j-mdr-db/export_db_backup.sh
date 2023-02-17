@@ -10,6 +10,11 @@ if [ $# -lt 3 ]; then
 	EOF
 	exit 2
 fi
+if [ -z "$NEO4J_MDR_AUTH_USER" ] || [ -z "$NEO4J_MDR_AUTH_PASSWORD" ] || [ -z "$NEO4J_MDR_BOLT_PORT" ]; then
+	echo "Missing environment variable(s) for db connection, needed: NEO4J_MDR_AUTH_USER, NEO4J_MDR_AUTH_PASSWORD, NEO4J_MDR_BOLT_PORT"
+	exit 2
+fi
+
 
 # Look up working directory
 WD="$(dirname "$(realpath "$0")")"
@@ -18,13 +23,19 @@ echo "- Workdir: $WD"
 echo "- Clean up export directory, delete any conflicting files"
 if [ -f "$WD/$3" ]; then
 	echo "  Deleting existing archive $WD/$3"
-	rm "$WD/$3"
+	rm "$WD/$3" || sudo rm "$WD/$3"
 fi
 if [ -d "$WD/db_export/$2" ]; then
 	echo "  Deleting existing export directory $WD/db_export/$2"
-	rm -rf "$WD/db_export/$2"
+	rm -rf "$WD/db_export/$2" || sudo rm -rf "$WD/db_export/$2" 
 fi
+
+echo "- Create export directory owned by database service user"
 mkdir "$WD/db_export/$2"
+DB_USER_AND_GROUP=$(docker exec "$1" stat -c "%u:%g" /data/databases)
+echo "  Database service runs as user:group $DB_USER_AND_GROUP"
+# Set db service user as owner for export dir.
+chown -R "$DB_USER_AND_GROUP" "$WD/db_export/$2" || sudo chown -R "$DB_USER_AND_GROUP" "$WD/db_export/$2"
 
 echo "- List existing databases"
 docker exec "$1" /var/lib/neo4j/bin/cypher-shell -d system -u "$NEO4J_MDR_AUTH_USER" -p "$NEO4J_MDR_AUTH_PASSWORD" -a "neo4j://localhost:$NEO4J_MDR_BOLT_PORT" "SHOW DATABASES;"

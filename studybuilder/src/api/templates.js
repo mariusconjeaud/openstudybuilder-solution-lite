@@ -26,19 +26,19 @@ export default (basePath) => {
       return repository.patch(`${basePath}/${uid}`, data)
     },
     approve (uid) {
-      return repository.post(`${basePath}/${uid}/approve`)
+      return repository.post(`${basePath}/${uid}/approvals`)
     },
     approveCascade (uid, cascade) {
-      return repository.post(`${basePath}/${uid}/approve?cascade=${cascade}`)
+      return repository.post(`${basePath}/${uid}/approvals?cascade=${cascade}`)
     },
     createNewVersion (uid, data) {
       return repository.post(`${basePath}/${uid}/versions`, data)
     },
     inactivate (uid) {
-      return repository.post(`${basePath}/${uid}/inactivate`)
+      return repository.delete(`${basePath}/${uid}/activations`)
     },
     reactivate (uid) {
-      return repository.post(`${basePath}/${uid}/reactivate`)
+      return repository.post(`${basePath}/${uid}/activations`)
     },
     delete (uid) {
       return repository.delete(`${basePath}/${uid}`)

@@ -40,7 +40,7 @@ export default {
         },
         {
           label: this.$t('StudyDefineForm.trialtype'),
-          name: 'trial_types_codes',
+          name: 'trial_type_codes',
           valuesDisplay: 'terms'
         },
         {

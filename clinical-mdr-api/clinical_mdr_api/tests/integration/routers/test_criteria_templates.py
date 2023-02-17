@@ -496,7 +496,7 @@ def test_versioning_criteria_templates(api_client):
     template_uid = res["uid"]
 
     # Approve
-    response = api_client.post(url=f"{url_prefix}/{template_uid}/approve")
+    response = api_client.post(url=f"{url_prefix}/{template_uid}/approvals")
     res = response.json()
     assert response.status_code == 201
     assert res["status"] == "Final"
@@ -534,18 +534,18 @@ def test_versioning_criteria_templates(api_client):
     assert res["change_description"] == change_description_new_name
 
     # Inactivate
-    _ = api_client.post(url=f"{url_prefix}/{template_uid}/approve")
-    response = api_client.post(url=f"{url_prefix}/{template_uid}/inactivate")
+    _ = api_client.post(url=f"{url_prefix}/{template_uid}/approvals")
+    response = api_client.delete(url=f"{url_prefix}/{template_uid}/activations")
     res = response.json()
-    assert response.status_code == 201
+    assert response.status_code == 200
     assert res["status"] == "Retired"
     assert res["version"] == "2.0"
-    assert res["change_description"] == "Deactivated version"
+    assert res["change_description"] == "Inactivated version"
 
     # Reactivate
-    response = api_client.post(url=f"{url_prefix}/{template_uid}/reactivate")
+    response = api_client.post(url=f"{url_prefix}/{template_uid}/activations")
     res = response.json()
-    assert response.status_code == 201
+    assert response.status_code == 200
     assert res["status"] == "Final"
     assert res["version"] == "2.0"
     assert res["change_description"] == "Reactivated version"
@@ -654,7 +654,7 @@ def test_errors_criteria_templates(api_client):
     ]
 
     # Patch template in Final status
-    _ = api_client.post(url=f"{url_prefix}/{template_uid}/approve")
+    _ = api_client.post(url=f"{url_prefix}/{template_uid}/approvals")
     response = api_client.patch(
         url=f"{url_prefix}/{template_uid}",
         json={

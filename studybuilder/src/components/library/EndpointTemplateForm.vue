@@ -43,8 +43,8 @@ export default {
       if (this.template.categories && this.template.categories.length) {
         form.categories = this.template.categories
       }
-      if (this.template.subCategories && this.template.subCategories.length) {
-        form.subCategories = this.template.subCategories
+      if (this.template.sub_categories && this.template.sub_categories.length) {
+        form.sub_categories = this.template.sub_categories
       }
       this.$store.commit('form/SET_FORM', form)
     },

@@ -1,8 +1,25 @@
+# OpenStudyBuilder Commits changelog
 
-# Version 0.2
+## V 0.3
 
-## Fixes and Enhancements
+### Fixes and Enhancements
+- Fixes on CRF library
+  - Issues on the Reference Extension on the Front-end fixed.
+- Improvements on Study structure and Study Interventions.
+- Fix applied on visual indication of required/mandatory (*) fields in UI so unnecessary error messages can be avoided.
 
+### New Features
+- Further additions to CRF library module.
+- API refactoring done, majorly use of snake case and aligning SB API with Zalando Rest API guidelines.
+- Implemented API to support Activity Placeholders and User Requested Activity Concept Requests.
+- Audit trail history studies.
+- Implemented Disease Milestones under Study Structure.
+- OS packages has been added for generating PDF. OS software licenses are included in git repositories, including the third party licenses. 
+
+
+## V 0.2 (12-DEC-2022)
+
+### Fixes and Enhancements
 - Locked version of documentation portal. 
 - neo4j database version updated in dockerfile. 
 - Updated README to correct default password error.
@@ -30,20 +47,18 @@
    - All timings are available for syntax templates
 - Improvements to sample data, data import and readme descriptions
 - Improvements to SDTM Study Design dataset listings.
+- Improvements on ease-of-use, clean and simplify sample data
+- Page level Version History on Study Activities, Study Endpoints, Study Intervention, Registry identifier pages.
+- Fix applied for Page level version history on Study Properties and on row level studies/criterias.
 
-
-## New Features
-
-- Sourcecode Public Gitlab file updates as below:
-   - Added DeveloperSetupGuide markdown file.
-   - Added Releasenotes markdown file.
-   - Added CHANGELOG markdown file.
+### New Features
 - Flowchart fitting for studies with many visits.
+- Improvements to Word add-in
 - Support creation of special visits without a specific time point reference
 - Support multiple ODM.XML styles and extensions.
 - Initial implementation to support generation of Clinical Trial Registration information in CDISC CTR.XML format. Note this is in part one only available via the API, a display via the View Spcifications menu item will be added later. Study Objectives & Endpoints HTML table built in the UI.
 
 
-# Version 0.1
+## V 0.1 (24-OCT-2022)
 
 Initial commit to Public Gitlab.

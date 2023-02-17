@@ -192,3 +192,48 @@ def get_same_start_string(string1, string2):
             break
 
     return same_start
+
+# Make sure we don't inlcude any characters that are reserved in urls
+# Reserved: ! * ' ( ) ; : @ & = + $ , / ? % # [ ]
+# Use double underscores to reduce the risk of collisions
+REPLACEMENTS = [
+    # No space
+    (" ", "__"),
+    # Operators
+    ("/", "__per__"),
+    ("&", "__and__"),
+    ("*", "__times__"),
+    ("+", "__plus__"),
+    ("^", "__pow__"),
+    ("=", "__equals__"),
+    ("<", "__lessthan__"),
+    (">", "__greaterthan__"),
+    # braces etc
+    ("(", "__openpar__"),
+    (")", "__closepar__"),
+    ("[", "__openbracket__"),
+    ("]", "__closebracket__"),
+    ("{", "__openbrace__"),
+    ("}", "__closebrace__"),
+    # Others
+    ("%", "__percent__"),
+    ("?", "__question__"),
+    ("'", "__quote__"),
+    (";", "__semicolon__"),
+    (":", "__colon__"),
+    ("$", "__dollar__"),
+    ("#", "__hash__"),
+    ("!", "__exclamation__"),
+    ("@", "__ampersat__"),
+    (",", "__comma__")
+]
+
+# Clean a string by replacing all characters that may cause trouble in a URL.
+def sanitize_string(value):
+    for old, new in REPLACEMENTS:
+        value = value.replace(old, new)
+    return value
+
+def make_uid_from_concept_and_submval(concept_id, submval):
+    clean_submval = sanitize_string(submval)
+    return f"{concept_id}_{clean_submval}"

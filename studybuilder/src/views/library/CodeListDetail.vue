@@ -5,62 +5,20 @@
     <v-spacer />
     <strong>{{ $t('CodeListDetail.concept_id') }}</strong> <span class="ml-2 secondary--text">{{ codelistNames.codelist_uid }}</span>
     <v-spacer />
-    <v-speed-dial
-      v-model="actionsMenu"
-      direction="left"
-      transition="transition-slide-x-reverse"
+    <v-btn
+      fab
+      dark
+      small
+      :title="$t('CodelistTable.show_terms')"
+      @click="openCodelistTerms()"
       >
-      <template v-slot:activator>
-        <v-btn
-          data-cy="table-actions-button"
-          v-model="actionsMenu"
-          color="primary"
-          fab
-          >
-          <v-icon>
-            mdi-menu
-          </v-icon>
-        </v-btn>
-      </template>
-      <v-btn
-        fab
-        dark
-        small
-        :title="$t('CodelistTable.show_terms')"
-        @click="openCodelistTerms()"
-        >
-        <v-icon>mdi-dots-horizontal</v-icon>
-      </v-btn>
-      <v-btn
-        class="mx-2"
-        color="secondary"
-        fab
-        small
-        >
-        <v-icon>mdi-history</v-icon>
-      </v-btn>
-      <data-table-export-button type="endpoint" dataUrl="" />
-      <v-btn
-        data-cy="add-new-term"
-        v-if="attributes.extensible"
-        class="mx-2"
-        fab
-        dark
-        small
-        color="primary"
-        @click.stop="showCreationForm = true"
-        :title="$t('CodelistTermsView.add_term')"
-        >
-        <v-icon dark>
-          mdi-plus
-        </v-icon>
-      </v-btn>
-    </v-speed-dial>
+      <v-icon>mdi-dots-horizontal</v-icon>
+    </v-btn>
   </div>
   <div class="v-label pa-4">{{ $t('CodeListDetail.sponsor_title') }}</div>
   <div class="v-data-table">
     <div class="v-data-table__wrapper">
-      <table class="white">
+      <table class="white" :aria-label="$t('CodeListDetail.sponsor_title')">
         <thead>
           <tr class="greyBackground">
             <th width="25%">{{ $t('CodeListDetail.ct_identifiers') }}</th>
@@ -112,7 +70,7 @@
               <v-btn
                 data-cy='sponsor-values-version-history'
                 icon
-                @click="openHistory"
+                @click="openNamesHistory"
                 :title="$t('CodeListDetail.history')"
                 >
                 <v-icon>mdi-history</v-icon>
@@ -131,7 +89,7 @@
   <div class="v-label pa-4 mt-6">{{ $t('CodeListDetail.attributes_title') }}</div>
   <div class="v-data-table">
     <div class="v-data-table__wrapper">
-      <table class="white">
+      <table class="white" :aria-label="$t('CodeListDetail.attributes_title')">
         <thead>
           <tr class="greyBackground">
             <th width="25%">{{ $t('CodeListDetail.ct_identifiers') }}</th>
@@ -208,6 +166,7 @@
     </div>
   </div>
   <v-dialog v-model="showSponsorValuesForm"
+            @keydown.esc="showSponsorValuesForm = false"
             persistent
             max-width="800px"
             >
@@ -217,6 +176,7 @@
       />
   </v-dialog>
   <v-dialog v-model="showAttributesForm"
+            @keydown.esc="showAttributesForm = false"
             persistent
             max-width="800px"
             >
@@ -225,43 +185,15 @@
       @close="showAttributesForm = false"
       />
   </v-dialog>
-  <v-dialog v-model="showSponsorValuesHistory"
+  <v-dialog v-model="showHistory"
+            @keydown.esc="closeHistory"
             persistent
             max-width="1200px">
     <history-table
-      @close="closeHistory()"
-      type="codelistSponsorValues"
-      url-prefix=""
-      :item="historyData"
-      :title-label="$t('CodelistTable.history_title')"
+      :title="historyTitle"
+      @close="closeHistory"
       :headers="historyHeaders"
-      />
-  </v-dialog>
-  <v-dialog v-model="showAttributesHistory"
-            persistent
-            max-width="1200px">
-    <history-table
-      @close="closeHistory()"
-      type="codelistAttributes"
-      url-prefix=""
-      :item="historyData"
-      :title-label="$t('CodelistTable.history_title')"
-      :headers="historyHeaders"
-      />
-  </v-dialog>
-  <v-dialog
-    v-if="attributes.extensible"
-    v-model="showCreationForm"
-    persistent
-    max-width="1024px"
-    content-class="top-dialog"
-    >
-    <codelist-term-creation-form
-      :catalogueName="codelistNames.catalogue_name"
-      :codelistUid="codelistNames.codelist_uid"
-      :libraryName="codelistNames.library_name"
-      @close="showCreationForm = false"
-      @created="goToTerm"
+      :items="historyItems"
       />
   </v-dialog>
 </div>
@@ -273,41 +205,53 @@ import { bus } from '@/main'
 import controlledTerminology from '@/api/controlledTerminology'
 import CodelistAttributesForm from '@/components/library/CodelistAttributesForm'
 import CodelistSponsorValuesForm from '@/components/library/CodelistSponsorValuesForm'
-import CodelistTermCreationForm from '@/components/library/CodelistTermCreationForm'
-import DataTableExportButton from '@/components/tools/DataTableExportButton'
-import HistoryTable from '@/components/library/HistoryTable'
+import dataFormating from '@/utils/dataFormating'
+import HistoryTable from '@/components/tools/HistoryTable'
 import StatusChip from '@/components/tools/StatusChip'
 
 export default {
   components: {
     CodelistAttributesForm,
     CodelistSponsorValuesForm,
-    CodelistTermCreationForm,
-    DataTableExportButton,
     HistoryTable,
     StatusChip
+  },
+  computed: {
+    namesHistoryTitle () {
+      return this.$t('CodeListDetail.names_history_title', { codelist: this.codelistNames.codelist_uid })
+    },
+    attributesHistoryTitle () {
+      return this.$t('CodeListDetail.attributes_history_title', { codelist: this.attributes.codelist_uid })
+    }
   },
   data () {
     return {
       actionsMenu: false,
       attributes: { possible_actions: [] },
       codelistNames: { possible_actions: [] },
-      historyHeaders: [
-        { text: this.$t('_global.library'), value: 'library_name' },
-        { text: this.$t('_global.name'), value: 'name' },
-        { text: this.$t('HistoryTable.change_description'), value: 'change_description' },
+      attributesHistoryHeaders: [
+        { text: this.$t('CodeListDetail.codelist_name'), value: 'name' },
+        { text: this.$t('CodeListDetail.submission_value'), value: 'submission_value' },
+        { text: this.$t('CodeListDetail.nci_pref_name'), value: 'nci_preferred_name' },
+        { text: this.$t('CodeListDetail.extensible'), value: 'extensible' },
+        { text: this.$t('_global.definition'), value: 'definition' },
         { text: this.$t('_global.status'), value: 'status' },
-        { text: this.$t('_global.version'), value: 'version' },
-        { text: this.$t('_global.user'), value: 'user_initials' },
-        { text: this.$t('HistoryTable.start_date'), value: 'start_date' },
-        { text: this.$t('HistoryTable.end_date'), value: 'endDate' }
+        { text: this.$t('_global.version'), value: 'version' }
+      ],
+      historyHeaders: [],
+      historyItems: [],
+      historyTitle: '',
+      namesHistoryHeaders: [
+        { text: this.$t('CodeListDetail.sponsor_pref_name'), value: 'name' },
+        { text: this.$t('CodeListDetail.tpl_parameter'), value: 'template_parameter' },
+        { text: this.$t('_global.status'), value: 'status' },
+        { text: this.$t('_global.version'), value: 'version' }
+
       ],
       showAttributesForm: false,
-      showAttributesHistory: false,
-      showCreationForm: false,
+      showHistory: false,
       showSponsorValuesForm: false,
-      showSponsorValuesHistory: false,
-      historyData: {}
+      showSponsorValuesHistory: false
     }
   },
   methods: {
@@ -332,14 +276,15 @@ export default {
         bus.$emit('notification', { msg: this.$t('CodeListDetail.sponsor_values_approve_success') })
       })
     },
-    openHistory () {
-      this.historyData = this.codelistNames
-      this.showSponsorValuesHistory = true
+    async openNamesHistory () {
+      this.historyTitle = this.namesHistoryTitle
+      this.historyHeaders = this.namesHistoryHeaders
+      const resp = await controlledTerminology.getCodelistNamesVersions(this.codelistNames.codelist_uid)
+      this.historyItems = this.transformHistoryItems(resp.data)
+      this.showHistory = true
     },
     closeHistory () {
-      this.historyData = {}
-      this.showSponsorValuesHistory = false
-      this.showAttributesHistory = false
+      this.showHistory = false
     },
     createNewAttributesVersion () {
       controlledTerminology.newCodelistAttributesVersion(this.attributes.codelist_uid).then(resp => {
@@ -353,9 +298,12 @@ export default {
         bus.$emit('notification', { msg: this.$t('CodeListDetail.attributes_approve_success') })
       })
     },
-    openAttributesHistory () {
-      this.historyData = this.attributes
-      this.showAttributesHistory = true
+    async openAttributesHistory () {
+      this.historyTitle = this.attributesHistoryTitle
+      this.historyHeaders = this.attributesHistoryHeaders
+      const resp = await controlledTerminology.getCodelistAttributesVersions(this.attributes.codelist_uid)
+      this.historyItems = this.transformHistoryItems(resp.data)
+      this.showHistory = true
     },
     goToTerm (term) {
       this.$router.push({ name: 'CodelistTermDetail', params: { codelist_id: term.codelist_uid, term_id: term.term_uid } })
@@ -363,6 +311,20 @@ export default {
     },
     openCodelistTerms () {
       this.$router.push({ name: 'CodelistTerms', params: { codelist_id: this.codelistNames.codelist_uid } })
+    },
+    transformHistoryItems (items) {
+      const result = []
+      for (const item of items) {
+        const newItem = { ...item }
+        if (newItem.template_parameter !== undefined) {
+          newItem.template_parameter = dataFormating.yesno(newItem.template_parameter)
+        }
+        if (newItem.extensible !== undefined) {
+          newItem.extensible = dataFormating.yesno(newItem.extensible)
+        }
+        result.push(newItem)
+      }
+      return result
     }
   },
   mounted () {

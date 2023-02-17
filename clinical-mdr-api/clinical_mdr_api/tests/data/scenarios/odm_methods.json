@@ -436,7 +436,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/odms/methods/OdmMethod_000001/approve"
+            "url": "concepts/odms/methods/OdmMethod_000001/approvals"
         },
         "response": {
             "code": 201,
@@ -503,12 +503,12 @@
         "name": "Test inactivating a specific ODM Method",
         "request": {
             "headers": {},
-            "method": "POST",
+            "method": "DELETE",
             "request": {},
-            "url": "concepts/odms/methods/OdmMethod_000001/inactivate"
+            "url": "concepts/odms/methods/OdmMethod_000001/activations"
         },
         "response": {
-            "code": 201,
+            "code": 200,
             "headers": {
                 "content-length": "459",
                 "content-type": "application/json"
@@ -523,7 +523,7 @@
                 "end_date": null,
                 "status": "Retired",
                 "version": "1.0",
-                "change_description": "Deactivated version",
+                "change_description": "Inactivated version",
                 "user_initials": "TODO initials",
                 "formal_expressions": [
                     {
@@ -574,10 +574,10 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/odms/methods/OdmMethod_000001/reactivate"
+            "url": "concepts/odms/methods/OdmMethod_000001/activations"
         },
         "response": {
-            "code": 201,
+            "code": 200,
             "headers": {
                 "content-length": "459",
                 "content-type": "application/json"

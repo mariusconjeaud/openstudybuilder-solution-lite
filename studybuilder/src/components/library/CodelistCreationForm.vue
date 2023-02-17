@@ -230,9 +230,6 @@ export default {
         this.$refs.stepper.loading = false
       }
     }
-  },
-  mounted () {
-    this.form.catalogue_name = this.catalogue
   }
 }
 </script>

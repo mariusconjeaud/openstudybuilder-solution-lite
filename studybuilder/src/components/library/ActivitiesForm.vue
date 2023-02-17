@@ -9,6 +9,35 @@
   >
   <template v-slot:body>
     <validation-observer ref="observer">
+      <v-row>
+        <v-col>
+          <v-text-field
+            :label="$t('_global.library')"
+            v-model="form.library_name"
+            dense
+            disabled
+            />
+        </v-col>
+      </v-row>
+      <validation-provider
+        v-slot="{ errors }"
+        rules="required"
+        >
+        <v-row>
+          <v-col>
+            <v-autocomplete
+              :label="$t('ActivityForms.activity_group')"
+              :items="groups"
+              v-model="form.activity_group"
+              item-text="name"
+              item-value="uid"
+              :error-messages="errors"
+              dense
+              clearable
+              />
+          </v-col>
+        </v-row>
+      </validation-provider>
       <validation-provider
         v-slot="{ errors }"
         rules="required"
@@ -17,14 +46,15 @@
           <v-col>
             <v-autocomplete
               :label="$t('ActivityForms.activity_subgroup')"
-              :items="subGroups"
+              :items="filteredSubGroups"
               v-model="form.activity_subgroup"
               item-text="name"
               item-value="uid"
               :error-messages="errors"
               dense
               clearable
-              ></v-autocomplete>
+              :disabled="form.activity_group ? false : true"
+              />
           </v-col>
         </v-row>
       </validation-provider>
@@ -35,8 +65,23 @@
         <v-row>
           <v-col>
             <v-text-field
-              :label="$t('ActivityForms.name')"
+              :label="$t('ActivityForms.activity_name')"
               v-model="form.name"
+              :error-messages="errors"
+              dense
+              clearable
+              />
+          </v-col>
+        </v-row>
+      </validation-provider>
+      <validation-provider
+        v-slot="{ errors }"
+        >
+        <v-row>
+          <v-col>
+            <v-text-field
+              :label="$t('ActivityForms.abbreviation')"
+              v-model="form.abbreviation"
               :error-messages="errors"
               dense
               clearable
@@ -63,7 +108,7 @@
         </v-row>
       </validation-provider>
       <validation-provider
-        v-if="editedActivity"
+        v-if="editing"
         v-slot="{ errors }"
         >
         <v-row>
@@ -91,6 +136,7 @@ import _isEqual from 'lodash/isEqual'
 import _isEmpty from 'lodash/isEmpty'
 import activities from '@/api/activities'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
+import constants from '@/constants/libraries.js'
 
 export default {
   components: {
@@ -102,35 +148,52 @@ export default {
   },
   computed: {
     title () {
-      return (this.editedActivity)
+      return (!_isEmpty(this.editedActivity))
         ? this.$t('ActivityForms.edit_activity')
         : this.$t('ActivityForms.add_activity')
+    },
+    filteredSubGroups () {
+      if (!this.form.activity_group) {
+        return []
+      }
+      return this.subGroups.filter(el => el.activity_group.uid === this.form.activity_group)
     }
   },
   data () {
     return {
-      form: {},
+      form: {
+        library_name: constants.LIBRARY_SPONSOR
+      },
+      groups: [],
       subGroups: [],
       libraries: [],
       helpItems: [
         'ActivityForms.activity_subgroup',
         'ActivityForms.name',
         'ActivityForms.definition'
-      ]
+      ],
+      editing: false
     }
   },
   methods: {
     initForm (value) {
+      this.editing = true
       this.form = {
         name: value.name,
         name_sentence_case: '',
         definition: value.definition,
-        change_description: value.change_description,
+        abbreviation: value.abbreviation,
+        change_description: '',
         library_name: value.library_name
       }
       if (!_isEmpty(value)) {
-        this.form.name_sentence_case = value.name.charAt(0).toUpperCase() + value.name.slice(1)
-        this.form.activity_subgroup = value.activity_subgroup
+        this.$set(this.form, 'name_sentence_case', value.name.charAt(0).toUpperCase() + value.name.slice(1))
+        if (value.activity_group) {
+          this.$set(this.form, 'activity_group', value.activity_group.uid)
+        }
+        if (value.activity_subgroup) {
+          this.$set(this.form, 'activity_subgroup', value.activity_subgroup.uid)
+        }
       }
       this.$store.commit('form/SET_FORM', this.form)
     },
@@ -150,12 +213,18 @@ export default {
     },
     close () {
       this.$emit('close')
-      this.form = {}
+      this.form = {
+        library_name: constants.LIBRARY_SPONSOR
+      }
+      this.editing = false
       this.$store.commit('form/CLEAR_FORM')
       this.$refs.observer.reset()
     },
     async submit () {
-      this.form.library_name = 'Sponsor' // Hardcoded for now at the Sinna and Mikkel request
+      const valid = await this.$refs.observer.validate()
+      if (!valid) {
+        return
+      }
       this.form.name_sentence_case = this.form.name.charAt(0).toUpperCase() + this.form.name.slice(1)
       if (!this.editedActivity) {
         activities.create(this.form, 'activities').then(resp => {
@@ -169,22 +238,25 @@ export default {
         })
       }
     },
-    getSubGroups () {
+    getGroupsAndSubGroups () {
       activities.get({ page_size: 0 }, 'activity-sub-groups').then(resp => {
         this.subGroups = resp.data.items
+      })
+      activities.get({ page_size: 0 }, 'activity-groups').then(resp => {
+        this.groups = resp.data.items
       })
     }
   },
   mounted () {
-    if (this.editedActivity) {
+    if (!_isEmpty(this.editedActivity)) {
       this.initForm(this.editedActivity)
     }
-    this.getSubGroups()
+    this.getGroupsAndSubGroups()
   },
   watch: {
     editedActivity: {
       handler (value) {
-        if (value) {
+        if (!_isEmpty(value)) {
           this.initForm(value)
         }
       },

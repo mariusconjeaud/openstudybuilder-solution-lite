@@ -78,7 +78,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/timeframes/{uid}/approve"
+            "url": "/timeframes/{uid}/approvals"
         },
         "response": {
             "code": 201,
@@ -118,7 +118,7 @@
             "headers": {},
             "method": "PATCH",
             "request": {},
-            "url": "/timeframes/{uid}/approve"
+            "url": "/timeframes/{uid}/approvals"
         },
         "response": {
             "code": 405,
@@ -136,7 +136,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/timeframes/{uid}/approve"
+            "url": "/timeframes/{uid}/approvals"
         },
         "response": {
             "code": 400,
@@ -147,7 +147,7 @@
             "result": {
                 "message": "The object is not in draft status.",
                 "method": "POST",
-                "path": "http://testserver/timeframes/a831a596-5e40-42a5-a2de-f9c0028e32e8/approve",
+                "path": "http://testserver/timeframes/a831a596-5e40-42a5-a2de-f9c0028e32e8/approvals",
                 "time": "2020-11-04T02:35:13.181265",
                 "type": "BusinessLogicException"
             }

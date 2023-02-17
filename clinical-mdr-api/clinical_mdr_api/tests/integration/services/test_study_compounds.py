@@ -115,6 +115,7 @@ class TestStudyCompoundsService(unittest.TestCase):
         # Make a compound selection with compound alias 'compound_alias1a'
         study_compound_created1: StudySelectionCompound = (
             TestUtils.create_study_compound(
+                study_uid=STUDY_UID,
                 compound_alias_uid=compound_alias1a.uid,
                 dosage_form_uid="dosage_form_uid1",
                 device_uid="delivery_device_uid1",
@@ -353,6 +354,7 @@ class TestStudyCompoundsService(unittest.TestCase):
         # Make a compound selection with compound alias 'compound_alias1a'
         study_compound_created1: StudySelectionCompound = (
             TestUtils.create_study_compound(
+                study_uid=STUDY_UID,
                 compound_alias_uid=compound_alias1a.uid,
                 dosage_form_uid="dosage_form_uid1",
                 device_uid="delivery_device_uid1",

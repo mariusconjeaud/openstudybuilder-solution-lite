@@ -54,6 +54,7 @@
           <v-textarea
             v-model="form.study_short_title"
             :maxlength="maxTitleLength/2"
+            :hint="$t('StudyTitleForm.short_title_hint')"
             persistent-hint
             rows="1"
             auto-grow
@@ -91,7 +92,6 @@
 <script>
 import { mapGetters } from 'vuex'
 import { bus } from '@/main'
-import studyConstants from '@/constants/study'
 import study from '@/api/study'
 import NNTable from '@/components/tools/NNTable'
 import _isEqual from 'lodash/isEqual'
@@ -187,7 +187,7 @@ export default {
     }
   },
   mounted () {
-    study.getAll([studyConstants.IDENTIFICATION_METADATA, studyConstants.DESCRIPTION_METADATA]).then(resp => {
+    study.getAll().then(resp => {
       this.studies = resp.data.items
     })
   },

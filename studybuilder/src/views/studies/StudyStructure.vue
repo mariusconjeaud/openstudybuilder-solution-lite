@@ -17,6 +17,7 @@
     <v-tab href="#elements">{{ $t('Sidebar.study.study_elements') }}</v-tab>
     <v-tab href="#visits">{{ $t('Sidebar.study.study_visits') }}</v-tab>
     <v-tab href="#design_matrix" @click="refreshMatrix()">{{ $t('Sidebar.study.design_matrix') }}</v-tab>
+    <v-tab href="#disease_milestones">{{ $t('Sidebar.study.disease_milestones') }}</v-tab>
   </v-tabs>
   <v-tabs-items v-model="tab">
     <v-tab-item id="overview">
@@ -31,11 +32,11 @@
     <v-tab-item id="cohorts">
       <study-cohorts-table />
     </v-tab-item>
-    <v-tab-item id="elements">
-      <study-elements-table />
-    </v-tab-item>
     <v-tab-item id="epochs">
       <study-epoch-table />
+    </v-tab-item>
+    <v-tab-item id="elements">
+      <study-elements-table />
     </v-tab-item>
     <v-tab-item id="visits">
       <study-visit-table />
@@ -43,12 +44,16 @@
     <v-tab-item id="design_matrix">
       <design-matrix-table :refresh="key"/>
     </v-tab-item>
+    <v-tab-item id="disease_milestones">
+      <disease-milestone-table />
+    </v-tab-item>
   </v-tabs-items>
 </div>
 </template>
 
 <script>
 import DesignMatrixTable from '@/components/studies/DesignMatrixTable'
+import DiseaseMilestoneTable from '@/components/studies/DiseaseMilestoneTable'
 import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels'
 import { studySelectedNavigationGuard } from '@/mixins/studies'
 import StudyEpochTable from '@/components/studies/StudyEpochTable'
@@ -62,6 +67,7 @@ import StudyStructureOverview from '@/components/studies/StudyStructureOverview'
 export default {
   mixins: [studySelectedNavigationGuard],
   components: {
+    DiseaseMilestoneTable,
     HelpButtonWithPanels,
     StudyVisitTable,
     StudyEpochTable,

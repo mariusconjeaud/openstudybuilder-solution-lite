@@ -27,12 +27,12 @@ export default {
     return repository.post(`${resource}/${uid}/versions`)
   },
   approve (uid) {
-    return repository.post(`${resource}/${uid}/approve`)
+    return repository.post(`${resource}/${uid}/approvals`)
   },
   inactivate (uid) {
-    return repository.post(`${resource}/${uid}/inactivate`)
+    return repository.delete(`${resource}/${uid}/activations`)
   },
   reactivate (uid) {
-    return repository.post(`${resource}/${uid}/reactivate`)
+    return repository.post(`${resource}/${uid}/activations`)
   }
 }

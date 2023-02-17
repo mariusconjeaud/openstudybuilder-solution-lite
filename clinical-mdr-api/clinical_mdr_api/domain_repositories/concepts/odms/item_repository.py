@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import List, Optional
 
 from clinical_mdr_api.domain.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.domain.concepts.odms.item import (
@@ -38,6 +38,7 @@ from clinical_mdr_api.domain_repositories.models.odm import (
     OdmItemRoot,
     OdmItemValue,
 )
+from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models import OdmItem
 
 
@@ -79,17 +80,17 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                 else None,
                 term_uids=[term.uid for term in root.has_codelist_term.all()],
                 activity_uids=[activity.uid for activity in root.has_activity.all()],
-                xml_extension_tag_uids=[
-                    xml_extension_tag.uid
-                    for xml_extension_tag in root.has_xml_extension_tag.all()
+                vendor_element_uids=[
+                    vendor_element.uid
+                    for vendor_element in root.has_vendor_element.all()
                 ],
-                xml_extension_attribute_uids=[
-                    xml_extension_attribute.uid
-                    for xml_extension_attribute in root.has_xml_extension_attribute.all()
+                vendor_attribute_uids=[
+                    vendor_attribute.uid
+                    for vendor_attribute in root.has_vendor_attribute.all()
                 ],
-                xml_extension_tag_attribute_uids=[
-                    xml_extension_tag_attribute.uid
-                    for xml_extension_tag_attribute in root.has_xml_extension_tag_attribute.all()
+                vendor_element_attribute_uids=[
+                    vendor_element_attribute.uid
+                    for vendor_element_attribute in root.has_vendor_element_attribute.all()
                 ],
             ),
             library=LibraryVO.from_input_values_2(
@@ -122,12 +123,10 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                 codelist_uid=input_dict.get("codelist_uid"),
                 term_uids=input_dict.get("term_uids"),
                 activity_uids=input_dict.get("activity_uids"),
-                xml_extension_tag_uids=input_dict.get("xml_extension_tag_uids"),
-                xml_extension_attribute_uids=input_dict.get(
-                    "xml_extension_attribute_uids"
-                ),
-                xml_extension_tag_attribute_uids=input_dict.get(
-                    "xml_extension_tag_attribute_uids"
+                vendor_element_uids=input_dict.get("vendor_element_uids"),
+                vendor_attribute_uids=input_dict.get("vendor_attribute_uids"),
+                vendor_element_attribute_uids=input_dict.get(
+                    "vendor_element_attribute_uids"
                 ),
             ),
             library=LibraryVO.from_input_values_2(
@@ -150,7 +149,7 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
         return odm_item_ar
 
     def specific_alias_clause(
-        self, only_specific_status: Optional[Sequence[str]] = None
+        self, only_specific_status: Optional[List[str]] = None
     ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]
@@ -173,9 +172,9 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
         head([(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[:HAS_CODELIST]->(ctcr:CTCodelistRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTCodelistAttributesRoot)-[:LATEST]->(ctcav:CTCodelistAttributesValue) | ctcr.uid]) AS codelist_uid,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hct:HAS_CODELIST_TERM]->(cttr:CTTermRoot)-[:HAS_NAME_ROOT]->(cttnr:CTTermNameRoot)-[:LATEST]->(cttnv:CTTermNameValue) | {{uid: cttr.uid, name: cttnv.name, mandatory: hct.mandatory, order: hct.order}}] AS terms,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[:HAS_ACTIVITY]->(ar:ActivityRoot)-[:LATEST]->(av:ActivityValue) | {{uid: ar.uid, name: av.name}}] AS activities,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hxet:HAS_XML_EXTENSION_TAG]->(xetr:OdmXmlExtensionTagRoot)-[:LATEST]->(xetv:OdmXmlExtensionTagValue) | {{uid: xetr.uid, name: xetv.name, value: hxet.value}}] AS xml_extension_tags,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hxea:HAS_XML_EXTENSION_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, value: hxea.value}}] AS xml_extension_attributes,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hxeta:HAS_XML_EXTENSION_TAG_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, value: hxeta.value}}] AS xml_extension_tag_attributes
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hve:HAS_VENDOR_ELEMENT]->(ver:OdmVendorElementRoot)-[:LATEST]->(vev:OdmVendorElementValue) | {{uid: ver.uid, name: vev.name, value: hve.value}}] AS vendor_elements,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hva:HAS_VENDOR_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name, value: hva.value}}] AS vendor_attributes,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hvea:HAS_VENDOR_ELEMENT_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name, value: hvea.value}}] AS vendor_element_attributes
 
         WITH *,
         [description in descriptions | description.uid] AS description_uids,
@@ -183,9 +182,9 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
         [unit_definition in unit_definitions | unit_definition.uid] AS unit_definition_uids,
         [term in terms | term.uid] AS term_uids,
         [activity in activities | activity.uid] AS activity_uids,
-        [xml_extension_tag in xml_extension_tags | xml_extension_tag.uid] AS xml_extension_tag_uids,
-        [xml_extension_attribute in xml_extension_attributes | xml_extension_attribute.uid] AS xml_extension_attribute_uids,
-        [xml_extension_tag_attribute in xml_extension_tag_attributes | xml_extension_tag_attribute.uid] AS xml_extension_tag_attribute_uids
+        [vendor_element in vendor_elements | vendor_element.uid] AS vendor_element_uids,
+        [vendor_attribute in vendor_attributes | vendor_attribute.uid] AS vendor_attribute_uids,
+        [vendor_element_attribute in vendor_element_attributes | vendor_element_attribute.uid] AS vendor_element_attribute_uids
         """
 
     def _get_or_create_value(
@@ -286,23 +285,49 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
             item_group_uid=item_group_uid,
             order_number=rel.order_number,
             mandatory=rel.mandatory,
-            data_entry_required=rel.data_entry_required,
-            sdv=rel.sdv,
-            locked=rel.locked,
             key_sequence=rel.key_sequence,
             method_oid=rel.method_oid,
             imputation_method_oid=rel.imputation_method_oid,
             role=rel.role,
             role_codelist_oid=rel.role_codelist_oid,
             collection_exception_condition_oid=rel.collection_exception_condition_oid,
+            vendor=rel.vendor,
         )
 
     def find_term_with_item_relation_by_item_uid(self, uid: str, term_uid: str):
+        def _get_relationship():
+            if ct_term_attributes_value_draft:
+                rel_data = ct_term_attributes_root.latest_draft.relationship(
+                    ct_term_attributes_value
+                )
+                if rel_data and not rel_data.end_date:
+                    return rel_data
+            if ct_term_attributes_value_final:
+                rel_data = ct_term_attributes_root.latest_final.relationship(
+                    ct_term_attributes_value
+                )
+                if not rel_data.end_date:
+                    return rel_data
+
+            raise BusinessLogicException(
+                f"No DRAFT or FINAL found for CT Term identified by uid ({ct_term_root.uid})"
+            )
+
         item_root = self.root_class.nodes.get_or_none(uid=uid)
 
         ct_term_root = CTTermRoot.nodes.get_or_none(uid=term_uid)
         ct_term_name_root = ct_term_root.has_name_root.get_or_none()
         ct_term_name_value = ct_term_name_root.has_latest_value.get_or_none()
+        ct_term_attributes_root = ct_term_root.has_attributes_root.get_or_none()
+        ct_term_attributes_value = (
+            ct_term_attributes_root.has_latest_value.get_or_none()
+        )
+        ct_term_attributes_value_draft = (
+            ct_term_attributes_root.latest_draft.get_or_none()
+        )
+        ct_term_attributes_value_final = (
+            ct_term_attributes_root.latest_final.get_or_none()
+        )
 
         rel = item_root.has_codelist_term.relationship(ct_term_root)
 
@@ -313,6 +338,7 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                 mandatory=rel.mandatory,
                 order=rel.order,
                 display_text=rel.display_text,
+                version=_get_relationship().version,
             )
         return None
 

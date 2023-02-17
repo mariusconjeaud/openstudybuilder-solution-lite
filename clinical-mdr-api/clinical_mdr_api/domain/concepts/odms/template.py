@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import date
-from typing import Callable, Optional, Sequence
+from typing import Callable, List, Optional
 
 from clinical_mdr_api.domain.concepts.concept_base import ConceptVO
 from clinical_mdr_api.domain.concepts.odms.odm_ar_base import OdmARBase
@@ -17,7 +17,7 @@ class OdmTemplateVO(ConceptVO):
     effective_date: Optional[date]
     retired_date: Optional[date]
     description: Optional[str]
-    form_uids: Sequence[str]
+    form_uids: List[str]
 
     @classmethod
     def from_repository_values(
@@ -27,7 +27,7 @@ class OdmTemplateVO(ConceptVO):
         effective_date: Optional[date],
         retired_date: Optional[date],
         description: Optional[str],
-        form_uids: Sequence[str],
+        form_uids: List[str],
     ) -> "OdmTemplateVO":
         return cls(
             name=name,
@@ -44,16 +44,23 @@ class OdmTemplateVO(ConceptVO):
 
     def validate(
         self,
-        odm_template_exists_by_name_callback: Callable[[str], bool],
+        concept_exists_by_callback: Callable[[str, str], bool],
         previous_name: Optional[str] = None,
+        previous_oid: Optional[str] = None,
     ) -> None:
 
-        if (
-            odm_template_exists_by_name_callback(self.name)
-            and previous_name != self.name
-        ):
+        if concept_exists_by_callback("name", self.name) and previous_name != self.name:
             raise BusinessLogicException(
                 f"ODM Template with name ({self.name}) already exists."
+            )
+
+        if (
+            self.oid
+            and concept_exists_by_callback("oid", self.oid)
+            and previous_oid != self.oid
+        ):
+            raise BusinessLogicException(
+                f"ODM Template with OID ({self.oid}) already exists."
             )
 
 
@@ -91,12 +98,12 @@ class OdmTemplateAR(OdmARBase):
         concept_vo: OdmTemplateVO,
         library: LibraryVO,
         generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
+        concept_exists_by_callback: Callable[[str, str], bool] = lambda x, y: True,
     ) -> "OdmTemplateAR":
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
         concept_vo.validate(
-            odm_template_exists_by_name_callback=concept_exists_by_name_callback,
+            concept_exists_by_callback=concept_exists_by_callback,
         )
 
         return cls(
@@ -112,13 +119,15 @@ class OdmTemplateAR(OdmARBase):
         change_description: Optional[str],
         concept_vo: OdmTemplateVO,
         concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
+        concept_exists_by_callback: Callable[[str, str], bool] = lambda x, y: True,
     ) -> None:
         """
         Creates a new draft version for the object.
         """
         concept_vo.validate(
-            odm_template_exists_by_name_callback=concept_exists_by_name_callback,
+            concept_exists_by_callback=concept_exists_by_callback,
             previous_name=self.name,
+            previous_oid=self._concept_vo.oid,
         )
 
         if self._concept_vo != concept_vo:

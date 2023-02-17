@@ -34,6 +34,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameterValueRoot,
 )
+from clinical_mdr_api.exceptions import BusinessLogicException
 
 
 class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
@@ -65,6 +66,10 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
     ) -> CTTermNameAR:
         ct_term_root_node = root.has_root.single()
         ct_codelist_root_node = ct_term_root_node.has_term.single()
+        if ct_codelist_root_node is None:
+            raise BusinessLogicException(
+                f"The term  with name '{value.name}' has no current version."
+            )
         has_term_relationship: CodelistTermRelationship = (
             ct_codelist_root_node.has_term.relationship(ct_term_root_node)
         )

@@ -19,6 +19,8 @@ class ActivityVO(ConceptVO):
     """
 
     activity_subgroup: str
+    request_rationale: Optional[str]
+    replaced_by_activity: Optional[str]
 
     @classmethod
     def from_repository_values(
@@ -28,6 +30,8 @@ class ActivityVO(ConceptVO):
         definition: Optional[str],
         abbreviation: Optional[str],
         activity_subgroup: Optional[str],
+        request_rationale: Optional[str],
+        replaced_by_activity: Optional[str] = None,
     ) -> "ActivityVO":
         activity_vo = cls(
             name=name,
@@ -38,6 +42,8 @@ class ActivityVO(ConceptVO):
             activity_subgroup=activity_subgroup
             if activity_subgroup is not None
             else None,
+            request_rationale=request_rationale,
+            replaced_by_activity=replaced_by_activity,
         )
 
         return activity_vo
@@ -51,7 +57,9 @@ class ActivityVO(ConceptVO):
 
         if activity_exists_by_name_callback(self.name) and previous_name != self.name:
             raise ValueError(f"Activity with name ({self.name}) already exists.")
-        if not activity_subgroup_exists(self.activity_subgroup):
+        if self.activity_subgroup and not activity_subgroup_exists(
+            self.activity_subgroup
+        ):
             raise ValueError(
                 f"Activity tried to connect to non existing ActivitySubGroup identified by uid ({self.activity_subgroup})."
             )

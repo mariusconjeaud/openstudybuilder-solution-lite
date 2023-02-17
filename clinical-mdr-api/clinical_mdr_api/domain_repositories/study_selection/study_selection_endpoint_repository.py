@@ -1,11 +1,11 @@
 import datetime
-from dataclasses import dataclass
 from typing import List, Optional, Sequence
 
 from neomodel import db
 
 from clinical_mdr_api.config import STUDY_ENDPOINT_TP_NAME
 from clinical_mdr_api.domain.study_selection.study_selection_endpoint import (
+    StudyEndpointSelectionHistory,
     StudySelectionEndpointsAR,
     StudySelectionEndpointVO,
 )
@@ -30,29 +30,6 @@ from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameter,
 )
 from clinical_mdr_api.domain_repositories.models.timeframe import TimeframeRoot
-
-
-@dataclass
-class SelectionHistoryObject:
-    """Class for selection history items"""
-
-    study_selection_uid: str
-    endpoint_uid: Optional[str]
-    endpoint_version: Optional[str]
-    endpoint_level: Optional[str]
-    endpoint_sublevel: Optional[str]
-    study_objective_uid: Optional[str]
-    timeframe_uid: Optional[str]
-    timeframe_version: Optional[str]
-    endpoint_units: Sequence[str]
-    unit_separator: Optional[str]
-    # Study selection Versioning
-    start_date: datetime.datetime
-    user_initials: Optional[str]
-    change_type: str
-    end_date: Optional[datetime.datetime]
-    order: int
-    status: Optional[str]
 
 
 class StudySelectionEndpointRepository:
@@ -127,9 +104,9 @@ class StudySelectionEndpointRepository:
             WITH sr, se, er, tr, elr, so, timeframe_ver, endpoint_ver, has_term, endpoint_sublevel_root
             CALL {
                 WITH se
-                OPTIONAL MATCH (se)-[rel:HAS_UNIT]->(un:UnitDefinitionRoot)
-                WITH rel, un, se ORDER BY rel.index
-                WITH collect(un.uid) as units, se
+                OPTIONAL MATCH (se)-[rel:HAS_UNIT]->(un:UnitDefinitionRoot)-[:LATEST_FINAL]->(unv:UnitDefinitionValue)
+                WITH rel, un, unv, se ORDER BY rel.index
+                WITH collect({uid: un.uid, name: unv.name}) as units, se
                 OPTIONAL MATCH (se)-[:HAS_CONJUNCTION]->(co:Conjunction) 
                 WITH  units, co
                 RETURN {units :units, separator : co.string} as values 
@@ -490,7 +467,7 @@ class StudySelectionEndpointRepository:
         # for all units which was set
         for index, unit in enumerate(selection.endpoint_units, start=1):
             # get unit definition node
-            endpoint_unit_node = UnitDefinitionRoot.nodes.get_or_none(uid=unit)
+            endpoint_unit_node = UnitDefinitionRoot.nodes.get_or_none(uid=unit["uid"])
 
             # connect to the unit node
             rel = study_endpoint_selection_node.has_unit.connect(endpoint_unit_node)
@@ -577,9 +554,9 @@ class StudySelectionEndpointRepository:
             WITH all_se, er, tr, elr, so, timeframe_ver, endpoint_ver, endpoint_sublevel
             CALL {
                 WITH all_se
-                OPTIONAL MATCH (all_se)-[rel:HAS_UNIT]->(un:UnitDefinitionRoot)
-                WITH rel, un, all_se ORDER BY rel.index
-                WITH collect(un.uid) as units, all_se
+                OPTIONAL MATCH (all_se)-[rel:HAS_UNIT]->(un:UnitDefinitionRoot)-[:LATEST_FINAL]->(unv:UnitDefinitionValue)
+                WITH rel, un, unv, all_se ORDER BY rel.index
+                WITH collect({uid: un.uid, name: unv.name}) as units, all_se
                 OPTIONAL MATCH (all_se)-[:HAS_CONJUNCTION]->(co:Conjunction) 
                 WITH  units, co
                 RETURN {units :units, separator : co.string} as values 
@@ -612,7 +589,7 @@ class StudySelectionEndpointRepository:
         result = []
         for res in helpers.db_result_to_list(specific_objective_selections_audit_trail):
             for action in res["change_type"]:
-                if not "StudyAction" in action:
+                if "StudyAction" not in action:
                     change_type = action
             if res["end_date"]:
                 end_date = convert_to_datetime(value=res["end_date"])
@@ -631,7 +608,7 @@ class StudySelectionEndpointRepository:
                 units = None
                 separator = None
             result.append(
-                SelectionHistoryObject(
+                StudyEndpointSelectionHistory(
                     study_selection_uid=res["study_endpoint_uid"],
                     endpoint_uid=res["endpoint_uid"],
                     endpoint_version=res["endpoint_version"],
@@ -654,7 +631,7 @@ class StudySelectionEndpointRepository:
 
     def find_selection_history(
         self, study_uid: str, study_selection_uid: str = None
-    ) -> List[SelectionHistoryObject]:
+    ) -> List[StudyEndpointSelectionHistory]:
         """
         Simple method to return all versions of a study objectives for a study.
         Optionally a specific selection uid is given to see only the response for a specific selection.

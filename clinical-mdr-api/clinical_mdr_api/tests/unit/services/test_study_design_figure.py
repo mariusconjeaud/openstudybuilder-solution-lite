@@ -933,6 +933,332 @@ TIMELINE = {
     ],
 }
 
+SVG_DOCUMENT = """
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="1009" height="299">
+  <defs>
+    <marker id="arrowhead1" viewBox="0 0 6 6" refX="6" refY="3" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 6 3 L 0 6 z" />
+    </marker>
+    <marker id="arrowhead2" viewBox="0 0 6 6" refX="3" refY="0" markerWidth="6" markerHeight="6" orient="0">
+      <path d="M 0 6 L 3 0 L 6 6 z" />
+    </marker>
+    <marker id="arrowtail1" viewBox="0 0 6 6" refX="3" refY="3" markerWidth="6" markerHeight="6" orient="auto">
+      <polyline points="3 0, 3 6" />
+    </marker>
+  </defs>
+  <g id="StudyArm_000009" class="arm" transform="translate(5, 36)">
+    <rect x="0" y="0" width="999" height="40" rx="5" ry="5" />
+    <text>
+      <tspan x="5" y="21">NPH insulin</tspan>
+    </text>
+  </g>
+  <g id="StudyArm_000011" class="arm" transform="translate(5, 81)">
+    <rect x="0" y="0" width="999" height="40" rx="5" ry="5" />
+    <text>
+      <tspan x="5" y="21">Metformin is longer</tspan>
+    </text>
+  </g>
+  <g id="StudyArm_000045" class="arm" transform="translate(5, 126)">
+    <rect x="0" y="0" width="999" height="40" rx="5" ry="5" />
+    <text>
+      <tspan x="5" y="21">Another arm</tspan>
+    </text>
+  </g>
+  <g id="StudyArm_000048" class="arm" transform="translate(5, 171)">
+    <rect x="0" y="0" width="999" height="30" rx="5" ry="5" />
+    <text>
+      <tspan x="5" y="21">More arms</tspan>
+    </text>
+  </g>
+  <g id="StudyEpoch_000001" class="epoch" transform="translate(175, 5)">
+    <rect x="0" y="0" width="114" height="201" rx="5" ry="5" />
+    <text>
+      <tspan x="25" y="19">Screening</tspan>
+    </text>
+  </g>
+  <g id="StudyEpoch_000002" class="epoch" transform="translate(299, 5)">
+    <rect x="0" y="0" width="130" height="201" rx="5" ry="5" />
+    <text>
+      <tspan x="32" y="19">Treatment</tspan>
+    </text>
+  </g>
+  <g id="StudyEpoch_000042" class="epoch" transform="translate(439, 5)">
+    <rect x="0" y="0" width="130" height="201" rx="5" ry="5" />
+    <text>
+      <tspan x="33" y="19">Extension</tspan>
+    </text>
+  </g>
+  <g id="StudyEpoch_000003" class="epoch" transform="translate(579, 5)">
+    <rect x="0" y="0" width="130" height="201" rx="5" ry="5" />
+    <text>
+      <tspan x="31" y="19">Follow-up</tspan>
+    </text>
+  </g>
+  <g id="StudyEpoch_000034" class="epoch" transform="translate(719, 5)">
+    <rect x="0" y="0" width="130" height="201" rx="5" ry="5" />
+    <text>
+      <tspan x="27" y="19">Elimination</tspan>
+    </text>
+  </g>
+  <g id="StudyEpoch_000041" class="epoch" transform="translate(859, 5)">
+    <rect x="0" y="0" width="140" height="201" rx="5" ry="5" />
+    <text>
+      <tspan x="18" y="19">Dose Escalation</tspan>
+    </text>
+  </g>
+  <g id="StudyElement_000018" class="element" transform="translate(180, 41)">
+    <rect x="0" y="0" width="104" height="75" rx="5" ry="5" />
+    <text>
+      <tspan x="5" y="21">Screening</tspan>
+    </text>
+  </g>
+  <g id="StudyElement_000020" class="element" transform="translate(304, 41)">
+    <rect x="0" y="0" width="120" height="30" rx="5" ry="5" />
+    <text>
+      <tspan x="5" y="21">NPH insulin</tspan>
+    </text>
+  </g>
+  <g id="StudyElement_000020" class="element" transform="translate(444, 41)">
+    <rect x="0" y="0" width="120" height="120" rx="5" ry="5" />
+    <text>
+      <tspan x="5" y="21">NPH insulin</tspan>
+    </text>
+  </g>
+  <g id="StudyElement_000024" class="element" transform="translate(584, 41)">
+    <rect x="0" y="0" width="120" height="75" rx="5" ry="5" />
+    <text>
+      <tspan x="5" y="21">Follow-up</tspan>
+    </text>
+  </g>
+  <g id="StudyElement_000020" class="element" transform="translate(724, 41)">
+    <rect x="0" y="0" width="120" height="30" rx="5" ry="5" />
+    <text>
+      <tspan x="5" y="21">NPH insulin</tspan>
+    </text>
+  </g>
+  <g id="StudyElement_000022" class="element" transform="translate(304, 86)">
+    <rect x="0" y="0" width="120" height="30" rx="5" ry="5" />
+    <text>
+      <tspan x="5" y="21">Metformin</tspan>
+    </text>
+  </g>
+  <g id="StudyElement_000022" class="element" transform="translate(724, 86)">
+    <rect x="0" y="0" width="120" height="30" rx="5" ry="5" />
+    <text>
+      <tspan x="5" y="21">Metformin</tspan>
+    </text>
+  </g>
+  <g id="StudyElement_000020" class="element" transform="translate(304, 131)">
+    <rect x="0" y="0" width="120" height="30" rx="5" ry="5" />
+    <text>
+      <tspan x="5" y="21">NPH insulin</tspan>
+    </text>
+  </g>
+  <g id="StudyElement_000020" class="element" transform="translate(584, 131)">
+    <rect x="0" y="0" width="120" height="30" rx="5" ry="5" />
+    <text>
+      <tspan x="5" y="21">NPH insulin</tspan>
+    </text>
+  </g>
+  <g id="CTTerm_000171" class="visit-type" transform="translate(175, 227)">
+    <text>
+      <tspan x="25" y="16">Screening</tspan>
+    </text>
+  </g>
+  <g id="CTTerm_000176" class="visit-type" transform="translate(299, 227)">
+    <text>
+      <tspan x="102" y="16">Treatment</tspan>
+    </text>
+  </g>
+  <g id="CTTerm_000161" class="visit-type" transform="translate(579, 227)">
+    <text>
+      <tspan x="31" y="16">Follow-up</tspan>
+    </text>
+  </g>
+  <g id="CTTerm_000164" class="visit-type" transform="translate(719, 218)">
+    <text>
+      <tspan x="18" y="16">Post treatment</tspan>
+      <tspan x="41" y="35">activity</tspan>
+    </text>
+  </g>
+  <g id="StudyVisit_000021" class="visit-timing" transform="translate(175, 279)">
+    <text>
+      <tspan x="0" y="16">Week -2</tspan>
+    </text>
+  </g>
+  <g id="StudyVisit_000022" class="visit-timing" transform="translate(299, 279)">
+    <text>
+      <tspan x="0" y="16">Week 1</tspan>
+    </text>
+  </g>
+  <g id="StudyVisit_000044" class="visit-timing" transform="translate(439, 279)">
+    <text>
+      <tspan x="0" y="16">Week 10</tspan>
+    </text>
+  </g>
+  <g id="StudyVisit_000031" class="visit-timing" transform="translate(579, 279)">
+    <text>
+      <tspan x="0" y="16">Week 27</tspan>
+    </text>
+  </g>
+  <g id="StudyVisit_000045" class="visit-timing" transform="translate(719, 279)">
+    <text>
+      <tspan x="0" y="16">Week 53</tspan>
+    </text>
+  </g>
+  <line class="timeline-arrow" x1="175" x2="299" y1="262" y2="262" />
+  <line class="timeline-arrow" x1="299" x2="579" y1="262" y2="262" />
+  <line class="timeline-arrow" x1="579" x2="719" y1="262" y2="262" />
+  <line class="timeline-arrow" x1="719" x2="859" y1="262" y2="262" />
+  <line class="visit-arrow" x1="175" x2="175" y1="276" y2="264" />
+  <line class="visit-arrow" x1="299" x2="299" y1="276" y2="264" />
+  <line class="visit-arrow" x1="439" x2="439" y1="276" y2="264" />
+  <line class="visit-arrow" x1="579" x2="579" y1="276" y2="264" />
+  <line class="visit-arrow" x1="719" x2="719" y1="276" y2="264" />
+  <style type="text/css">
+    text {
+      font-family: "Times New Roman";
+      font-size: 12pt;
+    }
+    .arm rect {
+      rx: 5px;
+      ry: 5px;
+      stroke-width: 2px;
+    }
+    .epoch rect {
+      rx: 5px;
+      ry: 5px;
+      stroke-width: 2px;
+    }
+    .element rect {
+      rx: 5px;
+      ry: 5px;
+      stroke-width: 1px;
+    }
+    .timeline-arrow {
+      stroke: #AAA;
+      stroke-width: 2px;
+      marker-start: url(#arrowtail1);
+      marker-end: url(#arrowhead1);
+      stroke-dasharray: 6 2;
+    }
+    #arrowtail1 polyline {
+      stroke: #AAA;
+      stroke-width: 1px;
+    }
+    #arrowhead1 path {
+      fill: #AAA;
+    }
+    #arrowhead2 path {
+      fill: #000;
+    }
+    .visit-arrow {
+      stroke: #000;
+      stroke-width: 1px;
+      marker-end: url(#arrowhead2);
+    }
+    #StudyArm_000009 rect {
+      fill: #fffde7;
+      stroke: #665d00;
+    }
+    #StudyArm_000009 text {
+      fill: #000;
+    }
+    #StudyArm_000011 rect {
+      fill: #ffebee;
+      stroke: #66000f;
+    }
+    #StudyArm_000011 text {
+      fill: #000;
+    }
+    #StudyArm_000045 rect {
+      fill: #f3e5f5;
+      stroke: #441c4a;
+    }
+    #StudyArm_000045 text {
+      fill: #000;
+    }
+    #StudyArm_000048 rect {
+      fill: #e8eaf6;
+      stroke: #1d2349;
+    }
+    #StudyArm_000048 text {
+      fill: #000;
+    }
+    #StudyEpoch_000001 rect {
+      fill: #a5d6a7;
+      stroke: #204621;
+    }
+    #StudyEpoch_000001 text {
+      fill: #000;
+    }
+    #StudyEpoch_000002 rect {
+      fill: #2e7d32;
+      stroke: #1b4b1e;
+    }
+    #StudyEpoch_000002 text {
+      fill: #fff;
+    }
+    #StudyEpoch_000042 rect {
+      fill: #80deea;
+      stroke: #0e4f58;
+    }
+    #StudyEpoch_000042 text {
+      fill: #000;
+    }
+    #StudyEpoch_000003 rect {
+      fill: #009688;
+      stroke: #00665c;
+    }
+    #StudyEpoch_000003 text {
+      fill: #fff;
+    }
+    #StudyEpoch_000034 rect {
+      fill: #c5cae9;
+      stroke: #1c224a;
+    }
+    #StudyEpoch_000034 text {
+      fill: #000;
+    }
+    #StudyEpoch_000041 rect {
+      fill: #80cbc4;
+      stroke: #1e4844;
+    }
+    #StudyEpoch_000041 text {
+      fill: #000;
+    }
+    #StudyElement_000018 rect {
+      fill: #d2e4f3;
+      stroke: #153651;
+    }
+    #StudyElement_000018 text {
+      fill: #000;
+    }
+    #StudyElement_000020 rect {
+      fill: #d2e4f3;
+      stroke: #153651;
+    }
+    #StudyElement_000020 text {
+      fill: #000;
+    }
+    #StudyElement_000024 rect {
+      fill: #d2e4f3;
+      stroke: #153651;
+    }
+    #StudyElement_000024 text {
+      fill: #000;
+    }
+    #StudyElement_000022 rect {
+      fill: #d2e4f3;
+      stroke: #153651;
+    }
+    #StudyElement_000022 text {
+      fill: #000;
+    }
+  </style>
+</svg>
+""".strip()
+
 
 class MockStudyDesignFigureService(StudyDesignFigureService):
     @staticmethod
@@ -1018,4 +1344,6 @@ def test_get_svg_document():
     assert (
         'class="timeline-arrow"' in doc
     ), 'class="visit-arrow" not found, missing visit arrows?'
-    assert "marker_width" in doc, '"marker_width" found, missing arrowhead markers?'
+    assert "markerWidth" in doc, '"markerWidth" found, missing arrowhead markers?'
+
+    assert doc == SVG_DOCUMENT

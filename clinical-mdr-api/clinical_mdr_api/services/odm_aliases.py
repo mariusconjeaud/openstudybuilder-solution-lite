@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import List
 
 from fastapi import status
 from neomodel import db
@@ -73,8 +73,8 @@ class OdmAliasService(OdmGenericService[OdmAliasAR]):
         return super().soft_delete(uid)
 
     def handle_batch_operations(
-        self, operations: Sequence[OdmAliasBatchInput]
-    ) -> Sequence[OdmAliasBatchOutput]:
+        self, operations: List[OdmAliasBatchInput]
+    ) -> List[OdmAliasBatchOutput]:
         results = []
         for operation in operations:
             result = {}

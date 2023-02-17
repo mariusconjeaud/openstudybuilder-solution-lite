@@ -176,7 +176,7 @@ def get_distinct_objective_values_for_header(
             "uid",
             "order",
             "objective_level=objective_level.sponsor_preferred_name",
-            "name=objective.name",
+            "name=objective.name_plain",
             "endpoint_count",
             "start_date",
             "user_initials",
@@ -698,7 +698,7 @@ State after:
         "defaults": [
             "uid",
             "order",
-            "name=endpoint.name",
+            "name=endpoint.name_plain",
             "units=endpoint_units.units",
             "timeframe=timeframe.name",
             "objective=study_objective",
@@ -2212,10 +2212,17 @@ def get_distinct_study_criteria_values_for_header(
     },
 )
 def get_all_criteria_audit_trail(
-    uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = studyUID,
+    criteria_type_uid: Optional[str] = Query(
+        None,
+        description="Optionally, the uid of the criteria_type for which to return study criteria audit trial.",
+    ),
+    current_user_id: str = Depends(get_current_user_id),
 ) -> Sequence[models.StudySelectionCriteriaCore]:
     service = StudyCriteriaSelectionService(author=current_user_id)
-    return service.get_all_selection_audit_trail(study_uid=uid)
+    return service.get_all_selection_audit_trail(
+        study_uid=uid, criteria_type_uid=criteria_type_uid
+    )
 
 
 @router.get(
@@ -2975,6 +2982,41 @@ def patch_update_activity_selection(
     )
 
 
+@router.patch(
+    "/studies/{uid}/study-activities/{study_activity_uid}/activity-requests-approvals",
+    summary="Update Study Activity with the Sponsor Activity that replaced Activity Request",
+    description="""
+State before:
+ - Study must exist and be in status draft
+
+Business logic:
+
+
+State after:
+ - Added new entry in the audit trail for the update of the study-activity.""",
+    response_model=models.StudySelectionActivity,
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - There exist no selection between the study and activity.",
+        },
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def update_activity_request_with_sponsor_activity(
+    uid: str = studyUID,
+    study_activity_uid: str = study_selection_uid,
+    current_user_id: str = Depends(get_current_user_id),
+) -> models.StudySelectionActivity:
+    service = StudyActivitySelectionService(author=current_user_id)
+    return service.update_activity_request_with_sponsor_activity(
+        study_uid=uid,
+        study_selection_uid=study_activity_uid,
+    )
+
+
 @router.delete(
     "/studies/{uid}/study-activities/{study_activity_uid}",
     summary="Delete a study activity",
@@ -3003,7 +3045,7 @@ def delete_selected_activity(
     "/studies/{uid}/study-activities/batch",
     summary="Batch create and/or edit of study activities",
     response_model=Sequence[models.StudySelectionActivityBatchOutput],
-    status_code=200,
+    status_code=207,
     responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
 )
 def activity_selection_batch_operations(

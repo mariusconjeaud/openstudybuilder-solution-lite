@@ -142,12 +142,12 @@ class GenericLightDictionaryRepoBase(Generic[Key, Entity], ABC):
         cache_lock: Lock = self.__get_cache_lock()
         if not cache_lock.acquire(blocking=False):
             # it means some other thread is refreshing
-            # we need not to wait if we have some data in repo (we have to wait if there is no data)
+            # we don't need to wait if we have some data in repo (we have to wait if there is no data)
             # if cache_refresh_data is None then it means we have nothing in cache (never been refreshed)
             if cache_refresh_date is None:
-                # if that's the case we have to wait on this lock (only wait - nothing to do)
                 # pylint:disable=not-context-manager
                 with cache_lock:
+                    # if that's the case we have to wait on this lock (only wait - nothing to do)
                     pass
 
             # at this point there must be some data in the cache

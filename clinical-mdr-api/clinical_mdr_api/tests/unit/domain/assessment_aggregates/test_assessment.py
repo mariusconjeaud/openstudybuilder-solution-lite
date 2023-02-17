@@ -16,6 +16,7 @@ def create_random_activity_vo() -> ActivityVO:
         definition=random_str(),
         abbreviation=random_str(),
         activity_subgroup=random_str(),
+        request_rationale=random_str(),
     )
     return random_activity_vo
 

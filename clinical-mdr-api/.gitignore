@@ -18,6 +18,8 @@ unit_report.xml
 auth_report.xml
 coverage*
 telemetry_report.xml
+*_report.xml
+*_report.tgz
 linting_report.txt
 .env
 .DS_Store

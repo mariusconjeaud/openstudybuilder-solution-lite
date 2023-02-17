@@ -8,7 +8,14 @@ function numericValue (value) {
   return `${value.value} ${value.unit_label}`
 }
 
+function numericValues (value) {
+  return value.map(item => numericValue(item)).join(', ')
+}
+
 function pharmacologicalClasses (value) {
+  if (value === undefined || value === null) {
+    return ''
+  }
   return value.map(item => (item !== null && item.pclass_name) ? `${item.pclass_name} (${item.pclass_id})` : null).filter(pclass => pclass !== null).join(', ')
 }
 
@@ -24,14 +31,26 @@ function substances (value) {
 }
 
 function names (value) {
+  if (value === undefined || value === null) {
+    return ''
+  }
   return value.map(item => `${item.name}`).join(', ')
+}
+
+function terms (value) {
+  if (!value) {
+    return ''
+  }
+  return value.map(item => item.name.sponsor_preferred_name).join(', ')
 }
 
 export default {
   lagTimes,
   numericValue,
+  numericValues,
   pharmacologicalClasses,
   substances,
   yesno,
-  names
+  names,
+  terms
 }

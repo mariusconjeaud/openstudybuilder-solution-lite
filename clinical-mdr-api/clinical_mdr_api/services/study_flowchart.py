@@ -8,6 +8,7 @@ from docx.enum.style import WD_STYLE_TYPE
 from docx.shared import Inches
 from opencensus.trace import execution_context
 
+from clinical_mdr_api import config
 from clinical_mdr_api.models import (
     CTTermName,
     StudyActivitySchedule,
@@ -91,10 +92,14 @@ class StudyFlowchartService:
     def get_study_visits(self, study_uid: str) -> Sequence[StudyVisit]:
         tracer = execution_context.get_opencensus_tracer()
         with tracer.span("StudyFlowchartService.get_study_visits"):
-
-            return (
+            result = (
                 StudyVisitService(self._current_user_id).get_all_visits(study_uid).items
             )
+            return [
+                study_visit
+                for study_visit in result
+                if study_visit.study_epoch_name != config.BASIC_EPOCH_NAME
+            ]
 
     @staticmethod
     def iter_visits_grouped(study_visits: Sequence[StudyVisit]):

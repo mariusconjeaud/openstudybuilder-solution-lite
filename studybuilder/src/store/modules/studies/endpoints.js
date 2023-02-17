@@ -190,15 +190,15 @@ const actions = {
       dispatch('fetchStudyEndpoints', { studyUid })
     })
   },
-  async updateStudyEndpointEndpointLatestVersion ({ commit }, { studyUid, studyObjectiveUid }) {
+  async updateStudyEndpointEndpointLatestVersion ({ commit }, { studyUid, studyEndpointUid }) {
     const resp = await study.updateStudyEndpointEndpointLatestVersion(
-      studyUid, studyObjectiveUid
+      studyUid, studyEndpointUid
     )
     commit('UPDATE_STUDY_ENDPOINT', resp.data)
   },
-  async updateStudyEndpointTimeframeLatestVersion ({ commit }, { studyUid, studyObjectiveUid }) {
+  async updateStudyEndpointTimeframeLatestVersion ({ commit }, { studyUid, studyEndpointUid }) {
     const resp = await study.updateStudyEndpointTimeframeLatestVersion(
-      studyUid, studyObjectiveUid
+      studyUid, studyEndpointUid
     )
     commit('UPDATE_STUDY_ENDPOINT', resp.data)
   },

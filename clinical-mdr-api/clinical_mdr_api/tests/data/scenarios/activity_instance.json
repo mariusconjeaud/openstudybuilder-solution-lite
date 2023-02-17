@@ -219,7 +219,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/activities/activity-instances/activity_instance_root2/approve"
+            "url": "concepts/activities/activity-instances/activity_instance_root2/approvals"
         },
         "response": {
             "code": 201,
@@ -287,15 +287,15 @@
         }
     },
     {
-        "name": "Test POST inactivate activity instance",
+        "name": "Test DELETE activations activity instance",
         "request": {
             "headers": {},
-            "method": "POST",
+            "method": "DELETE",
             "request": {},
-            "url": "concepts/activities/activity-instances/activity_instance_root2/inactivate"
+            "url": "concepts/activities/activity-instances/activity_instance_root2/activations"
         },
         "response": {
-            "code": 201,
+            "code": 200,
             "headers": {},
             "result": {
                 "uid": "activity_instance_root2",
@@ -350,7 +350,7 @@
                 "end_date": null,
                 "status": "Retired",
                 "version": "1.0",
-                "change_description": "Deactivated version",
+                "change_description": "Inactivated version",
                 "user_initials": "TODO user initials",
                 "possible_actions": [
                     "reactivate"
@@ -359,15 +359,15 @@
         }
     },
     {
-        "name": "Test POST reactivate activity instance",
+        "name": "Test POST activations activity instance",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/activities/activity-instances/activity_instance_root2/reactivate"
+            "url": "concepts/activities/activity-instances/activity_instance_root2/activations"
         },
         "response": {
-            "code": 201,
+            "code": 200,
             "headers": {},
             "result": {
                 "uid": "activity_instance_root2",

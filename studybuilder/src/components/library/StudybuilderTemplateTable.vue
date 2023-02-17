@@ -50,7 +50,7 @@ export default Vue.extend({
             sortable: false,
             width: '5%'
           },
-          { text: this.$t('_global.template'), value: 'name', width: '30%' },
+          { text: this.$t('_global.template'), value: 'name', width: '30%', filteringName: 'name_plain' },
           { text: this.$t('_global.modified'), value: 'start_date' },
           { text: this.$t('_global.status'), value: 'status' },
           { text: this.$t('_global.version'), value: 'version' }

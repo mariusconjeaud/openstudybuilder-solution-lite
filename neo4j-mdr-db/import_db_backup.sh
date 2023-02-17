@@ -11,6 +11,11 @@ if [ $# -lt 3 ]; then
 	exit 2
 fi
 
+if [ -z "$NEO4J_MDR_AUTH_USER" ] || [ -z "$NEO4J_MDR_AUTH_PASSWORD" ] || [ -z "$NEO4J_MDR_BOLT_PORT" ]; then
+	echo "Missing environment variable(s) for db connection, needed: NEO4J_MDR_AUTH_USER, NEO4J_MDR_AUTH_PASSWORD, NEO4J_MDR_BOLT_PORT"
+	exit 2
+fi
+
 # Look up working directory
 WD="$(dirname "$(realpath "$0")")"
 echo "- Workdir: $WD"
@@ -35,7 +40,7 @@ fi
 echo "- Prepare import directory, deleting any conflicting files"
 if [ -d "$WD/db_import/$DBNAME" ]; then
 	echo "  Deleting existing export directory $WD/db_import/$DBNAME"
-	rm -rf "$WD/db_import/$DBNAME"
+	rm -rf "$WD/db_import/$DBNAME" || sudo rm -rf "$WD/db_import/$DBNAME"
 fi
 mkdir "$WD/db_import/$DBNAME"
 tar -xf "$3" -C "$WD/db_import/$DBNAME/"

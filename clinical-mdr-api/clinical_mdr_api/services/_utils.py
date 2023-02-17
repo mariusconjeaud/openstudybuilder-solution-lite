@@ -1,4 +1,5 @@
 import functools
+import json
 import re
 from collections.abc import Hashable
 from dataclasses import dataclass
@@ -66,6 +67,10 @@ def get_input_or_new_value(
         initials = output_field[::2].upper()
 
     return f"{prefix}{initials}{sep}{int(time())}"
+
+
+def to_dict(obj):
+    return json.loads(json.dumps(obj, default=vars))
 
 
 def strip_suffix(string: str, suffix: str = "Root") -> str:
@@ -155,13 +160,13 @@ def fill_missing_values_in_base_model_from_reference_base_model(
         if field_name.endswith("Code") and not field_name.endswith("NullValueCode"):
             # both value field and null value code field not exists in the base (coming) set
             if (
-                re.sub("Code", "", field_name) + "NullValueCode"
+                field_name.replace("Code", "") + "NullValueCode"
                 not in base_model_with_missing_values.__fields_set__
             ):
                 fields_to_assign_with_previous_value.append(field_name)
             # value field doesn't exist and null value field exist in the base (coming) set
             elif (
-                re.sub("Code", "", field_name) + "NullValueCode"
+                field_name.replace("Code", "") + "NullValueCode"
                 in base_model_with_missing_values.__fields_set__
             ):
                 fields_to_assign_with_none.append(field_name)
@@ -256,7 +261,7 @@ class FieldsDirective:
         include_specs_set: Set[str] = set()
         exclude_specs_set: Set[str] = set()
 
-        for field_spec in fields_query_parameter.split(sep=","):
+        for field_spec in fields_query_parameter.split(","):
             if len(field_spec) < 1:
                 continue
             exclude_spec = False
@@ -494,17 +499,9 @@ def service_level_generic_header_filtering(
                 )
             )
             _filtered_items += matching_items
-        # Finally, deduplicate list
-        uids = set()
-        filtered_items = []
-        for item in _filtered_items:
-            if item.uid not in uids:
-                filtered_items.append(item)
-                uids.add(item.uid)
-    # Limit results returned
-    filtered_items = filtered_items[:result_count]
-    # Return values for field_name
+        filtered_items = _filtered_items
 
+    # Return values for field_name
     extracted_values = []
     for item in filtered_items:
         extracted_value = extract_nested_key_value(item, field_name)
@@ -520,15 +517,17 @@ def service_level_generic_header_filtering(
             # Append element to list
             extracted_values.append(extracted_value)
 
+    return_values = []
     # Transform into a set in order to remove duplicates, then cast back to list
-    if extracted_values and isinstance(extracted_values[0], Hashable):
-        return list(set(extracted_values))
-    unique_extracted_values = []
+    is_hashable = bool(extracted_values and isinstance(extracted_values[0], Hashable))
     for extracted_value in extracted_values:
-        name = extracted_value.name
-        if name not in unique_extracted_values:
-            unique_extracted_values.append(name)
-    return unique_extracted_values
+        value_to_return = extracted_value if is_hashable else extracted_value.name
+        if value_to_return not in return_values:
+            return_values.append(value_to_return)
+
+    # Limit results returned
+    return_values = return_values[:result_count]
+    return return_values
 
 
 def extract_nested_key_value(term, key):

@@ -44,6 +44,7 @@
               :items="elementSubTypes"
               :error-messages="errors"
               clearable
+              class="required"
               ></v-autocomplete>
           </validation-provider>
         </v-col>
@@ -60,6 +61,7 @@
               :label="$t('StudyElements.el_name')"
               :error-messages="errors"
               clearable
+              class="required"
               ></v-text-field>
           </validation-provider>
         </v-col>
@@ -76,6 +78,7 @@
               :label="$t('StudyElements.el_short_name')"
               :error-messages="errors"
               clearable
+              class="required"
               ></v-text-field>
           </validation-provider>
         </v-col>

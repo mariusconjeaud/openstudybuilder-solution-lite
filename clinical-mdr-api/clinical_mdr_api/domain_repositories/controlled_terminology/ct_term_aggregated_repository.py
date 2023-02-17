@@ -232,6 +232,8 @@ class CTTermAggregatedRepository:
 
         # Add header field name to filter_by, to filter with a CONTAINS pattern
         if search_string != "":
+            if filter_by is None:
+                filter_by = {}
             filter_by[field_name] = {
                 "v": [search_string],
                 "op": ComparisonOperator.CONTAINS,

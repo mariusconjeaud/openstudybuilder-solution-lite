@@ -1,36 +1,37 @@
 """
-This file contains classes for all tags and attributes that can be used for generating ODM-XML.
+This file contains classes for all elements and attributes that can be used for generating ODM-XML.
 
 There are some conventions to note:
-- Classes defined here are subject to be converted to either an XML Tag or an XML Attribute.
-- If a class contains a property called `_custom_tag_name` of type `str` then the name of
-  the XML Tag, generated based on this class, will be as specified in `_custom_tag_name`.
+- Classes defined here are subject to be converted to either an XML Element or an XML Attribute.
+- If a class contains a property called `_custom_element_name` of type `str` then the name of
+  the XML Element, generated based on this class, will be as specified in `_custom_element_name`.
 - Properties of type `Attribute` of all classes are considered to be XML attributes for the class these properties are present in.
-- Properties of type `str` of all classes, except `Attribute` class, are considered to be inner text of the XML Tag, generated based on these classes.
+- Properties of type `str` of all classes, except `Attribute` class,
+  are considered to be inner text of the XML Element, generated based on these classes.
   For the sake of consistency, name such properties `_string`.
 
 E.g. given the following class:
 class TranslatedText:
-    _custom_tag_name: str
+    _custom_element_name: str
     _string: str
     lang: Attribute
 
 When we instantiate it:
-TranslatedText("_custom_tag_name":"Translation", "_string": "This is inner text", "lang": Attribute("lang", "en"))
+TranslatedText("_custom_element_name":"Translation", "_string": "This is inner text", "lang": Attribute("lang", "en"))
 the following will be produced:
 <Translation lang="en">This is inner text</Translation>
 """
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, Sequence, Union
+from typing import List, Optional, Union
 
 
-class Tag:
-    _custom_tag_name: str
+class Element:
+    _custom_element_name: str
 
-    def __init__(self, _custom_tag_name, **kwargs):
-        self._custom_tag_name = _custom_tag_name
+    def __init__(self, _custom_element_name, **kwargs):
+        self._custom_element_name = _custom_element_name
 
         for key, val in kwargs.items():
             setattr(self, key, val)
@@ -77,7 +78,17 @@ class CodeList:
     name: Attribute
     datatype: Attribute
     sas_format_name: Attribute
-    codelist_items: Sequence[CodeListItem]
+    codelist_items: List[CodeListItem]
+
+    def __init__(self, oid, name, datatype, sas_format_name, codelist_items, **kwargs):
+        self.oid = oid
+        self.name = name
+        self.datatype = datatype
+        self.sas_format_name = sas_format_name
+        self.codelist_items = codelist_items
+
+        for key, val in kwargs.items():
+            setattr(self, key, val)
 
 
 class Alias:
@@ -94,12 +105,12 @@ class Alias:
 
 @dataclass
 class Description:
-    translated_text: Sequence[TranslatedText]
+    translated_text: List[TranslatedText]
 
 
 @dataclass
 class Question:
-    translated_text: Sequence[TranslatedText]
+    translated_text: List[TranslatedText]
 
 
 @dataclass
@@ -128,8 +139,8 @@ class ConditionDef:
     oid: Attribute
     name: Attribute
     description: Description
-    aliases: Sequence[Alias]
-    formal_expressions: Sequence[FormalExpression]
+    aliases: List[Alias]
+    formal_expressions: List[FormalExpression]
 
     def __init__(self, oid, name, description, aliases, formal_expressions, **kwargs):
         self.oid = oid
@@ -152,9 +163,9 @@ class ItemDef:
     sds_var_name: Attribute
     question: Question
     description: Description
-    aliases: Sequence[Alias]
+    aliases: List[Alias]
     codelist_ref: CodeListRef
-    measurement_unit_refs: Sequence[MeasurementUnitRef]
+    measurement_unit_refs: List[MeasurementUnitRef]
 
     def __init__(
         self,
@@ -228,7 +239,7 @@ class ItemRef:
 @dataclass
 class OsbDomainColor:
     _string: str
-    _custom_tag_name: str = "osb:DomainColor"
+    _custom_element_name: str = "osb:DomainColor"
 
 
 class ItemGroupDef:
@@ -238,10 +249,10 @@ class ItemGroupDef:
     purpose: Attribute
     sas_dataset_name: Attribute
     domain: Attribute
-    osb_domain_colors: Sequence[OsbDomainColor]
+    osb_domain_colors: List[OsbDomainColor]
     description: Description
-    aliases: Sequence[Alias]
-    item_refs: Sequence[ItemRef]
+    aliases: List[Alias]
+    item_refs: List[ItemRef]
 
     def __init__(
         self,
@@ -303,8 +314,8 @@ class FormDef:
     name: Attribute
     repeating: Attribute
     description: Description
-    aliases: Sequence[Alias]
-    item_group_refs: Sequence[ItemGroupRef]
+    aliases: List[Alias]
+    item_group_refs: List[ItemGroupRef]
 
     def __init__(
         self, oid, name, repeating, description, aliases, item_group_refs, **kwargs
@@ -331,22 +342,30 @@ class MeasurementUnit:
     name: Attribute
     symbol: Symbol
 
+    def __init__(self, oid, name, symbol, **kwargs):
+        self.oid = oid
+        self.name = name
+        self.symbol = symbol
+
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
 
 @dataclass
 class MetaDataVersion:
     oid: Attribute
     name: Attribute
     description: Attribute
-    form_defs: Sequence[FormDef]
-    item_group_defs: Sequence[ItemGroupDef]
-    item_defs: Sequence[ItemDef]
-    condition_defs: Sequence[ConditionDef]
-    codelists: Sequence[CodeList]
+    form_defs: List[FormDef]
+    item_group_defs: List[ItemGroupDef]
+    item_defs: List[ItemDef]
+    condition_defs: List[ConditionDef]
+    codelists: List[CodeList]
 
 
 @dataclass
 class BasicDefinitions:
-    measurement_units: Sequence[MeasurementUnit]
+    measurement_units: List[MeasurementUnit]
 
 
 @dataclass

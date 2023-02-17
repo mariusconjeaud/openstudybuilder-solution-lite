@@ -16,18 +16,19 @@
     :subTables="isExpand()"
     single-expand
     :filters-modify-function="modifyFilters"
+    :modifiable-table="!isExpand()"
     >
     <template v-slot:item="{ item, expand, isExpanded }" v-if="isExpand()">
       <tr style="background-color: lightskyblue">
         <td width="5%">
           <v-btn @click="expand(!isExpanded)" v-if="isExpanded" icon>
             <v-icon dark>
-              mdi-chevron-up
+              mdi-chevron-down
             </v-icon>
           </v-btn>
           <v-btn @click="expand(!isExpanded)" v-else icon>
             <v-icon dark>
-              mdi-chevron-down
+              mdi-chevron-right
             </v-icon>
           </v-btn>
         </td>
@@ -73,6 +74,7 @@
           hide-default-footer
           hide-default-header
           light
+          :items-per-page="-1"
           :loading="loading"
           :show-expand="true"
           @item-expanded="getSubgroupActivities"
@@ -83,12 +85,12 @@
               <td width="5%">
                 <v-btn @click="expand(!isExpanded)" v-if="isExpanded" icon>
                   <v-icon dark>
-                    mdi-chevron-up
+                    mdi-chevron-down
                   </v-icon>
                 </v-btn>
                 <v-btn @click="expand(!isExpanded)" v-else icon>
                   <v-icon dark>
-                    mdi-chevron-down
+                    mdi-chevron-right
                   </v-icon>
                 </v-btn>
               </td>
@@ -111,6 +113,7 @@
                 hide-default-footer
                 hide-default-header
                 light
+                :items-per-page="-1"
                 :loading="subLoading"
                 :show-expand="true"
                 >
@@ -152,6 +155,10 @@
     :open="showActivityForm"
     @close="closeForm"
     :edited-activity="activeActivity"/>
+  <requested-activities-form
+    :open="showRequestedActivityForm"
+    @close="closeForm"
+    :edited-activity="activeActivity"/>
   <v-dialog
       v-model="showGroupsForm"
       persistent
@@ -172,6 +179,16 @@
       @close="closeForm"
       :edited-activity="activeActivity"/>
   </v-dialog>
+  <v-dialog
+      v-model="showSponsorFromRequestedForm"
+      persistent
+      max-width="1200px"
+      content-class="top-dialog"
+    >
+    <activities-create-sponsor-from-requested-form
+      @close="closeForm"
+      :edited-activity="activeActivity"/>
+  </v-dialog>
 </div>
 </template>
 
@@ -181,8 +198,12 @@ import ActionsMenu from '@/components/tools/ActionsMenu'
 import NNTable from '@/components/tools/NNTable'
 import StatusChip from '@/components/tools/StatusChip'
 import ActivitiesForm from '@/components/library/ActivitiesForm'
+import RequestedActivitiesForm from '@/components/library/RequestedActivitiesForm'
 import ActivitiesGroupsForm from '@/components/library/ActivitiesGroupsForm'
 import ActivitiesInstantiationsForm from '@/components/library/ActivitiesInstantiationsForm'
+import ActivitiesCreateSponsorFromRequestedForm from '@/components/library/ActivitiesCreateSponsorFromRequestedForm'
+import libConstants from '@/constants/libraries'
+import statuses from '@/constants/statuses'
 
 export default {
   components: {
@@ -190,15 +211,28 @@ export default {
     NNTable,
     StatusChip,
     ActivitiesForm,
+    RequestedActivitiesForm,
     ActivitiesGroupsForm,
-    ActivitiesInstantiationsForm
+    ActivitiesInstantiationsForm,
+    ActivitiesCreateSponsorFromRequestedForm
   },
   props: {
-    source: String
+    source: String,
+    requested: {
+      type: Boolean,
+      default: false
+    }
   },
   data () {
     return {
       actions: [
+        {
+          label: this.$t('ActivityTable.create_sponsor_from_request'),
+          icon: 'mdi-pencil',
+          iconColor: 'primary',
+          condition: (item) => item.status === 'Final' && this.requested,
+          click: this.createSponsorFromRequested
+        },
         {
           label: this.$t('_global.approve'),
           icon: 'mdi-check-decagram',
@@ -245,9 +279,12 @@ export default {
       activities: [],
       activitiesHeaders: [
         { text: '', value: 'possible_actions', width: '5%' },
+        { text: this.$t('_global.library'), value: 'library_name' },
         { text: this.$t('ActivityTable.activity_group'), value: 'activity_group.name', externalFilterSource: 'concepts/activities/activity-groups$name' },
         { text: this.$t('ActivityTable.activity_subgroup'), value: 'activity_subgroup.name', externalFilterSource: 'concepts/activities/activity-sub-groups$name' },
-        { text: this.$t('ActivityTable.activity'), value: 'name', externalFilterSource: 'concepts/activities/activities$name' },
+        { text: this.$t('ActivityTable.activity_name'), value: 'name', externalFilterSource: 'concepts/activities/activities$name' },
+        { text: this.$t('ActivityTable.sentence_case_name'), value: 'name_sentence_case' },
+        { text: this.$t('ActivityTable.abbreviation'), value: 'abbreviation' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
@@ -278,6 +315,20 @@ export default {
         { text: this.$t('_global.status'), value: 'status', width: '15%' },
         { text: this.$t('_global.version'), value: 'version', width: '10%' }
       ],
+      requestedHeaders: [
+        { text: '', value: 'possible_actions', width: '5%' },
+        { text: this.$t('ActivityTable.activity_group'), value: 'activity_group.name', externalFilterSource: 'concepts/activities/activity-groups$name' },
+        { text: this.$t('ActivityTable.activity_subgroup'), value: 'activity_subgroup.name', externalFilterSource: 'concepts/activities/activity-sub-groups$name' },
+        { text: this.$t('ActivityTable.activity'), value: 'name', externalFilterSource: 'concepts/activities/activities$name' },
+        { text: this.$t('ActivityTable.sentence_case_name'), value: 'name_sentence_case' },
+        { text: this.$t('ActivityTable.abbreviation'), value: 'abbreviation' },
+        { text: this.$t('ActivityTable.definition'), value: 'definition' },
+        { text: this.$t('ActivityTable.rationale_for_request'), value: 'request_rationale' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
+        { text: this.$t('_global.modified_by'), value: 'user_initials' },
+        { text: this.$t('_global.status'), value: 'status' },
+        { text: this.$t('_global.version'), value: 'version' }
+      ],
       total: 0,
       options: {},
       filters: '',
@@ -285,8 +336,10 @@ export default {
       currentGroup: '',
       currentSubGroup: '',
       showActivityForm: false,
+      showRequestedActivityForm: false,
       showGroupsForm: false,
       showInstantiationsForm: false,
+      showSponsorFromRequestedForm: false,
       activeActivity: null,
       loading: false,
       subLoading: false,
@@ -305,7 +358,11 @@ export default {
       const params = {
         page_number: (this.options.page),
         page_size: this.options.itemsPerPage,
-        total_count: true
+        total_count: true,
+        sort_by: { name: true }
+      }
+      if (this.requested) {
+        params.library = libConstants.LIBRARY_REQUESTED
       }
       if (this.filters && this.filters !== undefined && this.filters !== '{}' && this.source === 'activities') {
         const filtersObj = JSON.parse(this.filters)
@@ -355,10 +412,16 @@ export default {
       } else if (filters !== undefined && filters !== '{}') {
         params.filters = filters
       }
+      if (this.requested) {
+        if (!params.filters) {
+          params.filters = {}
+        }
+        params.filters.status = { v: [statuses.FINAL], op: 'eq' }
+      }
       if (this.options.sortBy.length !== 0 && sort !== undefined) {
         params.sort_by = `{"${this.options.sortBy[0]}":${!sort}}`
       }
-      activities.get(params, this.source).then(resp => {
+      activities.get(params, this.source === 'requested-activities' ? 'activities' : this.source).then(resp => {
         this.activities = resp.data.items
         this.total = resp.data.total
       })
@@ -405,11 +468,10 @@ export default {
         })
         delete jsonFilter.specimen
       }
-      const filters = {
+      return {
         jsonFilter: jsonFilter,
         params: params
       }
-      return filters
     },
     isExpand () {
       return this.source === 'activity-groups'
@@ -438,7 +500,7 @@ export default {
     returnHeaders () {
       switch (this.source) {
         case 'activities':
-          return this.activitiesHeaders
+          return this.requested ? this.requestedHeaders : this.activitiesHeaders
         case 'activity-groups':
           return this.groupsHeaders
         case 'activity-instances':
@@ -447,38 +509,42 @@ export default {
     },
     inactivateActivity (item, source) {
       source = (source === undefined) ? this.source : source
-      activities.inactivate(item.uid, source).then(resp => {
+      activities.inactivate(item.uid, source).then(() => {
         this.fetchActivities()
       })
     },
     reactivateActivity (item, source) {
       source = (source === undefined) ? this.source : source
-      activities.reactivate(item.uid, source).then(resp => {
+      activities.reactivate(item.uid, source).then(() => {
         this.fetchActivities()
       })
     },
     deleteActivity (item, source) {
       source = (source === undefined) ? this.source : source
-      activities.delete(item.uid, source).then(resp => {
+      activities.delete(item.uid, source).then(() => {
         this.fetchActivities()
       })
     },
     approveActivity (item, source) {
       source = (source === undefined) ? this.source : source
-      activities.approve(item.uid, source).then(resp => {
+      activities.approve(item.uid, source).then(() => {
         this.fetchActivities()
       })
     },
     newActivityVersion (item, source) {
       source = (source === undefined) ? this.source : source
-      activities.newVersion(item.uid, source).then(resp => {
+      activities.newVersion(item.uid, source).then(() => {
         this.fetchActivities()
       })
     },
     showForm () {
       switch (this.source) {
         case 'activities':
-          this.showActivityForm = true
+          if (this.requested) {
+            this.showRequestedActivityForm = true
+          } else {
+            this.showActivityForm = true
+          }
           return
         case 'activity-groups':
           this.showGroupsForm = true
@@ -487,15 +553,15 @@ export default {
           this.showInstantiationsForm = true
       }
     },
-    editActivity (item, source) {
+    editActivity (item) {
       this.activeActivity = item
-      if (source === 'activities') {
-        this.showActivityForm = true
-        return
-      }
       switch (this.source) {
         case 'activities':
-          this.showActivityForm = true
+          if (this.requested) {
+            this.showRequestedActivityForm = true
+          } else {
+            this.showActivityForm = true
+          }
           return
         case 'activity-groups':
           this.showGroupsForm = true
@@ -503,6 +569,10 @@ export default {
         case 'activity-instances':
           this.showInstantiationsForm = true
       }
+    },
+    createSponsorFromRequested (item) {
+      this.activeActivity = item
+      this.showSponsorFromRequestedForm = true
     },
     getSubGroups ({ item }) {
       this.subgroups = []
@@ -524,14 +594,24 @@ export default {
     },
     closeForm () {
       this.showActivityForm = false
+      this.showRequestedActivityForm = false
       this.showGroupsForm = false
       this.showInstantiationsForm = false
+      this.showSponsorFromRequestedForm = false
       this.activeActivity = null
       this.fetchActivities()
     }
   },
   mounted () {
     this.fetchActivities()
+  },
+  watch: {
+    options: {
+      handler () {
+        this.fetchActivities()
+      },
+      deep: true
+    }
   }
 }
 </script>

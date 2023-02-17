@@ -51,14 +51,14 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/dictionaries/codelists/codelist_root1_uid/approve"
+            "url": "/dictionaries/codelists/codelist_root1_uid/approvals"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "The object is not in draft status.",
                 "method": "POST",
-                "path": "http://testserver/dictionaries/codelists/codelist_root1_uid/approve",
+                "path": "http://testserver/dictionaries/codelists/codelist_root1_uid/approvals",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }

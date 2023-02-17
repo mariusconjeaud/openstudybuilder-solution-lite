@@ -4,7 +4,6 @@ from typing import Dict
 from docx.enum.style import WD_STYLE_TYPE
 from yattag.doc import Doc
 
-from clinical_mdr_api.models.unit_definition import UnitDefinitionModel
 from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services.study import StudyService
@@ -63,18 +62,6 @@ class StudyObjectivesService:
         )
 
         return selection.items
-
-    def _get_all_units(self) -> Dict[str, UnitDefinitionModel]:
-        return {
-            u.uid: u
-            for u in self._unit_definition_service.get_all(library_name=None).items
-        }
-
-    @property
-    def units(self) -> Dict[str, UnitDefinitionModel]:
-        if self._units is None:
-            self._units = self._get_all_units()
-        return self._units
 
     # Unused but kept for future layout
     def get_condensed_html(self, study_uid) -> str:
@@ -468,10 +455,4 @@ class StudyObjectivesService:
         else:
             separator = " "
 
-        return separator.join(map(self._unit_name, endpoint_units.units))
-
-    def _unit_name(self, unit_uid: str) -> str:
-        unit: UnitDefinitionModel = self.units.get(unit_uid)
-        if unit:
-            return unit.name
-        return unit_uid
+        return separator.join(unit.name for unit in endpoint_units.units)

@@ -10,10 +10,13 @@ from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
 )
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study import (
+    CompactStudy,
     Study,
     StudyCreateInput,
     StudyFieldAuditTrailEntry,
     StudyPatchRequestJsonModel,
+    StudyPreferredTimeUnit,
+    StudyPreferredTimeUnitInput,
     StudyProtocolTitle,
 )
 from clinical_mdr_api.models.utils import CustomPage
@@ -31,7 +34,7 @@ StudyUID = Path(None, description="The unique id of the study.")
     "",
     summary="Returns all studies in their latest/newest version.",
     description="Allowed parameters include : filter on fields, sort by field name with sort direction, pagination",
-    response_model=CustomPage[Study],
+    response_model=CustomPage[CompactStudy],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -64,24 +67,6 @@ StudyUID = Path(None, description="The unique id of the study.")
 # pylint: disable=unused-argument
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
-    fields: Optional[str] = Query(
-        default=None,
-        description="Parameter specifies which parts of the whole Study Definition representation to retrieve."
-        " This endpoint won't return underlying metadata parts like high_level_study_design or study_intervention"
-        " even if they will be prefixed with a `+` because it was set to return only the most important part of the information"
-        " like identification metadata."
-        " In the form of comma separated name of the fields prefixed by (optional) `+` "
-        " if the client wishes"
-        " to retrieve the field or `-` if the client wants to skip the field."
-        " If not specified identification metadata and version metadata are retrieved."
-        " If value starts with `+` or `-` above default is extended or reduced by the specified fields"
-        " otherwise (if not started with `+` or `-`) provided fields specification"
-        " replaces the default. The `uid` and `study_status` fields will be always returned"
-        " as they are mandatory fields for the Study API model. Currently supported fields are"
-        " `current_metadata.identification_metadata`, `current_metadata.high_level_study_design`"
-        " , `current_metadata.study_population` and `current_metadata.study_intervention`"
-        " , `current_metadata.study_description`.",
-    ),
     has_study_objective: Optional[bool] = Query(
         default=None,
         description="Optionaly, filter studies based on the existence of related study objectives or not",
@@ -119,10 +104,9 @@ def get_all(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
     current_user_id: str = Depends(get_current_user_id),
-) -> CustomPage[Study]:
+) -> CustomPage[CompactStudy]:
     study_service = StudyService(user=current_user_id)
     results = study_service.get_all(
-        fields=fields,
         has_study_objective=has_study_objective,
         has_study_endpoint=has_study_endpoint,
         has_study_criteria=has_study_criteria,
@@ -315,12 +299,24 @@ def get_fields_audit_trail(
     uid: str = StudyUID,  # ,
     sections: Optional[str] = Query(
         default=None,
-        description="Optionally specify a list of sections to filter the audit trail by. "
-        "Each section name must be preceded by a '+' or a '-', "
-        "valid values are: 'IdentificationMetadata, RegistryIdentifiers, VersionMetadata, "
-        "HighLevelStudyDesign, StudyPopulation, StudyIntervention, StudyDescription'. "
-        "Example valid input: '-IdentificationMetadata,+StudyPopulation'."
-        " If no filters are specified, the entire audit trail is returned.",
+        description="""
+Optionally specify a list of sections to filter the audit trail by. 
+Each section name must be preceded by a `+` or a `-`.
+
+Valid values are:
+
+- identification_metadata
+- registry_identifiers
+- version_metadata
+- high_level_study_design
+- study_population
+- study_intervention
+- study_description
+
+Example valid input: `-identification_metadata,+study_population`.
+
+If no filters are specified, the entire audit trail is returned.
+""",
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
@@ -442,4 +438,82 @@ def copy_simple_form_from_another_study(
         reference_study_uid=reference_study_uid,
         component_to_copy=component_to_copy,
         overwrite=overwrite,
+    )
+
+
+@router.get(
+    "/{uid}/time-units",
+    summary="Gets a study preferred time unit",
+    response_model=StudyPreferredTimeUnit,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The study or unit definition with the specified 'uid'"
+            " wasn't found.",
+        },
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def get_preferred_time_unit(
+    uid: str = StudyUID,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    study_service = StudyService(user=current_user_id)
+    return study_service.get_study_preferred_time_unit(
+        study_uid=uid,
+    )
+
+
+@router.post(
+    "/{uid}/time-units",
+    summary="Creates a study preferred time unit",
+    response_model=StudyPreferredTimeUnit,
+    status_code=201,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The study or unit definition with the specified 'uid'"
+            " wasn't found.",
+        },
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def post_preferred_time_unit(
+    uid: str = StudyUID,
+    preferred_time_unit_input: StudyPreferredTimeUnitInput = Body(
+        ..., description="Data needed to create a study preferred time unit"
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    study_service = StudyService(user=current_user_id)
+    return study_service.post_study_preferred_time_unit(
+        study_uid=uid, unit_definition_uid=preferred_time_unit_input.unit_definition_uid
+    )
+
+
+@router.patch(
+    "/{uid}/time-units",
+    summary="Edits a study preferred time unit",
+    response_model=StudyPreferredTimeUnit,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The study or unit definition with the specified 'uid'"
+            " wasn't found.",
+        },
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def patch_preferred_time_unit(
+    uid: str = StudyUID,
+    preferred_time_unit_input: StudyPreferredTimeUnitInput = Body(
+        ..., description="Data needed to create a study preferred time unit"
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    study_service = StudyService(user=current_user_id)
+    return study_service.patch_study_preferred_time_unit(
+        study_uid=uid, unit_definition_uid=preferred_time_unit_input.unit_definition_uid
     )

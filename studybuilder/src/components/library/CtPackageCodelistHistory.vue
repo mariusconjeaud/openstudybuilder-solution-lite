@@ -1,9 +1,9 @@
 <template>
 <div>
-  <p><span class="v-label">{{ $t('CtPackageCodelistHistory.codelist_label') }}</span> {{ codelistAttributes.name }} [{{ codelistAttributes.codelistUid }}]</p>
+  <p><span class="v-label">{{ $t('CtPackageCodelistHistory.codelist_label') }}</span> {{ codelistAttributes.name }} [{{ codelistAttributes.codelist_uid }}]</p>
   <div class="v-data-table">
     <div class="v-data-table__wrapper">
-      <table class="mt-4 white">
+      <table class="mt-4 white" :aria-label="$t('CtPackageCodelistHistory.codelist_label')">
         <thead>
           <tr class="greyBackground">
             <th>{{ $t('CtPackageCodelistHistory.first_col_label') }}</th>
@@ -17,7 +17,7 @@
           />
         <tbody>
           <tr>
-            <td>{{ codelistAttributes.submissionValue }}</td>
+            <td>{{ codelistAttributes.submission_value }}</td>
             <td v-for="date in dates" :key="date">
               <template v-if="codelistChanges[date]">
                 <v-btn fab x-small :color="getButtonColor(codelistChanges[date])">
@@ -48,7 +48,7 @@ import controlledTerminology from '@/api/controlledTerminology'
 
 export default {
   props: {
-    catalogue_name: String,
+    catalogueName: String,
     codelistUid: String,
     fromDate: String,
     toDate: String
@@ -98,7 +98,7 @@ export default {
       if (this.terms[item.uid] === undefined) {
         this.$set(this.terms, item.uid, {})
         controlledTerminology.getCodelistTermAttributes(item.uid).then(resp => {
-          this.$set(this.termLabels, item.uid, resp.data.codeSubmissionValue)
+          this.$set(this.termLabels, item.uid, resp.data.code_submission_value)
         })
       }
       this.addChangeToList(item, this.terms[item.uid], type)
@@ -108,26 +108,26 @@ export default {
     controlledTerminology.getCodelistAttributes(this.codelistUid).then(resp => {
       this.codelistAttributes = resp.data
     })
-    controlledTerminology.getPackagesCodelistChanges(this.codelistUid, this.catalogue_name, this.fromDate, this.toDate).then(resp => {
+    controlledTerminology.getPackagesCodelistChanges(this.codelistUid, this.catalogueName, this.fromDate, this.toDate).then(resp => {
       this.loading = false
-      resp.data.newCodelists.forEach(item => {
+      resp.data.new_codelists.forEach(item => {
         this.addCodelistChange(item, 'added')
       })
-      resp.data.updatedCodelists.forEach(item => {
+      resp.data.updated_codelists.forEach(item => {
         if (item.is_change_of_codelist) {
           this.addCodelistChange(item, 'updated')
         }
       })
-      resp.data.deletedCodelists.forEach(item => {
+      resp.data.deleted_codelists.forEach(item => {
         this.addCodelistChange(item, 'deleted')
       })
-      resp.data.newTerms.forEach(item => {
+      resp.data.new_terms.forEach(item => {
         this.addTermChange(item, 'added')
       })
-      resp.data.updatedTerms.forEach(item => {
+      resp.data.updated_terms.forEach(item => {
         this.addTermChange(item, 'updated')
       })
-      resp.data.deletedTerms.forEach(item => {
+      resp.data.deleted_terms.forEach(item => {
         this.addTermChange(item, 'deleted')
       })
       this.dates = this.dates.sort((a, b) => new Date(a) - new Date(b))

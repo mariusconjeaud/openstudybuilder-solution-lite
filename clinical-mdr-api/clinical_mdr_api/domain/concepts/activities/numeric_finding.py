@@ -103,14 +103,14 @@ class NumericFindingVO(FindingVO):
             self.unit_dimension_uid
         ):
             raise ValueError(
-                f"{self.__class__.__name__} tried to connect to non existing unit dimension identified by uid ({self.unit_dimension_uid})"
+                f"{type(self).__name__} tried to connect to non existing unit dimension identified by uid ({self.unit_dimension_uid})"
             )
         if (
             self.unit_definition_uid is not None
             and not unit_definition_exists_callback(self.unit_definition_uid)
         ):
             raise ValueError(
-                f"{self.__class__.__name__} tried to connect to non existing unit definition identified by uid ({self.unit_definition_uid})"
+                f"{type(self).__name__} tried to connect to non existing unit definition identified by uid ({self.unit_definition_uid})"
             )
 
 

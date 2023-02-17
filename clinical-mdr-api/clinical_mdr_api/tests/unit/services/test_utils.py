@@ -55,6 +55,23 @@ class TestServiceUtils(unittest.TestCase):
     def test_get_input_or_new_value_raises_exception(self):
         self.assertRaises(ValueError, _utils.get_input_or_new_value, None, "Y", None)
 
+    def test_to_dict(self):
+        class B:
+            y: str
+
+            def __init__(self, y) -> None:
+                self.y = y
+
+        class A:
+            x: str
+            b: B
+
+            def __init__(self, x, b) -> None:
+                self.x = x
+                self.b = b
+
+        assert _utils.to_dict(A(x="a", b=B(y="b"))) == {"b": {"y": "b"}, "x": "a"}
+
     @parameterized.expand(
         [
             ("OdmItemGroupRoot", "Root", "OdmItemGroup"),

@@ -285,6 +285,51 @@ def post_preview_visit(
     return service.preview(study_uid=uid, study_visit_input=selection)
 
 
+@router.get(
+    "/studies/{uid}/study-visits/allowed-visit-types",
+    summary="Returns all allowed Visit Types for specified epoch type",
+    response_model=Sequence[
+        clinical_mdr_api.models.study_visit.AllowedVisitTypesForEpochType
+    ],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def get_allowed_visit_types_for_epoch_type(
+    current_user_id: str = Depends(get_current_user_id),
+    epoch_type_uid: str = Query(
+        ...,
+        description="The unique uid of the epoch type for which the "
+        "allowed visit types should be returned",
+    ),
+    uid: str = Path(description="The unique uid of the study"),
+) -> Sequence[clinical_mdr_api.models.study_visit.AllowedVisitTypesForEpochType]:
+    service = StudyVisitService(current_user_id)
+    return service.get_valid_visit_types_for_epoch_type(
+        epoch_type_uid=epoch_type_uid, study_uid=uid
+    )
+
+
+@router.get(
+    "/studies/{uid}/study-visits/allowed-time-references",
+    summary="Returns all allowed time references for a study visit",
+    response_model=Sequence[clinical_mdr_api.models.study_visit.AllowedTimeReferences],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def get_allowed_time_references_for_given_study(
+    current_user_id: str = Depends(get_current_user_id),
+    uid: str = Path(description="The unique uid of the study"),
+) -> Sequence[clinical_mdr_api.models.study_visit.AllowedTimeReferences]:
+    service = StudyVisitService(current_user_id)
+    return service.get_allowed_time_references_for_study(study_uid=uid)
+
+
 @router.patch(
     "/studies/{uid}/study-visits/{study_visit_uid}",
     summary="Edit a study visit",
@@ -485,51 +530,6 @@ def get_study_visit(
 
 
 @router.get(
-    "/study-visits/allowed-visit-types",
-    summary="Returns all allowed Visit Types for specified epoch type",
-    response_model=Sequence[
-        clinical_mdr_api.models.study_visit.AllowedVisitTypesForEpochType
-    ],
-    response_model_exclude_unset=True,
-    status_code=200,
-    responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
-    },
-)
-def get_allowed_visit_types_for_epoch_type(
-    current_user_id: str = Depends(get_current_user_id),
-    epoch_type_uid: str = Query(
-        ...,
-        description="The unique uid of the epoch type for which the "
-        "allowed visit types should be returned",
-    ),
-    study_uid: str = Query(..., description="The unique uid of the study"),
-) -> Sequence[clinical_mdr_api.models.study_visit.AllowedVisitTypesForEpochType]:
-    service = StudyVisitService(current_user_id)
-    return service.get_valid_visit_types_for_epoch_type(
-        epoch_type_uid=epoch_type_uid, study_uid=study_uid
-    )
-
-
-@router.get(
-    "/study-visits/allowed-time-references",
-    summary="Returns all allowed time references for a study visit",
-    response_model=Sequence[clinical_mdr_api.models.study_visit.AllowedTimeReferences],
-    response_model_exclude_unset=True,
-    status_code=200,
-    responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
-    },
-)
-def get_allowed_time_references_for_given_study(
-    current_user_id: str = Depends(get_current_user_id),
-    study_uid: str = Query(..., description="The unique uid of the study"),
-) -> Sequence[clinical_mdr_api.models.study_visit.AllowedTimeReferences]:
-    service = StudyVisitService(current_user_id)
-    return service.get_allowed_time_references_for_study(study_uid=study_uid)
-
-
-@router.get(
     "/studies/{uid}/get-amount-of-visits-in-epoch/{study_epoch_uid}",
     summary="Counts amount of visits in a specified study epoch",
     description="""
@@ -652,3 +652,79 @@ def get_anchor_visits_for_special_visit(
 ) -> Sequence[clinical_mdr_api.models.study_visit.SimpleStudyVisit]:
     service = StudyVisitService(current_user_id)
     return service.get_anchor_for_special_visit(study_uid=uid)
+
+
+@router.post(
+    "/studies/{uid}/consecutive-visit-groups",
+    summary="Assign consecutive visit groups for specific study visits for a selected study referenced by 'uid' ",
+    description="""
+State before:
+- Study must exist.
+
+Business logic:
+ - Assigns consecutive visit groups for specified study visits.
+
+State after:
+ - no change.
+
+Possible errors:
+ - Invalid study-uid.
+    """,
+    response_model=Sequence[clinical_mdr_api.models.study_visit.StudyVisit],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def assign_consecutive_visit_group_for_selected_study_visit(
+    uid: str = studyUID,
+    consecutive_visit_group_input: clinical_mdr_api.models.study_visit.VisitConsecutiveGroupInput = Body(
+        None,
+        description="The properties needed to assign visits into consecutive visit group",
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+) -> Sequence[clinical_mdr_api.models.study_visit.StudyVisit]:
+    service = StudyVisitService(current_user_id)
+    return service.assign_visit_consecutive_group(
+        study_uid=uid,
+        visits_to_assign=consecutive_visit_group_input.visits_to_assign,
+        overwrite_visit_from_template=consecutive_visit_group_input.overwrite_visit_from_template,
+    )
+
+
+@router.delete(
+    "/studies/{uid}/consecutive-visit-groups/{consecutive_visit_group_name}",
+    summary="Remove consecutive visit group specified by consecutive-visit-group-name for a selected study referenced by 'uid' ",
+    description="""
+State before:
+- Study must exist.
+
+Business logic:
+ - Removes consecutive-visit-group.
+
+State after:
+ - no change.
+
+Possible errors:
+ - Invalid study-uid.
+    """,
+    response_model=None,
+    status_code=204,
+    responses={
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def remove_consecutive_group(
+    uid: str = studyUID,
+    consecutive_visit_group_name: str = Path(
+        ...,
+        description="The name of the consecutive-visit-group that is removed",
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    service = StudyVisitService(current_user_id)
+    service.remove_visit_consecutive_group(
+        study_uid=uid, consecutive_visit_group=consecutive_visit_group_name
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

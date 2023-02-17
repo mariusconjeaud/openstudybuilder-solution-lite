@@ -13,7 +13,7 @@ router = APIRouter()
 @router.get(
     "",
     summary="Returns all template parameter available with samples of the available values.",
-    description="The returned template parameter are ordered by\n" "0. name ascending",
+    description="The returned template parameter are ordered by\n0. name ascending",
     response_model=List[models.TemplateParameter],
     status_code=200,
     responses={

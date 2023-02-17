@@ -23,6 +23,7 @@ from clinical_mdr_api.models.activity_description_template import (
 )
 from clinical_mdr_api.models.criteria import (
     Criteria,
+    CriteriaWithType,
     CriteriaVersion,
     CriteriaCreateInput,
     CriteriaEditInput,
@@ -117,20 +118,20 @@ from clinical_mdr_api.models.odm_alias import (
     OdmAliasBatchInput,
     OdmAliasBatchOutput,
 )
-from clinical_mdr_api.models.odm_xml_extension import (
-    OdmXmlExtension,
-    OdmXmlExtensionPostInput,
-    OdmXmlExtensionPatchInput,
+from clinical_mdr_api.models.odm_vendor_namespace import (
+    OdmVendorNamespace,
+    OdmVendorNamespacePostInput,
+    OdmVendorNamespacePatchInput,
 )
-from clinical_mdr_api.models.odm_xml_extension_attribute import (
-    OdmXmlExtensionAttribute,
-    OdmXmlExtensionAttributePostInput,
-    OdmXmlExtensionAttributePatchInput,
+from clinical_mdr_api.models.odm_vendor_attribute import (
+    OdmVendorAttribute,
+    OdmVendorAttributePostInput,
+    OdmVendorAttributePatchInput,
 )
-from clinical_mdr_api.models.odm_xml_extension_tag import (
-    OdmXmlExtensionTag,
-    OdmXmlExtensionTagPostInput,
-    OdmXmlExtensionTagPatchInput,
+from clinical_mdr_api.models.odm_vendor_element import (
+    OdmVendorElement,
+    OdmVendorElementPostInput,
+    OdmVendorElementPatchInput,
 )
 from clinical_mdr_api.models.odm_description import (
     OdmDescription,
@@ -162,6 +163,7 @@ from clinical_mdr_api.models.study_selection import (
     StudySelectionActivityCore,
     StudySelectionActivityCreateInput,
     StudySelectionActivityInput,
+    StudySelectionActivityRequestUpdate,
     StudySelectionActivityNewOrder,
     StudySelectionActivityBatchInput,
     StudySelectionActivityBatchUpdateInput,
@@ -217,8 +219,10 @@ from clinical_mdr_api.models.study_visit import StudyVisit
 from clinical_mdr_api.models.listings_sdtm import (
     StudyVisitListing,
     StudyElementListing,
+    StudyDiseaseMilestoneListing,
     StudyArmListing,
 )
+from clinical_mdr_api.models.listings_study import StudyMetadataListingModel
 from clinical_mdr_api.models.listings import (
     TopicCdDef,
     MetaData,
@@ -333,6 +337,7 @@ __all__ = [
     "StudySelectionActivityCore",
     "StudySelectionActivityCreateInput",
     "StudySelectionActivityInput",
+    "StudySelectionActivityRequestUpdate",
     "StudySelectionActivityNewOrder",
     "StudySelectionActivityBatchInput",
     "StudySelectionActivityBatchUpdateInput",
@@ -355,7 +360,9 @@ __all__ = [
     "StudyVisit",
     "StudyVisitListing",
     "StudyElementListing",
+    "StudyDiseaseMilestoneListing",
     "StudyArmListing",
+    "StudyMetadataListingModel",
     "TopicCdDef",
     "MetaData",
     "CDISCCTVer",
@@ -381,6 +388,7 @@ __all__ = [
     "ActivityInstructionVersion",
     "ActivityInstructionCreateInput",
     "Criteria",
+    "CriteriaWithType",
     "CriteriaVersion",
     "CriteriaCreateInput",
     "CriteriaEditInput",
@@ -494,15 +502,15 @@ __all__ = [
     "OdmDescriptionPatchInput",
     "OdmDescriptionBatchInput",
     "OdmDescriptionBatchOutput",
-    "OdmXmlExtension",
-    "OdmXmlExtensionPostInput",
-    "OdmXmlExtensionPatchInput",
-    "OdmXmlExtensionAttribute",
-    "OdmXmlExtensionAttributePostInput",
-    "OdmXmlExtensionAttributePatchInput",
-    "OdmXmlExtensionTag",
-    "OdmXmlExtensionTagPostInput",
-    "OdmXmlExtensionTagPatchInput",
+    "OdmVendorNamespace",
+    "OdmVendorNamespacePostInput",
+    "OdmVendorNamespacePatchInput",
+    "OdmVendorAttribute",
+    "OdmVendorAttributePostInput",
+    "OdmVendorAttributePatchInput",
+    "OdmVendorElement",
+    "OdmVendorElementPostInput",
+    "OdmVendorElementPatchInput",
     "SimpleDictionaryItem",
     "Timeframe",
     "TimeframeCreateInput",

@@ -27,6 +27,16 @@
       <v-btn
         fab
         small
+        class="mr-2"
+        :title="$t('GroupStudyVisits.title')"
+        v-show="selectedVisits.length > 1"
+        @click="groupSelectedVisits()"
+        >
+        <v-icon>mdi-arrow-expand-horizontal</v-icon>
+      </v-btn>
+      <v-btn
+        fab
+        small
         @click="toggleActivitySelectionDisplay(false)"
         :title="$t('DetailedFlowchart.hide_activity_selection')"
         >
@@ -61,10 +71,10 @@
     </template>
   </div>
   <div ref="tableContainer" class="sticky-header" :style="`height: ${tableHeight}px`">
-  <table>
+  <table :aria-label="$t('DetailedFlowchart.table_caption')">
     <thead>
       <tr ref="firstHeader">
-        <th width="2%" rowspan="4">
+        <th width="2%" rowspan="4" scope="col">
           <v-btn
             icon
             @click="showEditForm = true"
@@ -72,43 +82,64 @@
             <v-icon>mdi-pencil</v-icon>
           </v-btn>
         </th>
-        <th width="25%" rowspan="4">{{ $t('DetailedFlowchart.activities') }}</th>
-        <th width="10%">{{ $t('DetailedFlowchart.study_epoch') }}</th>
+        <th width="25%" rowspan="4" scope="col">{{ $t('DetailedFlowchart.activities') }}</th>
+        <th width="10%" scope="col">{{ $t('DetailedFlowchart.study_epoch') }}</th>
         <template v-if="groupedVisits.length">
-          <th v-for="(sv, index) in groupedVisits" :key="`epoch-${index}`" class="text-vertical">
+          <th v-for="(sv, index) in groupedVisits" :key="`epoch-${index}`" class="text-vertical" scope="col">
             {{ getEpochName(sv, index) }}
           </th>
         </template>
         <template v-else>
-          <th colspan="2"></th>
+          <th colspan="2" scope="col"></th>
         </template>
       </tr>
       <tr>
-        <th :style="`top: ${firstHeaderHeight}px`">{{ $t('DetailedFlowchart.visit_short_name') }}</th>
+        <th :style="`top: ${firstHeaderHeight}px`" scope="col">{{ $t('DetailedFlowchart.visit_short_name') }}</th>
         <template v-if="groupedVisits.length">
-          <th v-for="(sv, index) in groupedVisits" :key="`shortName-${index}`" :style="`top: ${firstHeaderHeight}px`">
-            {{ sv.visit_short_name }}
+          <th v-for="(sv, index) in groupedVisits" :key="`shortName-${index}`" :style="`top: ${firstHeaderHeight}px`" scope="col">
+            <div class="d-flex align-center">
+              {{ sv.visit_short_name }}
+              <v-checkbox
+                v-if="!sv.isGroup"
+                v-model="selectedVisits"
+                :value="sv"
+                :value-comparator="compareVisits"
+                hide-details
+                small
+                multiple
+                />
+              <v-btn
+                v-else
+                icon
+                color="error"
+                x-small
+                :title="$t('GroupStudyVisits.delete_title')"
+                @click="deleteVisitGroup(sv.uid)"
+                >
+                <v-icon>mdi-delete</v-icon>
+              </v-btn>
+            </div>
           </th>
         </template>
         <template v-else>
-          <th colspan="2" :style="`top: ${firstHeaderHeight}px`"></th>
+          <th colspan="2" :style="`top: ${firstHeaderHeight}px`" scope="col"></th>
         </template>
       </tr>
       <tr>
-        <th :style="`top: ${thirdHeaderRowTop}px`">{{ $t('DetailedFlowchart.study_week') }}</th>
+        <th :style="`top: ${thirdHeaderRowTop}px`" scope="col">{{ timingHeaderTitle }}</th>
         <template v-if="groupedVisits.length">
-          <th v-for="(sv, index) in groupedVisits" :key="`week-${index}`" :style="`top: ${thirdHeaderRowTop}px`">
-            {{ sv.study_week_number }}
+          <th v-for="(sv, index) in groupedVisits" :key="`week-${index}`" :style="`top: ${thirdHeaderRowTop}px`" scope="col">
+            {{ getVisitTiming(sv) }}
           </th>
         </template>
         <template v-else>
-          <th colspan="2" :style="`top: ${thirdHeaderRowTop}px`"></th>
+          <th colspan="2" :style="`top: ${thirdHeaderRowTop}px`" scope="col"></th>
         </template>
       </tr>
       <tr>
-        <th :style="`top: ${fourthHeaderRowTop}px`">{{ $t('DetailedFlowchart.visit_window') }}</th>
+        <th :style="`top: ${fourthHeaderRowTop}px`" scope="col">{{ $t('DetailedFlowchart.visit_window') }}</th>
         <template v-if="groupedVisits.length">
-          <th v-for="(sv, index) in groupedVisits" :key="`window-${index}`" :style="`top: ${fourthHeaderRowTop}px`">
+          <th v-for="(sv, index) in groupedVisits" :key="`window-${index}`" :style="`top: ${fourthHeaderRowTop}px`" scope="col">
             <template v-if="sv.min_visit_window_value !== sv.max_visit_window_value">
               {{ sv.min_visit_window_value }}/+{{ sv.max_visit_window_value }}
             </template>
@@ -118,7 +149,7 @@
           </th>
         </template>
         <template v-else>
-          <th colspan="2" :style="`top: ${fourthHeaderRowTop}px`"></th>
+          <th colspan="2" :style="`top: ${fourthHeaderRowTop}px`" scope="col"></th>
         </template>
       </tr>
     </thead>
@@ -257,6 +288,7 @@
     />
   <v-dialog
     v-model="showEditForm"
+    @keydown.esc="showEditForm = false"
     persistent
     max-width="600px"
     >
@@ -310,20 +342,38 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
+  <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
+  <v-dialog
+    v-model="showCollapsibleGroupForm"
+    persistent
+    max-width="1000px"
+    >
+    <collapsible-visit-group-form
+      :open="showCollapsibleGroupForm"
+      :visits="selectedVisits"
+      @close="closeCollapsibleVisitGroupForm"
+      @created="collapsibleVisitGroupCreated"
+      />
+  </v-dialog>
 </div>
 </template>
 
 <script>
 import { bus } from '@/main'
+import CollapsibleVisitGroupForm from './CollapsibleVisitGroupForm'
+import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import { mapGetters } from 'vuex'
 import study from '@/api/study'
 import StudyActivityScheduleBatchEditForm from './StudyActivityScheduleBatchEditForm'
+import studyConstants from '@/constants/study.js'
 import studyEpochs from '@/api/studyEpochs'
 import terms from '@/api/controlledTerminology/terms'
 import visitConstants from '@/constants/visits'
 
 export default {
   components: {
+    CollapsibleVisitGroupForm,
+    ConfirmDialog,
     StudyActivityScheduleBatchEditForm
   },
   props: {
@@ -337,7 +387,8 @@ export default {
     ...mapGetters({
       studyActivities: 'studyActivities/studyActivities',
       sortedStudyActivities: 'studyActivities/sortedStudyActivities',
-      selectedStudy: 'studiesGeneral/selectedStudy'
+      selectedStudy: 'studiesGeneral/selectedStudy',
+      studyPreferredTimeUnit: 'studiesGeneral/studyPreferredTimeUnit'
     }),
     thirdHeaderRowTop () {
       return this.initialFirstHeaderHeight + this.firstHeaderHeight
@@ -355,6 +406,7 @@ export default {
         const fakeVisit = {
           visit_short_name: `${firstVisit.visit_short_name}-${previousVisit.visit_short_name}`,
           epoch_uid: firstVisit.epoch_uid,
+          study_day_number: `${firstVisit.study_day_number}-${previousVisit.study_day_number}`,
           study_week_number: `${firstVisit.study_week_number}-${previousVisit.study_week_number}`,
           min_visit_window_value: firstVisit.min_visit_window_value,
           max_visit_window_value: firstVisit.max_visit_window_value,
@@ -390,6 +442,12 @@ export default {
         createFakeVisit()
       }
       return result
+    },
+    timingHeaderTitle () {
+      if (!this.studyPreferredTimeUnit || this.studyPreferredTimeUnit.time_unit_name === studyConstants.STUDY_TIME_UNIT_WEEK) {
+        return this.$t('_global.week')
+      }
+      return this.$t('_global.day')
     }
   },
   data () {
@@ -402,7 +460,9 @@ export default {
       epochs: [],
       initialFirstHeaderHeight: 0,
       firstHeaderHeight: 0,
+      selectedVisits: [],
       showBatchEditForm: false,
+      showCollapsibleGroupForm: false,
       showEditForm: false,
       studyActivitySchedules: [],
       studyActivitySelection: [],
@@ -432,7 +492,7 @@ export default {
       return currentValue
     },
     getDisplayButtonIcon (rowKey) {
-      return (this.getCurrentDisplayValue(rowKey)) ? 'mdi-chevron-up' : 'mdi-chevron-down'
+      return (this.getCurrentDisplayValue(rowKey)) ? 'mdi-chevron-down' : 'mdi-chevron-right'
     },
     getGroupDisplayState (flgroup, group) {
       for (const items of Object.values(this.sortedStudyActivities[flgroup][group])) {
@@ -637,6 +697,9 @@ export default {
         })
         resp.data.forEach(schedule => {
           const visit = this.studyVisits.find(item => item.uid === schedule.study_visit_uid)
+          if (!visit) {
+            return
+          }
           if (!visit.consecutive_visit_group) {
             this.$set(
               this.currentSelectionMatrix[schedule.study_activity_uid],
@@ -669,9 +732,9 @@ export default {
       if (this.editTarget === 'activities') {
         this.$router.push({ name: 'StudyActivities', params: { tab: 'list' } })
       } else if (this.editTarget === 'epochs') {
-        this.$router.push({ name: 'StudyDesign', params: { tab: 'epochs' } })
+        this.$router.push({ name: 'StudyStructure', params: { tab: 'epochs' } })
       } else {
-        this.$router.push({ name: 'StudyDesign', params: { tab: 'visits' } })
+        this.$router.push({ name: 'StudyStructure', params: { tab: 'visits' } })
       }
     },
     loadActivities () {
@@ -687,6 +750,42 @@ export default {
     },
     onResize () {
       this.tableHeight = window.innerHeight - this.$refs.tableContainer.getBoundingClientRect().y - 60
+    },
+    compareVisits (a, b) {
+      return a.uid === b.uid
+    },
+    groupSelectedVisits () {
+      const visitUids = this.selectedVisits.map(item => item.uid)
+      studyEpochs.createCollapsibleVisitGroup(this.selectedStudy.uid, visitUids).then(() => {
+        this.collapsibleVisitGroupCreated()
+      }).catch(err => {
+        if (err.response.status === 400) {
+          this.showCollapsibleGroupForm = true
+        }
+      })
+    },
+    closeCollapsibleVisitGroupForm () {
+      this.showCollapsibleGroupForm = false
+    },
+    collapsibleVisitGroupCreated () {
+      bus.$emit('notification', { msg: this.$t('CollapsibleVisitGroupForm.creation_success') })
+      this.loadActivities()
+      this.selectedVisits = []
+    },
+    async deleteVisitGroup (groupName) {
+      const message = this.$t('DetailedFlowchart.confirm_group_deletion', { group: groupName })
+      const options = { type: 'warning' }
+      if (!await this.$refs.confirm.open(message, options)) {
+        return
+      }
+      await studyEpochs.deleteCollapsibleVisitGroup(this.selectedStudy.uid, groupName)
+      this.loadActivities()
+    },
+    getVisitTiming (studyVisit) {
+      if (!this.studyPreferredTimeUnit || this.studyPreferredTimeUnit.time_unit_name === 'week') {
+        return studyVisit.study_week_number
+      }
+      return studyVisit.study_day_number
     }
   },
   mounted () {

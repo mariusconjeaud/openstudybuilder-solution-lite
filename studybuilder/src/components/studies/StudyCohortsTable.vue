@@ -95,6 +95,7 @@
     :branches="branches"/>
   <v-dialog
     v-model="showCohortHistory"
+    @keydown.esc="closeCohortHistory"
     persistent
     max-width="1200px"
     >

@@ -34,7 +34,8 @@
               v-model="form.epoch_type"
               @input="setEpochGroups()"
               @click:clear="setEpochGroups()"
-              :disabled="studyEpoch && studyEpoch.study_visit_count > 0"
+              :disabled="studyEpoch ? true : false"
+              class="required"
               />
           </validation-provider>
         </v-col>
@@ -55,7 +56,8 @@
               v-model="form.epoch_subtype"
               @input="setEpochGroups()"
               @click:clear="setEpochGroups()"
-              :disabled="studyEpoch && studyEpoch.study_visit_count > 0"
+              :disabled="studyEpoch ? true : false"
+              class="required"
               />
           </validation-provider>
         </v-col>
@@ -129,7 +131,7 @@
         v-slot="{ errors }"
         rules="required"
         >
-        <label class="v-label">{{ $t('_global.change_description') }}</label>
+        <label class="v-label required">{{ $t('_global.change_description') }}</label>
         <v-textarea
           v-model="form.change_description"
           :error-messages="errors"

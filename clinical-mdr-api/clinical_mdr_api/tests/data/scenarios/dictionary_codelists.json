@@ -1,5 +1,5 @@
 [
-  {
+    {
         "name": "Test POST /versions codelist",
         "request": {
             "headers": {},
@@ -22,7 +22,8 @@
                 "change_description": "New draft created",
                 "user_initials": "TODO user initials",
                 "possible_actions": [
-                    "approve", "edit"
+                    "approve",
+                    "edit"
                 ]
             }
         }
@@ -54,7 +55,8 @@
                 "change_description": "changing codelist name",
                 "user_initials": "TODO user initials",
                 "possible_actions": [
-                    "approve", "edit"
+                    "approve",
+                    "edit"
                 ]
             }
         }
@@ -86,7 +88,8 @@
                 "change_description": "changing codelist name",
                 "user_initials": "TODO user initials",
                 "possible_actions": [
-                    "approve", "edit"
+                    "approve",
+                    "edit"
                 ]
             }
         }
@@ -97,7 +100,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/dictionaries/codelists/codelist_root2_uid/approve"
+            "url": "/dictionaries/codelists/codelist_root2_uid/approvals"
         },
         "response": {
             "code": 201,
@@ -125,7 +128,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/dictionaries/codelists/codelist_root1_uid/approve"
+            "url": "/dictionaries/codelists/codelist_root1_uid/approvals"
         },
         "response": {
             "code": 201,

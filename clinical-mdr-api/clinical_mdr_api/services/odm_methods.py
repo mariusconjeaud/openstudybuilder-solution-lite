@@ -43,7 +43,7 @@ class OdmMethodService(OdmGenericService[OdmMethodAR]):
         return OdmMethodAR.from_input_values(
             author=self.user_initials,
             concept_vo=OdmMethodVO.from_repository_values(
-                oid=get_input_or_new_value(concept_input.oid, "C.", concept_input.name),
+                oid=concept_input.oid,
                 name=concept_input.name,
                 method_type=concept_input.method_type,
                 formal_expression_uids=concept_input.formal_expressions,
@@ -102,7 +102,7 @@ class OdmMethodService(OdmGenericService[OdmMethodAR]):
         method = self.non_transactional_create(
             concept_input=OdmMethodPostInput(
                 library=concept_input.library_name,
-                oid=get_input_or_new_value(concept_input.oid, "C.", concept_input.name),
+                oid=get_input_or_new_value(concept_input.oid, "M.", concept_input.name),
                 name=concept_input.name,
                 method_type=concept_input.method_type,
                 formal_expressions=formal_expression_uids,

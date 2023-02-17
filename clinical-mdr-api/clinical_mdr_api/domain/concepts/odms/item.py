@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Optional, Sequence
+from typing import Callable, List, Optional
 
 from clinical_mdr_api.domain.concepts.concept_base import ConceptVO
 from clinical_mdr_api.domain.concepts.odms.odm_ar_base import OdmARBase
@@ -26,15 +26,15 @@ class OdmItemVO(ConceptVO):
     sds_var_name: Optional[str]
     origin: Optional[str]
     comment: Optional[str]
-    description_uids: Sequence[str]
-    alias_uids: Sequence[str]
-    unit_definition_uids: Sequence[str]
+    description_uids: List[str]
+    alias_uids: List[str]
+    unit_definition_uids: List[str]
     codelist_uid: Optional[str]
-    term_uids: Sequence[str]
-    activity_uids: Sequence[str]
-    xml_extension_attribute_uids: Sequence[str]
-    xml_extension_tag_uids: Sequence[str]
-    xml_extension_tag_attribute_uids: Sequence[str]
+    term_uids: List[str]
+    activity_uids: List[str]
+    vendor_attribute_uids: List[str]
+    vendor_element_uids: List[str]
+    vendor_element_attribute_uids: List[str]
 
     @classmethod
     def from_repository_values(
@@ -49,15 +49,15 @@ class OdmItemVO(ConceptVO):
         sds_var_name: Optional[str],
         origin: Optional[str],
         comment: Optional[str],
-        description_uids: Sequence[str],
-        alias_uids: Sequence[str],
-        unit_definition_uids: Sequence[str],
+        description_uids: List[str],
+        alias_uids: List[str],
+        unit_definition_uids: List[str],
         codelist_uid: Optional[str],
-        term_uids: Sequence[str],
-        activity_uids: Sequence[str],
-        xml_extension_tag_uids: Sequence[str],
-        xml_extension_attribute_uids: Sequence[str],
-        xml_extension_tag_attribute_uids: Sequence[str],
+        term_uids: List[str],
+        activity_uids: List[str],
+        vendor_element_uids: List[str],
+        vendor_attribute_uids: List[str],
+        vendor_element_attribute_uids: List[str],
     ) -> "OdmItemVO":
         return cls(
             oid=oid,
@@ -76,9 +76,9 @@ class OdmItemVO(ConceptVO):
             codelist_uid=codelist_uid,
             term_uids=term_uids,
             activity_uids=activity_uids,
-            xml_extension_tag_uids=xml_extension_tag_uids,
-            xml_extension_attribute_uids=xml_extension_attribute_uids,
-            xml_extension_tag_attribute_uids=xml_extension_tag_attribute_uids,
+            vendor_element_uids=vendor_element_uids,
+            vendor_attribute_uids=vendor_attribute_uids,
+            vendor_element_attribute_uids=vendor_element_attribute_uids,
             name_sentence_case=None,
             definition=None,
             abbreviation=None,
@@ -131,11 +131,12 @@ class OdmItemVO(ConceptVO):
                     f"ODM Item tried to connect to non existing Unit Definition identified by uid ({unit_definition_uid})."
                 )
 
-        if self.codelist_uid is not None:
-            if not find_codelist_attribute_callback(self.codelist_uid):
-                raise BusinessLogicException(
-                    f"ODM Item tried to connect to non existing Codelist identified by uid ({self.codelist_uid})."
-                )
+        if self.codelist_uid is not None and not find_codelist_attribute_callback(
+            self.codelist_uid
+        ):
+            raise BusinessLogicException(
+                f"ODM Item tried to connect to non existing Codelist identified by uid ({self.codelist_uid})."
+            )
 
         if self.term_uids:
             if not self.codelist_uid:
@@ -148,7 +149,6 @@ class OdmItemVO(ConceptVO):
                 for term in find_all_terms_callback(
                     codelist_uid=self.codelist_uid
                 ).items
-                if self.term_uids
             ]
             for term_uid in self.term_uids:
                 if term_uid not in codelist_term_uids:
@@ -276,15 +276,13 @@ class OdmItemRefVO:
     item_group_uid: str
     order_number: int
     mandatory: str
-    data_entry_required: str
-    sdv: str
-    locked: str
     key_sequence: str
     method_oid: str
     imputation_method_oid: str
     role: str
     role_codelist_oid: str
     collection_exception_condition_oid: Optional[str]
+    vendor: dict
 
     @classmethod
     def from_repository_values(
@@ -295,14 +293,12 @@ class OdmItemRefVO:
         item_group_uid: str,
         order_number: int,
         mandatory: bool,
-        data_entry_required: bool,
-        sdv: bool,
-        locked: bool,
         key_sequence: str,
         method_oid: str,
         imputation_method_oid: str,
         role: str,
         role_codelist_oid: str,
+        vendor: dict,
         collection_exception_condition_oid: Optional[str] = None,
     ) -> "OdmItemRefVO":
         return cls(
@@ -312,15 +308,13 @@ class OdmItemRefVO:
             item_group_uid=item_group_uid,
             order_number=order_number,
             mandatory=booltostr(mandatory),
-            data_entry_required=booltostr(data_entry_required),
-            sdv=booltostr(sdv),
-            locked=booltostr(locked),
             key_sequence=key_sequence,
             method_oid=method_oid,
             imputation_method_oid=imputation_method_oid,
             role=role,
             role_codelist_oid=role_codelist_oid,
             collection_exception_condition_oid=collection_exception_condition_oid,
+            vendor=vendor,
         )
 
 
@@ -331,10 +325,17 @@ class OdmItemTermVO:
     mandatory: bool
     order: int
     display_text: str
+    version: str
 
     @classmethod
     def from_repository_values(
-        cls, uid: str, name: str, mandatory: bool, order: int, display_text: str
+        cls,
+        uid: str,
+        name: str,
+        mandatory: bool,
+        order: int,
+        display_text: str,
+        version: str,
     ) -> "OdmItemTermVO":
         return cls(
             uid=uid,
@@ -342,6 +343,7 @@ class OdmItemTermVO:
             mandatory=mandatory,
             order=order,
             display_text=display_text,
+            version=version,
         )
 
 

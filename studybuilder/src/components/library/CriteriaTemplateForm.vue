@@ -5,7 +5,7 @@
   :load-form-function="loadForm"
   :prepare-payload-function="preparePayload"
   :help-items="helpItems"
-  :title-context="{ type }"
+  :title-context="{ type: criteriaType.sponsor_preferred_name }"
   v-bind="$attrs"
   v-on="$listeners"
   >
@@ -38,7 +38,6 @@
 <script>
 import BaseTemplateForm from './BaseTemplateForm'
 import CriteriaTemplateIndexingForm from './CriteriaTemplateIndexingForm'
-import terms from '@/api/controlledTerminology/terms'
 import { VueEditor } from 'vue2-editor'
 
 export default {
@@ -49,7 +48,7 @@ export default {
   },
   props: {
     template: Object,
-    type: String
+    criteriaType: Object
   },
   data () {
     return {
@@ -63,9 +62,7 @@ export default {
         'CriteriaTemplateForm.indication',
         'CriteriaTemplateForm.criterion_cat',
         'CriteriaTemplateForm.criterion_sub_cat'
-      ],
-      types: [],
-      typeUid: ''
+      ]
     }
   },
   methods: {
@@ -80,15 +77,9 @@ export default {
       this.$store.commit('form/SET_FORM', form)
     },
     preparePayload (payload) {
-      payload.typeUid = this.typeUid
+      payload.type_uid = this.criteriaType.term_uid
       Object.assign(payload, this.$refs.indexingForm.preparePayload(payload))
     }
-  },
-  mounted () {
-    terms.getByCodelist('criteriaTypes').then(resp => {
-      this.types = resp.data.items
-      this.typeUid = this.types.find(item => item.sponsor_preferred_name.toLowerCase().startsWith(this.type)).termUid
-    })
   }
 }
 </script>

@@ -91,6 +91,7 @@
     />
   <v-dialog
     v-model="showElementHistory"
+    @keydown.esc="closeElementHistory"
     persistent
     max-width="1200px"
     >
@@ -230,7 +231,7 @@ export default {
       this.showForm = true
     },
     closeForm () {
-      this.activeElement = {}
+      this.activeElement = null
       this.showForm = false
       this.getStudyElements()
     },

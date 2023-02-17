@@ -63,20 +63,9 @@
       </v-icon>
     </v-chip>
   </div>
-  <v-menu offset-y v-if="isAuthenticated">
-    <template v-slot:activator="{ on, attrs }">
-      <v-btn data-cy="topbar-admin-icon" icon :title="$t('Topbar.admin')" v-bind="attrs" v-on="on">
-        <v-icon>mdi-cog</v-icon>
-      </v-btn>
-    </template>
-    <v-list dense>
-      <v-list-item data-cy="topbar-admin-list" @click="openSettingsBox">
-        <v-list-item-content>
-          <v-list-item-title>{{ $t('Topbar.settings') }}</v-list-item-title>
-        </v-list-item-content>
-      </v-list-item>
-    </v-list>
-  </v-menu>
+  <v-btn data-cy="topbar-admin-icon" icon :title="$t('Topbar.admin')" @click="openSettingsBox">
+    <v-icon>mdi-cog</v-icon>
+  </v-btn>
   <v-menu offset-y v-if="isAuthenticated">
     <template v-slot:activator="{ on, attrs }">
       <v-btn data-cy="topbar-help" icon :title="$t('Topbar.help')" v-bind="attrs" v-on="on">
@@ -164,12 +153,12 @@
   <v-dialog v-model="showAboutDialog" max-width="1200">
     <about @close="showAboutDialog = false" />
   </v-dialog>
-  <v-dialog v-model="settingsDialog" max-width="800">
+  <v-dialog v-model="settingsDialog" @keydown.esc="settingsDialog = false" max-width="800">
     <settings @close="settingsDialog = false" />
   </v-dialog>
   <study-form
-  :open="addStudyForm"
-  @close="addStudyForm = false"/>
+    :open="addStudyForm"
+    @close="addStudyForm = false"/>
   <confirm-dialog ref="confirm" :text-cols="5" :action-cols="6">
     <template v-slot:actions>
       <v-btn
@@ -270,8 +259,8 @@ export default {
         }
       ],
       showAboutDialog: false,
-      showSelectForm: false,
       settingsDialog: false,
+      showSelectForm: false,
       addStudyForm: false
     }
   },
@@ -282,9 +271,6 @@ export default {
     openAboutBox () {
       this.showAboutDialog = true
     },
-    reloadPage () {
-      document.location.reload()
-    },
     openSettingsBox () {
       this.settingsDialog = true
     },
@@ -294,6 +280,9 @@ export default {
     redirectToStudyTable () {
       this.$refs.confirm.cancel()
       this.$router.push({ name: 'SelectOrAddStudy' })
+    },
+    reloadPage () {
+      document.location.reload()
     }
   }
 }

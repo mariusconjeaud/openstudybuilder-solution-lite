@@ -74,14 +74,14 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/ct/codelists/ct_codelist_root1/names/approve"
+            "url": "/ct/codelists/ct_codelist_root1/names/approvals"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "The object is not in draft status.",
                 "method": "POST",
-                "path": "http://testserver/ct/codelists/ct_codelist_root1/names/approve",
+                "path": "http://testserver/ct/codelists/ct_codelist_root1/names/approvals",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }

@@ -9,7 +9,19 @@ from aiohttp_trace import request_tracer
 
 from importers.functions.utils import create_logger, load_env
 from importers.importer import BaseImporter, open_file, open_file_async
-from importers.functions.parsers import map_boolean, pass_float
+from importers.functions.parsers import map_boolean, parse_float
+from importers.api_bindings import (
+    CODELIST_UNIT_DIMENSION,
+    CODELIST_UNIT_SUBSET,
+    UNIT_SUBSET_AGE,
+    UNIT_SUBSET_DOSE,
+    UNIT_SUBSET_STUDY_TIME,
+    UNIT_SUBSET_TIME,
+    UNIT_SUBSET_STRENGTH,
+    UNIT_SUBSET_STUDY_PREFERRED_TIME_UNIT,
+    CODELIST_UNIT,
+    CODELIST_NAME_MAP,
+)
 
 logger = create_logger("legacy_mdr_migrations")
 
@@ -41,6 +53,21 @@ class Units(BaseImporter):
         super().__init__(api=api, metrics_inst=metrics_inst, cache=cache)
         self.sponsor_codelist_legacy_name_map = {}
         self.init_legacy_map(MDR_MIGRATION_SPONSOR_CODELIST_DEFINITIONS)
+
+    def fetch_ct_units_terms(self):
+        params={"codelist_uid": CODELIST_NAME_MAP[CODELIST_UNIT]}
+        items = self.api.get_all_from_api("/ct/terms/attributes", params=params)
+        if items is None:
+            items = []
+        self.log.info(f"Got {len(items)} terms from unit codelist")
+        return items
+
+    def lookup_ct_unit_uid(self, units, concept_id, submval):
+        for unit in units:
+            if unit["concept_id"] == concept_id and unit["code_submission_value"] == submval:
+                return unit["term_uid"]
+        return None
+
 
     @open_file()
     def init_legacy_map(self, csvfile):
@@ -100,7 +127,9 @@ class Units(BaseImporter):
                     "nci_preferred_name": "UNK",
                     "definition": row[headers.index("description")],
                     "sponsor_preferred_name": row[headers.index("CD_VAL_LB")],
-                    "sponsor_preferred_name_sentence_case": row[headers.index("CD_VAL_LB")],
+                    "sponsor_preferred_name_sentence_case": row[
+                        headers.index("CD_VAL_LB")
+                    ],
                     "library_name": "Sponsor",
                     "order": row[headers.index("CD_VAL_SORT_SEQ")],
                 },
@@ -118,7 +147,7 @@ class Units(BaseImporter):
         if post_status == 201:
             self.cache.added_terms[term_name] = post_result
             status, result = await self.api.approve_async(
-                "/ct/terms/" + post_result["term_uid"] + "/names/approve",
+                f"/ct/terms/{post_result['term_uid']}/names/approvals",
                 session=session,
             )
             if status != 201:
@@ -126,7 +155,7 @@ class Units(BaseImporter):
             else:
                 self.metrics.icrement("/ct/terms-NamesApprove")
             status, result = await self.api.approve_async(
-                "/ct/terms/" + post_result["term_uid"] + "/attributes/approve",
+                f"/ct/terms/{post_result['term_uid']}/attributes/approvals",
                 session=session,
             )
             if status != 201:
@@ -148,7 +177,7 @@ class Units(BaseImporter):
             if term_uid:
                 codelist_uid = data["body"]["codelist_uid"]
                 result = await self.api.post_to_api_async(
-                    url="/ct/codelists/" + codelist_uid + "/terms",
+                    url=f"/ct/codelists/{codelist_uid}/terms",
                     body={"term_uid": term_uid, "order": data["body"]["order"]},
                     session=session,
                 )
@@ -179,21 +208,26 @@ class Units(BaseImporter):
             )
         all_unit_dimension_terms = self.api.get_all_identifiers(
             self.api.get_all_from_api(
-                "/ct/terms/attributes?codelist_name=Unit Dimension"
+                f"/ct/terms/attributes?codelist_name={CODELIST_UNIT_DIMENSION}"
             ),
             identifier="code_submission_value",
             value="term_uid",
         )
         all_unit_subset_terms = self.api.get_all_identifiers(
-            self.api.get_all_from_api("/ct/terms/names?codelist_name=Unit Subset"),
+            self.api.get_all_from_api(
+                f"/ct/terms/names?codelist_name={CODELIST_UNIT_SUBSET}"
+            ),
             identifier="sponsor_preferred_name",
             value="term_uid",
         )
-        age_unit_subset_uid = all_unit_subset_terms["Age Unit"]
-        dose_unit_subset_uid = all_unit_subset_terms["Dose Unit"]
-        study_time_subset_uid = all_unit_subset_terms["Study Time"]
-        time_unit_subset_uid = all_unit_subset_terms["Time Unit"]
-        strength_unit_subset_uid = all_unit_subset_terms["Strength Unit"]
+        all_ct_units = self.fetch_ct_units_terms()
+
+        age_unit_subset_uid = all_unit_subset_terms[UNIT_SUBSET_AGE]
+        dose_unit_subset_uid = all_unit_subset_terms[UNIT_SUBSET_DOSE]
+        study_time_subset_uid = all_unit_subset_terms[UNIT_SUBSET_STUDY_TIME]
+        time_unit_subset_uid = all_unit_subset_terms[UNIT_SUBSET_TIME]
+        strength_unit_subset_uid = all_unit_subset_terms[UNIT_SUBSET_STRENGTH]
+        study_preferred_unit_subset_uid = all_unit_subset_terms[UNIT_SUBSET_STUDY_PREFERRED_TIME_UNIT]
         for row in readCSV:
             name = row[headers.index("UNIT")]
 
@@ -203,34 +237,35 @@ class Units(BaseImporter):
                 row[headers.index("UNIT_DIMENSION")]
             )
 
-
             ct_units = []
             # Link to CDISC units
-            # TODO look up via submission value instead of "guessing" uid?
             if row[headers.index("CT_CD")] != "":
                 if row[headers.index("CT_SUBMVAL")] not in ("", "0"):
-                    # Guess uid, we know it should be  Cnnnnn_{submission value}
-                    ct_units.append(
-                        row[headers.index("CT_CD")]
-                        + "_"
-                        + row[headers.index("CT_SUBMVAL")]
-                    )
+                    ct_unit_uid = self.lookup_ct_unit_uid(all_ct_units, row[headers.index("CT_CD")], row[headers.index("CT_SUBMVAL")])
+                    if ct_unit_uid is not None:
+                        self.log.info(f"Linking concept '{row[headers.index('CT_CD')]}' with submission value '{row[headers.index('CT_SUBMVAL')]}' to uid '{ct_unit_uid}'")
+                        ct_units.append(ct_unit_uid)
+                    else:
+                        self.log.warning(f"Cannot find uid for concept '{row[headers.index('CT_CD')]}' with submission value '{row[headers.index('CT_SUBMVAL')]}'")
                 if row[headers.index("CT_SUBMVAL_2")] not in ("", "0"):
-                    ct_units.append(
-                        row[headers.index("CT_CD")]
-                        + "_"
-                        + row[headers.index("CT_SUBMVAL_2")]
-                    )
+                    ct_unit_uid = self.lookup_ct_unit_uid(all_ct_units, row[headers.index("CT_CD")], row[headers.index("CT_SUBMVAL_2")])
+                    if ct_unit_uid is not None:
+                        self.log.info(f"Linking concept '{row[headers.index('CT_CD')]}' with submission value '{row[headers.index('CT_SUBMVAL_2')]}' to uid '{ct_unit_uid}'")
+                        ct_units.append(ct_unit_uid)
+                    else:
+                        self.log.warning(f"Cannot find uid for concept '{row[headers.index('CT_CD')]}' with submission value '{row[headers.index('CT_SUBMVAL_2')]}'")
             # Link to sponsor defined units
             if row[headers.index("SPDEF_SUBMVAL")] != "":
-                submval =  row[headers.index("SPDEF_SUBMVAL")]
-                filt = {"attributes.code_submission_value": {"v": [submval], "op": "eq"}}
+                submval = row[headers.index("SPDEF_SUBMVAL")]
+                filt = {
+                    "attributes.code_submission_value": {"v": [submval], "op": "eq"}
+                }
                 unitdefs = self.api.get_all_from_api(
                     f"/ct/terms?codelist_name=Unit&filters={json.dumps(filt)}"
                 )
-                #print(json.dumps(unitdefs, indent=2))
+                # print(json.dumps(unitdefs, indent=2))
                 unit_uids = [v["term_uid"] for v in unitdefs]
-                #print(json.dumps(unit_uids, indent=2))
+                # print(json.dumps(unit_uids, indent=2))
                 ct_units.extend(unit_uids)
 
             unit_subsets = []
@@ -244,6 +279,8 @@ class Units(BaseImporter):
                 unit_subsets.append(time_unit_subset_uid)
             if row[headers.index("STRENGTH_UNIT_SUBSET")] == "Y":
                 unit_subsets.append(strength_unit_subset_uid)
+            if row[headers.index("STUDY_PREFERRED_TIME_UNIT")] == "Y":
+                unit_subsets.append(study_preferred_unit_subset_uid)
 
             # Mark as template parameter if part of any subset
             # template_parameter = len(unit_subsets) > 0
@@ -268,10 +305,10 @@ class Units(BaseImporter):
                         row[headers.index("US_CONVENTIONAL_UNIT")]
                     ),
                     "legacy_code": row[headers.index("UNIT")],
-                    "molecular_weight_conv_expon": pass_float(
+                    "molecular_weight_conv_expon": parse_float(
                         row[headers.index("MOLECULAR_WEIGHT_CONV_EXPON")]
                     ),
-                    "conversion_factor_to_master": pass_float(
+                    "conversion_factor_to_master": parse_float(
                         row[headers.index("CONVERTION_FACTOR_TO_MASTER")]
                     ),
                     "unit_dimension": unit_dimension_uid,
@@ -299,7 +336,7 @@ class Units(BaseImporter):
         await asyncio.gather(*api_tasks)
 
     @open_file_async()
-    async def handle_sponsor_units(self, csvfile, code_lists_uids, session):
+    async def handle_sponsor_units(self, csvfile, session):
         self.ensure_cache()
         readCSV = csv.reader(csvfile, delimiter=",")
         headers = next(readCSV)
@@ -329,15 +366,17 @@ class Units(BaseImporter):
                     "nci_preferred_name": row[headers.index("NCI_PREFERRED_NAME")],
                     "definition": row[headers.index("DEFINITION")],
                     "sponsor_preferred_name": row[headers.index("SPDEF_SUBMVAL")],
-                    "sponsor_preferred_name_sentence_case": row[headers.index("SPDEF_SUBMVAL")],
+                    "sponsor_preferred_name_sentence_case": row[
+                        headers.index("SPDEF_SUBMVAL")
+                    ],
                     "library_name": "Sponsor",
-                    "order": None
+                    "order": None,
                 },
             }
 
-            data["body"]["codelist_uid"] = code_lists_uids["Unit"]
+            data["body"]["codelist_uid"] = CODELIST_NAME_MAP[CODELIST_UNIT]
             # if not existing_rows.get(data["body"]["sponsor_preferred_name"]):
-            #print(json.dumps(data, indent=2))
+            # print(json.dumps(data, indent=2))
             api_tasks.append(
                 self.process_simple_term_migration(data=data, session=session)
             )
@@ -353,7 +392,6 @@ class Units(BaseImporter):
             )
             await self.handle_sponsor_units(
                 MDR_MIGRATION_SPONSOR_UNITS,
-                code_lists_uids=code_lists_uids,
                 session=session,
             )
             await self.handle_unit_definitions(MDR_MIGRATION_UNIT_DIF, session)

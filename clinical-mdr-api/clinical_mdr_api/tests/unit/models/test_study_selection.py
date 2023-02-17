@@ -81,7 +81,9 @@ def study_selection_endpoints_aggregates_with_given_study_uid_study_objective_ui
                 start_date=draw(datetimes()),
                 endpoint_uid=draw(non_empty_text()),
                 endpoint_version=draw(non_empty_text()),
-                endpoint_units=draw(non_empty_text()),
+                endpoint_units=[
+                    {"uid": draw(non_empty_text()), "name": draw(non_empty_text())}
+                ],
                 endpoint_level_uid=draw(non_empty_text()),
                 endpoint_sublevel_uid=draw(non_empty_text()),
                 endpoint_level_order=0,
@@ -101,7 +103,10 @@ def study_selection_endpoints_aggregates_with_given_study_uid_study_objective_ui
                 start_date=draw(datetimes()),
                 endpoint_uid=draw(non_empty_text()),
                 endpoint_version=draw(non_empty_text()),
-                endpoint_units=draw(non_empty_text()),
+                endpoint_units=[
+                    {"uid": draw(non_empty_text()), "name": draw(non_empty_text())},
+                    {"uid": draw(non_empty_text()), "name": draw(non_empty_text())},
+                ],
                 endpoint_level_uid=draw(non_empty_text()),
                 endpoint_sublevel_uid=draw(non_empty_text()),
                 endpoint_level_order=0,

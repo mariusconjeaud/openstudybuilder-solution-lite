@@ -34,6 +34,7 @@ aenum = "~=3.1.11"
 Pillow = "~=9.2.0"
 xsdata = "==22.9"
 cached-property = "~=1.5.2"
+weasyprint = "~=57.1"
 
 [dev-packages]
 pytest = "~=7.1.2"
@@ -53,6 +54,7 @@ pytest-forked = "~=1.4.0"
 pytest-xdist = "~=2.5.0"
 parameterized = "~=0.8.1"
 deepdiff = "~=6.2.1"
+schemathesis = "~=3.17.5"
 
 [requires]
 python_version = "3.7"
@@ -60,14 +62,30 @@ python_version = "3.7"
 [scripts]
 dev = "uvicorn --host=0.0.0.0 --port=8000 clinical_mdr_api.main:app --reload"
 prod = "uvicorn --host=0.0.0.0 --port=8000 --limit-concurrency=120 --workers=4 --loop=asyncio clinical_mdr_api.main:app"
-test = "pytest"
+test = "pytest -s"
 dist = "python setup.py bdist_wheel"
 package = "pip wheel -r requirements.txt -w dist"
-testunit = "pytest --cov-report html:coverage_unit_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api  --junitxml=unit_report.xml clinical_mdr_api/tests/unit/"
-testint = "pytest -n 2 --dist loadfile --cov-report html:coverage_integration_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=int_report.xml clinical_mdr_api/tests/integration"
-testauth = "pytest --cov-report html:coverage_auth_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=auth_report.xml clinical_mdr_api/tests/oauth/"
-test-telemetry = "pytest --cov-report html:coverage_telemetry_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=telemetry_report.xml clinical_mdr_api/tests/telemetry/"
+testunit = "pytest -s --cov-report html:coverage_unit_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api  --junitxml=unit_report.xml clinical_mdr_api/tests/unit/"
+testint = "pytest -s -n 2 --dist loadfile --cov-report html:coverage_integration_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=int_report.xml clinical_mdr_api/tests/integration"
+testauth = "pytest -s --cov-report html:coverage_auth_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=auth_report.xml clinical_mdr_api/tests/oauth/"
+test-telemetry = "pytest -s --cov-report html:coverage_telemetry_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=telemetry_report.xml clinical_mdr_api/tests/telemetry/"
 lint = "pylint clinical_mdr_api"
 black = "python -m black clinical_mdr_api"
 isort = "python -m isort clinical_mdr_api"
+format = """sh -c "
+    python -m isort clinical_mdr_api \
+    && python -m black clinical_mdr_api \
+"
+"""
 openapi = "python generate_openapi_json.py"
+schemathesis = """sh -c "
+    st run \
+        --checks=all \
+        --base-url=http://localhost:8000 \
+        --hypothesis-max-examples=10 \
+        --junit-xml=schemathesis_report.xml \
+        --report=schemathesis_report.tgz \
+        --show-errors-tracebacks \
+        openapi.json
+"
+"""

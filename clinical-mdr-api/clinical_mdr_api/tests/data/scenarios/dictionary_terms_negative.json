@@ -74,52 +74,52 @@
                         "headers": {},
                         "method": "POST",
                         "request": {},
-                        "url": "/dictionaries/terms/term_root1_uid/approve"
+                        "url": "/dictionaries/terms/term_root1_uid/approvals"
                 },
                 "response": {
                         "code": 400,
                         "result": {
                                 "message": "The object is not in draft status.",
                                 "method": "POST",
-                                "path": "http://testserver/dictionaries/terms/term_root1_uid/approve",
+                                "path": "http://testserver/dictionaries/terms/term_root1_uid/approvals",
                                 "time": "2020-11-10T01:51:17.884429",
                                 "type": "BusinessLogicException"
                         }
                 }
         },
         {
-                "name": "Test POST inactivate non FINAL term",
+                "name": "Test DELETE activations non FINAL term",
                 "request": {
                         "headers": {},
-                        "method": "POST",
+                        "method": "DELETE",
                         "request": {},
-                        "url": "/dictionaries/terms/term_root2_uid/inactivate"
+                        "url": "/dictionaries/terms/term_root2_uid/activations"
                 },
                 "response": {
                         "code": 400,
                         "result": {
                                 "message": "Cannot retire draft version.",
-                                "method": "POST",
-                                "path": "http://testserver/dictionaries/terms/term_root2_uid/inactivate",
+                                "method": "DELETE",
+                                "path": "http://testserver/dictionaries/terms/term_root2_uid/activations",
                                 "time": "2020-11-10T01:51:17.884429",
                                 "type": "BusinessLogicException"
                         }
                 }
         },
         {
-                "name": "Test POST reactivate non retired term",
+                "name": "Test POST activations non retired term",
                 "request": {
                         "headers": {},
                         "method": "POST",
                         "request": {},
-                        "url": "/dictionaries/terms/term_root2_uid/reactivate"
+                        "url": "/dictionaries/terms/term_root2_uid/activations"
                 },
                 "response": {
                         "code": 400,
                         "result": {
                                 "message": "Only RETIRED version can be reactivated.",
                                 "method": "POST",
-                                "path": "http://testserver/dictionaries/terms/term_root2_uid/reactivate",
+                                "path": "http://testserver/dictionaries/terms/term_root2_uid/activations",
                                 "time": "2020-11-10T01:51:17.884429",
                                 "type": "BusinessLogicException"
                         }

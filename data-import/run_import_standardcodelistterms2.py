@@ -8,7 +8,8 @@ from aiohttp_trace import request_tracer
 
 from importers.functions.utils import create_logger, load_env
 from importers.importer import BaseImporter, open_file, open_file_async
-from importers.functions.parsers import map_boolean, pass_float
+from importers.functions.parsers import map_boolean, parse_float
+from importers.api_bindings import CODELIST_EPOCH_TYPE, CODELIST_ELEMENT_TYPE
 
 logger = create_logger("legacy_mdr_migrations")
 
@@ -58,6 +59,8 @@ MDR_MIGRATION_CONFIRMATORY_PURPOSE = load_env("MDR_MIGRATION_CONFIRMATORY_PURPOS
 MDR_MIGRATION_NONCONFIRMATORY_PURPOSE = load_env("MDR_MIGRATION_NONCONFIRMATORY_PURPOSE")
 MDR_MIGRATION_TRIAL_BLINDING_SCHEMA = load_env("MDR_MIGRATION_TRIAL_BLINDING_SCHEMA")
 MDR_MIGRATION_ROLE = load_env("MDR_MIGRATION_ROLE")
+MDR_MIGRATION_DISEASE_MILESTONE = load_env("MDR_MIGRATION_DISEASE_MILESTONE")
+MDR_MIGRATION_REGISTID = load_env("MDR_MIGRATION_REGISTID")
 
 # Import terms to standard codelists in sponsor library
 class StandardCodelistTerms2(BaseImporter):
@@ -69,8 +72,7 @@ class StandardCodelistTerms2(BaseImporter):
     @open_file_async()
     async def migrate_term(self, csvfile, codelist_name, code_lists_uids, session):
         self.ensure_cache()
-        readCSV = csv.reader(csvfile, delimiter=",")
-        headers = next(readCSV)
+        readCSV = csv.DictReader(csvfile, delimiter=",")
         api_tasks = []
 
         existing_rows = self.api.get_all_identifiers(
@@ -82,7 +84,7 @@ class StandardCodelistTerms2(BaseImporter):
         if codelist_name == self.visit_type_codelist_name:
             all_epoch_type_code_subm_values = self.api.get_all_identifiers(
                 self.api.get_all_from_api(
-                    "/ct/terms/attributes?codelist_name=Epoch Type"
+                    f"/ct/terms/attributes?codelist_name={CODELIST_EPOCH_TYPE}"
                 ),
                 identifier="code_submission_value",
                 value="term_uid",
@@ -90,7 +92,7 @@ class StandardCodelistTerms2(BaseImporter):
         if codelist_name == self.element_subtype_codelist_name:
             all_element_type_code_subm_values = self.api.get_all_identifiers(
                 self.api.get_all_from_api(
-                    "/ct/terms/attributes?codelist_name=Element Type"
+                    f"/ct/terms/attributes?codelist_name={CODELIST_ELEMENT_TYPE}"
                 ),
                 identifier="code_submission_value",
                 value="term_uid",
@@ -98,25 +100,23 @@ class StandardCodelistTerms2(BaseImporter):
         for row in readCSV:
             data = {
                 "path": "/ct/terms",
-                "codelist": row[headers.index("CT_CD_LIST_SUBMVAL")],
+                "codelist": row["CT_CD_LIST_SUBMVAL"],
                 "body": {
                     "catalogue_name": "SDTM CT",
-                    "code_submission_value": row[headers.index("CT_SUBMVAL")],
-                    "name_submission_value": row[headers.index("CT_SUBMVAL")],
-                    "nci_preferred_name": "UNK",
-                    "definition": row[headers.index("DEFINITION")],
-                    "sponsor_preferred_name": row[headers.index("CT_NAME")],
-                    "sponsor_preferred_name_sentence_case": row[
-                        headers.index("NAME_SENTENSE_CASE")
-                    ],
+                    "code_submission_value": row["CT_SUBMVAL"],
+                    "name_submission_value": row["CT_SUBMVAL"],
+                    "nci_preferred_name": row.get("NCI_PREFERRED_NAME", "UNK"),
+                    "definition": row["DEFINITION"],
+                    "sponsor_preferred_name": row["CT_NAME"],
+                    "sponsor_preferred_name_sentence_case": row["NAME_SENTENSE_CASE"],
                     "library_name": "Sponsor",
-                    "order": row[headers.index("ORDER")]
-                    if row[headers.index("ORDER")] != ""
-                    else None,
+                    "order": row["ORDER"] if row["ORDER"] != "" else None,
                 },
             }
+            if "CT_CD" in row and row["CT_CD"] != "":
+                data["term_concept_id"] = row["CT_CD"]
             if codelist_name == self.visit_type_codelist_name:
-                linked_epoch_types = row[headers.index("EPOCHS")].split(",")
+                linked_epoch_types = row["EPOCHS"].split(",")
                 valid_epoch_uids = []
                 for epoch_type in linked_epoch_types:
                     if epoch_type in all_epoch_type_code_subm_values:
@@ -125,7 +125,7 @@ class StandardCodelistTerms2(BaseImporter):
                         )
                 data["valid_epoch_uids"] = valid_epoch_uids
             if codelist_name == self.element_subtype_codelist_name:
-                element_type_subm_value = row[headers.index("GEN_ELEM_TYPE")]
+                element_type_subm_value = row["GEN_ELEM_TYPE"]
                 if element_type_subm_value in all_element_type_code_subm_values:
                     data["element_type_uid"] = all_element_type_code_subm_values[
                         element_type_subm_value
@@ -343,6 +343,18 @@ class StandardCodelistTerms2(BaseImporter):
             await self.migrate_term(
                 MDR_MIGRATION_ROLE,
                 codelist_name="Role",
+                code_lists_uids=code_lists_uids,
+                session=session,
+            )
+            await self.migrate_term(
+                MDR_MIGRATION_DISEASE_MILESTONE,
+                codelist_name="Disease Milestone Type",
+                code_lists_uids=code_lists_uids,
+                session=session,
+            )
+            await self.migrate_term(
+                MDR_MIGRATION_REGISTID,
+                codelist_name="Registry Identifier",
                 code_lists_uids=code_lists_uids,
                 session=session,
             )

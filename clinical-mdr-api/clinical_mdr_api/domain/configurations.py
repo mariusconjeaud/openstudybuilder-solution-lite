@@ -80,7 +80,7 @@ class CTConfigValueVO:
             and self.study_field_name != previous_name
         ):
             raise ValueError(
-                f"{self.__class__.__name__} for field identified by name ({self.study_field_name}) already exists"
+                f"{type(self).__name__} for field identified by name ({self.study_field_name}) already exists"
             )
 
 

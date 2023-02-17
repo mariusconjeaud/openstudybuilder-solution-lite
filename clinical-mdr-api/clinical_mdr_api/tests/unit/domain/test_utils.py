@@ -1,5 +1,7 @@
 import unittest
+from typing import Union
 
+import pytest
 from parameterized import parameterized
 
 from clinical_mdr_api.domain import _utils
@@ -49,29 +51,18 @@ class TestServiceUtils(unittest.TestCase):
 
     def test_get_iso_lang_data_raises_exception(self):
         self.assertRaises(
-            ValueError, _utils.get_iso_lang_data, "AK", "639-1", "639-3", False
+            KeyError, _utils.get_iso_lang_data, "AK", "639-1", "639-3", False
         )
         self.assertRaises(
             KeyError, _utils.get_iso_lang_data, "ak", "639-1", "NonExistingKey"
         )
         self.assertRaises(
-            KeyError, _utils.get_iso_lang_data, "ak", "NonExistingKey", "639-3"
+            ValueError, _utils.get_iso_lang_data, "ak", "NonExistingKey", "639-3"
         )
         self.assertRaises(
-            ValueError, _utils.get_iso_lang_data, "NonExistingValue", "639-1", "639-3"
+            KeyError, _utils.get_iso_lang_data, "NonExistingValue", "639-1", "639-3"
         )
         self.assertRaises(TypeError, _utils.get_iso_lang_data, 1, "639-1", "639-3")
-
-    @parameterized.expand(
-        [
-            ("", None),
-            ("   ", None),
-            ("x", "x"),
-            (" x ", "x"),
-        ]
-    )
-    def test_normalize_string(self, string, expected):
-        assert _utils.normalize_string(string) == expected
 
     @parameterized.expand(
         [
@@ -152,3 +143,36 @@ class TestServiceUtils(unittest.TestCase):
     )
     def test_defactorize_dict(self, data, expected):
         assert _utils.defactorize_dict(data) == expected
+
+
+@pytest.mark.parametrize(
+    "inpt, result",
+    [
+        pytest.param("", None),
+        pytest.param("   ", None),
+        pytest.param("x", "x"),
+        pytest.param(" x ", "x"),
+        pytest.param("Hello ", "Hello"),
+        pytest.param(" world", "world"),
+        pytest.param(" Lord ", "Lord"),
+        pytest.param("TomAte", "TomAte"),
+        pytest.param(" 007", "007"),
+        pytest.param(" lATe sh3r!0ck #holme Z", "lATe sh3r!0ck #holme Z"),
+        pytest.param(None, None),
+    ],
+)
+def test_normalize_string(inpt: Union[str, None], result: Union[str, None]):
+    assert _utils.normalize_string(inpt) == result
+
+
+@pytest.mark.parametrize(
+    "inpt, exception_class",
+    [
+        pytest.param(1, AttributeError),
+        pytest.param(3.14, AttributeError),
+        pytest.param(True, AttributeError),
+    ],
+)
+def test_normalize_string_exceptions(inpt: Union[str, None], exception_class):
+    with pytest.raises(exception_class):
+        _utils.normalize_string(inpt)

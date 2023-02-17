@@ -218,7 +218,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/ct/codelists/ct_codelist_root3/attributes/approve"
+            "url": "/ct/codelists/ct_codelist_root3/attributes/approvals"
         },
         "response": {
             "code": 201,
@@ -323,7 +323,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/ct/codelists/CTCodelist_000002/attributes/approve"
+            "url": "/ct/codelists/CTCodelist_000002/attributes/approvals"
         },
         "response": {
             "code": 201,

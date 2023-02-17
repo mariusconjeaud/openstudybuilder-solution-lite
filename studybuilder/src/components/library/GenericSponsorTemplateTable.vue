@@ -7,12 +7,14 @@
     item-key="uid"
     :export-object-label="objectType"
     :export-data-url="urlPrefix"
+    :export-data-url-params="exportDataUrlParams"
     :server-items-length="total"
     sort-by="start_date"
     sort-desc
     :options.sync="options"
     :has-api="hasApi"
     :column-data-resource="urlPrefix"
+    :column-data-parameters="extendedColumnDataParameters"
     @filter="filter"
     >
     <template v-slot:actions="">
@@ -79,6 +81,7 @@
     </template>
   </n-n-table>
   <v-dialog v-model="showForm"
+            @keydown.esc="closeForm"
             persistent
             :fullscreen="fullscreenForm"
             :max-width="fullscreenForm ? null : '800px'"
@@ -95,15 +98,17 @@
     </slot>
   </v-dialog>
   <v-dialog
-    v-model="showOTHistory"
+    v-model="showHistory"
+    @keydown.esc="closeHistory"
     persistent
     max-width="1200px"
     >
     <history-table
-      :title="oTHistoryTitle"
-      @close="closeOTHistory"
+      :title="historyTitle"
+      @close="closeHistory"
       :headers="headers"
-      :items="oTHistoryItems"
+      :items="historyItems"
+      :html-fields="historyHtmlFields"
       />
   </v-dialog>
   <default-parameter-values-set-form
@@ -133,17 +138,17 @@ import Vue from 'vue'
 import { bus } from '@/main'
 import templates from '@/api/templates'
 import ActionsMenu from '@/components/tools/ActionsMenu'
+import dataFormating from '@/utils/dataFormating'
 import defaultParameterValues from '@/utils/defaultParameterValues'
 import DefaultParameterValuesSetForm from '@/components/library/DefaultParameterValuesSetForm'
 import HistoryTable from '@/components/tools/HistoryTable'
+import libraryConstants from '@/constants/libraries'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
 import NNTable from '@/components/tools/NNTable'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import StatusChip from '@/components/tools/StatusChip'
 import statuses from '@/constants/statuses'
 import filteringParameters from '@/utils/filteringParameters'
-import objectives from '@/api/objectives'
-import timeframes from '@/api/timeframes'
 
 export default Vue.extend({
   name: 'studybuilder-template-table',
@@ -167,6 +172,10 @@ export default Vue.extend({
     columnDataResource: {
       type: String,
       default: ''
+    },
+    columnDataParameters: {
+      type: Object,
+      required: false
     },
     headers: {
       type: Array,
@@ -198,6 +207,14 @@ export default Vue.extend({
     withIndexingProperties: {
       type: Boolean,
       default: true
+    },
+    historyFormatingFunc: {
+      type: Function,
+      required: false
+    },
+    exportDataUrlParams: {
+      type: Object,
+      required: false
     }
   },
   components: {
@@ -294,9 +311,11 @@ export default Vue.extend({
         }
       ],
       api: null,
+      historyHtmlFields: ['name', 'guidance_text'],
+      historyItems: [],
       showForm: false,
       showIndexingForm: false,
-      showOTHistory: false,
+      showHistory: false,
       showParameterValuesSetForm: false,
       selectedObject: null,
       appLabel: this.$t(this.translationType + '.singular_title'),
@@ -304,8 +323,7 @@ export default Vue.extend({
       templates: [],
       options: {},
       total: 0,
-      key: 0,
-      oTHistoryItems: []
+      key: 0
     }
   },
   computed: {
@@ -327,13 +345,18 @@ export default Vue.extend({
       }
       return result
     },
-    oTHistoryTitle () {
+    historyTitle () {
       if (this.selectedObject) {
         return this.$t(
           'GenericTemplateTable.template_history_title',
           { templateUid: this.selectedObject.uid })
       }
       return ''
+    },
+    extendedColumnDataParameters () {
+      const result = this.columnDataParameters ? { ...this.columnDataParameters } : { filters: {} }
+      result.filters['library.name'] = { v: [libraryConstants.LIBRARY_SPONSOR] }
+      return result
     }
   },
   created () {
@@ -392,21 +415,13 @@ export default Vue.extend({
     },
     async openTemplateHistory (template) {
       this.selectedObject = template
-      let resp = {}
-      const type = this.getBaseObjectType()
-      if (type === 'objective') {
-        resp = await objectives.getVersions(template.uid)
-      } else if (this.type === 'timeframe') {
-        resp = await timeframes.getVersions(template.uid)
-      } else {
-        return
-      }
-      this.oTHistoryItems = resp.data
-      this.showOTHistory = true
+      const resp = await this.api.getVersions(template.uid)
+      this.historyItems = this.transformItems(resp.data)
+      this.showHistory = true
     },
-    closeOTHistory () {
+    closeHistory () {
       this.selectedObject = null
-      this.showOTHistory = false
+      this.showHistory = false
     },
     async createNewVersion (template) {
       if (template.studyCount > 0) {
@@ -433,10 +448,6 @@ export default Vue.extend({
       this.selectedObject = null
       this.showForm = false
       this.key += 1
-    },
-    closeHistory () {
-      this.selectedObject = null
-      this.showOTHistory = false
     },
     filter (filters, sort, filtersUpdated) {
       filters = (filters) ? JSON.parse(filters) : {}
@@ -487,6 +498,24 @@ export default Vue.extend({
       let result = this.objectType.replace('Templates', '')
       if (result === 'activity') {
         result = 'activity-description'
+      }
+      return result
+    },
+    transformItems (items) {
+      const result = []
+      for (const item of items) {
+        const newItem = { ...item }
+        if (item.indications) {
+          if (item.indications.length) {
+            newItem.indications.name = dataFormating.names(item.indications)
+          } else {
+            newItem.indications.name = this.$t('_global.not_applicable_long')
+          }
+        }
+        if (this.historyFormatingFunc) {
+          this.historyFormatingFunc(newItem)
+        }
+        result.push(newItem)
       }
       return result
     }

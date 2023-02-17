@@ -14,15 +14,21 @@ export default {
     const url = '/projects'
     return repository.get(url)
   },
-  getAll (fields) {
+  getAll () {
     const url = `/${resource}`
-    if (fields !== undefined) {
-      fields = fields.join(',')
-    }
-    return repository.get(url, { params: { fields, page_size: 0 } })
+    return repository.get(url, { params: { page_size: 0 } })
   },
   getStudy (studyUid) {
     return repository.get(`${resource}/${studyUid}`)
+  },
+  getStudyPreferredTimeUnit (studyUid) {
+    return repository.get(`${resource}/${studyUid}/time-units`, { ignoreErrors: true })
+  },
+  createStudyPreferredTimeUnit (studyUid, data) {
+    return repository.post(`${resource}/${studyUid}/time-units`, data)
+  },
+  updateStudyPreferredTimeUnit (studyUid, data) {
+    return repository.patch(`${resource}/${studyUid}/time-units`, data)
   },
   getStudyProtocolTitle (studyUid) {
     return repository.get(`${resource}/${studyUid}/protocol-title`)
@@ -44,21 +50,7 @@ export default {
     return repository.get(`${resource}/${studyUid}?fields=${fields}`)
   },
   getStudyFieldsAuditTrail (studyUid, section) {
-    // FIXME: remove ASAP (we wait for the API endpoint to be fixed)
-    if (section === 'study_population') {
-      section = 'StudyPopulation'
-    }
-    if (section === 'high_level_study_design') {
-      section = 'HighLevelStudyDesign'
-    }
-    if (section === 'study_intervention') {
-      section = 'StudyIntervention'
-    }
-    if (section === 'registry_identifiers') {
-      section = 'RegistryIdentifiers'
-    }
-
-    const params = { sections: `+${section},-IdentificationMetadata` }
+    const params = { sections: `+${section},-identification_metadata` }
     return repository.get(`${resource}/${studyUid}/fields-audit-trail`, { params })
   },
   getAllStudyObjectives (params) {
@@ -222,6 +214,9 @@ export default {
     const data = { new_order: order }
     return repository.patch(`studies/${studyUid}/study-activities/${studyActivityUid}/order`, data)
   },
+  updateToApprovedActivity (studyUid, studyActivityUid) {
+    return repository.patch(`studies/${studyUid}/study-activities/${studyActivityUid}/activity-requests-approvals`)
+  },
   getStudyActivitySchedules (studyUid) {
     return repository.get(`studies/${studyUid}/study-activity-schedules`)
   },
@@ -247,8 +242,8 @@ export default {
     }
     return repository.get(`studies/${studyUid}/study-criteria`, { params })
   },
-  getStudyCriteriaAllAuditTrail (studyUid) {
-    return repository.get(`studies/${studyUid}/study-criteria/audit-trail`)
+  getStudyCriteriaAllAuditTrail (studyUid, criteriaTypeUid) {
+    return repository.get(`studies/${studyUid}/study-criteria/audit-trail?criteria_type_uid=${criteriaTypeUid}`)
   },
   getStudyCriteriaAuditTrail (studyUid, studyCriteriaUid) {
     return repository.get(`studies/${studyUid}/study-criteria/${studyCriteriaUid}/audit-trail`)
@@ -351,5 +346,33 @@ export default {
   },
   getStudyDesignFigureSvgArray (studyUid) {
     return repository.get(`${resource}/${studyUid}/design.svg`, { responseType: 'arraybuffer' })
+  },
+  getStudyDiseaseMilestones (studyUid, params) {
+    return repository.get(`${resource}/${studyUid}/study-disease-milestones`, { params })
+  },
+  getStudyDiseaseMilestonesAuditTrail (studyUid) {
+    return repository.get(`${resource}/${studyUid}/study-disease-milestones/audit-trail`)
+  },
+  getStudyDiseaseMilestoneAuditTrail (studyUid, diseaseMilestoneUid) {
+    return repository.get(`${resource}/${studyUid}/study-disease-milestones/${diseaseMilestoneUid}/audit-trail`)
+  },
+  createStudyDiseaseMilestone (studyUid, data) {
+    return repository.post(`${resource}/${studyUid}/study-disease-milestones`, data)
+  },
+  updateStudyDiseaseMilestone (studyUid, diseaseMilestoneUid, data) {
+    return repository.patch(`${resource}/${studyUid}/study-disease-milestones/${diseaseMilestoneUid}`, data)
+  },
+  updateStudyDiseaseMilestoneOrder (studyUid, diseaseMilestoneUid, order) {
+    const data = { new_order: order.new_order }
+    return repository.patch(`${resource}/${studyUid}/study-disease-milestones/${diseaseMilestoneUid}/order`, data)
+  },
+  deleteStudyDiseaseMilestone (studyUid, diseaseMilestoneUid) {
+    return repository.delete(`${resource}/${studyUid}/study-disease-milestones/${diseaseMilestoneUid}`)
+  },
+  getCtrOdmXml (studyUid) {
+    return repository.get(`${resource}/${studyUid}/ctr/odm.xml`)
+  },
+  downloadCtrOdmXml (studyUid) {
+    return repository.get(`${resource}/${studyUid}/ctr/odm.xml`, { responseType: 'arraybuffer' })
   }
 }

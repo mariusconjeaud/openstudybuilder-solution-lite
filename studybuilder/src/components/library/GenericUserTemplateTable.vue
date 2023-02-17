@@ -12,6 +12,7 @@
   :options.sync="options"
   :has-api="hasApi"
   :column-data-resource="columnDataResource"
+  :column-data-parameters="extendedColumnDataParameters"
   @filter="filter"
   >
   <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
@@ -30,6 +31,7 @@
 </template>
 
 <script>
+import libraryConstants from '@/constants/libraries'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
 import NNTable from '@/components/tools/NNTable'
 import templates from '@/api/templates'
@@ -60,14 +62,18 @@ export default {
     columnDataResource: {
       type: String,
       default: ''
+    },
+    exportDataUrlParams: {
+      type: Object,
+      required: false
     }
   },
   data () {
     return {
       headers: [
-        { text: this.$t('_global.template'), value: 'name', width: '70%' },
+        { text: this.$t('_global.template'), value: 'name', width: '70%', filteringName: 'name_plain' },
         { text: this.$t('_global.modified'), value: 'start_date' },
-        { text: this.$t('_global.modified_by'), value: 'fixme' }
+        { text: this.$t('_global.modified_by'), value: 'user_initials' }
       ],
       options: {},
       selected: [],
@@ -76,13 +82,20 @@ export default {
       api: null
     }
   },
+  computed: {
+    extendedColumnDataParameters () {
+      const result = this.columnDataParameters ? { ...this.columnDataParameters } : { filters: {} }
+      result.filters['library.name'] = { v: [libraryConstants.LIBRARY_USER_DEFINED] }
+      return result
+    }
+  },
   created () {
     this.api = templates(this.urlPrefix)
   },
   methods: {
     async filter (filters, sort, filtersUpdated) {
       filters = (filters) ? JSON.parse(filters) : {}
-      filters['library.name'] = { v: ['User Defined'] }
+      filters['library.name'] = { v: [libraryConstants.LIBRARY_USER_DEFINED] }
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
       this.api.get(params).then(resp => {

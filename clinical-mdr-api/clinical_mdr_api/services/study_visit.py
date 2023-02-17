@@ -75,7 +75,7 @@ from clinical_mdr_api.domain_repositories.study_selection.study_visit_repository
     get_valid_visit_types_for_epoch_type,
 )
 from clinical_mdr_api.exceptions import ValidationException
-from clinical_mdr_api.models import StudyVisit
+from clinical_mdr_api.models import StudyActivityScheduleCreateInput, StudyVisit
 from clinical_mdr_api.models.study_visit import (
     AllowedTimeReferences,
     AllowedVisitTypesForEpochType,
@@ -92,6 +92,9 @@ from clinical_mdr_api.services._utils import (
     calculate_diffs_history,
     service_level_generic_filtering,
     service_level_generic_header_filtering,
+)
+from clinical_mdr_api.services.study_activity_schedule import (
+    StudyActivityScheduleService,
 )
 
 
@@ -672,33 +675,31 @@ class StudyVisitService:
 
                 for epoch in study_epochs:
                     if epoch.uid == visit_input.study_epoch_uid:
-                        if epoch.previous_visit:
-                            if (
-                                visit_vo.get_absolute_duration()
-                                < epoch.previous_visit.get_absolute_duration()
-                            ):
-                                raise ValueError(
-                                    f"The following visit can't be created as previous epoch ({epoch.previous_visit.epoch.epoch.value}) "
-                                    f"ends at the {epoch.previous_visit.study_day_number} study day"
-                                )
-                        if epoch.next_visit:
-                            if (
-                                visit_vo.get_absolute_duration()
-                                > epoch.next_visit.get_absolute_duration()
-                            ):
-                                raise ValueError(
-                                    f"The following visit can't be created as the next epoch ({epoch.next_visit.epoch.epoch.value}) "
-                                    f"starts at the {epoch.next_visit.study_day_number} study day"
-                                )
+                        if epoch.previous_visit and (
+                            visit_vo.get_absolute_duration()
+                            < epoch.previous_visit.get_absolute_duration()
+                        ):
+                            raise ValueError(
+                                "The following visit can't be created as previous epoch "
+                                f"({epoch.previous_visit.epoch.epoch.value}) "
+                                f"ends at the {epoch.previous_visit.study_day_number} study day"
+                            )
+                        if epoch.next_visit and (
+                            visit_vo.get_absolute_duration()
+                            > epoch.next_visit.get_absolute_duration()
+                        ):
+                            raise ValueError(
+                                "The following visit can't be created as the next epoch "
+                                f"({epoch.next_visit.epoch.epoch.value}) "
+                                f"starts at the {epoch.next_visit.study_day_number} study day"
+                            )
             if create:
                 timeline.remove_visit(visit_vo)
 
-        if visit_input.visit_sublabel_codelist_uid:
-            if (
-                visit_input.visit_sublabel_codelist_uid
-                not in self.study_visit_sublabels
-            ):
-                raise ValueError("Visit Sub Label codelist is not used properly")
+        if visit_input.visit_sublabel_codelist_uid and (
+            visit_input.visit_sublabel_codelist_uid not in self.study_visit_sublabels
+        ):
+            raise ValueError("Visit Sub Label codelist is not used properly")
         if visit_input.visit_contact_mode_uid not in self.study_visit_contact_mode:
             raise ValueError(
                 f"The following CTTerm identified by uid {visit_input.visit_contact_mode_uid} is not a valid"
@@ -1143,3 +1144,178 @@ class StudyVisitService:
             version_object_class=StudyVisitVersion,
         )
         return data
+
+    @db.transaction
+    def remove_visit_consecutive_group(
+        self, study_uid: str, consecutive_visit_group: str
+    ):
+        study_visits = self.repo.find_all_visits_by_study_uid(study_uid=study_uid)
+        timeline = TimelineAR(study_uid=study_uid, _visits=study_visits)
+        ordered_visits = timeline.ordered_study_visits
+        for visit in ordered_visits:
+            if visit.consecutive_visit_group == consecutive_visit_group:
+                visit.consecutive_visit_group = None
+                self.repo.save(self.repo.from_neomodel_to_vo(visit))
+
+    @db.transaction
+    def assign_visit_consecutive_group(
+        self,
+        study_uid: str,
+        visits_to_assign: Sequence[str],
+        overwrite_visit_from_template: Optional[str] = None,
+    ) -> Sequence[StudyVisit]:
+        study_visits = self.repo.find_all_visits_by_study_uid(study_uid=study_uid)
+        timeline = TimelineAR(study_uid=study_uid, _visits=study_visits)
+        ordered_visits = timeline.ordered_study_visits
+
+        # Get StudyVisitVOs for these visits that should be assigned to consecutive visit group
+        visits_to_be_assigned = self._get_visits_to_be_assigned_to_cons_group(
+            visit_to_assign_uids=visits_to_assign, ordered_visits=ordered_visits
+        )
+
+        # Get visit short labels to derive the consecutive visit group name
+        visits_short_labels = sorted(
+            visit.short_visit_label for visit in visits_to_be_assigned
+        )
+        consecutive_visit_group = f"{visits_short_labels[0]}-{visits_short_labels[-1]}"
+        self._validate_consecutive_group_assignment(
+            study_uid=study_uid,
+            visit_to_assign_uids=visits_to_assign,
+            visits_to_be_assigned=visits_to_be_assigned,
+            consecutive_visit_group=consecutive_visit_group,
+            overwrite_visit_from_template=overwrite_visit_from_template,
+        )
+        updated_visits = []
+        for visit in ordered_visits:
+            if visit.uid in visits_to_assign:
+                visit.consecutive_visit_group = consecutive_visit_group
+                self.repo.save(self.repo.from_neomodel_to_vo(visit))
+                updated_visits.append(self._transform_all_to_response_model(visit))
+        return updated_visits
+
+    def _get_visits_to_be_assigned_to_cons_group(
+        self,
+        visit_to_assign_uids: Sequence[str],
+        ordered_visits: Sequence[StudyVisitVO],
+    ):
+        visits_to_assign = sorted(visit_to_assign_uids)
+        idx_of_first_vis_in_cons_group = None
+        for idx, visit in enumerate(ordered_visits):
+            if visit.uid == visits_to_assign[0]:
+                idx_of_first_vis_in_cons_group = idx
+
+        # if first visit from visits_to_assign was not found in all visits for a given Study
+        if idx_of_first_vis_in_cons_group is None:
+            raise ValidationException(
+                f"The {visits_to_assign[0]} was not found in the ordered study visits"
+            )
+
+        # get the slice of all visits that represents the visit objects that are being assigned to consecutive group
+        visits_to_be_assigned = ordered_visits[
+            idx_of_first_vis_in_cons_group : idx_of_first_vis_in_cons_group
+            + len(visits_to_assign)
+        ]
+        return visits_to_be_assigned
+
+    def _validate_consecutive_group_assignment(
+        self,
+        study_uid: str,
+        visit_to_assign_uids: Sequence[str],
+        visits_to_be_assigned: Sequence[StudyVisitVO],
+        consecutive_visit_group: str,
+        overwrite_visit_from_template: Optional[str] = None,
+    ):
+
+        visit_to_overwrite_from = None
+        for visit in visits_to_be_assigned:
+            if visit.uid == overwrite_visit_from_template:
+                visit_to_overwrite_from = visit
+        # check if none of visits that we want to assign to consecutive group is not having a group already
+        for visit in visits_to_be_assigned:
+            if visit.consecutive_visit_group:
+                if overwrite_visit_from_template:
+                    # overwrite visit with props from overwrite_visit_from_template
+                    self._overwrite_visit_from_template(
+                        visit=visit, visit_template=visit_to_overwrite_from
+                    )
+                else:
+                    raise ValidationException(
+                        f"The following visit {visit.uid} already has consecutive group {visit.consecutive_visit_group}"
+                    )
+
+        chunk_uids = [visit.uid for visit in visits_to_be_assigned]
+
+        # check if we don't have a gap between visits that we are trying to assign to a consecutive visit group
+        for visit_to_assign, ordered_visit in zip(visit_to_assign_uids, chunk_uids):
+            if visit_to_assign != ordered_visit:
+                raise ValidationException(
+                    f"The {visit_to_assign} that is trying to be assigned to {consecutive_visit_group} "
+                    f"consecutive visit group is not subsequent with other visits"
+                )
+
+        # add check if visits that we want to group are the same
+        schedules_service = StudyActivityScheduleService(author=self.author)
+        if visit_to_overwrite_from:
+            reference_visit = visit_to_overwrite_from
+        else:
+            reference_visit = visits_to_be_assigned[0]
+        reference_visit_schedules = {
+            schedule.study_activity_schedule_uid
+            for schedule in schedules_service.get_all_schedules_for_specific_visit(
+                study_uid=study_uid, study_visit_uid=reference_visit.uid
+            )
+        }
+        for visit in visits_to_be_assigned:
+            are_visits_the_same = reference_visit.compare_cons_group_equality(
+                visit_schedules=reference_visit_schedules,
+                other_visit=visit,
+                other_visit_schedules={
+                    schedule.study_activity_schedule_uid
+                    for schedule in schedules_service.get_all_schedules_for_specific_visit(
+                        study_uid=study_uid, study_visit_uid=visit.uid
+                    )
+                },
+            )
+            if not are_visits_the_same:
+                # overwrite
+                if overwrite_visit_from_template:
+                    self._overwrite_visit_from_template(
+                        visit=visit, visit_template=visit_to_overwrite_from
+                    )
+                else:
+                    raise ValidationException(
+                        f"The following visit {reference_visit.visit_name} is not the same as {visit.visit_name}"
+                    )
+
+    def _overwrite_visit_from_template(self, visit, visit_template):
+        schedules_service = StudyActivityScheduleService(author=self.author)
+
+        # remove old activity schedules
+        for schedule in schedules_service.get_all_schedules_for_specific_visit(
+            study_uid=visit.study_uid, study_visit_uid=visit.uid
+        ):
+            self._repos.study_activity_schedule_repository.delete(
+                study_uid=visit.study_uid,
+                selection_uid=schedule.study_activity_schedule_uid,
+                author=self.author,
+            )
+
+        # copy activity schedules from the visit to overwrite
+        for schedule in schedules_service.get_all_schedules_for_specific_visit(
+            study_uid=visit_template.study_uid, study_visit_uid=visit_template.uid
+        ):
+            self._repos.study_activity_schedule_repository.save(
+                schedules_service._from_input_values(
+                    study_uid=visit.study_uid,
+                    schedule_input=StudyActivityScheduleCreateInput(
+                        study_activity_uid=schedule.study_activity_uid,
+                        study_visit_uid=visit.uid,
+                        note=schedule.note,
+                    ),
+                ),
+                self.author,
+            )
+
+        # copy properties from visit_template
+        visit.copy_cons_group_visit_properties(visit_template)
+        self._repos.study_visit_repository.save(visit)

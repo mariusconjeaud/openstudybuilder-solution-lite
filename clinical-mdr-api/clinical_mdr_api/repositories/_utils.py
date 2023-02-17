@@ -158,6 +158,14 @@ def get_order_by_clause(sort_by: Optional[dict], model: BaseModel):
     return sort_paths
 
 
+def merge_q_query_filters(*args, filter_operator: "FilterOperator"):
+    if filter_operator == FilterOperator.AND and args:
+        return functools.reduce(lambda filter1, filter2: filter1 & filter2, args)
+    if filter_operator == FilterOperator.OR and args:
+        return functools.reduce(lambda filter1, filter2: filter1 | filter2, args)
+    return args
+
+
 def decrement_page_number(page_number: int) -> int:
     page_number -= 1
     return page_number
@@ -191,7 +199,6 @@ def get_version_properties_sources() -> list:
 
 
 def transform_filters_into_neomodel(filter_by: Union[dict, None], model: BaseModel):
-    neomodel_filters = {}
     q_filters = []
     filters = FilterDict(elements=filter_by)
     for prop, filter_elem in filters.elements.items():
@@ -235,7 +242,7 @@ def transform_filters_into_neomodel(filter_by: Union[dict, None], model: BaseMod
                     filter_value = filter_elem.v[0]
                     if isinstance(filter_value, str) and is_date(filter_value):
                         filter_value = f"datetime({filter_value})"
-                    neomodel_filters[filter_name] = filter_value
+                    q_filters.append(Q(**{filter_name: filter_value}))
                 else:
                     if filter_elem.op == ComparisonOperator.BETWEEN:
                         filter_elem.v.sort()
@@ -248,12 +255,12 @@ def transform_filters_into_neomodel(filter_by: Union[dict, None], model: BaseMod
                             min_bound_value
                         ):
                             min_bound_value = f"datetime({min_bound_value})"
-                        neomodel_filters[min_bound] = min_bound_value
+                        q_filters.append(Q(**{min_bound: min_bound_value}))
                         if isinstance(max_bound_value, str) and is_date(
                             max_bound_value
                         ):
                             max_bound_value = f"datetime({max_bound_value})"
-                        neomodel_filters[max_bound] = max_bound_value
+                        q_filters.append(Q(**{max_bound: max_bound_value}))
                     elif filter_elem.op == ComparisonOperator.EQUALS:
                         neomodel_filter = comparison_operator_to_neomodel.get(
                             ComparisonOperator.IN
@@ -261,7 +268,6 @@ def transform_filters_into_neomodel(filter_by: Union[dict, None], model: BaseMod
                         filter_name = f"{field_name}{neomodel_filter}"
                         filter_value = filter_elem.v
                         q_filters.append(Q(**{filter_name: filter_value}))
-                        # neomodel_filters[filter_name] = filter_value
                     else:
                         raise AttributeError(
                             f"Not valid operator {filter_elem.op.value} for the following property {prop} of type"
@@ -269,7 +275,7 @@ def transform_filters_into_neomodel(filter_by: Union[dict, None], model: BaseMod
                         )
             else:
                 raise AttributeError("Passed wrong filter field name")
-    return neomodel_filters, q_filters
+    return q_filters
 
 
 def is_date(string):
@@ -450,6 +456,7 @@ class CypherQueryBuilder:
             _values = self.filter_by.elements[key].v
             _operator = self.filter_by.elements[key].op
             _predicates = []
+            _predicate_operator = " OR "
             _parsed_operator = "="
 
             if _alias == "*":
@@ -467,6 +474,9 @@ class CypherQueryBuilder:
                 # Parse operator to use in filter for the current label
                 if ComparisonOperator(_operator) == ComparisonOperator.CONTAINS:
                     _parsed_operator = " CONTAINS "
+                elif ComparisonOperator(_operator) == ComparisonOperator.NOT_EQUALS:
+                    _predicate_operator = " AND "
+                    _parsed_operator = "<>"
                 elif ComparisonOperator(_operator) == ComparisonOperator.GREATER_THAN:
                     _parsed_operator = ">"
                 elif (
@@ -629,8 +639,8 @@ class CypherQueryBuilder:
                                     )
                                 self.parameters[_query_param_name] = el
 
-                # If multiple values, will create a clause with OR, between ()
-                _predicate = " OR ".join(_predicates)
+                # If multiple values, will create a clause with OR or AND, between ()
+                _predicate = _predicate_operator.join(_predicates)
                 if len(_values) > 1 or _alias == "*":
                     _predicate = f"({_predicate})"
 
@@ -743,7 +753,7 @@ class CypherQueryBuilder:
         """
         return re.sub(nested_regex, "_", alias)
 
-    def execute(self) -> Tuple[any, any]:
+    def execute(self) -> Tuple[Any, Any]:
         try:
             result_array, attributes_names = db.cypher_query(
                 query=self.full_query, params=self.parameters
@@ -751,11 +761,11 @@ class CypherQueryBuilder:
         except CypherSyntaxError as _ex:
             raise exceptions.ValidationException(
                 "Unsupported filtering or sort parameters specified"
-            )
+            ) from _ex
         return result_array, attributes_names
 
 
-def sb_clear_cache(caches: List[str] = None):
+def sb_clear_cache(caches: Optional[List[str]] = None):
     """
     Decorator that will clear the specified caches after the wrapped function execution.
     """
@@ -774,7 +784,7 @@ def sb_clear_cache(caches: List[str] = None):
                     if cache:
                         log.info(
                             "Clear cache '%s.%s' of size: %s",
-                            self.__class__.__name__,
+                            type(self).__name__,
                             cache_name,
                             cache.currsize,
                         )

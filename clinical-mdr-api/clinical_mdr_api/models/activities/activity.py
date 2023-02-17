@@ -78,8 +78,8 @@ class ActivitySubGroupSimpleModel(ActivityHierarchySimpleModel):
     class Config:
         orm_mode = True
 
-    uid: str = Field(
-        ...,
+    uid: Optional[str] = Field(
+        None,
         title="uid",
         description="",
         source="has_latest_value.in_subgroup.has_latest_value.uid",
@@ -93,8 +93,8 @@ class ActivityGroupSimpleModel(ActivityHierarchySimpleModel):
     class Config:
         orm_mode = True
 
-    uid: str = Field(
-        ...,
+    uid: Optional[str] = Field(
+        None,
         title="uid",
         description="",
         source="has_latest_value.in_subgroup.in_group.has_latest_value.uid",
@@ -115,9 +115,12 @@ class Activity(ActivityBase):
         find_activity_subgroup_by_uid: Callable[[str], Optional[ActivitySubGroupAR]],
         find_activity_group_by_uid: Callable[[str], Optional[ActivityGroupAR]],
     ) -> "Activity":
-        activity_group_uid = find_activity_subgroup_by_uid(
-            activity_ar.concept_vo.activity_subgroup
-        ).concept_vo.activity_group
+        contains_subgroup = False
+        if activity_ar.concept_vo.activity_subgroup:
+            activity_group_uid = find_activity_subgroup_by_uid(
+                activity_ar.concept_vo.activity_subgroup
+            ).concept_vo.activity_group
+            contains_subgroup = True
         return cls(
             uid=activity_ar.uid,
             name=activity_ar.name,
@@ -127,11 +130,15 @@ class Activity(ActivityBase):
             activity_subgroup=ActivityHierarchySimpleModel.from_activity_uid(
                 uid=activity_ar.concept_vo.activity_subgroup,
                 find_activity_by_uid=find_activity_subgroup_by_uid,
-            ),
+            )
+            if contains_subgroup
+            else None,
             activity_group=ActivityHierarchySimpleModel.from_activity_uid(
                 uid=activity_group_uid,
                 find_activity_by_uid=find_activity_group_by_uid,
-            ),
+            )
+            if contains_subgroup
+            else None,
             library_name=Library.from_library_vo(activity_ar.library).name,
             start_date=activity_ar.item_metadata.start_date,
             end_date=activity_ar.item_metadata.end_date,
@@ -142,6 +149,8 @@ class Activity(ActivityBase):
             possible_actions=sorted(
                 [_.value for _ in activity_ar.get_possible_actions()]
             ),
+            request_rationale=activity_ar.concept_vo.request_rationale,
+            replaced_by_activity=activity_ar.concept_vo.replaced_by_activity,
         )
 
     activity_subgroup: Optional[ActivityHierarchySimpleModel] = Field(
@@ -154,6 +163,16 @@ class Activity(ActivityBase):
         None,
         title="Activity Sub Group",
         description="Activity Sub Group",
+    )
+    request_rationale: Optional[str] = Field(
+        None,
+        title="The rationale of the activity request",
+        description="The rationale of the activity request",
+    )
+    replaced_by_activity: Optional[str] = Field(
+        None,
+        title="The uid of the replacing Activity",
+        description="The uid of the replacing Activity",
     )
 
 
@@ -172,6 +191,18 @@ class ActivityORM(Activity):
         title="Activity Sub Group",
         description="Activity Sub Group",
     )
+    request_rationale: Optional[str] = Field(
+        None,
+        title="The rationale of the activity request",
+        description="The rationale of the activity request",
+        source="has_latest_value.request_rationale",
+    )
+    replaced_by_activity: Optional[str] = Field(
+        None,
+        title="The uid of the replacing Activity",
+        description="The uid of the replacing Activity",
+        source="has_latest_value.replaced_by_activity.uid",
+    )
 
 
 class ActivityCommonInput(ConceptInput):
@@ -189,6 +220,7 @@ class ActivityCommonInput(ConceptInput):
 
 class ActivityInput(ActivityCommonInput):
     activity_subgroup: Optional[str] = None
+    request_rationale: Optional[str] = None
 
 
 class ActivityEditInput(ActivityInput):
@@ -197,6 +229,10 @@ class ActivityEditInput(ActivityInput):
 
 class ActivityCreateInput(ActivityInput):
     library_name: str
+
+
+class ActivityFromRequestInput(ActivityInput):
+    activity_request_uid: str
 
 
 class ActivityVersion(Activity):

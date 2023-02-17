@@ -193,7 +193,11 @@ export default {
 
       const headers = {}
       headers.Accept = format.mediaType
-      repository.get(this.dataUrl, { params: this.dataUrlParams, headers, responseType: 'blob' }).then(response => {
+      const params = { ...this.dataUrlParams }
+      if (params.page_size === undefined) {
+        params.page_size = 0
+      }
+      repository.get(this.dataUrl, { params, headers, responseType: 'blob' }).then(response => {
         this.createDownloadLink(response.data, format)
       })
     }

@@ -9,90 +9,94 @@
     :form-observer-getter="getObserver"
     :help-items="helpItems"
     >
-    <template v-slot:step.select>
-      <v-row>
-        <v-col>
-          <v-radio-group
-            v-model="subgroup"
-            :disabled="editing"
-          >
-            <v-radio :label="$t('ActivityForms.group')" :value="false" />
-            <v-radio :label="$t('ActivityForms.subgroup')" :value="true" />
-          </v-radio-group>
-        </v-col>
-      </v-row>
+    <template v-slot:step.select="{ step }">
+      <validation-observer :ref="`observer_${step}`">
+        <v-row>
+          <v-col>
+            <v-radio-group
+              v-model="subgroup"
+              :disabled="editing"
+            >
+              <v-radio :label="$t('ActivityForms.group')" :value="false" />
+              <v-radio :label="$t('ActivityForms.subgroup')" :value="true" />
+            </v-radio-group>
+          </v-col>
+        </v-row>
+      </validation-observer>
     </template>
-    <template v-slot:step.details>
-      <validation-provider
-        v-slot="{ errors }"
-        rules="required"
-        v-if="subgroup"
-        >
-        <v-row>
-          <v-col>
-            <v-autocomplete
-              v-model="form.activity_group"
-              :items="groups"
-              :label="$t('ActivityForms.groups')"
-              item-text="name"
-              item-value="uid"
-              dense
-              clearable
-              :error-messages="errors"
-            />
-          </v-col>
-        </v-row>
-      </validation-provider>
-      <validation-provider
-        v-slot="{ errors }"
-        rules="required"
-        >
-        <v-row>
-          <v-col>
-            <v-text-field
-              v-model="form.name"
-              :label="$t('ActivityForms.name')"
-              hide-details
-              :error-messages="errors"
-            />
-          </v-col>
-        </v-row>
-      </validation-provider>
-      <validation-provider
-        v-slot="{ errors }"
-        rules="required"
-        >
-        <v-row>
-          <v-col>
-            <v-textarea
-              v-model="form.definition"
-              :label="$t('ActivityForms.definition')"
-              hide-details
-              :error-messages="errors"
-              auto-grow
-              rows="1"
-            />
-          </v-col>
-        </v-row>
-      </validation-provider>
-      <validation-provider
-        v-slot="{ errors }"
-        rules="required"
-        >
-        <v-row>
-          <v-col>
-            <v-textarea
-              v-if="editing"
-              v-model="form.change_description"
-              :label="$t('ActivityForms.change_description')"
-              hide-details
-              :error-messages="errors"
-              auto-grow
-              rows="1"
-            />
-          </v-col>
-        </v-row>
-      </validation-provider>
+    <template v-slot:step.details="{ step }">
+      <validation-observer :ref="`observer_${step}`">
+        <validation-provider
+          v-slot="{ errors }"
+          rules="required"
+          v-if="subgroup"
+          >
+          <v-row>
+            <v-col>
+              <v-autocomplete
+                v-model="form.activity_group"
+                :items="groups"
+                :label="$t('ActivityForms.groups')"
+                item-text="name"
+                item-value="uid"
+                dense
+                clearable
+                :error-messages="errors"
+              />
+            </v-col>
+          </v-row>
+        </validation-provider>
+        <validation-provider
+          v-slot="{ errors }"
+          rules="required"
+          >
+          <v-row>
+            <v-col>
+              <v-text-field
+                v-model="form.name"
+                :label="$t('ActivityForms.name')"
+                hide-details
+                :error-messages="errors"
+              />
+            </v-col>
+          </v-row>
+        </validation-provider>
+        <validation-provider
+          v-slot="{ errors }"
+          rules="required"
+          >
+          <v-row>
+            <v-col>
+              <v-textarea
+                v-model="form.definition"
+                :label="$t('ActivityForms.definition')"
+                hide-details
+                :error-messages="errors"
+                auto-grow
+                rows="1"
+              />
+            </v-col>
+          </v-row>
+        </validation-provider>
+        <validation-provider
+          v-slot="{ errors }"
+          rules="required"
+          v-if="editing"
+          >
+          <v-row>
+            <v-col>
+              <v-textarea
+                v-model="form.change_description"
+                :label="$t('ActivityForms.change_description')"
+                hide-details
+                :error-messages="errors"
+                auto-grow
+                rows="1"
+              />
+            </v-col>
+          </v-row>
+        </validation-provider>
+      </validation-observer>
     </template>
   </stepper-form>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
@@ -117,7 +121,7 @@ export default {
   },
   computed: {
     title () {
-      return (this.editedActivity)
+      return (!_isEmpty(this.editedActivity))
         ? this.$t('ActivityForms.edit_group')
         : this.$t('ActivityForms.add_group')
     }
@@ -153,15 +157,12 @@ export default {
         name: value.name,
         name_sentence_case: '',
         definition: value.definition,
-        change_description: value.change_description,
-        activity_groups: []
+        change_description: ''
       }
       if (!_isEmpty(value)) {
         this.form.name_sentence_case = value.name.charAt(0).toUpperCase() + value.name.slice(1)
-        if (!_isEmpty(value.activity_groups)) {
-          value.activity_groups.forEach(element => {
-            this.form.activity_groups.push(element.uid)
-          })
+        if (value.activity_group) {
+          this.$set(this.form, 'activity_group', value.activity_group.uid)
         }
       }
       this.$store.commit('form/SET_FORM', this.form)
@@ -186,6 +187,7 @@ export default {
     close () {
       this.$emit('close')
       this.form = {}
+      this.subgroup = false
       this.editing = false
       this.$store.commit('form/CLEAR_FORM')
       this.$refs.stepper.reset()
@@ -236,7 +238,7 @@ export default {
     }
   },
   mounted () {
-    if (this.editedActivity) {
+    if (!_isEmpty(this.editedActivity)) {
       this.initForm(this.editedActivity)
     }
     this.getGroups()
@@ -244,7 +246,7 @@ export default {
   watch: {
     editedActivity: {
       handler (value) {
-        if (value) {
+        if (!_isEmpty(value)) {
           this.initForm(value)
         }
       },

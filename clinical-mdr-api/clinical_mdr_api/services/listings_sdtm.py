@@ -146,3 +146,29 @@ class SDTMListingsService:
         )
 
         return filtered_items
+
+    @db.transaction
+    def list_tdm(
+        self,
+        study_uid: str,
+        sort_by: Optional[dict] = None,
+        page_number: int = 1,
+        page_size: int = 0,
+        filter_by: Optional[dict] = None,
+        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        total_count: bool = False,
+    ) -> GenericFilteringReturn[models.StudyDiseaseMilestoneListing]:
+        data = self._query_service.get_tdm(study_uid=study_uid)
+        result = list(map(models.StudyDiseaseMilestoneListing.from_query, data))
+
+        filtered_items = service_level_generic_filtering(
+            items=result,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            sort_by=sort_by,
+            total_count=total_count,
+            page_number=page_number,
+            page_size=page_size,
+        )
+
+        return filtered_items

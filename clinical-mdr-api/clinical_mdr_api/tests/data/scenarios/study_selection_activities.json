@@ -92,7 +92,9 @@
                     "activity_group": {
                             "uid": "activity_group_root1",
                             "name": "name1"
-                    }
+                    },
+                  "request_rationale": null,
+                  "replaced_by_activity": null
                 },
                 "flowchart_group": {
                     "term_uid": "term_efficacy_uid",
@@ -171,7 +173,9 @@
                             "activity_group": {
                                 "uid": "activity_group_root1",
                                 "name": "name1"
-                            }
+                            },
+                            "request_rationale": null,
+                            "replaced_by_activity": null
                         },
                         "flowchart_group": {
                             "term_uid": "term_efficacy_uid",
@@ -255,7 +259,9 @@
                             "activity_group": {
                                 "uid": "activity_group_root1",
                                 "name": "name1"
-                            }
+                            },
+                            "request_rationale": null,
+                            "replaced_by_activity": null
                         },
                         "flowchart_group": {
                             "term_uid": "term_efficacy_uid",
@@ -336,7 +342,9 @@
                             "activity_group": {
                                 "uid": "activity_group_root1",
                                 "name": "name1"
-                            }
+                            },
+                            "request_rationale": null,
+                            "replaced_by_activity": null
                         },
                         "flowchart_group": {
                             "term_uid": "term_efficacy_uid",
@@ -417,7 +425,9 @@
                             "activity_group": {
                                 "uid": "activity_group_root1",
                                 "name": "name1"
-                            }
+                            },
+                            "request_rationale": null,
+                            "replaced_by_activity": null
                         },
                         "flowchart_group": {
                             "term_uid": "term_efficacy_uid",
@@ -498,7 +508,9 @@
                             "activity_group": {
                                 "uid": "activity_group_root1",
                                 "name": "name1"
-                            }
+                            },
+                            "request_rationale": null,
+                            "replaced_by_activity": null
                         },
                         "flowchart_group": {
                             "term_uid": "term_efficacy_uid",
@@ -577,7 +589,9 @@
                     "activity_group": {
                         "uid": "activity_group_root1",
                         "name": "name1"
-                    }
+                    },
+                    "request_rationale": null,
+                    "replaced_by_activity": null
                 },
                 "flowchart_group": {
                     "term_uid": "term_efficacy_uid",
@@ -648,7 +662,9 @@
                         "activity_group": {
                             "uid": "activity_group_root1",
                             "name": "name1"
-                        }
+                        },
+                        "request_rationale": null,
+                        "replaced_by_activity": null
                     },
                     "flowchart_group": {
                         "term_uid": "term_efficacy_uid",
@@ -706,7 +722,9 @@
                         "activity_group": {
                             "uid": "activity_group_root1",
                             "name": "name1"
-                        }
+                        },
+                        "request_rationale": null,
+                        "replaced_by_activity": null
                     },
                     "flowchart_group": {
                         "term_uid": "term_efficacy_uid",
@@ -788,7 +806,9 @@
                     "activity_group": {
                         "uid": "activity_group_root2",
                         "name": "name2"
-                    }
+                    },
+                    "request_rationale": null,
+                    "replaced_by_activity": null
                 },
                 "flowchart_group": {
                     "term_uid": "term_efficacy_uid",
@@ -862,7 +882,9 @@
                     "activity_group": {
                         "uid": "activity_group_root1",
                         "name": "name1"
-                    }
+                    },
+                    "request_rationale": null,
+                    "replaced_by_activity": null
                 },
                 "flowchart_group": {
                     "term_uid": "term_efficacy_uid",
@@ -938,7 +960,9 @@
                     "activity_group": {
                         "uid": "activity_group_root1",
                         "name": "name1"
-                    }
+                    },
+                    "request_rationale": null,
+                    "replaced_by_activity": null
                 },
                 "flowchart_group": {
                     "term_uid": "term_efficacy_uid",

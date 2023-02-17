@@ -50,16 +50,19 @@ def get_catalogues_changes(
     comparison_type: str = Query(
         ...,
         description="The type of the comparison.\n"
-        "Valid types are 'attributes' or 'sponsor'",
+        "Valid types are `attributes` or `sponsor`",
+        example="attributes",
     ),
     start_datetime: datetime = Query(
         ...,
-        description="The start datetime to perform comparison, for instance '2020-03-27T00:00:00'",
+        description="The start datetime to perform comparison (ISO 8601 format with UTC offset)",
+        example="2023-03-26T00:00:00+00:00",
     ),
     end_datetime: Optional[datetime] = Query(
         None,
-        description="The end datetime to perform comparison, for instance '2020-06-26T00:00:00'\n"
+        description="The end datetime to perform comparison (ISO 8601 format with UTC offset).\n"
         "If it is not passed, then the current datetime is assigned.",
+        example="2023-03-27T00:00:00+00:00",
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):

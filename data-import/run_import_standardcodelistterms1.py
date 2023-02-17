@@ -1,4 +1,5 @@
 from importers.importer import BaseImporter, open_file, open_file_async
+from importers.path_join import path_join
 from importers.metrics import Metrics
 import asyncio
 import aiohttp
@@ -6,7 +7,7 @@ import csv
 import time
 from typing import Optional, Sequence, Any
 
-from importers.functions.parsers import map_boolean_exc, find_term_by_name
+from importers.functions.parsers import map_boolean, find_term_by_name
 from importers.functions.utils import load_env
 
 # ---------------------------------------------------------------
@@ -85,12 +86,12 @@ endpoint_level = {
 objective_level = {
     "MDR_MIGRATION_OBJECTIVE_LEVEL": lambda row, headers: {
         "path": "/ct/terms",
-        "codelist": row[headers.index("CD_LIST_ID")],
+        "codelist": row[headers.index("CT_CD_LIST_SUBMVAL")],
         "uid": row[headers.index("CT_CD")],
         "body": {
-            "order": row[headers.index("CD_VAL_SORT_SEG")],
-            "sponsor_preferred_name": row[headers.index("CD_VAL_LB")],
-            "sponsor_preferred_name_sentence_case": row[headers.index("CD_VAL_LB_LC")],
+            "order": row[headers.index("ORDER")],
+            "sponsor_preferred_name": row[headers.index("CT_NAME")],
+            "sponsor_preferred_name_sentence_case": row[headers.index("NAME_SENTENSE_CASE")],
             "change_description": "Migration",
         },
     }
@@ -184,7 +185,8 @@ class StandardCodelistTerms1(BaseImporter):
                     f"Epoch subtype '{row[headers.index('CD_LIST_ID')]}' not found in legacy name map, skipping"
                 )
                 self.metrics.icrement(
-                    data["path"] + "-Names Epoch Sub Type - SkippedASMissingcodelist_uid"
+                    data["path"]
+                    + "-Names Epoch Sub Type - SkippedASMissingcodelist_uid"
                 )
                 continue
             codelist_name = self.sponsor_codelist_legacy_name_map["GEN_EPOCH_SUB_TYPE"]
@@ -193,7 +195,8 @@ class StandardCodelistTerms1(BaseImporter):
             else:
                 self.log.error(f"Codelist '{codelist_name}' not found, skipping")
                 self.metrics.icrement(
-                    data["path"] + "-Names Epoch Sub Type - SkippedASMissingcodelist_uid"
+                    data["path"]
+                    + "-Names Epoch Sub Type - SkippedASMissingcodelist_uid"
                 )
                 continue
             reused_item = False
@@ -210,12 +213,12 @@ class StandardCodelistTerms1(BaseImporter):
                     self.cache.added_terms[subtype] = res
                     # Approve Names
                     self.api.simple_approve2(
-                        data["path"], f"/{term_uid}/names/approve", label="Names"
+                        data["path"], f"/{term_uid}/names/approvals", label="Names"
                     )
                     # Approve attributes
                     self.api.simple_approve2(
                         "/ct/terms",
-                        f"/{term_uid}/attributes/approve",
+                        f"/{term_uid}/attributes/approvals",
                         label="Attributes",
                     )
                 else:
@@ -246,7 +249,7 @@ class StandardCodelistTerms1(BaseImporter):
                     # add a term to the epoch sub type codelist
                     self.api.post_to_api(
                         {
-                            "path": "/ct/codelists/" + codelist_uid + "/terms",
+                            "path": f"/ct/codelists/{codelist_uid}/terms",
                             "body": {
                                 "term_uid": term_uid,
                                 "order": data["body"]["order"],
@@ -256,20 +259,20 @@ class StandardCodelistTerms1(BaseImporter):
                     # Start a new version
                     self.api.post_to_api(
                         {
-                            "path": "/ct/terms/" + term_uid + "/names/versions",
+                            "path": f"/ct/terms/{term_uid}/names/versions",
                             "body": {},
                         }
                     )
                     # patch the names
                     data["body"]["change_description"] = "Migration modification"
-                    res = self.api.simple_patch(
+                    _res = self.api.simple_patch(
                         data["body"],
-                        "/ct/terms/" + term_uid + "/names",
-                        "/ct/terms/names",
+                        f"/ct/terms{term_uid}/names",
+                        "/ct/terms/{uid}/names",
                     )
                     # Approve Names
                     self.api.simple_approve2(
-                        "/ct/terms", f"/{term_uid}/names/approve", label="Names"
+                        "/ct/terms", f"/{term_uid}/names/approvals", label="Names"
                     )
 
     @open_file()
@@ -300,27 +303,27 @@ class StandardCodelistTerms1(BaseImporter):
                 # add a term to the epoch codelist
                 self.api.post_to_api(
                     {
-                        "path": "/ct/codelists/" + codelist_uid + "/terms",
+                        "path": f"/ct/codelists/{codelist_uid}/terms",
                         "body": {"term_uid": term_uid, "order": data["body"]["order"]},
                     }
                 )
                 # Start a new version
                 self.api.post_to_api(
-                    {"path": "/ct/terms/" + term_uid + "/names/versions", "body": {}}
+                    {"path": f"/ct/terms/{term_uid}/names/versions", "body": {}}
                 )
                 # patch the names
                 data["body"]["change_description"] = "Migration modification"
                 res = self.api.simple_patch(
-                    data["body"], "/ct/terms/" + term_uid + "/names", "/ct/terms/names"
+                    data["body"], f"/ct/terms/{term_uid}/names", "/ct/terms/{uid}/names"
                 )
                 self.api.simple_patch(
                     {"codelist_uid": codelist_uid, "new_order": data["body"]["order"]},
-                    "/ct/terms/" + term_uid + "/order",
+                    f"/ct/terms/{term_uid}/order",
                     "/ct/terms/order",
                 )
                 # Approve Names
                 self.api.simple_approve2(
-                    "/ct/terms", f"/{term_uid}/names/approve", label="Names"
+                    "/ct/terms", f"/{term_uid}/names/approvals", label="Names"
                 )
 
     @open_file()
@@ -347,28 +350,29 @@ class StandardCodelistTerms1(BaseImporter):
                 data["body"]["codelist_uid"] = self.code_lists_uids[codelist_name]
             else:
                 self.metrics.icrement(
-                    data["path"] + "-Names Visit Day Type - SkippedASMissingcodelist_uid"
+                    data["path"]
+                    + "-Names Visit Day Type - SkippedASMissingcodelist_uid"
                 )
                 continue
             # Start a new version
             self.api.post_to_api(
-                {"path": "/ct/terms/" + data["uid"] + "/names/versions", "body": {}}
+                {"path": f"/ct/terms/{data['uid']}/names/versions", "body": {}}
             )
             # path the names
             res = self.api.simple_patch(
-                data["body"], "/ct/terms/" + data["uid"] + "/names", "/ct/terms/names"
+                data["body"], f"/ct/terms/{data['uid']}/names", "/ct/terms/{uid}/names"
             )
             # Approve
             if res is not None:
                 # Approve Names
                 if self.api.simple_approve2(
-                    "/ct/terms", f"/{res['term_uid']}/names/approve", label="Names"
+                    "/ct/terms", f"/{res['term_uid']}/names/approvals", label="Names"
                 ):
                     # add the term to the sponsor list
                     codelist_uid = data["body"]["codelist_uid"]
                     self.api.post_to_api(
                         {
-                            "path": "/ct/codelists/" + codelist_uid + "/terms",
+                            "path": f"/ct/codelists/{codelist_uid}/terms",
                             "body": {
                                 "term_uid": res["term_uid"],
                                 "order": row[headers.index("CD_VAL_SORT_SEG")],
@@ -377,7 +381,7 @@ class StandardCodelistTerms1(BaseImporter):
                     )
             else:
                 self.api.simple_approve2(
-                    "/ct/terms", f"/{data['uid']}/names/approve", label="Names"
+                    "/ct/terms", f"/{data['uid']}/names/approvals", label="Names"
                 )
 
     @open_file()
@@ -390,18 +394,19 @@ class StandardCodelistTerms1(BaseImporter):
             _class = "MDR_MIGRATION_OBJECTIVE_LEVEL"
             data = objective_level[_class](row, headers)
             if (
-                row[headers.index("CD_LIST_ID")]
+                row[headers.index("CT_CD_LIST_SUBMVAL")]
                 not in self.sponsor_codelist_legacy_name_map
             ):
                 self.log.warning(
-                    f"Codelist '{row[headers.index('CD_LIST_ID')]} not found in legacy map, skipping'"
+                    f"Codelist '{row[headers.index('CT_CD_LIST_SUBMVAL')]} not found in legacy map, skipping'"
                 )
                 self.metrics.icrement(
-                    data["path"] + "-Names Objective Level- SkippedASMissingcodelist_uid"
+                    data["path"]
+                    + "-Names Objective Level- SkippedASMissingcodelist_uid"
                 )
                 continue
             codelist_name = self.sponsor_codelist_legacy_name_map[
-                row[headers.index("CD_LIST_ID")]
+                row[headers.index("CT_CD_LIST_SUBMVAL")]
             ]
             if codelist_name in self.code_lists_uids:
                 data["body"]["codelist_uid"] = self.code_lists_uids[codelist_name]
@@ -414,26 +419,26 @@ class StandardCodelistTerms1(BaseImporter):
                 continue
             # Start a new version
             self.api.post_to_api(
-                {"path": "/ct/terms/" + data["uid"] + "/names/versions", "body": {}}
+                {"path": f"/ct/terms/{data['uid']}/names/versions", "body": {}}
             )
             # path the names
             res = self.api.simple_patch(
-                data["body"], "/ct/terms/" + data["uid"] + "/names", "/ct/terms/names"
+                data["body"], f"/ct/terms/{data['uid']}/names", "/ct/terms/{uid}/names"
             )
             # Approve
             if res is not None:
                 # Approve Names
                 if self.api.simple_approve2(
-                    "/ct/terms", f"/{res['term_uid']}/names/approve", label="Names"
+                    "/ct/terms", f"/{res['term_uid']}/names/approvals", label="Names"
                 ):
                     # add the term to the sponsor list
                     codelist_uid = data["body"]["codelist_uid"]
                     self.api.post_to_api(
                         {
-                            "path": "/ct/codelists/" + codelist_uid + "/terms",
+                            "path": f"/ct/codelists/{codelist_uid}/terms",
                             "body": {
                                 "term_uid": res["term_uid"],
-                                "order": row[headers.index("CD_VAL_SORT_SEG")],
+                                "order": row[headers.index("ORDER")],
                             },
                         }
                     )
@@ -507,7 +512,7 @@ class StandardCodelistTerms1(BaseImporter):
             new_codelist_name = row[headers.index("new_codelist_name")]
             try:
                 idx = headers.index("extensible")
-                extensible = map_boolean_exc(row[idx])
+                extensible = map_boolean(row[idx], raise_exception=True)
             except ValueError as e:
                 self.log.warning(
                     f"Error parsing boolean at index {idx} in line \n{row}\nerror: {e}\nDefaulting to False"
@@ -515,7 +520,7 @@ class StandardCodelistTerms1(BaseImporter):
                 extensible = False
             try:
                 idx = headers.index("template_parameter")
-                template_parameter = map_boolean_exc(row[idx])
+                template_parameter = map_boolean(row[idx], raise_exception=True)
             except ValueError as e:
                 self.log.warning(
                     f"Error parsing boolean at index {idx} in line\n{row}\nerror: {e}\nDefaulting to False"
@@ -553,15 +558,13 @@ class StandardCodelistTerms1(BaseImporter):
         api_tasks = []
 
         for row in readCSV:
-            url = (
-                "/ct/codelists/" + row[headers.index("CODELIST_CONCEPT_ID")] + "/names"
-            )
+            url = path_join("/ct/codelists", row[headers.index("CODELIST_CONCEPT_ID")], "names")
             change_description = f"Marking {row[headers.index('DESCRIPTION')]} as TemplateParameter in the migration"
             data = {
                 "get_path": url,
-                "path": url + "/versions",
+                "path": path_join(url, "versions"),
                 "patch_path": url,
-                "approve_path": url + "/approve",
+                "approve_path": path_join(url, "approvals"),
                 "body": {
                     "template_parameter": True,
                     "change_description": change_description,
@@ -590,7 +593,7 @@ class StandardCodelistTerms1(BaseImporter):
             # We do all these in parallel, this sleep should not affect the time it takes to run the import.
             time.sleep(0.05)
             status, result = await self.api.approve_async(
-                "/ct/codelists/" + uid + "/names/approve", session=session
+                f"/ct/codelists/{uid}/names/approvals", session=session
             )
             if status != 201:
                 self.log.error(
@@ -602,7 +605,7 @@ class StandardCodelistTerms1(BaseImporter):
                 self.metrics.icrement("/ct/codelists/-NamesApprove")
             time.sleep(0.05)
             status, result = await self.api.approve_async(
-                "/ct/codelists/" + uid + "/attributes/approve", session=session
+                f"/ct/codelists/{uid}/attributes/approvals", session=session
             )
             if status != 201:
                 self.log.error(
@@ -626,7 +629,7 @@ class StandardCodelistTerms1(BaseImporter):
     ):
         get_result = {}
         async with session.get(
-            API_BASE_URL + data["get_path"], headers=self.api.api_headers
+            path_join(API_BASE_URL, data["get_path"]), headers=self.api.api_headers
         ) as response:
             status = response.status
             get_result = await response.json()
@@ -656,7 +659,7 @@ class StandardCodelistTerms1(BaseImporter):
             term_uid = f"{data['term_uid']}_{data['body']['code_submission_value']}"
             codelist_uid = data["body"]["codelist_uid"]
             result = await self.api.post_to_api_async(
-                url="/ct/codelists/" + codelist_uid + "/terms",
+                url=f"/ct/codelists/{codelist_uid}/terms",
                 body={"term_uid": term_uid, "order": data["body"]["order"]},
                 session=session,
             )
@@ -668,7 +671,7 @@ class StandardCodelistTerms1(BaseImporter):
             if post_status == 201:
                 self.cache.added_terms[term_name] = post_result
                 status, result = await self.api.approve_async(
-                    "/ct/terms/" + post_result["term_uid"] + "/names/approve",
+                    f"/ct/terms/{post_result['term_uid']}/names/approvals",
                     session=session,
                 )
                 if status != 201:
@@ -676,7 +679,7 @@ class StandardCodelistTerms1(BaseImporter):
                 else:
                     self.metrics.icrement("/ct/terms-NamesApprove")
                 status, result = await self.api.approve_async(
-                    "/ct/terms/" + post_result["term_uid"] + "/attributes/approve",
+                    f"/ct/terms/{post_result['term_uid']}/attributes/approvals",
                     session=session,
                 )
                 if status != 201:

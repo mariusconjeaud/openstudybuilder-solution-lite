@@ -5,7 +5,9 @@ from os import environ
 from fastapi import Depends, FastAPI, Request, Security, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
+from fastapi.routing import APIRoute
 from fastapi_etag.dependency import PreconditionFailed
 from opencensus.ext.azure.trace_exporter import AzureExporter
 from opencensus.trace.samplers import AlwaysOnSampler
@@ -111,17 +113,18 @@ This component contains software licensed under different licenses when compiled
 ## Authentication:
 
 Supports OAuth2 [Authorization Code Flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1),
-at paths described in the [OpenID Connect Discovery metadata document]({OIDC_METADATA_URL}).
+at paths described in the [OpenID Connect Discovery metadata document]({OIDC_METADATA_URL})
 Microsoft Identity Platform
 ([documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)).
 
-Authentication can be turned off with `OAUTH_ENABLED=false` environment variable. When Authentication is turned on, all 
-API requests have to provide valid bearer (JWT) token. When turned off
-all endpoints accept (optional) custom header `X-Test-User-Id` which 
-allows any request to inject any user id value (for testing purposes). If the header is missing, the default value 
-of `unknown-user` is assumed.
+Authentication can be turned off with `OAUTH_ENABLED=false` environment variable. 
 
-    """,
+When authentication is turned on, all requests to API endpoints must provide a valid bearer (JWT) token inside the `Authorization` http header. 
+
+When authentication is turned off, all endpoints accept (optional) custom header `X-Test-User-Id` which 
+allows any request to specify any user id value. If the `X-Test-User-Id` header is missing, the default value of `unknown-user` is assumed.
+
+""",
 )
 
 
@@ -200,19 +203,19 @@ app.include_router(
     routers.odm_aliases_router, prefix="/concepts/odms/aliases", tags=["ODM Aliases"]
 )
 app.include_router(
-    routers.odm_xml_extension_router,
-    prefix="/concepts/odms/xml-extensions",
-    tags=["ODM XML Extensions"],
+    routers.odm_vendor_namespace_router,
+    prefix="/concepts/odms/vendor-namespaces",
+    tags=["ODM Vendor Namespaces"],
 )
 app.include_router(
-    routers.odm_xml_extension_attribute_router,
-    prefix="/concepts/odms/xml-extension-attributes",
-    tags=["ODM XML Extension Attributes"],
+    routers.odm_vendor_attribute_router,
+    prefix="/concepts/odms/vendor-attributes",
+    tags=["ODM Vendor Attributes"],
 )
 app.include_router(
-    routers.odm_xml_extension_tag_router,
-    prefix="/concepts/odms/xml-extension-tags",
-    tags=["ODM XML Extension Tags"],
+    routers.odm_vendor_element_router,
+    prefix="/concepts/odms/vendor-elements",
+    tags=["ODM Vendor Elements"],
 )
 app.include_router(
     routers.odm_metadata_router,
@@ -416,12 +419,32 @@ app.include_router(
 app.include_router(
     routers.data_models_router,
     prefix="/standards",
-    tags=["Standards"],
+    tags=["Data models"],
 )
 app.include_router(
     routers.data_model_igs_router,
     prefix="/standards",
-    tags=["Standards"],
+    tags=["Data model implementation guides"],
+)
+app.include_router(
+    routers.dataset_classes_router,
+    prefix="/standards",
+    tags=["Dataset classes"],
+)
+app.include_router(
+    routers.datasets_router,
+    prefix="/standards",
+    tags=["Datasets"],
+)
+app.include_router(
+    routers.class_variables_router,
+    prefix="/standards",
+    tags=["Class variables"],
+)
+app.include_router(
+    routers.dataset_variables_router,
+    prefix="/standards",
+    tags=["Dataset variables"],
 )
 system_app = FastAPI(
     middleware=None,
@@ -433,3 +456,53 @@ system_app = FastAPI(
 system_app.include_router(routers.system_router, tags=["System"])
 
 app.mount("/system", system_app)
+
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+
+    openapi_schema["servers"] = [{"url": environ.get("API_ROOT_PATH", "/")}]
+
+    if OAUTH_ENABLED:
+        if "components" not in openapi_schema:
+            openapi_schema["components"] = {}
+
+        if "securitySchemes" not in openapi_schema["components"]:
+            openapi_schema["components"]["securitySchemes"] = {}
+
+        # Add 'BearerJwtAuth' security schema globally
+        openapi_schema["components"]["securitySchemes"]["BearerJwtAuth"] = {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",  # optional, arbitrary value for documentation purposes
+            "in": "header",
+            "name": "Authorization",
+            "description": "Access token that will be sent as `Authorization: Bearer {token}` header in all requests",
+        }
+
+        # Add 'BearerJwtAuth' security method to all endpoints
+        api_router = [route for route in app.routes if isinstance(route, APIRoute)]
+        for route in api_router:
+            path = getattr(route, "path")
+            methods = [method.lower() for method in getattr(route, "methods")]
+
+            for method in methods:
+                endpoint_security: list = openapi_schema["paths"][path][method].get(
+                    "security", []
+                )
+                endpoint_security.append({"BearerJwtAuth": []})
+                openapi_schema["paths"][path][method]["security"] = endpoint_security
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi

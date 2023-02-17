@@ -160,7 +160,7 @@
           :show-select="showSelectBoxes"
           :items-per-page="computedItemsPerPage"
           :footer-props="returnHasApi() ? {
-            'items-per-page-options': [ 100, 15, 10, 5 ]
+            'items-per-page-options': computedItemsPerPageOptions
           } : {}"
           class="py-4 mr-0"
           :item-class="rowClass"
@@ -171,6 +171,7 @@
           :headers="shownColumns"
           @update:page="returnHasApi() ? filterTable($event) : ''"
           @update:sort-desc="filterTable($event)"
+          @update:items-per-page="showLoader($event)"
           elevation="0"
           v-bind="$attrs"
           v-on="$listeners"
@@ -231,6 +232,7 @@
 
   <v-dialog
     v-model="showColumnsDialog"
+    @keydown.esc="showColumnsDialog = false"
     max-width="550"
     persistent
     content-class="upperRight"
@@ -250,6 +252,7 @@
 
   <v-dialog
     v-model="showColumnsToFilterDialog"
+    @keydown.esc="showColumnsToFilterDialog = false"
     max-width="550"
     persistent
     content-class="upperRight"
@@ -273,6 +276,7 @@
 
   <v-dialog
     v-model="showHistory"
+    @keydown.esc="closeHistory"
     max-width="1200px"
     persistent
     >
@@ -281,6 +285,7 @@
       :items="historyItems"
       @close="closeHistory"
       :title="historyTitle"
+      :html-fields="historyHtmlFields"
       />
   </v-dialog>
 </div>
@@ -358,6 +363,10 @@ export default {
       type: Number,
       required: false
     },
+    itemsPerPageOptions: {
+      type: Array,
+      required: false
+    },
     options: Object,
     columnDataResource: String,
     columnDataParameters: Object,
@@ -373,6 +382,10 @@ export default {
     },
     historyTitle: {
       type: String,
+      required: false
+    },
+    historyHtmlFields: {
+      type: Array,
       required: false
     },
     disableFiltering: {
@@ -411,6 +424,10 @@ export default {
     showColumnNamesToggleButton: {
       type: Boolean,
       default: false
+    },
+    extraItemClass: {
+      type: Function,
+      required: false
     }
   },
   computed: {
@@ -439,6 +456,9 @@ export default {
     },
     computedItemsPerPage () {
       return this.itemsPerPage ? this.itemsPerPage : this.userData.rows
+    },
+    computedItemsPerPageOptions () {
+      return this.itemsPerPageOptions ? this.itemsPerPageOptions : [100, 15, 10, 5]
     },
     historyHeaders () {
       const result = [...this.headers]
@@ -568,11 +588,18 @@ export default {
       layoutMap.set(this.$route.fullPath, this.shownColumns)
       this.$store.commit('tablesLayout/SET_COLUMNS', layoutMap)
     },
-    rowClass () {
-      return this.subTables ? 'subRowsTable' : ''
+    rowClass (item) {
+      let result = this.subTables ? 'subRowsTable' : ''
+      if (this.extraItemClass) {
+        result += this.extraItemClass(item)
+      }
+      return result
     },
     returnHasApi () {
       return this.hasApi
+    },
+    showLoader (event) {
+      this.loading = true
     },
     saveSelectedColumns (columns) {
       this.shownColumns = columns
@@ -626,6 +653,7 @@ export default {
       this.filterTable()
     },
     filterTable (sort) {
+      this.loading = true
       if (this.timeout) clearTimeout(this.timeout)
       this.timeout = setTimeout(() => {
         if (sort === undefined) {

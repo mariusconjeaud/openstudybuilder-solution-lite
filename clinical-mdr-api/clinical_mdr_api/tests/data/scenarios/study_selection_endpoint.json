@@ -137,8 +137,12 @@
                 "endpoint_units": {
                     "separator": "string",
                     "units": [
-                        "unit 1",
-                        "unit 2"
+                        {
+                            "uid": "unit 1"
+                        },
+                        {
+                            "uid": "unit 2"
+                        }
                     ]
                 },
                 "start_date": "2021-04-08T07:54:04.733562",
@@ -302,8 +306,14 @@
                         "endpoint_units": {
                             "separator": "string",
                             "units": [
-                                "unit 1",
-                                "unit 2"
+                                {
+                                    "uid": "unit 1",
+                                    "name": "name 1"
+                                },
+                                {
+                                    "uid": "unit 2",
+                                    "name": "name 2"
+                                }
                             ]
                         },
                         "start_date": "2021-04-08T07:54:04.733562",
@@ -485,8 +495,14 @@
                         },
                         "endpoint_units": {
                             "units": [
-                                "unit 1",
-                                "unit 2"
+                                {
+                                    "uid": "unit 1",
+                                    "name": "name 1"
+                                },
+                                {
+                                    "uid": "unit 2",
+                                    "name": "name 2"
+                                }
                             ],
                             "separator": "string"
                         },
@@ -631,8 +647,14 @@
                     "endpoint_units": {
                         "separator": "string",
                         "units": [
-                            "unit 1",
-                            "unit 2"
+                            {
+                                "uid": "unit 1",
+                                "name": "name 1"
+                            },
+                            {
+                                "uid": "unit 2",
+                                "name": "name 2"
+                            }
                         ]
                     },
                     "start_date": "2021-04-08T07:54:04.733562",
@@ -1033,8 +1055,14 @@
                         "endpoint_units": {
                             "separator": "string",
                             "units": [
-                                "unit 1",
-                                "unit 2"
+                                {
+                                    "uid": "unit 1",
+                                    "name": "name 1"
+                                },
+                                {
+                                    "uid": "unit 2",
+                                    "name": "name 2"
+                                }
                             ]
                         },
                         "start_date": "2021-04-08T07:54:04.733562",
@@ -1801,8 +1829,12 @@
                 "endpoint_units": {
                     "separator": "string",
                     "units": [
-                        "unit 1",
-                        "unit 2"
+                        {
+                            "uid": "unit 1"
+                        },
+                        {
+                            "uid": "unit 2"
+                        }
                     ]
                 },
                 "endpoint": {

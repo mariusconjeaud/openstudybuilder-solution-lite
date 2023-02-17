@@ -1,5 +1,4 @@
 [
-  
   {
     "name": "Test adding selection 1st",
     "request": {
@@ -172,12 +171,11 @@
       "headers": {},
       "method": "POST",
       "request": {
-          "study_branch_arm_uid":"StudyBranchArm_000003",
-          "study_epoch_uid":"StudyEpoch_000001",
-          "study_element_uid":"StudyElement_000001",
-          "transition_rule":"Transition_Rule_1"
-          
-        },
+        "study_branch_arm_uid": "StudyBranchArm_000003",
+        "study_epoch_uid": "StudyEpoch_000001",
+        "study_element_uid": "StudyElement_000001",
+        "transition_rule": "Transition_Rule_1"
+      },
       "url": "/studies/study_root/study-design-cells"
     },
     "headers": {
@@ -190,22 +188,22 @@
         "content-length": "336",
         "content-type": "application/json"
       },
-      "results":{
-            "study_uid": "study_root",
-            "design_cell_uid": "StudyDesignCell_000001",
-            "study_arm_uid": null,
-            "study_arm_name": null,
-            "study_branch_arm_uid": "StudyBranchArm_000003",
-            "study_branch_arm_name": "BranchArm_Name_2",
-            "study_epoch_uid": "StudyEpoch_000001",
-            "study_epoch_name": "Epoch Subtype",
-            "study_element_uid": "StudyElement_000001",
-            "study_element_name": "Element_Name_1",
-            "transition_rule": null,
-            "start_date": null,
-            "user_initials": "TEST_USER", 
-            "order":1
-        }
+      "results": {
+        "study_uid": "study_root",
+        "design_cell_uid": "StudyDesignCell_000001",
+        "study_arm_uid": null,
+        "study_arm_name": null,
+        "study_branch_arm_uid": "StudyBranchArm_000003",
+        "study_branch_arm_name": "BranchArm_Name_2",
+        "study_epoch_uid": "StudyEpoch_000001",
+        "study_epoch_name": "Epoch Subtype",
+        "study_element_uid": "StudyElement_000001",
+        "study_element_name": "Element_Name_1",
+        "transition_rule": null,
+        "start_date": null,
+        "user_initials": "TEST_USER",
+        "order": 1
+      }
     }
   },
   {
@@ -213,11 +211,11 @@
     "request": {
       "headers": {},
       "method": "POST",
-      "request":   {
-        "study_arm_uid":"StudyArm_000002",
-        "study_epoch_uid":"StudyEpoch_000001",
-        "study_element_uid":"StudyElement_000003",
-        "transition_rule":"Transition_Rule_2"
+      "request": {
+        "study_arm_uid": "StudyArm_000002",
+        "study_epoch_uid": "StudyEpoch_000001",
+        "study_element_uid": "StudyElement_000003",
+        "transition_rule": "Transition_Rule_2"
       },
       "url": "/studies/study_root/study-design-cells"
     },
@@ -231,7 +229,7 @@
         "content-length": "336",
         "content-type": "application/json"
       },
-      "results":{
+      "results": {
         "study_uid": "study_root",
         "design_cell_uid": "StudyDesignCell_000002",
         "study_arm_uid": "StudyArm_000002",
@@ -244,7 +242,7 @@
         "study_element_name": "Element_Name_1",
         "transition_rule": null,
         "start_date": "2022-05-24T04:50:42.426267",
-        "user_initials": "TEST_USER", 
+        "user_initials": "TEST_USER",
         "order": 2
       }
     }
@@ -254,34 +252,34 @@
     "request": {
       "headers": {},
       "method": "POST",
-      "request": [{
-          "method":"PATCH",
-          "content":{
+      "request": [
+        {
+          "method": "PATCH",
+          "content": {
             "study_design_cell_uid": "StudyDesignCell_000001",
-            "study_arm_uid":"StudyArm_000002",
-            "study_element_uid":"StudyElement_000003", 
-            "study_branch_arm_uid":null
+            "study_arm_uid": "StudyArm_000002",
+            "study_element_uid": "StudyElement_000003",
+            "study_branch_arm_uid": null
           }
         },
         {
-          "method":"PATCH",
-          "content":{
+          "method": "PATCH",
+          "content": {
             "study_design_cell_uid": "StudyDesignCell_000002",
-            "study_branch_arm_uid":"StudyBranchArm_000003",
-            "study_element_uid":"StudyElement_000001"
+            "study_branch_arm_uid": "StudyBranchArm_000003",
+            "study_element_uid": "StudyElement_000001"
           }
         }
       ],
       "url": "/studies/study_root/study-design-cells/batch"
     },
     "response": {
-      "code": 200,
+      "code": 207,
       "headers": {
         "content-length": "336",
         "content-type": "application/json"
       },
-      "results":[
-        
+      "results": [
         {
           "response_code": 200,
           "content": {
@@ -343,7 +341,7 @@
         "content-length": "336",
         "content-type": "application/json"
       },
-      "results":[
+      "results": [
         {
           "study_uid": "study_root",
           "design_cell_uid": "StudyDesignCell_000001",
@@ -381,7 +379,7 @@
         "content-length": "336",
         "content-type": "application/json"
       },
-      "results":[
+      "results": [
         {
           "study_uid": "study_root",
           "design_cell_uid": "StudyDesignCell_000002",
@@ -419,7 +417,7 @@
         "content-length": "336",
         "content-type": "application/json"
       },
-      "results":[
+      "results": [
         {
           "study_uid": "study_root",
           "design_cell_uid": "StudyDesignCell_000001",
@@ -473,8 +471,7 @@
         "content-length": "336",
         "content-type": "application/json"
       },
-      "results":
-      [
+      "results": [
         {
           "study_uid": "study_root",
           "study_design_cell_uid": "StudyDesignCell_000002",
@@ -533,8 +530,7 @@
         "content-length": "336",
         "content-type": "application/json"
       },
-      "results":
-      [
+      "results": [
         {
           "study_uid": "study_root",
           "study_design_cell_uid": "StudyDesignCell_000001",
@@ -617,15 +613,16 @@
     "request": {
       "headers": {},
       "method": "POST",
-      "request": [{
-          "method":"DELETE",
-          "content":{
+      "request": [
+        {
+          "method": "DELETE",
+          "content": {
             "uid": "StudyDesignCell_000001"
           }
         },
         {
-          "method":"DELETE",
-          "content":{
+          "method": "DELETE",
+          "content": {
             "uid": "StudyDesignCell_000002"
           }
         }
@@ -633,12 +630,12 @@
       "url": "/studies/study_root/study-design-cells/batch"
     },
     "response": {
-      "code": 200,
+      "code": 207,
       "headers": {
         "content-length": "336",
         "content-type": "application/json"
       },
-      "results":[
+      "results": [
         {
           "response_code": 204,
           "content": null

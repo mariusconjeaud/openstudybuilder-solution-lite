@@ -117,6 +117,12 @@ class StudyValue(ClinicalMdrNode):
         StudyCohort, "HAS_STUDY_COHORT", model=ClinicalMdrRel
     )
 
+    has_study_disease_milestone = RelationshipTo(
+        ".study_disease_milestone.StudyDiseaseMilestone",
+        "HAS_STUDY_DISEASE_MILESTONE",
+        model=ClinicalMdrRel,
+    )
+
     has_before = RelationshipFrom(StudyAction, "BEFORE", model=ConjunctionRelation)
     has_after = RelationshipFrom(StudyAction, "AFTER", model=ConjunctionRelation)
     latest_value = RelationshipFrom("StudyRoot", "LATEST", model=ClinicalMdrRel)

@@ -14,6 +14,7 @@
     @filter="fetchObjectives"
     :history-data-fetcher="fetchObjectivesHistory"
     :history-title="$t('StudyObjectivesTable.global_history_title')"
+    :history-html-fields="historyHtmlFields"
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -114,6 +115,7 @@
       />
   </v-dialog>
   <v-dialog v-model="showHistory"
+            @keydown.esc="closeHistory"
             persistent
             max-width="1200px">
     <history-table
@@ -121,6 +123,7 @@
       @close="closeHistory"
       :headers="headers"
       :items="objectiveHistoryItems"
+      :html-fields="historyHtmlFields"
       />
   </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
@@ -229,6 +232,7 @@ export default {
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.modified_by'), value: 'user_initials' }
       ],
+      historyHtmlFields: ['objective.name'],
       objectiveHistoryItems: [],
       selectedObjective: null,
       selectedStudyObjective: null,

@@ -1,6 +1,6 @@
-import requests
 import logging
 from os import environ
+from typing import Optional
 
 from importers.metrics import Metrics
 
@@ -16,7 +16,7 @@ logger = logging.getLogger("legacy_mdr_migrations - utils")
 metrics = Metrics()
 
 
-def load_env(key: str, default: str = None):
+def load_env(key: str, default: Optional[str] = None):
     value = environ.get(key)
     logger.info("%s=%s", key, value)
     if value is None and default is None:
@@ -61,25 +61,6 @@ def camel_case_data(datadict):
     for key, value in datadict.items():
         return_value[snake_to_camel(key)] = sanitize_value(value)
     return return_value
-
-
-# def simple_post_to_api(path, body, simple_path):
-#     response = requests.post(API_BASE_URL + path, headers=API_HEADERS, json=body)
-#     if response.ok:
-#         metrics.icrement(simple_path)
-#         logger.info("POST %s %s", path, "success")
-#         return response.json()
-#     else:
-#         logger.warning("POST %s", path)
-#         if "message" in response.json().keys() and (
-#                 "all ready" in response.json()["message"] or "Duplicate template" in response.json()["message"]):
-#             logger.warning(response.json())
-#             metrics.icrement(simple_path + "-AlreadyExists")
-#         else:
-#             logger.warning(response.text)
-#             metrics.icrement(simple_path + "-ERROR")
-#         return None
-
 
 def create_logger(name):
     loglevel = environ.get("LOG_LEVEL", "INFO")

@@ -20,8 +20,10 @@
       <template v-slot:item="{ item }">
         <tr>
           <td v-for="(header, index)  in cleanedHeaders" v-bind:key="index">
-             <div v-if="getHighlight(index, header, item)" class="blue lighten-4 difference">{{ getDisplay(item, header.value) }}</div>
-             <span v-else>{{ getDisplay(item, header.value) }}</span>
+            <div :class="getCellClasses(header, item)">
+              <span v-if="htmlFields && htmlFields.indexOf(header.value) !== -1" v-html="getDisplay(item, header.value)" />
+              <span v-else>{{ getDisplay(item, header.value) }}</span>
+            </div>
           </td>
         </tr>
       </template>
@@ -63,12 +65,28 @@ export default {
     exportName: {
       type: String,
       required: false
+    },
+    htmlFields: {
+      type: Array,
+      required: false
+    },
+    startDateHeader: {
+      type: String,
+      default: 'start_date'
+    },
+    endDateHeader: {
+      type: String,
+      default: 'end_date'
+    },
+    changeTypeHeader: {
+      type: String,
+      default: 'change_type'
     }
   },
   computed: {
     cleanedHeaders () {
       let result = []
-      const excludedHeaders = ['actions', 'start_date']
+      const excludedHeaders = ['actions', 'user_initials', 'start_date']
       if (this.excludedHeaders) {
         for (const header of this.excludedHeaders) {
           excludedHeaders.push(header)
@@ -79,7 +97,7 @@ export default {
       })
       result.push({
         text: this.$t('HistoryTable.change_type'),
-        value: 'change_type'
+        value: this.changeTypeHeader
       })
       result.push({
         text: this.$t('_global.user'),
@@ -87,11 +105,11 @@ export default {
       })
       result.push({
         text: this.$t('HistoryTable.start_date'),
-        value: 'start_date'
+        value: this.startDateHeader
       })
       result.push({
         text: this.$t('HistoryTable.end_date'),
-        value: 'end_date'
+        value: this.endDateHeader
       })
       return result
     },
@@ -105,7 +123,7 @@ export default {
     }
   },
   methods: {
-    getHighlight (index, header, item) {
+    getHighlight (header, item) {
       if (item) {
         if (header.value.indexOf('Date') !== -1 || header.value.indexOf('changeType') !== -1) {
           return false
@@ -115,6 +133,12 @@ export default {
           return false
         }
       }
+    },
+    getCellClasses (header, item) {
+      if (this.getHighlight(header, item)) {
+        return 'blue lighten-4 difference'
+      }
+      return ''
     },
     getDisplay (item, accessor) {
       const accessList = accessor.split('.')

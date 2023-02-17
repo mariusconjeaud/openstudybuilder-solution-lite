@@ -27,6 +27,7 @@
               :error-messages="errors"
               dense
               clearable
+              class="required"
               />
           </validation-provider>
         </v-col>
@@ -116,6 +117,7 @@
               :error-messages="errors"
               dense
               clearable
+              class="required"
               />
           </validation-provider>
         </v-col>

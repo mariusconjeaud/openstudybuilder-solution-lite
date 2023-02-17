@@ -35,12 +35,12 @@ export default {
       params: [
         {
           label: this.$t('StudyPopulationForm.therapeuticarea'),
-          name: 'therapeutic_areas_codes',
+          name: 'therapeutic_area_codes',
           valuesDisplay: 'terms'
         },
         {
           label: this.$t('StudyPopulationForm.disease_condition'),
-          name: 'disease_conditions_or_indications_codes',
+          name: 'disease_condition_or_indication_codes',
           valuesDisplay: 'terms'
         },
         {
@@ -55,7 +55,7 @@ export default {
         },
         {
           label: this.$t('StudyPopulationForm.diagnosis_group'),
-          name: 'diagnosis_groups_codes',
+          name: 'diagnosis_group_codes',
           valuesDisplay: 'terms'
         },
         {

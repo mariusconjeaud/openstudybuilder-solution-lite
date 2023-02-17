@@ -6,15 +6,13 @@ from clinical_mdr_api import exceptions, models
 from clinical_mdr_api.domain.library.endpoints import EndpointAR
 from clinical_mdr_api.domain.library.timeframes import TimeframeAR
 from clinical_mdr_api.domain.study_selection.study_selection_endpoint import (
+    StudyEndpointSelectionHistory,
     StudySelectionEndpointsAR,
     StudySelectionEndpointVO,
 )
 from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_endpoint_repository import (
-    SelectionHistoryObject,
-)
 from clinical_mdr_api.models.study_selection import (
-    EndpointUnits,
+    EndpointUnitsInput,
     StudySelectionEndpointCreateInput,
     StudySelectionEndpointInput,
 )
@@ -94,12 +92,16 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         return models.study_selection.StudySelectionEndpoint.from_study_selection_endpoint(
             study_selection=study_selection,
             study_uid=study_uid,
-            get_endpoint_by_uid_and_version=self._transform_endpoint_model
-            if get_endpoint_by_uid_and_version is None
-            else get_endpoint_by_uid_and_version,
-            get_latest_endpoint_by_uid=self._transform_latest_endpoint_model
-            if get_latest_endpoint_by_uid is None
-            else get_latest_endpoint_by_uid,
+            get_endpoint_by_uid_and_version=(
+                self._transform_endpoint_model
+                if get_endpoint_by_uid_and_version is None
+                else get_endpoint_by_uid_and_version
+            ),
+            get_latest_endpoint_by_uid=(
+                self._transform_latest_endpoint_model
+                if get_latest_endpoint_by_uid is None
+                else get_latest_endpoint_by_uid
+            ),
             get_timeframe_by_uid_and_version=self._transform_timeframe_model,
             get_latest_timeframe=self._transform_latest_timeframe_model,
             get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
@@ -145,6 +147,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                     )
             else:
                 endpoint_ar = None
+
             if selection_create_input.timeframe_uid:
                 timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid_2(
                     selection_create_input.timeframe_uid, for_update=True
@@ -164,12 +167,18 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                     )
             else:
                 timeframe_ar = None
-            if selection_create_input.endpoint_units is None:
+
+            if selection_create_input.endpoint_units:
+                units = tuple(
+                    {"uid": unit}
+                    for unit in selection_create_input.endpoint_units.units
+                )
+                separator = selection_create_input.endpoint_units.separator
+
+            else:
                 units = None
                 separator = None
-            else:
-                units = selection_create_input.endpoint_units.units
-                separator = selection_create_input.endpoint_units.separator
+
             # get order from the endpoint level CT term
             if selection_create_input.endpoint_level_uid is not None:
                 endpoint_level_order = (
@@ -292,12 +301,17 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                         )
                 else:
                     timeframe_ar = None
-                if selection_create_input.endpoint_units is None:
+
+                if selection_create_input.endpoint_units:
+                    units = tuple(
+                        {"uid": unit}
+                        for unit in selection_create_input.endpoint_units.units
+                    )
+                    separator = selection_create_input.endpoint_units.separator
+
+                else:
                     units = None
                     separator = None
-                else:
-                    units = selection_create_input.endpoint_units.units
-                    separator = selection_create_input.endpoint_units.separator
 
                 # get order from the Objective level CT term
                 if selection_create_input.endpoint_level_uid is not None:
@@ -711,7 +725,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         transformed_current = StudySelectionEndpointInput(
             endpoint_uid=current_study_endpoint.endpoint_uid,
             endpoint_level_uid=current_study_endpoint.endpoint_level_uid,
-            endpoint_units=EndpointUnits(
+            endpoint_units=EndpointUnitsInput(
                 units=current_study_endpoint.endpoint_units,
                 separator=current_study_endpoint.unit_separator,
             ),
@@ -893,7 +907,9 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         return self._transform_single_to_response_model(new_selection, order, study_uid)
 
     def _transform_history_to_response_model(
-        self, study_selection_history: List[SelectionHistoryObject], study_uid: str
+        self,
+        study_selection_history: List[StudyEndpointSelectionHistory],
+        study_uid: str,
     ) -> Sequence[models.StudySelectionEndpoint]:
         result = []
 

@@ -84,6 +84,17 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 number_of_subjects=3,
                 arm_type_uid=arm_type_term.uid,
             ),
+            create_study_arm(
+                study_uid=self.study.uid,
+                name="Arm_Name_4",
+                short_name="Arm_Short_Name_4",
+                code="Arm_code_4",
+                description="desc...",
+                colour_code="colour...",
+                randomization_group="Randomization_Group_4",
+                number_of_subjects=3,
+                arm_type_uid=arm_type_term.uid,
+            ),
         ]
 
         # Create a study element
@@ -309,7 +320,7 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 models.StudyDesignCellBatchInput(
                     method="POST",
                     content=models.StudyDesignCellCreateInput(
-                        study_arm_uid=self.study_arms[2].arm_uid,
+                        study_arm_uid=self.study_arms[3].arm_uid,
                         study_epoch_uid=self.study_epoch.uid,
                         study_element_uid=self.study_elements[1].element_uid,
                         transition_rule="Transition_Rule_2",

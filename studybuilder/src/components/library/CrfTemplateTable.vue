@@ -7,12 +7,12 @@
     sort-by="name"
     sort-desc
     has-api
-    column-data-resource="concepts/odms/templates"
-    export-data-url="concepts/odms/templates"
-    export-object-label="CRFTemplates"
     :options.sync="options"
     :server-items-length="total"
     @filter="getTemplates"
+    column-data-resource="concepts/odms/templates"
+    export-data-url="concepts/odms/templates"
+    export-object-label="CRFTemplates"
     >
     <template v-slot:actions="">
       <v-btn
@@ -55,9 +55,11 @@
     :open="showForm"
     @close="closeForm"
     :selectedTemplate="selectedTemplate"
+    :readOnlyProp="selectedTemplate && selectedTemplate.status === statuses.FINAL"
     />
   <v-dialog
     v-model="showTemplateHistory"
+    @keydown.esc="closeTemplateHistory"
     persistent
     max-width="1200px"
     >
@@ -69,6 +71,7 @@
       />
   </v-dialog>
   <v-dialog v-model="showRelations"
+            @keydown.esc="closeRelationsTree()"
             max-width="800px"
             persistent>
     <odm-references-tree
@@ -89,6 +92,8 @@ import StatusChip from '@/components/tools/StatusChip'
 import filteringParameters from '@/utils/filteringParameters'
 import OdmReferencesTree from '@/components/library/OdmReferencesTree.vue'
 import crfTypes from '@/constants/crfTypes'
+import { mapGetters } from 'vuex'
+import statuses from '@/constants/statuses'
 
 export default {
   components: {
@@ -103,6 +108,10 @@ export default {
     elementProp: Object
   },
   computed: {
+    ...mapGetters({
+      templates: 'crfs/templates',
+      total: 'crfs/totalTemplates'
+    }),
     templateHistoryTitle () {
       if (this.selectedTemplate) {
         return this.$t(
@@ -127,7 +136,7 @@ export default {
           icon: 'mdi-pencil',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'edit'),
-          click: this.editTemplate
+          click: this.edit
         },
         {
           label: this.$t('_global.delete'),
@@ -178,16 +187,18 @@ export default {
       selectedTemplate: null,
       options: {},
       filters: '',
-      total: 0,
-      templates: [],
       showRelations: false,
       templateHistoryItems: []
     }
   },
+  created () {
+    this.statuses = statuses
+  },
   mounted () {
+    this.getTemplates()
     if (this.elementProp.tab === 'templates' && this.elementProp.type === crfTypes.TEMPLATE && this.elementProp.uid) {
       crfs.getTemplate(this.elementProp.uid).then((resp) => {
-        this.editTemplate(resp.data)
+        this.edit(resp.data)
       })
     }
   },
@@ -225,10 +236,12 @@ export default {
         this.getTemplates()
       })
     },
-    editTemplate (item) {
-      this.selectedTemplate = item
-      this.showForm = true
-      this.$emit('clearUid')
+    edit (item) {
+      crfs.getTemplate(item.uid).then((resp) => {
+        this.selectedTemplate = resp.data
+        this.showForm = true
+        this.$emit('clearUid')
+      })
     },
     async openTemplateHistory (template) {
       this.selectedTemplate = template
@@ -250,12 +263,12 @@ export default {
       this.getTemplates()
     },
     getTemplates (filters, sort, filtersUpdated) {
+      if (filters) {
+        this.filters = filters
+      }
       const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
-      crfs.get('templates', { params }).then((resp) => {
-        this.templates = resp.data.items
-        this.total = resp.data.total
-      })
+        this.options, this.filters, sort, filtersUpdated)
+      this.$store.dispatch('crfs/fetchTemplates', params)
     }
   },
   watch: {
@@ -267,9 +280,7 @@ export default {
     },
     elementProp (value) {
       if (value.tab === 'templates' && value.type === crfTypes.TEMPLATE && value.uid) {
-        crfs.getTemplate(value.uid).then((resp) => {
-          this.editTemplate(resp.data)
-        })
+        this.edit({ uid: value.uid })
       }
     }
   }

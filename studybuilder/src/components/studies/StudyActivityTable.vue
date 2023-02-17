@@ -1,6 +1,7 @@
 <template>
 <div>
   <n-n-table
+    key="studyActivityTable"
     ref="table"
     :headers="headers"
     :items="studyActivities"
@@ -14,6 +15,7 @@
     :column-data-resource="`studies/${selectedStudy.uid}/study-activities`"
     :history-data-fetcher="fetchActivitiesHistory"
     :history-title="$t('StudyActivityTable.global_history_title')"
+    :extra-item-class="getItemRowClass"
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -51,15 +53,6 @@
         </v-icon>
       </v-btn>
     </template>
-    <template v-slot:item.start_date="{ item }">
-      {{ item.start_date|date }}
-    </template>
-    <template v-slot:item.actions="{ item }">
-      <actions-menu
-        :actions="actions"
-        :item="item"
-        />
-    </template>
     <template v-slot:body="props" v-if="sortMode">
       <draggable
         :list="props.items"
@@ -69,6 +62,7 @@
         <tr
           v-for="(item, index) in props.items"
           :key="index"
+          :class="item.activity.library_name === libConstants.LIBRARY_REQUESTED ? 'warning' : ''"
           >
           <td v-if="props.showSelectBoxes">
             <v-checkbox
@@ -92,15 +86,26 @@
             </v-icon>
             {{ item.order }}
           </td>
+          <td>{{ item.activity.library_name }}</td>
           <td>{{ item.flowchart_group.sponsor_preferred_name }}</td>
-          <td>{{ getActivityGroup(item) }}</td>
-          <td>{{ getActivitySubGroup(item) }}</td>
+          <td>{{ item.activity.activity_group.name }}</td>
+          <td>{{ item.activity.activity_subgroup.name }}</td>
           <td>{{ item.activity.name }}</td>
           <td>{{ item.note }}</td>
           <td>{{ item.start_date|date }}</td>
           <td>{{ item.user_initials }}</td>
         </tr>
       </draggable>
+    </template>
+    <template v-slot:item.actions="{ item }">
+      <actions-menu
+        :actions="getActionsForItem(item)"
+        :item="item"
+        :badge="actionsMenuBadge(item)"
+        />
+    </template>
+    <template v-slot:item.start_date="{ item }">
+      {{ item.start_date | date }}
     </template>
   </n-n-table>
   <v-dialog
@@ -129,6 +134,7 @@
 
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
   <v-dialog v-model="showHistory"
+            @keydown.esc="closeHistory"
             persistent
             max-width="1200px">
     <history-table
@@ -161,6 +167,7 @@ import NNTable from '@/components/tools/NNTable'
 import StudyActivityBatchEditForm from './StudyActivityBatchEditForm'
 import StudyActivityEditForm from './StudyActivityEditForm'
 import StudyActivityForm from './StudyActivityForm'
+import libConstants from '@/constants/libraries'
 
 export default {
   components: {
@@ -192,6 +199,7 @@ export default {
   },
   data () {
     return {
+      libConstants: libConstants,
       actions: [
         {
           label: this.$t('_global.edit'),
@@ -221,6 +229,7 @@ export default {
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: '#', value: 'order', width: '5%' },
+        { text: this.$t('_global.library'), value: 'activity.library_name' },
         { text: this.$t('StudyActivity.flowchart_group'), value: 'flowchart_group.sponsor_preferred_name' },
         { text: this.$t('StudyActivity.activity_group'), value: 'activity.activity_group.name' },
         { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity.activity_subgroup.name' },
@@ -235,6 +244,27 @@ export default {
     }
   },
   methods: {
+    getActionsForItem (item) {
+      const result = [...this.actions]
+      if (item.activity.replaced_by_activity) {
+        result.unshift({
+          label: this.$t('StudyActivityTable.update_activity_request'),
+          icon: 'mdi-bell',
+          iconColor: 'red',
+          click: this.updateActivityRequest
+        })
+      }
+      return result
+    },
+    actionsMenuBadge (item) {
+      if (item.activity.replaced_by_activity) {
+        return {
+          color: 'error',
+          icon: 'mdi-exclamation'
+        }
+      }
+      return undefined
+    },
     closeForm () {
       this.showActivityForm = false
     },
@@ -249,7 +279,7 @@ export default {
         ? this.$t('StudyActivityTable.confirm_delete_side_effect')
         : this.$t('StudyActivityTable.confirm_delete', { activity })
       if (await this.$refs.confirm.open(msg, options)) {
-        study.deleteStudyActivity(this.selectedStudy.uid, sa.study_activity_uid).then(resp => {
+        study.deleteStudyActivity(this.selectedStudy.uid, sa.study_activity_uid).then(() => {
           this.getStudyActivities()
           bus.$emit('notification', { type: 'success', msg: this.$t('StudyActivityTable.delete_success') })
         })
@@ -258,6 +288,12 @@ export default {
     editStudyActivity (sa) {
       this.selectedStudyActivity = sa
       this.showActivityEditForm = true
+    },
+    updateActivityRequest (sa) {
+      study.updateToApprovedActivity(this.selectedStudy.uid, sa.study_activity_uid).then(() => {
+        bus.$emit('notification', { type: 'success', msg: this.$t('StudyActivityTable.update_success') })
+        this.getStudyActivities()
+      })
     },
     async openHistory (sa) {
       this.selectedStudyActivity = sa
@@ -292,7 +328,7 @@ export default {
     onOrderChange (event) {
       const studyActivity = event.moved.element
       const replacedStudyActivity = this.studyActivities[event.moved.newIndex]
-      study.updateStudyActivityOrder(studyActivity.study_uid, studyActivity.study_activity_uid, replacedStudyActivity.order).then(resp => {
+      study.updateStudyActivityOrder(studyActivity.study_uid, studyActivity.study_activity_uid, replacedStudyActivity.order).then(() => {
         this.getStudyActivities()
       })
     },
@@ -305,6 +341,9 @@ export default {
     async fetchActivitiesHistory () {
       const resp = await study.getStudyActivitiesAuditTrail(this.selectedStudy.uid)
       return resp.data
+    },
+    getItemRowClass (item) {
+      return item.activity.library_name === libConstants.LIBRARY_REQUESTED ? 'tableFontSize warning' : 'tableFontSize'
     }
   },
   mounted () {
@@ -320,3 +359,8 @@ export default {
   }
 }
 </script>
+<style scoped>
+.tableFontSize {
+  font-size: 14px;
+}
+</style>

@@ -7,7 +7,7 @@ from starlette.datastructures import MutableHeaders
 
 
 class MDRApiBaseException(Exception):
-    status_code: int = None
+    status_code: Optional[int] = None
 
     def __init__(self, msg):
         self.msg = msg

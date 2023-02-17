@@ -73,11 +73,11 @@ export default {
   getPreviewEpoch (studyUid, data) {
     return repository.post(`${resource}/${studyUid}/study-epochs/preview`, data)
   },
-  getAllowedVisitTypes (data) {
+  getAllowedVisitTypes (studyUid, data) {
     const params = {
       ...data
     }
-    return repository.get('study-visits/allowed-visit-types', { params })
+    return repository.get(`studies/${studyUid}/study-visits/allowed-visit-types`, { params })
   },
   getStudyArmsVersions (studyUid) {
     return repository.get(`${resource}/${studyUid}/study-arms/audit-trail`)
@@ -90,5 +90,17 @@ export default {
   },
   getStudyEpochsVersions (studyUid) {
     return repository.get(`${resource}/${studyUid}/study-epoch/audit-trail`)
+  },
+  createCollapsibleVisitGroup (studyUid, visitUids, visitTemplateUid) {
+    const data = {
+      visits_to_assign: visitUids
+    }
+    if (visitTemplateUid) {
+      data.overwrite_visit_from_template = visitTemplateUid
+    }
+    return repository.post(`${resource}/${studyUid}/consecutive-visit-groups`, data, { ignoreErrors: true })
+  },
+  deleteCollapsibleVisitGroup (studyUid, groupName) {
+    return repository.delete(`${resource}/${studyUid}/consecutive-visit-groups/${groupName}`)
   }
 }

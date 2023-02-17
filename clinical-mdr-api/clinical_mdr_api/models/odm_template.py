@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Callable, Dict, List, Optional, Sequence
+from typing import Callable, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -18,7 +18,7 @@ class OdmTemplate(ConceptModel):
     effective_date: Optional[date]
     retired_date: Optional[date]
     description: Optional[str]
-    forms: Sequence[OdmFormRefModel]
+    forms: List[OdmFormRefModel]
     possible_actions: List[str]
 
     @classmethod
@@ -52,7 +52,7 @@ class OdmTemplate(ConceptModel):
                     )
                     for form_uid in odm_template_ar.concept_vo.form_uids
                 ],
-                key=lambda item: item.order_number,
+                key=lambda item: (item.order_number, item.name),
             ),
             possible_actions=sorted(
                 [_.value for _ in odm_template_ar.get_possible_actions()]
@@ -62,9 +62,9 @@ class OdmTemplate(ConceptModel):
 
 class OdmTemplatePostInput(ConceptPostInput):
     oid: Optional[str]
-    effective_date: Optional[date]
-    retired_date: Optional[date]
-    description: Optional[str]
+    effective_date: Optional[date] = None
+    retired_date: Optional[date] = None
+    description: Optional[str] = None
 
 
 class OdmTemplatePatchInput(ConceptPatchInput):
@@ -79,7 +79,7 @@ class OdmTemplateFormPostInput(BaseModel):
     order_number: int
     mandatory: str
     locked: str = "No"
-    collection_exception_condition_oid: Optional[str]
+    collection_exception_condition_oid: Optional[str] = None
 
 
 class OdmTemplateVersion(OdmTemplate):

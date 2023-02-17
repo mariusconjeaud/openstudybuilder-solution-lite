@@ -407,10 +407,14 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                     criteria_type_order=order,
                     criteria_type_uid=criteria_type_uid,
                     get_criteria_by_uid_callback=(
-                        lambda _: models.Criteria.from_criteria_ar(criteria_ar)
+                        lambda _: models.Criteria.from_criteria_ar(
+                            criteria_ar,
+                        )
                     ),
                     get_criteria_by_uid_version_callback=(
-                        lambda _: models.Criteria.from_criteria_ar(criteria_ar)
+                        lambda _: models.Criteria.from_criteria_ar(
+                            criteria_ar,
+                        )
                     ),
                     get_ct_term_criteria_type=self._find_by_uid_or_raise_not_found,
                     find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
@@ -620,14 +624,14 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
 
     @db.transaction
     def get_all_selection_audit_trail(
-        self, study_uid: str
+        self, study_uid: str, criteria_type_uid: Optional[str]
     ) -> Sequence[models.StudySelectionCriteriaCore]:
         repos = self._repos
         try:
             try:
                 selection_history = (
                     repos.study_selection_criteria_repository.find_selection_history(
-                        study_uid
+                        study_uid=study_uid, criteria_type_uid=criteria_type_uid
                     )
                 )
             except ValueError as value_error:
@@ -648,7 +652,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             try:
                 selection_history = (
                     repos.study_selection_criteria_repository.find_selection_history(
-                        study_uid, study_selection_uid
+                        study_uid=study_uid, study_selection_uid=study_selection_uid
                     )
                 )
             except ValueError as value_error:

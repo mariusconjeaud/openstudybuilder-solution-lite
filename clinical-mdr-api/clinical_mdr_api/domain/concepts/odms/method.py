@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Optional, Sequence
+from typing import Callable, List, Optional
 
 from clinical_mdr_api.domain.concepts.concept_base import ConceptVO
 from clinical_mdr_api.domain.concepts.odms.description import OdmDescriptionAR
@@ -19,9 +19,9 @@ from clinical_mdr_api.exceptions import BusinessLogicException
 class OdmMethodVO(ConceptVO):
     oid: Optional[str]
     method_type: Optional[str]
-    formal_expression_uids: Sequence[str]
-    description_uids: Sequence[str]
-    alias_uids: Sequence[str]
+    formal_expression_uids: List[str]
+    description_uids: List[str]
+    alias_uids: List[str]
 
     @classmethod
     def from_repository_values(
@@ -29,9 +29,9 @@ class OdmMethodVO(ConceptVO):
         oid: Optional[str],
         name: str,
         method_type: Optional[str],
-        formal_expression_uids: Sequence[str],
-        description_uids: Sequence[str],
-        alias_uids: Sequence[str],
+        formal_expression_uids: List[str],
+        description_uids: List[str],
+        alias_uids: List[str],
     ) -> "OdmMethodVO":
         return cls(
             oid=oid,
@@ -56,7 +56,7 @@ class OdmMethodVO(ConceptVO):
         odm_alias_exists_by_callback: Callable[[str, str, bool], bool],
         previous_name: Optional[str] = None,
         previous_oid: Optional[str] = None,
-        previous_formal_expression_uids: Optional[Sequence[str]] = None,
+        previous_formal_expression_uids: Optional[List[str]] = None,
     ) -> None:
 
         if concept_exists_by_callback("name", self.name) and previous_name != self.name:

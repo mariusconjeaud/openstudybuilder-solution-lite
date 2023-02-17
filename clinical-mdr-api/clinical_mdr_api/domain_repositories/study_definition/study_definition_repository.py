@@ -15,6 +15,7 @@ from clinical_mdr_api.domain_repositories.generic_repository import (
     RepositoryClosureData,  # type: ignore
 )
 from clinical_mdr_api.domain_repositories.models.study import StudyValue
+from clinical_mdr_api.models.study import StudyPreferredTimeUnit
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 
@@ -458,8 +459,46 @@ class StudyDefinitionRepository(ABC):
     @abstractmethod
     def generate_uid(self) -> str:
         """
-        A method is supposed to generate a new unique id
+        A method that generates a new unique id
         for the StudyDefinition which is about to be created. It's meant to be used as a callback for some
         StudyDefinitionAR factories.
         :return: a string, an uid for the object about to be created
+        """
+
+    @abstractmethod
+    def get_preferred_time_unit(
+        self,
+        study_uid: str,
+    ) -> StudyPreferredTimeUnit:
+        """
+        A method that gets a StudyTimeField for the study preferred time unit. The preferred time unit is the unit definition
+        that is used to display items like study visits on the timescale.
+        :return: StudyPreferredTimeUnit
+        """
+
+    @abstractmethod
+    def post_preferred_time_unit(
+        self, study_uid: str, unit_definition_uid: str
+    ) -> StudyPreferredTimeUnit:
+        """
+        A method that creates a StudyTimeField for the study preferred time unit. The preferred time unit is the unit definition
+        that is used to display items like study visits on the timescale.
+        :return: StudyPreferredTimeUnit
+        """
+
+    @abstractmethod
+    def edit_preferred_time_unit(
+        self, study_uid: str, unit_definition_uid: str
+    ) -> StudyPreferredTimeUnit:
+        """
+        A method that edits a StudyTimeField for the study preferred time unit. The preferred time unit is the unit definition
+        that is used to display items like study visits on the timescale.
+        :return: StudyPreferredTimeUnit
+        """
+
+    @abstractmethod
+    def study_exists_by_uid(self, study_uid: str) -> bool:
+        """
+        A method that checks whether a Study exists with a specified study_uid
+        :return: bool
         """

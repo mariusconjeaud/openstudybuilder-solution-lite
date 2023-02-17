@@ -115,7 +115,7 @@ class ConceptARBase(LibraryItemAggregateRootBase):
             and self.name != concept_vo.name
         ):
             raise ValueError(
-                f"{self.__class__.__name__} with name ({concept_vo.name}) already exists."
+                f"{type(self).__name__} with name ({concept_vo.name}) already exists."
             )
         if self._concept_vo != concept_vo:
             super()._edit_draft(change_description=change_description, author=author)

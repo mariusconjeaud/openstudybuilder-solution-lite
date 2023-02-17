@@ -124,14 +124,14 @@ def test__filter_base_model_using_fields_directive__consistency_with_directive(
 
     # then
     if field_directive.is_field_included("parent_field"):
-        assert resulting_base_model.__dict__.get("parent_field") is not None
+        assert vars(resulting_base_model).get("parent_field") is not None
     else:
-        assert resulting_base_model.__dict__.get("parent_field") is None
+        assert vars(resulting_base_model).get("parent_field") is None
 
     if field_directive.is_field_included("child"):
-        assert resulting_base_model.__dict__.get("child") is not None
+        assert vars(resulting_base_model).get("child") is not None
         assert field_directive.is_field_included("child.child_field") == (
             "child_field" in resulting_base_model.child.__fields_set__
         )
     else:
-        assert resulting_base_model.__dict__.get("child") is None
+        assert vars(resulting_base_model).get("child") is None

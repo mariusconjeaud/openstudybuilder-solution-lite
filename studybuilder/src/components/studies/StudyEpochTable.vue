@@ -97,6 +97,7 @@
     />
   <v-dialog
     v-model="showEpochHistory"
+    @keydown.esc="closeEpochHistory"
     persistent
     max-width="1200px"
     >

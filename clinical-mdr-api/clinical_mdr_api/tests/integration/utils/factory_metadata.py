@@ -5,6 +5,7 @@ from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
 from clinical_mdr_api.models.study import (
     HighLevelStudyDesignJsonModel,
     RegistryIdentifiersJsonModel,
+    StudyDescriptionJsonModel,
     StudyIdentificationMetadataJsonModel,
     StudyMetadataJsonModel,
     StudyPatchRequestJsonModel,
@@ -23,8 +24,15 @@ def input_metadata_in_study(study_uid):
     )
 
 
-def generate_id_metadata() -> StudyIdentificationMetadataJsonModel:
-    ri_data = RegistryIdentifiersJsonModel(
+def generate_description_metadata() -> StudyDescriptionJsonModel:
+    return StudyDescriptionJsonModel(
+        study_title="Some Study Title for Testing",
+        study_short_title="Some Study Short Title for Testing",
+    )
+
+
+def generate_ri_data() -> RegistryIdentifiersJsonModel:
+    return RegistryIdentifiersJsonModel(
         ct_gov_id="some ct gov id",
         ct_gov_id_null_value_code=None,
         eudract_id="some eudtact id",
@@ -37,7 +45,9 @@ def generate_id_metadata() -> StudyIdentificationMetadataJsonModel:
         investigational_new_drug_application_number_ind_null_value_code=None,
     )
 
-    return StudyIdentificationMetadataJsonModel(registry_identifiers=ri_data)
+
+def generate_id_metadata() -> StudyIdentificationMetadataJsonModel:
+    return StudyIdentificationMetadataJsonModel(registry_identifiers=generate_ri_data())
 
 
 def generate_ver_metadata() -> StudyVersionMetadataJsonModel:
@@ -49,13 +59,13 @@ def generate_high_level_study_design() -> HighLevelStudyDesignJsonModel:
     return HighLevelStudyDesignJsonModel(
         study_type_code=None,
         study_type_null_value_code=None,
-        trial_types_codes=None,
-        trial_types_null_value_code=None,
+        trial_type_codes=None,
+        trial_type_null_value_code=None,
         trial_phase_code=None,
         trial_phase_null_value_code=None,
-        is_extension_trial=None,
+        is_extension_trial=False,
         is_extension_trial_null_value_code=None,
-        is_adaptive_design=None,
+        is_adaptive_design=False,
         is_adaptive_design_null_value_code=None,
         study_stop_rules="some stop rule",
         study_stop_rules_null_value_code=None,
@@ -68,12 +78,12 @@ def generate_high_level_study_design() -> HighLevelStudyDesignJsonModel:
 
 def generate_study_population() -> StudyPopulationJsonModel:
     return StudyPopulationJsonModel(
-        therapeutic_areas_codes=None,
-        therapeutic_areas_null_value_code=None,
-        disease_conditions_or_indications_codes=None,
-        disease_conditions_or_indications_null_value_code=None,
-        diagnosis_groups_codes=None,
-        diagnosis_groups_null_value_code=None,
+        therapeutic_area_codes=None,
+        therapeutic_area_null_value_code=None,
+        disease_condition_or_indication_codes=None,
+        disease_condition_or_indication_null_value_code=None,
+        diagnosis_group_codes=None,
+        diagnosis_group_null_value_code=None,
         sex_of_participants_code=None,
         sex_of_participants_null_value_code=None,
         rare_disease_indicator=None,
@@ -99,6 +109,7 @@ def generate_study_population() -> StudyPopulationJsonModel:
 
 def generate_study_metadata() -> StudyMetadataJsonModel:
     return StudyMetadataJsonModel(
+        study_description=generate_description_metadata(),
         identification_metadata=generate_id_metadata(),
         version_metadata=generate_ver_metadata(),
         high_level_study_design=generate_high_level_study_design(),

@@ -83,24 +83,36 @@ from clinical_mdr_api.routers.odm_items import router as odm_item_router
 from clinical_mdr_api.routers.odm_metadata import router as odm_metadata_router
 from clinical_mdr_api.routers.odm_methods import router as odm_methods_router
 from clinical_mdr_api.routers.odm_templates import router as odm_templates_router
-from clinical_mdr_api.routers.odm_xml_extension_attributes import (
-    router as odm_xml_extension_attribute_router,
+from clinical_mdr_api.routers.odm_vendor_attributes import (
+    router as odm_vendor_attribute_router,
 )
-from clinical_mdr_api.routers.odm_xml_extension_tags import (
-    router as odm_xml_extension_tag_router,
+from clinical_mdr_api.routers.odm_vendor_elements import (
+    router as odm_vendor_element_router,
 )
-from clinical_mdr_api.routers.odm_xml_extensions import (
-    router as odm_xml_extension_router,
+from clinical_mdr_api.routers.odm_vendor_namespaces import (
+    router as odm_vendor_namespace_router,
 )
 from clinical_mdr_api.routers.projects import router as projects_router
 from clinical_mdr_api.routers.rating_scales import router as rating_scales_router
 from clinical_mdr_api.routers.reminders import router as reminders_router
 from clinical_mdr_api.routers.special_purposes import router as special_purposes_router
+from clinical_mdr_api.routers.standard_data_models.class_variables import (
+    router as class_variables_router,
+)
 from clinical_mdr_api.routers.standard_data_models.data_model_igs import (
     router as data_model_igs_router,
 )
 from clinical_mdr_api.routers.standard_data_models.data_models import (
     router as data_models_router,
+)
+from clinical_mdr_api.routers.standard_data_models.dataset_classes import (
+    router as dataset_classes_router,
+)
+from clinical_mdr_api.routers.standard_data_models.dataset_variables import (
+    router as dataset_variables_router,
+)
+from clinical_mdr_api.routers.standard_data_models.datasets import (
+    router as datasets_router,
 )
 from clinical_mdr_api.routers.studies import router as studies_router
 from clinical_mdr_api.routers.study import router as study_router
@@ -118,6 +130,9 @@ from clinical_mdr_api.routers.study_design_cell import (
     router as study_design_cell_router,
 )
 from clinical_mdr_api.routers.study_design_figure import router as study_design_figure
+from clinical_mdr_api.routers.study_disease_milestones import (
+    router as study_disease_milestone_router,
+)
 from clinical_mdr_api.routers.study_duration_days import (
     router as study_duration_days_router,
 )
@@ -156,9 +171,9 @@ __all__ = [
     "odm_formal_expressions_router",
     "odm_descriptions_router",
     "odm_aliases_router",
-    "odm_xml_extension_router",
-    "odm_xml_extension_tag_router",
-    "odm_xml_extension_attribute_router",
+    "odm_vendor_namespace_router",
+    "odm_vendor_element_router",
+    "odm_vendor_attribute_router",
     "activity_instances_router",
     "odm_metadata_router",
     "reminders_router",
@@ -210,6 +225,7 @@ __all__ = [
     "timeframes_router",
     "study_router",
     "study_epoch_router",
+    "study_disease_milestone_router",
     "study_visit_router",
     "study_activity_instructions_router",
     "study_activity_schedule_router",
@@ -232,4 +248,8 @@ __all__ = [
     "visit_names_router",
     "data_models_router",
     "data_model_igs_router",
+    "datasets_router",
+    "dataset_classes_router",
+    "class_variables_router",
+    "dataset_variables_router",
 ]

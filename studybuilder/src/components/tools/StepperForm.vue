@@ -107,6 +107,11 @@ export default {
   },
   mounted () {
     this.$store.commit('form/SET_FORM', this.editData)
+    document.addEventListener('keydown', (evt) => {
+      if (evt.code === 'Escape') {
+        this.cancel()
+      }
+    })
   },
   methods: {
     async cancel () {

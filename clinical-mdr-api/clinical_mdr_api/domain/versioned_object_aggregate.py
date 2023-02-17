@@ -281,7 +281,7 @@ class VersioningActionMixin:
     # Setting labels of updated objects
     _NEW_VERSION_LABEL = "New draft created"
     _FINAL_VERSION_LABEL = "Approved version"
-    _RETIRED_VERSION_LABEL = "Deactivated version"
+    _RETIRED_VERSION_LABEL = "Inactivated version"
     _REACTIVATED_VERSION_LABEL = "Reactivated version"
     # implementations of basic versioning actions
     def approve(
@@ -711,16 +711,15 @@ class TemplateAggregateRootBase(LibraryItemAggregateRootBase):
         if self.item_metadata.version >= "1.0" and extract_parameters(
             self.name
         ) != extract_parameters(template.name):
-            if self.__class__.__name__ == "TimeframeTemplateAR":
-                raise VersioningException(
-                    "The template parameters cannot be modified after being a final version, only the plain text can be modified"
-                )
-            raise VersioningException(
-                "You cannot change number or order of template parameters for a previously approved template."
-            )
+            self._raise_versioning_exception()
         if self._template != template:
             super()._edit_draft(change_description=change_description, author=author)
             self._template = template
+
+    def _raise_versioning_exception(self):
+        raise VersioningException(
+            "You cannot change number or order of template parameters for a previously approved template."
+        )
 
     def create_new_version(
         self, author: str, change_description: str, template: TemplateVO

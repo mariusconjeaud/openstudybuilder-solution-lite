@@ -45,8 +45,8 @@
               :label="$t('OdmViewer.stylesheet')"
               row
               class="mt-7">
-              <v-radio :label="$t('OdmViewer.blank')" value="odm_template_blankcrf.xsl" />
-              <v-radio :label="$t('OdmViewer.sdtm')" value="odm_template_sdtmcrf.xsl" />
+              <v-radio :label="$t('OdmViewer.blank')" value="blank" />
+              <v-radio :label="$t('OdmViewer.sdtm')" value="sdtm" />
             </v-radio-group>
               <v-btn
                 class="mt-7"
@@ -119,7 +119,6 @@
 
 <script>
 import crfs from '@/api/crfs'
-import axios from 'axios'
 import statuses from '@/constants/statuses'
 import exportLoader from '@/utils/exportLoader'
 import { DateTime } from 'luxon'
@@ -127,7 +126,8 @@ import { DateTime } from 'luxon'
 export default {
   props: {
     typeProp: String,
-    elementProp: String
+    elementProp: String,
+    refresh: String
   },
   data () {
     return {
@@ -137,7 +137,7 @@ export default {
       doc: '',
       params: {
         target_type: 'template',
-        stylesheet: 'odm_template_sdtmcrf.xsl',
+        stylesheet: 'sdtm',
         export_to: 'v1'
       },
       loading: false,
@@ -147,10 +147,11 @@ export default {
       types: [
         { name: this.$t('OdmViewer.template'), value: 'template' },
         { name: this.$t('OdmViewer.form'), value: 'form' },
-        { name: this.$t('OdmViewer.item_group'), value: 'item-group' },
+        { name: this.$t('OdmViewer.item_group'), value: 'item_group' },
         { name: this.$t('OdmViewer.item'), value: 'item' }
       ],
-      draft: true
+      draft: true,
+      url: ''
     }
   },
   mounted () {
@@ -169,43 +170,37 @@ export default {
       switch (this.params.target_type) {
         case 'template':
           crfs.get('templates').then((resp) => {
-            this.elements = resp.data.items.filter(this.isFinal)
+            this.elements = resp.data.items.filter(this.checkIfDraft)
           })
           return
         case 'form':
           crfs.get('forms').then((resp) => {
-            this.elements = resp.data.items.filter(this.isFinal)
+            this.elements = resp.data.items.filter(this.checkIfDraft)
           })
           return
-        case 'item-group':
+        case 'item_group':
           crfs.get('item-groups').then((resp) => {
-            this.elements = resp.data.items.filter(this.isFinal)
+            this.elements = resp.data.items.filter(this.checkIfDraft)
           })
           return
         case 'item':
           crfs.get('items').then((resp) => {
-            this.elements = resp.data.items.filter(this.isFinal)
+            this.elements = resp.data.items.filter(this.checkIfDraft)
           })
       }
     },
-    isFinal (item) {
-      return item.status === statuses.FINAL
+    checkIfDraft (item) {
+      return this.draft ? (item.status === statuses.FINAL || item.status === statuses.DRAFT) : item.status === statuses.FINAL
     },
     loadXml () {
       this.doc = ''
       this.loading = true
-      let url = ''
-      if (process.env.NODE_ENV === 'development') {
-        url = `/${this.params.stylesheet}`
-      } else {
-        url = `https://${location.host}/${this.params.stylesheet}`
-      }
       this.params.status = this.draft ? 'final&status=draft' : 'final'
       crfs.getXml(this.params).then(resp => {
         const parser = new DOMParser()
         this.xml = parser.parseFromString(resp.data, 'application/xml')
         const xsltProcessor = new XSLTProcessor()
-        axios.get(url).then(resp => {
+        crfs.getXsl(this.params.stylesheet).then(resp => {
           const xmlDoc = parser.parseFromString(resp.data, 'text/xml')
           xsltProcessor.importStylesheet(xmlDoc)
           this.doc = new XMLSerializer().serializeToString(xsltProcessor.transformToDocument(this.xml))
@@ -216,6 +211,8 @@ export default {
         name: 'Crfs',
         params: { tab: 'odm-viewer', type: this.params.target_type, uid: this.params.target_uid }
       })
+      this.url = `${window.location.href}`
+      this.$emit('clearUid')
     },
     downloadHtml () {
       this.downloadLoadingHtml = true
@@ -239,11 +236,22 @@ export default {
     },
     clearXml () {
       this.doc = ''
+      this.url = ''
+      this.$router.push({ name: 'Crfs', params: { tab: 'odm-viewer' } })
     }
   },
   watch: {
+    refresh () {
+      if (this.refresh === 'odm-viewer' && this.url !== '') {
+        const stateObj = { id: '100' }
+        window.history.replaceState(stateObj, 'Loaded CRF', this.url)
+      }
+    },
     elementProp () {
       this.automaticLoad()
+    },
+    draft () {
+      this.setElements()
     }
   }
 }

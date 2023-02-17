@@ -518,8 +518,20 @@ class QueryService:
         MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-->(sf:StudyField)
         OPTIONAL MATCH  (sf)-->(ctr:CTTermRoot)-->(ctar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ctav:CTTermAttributesValue)<--(:CTPackageTerm)<--(:CTPackageCodelist)<--(ctp:CTPackage)
         OPTIONAL MATCH (sf)-->(dtr:DictionaryTermRoot)-->(dtv:DictionaryTermValue)
+        OPTIONAL MATCH (sf)-[:HAS_REASON_FOR_NULL_VALUE]->(ct_null:CTTermRoot{uid:"C48660_Not Applicable"})
+        OPTIONAL MATCH (sf)-[:HAS_REASON_FOR_NULL_VALUE]->(ct_pinf:CTTermRoot{uid:"CTTerm_000097"})
         WITH *,
         CASE sf.field_name
+            WHEN 'disease_condition_or_indication_codes' THEN 'C112038_INDIC'
+            WHEN 'stratification_factor' THEN 'C16153_STRATFCT'
+            WHEN 'stable_disease_minimum_duration' THEN 'C98783_SDMDUR'
+            WHEN 'relapse_criteria' THEN 'C117961_RLPSCRIT'
+            WHEN 'eudract_id' THEN 'C98714_REGID'
+            WHEN 'ct_gov_id' THEN 'C98714_REGID'
+            WHEN 'universal_trial_number_utn' THEN 'C98714_REGID'
+            WHEN 'investigational_new_drug_application_number_ind' THEN 'C98714_REGID'
+            WHEN 'japanese_trial_registry_id_japic' THEN 'C98714_REGID'
+            WHEN 'confirmed_response_minimum_duration' THEN 'C98715_CRMDUR'
             WHEN 'is_adaptive_design' THEN 'C146995_ADAPT'
             WHEN 'study_stop_rules' THEN 'C49698_STOPRULE'
             WHEN 'trial_phase_code' THEN 'C48281_TPHASE'
@@ -549,6 +561,11 @@ class QueryService:
         CASE
             // for StudyTimeFields and StudyIntFields we want to display
             // actual value that is stored in the StudyField node
+            WHEN sf.field_name='eudract_id' THEN 'EUDRACT'
+            WHEN sf.field_name='ct_gov_id' THEN 'ClinicalTrials.gov'
+            WHEN sf.field_name='universal_trial_number_utn' THEN 'UTN'
+            WHEN sf.field_name='investigational_new_drug_application_number_ind' THEN 'IND'
+            WHEN sf.field_name='japanese_trial_registry_id_japic' THEN 'JAPIC'
             WHEN sf:StudyTimeField
                 THEN 'Not Controlled TimeField'
             WHEN sf:StudyIntField
@@ -566,21 +583,27 @@ class QueryService:
         tav.code_submission_value AS TSPARMCD,
         tav.name_submission_value AS TSPARM,
         controlled_by AS controlled_by,
-        CASE controlled_by
-        WHEN 'CDISC' THEN ctav.code_submission_value
-        WHEN 'Dictionary' THEN dtv.name
+        CASE
+        WHEN controlled_by = 'CDISC' AND ct_null IS NULL THEN ctav.code_submission_value
+        WHEN controlled_by = 'Dictionary' THEN dtv.name
+        WHEN sf.value = [] THEN NULL
         ELSE sf.value
         END AS TSVAL,
-        '' AS TSVALNF,
-        CASE controlled_by
-        WHEN 'CDISC' THEN ctr.concept_id
-        WHEN 'Dictionary' THEN dtv.dictionary_id
+        CASE 
+            WHEN ct_null IS NOT NULL THEN 'NA'
+            WHEN controlled_by = 'Not Controlled TimeField' AND ct_pinf IS NOT NULL THEN 'PINF'
+            ELSE ''
+        END AS TSVALNF,
+        CASE 
+        WHEN controlled_by = 'CDISC' AND ct_null IS NULL  THEN ctr.concept_id
+        WHEN controlled_by = 'Dictionary' THEN dtv.dictionary_id
         ELSE ''
         END AS TSVALCD,
-        CASE controlled_by
-        WHEN 'Not Controlled TimeField' THEN 'ISO8601'
-        WHEN 'CDISC' THEN 'CDISC'
-        WHEN 'Dictionary' THEN head([(library:Library)-[:CONTAINS_DICTIONARY_TERM]->(dtr) | library.name])
+        CASE
+        WHEN controlled_by = 'Not Controlled TimeField' THEN 'ISO8601'
+        WHEN controlled_by = 'CDISC' AND ct_null IS NULL  THEN 'CDISC'
+        WHEN controlled_by = 'Dictionary' THEN head([(library:Library)-[:CONTAINS_DICTIONARY_TERM]->(dtr) | library.name])
+        WHEN controlled_by IN ['EUDRACT', 'ClinicalTrials.gov', 'UTN', 'IND', 'JAPIC'] THEN controlled_by
         ELSE ''
         END AS TSVCDREF,
         '' AS TSVCDVER
@@ -707,6 +730,41 @@ class QueryService:
                 medrt.dictionary_id as TSVALCD,
                 lib.name as TSVCDREF,
                 '' AS TSVCDVER
+        UNION
+            match (:CTTermRoot{uid : 'C49488_Y'})-[:HAS_TYPE]-(sf:StudyField{ field_name : 'is_trial_randomised'})-[:HAS_BOOLEAN_FIELD]- (sv:StudyValue)-[:LATEST]-(sr:StudyRoot{uid:$study_uid}) 
+            match (init_arms:StudyArm)-[:HAS_STUDY_ARM]-(sv)
+            with distinct init_arms, sv
+            with count( init_arms) as counter_arms,  sum( init_arms.number_of_subjects) as all_num_sub, sv
+            where counter_arms>1 
+            with all_num_sub, sv
+            call{
+                with sv
+                match (inv_arms:StudyArm)-[:HAS_STUDY_ARM]-(sv:StudyValue)
+                match  (inv_arms)-[:HAS_ARM_TYPE]-(:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST_FINAL]-(:CTTermNameValue{name:"Investigational Arm"})
+                with collect(distinct inv_arms) as collected_inv_arms
+                unwind collected_inv_arms as unwind_inv_arms
+                with sum( unwind_inv_arms.number_of_subjects) as inv_num_sub
+                return inv_num_sub
+            }
+            with all_num_sub, inv_num_sub, sv
+            with 
+            case all_num_sub
+                when 0 then 'NA'
+                else round(toFloat(inv_num_sub)/all_num_sub,4) 
+            end as rand_quotient, sv
+            match (tr:CTTermRoot {uid:'C98775_RANDQT'})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue) 
+            with tav, rand_quotient, sv
+            RETURN 
+                sv.study_id_prefix+'-'+sv.study_number as STUDYID,
+                'TS' as DOMAIN,
+                tav.code_submission_value as TSPARMCD,
+                tav.name_submission_value as TSPARM,
+                '' AS controlled_by,
+                rand_quotient as TSVAL,
+                '' AS TSVALNF,
+                '' as TSVALCD,
+                '' as TSVCDREF,
+                '' AS TSVCDVER
         }
         RETURN *
         ORDER BY TSPARMCD
@@ -730,6 +788,25 @@ class QueryService:
             se.end_rule AS TEENRL,
             se.planned_duration AS TEDUR
             ORDER BY se.order
+        """
+        result_array = db.cypher_query(
+            query=query, params={"study_uid": str(study_uid)}
+        )
+        return helpers.db_result_to_list(result_array)
+
+    def get_tdm(self, study_uid) -> list:
+        query = """
+        MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_DISEASE_MILESTONE]->(sdm:StudyDiseaseMilestone)
+        MATCH (sdm)-[:HAS_DISEASE_MILESTONE_TYPE]-(tr:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST]-(sdm_term:CTTermNameValue)
+        MATCH (tr)-[HAS_ATTRIBUTES_ROOT]->(CTTermAttributesRoot)-[LATEST]->(ctav:CTTermAttributesValue)
+        RETURN DISTINCT toUpper(sv.study_id_prefix + '-' + sv.study_number) AS STUDYID,
+            'TA' AS DOMAIN,
+            sdm_term.name AS MIDSTYPE ,
+            ctav.definition AS TMDEF,
+            case sdm.repetition_indicator
+                when true then 'Y'
+                when false then 'N'
+            END AS TMRPT
         """
         result_array = db.cypher_query(
             query=query, params={"study_uid": str(study_uid)}

@@ -1,6 +1,6 @@
 import time
 import re
-from mdr_standards_import.cdisc_ct.utils import are_lists_equal, get_sentence_case_string
+from mdr_standards_import.cdisc_ct.utils import are_lists_equal, get_sentence_case_string, REPLACEMENTS
 
 USER_INITIALS = None
 
@@ -60,8 +60,8 @@ def get_packages(tx, effective_date):
 
 
 def get_codelists(tx, effective_date):
-    result = tx.run(
-        """
+    replace_chars = "\n".join([f'WITH replace(submval, "{old}", "{new}") AS submval' for old, new in REPLACEMENTS])
+    query_str1 = """
         MATCH (:Import{effective_date: date($effective_date)})
             -[:INCLUDES]->(package)-[:CONTAINS]->(codelist)
         WHERE NOT (:Inconsistency)-[:AFFECTS_PACKAGE]->(package) AND
@@ -72,9 +72,16 @@ def get_codelists(tx, effective_date):
         CALL { WITH codelist
             MATCH (codelist)-[:CONTAINS]->(term)
             WHERE NOT (:Inconsistency)-[:AFFECTS_TERM]->(term)
+            CALL { WITH term
+                WITH term.code_submission_value AS submval
+        """
+
+    query_str2 = """
+                RETURN submval AS clean_submval
+            }
             RETURN collect({
                 term: term{
-                    uid: term.concept_id + '_' + term.code_submission_value,
+                    uid: term.concept_id + '_' + clean_submval,
                     .concept_id, .code_submission_value, .name_submission_value, .preferred_term, .definition, .synonyms
                 },
                 packages: [(term)<-[:CONTAINS_TERM]-(package) | package]
@@ -84,7 +91,10 @@ def get_codelists(tx, effective_date):
             codelist,
             terms_data,
             packages
-        """,
+        """
+    full_query = query_str1 + replace_chars + query_str2
+    result = tx.run(
+        full_query,
         effective_date=effective_date
     )
     return result.data()

@@ -2,7 +2,7 @@
 <package-timeline
   @catalogueChanged="updateCatalogue"
   @packageChanged="updateTerms"
-  :catalogue_name="$route.params.catalogue_name"
+  :catalogueName="$route.params.catalogue_name"
   :packageName="$route.params.package_name"
   >
   <template v-slot:default="{ selectedPackage }">
@@ -10,9 +10,9 @@
       {{ $t('CodelistTermsView.codelist') }} {{ $route.params.codelist_id }} - {{ codelistAttributes.submission_value }} / {{ $t('CodelistTermsView.terms_listing') }}
     </div>
     <codelist-term-table
-      :catalogue_name="$route.params.catalogue_name"
-      :codelist_uid="$route.params.codelist_id"
-      :packageName="selectedPackage"
+      :catalogue-name="$route.params.catalogue_name"
+      :codelist-uid="$route.params.codelist_id"
+      :package-name="selectedPackage"
       />
   </template>
 </package-timeline>

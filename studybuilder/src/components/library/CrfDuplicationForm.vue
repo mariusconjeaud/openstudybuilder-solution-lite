@@ -141,40 +141,35 @@ export default {
     async save () {
       const isValid = await this.$refs.observer.validate()
       if (!isValid) return
+      let resp
       this.form = Object.assign(this.form, this.item)
       this.$set(this.form, 'name', this.name)
       this.$set(this.form, 'oid', this.oid)
       if (this.type === crfTypes.TEMPLATE) {
-        crfs.createTemplate(this.form).then(resp => {
-          if (this.relations) {
-            crfs.addFormsToTemplate(this.item.forms, resp.data.uid, true).then(resp => {
-            })
-          }
-          this.close()
-        })
+        resp = await crfs.createTemplate(this.form)
+        if (this.relations) {
+          await crfs.addFormsToTemplate(this.item.forms, resp.data.uid, true)
+        }
+        this.close()
       } else if (this.type === crfTypes.FORM) {
         this.form.alias_uids = this.form.aliases.map(alias => alias.uid)
-        crfs.createForm(this.form).then(resp => {
-          this.$set(this.form, 'uid', resp.data.uid)
-          if (this.relations) {
-            crfs.addItemGroupsToForm(this.item.item_groups, resp.data.uid, true)
-          }
-          crfs.addFormsToTemplate([this.form], this.itemToLinkTo.uid, false).then(resp => {
-          })
-          this.close()
-        })
+        resp = await crfs.createForm(this.form)
+        this.$set(this.form, 'uid', resp.uid)
+        if (this.relations) {
+          crfs.addItemGroupsToForm(this.item.item_groups, resp.data.uid, true)
+        }
+        await crfs.addFormsToTemplate([this.form], this.itemToLinkTo.uid, false)
+        this.close()
       } else if (this.type === crfTypes.GROUP) {
         this.form.alias_uids = this.form.aliases.map(alias => alias.uid)
         this.form.sdtm_domain_uids = this.form.sdtm_domains.map(sdtm => sdtm.uid)
-        crfs.createItemGroup(this.form).then(resp => {
-          this.$set(this.form, 'uid', resp.data.uid)
-          if (this.relations) {
-            crfs.addItemsToItemGroup(this.item.items, resp.data.uid, true)
-          }
-          crfs.addItemGroupsToForm([this.form], this.itemToLinkTo.uid, false).then(resp => {
-          })
-          this.close()
-        })
+        resp = await crfs.createItemGroup(this.form)
+        this.$set(this.form, 'uid', resp.uid)
+        if (this.relations) {
+          crfs.addItemsToItemGroup(this.item.items, resp.data.uid, true)
+        }
+        await crfs.addItemGroupsToForm([this.form], this.itemToLinkTo.uid, false)
+        this.close()
       } else {
         this.form.alias_uids = this.form.aliases.map(alias => alias.uid)
         if (this.form.codelist) {
@@ -189,12 +184,10 @@ export default {
           term.uid = term.term_uid
           delete term.term_uid
         })
-        crfs.createItem(this.form).then(resp => {
-          this.$set(this.form, 'uid', resp.data.uid)
-          crfs.addItemsToItemGroup([this.form], this.itemToLinkTo.uid, false).then(resp => {
-          })
-          this.close()
-        })
+        resp = await crfs.createItem(this.form)
+        this.$set(this.form, 'uid', resp.uid)
+        crfs.addItemsToItemGroup([this.form], this.itemToLinkTo.uid, false)
+        this.close()
       }
     }
   },

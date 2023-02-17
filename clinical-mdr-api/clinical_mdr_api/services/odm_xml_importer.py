@@ -1,6 +1,6 @@
 from distutils.util import strtobool
 from time import time
-from typing import Dict, Optional, Sequence, Union
+from typing import Dict, List, Optional, Union
 from xml.dom import minicompat, minidom
 
 from fastapi import UploadFile
@@ -8,7 +8,11 @@ from neomodel import db
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain._utils import get_iso_lang_data
-from clinical_mdr_api.domain.concepts.utils import ENG_LANGUAGE, RelationType
+from clinical_mdr_api.domain.concepts.utils import (
+    ENG_LANGUAGE,
+    RelationType,
+    VendorCompatibleType,
+)
 from clinical_mdr_api.domain.versioned_object_aggregate import (
     LibraryVO,
     VersioningException,
@@ -29,26 +33,30 @@ from clinical_mdr_api.models import (
     OdmItemUnitDefinitionRelationshipInput,
     OdmTemplateFormPostInput,
     OdmTemplatePostInput,
-    OdmXmlExtensionAttributePostInput,
+    OdmVendorAttributePostInput,
 )
 from clinical_mdr_api.models.ct_term_attributes import CTTermAttributes
-from clinical_mdr_api.models.odm_common_models import OdmXmlExtensionRelationPostInput
+from clinical_mdr_api.models.odm_common_models import (
+    OdmRefVendorPostInput,
+    OdmVendorRelationPostInput,
+)
 from clinical_mdr_api.models.odm_condition import OdmCondition
 from clinical_mdr_api.models.odm_form import OdmForm
 from clinical_mdr_api.models.odm_item import OdmItem
 from clinical_mdr_api.models.odm_item_group import OdmItemGroup
 from clinical_mdr_api.models.odm_method import OdmMethod, OdmMethodPostInput
 from clinical_mdr_api.models.odm_template import OdmTemplate
-from clinical_mdr_api.models.odm_xml_extension import (
-    OdmXmlExtension,
-    OdmXmlExtensionPostInput,
+from clinical_mdr_api.models.odm_vendor_attribute import OdmVendorAttribute
+from clinical_mdr_api.models.odm_vendor_element import (
+    OdmVendorElement,
+    OdmVendorElementPostInput,
 )
-from clinical_mdr_api.models.odm_xml_extension_attribute import OdmXmlExtensionAttribute
-from clinical_mdr_api.models.odm_xml_extension_tag import (
-    OdmXmlExtensionTag,
-    OdmXmlExtensionTagPostInput,
+from clinical_mdr_api.models.odm_vendor_namespace import (
+    OdmVendorNamespace,
+    OdmVendorNamespacePostInput,
 )
 from clinical_mdr_api.models.unit_definition import UnitDefinitionModel
+from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import normalize_string
 from clinical_mdr_api.services.ct_term_attributes import CTTermAttributesService
@@ -60,20 +68,18 @@ from clinical_mdr_api.services.odm_item_groups import OdmItemGroupService
 from clinical_mdr_api.services.odm_items import OdmItemService
 from clinical_mdr_api.services.odm_methods import OdmMethodService
 from clinical_mdr_api.services.odm_templates import OdmTemplateService
-from clinical_mdr_api.services.odm_xml_extension_attributes import (
-    OdmXmlExtensionAttributeService,
-)
-from clinical_mdr_api.services.odm_xml_extension_tags import OdmXmlExtensionTagService
-from clinical_mdr_api.services.odm_xml_extensions import OdmXmlExtensionService
+from clinical_mdr_api.services.odm_vendor_attributes import OdmVendorAttributeService
+from clinical_mdr_api.services.odm_vendor_elements import OdmVendorElementService
+from clinical_mdr_api.services.odm_vendor_namespaces import OdmVendorNamespaceService
 from clinical_mdr_api.services.unit_definition import UnitDefinitionService
 from clinical_mdr_api.services.utils.odm_xml_mapper import map_xml
 
 
 class OdmXmlImporterService:
     _repos: MetaRepository
-    odm_xml_extension_service: OdmXmlExtensionService
-    odm_xml_extension_attribute_service: OdmXmlExtensionAttributeService
-    odm_xml_extension_tag_service: OdmXmlExtensionTagService
+    odm_vendor_namespace_service: OdmVendorNamespaceService
+    odm_vendor_attribute_service: OdmVendorAttributeService
+    odm_vendor_element_service: OdmVendorElementService
     odm_template_service: OdmTemplateService
     odm_form_service: OdmFormService
     odm_item_group_service: OdmItemGroupService
@@ -85,8 +91,6 @@ class OdmXmlImporterService:
     unit_definition_service: UnitDefinitionService
     ct_term_attributes_service: CTTermAttributesService
 
-    user_initials: Optional[str]
-
     xml_document: minidom.Document
     form_defs: minicompat.NodeList
     item_group_defs: minicompat.NodeList
@@ -96,46 +100,43 @@ class OdmXmlImporterService:
     codelists: minicompat.NodeList
     measurement_units: minicompat.NodeList
 
-    extension_prefixes: Dict[str, str]
+    namespace_prefixes: Dict[str, str]
 
-    db_xml_extensions: Sequence[OdmXmlExtension]
-    db_xml_extension_attributes: Sequence[OdmXmlExtensionAttribute]
-    db_xml_extension_tags: Sequence[OdmXmlExtensionTag]
-    db_templates: Sequence[OdmTemplate]
-    db_forms: Sequence[OdmForm]
-    db_item_groups: Sequence[OdmItemGroup]
-    db_items: Sequence[OdmItem]
-    db_conditions: Sequence[OdmCondition]
-    db_methods: Sequence[OdmMethod]
-    db_ct_term_attributes: Sequence[CTTermAttributes]
-    db_unit_definitions: Sequence[UnitDefinitionModel]
-    unit_definition_uids_by_ucum_uid: Dict[str, str]
+    db_vendor_namespaces: List[OdmVendorNamespace]
+    db_vendor_attributes: List[OdmVendorAttribute]
+    db_vendor_elements: List[OdmVendorElement]
+    db_templates: List[OdmTemplate]
+    db_forms: List[OdmForm]
+    db_item_groups: List[OdmItemGroup]
+    db_items: List[OdmItem]
+    db_conditions: List[OdmCondition]
+    db_methods: List[OdmMethod]
+    db_ct_term_attributes: List[CTTermAttributes]
+    db_unit_definitions: List[UnitDefinitionModel]
+    unit_definition_uids_by: Dict[str, str]
     measurement_unit_names_by_oid: Dict[str, str]
 
-    mapper: Optional[UploadFile] = None
+    mapper_file: Optional[UploadFile] = None
 
     OSB_PREFIX = "osb"
-    EXCLUDED_OSB_XML_EXTENSION_ATTRIBUTES = [
+    EXCLUDED_OSB_VENDOR_ATTRIBUTES = [
         "version",
         "lang",
-        "locked",
-        "sdv",
-        "dataEntryRequired",
         "instruction",
         "sponsorInstruction",
     ]
-    EXCLUDED_OSB_XML_EXTENSION_TAGS = ["DomainColor"]
+    EXCLUDED_OSB_VENDOR_ELEMENTS = ["DomainColor"]
     OSB_INSTRUCTION = f"{OSB_PREFIX}:instruction"
     OSB_SPONSOR_INSTRUCTION = f"{OSB_PREFIX}:sponsorInstruction"
 
-    def __init__(self, xml: UploadFile, mapper: Optional[UploadFile]):
-        if xml.content_type not in ["application/xml", "text/xml"]:
+    def __init__(self, xml_file: UploadFile, mapper_file: Optional[UploadFile]):
+        if xml_file.content_type not in ["application/xml", "text/xml"]:
             raise exceptions.BusinessLogicException("Only XML format is supported.")
 
         self._repos = MetaRepository()
-        self.odm_xml_extension_service = OdmXmlExtensionService()
-        self.odm_xml_extension_attribute_service = OdmXmlExtensionAttributeService()
-        self.odm_xml_extension_tag_service = OdmXmlExtensionTagService()
+        self.odm_vendor_namespace_service = OdmVendorNamespaceService()
+        self.odm_vendor_attribute_service = OdmVendorAttributeService()
+        self.odm_vendor_element_service = OdmVendorElementService()
         self.odm_template_service = OdmTemplateService()
         self.odm_form_service = OdmFormService()
         self.odm_item_group_service = OdmItemGroupService()
@@ -146,12 +147,10 @@ class OdmXmlImporterService:
         self.odm_description_service = OdmDescriptionService()
         self.ct_term_attributes_service = CTTermAttributesService()
 
-        self.user_initials = "TODO user initials"
-
-        self.extension_prefixes = {}
-        self.db_xml_extensions = []
-        self.db_xml_extension_attributes = []
-        self.db_xml_extension_tags = []
+        self.namespace_prefixes = {}
+        self.db_vendor_namespaces = []
+        self.db_vendor_attributes = []
+        self.db_vendor_elements = []
         self.db_templates = []
         self.db_forms = []
         self.db_item_groups = []
@@ -160,25 +159,26 @@ class OdmXmlImporterService:
         self.db_methods = []
         self.db_ct_term_attributes = []
         self.db_unit_definitions = []
-        self.unit_definition_uids_by_ucum_uid = {}
+        self.unit_definition_uids_by = {}
         self.measurement_unit_names_by_oid = {}
 
-        self.mapper = mapper
+        self.mapper_file = mapper_file
 
-        self.xml_document = minidom.parseString(xml.file.read())
+        self.xml_document = minidom.parseString(xml_file.file.read())
 
-        map_xml(self.xml_document, mapper)
+        map_xml(self.xml_document, mapper_file)
 
         self._set_def_elements()
 
     @db.transaction
     def store_odm_xml(self):
-        self._set_xml_extensions()
-        self._create_missing_xml_extensions()
-        self._set_xml_extension_attributes()
-        self._set_xml_extension_tags()
-        self._set_unit_definitions()
-        self._set_unit_definition_uids_by_ucum_uid()
+        self._set_vendor_namespaces()
+        self._create_missing_vendor_namespaces()
+        self._set_vendor_attributes()
+        self._set_vendor_elements()
+        if not self.db_unit_definitions:
+            self._set_unit_definitions()
+        self._set_unit_definition_uids_by()
         self._set_measurement_unit_names_by_oid()
         self._set_ct_term_attributes()
         self._create_methods_with_relations()
@@ -189,9 +189,9 @@ class OdmXmlImporterService:
         self._create_template_with_relations()
 
         return {
-            "xml_extensions": self._get_newly_created_xml_extensions(),
-            "xml_extension_attributes": self._get_newly_created_xml_extension_attributes(),
-            "xml_extension_tags": self._get_newly_created_xml_extension_tags(),
+            "vendor_namespaces": self._get_newly_created_vendor_namespaces(),
+            "vendor_attributes": self._get_newly_created_vendor_attributes(),
+            "vendor_elements": self._get_newly_created_vendor_elements(),
             "templates": self._get_newly_created_templates(),
             "forms": self._get_newly_created_forms(),
             "item_groups": self._get_newly_created_item_groups(),
@@ -211,368 +211,455 @@ class OdmXmlImporterService:
         self.method_defs = self.xml_document.getElementsByTagName("MethodDef")
         self.codelists = self.xml_document.getElementsByTagName("CodeList")
 
-    def _set_xml_extensions(self):
-        odm_tag = self.xml_document.getElementsByTagName("ODM")[0]
-        for attribute in odm_tag.attributes.values():
+    def _set_vendor_namespaces(self):
+        odm_element = self.xml_document.getElementsByTagName("ODM")[0]
+        for attribute in odm_element.attributes.values():
             if attribute.prefix and attribute.localName != "odm":
-                self.extension_prefixes[attribute.localName] = attribute.nodeValue
+                self.namespace_prefixes[attribute.localName] = attribute.nodeValue
 
-        rs, _ = self._repos.odm_xml_extension_repository.find_all(
+        rs, _ = self._repos.odm_vendor_namespace_repository.find_all(
             filter_by={
-                "prefix": {"v": list(self.extension_prefixes.keys()), "op": "eq"}
+                "prefix": {"v": list(self.namespace_prefixes.keys()), "op": "eq"}
             },
         )
 
         rs = sorted(rs, key=lambda elm: elm.name)
 
-        self.db_xml_extensions = [
-            self.odm_xml_extension_service._transform_aggregate_root_to_pydantic_model(
+        self.db_vendor_namespaces = [
+            self.odm_vendor_namespace_service._transform_aggregate_root_to_pydantic_model(
                 concept_ar
             )
             for concept_ar in rs
         ]
 
-    def _set_xml_extension_attributes(self):
-        xml_extension_attribute_uids = []
-        for db_xml_extension in self.db_xml_extensions:
-            xml_extension_attribute_uids.extend(
-                [
-                    xml_extension_attribute.uid
-                    for xml_extension_attribute in db_xml_extension.xml_extension_attributes
-                ]
-            )
+    def _set_vendor_attributes(self):
+        vendor_attribute_uids = [
+            vendor_attribute.uid
+            for db_vendor_namespace in self.db_vendor_namespaces
+            for vendor_attribute in db_vendor_namespace.vendor_attributes
+        ]
 
-        rs, _ = self._repos.odm_xml_extension_attribute_repository.find_all(
-            filter_by={"uid": {"v": xml_extension_attribute_uids, "op": "eq"}},
+        rs, _ = self._repos.odm_vendor_attribute_repository.find_all(
+            filter_by={"uid": {"v": vendor_attribute_uids, "op": "eq"}},
         )
 
         rs = sorted(rs, key=lambda elm: elm.name)
 
-        self.db_xml_extension_attributes = [
-            self.odm_xml_extension_attribute_service._transform_aggregate_root_to_pydantic_model(
+        self.db_vendor_attributes = [
+            self.odm_vendor_attribute_service._transform_aggregate_root_to_pydantic_model(
                 concept_ar
             )
             for concept_ar in rs
         ]
 
-    def _set_xml_extension_tags(self):
-        xml_extension_tag_uids = []
-        for db_xml_extension in self.db_xml_extensions:
-            xml_extension_tag_uids.extend(
-                [
-                    xml_extension_tag.uid
-                    for xml_extension_tag in db_xml_extension.xml_extension_tags
-                ]
-            )
+    def _set_vendor_elements(self):
+        vendor_element_uids = [
+            vendor_element.uid
+            for db_vendor_namespace in self.db_vendor_namespaces
+            for vendor_element in db_vendor_namespace.vendor_elements
+        ]
 
-        rs, _ = self._repos.odm_xml_extension_tag_repository.find_all(
-            filter_by={"uid": {"v": xml_extension_tag_uids, "op": "eq"}},
+        rs, _ = self._repos.odm_vendor_element_repository.find_all(
+            filter_by={"uid": {"v": vendor_element_uids, "op": "eq"}},
         )
 
         rs = sorted(rs, key=lambda elm: elm.name)
 
-        self.db_xml_extension_tags = [
-            self.odm_xml_extension_tag_service._transform_aggregate_root_to_pydantic_model(
+        self.db_vendor_elements = [
+            self.odm_vendor_element_service._transform_aggregate_root_to_pydantic_model(
                 concept_ar
             )
             for concept_ar in rs
         ]
 
-    def _create_missing_xml_extensions(self):
+    def _create_missing_vendor_namespaces(self):
         missing_prefixes = sorted(
             list(
-                set(self.extension_prefixes.keys())
+                set(self.namespace_prefixes.keys())
                 - {
-                    db_xml_extension.prefix
-                    for db_xml_extension in self.db_xml_extensions
+                    db_vendor_namespace.prefix
+                    for db_vendor_namespace in self.db_vendor_namespaces
                 }
             )
         )
 
-        new_xml_extensions = []
+        new_vendor_namespaces = []
         for missing_prefix in missing_prefixes:
             rs = self._create(
-                self._repos.odm_xml_extension_repository,
-                self.odm_xml_extension_service,
-                new_xml_extensions,
-                OdmXmlExtensionPostInput(
+                self._repos.odm_vendor_namespace_repository,
+                self.odm_vendor_namespace_service,
+                new_vendor_namespaces,
+                OdmVendorNamespacePostInput(
                     name=missing_prefix.upper(),
                     prefix=missing_prefix,
-                    namespace=self.extension_prefixes[missing_prefix],
+                    url=self.namespace_prefixes[missing_prefix],
                 ),
             )
 
             self._approve(
-                self._repos.odm_xml_extension_repository,
-                self.odm_xml_extension_service,
+                self._repos.odm_vendor_namespace_repository,
+                self.odm_vendor_namespace_service,
                 rs,
             )
 
-        self.db_xml_extensions.extend(new_xml_extensions)
+        self.db_vendor_namespaces.extend(new_vendor_namespaces)
 
-    def _create_missing_xml_extension_attributes(self, elm_attributes):
-        new_xml_extension_attributes = []
+    def _create_missing_vendors(self, def_element: minidom.Element):
+        self._create_missing_vendor_attributes(def_element.attributes.values())
+        self._create_missing_vendor_elements(def_element.childNodes)
+        self._create_missing_vendor_element_attributes(def_element.childNodes)
+
+    def _create_missing_vendor_attributes(self, elm_attributes):
+        new_vendor_attributes = []
 
         for elm_attribute in elm_attributes:
             if not isinstance(elm_attribute, minidom.Attr) or not elm_attribute.prefix:
                 continue
 
-            if not self._attribute_exists(
+            if not self._vendor_attribute_exists(
                 elm_attribute.prefix, elm_attribute.localName
             ):
                 rs = self._create(
-                    self._repos.odm_xml_extension_attribute_repository,
-                    self.odm_xml_extension_attribute_service,
-                    new_xml_extension_attributes,
-                    OdmXmlExtensionAttributePostInput(
+                    self._repos.odm_vendor_attribute_repository,
+                    self.odm_vendor_attribute_service,
+                    new_vendor_attributes,
+                    OdmVendorAttributePostInput(
                         name=elm_attribute.localName,
-                        xml_extension_uid=next(
-                            db_xml_extension.uid
-                            for db_xml_extension in self.db_xml_extensions
-                            if db_xml_extension.prefix == elm_attribute.prefix
+                        compatible_types=[elm_attribute.ownerElement.localName],
+                        vendor_namespace_uid=next(
+                            db_vendor_namespace.uid
+                            for db_vendor_namespace in self.db_vendor_namespaces
+                            if db_vendor_namespace.prefix == elm_attribute.prefix
                         ),
-                        xml_extension_tag_uid=None,
                     ),
                 )
 
                 self._approve(
-                    self._repos.odm_xml_extension_attribute_repository,
-                    self.odm_xml_extension_attribute_service,
+                    self._repos.odm_vendor_attribute_repository,
+                    self.odm_vendor_attribute_service,
                     rs,
                 )
 
-        self.db_xml_extension_attributes.extend(new_xml_extension_attributes)
+        self.db_vendor_attributes.extend(new_vendor_attributes)
 
-    def _create_missing_xml_extension_tags(self, elm_tags):
-        new_xml_extension_tags = []
+    def _create_missing_vendor_elements(self, elements: minicompat.NodeList):
+        new_vendor_elements = []
 
-        for elm_tag in elm_tags:
-            if not isinstance(elm_tag, minidom.Element) or not elm_tag.prefix:
+        for element in elements:
+            if not isinstance(element, minidom.Element) or not element.prefix:
                 continue
 
-            if not self.tag_exists(elm_tag.prefix, elm_tag.localName):
+            if not self.vendor_element_exists(element.prefix, element.localName):
                 rs = self._create(
-                    self._repos.odm_xml_extension_tag_repository,
-                    self.odm_xml_extension_tag_service,
-                    new_xml_extension_tags,
-                    OdmXmlExtensionTagPostInput(
-                        name=elm_tag.localName,
-                        xml_extension_uid=next(
-                            db_xml_extension.uid
-                            for db_xml_extension in self.db_xml_extensions
-                            if db_xml_extension.prefix == elm_tag.prefix
+                    self._repos.odm_vendor_element_repository,
+                    self.odm_vendor_element_service,
+                    new_vendor_elements,
+                    OdmVendorElementPostInput(
+                        name=element.localName,
+                        vendor_namespace_uid=next(
+                            db_vendor_namespace.uid
+                            for db_vendor_namespace in self.db_vendor_namespaces
+                            if db_vendor_namespace.prefix == element.prefix
                         ),
                     ),
                 )
 
                 self._approve(
-                    self._repos.odm_xml_extension_tag_repository,
-                    self.odm_xml_extension_tag_service,
+                    self._repos.odm_vendor_element_repository,
+                    self.odm_vendor_element_service,
                     rs,
                 )
 
-        self.db_xml_extension_tags.extend(new_xml_extension_tags)
+        self.db_vendor_elements.extend(new_vendor_elements)
 
-    def _create_missing_xml_extension_tag_attributes(self, elm_tags):
-        for elm_tag in elm_tags:
-            if not isinstance(elm_tag, minidom.Element) or not elm_tag.prefix:
+    def _create_missing_vendor_element_attributes(self, elements: minicompat.NodeList):
+        for element in elements:
+            if not isinstance(element, minidom.Element) or not element.prefix:
                 continue
 
-            new_xml_extension_tag_attributes = []
-            for tag_attribute in elm_tag.attributes.values():
+            new_vendor_element_attributes = []
+            for element_attribute in element.attributes.values():
                 if (
-                    not isinstance(tag_attribute, minidom.Attr)
-                    or not tag_attribute.prefix
+                    not isinstance(element_attribute, minidom.Attr)
+                    or not element_attribute.prefix
                 ):
                     continue
 
-                if not self._tag_attribute_exists(
-                    tag_attribute.prefix, tag_attribute.localName
+                if not self._vendor_element_attribtue_exists(
+                    element_attribute.prefix, element_attribute.localName
                 ):
                     rs = self._create(
-                        self._repos.odm_xml_extension_attribute_repository,
-                        self.odm_xml_extension_attribute_service,
-                        new_xml_extension_tag_attributes,
-                        OdmXmlExtensionAttributePostInput(
-                            name=tag_attribute.localName,
-                            xml_extension_uid=None,
-                            xml_extension_tag_uid=next(
-                                db_xml_extension_tag.uid
-                                for db_xml_extension_tag in self.db_xml_extension_tags
-                                if db_xml_extension_tag.xml_extension.prefix
-                                == tag_attribute.prefix
-                                and db_xml_extension_tag.name == elm_tag.localName
+                        self._repos.odm_vendor_attribute_repository,
+                        self.odm_vendor_attribute_service,
+                        new_vendor_element_attributes,
+                        OdmVendorAttributePostInput(
+                            name=element_attribute.localName,
+                            vendor_element_uid=next(
+                                db_vendor_element.uid
+                                for db_vendor_element in self.db_vendor_elements
+                                if db_vendor_element.vendor_namespace.prefix
+                                == element_attribute.prefix
+                                and db_vendor_element.name == element.localName
                             ),
                         ),
                     )
 
                     self._approve(
-                        self._repos.odm_xml_extension_attribute_repository,
-                        self.odm_xml_extension_attribute_service,
+                        self._repos.odm_vendor_attribute_repository,
+                        self.odm_vendor_attribute_service,
                         rs,
                     )
 
-            self.db_xml_extension_attributes.extend(new_xml_extension_tag_attributes)
+            self.db_vendor_attributes.extend(new_vendor_element_attributes)
 
-    def _create_relationship_for_xml_extension_attributes(
+    def _create_relationships_with_vendors(
+        self,
+        uid: str,
+        def_element: minidom.Element,
+        repo: OdmGenericRepository,
+        compatible_type: Optional[VendorCompatibleType] = None,
+    ):
+        self._create_relationship_with_vendor_attributes(
+            uid, def_element.attributes.values(), repo, compatible_type
+        )
+        self._create_relationship_with_vendor_elements(
+            uid, def_element.childNodes, repo
+        )
+        self._create_relationship_with_vendor_element_attributes(
+            uid, def_element.childNodes, repo
+        )
+
+    def _create_relationship_with_vendor_attributes(
         self,
         uid: str,
         elm_attributes,
         repository: OdmGenericRepository,
+        compatible_type: Optional[VendorCompatibleType] = None,
     ):
-        odm_xml_extension_relations: Sequence[OdmXmlExtensionRelationPostInput] = []
+        odm_vendor_relations: List[OdmVendorRelationPostInput] = []
         for elm_attribute in elm_attributes:
             if (
                 not isinstance(elm_attribute, minidom.Attr)
                 or not elm_attribute.prefix
                 or (
                     elm_attribute.prefix == self.OSB_PREFIX
-                    and elm_attribute.localName
-                    in self.EXCLUDED_OSB_XML_EXTENSION_ATTRIBUTES
+                    and elm_attribute.localName in self.EXCLUDED_OSB_VENDOR_ATTRIBUTES
                 )
             ):
                 continue
 
-            xml_extension_attribute_uid = next(
-                db_xml_extension_attribute.uid
-                for db_xml_extension_attribute in self.db_xml_extension_attributes
-                if elm_attribute.localName == db_xml_extension_attribute.name
+            vendor_attribute_uid = next(
+                db_vendor_attribute.uid
+                for db_vendor_attribute in self.db_vendor_attributes
+                if elm_attribute.localName == db_vendor_attribute.name
                 and (
-                    db_xml_extension_attribute.xml_extension
+                    db_vendor_attribute.vendor_namespace
                     and elm_attribute.prefix
-                    == db_xml_extension_attribute.xml_extension.prefix
+                    == db_vendor_attribute.vendor_namespace.prefix
                 )
             )
 
-            odm_xml_extension_relations.append(
-                OdmXmlExtensionRelationPostInput(
-                    uid=xml_extension_attribute_uid, value=elm_attribute.nodeValue
+            odm_vendor_relations.append(
+                OdmVendorRelationPostInput(
+                    uid=vendor_attribute_uid, value=elm_attribute.nodeValue
                 )
+            )
+
+            vendor_attribute_patterns = (
+                self.odm_vendor_attribute_service.get_regex_patterns_of_attributes(
+                    [
+                        odm_vendor_relation.uid
+                        for odm_vendor_relation in odm_vendor_relations
+                    ]
+                )
+            )
+            self.odm_vendor_attribute_service.attribute_values_matches_their_regex(
+                odm_vendor_relations, vendor_attribute_patterns
+            )
+            self.odm_vendor_attribute_service.is_vendor_compatible(
+                odm_vendor_relations, compatible_type
             )
 
         try:
-            for odm_xml_extension_relation in odm_xml_extension_relations:
+            for odm_vendor_relation in odm_vendor_relations:
                 repository.add_relation(
                     uid=uid,
-                    relation_uid=odm_xml_extension_relation.uid,
-                    relationship_type=RelationType.XML_EXTENSION_ATTRIBUTE,
-                    parameters={"value": odm_xml_extension_relation.value},
+                    relation_uid=odm_vendor_relation.uid,
+                    relationship_type=RelationType.VENDOR_ATTRIBUTE,
+                    parameters={"value": odm_vendor_relation.value},
                 )
         except ValueError as exception:
             raise exceptions.ValidationException(exception.args[0])
 
-    def _create_relationship_for_xml_extension_tags(
+    def _create_relationship_with_vendor_elements(
         self,
         uid: str,
-        elm_tags,
+        child_elements: minicompat.NodeList,
         repository: OdmGenericRepository,
     ):
-        odm_xml_extension_relations: Sequence[OdmXmlExtensionRelationPostInput] = []
-        for elm_tag in elm_tags:
+        odm_vendor_relations: List[OdmVendorRelationPostInput] = []
+        for child_element in child_elements:
             if (
-                not isinstance(elm_tag, minidom.Element)
-                or not elm_tag.prefix
+                not isinstance(child_element, minidom.Element)
+                or not child_element.prefix
                 or (
-                    elm_tag.prefix == self.OSB_PREFIX
-                    and elm_tag.localName in self.EXCLUDED_OSB_XML_EXTENSION_TAGS
+                    child_element.prefix == self.OSB_PREFIX
+                    and child_element.localName in self.EXCLUDED_OSB_VENDOR_ELEMENTS
                 )
             ):
                 continue
 
-            xml_extension_tag_uid = next(
-                db_xml_extension_tag.uid
-                for db_xml_extension_tag in self.db_xml_extension_tags
-                if elm_tag.localName == db_xml_extension_tag.name
+            vendor_element_uid = next(
+                db_vendor_element.uid
+                for db_vendor_element in self.db_vendor_elements
+                if child_element.localName == db_vendor_element.name
                 and (
-                    db_xml_extension_tag.xml_extension
-                    and elm_tag.prefix == db_xml_extension_tag.xml_extension.prefix
+                    db_vendor_element.vendor_namespace
+                    and child_element.prefix
+                    == db_vendor_element.vendor_namespace.prefix
                 )
             )
 
-            odm_xml_extension_relations.append(
-                OdmXmlExtensionRelationPostInput(
-                    uid=xml_extension_tag_uid,
-                    value=elm_tag.firstChild.nodeValue if elm_tag.firstChild else "",
+            odm_vendor_relations.append(
+                OdmVendorRelationPostInput(
+                    uid=vendor_element_uid,
+                    value=child_element.firstChild.nodeValue
+                    if child_element.firstChild
+                    else "",
                 )
             )
 
         try:
-            for odm_xml_extension_relation in odm_xml_extension_relations:
+            for odm_vendor_relation in odm_vendor_relations:
                 repository.add_relation(
                     uid=uid,
-                    relation_uid=odm_xml_extension_relation.uid,
-                    relationship_type=RelationType.XML_EXTENSION_TAG,
-                    parameters={"value": odm_xml_extension_relation.value},
+                    relation_uid=odm_vendor_relation.uid,
+                    relationship_type=RelationType.VENDOR_ELEMENT,
+                    parameters={"value": odm_vendor_relation.value},
                 )
         except ValueError as exception:
             raise exceptions.ValidationException(exception.args[0])
 
-    def _create_relationship_for_xml_extension_tag_attributes(
+    def _create_relationship_with_vendor_element_attributes(
         self,
         uid: str,
-        elm_tags,
+        child_elements: minicompat.NodeList,
         repository: OdmGenericRepository,
     ):
-        for elm_tag in elm_tags:
+        for child_element in child_elements:
             if (
-                not isinstance(elm_tag, minidom.Element)
-                or not elm_tag.prefix
+                not isinstance(child_element, minidom.Element)
+                or not child_element.prefix
                 or (
-                    elm_tag.prefix == self.OSB_PREFIX
-                    and elm_tag.localName in self.EXCLUDED_OSB_XML_EXTENSION_TAGS
+                    child_element.prefix == self.OSB_PREFIX
+                    and child_element.localName in self.EXCLUDED_OSB_VENDOR_ATTRIBUTES
                 )
             ):
                 continue
 
-            odm_xml_extension_relations: Sequence[OdmXmlExtensionRelationPostInput] = []
-            for tag_attribute in elm_tag.attributes.values():
+            odm_vendor_relations: List[OdmVendorRelationPostInput] = []
+            for child_element_attribute in child_element.attributes.values():
                 if (
-                    not isinstance(tag_attribute, minidom.Attr)
-                    or not tag_attribute.prefix
+                    not isinstance(child_element_attribute, minidom.Attr)
+                    or not child_element_attribute.prefix
                     or (
-                        tag_attribute.prefix == self.OSB_PREFIX
-                        and tag_attribute.localName
-                        in self.EXCLUDED_OSB_XML_EXTENSION_ATTRIBUTES
+                        child_element_attribute.prefix == self.OSB_PREFIX
+                        and child_element_attribute.localName
+                        in self.EXCLUDED_OSB_VENDOR_ATTRIBUTES
                     )
                 ):
                     continue
 
-                xml_extension_tag_attribute_uid = next(
-                    db_xml_extension_attribute.uid
-                    for db_xml_extension_attribute in self.db_xml_extension_attributes
-                    if tag_attribute.localName == db_xml_extension_attribute.name
+                vendor_element_attribute_uid = next(
+                    db_vendor_attribute.uid
+                    for db_vendor_attribute in self.db_vendor_attributes
+                    if child_element_attribute.localName == db_vendor_attribute.name
                     and (
-                        db_xml_extension_attribute.xml_extension_tag
-                        and tag_attribute.prefix
+                        db_vendor_attribute.vendor_element
+                        and child_element_attribute.prefix
                         == next(
                             (
-                                db_xml_extension_tag.xml_extension.prefix
-                                for db_xml_extension_tag in self.db_xml_extension_tags
-                                if db_xml_extension_tag.uid
-                                == db_xml_extension_attribute.xml_extension_tag.uid
+                                db_vendor_element.vendor_namespace.prefix
+                                for db_vendor_element in self.db_vendor_elements
+                                if db_vendor_element.uid
+                                == db_vendor_attribute.vendor_element.uid
                             ),
                             None,
                         )
                     )
                 )
 
-                odm_xml_extension_relations.append(
-                    OdmXmlExtensionRelationPostInput(
-                        uid=xml_extension_tag_attribute_uid,
-                        value=tag_attribute.nodeValue,
+                odm_vendor_relations.append(
+                    OdmVendorRelationPostInput(
+                        uid=vendor_element_attribute_uid,
+                        value=child_element_attribute.nodeValue,
                     )
                 )
 
             try:
-                for odm_xml_extension_relation in odm_xml_extension_relations:
+                for odm_vendor_relation in odm_vendor_relations:
                     repository.add_relation(
                         uid=uid,
-                        relation_uid=odm_xml_extension_relation.uid,
-                        relationship_type=RelationType.XML_EXTENSION_TAG_ATTRIBUTE,
-                        parameters={"value": odm_xml_extension_relation.value},
+                        relation_uid=odm_vendor_relation.uid,
+                        relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
+                        parameters={"value": odm_vendor_relation.value},
                     )
             except ValueError as exception:
                 raise exceptions.ValidationException(exception.args[0])
+
+    def _vendor_attribute_exists(self, prefix, vendor_attribute_name):
+        if (
+            prefix == self.OSB_PREFIX
+            and vendor_attribute_name in self.EXCLUDED_OSB_VENDOR_ATTRIBUTES
+        ):
+            return True
+
+        for db_vendor_attribute in self.db_vendor_attributes:
+            if vendor_attribute_name == db_vendor_attribute.name and (
+                db_vendor_attribute.vendor_namespace
+                and prefix == db_vendor_attribute.vendor_namespace.prefix
+            ):
+                return True
+        return False
+
+    def vendor_element_exists(self, prefix, vendor_element_name):
+        if (
+            prefix == self.OSB_PREFIX
+            and vendor_element_name in self.EXCLUDED_OSB_VENDOR_ELEMENTS
+        ):
+            return True
+
+        for db_vendor_element in self.db_vendor_elements:
+            if vendor_element_name == db_vendor_element.name and (
+                db_vendor_element.vendor_namespace
+                and prefix == db_vendor_element.vendor_namespace.prefix
+            ):
+                return True
+        return False
+
+    def _vendor_element_attribtue_exists(self, prefix, vendor_attribute_name):
+        if (
+            prefix == self.OSB_PREFIX
+            and vendor_attribute_name in self.EXCLUDED_OSB_VENDOR_ATTRIBUTES
+        ):
+            return True
+
+        for db_vendor_attribute in self.db_vendor_attributes:
+            if vendor_attribute_name == db_vendor_attribute.name and (
+                db_vendor_attribute.vendor_element
+                and prefix
+                == next(
+                    (
+                        db_vendor_element.vendor_namespace.prefix
+                        for db_vendor_element in self.db_vendor_elements
+                        if db_vendor_element.uid
+                        == db_vendor_attribute.vendor_element.uid
+                    ),
+                    None,
+                )
+            ):
+                return True
+        return False
 
     def _set_unit_definitions(self):
         measurement_unit_oids = {
@@ -602,8 +689,8 @@ class OdmXmlImporterService:
             for unit_definition_ar in rs
         ]
 
-    def _set_unit_definition_uids_by_ucum_uid(self):
-        self.unit_definition_uids_by_ucum_uid = {
+    def _set_unit_definition_uids_by(self):
+        self.unit_definition_uids_by = {
             db_unit_definition.ucum.term_uid: db_unit_definition.uid
             for db_unit_definition in self.db_unit_definitions
             if db_unit_definition.ucum
@@ -725,159 +812,55 @@ class OdmXmlImporterService:
 
     def _create_items_with_relations(self):
         for item_def in self.item_defs:
-            descriptions = self._extract_descriptions(item_def)
-            self._create_missing_xml_extension_attributes(item_def.attributes.values())
-            self._create_missing_xml_extension_tags(item_def.childNodes)
-            self._create_missing_xml_extension_tag_attributes(item_def.childNodes)
+            self._create_missing_vendors(item_def)
 
-            unit_definitions = [
-                OdmItemUnitDefinitionRelationshipInput(
-                    uid=self.unit_definition_uids_by_ucum_uid[
-                        self.measurement_unit_names_by_oid[
-                            measurement_unit_ref.getAttribute("MeasurementUnitOID")
-                        ]
-                    ]
-                )
-                for measurement_unit_ref in item_def.getElementsByTagName(
-                    "MeasurementUnitRef"
-                )
-            ]
-
-            codelist = next(
-                (
-                    codelist
-                    for codelist in self.codelists
-                    if item_def.getElementsByTagName("CodeListRef")
-                    and codelist.getAttribute("OID")
-                    == item_def.getElementsByTagName("CodeListRef")[0].getAttribute(
-                        "CodeListOID"
-                    )
-                ),
-                None,
-            )
+            (
+                odm_item_post_input,
+                terms,
+                unit_definitions,
+            ) = self._get_odm_item_post_input(item_def)
 
             rs = self._create(
                 self._repos.odm_item_repository,
                 self.odm_item_service,
                 self.db_items,
-                OdmItemPostInput(
-                    oid=item_def.getAttribute("OID"),
-                    name=item_def.getAttribute("Name"),
-                    prompt=item_def.getAttribute("Prompt"),
-                    datatype=item_def.getAttribute("DataType"),
-                    length=item_def.getAttribute("Length"),
-                    significant_digits=None,
-                    sas_field_name=item_def.getAttribute("SASFieldName"),
-                    sds_var_name=item_def.getAttribute("SDSVarName"),
-                    origin=item_def.getAttribute("Origin"),
-                    comment=None,
-                    descriptions=[
-                        self._create_description(
-                            name=description["name"],
-                            lang=description["lang"],
-                            description=description["description"],
-                            instruction=item_def.getAttribute(self.OSB_INSTRUCTION),
-                            sponsor_instruction=item_def.getAttribute(
-                                self.OSB_SPONSOR_INSTRUCTION
-                            ),
-                        ).uid
-                        for description in descriptions
-                    ],
-                    alias_uids=[],
-                    unit_definitions=unit_definitions,
-                    codelist_uid=codelist.getAttribute("Name") if codelist else None,
-                    terms=[],
-                ),
+                odm_item_post_input,
             )
 
-            self.odm_item_service._manage_terms(
-                rs.uid,
-                [
-                    OdmItemTermRelationshipInput(
-                        uid=codelist_item.getAttribute("osb:OID"),
-                        mandatory=codelist_item.getAttribute("Mandatory"),
-                        order=codelist_item.getAttribute("OrderNumber"),
-                    )
-                    for codelist_item in codelist.getElementsByTagName("CodeListItem")
-                ]
-                if codelist
-                else [],
-            )
+            if terms:
+                self.odm_item_service._manage_terms(rs.uid, terms)
             self.odm_item_service._manage_unit_definitions(rs.uid, unit_definitions)
 
-            self._create_relationship_for_xml_extension_attributes(
-                rs.uid, item_def.attributes.values(), self._repos.odm_item_repository
-            )
-            self._create_relationship_for_xml_extension_tags(
-                rs.uid, item_def.childNodes, self._repos.odm_item_repository
-            )
-            self._create_relationship_for_xml_extension_tag_attributes(
-                rs.uid, item_def.childNodes, self._repos.odm_item_repository
+            self._create_relationships_with_vendors(
+                rs.uid,
+                item_def,
+                self._repos.odm_item_repository,
+                VendorCompatibleType.ITEM_DEF,
             )
             self._approve(self._repos.odm_item_repository, self.odm_item_service, rs)
 
     def _create_item_groups_with_relations(self):
         for item_group_def in self.item_group_defs:
-            descriptions = self._extract_descriptions(item_group_def)
-            self._create_missing_xml_extension_attributes(
-                item_group_def.attributes.values()
-            )
-            self._create_missing_xml_extension_tags(item_group_def.childNodes)
-            self._create_missing_xml_extension_tag_attributes(item_group_def.childNodes)
+            self._create_missing_vendors(item_group_def)
 
             rs = self._create(
                 self._repos.odm_item_group_repository,
                 self.odm_item_group_service,
                 self.db_item_groups,
-                OdmItemGroupPostInput(
-                    oid=item_group_def.getAttribute("OID"),
-                    name=item_group_def.getAttribute("Name"),
-                    origin=item_group_def.getAttribute("Origin"),
-                    repeating=item_group_def.getAttribute("Repeating"),
-                    is_reference_data="no",  # missing in odm
-                    purpose=item_group_def.getAttribute("Purpose"),
-                    sas_dataset_name=item_group_def.getAttribute("SASDatasetName"),
-                    comment=None,
-                    descriptions=[
-                        self._create_description(
-                            name=description["name"],
-                            lang=description["lang"],
-                            description=description["description"],
-                            instruction=item_group_def.getAttribute(
-                                self.OSB_INSTRUCTION
-                            ),
-                            sponsor_instruction=item_group_def.getAttribute(
-                                self.OSB_SPONSOR_INSTRUCTION
-                            ),
-                        ).uid
-                        for description in descriptions
-                    ],
-                    alias_uids=[],
-                    sdtm_domain_uids=[
-                        db_ct_term_attribute.term_uid
-                        for db_ct_term_attribute in self.db_ct_term_attributes
-                        for domain in item_group_def.getAttribute("Domain").split("|")
-                        if domain
-                        and domain.split(":", 1)[-1]
-                        == db_ct_term_attribute.nci_preferred_name
-                    ],
-                ),
+                self._get_odm_item_group_post_input(item_group_def),
             )
 
-            self._create_relationship_for_xml_extension_attributes(
+            self._create_relationships_with_vendors(
                 rs.uid,
-                item_group_def.attributes.values(),
+                item_group_def,
                 self._repos.odm_item_group_repository,
-            )
-            self._create_relationship_for_xml_extension_tags(
-                rs.uid, item_group_def.childNodes, self._repos.odm_item_group_repository
-            )
-            self._create_relationship_for_xml_extension_tag_attributes(
-                rs.uid, item_group_def.childNodes, self._repos.odm_item_group_repository
+                VendorCompatibleType.ITEM_GROUP_DEF,
             )
 
-            odm_item_group_items = []
+            odm_item_group_items: List[OdmItemGroupItemPostInput] = []
             for item_ref in item_group_def.getElementsByTagName("ItemRef"):
+                self._create_missing_vendor_attributes(item_ref.attributes.values())
+
                 odm_item_group_items.append(
                     OdmItemGroupItemPostInput(
                         uid=next(
@@ -890,12 +873,6 @@ class OdmXmlImporterService:
                         ),
                         order_number=item_ref.getAttribute("OrderNumber"),
                         mandatory=item_ref.getAttribute("Mandatory"),
-                        data_entry_required=item_ref.getAttribute(
-                            "osb:dataEntryRequired"
-                        )
-                        or "No",
-                        sdv=item_ref.getAttribute("osb:sdv") or "No",
-                        locked=item_ref.getAttribute("osb:locked") or "No",
                         key_sequence="None",
                         method_oid=item_ref.getAttribute("MethodOID") or None,
                         imputation_method_oid="None",
@@ -904,31 +881,17 @@ class OdmXmlImporterService:
                         collection_exception_condition_oid=item_ref.getAttribute(
                             "CollectionExceptionConditionOID"
                         ),
+                        vendor=OdmRefVendorPostInput(
+                            attributes=self._get_list_of_attributes(
+                                item_ref.attributes.items()
+                            )
+                        ),
                     )
                 )
 
-            try:
-                for item in odm_item_group_items:
-                    self._repos.odm_item_group_repository.add_relation(
-                        uid=rs.uid,
-                        relation_uid=item.uid,
-                        relationship_type=RelationType.ITEM,
-                        parameters={
-                            "order_number": item.order_number,
-                            "mandatory": strtobool(item.mandatory),
-                            "data_entry_required": strtobool(item.data_entry_required),
-                            "sdv": strtobool(item.sdv),
-                            "locked": strtobool(item.locked),
-                            "key_sequence": item.key_sequence,
-                            "method_oid": item.method_oid,
-                            "imputation_method_oid": item.imputation_method_oid,
-                            "role": item.role,
-                            "role_codelist_oid": item.role_codelist_oid,
-                            "collection_exception_condition_oid": item.collection_exception_condition_oid,
-                        },
-                    )
-            except ValueError as exception:
-                raise exceptions.ValidationException(exception.args[0])
+            self.odm_item_group_service.non_transactional_add_items(
+                rs.uid, odm_item_group_items
+            )
 
             self._approve(
                 self._repos.odm_item_group_repository, self.odm_item_group_service, rs
@@ -936,49 +899,27 @@ class OdmXmlImporterService:
 
     def _create_forms_with_relations(self):
         for form_def in self.form_defs:
-            descriptions = self._extract_descriptions(form_def)
-            self._create_missing_xml_extension_attributes(form_def.attributes.values())
-            self._create_missing_xml_extension_tags(form_def.childNodes)
-            self._create_missing_xml_extension_tag_attributes(form_def.childNodes)
+            self._create_missing_vendors(form_def)
 
             rs = self._create(
                 self._repos.odm_form_repository,
                 self.odm_form_service,
                 self.db_forms,
-                OdmFormPostInput(
-                    oid=form_def.getAttribute("OID"),
-                    name=form_def.getAttribute("Name"),
-                    sdtm_version="",
-                    repeating=form_def.getAttribute("Repeating"),
-                    scope_uid=None,
-                    descriptions=[
-                        self._create_description(
-                            name=description["name"],
-                            lang=description["lang"],
-                            description=description["description"],
-                            instruction=form_def.getAttribute(self.OSB_INSTRUCTION),
-                            sponsor_instruction=form_def.getAttribute(
-                                self.OSB_SPONSOR_INSTRUCTION
-                            ),
-                        ).uid
-                        for description in descriptions
-                    ],
-                    alias_uids=[],
-                ),
+                self._get_odm_form_post_input(form_def),
             )
 
-            self._create_relationship_for_xml_extension_attributes(
-                rs.uid, form_def.attributes.values(), self._repos.odm_form_repository
+            self._create_relationships_with_vendors(
+                rs.uid,
+                form_def,
+                self._repos.odm_form_repository,
+                VendorCompatibleType.FORM_DEF,
             )
-            self._create_relationship_for_xml_extension_tags(
-                rs.uid, form_def.childNodes, self._repos.odm_form_repository
-            )
-            self._create_relationship_for_xml_extension_tag_attributes(
-                rs.uid, form_def.childNodes, self._repos.odm_form_repository
-            )
-
-            odm_form_item_groups = []
+            odm_form_item_groups: List[OdmFormItemGroupPostInput] = []
             for item_group_ref in form_def.getElementsByTagName("ItemGroupRef"):
+                self._create_missing_vendor_attributes(
+                    item_group_ref.attributes.values()
+                )
+
                 odm_form_item_groups.append(
                     OdmFormItemGroupPostInput(
                         uid=next(
@@ -992,28 +933,20 @@ class OdmXmlImporterService:
                         ),
                         order_number=item_group_ref.getAttribute("OrderNumber"),
                         mandatory=item_group_ref.getAttribute("Mandatory"),
-                        locked=item_group_ref.getAttribute("osb:locked") or "No",
                         collection_exception_condition_oid=item_group_ref.getAttribute(
                             "CollectionExceptionConditionOID"
+                        ),
+                        vendor=OdmRefVendorPostInput(
+                            attributes=self._get_list_of_attributes(
+                                item_group_ref.attributes.items()
+                            )
                         ),
                     )
                 )
 
-            try:
-                for item_group in odm_form_item_groups:
-                    self._repos.odm_form_repository.add_relation(
-                        uid=rs.uid,
-                        relation_uid=item_group.uid,
-                        relationship_type=RelationType.ITEM_GROUP,
-                        parameters={
-                            "order_number": item_group.order_number,
-                            "mandatory": strtobool(item_group.mandatory),
-                            "locked": strtobool(item_group.locked),
-                            "collection_exception_condition_oid": item_group.collection_exception_condition_oid,
-                        },
-                    )
-            except ValueError as exception:
-                raise exceptions.ValidationException(exception.args[0])
+            self.odm_form_service.non_transactional_add_item_groups(
+                rs.uid, odm_form_item_groups
+            )
 
             self._approve(self._repos.odm_form_repository, self.odm_form_service, rs)
 
@@ -1029,13 +962,7 @@ class OdmXmlImporterService:
             self._repos.odm_template_repository,
             self.odm_template_service,
             self.db_templates,
-            OdmTemplatePostInput(
-                oid=study_name,
-                name=study_name,
-                description=None,
-                effective_date=None,
-                retired_date=None,
-            ),
+            OdmTemplatePostInput(oid=study_name, name=study_name),
         )
 
         odm_template_forms = []
@@ -1046,7 +973,6 @@ class OdmXmlImporterService:
                     order_number=999999,
                     mandatory="yes",
                     locked="No",
-                    collection_exception_condition_oid=None,
                 )
             )
 
@@ -1098,7 +1024,7 @@ class OdmXmlImporterService:
             sponsor_instruction=sponsor_instruction if lang == ENG_LANGUAGE else None,
         )
 
-        library_vo = self.get_library(concept_input)
+        library_vo = self._get_library(concept_input)
 
         try:
             concept_ar = self.odm_description_service._create_aggregate_root(
@@ -1117,13 +1043,13 @@ class OdmXmlImporterService:
             raise exceptions.ValidationException(value_error.args[0])
 
     def _extract_descriptions(self, elm):
-        description_tag = elm.getElementsByTagName("Description")
-        question_tag = elm.getElementsByTagName("Question")
+        description_element = elm.getElementsByTagName("Description")
+        question_element = elm.getElementsByTagName("Question")
         descriptions = []
         description_langs = []
 
-        if description_tag:
-            for translated_text in description_tag[0].getElementsByTagName(
+        if description_element:
+            for translated_text in description_element[0].getElementsByTagName(
                 "TranslatedText"
             ):
                 lang = translated_text.getAttribute("xml:lang")
@@ -1138,8 +1064,8 @@ class OdmXmlImporterService:
                 )
                 description_langs.append(lang)
 
-        if question_tag:
-            for translated_text in question_tag[0].getElementsByTagName(
+        if question_element:
+            for translated_text in question_element[0].getElementsByTagName(
                 "TranslatedText"
             ):
                 lang = translated_text.getAttribute("xml:lang")
@@ -1173,14 +1099,14 @@ class OdmXmlImporterService:
 
         return descriptions
 
-    def _get_newly_created_xml_extensions(self):
+    def _get_newly_created_vendor_namespaces(self):
         try:
-            rs, _ = self._repos.odm_xml_extension_repository.find_all(
+            rs, _ = self._repos.odm_vendor_namespace_repository.find_all(
                 filter_by={
                     "uid": {
                         "v": [
-                            xml_extension.uid
-                            for xml_extension in self.db_xml_extensions
+                            vendor_namespace.uid
+                            for vendor_namespace in self.db_vendor_namespaces
                         ],
                         "op": "eq",
                     }
@@ -1192,20 +1118,20 @@ class OdmXmlImporterService:
             raise exceptions.ValidationException(e)
 
         return [
-            self.odm_xml_extension_service._transform_aggregate_root_to_pydantic_model(
+            self.odm_vendor_namespace_service._transform_aggregate_root_to_pydantic_model(
                 concept_ar
             )
             for concept_ar in rs
         ]
 
-    def _get_newly_created_xml_extension_attributes(self):
+    def _get_newly_created_vendor_attributes(self):
         try:
-            rs, _ = self._repos.odm_xml_extension_attribute_repository.find_all(
+            rs, _ = self._repos.odm_vendor_attribute_repository.find_all(
                 filter_by={
                     "uid": {
                         "v": [
-                            xml_extension_attribute.uid
-                            for xml_extension_attribute in self.db_xml_extension_attributes
+                            vendor_attribute.uid
+                            for vendor_attribute in self.db_vendor_attributes
                         ],
                         "op": "eq",
                     }
@@ -1217,20 +1143,20 @@ class OdmXmlImporterService:
             raise exceptions.ValidationException(e)
 
         return [
-            self.odm_xml_extension_attribute_service._transform_aggregate_root_to_pydantic_model(
+            self.odm_vendor_attribute_service._transform_aggregate_root_to_pydantic_model(
                 concept_ar
             )
             for concept_ar in rs
         ]
 
-    def _get_newly_created_xml_extension_tags(self):
+    def _get_newly_created_vendor_elements(self):
         try:
-            rs, _ = self._repos.odm_xml_extension_tag_repository.find_all(
+            rs, _ = self._repos.odm_vendor_element_repository.find_all(
                 filter_by={
                     "uid": {
                         "v": [
-                            xml_extension_tag.uid
-                            for xml_extension_tag in self.db_xml_extension_tags
+                            vendor_element.uid
+                            for vendor_element in self.db_vendor_elements
                         ],
                         "op": "eq",
                     }
@@ -1242,7 +1168,7 @@ class OdmXmlImporterService:
             raise exceptions.ValidationException(e)
 
         return [
-            self.odm_xml_extension_tag_service._transform_aggregate_root_to_pydantic_model(
+            self.odm_vendor_element_service._transform_aggregate_root_to_pydantic_model(
                 concept_ar
             )
             for concept_ar in rs
@@ -1380,7 +1306,7 @@ class OdmXmlImporterService:
             for concept_ar in rs
         ]
 
-    def get_library(self, concept_input):
+    def _get_library(self, concept_input):
         if not self._repos.library_repository.library_exists(
             normalize_string(concept_input.library_name)
         ):
@@ -1399,8 +1325,158 @@ class OdmXmlImporterService:
             ),
         )
 
+    def _get_odm_item_post_input(self, item_def):
+        descriptions = self._extract_descriptions(item_def)
+
+        unit_definitions = [
+            OdmItemUnitDefinitionRelationshipInput(
+                uid=self.unit_definition_uids_by[
+                    self.measurement_unit_names_by_oid[
+                        measurement_unit_ref.getAttribute("MeasurementUnitOID")
+                    ]
+                ]
+            )
+            for measurement_unit_ref in item_def.getElementsByTagName(
+                "MeasurementUnitRef"
+            )
+        ]
+
+        codelist = next(
+            (
+                codelist
+                for codelist in self.codelists
+                if item_def.getElementsByTagName("CodeListRef")
+                and codelist.getAttribute("OID")
+                == item_def.getElementsByTagName("CodeListRef")[0].getAttribute(
+                    "CodeListOID"
+                )
+            ),
+            None,
+        )
+
+        input_terms = []
+        if codelist:
+            input_terms = [
+                OdmItemTermRelationshipInput(
+                    uid=codelist_item.getAttribute("osb:OID"),
+                    mandatory=codelist_item.getAttribute("Mandatory"),
+                    order=codelist_item.getAttribute("OrderNumber"),
+                    display_text=codelist_item.getElementsByTagName("TranslatedText")[
+                        0
+                    ].firstChild.nodeValue,
+                )
+                for codelist_item in codelist.getElementsByTagName("CodeListItem")
+            ]
+
+        return (
+            OdmItemPostInput(
+                oid=item_def.getAttribute("OID"),
+                name=item_def.getAttribute("Name"),
+                prompt=item_def.getAttribute("Prompt"),
+                datatype=item_def.getAttribute("DataType"),
+                length=item_def.getAttribute("Length"),
+                sas_field_name=item_def.getAttribute("SASFieldName"),
+                sds_var_name=item_def.getAttribute("SDSVarName"),
+                origin=item_def.getAttribute("Origin"),
+                descriptions=[
+                    self._create_description(
+                        name=description["name"],
+                        lang=description["lang"],
+                        description=description["description"],
+                        instruction=item_def.getAttribute(self.OSB_INSTRUCTION),
+                        sponsor_instruction=item_def.getAttribute(
+                            self.OSB_SPONSOR_INSTRUCTION
+                        ),
+                    ).uid
+                    for description in descriptions
+                ],
+                alias_uids=[],
+                unit_definitions=unit_definitions,
+                codelist_uid=codelist.getAttribute("Name") if codelist else None,
+                terms=input_terms,
+            ),
+            input_terms,
+            unit_definitions,
+        )
+
+    def _get_odm_item_group_post_input(self, item_group_def):
+        descriptions = self._extract_descriptions(item_group_def)
+
+        return OdmItemGroupPostInput(
+            oid=item_group_def.getAttribute("OID"),
+            name=item_group_def.getAttribute("Name"),
+            origin=item_group_def.getAttribute("Origin"),
+            repeating=item_group_def.getAttribute("Repeating"),
+            is_reference_data="no",  # missing in odm
+            purpose=item_group_def.getAttribute("Purpose"),
+            sas_dataset_name=item_group_def.getAttribute("SASDatasetName"),
+            descriptions=[
+                self._create_description(
+                    name=description["name"],
+                    lang=description["lang"],
+                    description=description["description"],
+                    instruction=item_group_def.getAttribute(self.OSB_INSTRUCTION),
+                    sponsor_instruction=item_group_def.getAttribute(
+                        self.OSB_SPONSOR_INSTRUCTION
+                    ),
+                ).uid
+                for description in descriptions
+            ],
+            alias_uids=[],
+            sdtm_domain_uids=[
+                db_ct_term_attribute.term_uid
+                for db_ct_term_attribute in self.db_ct_term_attributes
+                for domain in item_group_def.getAttribute("Domain").split("|")
+                if domain
+                and domain.split(":", 1)[-1] == db_ct_term_attribute.nci_preferred_name
+            ],
+        )
+
+    def _get_odm_form_post_input(self, form_def):
+        descriptions = self._extract_descriptions(form_def)
+
+        return OdmFormPostInput(
+            oid=form_def.getAttribute("OID"),
+            name=form_def.getAttribute("Name"),
+            sdtm_version="",
+            repeating=form_def.getAttribute("Repeating"),
+            descriptions=[
+                self._create_description(
+                    name=description["name"],
+                    lang=description["lang"],
+                    description=description["description"],
+                    instruction=form_def.getAttribute(self.OSB_INSTRUCTION),
+                    sponsor_instruction=form_def.getAttribute(
+                        self.OSB_SPONSOR_INSTRUCTION
+                    ),
+                ).uid
+                for description in descriptions
+            ],
+            alias_uids=[],
+        )
+
+    def _get_list_of_attributes(self, attributes):
+        rs = []
+        for name, value in attributes:
+            if ":" in name:
+                prefix, local_name = name.split(":")
+
+                vendor_attribute_uid = next(
+                    db_vendor_attribute.uid
+                    for db_vendor_attribute in self.db_vendor_attributes
+                    if local_name == db_vendor_attribute.name
+                    and (
+                        db_vendor_attribute.vendor_namespace
+                        and prefix == db_vendor_attribute.vendor_namespace.prefix
+                    )
+                )
+                rs.append(
+                    OdmVendorRelationPostInput(uid=vendor_attribute_uid, value=value)
+                )
+        return rs
+
     def _create(self, repository, service, save_to, concept_input):
-        library_vo = self.get_library(concept_input)
+        library_vo = self._get_library(concept_input)
 
         try:
             concept_ar = service._create_aggregate_root(
@@ -1416,61 +1492,7 @@ class OdmXmlImporterService:
     def _approve(self, repository, service, item):
         try:
             appr = service._find_by_uid_or_raise_not_found(item.uid, for_update=True)
-            appr.approve(author=self.user_initials)
+            appr.approve(author=get_current_user_id())
             repository.save(appr)
         except VersioningException as e:
             raise exceptions.BusinessLogicException(e.msg)
-
-    def _attribute_exists(self, prefix, attribute_name):
-        if (
-            prefix == self.OSB_PREFIX
-            and attribute_name in self.EXCLUDED_OSB_XML_EXTENSION_ATTRIBUTES
-        ):
-            return True
-
-        for db_xml_extension_attribute in self.db_xml_extension_attributes:
-            if attribute_name == db_xml_extension_attribute.name and (
-                db_xml_extension_attribute.xml_extension
-                and prefix == db_xml_extension_attribute.xml_extension.prefix
-            ):
-                return True
-        return False
-
-    def tag_exists(self, prefix, tag_name):
-        if (
-            prefix == self.OSB_PREFIX
-            and tag_name in self.EXCLUDED_OSB_XML_EXTENSION_TAGS
-        ):
-            return True
-
-        for db_xml_extension_tag in self.db_xml_extension_tags:
-            if tag_name == db_xml_extension_tag.name and (
-                db_xml_extension_tag.xml_extension
-                and prefix == db_xml_extension_tag.xml_extension.prefix
-            ):
-                return True
-        return False
-
-    def _tag_attribute_exists(self, prefix, attribute_name):
-        if (
-            prefix == self.OSB_PREFIX
-            and attribute_name in self.EXCLUDED_OSB_XML_EXTENSION_ATTRIBUTES
-        ):
-            return True
-
-        for db_xml_extension_attribute in self.db_xml_extension_attributes:
-            if attribute_name == db_xml_extension_attribute.name and (
-                db_xml_extension_attribute.xml_extension_tag
-                and prefix
-                == next(
-                    (
-                        db_xml_extension_tag.xml_extension.prefix
-                        for db_xml_extension_tag in self.db_xml_extension_tags
-                        if db_xml_extension_tag.uid
-                        == db_xml_extension_attribute.xml_extension_tag.uid
-                    ),
-                    None,
-                )
-            ):
-                return True
-        return False

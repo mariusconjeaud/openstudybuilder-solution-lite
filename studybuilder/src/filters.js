@@ -24,12 +24,7 @@ Vue.filter('stripBrackets', function (value) {
 /*
 ** Display a list of terms
 */
-Vue.filter('terms', function (value) {
-  if (!value) {
-    return ''
-  }
-  return value.map(item => item.name.sponsor_preferred_name).join(', ')
-})
+Vue.filter('terms', dataFormating.terms)
 
 /*
 ** Display a list of objects names

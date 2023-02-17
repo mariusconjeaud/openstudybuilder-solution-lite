@@ -594,7 +594,7 @@ def create_new_version(
 
 
 @router.post(
-    "/{uid}/approve",
+    "/{uid}/approvals",
     summary="Approves the activity description template identified by 'uid'.",
     description="""This request is only valid if the activity description template
 * is in 'Draft' status and
@@ -640,8 +640,8 @@ def approve(
     return Service(current_user_id).approve_cascade(uid=uid)
 
 
-@router.post(
-    "/{uid}/inactivate",
+@router.delete(
+    "/{uid}/activations",
     summary="Inactivates/deactivates the activity description template identified by 'uid'.",
     description="""This request is only valid if the activity description template
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -652,9 +652,9 @@ If the request succeeds:
 * The 'version' property will remain the same as before.
     """,
     response_model=models.ActivityDescriptionTemplate,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -675,7 +675,7 @@ def inactivate(
 
 
 @router.post(
-    "/{uid}/reactivate",
+    "/{uid}/activations",
     summary="Reactivates the activity description template identified by 'uid'.",
     description="""This request is only valid if the activity description template
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -686,9 +686,9 @@ If the request succeeds:
 * The 'version' property will remain the same as before.
     """,
     response_model=models.ActivityDescriptionTemplate,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"

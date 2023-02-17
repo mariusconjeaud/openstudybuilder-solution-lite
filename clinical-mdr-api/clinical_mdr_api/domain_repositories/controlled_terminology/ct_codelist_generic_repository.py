@@ -159,7 +159,7 @@ class CTCodelistGenericRepository(
         :param total_count:
         :return GenericFilteringReturn[_AggregateRootType]:
         """
-        if self.relationship_from_root not in CTCodelistRoot.__dict__:
+        if self.relationship_from_root not in vars(CTCodelistRoot):
             raise ValueError(
                 f"The relationship of type {self.relationship_from_root} "
                 f"was not found in CTCodelistRoot object"
@@ -252,6 +252,8 @@ class CTCodelistGenericRepository(
 
         # Add header field name to filter_by, to filter with a CONTAINS pattern
         if search_string != "":
+            if filter_by is None:
+                filter_by = {}
             filter_by[field_name] = {
                 "v": [search_string],
                 "op": ComparisonOperator.CONTAINS,
@@ -395,7 +397,7 @@ class CTCodelistGenericRepository(
     def codelist_exists(self, codelist_uid: str) -> bool:
         query = """
             MATCH (codelist_root:CTCodelistRoot {uid: $uid})-[:HAS_NAME_ROOT]->
-            (codelist_ver_root:CTCodelistNameRoot)-[:LATEST_FINAL]->(codelist_ver_value:CTCodelistNameValue)
+            (codelist_ver_root:CTCodelistNameRoot)-[:LATEST]->(codelist_ver_value:CTCodelistNameValue)
             RETURN codelist_root
             """
         result, _ = db.cypher_query(query, {"uid": codelist_uid})

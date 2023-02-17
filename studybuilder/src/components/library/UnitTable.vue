@@ -22,6 +22,7 @@
         small
         color="primary"
         @click.stop="showForm = true"
+        data-cy="add-unit"
         :title="$t('UnitForm.add_title')"
         >
         <v-icon dark>

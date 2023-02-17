@@ -83,6 +83,7 @@
   </confirm-dialog>
   <v-dialog
     v-model="showSelectForm"
+    @keydown.esc="showSelectForm = false"
     persistent
     max-width="600px"
     >
@@ -120,31 +121,27 @@ export default {
           to: { name: 'SelectOrAddStudy' }
         },
         {
-          title: this.$t('ProtocolProcessView.study_design'),
+          title: this.$t('ProtocolProcessView.study_structure'),
           items: [
             {
-              title: this.$t('ProtocolProcessView.study_type'),
-              to: { name: 'StudyDesign', params: { tab: 'type' } }
-            },
-            {
               title: this.$t('ProtocolProcessView.study_arms'),
-              to: { name: 'StudyDesign', params: { tab: 'arms' } }
+              to: { name: 'StudyStructure', params: { tab: 'arms' } }
             },
             {
               title: this.$t('ProtocolProcessView.study_epochs'),
-              to: { name: 'StudyDesign', params: { tab: 'epochs' } }
+              to: { name: 'StudyStructure', params: { tab: 'epochs' } }
             },
             {
               title: this.$t('ProtocolProcessView.study_elements'),
-              to: { name: 'StudyDesign', params: { tab: 'elements' } }
+              to: { name: 'StudyStructure', params: { tab: 'elements' } }
             },
             {
               title: this.$t('ProtocolProcessView.study_visits'),
-              to: { name: 'StudyDesign', params: { tab: 'visits' } }
+              to: { name: 'StudyStructure', params: { tab: 'visits' } }
             },
             {
               title: this.$t('ProtocolProcessView.design_matrix'),
-              to: { name: 'StudyDesign', params: { tab: 'design_matrix' } }
+              to: { name: 'StudyStructure', params: { tab: 'design_matrix' } }
             }
           ]
         },
@@ -202,12 +199,16 @@ export default {
           title: this.$t('ProtocolProcessView.study_interventions'),
           items: [
             {
-              title: this.$t('ProtocolProcessView.intervention_type'),
-              to: { name: 'StudyInterventions', params: { tab: 'intervention_type' } }
+              title: this.$t('ProtocolProcessView.overview'),
+              to: { name: 'StudyInterventions', params: { tab: 'overview' } }
             },
             {
               title: this.$t('ProtocolProcessView.study_compounds'),
               to: { name: 'StudyInterventions', params: { tab: 'study_compounds' } }
+            },
+            {
+              title: this.$t('ProtocolProcessView.study_compound_dosings'),
+              to: { name: 'StudyInterventions', params: { tab: 'study_compound_dosings' } }
             },
             {
               title: this.$t('ProtocolProcessView.other_interventions'),

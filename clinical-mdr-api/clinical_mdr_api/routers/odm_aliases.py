@@ -1,7 +1,7 @@
-from typing import Any, Optional, Sequence
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, Path, Query
-from pydantic.types import Json, List
+from pydantic.types import Json
 
 from clinical_mdr_api import config
 from clinical_mdr_api.models import (
@@ -180,14 +180,14 @@ def create_odm_alias(
     "/batch",
     summary="Batch operations (create, edit) for ODM Aliases",
     description="",
-    response_model=Sequence[OdmAliasBatchOutput],
-    status_code=201,
+    response_model=List[OdmAliasBatchOutput],
+    status_code=207,
     responses={
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def odm_alias_batch_operations(
-    operations: Sequence[OdmAliasBatchInput] = Body(
+    operations: List[OdmAliasBatchInput] = Body(
         None, description="List of operation to perform"
     ),
 ):
@@ -268,7 +268,7 @@ def create_odm_alias_version(uid: str = OdmAliasUID):
 
 
 @router.post(
-    "/{uid}/approve",
+    "/{uid}/approvals",
     summary="Approve an ODM Alias",
     description="",
     response_model=OdmAlias,
@@ -293,14 +293,14 @@ def approve_odm_alias(uid: str = OdmAliasUID):
     return odm_alias_service.approve(uid=uid)
 
 
-@router.post(
-    "/{uid}/inactivate",
+@router.delete(
+    "/{uid}/activations",
     summary=" Inactivate an ODM Alias",
     description="",
     response_model=OdmAlias,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -319,13 +319,13 @@ def inactivate_odm_alias(uid: str = OdmAliasUID):
 
 
 @router.post(
-    "/{uid}/reactivate",
+    "/{uid}/activations",
     summary="Reactivate an ODM Alias",
     description="",
     response_model=OdmAlias,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"

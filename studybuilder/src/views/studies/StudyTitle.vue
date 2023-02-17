@@ -35,6 +35,7 @@
   </v-sheet>
   <v-dialog
     v-model="showForm"
+    @keydown.esc="showForm = false"
     persistent
     fullscreen
     hide-overlay

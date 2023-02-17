@@ -2,6 +2,7 @@ from neomodel import (
     BooleanProperty,
     DateProperty,
     IntegerProperty,
+    JSONProperty,
     RelationshipFrom,
     RelationshipTo,
     StringProperty,
@@ -157,11 +158,11 @@ class OdmFormalExpressionRoot(ConceptRoot):
 class OdmItemGroupRefRelation(ClinicalMdrRel):
     order_number = IntegerProperty()
     mandatory = BooleanProperty()
-    locked = BooleanProperty()
     collection_exception_condition_oid = StringProperty()
+    vendor = JSONProperty()
 
 
-class OdmXmlExtensionRelation(ClinicalMdrRel):
+class OdmVendorNamespaceRelation(ClinicalMdrRel):
     value = StringProperty()
 
 
@@ -187,18 +188,18 @@ class OdmFormRoot(ConceptRoot):
     item_group_ref = RelationshipTo(
         "OdmItemGroupRoot", "ITEM_GROUP_REF", model=OdmItemGroupRefRelation
     )
-    has_xml_extension_tag = RelationshipTo(
-        "OdmXmlExtensionTagRoot", "HAS_XML_EXTENSION_TAG", model=OdmXmlExtensionRelation
+    has_vendor_element = RelationshipTo(
+        "OdmVendorElementRoot", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
     )
-    has_xml_extension_attribute = RelationshipTo(
-        "OdmXmlExtensionAttributeRoot",
-        "HAS_XML_EXTENSION_ATTRIBUTE",
-        model=OdmXmlExtensionRelation,
+    has_vendor_attribute = RelationshipTo(
+        "OdmVendorAttributeRoot",
+        "HAS_VENDOR_ATTRIBUTE",
+        model=OdmVendorNamespaceRelation,
     )
-    has_xml_extension_tag_attribute = RelationshipTo(
-        "OdmXmlExtensionAttributeRoot",
-        "HAS_XML_EXTENSION_TAG_ATTRIBUTE",
-        model=OdmXmlExtensionRelation,
+    has_vendor_element_attribute = RelationshipTo(
+        "OdmVendorAttributeRoot",
+        "HAS_VENDOR_ELEMENT_ATTRIBUTE",
+        model=OdmVendorNamespaceRelation,
     )
     # TODO targets_data_model = RelationshipTo(DataModelRoot, "TARGETS_DATA_MODEL")
 
@@ -218,15 +219,13 @@ class OdmFormRoot(ConceptRoot):
 class OdmItemRefRelation(ClinicalMdrRel):
     order_number = IntegerProperty()
     mandatory = BooleanProperty()
-    data_entry_required = BooleanProperty()
-    sdv = BooleanProperty()
-    locked = BooleanProperty()
     key_sequence = StringProperty()
     method_oid = StringProperty()
     imputation_method_oid = StringProperty()
     role = StringProperty()
     role_codelist_oid = StringProperty()
     collection_exception_condition_oid = StringProperty()
+    vendor = JSONProperty()
 
 
 class OdmItemGroupValue(ConceptValue):
@@ -236,7 +235,6 @@ class OdmItemGroupValue(ConceptValue):
     sas_dataset_name = StringProperty()
     origin = StringProperty()
     purpose = StringProperty()
-    locked = BooleanProperty()
     comment = StringProperty()
 
 
@@ -251,18 +249,18 @@ class OdmItemGroupRoot(ConceptRoot):
         OdmFormRoot, "ITEM_GROUP_REF", model=OdmItemGroupRefRelation
     )
     item_ref = RelationshipTo("OdmItemRoot", "ITEM_REF", model=OdmItemRefRelation)
-    has_xml_extension_tag = RelationshipTo(
-        "OdmXmlExtensionTagRoot", "HAS_XML_EXTENSION_TAG", model=OdmXmlExtensionRelation
+    has_vendor_element = RelationshipTo(
+        "OdmVendorElementRoot", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
     )
-    has_xml_extension_attribute = RelationshipTo(
-        "OdmXmlExtensionAttributeRoot",
-        "HAS_XML_EXTENSION_ATTRIBUTE",
-        model=OdmXmlExtensionRelation,
+    has_vendor_attribute = RelationshipTo(
+        "OdmVendorAttributeRoot",
+        "HAS_VENDOR_ATTRIBUTE",
+        model=OdmVendorNamespaceRelation,
     )
-    has_xml_extension_tag_attribute = RelationshipTo(
-        "OdmXmlExtensionAttributeRoot",
-        "HAS_XML_EXTENSION_TAG_ATTRIBUTE",
-        model=OdmXmlExtensionRelation,
+    has_vendor_element_attribute = RelationshipTo(
+        "OdmVendorAttributeRoot",
+        "HAS_VENDOR_ELEMENT_ATTRIBUTE",
+        model=OdmVendorNamespaceRelation,
     )
     # TODO targets_data_model = RelationshipTo(DataModelRoot, "TARGETS_DATA_MODEL")
 
@@ -318,18 +316,18 @@ class OdmItemRoot(ConceptRoot):
         CTTermRoot, "HAS_CODELIST_TERM", model=OdmItemTermRelationship
     )
     item_ref = RelationshipFrom(OdmItemGroupRoot, "ITEM_REF", model=OdmItemRefRelation)
-    has_xml_extension_tag = RelationshipTo(
-        "OdmXmlExtensionTagRoot", "HAS_XML_EXTENSION_TAG", model=OdmXmlExtensionRelation
+    has_vendor_element = RelationshipTo(
+        "OdmVendorElementRoot", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
     )
-    has_xml_extension_attribute = RelationshipTo(
-        "OdmXmlExtensionAttributeRoot",
-        "HAS_XML_EXTENSION_ATTRIBUTE",
-        model=OdmXmlExtensionRelation,
+    has_vendor_attribute = RelationshipTo(
+        "OdmVendorAttributeRoot",
+        "HAS_VENDOR_ATTRIBUTE",
+        model=OdmVendorNamespaceRelation,
     )
-    has_xml_extension_tag_attribute = RelationshipTo(
-        "OdmXmlExtensionAttributeRoot",
-        "HAS_XML_EXTENSION_TAG_ATTRIBUTE",
-        model=OdmXmlExtensionRelation,
+    has_vendor_element_attribute = RelationshipTo(
+        "OdmVendorAttributeRoot",
+        "HAS_VENDOR_ELEMENT_ATTRIBUTE",
+        model=OdmVendorNamespaceRelation,
     )
 
     has_version = RelationshipTo(OdmItemValue, "HAS_VERSION", model=VersionRelationship)
@@ -370,114 +368,112 @@ class OdmTemplateRoot(ConceptRoot):
     )
 
 
-class OdmXmlExtensionValue(ConceptValue):
+class OdmVendorNamespaceValue(ConceptValue):
     prefix = StringProperty()
-    namespace = StringProperty()
+    url = StringProperty()
 
 
-class OdmXmlExtensionRoot(ConceptRoot):
-    has_xml_extension_tag = RelationshipTo(
-        "OdmXmlExtensionTagRoot",
-        "HAS_XML_EXTENSION_TAG",
-    )
-    has_xml_extension_attribute = RelationshipTo(
-        "OdmXmlExtensionAttributeRoot",
-        "HAS_XML_EXTENSION_ATTRIBUTE",
+class OdmVendorNamespaceRoot(ConceptRoot):
+    has_vendor_element = RelationshipTo("OdmVendorElementRoot", "HAS_VENDOR_ELEMENT")
+    has_vendor_attribute = RelationshipTo(
+        "OdmVendorAttributeRoot", "HAS_VENDOR_ATTRIBUTE"
     )
 
     has_version = RelationshipTo(
-        OdmXmlExtensionValue, "HAS_VERSION", model=VersionRelationship
+        OdmVendorNamespaceValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(OdmXmlExtensionValue, "LATEST")
+    has_latest_value = RelationshipTo(OdmVendorNamespaceValue, "LATEST")
     latest_draft = RelationshipTo(
-        OdmXmlExtensionValue, "LATEST_DRAFT", model=VersionRelationship
+        OdmVendorNamespaceValue, "LATEST_DRAFT", model=VersionRelationship
     )
     latest_final = RelationshipTo(
-        OdmXmlExtensionValue, "LATEST_FINAL", model=VersionRelationship
+        OdmVendorNamespaceValue, "LATEST_FINAL", model=VersionRelationship
     )
     latest_retired = RelationshipTo(
-        OdmXmlExtensionValue, "LATEST_RETIRED", model=VersionRelationship
+        OdmVendorNamespaceValue, "LATEST_RETIRED", model=VersionRelationship
     )
 
 
-class OdmXmlExtensionAttributeValue(ConceptValue):
+class OdmVendorAttributeValue(ConceptValue):
+    compatible_types = JSONProperty()
     data_type = StringProperty()
+    value_regex = StringProperty()
 
 
-class OdmXmlExtensionAttributeRoot(ConceptRoot):
-    belongs_to_xml_extension = RelationshipFrom(
-        "OdmXmlExtensionRoot", "HAS_XML_EXTENSION_ATTRIBUTE"
+class OdmVendorAttributeRoot(ConceptRoot):
+    belongs_to_vendor_namespace = RelationshipFrom(
+        "OdmVendorNamespaceRoot", "HAS_VENDOR_ATTRIBUTE"
     )
-    belongs_to_xml_extension_tag = RelationshipFrom(
-        "OdmXmlExtensionTagRoot", "HAS_XML_EXTENSION_ATTRIBUTE"
+    belongs_to_vendor_element = RelationshipFrom(
+        "OdmVendorElementRoot", "HAS_VENDOR_ATTRIBUTE"
     )
     belongs_to_form = RelationshipFrom(
-        "OdmFormRoot", "HAS_XML_EXTENSION_ATTRIBUTE", model=OdmXmlExtensionRelation
+        "OdmFormRoot", "HAS_VENDOR_ATTRIBUTE", model=OdmVendorNamespaceRelation
     )
     belongs_to_item_group = RelationshipFrom(
-        "OdmItemGroupRoot", "HAS_XML_EXTENSION_ATTRIBUTE", model=OdmXmlExtensionRelation
+        "OdmItemGroupRoot", "HAS_VENDOR_ATTRIBUTE", model=OdmVendorNamespaceRelation
     )
     belongs_to_item = RelationshipFrom(
-        "OdmItemRoot", "HAS_XML_EXTENSION_ATTRIBUTE", model=OdmXmlExtensionRelation
+        "OdmItemRoot", "HAS_VENDOR_ATTRIBUTE", model=OdmVendorNamespaceRelation
     )
-    belongs_to_tag_form = RelationshipFrom(
-        "OdmFormRoot", "HAS_XML_EXTENSION_TAG_ATTRIBUTE", model=OdmXmlExtensionRelation
+    belongs_to_element_form = RelationshipFrom(
+        "OdmFormRoot", "HAS_VENDOR_ELEMENT_ATTRIBUTE", model=OdmVendorNamespaceRelation
     )
-    belongs_to_tag_item_group = RelationshipFrom(
+    belongs_to_element_item_group = RelationshipFrom(
         "OdmItemGroupRoot",
-        "HAS_XML_EXTENSION_TAG_ATTRIBUTE",
-        model=OdmXmlExtensionRelation,
+        "HAS_VENDOR_ELEMENT_ATTRIBUTE",
+        model=OdmVendorNamespaceRelation,
     )
-    belongs_to_tag_item = RelationshipFrom(
-        "OdmItemRoot", "HAS_XML_EXTENSION_TAG_ATTRIBUTE", model=OdmXmlExtensionRelation
+    belongs_to_element_item = RelationshipFrom(
+        "OdmItemRoot", "HAS_VENDOR_ELEMENT_ATTRIBUTE", model=OdmVendorNamespaceRelation
     )
 
     has_version = RelationshipTo(
-        OdmXmlExtensionAttributeValue, "HAS_VERSION", model=VersionRelationship
+        OdmVendorAttributeValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(OdmXmlExtensionAttributeValue, "LATEST")
+    has_latest_value = RelationshipTo(OdmVendorAttributeValue, "LATEST")
     latest_draft = RelationshipTo(
-        OdmXmlExtensionAttributeValue, "LATEST_DRAFT", model=VersionRelationship
+        OdmVendorAttributeValue, "LATEST_DRAFT", model=VersionRelationship
     )
     latest_final = RelationshipTo(
-        OdmXmlExtensionAttributeValue, "LATEST_FINAL", model=VersionRelationship
+        OdmVendorAttributeValue, "LATEST_FINAL", model=VersionRelationship
     )
     latest_retired = RelationshipTo(
-        OdmXmlExtensionAttributeValue, "LATEST_RETIRED", model=VersionRelationship
+        OdmVendorAttributeValue, "LATEST_RETIRED", model=VersionRelationship
     )
 
 
-class OdmXmlExtensionTagValue(ConceptValue):
+class OdmVendorElementValue(ConceptValue):
     ...
 
 
-class OdmXmlExtensionTagRoot(ConceptRoot):
-    belongs_to_xml_extension = RelationshipFrom(
-        "OdmXmlExtensionRoot", "HAS_XML_EXTENSION_TAG"
+class OdmVendorElementRoot(ConceptRoot):
+    belongs_to_vendor_namespace = RelationshipFrom(
+        "OdmVendorNamespaceRoot", "HAS_VENDOR_ELEMENT"
     )
     belongs_to_form = RelationshipFrom(
-        "OdmFormRoot", "HAS_XML_EXTENSION_TAG", model=OdmXmlExtensionRelation
+        "OdmFormRoot", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
     )
     belongs_to_item_group = RelationshipFrom(
-        "OdmItemGroupRoot", "HAS_XML_EXTENSION_TAG", model=OdmXmlExtensionRelation
+        "OdmItemGroupRoot", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
     )
     belongs_to_item = RelationshipFrom(
-        "OdmItemRoot", "HAS_XML_EXTENSION_TAG", model=OdmXmlExtensionRelation
+        "OdmItemRoot", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
     )
-    has_xml_extension_attribute = RelationshipTo(
-        "OdmXmlExtensionAttributeRoot", "HAS_XML_EXTENSION_ATTRIBUTE"
+    has_vendor_attribute = RelationshipTo(
+        "OdmVendorAttributeRoot", "HAS_VENDOR_ATTRIBUTE"
     )
 
     has_version = RelationshipTo(
-        OdmXmlExtensionTagValue, "HAS_VERSION", model=VersionRelationship
+        OdmVendorElementValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(OdmXmlExtensionTagValue, "LATEST")
+    has_latest_value = RelationshipTo(OdmVendorElementValue, "LATEST")
     latest_draft = RelationshipTo(
-        OdmXmlExtensionTagValue, "LATEST_DRAFT", model=VersionRelationship
+        OdmVendorElementValue, "LATEST_DRAFT", model=VersionRelationship
     )
     latest_final = RelationshipTo(
-        OdmXmlExtensionTagValue, "LATEST_FINAL", model=VersionRelationship
+        OdmVendorElementValue, "LATEST_FINAL", model=VersionRelationship
     )
     latest_retired = RelationshipTo(
-        OdmXmlExtensionTagValue, "LATEST_RETIRED", model=VersionRelationship
+        OdmVendorElementValue, "LATEST_RETIRED", model=VersionRelationship
     )

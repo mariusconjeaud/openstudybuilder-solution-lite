@@ -115,7 +115,7 @@ def get_all_schedules_audit_trail(
     "/studies/{uid}/study-activity-schedules/batch",
     summary="Batch operations (create, delete) for study activity schedules",
     response_model=Sequence[models.StudyActivityScheduleBatchOutput],
-    status_code=200,
+    status_code=207,
     responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
 )
 def activity_schedule_batch_operations(

@@ -6,15 +6,6 @@ logger = logging.getLogger("legacy_mdr_migrations")
 # Utilites for parsing and converting data
 # ---------------------------------------------------------------
 #
-def parse_YN_as_bool(yn: str) -> bool:
-    if yn == "Y":
-        return True
-    elif yn == "N":
-        return False
-    else:
-        logger.warning("Failed to parse %s to boolean, defaulting to False", yn)
-        return False
-
 
 def parse_to_int(s: str) -> int:
     try:
@@ -33,39 +24,30 @@ def title_case(s: str) -> str:
     )
 
 
-def pass_float(value: str) -> Optional[float]:
-    # SAS DEFAUTL for NULL is "."
-    if value == ".":
+def parse_float(value: str) -> Optional[float]:
+    # SAS DEFAULT for NULL is "."
+    if value.lower() in (".", "null", "none"):
         return None
     try:
         new_value = float(value.replace("E", "e"))
-    except:
+    except ValueError:
         new_value = 0.0
-        logger.warning("Unable to parse string %s to float value", value)
+        logger.warning(f"Unable to parse string '{value}' as a number, defaulting to {new_value}")
     return new_value
 
 
-def map_boolean(bool_str: str) -> bool:
-    if bool_str == "Y" or bool_str == "T":
+def map_boolean(bool_str: str, raise_exception=False) -> bool:
+    if bool_str in ("Y", "y", "T", "True", "TRUE", "true"):
         return True
-    elif bool_str == "F" or bool_str == "N":
+    elif bool_str in ("N", "n", "F", "False", "FALSE", "false"):
         return False
     else:
+        if raise_exception:
+            raise ValueError(f"Unable to map string :'{bool_str}' to a boolean value")
         logger.warning(
-            "Unable to map string :'"
-            + bool_str
-            + "' to a boolean value, default is set to false"
+            f"Unable to map string :'{bool_str}' to a boolean value, default is set to false"
         )
         return False
-
-
-def map_boolean_exc(bool_str: str) -> bool:
-    if bool_str == "Y" or bool_str == "T":
-        return True
-    elif bool_str == "F" or bool_str == "N":
-        return False
-    else:
-        raise ValueError("Unable to map string :'" + bool_str + "' to a boolean value")
 
 
 def find_term_by_name(term_name: str, all_terms: Sequence[dict]) -> Optional[str]:

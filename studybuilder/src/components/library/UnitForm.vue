@@ -40,6 +40,7 @@
             <v-text-field
               v-model="form.name"
               :label="$t('_global.name')"
+              data-cy="unit-name"
               :error-messages="errors"
               dense
               clearable
@@ -53,11 +54,12 @@
         >
         <v-row>
           <v-col cols="12">
-            <v-select
+            <v-autocomplete
               v-model="form.ct_units"
               :label="$t('UnitForm.ct_term')"
+              data-cy="unit-codelist-term"
               :items="unitTerms"
-              :item-text="cTermText"
+              item-text="sponsor_preferred_name"
               item-value="term_uid"
               single-line
               multiple
@@ -77,6 +79,7 @@
             <v-select
               v-model="form.unit_subsets"
               label="Unit Subset"
+              data-cy="unit-subset"
               :items="unitSubsets"
               item-text="sponsor_preferred_name"
               item-value="term_uid"
@@ -94,22 +97,27 @@
           <v-switch
             v-model="form.convertible_unit"
             :label="$t('UnitForm.convertible_unit')"
+            data-cy="convertible-unit"
             />
           <v-switch
             v-model="form.display_unit"
             :label="$t('UnitForm.display_unit')"
+            data-cy="display-unit"
             />
           <v-switch
             v-model="form.master_unit"
             :label="$t('UnitForm.master_unit')"
+            data-cy="master-unit"
             />
           <v-switch
             v-model="form.si_unit"
             :label="$t('UnitForm.si_unit')"
+            data-cy="si-unit"
             />
           <v-switch
             v-model="form.us_conventional_unit"
             :label="$t('UnitForm.us_unit')"
+            data-cy="us-unit"
             />
         </v-col>
         <v-col>
@@ -130,6 +138,7 @@
             <v-autocomplete
               v-model="form.unit_dimension"
               :label="$t('UnitForm.dimension')"
+              data-cy="unit-dimension"
               :items="unitDimensions"
               item-text="sponsor_preferred_name"
               item-value="term_uid"
@@ -148,6 +157,7 @@
             <v-text-field
               v-model="form.legacy_code"
               :label="$t('UnitForm.legacy_code')"
+              data-cy="unit-legacy-code"
               :error-messages="errors"
               dense
               clearable
@@ -164,6 +174,7 @@
             <v-text-field
               v-model="form.molecular_weight_conv_expon"
               :label="$t('UnitForm.molecular_weight')"
+              data-cy="unit-molecular-weight"
               :error-messages="errors"
               dense
               clearable
@@ -180,6 +191,7 @@
             <v-text-field
               v-model="form.conversion_factor_to_master"
               :label="$t('UnitForm.conversion_factor')"
+              data-cy="unit-conversion-factor"
               :error-messages="errors"
               dense
               clearable
@@ -248,9 +260,6 @@ export default {
         us_conventional_unit: false
       }
     },
-    cTermText (unit) {
-      return `[${unit.term_uid}] ${unit.sponsor_preferred_name}`
-    },
     async cancel () {
       if (this.form.library_name === undefined) {
         this.close()
@@ -301,7 +310,7 @@ export default {
     }
   },
   mounted () {
-    terms.getByCodelist('units').then(resp => {
+    terms.getByCodelist('units', true).then(resp => {
       this.unitTerms = resp.data.items
     })
     terms.getByCodelist('unitDimensions').then(resp => {

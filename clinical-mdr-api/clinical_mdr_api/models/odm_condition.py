@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Sequence, Union
+from typing import Callable, Dict, List, Optional, Union
 
 from pydantic import Field
 
@@ -28,9 +28,9 @@ from clinical_mdr_api.models.odm_formal_expression import (
 
 class OdmCondition(ConceptModel):
     oid: Optional[str]
-    formal_expressions: Sequence[OdmFormalExpressionSimpleModel]
-    descriptions: Sequence[OdmDescriptionSimpleModel]
-    aliases: Sequence[OdmAliasSimpleModel]
+    formal_expressions: List[OdmFormalExpressionSimpleModel]
+    descriptions: List[OdmDescriptionSimpleModel]
+    aliases: List[OdmAliasSimpleModel]
     possible_actions: List[str]
 
     @classmethod
@@ -92,20 +92,20 @@ class OdmCondition(ConceptModel):
 
 class OdmConditionPostInput(ConceptPostInput):
     oid: Optional[str]
-    formal_expressions: Sequence[Union[OdmFormalExpressionPostInput, str]]
-    descriptions: Sequence[Union[OdmDescriptionPostInput, str]]
-    alias_uids: Sequence[str]
+    formal_expressions: List[Union[OdmFormalExpressionPostInput, str]]
+    descriptions: List[Union[OdmDescriptionPostInput, str]]
+    alias_uids: List[str]
 
 
 class OdmConditionPatchInput(ConceptPatchInput):
     oid: Optional[str]
-    formal_expressions: Sequence[
+    formal_expressions: List[
         Union[OdmFormalExpressionBatchPatchInput, OdmFormalExpressionPostInput, str]
     ]
-    descriptions: Sequence[
+    descriptions: List[
         Union[OdmDescriptionBatchPatchInput, OdmDescriptionPostInput, str]
     ]
-    alias_uids: Sequence[str]
+    alias_uids: List[str]
 
 
 class OdmConditionVersion(OdmCondition):

@@ -15,7 +15,7 @@
         >
         <v-radio :label="$t('StudyActivityForm.select_from_studies')" value="selectFromStudies" />
         <v-radio :label="$t('StudyActivityForm.select_from_library')" value="selectFromLibrary" />
-        <v-radio :label="$t('StudyActivityForm.create_placeholder')" value="createPlaceholder" />
+        <v-radio :label="$t('StudyActivityForm.create_placeholder_for_activity')" value="createPlaceholder" />
       </v-radio-group>
     </template>
     <template v-slot:step.selectStudies="{ step }">
@@ -182,6 +182,111 @@
         </n-n-table>
       </v-col>
     </template>
+    <template v-slot:step.createPlaceholder>
+      <v-row>
+        <v-col cols="5">
+          <validation-provider
+            v-slot="{ errors }"
+            rules="required"
+            >
+            <v-autocomplete
+              :label="$t('ActivityForms.activity_group')"
+              :items="groups"
+              v-model="form.activity_group"
+              item-text="name"
+              item-value="uid"
+              dense
+              clearable
+              return-object
+              :error-messages="errors"
+              />
+          </validation-provider>
+          <validation-provider
+            v-slot="{ errors }"
+            rules="required"
+            >
+            <v-autocomplete
+              :label="$t('ActivityForms.activity_subgroup')"
+              :items="filteredSubGroups"
+              v-model="form.activity_subgroup"
+              item-text="name"
+              item-value="uid"
+              dense
+              clearable
+              :disabled="form.activity_group ? false : true"
+              :error-messages="errors"
+              />
+          </validation-provider>
+          <validation-provider
+            v-slot="{ errors }"
+            rules="required"
+            >
+            <v-text-field
+              :label="$t('ActivityForms.name')"
+              v-model="form.name"
+              dense
+              clearable
+              @input="getActivities"
+              :error-messages="errors"
+              />
+          </validation-provider>
+          <v-text-field
+            :label="$t('ActivityFormsRequested.abbreviation')"
+            v-model="form.abbreviation"
+            dense
+            clearable
+            />
+          <validation-provider
+            v-slot="{ errors }"
+            rules="required"
+            >
+            <v-textarea
+              :label="$t('ActivityFormsRequested.definition')"
+              v-model="form.definition"
+              dense
+              clearable
+              auto-grow
+              rows="1"
+              :error-messages="errors"
+              />
+          </validation-provider>
+          <validation-provider
+            v-slot="{ errors }"
+            rules="required"
+            >
+            <v-textarea
+              :label="$t('ActivityFormsRequested.rationale_for_request')"
+              v-model="form.request_rationale"
+              dense
+              clearable
+              auto-grow
+              rows="1"
+              :error-messages="errors"
+              />
+            </validation-provider>
+        </v-col>
+        <v-col cols="7">
+          <v-data-table
+            :headers="activityHeaders"
+            :items="activities"
+            :options.sync="options"
+            :server-items-length="activitiesTotal"
+            @pagination="getActivities()"
+            :items-per-page="5">
+            <template v-slot:item.actions="{ item }">
+              <v-btn
+                icon
+                :color="getCopyButtonColor(item)"
+                :disabled="isActivitySelected(item)"
+                @click="selectActivityFromPlaceholder(item)"
+                :title="$t('StudyActivityForm.copy_activity')">
+                <v-icon>mdi-content-copy</v-icon>
+              </v-btn>
+            </template>
+          </v-data-table>
+        </v-col>
+      </v-row>
+    </template>
   </horizontal-stepper-form>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
 </div>
@@ -200,6 +305,7 @@ import NNTable from '@/components/tools/NNTable'
 import StudySelectionTable from '@/components/studies/StudySelectionTable'
 import _isEmpty from 'lodash/isEmpty'
 import _isEqual from 'lodash/isEqual'
+import libConstants from '@/constants/libraries'
 
 export default {
   components: {
@@ -212,7 +318,13 @@ export default {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
       studyActivities: 'studyActivities/studyActivities'
-    })
+    }),
+    filteredSubGroups () {
+      if (!this.form.activity_group) {
+        return []
+      }
+      return this.subGroups.filter(el => el.activity_group.uid === this.form.activity_group.uid)
+    }
   },
   data () {
     return {
@@ -225,6 +337,7 @@ export default {
       activitiesTotal: 0,
       activityHeaders: [
         { text: '', value: 'actions', width: '5%' },
+        { text: this.$t('_global.library'), value: 'library_name' },
         { text: this.$t('StudyActivity.activity_group'), value: 'activity_group.name' },
         { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity_subgroup.name' },
         { text: this.$t('StudyActivity.activity'), value: 'name' }
@@ -246,10 +359,12 @@ export default {
       ],
       createPlaceholderSteps: [
         { name: 'creationMode', title: this.$t('StudyActivityForm.creation_mode_title') },
-        { name: 'selectFlowchartGroup', title: this.$t('StudyActivityForm.flowchart_group_title') }
+        { name: 'selectFlowchartGroup', title: this.$t('StudyActivityForm.flowchart_group_title') },
+        { name: 'createPlaceholder', title: this.$t('StudyActivityForm.create_placeholder'), belowDisplay: true }
       ],
       selectionFromLibraryHeaders: [
         { text: '', value: 'actions', width: '5%' },
+        { text: this.$t('_global.library'), value: 'library_name' },
         { text: this.$t('StudyActivityForm.flowchart_group'), value: 'flowchart_group.sponsor_preferred_name' },
         { text: this.$t('StudyActivity.activity_group'), value: 'activity_group.name' },
         { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity_subgroup.name' },
@@ -257,6 +372,7 @@ export default {
       ],
       selectionFromStudiesHeaders: [
         { text: '', value: 'actions', width: '5%' },
+        { text: this.$t('_global.library'), value: 'activity.library_name' },
         { text: this.$t('StudyActivityForm.flowchart_group'), value: 'flowchart_group.sponsor_preferred_name' },
         { text: this.$t('StudyActivity.activity_group'), value: 'activity.activity_group.name' },
         { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity.activity_subgroup.name' },
@@ -266,12 +382,18 @@ export default {
       studyActivityHeaders: [
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('StudyActivityForm.study_id'), value: 'study_uid' },
+        { text: this.$t('_global.library'), value: 'activity.library_name' },
         { text: this.$t('StudyActivityForm.flowchart_group'), value: 'flowchart_group.sponsor_preferred_name' },
         { text: this.$t('StudyActivity.activity_group'), value: 'activity.activity_group.name' },
         { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity.activity_subgroup.name' },
         { text: this.$t('StudyActivity.activity'), value: 'activity.name' }
       ],
-      filters: ''
+      filters: '',
+      form: {
+        name: ''
+      },
+      groups: [],
+      subgroups: []
     }
   },
   methods: {
@@ -296,16 +418,38 @@ export default {
       this.creationMode = 'selectFromLibrary'
       this.steps = this.selectFromLibrarySteps
       this.selectedStudies = []
+      this.form = {
+        name: ''
+      }
       this.$refs.stepper.reset()
     },
     getObserver (step) {
       return this.$refs[`observer_${step}`]
     },
-    initFromStudyActivity (studyActivity) {
-      this.steps = this.editSteps
-      this.form = JSON.parse(JSON.stringify(studyActivity))
+    selectActivityFromPlaceholder (activity) {
+      this.creationMode = 'selectFromLibrary'
+      if (!this.currentFlowchartGroup) {
+        return
+      }
+      const activityCopy = { ...activity }
+      activityCopy.flowchart_group = { ...this.currentFlowchartGroup }
+      this.selectedActivities.push(activityCopy)
     },
     getActivities (filters, sort) {
+      if (this.creationMode === 'createPlaceholder') {
+        const params = {
+          page_number: (this.options.page),
+          page_size: this.options.itemsPerPage,
+          total_count: true,
+          library: libConstants.LIBRARY_SPONSOR,
+          filters: `{"*":{"v":["${this.form.name}"]}}`
+        }
+        activities.get(params, 'activities').then(resp => {
+          this.activities = resp.data.items
+          this.total = resp.data.total
+        })
+        return
+      }
       if (filters !== undefined && !_isEqual(filters, this.filters)) {
         // New filters, also reset current page
         this.filters = filters
@@ -437,7 +581,11 @@ export default {
     },
     async submit () {
       if (this.creationMode !== 'selectFromLibrary' && this.creationMode !== 'selectFromStudies') {
-        return
+        this.form.library_name = libConstants.LIBRARY_REQUESTED
+        this.form.name_sentence_case = this.form.name.charAt(0).toUpperCase() + this.form.name.slice(1)
+        await activities.create(this.form, 'activities').then(resp => {
+          this.selectActivity(resp.data)
+        })
       }
       if (!this.selectedActivities.length) {
         return
@@ -445,7 +593,7 @@ export default {
       for (let cpt = 0; cpt < this.selectedActivities.length; cpt++) {
         const item = this.selectedActivities[cpt]
         let payload
-        if (this.creationMode === 'selectFromLibrary') {
+        if (this.creationMode === 'selectFromLibrary' || this.creationMode === 'createPlaceholder') {
           payload = {
             flowchart_group_uid: item.flowchart_group.term_uid,
             activity_uid: item.uid
@@ -461,6 +609,14 @@ export default {
       bus.$emit('notification', { type: 'success', msg: this.$t('StudyActivityForm.add_success') })
       this.$emit('added')
       this.close()
+    },
+    getGroups () {
+      activities.get({ page_size: 0 }, 'activity-groups').then(resp => {
+        this.groups = resp.data.items
+      })
+      activities.get({ page_size: 0 }, 'activity-sub-groups').then(resp => {
+        this.subGroups = resp.data.items
+      })
     }
   },
   created () {
@@ -473,6 +629,7 @@ export default {
     study.get({ hasStudyActivity: true }).then(resp => {
       this.studies = resp.data.items.filter(study => study.uid !== this.selectedStudy.uid)
     })
+    this.getGroups()
   },
   watch: {
     studyEndpoint (val) {
@@ -489,6 +646,7 @@ export default {
         this.steps = this.selectFromLibrarySteps
       } else {
         this.steps = this.createPlaceholderSteps
+        this.options.itemsPerPage = 5
       }
     }
   }

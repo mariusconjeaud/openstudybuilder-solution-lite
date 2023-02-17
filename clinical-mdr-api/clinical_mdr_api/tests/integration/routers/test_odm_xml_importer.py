@@ -9,6 +9,8 @@ from clinical_mdr_api.tests.data.odm_xml import (
     import_input1,
     import_input2,
     import_input3,
+    import_input4,
+    import_input5,
     import_output1,
     import_output2,
 )
@@ -16,6 +18,9 @@ from clinical_mdr_api.tests.integration.utils import api
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_TERM_ATTRIBUTES_CYPHER,
+    STARTUP_ODM_VENDOR_ATTRIBUTES,
+    STARTUP_ODM_VENDOR_ELEMENTS,
+    STARTUP_ODM_VENDOR_NAMESPACES,
     STARTUP_UNIT_DEFINITIONS,
 )
 
@@ -26,7 +31,9 @@ class OdmXmlImporterTest(api.APITest):
 
     def setUp(self):
         inject_and_clear_db(self.TEST_DB_NAME)
-        db.cypher_query("MERGE (library:Library {name:'Sponsor', is_editable:true})")
+        db.cypher_query(STARTUP_ODM_VENDOR_NAMESPACES)
+        db.cypher_query(STARTUP_ODM_VENDOR_ELEMENTS)
+        db.cypher_query(STARTUP_ODM_VENDOR_ATTRIBUTES)
         db.cypher_query(STARTUP_UNIT_DEFINITIONS)
         db.cypher_query(STARTUP_CT_TERM_ATTRIBUTES_CYPHER)
 
@@ -44,23 +51,23 @@ class OdmXmlImporterTest(api.APITest):
     def test_import_odm_xml(self):
         response = self.test_client.post(
             "concepts/odms/metadata/xmls/import",
-            files={"xml": ("odm.xml", import_input1, self.CONTENT_TYPE)},
+            files={"xml_file": ("odm.xml", import_input1, self.CONTENT_TYPE)},
         )
 
         self.check(import_output1, loads(response.content))
 
-    def test_import_odm_xml_with_csv_mapper(self):
+    def test_import_odm_vendor_with_csv_mapper(self):
         response = self.test_client.post(
             "concepts/odms/metadata/xmls/import",
             files={
-                "xml": ("odm.xml", import_input2, self.CONTENT_TYPE),
-                "mapper": (
+                "xml_file": ("odm.xml", import_input2, self.CONTENT_TYPE),
+                "mapper_file": (
                     "mapper.csv",
                     "type,parent,from_name,to_name,to_alias,from_alias,alias_context\n"
                     "attribute,,Repeated,Repeating,,,\n"
-                    "tag,,NameOne,cs:nameOne,,,\n"
-                    "tag,,Alias,,,true,CompletionInstructions\n"
-                    "tag,*,Alias,,,true,ImplementationNotes\n"
+                    "element,,NameOne,cs:nameOne,,,\n"
+                    "element,,Alias,,,true,CompletionInstructions\n"
+                    "element,*,Alias,,,true,ImplementationNotes\n"
                     "attribute,,CompletionInstructions,osb:instruction,,,\n"
                     "attribute,*,ImplementationNotes,osb:sponsorInstruction,,,\n",
                     "text/csv",
@@ -70,12 +77,11 @@ class OdmXmlImporterTest(api.APITest):
 
         self.check(import_output2, loads(response.content))
 
-    # Test for temporary endpoint of Clinspark Import
     def test_import_clinspark_odm_xml(self):
         db.cypher_query("MERGE (:CTCatalogue {name:'CDASH CT'})")
         response = self.test_client.post(
-            "concepts/odms/metadata/clinspark/import",
-            files={"xml": ("clinspark.xml", clinspark_input, self.CONTENT_TYPE)},
+            "concepts/odms/metadata/xmls/import?exporter=clinspark",
+            files={"xml_file": ("clinspark.xml", clinspark_input, self.CONTENT_TYPE)},
         )
 
         self.check(clinspark_output, loads(response.content))
@@ -84,7 +90,7 @@ class OdmXmlImporterTest(api.APITest):
         response = self.test_client.post(
             "concepts/odms/metadata/xmls/import",
             files={
-                "xml": (
+                "xml_file": (
                     "mapper.json",
                     "",
                     "application/json",
@@ -97,10 +103,38 @@ class OdmXmlImporterTest(api.APITest):
         self.assertEqual(rs["type"], "BusinessLogicException")
         self.assertEqual(rs["message"], "Only XML format is supported.")
 
+    def test_throw_exception_if_vendor_attributes_dont_match_their_regex(self):
+        response = self.test_client.post(
+            "concepts/odms/metadata/xmls/import",
+            files={"xml_file": ("odm.xml", import_input4, self.CONTENT_TYPE)},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        rs = loads(response.content)
+        self.assertEqual(rs["type"], "BusinessLogicException")
+        self.assertEqual(
+            rs["message"],
+            "Provided values for following attributes don't match their regex pattern:\n\n{'odm_vendor_attribute3': '^[a-zA-Z]+$'}",
+        )
+
+    def test_throw_exception_if_ref_vendor_attributes_dont_match_their_regex(self):
+        response = self.test_client.post(
+            "concepts/odms/metadata/xmls/import",
+            files={"xml_file": ("odm.xml", import_input5, self.CONTENT_TYPE)},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        rs = loads(response.content)
+        self.assertEqual(rs["type"], "BusinessLogicException")
+        self.assertEqual(
+            rs["message"],
+            "Provided values for following attributes don't match their regex pattern:\n\n{'odm_vendor_attribute3': '^[a-zA-Z]+$'}",
+        )
+
     def test_throw_exception_if_measurementunits_dont_exist(self):
         response = self.test_client.post(
             "concepts/odms/metadata/xmls/import",
-            files={"xml": ("odm.xml", import_input3, self.CONTENT_TYPE)},
+            files={"xml_file": ("odm.xml", import_input3, self.CONTENT_TYPE)},
         )
 
         self.assertEqual(response.status_code, 400)

@@ -23,7 +23,7 @@
     <template v-slot:header="{ props: { headers } }">
       <thead>
         <tr>
-          <th v-for="header in headers" v-bind:key="header.value">
+          <th v-for="header in headers" v-bind:key="header.value" scope="col">
             <span>{{ header.text }}</span>
           </th>
         </tr>
@@ -32,47 +32,50 @@
     <template v-slot:item="{ item, expand, isExpanded }">
       <tr style="background-color: var(--v-dfltBackgroundLight1-base)">
         <td width="1%">
-          <v-btn @click="expand(!isExpanded)" v-if="isExpanded" icon>
-            <v-icon dark>
-              mdi-chevron-up
-            </v-icon>
-          </v-btn>
-          <v-btn @click="expand(!isExpanded), getForms(item)" v-else-if="!loading && item.forms.length > 0" icon>
+          <v-btn @click="expand(!isExpanded), colapseTemplate(item)" v-if="isExpanded" icon>
             <v-icon dark>
               mdi-chevron-down
+            </v-icon>
+          </v-btn>
+          <v-btn @click="expand(!isExpanded), expandTemplate(item)" v-else-if="!loading && item.forms.length > 0" icon>
+            <v-icon dark>
+              mdi-chevron-right
             </v-icon>
           </v-btn>
         </td>
         <td width="30%">
           <v-row>
             <div class="mt-3"><actions-menu :actions="actions" :item="item"/></div>
-            <v-icon color="primary">mdi-alpha-t-circle</v-icon>
+            <v-icon color="crfTemplate">mdi-alpha-t-circle</v-icon>
             <div class="mt-3 ml-1 mr-1">{{ item.name }}</div>
           </v-row>
         </td>
-        <td width="20%">{{ item.version }}</td>
+        <td width="10%"></td>
+        <td width="10%"></td>
         <td width="15%"><status-chip :status="item.status" /></td>
-        <td width="10%"></td>
-        <td width="10%"></td>
+        <td width="20%">{{ item.version }}</td>
         <td width="10%">
           <v-menu
             offset-y
+            v-if="item.status !== statuses.FINAL"
             >
             <template v-slot:activator="{ on, attrs }">
               <div>
                 <v-btn
-                  fab
+                  width="150px"
                   dark
                   small
+                  rounded
                   v-bind="attrs"
                   v-on="on"
-                  color="success"
+                  color="crfForm"
                   :title="$t('CrfTree.link_forms')"
                   v-show="item.status !== statuses.FINAL"
                   >
                   <v-icon dark>
                     mdi-plus
                   </v-icon>
+                  {{ $t('CrfTree.forms') }}
                 </v-btn>
               </div>
             </template>
@@ -95,6 +98,15 @@
               </v-list-item>
             </v-list>
           </v-menu>
+          <v-btn
+            v-else
+            width="150px"
+            rounded
+            dark
+            small
+            class="hide"
+            >
+          </v-btn>
         </td>
       </tr>
     </template>
@@ -103,7 +115,7 @@
         <v-data-table
           ref="formsTable"
           :headers="headers"
-          :items="item.forms"
+          :items="getForms(item)"
           item-key="uid"
           light
           hide-default-footer
@@ -116,14 +128,14 @@
           <template v-slot:item="{ item, expand, isExpanded }">
             <tr style="background-color: var(--v-dfltBackgroundLight2-base)">
               <td width="1%">
-                <v-btn @click="expand(!isExpanded)" v-if="isExpanded" icon>
-                  <v-icon dark>
-                    mdi-chevron-up
-                  </v-icon>
-                </v-btn>
-                <v-btn @click="expand(!isExpanded), getItemGroups(item)" v-else-if="item.item_groups && item.item_groups.length > 0" icon>
+                <v-btn @click="expand(!isExpanded), colapseForm(item)" v-if="isExpanded" icon>
                   <v-icon dark>
                     mdi-chevron-down
+                  </v-icon>
+                </v-btn>
+                <v-btn @click="expand(!isExpanded), expandForm(item)" v-else-if="item.item_groups && item.item_groups.length > 0" icon>
+                  <v-icon dark>
+                    mdi-chevron-right
                   </v-icon>
                 </v-btn>
               </td>
@@ -149,17 +161,15 @@
                     </v-icon>
                   </v-btn>
                   <div class="ml-2 mt-3"><actions-menu :actions="actions" :item="item"/></div>
-                  <v-icon color="success">mdi-alpha-f-circle</v-icon>
+                  <v-icon color="crfForm">mdi-alpha-f-circle</v-icon>
                   <div class="mt-3 ml-1 mr-1">{{ item.name }}</div>
                 </v-row>
               </td>
-              <td width="20%">{{ item.version }}</td>
-              <td width="15%"><status-chip :status="item.status" /></td>
               <td width="10%">
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
                     <v-icon
-                      color="success"
+                      color="darkGrey"
                       v-bind="attrs"
                       v-on="on"
                       v-if="item.locked === 'Yes'">
@@ -171,7 +181,7 @@
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
                     <v-icon
-                      color="success"
+                      color="darkGrey"
                       v-bind="attrs"
                       v-on="on"
                       v-if="item.mandatory === 'Yes'">
@@ -182,38 +192,43 @@
                 </v-tooltip>
               </td>
               <td width="10%">
-                <v-tooltip bottom>
+                <v-tooltip bottom
+                    v-if="item.repeating === 'Yes'">
                   <template v-slot:activator="{ on, attrs }">
                     <v-icon
-                      color="success"
+                      color="darkGrey"
                       v-bind="attrs"
-                      v-on="on"
-                      v-if="item.repeating === 'Yes'">
+                      v-on="on">
                         mdi-repeat
                     </v-icon>
                   </template>
                   <span>{{ $t('CrfTree.repeating') }}</span>
                 </v-tooltip>
               </td>
+              <td width="15%"><status-chip :status="item.status" /></td>
+              <td width="20%">{{ item.version }}</td>
               <td width="10%">
                 <v-menu
                   offset-y
+                  v-if="item.status !== statuses.FINAL"
                   >
                   <template v-slot:activator="{ on, attrs }">
                     <div>
                       <v-btn
-                        fab
+                        width="150px"
+                        rounded
                         dark
                         small
                         v-bind="attrs"
                         v-on="on"
-                        color="secondary"
+                        color="crfGroup"
                         :title="$t('CrfTree.link_item_groups')"
                         v-show="item.status !== statuses.FINAL"
                         >
                         <v-icon dark>
                           mdi-plus
                         </v-icon>
+                        {{ $t('CrfTree.item_groups') }}
                       </v-btn>
                     </div>
                   </template>
@@ -236,6 +251,15 @@
                     </v-list-item>
                   </v-list>
                 </v-menu>
+                <v-btn
+                  v-else
+                  width="150px"
+                  rounded
+                  dark
+                  small
+                  class="hide"
+                  >
+                </v-btn>
               </td>
             </tr>
           </template>
@@ -244,7 +268,7 @@
               <v-data-table
                 class="elevation-0"
                 :headers="headers"
-                :items="item.item_groups"
+                :items="getItemGroups(item)"
                 item-key="uid"
                 light
                 hide-default-footer
@@ -259,12 +283,12 @@
                     <td width="1%">
                       <v-btn @click="expand(!isExpanded)" v-if="isExpanded" icon>
                         <v-icon dark>
-                          mdi-chevron-up
+                          mdi-chevron-down
                         </v-icon>
                       </v-btn>
-                      <v-btn @click="expand(!isExpanded), getItems(item)" v-else-if="item.items && item.items.length > 0" icon>
+                      <v-btn @click="expand(!isExpanded)" v-else-if="item.items && item.items.length > 0" icon>
                         <v-icon dark>
-                          mdi-chevron-down
+                          mdi-chevron-right
                         </v-icon>
                       </v-btn>
                     </td>
@@ -290,17 +314,15 @@
                           </v-icon>
                         </v-btn>
                         <div class="mt-3 ml-8"><actions-menu :actions="actions" :item="item"/></div>
-                        <v-icon color="secondary">mdi-alpha-g-circle</v-icon>
+                        <v-icon color="crfGroup">mdi-alpha-g-circle</v-icon>
                         <div class="mt-3 ml-1 mr-1">{{ item.name }}</div>
                       </v-row>
                     </td>
-                    <td width="20%">{{ item.version }}</td>
-                    <td width="15%"><status-chip :status="item.status" /></td>
                     <td width="10%">
                       <v-tooltip bottom v-if="checkIfConditionExist(item)">
                         <template v-slot:activator="{ on, attrs }">
                           <v-icon
-                            color="success"
+                            color="darkGrey"
                             v-bind="attrs"
                             v-on="on">
                             mdi-alert-circle-check-outline
@@ -311,7 +333,7 @@
                       <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
                           <v-icon
-                            color="success"
+                            color="darkGrey"
                             v-bind="attrs"
                             v-on="on"
                             v-if="item.locked === 'Yes'">
@@ -323,7 +345,7 @@
                       <v-tooltip bottom>
                         <template v-slot:activator="{ on, attrs }">
                           <v-icon
-                            color="success"
+                            color="darkGrey"
                             v-bind="attrs"
                             v-on="on"
                             v-if="item.mandatory === 'Yes'">
@@ -334,50 +356,55 @@
                       </v-tooltip>
                     </td>
                     <td width="10%">
-                      <v-tooltip bottom>
+                      <v-tooltip bottom
+                        v-if="item.repeating === 'Yes'">
                         <template v-slot:activator="{ on, attrs }">
                           <v-icon
-                            color="success"
+                            color="darkGrey"
                             v-bind="attrs"
-                            v-on="on"
-                            v-if="item.repeating === 'Yes'">
+                            v-on="on">
                               mdi-repeat
                           </v-icon>
                         </template>
                         <span>{{ $t('CrfTree.repeating') }}</span>
                       </v-tooltip>
-                      <v-tooltip bottom>
+                      <v-tooltip bottom
+                        v-if="item.isReferenceData === 'Yes'">
                         <template v-slot:activator="{ on, attrs }">
                           <v-icon
-                            color="success"
+                            color="darkGrey"
                             v-bind="attrs"
-                            v-on="on"
-                            v-if="item.isReferenceData === 'Yes'">
+                            v-on="on">
                               mdi-arrow-decision-outline
                           </v-icon>
                         </template>
                         <span>{{ $t('CrfTree.ref_data') }}</span>
                       </v-tooltip>
                     </td>
+                    <td width="15%"><status-chip :status="item.status" /></td>
+                    <td width="20%">{{ item.version }}</td>
                     <td width="10%">
                       <v-menu
                         offset-y
+                        v-if="item.status !== statuses.FINAL"
                         >
                         <template v-slot:activator="{ on, attrs }">
                           <div>
                             <v-btn
-                              fab
+                              width="150px"
+                              rounded
                               dark
                               small
                               v-bind="attrs"
                               v-on="on"
-                              color="red"
+                              color="crfItem"
                               :title="$t('CrfTree.link_items')"
                               v-show="item.status !== statuses.FINAL"
                               >
                               <v-icon dark>
                                 mdi-plus
                               </v-icon>
+                              {{ $t('CrfTree.items')}}
                             </v-btn>
                           </div>
                         </template>
@@ -400,6 +427,15 @@
                           </v-list-item>
                         </v-list>
                       </v-menu>
+                      <v-btn
+                        v-else
+                        width="150px"
+                        rounded
+                        dark
+                        small
+                        class="hide"
+                        >
+                      </v-btn>
                     </td>
                   </tr>
                 </template>
@@ -408,7 +444,7 @@
                     <v-data-table
                       class="elevation-0"
                       :headers="headers"
-                      :items="item.items"
+                      :items="getItems(item)"
                       item-key="uid"
                       sort-by="order_number"
                       light
@@ -444,17 +480,15 @@
                                 </v-icon>
                               </v-btn>
                               <div class="mt-3 ml-10"><actions-menu :actions="actions" :item="item"/></div>
-                              <v-icon color="error">mdi-alpha-i-circle</v-icon>
+                              <v-icon color="crfItem">mdi-alpha-i-circle</v-icon>
                               <div class="mt-3 ml-1 mr-1">{{ item.name }}</div>
                             </v-row>
                           </td>
-                          <td width="20%">{{ item.version }}</td>
-                          <td width="15%"><status-chip :status="item.status" /></td>
                           <td width="10%">
                             <v-tooltip bottom v-if="checkIfConditionExist(item)">
                               <template v-slot:activator="{ on, attrs }">
                                 <v-icon
-                                  color="success"
+                                  color="darkGrey"
                                   v-bind="attrs"
                                   v-on="on">
                                   mdi-alert-circle-check-outline
@@ -465,7 +499,7 @@
                             <v-tooltip bottom>
                               <template v-slot:activator="{ on, attrs }">
                                 <v-icon
-                                  color="success"
+                                  color="darkGrey"
                                   v-bind="attrs"
                                   v-on="on"
                                   v-if="item.locked === 'Yes'">
@@ -477,7 +511,7 @@
                             <v-tooltip bottom>
                               <template v-slot:activator="{ on, attrs }">
                                 <v-icon
-                                  color="success"
+                                  color="darkGrey"
                                   v-bind="attrs"
                                   v-on="on"
                                   v-if="item.mandatory === 'Yes'">
@@ -489,7 +523,7 @@
                             <v-tooltip bottom>
                               <template v-slot:activator="{ on, attrs }">
                                 <v-icon
-                                  color="success"
+                                  color="darkGrey"
                                   v-bind="attrs"
                                   v-on="on"
                                   v-if="item.sdv === 'Yes'">
@@ -501,7 +535,7 @@
                             <v-tooltip bottom>
                               <template v-slot:activator="{ on, attrs }">
                                 <v-icon
-                                  color="success"
+                                  color="darkGrey"
                                   v-bind="attrs"
                                   v-on="on"
                                   v-if="item.data_entry_required === 'Yes'">
@@ -515,16 +549,25 @@
                             <v-tooltip bottom>
                               <template v-slot:activator="{ on, attrs }">
                                 <v-icon
-                                  color="success"
+                                  color="darkGrey"
                                   v-bind="attrs"
                                   v-on="on">
-                                    mdi-chart-donut
+                                    {{ getDataTypeIcon(item) }}
                                 </v-icon>
                               </template>
                               <span>{{ item.datatype + $t('CrfTree.data_type') }}</span>
                             </v-tooltip>
                           </td>
-                          <td width="10%"></td>
+                          <td width="15%"><status-chip :status="item.status" /></td>
+                          <td width="20%">{{ item.version }}</td>
+                          <td width="10%">
+                            <v-btn
+                              width="150px"
+                              rounded
+                              small
+                              class="hide"
+                              />
+                          </td>
                         </tr>
                       </template>
                     </v-data-table>
@@ -558,17 +601,25 @@
       :crfGroups="itemGroups"
       :crfItems="items"/>
   </v-dialog>
+  <crf-template-form
+    :open="showTemplateForm"
+    @close="closeTemplateForm"
+    :selectedTemplate="elementToEdit"
+    :readOnlyProp="elementToEdit && elementToEdit.status === statuses.FINAL"
+    />
   <v-dialog
-    v-model="showFormsForm"
+    v-model="showFormForm"
     persistent
     content-class="fullscreen-dialog"
     >
     <crf-form-form
       @close="closeFormsForm"
       @linkForm="linkForm"
-      :editItem="elementToEdit"
-      :readOnlyProp="readOnlyForm"
+      :selectedForm="elementToEdit"
+      :readOnlyProp="elementToEdit && elementToEdit.status === statuses.FINAL"
       class="fullscreen-dialog"
+      @newVersion="newVersion"
+      @approve="approve"
       />
   </v-dialog>
   <v-dialog
@@ -579,9 +630,11 @@
     <crf-item-group-form
       @close="closeItemGroupForm"
       @linkGroup="linkGroup"
-      :editItem="elementToEdit"
-      :readOnlyProp="readOnlyForm"
+      :selectedGroup="elementToEdit"
+      :readOnlyProp="elementToEdit && elementToEdit.status === statuses.FINAL"
       class="fullscreen-dialog"
+      @newVersion="newVersion"
+      @approve="approve"
       />
   </v-dialog>
   <v-dialog
@@ -592,9 +645,11 @@
     <crf-item-form
       @close="closeItemForm"
       @linkItem="linkItem"
-      :editItem="elementToEdit"
-      :readOnlyProp="readOnlyForm"
+      :selectedItem="elementToEdit"
+      :readOnlyProp="elementToEdit && elementToEdit.status === statuses.FINAL"
       class="fullscreen-dialog"
+      @newVersion="newVersion"
+      @approve="approve"
       />
   </v-dialog>
   <crf-references-form
@@ -603,6 +658,7 @@
     @close="closeAttributesForm"
     />
   <v-dialog v-model="showDuplicationForm"
+            @keydown.esc="closeDuplicateForm"
             max-width="800px"
             persistent>
     <crf-duplication-form
@@ -623,11 +679,13 @@ import ActionsMenu from '@/components/tools/ActionsMenu'
 import CrfItemGroupForm from '@/components/library/CrfItemGroupForm'
 import CrfFormForm from '@/components/library/CrfFormForm'
 import CrfItemForm from '@/components/library/CrfItemForm'
+import CrfTemplateForm from '@/components/library/CrfTemplateForm'
 import CrfReferencesForm from '@/components/library/CrfReferencesForm'
-import constants from '@/constants/parameters'
+import parameters from '@/constants/parameters'
 import crfTypes from '@/constants/crfTypes'
 import statuses from '@/constants/statuses'
 import CrfDuplicationForm from '@/components/library/CrfDuplicationForm'
+import { mapGetters } from 'vuex'
 
 export default {
   components: {
@@ -638,12 +696,20 @@ export default {
     CrfItemGroupForm,
     CrfFormForm,
     CrfItemForm,
+    CrfTemplateForm,
     CrfReferencesForm,
     CrfDuplicationForm
   },
   props: {
     source: String,
-    refresh: String
+    refresh: String,
+    updatedElement: Object
+  },
+  computed: {
+    ...mapGetters({
+      templates: 'crfs/templates',
+      total: 'crfs/totalTemplates'
+    })
   },
   created () {
     this.statuses = statuses
@@ -652,15 +718,13 @@ export default {
     return {
       headers: [
         { text: this.$t('CrfTree.items_for_linking'), value: 'name' },
-        { text: this.$t('_global.version'), value: 'version' },
-        { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('CrfTree.ref_attr'), value: 'refAttr' },
         { text: this.$t('CrfTree.def_attr'), value: 'defAttr' },
+        { text: this.$t('_global.status'), value: 'status' },
+        { text: this.$t('_global.version'), value: 'version' },
         { text: this.$t('CrfTree.link'), value: 'link' }
       ],
       options: {},
-      total: 0,
-      templates: [],
       forms: [],
       itemGroups: [],
       items: [],
@@ -691,18 +755,18 @@ export default {
           condition: (item) => (this.checkIfConditionExist(item) && !item.forms && !item.item_groups)
         },
         {
-          label: this.$t('CrfTree.go_to_def'),
+          label: this.$t('CrfTree.open_def'),
           icon: 'mdi-arrow-left',
           click: this.goToDefinition
         },
         {
-          label: 'Edit reference attributes',
+          label: this.$t('CrfTree.edit_reference'),
           icon: 'mdi-pencil',
           click: this.editAttributes,
-          condition: (item) => (item.status === statuses.DRAFT)
+          condition: (item) => (item.status === statuses.DRAFT && !item.forms)
         },
         {
-          label: 'Approve All',
+          label: this.$t('CrfTree.approve_all'),
           icon: 'mdi-check-decagram',
           click: this.approveAll,
           condition: (item) => (item.status === statuses.DRAFT)
@@ -723,18 +787,23 @@ export default {
           icon: 'mdi-arrow-expand-down',
           condition: (item) => item.forms,
           click: this.expandWholeTemplate
+        },
+        {
+          label: this.$t('CrfTree.expand'),
+          icon: 'mdi-arrow-expand-down',
+          condition: (item) => item.item_groups,
+          click: this.expandWholeForm
         }
       ],
       templatesExpand: [],
       formsExpand: [],
       groupsExpand: [],
-      showFormsForm: false,
+      showFormForm: false,
       showTemplateForm: false,
       showItemGroupForm: false,
       showItemForm: false,
       sortMode: false,
       elementToEdit: {},
-      readOnlyForm: false,
       type: '',
       formsTableKey: 0,
       groupsTableKey: 0,
@@ -746,14 +815,259 @@ export default {
     }
   },
   methods: {
-    openDuplicateForm (item) {
-      this.duplicateElement = item
-      this.type = item.forms ? crfTypes.TEMPLATE : item.item_groups ? crfTypes.FORM : item.items ? crfTypes.GROUP : crfTypes.ITEM
-      this.showDuplicationForm = true
+    // Methods for fetching CRF Tree Data (Templates, Forms, Item Groups and Items)
+    getTemplates (sort) {
+      this.loading = true
+      this.forms = []
+      this.itemGroups = []
+      this.items = []
+      const params = {
+        page_number: (this.options.page),
+        page_size: this.options.itemsPerPage,
+        total_count: true
+      }
+      this.$store.dispatch('crfs/fetchTemplates', params)
+      this.loading = false
     },
-    closeDuplicateForm () {
-      this.type = ''
-      this.showDuplicationForm = false
+    getTemplate (uid) {
+      crfs.getTemplate(uid).then((resp) => {
+        this.updateTemplate(resp.data)
+      })
+    },
+    getForms (item) {
+      // Checking if Template has any Forms
+      if (item.forms && item.forms.length > 0) {
+        const formsToGet = []
+        item.forms.forEach(form => {
+          // Checking if Form was already fetched from API, if not then it's added to an Object that holds Forms that we need to fetch
+          if (!this.forms.find(el => el.uid === form.uid)) {
+            formsToGet.push(form.uid)
+          }
+        })
+        if (formsToGet.length > 0) {
+          // Calling for Forms that were not yet fetched and saving them in forms Object so that we don't have to get them again for other Templates
+          const params = {
+            total_count: true,
+            filters: { uid: { v: formsToGet } }
+          }
+          crfs.get('forms', { params }).then((resp) => {
+            resp.data.items.forEach(form => {
+              resp.data.items[resp.data.items.indexOf(form)].parentTemplateUid = item.uid
+            })
+            formsToGet.forEach(form => {
+              this.forms.push(resp.data.items.find(el => el.uid === form))
+            })
+          })
+        }
+        const forms = []
+        // Overwriting Forms for those from forms Object
+        this.templates.find(el => el.uid === item.uid).forms.forEach((form) => {
+          forms.push({ ...this.forms.find(el => el.uid === form.uid), ...form })
+        })
+        forms.forEach(form => {
+          form.parentTemplateUid = item.uid
+        })
+        return forms
+      }
+      return []
+      // Same logic was applied for Item Groups and Items
+    },
+    async getForm (uid) {
+      let form = {}
+      await crfs.getForm(uid).then((resp) => {
+        this.updateForm(resp.data)
+        form = resp.data
+      })
+      return form
+    },
+    getItemGroups (item) {
+      if (item.item_groups && item.item_groups.length > 0) {
+        const groupsToGet = []
+        item.item_groups.forEach(group => {
+          if (!this.itemGroups.find(el => el.uid === group.uid)) {
+            groupsToGet.push(group.uid)
+          }
+        })
+        if (groupsToGet.length > 0) {
+          const params = {
+            total_count: true,
+            filters: { uid: { v: groupsToGet } }
+          }
+          crfs.get('item-groups', { params }).then((resp) => {
+            resp.data.items.forEach(group => {
+              resp.data.items[resp.data.items.indexOf(group)].parentFormUid = item.uid
+            })
+            groupsToGet.forEach(group => {
+              this.itemGroups.push(resp.data.items.find(el => el.uid === group))
+            })
+          })
+        }
+        const groups = []
+        this.forms.find(el => el.uid === item.uid).item_groups.forEach((group, index) => {
+          groups.push({ ...this.itemGroups.find(el => el.uid === group.uid), ...group })
+        })
+        groups.forEach(group => {
+          group.parentFormUid = item.uid
+        })
+        this.groups = groups
+        return groups
+      }
+    },
+    async getItemGroup (uid) {
+      let group = {}
+      await crfs.getItemGroup(uid).then((resp) => {
+        this.updateItemGroup(resp.data)
+        group = resp.data
+      })
+      return group
+    },
+    getItems (item) {
+      if (item.items && item.items.length > 0) {
+        const itemsToGet = []
+        item.items.forEach(item => {
+          if (!this.items.find(el => el.uid === item.uid)) {
+            itemsToGet.push(item.uid)
+          }
+        })
+        if (itemsToGet.length > 0) {
+          const params = {
+            total_count: true,
+            filters: { uid: { v: itemsToGet } }
+          }
+          crfs.get('items', { params }).then((resp) => {
+            resp.data.items.forEach(group => {
+              resp.data.items[resp.data.items.indexOf(group)].parentGroupUid = item.uid
+            })
+            itemsToGet.forEach(it => {
+              this.items.push(resp.data.items.find(el => el.uid === it))
+            })
+          })
+        }
+        const items = []
+        this.itemGroups.find(el => el.uid === item.uid).items.forEach((item, index) => {
+          items.push({ ...this.items.find(el => el.uid === item.uid), ...item })
+        })
+        items.forEach(it => {
+          it.parentGroupUid = item.uid
+        })
+        return items
+      }
+    },
+    getItem (uid) {
+      crfs.getItem(uid).then((resp) => {
+        this.updateItem(resp.data)
+      })
+    },
+    updateTemplate (updatedTemplate) {
+      const index = this.templates.indexOf(this.templates.find(template => template.uid === updatedTemplate.uid))
+      if (index > -1) {
+        this.$set(this.templates[index], 'name', updatedTemplate.name)
+        this.$set(this.templates[index], 'status', updatedTemplate.status)
+        this.$set(this.templates[index], 'version', updatedTemplate.version)
+        this.$set(this.templates[index], 'forms', updatedTemplate.forms)
+      }
+      this.formsTableKey += 1
+    },
+    updateForm (updatedForm) {
+      const index = this.forms.indexOf(this.forms.find(form => form.uid === updatedForm.uid))
+      if (index > -1) {
+        this.$set(this.forms[index], 'name', updatedForm.name)
+        this.$set(this.forms[index], 'status', updatedForm.status)
+        this.$set(this.forms[index], 'version', updatedForm.version)
+        this.$set(this.forms[index], 'item_groups', updatedForm.item_groups)
+      }
+      this.groupsTableKey += 1
+    },
+    updateItemGroup (updatedGroup) {
+      const index = this.itemGroups.indexOf(this.itemGroups.find(group => group.uid === updatedGroup.uid))
+      if (index > -1) {
+        this.$set(this.itemGroups[index], 'name', updatedGroup.name)
+        this.$set(this.itemGroups[index], 'status', updatedGroup.status)
+        this.$set(this.itemGroups[index], 'version', updatedGroup.version)
+        this.$set(this.itemGroups[index], 'items', updatedGroup.items)
+      }
+      this.itemsTableKey += 1
+    },
+    updateItem (updatedItem) {
+      const index = this.items.indexOf(this.items.find(item => item.uid === updatedItem.uid))
+      if (index > -1) {
+        this.$set(this.items[index], 'name', updatedItem.name)
+        this.$set(this.items[index], 'status', updatedItem.status)
+        this.$set(this.items[index], 'version', updatedItem.version)
+      }
+      this.itemsTableKey += 1
+    },
+    // Methods for expanding CRF Tree
+    expandTemplate (item) {
+      this.templatesExpand.push(item)
+    },
+    colapseTemplate (item) {
+      this.templatesExpand = this.templatesExpand.filter(el => el.uid !== item.uid)
+    },
+    expandForm (item) {
+      this.formsExpand.push(item)
+    },
+    colapseForm (item) {
+      this.formsExpand = this.formsExpand.filter(el => el.uid !== item.uid)
+    },
+    async expandWholeTemplate (item) {
+      this.templatesExpand = [item]
+      for (const form of item.forms) {
+        const formToGet = await this.getForm(form.uid)
+        this.formsExpand = this.formsExpand.concat(formToGet)
+        this.groupsExpand = this.groupsExpand.concat(formToGet.item_groups)
+      }
+    },
+    async expandWholeForm (item) {
+      this.formsExpand = this.formsExpand.concat([item])
+      this.groupsExpand = this.groupsExpand.concat(item.item_groups)
+    },
+    // Methods for approving/creating new version of CRF Tree elements
+    approve (item) {
+      let type = ''
+      if (item.parentTemplateUid) {
+        type = 'forms'
+      } else if (item.parentFormUid) {
+        type = 'item-groups'
+      } else if (item.parentGroupUid) {
+        type = 'items'
+      }
+      crfs.approve(type, item.uid).then((resp) => {
+        switch (type) {
+          case 'forms':
+            this.getForm(item.uid)
+            break
+          case 'item-groups':
+            this.getItemGroup(item.uid)
+            break
+          case 'items':
+            this.getItem(item.uid)
+            break
+        }
+      })
+    },
+    newVersion (item) {
+      let type = ''
+      if (item.parentTemplateUid) {
+        type = 'forms'
+      } else if (item.parentFormUid) {
+        type = 'item-groups'
+      } else if (item.parentGroupUid) {
+        type = 'items'
+      }
+      crfs.newVersion(type, item.uid).then((resp) => {
+        switch (type) {
+          case 'forms':
+            this.getForm(item.uid)
+            break
+          case 'item-groups':
+            this.getItemGroup(item.uid)
+            break
+          case 'items':
+            this.getItem(item.uid)
+            break
+        }
+      })
     },
     approveAll (item) {
       if (item.forms) {
@@ -766,7 +1080,7 @@ export default {
     },
     async approveFormsAndTemplate (template) {
       for (const form of template.forms) {
-        this.approveGroupsAndForm(form)
+        await this.approveGroupsAndForm(form)
       }
       if (template.status === statuses.DRAFT) {
         await crfs.approve('templates', template.uid).then((resp) => {
@@ -775,8 +1089,12 @@ export default {
       }
     },
     async approveGroupsAndForm (form) {
+      if (!form.item_groups) {
+        const formInObject = this.forms.find(f => f.uid === form.uid)
+        formInObject ? form = formInObject : form = await this.getForm(form.uid)
+      }
       for (const group of form.item_groups) {
-        this.approveItemsAndGroup(group)
+        await this.approveItemsAndGroup(group)
       }
       if (form.status === statuses.DRAFT) {
         await crfs.approve('forms', form.uid).then((resp) => {
@@ -785,7 +1103,12 @@ export default {
       }
     },
     async approveItemsAndGroup (group) {
-      for (const item of group.items) {
+      if (!group.items) {
+        const groupInObject = this.itemGroups.find(g => g.uid === group.uid)
+        groupInObject ? group = groupInObject : group = await this.getItemGroup(group.uid)
+      }
+      const items = await this.getItems(group)
+      for (const item of items) {
         if (item.status === statuses.DRAFT) {
           await crfs.approve('items', item.uid).then((resp) => {
             item.status = statuses.FINAL
@@ -798,27 +1121,98 @@ export default {
         })
       }
     },
+    openDuplicateForm (item) {
+      this.duplicateElement = item
+      this.type = item.forms ? crfTypes.TEMPLATE : item.item_groups ? crfTypes.FORM : item.items ? crfTypes.GROUP : crfTypes.ITEM
+      this.showDuplicationForm = true
+    },
+    closeDuplicateForm () {
+      this.type = ''
+      this.showDuplicationForm = false
+    },
     editAttributes (item) {
       this.attributesElement = item
       this.attributesForm = true
     },
     closeAttributesForm () {
+      if (this.attributesElement.parentTemplateUid) {
+        this.getTemplate(this.attributesElement.parentTemplateUid)
+      } else if (this.attributesElement.parentFormUid) {
+        this.getForm(this.attributesElement.parentFormUid)
+      } else {
+        this.getItemGroup(this.attributesElement.parentGroupUid)
+      }
       this.attributesElement = {}
       this.attributesForm = false
-      this.groupsTableKey += 1
     },
-    async expandWholeTemplate (item) {
-      this.templatesExpand = this.templatesExpand.concat([item])
-      await this.getForms(item)
-      this.formsExpand = this.formsExpand.concat(item.forms)
-      let groups = []
-      for (const form of item.forms) {
-        await this.getItemGroups(form)
-        groups = groups.concat(form.item_groups)
+    reorderContent (item, direction) {
+      if (item.order_number === 0 && direction === -1) {
+        return
       }
-      this.groupsExpand = this.groupsExpand.concat(groups)
-      for (const group of this.groupsExpand) {
-        await this.getItems(group)
+      let payload = []
+      const movedItemNewOrder = item.order_number + direction
+      if (item.parentGroupUid) {
+        const group = this.itemGroups.find(group => group.uid === item.parentGroupUid)
+        const indexOfSwapItem = group.items.indexOf(group.items.find(item => item.order_number === movedItemNewOrder))
+        payload = this.reorder(group.items, indexOfSwapItem, direction)
+        crfs.addItemsToItemGroup(group.items, group.uid, true)
+      } else if (item.parentFormUid) {
+        const form = this.forms.find(form => form.uid === item.parentFormUid)
+        const indexOfSwapItem = form.item_groups.indexOf(form.item_groups.find(group => group.order_number === movedItemNewOrder))
+        payload = this.reorder(form.item_groups, indexOfSwapItem, direction)
+        crfs.addItemGroupsToForm(form.item_groups, form.uid, true)
+      } else if (item.parentTemplateUid) {
+        const template = this.templates.find(template => template.uid === item.parentTemplateUid)
+        const indexOfSwapItem = template.forms.indexOf(template.forms.find(form => form.order_number === movedItemNewOrder))
+        payload = this.reorder(template.forms, indexOfSwapItem, direction)
+        crfs.addFormsToTemplate(payload, template.uid, true)
+      }
+    },
+    reorder (array, index, direction) {
+      const payload = [];
+      [array[index - direction], array[index]] = [array[index], array[index - direction]]
+      array.forEach((el, index) => {
+        el.order_number = index
+        payload.push(el)
+      })
+      return payload
+    },
+    // Methods responsible for CRF elements conditions
+    checkIfConditionExist (item) {
+      return (item.collection_exception_condition_oid && item.collection_exception_condition_oid !== 'null' && item.collection_exception_condition_oid !== 'none')
+    },
+    openConditionForm (item) {
+      this.itemToLink = item
+      this.conditionForm = true
+    },
+    closeConditionForm () {
+      this.itemToLink = {}
+      this.conditionForm = false
+      this.getTemplates()
+    },
+    cancelConditionForm () {
+      this.itemToLink = {}
+      this.conditionForm = false
+    },
+    deleteCondition (item) {
+      const data = {}
+      data.filters = `{"oid":{ "v": ["${item.collection_exception_condition_oid}"], "op": "co" }}`
+      crfs.getConditionByOid(data).then(resp => {
+        crfs.deleteCondition(resp.data.items[0].uid).then(resp => {
+          this.getTemplates()
+        })
+      })
+    },
+    goToDefinition (item) {
+      this.elementToEdit = item
+      if (item.forms) {
+        this.showTemplateForm = true
+      } else if (item.item_groups) {
+        this.showFormForm = true
+      } else if (item.items) {
+        this.showItemGroupForm = true
+      } else {
+        this.showItemForm = true
       }
     },
     previewODM (item) {
@@ -837,90 +1231,42 @@ export default {
       }
       this.$emit('redirectToPage', data)
     },
-    goToDefinition (item) {
-      const data = {
-        uid: item.uid
+    getDataTypeIcon (item) {
+      switch (item.datatype) {
+        case 'URI':
+          return 'mdi-web'
+        case 'STRING':
+          return 'mdi-format-list-bulleted-square'
+        case 'COMMENT':
+        case 'TEXT':
+          return 'mdi-alphabetical'
+        case 'BOOLEAN':
+        case 'HEXBINARY':
+        case 'BASE64BINARY':
+          return 'mdi-order-bool-ascending'
+        case 'INTEGER':
+        case 'FLOAT':
+        case 'DOUBLE':
+        case 'HEXFLOAT':
+        case 'BASE64FLOAT':
+          return 'mdi-numeric'
       }
-      if (item.forms) {
-        data.type = crfTypes.TEMPLATE
-        data.tab = 'templates'
-      } else if (item.item_groups) {
-        data.type = crfTypes.FORM
-        data.tab = 'forms'
-      } else if (item.items) {
-        data.type = crfTypes.ITEM_GROUP
-        data.tab = 'item-groups'
-      } else {
-        data.type = crfTypes.ITEM
-        data.tab = 'items'
-      }
-      this.$emit('redirectToPage', data)
+      return 'mdi-calendar-clock'
     },
-    reorderContent (item, direction) {
-      if (item.order_number === 0 && direction === -1) {
-        return
-      }
-      const movedItemNewOrder = item.order_number + direction
-      if (item.parentGroupUid) {
-        const group = this.itemGroups.find(group => group.uid === item.parentGroupUid)
-        if (direction === 1) {
-          this.$set(group.items.find(el => el.order_number === movedItemNewOrder), 'order_number', (group.items.find(el => el.order_number === movedItemNewOrder).order_number - 1))
-          item.order_number = movedItemNewOrder
-        } else {
-          this.$set(group.items.find(el => el.order_number === movedItemNewOrder), 'order_number', (group.items.find(el => el.order_number === movedItemNewOrder).order_number + 1))
-          item.order_number = movedItemNewOrder
-        }
-        crfs.addItemsToItemGroup(group.items, group.uid, true).then(resp => {
-        })
-      } else if (item.parentFormUid) {
-        const form = this.forms.find(form => form.uid === item.parentFormUid)
-        if (direction === 1) {
-          this.$set(form.item_groups.find(el => el.order_number === movedItemNewOrder), 'order_number', (form.item_groups.find(el => el.order_number === movedItemNewOrder).order_number - 1))
-          item.order_number = movedItemNewOrder
-        } else {
-          this.$set(form.item_groups.find(el => el.order_number === movedItemNewOrder), 'order_number', (form.item_groups.find(el => el.order_number === movedItemNewOrder).order_number + 1))
-          item.order_number = movedItemNewOrder
-        }
-        crfs.addItemGroupsToForm(form.item_groups, form.uid, true).then(resp => {
-        })
-      } else if (item.parentTemplateUid) {
-        const template = this.templates.find(template => template.uid === item.parentTemplateUid)
-        if (direction === 1) {
-          this.$set(template.forms.find(el => el.order_number === movedItemNewOrder), 'order_number', (template.forms.find(el => el.order_number === movedItemNewOrder).order_number - 1))
-          item.order_number = movedItemNewOrder
-        } else {
-          this.$set(template.forms.find(el => el.order_number === movedItemNewOrder), 'order_number', (template.forms.find(el => el.order_number === movedItemNewOrder).order_number + 1))
-          item.order_number = movedItemNewOrder
-        }
-        crfs.addFormsToTemplate(template.forms, template.uid, true).then(resp => {
-        })
-      }
-    },
-    checkIfConditionExist (item) {
-      return (item.collection_exception_condition_oid && item.collection_exception_condition_oid !== 'null' && item.collection_exception_condition_oid !== 'none')
-    },
-    openConditionForm (item) {
-      this.itemToLink = item
-      this.conditionForm = true
-    },
-    closeConditionForm () {
+    closeTemplateForm () {
+      this.showTemplateForm = false
+      this.getTemplate(this.elementToEdit.uid)
       this.itemToLink = {}
-      this.conditionForm = false
-      this.getTemplates()
-    },
-    cancelConditionForm () {
-      this.itemToLink = {}
-      this.conditionForm = false
+      this.elementToEdit = {}
     },
     openFormsForm (item) {
       this.itemToLink = item
-      this.showFormsForm = true
+      this.showFormForm = true
     },
     closeFormsForm () {
-      this.showFormsForm = false
+      this.showFormForm = false
       this.itemToLink = {}
-      this.readOnlyForm = false
-      this.getTemplates()
+      this.elementToEdit = {}
     },
     openItemGroupForm (item) {
       this.itemToLink = item
@@ -929,8 +1275,7 @@ export default {
     closeItemGroupForm () {
       this.showItemGroupForm = false
       this.itemToLink = {}
-      this.readOnlyForm = false
-      this.getTemplates()
+      this.elementToEdit = {}
     },
     openItemForm (item) {
       this.itemToLink = item
@@ -939,15 +1284,9 @@ export default {
     closeItemForm () {
       this.showItemForm = false
       this.itemToLink = {}
-      this.readOnlyForm = false
-      this.getTemplates()
+      this.elementToEdit = {}
     },
-    closeTemplateForm () {
-      this.showTemplateForm = false
-      this.itemToLink = {}
-      this.readOnlyForm = false
-      this.getTemplates()
-    },
+    // Methods for linking Forms, Item Groups and Items to parents
     linkForm (form) {
       const payload = [{
         uid: form.data.uid,
@@ -976,134 +1315,17 @@ export default {
         order_number: this.itemToLink.items.length,
         mandatory: false,
         collection_exception_condition_oid: null,
-        key_sequence: constants.NULL,
-        methodOid: constants.NULL,
-        imputation_method_oid: constants.NULL,
-        role: constants.NULL,
-        role_codelist_oid: constants.NULL,
+        key_sequence: parameters.NULL,
+        methodOid: parameters.NULL,
+        imputation_method_oid: parameters.NULL,
+        role: parameters.NULL,
+        role_codelist_oid: parameters.NULL,
         data_entry_required: 'No',
         sdv: 'No'
       }]
       crfs.addItemsToItemGroup(payload, this.itemToLink.uid, false).then(resp => {
         this.getTemplates()
       })
-    },
-    deleteCondition (item) {
-      const data = {}
-      data.filters = `{"oid":{ "v": ["${item.collection_exception_condition_oid}"], "op": "co" }}`
-      crfs.getConditionByOid(data).then(resp => {
-        crfs.deleteCondition(resp.data.items[0].uid).then(resp => {
-          this.getTemplates()
-        })
-      })
-    },
-    async getForms (item) {
-      // Checking if Template has any Forms
-      if (item.forms && item.forms.length > 0) {
-        const formsToGet = []
-        item.forms.forEach(form => {
-          // Checking if Form was already fetched from API, if not then it's added to an Object that holds Forms that we need to fetch
-          if (!this.forms.find(el => el.uid === form.uid)) {
-            formsToGet.push(form.uid)
-          }
-        })
-        if (formsToGet.length > 0) {
-          // Calling for Forms that were not yet fetched and saving them in forms Object so that we don't have to get them again for other Templates
-          const params = {
-            total_count: true,
-            filters: { uid: { v: formsToGet } }
-          }
-          await crfs.get('forms', { params }).then((resp) => {
-            resp.data.items.forEach(form => {
-              resp.data.items[resp.data.items.indexOf(form)].parentTemplateUid = item.uid
-            })
-            formsToGet.forEach(form => {
-              this.forms.push({ ...item.forms.find(el => el.uid === form), ...resp.data.items.find(el => el.uid === form) })
-            })
-          })
-        }
-        const forms = []
-        // Overwriting Forms for those from forms Object
-        this.templates.find(el => el.uid === item.uid).forms.forEach((form, index) => {
-          forms.push(this.forms.find(el => el.uid === form.uid))
-        })
-        this.templates.find(el => el.uid === item.uid).forms = forms
-        this.formsTableKey += 1
-      }
-      // Same logic was applied for Item Groups and Items
-    },
-    async getItemGroups (item) {
-      if (item.item_groups && item.item_groups.length > 0) {
-        const groupsToGet = []
-        item.item_groups.forEach(group => {
-          if (!this.itemGroups.find(el => el.uid === group.uid)) {
-            groupsToGet.push(group.uid)
-          }
-        })
-        if (groupsToGet.length > 0) {
-          const params = {
-            total_count: true,
-            filters: { uid: { v: groupsToGet } }
-          }
-          await crfs.get('item-groups', { params }).then((resp) => {
-            resp.data.items.forEach(group => {
-              resp.data.items[resp.data.items.indexOf(group)].parentFormUid = item.uid
-            })
-            groupsToGet.forEach(group => {
-              this.itemGroups.push({ ...item.item_groups.find(el => el.uid === group), ...resp.data.items.find(el => el.uid === group) })
-            })
-          })
-        }
-        const groups = []
-        this.forms.find(el => el.uid === item.uid).item_groups.forEach((group, index) => {
-          groups.push(this.itemGroups.find(el => el.uid === group.uid))
-        })
-        this.forms.find(el => el.uid === item.uid).item_groups = groups
-        this.groupsTableKey += 1
-      }
-    },
-    async getItems (item) {
-      if (item.items.length > 0) {
-        const itemsToGet = []
-        item.items.forEach(item => {
-          if (!this.items.find(el => el.uid === item.uid)) {
-            itemsToGet.push(item.uid)
-          }
-        })
-        if (itemsToGet.length > 0) {
-          const params = {
-            total_count: true,
-            filters: { uid: { v: itemsToGet } }
-          }
-          await crfs.get('items', { params }).then((resp) => {
-            resp.data.items.forEach(group => {
-              resp.data.items[resp.data.items.indexOf(group)].parentGroupUid = item.uid
-            })
-            itemsToGet.forEach(it => {
-              this.items.push({ ...item.items.find(el => el.uid === it), ...resp.data.items.find(el => el.uid === it) })
-            })
-          })
-        }
-        const items = []
-        this.itemGroups.find(el => el.uid === item.uid).items.forEach((item, index) => {
-          items.push(this.items.find(el => el.uid === item.uid))
-        })
-        this.itemGroups.find(el => el.uid === item.uid).items = items
-        this.itemsTableKey += 1
-      }
-    },
-    async getTemplates (sort) {
-      this.loading = true
-      const params = {
-        page_number: (this.options.page),
-        page_size: this.options.itemsPerPage,
-        total_count: true
-      }
-      await crfs.get('templates', { params }).then((resp) => {
-        this.templates = resp.data.items
-        this.total = resp.data.total
-      })
-      this.loading = false
     },
     openForm (item, type) {
       this.linkedItemsType = type
@@ -1124,6 +1346,21 @@ export default {
   watch: {
     options () {
       this.getTemplates()
+    },
+    updatedElement (element) {
+      switch (element.type) {
+        case crfTypes.FORM:
+          this.updateForm(element.element)
+          this.formsTableKey += 1
+          return
+        case crfTypes.GROUP:
+          this.updateItemGroup(element.element)
+          this.groupsTableKey += 1
+          return
+        case crfTypes.ITEM:
+          this.updateItem(element.element)
+          this.itemsTableKey += 1
+      }
     }
   }
 }
@@ -1134,9 +1371,11 @@ export default {
 }
 .templates {
   background-color: var(--v-dfltBackgroundLight1-base);
-
 }
 .group {
   background-color: var(--v-dfltBackgroundLight2-base);
+}
+.hide {
+  opacity: 0;
 }
 </style>

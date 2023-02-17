@@ -194,7 +194,7 @@ def get_specific_schedule_audit_trail(
     "/studies/{uid}/study-design-cells/batch",
     summary="Batch operations (create, delete) for study design cells",
     response_model=Sequence[models.StudyDesignCellBatchOutput],
-    status_code=200,
+    status_code=207,
     responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
 )
 def design_cell_batch_operations(

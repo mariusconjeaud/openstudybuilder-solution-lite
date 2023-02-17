@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Callable, Dict, List, Optional
 
-from pydantic import Field, validator
+from pydantic import Field, conlist, validator
 
 from clinical_mdr_api.config import (
     DAY_UNIT_CONVERSION_FACTOR_TO_MASTER,
@@ -621,3 +621,16 @@ class AllowedVisitTypesForEpochType(BaseModel):
 class AllowedTimeReferences(BaseModel):
     time_reference_uid: str
     time_reference_name: str
+
+
+class VisitConsecutiveGroupInput(BaseModel):
+    visits_to_assign: conlist(str, min_items=2) = Field(
+        ...,
+        title="visits_to_assign",
+        description="List of visits to be assigned to the consecutive_visit_group",
+    )
+    overwrite_visit_from_template: Optional[str] = Field(
+        None,
+        title="overwrite_visit_from_template",
+        description="The uid of the visit from which get properties to overwrite",
+    )

@@ -20,7 +20,7 @@ def xml_diff(expected: Element, actual: Element, path: str = "Root"):
             f"EXPECTED: {expected_text}\n"
             f"ACTUAL: {actual_text}\n\n\n"
         )
-    assert expected.items() == actual.items(), (
+    assert set(expected.items()) == set(actual.items()), (
         f"\nPATH: {path}\n"
         f"Attributes of {expected.tag} don't match:\n"
         f"EXPECTED: {expected.items()}\n"

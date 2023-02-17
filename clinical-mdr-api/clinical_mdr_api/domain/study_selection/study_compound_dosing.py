@@ -181,7 +181,7 @@ class StudySelectionCompoundDosingsAR:
         """
         updated_selection = []
         for selection in self.study_compound_dosings_selection:
-            if not selection.study_selection_uid == study_selection_uid:
+            if selection.study_selection_uid != study_selection_uid:
                 updated_selection.append(selection)
         self._study_compound_dosings_selection = tuple(updated_selection)
 
@@ -214,21 +214,19 @@ class StudySelectionCompoundDosingsAR:
                 if old_order >= new_order:
                     updated_selections.append(selected_value)
                     if (
-                        not selection.study_selection_uid
-                        == selected_value.study_selection_uid
+                        selection.study_selection_uid
+                        != selected_value.study_selection_uid
                     ):
                         updated_selections.append(selection)
                 else:
                     if (
-                        not selection.study_selection_uid
-                        == selected_value.study_selection_uid
+                        selection.study_selection_uid
+                        != selected_value.study_selection_uid
                     ):
                         updated_selections.append(selection)
                     updated_selections.append(selected_value)
             # We add all other vo to in the same order as before, except for the vo we are moving
-            elif (
-                not selection.study_selection_uid == selected_value.study_selection_uid
-            ):
+            elif selection.study_selection_uid != selected_value.study_selection_uid:
                 updated_selections.append(selection)
         self._study_compound_dosings_selection = tuple(updated_selections)
 

@@ -12,12 +12,12 @@ from neomodel.core import db
 from requests.structures import CaseInsensitiveDict
 from starlette.testclient import TestClient
 
-from clinical_mdr_api.routers import admin
 from clinical_mdr_api.tests.integration.utils.data_library import inject_base_data
 
 
 def inject_and_clear_db(db_name):
     os.environ["NEO4J_DATABASE"] = db_name
+
     from clinical_mdr_api import config
 
     config.settings = config.Settings()
@@ -51,7 +51,11 @@ def inject_and_clear_db(db_name):
     if not db_exists:
         raise RuntimeError(f"db {db_name} is not available")
 
-    admin.clear_caches()
+    # this import results to cypher queries which I don't want to run on the default database
+    from clinical_mdr_api.routers.admin import clear_caches
+
+    clear_caches()
+
     return db
 
 

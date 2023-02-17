@@ -1,6 +1,6 @@
 <template>
 <div>
-  <stepper-form
+  <horizontal-stepper-form
     :title="title"
     :steps="steps"
     @close="close"
@@ -56,6 +56,7 @@
                 clearable
                 :loading="loading"
                 :disabled="studyVisit !== undefined && studyVisit !== null"
+                class="required"
                 />
             </v-col>
           </v-row>
@@ -63,387 +64,395 @@
       </validation-observer>
     </template>
     <template v-slot:step.details="{ step }">
-      <validation-observer :ref="`observer_${step}`">
-        <div class="sub-title">{{ $t('StudyVisitForm.timing') }}</div>
-        <v-row>
-          <v-col cols="4">
-            <v-checkbox
-              v-model="batchCreateVisits"
-              :label="$t('StudyVisitForm.batch_create_visits')"
-              :disabled="true"
-              />
-          </v-col>
-          <v-col cols="4">
-            <v-text-field
-              v-if="batchCreateVisits"
-              v-model="visitCount"
-              :label="$t('StudyVisitForm.batch_create_visit_count')"
-              type="number"
-              />
-          </v-col>
-
-        </v-row>
-        <v-row>
-          <v-col cols="12" v-if="form.visit_class === visitConstants.CLASS_SINGLE_VISIT">
-            <v-radio-group
-              v-model="form.visit_subclass"
-              row
-              hide-details
+      <v-row>
+        <v-col cols="8">
+          <validation-observer :ref="`observer_${step}`">
+            <div class="sub-title">{{ $t('StudyVisitForm.timing') }}</div>
+            <v-row class="mt-2">
+              <v-col cols="12" v-if="form.visit_class === visitConstants.CLASS_SINGLE_VISIT">
+                <v-radio-group
+                  v-model="form.visit_subclass"
+                  row
+                  hide-details
+                  >
+                  <v-radio
+                    :label="$t('StudyVisitForm.single_visit')"
+                    data-cy="single-visit"
+                    :value="visitConstants.SUBCLASS_SINGLE_VISIT"
+                    ></v-radio>
+                  <v-radio
+                    :label="$t('StudyVisitForm.anchor_visit_in_group')"
+                    data-cy="anchor-visit-in-visit-group"
+                    :value="visitConstants.SUBCLASS_ANCHOR_VISIT_IN_GROUP_OF_SUBV"
+                    ></v-radio>
+                  <v-radio
+                    v-if="!displayAnchorVisitFlag && anchorVisitsInSubgroup.length"
+                    :label="$t('StudyVisitForm.additional_sub_visit')"
+                    :value="visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV"
+                    ></v-radio>
+                </v-radio-group>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="4">
+                <validation-provider
+                  v-slot="{ errors }"
+                  rules="required"
+                  >
+                  <v-autocomplete
+                    v-model="form.visit_type_uid"
+                    :label="$t('StudyVisitForm.visit_type')"
+                    data-cy="visit-type"
+                    :items="visitTypes"
+                    item-text="visit_type_name"
+                    item-value="visit_type_uid"
+                    :error-messages="errors"
+                    clearable
+                    :disabled="form.visit_class !== visitConstants.CLASS_SINGLE_VISIT && form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT"
+                    class="required"
+                    />
+                </validation-provider>
+              </v-col>
+              <v-col cols="4">
+                <validation-provider
+                  v-slot="{ errors }"
+                  rules="required"
+                  >
+                  <v-autocomplete
+                    v-model="form.visit_contact_mode_uid"
+                    :label="$t('StudyVisitForm.contact_mode')"
+                    data-cy="contact-mode"
+                    :items="contactModes"
+                    item-text="sponsor_preferred_name"
+                    item-value="term_uid"
+                    :error-messages="errors"
+                    @change="getVisitPreview"
+                    clearable
+                    class="required"
+                    />
+                </validation-provider>
+              </v-col>
+              <v-col cols="4" v-if="form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT">
+                <div class="d-flex">
+                  <v-checkbox
+                    v-if="displayAnchorVisitFlag"
+                    v-model="form.is_global_anchor_visit"
+                    :label="$t('StudyVisitForm.anchor_visit')"
+                    data-cy="anchor-visit-checkbox"
+                    :hint="$t('StudyVisitForm.anchor_visit_hint')"
+                    persistent-hint
+                    />
+                  <v-text-field
+                    :label="$t('StudyVisitForm.current_anchor_visit')"
+                    v-model="currentAnchorVisit"
+                    readonly
+                    filled
+                    class="ml-4"
+                    />
+                </div>
+              </v-col>
+            </v-row>
+            <v-row v-if="form.visit_class === visitConstants.CLASS_SINGLE_VISIT || form.visit_class === visitConstants.CLASS_SPECIAL_VISIT">
+              <v-col cols="4">
+                <validation-provider
+                  v-slot="{ errors }"
+                  rules="required"
+                  >
+                  <v-autocomplete
+                    v-if="form.visit_subclass !== visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV && form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT"
+                    v-model="form.time_reference_uid"
+                    :label="$t('StudyVisitForm.time_reference')"
+                    data-cy="time-reference"
+                    :items="timeReferences"
+                    item-text="sponsor_preferred_name"
+                    item-value="term_uid"
+                    :error-messages="errors"
+                    clearable
+                    @change="getVisitPreview"
+                    class="required"
+                    />
+                  <v-autocomplete
+                    v-else
+                    v-model="form.visit_sublabel_reference"
+                    :label="$t('StudyVisitForm.time_reference')"
+                    data-cy="time-reference"
+                    :items="timerefVisits"
+                    item-text="visit_name"
+                    item-value="uid"
+                    :error-messages="errors"
+                    clearable
+                    />
+                </validation-provider>
+              </v-col>
+              <v-col cols="4" v-if="form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT">
+                <validation-provider
+                  v-slot="{ errors }"
+                  rules="required"
+                  >
+                  <v-text-field
+                    v-model="form.time_value"
+                    type="number"
+                    :label="$t('StudyVisitForm.time_dist')"
+                    data-cy="visit-timing"
+                    clearable
+                    :error-messages="errors"
+                    @change="getVisitPreview"
+                    :disabled="disableTimeValue"
+                    class="required"
+                    />
+                </validation-provider>
+              </v-col>
+              <v-col cols="4" v-if="form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT">
+                <validation-provider
+                  v-slot="{ errors }"
+                  rules="required"
+                  >
+                  <v-autocomplete
+                    v-model="form.time_unit_uid"
+                    :label="$t('StudyVisitForm.time_unit_name')"
+                    data-cy="time-unit"
+                    :items="timeUnits"
+                    item-text="name"
+                    item-value="uid"
+                    :error-messages="errors"
+                    clearable
+                    @change="getVisitPreview"
+                    class="required"
+                    />
+                </validation-provider>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="3">
+                <v-text-field
+                  v-model="form.visit_name"
+                  :label="$t('StudyVisitForm.visit_name')"
+                  data-cy="visit-name"
+                  readonly
+                  filled
+                  :loading="previewLoading"
+                  />
+              </v-col>
+              <v-col cols="3">
+                <v-text-field
+                  v-model="form.visit_short_name"
+                  :label="$t('StudyVisitForm.visit_short_name')"
+                  data-cy="visit-short-name"
+                  readonly
+                  filled
+                  :loading="previewLoading"
+                  />
+              </v-col>
+              <v-col cols="3" v-if="form.visit_class === visitConstants.CLASS_SINGLE_VISIT">
+                <v-text-field
+                  v-model="form.study_day_label"
+                  :label="$t('StudyVisitForm.study_day_label')"
+                  data-cy="study-day-label"
+                  readonly
+                  filled
+                  :loading="previewLoading"
+                  />
+              </v-col>
+              <v-col cols="3" v-if="form.visit_class === visitConstants.CLASS_SINGLE_VISIT">
+                <v-text-field
+                  v-model="form.study_week_label"
+                  :label="$t('StudyVisitForm.study_week_label')"
+                  data-cy="study-week-label"
+                  readonly
+                  filled
+                  :loading="previewLoading"
+                  />
+              </v-col>
+            </v-row>
+            <template v-if="form.visit_class === visitConstants.CLASS_SINGLE_VISIT">
+              <div class="sub-title">{{ $t('StudyVisitForm.visit_window') }}</div>
+              <div class="d-flex align-center">
+                <div class="mr-2">
+                  <validation-provider
+                    v-slot="{ errors }"
+                    rules="max_value:0"
+                    >
+                    <v-row>
+                      <v-col>
+                        <v-text-field
+                          v-model="form.min_visit_window_value"
+                          :label="$t('StudyVisitForm.visit_win_min')"
+                          data-cy="visit-win-min"
+                          clearable
+                          :error-messages="errors"
+                          type="number"
+                          />
+                      </v-col>
+                    </v-row>
+                  </validation-provider>
+                </div>
+                <div class="mr-2 secondary--text text-h4">/</div>
+                <div class="mr-2">
+                  <validation-provider
+                    v-slot="{ errors }"
+                    rules="min_value:0"
+                    >
+                    <v-row>
+                      <v-col>
+                        <v-text-field
+                          v-model="form.max_visit_window_value"
+                          :label="$t('StudyVisitForm.visit_win_max')"
+                          data-cy="visit-win-max"
+                          clearable
+                          :error-messages="errors"
+                          type="number"
+                          />
+                      </v-col>
+                    </v-row>
+                  </validation-provider>
+                </div>
+                <div>
+                  <validation-provider
+                    v-slot="{ errors }"
+                    rules="required"
+                    >
+                    <v-row>
+                      <v-col>
+                        <v-autocomplete
+                          v-model="form.visit_window_unit_uid"
+                          :label="$t('StudyVisitForm.visit_win_unit')"
+                          data-cy="visit-win-unit"
+                          :items="timeUnits"
+                          item-text="name"
+                          item-value="uid"
+                          :error-messages="errors"
+                          clearable
+                          @change="getVisitPreview"
+                          class="required"
+                          />
+                      </v-col>
+                    </v-row>
+                  </validation-provider>
+                </div>
+              </div>
+            </template>
+            <div class="sub-title mt-8">{{ $t('StudyVisitForm.visit_details') }}</div>
+            <v-row>
+              <v-col>
+                <v-text-field
+                  v-model="form.description"
+                  :label="$t('StudyVisitForm.visit_description')"
+                  data-cy="visit-description"
+                  clearable
+                  />
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="6">
+                <v-autocomplete
+                  v-model="form.epoch_allocation_uid"
+                  :label="$t('StudyVisitForm.epoch_allocation')"
+                  data-cy="epoch-allocation-rule"
+                  :items="epochAllocations"
+                  item-text="sponsor_preferred_name"
+                  item-value="term_uid"
+                  clearable
+                  />
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="6">
+                <validation-provider
+                  v-slot="{ errors }"
+                  rules=""
+                  >
+                  <v-textarea
+                    v-model="form.start_rule"
+                    :label="$t('StudyVisitForm.visit_start_rule')"
+                    data-cy="visit-start-rule"
+                    clearable
+                    rows="1"
+                    :error-messages="errors"
+                    auto-grow
+                    />
+                </validation-provider>
+              </v-col>
+              <v-col cols="6">
+                <v-textarea
+                  v-model="form.end_rule"
+                  :label="$t('StudyVisitForm.visit_stop_rule')"
+                  data-cy="visit-end-rule"
+                  clearable
+                  rows="1"
+                  auto-grow
+                  />
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>
+                <v-text-field
+                  v-model="form.note"
+                  :label="$t('StudyVisitForm.visit_notes')"
+                  data-cy="visit-notes"
+                  clearable
+                  />
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="6" class="d-flex align-center">
+                <v-checkbox
+                  v-model="form.show_visit"
+                  default="true"
+                  :label="$t('StudyVisitForm.show_visit')"
+                  />
+              </v-col>
+            </v-row>
+          </validation-observer>
+        </v-col>
+        <v-col cols="4" class="d-flex justify-center">
+          <v-data-iterator
+            :items="epochStudyVisits"
+            :no-data-text="$t('StudyVisitForm.no_visit_available')"
+            hide-default-footer
+            items-per-page="-1"
             >
-              <v-radio
-                :label="$t('StudyVisitForm.single_visit')"
-                data-cy="single-visit"
-                :value="visitConstants.SUBCLASS_SINGLE_VISIT"
-              ></v-radio>
-              <v-radio
-                :label="$t('StudyVisitForm.anchor_visit_in_group')"
-                data-cy="anchor-visit-in-visit-group"
-                :value="visitConstants.SUBCLASS_ANCHOR_VISIT_IN_GROUP_OF_SUBV"
-              ></v-radio>
-              <v-radio
-                v-if="!displayAnchorVisitFlag && anchorVisitsInSubgroup.length"
-                :label="$t('StudyVisitForm.additional_sub_visit')"
-                :value="visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV"
-              ></v-radio>
-            </v-radio-group>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="4">
-            <validation-provider
-              v-slot="{ errors }"
-              rules="required"
-              >
-              <v-autocomplete
-                v-model="form.visit_type_uid"
-                :label="$t('StudyVisitForm.visit_type')"
-                data-cy="visit-type"
-                :items="visitTypes"
-                item-text="visit_type_name"
-                item-value="visit_type_uid"
-                :error-messages="errors"
-                clearable
-                :disabled="form.visit_class !== visitConstants.CLASS_SINGLE_VISIT && form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT"
-                />
-            </validation-provider>
-          </v-col>
-          <v-col cols="4">
-            <validation-provider
-              v-slot="{ errors }"
-              rules="required"
-              >
-              <v-autocomplete
-                v-model="form.visit_contact_mode_uid"
-                :label="$t('StudyVisitForm.contact_mode')"
-                data-cy="contact-mode"
-                :items="contactModes"
-                item-text="sponsor_preferred_name"
-                item-value="term_uid"
-                :error-messages="errors"
-                @change="getVisitPreview"
-                clearable
-                />
-            </validation-provider>
-          </v-col>
-          <v-col cols="4" v-if="form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT">
-            <div class="d-flex">
-              <v-checkbox
-                v-if="displayAnchorVisitFlag"
-                v-model="form.is_global_anchor_visit"
-                :label="$t('StudyVisitForm.anchor_visit')"
-                data-cy="anchor-visit-checkbox"
-                :hint="$t('StudyVisitForm.anchor_visit_hint')"
-                persistent-hint
-                :disabled="batchCreateVisits"
-                />
-              <v-text-field
-                :label="$t('StudyVisitForm.current_anchor_visit')"
-                v-model="currentAnchorVisit"
-                readonly
-                filled
-                class="ml-4"
-                />
-            </div>
-          </v-col>
-        </v-row>
-        <v-row v-if="form.visit_class === visitConstants.CLASS_SINGLE_VISIT || form.visit_class === visitConstants.CLASS_SPECIAL_VISIT">
-          <v-col cols="4">
-            <validation-provider
-              v-slot="{ errors }"
-              rules="required"
-              >
-              <v-autocomplete
-                v-if="form.visit_subclass !== visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV && form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT"
-                v-model="form.time_reference_uid"
-                :label="$t('StudyVisitForm.time_reference')"
-                data-cy="time-reference"
-                :items="timeReferences"
-                item-text="sponsor_preferred_name"
-                item-value="term_uid"
-                :error-messages="errors"
-                clearable
-                @change="getVisitPreview"
-                />
-              <v-autocomplete
-                v-else
-                v-model="form.visit_sublabel_reference"
-                :label="$t('StudyVisitForm.time_reference')"
-                data-cy="time-reference"
-                :items="timerefVisits"
-                item-text="visit_name"
-                item-value="uid"
-                :error-messages="errors"
-                clearable
-                />
-            </validation-provider>
-          </v-col>
-          <v-col cols="4" v-if="form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT">
-            <validation-provider
-              v-slot="{ errors }"
-              rules="required"
-              >
-              <v-text-field
-                v-model="form.time_value"
-                type="number"
-                :label="$t('StudyVisitForm.time_dist')"
-                data-cy="visit-timing"
-                clearable
-                :error-messages="errors"
-                @change="getVisitPreview"
-                :disabled="disableTimeValue"
-                />
-            </validation-provider>
-          </v-col>
-          <v-col cols="4" v-if="form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT">
-            <validation-provider
-              v-slot="{ errors }"
-              rules="required"
-              >
-              <v-autocomplete
-                v-model="form.time_unit_uid"
-                :label="$t('StudyVisitForm.time_unit_name')"
-                data-cy="time-unit"
-                :items="timeUnits"
-                item-text="name"
-                item-value="uid"
-                :error-messages="errors"
-                clearable
-                @change="getVisitPreview"
-                />
-            </validation-provider>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="3">
-            <v-text-field
-              v-model="form.visit_name"
-              :label="$t('StudyVisitForm.visit_name')"
-              data-cy="visit-name"
-              readonly
-              filled
-              :loading="previewLoading"
-              />
-          </v-col>
-          <v-col cols="3">
-            <v-text-field
-              v-model="form.visit_short_name"
-              :label="$t('StudyVisitForm.visit_short_name')"
-              data-cy="visit-short-name"
-              readonly
-              filled
-              :loading="previewLoading"
-              />
-          </v-col>
-          <v-col cols="3" v-if="form.visit_class === visitConstants.CLASS_SINGLE_VISIT">
-            <v-text-field
-              v-model="form.study_day_label"
-              :label="$t('StudyVisitForm.study_day_label')"
-              data-cy="study-day-label"
-              readonly
-              filled
-              :loading="previewLoading"
-              />
-          </v-col>
-          <v-col cols="3" v-if="form.visit_class === visitConstants.CLASS_SINGLE_VISIT">
-            <v-text-field
-              v-model="form.study_week_label"
-              :label="$t('StudyVisitForm.study_week_label')"
-              data-cy="study-week-label"
-              readonly
-              filled
-              :loading="previewLoading"
-              />
-          </v-col>
-        </v-row>
-        <template v-if="form.visit_class === visitConstants.CLASS_SINGLE_VISIT">
-          <div class="sub-title">{{ $t('StudyVisitForm.visit_window') }}</div>
-          <div class="d-flex align-center">
-            <div class="mr-2">
-              <validation-provider
-                v-slot="{ errors }"
-                rules="max_value:0"
-                >
-                <v-row>
-                  <v-col>
-                    <v-text-field
-                      v-model="form.min_visit_window_value"
-                      :label="$t('StudyVisitForm.visit_win_min')"
-                      data-cy="visit-win-min"
-                      clearable
-                      :error-messages="errors"
-                      type="number"
-                      />
-                  </v-col>
-                </v-row>
-              </validation-provider>
-            </div>
-            <div class="mr-2 secondary--text text-h4">/</div>
-            <div class="mr-2">
-              <validation-provider
-                v-slot="{ errors }"
-                rules="min_value:0"
-                >
-                <v-row>
-                  <v-col>
-                    <v-text-field
-                      v-model="form.max_visit_window_value"
-                      :label="$t('StudyVisitForm.visit_win_max')"
-                      data-cy="visit-win-max"
-                      clearable
-                      :error-messages="errors"
-                      type="number"
-                      />
-                  </v-col>
-                </v-row>
-              </validation-provider>
-            </div>
-            <div>
-              <validation-provider
-                v-slot="{ errors }"
-                rules="required"
-                >
-                <v-row>
-                  <v-col>
-                    <v-autocomplete
-                      v-model="form.visit_window_unit_uid"
-                      :label="$t('StudyVisitForm.visit_win_unit')"
-                      data-cy="visit-win-unit"
-                      :items="timeUnits"
-                      item-text="name"
-                      item-value="uid"
-                      :error-messages="errors"
-                      clearable
-                      @change="getVisitPreview"
-                      />
-                  </v-col>
-                </v-row>
-              </validation-provider>
-            </div>
-          </div>
-        </template>
-        <div class="sub-title mt-8">{{ $t('StudyVisitForm.visit_details') }}</div>
-        <v-row>
-          <v-col>
-            <v-text-field
-              v-model="form.description"
-              :label="$t('StudyVisitForm.visit_description')"
-              data-cy="visit-description"
-              clearable
-              />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="6">
-            <v-autocomplete
-              v-model="form.epoch_allocation_uid"
-              :label="$t('StudyVisitForm.epoch_allocation')"
-              data-cy="epoch-allocation-rule"
-              :items="epochAllocations"
-              item-text="sponsor_preferred_name"
-              item-value="term_uid"
-              clearable
-              />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="6">
-            <validation-provider
-              v-slot="{ errors }"
-              rules=""
-              >
-              <v-textarea
-                v-model="form.start_rule"
-                :label="$t('StudyVisitForm.visit_start_rule')"
-                data-cy="visit-start-rule"
-                clearable
-                rows="1"
-                :error-messages="errors"
-                auto-grow
-                />
-            </validation-provider>
-          </v-col>
-          <v-col cols="6">
-            <v-textarea
-              v-model="form.end_rule"
-              :label="$t('StudyVisitForm.visit_stop_rule')"
-              data-cy="visit-end-rule"
-              clearable
-              rows="1"
-              auto-grow
-              />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col>
-            <v-text-field
-              v-model="form.note"
-              :label="$t('StudyVisitForm.visit_notes')"
-              data-cy="visit-notes"
-              clearable
-              />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="6" class="d-flex align-center">
-            <div class="mr-2">
-              <v-combobox
-                v-model="form.consecutive_visit_group"
-                :label="$t('StudyVisitForm.consecutive_visit')"
-                :items="visitGroups"
-                item-text="name"
-                ref="consecutiveGroupCombobox"
-                clearable
-                />
-            </div>
-            <v-checkbox
-              v-model="form.show_visit"
-              default="true"
-              :label="$t('StudyVisitForm.show_visit')"
-              />
-          </v-col>
-        </v-row>
-      </validation-observer>
+            <template v-slot:header>
+              <div class="sub-title">
+                {{ $t('StudyVisitForm.existing_visits') }}<br>{{ $t('StudyVisitForm.names_and_timing') }}
+              </div>
+            </template>
+            <template v-slot:default="props">
+              <v-card>
+                <v-list>
+                  <v-list-item
+                    v-for="item in props.items"
+                    cols="12"
+                    :key="item.uid"
+                    >
+                    {{ item.visit_name }} - {{ item.study_day_label }}
+                  </v-list-item>
+                </v-list>
+              </v-card>
+            </template>
+          </v-data-iterator>
+        </v-col>
+      </v-row>
     </template>
-  </stepper-form>
+  </horizontal-stepper-form>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
 </div>
 </template>
 
 <script>
-import StepperForm from '@/components/tools/StepperForm'
 import epochs from '@/api/studyEpochs'
 import units from '@/api/units'
 import codelists from '@/api/controlledTerminology/terms'
 import { mapGetters } from 'vuex'
 import { bus } from '@/main'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
+import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm'
 import unitConstants from '@/constants/units'
 import visitConstants from '@/constants/visits'
 
 export default {
   components: {
     ConfirmDialog,
-    StepperForm
+    HorizontalStepperForm
   },
   props: {
     studyVisit: Object,
@@ -477,20 +486,21 @@ export default {
         return this.anchorVisitsForSpecialVisit
       }
       return this.studyVisits
+    },
+    epochStudyVisits () {
+      return this.studyVisits.filter(item => item.study_epoch_uid === this.studyEpoch)
     }
   },
   data () {
     return {
       anchorVisitsInSubgroup: [],
       anchorVisitsForSpecialVisit: [],
-      batchCreateVisits: false,
       currentAnchorVisit: null,
       disableTimeValue: false,
       form: this.getInitialFormContent(this.studyVisit),
       helpItems: [
         'StudyVisitForm.vtype_step_label',
         'StudyVisitForm.period',
-        'StudyVisitForm.batch_create_visits',
         'StudyVisitForm.single_visit',
         'StudyVisitForm.anchor_visit_in_group',
         'StudyVisitForm.visit_type',
@@ -520,11 +530,10 @@ export default {
       steps: [
         { name: 'visitType', title: this.$t('StudyVisitForm.vtype_step_label') },
         { name: 'epoch', title: this.$t('StudyVisitForm.epoch_step_label') },
-        { name: 'details', title: this.$t('StudyVisitForm.details_step_label') }
+        { name: 'details', title: this.$t('StudyVisitForm.details_step_label'), belowDisplay: true }
       ],
       timeReferences: [],
       timeUnits: [],
-      visitGroups: [],
       visitTypes: [],
       loading: false,
       previewLoading: false,
@@ -573,7 +582,6 @@ export default {
       }
     },
     async submit () {
-      this.$refs.consecutiveGroupCombobox.blur()
       const valid1 = await this.$refs.observer_1.validate()
       if (!valid1) {
         return
@@ -606,13 +614,13 @@ export default {
         delete data.time_unit_uid
       }
       await this.$store.dispatch('studyEpochs/addStudyVisit', { studyUid: this.selectedStudy.uid, input: data })
-      this.$store.dispatch('studyEpochs/fetchStudyVisits', this.selectedStudy.uid)
+      this.$emit('refresh')
       bus.$emit('notification', { msg: this.$t('StudyVisitForm.add_success') })
     },
     updateObject () {
       const data = JSON.parse(JSON.stringify(this.form))
       return this.$store.dispatch('studyEpochs/updateStudyVisit', { studyUid: this.selectedStudy.uid, studyVisitUid: this.studyVisit.uid, input: data }).then(resp => {
-        this.$store.dispatch('studyEpochs/fetchStudyVisits', this.selectedStudy.uid)
+        this.$emit('refresh')
         bus.$emit('notification', { msg: this.$t('StudyVisitForm.update_success') })
       })
     },
@@ -687,13 +695,10 @@ export default {
           this.form.visit_window_unit_uid = defaultUnit.uid
         }
       })
-      epochs.getGroups(this.selectedStudy.uid).then(resp => {
-        this.visitGroups = resp.data
-      })
       codelists.getByCodelist('epochAllocations').then(resp => {
         this.epochAllocations = resp.data.items
       })
-      epochs.getStudyVisits(this.selectedStudy.uid).then(resp => {
+      epochs.getStudyVisits(this.selectedStudy.uid, { page_size: 0 }).then(resp => {
         this.studyVisits = resp.data.items
       })
     },
@@ -756,8 +761,10 @@ export default {
         this.form = value
       }
     },
-    opened () {
-      this.callbacks()
+    opened (value) {
+      if (value) {
+        this.callbacks()
+      }
     },
     studyEpoch (value) {
       if (!value) {
@@ -765,10 +772,9 @@ export default {
       }
       this.$set(this.form, 'study_epoch_uid', value)
       const data = {
-        study_uid: this.selectedStudy.uid,
         epoch_type_uid: this.periods.find(el => el.uid === value).epoch_type
       }
-      epochs.getAllowedVisitTypes(data).then(resp => {
+      epochs.getAllowedVisitTypes(this.selectedStudy.uid, data).then(resp => {
         this.visitTypes = resp.data
         codelists.getByCodelist('timepointReferences').then(resp => {
           this.timeReferences = resp.data.items
@@ -795,14 +801,6 @@ export default {
           })
         } else {
           this.setEpochAllocationRule(visitConstants.CURRENT_VISIT)
-        }
-      }
-    },
-    batchCreateVisits (value) {
-      if (value) {
-        const timeRef = this.timeReferences.find(timeRef => timeRef.sponsor_preferred_name === visitConstants.TIMEREF_PREVIOUS_VISIT)
-        if (timeRef) {
-          this.$set(this.form, 'time_reference_uid', timeRef.term_uid)
         }
       }
     },

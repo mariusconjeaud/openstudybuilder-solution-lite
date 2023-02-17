@@ -42,6 +42,7 @@
   </v-dialog>
   <v-dialog
     v-model="showHistory"
+    @keydown.esc="closeHistory"
     persistent
     max-width="1200px"
     >

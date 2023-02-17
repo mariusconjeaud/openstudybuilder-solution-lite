@@ -12,7 +12,10 @@ from clinical_mdr_api.domain.controlled_terminology.ct_term_name import (
     CTTermNameVO,
 )
 from clinical_mdr_api.domain.controlled_terminology.utils import TermParentType
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
+from clinical_mdr_api.domain.versioned_object_aggregate import (
+    LibraryItemStatus,
+    LibraryVO,
+)
 from clinical_mdr_api.models import CTTerm, CTTermCreateInput, CTTermNameAndAttributes
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -68,6 +71,14 @@ class CTTermService:
         ):
             raise exceptions.BusinessLogicException(
                 f"Codelist identified by {term_input.codelist_uid} is not extensible"
+            )
+
+        ct_codelist_name_ar = self._repos.ct_codelist_name_repository.find_by_uid(
+            codelist_uid=term_input.codelist_uid
+        )
+        if ct_codelist_name_ar.item_metadata.status is LibraryItemStatus.DRAFT:
+            raise exceptions.BusinessLogicException(
+                f"Until Codelist {term_input.codelist_uid} is in DRAFT status, no Terms can be added"
             )
 
         library_vo = LibraryVO.from_input_values_2(

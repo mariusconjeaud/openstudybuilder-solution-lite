@@ -231,11 +231,7 @@ export default {
       const data = { ...this.form }
       data.type_uid = this.typeUid
       if (data.indications && data.indications.length > 0) {
-        if (this.template !== null && _isEqual(data.indications, this.template.indications)) {
-          data.indication_uids = data.indications.map(item => item.term_uid)
-        } else {
-          data.indication_uids = data.indications.map(item => item.term_uid)
-        }
+        data.indication_uids = data.indications.map(item => item.term_uid)
       }
       if (this.preparePayloadFunction) {
         this.preparePayloadFunction(data)
@@ -348,7 +344,7 @@ export default {
     }
     dictionaries.getCodelists('SNOMED').then(resp => {
       /* FIXME: we need a direct way to retrieve the terms here */
-      dictionaries.getTerms({ codelist_uid: resp.data.items[0].codelistUid }).then(resp => {
+      dictionaries.getTerms({ codelist_uid: resp.data.items[0].codelist_uid }).then(resp => {
         this.indications = resp.data.items
       })
     })

@@ -44,7 +44,7 @@ class ProjectRepository:
         which ultimately determines whether a method invocation is a hit or miss.
         """
         return hashkey(
-            str(self.__class__),
+            str(type(self)),
             uid,
         )
 

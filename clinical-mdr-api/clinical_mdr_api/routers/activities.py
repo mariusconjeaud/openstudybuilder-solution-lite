@@ -10,6 +10,7 @@ from clinical_mdr_api.models.activities.activity import (
     Activity,
     ActivityCreateInput,
     ActivityEditInput,
+    ActivityFromRequestInput,
 )
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
@@ -41,6 +42,7 @@ State after:
 Possible errors:
  - Invalid library name specified.""",
     response_model=CustomPage[Activity],
+    response_model_exclude_unset=True,
     status_code=200,
     responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
 )
@@ -195,6 +197,7 @@ Possible errors:
  - Invalid uid, at_specified_date_time, status or version.
  """,
     response_model=Activity,
+    response_model_exclude_unset=True,
     status_code=200,
     responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
 )
@@ -223,6 +226,7 @@ Possible errors:
  - Invalid uid.
     """,
     response_model=List[Activity],
+    response_model_exclude_unset=True,
     status_code=200,
     responses={
         404: {
@@ -263,6 +267,7 @@ Possible errors:
  - Invalid library or control terminology uid's specified.
 """,
     response_model=Activity,
+    response_model_exclude_unset=True,
     status_code=201,
     responses={
         201: {"description": "Created - The activity was successfully created."},
@@ -281,6 +286,53 @@ def create(
 ):
     activity_service = ActivityService(user=current_user_id)
     return activity_service.create(concept_input=activity_create_input)
+
+
+@router.post(
+    "/activities/sponsor-activities",
+    summary="Creates new sponsor activity and retires activity request.",
+    description="""
+State before:
+ - The specified library allows creation of concepts (the 'is_editable' property of the library needs to be true).
+ - The specified CT term uids must exist, and the term names are in a final state.
+
+Business logic:
+ - New node is created for the activity with the set properties.
+ - relationships to specified control terminology are created (as in the model).
+ - relationships to specified activity parent are created (as in the model)
+ - The status of the new created version will be automatically set to 'Draft'.
+ - The 'version' property of the new version will be automatically set to 0.1.
+ - The 'change_description' property will be set automatically to 'Initial version'.
+
+State after:
+ - Activity is created in status Draft and assigned an initial minor version number as 0.1.
+ - Audit trail entry must be made with action of creating new Draft version.
+
+Possible errors:
+ - Invalid library or control terminology uid's specified.
+""",
+    response_model=Activity,
+    response_model_exclude_unset=True,
+    status_code=201,
+    responses={
+        201: {"description": "Created - The activity was successfully created."},
+        403: {
+            "model": ErrorResponse,
+            "description": "Forbidden - Reasons include e.g.: \n"
+            "- The library does not exist.\n"
+            "- The library does not allow to add new items.\n",
+        },
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def create_sponsor_activity_from_activity_request(
+    activity_create_input: ActivityFromRequestInput = Body(None, description=""),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    activity_service = ActivityService(user=current_user_id)
+    return activity_service.replace_requested_activity_with_sponsor(
+        sponsor_activity_input=activity_create_input
+    )
 
 
 @router.patch(
@@ -305,6 +357,7 @@ Possible errors:
 
 """,
     response_model=Activity,
+    response_model_exclude_unset=True,
     status_code=200,
     responses={
         200: {"description": "OK."},
@@ -349,6 +402,7 @@ Possible errors:
  - Invalid uid or status not Final.
 """,
     response_model=Activity,
+    response_model_exclude_unset=True,
     status_code=201,
     responses={
         201: {"description": "OK."},
@@ -374,7 +428,7 @@ def new_version(
 
 
 @router.post(
-    "/activities/{uid}/approve",
+    "/activities/{uid}/approvals",
     summary="Approve draft version of activity",
     description="""
 State before:
@@ -394,6 +448,7 @@ Possible errors:
  - Invalid uid or status not Draft.
     """,
     response_model=Activity,
+    response_model_exclude_unset=True,
     status_code=201,
     responses={
         201: {"description": "OK."},
@@ -417,8 +472,8 @@ def approve(
     return activity_service.approve(uid=uid)
 
 
-@router.post(
-    "/activities/{uid}/inactivate",
+@router.delete(
+    "/activities/{uid}/activations",
     summary=" Inactivate final version of activity",
     description="""
 State before:
@@ -438,9 +493,10 @@ Possible errors:
  - Invalid uid or status not Final.
     """,
     response_model=Activity,
-    status_code=201,
+    response_model_exclude_unset=True,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -461,7 +517,7 @@ def inactivate(
 
 
 @router.post(
-    "/activities/{uid}/reactivate",
+    "/activities/{uid}/activations",
     summary="Reactivate retired version of a activity",
     description="""
 State before:
@@ -481,9 +537,10 @@ Possible errors:
  - Invalid uid or status not Retired.
     """,
     response_model=Activity,
-    status_code=201,
+    response_model_exclude_unset=True,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"

@@ -1,4 +1,5 @@
 from importers.importer import BaseImporter, open_file, open_file_async
+from importers.path_join import path_join
 from importers.metrics import Metrics
 import asyncio
 import aiohttp
@@ -40,6 +41,9 @@ def sample_from_list(d, sample=10):
     else:
         return d
 
+ACTIVITIES_PATH = "/concepts/activities/activities"
+ACTIVITY_GROUPS_PATH = "/concepts/activities/activity-groups"
+ACTIVITY_SUBGROUPS_PATH = "/concepts/activities/activity-sub-groups"
 
 # Activities with instances, groups and subgroups in sponsor library
 class Activities(BaseImporter):
@@ -56,15 +60,15 @@ class Activities(BaseImporter):
         api_tasks = []
 
         existing_rows = self.api.get_all_identifiers(
-            self.api.get_all_from_api("/concepts/activities/activity-groups"),
+            self.api.get_all_from_api(ACTIVITY_GROUPS_PATH),
             identifier="name",
             value="uid",
         )
 
         for row in readCSV:
             data = {
-                "path": "/concepts/activities/activity-groups",
-                "approve_path": "/concepts/activities/activity-groups",
+                "path": ACTIVITY_GROUPS_PATH,
+                "approve_path": ACTIVITY_GROUPS_PATH,
                 "body": {
                     "name": row[headers.index("std_assm_grp")],
                     "name_sentence_case": row[headers.index("std_assm_grp")].lower(),
@@ -94,7 +98,7 @@ class Activities(BaseImporter):
 
         existing_groups = sample_from_dict(
             self.api.get_all_identifiers(
-                self.api.get_all_from_api("/concepts/activities/activity-groups"),
+                self.api.get_all_from_api(ACTIVITY_GROUPS_PATH),
                 identifier="name",
                 value="uid",
             ),
@@ -104,7 +108,7 @@ class Activities(BaseImporter):
         existing_sub_groups = {}
 
         for item in self.api.get_all_from_api(
-            "/concepts/activities/activity-sub-groups"
+            ACTIVITY_SUBGROUPS_PATH
         ):
             existing_sub_groups[item["name"]] = {
                 "uid": item["uid"],
@@ -136,13 +140,10 @@ class Activities(BaseImporter):
                     self.log.info(f"Subgroup '{sub_group_name}' already exists for group '{group_name}'")
                     continue
                 data = {
-                    "path": "/concepts/activities/activity-sub-groups",
-                    "patch_path": "/concepts/activities/activity-sub-groups/"
-                    + existing_sub_groups[sub_group_name]["uid"],
-                    "new_path": "/concepts/activities/activity-sub-groups/"
-                    + existing_sub_groups[sub_group_name]["uid"]
-                    + "/versions",
-                    "approve_path": "/concepts/activities/activity-sub-groups",
+                    "path": ACTIVITY_SUBGROUPS_PATH,
+                    "patch_path": path_join(ACTIVITY_SUBGROUPS_PATH, existing_sub_groups[sub_group_name]['uid']),
+                    "new_path": path_join(ACTIVITY_SUBGROUPS_PATH, existing_sub_groups[sub_group_name]['uid'], "versions"),
+                    "approve_path": ACTIVITY_SUBGROUPS_PATH,
                     "body": {
                         "name": sub_group_name,
                         "name_sentence_case": sub_group_name.lower(),
@@ -161,8 +162,8 @@ class Activities(BaseImporter):
             else:
                 # Create the new subgroup
                 data = {
-                    "path": "/concepts/activities/activity-sub-groups",
-                    "approve_path": "/concepts/activities/activity-sub-groups",
+                    "path": ACTIVITY_SUBGROUPS_PATH,
+                    "approve_path": ACTIVITY_SUBGROUPS_PATH,
                     "body": {
                         "name": sub_group_name,
                         "name_sentence_case": sub_group_name.lower(),
@@ -187,7 +188,7 @@ class Activities(BaseImporter):
         headers = next(readCSV)
         self.log.info("Fetching all existing activity subgroups")
         existing_sub_groups = self.api.get_all_identifiers(
-            self.api.get_all_from_api("/concepts/activities/activity-sub-groups"),
+            self.api.get_all_from_api(ACTIVITY_SUBGROUPS_PATH),
             identifier="name",
             value="uid",
         )
@@ -226,12 +227,12 @@ class Activities(BaseImporter):
                     self.log.info(f"Activity '{activity_name}' already exists for subgroup '{sub_group_name}'")
                     continue
                 data = {
-                    "path": "/concepts/activities/activities",
-                    "patch_path": "/concepts/activities/activities",
-                    "new_path": "/concepts/activities/activities/"
-                    + existing_activities[activity_name]["uid"]
-                    + "/versions",
-                    "approve_path": "/concepts/activities/activities",
+                    "path": ACTIVITIES_PATH,
+                    "patch_path": ACTIVITIES_PATH,
+                    "new_path": path_join(ACTIVITIES_PATH,
+                        existing_activities[activity_name]["uid"],
+                        "versions"),
+                    "approve_path": ACTIVITIES_PATH,
                     "body": {
                         "name": activity_name,
                         "name_sentence_case": activity_name.lower(),
@@ -251,8 +252,8 @@ class Activities(BaseImporter):
 
             else:  # Create the activity
                 data = {
-                    "path": "/concepts/activities/activities",
-                    "approve_path": "/concepts/activities/activities",
+                    "path": ACTIVITIES_PATH,
+                    "approve_path": ACTIVITIES_PATH,
                     "body": {
                         "name": activity_name,
                         "name_sentence_case": activity_name.lower(),

@@ -84,6 +84,7 @@ def get_available_packages_meta_data_from_cdisc_api_as_json():
     """
     response = requests.get(BASE_URL + '/mdr/ct/packages', headers=HEADERS)
     response.raise_for_status()
+    print(json.dumps(response.json(), indent=2))
     return response.json()
 
 

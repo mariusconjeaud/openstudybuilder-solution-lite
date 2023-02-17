@@ -37,7 +37,12 @@ export default new Vuetify({
         nnDarkBlue1: '#2267c8',
         nnGreen1: '#2a918b',
         nnPink1: '#eea7bf',
-        parameterBackground: '#E0E0E0'
+        parameterBackground: '#E0E0E0',
+        crfTemplate: '#193074',
+        crfForm: '#005AD2',
+        crfGroup: '#3B97DE',
+        crfItem: '#63A8A5',
+        darkGrey: '#747474'
       },
       dark: {
         primary: '#ff9800',

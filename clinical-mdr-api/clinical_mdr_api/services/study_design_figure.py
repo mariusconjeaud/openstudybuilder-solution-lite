@@ -230,8 +230,9 @@ class StudyDesignFigureService:
             for _ in range(len(study_arms) + 1)
         ]
 
-        for id_, epoch in study_epochs.items():
-            table[0][epoch.order].update(
+        column_by_epoch_uid = {}
+        for i, (id_, epoch) in enumerate(study_epochs.items(), start=1):
+            table[0][i].update(
                 klass="epoch",
                 id=id_,
                 text=epoch.epoch_name,
@@ -239,9 +240,11 @@ class StudyDesignFigureService:
                 margin=EPOCH_MARGIN,
                 paddings=EPOCH_PADDINGS,
             )
+            column_by_epoch_uid[epoch.uid] = i
 
-        for id_, arm in study_arms.items():
-            table[arm.order][0].update(
+        row_by_arm_uid = {}
+        for i, (id_, arm) in enumerate(study_arms.items(), start=1):
+            table[i][0].update(
                 klass="arm",
                 id=id_,
                 text=arm.short_name or arm.name,
@@ -249,13 +252,14 @@ class StudyDesignFigureService:
                 margin=ARM_MARGIN,
                 paddings=ARM_PADDINGS,
             )
+            row_by_arm_uid[arm.arm_uid] = i
 
         for cell in study_design_cells:
-            arm = study_arms.get(cell.study_arm_uid)
-            epoch = study_epochs.get(cell.study_epoch_uid)
+            row_idx = row_by_arm_uid.get(cell.study_arm_uid)
+            col_idx = column_by_epoch_uid.get(cell.study_epoch_uid)
             element = study_elements.get(cell.study_element_uid)
 
-            if not all((arm, epoch, element)):
+            if not all((row_idx, col_idx, element)):
                 log.debug(
                     "Skipping %s, missing %s, %s or %s not in results",
                     cell.design_cell_uid,
@@ -265,7 +269,7 @@ class StudyDesignFigureService:
                 )
                 continue
 
-            table[arm.order][epoch.order].update(
+            table[row_idx][col_idx].update(
                 klass="element",
                 id=element.element_uid,
                 text=element.short_name or element.name,
@@ -507,7 +511,7 @@ class StudyDesignFigureService:
 
             # next row
             x = DOC_MARGIN
-            y += max(cell["height"] for cell in row) + ARM_MARGIN
+            y += max(cell.get("height", 0) for cell in row) + ARM_MARGIN
 
         total_height = y + DOC_MARGIN
 
@@ -700,7 +704,7 @@ class StudyDesignFigureService:
 
     def _get_text_size_px(self, text: str) -> Tuple[int, int]:
         """Returns width and height (in pixels) of given text if rendered with font and size"""
-        return self.font.getsize(text)
+        return self.font.getbbox(text)[2:4]
 
     def _get_words_size_px(self, text: str) -> Tuple[Tuple[str, int, int]]:
         """Returns a tuple of (word, width, height) in pixels of each word of a text if rendered with font and size"""
@@ -990,11 +994,11 @@ class StudyDesignFigureService:
         with doc.tag(
             "marker",
             id=id_,
-            view_box="0 0 6 6",
+            viewBox="0 0 6 6",
             refX="6",
             refY="3",
-            marker_width="6",
-            marker_height="6",
+            markerWidth="6",
+            markerHeight="6",
             orient="auto-start-reverse",
         ):
             doc.stag("path", d="M 0 0 L 6 3 L 0 6 z")
@@ -1005,11 +1009,11 @@ class StudyDesignFigureService:
         with doc.tag(
             "marker",
             id=id_,
-            view_box="0 0 6 6",
+            viewBox="0 0 6 6",
             refX="3",
             refY="0",
-            marker_width="6",
-            marker_height="6",
+            markerWidth="6",
+            markerHeight="6",
             orient="0",
         ):
             doc.stag("path", d="M 0 6 L 3 0 L 6 6 z")
@@ -1020,11 +1024,11 @@ class StudyDesignFigureService:
         with doc.tag(
             "marker",
             id=id_,
-            view_box="0 0 6 6",
+            viewBox="0 0 6 6",
             refX="3",
             refY="3",
-            marker_width="6",
-            marker_height="6",
+            markerWidth="6",
+            markerHeight="6",
             orient="auto",
         ):
             doc.stag("polyline", points="3 0, 3 6")

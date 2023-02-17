@@ -116,7 +116,7 @@ class StudySelectionCohortRepository:
                 sar.accepted_version AS accepted_version,
                 sar.number_of_subjects AS number_of_subjects,
                 sar.colour_code AS colour_code,
-                COLLECT (bars.uid) AS branch_arm_root_uids,
+                COLLECT (DISTINCT bars.uid) AS branch_arm_root_uids,
                 COLLECT (ars.uid) AS arm_root_uids,
                 sar.text AS text,
                 sa.date AS start_date,
@@ -300,14 +300,10 @@ class StudySelectionCohortRepository:
 
         # loop through and add selections
         for order, selection in selections_to_add:
-            # create last_study_selection_node None as the new study_selection could not have an audit trial node
-            last_study_selection_node = None
             # if the study selection already has an audit trail node
             if selection.study_selection_uid in audit_trail_nodes:
                 # extract the audit_trail_node
                 audit_node = audit_trail_nodes[selection.study_selection_uid]
-                # extract the last "AFTER" selection that now is "BEFORE"
-                last_study_selection_node = last_nodes[selection.study_selection_uid]
             else:
                 audit_node = Create()
                 audit_node.user_initials = selection.user_initials

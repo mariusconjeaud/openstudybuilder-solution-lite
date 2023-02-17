@@ -57,7 +57,7 @@
           >
           <v-row>
             <v-col cols="11">
-              <v-select
+              <v-autocomplete
                 v-model="form.activities"
                 :label="$t('ActivityDescriptionTemplateForm.activity')"
                 :items="activities"

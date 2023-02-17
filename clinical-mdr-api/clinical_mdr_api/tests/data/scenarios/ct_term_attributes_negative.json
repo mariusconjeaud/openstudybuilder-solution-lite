@@ -147,14 +147,14 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/ct/terms/term_root_final/attributes/approve"
+            "url": "/ct/terms/term_root_final/attributes/approvals"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "The object is not in draft status.",
                 "method": "POST",
-                "path": "http://testserver/ct/terms/term_root_final/attributes/approve",
+                "path": "http://testserver/ct/terms/term_root_final/attributes/approvals",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }
@@ -166,52 +166,52 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/ct/terms/term_root_draft_non_edit/attributes/approve"
+            "url": "/ct/terms/term_root_draft_non_edit/attributes/approvals"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "Library is not editable.",
                 "method": "POST",
-                "path": "http://testserver/ct/terms/term_root_draft_non_edit/attributes/approve",
+                "path": "http://testserver/ct/terms/term_root_draft_non_edit/attributes/approvals",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test POST attributes inactivate non FINAL term",
+        "name": "Test DELETE attributes activations non FINAL term",
         "request": {
             "headers": {},
-            "method": "POST",
+            "method": "DELETE",
             "request": {},
-            "url": "/ct/terms/term_root_draft/attributes/inactivate"
+            "url": "/ct/terms/term_root_draft/attributes/activations"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "Cannot retire draft version.",
-                "method": "POST",
-                "path": "http://testserver/ct/terms/term_root_draft/attributes/inactivate",
+                "method": "DELETE",
+                "path": "http://testserver/ct/terms/term_root_draft/attributes/activations",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test POST attributes inactivate non editable library",
+        "name": "Test DELETE attributes activations non editable library",
         "request": {
             "headers": {},
-            "method": "POST",
+            "method": "DELETE",
             "request": {},
-            "url": "/ct/terms/term_root_final_non_edit/attributes/inactivate"
+            "url": "/ct/terms/term_root_final_non_edit/attributes/activations"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "Library is not editable.",
-                "method": "POST",
-                "path": "http://testserver/ct/terms/term_root_final_non_edit/attributes/inactivate",
+                "method": "DELETE",
+                "path": "http://testserver/ct/terms/term_root_final_non_edit/attributes/activations",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }

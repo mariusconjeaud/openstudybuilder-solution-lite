@@ -1,4 +1,4 @@
-from typing import List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Set
 
 from neomodel import db
 
@@ -521,3 +521,11 @@ class StudyCompoundSelectionService(
             )
         finally:
             repos.close()
+
+    @db.transaction
+    def get_compound_uid_to_arm_uids_mapping(
+        self, study_uid: str
+    ) -> Dict[str, Set[str]]:
+        return self._repos.study_selection_compound_repository.get_compound_uid_to_arm_uids_mapping(
+            study_uid
+        )

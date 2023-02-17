@@ -78,6 +78,13 @@ class ActivityValue(ConceptValue):
     in_subgroup = RelationshipTo(
         ActivitySubGroupValue, "IN_SUB_GROUP", model=ClinicalMdrRel
     )
+    request_rationale = StringProperty()
+    replaced_by_activity = RelationshipTo(
+        "ActivityRoot",
+        "REPLACED_BY_ACTIVITY",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
 
 
 class ActivityRoot(ConceptRoot):

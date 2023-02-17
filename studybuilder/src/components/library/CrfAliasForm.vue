@@ -32,7 +32,7 @@
             rules="required"
             >
             <v-text-field
-              :label="$t('_global.name')"
+              :label="$t('CrfAliases.name')"
               v-model="form.name"
               dense
               clearable
@@ -70,7 +70,10 @@ export default {
   data () {
     return {
       form: {},
-      helpItems: []
+      helpItems: [
+        'CrfAliases.context',
+        'CrfAliases.name'
+      ]
     }
   },
   methods: {
@@ -101,12 +104,12 @@ export default {
       }
       this.form.library_name = 'Sponsor'
       if (Object.keys(this.editedItem).length !== 0) {
-        crfs.editAlias(this.editedItem.uid, this.form).then(resp => {
+        crfs.editAlias(this.editedItem.uid, this.form).then(() => {
           bus.$emit('notification', { msg: this.$t('CrfAliases.alias_edited') })
           this.close()
         })
       } else {
-        crfs.addAlias(this.form).then(resp => {
+        crfs.addAlias(this.form).then(() => {
           bus.$emit('notification', { msg: this.$t('CrfAliases.alias_created') })
           this.close()
         })

@@ -63,7 +63,7 @@ def generate_default_input_data_for_visit():
         "legacy_subname": "",
         "visit_sublabel_codelist_uid": "",
         "visit_sublabel_reference": "",
-        "consecutive_visit_group": "",
+        "consecutive_visit_group": None,
         "show_visit": True,
         "min_visit_window_value": -1,
         "max_visit_window_value": 1,

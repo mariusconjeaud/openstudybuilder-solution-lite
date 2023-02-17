@@ -5,6 +5,7 @@
   </v-btn>
   <v-dialog
     v-model="showHelp"
+    @keydown.esc="showHelp = false"
     width="495"
     persistent
     hide-overlay

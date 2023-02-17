@@ -262,7 +262,7 @@ def create_odm_condition_version(uid: str = OdmConditionUID):
 
 
 @router.post(
-    "/{uid}/approve",
+    "/{uid}/approvals",
     summary="Approve draft version of ODM Condition",
     description="",
     response_model=OdmCondition,
@@ -287,14 +287,14 @@ def approve_odm_condition(uid: str = OdmConditionUID):
     return odm_condition_service.approve(uid=uid)
 
 
-@router.post(
-    "/{uid}/inactivate",
+@router.delete(
+    "/{uid}/activations",
     summary=" Inactivate final version of ODM Condition",
     description="",
     response_model=OdmCondition,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -313,13 +313,13 @@ def inactivate_odm_condition(uid: str = OdmConditionUID):
 
 
 @router.post(
-    "/{uid}/reactivate",
+    "/{uid}/activations",
     summary="Reactivate retired version of a ODM Condition",
     description="",
     response_model=OdmCondition,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"

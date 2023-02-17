@@ -2,6 +2,7 @@
 <div>
   <v-dialog
     :value="open"
+    @keydown.esc="cancel"
     scrollable
     persistent
     :max-width="maxWidth">
@@ -13,6 +14,15 @@
           :help-text="helpText"
           :items="helpItems"
           />
+        <v-btn
+          v-if="formUrl"
+          color="secondary"
+          class="ml-2"
+          small
+          @click="copyUrl"
+          >
+          {{  $t('_global.copy_link') }}
+        </v-btn>
       </v-card-title>
       <v-divider></v-divider>
       <v-card-text>
@@ -39,6 +49,7 @@
           color="secondary"
           @click="submit"
           :loading="working"
+          v-if="!noSaving"
           >
           {{ $t('_global.save') }}
         </v-btn>
@@ -69,7 +80,12 @@ export default {
     maxWidth: {
       type: String,
       default: '800px'
-    }
+    },
+    noSaving: {
+      type: Boolean,
+      default: false
+    },
+    formUrl: String
   },
   data () {
     return {
@@ -77,6 +93,9 @@ export default {
     }
   },
   methods: {
+    copyUrl () {
+      navigator.clipboard.writeText(this.formUrl)
+    },
     cancel () {
       this.$emit('close')
     },

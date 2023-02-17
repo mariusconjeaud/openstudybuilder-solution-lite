@@ -110,6 +110,15 @@ class StudyEpochVO:
             return None
         return self.first_visit.study_day_number
 
+    def get_start_week(self):
+        if len(self._visits) == 0:
+            # if epoch is not the last one and not the first one, then we return the study week of the visit
+            # from the previous epoch as start week to display empty epochs as well
+            if self.next_visit and self.previous_visit:
+                return self.previous_visit.study_week_number
+            return None
+        return self.first_visit.study_week_number
+
     def get_end_day(self):
         if len(self._visits) == 0:
             # if epoch is not the last one, then we return the study day of the next visit
@@ -130,6 +139,27 @@ class StudyEpochVO:
         if len(self._visits) == 1:
             return self.get_start_day() + FIXED_WEEK_PERIOD
         return self.last_visit.study_day_number
+
+    def get_end_week(self):
+        if len(self._visits) == 0:
+            # if epoch is not the last one, then we return the study week of the next visit
+            # int the next epoch as we want to display empty epochs as well
+            if self.next_visit:
+                return self.next_visit.study_week_number
+            return None
+
+        if self.next_visit:
+            # if next visit exists in next epoch (it's not empty epoch) then return it study week
+            if self._is_next_visit_in_next_epoch:
+                return self.next_visit.study_week_number
+            # next epoch is empty return study week of last visit in current epoch as end week
+            return self.last_visit.study_week_number
+        # if next visit doesn't exist it means that this is the last epoch
+        # if there is one visit in last epoch we want to add a fixed 7 day period to the epoch duration
+        # to display it in the visit overview
+        if len(self._visits) == 1:
+            return self.get_start_week() + 1
+        return self.last_visit.study_week_number
 
     @property
     def calculated_duration(self):

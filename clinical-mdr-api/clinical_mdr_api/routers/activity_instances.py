@@ -224,7 +224,7 @@ def create(
 
 
 @router.post(
-    "/activity-instances/{uid}/approve",
+    "/activity-instances/{uid}/approvals",
     summary="Approve draft version of an activity instance",
     description="""
 State before:
@@ -268,8 +268,8 @@ def approve(
     return activity_instance_service.approve(uid=uid)
 
 
-@router.post(
-    "/activity-instances/{uid}/inactivate",
+@router.delete(
+    "/activity-instances/{uid}/activations",
     summary=" Inactivate final version of an activity instance",
     description="""
 State before:
@@ -289,9 +289,9 @@ Possible errors:
  - Invalid uid or status not Final.
     """,
     response_model=ActivityInstance,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -313,7 +313,7 @@ def inactivate(
 
 
 @router.post(
-    "/activity-instances/{uid}/reactivate",
+    "/activity-instances/{uid}/activations",
     summary="Reactivate retired version of an activity instance",
     description="""
 State before:
@@ -333,9 +333,9 @@ Possible errors:
  - Invalid uid or status not Retired.
     """,
     response_model=ActivityInstance,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"

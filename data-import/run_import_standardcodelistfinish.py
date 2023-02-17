@@ -6,7 +6,7 @@ from aiohttp_trace import request_tracer
 
 from importers.functions.utils import create_logger, load_env
 from importers.importer import BaseImporter, open_file, open_file_async
-from importers.functions.parsers import map_boolean, pass_float
+from importers.functions.parsers import map_boolean, parse_float
 
 logger = create_logger("legacy_mdr_migrations")
 
@@ -54,17 +54,17 @@ class StandardCodelistFinish(BaseImporter):
             data = dosage_form[_class](row, headers)
             # Start a new version
             self.api.post_to_api(
-                {"path": "/ct/terms/" + data["uid"] + "/names/versions", "body": {}}
+                {"path": f"/ct/terms/{data['uid']}/names/versions", "body": {}}
             )
             # path the names
             res = self.api.simple_patch(
-                data["body"], "/ct/terms/" + data["uid"] + "/names", "/ct/terms/names"
+                data["body"], f"/ct/terms/{data['uid']}/names", "/ct/terms/names"
             )
             # Approve
             if res is not None:
                 # Approve Names
                 self.api.simple_approve2(
-                    "/ct/terms", f"/{res['term_uid']}/names/approve", label="Names"
+                    "/ct/terms", f"/{res['term_uid']}/names/approvals", label="Names"
                 )
 
     def run(self):

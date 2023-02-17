@@ -1,13 +1,18 @@
-from importers.importer import BaseImporter, open_file, open_file_async
-from importers.api_bindings import CODELIST_NAME_MAP, CODELIST_ROUTE_OF_ADMINISTRATION, CODELIST_DOSAGE_FORM, CODELIST_DELIVERY_DEVICE, CODELIST_COMPOUND_DISPENSED_IN
+from importers.importer import BaseImporter, open_file
+from importers.api_bindings import CODELIST_NAME_MAP, \
+    CODELIST_ROUTE_OF_ADMINISTRATION, \
+    CODELIST_DOSAGE_FORM, \
+    CODELIST_DELIVERY_DEVICE, \
+    CODELIST_COMPOUND_DISPENSED_IN, \
+    CODELIST_SDTM_DOMAIN_ABBREVIATION
+
 from importers.metrics import Metrics
 import csv
-from importers.functions.parsers import (
-    map_boolean,
-    map_boolean_exc,
-    update_uid_list_dict,
-)
+from importers.functions.parsers import map_boolean
 from importers.functions.utils import load_env
+from importers.api_bindings import UNIT_SUBSET_AGE, \
+    UNIT_SUBSET_DOSE, \
+    UNIT_SUBSET_STRENGTH
 
 import json
 
@@ -92,22 +97,22 @@ class Compounds(BaseImporter):
     def __init__(self, api=None, metrics_inst=None, cache=None):
         super().__init__(api=api, metrics_inst=metrics_inst, cache=cache)
         self.dose_units = self.api.get_all_identifiers(
-            self.api.get_all_from_api("/concepts/unit-definitions?subset=Dose Unit"),
+            self.api.get_all_from_api(f"/concepts/unit-definitions?subset={UNIT_SUBSET_DOSE}"),
             identifier="name",
             value="uid",
         )
         self.age_units = self.api.get_all_identifiers(
-            self.api.get_all_from_api("/concepts/unit-definitions?subset=Age Unit"),
+            self.api.get_all_from_api(f"/concepts/unit-definitions?subset={UNIT_SUBSET_AGE}"),
             identifier="name",
             value="uid",
         )
         self.strength_units = self.api.get_all_identifiers(
-            self.api.get_all_from_api("/concepts/unit-definitions?subset=Strength Unit"),
+            self.api.get_all_from_api(f"/concepts/unit-definitions?subset={UNIT_SUBSET_STRENGTH}"),
             identifier="name",
             value="uid",
         )
         self.sdtm_domains = self.api.get_all_from_api(
-            "/ct/terms?codelist_name=SDTM Domain Abbreviation"
+            f"/ct/terms?codelist_name={CODELIST_SDTM_DOMAIN_ABBREVIATION}"
         )
 
     def add_numeric_values(self, values, units, available_units):
@@ -258,12 +263,12 @@ class Compounds(BaseImporter):
                     data["body"]["substance_terms_uids"] = term_uids
             if row[headers.index("SPONSOR_YN")] != "":
                 try:
-                    data["body"]["is_sponsor_compound"] = map_boolean_exc(row[headers.index("SPONSOR_YN")])
+                    data["body"]["is_sponsor_compound"] = map_boolean(row[headers.index("SPONSOR_YN")], raise_exception=True)
                 except ValueError:
                     pass
             if row[headers.index("INN_YN")] != "":
                 try:
-                    data["body"]["is_name_inn"] = map_boolean_exc(row[headers.index("INN_YN")])
+                    data["body"]["is_name_inn"] = map_boolean(row[headers.index("INN_YN")], raise_exception=True)
                 except ValueError:
                     pass
             # print("--- compound to post")

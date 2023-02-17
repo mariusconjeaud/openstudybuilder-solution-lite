@@ -20,9 +20,9 @@ MANDATORY_MAPPER_FIELDS = {
 
 def map_xml(xml_document: Document, mapper: Optional[UploadFile]):
     """
-    Transform XML Tags and Attributes according to provided CSV mapper configuration.
-    - Rename XML Tags and XML Attributes.
-    - Create XML Alias Tag based on XML Attributes.
+    Transform XML Elements and Attributes according to provided CSV mapper configuration.
+    - Rename XML Elements and XML Attributes.
+    - Create XML Alias Element based on XML Attributes.
     """
     if not mapper:
         return
@@ -48,8 +48,8 @@ def map_xml(xml_document: Document, mapper: Optional[UploadFile]):
                 parent,
                 (mapping["to_alias"].casefold() == "true"),
             )
-        elif mapping["type"] == "tag":
-            _map_tags(
+        elif mapping["type"] == "element":
+            _map_elements(
                 xml_document,
                 mapping["from_name"],
                 mapping["to_name"],
@@ -59,18 +59,18 @@ def map_xml(xml_document: Document, mapper: Optional[UploadFile]):
             )
 
 
-def _get_tags(xml_document: Document, name: str, parent: str):
+def _get_elements(xml_document: Document, name: str, parent: str):
     if parent == "*":
         return xml_document.getElementsByTagName(name)
 
-    tags = []
-    parent_tags = xml_document.getElementsByTagName(parent)
-    for parent_tag in parent_tags:
-        tags += parent_tag.getElementsByTagName(name)
-    return tags
+    elements = []
+    parent_elements = xml_document.getElementsByTagName(parent)
+    for parent_element in parent_elements:
+        elements += parent_element.getElementsByTagName(name)
+    return elements
 
 
-def _map_tags(
+def _map_elements(
     xml_document: Document,
     from_name: str,
     to_name: str,
@@ -78,20 +78,20 @@ def _map_tags(
     from_alias: bool = False,
     alias_context: Optional[str] = None,
 ):
-    tags = _get_tags(xml_document, from_name, parent)
+    elements = _get_elements(xml_document, from_name, parent)
 
-    for tag in tags:
-        if from_alias and alias_context == tag.getAttribute("Context"):
-            tag.parentNode.setAttribute(
-                tag.getAttribute("Context"), tag.getAttribute("Name")
+    for element in elements:
+        if from_alias and alias_context == element.getAttribute("Context"):
+            element.parentNode.setAttribute(
+                element.getAttribute("Context"), element.getAttribute("Name")
             )
-            tag.parentNode.removeChild(tag)
+            element.parentNode.removeChild(element)
         else:
-            tag.tagName = to_name
-            tag.nodeName = to_name
+            element.tagName = to_name
+            element.nodeName = to_name
             if ":" in to_name:
                 prefix, _ = to_name.split(":")
-                tag.prefix = prefix
+                element.prefix = prefix
 
 
 def _map_attributes(
@@ -101,19 +101,19 @@ def _map_attributes(
     parent: str,
     to_alias: bool = False,
 ):
-    tags = xml_document.getElementsByTagName(parent)
+    elements = xml_document.getElementsByTagName(parent)
 
-    for tag in tags:
-        tag_attribute_value = tag.getAttribute(from_name)
-        if tag_attribute_value and to_alias:
-            alias_tag = xml_document.createElement("Alias")
-            alias_tag.setAttribute("Name", tag_attribute_value)
-            alias_tag.setAttribute("Context", from_name)
-            tag.appendChild(alias_tag)
-        elif tag_attribute_value:
-            tag.removeAttribute(from_name)
+    for element in elements:
+        element_attribute_value = element.getAttribute(from_name)
+        if element_attribute_value and to_alias:
+            alias_element = xml_document.createElement("Alias")
+            alias_element.setAttribute("Name", element_attribute_value)
+            alias_element.setAttribute("Context", from_name)
+            element.appendChild(alias_element)
+        elif element_attribute_value:
+            element.removeAttribute(from_name)
             if ":" in to_name:
                 prefix, _ = to_name.split(":")
-                tag.setAttributeNS(prefix, to_name, tag_attribute_value)
+                element.setAttributeNS(prefix, to_name, element_attribute_value)
             else:
-                tag.setAttribute(to_name, tag_attribute_value)
+                element.setAttribute(to_name, element_attribute_value)

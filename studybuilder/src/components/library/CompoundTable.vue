@@ -2,7 +2,7 @@
 <div>
   <n-n-table
     :headers="headers"
-    :items="compounds"
+    :items="formatedCompounds"
     :server-items-length="total"
     :options.sync="options"
     item-key="uid"
@@ -33,54 +33,10 @@
         :item="item"
         />
     </template>
-    <template v-slot:item.is_sponsor_compound="{ item }">
-      {{ item.is_sponsor_compound|yesno }}
-    </template>
     <template v-slot:item.name="{ item }">
       <router-link :to="{ name: 'CompoundOverview', params: { id: item.uid } }">
         {{ item.name }}
       </router-link>
-    </template>
-    <template v-slot:item.is_name_inn="{ item }">
-      {{ item.is_name_inn|yesno }}
-    </template>
-    <template v-slot:item.brands="{ item }">
-      {{ item.brands|names }}
-    </template>
-    <template v-slot:item.substances="{ item }">
-      {{ item.substances|substances }}
-    </template>
-    <template v-slot:item.pharmacological_classes="{ item }">
-      {{ item.substances|pharmacologicalClasses }}
-    </template>
-    <template v-slot:item.dose_values="{ item }">
-      {{ item.dose_values|numericValues }}
-    </template>
-    <template v-slot:item.strength_values="{ item }">
-      {{ item.strength_values|numericValues }}
-    </template>
-    <template v-slot:item.dosage_forms="{ item }">
-      {{ item.dosage_forms|names }}
-    </template>
-    <template v-slot:item.routes_of_administration="{ item }">
-      {{ item.routes_of_administration|names }}
-    </template>
-    <template v-slot:item.dose_frequencies="{ item }">
-      {{ item.dose_frequencies|names }}
-    </template>
-    <template v-slot:item.dispensers="{ item }">
-      {{ item.dispensers|names }}
-    </template>
-    <template v-slot:item.delivery_devices="{ item }">
-      {{ item.delivery_devices|names }}
-    </template>
-    <template v-slot:item.half_life="{ item }">
-      <template v-if="item.half_life">
-        {{ item.half_life.value }} {{ item.half_life.unit_label }}
-      </template>
-    </template>
-    <template v-slot:item.lag_times="{ item }">
-      {{ item.lag_times|lagTimes }}
     </template>
     <template v-slot:item.start_date="{ item }">
       {{ item.start_date|date }}
@@ -105,15 +61,15 @@
   </v-dialog>
   <v-dialog
     v-model="showHistory"
+    @keydown.esc="closeHistory"
     persistent
     max-width="1200px"
     >
     <history-table
+      :title="historyTitle"
       @close="closeHistory"
-      type="compound"
-      url-prefix="compounds"
-      :item="selectedCompound"
-      :title-label="$t('CompoundTable.compound')"
+      :headers="headers"
+      :items="historyItems"
       />
   </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
@@ -126,7 +82,8 @@ import { bus } from '@/main'
 import CompoundForm from './CompoundForm'
 import compounds from '@/api/concepts/compounds'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
-import HistoryTable from '@/components/library/HistoryTable'
+import dataFormating from '@/utils/dataFormating'
+import HistoryTable from '@/components/tools/HistoryTable'
 import NNTable from '@/components/tools/NNTable'
 import StatusChip from '@/components/tools/StatusChip'
 
@@ -141,6 +98,17 @@ export default {
   },
   props: {
     tabClickedAt: Number
+  },
+  computed: {
+    historyTitle () {
+      if (this.selectedCompound) {
+        return this.$t('CompoundTable.compound_history_title', { compound: this.selectedCompound.uid })
+      }
+      return ''
+    },
+    formatedCompounds () {
+      return this.transformItems(this.compounds)
+    }
   },
   data () {
     return {
@@ -221,16 +189,12 @@ export default {
         { text: this.$t('_global.version'), value: 'version' },
         { text: this.$t('_global.status'), value: 'status' }
       ],
+      historyItems: [],
       options: {},
       selectedCompound: null,
       showCompoundForm: false,
       showHistory: false,
       total: 0
-    }
-  },
-  filters: {
-    numericValues: function (value) {
-      return value.map(item => `${item.value} ${item.unit_label}`).join(', ')
     }
   },
   methods: {
@@ -265,11 +229,13 @@ export default {
       this.selectedCompound = null
     },
     editCompound (item) {
-      this.selectedCompound = item
+      // Make sure to edit the orignal compound, not the formated one
+      const orignalItem = this.compounds.find(compound => compound.uid === item.uid)
+      this.selectedCompound = orignalItem
       this.showCompoundForm = true
     },
     approveCompound (item) {
-      compounds.approve(item.uid).then(resp => {
+      compounds.approve(item.uid).then(() => {
         this.fetchItems()
         bus.$emit('notification', { msg: this.$t('CompoundTable.approve_success'), type: 'success' })
       })
@@ -284,37 +250,66 @@ export default {
       }
     },
     createNewVersion (item) {
-      compounds.newVersion(item.uid).then(resp => {
+      compounds.newVersion(item.uid).then(() => {
         this.fetchItems()
         bus.$emit('notification', { msg: this.$t('CompoundTable.new_version_success'), type: 'success' })
       })
     },
     inactivateCompound (item) {
-      compounds.inactivate(item.uid).then(resp => {
+      compounds.inactivate(item.uid).then(() => {
         this.fetchItems()
         bus.$emit('notification', { msg: this.$t('CompoundTable.inactivate_success'), type: 'success' })
       })
     },
     reactivateCompound (item) {
-      compounds.reactivate(item.uid).then(resp => {
+      compounds.reactivate(item.uid).then(() => {
         this.fetchItems()
         bus.$emit('notification', { msg: this.$t('CompoundTable.reactivate_success'), type: 'success' })
       })
     },
-    openHistory (item) {
+    async openHistory (item) {
       this.selectedCompound = item
+      const resp = await compounds.getVersions(this.selectedCompound.uid)
+      this.historyItems = this.transformItems(resp.data)
       this.showHistory = true
     },
     closeHistory () {
       this.showHistory = false
+    },
+    transformItems (items) {
+      const result = []
+      for (const item of items) {
+        const newItem = { ...item }
+        newItem.is_sponsor_compound = dataFormating.yesno(newItem.is_sponsor_compound)
+        newItem.is_name_inn = dataFormating.yesno(newItem.is_name_inn)
+        newItem.brands = dataFormating.names(newItem.brands)
+        newItem.substances = dataFormating.substances(item.substances)
+        newItem.pharmacological_classes = dataFormating.pharmacologicalClasses(item.substances)
+        newItem.dose_values = dataFormating.numericValues(newItem.dose_values)
+        newItem.strength_values = dataFormating.numericValues(newItem.strength_values)
+        newItem.dosage_forms = dataFormating.names(newItem.dosage_forms)
+        newItem.routes_of_administration = dataFormating.names(newItem.routes_of_administration)
+        newItem.dose_frequencies = dataFormating.names(newItem.dose_frequencies)
+        newItem.dispensers = dataFormating.names(newItem.dispensers)
+        newItem.delivery_devices = dataFormating.names(newItem.delivery_devices)
+        if (newItem.half_life) {
+          newItem.half_life = dataFormating.numericValue(newItem.half_life)
+        }
+        newItem.lag_times = dataFormating.lagTimes(newItem.lag_times)
+        result.push(newItem)
+      }
+      return result
     }
   },
-  mounted () {
-    this.fetchItems()
-  },
   watch: {
-    tabClickedAt (value) {
+    tabClickedAt () {
       this.fetchItems(this.filters, this.sort)
+    },
+    options: {
+      handler () {
+        this.fetchItems()
+      },
+      deep: true
     }
   }
 }

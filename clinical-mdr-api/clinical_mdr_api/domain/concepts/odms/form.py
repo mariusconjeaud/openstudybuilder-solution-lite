@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Optional, Sequence
+from typing import Callable, List, Optional
 
 from clinical_mdr_api.domain.concepts.concept_base import ConceptVO
 from clinical_mdr_api.domain.concepts.odms.odm_ar_base import OdmARBase
@@ -17,16 +17,16 @@ from clinical_mdr_api.models.utils import booltostr
 @dataclass(frozen=True)
 class OdmFormVO(ConceptVO):
     oid: Optional[str]
-    repeating: bool
+    repeating: Optional[str]
     sdtm_version: Optional[str]
     scope_uid: Optional[str]
-    description_uids: Sequence[str]
-    alias_uids: Sequence[str]
-    activity_group_uids: Sequence[str]
-    item_group_uids: Sequence[str]
-    xml_extension_attribute_uids: Sequence[str]
-    xml_extension_tag_uids: Sequence[str]
-    xml_extension_tag_attribute_uids: Sequence[str]
+    description_uids: List[str]
+    alias_uids: List[str]
+    activity_group_uids: List[str]
+    item_group_uids: List[str]
+    vendor_attribute_uids: List[str]
+    vendor_element_uids: List[str]
+    vendor_element_attribute_uids: List[str]
 
     @classmethod
     def from_repository_values(
@@ -34,15 +34,15 @@ class OdmFormVO(ConceptVO):
         oid: Optional[str],
         name: str,
         sdtm_version: Optional[str],
-        repeating: bool,
+        repeating: Optional[str],
         scope_uid: Optional[str],
-        description_uids: Sequence[str],
-        alias_uids: Sequence[str],
-        activity_group_uids: Sequence[str],
-        item_group_uids: Sequence[str],
-        xml_extension_tag_uids: Sequence[str],
-        xml_extension_attribute_uids: Sequence[str],
-        xml_extension_tag_attribute_uids: Sequence[str],
+        description_uids: List[str],
+        alias_uids: List[str],
+        activity_group_uids: List[str],
+        item_group_uids: List[str],
+        vendor_element_uids: List[str],
+        vendor_attribute_uids: List[str],
+        vendor_element_attribute_uids: List[str],
     ) -> "OdmFormVO":
         return cls(
             oid=oid,
@@ -54,9 +54,9 @@ class OdmFormVO(ConceptVO):
             alias_uids=alias_uids,
             activity_group_uids=activity_group_uids,
             item_group_uids=item_group_uids,
-            xml_extension_tag_uids=xml_extension_tag_uids,
-            xml_extension_attribute_uids=xml_extension_attribute_uids,
-            xml_extension_tag_attribute_uids=xml_extension_tag_attribute_uids,
+            vendor_element_uids=vendor_element_uids,
+            vendor_attribute_uids=vendor_attribute_uids,
+            vendor_element_attribute_uids=vendor_element_attribute_uids,
             name_sentence_case=None,
             definition=None,
             abbreviation=None,

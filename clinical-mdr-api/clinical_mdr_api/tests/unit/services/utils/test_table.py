@@ -24,7 +24,7 @@ TABLE = Table(
                 lambda: None,
                 [
                     "Medical-device (if applicable)",
-                    "Administered using Syringe with a Cartridge",
+                    "Administered using Syringe\nwith a newline character",
                     "Administered using Syringe with a Cartridge",
                 ],
             ),
@@ -106,13 +106,40 @@ HTML_RESULT = [
     "Comparative Treatment",
     "</td>",
     "</tr>",
+    "<tr>",
+    "<th>",
+    "Medical-device (if applicable)",
+    "</th>",
+    "<td>",
+    "Administered using Syringe",
+    "<br />",
+    "with a newline character",
+    "</td>",
+    "<td>",
+    "Administered using Syringe with a Cartridge",
+    "</td>",
+    "</tr>",
+    "<tr>",
+    '<th class="header2">',
+    "Trial product strength",
+    "</th>",
+    "<td>",
+    "10.0 U/Kg",
+    "</td>",
+    "<td>",
+    "10.0 U/Kg",
+    "</td>",
+    "</tr>",
+    "</tbody>",
+    "</table>",
+    "</body>",
+    "</html>",
 ]
 
 
 def test_table_to_html():
     doc = table_to_html(TABLE, title="Test")
-    assert doc.result[:36] == HTML_RESULT
-    assert len(doc.result) == 62
+    assert doc.result == HTML_RESULT
 
 
 def test_table_to_docx():
