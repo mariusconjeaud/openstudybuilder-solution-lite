@@ -1,9 +1,11 @@
 import dictionaries from '@/api/dictionaries'
+import study from '@/api/study'
 import terms from '@/api/controlledTerminology/terms'
 import units from '@/api/units'
 
 const state = {
   selectedStudy: null,
+  studyPreferredTimeUnit: null,
   studyTypes: [],
   trialIntentTypes: [],
   trialTypes: [],
@@ -24,6 +26,7 @@ const state = {
 
 const getters = {
   selectedStudy: state => state.selectedStudy,
+  studyPreferredTimeUnit: state => state.studyPreferredTimeUnit,
   studyTypes: state => state.studyTypes,
   trialIntentTypes: state => state.trialIntentTypes,
   trialTypes: state => state.trialTypes,
@@ -60,6 +63,9 @@ const mutations = {
   UNSELECT_STUDY (state) {
     state.selectedStudy = null
     localStorage.removeItem('selectedStudy')
+  },
+  SET_STUDY_PREFERRED_TIME_UNIT (state, timeUnit) {
+    state.studyPreferredTimeUnit = timeUnit
   },
   SET_UNITS (state, data) {
     state.units = data
@@ -115,8 +121,24 @@ const actions = {
   initialize ({ commit }) {
     const selectedStudy = localStorage.getItem('selectedStudy')
     if (selectedStudy) {
-      commit('SELECT_STUDY', JSON.parse(selectedStudy))
+      const parsedStudy = JSON.parse(selectedStudy)
+      commit('SELECT_STUDY', parsedStudy)
+      study.getStudyPreferredTimeUnit(parsedStudy.uid).then(resp => {
+        commit('SET_STUDY_PREFERRED_TIME_UNIT', resp.data)
+      })
     }
+  },
+  setStudyPreferredTimeUnit ({ commit, state }, timeUnitUid) {
+    const data = { unit_definition_uid: timeUnitUid }
+    let func
+    if (!state.studyPreferredTimeUnit) {
+      func = study.createStudyPreferredTimeUnit
+    } else {
+      func = study.updateStudyPreferredTimeUnit
+    }
+    return func(state.selectedStudy.uid, data).then(resp => {
+      commit('SET_STUDY_PREFERRED_TIME_UNIT', resp.data)
+    })
   },
   fetchUnits ({ commit, state }) {
     units.getBySubset('Study Time').then(resp => {

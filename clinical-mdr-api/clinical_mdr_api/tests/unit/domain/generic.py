@@ -169,9 +169,9 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
         """
         if self.uid is None:
             object_name = (
-                self.__class__.__name__[: len(self.__class__.__name__) - 4]
-                if self.__class__.__name__.endswith("Root")
-                else self.__class__.__name__
+                type(self).__name__[: len(type(self).__name__) - 4]
+                if type(self).__name__.endswith("Root")
+                else type(self).__name__
             )
 
             new_uid = db.cypher_query(

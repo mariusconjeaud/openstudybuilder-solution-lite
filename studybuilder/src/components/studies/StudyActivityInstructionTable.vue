@@ -29,7 +29,7 @@
       </v-icon>
     </v-btn>
   </div>
-  <table>
+  <table :aria-label="$t('StudyActivityInstructionTable.table_caption')">
     <thead>
       <tr>
         <th width="5%"></th>
@@ -217,7 +217,7 @@ export default {
       return currentValue
     },
     getDisplayButtonIcon (rowKey) {
-      return (this.getCurrentDisplayValue(rowKey)) ? 'mdi-chevron-up' : 'mdi-chevron-down'
+      return (this.getCurrentDisplayValue(rowKey)) ? 'mdi-chevron-down' : 'mdi-chevron-right'
     },
     async getInstructionsPerActivity () {
       this.instructionsPerStudyActivity = {}

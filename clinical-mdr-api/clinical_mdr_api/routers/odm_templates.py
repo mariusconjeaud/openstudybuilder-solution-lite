@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Sequence
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
@@ -261,7 +261,7 @@ def create_odm_template_version(uid: str = OdmTemplateUID):
 
 
 @router.post(
-    "/{uid}/approve",
+    "/{uid}/approvals",
     summary="Approve draft version of ODM Template",
     description="",
     response_model=OdmTemplate,
@@ -286,14 +286,14 @@ def approve_odm_template(uid: str = OdmTemplateUID):
     return odm_template_service.approve(uid=uid)
 
 
-@router.post(
-    "/{uid}/inactivate",
+@router.delete(
+    "/{uid}/activations",
     summary=" Inactivate final version of ODM Template",
     description="",
     response_model=OdmTemplate,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -312,13 +312,13 @@ def inactivate_odm_template(uid: str = OdmTemplateUID):
 
 
 @router.post(
-    "/{uid}/reactivate",
+    "/{uid}/activations",
     summary="Reactivate retired version of a ODM Template",
     description="",
     response_model=OdmTemplate,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -363,7 +363,7 @@ def add_forms_to_odm_template(
         False,
         description="If true, all existing form relationships will be replaced with the provided form relationships.",
     ),
-    odm_template_form_post_input: Sequence[OdmTemplateFormPostInput] = Body(
+    odm_template_form_post_input: List[OdmTemplateFormPostInput] = Body(
         None, description=""
     ),
 ):

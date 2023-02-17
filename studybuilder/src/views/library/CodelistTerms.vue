@@ -4,8 +4,8 @@
     {{ codelistAttributes.name }} ({{ $route.params.codelist_id }}) - {{ codelistAttributes.submission_value }} / {{ $t('CodelistTermsView.terms_listing') }}
   </div>
   <codelist-term-table
-    :catalogueName="$route.params.catalogue_name"
-    :codelistUid="$route.params.codelist_id"
+    :catalogue-name="$route.params.catalogue_name"
+    :codelist-uid="$route.params.codelist_id"
     />
 </div>
 </template>

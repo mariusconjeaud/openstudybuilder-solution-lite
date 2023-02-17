@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import List, Optional
 
 from neomodel import db
 
@@ -100,7 +100,7 @@ class MethodRepository(OdmGenericRepository[OdmMethodAR]):
         return odm_method_ar
 
     def specific_alias_clause(
-        self, only_specific_status: Optional[Sequence[str]] = None
+        self, only_specific_status: Optional[List[str]] = None
     ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]

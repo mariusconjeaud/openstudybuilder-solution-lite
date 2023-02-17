@@ -285,7 +285,7 @@
          "headers": {},
          "method": "POST",
          "request": {},
-         "url": "/concepts/activities/activity-instances/Reminder_000001/approve"
+         "url": "/concepts/activities/activity-instances/Reminder_000001/approvals"
       },
       "response": {
          "code": 201,
@@ -519,7 +519,7 @@
          "headers": {},
          "method": "POST",
          "request": {},
-         "url": "/concepts/activities/activity-instances/Reminder_000001/approve"
+         "url": "/concepts/activities/activity-instances/Reminder_000001/approvals"
       },
       "response": {
          "code": 201,
@@ -596,15 +596,15 @@
       }
    },
    {
-      "name": "Test POST inactivate reminder",
+      "name": "Test DELETE activations reminder",
       "request": {
          "headers": {},
-         "method": "POST",
+         "method": "DELETE",
          "request": {},
-         "url": "/concepts/activities/activity-instances/Reminder_000001/inactivate"
+         "url": "/concepts/activities/activity-instances/Reminder_000001/activations"
       },
       "response": {
-         "code": 201,
+         "code": 200,
          "headers": {},
          "result": {
             "uid": "Reminder_000001",
@@ -668,7 +668,7 @@
             "end_date": null,
             "status": "Retired",
             "version": "2.0",
-            "change_description": "Deactivated version",
+            "change_description": "Inactivated version",
             "user_initials": "TODO user initials",
             "possible_actions": [
                "reactivate"
@@ -677,15 +677,15 @@
       }
    },
    {
-      "name": "Test POST reactivate reminder",
+      "name": "Test POST activations reminder",
       "request": {
          "headers": {},
          "method": "POST",
          "request": {},
-         "url": "/concepts/activities/activity-instances/Reminder_000001/reactivate"
+         "url": "/concepts/activities/activity-instances/Reminder_000001/activations"
       },
       "response": {
-         "code": 201,
+         "code": 200,
          "headers": {},
          "result": {
             "uid": "Reminder_000001",

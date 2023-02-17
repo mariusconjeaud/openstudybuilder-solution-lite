@@ -16,13 +16,13 @@ const knownCodelists = {
   nullValues: { attribute: 'codelist_name', value: 'Null Flavor' },
   ageUnits: { attribute: 'codelist_uid', value: 'C66781' },
   objectiveLevels: { attribute: 'codelist_name', value: 'Objective Level' },
-  units: { attribute: 'codelist_name', value: 'Unit' },
+  units: { attribute: 'codelist_uid', value: 'C71620' },
   visitTypes: { attribute: 'codelist_name', value: 'VisitType' },
   timepointReferences: { attribute: 'codelist_name', value: 'Time Point Reference' },
-  epochs: { attribute: 'codelist_name', value: 'Epoch' },
+  epochs: { attribute: 'codelist_uid', value: 'C99079' },
   epochTypes: { attribute: 'codelist_name', value: 'Epoch Type' },
   epochSubTypes: { attribute: 'codelist_name', value: 'Epoch Sub Type' },
-  sexOfParticipants: { attribute: 'codelist_name', value: 'Sex of Participants' },
+  sexOfParticipants: { attribute: 'codelist_uid', value: 'C66732' },
   objectiveCategories: { attribute: 'codelist_name', value: 'Objective Category' },
   endpointLevels: { attribute: 'codelist_name', value: 'Endpoint Level' },
   endpointSubLevels: { attribute: 'codelist_name', value: 'Endpoint Sub Level' },
@@ -43,23 +43,24 @@ const knownCodelists = {
   elementSubTypes: { attribute: 'codelist_name', value: 'Element Sub Type' },
   elementTypes: { attribute: 'codelist_name', value: 'Element Type' },
   language: { attribute: 'codelist_name', value: 'Language' },
-  sdtmDomainAbbreviation: { attribute: 'codelist_name', value: 'SDTM Domain Abbreviation' },
-  originType: { attribute: 'codelist_name', value: 'Origin Type' },
+  sdtmDomainAbbreviation: { attribute: 'codelist_uid', value: 'C66734' },
+  originType: { attribute: 'codelist_uid', value: 'C170449' },
   dataType: { attribute: 'codelist_name', value: 'Data type' },
   frequency: { attribute: 'codelist_uid', value: 'C71113' },
   deliveryDevice: { attribute: 'codelist_name', value: 'Delivery Device' },
   dispensedIn: { attribute: 'codelist_name', value: 'Compound Dispensed In' },
-  adverseEvents: { attribute: 'codelist_uid', value: 'C66734' }
+  adverseEvents: { attribute: 'codelist_uid', value: 'C66734' },
+  diseaseMilestoneTypes: { attribute: 'codelist_name', value: 'Disease Milestone Type' }
 }
 
 export default {
   getAll (params) {
     return repository.get(resource, { params })
   },
-  getByCodelist (name) {
+  getByCodelist (name, getAll) {
     const codelist = knownCodelists[name]
     if (codelist !== undefined) {
-      const params = { page_size: 100 }
+      const params = { page_size: getAll ? 0 : 100 }
       params[codelist.attribute] = codelist.value
       return repository.get(`${resource}/names`, { params })
     }

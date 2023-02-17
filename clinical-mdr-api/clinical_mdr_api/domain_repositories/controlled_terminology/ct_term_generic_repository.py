@@ -101,7 +101,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         result, _ = db.cypher_query(query, {"uid": uid})
         return len(result) > 0
 
-    def term_specific_order_by_uid(self, uid: str) -> int:
+    def term_specific_order_by_uid(self, uid: str) -> Optional[int]:
         """
         Returns the latest final version order number if a order number exists for a given term uid
         :return:
@@ -146,14 +146,26 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             return True
         return False
 
-    def get_term_attributes_by_codelist_uids(self, codelist_uids: list):
+    def get_term_name_and_attributes_by_codelist_uids(self, codelist_uids: list):
         query = """
             MATCH (codelist:CTCodelistRoot)-[:HAS_TERM]->(term_root:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(term_attr_root:CTTermAttributesRoot)-[:LATEST]->(term_attr_value:CTTermAttributesValue)
+            MATCH (term_root)-[:HAS_NAME_ROOT]->(term_name_root:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue)
             WHERE codelist.uid in $codelist_uids
-            RETURN term_root.uid as term_uid, codelist.uid as codelist_uid, term_attr_value.code_submission_value as code_submission_value, term_attr_value.preferred_term as nci_preferred_name
+            RETURN term_name_value.name as name, term_root.uid as term_uid, codelist.uid as codelist_uid, term_attr_value.code_submission_value as code_submission_value, term_attr_value.preferred_term as nci_preferred_name
             """
 
         items, prop_names = db.cypher_query(query, {"codelist_uids": codelist_uids})
+
+        return items, prop_names
+
+    def get_term_attributes_by_term_uids(self, term_uids: list):
+        query = """
+            MATCH (term_root:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(term_attr_root:CTTermAttributesRoot)-[:LATEST]->(term_attr_value:CTTermAttributesValue)
+            WHERE term_root.uid in $term_uids
+            RETURN term_root.uid as term_uid, term_attr_value.code_submission_value as code_submission_value, term_attr_value.preferred_term as nci_preferred_name
+            """
+
+        items, prop_names = db.cypher_query(query, {"term_uids": term_uids})
 
         return items, prop_names
 
@@ -189,7 +201,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         :param total_count:
         :return GenericFilteringReturn[_AggregateRootType]:
         """
-        if self.relationship_from_root not in CTTermRoot.__dict__:
+        if self.relationship_from_root not in vars(CTTermRoot):
             raise ValueError(
                 f"The relationship of type {self.relationship_from_root} "
                 f"was not found in CTTermRoot object"
@@ -277,6 +289,8 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
 
         # Add header field name to filter_by, to filter with a CONTAINS pattern
         if search_string != "":
+            if filter_by is None:
+                filter_by = {}
             filter_by[field_name] = {
                 "v": [search_string],
                 "op": ComparisonOperator.CONTAINS,
@@ -397,7 +411,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         If this custom hashkey function is not defined, most invocations of find_by_uid method will be misses.
         """
         return hashkey(
-            str(self.__class__),
+            str(type(self)),
             term_uid,
             version,
             status,

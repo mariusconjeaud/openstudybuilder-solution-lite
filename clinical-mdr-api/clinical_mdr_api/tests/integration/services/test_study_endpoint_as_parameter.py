@@ -87,7 +87,7 @@ def test_data(request: FixtureRequest):
     study_endpoint = TestUtils.create_study_endpoint(
         study_uid=study_uid,
         endpoint_template_uid=endpoint_template.uid,
-        endpoint_units=study_selection.EndpointUnits(
+        endpoint_units=study_selection.EndpointUnitsInput(
             units=[u.uid for u in unit_definitions], separator=unit_separator
         ),
         timeframe_uid=timeframe.uid,

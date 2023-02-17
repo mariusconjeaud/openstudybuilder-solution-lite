@@ -1,9 +1,63 @@
 import datetime
 import sys
 from dataclasses import dataclass, field, replace
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple
+
+from pydantic import Field
 
 from clinical_mdr_api.domain._utils import normalize_string
+from clinical_mdr_api.models.utils import BaseModel
+
+
+class EndpointUnitItem(BaseModel):
+    uid: str = Field(
+        ...,
+        title="separator",
+        description="uid of the endpoint unit",
+    )
+
+    name: Optional[str] = Field(
+        None,
+        title="name",
+        description="name of the endpoint unit",
+    )
+
+
+class EndpointUnits(BaseModel):
+    units: Optional[Tuple[EndpointUnitItem, ...]] = Field(
+        ...,
+        title="units",
+        description="list of endpoint units selected for the study endpoint",
+    )
+
+    separator: Optional[str] = Field(
+        None,
+        title="separator",
+        description="separator, if more than one endpoint units were selected for the study endpoint",
+    )
+
+
+@dataclass
+class StudyEndpointSelectionHistory:
+    """Class for selection history items"""
+
+    study_selection_uid: str
+    endpoint_uid: Optional[str]
+    endpoint_version: Optional[str]
+    endpoint_level: Optional[str]
+    endpoint_sublevel: Optional[str]
+    study_objective_uid: Optional[str]
+    timeframe_uid: Optional[str]
+    timeframe_version: Optional[str]
+    endpoint_units: Optional[EndpointUnits]
+    unit_separator: Optional[str]
+    # Study selection Versioning
+    start_date: datetime.datetime
+    user_initials: Optional[str]
+    change_type: str
+    end_date: Optional[datetime.datetime]
+    order: int
+    status: Optional[str]
 
 
 @dataclass(frozen=True)
@@ -21,7 +75,7 @@ class StudySelectionEndpointVO:
     study_objective_uid: Optional[str]
     timeframe_uid: Optional[str]
     timeframe_version: Optional[str]
-    endpoint_units: Sequence[str]
+    endpoint_units: Tuple[Dict[str, Any]]
     unit_separator: Optional[str]
     endpoint_level_order: Optional[int]
     # Study selection Versioning
@@ -70,13 +124,21 @@ class StudySelectionEndpointVO:
         if start_date is None:
             start_date = datetime.datetime.now(datetime.timezone.utc)
 
-        if endpoint_units is not None:
-            units = []
+        if endpoint_units:
+            # built-in dict remembers insertion order (guaranteed since Python 3.7)
+            units = {}
             for unit in endpoint_units:
-                units.append(normalize_string(unit))
-            units = tuple(units)
+                unit = {
+                    k: normalize_string(v) if isinstance(v, str) else v
+                    for k, v in unit.items()
+                }
+                if unit["uid"]:
+                    units[unit["uid"]] = unit
+            units = tuple(units.values())
+
         else:
             units = tuple()
+
         # returns a new instance of the VO
         return StudySelectionEndpointVO(
             study_uid=study_uid,
@@ -137,7 +199,7 @@ class StudySelectionEndpointVO:
         # check that if there are more than one unit then there need to be a separator
         if len(self.endpoint_units) > 1 and self.unit_separator is None:
             raise ValueError(
-                f"If the endpoint units have move than one value then a separator is needed ({self.endpoint_units})"
+                "In case of more than one endpoint units, a unit separator is required."
             )
         if self.unit_separator is not None and len(self.endpoint_units) < 2:
             raise ValueError(
@@ -158,9 +220,12 @@ class StudySelectionEndpointVO:
                 f"There is no approved endpoint sub level identified by provided term uid ({self.endpoint_sublevel_uid})"
             )
         for unit in self.endpoint_units:
-            if not unit_definition_exists_callback(unit):
+            uid = unit.get("uid")
+            if not uid:
+                raise ValueError(f"There is no uid for unit definition {unit}")
+            if not unit_definition_exists_callback(uid):
                 raise ValueError(
-                    f"There is no approved unit definition identified by provided uid ({unit})"
+                    f"There is no approved unit definition identified by provided uid ({uid})"
                 )
 
     def update_endpoint_version(self, endpoint_version: str):
@@ -320,8 +385,8 @@ class StudySelectionEndpointsAR:
                     ):
                         updated_selections.append(selected_value)
                         if (
-                            not selection.study_selection_uid
-                            == selected_value.study_selection_uid
+                            selection.study_selection_uid
+                            != selected_value.study_selection_uid
                         ):
                             updated_selections.append(selection)
                     else:

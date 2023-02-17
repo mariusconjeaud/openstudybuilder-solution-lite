@@ -113,6 +113,7 @@ export default {
       options: {},
       total: 0,
       arms: [],
+      branchArms: {},
       elements: [],
       cells: {},
       matrix: [],
@@ -144,30 +145,35 @@ export default {
         page_size: this.options.itemsPerPage,
         total_count: true
       }
-      let matrixPushStack = []
-      arms.getAllForStudy(this.selectedStudy.uid, params).then(resp => {
+      await arms.getAllForStudy(this.selectedStudy.uid, params).then(async resp => {
         this.arms = resp.data.items
         this.total = resp.data.total
         this.matrix = []
-        matrixPushStack = []
-        for (let i = 0; i < this.arms.length; i++) {
-          const el = this.arms[i]
-          arms.getAllBranchesForArm(this.selectedStudy.uid, el.arm_uid).then(resp => {
-            if (resp.data.length === 0) {
-              // making a stack of what has to be pushed in this.matrix
-              matrixPushStack.push({ uid: el.arm_uid, arms: el.name, armColor: el.arm_colour, order: el.order })
-            } else {
-              resp.data.forEach(value => {
-                // making a stack of what has to be pushed in this.matrix
-                matrixPushStack.push({ id: value.branch_arm_uid, uid: el.arm_uid, arms: el.name, armColor: value.arm_root.arm_colour, branches: value.name, branchColor: value.colour_code, order: el.order })
-              })
-            }
-            // making this.matrix.push() in the right order
-            this.matrixPushCalls(matrixPushStack)
+        this.branchArms = {}
+        for (const el of this.arms) {
+          await arms.getAllBranchesForArm(this.selectedStudy.uid, el.arm_uid).then(resp => {
+            this.branchArms[el.arm_uid] = resp.data
           })
         }
-        this.loading = false
       })
+      this.buildMatrix()
+      this.loading = false
+    },
+    async buildMatrix () {
+      const matrixPushStack = []
+      for (const el of this.arms) {
+        if (this.branchArms[el.arm_uid].length === 0) {
+          // making a stack of what has to be pushed in this.matrix
+          matrixPushStack.push({ uid: el.arm_uid, arms: el.name, armColor: el.arm_colour, order: el.order })
+        } else {
+          this.branchArms[el.arm_uid].forEach(value => {
+            // making a stack of what has to be pushed in this.matrix
+            matrixPushStack.push({ id: value.branch_arm_uid, uid: el.arm_uid, arms: el.name, armColor: value.arm_root.arm_colour, branches: value.name, branchColor: value.colour_code, order: el.order })
+          })
+        }
+      }
+      // making this.matrix.push() in the right order
+      this.matrixPushCalls(matrixPushStack)
     },
     async fetchStudyElements () {
       return arms.getStudyElements(this.selectedStudy.uid, { page_size: 0 }).then(resp => {
@@ -201,6 +207,7 @@ export default {
     },
     cancel () {
       this.editMode = false
+      this.buildMatrix()
     }
   },
   async mounted () {

@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Sequence, Union
+from typing import Callable, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -7,12 +7,13 @@ from clinical_mdr_api.domain.concepts.odms.alias import OdmAliasAR
 from clinical_mdr_api.domain.concepts.odms.description import OdmDescriptionAR
 from clinical_mdr_api.domain.concepts.odms.form import OdmFormAR, OdmFormRefVO
 from clinical_mdr_api.domain.concepts.odms.item_group import OdmItemGroupRefVO
-from clinical_mdr_api.domain.concepts.odms.xml_extension_attribute import (
-    OdmXmlExtensionAttributeRelationVO,
-    OdmXmlExtensionAttributeTagRelationVO,
+from clinical_mdr_api.domain.concepts.odms.vendor_attribute import (
+    OdmVendorAttributeAR,
+    OdmVendorAttributeRelationVO,
+    OdmVendorElementAttributeRelationVO,
 )
-from clinical_mdr_api.domain.concepts.odms.xml_extension_tag import (
-    OdmXmlExtensionTagRelationVO,
+from clinical_mdr_api.domain.concepts.odms.vendor_element import (
+    OdmVendorElementRelationVO,
 )
 from clinical_mdr_api.domain.concepts.utils import RelationType
 from clinical_mdr_api.domain.controlled_terminology.ct_term_attributes import (
@@ -26,19 +27,18 @@ from clinical_mdr_api.models.concept import (
 )
 from clinical_mdr_api.models.ct_term import SimpleCTTermAttributes
 from clinical_mdr_api.models.odm_alias import OdmAliasSimpleModel
+from clinical_mdr_api.models.odm_common_models import OdmRefVendorPostInput
 from clinical_mdr_api.models.odm_description import (
     OdmDescriptionBatchPatchInput,
     OdmDescriptionPostInput,
     OdmDescriptionSimpleModel,
 )
 from clinical_mdr_api.models.odm_item_group import OdmItemGroupRefModel
-from clinical_mdr_api.models.odm_xml_extension_attribute import (
-    OdmXmlExtensionAttributeRelationModel,
-    OdmXmlExtensionTagAttributeRelationModel,
+from clinical_mdr_api.models.odm_vendor_attribute import (
+    OdmVendorAttributeRelationModel,
+    OdmVendorElementAttributeRelationModel,
 )
-from clinical_mdr_api.models.odm_xml_extension_tag import (
-    OdmXmlExtensionTagRelationModel,
-)
+from clinical_mdr_api.models.odm_vendor_element import OdmVendorElementRelationModel
 from clinical_mdr_api.models.utils import booltostr
 
 
@@ -47,13 +47,13 @@ class OdmForm(ConceptModel):
     repeating: Optional[str]
     sdtm_version: Optional[str]
     scope: Optional[SimpleCTTermAttributes]
-    descriptions: Sequence[OdmDescriptionSimpleModel]
-    aliases: Sequence[OdmAliasSimpleModel]
-    activity_groups: Sequence[ActivityHierarchySimpleModel]
-    item_groups: Sequence[OdmItemGroupRefModel]
-    xml_extension_tags: Sequence[OdmXmlExtensionTagRelationModel]
-    xml_extension_attributes: Sequence[OdmXmlExtensionAttributeRelationModel]
-    xml_extension_tag_attributes: Sequence[OdmXmlExtensionTagAttributeRelationModel]
+    descriptions: List[OdmDescriptionSimpleModel]
+    aliases: List[OdmAliasSimpleModel]
+    activity_groups: List[ActivityHierarchySimpleModel]
+    item_groups: List[OdmItemGroupRefModel]
+    vendor_elements: List[OdmVendorElementRelationModel]
+    vendor_attributes: List[OdmVendorAttributeRelationModel]
+    vendor_element_attributes: List[OdmVendorElementAttributeRelationModel]
     possible_actions: List[str]
 
     @classmethod
@@ -67,14 +67,17 @@ class OdmForm(ConceptModel):
         find_odm_item_group_by_uid_with_form_relation: Callable[
             [str, str], Optional[OdmItemGroupRefVO]
         ],
-        find_odm_xml_extension_tag_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType], Optional[OdmXmlExtensionTagRelationVO]
+        find_odm_vendor_attribute_by_uid: Callable[
+            [str], Optional[OdmVendorAttributeAR]
         ],
-        find_odm_xml_extension_attribute_by_uid_with_odm_element_relation: Callable[
+        find_odm_vendor_element_by_uid_with_odm_element_relation: Callable[
+            [str, str, RelationType], Optional[OdmVendorElementRelationVO]
+        ],
+        find_odm_vendor_attribute_by_uid_with_odm_element_relation: Callable[
             [str, str, RelationType, bool],
             Union[
-                OdmXmlExtensionAttributeRelationVO,
-                OdmXmlExtensionAttributeTagRelationVO,
+                OdmVendorAttributeRelationVO,
+                OdmVendorElementAttributeRelationVO,
                 None,
             ],
         ],
@@ -132,45 +135,46 @@ class OdmForm(ConceptModel):
                         uid=item_group_uid,
                         form_uid=odm_form_ar._uid,
                         find_odm_item_group_by_uid_with_form_relation=find_odm_item_group_by_uid_with_form_relation,
+                        find_odm_vendor_attribute_by_uid=find_odm_vendor_attribute_by_uid,
                     )
                     for item_group_uid in odm_form_ar.concept_vo.item_group_uids
                 ],
                 key=lambda item: item.order_number,
             ),
-            xml_extension_tags=sorted(
+            vendor_elements=sorted(
                 [
-                    OdmXmlExtensionTagRelationModel.from_uid(
-                        uid=xml_extension_tag_uid,
+                    OdmVendorElementRelationModel.from_uid(
+                        uid=vendor_element_uid,
                         odm_element_uid=odm_form_ar._uid,
                         odm_element_type=RelationType.FORM,
-                        find_by_uid_with_odm_element_relation=find_odm_xml_extension_tag_by_uid_with_odm_element_relation,
+                        find_by_uid_with_odm_element_relation=find_odm_vendor_element_by_uid_with_odm_element_relation,
                     )
-                    for xml_extension_tag_uid in odm_form_ar.concept_vo.xml_extension_tag_uids
+                    for vendor_element_uid in odm_form_ar.concept_vo.vendor_element_uids
                 ],
                 key=lambda item: item.name,
             ),
-            xml_extension_attributes=sorted(
+            vendor_attributes=sorted(
                 [
-                    OdmXmlExtensionAttributeRelationModel.from_uid(
-                        uid=xml_extension_attribute_uid,
+                    OdmVendorAttributeRelationModel.from_uid(
+                        uid=vendor_attribute_uid,
                         odm_element_uid=odm_form_ar._uid,
                         odm_element_type=RelationType.FORM,
-                        find_by_uid_with_odm_element_relation=find_odm_xml_extension_attribute_by_uid_with_odm_element_relation,
-                        xml_extension_tag_attribute=False,
+                        find_by_uid_with_odm_element_relation=find_odm_vendor_attribute_by_uid_with_odm_element_relation,
+                        vendor_element_attribute=False,
                     )
-                    for xml_extension_attribute_uid in odm_form_ar.concept_vo.xml_extension_attribute_uids
+                    for vendor_attribute_uid in odm_form_ar.concept_vo.vendor_attribute_uids
                 ],
                 key=lambda item: item.name,
             ),
-            xml_extension_tag_attributes=sorted(
+            vendor_element_attributes=sorted(
                 [
-                    OdmXmlExtensionTagAttributeRelationModel.from_uid(
-                        uid=xml_extension_tag_attribute_uid,
+                    OdmVendorElementAttributeRelationModel.from_uid(
+                        uid=vendor_element_attribute_uid,
                         odm_element_uid=odm_form_ar._uid,
                         odm_element_type=RelationType.FORM,
-                        find_by_uid_with_odm_element_relation=find_odm_xml_extension_attribute_by_uid_with_odm_element_relation,
+                        find_by_uid_with_odm_element_relation=find_odm_vendor_attribute_by_uid_with_odm_element_relation,
                     )
-                    for xml_extension_tag_attribute_uid in odm_form_ar.concept_vo.xml_extension_tag_attribute_uids
+                    for vendor_element_attribute_uid in odm_form_ar.concept_vo.vendor_element_attribute_uids
                 ],
                 key=lambda item: item.name,
             ),
@@ -231,9 +235,9 @@ class OdmFormPostInput(ConceptPostInput):
     oid: Optional[str]
     sdtm_version: Optional[str]
     repeating: str
-    scope_uid: Optional[str]
-    descriptions: Sequence[Union[OdmDescriptionPostInput, str]]
-    alias_uids: Sequence[str]
+    scope_uid: Optional[str] = None
+    descriptions: List[Union[OdmDescriptionPostInput, str]]
+    alias_uids: List[str]
 
 
 class OdmFormPatchInput(ConceptPatchInput):
@@ -241,18 +245,18 @@ class OdmFormPatchInput(ConceptPatchInput):
     sdtm_version: Optional[str]
     repeating: Optional[str]
     scope_uid: Optional[str]
-    descriptions: Sequence[
+    descriptions: List[
         Union[OdmDescriptionBatchPatchInput, OdmDescriptionPostInput, str]
     ]
-    alias_uids: Sequence[str]
+    alias_uids: List[str]
 
 
 class OdmFormItemGroupPostInput(BaseModel):
     uid: str
     order_number: int
     mandatory: str
-    locked: str = "No"
     collection_exception_condition_oid: Optional[str]
+    vendor: OdmRefVendorPostInput
 
 
 class OdmFormActivityGroupPostInput(BaseModel):

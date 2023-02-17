@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import List, Optional
 
 from clinical_mdr_api.domain.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.domain.concepts.odms.form import (
@@ -70,17 +70,17 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
                 item_group_uids=[
                     item_group.uid for item_group in root.item_group_ref.all()
                 ],
-                xml_extension_tag_uids=[
-                    xml_extension_tag.uid
-                    for xml_extension_tag in root.has_xml_extension_tag.all()
+                vendor_element_uids=[
+                    vendor_element.uid
+                    for vendor_element in root.has_vendor_element.all()
                 ],
-                xml_extension_attribute_uids=[
-                    xml_extension_attribute.uid
-                    for xml_extension_attribute in root.has_xml_extension_attribute.all()
+                vendor_attribute_uids=[
+                    vendor_attribute.uid
+                    for vendor_attribute in root.has_vendor_attribute.all()
                 ],
-                xml_extension_tag_attribute_uids=[
-                    xml_extension_tag_attribute.uid
-                    for xml_extension_tag_attribute in root.has_xml_extension_tag_attribute.all()
+                vendor_element_attribute_uids=[
+                    vendor_element_attribute.uid
+                    for vendor_element_attribute in root.has_vendor_element_attribute.all()
                 ],
             ),
             library=LibraryVO.from_input_values_2(
@@ -106,12 +106,10 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
                 alias_uids=input_dict.get("alias_uids"),
                 activity_group_uids=input_dict.get("activity_group_uids"),
                 item_group_uids=input_dict.get("item_group_uids"),
-                xml_extension_tag_uids=input_dict.get("xml_extension_tag_uids"),
-                xml_extension_attribute_uids=input_dict.get(
-                    "xml_extension_attribute_uids"
-                ),
-                xml_extension_tag_attribute_uids=input_dict.get(
-                    "xml_extension_tag_attribute_uids"
+                vendor_element_uids=input_dict.get("vendor_element_uids"),
+                vendor_attribute_uids=input_dict.get("vendor_attribute_uids"),
+                vendor_element_attribute_uids=input_dict.get(
+                    "vendor_element_attribute_uids"
                 ),
             ),
             library=LibraryVO.from_input_values_2(
@@ -134,7 +132,7 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
         return odm_form_ar
 
     def specific_alias_clause(
-        self, only_specific_status: Optional[Sequence[str]] = None
+        self, only_specific_status: Optional[List[str]] = None
     ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]
@@ -142,7 +140,7 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
         return f"""
         WITH *,
         concept_value.oid AS oid,
-        concept_value.repeating AS repeating,
+        toString(concept_value.repeating) AS repeating,
         concept_value.sdtm_version AS sdtm_version,
 
         head([(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[:HAS_SCOPE]->(tr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(tav:CTTermAttributesValue) | tr.uid]) AS scope_uid,
@@ -150,18 +148,18 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[:HAS_ALIAS]->(ar:OdmAliasRoot)-[:LATEST]->(av:OdmAliasValue) | {{uid: ar.uid, name: av.name, context: av.context}}] AS aliases,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[:HAS_ACTIVITY_GROUP]->(agr:ActivityGroupRoot)-[:LATEST]->(agv:ActivityGroupValue) | {{uid: agr.uid, name: agv.name}}] AS activity_groups,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[igref:ITEM_GROUP_REF]->(igr:OdmItemGroupRoot)-[:LATEST]->(igv:OdmItemGroupValue) | {{uid: igr.uid, name: igv.name, order: igref.order, mandatory: igref.mandatory}}] AS item_groups,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[hxet:HAS_XML_EXTENSION_TAG]->(xetr:OdmXmlExtensionTagRoot)-[:LATEST]->(xetv:OdmXmlExtensionTagValue) | {{uid: xetr.uid, name: xetv.name, value: hxet.value}}] AS xml_extension_tags,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[hxea:HAS_XML_EXTENSION_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, value: hxea.value}}] AS xml_extension_attributes,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[hxeta:HAS_XML_EXTENSION_TAG_ATTRIBUTE]->(xear:OdmXmlExtensionAttributeRoot)-[:LATEST]->(xeav:OdmXmlExtensionAttributeValue) | {{uid: xear.uid, name: xeav.name, value: hxeta.value}}] AS xml_extension_tag_attributes
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[hve:HAS_VENDOR_ELEMENT]->(ver:OdmVendorElementRoot)-[:LATEST]->(vev:OdmVendorElementValue) | {{uid: ver.uid, name: vev.name, value: hve.value}}] AS vendor_elements,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[hva:HAS_VENDOR_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name, value: hva.value}}] AS vendor_attributes,
+        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmFormRoot)-[hvea:HAS_VENDOR_ELEMENT_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name, value: hvea.value}}] AS vendor_element_attributes
 
         WITH *,
         [description in descriptions | description.uid] AS description_uids,
         [alias in aliases | alias.uid] AS alias_uids,
         [activity_group in activity_groups | activity_group.uid] AS activity_group_uids,
         [item_group in item_groups | item_group.uid] AS item_group_uids,
-        [xml_extension_tag in xml_extension_tags | xml_extension_tag.uid] AS xml_extension_tag_uids,
-        [xml_extension_attribute in xml_extension_attributes | xml_extension_attribute.uid] AS xml_extension_attribute_uids,
-        [xml_extension_tag_attribute in xml_extension_tag_attributes | xml_extension_tag_attribute.uid] AS xml_extension_tag_attribute_uids
+        [vendor_element in vendor_elements | vendor_element.uid] AS vendor_element_uids,
+        [vendor_attribute in vendor_attributes | vendor_attribute.uid] AS vendor_attribute_uids,
+        [vendor_element_attribute in vendor_element_attributes | vendor_element_attribute.uid] AS vendor_element_attribute_uids
         """
 
     def _get_or_create_value(

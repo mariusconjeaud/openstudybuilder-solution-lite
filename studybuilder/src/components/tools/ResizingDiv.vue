@@ -24,16 +24,16 @@ export default {
     },
     getHeight () {
       const height = window.innerHeight -
-      this.$refs.resizingDiv.getBoundingClientRect().y -
-      this.footerHeight
-      return height < 200 ? 400 : height
+        this.$refs.resizingDiv.getBoundingClientRect().y -
+        this.footerHeight
+      return height < 400 ? 400 : height
     }
   },
   updated () {
-    // const areaHeight = this.getHeight()
-    // if (areaHeight !== this.areaHeight) {
-    //   this.areaHeight = areaHeight
-    // }
+    const areaHeight = this.getHeight()
+    if (areaHeight !== this.areaHeight) {
+      this.areaHeight = areaHeight
+    }
   }
 }
 </script>

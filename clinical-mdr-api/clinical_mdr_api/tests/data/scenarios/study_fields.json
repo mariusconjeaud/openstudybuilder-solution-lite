@@ -512,7 +512,7 @@
           "date": "2021-04-12T12:03:10.066049+02:00",
           "actions": [
             {
-              "section": "IdentificationMetadata",
+              "section": "identification_metadata",
               "field": "study_acronym",
               "before_value": {
                 "term_uid": "Study-007",
@@ -532,7 +532,7 @@
           "date": "2021-04-12T12:03:09.921878+02:00",
           "actions": [
             {
-              "section": "StudyIntervention",
+              "section": "study_intervention",
               "field": "intervention_type",
               "before_value": {
                 "term_uid": "C127574",
@@ -545,7 +545,7 @@
               "action": "Edit"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "is_adaptive_design",
               "before_value": {
                 "term_uid": "true",
@@ -558,7 +558,7 @@
               "action": "Edit"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "is_extension_trial",
               "before_value": {
                 "term_uid": "false",
@@ -571,7 +571,7 @@
               "action": "Edit"
             },
             {
-              "section": "StudyIntervention",
+              "section": "study_intervention",
               "field": "planned_study_length",
               "before_value": {
                 "term_uid": "P50H",
@@ -584,7 +584,7 @@
               "action": "Edit"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "study_stop_rules",
               "before_value": {
                 "term_uid": "study_stop_rules 710",
@@ -594,7 +594,7 @@
               "action": "Delete"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "study_type_null_value_code",
               "before_value": {
                 "term_uid": "A bad reason",
@@ -617,7 +617,7 @@
               "action": "Delete"
             },
             {
-              "section": "StudyIntervention",
+              "section": "study_intervention",
               "field": "trial_intent_types",
               "before_value": {
                 "term_uid": "",
@@ -630,7 +630,7 @@
               "action": "Edit"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "trial_phase_null_value_code",
               "before_value": {
                 "term_uid": "A good reason",
@@ -650,7 +650,7 @@
           "date": "2021-04-12T12:03:09.780186+02:00",
           "actions": [
             {
-              "section": "StudyIntervention",
+              "section": "study_intervention",
               "field": "intervention_type",
               "before_value": null,
               "after_value": {
@@ -660,7 +660,7 @@
               "action": "Create"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "is_adaptive_design",
               "before_value": null,
               "after_value": {
@@ -670,7 +670,7 @@
               "action": "Create"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "is_extension_trial",
               "before_value": null,
               "after_value": {
@@ -680,7 +680,7 @@
               "action": "Create"
             },
             {
-              "section": "StudyIntervention",
+              "section": "study_intervention",
               "field": "planned_study_length",
               "before_value": null,
               "after_value": {
@@ -690,7 +690,7 @@
               "action": "Create"
             },
             {
-              "section": "IdentificationMetadata",
+              "section": "identification_metadata",
               "field": "project_number",
               "before_value": {
                 "term_uid": "123",
@@ -703,7 +703,7 @@
               "action": "Edit"
             },
             {
-              "section": "IdentificationMetadata",
+              "section": "identification_metadata",
               "field": "study_id",
               "before_value": {
                 "term_uid": "123",
@@ -716,7 +716,7 @@
               "action": "Edit"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "study_stop_rules",
               "before_value": null,
               "after_value": {
@@ -726,7 +726,7 @@
               "action": "Create"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "study_type_null_value_code",
               "before_value": null,
               "after_value": {
@@ -746,7 +746,7 @@
               "action": "Create"
             },
             {
-              "section": "StudyIntervention",
+              "section": "study_intervention",
               "field": "trial_intent_types",
               "before_value": null,
               "after_value": {
@@ -756,7 +756,7 @@
               "action": "Create"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "trial_phase_null_value_code",
               "before_value": null,
               "after_value": {
@@ -773,7 +773,7 @@
           "date": "2021-04-12T12:03:09.674255+02:00",
           "actions": [
             {
-              "section": "StudyDescription",
+              "section": "study_description",
               "field": "study_title",
               "before_value": {
                 "term_uid": "456",
@@ -790,7 +790,7 @@
           "date": "2021-04-12T12:03:09.567687+02:00",
           "actions": [
             {
-              "section": "StudyDescription",
+              "section": "study_description",
               "field": "study_title",
               "before_value": {
                 "term_uid": "123",
@@ -810,7 +810,7 @@
           "date": "2021-04-12T12:03:09.285447+02:00",
           "actions": [
             {
-              "section": "StudyDescription",
+              "section": "study_description",
               "field": "study_title",
               "before_value": null,
               "after_value": {
@@ -827,7 +827,7 @@
           "date": "2021-04-12T12:03:09.049697+02:00",
           "actions": [
             {
-              "section": "IdentificationMetadata",
+              "section": "identification_metadata",
               "field": "project_number",
               "before_value": null,
               "after_value": {
@@ -837,7 +837,7 @@
               "action": "Create"
             },
             {
-              "section": "IdentificationMetadata",
+              "section": "identification_metadata",
               "field": "study_acronym",
               "before_value": null,
               "after_value": {
@@ -847,7 +847,7 @@
               "action": "Create"
             },
             {
-              "section": "IdentificationMetadata",
+              "section": "identification_metadata",
               "field": "study_id",
               "before_value": null,
               "after_value": {
@@ -857,7 +857,7 @@
               "action": "Create"
             },
             {
-              "section": "IdentificationMetadata",
+              "section": "identification_metadata",
               "field": "study_number",
               "before_value": null,
               "after_value": {
@@ -877,7 +877,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/studies/{study_uid}/fields-audit-trail?sections=-IdentificationMetadata%2C%2BHighLevelStudyDesign"
+      "url": "/studies/{study_uid}/fields-audit-trail?sections=-identification_metadata%2C%2Bhigh_level_study_design"
     },
     "response": {
       "code": 200,
@@ -892,7 +892,7 @@
           "date": "2021-04-12T12:03:09.921878+02:00",
           "actions": [
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "is_adaptive_design",
               "before_value": {
                 "term_uid": "true",
@@ -905,7 +905,7 @@
               "action": "Edit"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "is_extension_trial",
               "before_value": {
                 "term_uid": "false",
@@ -918,7 +918,7 @@
               "action": "Edit"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "study_stop_rules",
               "before_value": {
                 "term_uid": "study_stop_rules 710",
@@ -928,7 +928,7 @@
               "action": "Delete"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "study_type_null_value_code",
               "before_value": {
                 "term_uid": "A bad reason",
@@ -941,7 +941,7 @@
               "action": "Edit"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "trial_phase_null_value_code",
               "before_value": {
                 "term_uid": "A good reason",
@@ -961,7 +961,7 @@
           "date": "2021-04-12T12:03:09.780186+02:00",
           "actions": [
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "is_adaptive_design",
               "before_value": null,
               "after_value": {
@@ -971,7 +971,7 @@
               "action": "Create"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "is_extension_trial",
               "before_value": null,
               "after_value": {
@@ -981,7 +981,7 @@
               "action": "Create"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "study_stop_rules",
               "before_value": null,
               "after_value": {
@@ -991,7 +991,7 @@
               "action": "Create"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "study_type_null_value_code",
               "before_value": null,
               "after_value": {
@@ -1001,7 +1001,7 @@
               "action": "Create"
             },
             {
-              "section": "HighLevelStudyDesign",
+              "section": "high_level_study_design",
               "field": "trial_phase_null_value_code",
               "before_value": null,
               "after_value": {
@@ -1125,8 +1125,8 @@
               "term_uid": "A good reason",
               "name": "NullValue1"
             },
-            "trial_types_codes": [],
-            "trial_types_null_value_code": null,
+            "trial_type_codes": [],
+            "trial_type_null_value_code": null,
             "trial_phase_code": null,
             "trial_phase_null_value_code": {
               "term_uid": "A bad reason",
@@ -1301,12 +1301,12 @@
           },
           "high_level_study_design": null,
           "study_population": {
-            "therapeutic_areas_codes": [],
-            "therapeutic_areas_null_value_code": null,
-            "disease_conditions_or_indications_codes": [],
-            "disease_conditions_or_indications_null_value_code": null,
-            "diagnosis_groups_codes": [],
-            "diagnosis_groups_null_value_code": null,
+            "therapeutic_area_codes": [],
+            "therapeutic_area_null_value_code": null,
+            "disease_condition_or_indication_codes": [],
+            "disease_condition_or_indication_null_value_code": null,
+            "diagnosis_group_codes": [],
+            "diagnosis_group_null_value_code": null,
             "sex_of_participants_code": null,
             "sex_of_participants_null_value_code": null,
             "rare_disease_indicator": null,

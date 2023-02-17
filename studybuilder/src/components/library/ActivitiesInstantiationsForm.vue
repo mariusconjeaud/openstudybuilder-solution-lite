@@ -9,131 +9,135 @@
     :form-observer-getter="getObserver"
     :help-items="helpItems"
     >
-    <template v-slot:step.type>
-      <validation-provider
-        v-slot="{ errors }"
-        rules="required"
-        >
-        <v-row>
-          <v-col>
-            <v-select
-              v-model="type"
-              :items="types"
-              :label="$t('ActivityForms.type')"
-              item-text="name"
-              item-value="value"
-              dense
-              clearable
-              :error-messages="errors"
-            />
-          </v-col>
-        </v-row>
-      </validation-provider>
+    <template v-slot:step.type="{ step }">
+      <validation-observer :ref="`observer_${step}`">
+        <validation-provider
+          v-slot="{ errors }"
+          rules="required"
+          >
+          <v-row>
+            <v-col>
+              <v-select
+                v-model="type"
+                :items="types"
+                :label="$t('ActivityForms.type')"
+                item-text="name"
+                item-value="value"
+                dense
+                clearable
+                :error-messages="errors"
+              />
+            </v-col>
+          </v-row>
+        </validation-provider>
+      </validation-observer>
     </template>
-    <template v-slot:step.basicData>
-      <validation-provider
-        v-slot="{ errors }"
-        rules="required"
-        >
-        <v-row>
-          <v-col>
-            <v-text-field
-              v-model="form.name"
-              :label="$t('ActivityForms.name')"
-              hide-details
-              class="mb-4"
-              :error-messages="errors"
-            />
-          </v-col>
-        </v-row>
-      </validation-provider>
-      <validation-provider
-        v-slot="{ errors }"
-        rules="required"
-        >
-        <v-row>
-          <v-col>
-            <v-autocomplete
-              v-model="form.activities"
-              :items="activities"
-              :label="$t('ActivityForms.activities')"
-              item-text="name"
-              item-value="uid"
-              dense
-              clearable
-              multiple
-              :error-messages="errors"
-              class="pt-3"
-            />
-          </v-col>
-        </v-row>
-      </validation-provider>
-      <validation-provider
-        v-slot="{ errors }"
-        rules="required"
-        >
-        <v-row>
-          <v-col>
-            <v-textarea
-              v-model="form.definition"
-              :label="$t('ActivityForms.definition')"
-              hide-details
-              class="mb-4"
-              :error-messages="errors"
-              auto-grow
-              rows="1"
-            />
-          </v-col>
-        </v-row>
-      </validation-provider>
-      <validation-provider
-        v-slot="{ errors }"
-        rules="required"
-        >
-        <v-row>
-          <v-col>
-            <v-text-field
-              v-model="form.topic_code"
-              :label="$t('ActivityForms.topicCode')"
-              hide-details
-              class="mb-4"
-              :error-messages="errors"
-            />
-          </v-col>
-        </v-row>
-      </validation-provider>
-      <validation-provider
-        v-slot="{ errors }"
-        rules="required"
-        >
-        <v-row>
-          <v-col>
-            <v-text-field
-              v-model="form.adam_param_code"
-              :label="$t('ActivityForms.adamCode')"
-              hide-details
-              class="mb-4"
-              :error-messages="errors"
-            />
-          </v-col>
-        </v-row>
-      </validation-provider>
-      <validation-provider
-        v-slot="{ errors }"
-        rules="required"
-        >
-        <v-row>
-          <v-col>
-            <v-text-field
-              v-model="form.legacy_description"
-              :label="$t('ActivityForms.legacyDesc')"
-              hide-details
-              class="mb-4"
-              :error-messages="errors"
-            />
-          </v-col>
-        </v-row>
-      </validation-provider>
+    <template v-slot:step.basicData="{ step }">
+      <validation-observer :ref="`observer_${step}`">
+        <validation-provider
+          v-slot="{ errors }"
+          rules="required"
+          >
+          <v-row>
+            <v-col>
+              <v-text-field
+                v-model="form.name"
+                :label="$t('ActivityForms.name')"
+                hide-details
+                class="mb-4"
+                :error-messages="errors"
+              />
+            </v-col>
+          </v-row>
+        </validation-provider>
+        <validation-provider
+          v-slot="{ errors }"
+          rules="required"
+          >
+          <v-row>
+            <v-col>
+              <v-autocomplete
+                v-model="form.activities"
+                :items="activities"
+                :label="$t('ActivityForms.activities')"
+                item-text="name"
+                item-value="uid"
+                dense
+                clearable
+                multiple
+                :error-messages="errors"
+                class="pt-3"
+              />
+            </v-col>
+          </v-row>
+        </validation-provider>
+        <validation-provider
+          v-slot="{ errors }"
+          rules="required"
+          >
+          <v-row>
+            <v-col>
+              <v-textarea
+                v-model="form.definition"
+                :label="$t('ActivityForms.definition')"
+                hide-details
+                class="mb-4"
+                :error-messages="errors"
+                auto-grow
+                rows="1"
+              />
+            </v-col>
+          </v-row>
+        </validation-provider>
+        <validation-provider
+          v-slot="{ errors }"
+          rules="required"
+          >
+          <v-row>
+            <v-col>
+              <v-text-field
+                v-model="form.topic_code"
+                :label="$t('ActivityForms.topicCode')"
+                hide-details
+                class="mb-4"
+                :error-messages="errors"
+              />
+            </v-col>
+          </v-row>
+        </validation-provider>
+        <validation-provider
+          v-slot="{ errors }"
+          rules="required"
+          >
+          <v-row>
+            <v-col>
+              <v-text-field
+                v-model="form.adam_param_code"
+                :label="$t('ActivityForms.adamCode')"
+                hide-details
+                class="mb-4"
+                :error-messages="errors"
+              />
+            </v-col>
+          </v-row>
+        </validation-provider>
+        <validation-provider
+          v-slot="{ errors }"
+          rules="required"
+          >
+          <v-row>
+            <v-col>
+              <v-text-field
+                v-model="form.legacy_description"
+                :label="$t('ActivityForms.legacyDesc')"
+                hide-details
+                class="mb-4"
+                :error-messages="errors"
+              />
+            </v-col>
+          </v-row>
+        </validation-provider>
+      </validation-observer>
     </template>
     <template v-slot:step.additionalData1="{ step }">
       <validation-observer :ref="`observer_${step}`">
@@ -328,7 +332,7 @@ export default {
       return this.$refs[`observer_${step}`]
     },
     getActivities () {
-      activities.get({}, 'activities').then(resp => {
+      activities.get({ page_size: 0 }, 'activities').then(resp => {
         this.activities = resp.data.items
       })
     }
@@ -350,16 +354,22 @@ export default {
     },
     type (value) {
       switch (value) {
-        case 'events' || 'special-purposes' || 'reminders':
+        case 'events':
+        case 'special-purposes':
+        case 'reminders':
           this.steps = this.getInitialSteps()
           return
-        case 'laboratory-activities' || 'rating-scales' || 'categoric-findings':
+        case 'laboratory-activities':
+        case 'rating-scales':
+        case 'categoric-findings':
           this.steps = this.advancedSteps1
           return
-        case 'compund-dosigns' || 'compounds':
+        case 'compund-dosigns':
+        case 'compounds':
           this.steps = this.advancedSteps2
           return
-        case 'textual-findings' || 'numeric-findings':
+        case 'textual-findings':
+        case 'numeric-findings':
           this.steps = this.advancedSteps3
       }
     }

@@ -9,6 +9,7 @@ from clinical_mdr_api.repositories._utils import (
     get_field,
     get_field_path,
     get_order_by_clause,
+    merge_q_query_filters,
     transform_filters_into_neomodel,
 )
 
@@ -35,19 +36,19 @@ class StandardsGenericRepository:
         page_number: int = 1,
         page_size: int = 0,
         filter_by: Optional[dict] = None,
-        # pylint:disable=unused-argument
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         total_count: bool = False,
     ) -> Tuple[Sequence[_StandardsReturnType], int]:
-        neomodel_filter, q_filters = transform_filters_into_neomodel(
+        q_filters = transform_filters_into_neomodel(
             filter_by=filter_by, model=self.return_model
         )
+        q_filters = merge_q_query_filters(q_filters, filter_operator=filter_operator)
         sort_paths = get_order_by_clause(sort_by=sort_by, model=self.return_model)
         page_number = decrement_page_number(page_number)
         nodes = (
             self.get_neomodel_extension_query()
             .order_by(sort_paths[0] if len(sort_paths) > 0 else "uid")
-            .filter(*q_filters, **neomodel_filter)
+            .filter(*q_filters)
             .limit_results(page_size)
             .skip_results(page_number * page_size)
             .to_relation_trees()
@@ -56,7 +57,7 @@ class StandardsGenericRepository:
             self.return_model.from_orm(activity_node) for activity_node in nodes
         ]
         if total_count:
-            len_query = self.root_class.nodes.filter(*q_filters, **neomodel_filter)
+            len_query = self.root_class.nodes.filter(*q_filters)
             all_nodes = len(len_query)
         return all_data_model, all_nodes if total_count else 0
 
@@ -69,7 +70,6 @@ class StandardsGenericRepository:
         field_name: str,
         search_string: Optional[str] = "",
         filter_by: Optional[dict] = None,
-        # pylint: disable=unused-argument
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence:
@@ -93,39 +93,24 @@ class StandardsGenericRepository:
                 "v": [search_string],
                 "op": ComparisonOperator.CONTAINS,
             }
-        neomodel_filter, q_filters = transform_filters_into_neomodel(
+        q_filters = transform_filters_into_neomodel(
             filter_by=filter_by, model=self.return_model
         )
-
+        q_filters = merge_q_query_filters(q_filters, filter_operator=filter_operator)
         field = get_field(prop=field_name, model=self.return_model)
         field_path = get_field_path(prop=field_name, field=field)
-        field_traversal = field_path
+
         if "__" in field_path:
-            field_traversal, prop = field_path.rsplit("__", 1)
-            nodes = (
-                self.root_class.nodes.fetch_optional_relations_and_collect(
-                    field_traversal
-                )
-                .filter(*q_filters, **neomodel_filter)
+            values = (
+                self.root_class.nodes.collect_values(field_path)
+                .filter(*q_filters)
                 .limit_results(result_count)
-                .to_relation_trees()
+                .all()
             )
         else:
-            prop = field_path
-            nodes = (
-                self.root_class.nodes.filter(*q_filters, **neomodel_filter)
+            values = (
+                self.root_class.nodes.filter(*q_filters)
                 .limit_results(result_count)
                 .to_relation_trees()
             )
-
-        result = []
-        for n in nodes:
-            for part in field_traversal.split("__"):
-                if part in n._relations:
-                    n = n._relations[part]
-                else:
-                    n = [n]
-            for res in n:
-                result.append(getattr(res, prop))
-
-        return result
+        return values

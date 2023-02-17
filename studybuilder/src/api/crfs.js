@@ -7,20 +7,19 @@ export default {
     if (!source) {
       return repository.get(`${resource}`, params)
     }
-
     return repository.get(`${resource}/${source}`, params)
   },
   reactivate (source, uid) {
-    return repository.post(`${resource}/${source}/${uid}/reactivate`)
+    return repository.post(`${resource}/${source}/${uid}/activations`)
   },
   inactivate (source, uid) {
-    return repository.post(`${resource}/${source}/${uid}/inactivate`)
+    return repository.delete(`${resource}/${source}/${uid}/activations`)
   },
   newVersion (source, uid) {
     return repository.post(`${resource}/${source}/${uid}/versions`)
   },
   approve (source, uid) {
-    return repository.post(`${resource}/${source}/${uid}/approve`)
+    return repository.post(`${resource}/${source}/${uid}/approvals`)
   },
   delete (source, uid) {
     return repository.delete(`${resource}/${source}/${uid}`)
@@ -112,6 +111,9 @@ export default {
   getXml (params) {
     return repository.post(`${resource}/metadata/xmls/export?target_uid=${params.target_uid}&target_type=${params.target_type}&export_to=${params.export_to}&stylesheet=${params.stylesheet}&status=${params.status}`)
   },
+  getXsl (type) {
+    return repository.get(`${resource}/metadata/xmls/stylesheets/${type}`)
+  },
   getAllAliases (params) {
     return repository.get(`${resource}/aliases`, { params })
   },
@@ -165,5 +167,44 @@ export default {
   },
   getCrfGroups () {
     return repository.get(`${resource}/item-groups/forms`)
+  },
+  getAllNamespaces (params) {
+    return repository.get(`${resource}/vendor-namespaces`, { params })
+  },
+  getNamespace (uid) {
+    return repository.get(`${resource}/vendor-namespaces/${uid}`)
+  },
+  createNamespace (data) {
+    return repository.post(`${resource}/vendor-namespaces`, data)
+  },
+  deleteNamespace (uid) {
+    return repository.delete(`${resource}/vendor-namespaces/${uid}`)
+  },
+  editNamespace (uid, data) {
+    return repository.patch(`${resource}/vendor-namespaces/${uid}`, data)
+  },
+  getAllAttributes (params) {
+    return repository.get(`${resource}/vendor-attributes`, { params })
+  },
+  createAttribute (data) {
+    return repository.post(`${resource}/vendor-attributes`, data)
+  },
+  editAttribute (uid, data) {
+    return repository.patch(`${resource}/vendor-attributes/${uid}`, data)
+  },
+  getAllElements (params) {
+    return repository.get(`${resource}/vendor-elements`, { params })
+  },
+  createElement (data) {
+    return repository.post(`${resource}/vendor-elements`, data)
+  },
+  setElements (source, uid, data) {
+    return repository.post(`${resource}/${source}/${uid}/vendor-elements`, data)
+  },
+  setAttributes (source, uid, data) {
+    return repository.post(`${resource}/${source}/${uid}/vendor-attributes`, data)
+  },
+  setElementAttributes (source, uid, data) {
+    return repository.post(`${resource}/${source}/${uid}/vendor-element-attributes`, data)
   }
 }

@@ -97,7 +97,7 @@ export default {
         agreeLabel: this.$t('_global.continue')
       }
       if (await this.$refs.confirm.open(this.$t('CrfAliases.delete_approve'), options)) {
-        crfs.deleteAlias(item.uid).then(resp => {
+        crfs.deleteAlias(item.uid).then(() => {
           bus.$emit('notification', { msg: this.$t('CrfAliases.alias_deleted') })
           this.getAliases()
         })

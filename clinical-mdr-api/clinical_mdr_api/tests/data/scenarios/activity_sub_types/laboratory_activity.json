@@ -207,7 +207,7 @@
          "headers": {},
          "method": "POST",
          "request": {},
-         "url": "/concepts/activities/activity-instances/LaboratoryActivity_000001/approve"
+         "url": "/concepts/activities/activity-instances/LaboratoryActivity_000001/approvals"
       },
       "response": {
          "code": 201,
@@ -468,7 +468,7 @@
          "headers": {},
          "method": "POST",
          "request": {},
-         "url": "/concepts/activities/activity-instances/LaboratoryActivity_000001/approve"
+         "url": "/concepts/activities/activity-instances/LaboratoryActivity_000001/approvals"
       },
       "response": {
          "code": 201,
@@ -548,15 +548,15 @@
       }
    },
    {
-      "name": "Test POST inactivate laboratory activity",
+      "name": "Test DELETE activations laboratory activity",
       "request": {
          "headers": {},
-         "method": "POST",
+         "method": "DELETE",
          "request": {},
-         "url": "/concepts/activities/activity-instances/LaboratoryActivity_000001/inactivate"
+         "url": "/concepts/activities/activity-instances/LaboratoryActivity_000001/activations"
       },
       "response": {
-         "code": 201,
+         "code": 200,
          "headers": {},
          "result": {
             "uid": "LaboratoryActivity_000001",
@@ -623,7 +623,7 @@
             "end_date": null,
             "status": "Retired",
             "version": "2.0",
-            "change_description": "Deactivated version",
+            "change_description": "Inactivated version",
             "user_initials": "TODO user initials",
             "possible_actions": [
                "reactivate"
@@ -632,15 +632,15 @@
       }
    },
    {
-      "name": "Test POST reactivate laboratory activity",
+      "name": "Test POST activations laboratory activity",
       "request": {
          "headers": {},
          "method": "POST",
          "request": {},
-         "url": "/concepts/activities/activity-instances/LaboratoryActivity_000001/reactivate"
+         "url": "/concepts/activities/activity-instances/LaboratoryActivity_000001/activations"
       },
       "response": {
-         "code": 201,
+         "code": 200,
          "headers": {},
          "result": {
             "uid": "LaboratoryActivity_000001",

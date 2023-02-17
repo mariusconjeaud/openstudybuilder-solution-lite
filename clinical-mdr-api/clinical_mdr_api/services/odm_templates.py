@@ -1,5 +1,5 @@
 from distutils.util import strtobool
-from typing import Sequence
+from typing import List
 
 from neomodel import db
 
@@ -49,7 +49,7 @@ class OdmTemplateService(OdmGenericService[OdmTemplateAR]):
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
-            concept_exists_by_name_callback=self._repos.odm_template_repository.concept_exists_by_name,
+            concept_exists_by_callback=self._repos.odm_template_repository.exists_by,
         )
 
     def _edit_aggregate(
@@ -66,7 +66,7 @@ class OdmTemplateService(OdmGenericService[OdmTemplateAR]):
                 description=concept_edit_input.description,
                 form_uids=[],
             ),
-            concept_exists_by_name_callback=self._repos.odm_template_repository.concept_exists_by_name,
+            concept_exists_by_callback=self._repos.odm_template_repository.exists_by,
         )
         return item
 
@@ -74,8 +74,8 @@ class OdmTemplateService(OdmGenericService[OdmTemplateAR]):
     def add_forms(
         self,
         uid: str,
-        odm_template_form_post_input: Sequence[OdmTemplateFormPostInput],
-        override: bool,
+        odm_template_form_post_input: List[OdmTemplateFormPostInput],
+        override: bool = False,
     ) -> OdmTemplate:
         odm_template_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 

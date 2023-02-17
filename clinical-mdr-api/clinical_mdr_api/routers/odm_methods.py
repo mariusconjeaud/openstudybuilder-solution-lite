@@ -258,7 +258,7 @@ def create_odm_method_version(uid: str = OdmMethodUID):
 
 
 @router.post(
-    "/{uid}/approve",
+    "/{uid}/approvals",
     summary="Approve draft version of ODM Method",
     description="",
     response_model=OdmMethod,
@@ -283,14 +283,14 @@ def approve_odm_method(uid: str = OdmMethodUID):
     return odm_method_service.approve(uid=uid)
 
 
-@router.post(
-    "/{uid}/inactivate",
+@router.delete(
+    "/{uid}/activations",
     summary=" Inactivate final version of ODM Method",
     description="",
     response_model=OdmMethod,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -309,13 +309,13 @@ def inactivate_odm_method(uid: str = OdmMethodUID):
 
 
 @router.post(
-    "/{uid}/reactivate",
+    "/{uid}/activations",
     summary="Reactivate retired version of a ODM Method",
     description="",
     response_model=OdmMethod,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"

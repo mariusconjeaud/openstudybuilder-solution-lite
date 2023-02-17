@@ -1,16 +1,19 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
 from fastapi.param_functions import Body
+from pydantic.types import Json
 
-from clinical_mdr_api import models
+from clinical_mdr_api import config, models
 from clinical_mdr_api.domain_repositories.models.criteria import CriteriaValue
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study import Study
+from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id
-from clinical_mdr_api.routers import decorators
+from clinical_mdr_api.repositories._utils import FilterOperator
+from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.criteria import CriteriaService
 
 router = APIRouter()
@@ -24,7 +27,7 @@ CriteriaUID = Path(None, description="The unique id of the criteria.")
 @router.get(
     "",
     summary="Returns all final versions of criteria referenced by any study.",
-    response_model=List[models.Criteria],
+    response_model=CustomPage[models.CriteriaWithType],
     status_code=200,
     responses={
         200: {
@@ -89,9 +92,89 @@ CriteriaUID = Path(None, description="The unique id of the criteria.")
 # pylint: disable=unused-argument
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Optional[int] = Query(
+        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
+    ),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+    ),
+    filters: Optional[Json] = Query(
+        None,
+        description=_generic_descriptions.FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: Optional[bool] = Query(
+        False, description=_generic_descriptions.TOTAL_COUNT
+    ),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    return CriteriaService(current_user_id).get_releases_referenced_by_any_study()
+    all_items = CriteriaService(current_user_id).get_all(
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        sort_by=sort_by,
+    )
+
+    return CustomPage.create(
+        items=all_items.items,
+        total=all_items.total_count,
+        page=page_number,
+        size=page_size,
+    )
+
+
+@router.get(
+    "/headers",
+    summary="Returns possible values from the database for a given header",
+    description="""Allowed parameters include : field name for which to get possible
+    values, search string to provide filtering for the field name, additional filters to apply on other fields""",
+    response_model=List[Any],
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - Invalid field name specified",
+        },
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def get_distinct_values_for_header(
+    current_user_id: str = Depends(get_current_user_id),
+    status: Optional[str] = Query(
+        None,
+        description="If specified, only those objective templates will be returned that are currently in the specified status. "
+        "This may be particularly useful if the objective template has "
+        "a) a 'Draft' and a 'Final' status or "
+        "b) a 'Draft' and a 'Retired' status at the same time "
+        "and you are interested in the 'Final' or 'Retired' status.\n"
+        "Valid values are: 'Final', 'Draft' or 'Retired'.",
+    ),
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
+        "", description=_generic_descriptions.HEADER_SEARCH_STRING
+    ),
+    filters: Optional[Json] = Query(
+        None,
+        description=_generic_descriptions.FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: Optional[int] = Query(
+        10, description=_generic_descriptions.HEADER_RESULT_COUNT
+    ),
+):
+    return CriteriaService(current_user_id).get_distinct_values_for_header(
+        status=status,
+        field_name=field_name,
+        search_string=search_string,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        result_count=result_count,
+    )
 
 
 @router.get(
@@ -99,7 +182,7 @@ def get_all(
     summary="Returns the latest/newest version of a specific criteria identified by 'uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
-    response_model=Optional[models.Criteria],
+    response_model=Optional[models.CriteriaWithType],
     status_code=200,
     responses={
         404: {
@@ -175,7 +258,7 @@ If the request succeeds:
 * The 'version' property will be increased automatically by +0.1.
 * The status will remain in 'Draft'.
 """,
-    response_model=models.Criteria,
+    response_model=models.CriteriaWithType,
     status_code=200,
     responses={
         200: {"description": "OK."},
@@ -207,7 +290,7 @@ def edit(
 
 
 @router.post(
-    "/{uid}/approve",
+    "/{uid}/approvals",
     summary="Approves the criteria identified by 'uid'.",
     description="""This request is only valid if the criteria
 * is in 'Draft' status and
@@ -218,7 +301,7 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
-    response_model=models.Criteria,
+    response_model=models.CriteriaWithType,
     status_code=201,
     responses={
         201: {"description": "OK."},
@@ -241,8 +324,8 @@ def approve(
     return Service(current_user_id).approve(uid)
 
 
-@router.post(
-    "/{uid}/inactivate",
+@router.delete(
+    "/{uid}/activations",
     summary="Inactivates/deactivates the criteria identified by 'uid'.",
     description="""This request is only valid if the criteria
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -252,10 +335,10 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=models.Criteria,
-    status_code=201,
+    response_model=models.CriteriaWithType,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -275,7 +358,7 @@ def inactivate(
 
 
 @router.post(
-    "/{uid}/reactivate",
+    "/{uid}/activations",
     summary="Reactivates the criteria identified by 'uid'.",
     description="""This request is only valid if the criteria
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -285,10 +368,10 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=models.Criteria,
-    status_code=201,
+    response_model=models.CriteriaWithType,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"

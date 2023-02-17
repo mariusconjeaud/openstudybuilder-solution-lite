@@ -30,6 +30,34 @@ from clinical_mdr_api.models.duration import DurationJsonModel
 from clinical_mdr_api.models.utils import BaseModel
 
 
+class StudyPreferredTimeUnit(BaseModel):
+    class Config:
+        orm_mode = True
+
+    study_uid: str = Field(
+        ...,
+        description="Uid of study",
+        source="has_time_field.latest_value.uid",
+    )
+    time_unit_uid: str = Field(
+        ...,
+        description="Uid of time unit",
+        source="has_unit_definition.uid",
+    )
+    time_unit_name: str = Field(
+        ...,
+        description="Name of time unit",
+        source="has_unit_definition.has_latest_value.name",
+    )
+
+
+class StudyPreferredTimeUnitInput(BaseModel):
+    unit_definition_uid: str = Field(
+        ...,
+        description="Uid of preferred time unit",
+    )
+
+
 class RegistryIdentifiersJsonModel(BaseModel):
     class Config:
         title = "RegistryIdentifiersMetadata"
@@ -124,6 +152,42 @@ class StudyIdentificationMetadataJsonModel(BaseModel):
         )
 
 
+class CompactStudyIdentificationMetadataJsonModel(BaseModel):
+    class Config:
+        title = "CompactStudyIdentificationMetadata"
+        description = "Identification metadata for study definition."
+
+    study_number: Optional[str] = None
+    study_acronym: Optional[str] = None
+    project_number: Optional[str] = None
+    project_name: Optional[str] = None
+    clinical_programme_name: Optional[str] = None
+    study_id: Optional[str] = None
+
+    @classmethod
+    def from_study_identification_vo(
+        cls,
+        study_identification_o: Optional[StudyIdentificationMetadataVO],
+        find_project_by_project_number: Callable[[str], ProjectAR],
+        find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
+    ) -> Optional["CompactStudyIdentificationMetadataJsonModel"]:
+        if study_identification_o is None:
+            return None
+        project_ar = find_project_by_project_number(
+            study_identification_o.project_number
+        )
+        return cls(
+            study_number=study_identification_o.study_number,
+            study_acronym=study_identification_o.study_acronym,
+            project_number=study_identification_o.project_number,
+            project_name=project_ar.name,
+            clinical_programme_name=find_clinical_programme_by_uid(
+                project_ar.clinical_programme_uid
+            ).name,
+            study_id=study_identification_o.study_id,
+        )
+
+
 class StudyVersionMetadataJsonModel(BaseModel):
     class Config:
         title = "StudyVersionMetadata"
@@ -152,14 +216,14 @@ class StudyVersionMetadataJsonModel(BaseModel):
 
 class HighLevelStudyDesignJsonModel(BaseModel):
     class Config:
-        title = "HighLevelStudyDesign"
+        title = "high_level_study_design"
         description = "High level study design parameters for study definition."
 
     study_type_code: Optional[SimpleTermModel] = None
     study_type_null_value_code: Optional[SimpleTermModel] = None
 
-    trial_types_codes: Optional[Sequence[SimpleTermModel]] = None
-    trial_types_null_value_code: Optional[SimpleTermModel] = None
+    trial_type_codes: Optional[Sequence[SimpleTermModel]] = None
+    trial_type_null_value_code: Optional[SimpleTermModel] = None
 
     trial_phase_code: Optional[SimpleTermModel] = None
     trial_phase_null_value_code: Optional[SimpleTermModel] = None
@@ -199,13 +263,13 @@ class HighLevelStudyDesignJsonModel(BaseModel):
                 c_code=high_level_study_design_vo.study_type_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            trial_types_codes=[
+            trial_type_codes=[
                 SimpleTermModel.from_ct_code(
                     c_code=trial_type_code, find_term_by_uid=find_term_by_uid
                 )
                 for trial_type_code in high_level_study_design_vo.trial_type_codes
             ],
-            trial_types_null_value_code=SimpleTermModel.from_ct_code(
+            trial_type_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=high_level_study_design_vo.trial_type_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
@@ -255,17 +319,17 @@ class HighLevelStudyDesignJsonModel(BaseModel):
 
 class StudyPopulationJsonModel(BaseModel):
     class Config:
-        title = "StudyPopulation"
+        title = "study_population"
         description = "Study population parameters for study definition."
 
-    therapeutic_areas_codes: Optional[Sequence[SimpleTermModel]] = None
-    therapeutic_areas_null_value_code: Optional[SimpleTermModel] = None
+    therapeutic_area_codes: Optional[Sequence[SimpleTermModel]] = None
+    therapeutic_area_null_value_code: Optional[SimpleTermModel] = None
 
-    disease_conditions_or_indications_codes: Optional[Sequence[SimpleTermModel]] = None
-    disease_conditions_or_indications_null_value_code: Optional[SimpleTermModel] = None
+    disease_condition_or_indication_codes: Optional[Sequence[SimpleTermModel]] = None
+    disease_condition_or_indication_null_value_code: Optional[SimpleTermModel] = None
 
-    diagnosis_groups_codes: Optional[Sequence[SimpleTermModel]] = None
-    diagnosis_groups_null_value_code: Optional[SimpleTermModel] = None
+    diagnosis_group_codes: Optional[Sequence[SimpleTermModel]] = None
+    diagnosis_group_null_value_code: Optional[SimpleTermModel] = None
 
     sex_of_participants_code: Optional[SimpleTermModel] = None
     sex_of_participants_null_value_code: Optional[SimpleTermModel] = None
@@ -315,38 +379,38 @@ class StudyPopulationJsonModel(BaseModel):
         if study_population_vo is None:
             return None
         return cls(
-            therapeutic_areas_codes=[
+            therapeutic_area_codes=[
                 SimpleTermModel.from_ct_code(
                     c_code=therapeutic_area_code,
                     find_term_by_uid=find_dictionary_term_by_uid,
                 )
                 for therapeutic_area_code in study_population_vo.therapeutic_area_codes
             ],
-            therapeutic_areas_null_value_code=SimpleTermModel.from_ct_code(
+            therapeutic_area_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_population_vo.therapeutic_area_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
-            disease_conditions_or_indications_codes=[
+            disease_condition_or_indication_codes=[
                 SimpleTermModel.from_ct_code(
                     c_code=disease_or_indication_code,
                     find_term_by_uid=find_dictionary_term_by_uid,
                 )
                 for disease_or_indication_code in study_population_vo.disease_condition_or_indication_codes
             ],
-            disease_conditions_or_indications_null_value_code=(
+            disease_condition_or_indication_null_value_code=(
                 SimpleTermModel.from_ct_code(
                     c_code=study_population_vo.disease_condition_or_indication_null_value_code,
                     find_term_by_uid=find_term_by_uid,
                 )
             ),
-            diagnosis_groups_codes=[
+            diagnosis_group_codes=[
                 SimpleTermModel.from_ct_code(
                     c_code=diagnosis_group_code,
                     find_term_by_uid=find_dictionary_term_by_uid,
                 )
                 for diagnosis_group_code in study_population_vo.diagnosis_group_codes
             ],
-            diagnosis_groups_null_value_code=SimpleTermModel.from_ct_code(
+            diagnosis_group_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_population_vo.diagnosis_group_null_value_code,
                 find_term_by_uid=find_term_by_uid,
             ),
@@ -434,7 +498,7 @@ class StudyPopulationJsonModel(BaseModel):
 
 class StudyInterventionJsonModel(BaseModel):
     class Config:
-        title = "StudyIntervention"
+        title = "study_intervention"
         description = "Study interventions parameters for study definition."
 
     intervention_type_code: Optional[SimpleTermModel] = None
@@ -568,7 +632,7 @@ class StudyInterventionJsonModel(BaseModel):
 
 class StudyDescriptionJsonModel(BaseModel):
     class Config:
-        title = "StudyDescription"
+        title = "study_description"
         description = "Study description for the study definition."
 
     study_title: Optional[str] = None
@@ -583,6 +647,35 @@ class StudyDescriptionJsonModel(BaseModel):
         return cls(
             study_title=study_description_vo.study_title,
             study_short_title=study_description_vo.study_short_title,
+        )
+
+
+class CompactStudyMetadataJsonModel(BaseModel):
+    class Config:
+        title = "StudyMetadata"
+        description = "Study metadata"
+
+    identification_metadata: Optional[
+        CompactStudyIdentificationMetadataJsonModel
+    ] = None
+    version_metadata: Optional[StudyVersionMetadataJsonModel] = None
+
+    @classmethod
+    def from_study_metadata_vo(
+        cls,
+        study_metadata_vo: StudyMetadataVO,
+        find_project_by_project_number: Callable[[str], ProjectAR],
+        find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
+    ) -> "CompactStudyMetadataJsonModel":
+        return cls(
+            identification_metadata=CompactStudyIdentificationMetadataJsonModel.from_study_identification_vo(
+                study_identification_o=study_metadata_vo.id_metadata,
+                find_project_by_project_number=find_project_by_project_number,
+                find_clinical_programme_by_uid=find_clinical_programme_by_uid,
+            ),
+            version_metadata=StudyVersionMetadataJsonModel.from_study_version_metadata_vo(
+                study_version_metadata_vo=study_metadata_vo.ver_metadata
+            ),
         )
 
 
@@ -646,6 +739,79 @@ class StudyPatchRequestJsonModel(BaseModel):
         description = "Identification metadata for study definition."
 
     current_metadata: Optional[StudyMetadataJsonModel] = None
+
+
+class CompactStudy(BaseModel):
+    uid: str = Field(
+        title="uid",
+        description="The unique id of the study.",
+    )
+
+    study_number: Optional[str] = Field(
+        None,
+        title="study_number",
+        description="DEPRECATED. Use field in current_metadata.identification_metadata.",
+    )
+
+    study_id: Optional[str] = Field(
+        None,
+        title="study_id",
+        description="DEPRECATED. Use field in current_metadata.identification_metadata.",
+    )
+
+    study_acronym: Optional[str] = Field(
+        None,
+        title="study_acronym",
+        description="DEPRECATED. Use field in current_metadata.identification_metadata.",
+    )
+
+    project_number: Optional[str] = Field(
+        None,
+        title="project_number",
+        description="DEPRECATED. Use field in current_metadata.identification_metadata.",
+    )
+    study_status: str = Field(
+        None,
+        title="study_status",
+        description="Current status of given StudyDefinition. "
+        "Possible values are: 'DRAFT' or 'LOCKED'.",
+    )
+
+    current_metadata: Optional[CompactStudyMetadataJsonModel] = None
+
+    @classmethod
+    def from_study_definition_ar(
+        cls,
+        study_definition_ar: StudyDefinitionAR,
+        find_project_by_project_number: Callable[[str], ProjectAR],
+        find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
+    ) -> "Study":
+        is_id_metadata_none = (
+            True if study_definition_ar.current_metadata.id_metadata is None else None
+        )
+        return cls(
+            uid=study_definition_ar.uid,
+            study_number=study_definition_ar.current_metadata.id_metadata.study_number
+            if not is_id_metadata_none
+            else None,
+            study_acronym=study_definition_ar.current_metadata.id_metadata.study_acronym
+            if not is_id_metadata_none
+            else None,
+            project_number=study_definition_ar.current_metadata.id_metadata.project_number
+            if not is_id_metadata_none
+            else None,
+            study_id=study_definition_ar.current_metadata.id_metadata.study_id
+            if not is_id_metadata_none
+            else None,
+            study_status=study_definition_ar.current_metadata.ver_metadata.study_status.value
+            if not is_id_metadata_none
+            else None,
+            current_metadata=CompactStudyMetadataJsonModel.from_study_metadata_vo(
+                study_metadata_vo=study_definition_ar.current_metadata,
+                find_project_by_project_number=find_project_by_project_number,
+                find_clinical_programme_by_uid=find_clinical_programme_by_uid,
+            ),
+        )
 
 
 class Study(BaseModel):

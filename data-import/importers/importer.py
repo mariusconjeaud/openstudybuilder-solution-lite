@@ -24,6 +24,7 @@ API_HEADERS = {"Accept": "application/json"}
 #
 API_BASE_URL = load_env("API_BASE_URL")
 
+
 class TermCache:
     def __init__(self, api):
         self.api = api
@@ -45,7 +46,9 @@ class TermCache:
         self.all_term_names = self.api.get_all_from_api("/ct/terms/names")
         self.all_term_name_values = CaselessDict(
             self.api.get_all_identifiers_multiple(
-                self.all_term_names, identifier="sponsor_preferred_name", values=["term_uid", "catalogue_name"]
+                self.all_term_names,
+                identifier="sponsor_preferred_name",
+                values=["term_uid", "catalogue_name"],
             )
         )
         self.added_terms = CaselessDict()
@@ -207,9 +210,13 @@ class BaseImporter:
         self.ensure_cache()
         result = None
         term_name = data["body"]["sponsor_preferred_name"]
-        post_status, post_result = await self.api.post_to_api_async(
-            url="/ct/terms", body=data["body"], session=session
-        )
+        concept_id = data.get("term_concept_id")
+        if concept_id and concept_id.lower() != "none":
+            post_status = None
+        else:
+            post_status, post_result = await self.api.post_to_api_async(
+                url="/ct/terms", body=data["body"], session=session
+            )
         term_uid = None
         if post_status == 201:
             self.cache.added_terms[term_name] = post_result
@@ -217,7 +224,7 @@ class BaseImporter:
             self.log.info(f"Added term name '{term_name}' with uid '{term_uid}'")
             time.sleep(0.01)
             status, result = await self.api.approve_async(
-                "/ct/terms/" + term_uid + "/names/approve", session=session
+                "/ct/terms/" + term_uid + "/names/approvals", session=session
             )
             if status != 201:
                 self.log.error(
@@ -228,7 +235,7 @@ class BaseImporter:
                 self.log.info(f"Approved term name '{term_name}' with uid '{term_uid}'")
                 metrics.icrement("/ct/terms--NamesApprove")
             status, result = await self.api.approve_async(
-                "/ct/terms/" + term_uid + "/attributes/approve", session=session
+                "/ct/terms/" + term_uid + "/attributes/approvals", session=session
             )
             if status != 201:
                 self.log.error(
@@ -241,17 +248,62 @@ class BaseImporter:
                 )
                 metrics.icrement("/ct/terms--AttributesApprove")
         else:
-            self.log.error(
-                f"Failed to add term name '{term_name}' with uid '{term_uid}', trying to link to already existing"
+            self.log.info(
+                f"Failed to create new term name '{term_name}' with uid '{term_uid}', trying to link to already existing"
             )
-            if term_name in self.cache.added_terms:
+            if concept_id and concept_id.lower() == "none":
+                self.log.error(
+                    f"Term '{term_name}' should not be linked, skipping"
+                )
+                return
+            elif concept_id:
+                catalogue = data["body"]["catalogue_name"]
+                submval = data["body"]["code_submission_value"]
+                self.log.info(
+                    f"Looking up term with concept id '{concept_id}' with submission value '{submval}' in catalogue '{catalogue}'"
+                )
+                matching_terms = self.api.lookup_terms_from_concept_id(concept_id, catalogue_name=catalogue, code_submission_value=submval)
+                if len(matching_terms) == 0:
+                    self.log.warning(
+                        f"Could not find term with concept id '{concept_id}' with submission value '{submval}' in catalogue '{catalogue}'"
+                    )
+                    matching_terms = self.api.lookup_terms_from_concept_id(concept_id, code_submission_value=submval)
+                    if len(matching_terms) == 0:
+                        self.log.warning(
+                            f"Could not find term with concept id '{concept_id}' with submission value '{submval}' in any catalogue'"
+                        )
+                        matching_terms = self.api.lookup_terms_from_concept_id(concept_id, catalogue_name=catalogue)
+                        if len(matching_terms) == 0:
+                            self.log.warning(
+                                f"Could not find term with concept id '{concept_id}' with any submission value in catalogue '{catalogue}'"
+                            )
+                            matching_terms = self.api.lookup_terms_from_concept_id(concept_id)
+                            if len(matching_terms) == 0:
+                                self.log.error(
+                                    f"Could not find term with concept id '{concept_id}' with any submission value in any catalogue, skipping"
+                                )
+                                return
+                term_uid = matching_terms[0]["term_uid"]
+
+                self.log.info(
+                    f"Found term(s) with uid(s) {[t['term_uid'] for t in matching_terms]} for concept id '{concept_id}'"
+                )
+                codelist_uid = data["body"]["codelist_uid"]
+                if any([t["codelist_uid"] == codelist_uid for t in matching_terms]):
+                    self.log.info(
+                        f"Term name '{term_name}' already exits in the codelist with uid {codelist_uid}, not adding again"
+                    )
+                    return
+            elif term_name in self.cache.added_terms:
                 term_uid = self.cache.added_terms[term_name]["term_uid"]
                 self.log.info(
                     f"Term name '{term_name}' with uid '{term_uid}' found in cache of newly added terms"
                 )
             elif term_name in self.cache.all_term_name_values:
                 found_terms = self.cache.all_term_name_values[term_name]
-                term_in_catalogue = self._find_term_with_catalogue(found_terms, data["body"]["catalogue_name"])
+                term_in_catalogue = self._find_term_with_catalogue(
+                    found_terms, data["body"]["catalogue_name"]
+                )
                 self.log.info(
                     f"Term name '{term_name}' found as '{[str(t['catalogue_name']) + ':' + t['term_uid'] for t in found_terms]}' among existing term names"
                 )
@@ -263,7 +315,12 @@ class BaseImporter:
                 else:
                     term_uid = term_in_catalogue["term_uid"]
                 codelist_uid = data["body"]["codelist_uid"]
-                codelist = self.retry_function(self.api.get_terms_for_codelist_uid, [codelist_uid], nbr_retries=3, retry_delay=0.5)
+                codelist = self.retry_function(
+                    self.api.get_terms_for_codelist_uid,
+                    [codelist_uid],
+                    nbr_retries=3,
+                    retry_delay=0.5,
+                )
                 if self.search_codelist(codelist, term_name):
                     self.log.info(
                         f"Term name '{term_name}' already exits in the codelist with uid {codelist_uid}, not adding again"
@@ -324,11 +381,19 @@ class BaseImporter:
     # Retry a function that sporadically fails.
     # After the first failure it will sleep for retry_delay seconds,
     # then double the delay for each subsequent failure.
-    def retry_function(self, function: Callable, args: list, nbr_retries:int=3, retry_delay:float=0.5):
-        for n in range(nbr_retries+1):
+    def retry_function(
+        self,
+        function: Callable,
+        args: list,
+        nbr_retries: int = 3,
+        retry_delay: float = 0.5,
+    ):
+        for n in range(nbr_retries + 1):
             try:
                 return function(*args)
             except Exception:
-                self.log.warning(f"Function failed, retry {n+1} of {nbr_retries} in {retry_delay} seconds")
+                self.log.warning(
+                    f"Function failed, retry {n+1} of {nbr_retries} in {retry_delay} seconds"
+                )
                 time.sleep(retry_delay)
-                retry_delay = 2*retry_delay
+                retry_delay = 2 * retry_delay

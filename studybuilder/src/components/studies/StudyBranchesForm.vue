@@ -25,6 +25,7 @@
               :error-messages="errors"
               clearable
               :disabled="Object.keys(editedBranchArm).length !== 0"
+              class="required"
               />
           </v-col>
         </v-row>
@@ -41,6 +42,7 @@
               data-cy="study-branch-arm-name"
               :error-messages="errors"
               clearable
+              class="required"
               />
           </v-col>
         </v-row>
@@ -57,6 +59,7 @@
               data-cy="study-branch-arm-short-name"
               :error-messages="errors"
               clearable
+              class="required"
               />
           </v-col>
         </v-row>

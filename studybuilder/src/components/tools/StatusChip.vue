@@ -1,5 +1,5 @@
 <template>
-<v-chip :color="color" dark>{{ status }}</v-chip>
+<v-chip :color="color" outlined text-color="black">{{ status }}</v-chip>
 </template>
 
 <script>

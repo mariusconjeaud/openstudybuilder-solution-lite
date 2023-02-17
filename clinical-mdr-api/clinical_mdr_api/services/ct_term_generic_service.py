@@ -147,12 +147,13 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
         return header_values
 
     @db.transaction
-    def get_term_attributes_by_codelist_uids(
+    def get_term_name_and_attributes_by_codelist_uids(
         self, codelist_uids: Sequence[str]
     ) -> list:
-        items, prop_names = self.repository.get_term_attributes_by_codelist_uids(
-            codelist_uids
-        )
+        (
+            items,
+            prop_names,
+        ) = self.repository.get_term_name_and_attributes_by_codelist_uids(codelist_uids)
 
         return [dict(zip(prop_names, item)) for item in items]
 

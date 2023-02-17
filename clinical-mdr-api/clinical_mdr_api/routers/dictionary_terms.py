@@ -317,7 +317,7 @@ def create_new_version(
 
 
 @router.post(
-    "/terms/{uid}/approve",
+    "/terms/{uid}/approvals",
     summary="Approve draft version of the dictionary term",
     description="""
 State before:
@@ -361,8 +361,8 @@ def approve(
     return dictionary_term_service.approve(term_uid=uid)
 
 
-@router.post(
-    "/terms/{uid}/inactivate",
+@router.delete(
+    "/terms/{uid}/activations",
     summary=" Inactivate final version of a dictionary term",
     description="""
 State before:
@@ -383,9 +383,9 @@ Possible errors:
     """,
     response_model=models.DictionaryTerm,
     response_model_exclude_unset=True,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -406,7 +406,7 @@ def inactivate(
 
 
 @router.post(
-    "/terms/{uid}/reactivate",
+    "/terms/{uid}/activations",
     summary="Reactivate retired version of a dictionary term",
     description="""
 State before:
@@ -427,9 +427,9 @@ Possible errors:
     """,
     response_model=models.DictionaryTerm,
     response_model_exclude_unset=True,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"

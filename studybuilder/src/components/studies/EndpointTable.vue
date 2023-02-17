@@ -14,6 +14,7 @@
     @filter="fetchEndpoints"
     :history-data-fetcher="fetchEndpointsHistory"
     :history-title="$t('StudyEndpointsTable.global_history_title')"
+    :history-html-fields="historyHtmlFields"
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -156,6 +157,7 @@
       />
   </v-dialog>
   <v-dialog v-model="showHistory"
+            @keydown.esc="closeHistory"
             persistent
             max-width="1200px">
     <history-table
@@ -163,6 +165,7 @@
       @close="closeHistory"
       :headers="headers"
       :items="endpointHistoryItems"
+      :html-fields="historyHtmlFields"
       />
   </v-dialog>
   <confirm-dialog ref="confirm" width="600"/>
@@ -203,7 +206,6 @@ export default {
   },
   computed: {
     ...mapGetters({
-      units: 'studiesGeneral/allUnits',
       selectedStudy: 'studiesGeneral/selectedStudy',
       studyEndpoints: 'studyEndpoints/studyEndpoints'
     }),
@@ -294,6 +296,7 @@ export default {
         { text: this.$t('_global.modified'), value: 'start_date', width: '10%' },
         { text: this.$t('_global.modified_by'), value: 'user_initials', width: '10%' }
       ],
+      historyHtmlFields: ['endpoint.name', 'timeframe.name', 'study_objective.objective.name'],
       selectedStudyEndpoint: null,
       showForm: false,
       showHistory: false,
@@ -354,11 +357,11 @@ export default {
         cancelLabel: this.$t('StudyObjectivesTable.keep_old_version'),
         agreeLabel: this.$t('StudyObjectivesTable.use_new_version')
       }
-      const message = this.$t('StudyEndpointsTable.update_timeframe_version_alert') + '<br><br>' +
-      '<h4 class="confirmation-text-header">' + this.$t('StudyEndpointsTable.previous_version') + '</h4>' +
-      '<p class="confirmation-text-field">' + item.timeframe.name + '</p>' +
-      '<h4 class="confirmation-text-header">' + this.$t('StudyEndpointsTable.new_version') + '</h4>' +
-      '<p class="confirmation-text-field">' + item.latest_timeframe.name + '</p>'
+      const message = this.$t('StudyEndpointsTable.update_timeframe_version_alert') + ' ' +
+            this.$t('StudyEndpointsTable.previous_version') +
+            ' ' + item.timeframe.name_plain +
+            ' ' + this.$t('StudyEndpointsTable.new_version') +
+            ' ' + item.latest_timeframe.name_plain
 
       if (await this.$refs.confirm.open(message, options)) {
         const args = {
@@ -403,14 +406,14 @@ export default {
         agreeLabel: this.$t('StudyObjectivesTable.use_new_version')
       }
       const message = this.$t('StudyEndpointsTable.update_endpoint_version_alert') + ' ' + this.$t('StudyEndpointsTable.previous_version') +
-      ' ' + item.endpoint.name + ' ' + this.$t('StudyEndpointsTable.new_version') + ' ' + item.latest_endpoint.name
+      ' ' + item.endpoint.name_plain + ' ' + this.$t('StudyEndpointsTable.new_version') + ' ' + item.latest_endpoint.name_plain
 
       if (await this.$refs.confirm.open(message, options)) {
         const args = {
           studyUid: item.study_uid,
           studyEndpointUid: item.study_endpoint_uid
         }
-        this.$store.dispatch('studyEndpoints/updateStudyEndpointEndpointLatestVersion', args).then(resp => {
+        this.$store.dispatch('studyEndpoints/updateStudyEndpointEndpointLatestVersion', args).then(() => {
           bus.$emit('notification', { msg: this.$t('StudyEndpointsTable.update_version_successful') })
         })
       } else {
@@ -419,8 +422,7 @@ export default {
           studyUid: item.study_uid,
           studyEndpointUid: item.study_endpoint_uid
         }
-        this.$store.dispatch('studyEndpoints/updateStudyEndpointAcceptVersion', args).then(resp => {
-        })
+        await this.$store.dispatch('studyEndpoints/updateStudyEndpointAcceptVersion', args)
       }
     },
     closeForm () {
@@ -440,17 +442,8 @@ export default {
       this.cloneMode = true
       this.editStudyEndpoint(studyEndpoint)
     },
-    getUnitName (unitUid) {
-      for (let cpt = 0; cpt < this.units.length; cpt++) {
-        const unit = this.units[cpt]
-        if (unit.uid === unitUid) {
-          return unit.name
-        }
-      }
-      return ''
-    },
     displayUnits (units) {
-      const unitNames = units.units.map(unit => this.getUnitName(unit))
+      const unitNames = units.units.map(unit => unit.name)
       if (unitNames.length > 1) {
         return unitNames.join(` ${units.separator} `)
       }

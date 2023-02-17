@@ -16,7 +16,7 @@
             rules="required"
             >
             <v-text-field
-              v-model="form.dictionaryId"
+              v-model="form.dictionary_id"
               :label="`${dictionaryName} ID`"
               :error-messages="errors"
               dense
@@ -192,7 +192,7 @@ export default {
         return
       }
       this.form.library_name = this.dictionaryName
-      this.form.codelistUid = this.editedTermCategory
+      this.form.codelist_uid = this.editedTermCategory
       const data = JSON.parse(JSON.stringify(this.form))
       dictionaries.create(data).then(resp => {
         bus.$emit('notification', { msg: this.$t('DictionaryTermForm.create_success') })
@@ -221,7 +221,7 @@ export default {
       this.initForm(this.editedTerm)
       this.form.change_description = this.$t('DictionaryTermForm.default_change_descr')
     }
-    this.form.codelistUid = this.editedTermCategory
+    this.form.codelist_uid = this.editedTermCategory
     this.$store.commit('form/SET_FORM', this.form)
   },
   watch: {
@@ -234,7 +234,7 @@ export default {
             this.editedTerm.defComplete = false
           }
           this.initForm(value)
-          this.form.codelistUid = this.editedTermCategory
+          this.form.codelist_uid = this.editedTermCategory
           this.$store.commit('form/SET_FORM', this.form)
         }
       },

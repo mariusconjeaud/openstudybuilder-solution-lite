@@ -3,10 +3,13 @@
   <horizontal-stepper-form
     ref="stepper"
     :title="title"
+    :help-items="helpItems"
     :steps="steps"
     @close="close"
     @save="submit"
     :form-observer-getter="getObserver"
+    :form-url="formUrl"
+    :editable="isEdit()"
     >
     <template v-slot:step.form="{ step }">
       <validation-observer :ref="`observer_${step}`">
@@ -326,13 +329,13 @@
       </validation-observer>
     </template>
     <template v-slot:actions>
-      <actions-menu :actions="actions" :item="form" v-if="editItem"/>
+      <actions-menu :actions="actions" :item="form" v-if="selectedGroup"/>
     </template>
   </horizontal-stepper-form>
   <crf-activities-models-link-form
     :open="linkForm"
     @close="closeLinkForm"
-    :item-to-link="editItem"
+    :item-to-link="selectedGroup"
     item-type="itemGroup" />
 </div>
 </template>
@@ -342,7 +345,7 @@ import crfs from '@/api/crfs'
 import terms from '@/api/controlledTerminology/terms'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm'
 import { bus } from '@/main'
-import constants from '@/constants/libraries'
+import libraries from '@/constants/libraries'
 import CrfDescriptionTable from '@/components/tools/CrfDescriptionTable'
 import { VueEditor } from 'vue2-editor'
 import { mapGetters } from 'vuex'
@@ -350,7 +353,6 @@ import ActionsMenu from '@/components/tools/ActionsMenu'
 import CrfActivitiesModelsLinkForm from '@/components/library/CrfActivitiesModelsLinkForm'
 import actions from '@/constants/actions'
 import parameters from '@/constants/parameters'
-import statuses from '@/constants/statuses'
 
 export default {
   components: {
@@ -361,7 +363,7 @@ export default {
     CrfActivitiesModelsLinkForm
   },
   props: {
-    editItem: {},
+    selectedGroup: Object,
     readOnlyProp: {
       type: Boolean,
       default: false
@@ -372,14 +374,30 @@ export default {
       userData: 'app/userData'
     }),
     title () {
-      return (this.isEdit(this.editItem))
+      return (this.isEdit())
         ? (this.readOnly ? this.$t('CRFItemGroups.item_group') + ' - ' + this.form.name : this.$t('CRFItemGroups.edit_group') + ' - ' + this.form.name)
         : this.$t('CRFItemGroups.add_group')
+    },
+    formUrl () {
+      if (this.isEdit()) {
+        return `${window.location.href.replace('crf-tree', 'item-groups')}/item-group/${this.selectedGroup.uid}`
+      }
+      return null
     }
   },
   data () {
     return {
-      helpItems: [],
+      helpItems: [
+        'CRFItemGroups.name',
+        'CRFItemGroups.oid',
+        'CRFItemGroups.repeating',
+        'CRFItemGroups.description',
+        'CRFItemGroups.impl_notes',
+        'CRFItemGroups.displayed_text',
+        'CRFItemGroups.compl_instructions',
+        'CRFItemGroups.aliases',
+        'CRFItemGroups.context'
+      ],
       form: {
         oid: 'G.',
         repeating: 'No',
@@ -412,19 +430,20 @@ export default {
         [{ list: 'ordered' }, { list: 'bullet' }]
       ],
       readOnly: this.readOnlyProp,
+      linkForm: false,
       actions: [
         {
           label: this.$t('_global.approve'),
           icon: 'mdi-check-decagram',
           iconColor: 'success',
-          condition: (item) => item.possible_actions ? item.possible_actions.find(action => action === actions.APPROVE) : false,
+          condition: (item) => !this.readOnly,
           click: this.approve
         },
         {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions ? item.possible_actions.find(action => action === actions.NEW_VERSION) : false,
+          condition: (item) => this.readOnly,
           click: this.newVersion
         },
         {
@@ -438,7 +457,7 @@ export default {
           label: this.$t('CrfLinikingForm.link_activity_sub_groups'),
           icon: 'mdi-plus',
           iconColor: 'primary',
-          condition: (item) => item.status === statuses.FINAL,
+          condition: (item) => this.readOnly,
           click: this.openLinkForm
         }
       ]
@@ -446,8 +465,7 @@ export default {
   },
   methods: {
     getGroup () {
-      crfs.getItemGroup(this.editItem.uid).then((resp) => {
-        this.form = resp.data
+      crfs.getItemGroup(this.selectedGroup.uid).then((resp) => {
         this.initForm(resp.data)
       })
     },
@@ -459,18 +477,18 @@ export default {
       this.getGroup()
     },
     async newVersion () {
-      await crfs.newVersion('item-groups', this.editItem.uid)
+      this.$emit('newVersion', this.selectedGroup)
       this.readOnly = false
       this.getGroup()
     },
     approve () {
-      crfs.approve('item-groups', this.editItem.uid)
+      this.$emit('approve', this.selectedGroup)
       this.readOnly = true
       this.getGroup()
     },
     async delete () {
       let relationships = 0
-      await crfs.getGroupRelationship(this.editItem.uid).then(resp => {
+      await crfs.getGroupRelationship(this.selectedGroup.uid).then(resp => {
         if (resp.data.OdmForm && resp.data.OdmForm.length > 0) {
           relationships = resp.data.OdmForm.length
         }
@@ -481,11 +499,11 @@ export default {
         agreeLabel: this.$t('_global.continue')
       }
       if (relationships > 0 && await this.$refs.confirm.open(`${this.$t('CRFItemGroups.delete_warning_1')} ${relationships} ${this.$t('CRFItemGroups.delete_warning_2')}`, options)) {
-        crfs.delete('item-groups', this.editItem.uid).then((resp) => {
+        crfs.delete('item-groups', this.selectedGroup.uid).then((resp) => {
           this.$emit('close')
         })
       } else if (relationships === 0) {
-        crfs.delete('item-groups', this.editItem.uid).then((resp) => {
+        crfs.delete('item-groups', this.selectedGroup.uid).then((resp) => {
           this.$emit('close')
         })
       }
@@ -517,14 +535,14 @@ export default {
     },
     async submit () {
       await this.createOrUpdateDescription()
-      this.form.library_name = constants.LIBRARY_SPONSOR
+      this.form.library_name = libraries.LIBRARY_SPONSOR
       if (this.form.oid === 'G.') {
         this.$set(this.form, 'oid', '')
       }
       try {
-        if (this.isEdit(this.editItem)) {
+        if (this.isEdit()) {
           this.form.alias_uids = this.form.alias_uids.map(alias => alias.uid ? alias.uid : alias)
-          await crfs.updateItemGroup(this.form, this.editItem.uid).then(resp => {
+          await crfs.updateItemGroup(this.form, this.selectedGroup.uid).then(resp => {
             bus.$emit('notification', { msg: this.$t('CRFItemGroups.group_updated') })
             this.close()
           })
@@ -540,7 +558,7 @@ export default {
       }
     },
     async createAlias () {
-      this.alias.library_name = constants.LIBRARY_SPONSOR
+      this.alias.library_name = libraries.LIBRARY_SPONSOR
       await crfs.createAlias(this.alias).then(resp => {
         this.form.alias_uids.push(resp.data.uid)
         crfs.getAliases().then(resp => {
@@ -556,7 +574,7 @@ export default {
         if (e.uid) {
           descArray.push(e)
         } else {
-          e.library_name = constants.LIBRARY_SPONSOR
+          e.library_name = libraries.LIBRARY_SPONSOR
           descArray.push(e)
         }
       })
@@ -567,6 +585,7 @@ export default {
       this.form.descriptions = descArray
     },
     initForm (item) {
+      this.form = item
       this.form.alias_uids = item.aliases
       this.form.sdtm_domain_uids = item.sdtm_domains.map(el => el.uid)
       this.form.change_description = ''
@@ -578,8 +597,11 @@ export default {
     getAliasDisplay (item) {
       return `${item.context} - ${item.name}`
     },
-    isEdit (value) {
-      return Object.keys(value).length !== 0
+    isEdit () {
+      if (this.selectedGroup) {
+        return Object.keys(this.selectedGroup).length !== 0
+      }
+      return false
     }
   },
   mounted () {
@@ -594,10 +616,9 @@ export default {
     crfs.getAliases().then(resp => {
       this.aliases = resp.data.items
     })
-    if (this.isEdit(this.editItem)) {
+    if (this.isEdit()) {
       this.steps = this.readOnly ? this.createSteps : this.editSteps
-      this.form = this.editItem
-      this.initForm(this.editItem)
+      this.initForm(this.selectedGroup)
     } else {
       this.steps = this.createSteps
     }
@@ -622,11 +643,10 @@ export default {
         }
       }
     },
-    editItem: {
+    selectedGroup: {
       handler (value) {
-        if (this.isEdit(value)) {
+        if (this.isEdit()) {
           this.steps = this.readOnly ? this.createSteps : this.editSteps
-          this.form = value
           this.initForm(value)
         } else {
           this.steps = this.createSteps

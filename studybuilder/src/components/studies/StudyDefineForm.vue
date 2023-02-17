@@ -39,7 +39,7 @@
             >
             <multiple-select
               data-cy="trial-type"
-              v-model="form.trial_types_codes"
+              v-model="form.trial_type_codes"
               :label="$t('StudyDefineForm.trialtype')"
               :items="trialTypes"
               item-text="sponsor_preferred_name"
@@ -237,7 +237,7 @@ export default {
       }
       data.study_type_code = this.getTermPayload('study_type_code')
       data.trial_intent_types_codes = this.getTermsPayload('trial_intent_types_codes')
-      data.trial_types_codes = this.getTermsPayload('trial_types_codes')
+      data.trial_type_codes = this.getTermsPayload('trial_type_codes')
       data.trial_phase_code = this.getTermPayload('trial_phase_code')
       if (this.stopRulesNone) {
         data.studyStopRules = studyConstants.STOP_RULE_NONE

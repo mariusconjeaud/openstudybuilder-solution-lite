@@ -10,16 +10,16 @@ export default {
     return repository.get(`${resource}/${source}`, { params })
   },
   inactivate (uid, source) {
-    return repository.post(`${resource}/${source}/${uid}/inactivate`)
+    return repository.delete(`${resource}/${source}/${uid}/activations`)
   },
   reactivate (uid, source) {
-    return repository.post(`${resource}/${source}/${uid}/reactivate`)
+    return repository.post(`${resource}/${source}/${uid}/activations`)
   },
   delete (uid, source) {
     return repository.delete(`${resource}/${source}/${uid}`)
   },
   approve (uid, source) {
-    return repository.post(`${resource}/${source}/${uid}/approve`)
+    return repository.post(`${resource}/${source}/${uid}/approvals`)
   },
   newVersion (uid, source) {
     return repository.post(`${resource}/${source}/${uid}/versions`)
@@ -39,7 +39,8 @@ export default {
   getSubGroups (group) {
     const params = {
       activity_group_uid: group,
-      page_size: 0
+      page_size: 0,
+      sort_by: { name: true }
     }
     return repository.get(`${resource}/activity-sub-groups`, { params })
   },
@@ -58,7 +59,8 @@ export default {
   getSubGroupActivities (group) {
     const params = {
       activity_subgroup_uid: group,
-      page_size: 0
+      page_size: 0,
+      sort_by: { name: true }
     }
     return repository.get(`${resource}/activities`, { params })
   },
@@ -73,5 +75,8 @@ export default {
       ...data
     }
     return repository.patch(`${resource}/${source}/${uid}`, params)
+  },
+  createFromActivityRequest (data) {
+    return repository.post(`${resource}/activities/sponsor-activities`, data)
   }
 }

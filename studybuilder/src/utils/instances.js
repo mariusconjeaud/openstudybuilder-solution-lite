@@ -14,7 +14,7 @@ async function formatConstantParameterValue (parameter) {
       const numData = {
         value: parameter.selectedValues,
         library_name: 'Sponsor',
-        templateParameter: true
+        template_parameter: true
       }
       resp = await concepts.create(numData, 'numeric-values')
     } else if (parameter.name === pconstants.TEXT_VALUE) {
@@ -22,7 +22,7 @@ async function formatConstantParameterValue (parameter) {
         name: parameter.selectedValues,
         name_sentence_case: parameter.selectedValues.toLowerCase(),
         library_name: 'Sponsor',
-        templateParameter: true
+        template_parameter: true
       }
       resp = await concepts.create(textData, 'text-values')
     }

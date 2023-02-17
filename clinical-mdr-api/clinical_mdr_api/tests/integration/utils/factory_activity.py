@@ -4,10 +4,12 @@ from clinical_mdr_api.services.study_activity_selection import (
 )
 
 
-def create_study_activity(study_uid: str, activity_uid="activity_root1"):
+def create_study_activity(
+    study_uid: str, activity_uid="activity_root1", flowchart_group_uid="term_root_final"
+):
     return StudyActivitySelectionService(author="test").make_selection(
         study_uid,
         StudySelectionActivityCreateInput(
-            flowchart_group_uid="term_root_final", activity_uid=activity_uid
+            flowchart_group_uid=flowchart_group_uid, activity_uid=activity_uid
         ),
     )

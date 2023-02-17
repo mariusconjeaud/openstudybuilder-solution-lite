@@ -22,14 +22,22 @@ Note: the pipenv config file Pipefile specifies Python 3.7. It is also possible 
 
 Create `.env` file (in the root of the repository) with the following content:
 ```shell
-NEO4J_DSN=bolt://neo4j:password@localhost:7687
+NEO4J_DSN=bolt://neo4j:test1234@localhost:7687
 OAUTH_ENABLED=false
 ALLOW_ORIGIN_REGEX='.*'
 ```
 
-To enable Authentication, add and reset the following variables too.
-Update them according to your auth configuration.
-(the values below are random-generated examples)
+Note that the value of `NEO4J_DSN` variable needs to be in alignment with the actual environemt variables used when starting the target neo4j database, e.g.
+
+```
+NEO4J_MDR_BOLT_PORT=7687
+NEO4J_MDR_HOST=localhost
+NEO4J_MDR_AUTH_USER=neo4j
+NEO4J_MDR_AUTH_PASSWORD=test1234
+```
+
+To enable Authentication, add and set the following variables too.
+Update them according to your auth configuration (the values below are random-generated examples).
 ```shell
 OAUTH_ENABLED=True
 OIDC_METADATA_DOCUMENT='https://login.microsoftonline.com/bd70d9d2-5ba8-4bb8-8ca5-55fdaf0c76d1/v2.0/.well-known/openid-configuration'
@@ -47,23 +55,23 @@ APPLICATIONINSIGHTS_CONNECTION_STRING='InstrumentationKey=00000000-0000-0000-000
 UVICORN_LOG_CONFIG='logging-azure.yaml'
 ```
 
-### Launch Development Server
+### Launch API locally
 
-Then, launch the development server by:
+Start the API locally by running:
 
 ```bash
-$ pipenv run uvicorn clinical_mdr_api.main:app --reload
+$ pipenv run dev
 ```
 
 
 ### Verify the API is running
 If the setup is correctly done, the API should be available at:
 
-http://localhost:8000/
+- http://localhost:8000/
 
-And the documentation at:
+and the API specification in the form of SwaggerUI at:
 
-http://localhost:8000/docs/
+- http://localhost:8000/docs/
 
 ### Additional information
 
@@ -72,56 +80,62 @@ You might want to use a start script like this:
 ```sh
 #!/usr/bin/env bash
 pipenv sync
-pipenv run uvicorn clinical_mdr_api.main:app --reload
+pipenv run dev
 ```
 
-There is also a predefined pipenv script to invoke uvicorn and start the app: `pipenv run dev` which should be run after `pipenv install`.
-
-All in all, you should be able to start the API by:
-* starting docker by `sudo service start docker` (if docker is not start on boot)
-* starting container by `docker start neo4j_local`
-* install the virtual environment by `pipenv install`
-* start API by `pipenv run dev`
+All in all, you should be able to start the API by performing these steps:
+* Start docker service by running `sudo service start docker`
+* Start database container by running `docker start neo4j_local`
+* Install Python virtual environment by running `pipenv install`
+* Start the API by running `pipenv run dev`
 
 ---
 
-## Run unit tests
+## Usefull shortcuts (i.e. scripts defined in Pipfile)
+- `pipenv run format` - Formats all Python code using [Black](https://black.readthedocs.io/en/stable/) and [isort](https://pycqa.github.io/isort/)
+- `pipenv run testunit` - Runs all tests defined in the `clinical_mdr_api/tests/unit` folder and generates test and coverage reports
+- `pipenv run testint` - Runs all tests defined in the `clinical_mdr_api/tests/integration` folder and generates test and coverage reports
+- `pipenv run testauth` - Runs all tests defined in the `clinical_mdr_api/tests/oauth` folder and generates test and coverage reports
+- `pipenv run test-telemetry` - Runs all tests defined in the `clinical_mdr_api/tests/telemetry` folder and generates test and coverage reports
+- `pipenv run test` - Runs all tests defined in the `clinical_mdr_api/tests` folder
+- `pipenv run lint` - Performs static code analysis using [Pylint](https://pylint.pycqa.org/en/latest/)
+- `pipenv run openapi` - Generates API specification in the [OpenAPI](https://swagger.io/specification/) format and stores it in `openapi.json` file
+- `pipenv run schemathesis` - Checks API implementation against the specification defined in `openapi.json` file, by using [schemathesis](https://schemathesis.readthedocs.io/en/stable/) tool
 
-Running unit tests requires a neo4j database to be available on your
-machine. We recommend using the docker image provided by the
-neo4j-mdr-db repository.
+### Running tests
+- Running unit/integration tests requires a neo4j database. We recommend using the docker image provided by the `neo4j-mdr-db` repository to start the database locally.
 
-Once you're ready, start unit tests using the following commands:
+- If you want to execute only a subset of tests instead of using shortcuts defined above, you can run:
+  ```bash
+  $ pipenv run pytest {test file path}::{test class}::{test method}
+  ```
+  Below is an example:
+  ```bash
+  $ pipenv run pytest clinical_mdr_api/tests/integration/services/test_listing_study_design.py::TestStudyListing::test_registry_identifiers_listing
+  ```
 
-```bash
-$ pipenv run pytest
-```
-or use following script:
-```bash
-$ pipenv install
-$ export NEO4J_DSN=bolt://neo4j:password@localhost:7687
-$ pipenv run pytest
-```
-If you want to execute pytest for a particular (part of) test instead of all the tests:
-```bash
-$ pipenv run pytest {path to test file}::{class of test}::{particular part to be tested}
-```
-Below is an example:
-```bash
-$ pipenv run pytest clinical_mdr_api/tests/integration/services/test_listing_study_design.py::TestStudyListing::test_registry_identifiers_listing
-```
+### Running Schemathesis checks
+- In order to run schemathesis checks on a subset of endpoints and/or http methods, 
+you can specify parameters for the desired http methods (`-M`) and endpoint names (`-E`) inside the `Pipfile`.
 
-If you want to execute pytest with testing a coverage, please consider using --cov option. This requires pytest-cov package installed (already in pipenv):
+  For example, this will only test `GET` and `POST` endpoints whose name starts with `/concepts/numeric-values-with-unit`:
 
-```bash
-$ pipenv run pytest --cov 
-```
-
-To exclude coverage information about packages from virtual environment (pytest by default is not testing virtualenv packages) add package name to --cov option:
-
-```bash
-$ pipenv run pytest --cov=clinical_mdr_api
-```
+  ```
+  schemathesis = """sh -c "
+      st run \
+          --checks=all \
+          --base-url=http://localhost:8000 \
+          -M GET \
+          -M POST \
+          -E ^/concepts/numeric-values-with-unit \
+          --hypothesis-max-examples=10 \
+          --junit-xml=schemathesis_report.xml \
+          --report=schemathesis_report.tgz \
+          --show-errors-tracebacks \
+          openapi.json
+  "
+  """
+  ```
 
 ---
 

@@ -9,10 +9,12 @@ import form from '@/store/modules/form'
 import objectives from '@/store/modules/library/objectives'
 import endpoints from '@/store/modules/library/endpoints'
 import timeframes from '@/store/modules/library/timeframes'
+import criteria from '@/store/modules/library/criteria'
 import ctCatalogues from '@/store/modules/library/ctCatalogues'
 import tablesLayout from '@/store/modules/library/tablesLayout'
 import units from '@/store/modules/library/units'
 import compounds from './modules/library/compounds'
+import crfs from './modules/library/crfs'
 
 // Studies modules
 import studiesGeneral from '@/store/modules/studies/general'
@@ -32,6 +34,7 @@ export default new Vuex.Store({
     objectives,
     timeframes,
     endpoints,
+    criteria,
     compounds,
     ctCatalogues,
     units,
@@ -43,6 +46,7 @@ export default new Vuex.Store({
     studyEpochs,
     studyActivities,
     tablesLayout,
-    form
+    form,
+    crfs
   }
 })

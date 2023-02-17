@@ -173,39 +173,39 @@ class TestStudyService(unittest.TestCase):
                     list(_ref_study_population.therapeutic_area_codes),
                     [
                         self.get_field_or_simple_term_uid(therapeutic_area_code)
-                        for therapeutic_area_code in _res_study_population.therapeutic_areas_codes
+                        for therapeutic_area_code in _res_study_population.therapeutic_area_codes
                     ],
                 )
                 self.assertEqual(
                     _ref_study_population.therapeutic_area_null_value_code,
                     self.get_field_or_simple_term_uid(
-                        _res_study_population.therapeutic_areas_null_value_code
+                        _res_study_population.therapeutic_area_null_value_code
                     ),
                 )
                 self.assertEqual(
                     list(_ref_study_population.disease_condition_or_indication_codes),
                     [
                         self.get_field_or_simple_term_uid(disease_or_indication_code)
-                        for disease_or_indication_code in _res_study_population.disease_conditions_or_indications_codes
+                        for disease_or_indication_code in _res_study_population.disease_condition_or_indication_codes
                     ],
                 )
                 self.assertEqual(
                     _ref_study_population.disease_condition_or_indication_null_value_code,
                     self.get_field_or_simple_term_uid(
-                        _res_study_population.disease_conditions_or_indications_null_value_code
+                        _res_study_population.disease_condition_or_indication_null_value_code
                     ),
                 )
                 self.assertEqual(
                     list(_ref_study_population.diagnosis_group_codes),
                     [
                         self.get_field_or_simple_term_uid(diagnosis_group_code)
-                        for diagnosis_group_code in _res_study_population.diagnosis_groups_codes
+                        for diagnosis_group_code in _res_study_population.diagnosis_group_codes
                     ],
                 )
                 self.assertEqual(
                     _ref_study_population.diagnosis_group_null_value_code,
                     self.get_field_or_simple_term_uid(
-                        _res_study_population.diagnosis_groups_null_value_code
+                        _res_study_population.diagnosis_group_null_value_code
                     ),
                 )
                 self.assertEqual(
@@ -489,179 +489,16 @@ class TestStudyService(unittest.TestCase):
         self.assertEqual(
             [
                 self.get_field_or_simple_term_uid(trial_type_code)
-                for trial_type_code in _res_high_level_study_design.trial_types_codes
+                for trial_type_code in _res_high_level_study_design.trial_type_codes
             ],
             list(_ref_high_level_study_design.trial_type_codes),
         )
         self.assertEqual(
             self.get_field_or_simple_term_uid(
-                _res_high_level_study_design.trial_types_null_value_code
+                _res_high_level_study_design.trial_type_null_value_code
             ),
             _ref_high_level_study_design.trial_type_null_value_code,
         )
-
-    @patch(StudyService.__module__ + ".MetaRepository.clinical_programme_repository")
-    @patch(StudyService.__module__ + ".MetaRepository.project_repository")
-    @patch(
-        StudyService.__module__ + ".MetaRepository.study_definition_repository",
-        new_callable=PropertyMock,
-    )
-    def test__get_all__minus_identification_plus_high_level_study_design__result(
-        self,
-        study_definition_repository_property_mock: PropertyMock,
-        project_repository_property_mock: PropertyMock,
-        clinical_programme_repository_property_mock: PropertyMock,
-    ):
-
-        # given
-        test_db = StudyDefinitionsDBFake()
-
-        prepare_repo = StudyDefinitionRepositoryFake(test_db)
-        sample_study_definitions = [
-            create_random_study(generate_uid_callback=prepare_repo.generate_uid)
-            for _ in range(0, 10)
-        ]
-        for _ in sample_study_definitions:
-            prepare_repo.save(_)
-        prepare_repo.close()
-
-        test_repo = StudyDefinitionRepositoryFake(test_db)
-        study_definition_repository_property_mock.return_value = test_repo
-
-        # when
-        project_repository_property_mock.find_by_project_number.return_value = create_random_project(
-            clinical_programme_uid=random_str(),
-            # pylint:disable=unnecessary-lambda
-            generate_uid_callback=lambda: random_str(),
-        )
-        clinical_programme_repository_property_mock.find_by_uid.return_value = (
-            # pylint:disable=unnecessary-lambda
-            create_random_clinical_programme(generate_uid_callback=lambda: random_str())
-        )
-        study_service = StudyService(user="PIWQ")
-        service_response = study_service.get_all(
-            fields=" - current_metadata . identification_metadata , "
-            " + current_metadata . high_level_study_design   "
-        ).items
-
-        # then
-        self.assertEqual(len(service_response), len(sample_study_definitions))
-
-        self.assertEqual(
-            {_.uid for _ in service_response}, {_.uid for _ in sample_study_definitions}
-        )
-
-        for sample_study_definition in sample_study_definitions:
-            service_response_item = [
-                _ for _ in service_response if _.uid == sample_study_definition.uid
-            ][0]
-
-            # no id metadata in response
-            self.assertIsNone(
-                service_response_item.current_metadata.identification_metadata
-            )
-            self.assertNotIn(
-                "identification_metadata",
-                service_response_item.current_metadata.__fields_set__,
-            )
-
-            # correct values of ver metadata
-            self.assertEqual(
-                sample_study_definition.current_metadata.ver_metadata.study_status.value,
-                service_response_item.current_metadata.version_metadata.study_status,
-            )
-            self.assertEqual(
-                sample_study_definition.current_metadata.ver_metadata.locked_version_number,
-                service_response_item.current_metadata.version_metadata.locked_version_number,
-            )
-            self.assertEqual(
-                sample_study_definition.current_metadata.ver_metadata.locked_version_info,
-                service_response_item.current_metadata.version_metadata.locked_version_info,
-            )
-            self.assertEqual(
-                sample_study_definition.current_metadata.ver_metadata.locked_version_author,
-                service_response_item.current_metadata.version_metadata.locked_version_author,
-            )
-            self.assertEqual(
-                sample_study_definition.current_metadata.ver_metadata.version_timestamp,
-                service_response_item.current_metadata.version_metadata.version_timestamp,
-            )
-
-            # correct values of high level study design
-            _ref_high_level_study_design = (
-                sample_study_definition.current_metadata.high_level_study_design
-            )
-            _res_high_level_study_design = (
-                service_response_item.current_metadata.high_level_study_design
-            )
-
-            self.assertEqual(
-                self.get_field_or_simple_term_uid(
-                    _res_high_level_study_design.study_type_null_value_code
-                ),
-                _ref_high_level_study_design.study_type_null_value_code,
-            )
-            self.assertEqual(
-                self.get_field_or_simple_term_uid(
-                    _res_high_level_study_design.study_type_code
-                ),
-                _ref_high_level_study_design.study_type_code,
-            )
-            self.assertEqual(
-                self.get_field_or_simple_term_uid(
-                    _res_high_level_study_design.is_extension_trial_null_value_code
-                ),
-                _ref_high_level_study_design.is_extension_trial_null_value_code,
-            )
-            self.assertEqual(
-                _res_high_level_study_design.is_extension_trial,
-                _ref_high_level_study_design.is_extension_trial,
-            )
-            self.assertEqual(
-                _res_high_level_study_design.is_adaptive_design,
-                _ref_high_level_study_design.is_adaptive_design,
-            )
-            self.assertEqual(
-                self.get_field_or_simple_term_uid(
-                    _res_high_level_study_design.is_adaptive_design_null_value_code
-                ),
-                _ref_high_level_study_design.is_adaptive_design_null_value_code,
-            )
-            self.assertEqual(
-                _res_high_level_study_design.study_stop_rules,
-                _ref_high_level_study_design.study_stop_rules,
-            )
-            self.assertEqual(
-                self.get_field_or_simple_term_uid(
-                    _res_high_level_study_design.study_stop_rules_null_value_code
-                ),
-                _ref_high_level_study_design.study_stop_rules_null_value_code,
-            )
-            self.assertEqual(
-                self.get_field_or_simple_term_uid(
-                    _res_high_level_study_design.trial_phase_code
-                ),
-                _ref_high_level_study_design.trial_phase_code,
-            )
-            self.assertEqual(
-                self.get_field_or_simple_term_uid(
-                    _res_high_level_study_design.trial_phase_null_value_code
-                ),
-                _ref_high_level_study_design.trial_phase_null_value_code,
-            )
-            self.assertEqual(
-                list(
-                    self.get_field_or_simple_term_uid(trial_type)
-                    for trial_type in _res_high_level_study_design.trial_types_codes
-                ),
-                list(_ref_high_level_study_design.trial_type_codes),
-            )
-            self.assertEqual(
-                self.get_field_or_simple_term_uid(
-                    _res_high_level_study_design.trial_types_null_value_code
-                ),
-                _ref_high_level_study_design.trial_type_null_value_code,
-            )
 
     @patch(StudyService.__module__ + ".MetaRepository.clinical_programme_repository")
     @patch(StudyService.__module__ + ".MetaRepository.project_repository")

@@ -87,10 +87,10 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
         "defaults": [
             "library=library.name",
             "uid",
-            "name",
+            "name_plain",
             "indications=indications.name",
-            "categories",
-            "sub_categories",
+            "categories=categories.name.sponsor_preferred_name",
+            "sub_categories=sub_categories.name.sponsor_preferred_name",
             "guidance_text",
             "start_date",
             "end_date",
@@ -584,7 +584,7 @@ def create_new_version(
 
 
 @router.post(
-    "/{uid}/approve",
+    "/{uid}/approvals",
     summary="Approves the criteria template identified by 'uid'.",
     description="""This request is only valid if the criteria template
 * is in 'Draft' status and
@@ -630,8 +630,8 @@ def approve(
     return Service(current_user_id).approve_cascade(uid=uid)
 
 
-@router.post(
-    "/{uid}/inactivate",
+@router.delete(
+    "/{uid}/activations",
     summary="Inactivates/deactivates the criteria template identified by 'uid'.",
     description="""This request is only valid if the criteria template
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -642,9 +642,9 @@ If the request succeeds:
 * The 'version' property will remain the same as before.
     """,
     response_model=models.CriteriaTemplate,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -664,7 +664,7 @@ def inactivate(
 
 
 @router.post(
-    "/{uid}/reactivate",
+    "/{uid}/activations",
     summary="Reactivates the criteria template identified by 'uid'.",
     description="""This request is only valid if the criteria template
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -675,9 +675,9 @@ If the request succeeds:
 * The 'version' property will remain the same as before.
     """,
     response_model=models.CriteriaTemplate,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"

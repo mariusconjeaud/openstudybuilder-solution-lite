@@ -91,7 +91,7 @@ class StudySelectionActivityRepository:
         # Then, match the StudyActivity and Activity
         query += """
             WITH sr, sv
-            MATCH (sv)-[:HAS_STUDY_ACTIVITY]->(sa:StudyActivity)-[:HAS_SELECTED_ACTIVITY]->(av:ActivityValue)<-[ver:LATEST_FINAL]-(ar:ActivityRoot)
+            MATCH (sv)-[:HAS_STUDY_ACTIVITY]->(sa:StudyActivity)-[:HAS_SELECTED_ACTIVITY]->(av:ActivityValue)<-[ver:LATEST_FINAL|LATEST_RETIRED]-(ar:ActivityRoot)
         """
 
         # Filter on Activity, ActivityGroup or ActivityGroupNames if provided as a specific filter

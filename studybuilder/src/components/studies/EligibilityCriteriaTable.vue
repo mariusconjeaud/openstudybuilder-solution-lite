@@ -10,6 +10,7 @@
     export-object-label="StudyCriteria"
     :history-data-fetcher="fetchAllCriteriaHistory"
     :history-title="$t('EligibilityCriteriaTable.global_history_title')"
+    :history-html-fields="historyHtmlFields"
     >
     <template v-slot:afterSwitches>
       <div :title="$t('NNTableTooltips.reorder_content')">
@@ -124,7 +125,7 @@
           </td>
           <td>
             <v-checkbox
-              v-model="item.keyCriteria"
+              v-model="item.key_criteria"
               @change="updateKeyCriteria($event, item.study_criteria_uid)"
               />
           </td>
@@ -165,6 +166,7 @@
   </v-dialog>
   <v-dialog
     v-model="showHistory"
+    @keydown.esc="closeHistory"
     persistent
     max-width="1200px"
     >
@@ -173,6 +175,7 @@
       @close="closeHistory"
       :headers="headers"
       :items="criteriaHistoryItems"
+      :html-fields="historyHtmlFields"
       />
   </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
@@ -254,11 +257,12 @@ export default {
         { text: '', value: 'actions', width: '5%' },
         { text: '#', value: 'order', width: '5%' },
         { text: this.criteriaType.sponsor_preferred_name, value: 'name', width: '30%' },
-        { text: this.$t('EligibilityCriteriaTable.guidance_text'), value: 'guidanceText', width: '20%' },
-        { text: this.$t('EligibilityCriteriaTable.key_criteria'), value: 'keyCriteria' },
+        { text: this.$t('EligibilityCriteriaTable.guidance_text'), value: 'guidance_text', width: '20%' },
+        { text: this.$t('EligibilityCriteriaTable.key_criteria'), value: 'key_criteria' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.modified_by'), value: 'user_initials' }
       ],
+      historyHtmlFields: ['name', 'guidance_text'],
       selectedStudyCriteria: null,
       showEditForm: false,
       showForm: false,
@@ -268,7 +272,7 @@ export default {
   },
   methods: {
     async fetchAllCriteriaHistory () {
-      const resp = await study.getStudyCriteriaAllAuditTrail(this.selectedStudy.uid)
+      const resp = await study.getStudyCriteriaAllAuditTrail(this.selectedStudy.uid, this.criteriaType.term_uid)
       return this.transformItems(resp.data)
     },
     actionsMenuBadge (item) {

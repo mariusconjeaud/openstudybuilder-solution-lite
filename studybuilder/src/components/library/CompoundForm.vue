@@ -23,6 +23,7 @@
               :label="$t('CompoundForm.sponsor_compound')"
               row
               :error-messages="errors"
+              class="required"
               />
           </validation-provider>
         </v-col>
@@ -79,6 +80,7 @@
               :label="$t('CompoundForm.name')"
               dense
               :error-messages="errors"
+              class="required"
               />
           </validation-provider>
         </v-col>
@@ -375,6 +377,7 @@
                 dense
                 clearable
                 :error-messages="errors"
+                class="required"
                 />
             </validation-provider>
           </v-col>
@@ -391,6 +394,7 @@
                 dense
                 clearable
                 :error-messages="errors"
+                class="required"
                 />
             </validation-provider>
           </v-col>
@@ -405,6 +409,7 @@
                 v-model="form.aliasIsPreferredSynonym"
                 :label="$t('CompoundAliasForm.is_preferred_synonym')"
                 :error-messages="errors"
+                class="required"
                 />
             </validation-provider>
           </v-col>
@@ -429,9 +434,9 @@
           <template v-slot:default>
             <thead>
               <tr class="text-left">
-                <th>{{ $t('CompoundOverview.compound_alias') }}</th>
-                <th>{{ $t('_global.definition') }}</th>
-                <th>{{ $t('CompoundOverview.preferred_alias') }}</th>
+                <th scope="col">{{ $t('CompoundOverview.compound_alias') }}</th>
+                <th scope="col">{{ $t('_global.definition') }}</th>
+                <th scope="col">{{ $t('CompoundOverview.preferred_alias') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -691,7 +696,7 @@ export default {
         this.compound = resp.data
       })
     }
-    this.$store.dispatch('compounds/fetchSubstances').then(resp => {
+    this.$store.dispatch('compounds/fetchSubstances').then(() => {
       this.transformSubstances()
     })
     terms.getByCodelist('frequency').then(resp => {

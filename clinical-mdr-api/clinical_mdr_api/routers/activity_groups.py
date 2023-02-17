@@ -347,7 +347,7 @@ def create_new_version(
 
 
 @router.post(
-    "/activity-groups/{uid}/approve",
+    "/activity-groups/{uid}/approvals",
     summary="Approve draft version of activity group",
     description="""
 State before:
@@ -390,8 +390,8 @@ def approve(
     return activity_group_service.approve(uid=uid)
 
 
-@router.post(
-    "/activity-groups/{uid}/inactivate",
+@router.delete(
+    "/activity-groups/{uid}/activations",
     summary=" Inactivate final version of activity group",
     description="""
 State before:
@@ -411,9 +411,9 @@ Possible errors:
  - Invalid uid or status not Final.
     """,
     response_model=ActivityGroup,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -434,7 +434,7 @@ def inactivate(
 
 
 @router.post(
-    "/activity-groups/{uid}/reactivate",
+    "/activity-groups/{uid}/activations",
     summary="Reactivate retired version of a activity group",
     description="""
 State before:
@@ -454,9 +454,9 @@ Possible errors:
  - Invalid uid or status not Retired.
     """,
     response_model=ActivityGroup,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"

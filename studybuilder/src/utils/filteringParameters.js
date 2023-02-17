@@ -9,7 +9,7 @@ function prepareParameters (options, filters, sort, filtersUpdated) {
     /* Filters changed, reset page number */
     options.page = 1
   }
-  if (filters !== undefined && filters !== '{}') {
+  if (filters && filters !== undefined && filters !== '{}') {
     params.filters = filters
   }
   if (options.sortBy && options.sortBy.length !== 0 && sort !== undefined) {

@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import study from '@/api/study'
-import constants from '@/constants/study'
 
 const state = {
   studies: {
@@ -13,7 +12,7 @@ const getters = {
   studies: state => state.studies,
   projects: state => state.projects,
   getProjectByNumber: state => number => {
-    return state.projects.find(project => project.projectNumber === number)
+    return state.projects.find(project => project.project_number === number)
   }
 }
 
@@ -38,7 +37,7 @@ const mutations = {
 
 const actions = {
   fetchStudies ({ commit }) {
-    return study.getAll([`${constants.IDENTIFICATION_METADATA}`, `${constants.VERSION_METADATA}`, `${constants.DESCRIPTION_METADATA}`]).then(resp => {
+    return study.getAll().then(resp => {
       commit('SET_STUDIES', resp.data)
     })
   },

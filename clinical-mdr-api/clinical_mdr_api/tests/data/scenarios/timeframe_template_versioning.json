@@ -71,7 +71,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/timeframe-templates/{uid}/approve"
+            "url": "/timeframe-templates/{uid}/approvals"
         },
         "response": {
             "code": 201,
@@ -108,7 +108,7 @@
             "headers": {},
             "method": "PATCH",
             "request": {},
-            "url": "/timeframe-templates/{uid}/approve"
+            "url": "/timeframe-templates/{uid}/approvals"
         },
         "response": {
             "code": 405,
@@ -127,7 +127,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/timeframe-templates/{uid}/approve"
+            "url": "/timeframe-templates/{uid}/approvals"
         },
         "response": {
             "code": 400,
@@ -138,7 +138,7 @@
             "result": {
                 "message": "The object is not in draft status.",
                 "method": "POST",
-                "path": "http://testserver/timeframe-templates/a831a596-5e40-42a5-a2de-f9c0028e32e8/approve",
+                "path": "http://testserver/timeframe-templates/a831a596-5e40-42a5-a2de-f9c0028e32e8/approvals",
                 "time": "2020-11-04T02:35:13.181265",
                 "type": "BusinessLogicException"
             }
@@ -555,7 +555,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/timeframe-templates/{uid}/approve"
+            "url": "/timeframe-templates/{uid}/approvals"
         },
         "response": {
             "code": 201,
@@ -590,18 +590,18 @@
         "name": "Test inactivate",
         "request": {
             "headers": {},
-            "method": "POST",
+            "method": "DELETE",
             "request": {},
-            "url": "/timeframe-templates/{uid}/inactivate"
+            "url": "/timeframe-templates/{uid}/activations"
         },
         "response": {
-            "code": 201,
+            "code": 200,
             "headers": {
                 "content-length": "332",
                 "content-type": "application/json"
             },
             "result": {
-                "change_description": "Deactivated version",
+                "change_description": "Inactivated version",
                 "end_date": null,
                 "library": {
                     "is_editable": true,
@@ -628,10 +628,10 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/timeframe-templates/{uid}/reactivate"
+            "url": "/timeframe-templates/{uid}/activations"
         },
         "response": {
-            "code": 201,
+            "code": 200,
             "headers": {
                 "content-length": "332",
                 "content-type": "application/json"

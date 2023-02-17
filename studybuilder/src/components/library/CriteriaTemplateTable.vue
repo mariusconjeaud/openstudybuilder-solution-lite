@@ -8,11 +8,14 @@
   :extra-filters-func="getExtraFilters"
   has-api
   column-data-resource="criteria-templates"
+  :column-data-parameters="columnDataParameters"
   fullscreen-form
+  :history-formating-func="formatHistoryItem"
+  :export-data-url-params="columnDataParameters"
   >
   <template v-slot:editform="{ closeForm, selectedObject, filter, updateTemplate }">
     <criteria-template-form
-      :type="type"
+      :criteria-type="criteriaType"
       @close="closeForm"
       :template="selectedObject"
       @templateAdded="filter()"
@@ -60,15 +63,15 @@
 </template>
 
 <script>
-import terms from '@/api/controlledTerminology/terms'
 import CriteriaTemplateForm from './CriteriaTemplateForm'
 import CriteriaTemplateIndexingForm from './CriteriaTemplateIndexingForm'
+import dataFormating from '@/utils/dataFormating'
 import StudybuilderTemplateTable from '@/components/library/StudybuilderTemplateTable'
 import TemplateIndexingDialog from './TemplateIndexingDialog'
 
 export default {
   props: {
-    type: String
+    criteriaType: Object
   },
   components: {
     CriteriaTemplateForm,
@@ -78,7 +81,9 @@ export default {
   },
   data () {
     return {
-      criteriaType: null,
+      columnDataParameters: {
+        filters: { 'type.term_uid': { v: [this.criteriaType.term_uid], op: 'eq' } }
+      },
       headers: [
         {
           text: '',
@@ -89,7 +94,7 @@ export default {
         { text: this.$t('CriteriaTemplateTable.indications'), value: 'indications.name' },
         { text: this.$t('CriteriaTemplateTable.criterion_cat'), value: 'categories.name.sponsor_preferred_name' },
         { text: this.$t('CriteriaTemplateTable.criterion_sub_cat'), value: 'sub_categories.name.sponsor_preferred_name' },
-        { text: this.$t('CriteriaTemplateTable.criterion_tpl'), value: 'name', width: '30%' },
+        { text: this.$t('CriteriaTemplateTable.criterion_tpl'), value: 'name', width: '30%', filteringName: 'name_plain' },
         { text: this.$t('CriteriaTemplateTable.guidance_text'), value: 'guidance_text', width: '30%' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
@@ -101,23 +106,29 @@ export default {
   },
   methods: {
     getExtraFilters (filters) {
-      filters['type.termUid'] = { v: [this.criteriaType] }
+      filters['type.term_uid'] = { v: [this.criteriaType.term_uid] }
     },
     prepareIndexingPayload (form) {
       return this.$refs.indexingForm.preparePayload(form)
     },
     refreshTable () {
       this.$refs.table.$refs.sponsorTable.filter()
+    },
+    formatHistoryItem (item) {
+      if (item.categories) {
+        item.categories = { name: { sponsor_preferred_name: dataFormating.terms(item.categories) } }
+      } else {
+        item.categories = { name: { sponsor_preferred_name: this.$t('_global.not_applicable_long') } }
+      }
+      if (item.sub_categories) {
+        item.sub_categories = { name: { sponsor_preferred_name: dataFormating.terms(item.sub_categories) } }
+      } else {
+        item.sub_categories = { name: { sponsor_preferred_name: this.$t('_global.not_applicable_long') } }
+      }
     }
   },
   created () {
     this.$store.dispatch('studiesGeneral/fetchNullValues')
-    terms.getByCodelist('criteriaTypes').then(resp => {
-      this.types = resp.data.items
-      const type = this.types.find(item => item.sponsor_preferred_name.toLowerCase().startsWith(this.type))
-      this.criteriaType = type.termUid
-      this.$refs.table.$refs.sponsorTable.filter()
-    })
   }
 }
 </script>

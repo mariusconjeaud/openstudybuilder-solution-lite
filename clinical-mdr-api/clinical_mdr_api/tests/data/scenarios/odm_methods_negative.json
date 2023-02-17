@@ -382,9 +382,9 @@
         "name": "Test cannot inactivate an ODM Method that is in Draft status",
         "request": {
             "headers": {},
-            "method": "POST",
+            "method": "DELETE",
             "request": {},
-            "url": "concepts/odms/methods/OdmMethod_000001/inactivate"
+            "url": "concepts/odms/methods/OdmMethod_000001/activations"
         },
         "response": {
             "code": 400,
@@ -395,8 +395,8 @@
             "result": {
                 "message": "Cannot retire draft version.",
                 "time": "2022-03-07T12:24:39.980123",
-                "path": "http://testserver/concepts/odms/methods/OdmMethod_000001/inactivate",
-                "method": "POST",
+                "path": "http://testserver/concepts/odms/methods/OdmMethod_000001/activations",
+                "method": "DELETE",
                 "type": "BusinessLogicException"
             }
         }
@@ -407,7 +407,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/odms/methods/OdmMethod_000001/reactivate"
+            "url": "concepts/odms/methods/OdmMethod_000001/activations"
         },
         "response": {
             "code": 400,
@@ -418,7 +418,7 @@
             "result": {
                 "message": "Only RETIRED version can be reactivated.",
                 "time": "2022-03-07T12:27:17.572613",
-                "path": "http://testserver/concepts/odms/methods/OdmMethod_000001/reactivate",
+                "path": "http://testserver/concepts/odms/methods/OdmMethod_000001/activations",
                 "method": "POST",
                 "type": "BusinessLogicException"
             }

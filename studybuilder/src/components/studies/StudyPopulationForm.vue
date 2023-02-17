@@ -17,7 +17,7 @@
             rules=""
             >
             <multiple-select
-              v-model="form.therapeutic_areas_codes"
+              v-model="form.therapeutic_area_codes"
               :data-cy="$t('StudyPopulationForm.therapeuticarea')"
               :label="$t('StudyPopulationForm.therapeuticarea')"
               :items="snomedTerms"
@@ -31,14 +31,14 @@
       </v-row>
       <not-applicable-field
         :clean-function="setNullValueStudyDisease"
-        :checked="form.disease_conditions_or_indications_null_value_code ? true : false"
+        :checked="form.disease_condition_or_indication_null_value_code ? true : false"
         >
         <template v-slot:mainField="{ notApplicable }">
           <multiple-select
             :data-cy="$t('StudyPopulationForm.disease_condition')"
             :label="$t('StudyPopulationForm.disease_condition')"
             :disabled="notApplicable"
-            v-model="form.disease_conditions_or_indications_codes"
+            v-model="form.disease_condition_or_indication_codes"
             :items="snomedTerms"
             item-value="term_uid"
             item-text="name"
@@ -68,7 +68,7 @@
           <v-col cols="11">
             <multiple-select
               :data-cy="$t('StudyPopulationForm.diagnosis_group')"
-              v-model="form.diagnosis_groups_codes"
+              v-model="form.diagnosis_group_codes"
               :label="$t('StudyPopulationForm.diagnosis_group')"
               :items="snomedTerms"
               item-value="term_uid"
@@ -318,11 +318,11 @@ export default {
   },
   methods: {
     setNullValueStudyDisease () {
-      this.$set(this.form, 'disease_conditions_or_indications_codes', [])
-      if (this.form.disease_conditions_or_indications_null_value_code) {
-        this.$set(this.form, 'disease_conditions_or_indications_null_value_code', null)
+      this.$set(this.form, 'disease_condition_or_indication_codes', [])
+      if (this.form.disease_condition_or_indication_null_value_code) {
+        this.$set(this.form, 'disease_condition_or_indication_null_value_code', null)
       } else {
-        this.$set(this.form, 'disease_conditions_or_indications_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
+        this.$set(this.form, 'disease_condition_or_indication_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })
       }
     },
     setNullValueDiseaseDuration () {
@@ -392,9 +392,9 @@ export default {
         data.number_of_expected_subjects = null
       }
       data.sex_of_participants_code = this.getTermPayload('sex_of_participants_code')
-      data.therapeutic_areas_codes = this.getTermsPayload('therapeutic_areas_codes')
-      data.disease_conditions_or_indications_codes = this.getTermsPayload('disease_conditions_or_indications_codes')
-      data.diagnosis_groups_codes = this.getTermsPayload('diagnosis_groups_codes')
+      data.therapeutic_area_codes = this.getTermsPayload('therapeutic_area_codes')
+      data.disease_condition_or_indication_codes = this.getTermsPayload('disease_condition_or_indication_codes')
+      data.diagnosis_group_codes = this.getTermsPayload('diagnosis_group_codes')
       return data
     },
     async submit () {

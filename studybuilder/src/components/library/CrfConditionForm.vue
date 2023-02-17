@@ -222,20 +222,23 @@ export default {
     }
   },
   mounted () {
-    this.initForm()
-    if (!this.userData.multilingual) {
-      this.steps = this.steps.filter(function (obj) {
-        return obj.name !== 'description'
-      })
-    } else {
-      this.steps.splice(1, 0, { name: 'description', title: this.$t('CRFForms.description_details'), belowDisplay: true })
-    }
-    const uniqueSteps = Array.from(new Set(this.steps.map(a => a.name))).map(name => {
-      return this.steps.find(a => a.name === name)
-    })
-    this.steps = uniqueSteps
+    this.initiateSteps()
   },
   methods: {
+    initiateSteps () {
+      this.initForm()
+      if (!this.userData.multilingual) {
+        this.steps = this.steps.filter(function (obj) {
+          return obj.name !== 'description'
+        })
+      } else {
+        this.steps.splice(1, 0, { name: 'description', title: this.$t('CRFForms.description_details'), belowDisplay: true })
+      }
+      const uniqueSteps = Array.from(new Set(this.steps.map(a => a.name))).map(name => {
+        return this.steps.find(a => a.name === name)
+      })
+      this.steps = uniqueSteps
+    },
     setFormalExpression () {
       const itemDef = 'ItemDef'
       const itemGroupDef = 'ItemGroupDef'
@@ -295,7 +298,7 @@ export default {
       try {
         if (this.form.uid) {
           this.form.formal_expressions[0].change_description = ''
-          crfs.editCondition(this.form.uid, this.form).then(resp => {
+          crfs.editCondition(this.form.uid, this.form).then(() => {
             this.close()
             this.$emit('close')
           })
@@ -303,7 +306,7 @@ export default {
           await crfs.createCondition(this.form).then(resp => {
             const data = [this.itemToLink]
             this.$set(data[0], 'collection_exception_condition_oid', resp.data.oid)
-            crfs.addItemGroupsToForm(data, this.itemToLink.parentFormUid, false).then(resp => {
+            crfs.addItemGroupsToForm(data, this.itemToLink.parentFormUid, false).then(() => {
               this.close()
               this.$emit('close')
             })
@@ -312,7 +315,7 @@ export default {
           await crfs.createCondition(this.form).then(resp => {
             const data = [this.itemToLink]
             this.$set(data[0], 'collection_exception_condition_oid', resp.data.oid)
-            crfs.addItemsToItemGroup(data, this.itemToLink.parentGroupUid, false).then(resp => {
+            crfs.addItemsToItemGroup(data, this.itemToLink.parentGroupUid, false).then(() => {
               this.close()
               this.$emit('close')
             })
@@ -353,19 +356,8 @@ export default {
     }
   },
   watch: {
-    itemToLink (value) {
-      this.initForm()
-      if (!this.userData.multilingual) {
-        this.steps = this.steps.filter(function (obj) {
-          return obj.name !== 'description'
-        })
-      } else {
-        this.steps.splice(1, 0, { name: 'description', title: this.$t('CRFForms.description_details'), belowDisplay: true })
-      }
-      const uniqueSteps = Array.from(new Set(this.steps.map(a => a.name))).map(name => {
-        return this.steps.find(a => a.name === name)
-      })
-      this.steps = uniqueSteps
+    itemToLink () {
+      this.initiateSteps()
     }
   }
 }

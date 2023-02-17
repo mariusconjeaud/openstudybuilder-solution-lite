@@ -351,6 +351,14 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         result, _ = db.cypher_query(query, {"uid": uid})
         return len(result) > 0 and len(result[0]) > 0
 
+    def final_concept_exists_by_name(self, name: str) -> bool:
+        query = f"""
+            MATCH (concept_root:{self.root_class.__label__})-[:LATEST_FINAL]->(concept_value:{self.value_class.__label__}{{name: $name}})
+            RETURN concept_root
+            """
+        result, _ = db.cypher_query(query, {"name": name})
+        return len(result) > 0 and len(result[0]) > 0
+
     def concept_exists_by_name(self, name: str) -> bool:
         return self.exists_by("name", name)
 

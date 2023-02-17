@@ -1,10 +1,13 @@
+import json
 import re
 from copy import copy
+from distutils.util import strtobool
 from typing import Any, Callable, Dict, Generic, Iterable, Sequence, Type, TypeVar
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import conint, create_model
 from pydantic.generics import GenericModel
+from starlette.responses import Response
 
 from clinical_mdr_api.config import STUDY_TIME_UNIT_SUBSET
 from clinical_mdr_api.domain.unit_definition.unit_definition import UnitDefinitionAR
@@ -82,11 +85,14 @@ class BaseModel(PydanticBaseModel):
                 continue
             if "." in source or "|" in source:
                 # split by . that implicates property on node or | that indicates property on the relationship
-                parts = re.split(r"\.|\|", source)
+                parts = re.split(r"[.|]", source)
                 source = parts[-1]
                 node = obj
                 parts = parts[:-1]
                 for _, part in enumerate(parts):
+                    if not hasattr(node, "_relations"):
+                        node = None
+                        break
                     if part not in node._relations.keys():
                         # it means that the field is Optional and None was set to be a default value
                         if field.field_info.default is None:
@@ -131,6 +137,9 @@ def booltostr(b: bool, true_format: str = "Yes"):
     b: boolean value to convert to string.
     true_format: format of the string representation of truth. Only True values allowed.
     """
+
+    if isinstance(b, str):
+        b = bool(strtobool(b))
 
     if true_format in ("y", "Yes", "yes", "t", "true", "on", "1"):
         if b:
@@ -281,3 +290,16 @@ class InfiniteIntegerField(int):
         if v is None:
             return v
         raise ValueError("Unknown Type")
+
+
+class PrettyJSONResponse(Response):
+    media_type = "application/json"
+
+    def render(self, content: Any) -> bytes:
+        return json.dumps(
+            content,
+            ensure_ascii=False,
+            allow_nan=False,
+            indent=4,
+            separators=(", ", ": "),
+        ).encode("utf-8")

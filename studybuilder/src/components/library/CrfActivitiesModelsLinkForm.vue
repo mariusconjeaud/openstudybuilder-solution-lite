@@ -73,7 +73,13 @@ export default {
   },
   computed: {
     title () {
-      return this.itemType === 'form' ? this.$t('CrfLinikingForm.link_activity_groups') : (this.itemType === 'itemGroup' ? this.$t('CrfLinikingForm.link_activity_sub_groups') : this.$t('CrfLinikingForm.link_activities'))
+      if (this.itemType === 'form') {
+        return this.$t('CrfLinikingForm.link_activity_groups')
+      }
+      if (this.itemType === 'itemGroup') {
+        return this.$t('CrfLinikingForm.link_activity_sub_groups')
+      }
+      return this.$t('CrfLinikingForm.link_activities')
     }
   },
   data () {
@@ -100,15 +106,15 @@ export default {
         data.push({ uid: el.uid })
       })
       if (this.itemType === 'form') {
-        crfs.addActivityGroupsToForm(data, this.itemToLink.uid).then(resp => {
+        crfs.addActivityGroupsToForm(data, this.itemToLink.uid).then(() => {
           this.close()
         })
       } else if (this.itemType === 'itemGroup') {
-        crfs.addActivitySubGroupsToItemGroup(data, this.itemToLink.uid).then(resp => {
+        crfs.addActivitySubGroupsToItemGroup(data, this.itemToLink.uid).then(() => {
           this.close()
         })
       } else {
-        crfs.addActivitiesToItem(data, this.itemToLink.uid).then(resp => {
+        crfs.addActivitiesToItem(data, this.itemToLink.uid).then(() => {
           this.close()
         })
       }

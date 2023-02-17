@@ -8,7 +8,7 @@
     @save="submit"
     :form-observer-getter="getObserver"
     :editable="studyObjective !== undefined && studyObjective !== null"
-    :extra-step-validation="createTemplate"
+    :extra-step-validation="extraStepValidation"
     :helpItems="helpItems"
     :editData="form"
     >
@@ -513,8 +513,16 @@ export default {
     getCopyButtonColor (item) {
       return (!this.isStudyObjectiveSelected(item) ? 'primary' : '')
     },
-    async createTemplate (step) {
-      if ((this.creationMode !== 'scratch' || step !== 2) && (this.creationMode !== 'clone' || step !== 1)) {
+    async extraStepValidation (step) {
+      if (this.creationMode === 'template' && step === 2) {
+        if (this.form.objective_template === undefined || this.form.objective_template === null) {
+          bus.$emit('notification', { msg: this.$t('StudyObjectiveForm.template_not_selected'), type: 'error' })
+          return false
+        }
+        return true
+      }
+      if ((this.creationMode !== 'scratch' || step !== 2) &&
+          (this.creationMode !== 'clone' || step !== 1)) {
         return true
       }
       if (this.form.objective_template && this.form.objective_template.name === this.templateForm.name) {

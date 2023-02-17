@@ -2,9 +2,11 @@ from neomodel import (
     BooleanProperty,
     IntegerProperty,
     One,
+    OneOrMore,
     RelationshipFrom,
     RelationshipTo,
     StringProperty,
+    ZeroOrMore,
     ZeroOrOne,
 )
 
@@ -116,6 +118,12 @@ class StudyCompound(StudySelection):
     )
     has_reason_for_missing = RelationshipTo(
         CTTermRoot, "HAS_REASON_FOR_NULL_VALUE", model=ClinicalMdrRel
+    )
+    has_compound_dosing = RelationshipTo(
+        "StudyCompoundDosing",
+        "STUDY_COMPOUND_HAS_COMPOUND_DOSING",
+        cardinality=OneOrMore,
+        model=ClinicalMdrRel,
     )
 
 
@@ -230,6 +238,12 @@ class StudyElement(StudySelection):
     has_design_cell = RelationshipTo(
         StudyDesignCell, "STUDY_ELEMENT_HAS_DESIGN_CELL", model=ClinicalMdrRel
     )
+    has_compound_dosing = RelationshipTo(
+        "StudyCompoundDosing",
+        "STUDY_ELEMENT_HAS_COMPOUND_DOSING",
+        cardinality=ZeroOrMore,
+        model=ClinicalMdrRel,
+    )
 
 
 class StudyActivityInstruction(AuditTrailMixin, ClinicalMdrNodeWithUID):
@@ -302,8 +316,14 @@ class StudyCompoundDosing(StudySelection):
         NumericValueWithUnitRoot, "HAS_DOSE_VALUE", cardinality=ZeroOrOne
     )
     study_compound = RelationshipFrom(
-        StudyCompound, "STUDY_COMPOUND_HAS_COMPOUND_DOSING", model=ClinicalMdrRel
+        StudyCompound,
+        "STUDY_COMPOUND_HAS_COMPOUND_DOSING",
+        cardinality=ZeroOrOne,
+        model=ClinicalMdrRel,
     )
     study_element = RelationshipFrom(
-        StudyElement, "STUDY_ELEMENT_HAS_COMPOUND_DOSING", model=ClinicalMdrRel
+        StudyElement,
+        "STUDY_ELEMENT_HAS_COMPOUND_DOSING",
+        cardinality=ZeroOrOne,
+        model=ClinicalMdrRel,
     )

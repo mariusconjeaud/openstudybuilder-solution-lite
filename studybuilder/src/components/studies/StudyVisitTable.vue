@@ -2,30 +2,41 @@
 <div>
   <div id="visjs" class="pa-6">
     <span class="text-h6 ml-2">{{ $t('StudyVisitTable.title') }}</span>
-    <div v-if="!loading && studyVisits.length > 0" :key="chartsKey">
-      <horizontal-bar-chart
-        :chart-data="barChartDatasets"
-        :options="barChartOptions"
-        :styles="barChartStyles"
-        class="pr-3"
-        :key="barChartKey"
-        />
-      <bubble-chart
-        :chart-data="lineChartDatasets"
-        :options="lineChartOptions"
-        :styles="lineChartStyles"
-        class="ml-1"
-        />
-    </div>
-    <div v-else-if="loading">
-      <v-progress-linear
-        class="mt-5"
-        indeterminate
-      ></v-progress-linear>
-    </div>
-    <div v-else class="mt-3">
-      {{ $t('StudyVisitForm.no_data') }}
-    </div>
+    <v-expansion-panels
+      accordion
+      tile
+      class="mt-2"
+      >
+      <v-expansion-panel>
+        <v-expansion-panel-header>{{ $t('StudyVisitTable.timeline_preview') }}</v-expansion-panel-header>
+        <v-expansion-panel-content>
+          <div v-if="!loading && studyVisits.length > 0" :key="chartsKey">
+            <horizontal-bar-chart
+              :chart-data="barChartDatasets"
+              :options="barChartOptions"
+              :styles="barChartStyles"
+              class="pr-3"
+              :key="barChartKey"
+              />
+            <bubble-chart
+              :chart-data="lineChartDatasets"
+              :options="lineChartOptions"
+              :styles="lineChartStyles"
+              class="ml-1"
+              />
+          </div>
+          <div v-else-if="loading">
+            <v-progress-linear
+              class="mt-5"
+              indeterminate
+              ></v-progress-linear>
+          </div>
+          <div v-else class="mt-3">
+            {{ $t('StudyVisitForm.no_data') }}
+          </div>
+        </v-expansion-panel-content>
+      </v-expansion-panel>
+    </v-expansion-panels>
   </div>
   <n-n-table
     ref="table"
@@ -37,6 +48,8 @@
     :export-data-url="exportDataUrl"
     export-object-label="StudyVisits"
     has-api
+    :items-per-page="50"
+    :items-per-page-options="[25, 50, 100]"
     @filter="fetchStudyVisits"
     :column-data-resource="`studies/${selectedStudy.uid}/study-visits`"
     :options.sync="options"
@@ -45,6 +58,26 @@
     :history-data-fetcher="fetchVisitsHistory"
     :history-title="$t('StudyVisitTable.global_history_title')"
     >
+    <template v-slot:afterSwitches>
+      <label class="v-label theme--light mr-4">
+        {{ $t('StudyVisitTable.preferred_time_unit') }}
+      </label>
+      <v-radio-group
+        v-model="preferredTimeUnit"
+        row
+        hide-details
+        @change="updatePreferredTimeUnit"
+        >
+        <v-radio
+          :label="$t('_global.day')"
+          value="day"
+          ></v-radio>
+        <v-radio
+          :label="$t('_global.week')"
+          value="week"
+          ></v-radio>
+      </v-radio-group>
+    </template>
     <template v-slot:headerCenter>
       <v-btn
         small
@@ -58,13 +91,23 @@
         {{ $t('StudyVisitTable.close_edit_mode') }}
       </v-btn>
     </template>
-    <template v-slot:actions>
+    <template v-slot:actions="{ selected, showSelectBoxes }">
       <v-progress-circular
         indeterminate
         color="primary"
         v-show="loading"
         >
       </v-progress-circular>
+      <v-btn
+        fab
+        small
+        class="mr-2"
+        :title="$t('GroupStudyVisits.title')"
+        v-show="!loading && showSelectBoxes"
+        @click="groupSelectedVisits(selected)"
+        >
+        <v-icon>mdi-arrow-expand-horizontal</v-icon>
+      </v-btn>
       <v-btn
         fab
         dark
@@ -101,7 +144,7 @@
         >
       </v-progress-circular>
     </template>
-    <template v-slot:item.visitWindow="{ item }">
+    <template v-slot:item.visit_window="{ item }">
       <div v-if="editMode && item.visit_class === 'SINGLE_VISIT'">
         <v-row class="cellWidth">
           <v-col cols="3">
@@ -299,13 +342,21 @@
   <v-dialog
     v-model="showForm"
     persistent
-    max-width="1200px"
-    content-class="top-dialog"
+    fullscreen
+    content-class="fullscreen-dialog"
     >
-    <study-visit-form :opened="showForm" :firstVisit="studyVisits ? (studyVisits.length === 0) : true" :studyVisit="selectedStudyVisit" @close="closeForm" />
+    <study-visit-form
+      :opened="showForm"
+      :firstVisit="studyVisits ? (studyVisits.length === 0) : true"
+      :studyVisit="selectedStudyVisit"
+      @close="closeForm"
+      @refresh="fetchStudyVisits"
+      class="fullscreen-dialog"
+      />
   </v-dialog>
   <v-dialog
     v-model="showVisitHistory"
+    @keydown.esc="closeVisitHistory"
     persistent
     max-width="1200px"
     >
@@ -314,6 +365,18 @@
       @close="closeVisitHistory"
       :headers="headers"
       :items="visitHistoryItems"
+      />
+  </v-dialog>
+  <v-dialog
+    v-model="showCollapsibleGroupForm"
+    persistent
+    max-width="1000px"
+    >
+    <collapsible-visit-group-form
+      :open="showCollapsibleGroupForm"
+      :visits="visitSelection"
+      @close="closeCollapsibleVisitGroupForm"
+      @created="collapsibleVisitGroupCreated"
       />
   </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
@@ -331,9 +394,11 @@ import StudyVisitForm from './StudyVisitForm'
 import HorizontalBarChart from '@/components/tools/HorizontalBarChart'
 import BubbleChart from '@/components/tools/BubbleChart'
 import HistoryTable from '@/components/tools/HistoryTable'
+import CollapsibleVisitGroupForm from './CollapsibleVisitGroupForm'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import visitConstants from '@/constants/visits'
 import filteringParameters from '@/utils/filteringParameters'
+import studyConstants from '@/constants/study'
 import StudyVisitsDuplicateForm from './StudyVisitsDuplicateForm'
 import unitConstants from '@/constants/units'
 import studyEpochs from '@/api/studyEpochs'
@@ -342,6 +407,7 @@ import dataFormating from '@/utils/dataFormating'
 export default {
   components: {
     ConfirmDialog,
+    CollapsibleVisitGroupForm,
     ActionsMenu,
     NNTable,
     StudyVisitForm,
@@ -353,6 +419,7 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
+      studyPreferredTimeUnit: 'studiesGeneral/studyPreferredTimeUnit',
       studyEpochs: 'studyEpochs/studyEpochs',
       studyVisits: 'studyEpochs/studyVisits',
       totalVisits: 'studyEpochs/totalVisits'
@@ -432,7 +499,7 @@ export default {
         { text: this.$t('StudyVisitForm.study_day_label'), value: 'study_day_label' },
         { text: this.$t('StudyVisitForm.study_week_label'), value: 'study_week_label' },
         { text: this.$t('StudyVisitForm.visit_window'), value: 'visit_window' },
-        { text: this.$t('StudyVisitForm.consecutive_visit'), value: 'consecutive_visit_group' },
+        { text: this.$t('StudyVisitForm.collapsible_visit'), value: 'consecutive_visit_group' },
         { text: this.$t('StudyVisitForm.show_wisit'), value: 'show_visit' },
         { text: this.$t('StudyVisitForm.visit_description'), value: 'description' },
         { text: this.$t('StudyVisitForm.epoch_allocation'), value: 'epoch_allocation_name' },
@@ -461,7 +528,7 @@ export default {
         { text: this.$t('StudyVisitForm.study_day_label'), value: 'study_day_label' },
         { text: this.$t('StudyVisitForm.study_week_label'), value: 'study_week_label' },
         { text: this.$t('StudyVisitForm.visit_window'), value: 'visit_window' },
-        { text: this.$t('StudyVisitForm.consecutive_visit'), value: 'consecutive_visit_group' },
+        { text: this.$t('StudyVisitForm.collapsible_visit'), value: 'consecutive_visit_group' },
         { text: this.$t('StudyVisitForm.show_wisit'), value: 'show_visit' },
         { text: this.$t('StudyVisitForm.visit_description'), value: 'description' },
         { text: this.$t('StudyVisitForm.epoch_allocation'), value: 'epoch_allocation_name' },
@@ -486,6 +553,8 @@ export default {
         { text: this.$t('StudyVisitForm.visit_start_rule'), value: 'start_rule' },
         { text: this.$t('StudyVisitForm.visit_stop_rule'), value: 'end_rule' }
       ],
+      preferredTimeUnit: studyConstants.STUDY_TIME_UNIT_DAY,
+      preferredTimeUnits: [],
       selectedStudyVisit: null,
       showForm: false,
       showVisitHistory: false,
@@ -587,8 +656,10 @@ export default {
         { label: this.$t('StudyVisitForm.non_visit'), value: visitConstants.CLASS_NON_VISIT }
       ],
       timeReferences: [],
+      showCollapsibleGroupForm: false,
       showStudyVisitsHistory: false,
-      visitHistoryItems: []
+      visitHistoryItems: [],
+      visitSelection: []
     }
   },
   methods: {
@@ -612,12 +683,12 @@ export default {
       this.editMode = true
     },
     closeEditMode () {
-      this.$store.dispatch('studyEpochs/fetchStudyVisits', this.selectedStudy.uid)
+      this.fetchStudyVisits()
       this.editMode = false
       this.headers = this.defaultColumns
     },
     disableOthers (item) {
-      if (item.minVisitWindowValue > 0) {
+      if (item.min_visit_window_value > 0) {
         item.min_visit_window_value = item.min_visit_window_value * -1
       }
       if (!this.itemsDisabled) {
@@ -629,13 +700,13 @@ export default {
     },
     saveVisit (item) {
       return this.$store.dispatch('studyEpochs/updateStudyVisit', { studyUid: this.selectedStudy.uid, studyVisitUid: item.uid, input: item }).then(resp => {
-        this.$store.dispatch('studyEpochs/fetchStudyVisits', this.selectedStudy.uid)
+        this.fetchStudyVisits()
         bus.$emit('notification', { msg: this.$t('StudyVisitForm.update_success') })
         this.itemsDisabled = false
       })
     },
     cancelVisitEditing () {
-      this.$store.dispatch('studyEpochs/fetchStudyVisits', this.selectedStudy.uid)
+      this.fetchStudyVisits()
       this.itemsDisabled = false
     },
     edit () {
@@ -695,7 +766,7 @@ export default {
     async deleteVisit (item) {
       await this.$store.dispatch('studyEpochs/deleteStudyVisit', { studyUid: this.selectedStudy.uid, studyVisitUid: item.uid })
       bus.$emit('notification', { msg: this.$t('StudyVisitTable.delete_success') })
-      await this.$store.dispatch('studyEpochs/fetchStudyVisits', this.selectedStudy.uid)
+      this.fetchStudyVisits()
     },
     async openVisitHistory (visit) {
       this.selectedStudyVisit = visit
@@ -726,7 +797,7 @@ export default {
       this.barChartDatasets.datasets = []
       this.lineChartDatasets.datasets = []
       const negativeDaysEpochs = []
-      let maxDay = 0
+      let maxXvalue = 0
       for (const d of this.studyEpochs) {
         if (d.start_day >= 0) {
           break
@@ -738,14 +809,23 @@ export default {
       negativeDaysEpochs.forEach(el => { //  needed for correct timeline display
         this.studyEpochs.unshift(el)
       })
+      let startField
+      let endField
+      if (this.preferredTimeUnit === studyConstants.STUDY_TIME_UNIT_DAY) {
+        startField = 'start_day'
+        endField = 'end_day'
+      } else {
+        startField = 'start_week'
+        endField = 'end_week'
+      }
       this.studyEpochs.forEach(el => {
         if (el.epoch_name !== visitConstants.EPOCH_BASIC) {
-          if (el.end_day > maxDay) {
-            maxDay = el.end_day
+          if (el[endField] > maxXvalue) {
+            maxXvalue = el[endField]
           }
           this.barChartDatasets.datasets.push(
             {
-              data: [[el.start_day, el.end_day]],
+              data: [[el[startField], el[endField]]],
               backgroundColor: el.color_hash, // and for the rest we need to just provide duration of epoch, but if the first epoch has positive first day number than we need to build
               label: el.epoch_name // such array just for the first epoch
             }
@@ -753,14 +833,15 @@ export default {
         }
       })
       this.singleStudyVisits.forEach(el => {
+        const value = this.preferredTimeUnit === studyConstants.STUDY_TIME_UNIT_DAY ? el.study_day_number : el.study_week_number
         this.lineChartDatasets.datasets.push(
           {
             data: [{
-              x: el.study_day_number,
+              x: value,
               y: 0,
               r: 7
             }],
-            study_day: el.study_day_number,
+            study_day: el.study_day_label,
             label: el.visit_name,
             backgroundColor: 'rgb(6, 57, 112)',
             contact_mode: el.visit_contact_mode_name,
@@ -771,17 +852,60 @@ export default {
       })
       if (this.singleStudyVisits.length > 0) {
         const lastVisitDay = this.singleStudyVisits[this.singleStudyVisits.length - 1].study_day_number
-        const firstVisitDay = this.singleStudyVisits[0].study_day_number
-
-        this.barChartOptions.scales.xAxes[0].ticks.max = Math.round(maxDay)
-        this.lineChartOptions.scales.xAxes[0].ticks.max = Math.round(maxDay)
-        this.barChartOptions.scales.xAxes[0].ticks.min = (firstVisitDay < 0) ? Math.round(firstVisitDay) - 1 : Math.round(firstVisitDay)
-        this.lineChartOptions.scales.xAxes[0].ticks.min = (firstVisitDay < 0) ? Math.round(firstVisitDay) - 1 : Math.round(firstVisitDay)
-        this.lineChartOptions.scales.xAxes[0].ticks.stepSize = 7 * Math.ceil(lastVisitDay / 100)
+        let minXvalue
+        let label
+        let stepSize
+        if (this.preferredTimeUnit === studyConstants.STUDY_TIME_UNIT_DAY) {
+          minXvalue = this.singleStudyVisits[0].study_day_number
+          label = this.$t('StudyVisitTable.study_day')
+          stepSize = 7 * Math.ceil(lastVisitDay / 100)
+        } else {
+          minXvalue = this.singleStudyVisits[0].study_week_number
+          label = this.$t('StudyVisitTable.study_week')
+          stepSize = 1
+        }
+        this.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = label
+        this.barChartOptions.scales.xAxes[0].ticks.max = Math.round(maxXvalue)
+        this.lineChartOptions.scales.xAxes[0].ticks.max = Math.round(maxXvalue)
+        this.barChartOptions.scales.xAxes[0].ticks.min = (minXvalue < 0) ? Math.round(minXvalue) - 1 : Math.round(minXvalue)
+        this.lineChartOptions.scales.xAxes[0].ticks.min = (minXvalue < 0) ? Math.round(minXvalue) - 1 : Math.round(minXvalue)
+        this.lineChartOptions.scales.xAxes[0].ticks.stepSize = stepSize
       }
       this.loading = false
       this.chartsKey += 1
       this.barChartKey += 1
+    },
+    groupSelectedVisits (selection) {
+      if (!selection.length) {
+        bus.$emit('notification', { msg: this.$t('GroupStudyVisits.no_selection'), type: 'warning' })
+        return
+      }
+      const visitUids = selection.map(item => item.uid)
+      studyEpochs.createCollapsibleVisitGroup(this.selectedStudy.uid, visitUids).then(() => {
+        this.collapsibleVisitGroupCreated()
+      }).catch(err => {
+        if (err.response.status === 400) {
+          this.visitSelection = selection
+          this.showCollapsibleGroupForm = true
+        }
+      })
+    },
+    closeCollapsibleVisitGroupForm () {
+      this.showCollapsibleGroupForm = false
+      this.visitSelection = []
+    },
+    collapsibleVisitGroupCreated () {
+      bus.$emit('notification', { msg: this.$t('CollapsibleVisitGroupForm.creation_success') })
+      this.fetchStudyVisits()
+    },
+    updatePreferredTimeUnit (value) {
+      for (const timeUnit of this.preferredTimeUnits) {
+        if (timeUnit.name === value) {
+          this.$store.dispatch('studiesGeneral/setStudyPreferredTimeUnit', timeUnit.uid)
+          this.fetchStudyVisits()
+          break
+        }
+      }
     }
   },
   created () {
@@ -807,12 +931,18 @@ export default {
     units.getBySubset(unitConstants.TIME_UNIT_SUBSET_STUDY_TIME).then(resp => {
       this.timeUnits = resp.data.items
     })
+    units.getBySubset(unitConstants.TIME_UNIT_SUBSET_STUDY_PREFERRED_TIME_UNIT).then(resp => {
+      this.preferredTimeUnits = resp.data.items
+    })
     terms.getByCodelist('contactModes').then(resp => {
       this.contactModes = resp.data.items
     })
     terms.getByCodelist('timepointReferences').then(resp => {
       this.timeReferences = resp.data.items
     })
+    if (this.studyPreferredTimeUnit) {
+      this.preferredTimeUnit = this.studyPreferredTimeUnit.time_unit_name
+    }
   },
   watch: {
     studyVisits () {

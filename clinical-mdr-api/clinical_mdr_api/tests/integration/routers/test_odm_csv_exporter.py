@@ -14,9 +14,9 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_ODM_ITEM_GROUPS,
     STARTUP_ODM_ITEMS,
     STARTUP_ODM_TEMPLATES,
+    STARTUP_ODM_VENDOR_ELEMENTS,
+    STARTUP_ODM_VENDOR_NAMESPACES,
     STARTUP_ODM_XML_EXPORTER,
-    STARTUP_ODM_XML_EXTENSION_TAGS,
-    STARTUP_ODM_XML_EXTENSIONS,
     STARTUP_UNIT_DEFINITIONS,
 )
 
@@ -36,8 +36,8 @@ class OdmCsvExporterTest(TestCase):
         db.cypher_query(STARTUP_ODM_ITEM_GROUPS)
         db.cypher_query(STARTUP_ODM_FORMS)
         db.cypher_query(STARTUP_ODM_TEMPLATES)
-        db.cypher_query(STARTUP_ODM_XML_EXTENSIONS)
-        db.cypher_query(STARTUP_ODM_XML_EXTENSION_TAGS)
+        db.cypher_query(STARTUP_ODM_VENDOR_NAMESPACES)
+        db.cypher_query(STARTUP_ODM_VENDOR_ELEMENTS)
         db.cypher_query(STARTUP_ODM_XML_EXPORTER)
 
         from clinical_mdr_api import main

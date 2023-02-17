@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from typing import List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Set
 
 from neomodel import db
 
@@ -645,7 +645,7 @@ class StudySelectionCompoundRepository:
         result = []
         for res in helpers.db_result_to_list(compound_selections_audit_trail):
             for action in res["change_type"]:
-                if not "StudyAction" in action:
+                if "StudyAction" not in action:
                     change_type = action
             if res["end_date"]:
                 end_date = convert_to_datetime(value=res["end_date"])
@@ -724,3 +724,27 @@ class StudySelectionCompoundRepository:
         if len(result) > 0 and len(result[0]) > 0:
             return result[0][0].get("uid")
         return None
+
+    @staticmethod
+    def get_compound_uid_to_arm_uids_mapping(study_uid: str) -> Dict[str, Set[str]]:
+        results = (
+            StudyRoot.nodes.fetch_optional_relations_and_collect(
+                "latest_value__has_study_compound__has_compound_dosing__study_element__has_design_cell__study_arm"
+            )
+            .filter(uid=study_uid)
+            .to_relation_trees()
+        )
+
+        if not results:
+            return {}
+
+        return {
+            compound.uid: {
+                arm.uid
+                for dosing in compound.has_compound_dosing
+                for element in dosing.study_element
+                for cell in element.has_design_cell
+                for arm in cell.study_arm
+            }
+            for compound in results[0].latest_value[0].has_study_compound
+        }

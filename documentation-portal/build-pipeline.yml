@@ -69,10 +69,11 @@ jobs:
         echo "No third-party licenses to include for this component. Created with [Vuepress](https://github.com/vuejs/vuepress)" >> sbom.md
         cat sbom.md
 
-        if [[ "$(Build.SourceBranchName)" != "main" && "$(Build.Reason)" == "PullRequest" ]]; then
+        if [[ "$(Build.SourceBranchName)" != "main" && "$(Build.Reason)" == "PullRequest" && `git diff --exit-code sbom.md` ]]; then
           git config --global user.email pipeline@studybuilder.com
           git config --global user.name "Pipeline $(Build.BuildNumber)"
           git add sbom.md
+          pwsh -NoLogo -NonInteractive -File CheckSbom.ps1 -token $(System.AccessToken) -pullRequestId $(System.PullRequest.PullRequestId) -projectName $(System.TeamProject) -repositoryName $(Build.Repository.Name)
           git commit sbom.md -m "Pipeline $(Build.BuildNumber) committed changes to SBOM"
           git push https://$SYSTEM_ACCESSTOKEN@dev.azure.com/novonordiskit/Clinical-MDR/_git/documentation-portal $(gitref.gitbranch)
         fi

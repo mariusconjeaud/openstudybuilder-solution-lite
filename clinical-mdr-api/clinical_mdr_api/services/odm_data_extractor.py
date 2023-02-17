@@ -1,4 +1,4 @@
-from typing import Dict, Sequence
+from typing import Dict, List
 
 from clinical_mdr_api.domain.concepts.utils import TargetType
 from clinical_mdr_api.exceptions import BusinessLogicException
@@ -15,28 +15,30 @@ from clinical_mdr_api.services.odm_forms import OdmFormService
 from clinical_mdr_api.services.odm_item_groups import OdmItemGroupService
 from clinical_mdr_api.services.odm_items import OdmItemService
 from clinical_mdr_api.services.odm_templates import OdmTemplateService
-from clinical_mdr_api.services.odm_xml_extension_tags import OdmXmlExtensionTagService
-from clinical_mdr_api.services.odm_xml_extensions import OdmXmlExtensionService
+from clinical_mdr_api.services.odm_vendor_attributes import OdmVendorAttributeService
+from clinical_mdr_api.services.odm_vendor_elements import OdmVendorElementService
+from clinical_mdr_api.services.odm_vendor_namespaces import OdmVendorNamespaceService
 from clinical_mdr_api.services.unit_definition import UnitDefinitionService
 
 
 class OdmDataExtractor:
     target_uid: str
     target_name: str
-    status: Sequence[str]
+    status: List[str]
 
-    odm_xml_extensions: Dict[str, dict]
-    odm_xml_extension_tags: Dict[str, dict]
-    odm_forms: Sequence[OdmForm]
-    odm_item_groups: Sequence[OdmItemGroup]
-    odm_items: Sequence[OdmItem]
-    odm_conditions: Sequence[OdmCondition]
-    codelists: Sequence[CTCodelistAttributes]
-    ct_terms: Sequence[Dict[str, str]]
-    unit_definitions: Sequence[UnitDefinitionModel]
+    odm_vendor_namespaces: Dict[str, dict]
+    odm_vendor_elements: Dict[str, dict]
+    odm_forms: List[OdmForm]
+    odm_item_groups: List[OdmItemGroup]
+    odm_items: List[OdmItem]
+    odm_conditions: List[OdmCondition]
+    codelists: List[CTCodelistAttributes]
+    ct_terms: List[Dict[str, str]]
+    unit_definitions: List[UnitDefinitionModel]
 
-    xml_extension_service: OdmXmlExtensionService
-    xml_extension_tag_service: OdmXmlExtensionTagService
+    vendor_namespace_service: OdmVendorNamespaceService
+    vendor_element_service: OdmVendorElementService
+    vendor_attribute_service: OdmVendorAttributeService
     template_service: OdmTemplateService
     form_service: OdmFormService
     item_group_service: OdmItemGroupService
@@ -50,12 +52,13 @@ class OdmDataExtractor:
         self,
         target_uid: str,
         target_type: TargetType,
-        status: Sequence[str],
+        status: List[str],
         unit_definition_service,
     ):
         self.unit_definition_service = unit_definition_service
-        self.xml_extension_service = OdmXmlExtensionService()
-        self.xml_extension_tag_service = OdmXmlExtensionTagService()
+        self.vendor_namespace_service = OdmVendorNamespaceService()
+        self.vendor_element_service = OdmVendorElementService()
+        self.vendor_attribute_service = OdmVendorAttributeService()
         self.template_service = OdmTemplateService()
         self.form_service = OdmFormService()
         self.item_group_service = OdmItemGroupService()
@@ -64,8 +67,9 @@ class OdmDataExtractor:
         self.ct_codelist_attributes_service = CTCodelistAttributesService()
         self.ct_term_attributes_service = CTTermAttributesService()
 
-        self.odm_xml_extensions = {}
-        self.odm_xml_extension_tags = {}
+        self.odm_vendor_namespaces = {}
+        self.odm_vendor_elements = {}
+        self.ref_odm_vendor_attributes = {}
         self.odm_forms = []
         self.odm_item_groups = []
         self.odm_items = []
@@ -99,28 +103,28 @@ class OdmDataExtractor:
         self.target_uid = target_uid
 
         self.set_conditions(self.odm_forms, self.odm_item_groups)
-        self.set_xml_extensions()
-        self.set_xml_extension_tags()
+        self.set_vendor_namespaces()
+        self.set_vendor_elements()
+        self.set_ref_vendor_attributes()
 
-    def set_xml_extension_tags(self):
-        xml_extension_tags = self.xml_extension_tag_service.get_all_concepts(
+    def set_ref_vendor_attributes(self):
+        vendor_attributes = self.vendor_attribute_service.get_all_concepts(
             filter_by={
                 "uid": {
                     "v": (
                         {
-                            tag.uid
+                            attribute.uid
                             for form in self.odm_forms
-                            for tag in form.xml_extension_tags
+                            for item_group in form.item_groups
+                            if item_group.vendor
+                            for attribute in item_group.vendor.attributes
                         }
                         | {
-                            tag.uid
+                            attribute.uid
                             for item_group in self.odm_item_groups
-                            for tag in item_group.xml_extension_tags
-                        }
-                        | {
-                            tag.uid
-                            for item in self.odm_items
-                            for tag in item.xml_extension_tags
+                            for item in item_group.items
+                            if item.vendor
+                            for attribute in item.vendor.attributes
                         }
                     ),
                     "op": "eq",
@@ -129,26 +133,57 @@ class OdmDataExtractor:
             only_specific_status=self.status,
         ).items
 
-        self.odm_xml_extension_tags = {
-            xml_extension_tag.uid: {
-                "name": xml_extension_tag.name,
-                "xml_extension": xml_extension_tag.xml_extension.__dict__,
+        self.ref_odm_vendor_attributes = {
+            vendor_attribute.uid: {
+                "name": vendor_attribute.name,
+                "vendor_namespace": vars(vendor_attribute.vendor_namespace),
             }
-            for xml_extension_tag in xml_extension_tags
+            for vendor_attribute in vendor_attributes
+            if vendor_attribute.vendor_namespace
         }
 
-    def set_xml_extensions(self):
-        xml_extensions = self.xml_extension_service.get_all_concepts(
+    def set_vendor_elements(self):
+        vendor_elements = self.vendor_element_service.get_all_concepts(
+            filter_by={
+                "uid": {
+                    "v": (
+                        {
+                            element.uid
+                            for form in self.odm_forms
+                            for element in form.vendor_elements
+                        }
+                        | {
+                            element.uid
+                            for item_group in self.odm_item_groups
+                            for element in item_group.vendor_elements
+                        }
+                    ),
+                    "op": "eq",
+                }
+            },
+            only_specific_status=self.status,
+        ).items
+
+        self.odm_vendor_elements = {
+            vendor_element.uid: {
+                "name": vendor_element.name,
+                "vendor_namespace": vars(vendor_element.vendor_namespace),
+            }
+            for vendor_element in vendor_elements
+        }
+
+    def set_vendor_namespaces(self):
+        vendor_namespaces = self.vendor_namespace_service.get_all_concepts(
             only_specific_status=self.status
         ).items
 
-        self.odm_xml_extensions = {
-            xml_extension.uid: {
-                "name": xml_extension.name,
-                "prefix": xml_extension.prefix,
-                "namespace": xml_extension.namespace,
+        self.odm_vendor_namespaces = {
+            vendor_namespace.uid: {
+                "name": vendor_namespace.name,
+                "prefix": vendor_namespace.prefix,
+                "url": vendor_namespace.url,
             }
-            for xml_extension in xml_extensions
+            for vendor_namespace in vendor_namespaces
         }
 
     def set_forms_of_target(self, target):
@@ -167,7 +202,7 @@ class OdmDataExtractor:
 
         self.set_item_groups_of_forms(self.odm_forms)
 
-    def set_item_groups_of_forms(self, forms: Sequence[OdmForm]):
+    def set_item_groups_of_forms(self, forms: List[OdmForm]):
         self.odm_item_groups = sorted(
             self.item_group_service.get_all_concepts(
                 filter_by={
@@ -187,7 +222,7 @@ class OdmDataExtractor:
 
         self.set_items_of_item_groups(self.odm_item_groups)
 
-    def set_items_of_item_groups(self, item_groups: Sequence[OdmItemGroup]):
+    def set_items_of_item_groups(self, item_groups: List[OdmItemGroup]):
         self.odm_items = sorted(
             self.item_service.get_all_concepts(
                 filter_by={
@@ -229,7 +264,7 @@ class OdmDataExtractor:
                 key=lambda elm: elm.name,
             )
 
-    def set_unit_definitions_of_items(self, items: Sequence[OdmItem]):
+    def set_unit_definitions_of_items(self, items: List[OdmItem]):
         self.unit_definitions = sorted(
             self.unit_definition_service.get_all(
                 library_name=None,
@@ -247,7 +282,7 @@ class OdmDataExtractor:
             key=lambda elm: elm.name,
         )
 
-    def set_codelists_of_items(self, items: Sequence[OdmItem]):
+    def set_codelists_of_items(self, items: List[OdmItem]):
         self.codelists = sorted(
             self.ct_codelist_attributes_service.get_all_ct_codelists(
                 catalogue_name=None,
@@ -265,9 +300,9 @@ class OdmDataExtractor:
 
         self.set_terms_of_codelists(self.codelists)
 
-    def set_terms_of_codelists(self, codelists: Sequence[CTCodelistAttributes]):
+    def set_terms_of_codelists(self, codelists: List[CTCodelistAttributes]):
         self.ct_terms = sorted(
-            self.ct_term_attributes_service.get_term_attributes_by_codelist_uids(
+            self.ct_term_attributes_service.get_term_name_and_attributes_by_codelist_uids(
                 [codelist.codelist_uid for codelist in codelists]
             ),
             key=lambda elm: elm["nci_preferred_name"],

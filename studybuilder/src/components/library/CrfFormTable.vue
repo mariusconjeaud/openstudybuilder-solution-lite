@@ -6,10 +6,10 @@
     item-key="uid"
     sort-by="name"
     sort-desc
+    has-api
     :options.sync="options"
     :server-items-length="total"
     @filter="getForms"
-    has-api
     column-data-resource="concepts/odms/forms"
     export-data-url="concepts/odms/forms"
     export-object-label="CRFForms"
@@ -73,13 +73,16 @@
     >
     <crf-form-form
       @close="closeForm"
-      :editItem="editItem"
+      @newVersion="newVersion"
+      @approve="approve"
+      :selectedForm="selectedForm"
       class="fullscreen-dialog"
-      :readOnlyProp="editItem.status === constants.FINAL"
+      :readOnlyProp="selectedForm && selectedForm.status === statuses.FINAL"
       />
   </v-dialog>
   <v-dialog
     v-model="showFormHistory"
+    @keydown.esc="closeFormHistory"
     persistent
     max-width="1200px"
     >
@@ -96,6 +99,7 @@
     :item-to-link="selectedForm"
     item-type="form" />
   <v-dialog v-model="showRelations"
+            @keydown.esc="closeRelationsTree()"
             max-width="800px"
             persistent>
     <odm-references-tree
@@ -115,13 +119,15 @@ import crfs from '@/api/crfs'
 import CrfFormForm from '@/components/library/CrfFormForm'
 import HistoryTable from '@/components/tools/HistoryTable'
 import CrfActivitiesModelsLinkForm from '@/components/library/CrfActivitiesModelsLinkForm'
-import constants from '@/constants/statuses'
+import statuses from '@/constants/statuses'
 import filteringParameters from '@/utils/filteringParameters'
 import OdmReferencesTree from '@/components/library/OdmReferencesTree.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import crfTypes from '@/constants/crfTypes'
 import parameters from '@/constants/parameters'
 import dataFormating from '@/utils/dataFormating'
+import { mapGetters } from 'vuex'
+import _isEmpty from 'lodash/isEmpty'
 
 export default {
   components: {
@@ -138,6 +144,10 @@ export default {
     elementProp: Object
   },
   computed: {
+    ...mapGetters({
+      forms: 'crfs/forms',
+      total: 'crfs/totalForms'
+    }),
     formHistoryTitle () {
       if (this.selectedForm) {
         return this.$t(
@@ -168,7 +178,7 @@ export default {
           label: this.$t('_global.view'),
           icon: 'mdi-eye-outline',
           iconColor: 'primary',
-          condition: (item) => item.status === constants.FINAL,
+          condition: (item) => item.status === statuses.FINAL,
           click: this.view
         },
         {
@@ -203,7 +213,7 @@ export default {
           label: this.$t('CrfLinikingForm.link_activity_groups'),
           icon: 'mdi-plus',
           iconColor: 'primary',
-          condition: (item) => item.status === constants.FINAL,
+          condition: (item) => item.status === statuses.FINAL,
           click: this.openLinkForm
         },
         {
@@ -229,9 +239,6 @@ export default {
       selectedForm: null,
       options: {},
       filters: '',
-      total: 0,
-      forms: [],
-      editItem: {},
       showFormHistory: false,
       linkForm: false,
       showRelations: false,
@@ -239,12 +246,13 @@ export default {
     }
   },
   mounted () {
+    this.getForms()
     if (this.elementProp.tab === 'forms' && this.elementProp.type === crfTypes.FORM && this.elementProp.uid) {
       this.edit({ uid: this.elementProp.uid })
     }
   },
   created () {
-    this.constants = constants
+    this.statuses = statuses
   },
   methods: {
     getDescription (item) {
@@ -269,11 +277,6 @@ export default {
       this.selectedForm = null
       this.showRelations = false
     },
-    approve (item) {
-      crfs.approve('forms', item.uid).then((resp) => {
-        this.getForms()
-      })
-    },
     async delete (item) {
       let relationships = 0
       await crfs.getFormRelationship(item.uid).then(resp => {
@@ -296,40 +299,55 @@ export default {
         })
       }
     },
+    approve (item) {
+      crfs.approve('forms', item.uid).then((resp) => {
+        this.getForms()
+        this.$emit('updateForm', { type: crfTypes.FORM, element: resp.data })
+      })
+    },
     inactivate (item) {
       crfs.inactivate('forms', item.uid).then((resp) => {
+        this.$emit('updateForm', { type: crfTypes.FORM, element: resp.data })
         this.getForms()
       })
     },
     reactivate (item) {
       crfs.reactivate('forms', item.uid).then((resp) => {
+        this.$emit('updateForm', { type: crfTypes.FORM, element: resp.data })
         this.getForms()
       })
     },
     newVersion (item) {
       crfs.newVersion('forms', item.uid).then((resp) => {
+        this.$emit('updateForm', { type: crfTypes.FORM, element: resp.data })
         this.getForms()
       })
     },
     edit (item) {
       crfs.getForm(item.uid).then((resp) => {
-        this.editItem = resp.data
+        this.selectedForm = resp.data
         this.showForm = true
         this.$emit('clearUid')
       })
     },
     view (item) {
       crfs.getForm(item.uid).then((resp) => {
-        this.editItem = resp.data
+        this.selectedForm = resp.data
         this.showForm = true
       })
     },
     openForm () {
+      this.selectedForm = null
       this.showForm = true
     },
-    closeForm () {
+    async closeForm () {
+      if (!_isEmpty(this.selectedForm)) {
+        await crfs.getForm(this.selectedForm.uid).then((resp) => {
+          this.$emit('updateForm', { type: crfTypes.FORM, element: resp.data })
+        })
+      }
       this.showForm = false
-      this.editItem = {}
+      this.selectedForm = null
       this.getForms()
     },
     async openFormHistory (form) {
@@ -339,7 +357,7 @@ export default {
       this.showFormHistory = true
     },
     closeFormHistory () {
-      this.selectedForm = {}
+      this.selectedForm = null
       this.showFormHistory = false
     },
     transformItems (items) {
@@ -361,16 +379,16 @@ export default {
     },
     closeLinkForm () {
       this.linkForm = false
-      this.selectedForm = {}
+      this.selectedForm = null
       this.getForms()
     },
-    getForms (filters, sort, filtersUpdated) {
+    async getForms (filters, sort, filtersUpdated) {
+      if (filters) {
+        this.filters = filters
+      }
       const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
-      crfs.get('forms', { params }).then((resp) => {
-        this.forms = resp.data.items
-        this.total = resp.data.total
-      })
+        this.options, this.filters, sort, filtersUpdated)
+      await this.$store.dispatch('crfs/fetchForms', params)
     }
   },
   watch: {

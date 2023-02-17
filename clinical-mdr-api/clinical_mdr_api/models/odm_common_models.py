@@ -1,102 +1,154 @@
-from typing import Callable, Optional, Sequence
+from typing import Callable, List, Optional
 
 from pydantic import BaseModel, Field
 
 from clinical_mdr_api.domain.concepts.concept_base import ConceptARBase
+from clinical_mdr_api.domain.concepts.odms.vendor_attribute import OdmVendorAttributeAR
 
 
 class OdmElementWithParentUid(BaseModel):
     uid: str
     name: str
-    parent_uids: Sequence[str]
+    parent_uids: List[str]
 
 
-class OdmXmlExtensionRelationPostInput(BaseModel):
+class OdmVendorRelationPostInput(BaseModel):
     uid: str
     value: str
 
 
-class OdmXmlExtensionSimpleModel(BaseModel):
+class OdmRefVendorPostInput(BaseModel):
+    attributes: List[OdmVendorRelationPostInput]
+
+
+class OdmRefVendorAttributeModel(BaseModel):
     @classmethod
-    def from_odm_xml_extension_uid(
+    def from_uid(
         cls,
         uid: str,
-        find_odm_xml_extension_by_uid: Callable[[str], Optional[ConceptARBase]],
-    ) -> Optional["OdmXmlExtensionSimpleModel"]:
+        value: str,
+        find_odm_vendor_attribute_by_uid: Callable[
+            [str], Optional[OdmVendorAttributeAR]
+        ],
+    ) -> Optional["OdmRefVendorAttributeModel"]:
 
         if uid is not None:
-            odm_xml_extension = find_odm_xml_extension_by_uid(uid)
-
-            if odm_xml_extension is not None:
-                simple_odm_xml_extension_model = cls(
+            odm_vendor_attribute_ar = find_odm_vendor_attribute_by_uid(uid)
+            if odm_vendor_attribute_ar is not None:
+                odm_vendor_element_ref_model = cls(
                     uid=uid,
-                    name=odm_xml_extension.concept_vo.name,
-                    prefix=odm_xml_extension.concept_vo.prefix,
-                    namespace=odm_xml_extension.concept_vo.namespace,
+                    name=odm_vendor_attribute_ar.name,
+                    data_type=odm_vendor_attribute_ar.concept_vo.data_type,
+                    value_regex=odm_vendor_attribute_ar.concept_vo.value_regex,
+                    value=value,
+                    vendor_namespace_uid=odm_vendor_attribute_ar.concept_vo.vendor_namespace_uid,
                 )
             else:
-                simple_odm_xml_extension_model = cls(
-                    uid=uid, name=None, prefix=None, namespace=None
+                odm_vendor_element_ref_model = cls(
+                    uid=uid,
+                    name=None,
+                    data_type=None,
+                    value_regex=None,
+                    value=None,
+                    vendor_namespace_uid=None,
                 )
         else:
-            simple_odm_xml_extension_model = None
-        return simple_odm_xml_extension_model
+            odm_vendor_element_ref_model = None
+        return odm_vendor_element_ref_model
+
+    uid: str = Field(..., title="uid", description="")
+    name: Optional[str] = Field(None, title="name", description="")
+    data_type: Optional[str] = Field(None, title="data_type", description="")
+    value_regex: Optional[str] = Field(None, title="value_regex", description="")
+    value: Optional[str] = Field(None, title="value", description="")
+    vendor_namespace_uid: Optional[str] = Field(
+        None, title="vendor_namespace_uid", description=""
+    )
+
+
+class OdmRefVendor(BaseModel):
+    attributes: List[OdmRefVendorAttributeModel]
+
+
+class OdmVendorNamespaceSimpleModel(BaseModel):
+    @classmethod
+    def from_odm_vendor_namespace_uid(
+        cls,
+        uid: str,
+        find_odm_vendor_namespace_by_uid: Callable[[str], Optional[ConceptARBase]],
+    ) -> Optional["OdmVendorNamespaceSimpleModel"]:
+
+        if uid is not None:
+            odm_vendor_namespace = find_odm_vendor_namespace_by_uid(uid)
+
+            if odm_vendor_namespace is not None:
+                simple_odm_vendor_namespace_model = cls(
+                    uid=uid,
+                    name=odm_vendor_namespace.concept_vo.name,
+                    prefix=odm_vendor_namespace.concept_vo.prefix,
+                    url=odm_vendor_namespace.concept_vo.url,
+                )
+            else:
+                simple_odm_vendor_namespace_model = cls(
+                    uid=uid, name=None, prefix=None, url=None
+                )
+        else:
+            simple_odm_vendor_namespace_model = None
+        return simple_odm_vendor_namespace_model
 
     uid: str = Field(..., title="uid", description="")
     name: Optional[str] = Field(None, title="name", description="")
     prefix: Optional[str] = Field(None, title="prefix", description="")
-    namespace: Optional[str] = Field(None, title="namespace", description="")
+    url: Optional[str] = Field(None, title="url", description="")
 
 
-class OdmXmlExtensionAttributeSimpleModel(BaseModel):
+class OdmVendorAttributeSimpleModel(BaseModel):
     @classmethod
-    def from_odm_xml_extension_attribute_uid(
+    def from_odm_vendor_attribute_uid(
         cls,
         uid: str,
-        find_odm_xml_extension_attribute_by_uid: Callable[
-            [str], Optional[ConceptARBase]
-        ],
-    ) -> Optional["OdmXmlExtensionAttributeSimpleModel"]:
+        find_odm_vendor_attribute_by_uid: Callable[[str], Optional[ConceptARBase]],
+    ) -> Optional["OdmVendorAttributeSimpleModel"]:
 
         if uid is not None:
-            odm_xml_extension_attribute = find_odm_xml_extension_attribute_by_uid(uid)
+            odm_vendor_attribute = find_odm_vendor_attribute_by_uid(uid)
 
-            if odm_xml_extension_attribute is not None:
-                simple_odm_xml_extension_attribute_model = cls(
+            if odm_vendor_attribute is not None:
+                simple_odm_vendor_attribute_model = cls(
                     uid=uid,
-                    name=odm_xml_extension_attribute.concept_vo.name,
+                    name=odm_vendor_attribute.concept_vo.name,
                 )
             else:
-                simple_odm_xml_extension_attribute_model = cls(uid=uid, name=None)
+                simple_odm_vendor_attribute_model = cls(uid=uid, name=None)
         else:
-            simple_odm_xml_extension_attribute_model = None
-        return simple_odm_xml_extension_attribute_model
+            simple_odm_vendor_attribute_model = None
+        return simple_odm_vendor_attribute_model
 
     uid: str = Field(..., title="uid", description="")
     name: Optional[str] = Field(None, title="name", description="")
 
 
-class OdmXmlExtensionTagSimpleModel(BaseModel):
+class OdmVendorElementSimpleModel(BaseModel):
     @classmethod
-    def from_odm_xml_extension_tag_uid(
+    def from_odm_vendor_element_uid(
         cls,
         uid: str,
-        find_odm_xml_extension_tag_by_uid: Callable[[str], Optional[ConceptARBase]],
-    ) -> Optional["OdmXmlExtensionTagSimpleModel"]:
+        find_odm_vendor_element_by_uid: Callable[[str], Optional[ConceptARBase]],
+    ) -> Optional["OdmVendorElementSimpleModel"]:
 
         if uid is not None:
-            odm_xml_extension_tag = find_odm_xml_extension_tag_by_uid(uid)
+            odm_vendor_element = find_odm_vendor_element_by_uid(uid)
 
-            if odm_xml_extension_tag is not None:
-                simple_odm_xml_extension_tag_model = cls(
+            if odm_vendor_element is not None:
+                simple_odm_vendor_element_model = cls(
                     uid=uid,
-                    name=odm_xml_extension_tag.concept_vo.name,
+                    name=odm_vendor_element.concept_vo.name,
                 )
             else:
-                simple_odm_xml_extension_tag_model = cls(uid=uid, name=None)
+                simple_odm_vendor_element_model = cls(uid=uid, name=None)
         else:
-            simple_odm_xml_extension_tag_model = None
-        return simple_odm_xml_extension_tag_model
+            simple_odm_vendor_element_model = None
+        return simple_odm_vendor_element_model
 
     uid: str = Field(..., title="uid", description="")
     name: Optional[str] = Field(None, title="name", description="")

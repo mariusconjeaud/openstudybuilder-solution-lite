@@ -7,14 +7,14 @@
       type="table-heading, table-thead, table-tbody"
       />
     <div v-if="!studyCompounds__Loading && !studyCompounds.length" class="mx-4 my-8">{{ $t('InterventionOverview.no_intervention_selected') }}</div>
-    <table  v-if="!studyCompounds__Loading && studyCompounds.length" class="mt-4">
+    <table  v-if="!studyCompounds__Loading && studyCompounds.length" class="mt-4" :aria-label="$t('InterventionOverview.table_caption')">
       <thead>
         <tr>
-          <th class="no-border"></th>
-          <th :colspan="cols">{{ $t('InterventionOverview.study_compounds') }}</th>
+          <th class="no-border" scope="col"></th>
+          <th :colspan="cols" scope="col">{{ $t('InterventionOverview.study_compounds') }}</th>
         </tr>
         <tr>
-          <th>{{ $t('InterventionOverview.first_col_title') }}</th>
+          <th scope="col">{{ $t('InterventionOverview.first_col_title') }}</th>
           <td v-for="(studyCompound, index) in studyCompounds" :key="`header-${index}`">
             <template v-if="studyCompound.compound">
               {{ studyCompound.compound.name }}

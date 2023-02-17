@@ -507,7 +507,10 @@ class StudySelectionCriteriaRepository:
         return StudyCriteria.get_next_free_uid_and_increment_counter()
 
     def _get_selection_with_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self,
+        study_uid: str,
+        criteria_type_uid: Optional[str] = None,
+        study_selection_uid: str = None,
     ):
         """
         returns the audit trail for study criteria either for a specific selection or for all study criteria for the study
@@ -524,19 +527,24 @@ class StudySelectionCriteriaRepository:
             MATCH (sr:StudyRoot { uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(all_sc:StudyCriteria)
             WITH DISTINCT all_sc
             """
-
-        specific_criteria_selections_audit_trail_query = """
+        specific_criteria_selections_audit_trail_query = (
+            """
             CALL {
                 WITH all_sc
-                MATCH (all_sc)-[:HAS_SELECTED_CRITERIA]->(:CriteriaValue)<-[ver]-(cr:CriteriaRoot)<-[:HAS_CRITERIA]-(:CriteriaTemplateRoot)-[:HAS_TYPE]->(term:CTTermRoot)
-                WHERE ver.status = "Final"
+                MATCH (all_sc)-[:HAS_SELECTED_CRITERIA]->(:CriteriaValue)<-[ver]-(cr:CriteriaRoot)<-[:HAS_CRITERIA]
+                -(:CriteriaTemplateRoot)-[:HAS_TYPE]->(term:CTTermRoot)
+                WHERE ver.status = 'Final'"""
+            + (" AND term.uid=$criteria_type_uid" if criteria_type_uid else "")
+            + """
                 RETURN ver as ver, cr as obj, term.uid as term_uid, true as is_instance
                 ORDER BY ver.start_date DESC
                 LIMIT 1
             UNION
                 WITH all_sc
                 MATCH (all_sc)-[:HAS_SELECTED_CRITERIA_TEMPLATE]->(:CriteriaTemplateValue)<-[ver]-(ctr:CriteriaTemplateRoot)-[:HAS_TYPE]->(term:CTTermRoot)
-                WHERE ver.status = "Final"
+                WHERE ver.status = 'Final'"""
+            + (" AND term.uid=$criteria_type_uid" if criteria_type_uid else "")
+            + """
                 RETURN ver as ver, ctr as obj, term.uid as term_uid, false as is_instance
                 ORDER BY ver.start_date DESC
                 LIMIT 1
@@ -562,10 +570,14 @@ class StudySelectionCriteriaRepository:
                 is_instance AS is_instance,
                 all_sc.key_criteria as key_criteria
             """
-
+        )
         specific_criteria_selections_audit_trail = db.cypher_query(
             cypher + specific_criteria_selections_audit_trail_query,
-            {"study_uid": study_uid, "study_selection_uid": study_selection_uid},
+            {
+                "study_uid": study_uid,
+                "study_selection_uid": study_selection_uid,
+                "criteria_type_uid": criteria_type_uid,
+            },
         )
         result = []
         for res in helpers.db_result_to_list(specific_criteria_selections_audit_trail):
@@ -595,7 +607,10 @@ class StudySelectionCriteriaRepository:
         return result
 
     def find_selection_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self,
+        study_uid: str,
+        criteria_type_uid: Optional[str] = None,
+        study_selection_uid: str = None,
     ) -> List[Optional[dict]]:
         """
         Simple method to return all versions of a study criteria for a study.
@@ -603,9 +618,13 @@ class StudySelectionCriteriaRepository:
         """
         if study_selection_uid is not None:
             return self._get_selection_with_history(
-                study_uid=study_uid, study_selection_uid=study_selection_uid
+                study_uid=study_uid,
+                study_selection_uid=study_selection_uid,
             )
-        return self._get_selection_with_history(study_uid=study_uid)
+        return self._get_selection_with_history(
+            study_uid=study_uid,
+            criteria_type_uid=criteria_type_uid,
+        )
 
     def _is_selected_object_instance(
         self, study_uid: str, study_selection_uid: str

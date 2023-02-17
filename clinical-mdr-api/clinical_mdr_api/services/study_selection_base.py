@@ -104,7 +104,9 @@ class StudySelectionMixin:
             criteria = criteria_repo.find_by_uid_2(
                 uid=criteria_uid, status=LibraryItemStatus.RETIRED
             )
-        return Criteria.from_criteria_ar(criteria)
+        return Criteria.from_criteria_ar(
+            criteria,
+        )
 
     def _transform_criteria_model(
         self, criteria_uid: str, criteria_version: str
@@ -113,7 +115,9 @@ class StudySelectionMixin:
         criteria = criteria_repo.find_by_uid_2(
             uid=criteria_uid, version=criteria_version
         )
-        return Criteria.from_criteria_ar(criteria)
+        return Criteria.from_criteria_ar(
+            criteria,
+        )
 
     def _transform_latest_activity_model(self, activity_uid: str) -> Activity:
         """Finds the activity with a given UID."""

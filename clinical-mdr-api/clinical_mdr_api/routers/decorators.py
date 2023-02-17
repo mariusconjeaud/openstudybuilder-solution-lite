@@ -2,6 +2,7 @@
 
 import collections
 import csv
+import datetime
 import functools
 import io
 
@@ -74,7 +75,9 @@ def _convert_data_to_rows(data: dict, headers: list):
     dict_headers = _convert_headers_to_dict(headers)
     yield list(dict_headers.keys())
     for value in _extract_values_from_data(data, dict_headers):
-        yield list(value.values())
+        yield [
+            str(x) if isinstance(x, datetime.datetime) else x for x in value.values()
+        ]
 
 
 def _convert_data_to_list(data: dict, headers: list) -> list:

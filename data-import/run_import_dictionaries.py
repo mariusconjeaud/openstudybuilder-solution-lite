@@ -113,7 +113,7 @@ class Dictionaries(BaseImporter):
     # Create the libraries
     def create_libraries(self):
         libs = self.api.get_libraries()
-        new_libs = ["Sponsor", "SNOMED", "MED-RT", "UNII", "UCUM", "User Defined"]
+        new_libs = ["Sponsor", "SNOMED", "MED-RT", "UNII", "UCUM", "User Defined", "Requested"]
         for lib in new_libs:
             self.log.info(f"Create library {lib}")
             if lib not in libs:
@@ -145,7 +145,9 @@ class Dictionaries(BaseImporter):
                 if res is not None:
                     # Approve dictionary codelist
                     self.api.simple_approve2(
-                        data["path"], f"/{res['codelist_uid']}/approve", label="Names"
+                        data["path"],
+                        f"/{res['codelist_uid']}/approvals",
+                        label="Names",
                     )
             else:
                 self.log.info(f"Codelist '{data['body']['name']}' already exists")
@@ -220,7 +222,7 @@ class Dictionaries(BaseImporter):
                             # Approve dictionary term
                             self.api.simple_approve2(
                                 data["path"],
-                                f"/{res['term_uid']}/approve",
+                                f"/{res['term_uid']}/approvals",
                                 label="Names",
                             )
                     else:
@@ -290,7 +292,7 @@ class Dictionaries(BaseImporter):
                     if res is not None:
                         # Approve dictionary term
                         if self.api.simple_approve(
-                            "/dictionaries/terms/" + res["term_uid"] + "/approve"
+                            f"/dictionaries/terms/{res['term_uid']}/approvals"
                         ):
                             self.metrics.icrement(data["path"] + "--Approve")
                         else:

@@ -41,6 +41,22 @@ class StudyActivityScheduleService(StudySelectionMixin):
             .to_relation_trees()
         ]
 
+    def get_all_schedules_for_specific_visit(
+        self, study_uid: str, study_visit_uid: str
+    ) -> Sequence[models.StudyActivitySchedule]:
+        return [
+            models.StudyActivitySchedule.from_orm(sas_node)
+            for sas_node in StudyActivityScheduleNeoModel.nodes.fetch_relations(
+                "has_after",
+                "study_visit__has_visit_name__has_latest_value",
+                "study_activity__has_selected_activity",
+            )
+            .filter(
+                study_value__study_root__uid=study_uid, study_visit__uid=study_visit_uid
+            )
+            .to_relation_trees()
+        ]
+
     @db.transaction
     def get_specific_schedule(
         self, study_uid: str, schedule_uid: str
@@ -167,7 +183,7 @@ class StudyActivityScheduleService(StudySelectionMixin):
                     response_code = status.HTTP_204_NO_CONTENT
             except exceptions.MDRApiBaseException as error:
                 result["response_code"] = error.status_code
-                result["content"] = models.error.BatchErrorResponse(error)
+                result["content"] = models.error.BatchErrorResponse(message=str(error))
             else:
                 result["response_code"] = response_code
                 if item:

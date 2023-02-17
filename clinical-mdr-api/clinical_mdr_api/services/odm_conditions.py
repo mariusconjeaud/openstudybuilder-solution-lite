@@ -46,7 +46,7 @@ class OdmConditionService(OdmGenericService[OdmConditionAR]):
         return OdmConditionAR.from_input_values(
             author=self.user_initials,
             concept_vo=OdmConditionVO.from_repository_values(
-                oid=get_input_or_new_value(concept_input.oid, "C.", concept_input.name),
+                oid=concept_input.oid,
                 name=concept_input.name,
                 formal_expression_uids=concept_input.formal_expressions,
                 description_uids=concept_input.descriptions,

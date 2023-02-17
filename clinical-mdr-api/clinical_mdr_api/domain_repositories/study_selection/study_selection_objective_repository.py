@@ -457,7 +457,7 @@ class StudySelectionObjectiveRepository:
         result = []
         for res in helpers.db_result_to_list(specific_objective_selections_audit_trail):
             for action in res["change_type"]:
-                if not "StudyAction" in action:
+                if "StudyAction" not in action:
                     change_type = action
             if res["end_date"]:
                 end_date = convert_to_datetime(value=res["end_date"])

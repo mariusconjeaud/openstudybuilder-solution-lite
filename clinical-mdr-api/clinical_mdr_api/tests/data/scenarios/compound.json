@@ -469,7 +469,7 @@
          "headers": {},
          "method": "POST",
          "request": {},
-         "url": "/concepts/compounds/Compound_000001/approve"
+         "url": "/concepts/compounds/Compound_000001/approvals"
       },
       "response": {
          "code": 201,
@@ -1121,7 +1121,7 @@
          "headers": {},
          "method": "POST",
          "request": {},
-         "url": "/concepts/compounds/Compound_000001/approve"
+         "url": "/concepts/compounds/Compound_000001/approvals"
       },
       "response": {
          "code": 201,
@@ -1266,15 +1266,15 @@
       }
    },
    {
-      "name": "Test POST inactivate compound",
+      "name": "Test DELETE activations compound",
       "request": {
          "headers": {},
-         "method": "POST",
+         "method": "DELETE",
          "request": {},
-         "url": "/concepts/compounds/Compound_000001/inactivate"
+         "url": "/concepts/compounds/Compound_000001/activations"
       },
       "response": {
-         "code": 201,
+         "code": 200,
          "headers": {},
          "result": {
             "uid": "Compound_000001",
@@ -1285,7 +1285,7 @@
             "library_name": "Sponsor",
             "status": "Retired",
             "version": "2.0",
-            "change_description": "Deactivated version",
+            "change_description": "Inactivated version",
             "user_initials": "TEST_USER",
             "start_date": null,
             "end_date": null,
@@ -1415,15 +1415,15 @@
       }
    },
    {
-      "name": "Test POST reactivate compound",
+      "name": "Test POST activations compound",
       "request": {
          "headers": {},
          "method": "POST",
          "request": {},
-         "url": "/concepts/compounds/Compound_000001/reactivate"
+         "url": "/concepts/compounds/Compound_000001/activations"
       },
       "response": {
-         "code": 201,
+         "code": 200,
          "headers": {},
          "result": {
             "uid": "Compound_000001",

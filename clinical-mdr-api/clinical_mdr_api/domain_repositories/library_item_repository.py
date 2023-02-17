@@ -684,7 +684,7 @@ class LibraryItemRepositoryImplBase(
         If this custom hashkey function is not defined, most invocations of find_by_uid_2 method will be misses.
         """
         return hashkey(
-            str(self.__class__),
+            str(type(self)),
             uid,
             version,
             status,
@@ -1105,7 +1105,7 @@ class LibraryItemRepositoryImplBase(
         # set_number
         # --> position
         for param in parameter_strings:
-            if not param["set_number"] in data_dict:
+            if param["set_number"] not in data_dict:
                 data_dict[param["set_number"]] = {}
             data_dict[param["set_number"]][param["position"]] = {
                 "parameter_name": param["parameter_name"],
@@ -1187,7 +1187,7 @@ class LibraryItemRepositoryImplBase(
                 else:
                     for value in sorted(
                         item["parameter_uids"],
-                        key=lambda x: x["index"] if not x["index"] is None else 0,
+                        key=lambda x: x["index"] or 0,
                     ):
                         if value["parameter_uid"]:
                             pv = self._parameter_from_repository_values(value)

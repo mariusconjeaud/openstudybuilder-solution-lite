@@ -6,6 +6,7 @@
   object-type="activityTemplates"
   :headers="headers"
   fullscreen-form
+  :history-formating-func="formatHistoryItem"
   >
   <template v-slot:editform="{ closeForm, selectedObject, filter, updateTemplate }">
     <activity-template-form
@@ -80,7 +81,7 @@ export default {
         { text: this.$t('ActivityTemplateTable.activity_group'), value: 'activity_groups' },
         { text: this.$t('ActivityTemplateTable.activity_subgroup'), value: 'activity_subgroups' },
         { text: this.$t('ActivityTemplateTable.activity_name'), value: 'activities' },
-        { text: this.$t('ActivityTemplateTable.activity_template'), value: 'name', width: '30%' },
+        { text: this.$t('ActivityTemplateTable.activity_template'), value: 'name', width: '30%', filteringName: 'name_plain' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
@@ -98,6 +99,17 @@ export default {
     },
     refreshTable () {
       this.$refs.table.$refs.sponsorTable.filter()
+    },
+    formatHistoryItem (item) {
+      if (item.activity_groups) {
+        item.activity_groups = this.displayList(item.activity_groups)
+      }
+      if (item.activity_subgroups) {
+        item.activity_subgroups = this.displayList(item.activity_subgroups)
+      }
+      if (item.activities) {
+        item.activities = this.displayList(item.activities)
+      }
     }
   },
   mounted () {

@@ -59,6 +59,7 @@
               data-cy="study-cohort-name"
               :error-messages="errors"
               clearable
+              class="required"
               />
           </v-col>
         </v-row>
@@ -75,12 +76,14 @@
               data-cy="study-cohort-short-name"
               :error-messages="errors"
               clearable
+              class="required"
               />
           </v-col>
         </v-row>
       </validation-provider>
       <validation-provider
         v-slot="{ errors }"
+        rules="required|max:20"
         >
         <v-row>
           <v-col cols="12">
@@ -90,6 +93,7 @@
               data-cy="study-cohort-code"
               :error-messages="errors"
               clearable
+              class="required"
               />
           </v-col>
         </v-row>

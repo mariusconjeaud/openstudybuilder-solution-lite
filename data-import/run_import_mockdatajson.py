@@ -40,7 +40,19 @@ from importers.api_bindings import CODELIST_NAME_MAP, \
     CODELIST_TYPE_OF_TREATMENT, \
     CODELIST_OBJECTIVE_LEVEL, \
     CODELIST_ENDPOINT_LEVEL, \
-    CODELIST_ENDPOINT_SUBLEVEL
+    CODELIST_ENDPOINT_SUBLEVEL, \
+    CODELIST_CONTROL_TYPE, \
+    CODELIST_INTERVENTION_MODEL, \
+    CODELIST_INTERVENTION_TYPE, \
+    CODELIST_TRIAL_BLINDING_SCHEMA, \
+    CODELIST_TRIAL_INDICATION_TYPE, \
+    CODELIST_STUDY_TYPE, \
+    CODELIST_TRIAL_PHASE, \
+    CODELIST_SEX_OF_PARTICIPANTS, \
+    UNIT_SUBSET_AGE, \
+    UNIT_SUBSET_STUDY_TIME, \
+    UNIT_SUBSET_DOSE
+
 
 from importers import import_templates
 
@@ -174,7 +186,7 @@ class MockdataJson(BaseImporter):
 
         # TODO replace all these lookup tables with lookup functions
         self.all_study_times = self.api.get_all_identifiers(
-            self.api.get_all_from_api("/concepts/unit-definitions", params={"subset": "Study Time"}),
+            self.api.get_all_from_api("/concepts/unit-definitions", params={"subset": UNIT_SUBSET_STUDY_TIME}),
             identifier="name",
             value="uid",
         )
@@ -804,8 +816,7 @@ class MockdataJson(BaseImporter):
     def fill_age_unit(self, data, key):
         name = self.get_dict_path(data, [key, "duration_unit_code", "name"], default=None)
         if name:
-            #uid = self.lookup_ct_term_uid("Age Unit", name)
-            uid = self.lookup_unit_uid(name, subset="Age Unit")
+            uid = self.lookup_unit_uid(name, subset=UNIT_SUBSET_AGE)
             if uid:
                 self.log.info(f"Found time unit '{name}' with uid '{uid}'")
                 self.create_dict_path(data, [key, "duration_unit_code"], "uid", uid)
@@ -864,7 +875,7 @@ class MockdataJson(BaseImporter):
                 self.log.info(f"Handle null value for {data_key}")
                 if data.get(data_key, None) is None:
                     self.log.info(f"No data, update {key}")
-                    self.fill_general_term(data, key, "Null Flavor")
+                    self.fill_general_term(data, key, CODELIST_NULL_FLAVOR)
                 else:
                     self.log.info(f"Data found, null {key}")
                     data[key] = None
@@ -891,8 +902,8 @@ class MockdataJson(BaseImporter):
 
         self.fill_age_unit(metadata, "confirmed_response_minimum_duration")
 
-        self.fill_general_term(metadata, "study_type_code", "Study Type")
-        self.fill_general_term(metadata, "trial_phase_code", "Trial Phase")
+        self.fill_general_term(metadata, "study_type_code", CODELIST_STUDY_TYPE)
+        self.fill_general_term(metadata, "trial_phase_code", CODELIST_TRIAL_PHASE)
 
         items = metadata.get("diagnosis_groups_codes", [])
         if items:
@@ -922,7 +933,7 @@ class MockdataJson(BaseImporter):
         self.fill_age_unit(metadata, "planned_minimum_age_of_subjects")
         self.fill_age_unit(metadata, "stable_disease_minimum_duration")
 
-        self.fill_general_term(metadata, "sex_of_participants_code", "Sex of Participants")
+        self.fill_general_term(metadata, "sex_of_participants_code", CODELIST_SEX_OF_PARTICIPANTS)
 
         self.fill_snomed_term_list(metadata, "diagnosis_groups_codes")
         self.fill_snomed_term_list(metadata, "disease_conditions_or_indications_codes")
@@ -940,15 +951,15 @@ class MockdataJson(BaseImporter):
             default={},
         )
 
-        self.fill_general_term(metadata, "control_type_code", "Control Type")
-        self.fill_general_term(metadata, "intervention_model_code", "Intervention Model")
-        self.fill_general_term(metadata, "intervention_type_code", "Intervention Type")
+        self.fill_general_term(metadata, "control_type_code", CODELIST_CONTROL_TYPE)
+        self.fill_general_term(metadata, "intervention_model_code", CODELIST_INTERVENTION_MODEL)
+        self.fill_general_term(metadata, "intervention_type_code", CODELIST_INTERVENTION_TYPE)
         self.fill_general_term(
-            metadata, "trial_blinding_schema_code", "Trial Blinding Schema"
+            metadata, "trial_blinding_schema_code", CODELIST_TRIAL_BLINDING_SCHEMA
         )
         self.fill_age_unit(metadata, "planned_study_length")
         self.fill_general_term_list(
-            metadata, "trial_intent_types_codes", "Trial Indication Type"
+            metadata, "trial_intent_types_codes", CODELIST_TRIAL_INDICATION_TYPE
         )
         self.fill_null_value_codes(metadata, template)
 
@@ -993,6 +1004,57 @@ class MockdataJson(BaseImporter):
                 self.api.simple_post_to_api("/projects", data, "/studies")
             else:
                 self.log.info(f"Skipping existing project '{project_number}'")
+
+    
+    # Brands
+    @open_file()
+    def handle_brands(self, jsonfile):
+        self.log.info("====== Brands ======")
+        import_data = json.load(jsonfile)
+       
+        all_brands = self.api.get_all_identifiers(
+            self.api.get_all_from_api("/brands", items_only=False),
+            identifier="name",
+            value="uid",
+        )
+
+        for brand in import_data:
+            data = self._copy_parameters(
+                brand,
+                import_templates.brands,
+            )
+            brand_name = brand["name"]
+
+            if brand_name not in all_brands:
+                self.log.info(f"Add brand '{brand_name}' ")
+                self.api.simple_post_to_api("/brands", data)
+            else:
+                self.log.info(f"Skipping existing brand '{brand_name}' ")
+    
+    @open_file()
+    def handle_clinical_programmes(self, jsonfile):
+        self.log.info("===== Clinical Programmes =====")
+        import_data = json.load(jsonfile)
+
+        all_clinical_programmes = self.api.get_all_identifiers(
+            self.api.get_all_from_api("/clinical-programmes", items_only=False),
+            identifier="name",
+            value="uid",
+        )
+
+        for programme in import_data:
+            data = self._copy_parameters(
+                programme,
+                import_templates.clinical_programme,
+            )
+            programme_name = programme["name"]
+
+            if programme_name not in all_clinical_programmes:
+                self.log.info(f"Add Clinical Programme '{programme_name}' ")
+                self.api.simple_post_to_api("/clinical-programmes", data)
+            else:
+                self.log.info(f"Skipping existing clinical programme '{programme_name}' ")
+
 
     def filter_studies(self, studies):
         include_numbers = [
@@ -1692,7 +1754,7 @@ class MockdataJson(BaseImporter):
 
             if "planned_duration" in imported_el and imported_el["planned_duration"] is not None:
                 unit_name = imported_el["planned_duration"]["duration_unit_code"]["name"]
-                uid = self.lookup_unit_uid(unit_name, subset="Age Unit")
+                uid = self.lookup_unit_uid(unit_name, subset=UNIT_SUBSET_AGE)
                 if uid:
                     data["planned_duration"]["duration_unit_code"]["name"] = unit_name
                     data["planned_duration"]["duration_unit_code"]["uid"] = uid
@@ -2101,10 +2163,10 @@ class MockdataJson(BaseImporter):
                 uid = self.lookup_codelist_term_uid(CODELIST_COMPOUND_DISPENSED_IN, name)
                 self.append_if_not_none(data["dispensers_uids"], uid)
             for val in comp["dose_values"]:
-                uid = self.create_or_get_numeric_value(val, "Dose Unit")
+                uid = self.create_or_get_numeric_value(val, UNIT_SUBSET_DOSE)
                 self.append_if_not_none(data["dose_values_uids"], uid)
             for val in comp["strength_values"]:
-                uid = self.create_or_get_numeric_value(val, "Dose Unit")
+                uid = self.create_or_get_numeric_value(val, UNIT_SUBSET_DOSE)
                 self.append_if_not_none(data["strength_values_uids"], uid)
             for val in comp["lag_times"]:
                 uid = self.create_or_get_lag_time(val)
@@ -2113,7 +2175,7 @@ class MockdataJson(BaseImporter):
                 # TODO get some data that uses this
                 uid = self.create_or_get_numeric_value(val, "TODO")
                 self.append_if_not_none(data["dose_frequency_uids"], uid)
-            uid = self.create_or_get_numeric_value(comp["half_life"], "Age Unit")
+            uid = self.create_or_get_numeric_value(comp["half_life"], UNIT_SUBSET_AGE)
             data["half_life_uid"] = uid
             # print(json.dumps(data, indent=2))
             path = "/concepts/compounds"
@@ -2152,7 +2214,7 @@ class MockdataJson(BaseImporter):
             if not key.lower().endswith("uid"):
                 data[key] = value.get(key, data[key])
         data["unit_definition_uid"] = self.lookup_unit_uid(
-            value["unit_label"], subset="Age Unit"
+            value["unit_label"], subset=UNIT_SUBSET_AGE
         )
         data["sdtm_domain_uid"] = self.lookup_ct_term_uid(
             CODELIST_SDTM_DOMAIN_ABBREVIATION, value["sdtm_domain_label"]
@@ -2225,7 +2287,7 @@ class MockdataJson(BaseImporter):
                 )
             if item["strength_value"] is not None:
                 data["strength_value_uid"] = self.create_or_get_numeric_value(
-                    item["strength_value"], "Dose Unit"
+                    item["strength_value"], UNIT_SUBSET_DOSE
                 )
             if item["device"] is not None:
                 data["device_uid"] = self.lookup_codelist_term_uid(
@@ -2321,7 +2383,7 @@ class MockdataJson(BaseImporter):
         self.log.info(f"======== CT extensions for {codelist_name} ========")
         imported = json.load(jsonfile)
         codelist_uid = self.lookup_ct_codelist_uid(codelist_name)
-        existing_terms = self.fetch_codelist_terms("Unit")
+        existing_terms = self.fetch_codelist_terms(CODELIST_UNIT)
         existing_names = [term["name"]["sponsor_preferred_name"] for term in existing_terms]
         for term in imported:
             name = term.get("name", {}).get("sponsor_preferred_name")
@@ -2505,26 +2567,17 @@ class MockdataJson(BaseImporter):
     def run(self):
         self.log.info("Migrating json mock data")
 
-        # TODO Clinical programmes
-        #if MDR_MIGRATION_EXPORTED_PROGRAMMES:
-        #   programmes_json = os.path.join(IMPORT_DIR, "clinical-programmes.json")
-        #   self.handle_clinical_programmes(programmes_json)
-        #else:
-        #    self.log.info("Skipping clinical programmes")
-
-        # TODO Projects
-        #if MDR_MIGRATION_EXPORTED_PROJECTS:
-        #   projects_json = os.path.join(IMPORT_DIR, "projects.json")
-        #   self.handle_projects(projects_json)
-        #else:
-        #    self.log.info("Skipping projects")
-
-        # TODO Brands
-        #if MDR_MIGRATION_EXPORTED_BRANDS:
-        #   brands_json = os.path.join(IMPORT_DIR, "brands.json")
-        #   self.handle_brands(brands_json)
-        #else:
-        #    self.log.info("Skipping brands")
+        if MDR_MIGRATION_EXPORTED_PROGRAMMES:
+          programmes_json = os.path.join(IMPORT_DIR, "clinical-programmes.json")
+          self.handle_clinical_programmes(programmes_json)
+        else:
+           self.log.info("Skipping clinical programmes")
+        
+        if MDR_MIGRATION_EXPORTED_BRANDS:
+           brands_json = os.path.join(IMPORT_DIR, "brands.json")
+           self.handle_brands(brands_json)
+        else:
+            self.log.info("Skipping brands")
 
         # Dictionaries
         snomed_json = os.path.join(IMPORT_DIR, "dictionaries.SNOMED.json")

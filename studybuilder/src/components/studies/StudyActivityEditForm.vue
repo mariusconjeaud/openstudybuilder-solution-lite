@@ -8,6 +8,13 @@
     <div class="white pa-4">
       <div class="d-flex">
         <v-text-field
+          :label="$t('_global.library')"
+          :value="library"
+          disabled
+          filled
+          class="mr-2"
+          />
+        <v-text-field
           :label="$t('StudyActivity.activity_group')"
           :value="activity_group"
           disabled
@@ -85,13 +92,18 @@ export default {
     HelpButtonWithPanels
   },
   computed: {
-    activity_group () {
+    library () {
       return (this.studyActivity && this.studyActivity.activity)
+        ? this.studyActivity.activity.library_name
+        : ''
+    },
+    activity_group () {
+      return (this.studyActivity && this.studyActivity.activity && this.studyActivity.activity.activity_group)
         ? this.studyActivity.activity.activity_group.name
         : ''
     },
     activity_subgroup () {
-      return (this.studyActivity && this.studyActivity.activity)
+      return (this.studyActivity && this.studyActivity.activity && this.studyActivity.activity.activity_subgroup)
         ? this.studyActivity.activity.activity_subgroup.name
         : ''
     },

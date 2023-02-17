@@ -40,13 +40,13 @@ class FindingVO(ActivityInstanceVO):
             self.specimen_uid
         ):
             raise ValueError(
-                f"{self.__class__.__name__} tried to connect to non existing specimen identified by uid ({self.specimen_uid})"
+                f"{type(self).__name__} tried to connect to non existing specimen identified by uid ({self.specimen_uid})"
             )
         if self.test_code_uid is not None and not ct_term_exists_callback(
             self.test_code_uid
         ):
             raise ValueError(
-                f"{self.__class__.__name__} tried to connect to non existing test code identified by uid ({self.test_code_uid})"
+                f"{type(self).__name__} tried to connect to non existing test code identified by uid ({self.test_code_uid})"
             )
 
 
@@ -135,7 +135,7 @@ class CategoricFindingVO(FindingVO):
             and not ct_term_exists_callback(self.categoric_response_value_uid)
         ):
             raise ValueError(
-                f"{self.__class__.__name__} tried to connect to non existing categoric "
+                f"{type(self).__name__} tried to connect to non existing categoric "
                 "response value identified by uid ({self.categoric_response_value_uid})"
             )
         if (
@@ -143,7 +143,7 @@ class CategoricFindingVO(FindingVO):
             and not ct_term_exists_callback(self.categoric_response_list_uid)
         ):
             raise ValueError(
-                f"{self.__class__.__name__} tried to connect to non existing categoric "
+                f"{type(self).__name__} tried to connect to non existing categoric "
                 f"response list identified by uid ({self.categoric_response_list_uid})"
             )
 

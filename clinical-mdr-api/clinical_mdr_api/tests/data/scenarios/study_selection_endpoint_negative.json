@@ -75,7 +75,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "If the endpoint units have move than one value then a separator is needed (('unit 1', 'unit 2'))",
+                "message": "In case of more than one endpoint units, a unit separator is required.",
                 "method": "POST",
                 "path": "http://testserver/studies/study_root/study-endpoints",
                 "time": "2020-11-03T23:42:41.518146",

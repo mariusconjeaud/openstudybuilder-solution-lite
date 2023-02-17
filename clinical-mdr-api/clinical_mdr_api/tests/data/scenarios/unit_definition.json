@@ -293,9 +293,9 @@
     "name": "Test retire draft fail",
     "request": {
       "headers": {},
-      "method": "POST",
+      "method": "DELETE",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/inactivate"
+      "url": "/concepts/unit-definitions/{uid}/activations"
     },
     "response": {
       "code": 400,
@@ -304,7 +304,7 @@
         "message": "",
         "time": "",
         "path": "",
-        "method": "POST",
+        "method": "DELETE",
         "type": "BusinessLogicException"
       }
     }
@@ -315,7 +315,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/reactivate"
+      "url": "/concepts/unit-definitions/{uid}/activations"
     },
     "response": {
       "code": 400,
@@ -1053,7 +1053,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/approve"
+      "url": "/concepts/unit-definitions/{uid}/approvals"
     },
     "response": {
       "code": 201,
@@ -1300,7 +1300,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/approve"
+      "url": "/concepts/unit-definitions/{uid}/approvals"
     },
     "response": {
       "code": 400,
@@ -1320,7 +1320,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/reactivate"
+      "url": "/concepts/unit-definitions/{uid}/activations"
     },
     "response": {
       "code": 400,
@@ -1383,12 +1383,12 @@
     "name": "Test inactivate",
     "request": {
       "headers": {},
-      "method": "POST",
+      "method": "DELETE",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/inactivate"
+      "url": "/concepts/unit-definitions/{uid}/activations"
     },
     "response": {
-      "code": 201,
+      "code": 200,
       "headers": {},
       "result": {
         "ct_units": [
@@ -1407,7 +1407,7 @@
         "status": "Retired",
         "version": "1.0",
         "user_initials": "TODO: Initials",
-        "change_description": "Deactivated version",
+        "change_description": "Inactivated version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
         "name": "unit1-patched",
         "library_name": "Test library",
@@ -1431,9 +1431,9 @@
     "name": "Test retire retired fail",
     "request": {
       "headers": {},
-      "method": "POST",
+      "method": "DELETE",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/inactivate"
+      "url": "/concepts/unit-definitions/{uid}/activations"
     },
     "response": {
       "code": 400,
@@ -1442,7 +1442,7 @@
         "message": "",
         "time": "",
         "path": "",
-        "method": "POST",
+        "method": "DELETE",
         "type": "BusinessLogicException"
       }
     }
@@ -1473,7 +1473,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/approve"
+      "url": "/concepts/unit-definitions/{uid}/approvals"
     },
     "response": {
       "code": 400,
@@ -1538,10 +1538,10 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/reactivate"
+      "url": "/concepts/unit-definitions/{uid}/activations"
     },
     "response": {
-      "code": 201,
+      "code": 200,
       "headers": {},
       "result": {
         "ct_units": [
@@ -1586,7 +1586,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/approve"
+      "url": "/concepts/unit-definitions/{uid}/approvals"
     },
     "response": {
       "code": 400,
@@ -1606,7 +1606,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/reactivate"
+      "url": "/concepts/unit-definitions/{uid}/activations"
     },
     "response": {
       "code": 400,
@@ -1717,9 +1717,9 @@
     "name": "Test retire draft fail",
     "request": {
       "headers": {},
-      "method": "POST",
+      "method": "DELETE",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/inactivate"
+      "url": "/concepts/unit-definitions/{uid}/activations"
     },
     "response": {
       "code": 400,
@@ -1728,7 +1728,7 @@
         "message": "",
         "time": "",
         "path": "",
-        "method": "POST",
+        "method": "DELETE",
         "type": "BusinessLogicException"
       }
     }
@@ -1739,7 +1739,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/reactivate"
+      "url": "/concepts/unit-definitions/{uid}/activations"
     },
     "response": {
       "code": 400,
@@ -2076,7 +2076,7 @@
           "status": "Retired",
           "version": "1.0",
           "user_initials": "TODO: Initials",
-          "change_description": "Deactivated version",
+          "change_description": "Inactivated version",
           "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
           "name": "unit1-patched",
           "library_name": "Test library",

@@ -440,19 +440,19 @@
         }
     },
     {
-        "name": "Test POST inactivate non FINAL compound alias",
+        "name": "Test DELETE activations non FINAL compound alias",
         "request": {
             "headers": {},
-            "method": "POST",
+            "method": "DELETE",
             "request": {},
-            "url": "/concepts/compound-aliases/CompoundAlias_000001/inactivate"
+            "url": "/concepts/compound-aliases/CompoundAlias_000001/activations"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "Cannot retire draft version.",
-                "method": "POST",
-                "path": "http://testserver/concepts/compound-aliases/CompoundAlias_000001/inactivate",
+                "method": "DELETE",
+                "path": "http://testserver/concepts/compound-aliases/CompoundAlias_000001/activations",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }
@@ -464,7 +464,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/compound-aliases/CompoundAlias_000001/approve"
+            "url": "concepts/compound-aliases/CompoundAlias_000001/approvals"
         },
         "response": {
             "code": 201,
@@ -500,33 +500,33 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/concepts/compound-aliases/CompoundAlias_000001/approve"
+            "url": "/concepts/compound-aliases/CompoundAlias_000001/approvals"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "The object is not in draft status.",
                 "method": "POST",
-                "path": "http://testserver/concepts/compound-aliases/CompoundAlias_000001/approve",
+                "path": "http://testserver/concepts/compound-aliases/CompoundAlias_000001/approvals",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test POST reactivate non retired compound alias",
+        "name": "Test POST activations non retired compound alias",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/concepts/compound-aliases/CompoundAlias_000001/reactivate"
+            "url": "/concepts/compound-aliases/CompoundAlias_000001/activations"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "Only RETIRED version can be reactivated.",
                 "method": "POST",
-                "path": "http://testserver/concepts/compound-aliases/CompoundAlias_000001/reactivate",
+                "path": "http://testserver/concepts/compound-aliases/CompoundAlias_000001/activations",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }

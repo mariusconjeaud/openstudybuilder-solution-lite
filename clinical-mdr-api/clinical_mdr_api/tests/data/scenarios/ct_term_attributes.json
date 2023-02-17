@@ -5,16 +5,16 @@
             "headers": {},
             "method": "POST",
             "request": {
-              "catalogue_name": "SDTM CT",
-              "codelist_uid": "editable_cr",
-              "code_submission_value": "code_submission_value",
-              "name_submission_value": "name_submission_value",
-              "nci_preferred_name": "nci_preferred_name",
-              "definition": "definition",
-              "sponsor_preferred_name": "string",
-              "sponsor_preferred_name_sentence_case": "string",
-              "order": 7,
-              "library_name": "Sponsor"
+                "catalogue_name": "SDTM CT",
+                "codelist_uid": "editable_cr",
+                "code_submission_value": "code_submission_value",
+                "name_submission_value": "name_submission_value",
+                "nci_preferred_name": "nci_preferred_name",
+                "definition": "definition",
+                "sponsor_preferred_name": "string",
+                "sponsor_preferred_name_sentence_case": "string",
+                "order": 7,
+                "library_name": "Sponsor"
             },
             "url": "/ct/terms"
         },
@@ -35,7 +35,9 @@
                 "order": 7,
                 "library_name": "Sponsor",
                 "possible_actions": [
-                    "approve", "delete","edit"
+                    "approve",
+                    "delete",
+                    "edit"
                 ]
             }
         }
@@ -74,9 +76,9 @@
                 "version": "0.2",
                 "user_initials": "unknown-user",
                 "possible_actions": [
-                  "approve",
-                  "delete",
-                  "edit"
+                    "approve",
+                    "delete",
+                    "edit"
                 ]
             }
         }
@@ -87,7 +89,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/ct/terms/term_root_draft/attributes/approve"
+            "url": "/ct/terms/term_root_draft/attributes/approvals"
         },
         "response": {
             "code": 201,
@@ -109,22 +111,22 @@
                 "version": "1.0",
                 "user_initials": "unknown-user",
                 "possible_actions": [
-                  "inactivate",
-                  "new_version"
+                    "inactivate",
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test POST attributes inactivate term",
+        "name": "Test DELETE attributes activations term",
         "request": {
             "headers": {},
-            "method": "POST",
+            "method": "DELETE",
             "request": {},
-            "url": "/ct/terms/term_root_draft/attributes/inactivate"
+            "url": "/ct/terms/term_root_draft/attributes/activations"
         },
         "response": {
-            "code": 201,
+            "code": 200,
             "headers": {},
             "result": {
                 "term_uid": "term_root_draft",
@@ -135,7 +137,7 @@
                 "name_submission_value": "name_submission_valuePATCHED",
                 "nci_preferred_name": "nci_preferred_name",
                 "definition": "definition",
-                "change_description": "Deactivated version",
+                "change_description": "Inactivated version",
                 "library_name": "Sponsor",
                 "start_date": "2021-04-06T12:38:32.069969",
                 "end_date": null,
@@ -143,7 +145,7 @@
                 "version": "1.0",
                 "user_initials": "unknown-user",
                 "possible_actions": [
-                  "reactivate"
+                    "reactivate"
                 ]
             }
         }
@@ -154,10 +156,10 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/ct/terms/term_root_draft/attributes/reactivate"
+            "url": "/ct/terms/term_root_draft/attributes/activations"
         },
         "response": {
-            "code": 201,
+            "code": 200,
             "headers": {},
             "result": {
                 "term_uid": "term_root_draft",
@@ -176,8 +178,8 @@
                 "version": "1.0",
                 "user_initials": "unknown-user",
                 "possible_actions": [
-                  "inactivate",
-                  "new_version"
+                    "inactivate",
+                    "new_version"
                 ]
             }
         }
@@ -210,8 +212,8 @@
                 "version": "1.1",
                 "user_initials": "unknown-user",
                 "possible_actions": [
-                  "approve",
-                  "edit"
+                    "approve",
+                    "edit"
                 ]
             }
         }
@@ -240,8 +242,8 @@
                 "order": 1,
                 "library_name": "Sponsor",
                 "possible_actions": [
-                  "inactivate",
-                  "new_version"
+                    "inactivate",
+                    "new_version"
                 ]
             }
         }
@@ -270,8 +272,8 @@
                 "order": 1,
                 "library_name": "Sponsor",
                 "possible_actions": [
-                  "inactivate",
-                  "new_version"
+                    "inactivate",
+                    "new_version"
                 ]
             }
         }
@@ -300,8 +302,8 @@
                 "order": 1,
                 "library_name": "Sponsor",
                 "possible_actions": [
-                  "inactivate",
-                  "new_version"
+                    "inactivate",
+                    "new_version"
                 ]
             }
         }

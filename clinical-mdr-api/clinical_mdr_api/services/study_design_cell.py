@@ -315,7 +315,7 @@ class StudyDesignCellService(StudySelectionMixin):
                     response_code = status.HTTP_204_NO_CONTENT
             except exceptions.MDRApiBaseException as error:
                 result["response_code"] = error.status_code
-                result["content"] = models.error.BatchErrorResponse(error)
+                result["content"] = models.error.BatchErrorResponse(message=str(error))
             else:
                 result["response_code"] = response_code
                 if item:

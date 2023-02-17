@@ -39,7 +39,7 @@
   <div class="pa-4 v-label">{{ $t('CodelistTermDetail.sponsor_title') }}</div>
   <div class="v-data-table">
     <div class="v-data-table__wrapper">
-      <table class="white">
+      <table class="white" :aria-label="$t('CodelistTermDetail.sponsor_title')">
         <thead>
           <tr class="greyBackground">
             <th width="25%">{{ $t('CodeListDetail.ct_identifiers') }}</th>
@@ -141,7 +141,7 @@
   <div class="v-label pa-4 mt-6">{{ $t('CodeListDetail.attributes_title') }}</div>
   <div class="v-data-table">
     <div class="v-data-table__wrapper">
-      <table class="white">
+      <table class="white" :aria-label="$t('CodeListDetail.attributes_title')">
         <thead>
           <tr class="greyBackground">
             <th width="25%">{{ $t('CodeListDetail.ct_identifiers') }}</th>
@@ -250,6 +250,7 @@
   </div>
   <v-dialog
     v-model="showNamesForm"
+    @keydown.esc="showNamesForm = false"
     persistent
     max-width="1024px"
     >
@@ -260,6 +261,7 @@
   </v-dialog>
   <v-dialog
     v-model="showAttributesForm"
+    @keydown.esc="showAttributesForm = false"
     persistent
     max-width="1024px"
     >
@@ -284,16 +286,15 @@
   </v-dialog>
   <v-dialog
     v-model="showHistory"
+    @keydown.esc="closeHistory"
     persistent
     max-width="1200px"
     >
     <history-table
+      :title="historyTitleLabel"
       @close="closeHistory"
-      :type="historyType"
-      url-prefix="terms/"
-      :url-suffix="historyUrlSuffix"
-      :item="term"
-      :title-label="historyTitleLabel"
+      :headers="historyHeaders"
+      :items="historyItems"
       />
   </v-dialog>
 </div>
@@ -307,7 +308,7 @@ import CodelistTermAttributesForm from '@/components/library/CodelistTermAttribu
 import CodelistTermCreationForm from '@/components/library/CodelistTermCreationForm'
 import CodelistTermNamesForm from '@/components/library/CodelistTermNamesForm'
 import DataTableExportButton from '@/components/tools/DataTableExportButton'
-import HistoryTable from '@/components/library/HistoryTable'
+import HistoryTable from '@/components/tools/HistoryTable'
 import StatusChip from '@/components/tools/StatusChip'
 
 export default {
@@ -324,11 +325,8 @@ export default {
   computed: {
     historyTitleLabel () {
       return (this.historyType === 'termName')
-        ? this.$t('CodelistTermTable.history_label_name')
-        : this.$t('CodelistTermTable.history_label_attributes')
-    },
-    historyUrlSuffix () {
-      return (this.historyType === 'termName') ? 'names' : 'attributes'
+        ? this.$t('CodelistTermTable.history_label_name', { term: this.termUid })
+        : this.$t('CodelistTermTable.history_label_attributes', { term: this.termUid })
     }
   },
   data () {
@@ -337,6 +335,8 @@ export default {
       codelistAttributes: {},
       codelistNames: {},
       historyType: '',
+      historyItems: [],
+      historyHeaders: [],
       showAttributesForm: false,
       showCreationForm: false,
       showHistory: false,
@@ -421,12 +421,33 @@ export default {
       this.$router.push({ name: 'CodelistTermDetail', params: { codelist_id: term.codelist_uid, term_id: term.term_uid } })
       bus.$emit('notification', { msg: this.$t('CodelistTermCreationForm.add_success') })
     },
-    openSponsorValuesHistory () {
+    async openSponsorValuesHistory () {
       this.historyType = 'termName'
+      this.historyHeaders = [
+        { text: this.$t('CodeListDetail.sponsor_pref_name'), value: 'sponsor_preferred_name' },
+        { text: this.$t('CodelistTermDetail.sentence_case_name'), value: 'sponsor_preferred_name_sentence_case' },
+        { text: this.$t('CodelistTermDetail.order'), value: 'order' },
+        { text: this.$t('_global.status'), value: 'status' },
+        { text: this.$t('_global.version'), value: 'version' }
+      ]
+      const resp = await controlledTerminology.getCodelistTermNamesVersions(this.termUid)
+      this.historyItems = resp.data
       this.showHistory = true
     },
-    openCTValuesHistory () {
+    async openCTValuesHistory () {
       this.historyType = 'termAttributes'
+      this.historyHeaders = [
+        { text: this.$t('CodelistTermDetail.concept_id'), value: 'concept_id' },
+        { text: this.$t('CodelistTermDetail.term_name'), value: 'name_submission_value' },
+        { text: this.$t('CodelistTermDetail.submission_value'), value: 'code_submission_value' },
+        { text: this.$t('CodeListDetail.nci_pref_name'), value: 'nci_preferred_name' },
+        { text: this.$t('_global.definition'), value: 'definition' },
+        { text: this.$t('CodelistTermDetail.synonyms'), value: 'synonyms' },
+        { text: this.$t('_global.status'), value: 'status' },
+        { text: this.$t('_global.version'), value: 'version' }
+      ]
+      const resp = await controlledTerminology.getCodelistTermAttributesVersions(this.termUid)
+      this.historyItems = resp.data
       this.showHistory = true
     },
     closeHistory () {

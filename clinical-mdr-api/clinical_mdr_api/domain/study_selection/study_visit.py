@@ -369,3 +369,33 @@ class StudyVisitVO:
 
     def delete(self):
         self.is_deleted = True
+
+    def compare_cons_group_equality(
+        self,
+        visit_schedules: set,
+        other_visit: "StudyVisitVO",
+        other_visit_schedules: set,
+    ) -> bool:
+        return (
+            visit_schedules == other_visit_schedules
+            and self.visit_type == other_visit.visit_type
+            and self.epoch_uid == other_visit.epoch_uid
+            and self.visit_contact_mode == other_visit.visit_contact_mode
+            and self.timepoint.visit_timereference
+            == other_visit.timepoint.visit_timereference
+            and self.visit_window_min == other_visit.visit_window_min
+            and self.visit_window_max == other_visit.visit_window_max
+            and self.note == other_visit.note
+        )
+
+    def copy_cons_group_visit_properties(
+        self,
+        other_visit: "StudyVisitVO",
+    ):
+        self.visit_type = other_visit.visit_type
+        self.epoch_connector = other_visit.epoch
+        self.visit_contact_mode = other_visit.visit_contact_mode
+        self.timepoint.visit_timereference = other_visit.timepoint.visit_timereference
+        self.visit_window_min = other_visit.visit_window_min
+        self.visit_window_max = other_visit.visit_window_max
+        self.note = other_visit.note

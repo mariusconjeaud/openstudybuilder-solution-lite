@@ -1,15 +1,15 @@
-from typing import Optional, Sequence
+from typing import List, Optional
 
 from neomodel import db
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain.concepts.odms.item import OdmItemAR, OdmItemVO
-from clinical_mdr_api.domain.concepts.utils import RelationType
+from clinical_mdr_api.domain.concepts.utils import RelationType, VendorCompatibleType
 from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.domain_repositories.concepts.odms.item_repository import (
     ItemRepository,
 )
-from clinical_mdr_api.models.odm_common_models import OdmXmlExtensionRelationPostInput
+from clinical_mdr_api.models.odm_common_models import OdmVendorRelationPostInput
 from clinical_mdr_api.models.odm_description import OdmDescriptionBatchPatchInput
 from clinical_mdr_api.models.odm_item import (
     OdmItem,
@@ -44,11 +44,11 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
             find_codelist_attribute_by_codelist_uid=self._repos.ct_codelist_attribute_repository.find_by_uid,
             find_term_with_item_relation_by_item_uid=self._repos.odm_item_repository.find_term_with_item_relation_by_item_uid,
             find_activity_by_uid=self._repos.activity_repository.find_by_uid_2,
-            find_odm_xml_extension_tag_by_uid_with_odm_element_relation=(
-                self._repos.odm_xml_extension_tag_repository.find_by_uid_with_odm_element_relation
+            find_odm_vendor_element_by_uid_with_odm_element_relation=(
+                self._repos.odm_vendor_element_repository.find_by_uid_with_odm_element_relation
             ),
-            find_odm_xml_extension_attribute_by_uid_with_odm_element_relation=(
-                self._repos.odm_xml_extension_attribute_repository.find_by_uid_with_odm_element_relation
+            find_odm_vendor_attribute_by_uid_with_odm_element_relation=(
+                self._repos.odm_vendor_attribute_repository.find_by_uid_with_odm_element_relation
             ),
         )
 
@@ -58,7 +58,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         return OdmItemAR.from_input_values(
             author=self.user_initials,
             concept_vo=OdmItemVO.from_repository_values(
-                oid=get_input_or_new_value(concept_input.oid, "I.", concept_input.name),
+                oid=concept_input.oid,
                 name=concept_input.name,
                 prompt=concept_input.prompt,
                 datatype=concept_input.datatype,
@@ -77,9 +77,9 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                 codelist_uid=concept_input.codelist_uid,
                 term_uids=[term.uid for term in concept_input.terms],
                 activity_uids=[],
-                xml_extension_tag_uids=[],
-                xml_extension_attribute_uids=[],
-                xml_extension_tag_attribute_uids=[],
+                vendor_element_uids=[],
+                vendor_attribute_uids=[],
+                vendor_element_attribute_uids=[],
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
@@ -117,9 +117,9 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                 codelist_uid=concept_edit_input.codelist_uid,
                 term_uids=[term.uid for term in concept_edit_input.terms],
                 activity_uids=[],
-                xml_extension_tag_uids=[],
-                xml_extension_attribute_uids=[],
-                xml_extension_tag_attribute_uids=[],
+                vendor_element_uids=[],
+                vendor_attribute_uids=[],
+                vendor_element_attribute_uids=[],
             ),
             concept_exists_by_callback=self._repos.odm_item_repository.exists_by,
             odm_description_exists_by_callback=self._repos.odm_description_repository.exists_by,
@@ -144,7 +144,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         item = self.non_transactional_create(
             concept_input=OdmItemPostInput(
                 library=concept_input.library_name,
-                oid=concept_input.oid,
+                oid=get_input_or_new_value(concept_input.oid, "I.", concept_input.name),
                 name=concept_input.name,
                 prompt=concept_input.prompt,
                 datatype=concept_input.datatype,
@@ -226,7 +226,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
     def _manage_terms(
         self,
         item_uid: str,
-        terms: Sequence[OdmItemTermRelationshipInput],
+        input_terms: List[OdmItemTermRelationshipInput],
         for_update: bool = False,
     ):
         try:
@@ -238,15 +238,30 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                     disconnect_all=True,
                 )
 
-            for term in terms:
+            (
+                items,
+                prop_names,
+            ) = self._repos.ct_term_attributes_repository.get_term_attributes_by_term_uids(
+                [term.uid for term in input_terms]
+            )
+
+            terms = [dict(zip(prop_names, item)) for item in items]
+
+            for input_term in input_terms:
                 self._repos.odm_item_repository.add_relation(
                     uid=item_uid,
-                    relation_uid=term.uid,
+                    relation_uid=input_term.uid,
                     relationship_type=RelationType.TERM,
                     parameters={
-                        "mandatory": term.mandatory,
-                        "order": term.order,
-                        "display_text": term.display_text,
+                        "mandatory": input_term.mandatory,
+                        "order": input_term.order,
+                        "display_text": input_term.display_text
+                        if not any(
+                            input_term.uid == term["term_uid"]
+                            and input_term.display_text == term["nci_preferred_name"]
+                            for term in terms
+                        )
+                        else None,
                     },
                 )
         except ValueError as exception:
@@ -255,7 +270,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
     def _manage_unit_definitions(
         self,
         item_uid: str,
-        unit_definitions: Sequence[OdmItemUnitDefinitionRelationshipInput],
+        unit_definitions: List[OdmItemUnitDefinitionRelationshipInput],
         for_update: bool = False,
     ):
         try:
@@ -284,7 +299,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         self,
         length: Optional[int],
         codelist_uid: Optional[str],
-        input_terms: Sequence[OdmItemTermRelationshipInput],
+        input_terms: List[OdmItemTermRelationshipInput],
     ):
         if length:
             return length
@@ -295,7 +310,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         (
             items,
             prop_names,
-        ) = self._repos.ct_term_attributes_repository.get_term_attributes_by_codelist_uids(
+        ) = self._repos.ct_term_attributes_repository.get_term_name_and_attributes_by_codelist_uids(
             [codelist_uid]
         )
 
@@ -320,8 +335,8 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
     def add_activities(
         self,
         uid: str,
-        odm_item_activity_post_input: Sequence[OdmItemActivityPostInput],
-        override: bool,
+        odm_item_activity_post_input: List[OdmItemActivityPostInput],
+        override: bool = False,
     ) -> OdmItem:
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
@@ -351,13 +366,11 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         return self._transform_aggregate_root_to_pydantic_model(odm_item_ar)
 
     @db.transaction
-    def add_xml_extension_tags(
+    def add_vendor_elements(
         self,
         uid: str,
-        odm_xml_extension_relation_post_input: Sequence[
-            OdmXmlExtensionRelationPostInput
-        ],
-        override: bool,
+        odm_vendor_relation_post_input: List[OdmVendorRelationPostInput],
+        override: bool = False,
     ) -> OdmItem:
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
@@ -365,26 +378,26 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
             raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
 
         if override:
-            self.fail_if_non_present_tags_are_used_by_current_odm_element_attributes(
-                odm_item_ar._concept_vo.xml_extension_tag_attribute_uids,
-                odm_xml_extension_relation_post_input,
+            self.fail_if_non_present_vendor_elements_are_used_by_current_odm_element_attributes(
+                odm_item_ar._concept_vo.vendor_element_attribute_uids,
+                odm_vendor_relation_post_input,
             )
 
             self._repos.odm_item_repository.remove_relation(
                 uid=uid,
                 relation_uid=None,
-                relationship_type=RelationType.XML_EXTENSION_TAG,
+                relationship_type=RelationType.VENDOR_ELEMENT,
                 disconnect_all=True,
             )
 
         try:
-            for xml_extension_tag in odm_xml_extension_relation_post_input:
+            for vendor_element in odm_vendor_relation_post_input:
                 self._repos.odm_item_repository.add_relation(
                     uid=uid,
-                    relation_uid=xml_extension_tag.uid,
-                    relationship_type=RelationType.XML_EXTENSION_TAG,
+                    relation_uid=vendor_element.uid,
+                    relationship_type=RelationType.VENDOR_ELEMENT,
                     parameters={
-                        "value": xml_extension_tag.value,
+                        "value": vendor_element.value,
                     },
                 )
         except ValueError as exception:
@@ -395,13 +408,11 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         return self._transform_aggregate_root_to_pydantic_model(odm_item_ar)
 
     @db.transaction
-    def add_xml_extension_attributes(
+    def add_vendor_attributes(
         self,
         uid: str,
-        odm_xml_extension_relation_post_input: Sequence[
-            OdmXmlExtensionRelationPostInput
-        ],
-        override: bool,
+        odm_vendor_relation_post_input: List[OdmVendorRelationPostInput],
+        override: bool = False,
     ) -> OdmItem:
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
@@ -409,25 +420,26 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
             raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
 
         self.fail_if_these_attributes_cannot_be_added(
-            odm_xml_extension_relation_post_input
+            odm_vendor_relation_post_input,
+            compatible_type=VendorCompatibleType.ITEM_DEF,
         )
 
         if override:
             self._repos.odm_item_repository.remove_relation(
                 uid=uid,
                 relation_uid=None,
-                relationship_type=RelationType.XML_EXTENSION_ATTRIBUTE,
+                relationship_type=RelationType.VENDOR_ATTRIBUTE,
                 disconnect_all=True,
             )
 
         try:
-            for xml_extension_attribute in odm_xml_extension_relation_post_input:
+            for vendor_attribute in odm_vendor_relation_post_input:
                 self._repos.odm_item_repository.add_relation(
                     uid=uid,
-                    relation_uid=xml_extension_attribute.uid,
-                    relationship_type=RelationType.XML_EXTENSION_ATTRIBUTE,
+                    relation_uid=vendor_attribute.uid,
+                    relationship_type=RelationType.VENDOR_ATTRIBUTE,
                     parameters={
-                        "value": xml_extension_attribute.value,
+                        "value": vendor_attribute.value,
                     },
                 )
         except ValueError as exception:
@@ -438,13 +450,11 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         return self._transform_aggregate_root_to_pydantic_model(odm_item_ar)
 
     @db.transaction
-    def add_xml_extension_tag_attributes(
+    def add_vendor_element_attributes(
         self,
         uid: str,
-        odm_xml_extension_relation_post_input: Sequence[
-            OdmXmlExtensionRelationPostInput
-        ],
-        override: bool,
+        odm_vendor_relation_post_input: List[OdmVendorRelationPostInput],
+        override: bool = False,
     ) -> OdmItem:
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
@@ -452,26 +462,26 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
             raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
 
         self.fail_if_these_attributes_cannot_be_added(
-            odm_xml_extension_relation_post_input,
-            odm_item_ar.concept_vo.xml_extension_tag_uids,
+            odm_vendor_relation_post_input,
+            odm_item_ar.concept_vo.vendor_element_uids,
         )
 
         if override:
             self._repos.odm_item_repository.remove_relation(
                 uid=uid,
                 relation_uid=None,
-                relationship_type=RelationType.XML_EXTENSION_TAG_ATTRIBUTE,
+                relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
                 disconnect_all=True,
             )
 
         try:
-            for xml_extension_tag_attribute in odm_xml_extension_relation_post_input:
+            for vendor_element_attribute in odm_vendor_relation_post_input:
                 self._repos.odm_item_repository.add_relation(
                     uid=uid,
-                    relation_uid=xml_extension_tag_attribute.uid,
-                    relationship_type=RelationType.XML_EXTENSION_TAG_ATTRIBUTE,
+                    relation_uid=vendor_element_attribute.uid,
+                    relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
                     parameters={
-                        "value": xml_extension_tag_attribute.value,
+                        "value": vendor_element_attribute.value,
                     },
                 )
         except ValueError as exception:

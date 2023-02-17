@@ -1,0 +1,17 @@
+steps:
+
+  - script: |
+      # Ensure none of the current composed services are running
+      docker compose down --volumes
+  
+      # Remove all unused local volumes, which are not referenced by any containers.
+      docker volume prune -f
+    displayName: "Reset docker environment"
+
+  - script: |    
+      docker compose build
+    displayName: "Build docker images"
+
+  - script: |    
+      docker compose up --detach --renew-anon-volumes
+    displayName: "Start docker services"

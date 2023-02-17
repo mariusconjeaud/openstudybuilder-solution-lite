@@ -1,7 +1,7 @@
 """Study Protocol Interventions service"""
 
 import logging
-from typing import Sequence
+from typing import Dict, List, Mapping, Sequence
 
 import yattag
 from docx.enum.style import WD_STYLE_TYPE
@@ -9,6 +9,10 @@ from docx.enum.style import WD_STYLE_TYPE
 from clinical_mdr_api import models
 from clinical_mdr_api.models.table import Table
 from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.services.study_arm_selection import StudyArmSelectionService
+from clinical_mdr_api.services.study_compound_dosing_selection import (
+    StudyCompoundDosingSelectionService,
+)
 from clinical_mdr_api.services.study_compound_selection import (
     StudyCompoundSelectionService,
 )
@@ -34,6 +38,7 @@ _gettext = {
     "trial_product_strength_template": "{value} {unit}",
     "None": "None",
     "study_interventions": "Study Interventions",
+    "no_information": "-",
 }.get
 
 log = logging.getLogger(__name__)
@@ -54,7 +59,9 @@ class StudyInterventionsService:
 
     def get_table(self, study_uid: str) -> Table:
         compounds = self._get_study_compounds(study_uid)
-        table = self.mk_table(compounds)
+        arms = self._get_arms_for_compounds(study_uid)
+        dosings = self._get_compound_dosings(study_uid)
+        table = self.mk_table(compounds, arms, dosings)
         return table
 
     def get_html(self, study_uid: str) -> str:
@@ -72,6 +79,8 @@ class StudyInterventionsService:
     @staticmethod
     def mk_table(
         compounds: Sequence[models.StudySelectionCompound],
+        arms: Mapping[str, Sequence[models.StudySelectionArm]],
+        dosings: Mapping[str, Sequence[models.StudyCompoundDosing]],
     ) -> Table:
 
         table = Table.new()
@@ -81,8 +90,8 @@ class StudyInterventionsService:
         r = 0
         table.data[r][0] = _gettext("intervention_or_arm_name")
         table.meta[r][0]["class"] = "header1"
-        for c, _ in enumerate(compounds, start=1):
-            table.data[r][c] = "?"  # TODO arm name
+        for c, cmp in enumerate(compounds, start=1):
+            table.data[r][c] = StudyInterventionsService._arm_txt(cmp, arms)
             table.meta[r][c]["class"] = "header2"
 
         r += 1
@@ -149,14 +158,14 @@ class StudyInterventionsService:
         r += 1
         table.data[r][0] = _gettext("dose_and_frequency")
         table.meta[r][0]["class"] = "header2"
-        for c, _ in enumerate(compounds, start=1):
-            table.data[r][c] = "?"  # TODO
+        for c, cmp in enumerate(compounds, start=1):
+            table.data[r][c] = StudyInterventionsService._dosing_txt(cmp, dosings)
 
         r += 1
         table.data[r][0] = _gettext("dosing_and_administration")
         table.meta[r][0]["class"] = "header2"
-        for c, _ in enumerate(compounds, start=1):
-            table.data[r][c] = "?"  # TODO
+        for c, cmp in enumerate(compounds, start=1):
+            table.data[r][c] = cmp.other_info or _gettext("no_information")
 
         r += 1
         table.data[r][0] = _gettext("transfer_from_other_therapy")
@@ -184,6 +193,21 @@ class StudyInterventionsService:
 
         return table
 
+    @staticmethod
+    def _dosing_txt(compounds, dosings):
+        return "\n".join(
+            f"{dosing.dose_value.value if dosing.dose_value else ''} "
+            f"{dosing.dose_value.unit_label if dosing.dose_value else ''} "
+            f"{dosing.dose_frequency.name if dosing.dose_frequency else ''}".strip()
+            for dosing in dosings.get(compounds.study_compound_uid, [])
+        ) or _gettext("no_information")
+
+    @staticmethod
+    def _arm_txt(compound, arms):
+        return "\n".join(
+            arm.name for arm in arms.get(compound.study_compound_uid, [])
+        ) or _gettext("no_information")
+
     def _get_study_compounds(
         self, study_uid
     ) -> Sequence[models.StudySelectionCompound]:
@@ -194,3 +218,40 @@ class StudyInterventionsService:
             )
             .items
         )
+
+    def _get_arms_for_compounds(
+        self, study_uid
+    ) -> Mapping[str, List[models.StudySelectionArm]]:
+        arms = {
+            arm.arm_uid: arm
+            for arm in StudyArmSelectionService(author=self.current_user_id)
+            .get_all_selection(
+                study_uid=study_uid,
+            )
+            .items
+        }
+
+        mapping = StudyCompoundSelectionService(
+            author=self.current_user_id
+        ).get_compound_uid_to_arm_uids_mapping(study_uid)
+
+        return {
+            compound_uid: [arms[arm_uid] for arm_uid in arm_uids]
+            for compound_uid, arm_uids in mapping.items()
+        }
+
+    def _get_compound_dosings(
+        self, study_uid: str
+    ) -> Dict[str, List[models.StudyCompoundDosing]]:
+        results = (
+            StudyCompoundDosingSelectionService(author=self.current_user_id)
+            .get_all_compound_dosings(study_uid)
+            .items
+        )
+
+        mapping = {}
+        for dosing in results:
+            key = dosing.study_compound.study_compound_uid
+            mapping.setdefault(key, []).append(dosing)
+
+        return mapping

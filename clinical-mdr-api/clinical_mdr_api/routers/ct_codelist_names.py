@@ -281,7 +281,7 @@ def create(
 
 
 @router.post(
-    "/codelists/{codelist_uid}/names/approve",
+    "/codelists/{codelist_uid}/names/approvals",
     summary="Approves the codelist identified by 'codelist_uid'.",
     description="""This request is only valid if the codelist
 * is in 'Draft' status and

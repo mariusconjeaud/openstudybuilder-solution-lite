@@ -290,8 +290,8 @@ export default {
       if (this.compoundAliasUid !== null) {
         compoundAliases.getObject(this.compoundAliasUid).then(resp => {
           this.compoundAlias = resp.data
-          compounds.getObject(this.compoundAlias.compound.uid).then(resp => {
-            this.$set(this.form, 'compoundSimple', resp.data)
+          compounds.getObject(this.compoundAlias.compound.uid).then(aliasResp => {
+            this.$set(this.form, 'compoundSimple', aliasResp.data)
           })
         })
       }

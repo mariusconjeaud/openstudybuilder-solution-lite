@@ -26,7 +26,7 @@
       <sdtm-design-table type="TI"/>
     </v-tab-item>
     <v-tab-item id="tab-4">
-      <UnderConstruction />
+      <sdtm-design-table type="TDM"/>
     </v-tab-item>
     <v-tab-item id="tab-5">
       <sdtm-design-table type="TS"/>
@@ -37,13 +37,11 @@
 
 <script>
 import SdtmDesignTable from '@/components/studies/SdtmDesignTable'
-import UnderConstruction from '@/components/layout/UnderConstruction.vue'
 import HelpButton from '@/components/tools/HelpButton'
 
 export default {
   components: {
     SdtmDesignTable,
-    UnderConstruction,
     HelpButton
   },
   data () {

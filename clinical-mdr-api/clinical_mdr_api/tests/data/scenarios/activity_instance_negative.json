@@ -24,52 +24,52 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/concepts/activities/activity-instances/activity_instance_root1/approve"
+            "url": "/concepts/activities/activity-instances/activity_instance_root1/approvals"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "The object is not in draft status.",
                 "method": "POST",
-                "path": "http://testserver/concepts/activities/activity-instances/activity_instance_root1/approve",
+                "path": "http://testserver/concepts/activities/activity-instances/activity_instance_root1/approvals",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test POST inactivate non FINAL activity instance",
+        "name": "Test DELETE activations non FINAL activity instance",
         "request": {
             "headers": {},
-            "method": "POST",
+            "method": "DELETE",
             "request": {},
-            "url": "/concepts/activities/activity-instances/activity_instance_root2/inactivate"
+            "url": "/concepts/activities/activity-instances/activity_instance_root2/activations"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "Cannot retire draft version.",
-                "method": "POST",
-                "path": "http://testserver/concepts/activities/activity-instances/activity_instance_root2/inactivate",
+                "method": "DELETE",
+                "path": "http://testserver/concepts/activities/activity-instances/activity_instance_root2/activations",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }
         }
     },
     {
-        "name": "Test POST reactivate non retired activity instance",
+        "name": "Test POST activations non retired activity instance",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/concepts/activities/activity-instances/activity_instance_root2/reactivate"
+            "url": "/concepts/activities/activity-instances/activity_instance_root2/activations"
         },
         "response": {
             "code": 400,
             "result": {
                 "message": "Only RETIRED version can be reactivated.",
                 "method": "POST",
-                "path": "http://testserver/concepts/activities/activity-instances/activity_instance_root2/reactivate",
+                "path": "http://testserver/concepts/activities/activity-instances/activity_instance_root2/activations",
                 "time": "2020-11-10T01:51:17.884429",
                 "type": "BusinessLogicException"
             }

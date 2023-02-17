@@ -82,6 +82,7 @@ class CTConfigRepository(LibraryItemRepositoryImplBase[CTConfigAR]):
         root: VersionRoot,
         value: VersionValue,
     ) -> None:
+        # method required by interface, does nothing #
         pass
 
     def _get_or_create_value(self, root: VersionRoot, ar: CTConfigAR) -> VersionValue:

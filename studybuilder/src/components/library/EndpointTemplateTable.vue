@@ -8,6 +8,7 @@
   has-api
   column-data-resource="endpoint-templates"
   fullscreen-form
+  :history-formating-func="formatHistoryItem"
   >
   <template v-slot:editform="{ closeForm, selectedObject, filter, updateTemplate }">
     <endpoint-template-form
@@ -55,6 +56,7 @@
 </template>
 
 <script>
+import dataFormating from '@/utils/dataFormating'
 import EndpointTemplateForm from '@/components/library/EndpointTemplateForm'
 import EndpointTemplateIndexingForm from './EndpointTemplateIndexingForm'
 import StudybuilderTemplateTable from '@/components/library/StudybuilderTemplateTable'
@@ -79,7 +81,7 @@ export default {
         { text: this.$t('_global.indications'), value: 'indications.name' },
         { text: this.$t('EndpointTemplateTable.endpoint_cat'), value: 'categories.name.sponsor_preferred_name' },
         { text: this.$t('EndpointTemplateTable.endpoint_sub_cat'), value: 'sub_categories.name.sponsor_preferred_name' },
-        { text: this.$t('_global.template'), value: 'name', width: '30%' },
+        { text: this.$t('_global.template'), value: 'name', width: '30%', filteringName: 'name_plain' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
@@ -93,6 +95,18 @@ export default {
     },
     refreshTable () {
       this.$refs.table.$refs.sponsorTable.filter()
+    },
+    formatHistoryItem (item) {
+      if (item.categories) {
+        item.categories = { name: { sponsor_preferred_name: dataFormating.terms(item.categories) } }
+      } else {
+        item.categories = { name: { sponsor_preferred_name: this.$t('_global.not_applicable_long') } }
+      }
+      if (item.sub_categories) {
+        item.sub_categories = { name: { sponsor_preferred_name: dataFormating.terms(item.sub_categories) } }
+      } else {
+        item.sub_categories = { name: { sponsor_preferred_name: this.$t('_global.not_applicable_long') } }
+      }
     }
   }
 }

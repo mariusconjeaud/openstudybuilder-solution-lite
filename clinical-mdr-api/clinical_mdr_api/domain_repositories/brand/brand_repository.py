@@ -29,7 +29,7 @@ class BrandRepository:
         which ultimately determines whether a method invocation is a hit or miss.
         """
         return hashkey(
-            str(self.__class__),
+            str(type(self)),
             uid,
         )
 
@@ -76,9 +76,9 @@ class BrandRepository:
     def find_all(self) -> Collection[BrandAR]:
         brands: Sequence[Brand] = Brand.nodes.filter(is_deleted=False)
         brand_ars: Sequence[BrandAR] = [
-            BrandAR.from_input_values(
+            BrandAR(
+                _uid=p.uid,
                 name=p.name,
-                generate_uid_callback=lambda: p.uid,
             )
             for p in brands
         ]

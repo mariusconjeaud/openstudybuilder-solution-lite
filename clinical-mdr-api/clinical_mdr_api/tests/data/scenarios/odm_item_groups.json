@@ -109,9 +109,9 @@
                 ],
                 "activity_subgroups": [],
                 "items": [],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "approve",
                     "delete",
@@ -190,9 +190,9 @@
                         ],
                         "activity_subgroups": [],
                         "items": [],
-                        "xml_extension_tags": [],
-                        "xml_extension_attributes": [],
-                        "xml_extension_tag_attributes": [],
+                        "vendor_elements": [],
+                        "vendor_attributes": [],
+                        "vendor_element_attributes": [],
                         "possible_actions": [
                             "approve",
                             "delete",
@@ -293,9 +293,9 @@
                 ],
                 "activity_subgroups": [],
                 "items": [],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "approve",
                     "delete",
@@ -373,9 +373,9 @@
                     ],
                     "activity_subgroups": [],
                     "items": [],
-                    "xml_extension_tags": [],
-                    "xml_extension_attributes": [],
-                    "xml_extension_tag_attributes": [],
+                    "vendor_elements": [],
+                    "vendor_attributes": [],
+                    "vendor_element_attributes": [],
                     "possible_actions": [
                         "approve",
                         "delete",
@@ -474,9 +474,9 @@
                 ],
                 "activity_subgroups": [],
                 "items": [],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "approve",
                     "delete",
@@ -491,7 +491,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/odms/item-groups/OdmItemGroup_000001/approve"
+            "url": "concepts/odms/item-groups/OdmItemGroup_000001/approvals"
         },
         "response": {
             "code": 201,
@@ -553,9 +553,9 @@
                 ],
                 "activity_subgroups": [],
                 "items": [],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "inactivate",
                     "new_version"
@@ -567,12 +567,12 @@
         "name": "Test inactivating a specific ODM Item Group",
         "request": {
             "headers": {},
-            "method": "POST",
+            "method": "DELETE",
             "request": {},
-            "url": "concepts/odms/item-groups/OdmItemGroup_000001/inactivate"
+            "url": "concepts/odms/item-groups/OdmItemGroup_000001/activations"
         },
         "response": {
-            "code": 201,
+            "code": 200,
             "headers": {
                 "content-length": "459",
                 "content-type": "application/json"
@@ -592,7 +592,7 @@
                 "end_date": null,
                 "status": "Retired",
                 "version": "1.0",
-                "change_description": "Deactivated version",
+                "change_description": "Inactivated version",
                 "user_initials": "TODO initials",
                 "descriptions": [
                     {
@@ -631,9 +631,9 @@
                 ],
                 "activity_subgroups": [],
                 "items": [],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "delete",
                     "reactivate"
@@ -647,10 +647,10 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/odms/item-groups/OdmItemGroup_000001/reactivate"
+            "url": "concepts/odms/item-groups/OdmItemGroup_000001/activations"
         },
         "response": {
-            "code": 201,
+            "code": 200,
             "headers": {
                 "content-length": "459",
                 "content-type": "application/json"
@@ -709,9 +709,9 @@
                 ],
                 "activity_subgroups": [],
                 "items": [],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "inactivate",
                     "new_version"
@@ -796,9 +796,9 @@
                     }
                 ],
                 "items": [],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "inactivate",
                     "new_version"
@@ -883,9 +883,9 @@
                     }
                 ],
                 "items": [],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "inactivate",
                     "new_version"
@@ -903,15 +903,20 @@
                     "uid": "odm_item1",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "data_entry_required": "Yes",
-                    "sdv": "Yes",
-                    "locked": "No",
                     "key_sequence": "key_sequence1",
                     "method_oid": "method_oid1",
                     "imputation_method_oid": "imputation_method_oid1",
                     "role": "role1",
                     "role_codelist_oid": "role_codelist_oid1",
-                    "collection_exception_condition_oid": "collection_exception_condition_oid1"
+                    "collection_exception_condition_oid": "collection_exception_condition_oid1",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "odm_vendor_attribute3",
+                                "value": "Yes"
+                            }
+                        ]
+                    }
                 }
             ],
             "url": "concepts/odms/item-groups/OdmItemGroup_000001/items"
@@ -987,20 +992,29 @@
                         "name": "name1",
                         "order_number": 1,
                         "mandatory": "Yes",
-                        "data_entry_required": "Yes",
-                        "sdv": "Yes",
-                        "locked": "No",
                         "key_sequence": "key_sequence1",
                         "method_oid": "method_oid1",
                         "imputation_method_oid": "imputation_method_oid1",
                         "role": "role1",
                         "role_codelist_oid": "role_codelist_oid1",
-                        "collection_exception_condition_oid": "collection_exception_condition_oid1"
+                        "collection_exception_condition_oid": "collection_exception_condition_oid1",
+                        "vendor": {
+                            "attributes": [
+                                {
+                                    "uid": "odm_vendor_attribute3",
+                                    "name": "nameThree",
+                                    "data_type": "string",
+                                    "value_regex": null,
+                                    "value": "Yes",
+                                    "vendor_namespace_uid": "odm_vendor_namespace1"
+                                }
+                            ]
+                        }
                     }
                 ],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "inactivate",
                     "new_version"
@@ -1018,15 +1032,24 @@
                     "uid": "odm_item2",
                     "order_number": 2,
                     "mandatory": "Yes",
-                    "data_entry_required": "Yes",
-                    "sdv": "Yes",
-                    "locked": "No",
                     "key_sequence": "key_sequence2",
                     "method_oid": "method_oid2",
                     "imputation_method_oid": "imputation_method_oid2",
                     "role": "role2",
                     "role_codelist_oid": "role_codelist_oid2",
-                    "collection_exception_condition_oid": "collection_exception_condition_oid2"
+                    "collection_exception_condition_oid": "collection_exception_condition_oid2",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "odm_vendor_attribute3",
+                                "name": "nameThree",
+                                "data_type": "string",
+                                "value_regex": null,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace1"
+                            }
+                        ]
+                    }
                 }
             ],
             "url": "concepts/odms/item-groups/OdmItemGroup_000001/items?override=true"
@@ -1102,20 +1125,29 @@
                         "name": "name2",
                         "order_number": 2,
                         "mandatory": "Yes",
-                        "data_entry_required": "Yes",
-                        "sdv": "Yes",
-                        "locked": "No",
                         "key_sequence": "key_sequence2",
                         "method_oid": "method_oid2",
                         "imputation_method_oid": "imputation_method_oid2",
                         "role": "role2",
                         "role_codelist_oid": "role_codelist_oid2",
-                        "collection_exception_condition_oid": "collection_exception_condition_oid2"
+                        "collection_exception_condition_oid": "collection_exception_condition_oid2",
+                        "vendor": {
+                            "attributes": [
+                                {
+                                    "uid": "odm_vendor_attribute3",
+                                    "name": "nameThree",
+                                    "data_type": "string",
+                                    "value_regex": null,
+                                    "value": "Yes",
+                                    "vendor_namespace_uid": "odm_vendor_namespace1"
+                                }
+                            ]
+                        }
                     }
                 ],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "inactivate",
                     "new_version"
@@ -1124,17 +1156,17 @@
         }
     },
     {
-        "name": "Test adding ODM XML Extension Tag to a specific ODM Item Group",
+        "name": "Test adding ODM Vendor Element to a specific ODM Item Group",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
-                    "uid": "odm_xml_extension_tag2",
+                    "uid": "odm_vendor_element2",
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/item-groups/OdmItemGroup_000001/xml-extension-tags"
+            "url": "concepts/odms/item-groups/OdmItemGroup_000001/vendor-elements"
         },
         "response": {
             "code": 201,
@@ -1207,26 +1239,35 @@
                         "name": "name2",
                         "order_number": 2,
                         "mandatory": "Yes",
-                        "data_entry_required": "Yes",
-                        "sdv": "Yes",
-                        "locked": "No",
                         "key_sequence": "key_sequence2",
                         "method_oid": "method_oid2",
                         "imputation_method_oid": "imputation_method_oid2",
                         "role": "role2",
                         "role_codelist_oid": "role_codelist_oid2",
-                        "collection_exception_condition_oid": "collection_exception_condition_oid2"
+                        "collection_exception_condition_oid": "collection_exception_condition_oid2",
+                        "vendor": {
+                            "attributes": [
+                                {
+                                    "uid": "odm_vendor_attribute3",
+                                    "name": "nameThree",
+                                    "data_type": "string",
+                                    "value_regex": null,
+                                    "value": "Yes",
+                                    "vendor_namespace_uid": "odm_vendor_namespace1"
+                                }
+                            ]
+                        }
                     }
                 ],
-                "xml_extension_tags": [
+                "vendor_elements": [
                     {
-                        "uid": "odm_xml_extension_tag2",
+                        "uid": "odm_vendor_element2",
                         "name": "nameTwo",
                         "value": "value"
                     }
                 ],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "inactivate",
                     "new_version"
@@ -1235,17 +1276,17 @@
         }
     },
     {
-        "name": "Test overriding ODM XML Extension Tag from a specific ODM Item Group",
+        "name": "Test overriding ODM Vendor Element from a specific ODM Item Group",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
-                    "uid": "odm_xml_extension_tag1",
+                    "uid": "odm_vendor_element1",
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/item-groups/OdmItemGroup_000001/xml-extension-tags?override=true"
+            "url": "concepts/odms/item-groups/OdmItemGroup_000001/vendor-elements?override=true"
         },
         "response": {
             "code": 201,
@@ -1318,26 +1359,35 @@
                         "name": "name2",
                         "order_number": 2,
                         "mandatory": "Yes",
-                        "data_entry_required": "Yes",
-                        "sdv": "Yes",
-                        "locked": "No",
                         "key_sequence": "key_sequence2",
                         "method_oid": "method_oid2",
                         "imputation_method_oid": "imputation_method_oid2",
                         "role": "role2",
                         "role_codelist_oid": "role_codelist_oid2",
-                        "collection_exception_condition_oid": "collection_exception_condition_oid2"
+                        "collection_exception_condition_oid": "collection_exception_condition_oid2",
+                        "vendor": {
+                            "attributes": [
+                                {
+                                    "uid": "odm_vendor_attribute3",
+                                    "name": "nameThree",
+                                    "data_type": "string",
+                                    "value_regex": null,
+                                    "value": "Yes",
+                                    "vendor_namespace_uid": "odm_vendor_namespace1"
+                                }
+                            ]
+                        }
                     }
                 ],
-                "xml_extension_tags": [
+                "vendor_elements": [
                     {
-                        "uid": "odm_xml_extension_tag1",
+                        "uid": "odm_vendor_element1",
                         "name": "nameOne",
                         "value": "value"
                     }
                 ],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "inactivate",
                     "new_version"
@@ -1346,17 +1396,17 @@
         }
     },
     {
-        "name": "Test adding ODM XML Extension Attribute to a specific ODM Item Group",
+        "name": "Test adding ODM Vendor Attribute to a specific ODM Item Group",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
-                    "uid": "odm_xml_extension_attribute3",
+                    "uid": "odm_vendor_attribute3",
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/item-groups/OdmItemGroup_000001/xml-extension-attributes"
+            "url": "concepts/odms/item-groups/OdmItemGroup_000001/vendor-attributes"
         },
         "response": {
             "code": 201,
@@ -1429,34 +1479,44 @@
                         "name": "name2",
                         "order_number": 2,
                         "mandatory": "Yes",
-                        "data_entry_required": "Yes",
-                        "sdv": "Yes",
-                        "locked": "No",
                         "key_sequence": "key_sequence2",
                         "method_oid": "method_oid2",
                         "imputation_method_oid": "imputation_method_oid2",
                         "role": "role2",
                         "role_codelist_oid": "role_codelist_oid2",
-                        "collection_exception_condition_oid": "collection_exception_condition_oid2"
+                        "collection_exception_condition_oid": "collection_exception_condition_oid2",
+                        "vendor": {
+                            "attributes": [
+                                {
+                                    "uid": "odm_vendor_attribute3",
+                                    "name": "nameThree",
+                                    "data_type": "string",
+                                    "value_regex": null,
+                                    "value": "Yes",
+                                    "vendor_namespace_uid": "odm_vendor_namespace1"
+                                }
+                            ]
+                        }
                     }
                 ],
-                "xml_extension_tags": [
+                "vendor_elements": [
                     {
-                        "uid": "odm_xml_extension_tag1",
+                        "uid": "odm_vendor_element1",
                         "name": "nameOne",
                         "value": "value"
                     }
                 ],
-                "xml_extension_attributes": [
+                "vendor_attributes": [
                     {
-                        "uid": "odm_xml_extension_attribute3",
+                        "uid": "odm_vendor_attribute3",
                         "name": "nameThree",
                         "data_type": "string",
+                        "value_regex": "^[a-zA-Z]+$",
                         "value": "value",
-                        "xml_extension_uid": "odm_xml_extension1"
+                        "vendor_namespace_uid": "odm_vendor_namespace1"
                     }
                 ],
-                "xml_extension_tag_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "inactivate",
                     "new_version"
@@ -1465,17 +1525,17 @@
         }
     },
     {
-        "name": "Test overriding ODM XML Extension Attribute from a specific ODM Item Group",
+        "name": "Test overriding ODM Vendor Attribute from a specific ODM Item Group",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
-                    "uid": "odm_xml_extension_attribute4",
+                    "uid": "odm_vendor_attribute4",
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/item-groups/OdmItemGroup_000001/xml-extension-attributes?override=true"
+            "url": "concepts/odms/item-groups/OdmItemGroup_000001/vendor-attributes?override=true"
         },
         "response": {
             "code": 201,
@@ -1548,34 +1608,44 @@
                         "name": "name2",
                         "order_number": 2,
                         "mandatory": "Yes",
-                        "data_entry_required": "Yes",
-                        "sdv": "Yes",
-                        "locked": "No",
                         "key_sequence": "key_sequence2",
                         "method_oid": "method_oid2",
                         "imputation_method_oid": "imputation_method_oid2",
                         "role": "role2",
                         "role_codelist_oid": "role_codelist_oid2",
-                        "collection_exception_condition_oid": "collection_exception_condition_oid2"
+                        "collection_exception_condition_oid": "collection_exception_condition_oid2",
+                        "vendor": {
+                            "attributes": [
+                                {
+                                    "uid": "odm_vendor_attribute3",
+                                    "name": "nameThree",
+                                    "data_type": "string",
+                                    "value_regex": null,
+                                    "value": "Yes",
+                                    "vendor_namespace_uid": "odm_vendor_namespace1"
+                                }
+                            ]
+                        }
                     }
                 ],
-                "xml_extension_tags": [
+                "vendor_elements": [
                     {
-                        "uid": "odm_xml_extension_tag1",
+                        "uid": "odm_vendor_element1",
                         "name": "nameOne",
                         "value": "value"
                     }
                 ],
-                "xml_extension_attributes": [
+                "vendor_attributes": [
                     {
-                        "uid": "odm_xml_extension_attribute4",
-                        "name": "name_four",
+                        "uid": "odm_vendor_attribute4",
+                        "name": "nameFour",
                         "data_type": "string",
+                        "value_regex": null,
                         "value": "value",
-                        "xml_extension_uid": "odm_xml_extension1"
+                        "vendor_namespace_uid": "odm_vendor_namespace1"
                     }
                 ],
-                "xml_extension_tag_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "inactivate",
                     "new_version"
@@ -1584,17 +1654,17 @@
         }
     },
     {
-        "name": "Test adding ODM XML Extension Tag attribute to a specific ODM Item Group",
+        "name": "Test adding ODM Vendor Element attribute to a specific ODM Item Group",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
-                    "uid": "odm_xml_extension_attribute1",
+                    "uid": "odm_vendor_attribute1",
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/item-groups/OdmItemGroup_000001/xml-extension-tag-attributes"
+            "url": "concepts/odms/item-groups/OdmItemGroup_000001/vendor-element-attributes"
         },
         "response": {
             "code": 201,
@@ -1667,40 +1737,51 @@
                         "name": "name2",
                         "order_number": 2,
                         "mandatory": "Yes",
-                        "data_entry_required": "Yes",
-                        "sdv": "Yes",
-                        "locked": "No",
                         "key_sequence": "key_sequence2",
                         "method_oid": "method_oid2",
                         "imputation_method_oid": "imputation_method_oid2",
                         "role": "role2",
                         "role_codelist_oid": "role_codelist_oid2",
-                        "collection_exception_condition_oid": "collection_exception_condition_oid2"
+                        "collection_exception_condition_oid": "collection_exception_condition_oid2",
+                        "vendor": {
+                            "attributes": [
+                                {
+                                    "uid": "odm_vendor_attribute3",
+                                    "name": "nameThree",
+                                    "data_type": "string",
+                                    "value_regex": null,
+                                    "value": "Yes",
+                                    "vendor_namespace_uid": "odm_vendor_namespace1"
+                                }
+                            ]
+                        }
                     }
                 ],
-                "xml_extension_tags": [
+                "vendor_elements": [
                     {
-                        "uid": "odm_xml_extension_tag1",
+                        "uid": "odm_vendor_element1",
                         "name": "nameOne",
                         "value": "value"
                     }
                 ],
-                "xml_extension_attributes": [
+                "vendor_attributes": [
                     {
-                        "uid": "odm_xml_extension_attribute4",
-                        "name": "name_four",
+                        "uid": "odm_vendor_attribute4",
+                        "name": "nameFour",
                         "data_type": "string",
+                        "value_regex": null,
                         "value": "value",
-                        "xml_extension_uid": "odm_xml_extension1"
+                        "vendor_namespace_uid": "odm_vendor_namespace1"
                     }
                 ],
-                "xml_extension_tag_attributes": [
+                "vendor_element_attributes": [
                     {
-                        "uid": "odm_xml_extension_attribute1",
+                        "uid": "odm_vendor_attribute1",
                         "name": "nameOne",
                         "data_type": "string",
+                        "value_regex": "^[a-zA-Z]+$",
                         "value": "value",
-                        "xml_extension_tag_uid": "odm_xml_extension_tag1"
+                        "vendor_element_uid": "odm_vendor_element1"
                     }
                 ],
                 "possible_actions": [
@@ -1711,17 +1792,17 @@
         }
     },
     {
-        "name": "Test overriding ODM XML Extension Tag attribute from a specific ODM Item Group",
+        "name": "Test overriding ODM Vendor Element attribute from a specific ODM Item Group",
         "request": {
             "headers": {},
             "method": "POST",
             "request": [
                 {
-                    "uid": "odm_xml_extension_attribute2",
+                    "uid": "odm_vendor_attribute2",
                     "value": "value"
                 }
             ],
-            "url": "concepts/odms/item-groups/OdmItemGroup_000001/xml-extension-tag-attributes?override=true"
+            "url": "concepts/odms/item-groups/OdmItemGroup_000001/vendor-element-attributes?override=true"
         },
         "response": {
             "code": 201,
@@ -1794,40 +1875,51 @@
                         "name": "name2",
                         "order_number": 2,
                         "mandatory": "Yes",
-                        "data_entry_required": "Yes",
-                        "sdv": "Yes",
-                        "locked": "No",
                         "key_sequence": "key_sequence2",
                         "method_oid": "method_oid2",
                         "imputation_method_oid": "imputation_method_oid2",
                         "role": "role2",
                         "role_codelist_oid": "role_codelist_oid2",
-                        "collection_exception_condition_oid": "collection_exception_condition_oid2"
+                        "collection_exception_condition_oid": "collection_exception_condition_oid2",
+                        "vendor": {
+                            "attributes": [
+                                {
+                                    "uid": "odm_vendor_attribute3",
+                                    "name": "nameThree",
+                                    "data_type": "string",
+                                    "value_regex": null,
+                                    "value": "Yes",
+                                    "vendor_namespace_uid": "odm_vendor_namespace1"
+                                }
+                            ]
+                        }
                     }
                 ],
-                "xml_extension_tags": [
+                "vendor_elements": [
                     {
-                        "uid": "odm_xml_extension_tag1",
+                        "uid": "odm_vendor_element1",
                         "name": "nameOne",
                         "value": "value"
                     }
                 ],
-                "xml_extension_attributes": [
+                "vendor_attributes": [
                     {
-                        "uid": "odm_xml_extension_attribute4",
-                        "name": "name_four",
+                        "uid": "odm_vendor_attribute4",
+                        "name": "nameFour",
                         "data_type": "string",
+                        "value_regex": null,
                         "value": "value",
-                        "xml_extension_uid": "odm_xml_extension1"
+                        "vendor_namespace_uid": "odm_vendor_namespace1"
                     }
                 ],
-                "xml_extension_tag_attributes": [
+                "vendor_element_attributes": [
                     {
-                        "uid": "odm_xml_extension_attribute2",
+                        "uid": "odm_vendor_attribute2",
                         "name": "nameTwo",
                         "data_type": "string",
+                        "value_regex": null,
                         "value": "value",
-                        "xml_extension_tag_uid": "odm_xml_extension_tag1"
+                        "vendor_element_uid": "odm_vendor_element1"
                     }
                 ],
                 "possible_actions": [
@@ -1916,40 +2008,51 @@
                         "name": "name2",
                         "order_number": 2,
                         "mandatory": "Yes",
-                        "data_entry_required": "Yes",
-                        "sdv": "Yes",
-                        "locked": "No",
                         "key_sequence": "key_sequence2",
                         "method_oid": "method_oid2",
                         "imputation_method_oid": "imputation_method_oid2",
                         "role": "role2",
                         "role_codelist_oid": "role_codelist_oid2",
-                        "collection_exception_condition_oid": "collection_exception_condition_oid2"
+                        "collection_exception_condition_oid": "collection_exception_condition_oid2",
+                        "vendor": {
+                            "attributes": [
+                                {
+                                    "uid": "odm_vendor_attribute3",
+                                    "name": "nameThree",
+                                    "data_type": "string",
+                                    "value_regex": null,
+                                    "value": "Yes",
+                                    "vendor_namespace_uid": "odm_vendor_namespace1"
+                                }
+                            ]
+                        }
                     }
                 ],
-                "xml_extension_tags": [
+                "vendor_elements": [
                     {
-                        "uid": "odm_xml_extension_tag1",
+                        "uid": "odm_vendor_element1",
                         "name": "nameOne",
                         "value": "value"
                     }
                 ],
-                "xml_extension_attributes": [
+                "vendor_attributes": [
                     {
-                        "uid": "odm_xml_extension_attribute4",
-                        "name": "name_four",
+                        "uid": "odm_vendor_attribute4",
+                        "name": "nameFour",
                         "data_type": "string",
+                        "value_regex": null,
                         "value": "value",
-                        "xml_extension_uid": "odm_xml_extension1"
+                        "vendor_namespace_uid": "odm_vendor_namespace1"
                     }
                 ],
-                "xml_extension_tag_attributes": [
+                "vendor_element_attributes": [
                     {
-                        "uid": "odm_xml_extension_attribute2",
+                        "uid": "odm_vendor_attribute2",
                         "name": "nameTwo",
                         "data_type": "string",
+                        "value_regex": null,
                         "value": "value",
-                        "xml_extension_tag_uid": "odm_xml_extension_tag1"
+                        "vendor_element_uid": "odm_vendor_element1"
                     }
                 ],
                 "possible_actions": [
@@ -2020,9 +2123,9 @@
                 "sdtm_domains": [],
                 "activity_subgroups": [],
                 "items": [],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "approve",
                     "delete",
@@ -2126,9 +2229,9 @@
                 "sdtm_domains": [],
                 "activity_subgroups": [],
                 "items": [],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "approve",
                     "delete",
@@ -2252,40 +2355,51 @@
                         "name": "name2",
                         "order_number": 2,
                         "mandatory": "Yes",
-                        "data_entry_required": "Yes",
-                        "sdv": "Yes",
-                        "locked": "No",
                         "key_sequence": "key_sequence2",
                         "method_oid": "method_oid2",
                         "imputation_method_oid": "imputation_method_oid2",
                         "role": "role2",
                         "role_codelist_oid": "role_codelist_oid2",
-                        "collection_exception_condition_oid": "collection_exception_condition_oid2"
+                        "collection_exception_condition_oid": "collection_exception_condition_oid2",
+                        "vendor": {
+                            "attributes": [
+                                {
+                                    "uid": "odm_vendor_attribute3",
+                                    "name": "nameThree",
+                                    "data_type": "string",
+                                    "value_regex": null,
+                                    "value": "Yes",
+                                    "vendor_namespace_uid": "odm_vendor_namespace1"
+                                }
+                            ]
+                        }
                     }
                 ],
-                "xml_extension_tags": [
+                "vendor_elements": [
                     {
-                        "uid": "odm_xml_extension_tag1",
+                        "uid": "odm_vendor_element1",
                         "name": "nameOne",
                         "value": "value"
                     }
                 ],
-                "xml_extension_attributes": [
+                "vendor_attributes": [
                     {
-                        "uid": "odm_xml_extension_attribute4",
-                        "name": "name_four",
+                        "uid": "odm_vendor_attribute4",
+                        "name": "nameFour",
                         "data_type": "string",
+                        "value_regex": null,
                         "value": "value",
-                        "xml_extension_uid": "odm_xml_extension1"
+                        "vendor_namespace_uid": "odm_vendor_namespace1"
                     }
                 ],
-                "xml_extension_tag_attributes": [
+                "vendor_element_attributes": [
                     {
-                        "uid": "odm_xml_extension_attribute2",
+                        "uid": "odm_vendor_attribute2",
                         "name": "nameTwo",
                         "data_type": "string",
+                        "value_regex": null,
                         "value": "value",
-                        "xml_extension_tag_uid": "odm_xml_extension_tag1"
+                        "vendor_element_uid": "odm_vendor_element1"
                     }
                 ],
                 "possible_actions": [
@@ -2336,9 +2450,9 @@
                 "aliases": [],
                 "activity_groups": [],
                 "item_groups": [],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "approve",
                     "delete",
@@ -2353,7 +2467,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/odms/forms/OdmForm_000001/approve"
+            "url": "concepts/odms/forms/OdmForm_000001/approvals"
         },
         "response": {
             "code": 201,
@@ -2379,9 +2493,9 @@
                 "aliases": [],
                 "activity_groups": [],
                 "item_groups": [],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "inactivate",
                     "new_version"
@@ -2399,8 +2513,19 @@
                     "uid": "OdmItemGroup_000001",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "locked": "No",
-                    "collection_exception_condition_oid": "None"
+                    "collection_exception_condition_oid": "None",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "odm_vendor_attribute3",
+                                "name": "nameThree",
+                                "data_type": "string",
+                                "value_regex": null,
+                                "value": "No",
+                                "vendor_namespace_uid": "odm_vendor_namespace1"
+                            }
+                        ]
+                    }
                 }
             ],
             "url": "concepts/odms/forms/OdmForm_000001/item-groups"
@@ -2435,13 +2560,24 @@
                         "name": "name1",
                         "order_number": 1,
                         "mandatory": "Yes",
-                        "locked": "No",
-                        "collection_exception_condition_oid": "None"
+                        "collection_exception_condition_oid": "None",
+                        "vendor": {
+                            "attributes": [
+                                {
+                                    "uid": "odm_vendor_attribute3",
+                                    "name": "nameThree",
+                                    "data_type": "string",
+                                    "value_regex": null,
+                                    "value": "No",
+                                    "vendor_namespace_uid": "odm_vendor_namespace1"
+                                }
+                            ]
+                        }
                     }
                 ],
-                "xml_extension_tags": [],
-                "xml_extension_attributes": [],
-                "xml_extension_tag_attributes": [],
+                "vendor_elements": [],
+                "vendor_attributes": [],
+                "vendor_element_attributes": [],
                 "possible_actions": [
                     "inactivate",
                     "new_version"

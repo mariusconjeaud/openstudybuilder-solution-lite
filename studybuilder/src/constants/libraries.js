@@ -1,7 +1,9 @@
 const LIBRARY_SPONSOR = 'Sponsor'
 const LIBRARY_USER_DEFINED = 'User Defined'
+const LIBRARY_REQUESTED = 'Requested'
 
 export default {
   LIBRARY_SPONSOR,
-  LIBRARY_USER_DEFINED
+  LIBRARY_USER_DEFINED,
+  LIBRARY_REQUESTED
 }

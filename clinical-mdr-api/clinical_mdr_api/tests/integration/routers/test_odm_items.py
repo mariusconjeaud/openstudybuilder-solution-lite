@@ -10,9 +10,9 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_TERM_ATTRIBUTES_CYPHER,
     STARTUP_ODM_ALIASES,
     STARTUP_ODM_DESCRIPTIONS,
-    STARTUP_ODM_XML_EXTENSION_ATTRIBUTES,
-    STARTUP_ODM_XML_EXTENSION_TAGS,
-    STARTUP_ODM_XML_EXTENSIONS,
+    STARTUP_ODM_VENDOR_ATTRIBUTES,
+    STARTUP_ODM_VENDOR_ELEMENTS,
+    STARTUP_ODM_VENDOR_NAMESPACES,
     STARTUP_UNIT_DEFINITIONS,
 )
 
@@ -29,9 +29,9 @@ class OdmItemTest(api.APITest):
         db.cypher_query(STARTUP_UNIT_DEFINITIONS)
         db.cypher_query(STARTUP_ODM_DESCRIPTIONS)
         db.cypher_query(STARTUP_ODM_ALIASES)
-        db.cypher_query(STARTUP_ODM_XML_EXTENSIONS)
-        db.cypher_query(STARTUP_ODM_XML_EXTENSION_TAGS)
-        db.cypher_query(STARTUP_ODM_XML_EXTENSION_ATTRIBUTES)
+        db.cypher_query(STARTUP_ODM_VENDOR_NAMESPACES)
+        db.cypher_query(STARTUP_ODM_VENDOR_ELEMENTS)
+        db.cypher_query(STARTUP_ODM_VENDOR_ATTRIBUTES)
 
         from clinical_mdr_api import main
 
@@ -56,9 +56,9 @@ class OdmItemNegativeTest(api.APITest):
         db.cypher_query(STARTUP_UNIT_DEFINITIONS)
         db.cypher_query(STARTUP_ODM_DESCRIPTIONS)
         db.cypher_query(STARTUP_ODM_ALIASES)
-        db.cypher_query(STARTUP_ODM_XML_EXTENSIONS)
-        db.cypher_query(STARTUP_ODM_XML_EXTENSION_TAGS)
-        db.cypher_query(STARTUP_ODM_XML_EXTENSION_ATTRIBUTES)
+        db.cypher_query(STARTUP_ODM_VENDOR_NAMESPACES)
+        db.cypher_query(STARTUP_ODM_VENDOR_ELEMENTS)
+        db.cypher_query(STARTUP_ODM_VENDOR_ATTRIBUTES)
 
         from clinical_mdr_api import main
 

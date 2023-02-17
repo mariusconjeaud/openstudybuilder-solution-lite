@@ -69,15 +69,14 @@
       />
   </v-dialog>
   <v-dialog v-model="showSponsorValuesHistory"
+            @keydown.esc="closeHistory"
             persistent
             max-width="1200px">
     <history-table
-      @close="showSponsorValuesHistory = false"
-      type="codelistSponsorValues"
-      url-prefix=""
-      :item="selectedCodelist"
-      :title-label="$t('CodelistTable.history_title')"
+      :title="historyTitle"
+      @close="closeHistory"
       :headers="historyHeaders"
+      :items="historyItems"
       />
   </v-dialog>
 </div>
@@ -89,7 +88,8 @@ import { bus } from '@/main'
 import controlledTerminology from '@/api/controlledTerminology'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import CodelistCreationForm from '@/components/library/CodelistCreationForm'
-import HistoryTable from '@/components/library/HistoryTable'
+import dataFormating from '@/utils/dataFormating'
+import HistoryTable from '@/components/tools/HistoryTable'
 import NNTable from '@/components/tools/NNTable'
 import StatusChip from '@/components/tools/StatusChip'
 import filteringParameters from '@/utils/filteringParameters'
@@ -121,7 +121,13 @@ export default {
   computed: {
     ...mapGetters({
       currentCataloguePage: 'ctCatalogues/currentCataloguePage'
-    })
+    }),
+    historyTitle () {
+      if (this.selectedCodelist) {
+        return this.$t('CodelistTable.history_title', { codelist: this.selectedCodelist.codelist_uid })
+      }
+      return ''
+    }
   },
   data () {
     return {
@@ -148,13 +154,13 @@ export default {
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('_global.library'), value: 'library_name' },
-        { text: this.$t('CtCatalogueTable.concept_id'), value: 'codelist_uid' },
         { text: this.$t('CtCatalogueTable.sponsor_pref_name'), value: 'name.name', width: '15%' },
         { text: this.$t('CtCatalogueTable.template_parameter'), value: 'name.template_parameter' },
         { text: this.$t('CtCatalogueTable.cd_status'), value: 'name.status' },
         { text: this.$t('CtCatalogueTable.modified_name'), value: 'name.start_date' },
-        { text: this.$t('CtCatalogueTable.cd_name'), value: 'attributes.name' },
+        { text: this.$t('CtCatalogueTable.concept_id'), value: 'codelist_uid' },
         { text: this.$t('CtCatalogueTable.submission_value'), value: 'attributes.submission_value' },
+        { text: this.$t('CtCatalogueTable.cd_name'), value: 'attributes.name' },
         { text: this.$t('CtCatalogueTable.nci_pref_name'), value: 'attributes.nci_preferred_name' },
         { text: this.$t('CtCatalogueTable.extensible'), value: 'attributes.extensible' },
         { text: this.$t('CtCatalogueTable.attr_status'), value: 'attributes.status' },
@@ -163,13 +169,12 @@ export default {
       historyHeaders: [
         { text: this.$t('_global.library'), value: 'library_name' },
         { text: this.$t('_global.name'), value: 'name' },
+        { text: this.$t('CtCatalogueTable.template_parameter'), value: 'template_parameter' },
         { text: this.$t('HistoryTable.change_description'), value: 'change_description' },
         { text: this.$t('_global.status'), value: 'status' },
-        { text: this.$t('_global.version'), value: 'version' },
-        { text: this.$t('_global.user'), value: 'user_initials' },
-        { text: this.$t('HistoryTable.start_date'), value: 'start_date' },
-        { text: this.$t('HistoryTable.end_date'), value: 'end_date' }
+        { text: this.$t('_global.version'), value: 'version' }
       ],
+      historyItems: [],
       options: {},
       showCreationForm: false,
       showSponsorValuesHistory: false,
@@ -186,10 +191,10 @@ export default {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
       params.library = this.library
-      if (this.catalogue && this.catalogue !== 'All') {
-        params.catalogue_name = this.catalogue
-      } else if (this.package) {
+      if (this.package) {
         params.package = this.package
+      } else if (this.catalogue && this.catalogue !== 'All') {
+        params.catalogue_name = this.catalogue
       }
       controlledTerminology.getCodelists(params).then(resp => {
         this.codelists = resp.data.items
@@ -213,12 +218,22 @@ export default {
       }
       this.$emit('openCodelistTerms', params)
     },
-    openCodelistHistory (codelist) {
+    async openCodelistHistory (codelist) {
       this.selectedCodelist = codelist
+      const resp = await controlledTerminology.getCodelistNamesVersions(codelist.codelist_uid)
+      this.historyItems = resp.data
+      for (const item of this.historyItems) {
+        if (item.template_parameter !== undefined) {
+          item.template_parameter = dataFormating.yesno(item.template_parameter)
+        }
+      }
       this.showSponsorValuesHistory = true
     },
     storeCurrentPage (page) {
       this.$store.commit('ctCatalogues/SET_CURRENT_CATALOGUE_PAGE', page)
+    },
+    closeHistory () {
+      this.showSponsorValuesHistory = false
     }
   },
   watch: {

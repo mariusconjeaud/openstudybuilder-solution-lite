@@ -4,7 +4,7 @@ from typing import Optional, Sequence, Union
 
 from bs4 import BeautifulSoup
 
-from clinical_mdr_api.domain.iso_languages import langs
+from clinical_mdr_api.domain.iso_languages import LANGUAGES_INDEXED_BY
 
 
 class ObjectStatus(Enum):
@@ -35,32 +35,29 @@ def get_iso_lang_data(
     if not isinstance(q, str):
         raise TypeError(f"Expected type str but found {type(q)}")
 
-    if ignore_case:
-        q = q.casefold()
+    try:
+        index = LANGUAGES_INDEXED_BY[key]
+    except KeyError as exc:
+        raise ValueError(f"Languages not indexed by key: {key}") from exc
+
+    q_ = q.casefold()
 
     try:
-        for lang in langs:
-            if ignore_case:
-                value = (
-                    lang[key].casefold()
-                    if isinstance(lang[key], str)
-                    else [val.casefold() for val in lang[key]]
-                )
-            else:
-                value = lang[key]
+        lang = index[q_]
+    except KeyError as exc:
+        raise KeyError(q) from exc
 
-            if value == q or (isinstance(value, list) and q in value):
-                return lang if not return_key else lang[return_key]
-    except KeyError as e:
-        raise KeyError(f"The key [{e}] was not found") from e
+    if not ignore_case and lang[key] != q:
+        raise KeyError(q)
 
-    raise ValueError(f"Value of key [{key}] is not equal to the provided value [{q}]")
+    return lang[return_key] if return_key else lang
 
 
 def normalize_string(s: Optional[str]) -> Optional[str]:
-    if s is not None:
+    """Strips string of leading & tailing whitespace, and returns string or None if None or empty string"""
+    if s:
         s = s.strip()
-    return None if s == "" else s
+    return s or None
 
 
 def strip_html(html):

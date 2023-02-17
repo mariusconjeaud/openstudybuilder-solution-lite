@@ -222,7 +222,7 @@
          "headers": {},
          "method": "POST",
          "request": {},
-         "url": "/concepts/activities/activity-sub-groups/ActivitySubGroup_000001/approve"
+         "url": "/concepts/activities/activity-sub-groups/ActivitySubGroup_000001/approvals"
       },
       "response": {
          "code": 201,
@@ -287,15 +287,15 @@
       }
    },
    {
-      "name": "Test POST inactivate activity sub group",
+      "name": "Test DELETE activations activity sub group",
       "request": {
          "headers": {},
-         "method": "POST",
+         "method": "DELETE",
          "request": {},
-         "url": "/concepts/activities/activity-sub-groups/activity_subgroup_root1/inactivate"
+         "url": "/concepts/activities/activity-sub-groups/activity_subgroup_root1/activations"
       },
       "response": {
-         "code": 201,
+         "code": 200,
          "headers": {},
          "result": {
             "uid": "activity_subgroup_root1",
@@ -312,7 +312,7 @@
             "end_date": null,
             "status": "Retired",
             "version": "1.0",
-            "change_description": "Deactivated version",
+            "change_description": "Inactivated version",
             "user_initials": "TODO user initials",
             "possible_actions": [
                "reactivate"
@@ -321,15 +321,15 @@
       }
    },
    {
-      "name": "Test POST reactivate activity sub group",
+      "name": "Test POST activations activity sub group",
       "request": {
          "headers": {},
          "method": "POST",
          "request": {},
-         "url": "/concepts/activities/activity-sub-groups/activity_subgroup_root1/reactivate"
+         "url": "/concepts/activities/activity-sub-groups/activity_subgroup_root1/activations"
       },
       "response": {
-         "code": 201,
+         "code": 200,
          "headers": {},
          "result": {
             "uid": "activity_subgroup_root1",

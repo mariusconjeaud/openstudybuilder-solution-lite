@@ -84,7 +84,7 @@
           "configured_codelist_uid": null,
           "configured_term_uid": null,
           "study_field_name_api": null,
-        "is_dictionary_term": false
+          "is_dictionary_term": false
         }
       ]
     }
@@ -166,9 +166,9 @@
     "name": "Test retire draft fail",
     "request": {
       "headers": {},
-      "method": "POST",
+      "method": "DELETE",
       "request": {},
-      "url": "/configurations/{uid}/inactivate"
+      "url": "/configurations/{uid}/activations"
     },
     "response": {
       "code": 400,
@@ -177,7 +177,7 @@
         "message": "",
         "time": "",
         "path": "",
-        "method": "POST",
+        "method": "DELETE",
         "type": "BusinessLogicException"
       }
     }
@@ -188,7 +188,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/reactivate"
+      "url": "/configurations/{uid}/activations"
     },
     "response": {
       "code": 400,
@@ -249,7 +249,7 @@
           "configured_codelist_uid": null,
           "configured_term_uid": null,
           "study_field_name_api": null,
-        "is_dictionary_term": false
+          "is_dictionary_term": false
         }
       ]
     }
@@ -497,7 +497,7 @@
           "configured_codelist_uid": null,
           "configured_term_uid": null,
           "study_field_name_api": null,
-        "is_dictionary_term": false
+          "is_dictionary_term": false
         }
       ]
     }
@@ -700,7 +700,7 @@
       },
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/approve"
+      "url": "/configurations/{uid}/approvals"
     },
     "response": {
       "code": 201,
@@ -751,7 +751,7 @@
           "configured_codelist_uid": null,
           "configured_term_uid": null,
           "study_field_name_api": null,
-        "is_dictionary_term": false
+          "is_dictionary_term": false
         }
       ]
     }
@@ -852,7 +852,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/approve"
+      "url": "/configurations/{uid}/approvals"
     },
     "response": {
       "code": 400,
@@ -872,7 +872,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/reactivate"
+      "url": "/configurations/{uid}/activations"
     },
     "response": {
       "code": 400,
@@ -935,12 +935,12 @@
     "name": "Test inactivate",
     "request": {
       "headers": {},
-      "method": "POST",
+      "method": "DELETE",
       "request": {},
-      "url": "/configurations/{uid}/inactivate"
+      "url": "/configurations/{uid}/activations"
     },
     "response": {
-      "code": 201,
+      "code": 200,
       "headers": {},
       "result": {
         "user_initials": "TEST_USER",
@@ -950,7 +950,7 @@
         "end_date": null,
         "status": "Retired",
         "version": "1.0",
-        "change_description": "Deactivated version",
+        "change_description": "Inactivated version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
         "study_field_data_type": null,
         "study_field_null_value_code": null,
@@ -965,9 +965,9 @@
     "name": "Test retire retired fail",
     "request": {
       "headers": {},
-      "method": "POST",
+      "method": "DELETE",
       "request": {},
-      "url": "/configurations/{uid}/inactivate"
+      "url": "/configurations/{uid}/activations"
     },
     "response": {
       "code": 400,
@@ -976,7 +976,7 @@
         "message": "",
         "time": "",
         "path": "",
-        "method": "POST",
+        "method": "DELETE",
         "type": "BusinessLogicException"
       }
     }
@@ -1007,7 +1007,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/approve"
+      "url": "/configurations/{uid}/approvals"
     },
     "response": {
       "code": 400,
@@ -1074,10 +1074,10 @@
       },
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/reactivate"
+      "url": "/configurations/{uid}/activations"
     },
     "response": {
-      "code": 201,
+      "code": 200,
       "headers": {},
       "result": {
         "user_initials": "TEST_USER",
@@ -1104,7 +1104,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/approve"
+      "url": "/configurations/{uid}/approvals"
     },
     "response": {
       "code": 400,
@@ -1124,7 +1124,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/reactivate"
+      "url": "/configurations/{uid}/activations"
     },
     "response": {
       "code": 400,
@@ -1219,9 +1219,9 @@
     "name": "Test retire draft fail",
     "request": {
       "headers": {},
-      "method": "POST",
+      "method": "DELETE",
       "request": {},
-      "url": "/configurations/{uid}/inactivate"
+      "url": "/configurations/{uid}/activations"
     },
     "response": {
       "code": 400,
@@ -1230,7 +1230,7 @@
         "message": "",
         "time": "",
         "path": "",
-        "method": "POST",
+        "method": "DELETE",
         "type": "BusinessLogicException"
       }
     }
@@ -1241,7 +1241,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/reactivate"
+      "url": "/configurations/{uid}/activations"
     },
     "response": {
       "code": 400,
@@ -1415,7 +1415,7 @@
           "configured_codelist_uid": null,
           "configured_term_uid": null,
           "study_field_name_api": null,
-        "is_dictionary_term": false
+          "is_dictionary_term": false
         },
         {
           "user_initials": "TEST_USER",
@@ -1432,7 +1432,7 @@
           "configured_codelist_uid": null,
           "configured_term_uid": null,
           "study_field_name_api": null,
-        "is_dictionary_term": false
+          "is_dictionary_term": false
         },
         {
           "user_initials": "TEST_USER",
@@ -1449,7 +1449,7 @@
           "configured_codelist_uid": null,
           "configured_term_uid": null,
           "study_field_name_api": null,
-        "is_dictionary_term": false
+          "is_dictionary_term": false
         },
         {
           "user_initials": "TEST_USER",
@@ -1459,14 +1459,14 @@
           "end_date": null,
           "status": "Retired",
           "version": "1.0",
-          "change_description": "Deactivated version",
+          "change_description": "Inactivated version",
           "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
           "study_field_data_type": null,
           "study_field_null_value_code": null,
           "configured_codelist_uid": null,
           "configured_term_uid": null,
           "study_field_name_api": null,
-        "is_dictionary_term": false
+          "is_dictionary_term": false
         },
         {
           "user_initials": "TEST_USER",
@@ -1483,7 +1483,7 @@
           "configured_codelist_uid": null,
           "configured_term_uid": null,
           "study_field_name_api": null,
-        "is_dictionary_term": false
+          "is_dictionary_term": false
         },
         {
           "user_initials": "TEST_USER",
@@ -1500,7 +1500,7 @@
           "configured_codelist_uid": null,
           "configured_term_uid": null,
           "study_field_name_api": null,
-        "is_dictionary_term": false
+          "is_dictionary_term": false
         },
         {
           "user_initials": "TEST_USER",
@@ -1517,7 +1517,7 @@
           "configured_codelist_uid": null,
           "configured_term_uid": null,
           "study_field_name_api": null,
-        "is_dictionary_term": false
+          "is_dictionary_term": false
         }
       ]
     }

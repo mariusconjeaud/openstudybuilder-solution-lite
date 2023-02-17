@@ -292,7 +292,7 @@ def new_version(
 
 
 @router.post(
-    "/{uid}/approve",
+    "/{uid}/approvals",
     summary="Approves the configuration identified by 'uid'.",
     description="""This request is only valid if the configuration
 * is in 'Draft' status
@@ -324,8 +324,8 @@ def approve(
     return service.approve(uid)
 
 
-@router.post(
-    "/{uid}/inactivate",
+@router.delete(
+    "/{uid}/activations",
     summary="Inactivates/deactivates the configuration identified by 'uid'.",
     description="""This request is only valid if the configuration
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -336,9 +336,9 @@ If the request succeeds:
 * The 'version' property will remain the same as before.
     """,
     response_model=CTConfigModel,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -358,7 +358,7 @@ def inactivate(
 
 
 @router.post(
-    "/{uid}/reactivate",
+    "/{uid}/activations",
     summary="Reactivates the configuration identified by 'uid'.",
     description="""This request is only valid if the configuration
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -369,9 +369,9 @@ If the request succeeds:
 * The 'version' property will remain the same as before.
     """,
     response_model=CTConfigModel,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"

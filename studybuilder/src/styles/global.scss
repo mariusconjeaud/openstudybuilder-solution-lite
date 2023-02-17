@@ -190,6 +190,12 @@ thead.v-data-table-header {
     padding-top: 100px;
 }
 
+.required .v-label:first-child::after,
+label.required::after {
+    content: " *";
+    color: red;
+}
+
 // Landing pages
 .fullscreen-bg {
     padding: 2rem;

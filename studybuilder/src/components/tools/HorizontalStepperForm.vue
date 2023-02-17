@@ -4,10 +4,20 @@
     <span class="dialog-title ml-6">{{ title }}</span>
     <help-button v-if="helpText" :help-text="helpText" />
     <help-button-with-panels v-if="helpItems" :title="$t('_global.help')" :items="helpItems" />
+    <v-btn
+      v-if="formUrl"
+      color="secondary"
+      class="ml-2"
+      small
+      @click="copyUrl"
+      >
+      {{ $t('_global.copy_link') }}
+    </v-btn>
   </v-card-title>
   <v-card-text class="mt-4 dfltBackground">
     <v-stepper
       v-model="currentStep"
+      :non-linear="editable"
       >
       <v-stepper-header class="white mx-8">
         <template v-for="(step, index) in steps">
@@ -168,7 +178,8 @@ export default {
       required: false
     },
     editData: Object,
-    debug: Boolean
+    debug: Boolean,
+    formUrl: String
   },
   data () {
     return {
@@ -178,8 +189,16 @@ export default {
   },
   mounted () {
     this.$store.commit('form/SET_FORM', this.editData)
+    document.addEventListener('keydown', (evt) => {
+      if (evt.code === 'Escape') {
+        this.cancel()
+      }
+    })
   },
   methods: {
+    copyUrl () {
+      navigator.clipboard.writeText(this.formUrl)
+    },
     async cancel () {
       if (this.$store.getters['form/form'] === '' || _isEqual(this.$store.getters['form/form'], JSON.stringify(this.editData))) {
         this.close()
@@ -246,6 +265,9 @@ export default {
       if (this.$store.getters['form/form'] === '') {
         this.$store.commit('form/SET_FORM', value)
       }
+    },
+    currentStep (value) {
+      this.$emit('change', value)
     }
   }
 }

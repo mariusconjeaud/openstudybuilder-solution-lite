@@ -8,7 +8,7 @@
                 "dictionary_id": "dictionary_id5",
                 "name": "name5",
                 "name_sentence_case": "Name5",
-                "abbreviation" : "abbreviation5",
+                "abbreviation": "abbreviation5",
                 "definition": "definition5",
                 "codelist_uid": "codelist_root1_uid",
                 "library_name": "SNOMED"
@@ -23,7 +23,7 @@
                 "dictionary_id": "dictionary_id5",
                 "name": "name5",
                 "name_sentence_case": "Name5",
-                "abbreviation" : "abbreviation5",
+                "abbreviation": "abbreviation5",
                 "definition": "definition5",
                 "library_name": "SNOMED",
                 "start_date": "2021-03-18T11:54:20.898Z",
@@ -33,7 +33,9 @@
                 "change_description": "Initial version",
                 "user_initials": "TODO user initials",
                 "possible_actions": [
-                    "approve", "delete", "edit"
+                    "approve",
+                    "delete",
+                    "edit"
                 ]
             }
         }
@@ -56,7 +58,7 @@
                         "dictionary_id": "dictionary_id5",
                         "name": "name5",
                         "name_sentence_case": "Name5",
-                        "abbreviation" : "abbreviation5",
+                        "abbreviation": "abbreviation5",
                         "definition": "definition5",
                         "library_name": "SNOMED",
                         "start_date": "2021-03-18T11:54:20.898Z",
@@ -66,7 +68,9 @@
                         "change_description": "Initial version",
                         "user_initials": "TODO user initials",
                         "possible_actions": [
-                            "approve","delete", "edit"
+                            "approve",
+                            "delete",
+                            "edit"
                         ]
                     },
                     {
@@ -74,7 +78,7 @@
                         "dictionary_id": "dictionary_id4",
                         "name": "name4",
                         "name_sentence_case": "Name4",
-                        "abbreviation" : "abbreviation4",
+                        "abbreviation": "abbreviation4",
                         "definition": "definition4",
                         "library_name": "SNOMED",
                         "start_date": "2021-03-18T11:54:20.898Z",
@@ -84,7 +88,8 @@
                         "change_description": "Approved version",
                         "user_initials": "TODO user initials",
                         "possible_actions": [
-                            "inactivate", "new_version"
+                            "inactivate",
+                            "new_version"
                         ]
                     },
                     {
@@ -92,7 +97,7 @@
                         "dictionary_id": "dictionary_id1",
                         "name": "name1",
                         "name_sentence_case": "Name1",
-                        "abbreviation" : "abbreviation1",
+                        "abbreviation": "abbreviation1",
                         "definition": "definition1",
                         "library_name": "SNOMED",
                         "start_date": "2021-03-18T11:54:20.898Z",
@@ -102,7 +107,8 @@
                         "change_description": "Approved version",
                         "user_initials": "TODO user initials",
                         "possible_actions": [
-                            "inactivate", "new_version"
+                            "inactivate",
+                            "new_version"
                         ]
                     }
                 ],
@@ -128,7 +134,7 @@
                 "dictionary_id": "dictionary_id1",
                 "name": "name1",
                 "name_sentence_case": "Name1",
-                "abbreviation" : "abbreviation1",
+                "abbreviation": "abbreviation1",
                 "definition": "definition1",
                 "library_name": "SNOMED",
                 "start_date": "2021-03-18T11:54:20.898Z",
@@ -138,7 +144,8 @@
                 "change_description": "New draft created",
                 "user_initials": "TODO user initials",
                 "possible_actions": [
-                    "approve", "edit"
+                    "approve",
+                    "edit"
                 ]
             }
         }
@@ -164,7 +171,7 @@
                 "dictionary_id": "dictionary_id1",
                 "name": "term new name",
                 "name_sentence_case": "Term new name",
-                "abbreviation" : "abbreviation1",
+                "abbreviation": "abbreviation1",
                 "definition": "new_definition",
                 "library_name": "SNOMED",
                 "start_date": "2021-03-18T11:54:20.898Z",
@@ -174,7 +181,8 @@
                 "change_description": "term patch",
                 "user_initials": "TODO user initials",
                 "possible_actions": [
-                    "approve", "edit"
+                    "approve",
+                    "edit"
                 ]
             }
         }
@@ -185,7 +193,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/dictionaries/terms/term_root2_uid/approve"
+            "url": "/dictionaries/terms/term_root2_uid/approvals"
         },
         "response": {
             "code": 201,
@@ -195,7 +203,7 @@
                 "dictionary_id": "dictionary_id2",
                 "name": "name2",
                 "name_sentence_case": "Name2",
-                "abbreviation" : "abbreviation2",
+                "abbreviation": "abbreviation2",
                 "definition": "definition2",
                 "library_name": "SNOMED",
                 "start_date": "2021-03-18T11:54:20.898Z",
@@ -205,35 +213,36 @@
                 "change_description": "Approved version",
                 "user_initials": "TODO user initials",
                 "possible_actions": [
-                    "inactivate","new_version"
+                    "inactivate",
+                    "new_version"
                 ]
             }
         }
     },
     {
-        "name": "Test POST inactivate term",
+        "name": "Test DELETE activations term",
         "request": {
             "headers": {},
-            "method": "POST",
+            "method": "DELETE",
             "request": {},
-            "url": "/dictionaries/terms/term_root2_uid/inactivate"
+            "url": "/dictionaries/terms/term_root2_uid/activations"
         },
         "response": {
-            "code": 201,
+            "code": 200,
             "headers": {},
             "result": {
                 "term_uid": "term_root2_uid",
                 "dictionary_id": "dictionary_id2",
                 "name": "name2",
                 "name_sentence_case": "Name2",
-                "abbreviation" : "abbreviation2",
+                "abbreviation": "abbreviation2",
                 "definition": "definition2",
                 "library_name": "SNOMED",
                 "start_date": "2021-03-18T11:54:20.898Z",
                 "end_date": null,
                 "status": "Retired",
                 "version": "1.0",
-                "change_description": "Deactivated version",
+                "change_description": "Inactivated version",
                 "user_initials": "TODO user initials",
                 "possible_actions": [
                     "reactivate"
@@ -242,22 +251,22 @@
         }
     },
     {
-        "name": "Test POST reactivate term",
+        "name": "Test POST activations term",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/dictionaries/terms/term_root2_uid/reactivate"
+            "url": "/dictionaries/terms/term_root2_uid/activations"
         },
         "response": {
-            "code": 201,
+            "code": 200,
             "headers": {},
             "result": {
                 "term_uid": "term_root2_uid",
                 "dictionary_id": "dictionary_id2",
                 "name": "name2",
                 "name_sentence_case": "Name2",
-                "abbreviation" : "abbreviation2",
+                "abbreviation": "abbreviation2",
                 "definition": "definition2",
                 "library_name": "SNOMED",
                 "start_date": "2021-03-18T11:54:20.898Z",
@@ -267,7 +276,8 @@
                 "change_description": "Reactivated version",
                 "user_initials": "TODO user initials",
                 "possible_actions": [
-                    "inactivate","new_version"
+                    "inactivate",
+                    "new_version"
                 ]
             }
         }

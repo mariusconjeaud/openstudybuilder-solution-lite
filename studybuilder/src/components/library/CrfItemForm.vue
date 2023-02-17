@@ -3,10 +3,13 @@
 <horizontal-stepper-form
   ref="stepper"
   :title="title"
+  :help-items="helpItems"
   :steps="steps"
   @close="close"
   @save="submit"
   :form-observer-getter="getObserver"
+  :form-url="formUrl"
+  :editable="isEdit()"
   >
   <template v-slot:step.form="{ step }">
     <validation-observer :ref="`observer_${step}`">
@@ -62,7 +65,7 @@
                 />
             </validation-provider>
           </v-col>
-          <v-col cols="4">
+          <v-col cols="4" v-if="lengthFieldCheck">
             <v-text-field
               v-if="form.datatype !== crfTypes.COMMENT"
               :label="$t('CRFItems.length')"
@@ -75,9 +78,8 @@
               :readonly="readOnly"
               />
           </v-col>
-          <v-col cols="4">
+          <v-col cols="4" v-if="digitsFieldCheck">
             <v-text-field
-              v-if="form.datatype !== crfTypes.COMMENT"
               :label="$t('CRFItems.significant_digits')"
               data-cy="item-significant-digits"
               v-model="form.significant_digits"
@@ -178,7 +180,7 @@
           </v-col>
         </v-row>
         <v-row>
-          <v-col cols="4">
+          <v-col cols="4" v-if="originFieldCheck">
             <v-select
               v-model="form.origin"
               :label="$t('CRFItems.origin')"
@@ -212,7 +214,7 @@
         <v-row>
           <v-col>
             <v-text-field
-              :label="$t('CRFItemGroups.context')"
+              :label="$t('CRFItems.context')"
               data-cy="item-aliast-context"
               v-model="alias.context"
               dense
@@ -224,7 +226,7 @@
         <v-row>
           <v-col cols="10">
             <v-text-field
-              :label="$t('CRFItemGroups.name')"
+              :label="$t('CRFItems.name')"
               data-cy="item-alias-name"
               v-model="alias.name"
               dense
@@ -347,7 +349,13 @@
           <v-checkbox
             v-model="item.mandatory"
             :readonly="readOnly"
-          ></v-checkbox>
+          />
+        </template>
+        <template v-slot:item.display_text="{ item }">
+          <v-text-field
+            v-model="item.display_text"
+            :readonly="readOnly"
+            dense/>
         </template>
         <template v-slot:item.delete="{ item }">
           <v-btn
@@ -469,13 +477,13 @@
     </validation-observer>
   </template>
   <template v-slot:actions>
-    <actions-menu :actions="actions" :item="form" v-if="editItem"/>
+    <actions-menu :actions="actions" :item="form" v-if="selectedItem"/>
   </template>
 </horizontal-stepper-form>
 <crf-activities-models-link-form
   :open="linkForm"
   @close="closeLinkForm"
-  :item-to-link="editItem"
+  :item-to-link="selectedItem"
   item-type="item" />
 </div>
 </template>
@@ -496,7 +504,6 @@ import ActionsMenu from '@/components/tools/ActionsMenu'
 import CrfActivitiesModelsLinkForm from '@/components/library/CrfActivitiesModelsLinkForm'
 import actions from '@/constants/actions'
 import parameters from '@/constants/parameters'
-import statuses from '@/constants/statuses'
 
 export default {
   components: {
@@ -508,7 +515,7 @@ export default {
     CrfActivitiesModelsLinkForm
   },
   props: {
-    editItem: {},
+    selectedItem: {},
     readOnlyProp: {
       type: Boolean,
       default: false
@@ -519,9 +526,15 @@ export default {
       userData: 'app/userData'
     }),
     title () {
-      return (this.isEdit(this.editItem))
+      return (this.isEdit())
         ? (this.readOnly ? this.$t('CRFItems.crf_item') + ' - ' + this.form.name : this.$t('CRFItems.edit_item') + ' - ' + this.form.name)
         : this.$t('CRFItems.add_item')
+    },
+    formUrl () {
+      if (this.isEdit()) {
+        return `${window.location.href.replace('crf-tree', 'items')}/item/${this.selectedItem.uid}`
+      }
+      return null
     }
   },
   created () {
@@ -529,7 +542,21 @@ export default {
   },
   data () {
     return {
-      helpItems: [],
+      helpItems: [
+        'CRFItems.name',
+        'CRFItems.oid',
+        'CRFItems.data_type',
+        'CRFItems.length',
+        'CRFItems.significant_digits',
+        'CRFItems.impl_notes',
+        'CRFItems.compl_instructions',
+        'CRFItems.sas_name',
+        'CRFItems.sds_name',
+        'CRFItems.origin',
+        'CRFItems.comment',
+        'CRFItems.context',
+        'CRFItems.name'
+      ],
       form: {
         oid: 'I.',
         alias_uids: []
@@ -559,15 +586,16 @@ export default {
         { text: '', value: 'delete' }
       ],
       termsHeaders: [
-        { text: this.$t('_global.uid'), value: 'term_uid' },
+        { text: this.$t('CtCatalogueTable.concept_id'), value: 'term_uid' },
         { text: this.$t('_global.name'), value: 'name.sponsor_preferred_name' },
         { text: '', value: 'add' }
       ],
       selectedTermsHeaders: [
-        { text: this.$t('_global.uid'), value: 'term_uid' },
-        { text: this.$t('_global.name'), value: 'name.sponsor_preferred_name' },
-        { text: this.$t('_global.mandatory'), value: 'mandatory' },
-        { text: '', value: 'delete' }
+        { text: this.$t('CtCatalogueTable.concept_id'), value: 'term_uid', width: '10%' },
+        { text: this.$t('CRFItems.sponsor_pref_name'), value: 'name.sponsor_preferred_name', width: '40%' },
+        { text: this.$t('_global.mandatory'), value: 'mandatory', width: '5%' },
+        { text: this.$t('CRFItems.displayed_name'), value: 'display_text', width: '40%' },
+        { text: '', value: 'delete', width: '5%' }
       ],
       aliases: [],
       alias: {},
@@ -610,14 +638,14 @@ export default {
           label: this.$t('_global.approve'),
           icon: 'mdi-check-decagram',
           iconColor: 'success',
-          condition: (item) => item.possible_actions ? item.possible_actions.find(action => action === actions.APPROVE) : false,
+          condition: (item) => !this.readOnly,
           click: this.approve
         },
         {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
-          condition: (item) => item.possible_actions ? item.possible_actions.find(action => action === actions.NEW_VERSION) : false,
+          condition: (item) => this.readOnly,
           click: this.newVersion
         },
         {
@@ -631,16 +659,82 @@ export default {
           label: this.$t('CrfLinikingForm.link_activities'),
           icon: 'mdi-plus',
           iconColor: 'primary',
-          condition: (item) => item.status === statuses.FINAL,
+          condition: (item) => this.readOnly,
           click: this.openLinkForm
         }
-      ]
+      ],
+      lengthFieldCheck: false,
+      digitsFieldCheck: false,
+      originFieldCheck: true
+    }
+  },
+  mounted () {
+    this.fetchCodelists()
+    terms.getAttributesByCodelist('originType').then(resp => {
+      this.origins = resp.data.items
+    })
+    terms.getAttributesByCodelist('dataType').then(resp => {
+      this.dataTypes = resp.data.items
+    })
+    crfs.getAliases().then(resp => {
+      this.aliases = resp.data.items
+    })
+    this.$store.dispatch('units/fetchUnits').then((resp) => {
+      this.units = this.$store.getters['units/units'].items
+    })
+    if (this.isEdit()) {
+      this.steps = this.readOnly ? this.createSteps : this.editSteps
+      this.initForm(this.selectedItem)
+    } else {
+      this.steps = this.createSteps
+    }
+    if (!this.userData.multilingual) {
+      this.steps = this.steps.filter(function (obj) {
+        return obj.name !== 'description'
+      })
     }
   },
   methods: {
+    checkFieldAvailable (dataType) {
+      this.lengthFieldCheck = false
+      this.digitsFieldCheck = false
+      this.originFieldCheck = true
+      this.$set(this.form, 'length', null)
+      switch (dataType) {
+        case 'TEXT':
+        case 'BOOLEAN':
+        case 'URI':
+          break
+        case 'COMMENT':
+          this.originFieldCheck = false
+          break
+        case 'FLOAT':
+        case 'DOUBLE':
+        case 'HEXBINARY':
+        case 'BASE64BINARY':
+        case 'HEXFLOAT':
+        case 'BASE64FLOAT':
+          this.lengthFieldCheck = true
+          this.digitsFieldCheck = true
+          break
+        case 'DATE':
+          this.lengthFieldCheck = true
+          this.$set(this.form, 'length', 10)
+          break
+        case 'TIME':
+          this.lengthFieldCheck = true
+          this.$set(this.form, 'length', 5)
+          break
+        case 'DATETIME':
+          this.lengthFieldCheck = true
+          this.$set(this.form, 'length', 16)
+          break
+        default:
+          this.lengthFieldCheck = true
+      }
+    },
     getItem () {
-      crfs.getItem(this.editItem.uid).then((resp) => {
-        this.form = resp.data
+      crfs.getItem(this.selectedItem.uid).then((resp) => {
         this.initForm(resp.data)
       })
     },
@@ -652,18 +746,18 @@ export default {
       this.getItem()
     },
     async newVersion () {
-      await crfs.newVersion('items', this.editItem.uid)
+      this.$emit('newVersion', this.selectedItem)
       this.readOnly = false
       this.getItem()
     },
     async approve () {
-      await crfs.approve('items', this.editItem.uid)
+      this.$emit('approve', this.selectedItem)
       this.readOnly = true
       this.getItem()
     },
     async delete () {
       let relationships = 0
-      await crfs.getItemRelationship(this.editItem.uid).then(resp => {
+      await crfs.getItemRelationship(this.selectedItem.uid).then(resp => {
         if (resp.data.OdmItemGroup && resp.data.OdmItemGroup.length > 0) {
           relationships = resp.data.OdmItemGroup.length
         }
@@ -674,11 +768,11 @@ export default {
         agreeLabel: this.$t('_global.continue')
       }
       if (relationships > 0 && await this.$refs.confirm.open(`${this.$t('CRFItems.delete_warning_1')} ${relationships} ${this.$t('CRFItems.delete_warning_2')}`, options)) {
-        crfs.delete('items', this.editItem.uid).then((resp) => {
+        crfs.delete('items', this.selectedItem.uid).then((resp) => {
           this.$emit('close')
         })
       } else if (relationships === 0) {
-        crfs.delete('items', this.editItem.uid).then((resp) => {
+        crfs.delete('items', this.selectedItem.uid).then((resp) => {
           this.$emit('close')
         })
       }
@@ -722,6 +816,7 @@ export default {
         return this.steps.find(a => a.name === name)
       })
       this.steps = uniqueSteps
+      this.checkFieldAvailable(this.form.datatype)
     },
     close () {
       this.form = {
@@ -743,6 +838,7 @@ export default {
           if (this.form.terms) {
             this.form.terms.forEach((el, index) => {
               this.selectedTerms.push(this.terms.find(e => e.term_uid === el.term_uid))
+              this.selectedTerms[index].display_text = el.display_text
               if (el.mandatory) {
                 this.selectedTerms[index].mandatory = true
               }
@@ -780,12 +876,12 @@ export default {
         this.$set(this.form, 'terms', [])
       } else {
         this.form.codelist_uid = this.selectedCodelists[0] ? this.selectedCodelists[0].codelist_uid : null
-        this.$set(this.form, 'terms', this.selectedTerms.map(el => ({ uid: el.term_uid, mandatory: el.mandatory })))
+        this.$set(this.form, 'terms', this.selectedTerms.map(el => ({ uid: el.term_uid, mandatory: el.mandatory, display_text: el.display_text })))
       }
       try {
-        if (this.isEdit(this.editItem)) {
+        if (this.isEdit()) {
           this.form.alias_uids = this.form.alias_uids.map(alias => alias.uid ? alias.uid : alias)
-          await crfs.updateItem(this.form, this.editItem.uid).then(resp => {
+          await crfs.updateItem(this.form, this.selectedItem.uid).then(resp => {
             bus.$emit('notification', { msg: this.$t('CRFItems.item_updated') })
             this.close()
           })
@@ -840,25 +936,30 @@ export default {
       this.form.descriptions = descArray
     },
     initForm (item) {
+      this.form = item
       this.form.alias_uids = item.aliases
       if (item.descriptions.find(el => el.language === parameters.ENG)) {
         this.engDescription = item.descriptions.find(el => el.language === parameters.ENG)
       }
       this.desc = item.descriptions.filter((el) => el.language !== parameters.ENG)
-      item.unit_definitions.forEach(e => {
-        if (!this.choosenUnits.some(el => el.uid === e.uid)) {
-          this.choosenUnits.unshift(
-            {
-              uid: e.uid,
-              oid: e.name,
-              name: e.name,
-              ucum: e.ucum ? e.ucum.name : '',
-              terms: e.ct_units[0] ? e.ct_units[0].name : '',
-              mandatory: e.mandatory
-            }
-          )
-        }
-      })
+      if (!item.unit_definitions || item.unit_definitions.length === 0) {
+        this.choosenUnits = []
+      } else {
+        item.unit_definitions.forEach(e => {
+          if (!this.choosenUnits.some(el => el.uid === e.uid)) {
+            this.choosenUnits.unshift(
+              {
+                uid: e.uid,
+                oid: e.name,
+                name: e.name,
+                ucum: e.ucum ? e.ucum.name : '',
+                terms: e.ct_units[0] ? e.ct_units[0].name : '',
+                mandatory: e.mandatory
+              }
+            )
+          }
+        })
+      }
       if (this.selectedCodelists.length === 0 && item.codelist) {
         this.selectedCodelists.push(
           {
@@ -877,10 +978,11 @@ export default {
     getAliasDisplay (item) {
       return `${item.context} - ${item.name}`
     },
-    isEdit (value) {
-      if (value) {
-        return Object.keys(value).length !== 0
+    isEdit () {
+      if (this.selectedItem) {
+        return Object.keys(this.selectedItem).length !== 0
       }
+      return false
     },
     fetchCodelists (filters, sort, filtersUpdated) {
       this.filters = filters
@@ -912,33 +1014,6 @@ export default {
       this.codelists.unshift(item)
     }
   },
-  mounted () {
-    this.fetchCodelists()
-    terms.getAttributesByCodelist('originType').then(resp => {
-      this.origins = resp.data.items
-    })
-    terms.getAttributesByCodelist('dataType').then(resp => {
-      this.dataTypes = resp.data.items
-    })
-    crfs.getAliases().then(resp => {
-      this.aliases = resp.data.items
-    })
-    this.$store.dispatch('units/fetchUnits').then((resp) => {
-      this.units = this.$store.getters['units/units'].items
-    })
-    if (this.isEdit(this.editItem)) {
-      this.steps = this.readOnly ? this.createSteps : this.editSteps
-      this.form = this.editItem
-      this.initForm(this.editItem)
-    } else {
-      this.steps = this.createSteps
-    }
-    if (!this.userData.multilingual) {
-      this.steps = this.steps.filter(function (obj) {
-        return obj.name !== 'description'
-      })
-    }
-  },
   watch: {
     readOnlyProp (value) {
       this.readOnly = value
@@ -957,9 +1032,9 @@ export default {
         }
       }
     },
-    editItem: {
+    selectedItem: {
       handler (value) {
-        if (this.isEdit(value)) {
+        if (this.isEdit()) {
           this.steps = this.readOnly ? this.createSteps : this.editSteps
           if (value.datatype.indexOf('INTEGER') !== -1 || value.datatype.indexOf('FLOAT') !== -1 || value.datatype.indexOf('DOUBLE') !== -1) {
             this.steps.splice(3, 0, { name: 'unit', title: this.$t('CRFItems.unit_details') })
@@ -968,7 +1043,6 @@ export default {
             this.steps.splice(1, 0, { name: 'codelist', title: this.$t('CRFItems.codelist_details') })
             this.steps.splice(2, 0, { name: 'terms', title: this.$t('CRFItems.codelist_subset') })
           }
-          this.form = value
           this.initForm(value)
         } else {
           this.steps = this.createSteps

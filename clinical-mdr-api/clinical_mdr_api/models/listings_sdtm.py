@@ -352,3 +352,43 @@ class StudyElementListing(BaseModel):
             TEENRL=query_result["TEENRL"],
             TEDUR=query_result["TEDUR"],
         )
+
+
+class StudyDiseaseMilestoneListing(BaseModel):
+    STUDYID: str = Field(
+        title="Study Identifier", description="Unique identifier for a study."
+    )
+    DOMAIN: str = Field(
+        title="Domain Abbreviation",
+        description="Two-character abbreviation for the domain",
+    )
+    MIDSTYPE: str = Field(
+        None,
+        title="Disease Milestone Type",
+        description="""
+        The type of Disease Milestone. Example: "HYPOGLYCEMIC EVENT".
+         """,
+    )
+    TMDEF: str = Field(
+        None,
+        title="Disease Milestone Definition",
+        description="Definition of the Disease Milestone.",
+    )
+    TMRPT: str = Field(
+        None,
+        title="Disease Milestone Repetition Indicator",
+        description="""
+        Indicates whether this is a Disease Milestone that can occur only once ('N') 
+        or a type of Disease Milestone that can occur multiple times ('Y').
+        """,
+    )
+
+    @classmethod
+    def from_query(cls, query_result: dict) -> "StudyDiseaseMilestoneListing":
+        return cls(
+            STUDYID=query_result["STUDYID"],
+            DOMAIN=query_result["DOMAIN"],
+            MIDSTYPE=query_result["MIDSTYPE"],
+            TMDEF=query_result["TMDEF"],
+            TMRPT=query_result["TMRPT"],
+        )

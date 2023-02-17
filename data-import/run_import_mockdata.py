@@ -195,7 +195,7 @@ class Mockdata(BaseImporter):
             self.log.info(f"Adding template '{data['body']['name']}'")
             res = self.api.post_to_api(data)
             if res is not None:
-                if self.api.approve_item(res["uid"], data["path"] + "/"):
+                if self.api.approve_item(res["uid"], data["path"]):
                     self.log.info(f"Approved template '{data['body']['name']}'")
                     self.metrics.icrement(data["path"] + "--Approve")
                 else:
@@ -272,7 +272,7 @@ class Mockdata(BaseImporter):
             )
             res = self.api.post_to_api({"body": body, "path": data["path"]})
             if res is not None:
-                if self.api.approve_item(res["uid"], data["path"] + "/"):
+                if self.api.approve_item(res["uid"], data["path"]):
                     self.log.info("Approve ok")
                     self.metrics.icrement(data["path"] + "--Approve")
                 else:
@@ -340,7 +340,7 @@ class Mockdata(BaseImporter):
             self.log.info(f"Adding template '{data['body']['name']}'")
             res = self.api.post_to_api(data)
             if res is not None:
-                if self.api.approve_item(res["uid"], data["path"] + "/"):
+                if self.api.approve_item(res["uid"], data["path"]):
                     self.log.info(f"Approved template '{data['body']['name']}'")
                     self.metrics.icrement(data["path"] + "--Approve")
                 else:
@@ -406,7 +406,7 @@ class Mockdata(BaseImporter):
             self.log.info(
                 f"Add study objective '{objective_name}' for study id '{study_id}'"
             )
-            path = "/studies/" + study["uid"] + "/study-objectives"
+            path = f"/studies/{study['uid']}/study-objectives"
             self.api.simple_post_to_api(path, body, "/study-objectives")
 
     # Study endpoints
@@ -446,7 +446,7 @@ class Mockdata(BaseImporter):
             study_objective = row[headers.index("study_objective")]
             if study_objective in all_study_objectives:
                 body["study_objective_uid"] = all_study_objectives[study_objective]
-            path = "/studies/" + study["uid"] + "/study-endpoints"
+            path = f"/studies/{study['uid']}/study-endpoints"
             self.log.info(
                 f"Add study endpoint '{endpoint_name}' for study id '{study_id}'"
             )
@@ -485,7 +485,7 @@ class Mockdata(BaseImporter):
                         # array field, and if so then we have to append new value to array instead just patching single value
                         patched_data = {}
                         self.update_data(data["patch"], study_data)
-                        self.api.patch_to_api(study_data, data["path"] + "/")
+                        self.api.patch_to_api(study_data, data["path"])
                         patched_data.update(data["patch"])
                         with open(
                             MDR_MIGRATION_STUDY_TYPE, encoding="utf-8", errors="ignore"

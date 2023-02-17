@@ -2241,6 +2241,8 @@
             "epoch_type": "EpochType_0001",
             "start_day": null,
             "end_day": null,
+            "start_week": null,
+            "end_week": null,
             "start_date": "2022-06-23 16:15:43",
             "status": "DRAFT",
             "user_initials": "TODO Initials",

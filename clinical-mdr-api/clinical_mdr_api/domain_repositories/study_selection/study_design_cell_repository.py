@@ -196,6 +196,25 @@ class StudyDesignCellRepository:
                     f"The study element with uid {design_cell_vo.study_element_uid} was not found"
                 )
 
+        # check if the new cell already exists
+        if create:
+            all_existing = self.get_design_cells_connected_to_epoch(
+                design_cell_vo.study_uid, design_cell_vo.study_epoch_uid
+            )
+            for existing in all_existing:
+                arm = existing.study_arm.single()
+                branch = existing.study_branch_arm.single()
+                arm_uid = arm.uid if arm else None
+                branch_uid = branch.uid if branch else None
+                if branch_uid and branch_uid == design_cell_vo.study_branch_arm_uid:
+                    raise exceptions.ForbiddenException(
+                        "A study design cell already exists for the given combination study branch arm and study epoch."
+                    )
+                if not branch_uid and arm_uid == design_cell_vo.study_arm_uid:
+                    raise exceptions.ForbiddenException(
+                        "A study design cell already exists for the given combination of study arm and study epoch."
+                    )
+
         # Create new node
         design_cell = StudyDesignCell(
             uid=design_cell_vo.uid,

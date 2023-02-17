@@ -344,7 +344,7 @@ def create_new_version(
 
 
 @router.post(
-    "/codelists/{uid}/approve",
+    "/codelists/{uid}/approvals",
     summary="Approve draft version of the dictionary codelist",
     description="""
 State before:

@@ -1,11 +1,17 @@
 from datetime import datetime
-from typing import Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from pydantic.fields import Field
 from pydantic.main import BaseModel
 
 from clinical_mdr_api.domain.library.criteria import CriteriaAR
-from clinical_mdr_api.models.criteria_template import CriteriaTemplateNameUid
+from clinical_mdr_api.domain_repositories.models.criteria_template import (
+    CriteriaTemplateRoot,
+)
+from clinical_mdr_api.models.criteria_template import (
+    CriteriaTemplateNameUid,
+    CTTermNameAndAttributes,
+)
 from clinical_mdr_api.models.library import Library
 from clinical_mdr_api.models.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
@@ -14,6 +20,10 @@ from clinical_mdr_api.models.template_parameter_value import (
     IndexedTemplateParameterValue,
     MultiTemplateParameterValue,
 )
+
+
+class CriteriaTemplateWithType(CriteriaTemplateNameUid):
+    type: CTTermNameAndAttributes
 
 
 class Criteria(BaseModel):
@@ -48,7 +58,10 @@ class Criteria(BaseModel):
     )
 
     @classmethod
-    def from_criteria_ar(cls, criteria_ar: CriteriaAR) -> "Criteria":
+    def from_criteria_ar(
+        cls,
+        criteria_ar: CriteriaAR,
+    ) -> "Criteria":
 
         parameter_values: List[MultiTemplateParameterValue] = []
         for position, parameter in enumerate(criteria_ar.get_parameters()):
@@ -93,7 +106,70 @@ class Criteria(BaseModel):
         )
 
 
-class CriteriaVersion(Criteria):
+class CriteriaWithType(Criteria):
+
+    criteria_template: Optional[CriteriaTemplateWithType]
+
+    @classmethod
+    def from_criteria_ar(
+        cls,
+        criteria_ar: CriteriaAR,
+        get_criteria_type_name: Callable[[type, str], Any],
+        get_criteria_type_attributes: Callable[[type, str], Any],
+    ) -> "CriteriaWithType":
+
+        parameter_values: List[MultiTemplateParameterValue] = []
+        for position, parameter in enumerate(criteria_ar.get_parameters()):
+            values: List[IndexedTemplateParameterValue] = []
+            for index, parameter_value in enumerate(parameter.parameters):
+                pv = IndexedTemplateParameterValue(
+                    index=index + 1,
+                    uid=parameter_value.uid,
+                    name=parameter_value.value,
+                    type=parameter.parameter_name,
+                )
+                values.append(pv)
+            conjunction = parameter.conjunction
+
+            parameter_values.append(
+                MultiTemplateParameterValue(
+                    conjunction=conjunction, position=position + 1, values=values
+                )
+            )
+        return cls(
+            uid=criteria_ar.uid,
+            name=criteria_ar.name,
+            name_plain=criteria_ar.name_plain,
+            start_date=criteria_ar.item_metadata.start_date,
+            end_date=criteria_ar.item_metadata.end_date,
+            status=criteria_ar.item_metadata.status.value,
+            version=criteria_ar.item_metadata.version,
+            change_description=criteria_ar.item_metadata.change_description,
+            user_initials=criteria_ar.item_metadata.user_initials,
+            possible_actions=sorted(
+                {_.value for _ in criteria_ar.get_possible_actions()}
+            ),
+            criteria_template=CriteriaTemplateWithType(
+                name=criteria_ar.template_name,
+                name_plain=criteria_ar.name_plain,
+                uid=criteria_ar.template_uid,
+                guidance_text=criteria_ar.template_guidance_text,
+                type=CTTermNameAndAttributes.from_ct_term_ars(
+                    ct_term_name_ar=get_criteria_type_name(
+                        CriteriaTemplateRoot, criteria_ar.template_uid
+                    ),
+                    ct_term_attributes_ar=get_criteria_type_attributes(
+                        CriteriaTemplateRoot, criteria_ar.template_uid
+                    ),
+                ),
+            ),
+            library=Library.from_library_vo(criteria_ar.library),
+            study_count=criteria_ar.study_count,
+            parameter_values=parameter_values,
+        )
+
+
+class CriteriaVersion(CriteriaWithType):
     """
     Class for storing Criteria and calculation of differences
     """

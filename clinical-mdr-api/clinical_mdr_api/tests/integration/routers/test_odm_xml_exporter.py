@@ -11,7 +11,7 @@ from clinical_mdr_api.tests.data.odm_xml import (
     export_item_group,
     export_template,
     export_with_csv,
-    export_with_extension,
+    export_with_namespace,
 )
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
@@ -23,9 +23,10 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_ODM_ITEM_GROUPS,
     STARTUP_ODM_ITEMS,
     STARTUP_ODM_TEMPLATES,
+    STARTUP_ODM_VENDOR_ATTRIBUTES,
+    STARTUP_ODM_VENDOR_ELEMENTS,
+    STARTUP_ODM_VENDOR_NAMESPACES,
     STARTUP_ODM_XML_EXPORTER,
-    STARTUP_ODM_XML_EXTENSION_TAGS,
-    STARTUP_ODM_XML_EXTENSIONS,
     STARTUP_UNIT_DEFINITIONS,
 )
 from clinical_mdr_api.tests.utils.utils import xml_diff
@@ -46,8 +47,9 @@ class OdmXmlExporterTest(TestCase):
         db.cypher_query(STARTUP_ODM_ITEM_GROUPS)
         db.cypher_query(STARTUP_ODM_FORMS)
         db.cypher_query(STARTUP_ODM_TEMPLATES)
-        db.cypher_query(STARTUP_ODM_XML_EXTENSIONS)
-        db.cypher_query(STARTUP_ODM_XML_EXTENSION_TAGS)
+        db.cypher_query(STARTUP_ODM_VENDOR_NAMESPACES)
+        db.cypher_query(STARTUP_ODM_VENDOR_ELEMENTS)
+        db.cypher_query(STARTUP_ODM_VENDOR_ATTRIBUTES)
         db.cypher_query(STARTUP_ODM_XML_EXPORTER)
 
         from clinical_mdr_api import main
@@ -122,12 +124,12 @@ class OdmXmlExporterTest(TestCase):
 
         xml_diff(expected_xml, actual_xml)
 
-    def test_get_odm_xml_with_allowed_extensions(self):
+    def test_get_odm_xml_with_allowed_namespaces(self):
         response = self.test_client.post(
-            "concepts/odms/metadata/xmls/export?target_uid=odm_template1&target_type=template&allowed_extensions=prefix",
+            "concepts/odms/metadata/xmls/export?target_uid=odm_template1&target_type=template&allowed_namespaces=prefix",
         )
 
-        expected_xml = ET.fromstring(export_with_extension)
+        expected_xml = ET.fromstring(export_with_namespace)
         actual_xml = ET.fromstring(response.content)
         expected_xml.set("FileOID", actual_xml.get("FileOID"))
         expected_xml.set("CreationDateTime", actual_xml.get("CreationDateTime"))
@@ -141,7 +143,7 @@ class OdmXmlExporterTest(TestCase):
         response = self.test_client.post(
             "concepts/odms/metadata/xmls/export?target_type=template&target_uid=odm_template1",
             files={
-                "mapper": (
+                "mapper_file": (
                     "mapper.csv",
                     "type,parent,from_name,to_name,to_alias,from_alias,alias_context\n"
                     "attribute,,osb:instruction,CompletionInstructions,,,\n"
@@ -149,10 +151,10 @@ class OdmXmlExporterTest(TestCase):
                     "attribute,,CompletionInstructions,,true,,\n"
                     "attribute,*,ImplementationNotes,,true,,\n"
                     "attribute,FormDef,osb:version,ov,,,\n"
-                    "tag,,ItemRef,osb:ItemRef,,,\n"
-                    "tag,FormDef,ItemGroupRef,osb:ItemGroupRef,,,\n"
-                    "tag,*,MeasurementUnitRef,osb:measurementUnitRef,,,\n"
-                    "tag,*,osb:DomainColor,DomainColor,,,",
+                    "element,,ItemRef,osb:ItemRef,,,\n"
+                    "element,FormDef,ItemGroupRef,osb:ItemGroupRef,,,\n"
+                    "element,*,MeasurementUnitRef,osb:measurementUnitRef,,,\n"
+                    "element,*,osb:DomainColor,DomainColor,,,",
                     "text/csv",
                 )
             },
@@ -169,6 +171,14 @@ class OdmXmlExporterTest(TestCase):
 
         xml_diff(expected_xml, actual_xml)
 
+    def test_get_odm_xml_pdf_version(self):
+        response = self.test_client.post(
+            "concepts/odms/metadata/xmls/export?target_type=template&target_uid=odm_template1&pdf=true&stylesheet=blank"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("content-type"), "application/pdf")
+
     def test_throw_exception_if_target_type_is_not_supported(self):
         response = self.test_client.post(
             "concepts/odms/metadata/xmls/export?target_uid=study&target_type=study",
@@ -184,7 +194,7 @@ class OdmXmlExporterTest(TestCase):
         response = self.test_client.post(
             "concepts/odms/metadata/xmls/export?target_uid=odm_template1&target_type=template",
             files={
-                "mapper": (
+                "mapper_file": (
                     "mapper.json",
                     "type,parent,from_name,to_name,to_alias\n"
                     "attribute,,osb:instruction,CompletionInstructions,\n",
@@ -201,7 +211,7 @@ class OdmXmlExporterTest(TestCase):
         response = self.test_client.post(
             "concepts/odms/metadata/xmls/export?target_uid=odm_template1&target_type=template",
             files={
-                "mapper": (
+                "mapper_file": (
                     "mapper.csv",
                     "parent,from_name,to_name,to_alias\n"
                     ",osb:instruction,CompletionInstructions,\n",

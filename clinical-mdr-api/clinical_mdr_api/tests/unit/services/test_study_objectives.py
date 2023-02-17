@@ -2,6 +2,10 @@ import datetime
 
 import pytest
 
+from clinical_mdr_api.domain.study_selection.study_selection_endpoint import (
+    EndpointUnitItem,
+    EndpointUnits,
+)
 from clinical_mdr_api.models import (
     CTTermName,
     Endpoint,
@@ -11,7 +15,6 @@ from clinical_mdr_api.models import (
     Timeframe,
 )
 from clinical_mdr_api.models.ct_term import SimpleTermModel
-from clinical_mdr_api.models.study_selection import EndpointUnits
 from clinical_mdr_api.models.unit_definition import UnitDefinitionModel
 from clinical_mdr_api.services.study_objectives import StudyObjectivesService
 
@@ -67,9 +70,17 @@ ENDPOINT_3 = Endpoint(
     name_plain="Mean Change from Baseline in 25-Hydroxyvitamin D",
 )
 
-ENDPOINT_UNITS_ = EndpointUnits(units=[], separator=None)
-ENDPOINT_UNITS_2 = EndpointUnits(units=["UnitDefinition_000002"], separator=None)
-ENDPOINT_UNITS_6 = EndpointUnits(units=["UnitDefinition_000006"], separator=None)
+ENDPOINT_UNITS_ = EndpointUnits(units=tuple(), separator=None)
+ENDPOINT_UNITS_2 = EndpointUnits(
+    units=(EndpointUnitItem(uid="UnitDefinition_000002", name="Unit2"),), separator=None
+)
+ENDPOINT_UNITS_6 = EndpointUnits(
+    units=(
+        EndpointUnitItem(uid="UnitDefinition_000006", name="Unit6"),
+        EndpointUnitItem(uid="UnitDefinition_0000011", name="Unit11"),
+    ),
+    separator="and",
+)
 
 OBJECTIVE_3 = Objective(
     uid="Objective_000003",

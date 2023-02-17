@@ -225,11 +225,7 @@ export default {
     },
     async preparePayload (data) {
       if (data.indications && data.indications.length > 0) {
-        if (this.template !== null && _isEqual(data.indications, this.template.indications)) {
-          data.indication_uids = data.indications.map(item => item.term_uid)
-        } else {
-          data.indication_uids = data.indications.map(item => item.term_uid)
-        }
+        data.indication_uids = data.indications.map(item => item.term_uid)
       }
       if (this.preparePayloadFunction) {
         this.preparePayloadFunction(data)
@@ -246,7 +242,7 @@ export default {
 
       await this.preparePayload(data)
       try {
-        return this.apiTemplateEndpoint.create(data).then(resp => {
+        return this.apiTemplateEndpoint.create(data).then(() => {
           this.$emit('templateAdded')
           bus.$emit('notification', { msg: this.$t(`${this.translationKey}TemplateForm.add_success`) })
           this.close()
@@ -260,12 +256,13 @@ export default {
 
       try {
         let template
+        let resp
         if (this.template.name !== data.name) {
-          const resp = await this.apiTemplateEndpoint.update(this.template.uid, data)
+          resp = await this.apiTemplateEndpoint.update(this.template.uid, data)
           template = resp.data
         }
         await this.preparePayload(data)
-        const resp = await this.apiTemplateEndpoint.updateGroupings(this.template.uid, data)
+        resp = await this.apiTemplateEndpoint.updateGroupings(this.template.uid, data)
         if (!template) {
           template = resp.data
         }
@@ -281,7 +278,7 @@ export default {
         return
       }
       const data = { name: this.form.name }
-      this.apiTemplateEndpoint.preValidate(data).then(resp => {
+      this.apiTemplateEndpoint.preValidate(data).then(() => {
         bus.$emit(
           'notification',
           { msg: this.$t('_global.valid_syntax') })

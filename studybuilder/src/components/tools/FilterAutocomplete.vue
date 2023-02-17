@@ -75,6 +75,21 @@
     @change="filterTable()"
     class="mt-4 select filterAutocompleteLabel"
     >
+    <template #item="data">
+      <v-tooltip bottom>
+        <template #activator="{ on, attrs }">
+          <v-layout wrap v-on="on" v-bind="attrs">
+            <v-list-item-action>
+              <v-checkbox v-model="data.attrs.inputValue"/>
+            </v-list-item-action>
+            <v-list-item-content>
+              <v-list-item-title>{{ data.item }}</v-list-item-title>
+            </v-list-item-content>
+          </v-layout>
+        </template>
+        <span>{{ data.item }}</span>
+      </v-tooltip>
+    </template>
     <template v-slot:prepend-item>
       <v-row>
         <v-text-field
@@ -110,6 +125,7 @@
 </template>
 
 <script>
+import _isEmpty from 'lodash/isEmpty'
 import columnData from '@/api/columnData'
 
 export default {
@@ -200,7 +216,7 @@ export default {
         jsonFilter = filters.jsonFilter
         params = filters.params
       }
-      if (!this.item.externalFilterSource) {
+      if (!this.item.externalFilterSource && !_isEmpty(jsonFilter)) {
         params.filters = jsonFilter
       }
       if (this.resource[1] !== undefined) {

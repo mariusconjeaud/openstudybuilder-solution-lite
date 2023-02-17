@@ -1,3 +1,5 @@
+from typing import Optional
+
 from clinical_mdr_api.domain.library.criteria import CriteriaAR, CriteriaTemplateVO
 from clinical_mdr_api.domain_repositories.library.criteria_repository import (
     CriteriaRepository,
@@ -6,7 +8,10 @@ from clinical_mdr_api.domain_repositories.templates.criteria_template_repository
     CriteriaTemplateRepository,
 )
 from clinical_mdr_api.models import Criteria
-from clinical_mdr_api.models.criteria import CriteriaVersion
+from clinical_mdr_api.models.criteria import CriteriaVersion, CriteriaWithType
+from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.repositories._utils import FilterOperator
+from clinical_mdr_api.services._utils import service_level_generic_filtering
 from clinical_mdr_api.services.generic_object_service import (
     GenericObjectService,  # type: ignore
 )
@@ -25,4 +30,36 @@ class CriteriaService(GenericObjectService[CriteriaAR]):
     def _transform_aggregate_root_to_pydantic_model(
         self, item_ar: CriteriaAR
     ) -> Criteria:
-        return Criteria.from_criteria_ar(item_ar)
+
+        return CriteriaWithType.from_criteria_ar(
+            item_ar,
+            get_criteria_type_name=self._repos.ct_term_name_repository.get_template_criteria_type,
+            get_criteria_type_attributes=self._repos.ct_term_attributes_repository.get_template_criteria_type,
+        )
+
+    def get_all(
+        self,
+        status: Optional[str] = None,
+        return_study_count: bool = True,
+        sort_by: Optional[dict] = None,
+        page_number: int = 1,
+        page_size: int = 0,
+        filter_by: Optional[dict] = None,
+        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        total_count: bool = False,
+    ) -> GenericFilteringReturn[Criteria]:
+        all_items = super().get_releases_referenced_by_any_study()
+
+        # The get_all method is only using neomodel, without Cypher query
+        # Therefore, the filtering will be done in this service layer
+        filtered_items = service_level_generic_filtering(
+            items=all_items,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            sort_by=sort_by,
+            total_count=total_count,
+            page_number=page_number,
+            page_size=page_size,
+        )
+
+        return filtered_items

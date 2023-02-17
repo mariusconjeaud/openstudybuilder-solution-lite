@@ -16,9 +16,21 @@ class RelationType(Enum):
     FORM = "form"
     TERM = "term"
     UNIT_DEFINITION = "unit_definition"
-    XML_EXTENSION_TAG = "xml_extension_tag"
-    XML_EXTENSION_ATTRIBUTE = "xml_extension_attribute"
-    XML_EXTENSION_TAG_ATTRIBUTE = "xml_extension_tag_attribute"
+    VENDOR_ELEMENT = "vendor_element"
+    VENDOR_ATTRIBUTE = "vendor_attribute"
+    VENDOR_ELEMENT_ATTRIBUTE = "vendor_element_attribute"
+
+
+class VendorCompatibleType(Enum):
+    """
+    Enum for types (e.g. FormDef, ItemRef) that are compatible with Vendor Attribute
+    """
+
+    FORM_DEF = "FormDef"
+    ITEM_GROUP_DEF = "ItemGroupDef"
+    ITEM_DEF = "ItemDef"
+    ITEM_GROUP_REF = "ItemGroupRef"
+    ITEM_REF = "ItemRef"
 
 
 class TargetType(Enum):
@@ -31,3 +43,12 @@ class TargetType(Enum):
     FORM = "form"
     ITEM_GROUP = "item_group"
     ITEM = "item"
+
+
+class ExporterType(Enum):
+    """
+    Enum for systems that export ODM files that can be imported into OSB
+    """
+
+    OSB = "osb"
+    CLINSPARK = "clinspark"

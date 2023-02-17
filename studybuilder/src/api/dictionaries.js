@@ -22,16 +22,16 @@ export default {
     return repository.get(`${resource}/substances`, { params })
   },
   inactivate (uid) {
-    return repository.post(`${resource}/terms/${uid}/inactivate`)
+    return repository.delete(`${resource}/terms/${uid}/activations`)
   },
   reactivate (uid) {
-    return repository.post(`${resource}/terms/${uid}/reactivate`)
+    return repository.post(`${resource}/terms/${uid}/activations`)
   },
   delete (uid) {
     return repository.delete(`${resource}/terms/${uid}`)
   },
   approve (uid) {
-    return repository.post(`${resource}/terms/${uid}/approve`)
+    return repository.post(`${resource}/terms/${uid}/approvals`)
   },
   newVersion (uid) {
     return repository.post(`${resource}/terms/${uid}/versions`)

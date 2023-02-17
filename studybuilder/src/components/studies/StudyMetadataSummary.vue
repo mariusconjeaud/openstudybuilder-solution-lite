@@ -49,6 +49,7 @@
 
   <v-dialog
     v-model="showCopyForm"
+    @keydown.esc="closeCopyForm"
     persistent
     max-width="500px"
     >
@@ -57,6 +58,7 @@
 
   <v-dialog
     v-model="showHistory"
+    @keydown.esc="closeHistory"
     persistent
     max-width="1200px"
     >
@@ -66,6 +68,8 @@
       :title="historyTitle"
       :export-name="component"
       @close="closeHistory"
+      start-date-header="date"
+      change-type-header="action"
       />
   </v-dialog>
 </div>
@@ -137,11 +141,9 @@ export default {
       ],
       historyHeaders: [
         { text: this.$t('HistoryTable.field'), value: 'field' },
-        { text: this.$t('HistoryTable.action'), value: 'action' },
         { text: this.$t('HistoryTable.value_before'), value: 'before_value.term_uid' },
         { text: this.$t('HistoryTable.value_after'), value: 'after_value.term_uid' },
-        { text: this.$t('_global.user'), value: 'user_initials' },
-        { text: this.$t('HistoryTable.date'), value: 'date' }
+        { text: this.$t('_global.user'), value: 'user_initials' }
       ],
       historyItems: [],
       showHistory: false,

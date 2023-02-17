@@ -43,6 +43,7 @@
               data-cy="arm-name"
               :error-messages="errors"
               clearable
+              class="required"
               />
           </v-col>
         </v-row>
@@ -61,6 +62,7 @@
               data-cy="arm-short-name"
               :error-messages="errors"
               clearable
+              class="required"
               />
           </v-col>
         </v-row>
@@ -87,7 +89,7 @@
         v-slot="{ errors }"
         name="Code"
         vid="code"
-        rules="max:20"
+        :rules="codeRules"
         >
         <v-row>
           <v-col cols="12">
@@ -95,7 +97,6 @@
               v-model="form.code"
               :label="$t('StudyArmsForm.arm_code')"
               data-cy="arm-code"
-              :rules="codeRules"
               :error-messages="errors"
               clearable
               :disabled="!armCodeEnable && !isEdit()"
@@ -209,7 +210,7 @@ export default {
       editMode: false,
       armCodeEnable: false,
       branches: [],
-      codeRules: []
+      codeRules: ''
     }
   },
   methods: {
@@ -217,9 +218,7 @@ export default {
       if (!this.armCodeEnable) {
         this.$set(this.form, 'code', this.form.randomization_group)
         this.armCodeEnable = true
-        this.codeRules = [
-          v => (v && v.length <= 20) || this.$t('_errors.max_length_reached', { length: '20' })
-        ]
+        this.codeRules = 'max:20'
       }
     },
     isEdit () {
@@ -303,6 +302,9 @@ export default {
           delete this.form.arm_connected_branch_arms
         }
         this.$set(this.form, 'arm_type_uid', value.arm_type.term_uid)
+        if (value.arm_colour) {
+          this.colorHash = this.editedArm.arm_colour
+        }
         this.$store.commit('form/SET_FORM', this.form)
       }
     }

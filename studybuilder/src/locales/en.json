@@ -13,6 +13,7 @@
         "logout": "Logout",
         "objective": "Objective",
         "objectives": "Objectives",
+        "criteria": "Criteria",
         "update": "Update",
         "search": "Search",
         "status": "Status",
@@ -83,7 +84,7 @@
         "reactivate": "Reactivate",
         "not_applicable_full_name": "Not Applicable",
         "positive_infinity_full_name": "Positive Infinity",
-        "na_uid": "C48660_Not Applicable",
+        "na_uid": "C48660_NA",
         "unknown_user": "unknown-user",
         "filtering_to_add": "Filtering currently not activated",
         "save_anyway": "Save anyway",
@@ -102,7 +103,13 @@
         "view": "View",
         "relations": "Relations",
         "duplicate": "Duplicate",
-        "edit_element": "Edit element"
+        "edit_element": "Edit element",
+        "link": "Link",
+        "value": "Value",
+        "type": "Type",
+        "day": "Day",
+        "week": "Week",
+        "copy_link": "Copy link"
     },
     "_errors": {
         "exclusive_select": "Field and Null Flavor can't be selected at the same time.",
@@ -118,7 +125,54 @@
     },
     "_help": {
         "CrfTemplates": {
-            "retired_date": "help text for retired date"
+            "name": "Provide the name of the Template that will be displayed in the different part of the application (Mandatory field).",
+            "oid": "Specify an 'Object Identifier' as a unique ID in the application. As we are defining a Template, it could starts with T.XXX. This is not an ODM element but we are using it here to group Forms, ItemGroups and Items to be re-used after at the Study Level of the application (Mandatory field, but it can be auto-populated if left blank).",
+            "effective_date": "Provide an effective start date, when this Template will be applicable (Select a date in the datepicker).",
+            "retired_date": "Provide an obsolete stop date (a retired date), when this Template will be deprecated (Select a date in the datepicker)."
+        },
+        "CRFForms": {
+            "name": "Provide the name of the Form. This will be used as the /ODM/FormDef/@name attribute in the ODM-XML file (Mandatory field).",
+            "oid": "Specify an 'Object Identifier' as a unique ID in the application. As we are defining a Form, it could starts with F.XXX. This will be used as the /ODM/FormDef/@OID attribute in the ODM-XML file (Mandatory field, but it can be auto-populated if left blank).",
+            "repeating": "Specify if the Form is repeating over time or not. This will be used as the /ODM/FormDef/@Repeating with a Yes/No answer.",
+            "description": "A free-text description of the containing study metadata component. This information will be used as the /ODM/FormDef/Description/TranslatedText.",
+            "impl_notes": "Provide here the text explaining the way this Form will be used in the application (as a Sponsor note). Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/FormDef[@ImplementationNotes] attribute in the ODM-XML file.",
+            "displayed_text": "Specify here the label of the Form (using the default language). This will be used as the /ODM/FormDef/Description/TranslatedText/ tag in the ODM-XML file. When the multilingual is activated then, the stepper 'Translations' will allow the display text of the Form to be translated accordingly.",
+            "compl_instructions": "Provide here the help text that could be displayed in a CRF as an OnlineHelp. Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/FormDef/[@CompletionInstructions] name attribute in the ODM-XML file.",
+            "vendor_extensions": "This stepper is dedicated to the extension of the Form by providing both Elements and / or Attributes. This will then be added to the ODM/FormDef as a Vendor like for example osb:displayAsTable='Yes' or as an extension under this OMD level. XML namespaces are used for providing uniquely named elements and attributes in an XML document. Provide also the datatype for this Vendor Extension and note that the value can be verified against a dedicated list of accepted reply.",
+            "aliases": "An Alias provides an additional name for an element, here for the Form element. The Context attribute specifies the application domain in which this additional name is relevant. This will be used as the /ODM/FormDef/Alias[@Context] name attribute in the ODM-XML file.",
+            "context": "The Context attribute specifies the application domain in which this additional name is relevant. You could use for example 'CDASH/SDTM' with a 'Name' = 'DM:Demographics' and then the ODM-XML view will display it as an annotation."
+        },
+        "CRFItemGroups": {
+            "name": "Provide the name of the ItemGroup. An ItemGroup describes a type of item group (a group of clinical questions that are meaningful together) that can occur within a study. This will be used as the /ODM/ItemGroupDef/@name attribute in the ODM-XML file (Mandatory field).",
+            "oid": "Specify an 'Object Identifier' as a unique ID in the application. As we are defining an ItemGroup, it could starts with G.XXX. This will be used as the /ODM/ItemGroupDef/@OID attribute in the ODM-XML file (Mandatory field, but it can be auto-populated if left blank).",
+            "repeating": "Specify if the ItemGroup is repeating over time or not. This will be used as the /ODM/ItemGroupDef/@Repeating with a Yes/No answer.",
+            "description": "A free-text description of the containing study metadata component. This information will be used as the /ODM/ItemGroupDef/Description/TranslatedText.",
+            "impl_notes": "Provide here the text explaining the way this Item Group will be used in the application (as a Sponsor note). Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/ItemGroupDef[@osb:instruction] attribute in the ODM-XML file.",
+            "displayed_text": "Specify here the label of the Item Group (using the default language). This will be used as the /ODM/ItemGroupDef/Description/TranslatedText/ tag in the ODM-XML file. When the multilingual is activated then, the stepper 'Translations' will allow the display text of the Form to be translated accordingly.",
+            "compl_instructions": "Provide here the help text that could be displayed in a CRF as an OnlineHelp. Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/ItemGroupDef[@osb:sponsorInstruction] attribute in the ODM-XML file.",
+            "aliases": "An Alias provides an additional name for an element, here for the ItemGroup element. The Context attribute specifies the application domain in which this additional name is relevant. This will be used as the /ODM/ItemGroupDef/Alias[@Context] name attribute in the ODM-XML file.",
+            "context": "The Context attribute specifies the application domain in which this additional name is relevant. You could use for example 'CDASH/SDTM' with a 'Name' = 'DM:Demographics|DS:Disposition' and then the ODM-XML view will display it as an annotation for two SDTM Domain."
+        },
+        "CRFItems": {
+            "name": "Provide the name of the Item. An ItemDef describes a type of item that can occur within a study. Item properties include name, datatype, measurement units, range or codelist restrictions, and several other properties. This will be used as the /ODM/ItemDef/@name attribute in the ODM-XML file (Mandatory field).",
+            "oid": "Specify an 'Object Identifier' as a unique ID in the application. As we are defining an Item, it could starts with I.XXX. This will be used as the /ODM/ItemDef/@OID attribute in the ODM-XML file (Mandatory field, but it can be auto-populated if left blank).",
+            "data_type": "The DataType attribute specifies how the corresponding value elements are to be interpreted for comparison and storage. The Length attribute is required when DataType is text or string, optional when DataType is integer or float, and should not be given for the other datatypes. The SignificantDigits attribute is optional when DataType is float, and should not be given for the other datatypes. When DataType is float both Length and SignificantDigits must be given or both be absent.",
+            "length": "If DataType=integer, Length=N is a requirement that the receiving system be able to process and store all whole number values of magnitude less than 10N. Larger values may be rejected. If DataType=float, Length=N and SignificantDigits=S is a requirement that the receiving system be able to process and store all numeric values of magnitude less than 10N-S that are multiples of 10-S. Larger values may be rejected. Intermediate values may be rounded to the nearest multiple of 10-S. If DataType=text, Length=N is a requirement that the receiving system be able to process and store all text string values of length less than or equal to N. All characters are allowed in text string values. Data of type Text should be transmitted in an ItemDataString element.",
+            "significant_digits": "Length and SignificantDigits are statements about an item's data values, not the number of characters used to represent these values in value elements. For example, the character '<' might be represented as '&lt;'. Data characters that are not included in the encoding character set for a particular ODM file must be represented using XML entities or character references. For example, Æ could be represented as '&#198;'.",
+            "sas_name": "The SAS Name could be used to store legacy variable reference.",
+            "sds_name": "The SDSVarName attribute carry submission information as described in the latest version of CDISC SDTM. It should use a SDTMIG variable reference.",
+            "origin": "Origin attribute carry submission information as described in the latest version of CDISC SDTM.",
+            "comment": "Comment attribute carry submission information as described in the latest version of CDISC SDTM.",
+            "impl_notes": "Provide here the text explaining the way this Item will be used in the application (as a Sponsor note). Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/ItemDef[@osb:instruction] attribute in the ODM-XML file.",
+            "displayed_text": "Specify here the label of the Item (using the default language). This will be used as the /ODM/ItemDef/Description/TranslatedText/ tag in the ODM-XML file. When the multilingual is activated then, the stepper 'Translations' will allow the display text of the Form to be translated accordingly.",
+            "compl_instructions": "Provide here the help text that could be displayed in a CRF as an OnlineHelp. Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/ItemDef[@osb:sponsorInstruction] attribute in the ODM-XML file.",
+            "vendor_extensions": "This stepper is dedicated to the extension of the Form by providing both Elements and / or Attributes. This will then be added to the ODM/ItemDef as a Vendor like for example osb:displayAsTable='Yes' or as an extension under this OMD level. XML namespaces are used for providing uniquely named elements and attributes in an XML document. Provide also the datatype for this Vendor Extension and note that the value can be verified against a dedicated list of accepted reply.",
+            "aliases": "An Alias provides an additional name for an element, here for the Item element. The Context attribute specifies the application domain in which this additional name is relevant. This will be used as the /ODM/ItemDef/Alias[@Context] name attribute in the ODM-XML file.",
+            "context": "The Context attribute specifies the application domain in which this additional name is relevant. You could use for example 'CDASH/SDTM' with a 'Name' = 'VS:VSORRES' and then the ODM-XML view will display it as an annotation for two SDTM Domain."
+        },
+        "CrfAliases": {
+            "name": "An Alias provides an additional name for an element, here for the ItemGroup element. The Context attribute specifies the application domain in which this additional name is relevant. This will be used as the Alias[@Name] name attribute in the ODM-XML file.",
+            "context": "The Context attribute specifies the application domain in which this additional name is relevant. You could use for example 'CDASH/SDTM' with a 'Name' = 'DM:Demographics|DS:Disposition' and then the ODM-XML view will display it as an annotation for two SDTM Domain."
         },
         "GenericTemplateForm": {
             "study_indication": "Indications, conditions, diseases or disorders in scope for the template. Select NA (not applicable), if template is generic not targeted specific studies.",
@@ -374,7 +428,6 @@
         "StudyVisitForm": {
             "vtype_step_label": "Select the type of visit: Scheduled visit is a planned visit as per protocol, Non Visit is for study activities not planned, e.g. an AE. Unscheduled visit is for additional visits that was not planned for, e.g. extra lab samples. The Non Visit and Unscheduled Visit is used for Form setup.",
             "period": "The epoch types corresponds to the epochs defined in the Study Epochs tab. Select the one applicable for the visit",
-            "batch_create_visits": "TO BE DESCRIBED: Tick if visit definition applies to multiple visits",
             "single_visit": "Single visit. Default should be set to Single Visit. If visits need sub-grouping, e.g. a set of days need to be grouped into a visit then select Anchor Visit in Group. For subsequent select additional sub-visit",
             "anchor_visit_in_group": "If ticked, it will create a local anchor visit. Visits referencing to a Anchor visit in group will have the same Visit number concatenated with number of days. Eg. if Visits 3 (V3) is Anchor visit in group then a visits referring this (Time reference) will have same visit but visits short name as V3D2, if it occurs 2 days after the anchor visit. Remember to tick subsequent visits as Additional Sub-visit. This will allow for selecting the local anchor visit from the time reference drop-down.",
             "visit_type": "For definition of visit types see [Visit Type](https://studybuilder.clinicalmdr-dev.corp.azure.novonordisk.com/library/ct_catalogues/All/CTCodelist_000005)",
@@ -396,7 +449,7 @@
             "visit_start_rule": "Enter visit start rule. Describe when the visit starts, in relation to the sequence of elements, e.g. 2 weeks after start of Treatment Epoch",
             "visit_stop_rule": "Enter visit stop rule. Describe when the visit ends, in relation to the sequence of elements e.g. At End of Trial",
             "visit_notes": "Notes for the visit that need to be added to the flowchart as footnotes.",
-            "consecutive_visit": "Indicate whether the visit is part of a group of visits which should be shown as a range of visits in the flowchart. This will provide an additional label to the visit(s).",
+            "collapsible_visit": "Indicate whether the visit is part of a group of visits which should be shown as a range of visits in the flowchart. This will provide an additional label to the visit(s).",
             "duplicate_visit": "Specify the timing for the new visit. The timing unit for new visit will be same as for the visit being copied from. E.g. if the study has Visit 7,8,9. To duplicate  e.g. Visit 7 (timing in Weeks) this visit, then specify timing  of this new visit, e.g. 2. Then a Visit 10 will appear that is 2 weeks (timing = 2 weeks) after Visit 9. You can reorder the visits to get the new visit as needed. Note, you cannot copy a randomisation visit."
         },
         "Settings": {
@@ -827,6 +880,7 @@
             "cdash_crf": "CDASH annotated CRF",
             "sdtm_crf": "SDTM annotated CRF",
             "odm_specification": "ODM Specification",
+            "ctr_odm_xml": "CTR ODM XML",
             "sdtm_specification": "SDTM Specifications",
             "sdtm_study": "SDTM Study Design Datasets",
             "adam_spec": "ADaM Specification",
@@ -866,7 +920,8 @@
             "progress_tracking": "Progress Tracking",
             "study_interventions_and_therapy": "Study Interventions",
             "specification_overview": "Specification Overview",
-            "study_branches": "Study Branches"
+            "study_branches": "Study Branches",
+            "disease_milestones": "Disease Milestones"
         }
     },
     "HomeView": {
@@ -1059,16 +1114,20 @@
         "export_xml": "Export data in XML format",
         "export_html": "Export data in HTML format"
     },
+    "InstanceTable": {
+        "item_history_title": "History for {type} [{instance}]",
+        "show_studies": "Display studies using this {type}"
+    },
     "ObjectiveTable": {
         "singular_title": "Objective",
         "studies_count": "Number of studies",
-        "show_studies": "Display studies using this objective"
+        "show_studies": "Display studies using this objective",
+        "item_history_title": "History for objective [{objective}]"
     },
-    "ObjectiveStudiesDialog": {
-        "title": "List of studies with a specific objective",
-        "objective_template": "Objective template:",
-        "objective_text": "Objective text:",
-        "objective_level": "Objective level",
+    "InstanceStudiesDialog": {
+        "title": "List of studies with a specific {type}",
+        "template": "{type} template:",
+        "text": "{type} text:",
         "project_id": "Project ID",
         "project_name": "Project name",
         "brand_name": "Brand name",
@@ -1102,7 +1161,9 @@
         "reactivate_success": "Endpoint reactivated",
         "add_endpoint": "Add a new endpoint from a template",
         "singular_title": "Endpoint",
-        "studies_count": "Number of studies"
+        "studies_count": "Number of studies",
+        "item_history_title": "History for endpoint [{endpoint}]",
+        "show_studies": "Show studies using this endpoint"
     },
     "EndpointForm": {
         "add_title": "Add endpoint from a template",
@@ -1123,7 +1184,9 @@
         "approve_success": "Time frame is now in Final state",
         "inactivate_success": "Time frame in-activated",
         "reactivate_success": "Time frame reactivated",
-        "singular_title": "Time frame"
+        "singular_title": "Time frame",
+        "item_history_title": "History for time frame [{timeframe}]",
+        "show_studies": "Display studies using this time frame"
     },
     "TimeframeForm": {
         "add_title": "Add time frame from a template",
@@ -1141,6 +1204,9 @@
     },
     "TimeframesView": {
         "title": "Time Frames"
+    },
+    "CriteriaView": {
+        "title": "Criteria"
     },
     "ManageStudiesView": {
         "title": "Manage Studies"
@@ -1211,7 +1277,8 @@
         "epochs": "Epochs",
         "arms_number": "Number of arms:",
         "planned_subjects": "Planned number of subjects:",
-        "study_design_class": "Study Design Class:"
+        "study_design_class": "Study Design Class:",
+        "table_caption": "Study structure overview table"
     },
     "NullFlavorSelect": {
         "label": "Reason for missing"
@@ -1322,7 +1389,8 @@
         "select_template_title": "Selected objective template",
         "select_studies": "Select studies",
         "study_objective": "Study Objective",
-        "selected_objectives": "Selected study objectives"
+        "selected_objectives": "Selected study objectives",
+        "template_not_selected": "You must select a template first"
     },
     "ParameterValueSelector": {
         "separator": "Separator",
@@ -1568,7 +1636,8 @@
         "compound_dosing": "Study Element | Dose, Frequency",
         "half_life": "Half-life (unit)",
         "lag_time": "Lag-time (unit) | SDTM Domain",
-        "compound_def": "Compound definition"
+        "compound_def": "Compound definition",
+        "table_caption": "Study interventions overview table"
     },
     "CtCatalogueTable": {
         "concept_id": "Concept ID",
@@ -1585,12 +1654,18 @@
         "remove_term": "Remove term"
     },
     "ActivityTable": {
+        "sentence_case_name": "Sentence case name",
+        "abbreviation": "Abbreviation",
+        "definition": "Definition",
+        "rationale_for_request": "Rationale for activity request",
+        "create_sponsor_from_request": "Create Sponsor Activity from Activity Request",
         "topic_code": "Topic code",
         "adam_code": "ADaM parameter code",
         "specimen": "Specimen",
         "activity_group": "Activity group",
         "activity_subgroup": "Activity subgroup",
         "activity": "Activity",
+        "activity_name": "Activity Name",
         "activities": "List of Activities",
         "sdtm_domain": "SDTM domain",
         "sdtm_variable": "SDTM variable",
@@ -1600,7 +1675,8 @@
         "instances": "Activities Instantiations",
         "instance": "Activity Instance",
         "activities_overview": "Activities by Grouping",
-        "type": "Instance type"
+        "type": "Instance type",
+        "requested": "Requested Activities"
     },
     "ActivityFormsInstantiations": {
         "select_type": "Select type",
@@ -1616,8 +1692,21 @@
         "name": "Name",
         "definition": "Definition"
     },
+    "ActivityFormsRequested": {
+        "activity_request": "Activity Request",
+        "sponsor_activity": "Sponsor Activity",
+        "confirmation": "Confirmation",
+        "abbreviation": "Abbreviation",
+        "definition": "Definition",
+        "rationale_for_request": "Rationale for activity request",
+        "requested_activity": "Requested Activity",
+        "new_sponsor_concept": "New Sponsor Activity Concept",
+        "new_concept_warning": "New Activity Concept must be approved before available for selection, and this will retire the replacing Activity Concept"
+    },
     "ActivityForms": {
         "activity_subgroup": "Activity subgroup",
+        "activity_group": "Activity group",
+        "activity_name": "Activity name",
         "name": "Instance name",
         "definition": "Definition",
         "reason_for_change": "Reason for change",
@@ -1647,7 +1736,8 @@
         "editInstance": "Edit Activity Instantiation",
         "addInstance": "Add Activity Instantiation",
         "addBasicData": "Add basic data",
-        "addAdditionalData": "Add additional data"
+        "addAdditionalData": "Add additional data",
+        "abbreviation": "Abbreviation"
     },
     "ClinicalMetadataView": {
         "title": "General Clinical Metadata",
@@ -1685,7 +1775,7 @@
         "study_title": "Study title",
         "title_label": "Study title",
         "short_title": "Short study title",
-        "title_hint": "The Title must include the name of the study intervention(s) under clinical investigation, the condition being studied, the participants included and the primary purpose, and should not be longer than 300 characters, including spaces. Two studies must not have identical titles.",
+        "title_hint": "The Title must include the name of the study intervention(s) under clinical investigation, the condition being studied, the participants included and the primary purpose, and should not be longer than 600 characters, including spaces. Two studies must not have identical titles.",
         "update_success": "Study title updated",
         "copy_title": "Use this study's title as a template",
         "short_title_hint": "The short title is used for the front page of the protocol, for participant information/informed consent forms (PI/IC) and protocol synopsis in lay language (PSLL), if applicable. The short title should be in lay language and be a maximum of 300 characters. For guidance on lay language titles please refer to the User Guide on Lay Language Titles in the PI/IC toolbox on Sharepoint."
@@ -1699,7 +1789,14 @@
         "study_design": "Study Design",
         "download": "Download",
         "loading": "Loading...",
-        "downloading": "Downoading..."
+        "downloading": "Downloading..."
+    },
+    "CtrOdmXmlVue": {
+        "title": "CTR ODM XML",
+        "download": "Download XML",
+        "downloading": "Downloading XML...",
+        "iframe_title": "Rendered CTR ODM document",
+        "loading": "Loading XML..."
     },
     "ProtocolElementsObjectiveTable": {
         "title": "Objectives and Endpoints",
@@ -1724,7 +1821,9 @@
         "add": "Add activity template",
         "add_success": "Activity template added",
         "approve_success": "Activity template is now in Final state",
-        "new_version_success": "New version created"
+        "new_version_success": "New version created",
+        "inactivate_success": "Activity template retired",
+        "reactivate_success": "Activity template reactivated"
     },
     "ActivityDescriptionTemplateForm": {
         "add_title": "Add activity template",
@@ -1735,7 +1834,8 @@
         "tpl_label": "Activity template",
         "name": "Template text",
         "activity": "Activity",
-        "update_success": "Activity template updated"
+        "update_success": "Activity template updated",
+        "add_success": "Activity template added"
     },
     "CodeListDetail": {
         "concept_id": "Concept ID",
@@ -1760,7 +1860,9 @@
         "new_attributes_version": "Create new attributes version",
         "new_attributes_version_success": "New version of attributes created",
         "approve_attributes_version": "Change status to Final",
-        "attributes_approve_success": "Attributes are now in Final state"
+        "attributes_approve_success": "Attributes are now in Final state",
+        "names_history_title": "Sponsor values history for code list [{codelist}]",
+        "attributes_history_title": "Attributes values history for code list [{codelist}]"
     },
     "CodelistSponsorValuesForm": {
         "title": "Edit Sponsor Code list",
@@ -1769,7 +1871,7 @@
         "update_success": "Sponsor values have been updated"
     },
     "CodelistTable": {
-        "history_title": "code list sponsor values",
+        "history_title": "Sponsor values history for code list [{codelist}]",
         "show_terms": "Show terms"
     },
     "CodelistAttributesForm": {
@@ -1811,8 +1913,8 @@
     "CodelistTermTable": {
         "open_sponsor_history": "Sponsor values history",
         "open_ct_history": "CT values history",
-        "history_label_name": "term sponsor values",
-        "history_label_attributes": "term CT values"
+        "history_label_name": "Sponsor values history for term [{term}]",
+        "history_label_attributes": "CT values history for term [{term}]"
     },
     "CodelistTermDetail": {
         "add_term": "Add term",
@@ -1931,14 +2033,15 @@
         "show_all_tooltip": "Reset table to show all columns"
     },
     "CrfsView": {
-        "title": "CRFs",
+        "title": "CRFs (Case Report Forms)",
         "tab1_title": "CRF Templates",
         "tab2_title": "Forms",
         "tab3_title": "Item Groups",
         "tab4_title": "Items",
         "tab5_title": "CRF Tree",
         "tab6_title": "ODM View",
-        "tab7_title": "Alias"
+        "tab7_title": "Alias",
+        "tab8_title": "Extensions"
     },
     "CrfFormTable": {
         "repeating": "Repeating",
@@ -1978,7 +2081,8 @@
         "delete_success": "Compound deleted",
         "inactivate_success": "Compound in-activated",
         "reactivate_success": "Compound reactivated",
-        "new_version_success": "New version created"
+        "new_version_success": "New version created",
+        "compound_history_title": "History for compound [{compound}]"
     },
     "CompoundOverview": {
         "sponsor_compound": "Sponsor compound",
@@ -2062,7 +2166,8 @@
         "delete_success": "Compound alias deleted",
         "inactivate_success": "Compound alias in-activated",
         "reactivate_success": "Compound alias reactivated",
-        "new_version_success": "New version created"
+        "new_version_success": "New version created",
+        "history_title": "History for compound alias [{compoundAlias}]"
     },
     "CompoundAliasForm": {
         "add_title": "Add new compound alias",
@@ -2078,13 +2183,7 @@
         "update_success": "Compound alias updated"
     },
     "CriteriaTemplatesView": {
-        "title": "Criteria Templates",
-        "inclusion_criteria": "Inclusion Criteria",
-        "exclusion_criteria": "Exclusion Criteria",
-        "randomisation_criteria": "Randomisation Criteria",
-        "withdrawal_criteria": "Withdrawal Criteria",
-        "runin_criteria": "Run-in Criteria",
-        "dosing_criteria": "Dosing Criteria"
+        "title": "Criteria Templates"
     },
     "CriteriaTemplateTable": {
         "health_status": "Health status",
@@ -2094,6 +2193,7 @@
         "criterion_sub_cat": "Criterion sub-category",
         "criterion_tpl": "Template",
         "guidance_text": "Guidance text",
+        "add": "Add",
         "edit": "Edit",
         "approve": "Approve",
         "delete": "Delete",
@@ -2194,7 +2294,9 @@
         "copy_instructions": "Find and copy criteria from the table. Use free-text search or the filters.",
         "select_studies": "Select studies",
         "add_success": "Study criteria added",
-        "add_criteria": "Add criteria"
+        "add_criteria": "Add criteria",
+        "no_template_error": "No criteria template selected",
+        "no_criteria_error": "No criteria selected"
     },
     "EligibilityCriteriaEditForm": {
         "title": "Edit Study Criteria",
@@ -2273,7 +2375,7 @@
         "study_week_number": "Study week number",
         "study_week_label": "Study week label",
         "visit_sub_name": "Visit sub name",
-        "consecutive_visit": "Consecutive visit group",
+        "collapsible_visit": "Collapsible visit group",
         "show_visit": "Show visit",
         "visit_window": "Visit window",
         "visit_win_min": "Min",
@@ -2315,21 +2417,22 @@
         "scheduled_visit": "Scheduled visit",
         "unscheduled_visit": "Unscheduled visit",
         "non_visit": "Non visit",
-        "batch_create_visits": "Batch create group of similar visits",
         "anchor_visit": "Anchor visit",
         "anchor_visit_hint": "Day 1 of the study",
         "current_anchor_visit": "Current anchor visit",
         "anchor_warning": "The visit will be the new anchor visit (day 1) and the timing of all currently defined visits recalculated based on this new anchor visit.",
         "keep_anchor": "Keep old anchor visit",
         "set_new_anchor": "Set new anchor visit",
-        "batch_create_visit_count": "Number of visit(s)",
         "no_anchor_visit": "No global anchor is defined yet",
         "global_anchor_visit": "Global anchor visit",
         "visit_duplicated": "Visit duplicated",
         "duplicate_visit": "Duplicate Study Visit",
         "visit_class": "Visit Class",
         "visit_group": "Visit group",
-        "special_visit": "Special visit"
+        "special_visit": "Special visit",
+        "existing_visits": "Existing visits",
+        "names_and_timing": "Names and timing",
+        "no_visit_available": "No visit in this epoch"
     },
     "HelpMessages": {
         "units": "Note that this table is providing the UCUM tool that allow the end user to verify and link a unit with one existing in the UCUM referential system. You just need to start entering few first letters and the UCUM engine will provide you with some suggestion. In order to keep the validated unit in the UCUM referential, just click on it in the list and the result will be kept with the corresponding unit.",
@@ -2462,7 +2565,10 @@
         "param_null": "Parameter Null Flavor",
         "param_value_code": "Parameter Value Code",
         "reference_term_name": "Name of the Reference Terminology",
-        "reference_term_version": "Version of the Reference Terminology"
+        "reference_term_version": "Version of the Reference Terminology",
+        "disease_milestone_type": "Disease Milestone Type",
+        "disease_milestone_definition": "Disease Milestone Definition",
+        "disease_milestone_rep_ind": "Disease Milestone Repetition Indicator"
     },
     "CtPackageCodelistHistoryView": {
         "title": "CT packages history for one code list"
@@ -2479,7 +2585,16 @@
         "duplicate": "Duplicate",
         "close_edit_mode": "Close edit mode",
         "global_history_title": "Study visits history",
-        "study_visit_history_title":"History for study visit [{visitUid}]"
+        "study_visit_history_title":"History for study visit [{visitUid}]",
+        "group_visit_title": "Group selected visits together",
+        "grouping_no_selection": "Please select the visits that should be grouped. Note that the visits must be similar and in consecutive order",
+        "preferred_time_unit": "Preferred time unit:",
+        "timeline_preview": "Time line preview"
+    },
+    "GroupStudyVisits": {
+        "title": "Group selected visits together",
+        "delete_title": "Delete this group",
+        "no_selection": "Please select the visits that should be grouped. Note that the visits must be similar and in consecutive order"
     },
     "StudyVisitTimeline": {
         "history": "History",
@@ -2522,7 +2637,10 @@
         "activity_list": "List of Activities",
         "detailed_flowchart": "Detailed Flowchart",
         "protocol_flowchart": "Protocol Flowchart",
-        "activity_instructions": "Activity Instructions"
+        "activity_instructions": "Activity Instructions",
+        "study_structure":"Study Structure",
+        "overview": "Overview",
+        "study_compound_dosings": "Study Compound Dosings"
     },
     "License": {
         "title": "License"
@@ -2610,7 +2728,9 @@
         "batch_edit_no_selection": "Select the items (rows) in scope for Batch Editing. Use the Select rows switch button to activate the row-selection boxes. Then select the rows in scope for the editing. You can batch select rows by using search or filters to zoom in on the relevant rows and then select all by using the tick-box in the header row.",
         "edit_activity_selection": "Batch edit selected rows",
         "global_history_title": "Study activities history",
-        "study_activity_history_title": "History for study activity [{studyActivityUid}]"
+        "study_activity_history_title": "History for study activity [{studyActivityUid}]",
+        "update_activity_request": "Update to approved activity",
+        "update_success": "Study activity updated"
     },
     "StudyActivity": {
         "activity_group": "Activity group",
@@ -2629,7 +2749,7 @@
         "flowchart_group_title": "Select flowchart group",
         "select_from_studies": "Select from studies",
         "select_from_library": "Select from library",
-        "create_placeholder": "Create placeholder",
+        "create_placeholder_for_activity": "Create placeholder for new Activity Request",
         "flowchart_group": "Flowchart group",
         "selected_activities": "Selected activities",
         "copy_activity_instructions": "Find and copy activities from the table. Use free-text search or filters.",
@@ -2637,7 +2757,8 @@
         "study_id": "Study ID",
         "select_studies": "Select studies",
         "copy_activity": "Copy activity",
-        "copy_all_activities": "Copy all displayed activities"
+        "copy_all_activities": "Copy all displayed activities",
+        "create_placeholder": "Create Placeholder"
     },
     "StudyActivityEditForm": {
         "title": "Edit study activity",
@@ -2668,7 +2789,9 @@
         "study_visits": "Study Visits",
         "batch_edit_no_selection": "Select the items (rows) in scope for Batch Editing.",
         "hide_flowchart_groups": "Hide flowchart groups",
-        "edit_dialog_title": "Do you want to edit"
+        "edit_dialog_title": "Do you want to edit",
+        "table_caption": "Flowchart table",
+        "confirm_group_deletion": "Collapsible visit group {group} will be deleted"
     },
     "StudyActivityInstructionTable": {
         "activities": "Activities",
@@ -2677,7 +2800,8 @@
         "confirm_delete": "The study activity instruction '{instruction}' will be removed",
         "delete_success": "Study activity instruction deleted",
         "batch_no_selection": "Select the items (rows) in scope for Batch Creation.",
-        "open_batch_form": "Open batch creation form"
+        "open_batch_form": "Open batch creation form",
+        "table_caption": "Study activity instruction table"
     },
     "StudySelectionTable": {
         "select_studies": "Select studies",
@@ -2898,7 +3022,8 @@
         "delete_warning_1": "This Form is used in",
         "delete_warning_2": "Templates. Are you sure you want to delete it?",
         "impl_notes": "Implementation Notes",
-        "compl_instructions": "Completion Instructions"
+        "compl_instructions": "Completion Instructions",
+        "vendor_extensions": "Vendor Extensions"
     },
     "CRFItemGroups": {
         "add_group": "Add CRF Item Group",
@@ -2931,6 +3056,7 @@
         "alias_created": "Alias created",
         "displayed_text": "Displayed text",
         "help_for_site": "Help for site",
+        "help_for_sponsor": "Implementation notes",
         "delete_warning_1": "This Item Group is used in",
         "delete_warning_2": "Forms. Are you sure you want to delete it?",
         "impl_notes": "Implementation Notes",
@@ -2951,6 +3077,8 @@
         "comment": "Comment",
         "item_details": "Item",
         "alias_details": "Alias",
+        "context": "Context",
+        "aliases": "Aliases",
         "desc_details": "Translations",
         "codelist_details": "Code list",
         "unit_details": "Unit",
@@ -2972,7 +3100,9 @@
         "delete_warning_2": "Item Groups. Are you sure you want to delete it?",
         "impl_notes": "Implementation Notes",
         "compl_instructions": "Completion Instructions",
-        "item_history_title": "History for item [{itemUid}]"
+        "item_history_title": "History for item [{itemUid}]",
+        "sponsor_pref_name": "Sponsor preferred name",
+        "displayed_name": "Displayed name"
     },
     "StudyBranchArms": {
         "no_data": "No data available - Create Study Arm first",
@@ -3038,6 +3168,7 @@
         "add_template": "Add Template",
         "edit_template": "Edit Template",
         "crf_template": "CRF Template",
+        "name": "Name",
         "oid": "OID",
         "effective_date": "Effective",
         "retired_date": "Obsolete",
@@ -3071,10 +3202,13 @@
         "def_attr": "Definition attributes",
         "preview_odm": "Preview ODM",
         "go_to_def": "Go to definition",
+        "open_def": "Open definition",
         "expand": "Expand All",
         "entry_required": "Data Entry Required",
         "data_type": " Data Type",
-        "impl_notes":"Implementation Notes"
+        "impl_notes":"Implementation Notes",
+        "edit_reference": "Edit reference attributes",
+        "approve_all": "Approve all"
     },
     "CrfConditionForm": {
         "set_condition": "Set a Condition",
@@ -3097,6 +3231,7 @@
         "add_alias": "Add Alias",
         "edit_alias": "Edit Alias",
         "oid": "OID",
+        "name":"Name",
         "context": "Context",
         "delete_approve": "Are you sure to delete this Alias?"
     },
@@ -3137,5 +3272,53 @@
         "warning_1": "You are about to change a property that will affect ",
         "warning_forms": " other forms. Are you sure you want to continue?",
         "warning_templ": " other templates. Are you sure you want to continue?"
+    },
+    "CrfExtensions": {
+        "attr_name": "Attribute Name",
+        "data_type": "Data Type",
+        "parent": "Parent",
+        "new_attr": "New Attribute",
+        "edit_attr": "Edit Attribute",
+        "ele_name": "Element Name",
+        "related_attr": "Related Attributes",
+        "add_existing_attr": "Add Existing Attribute",
+        "add_new_attr": "Add New Attribute",
+        "new_ele": "New Element",
+        "edit_ele": "Edit Element",
+        "prefix": "Prefix",
+        "url": "URL",
+        "namespace": "Namespace",
+        "new_namespace": "New Namespace",
+        "edit_namespace": "Edit Namespace",
+        "delete_namespace": "Delete Namespace",
+        "element": "Element",
+        "elements": "Elements",
+        "attribute": "Attribute",
+        "attributes": "Attributes",
+        "extension": "Extension: ",
+        "edit_extension": "Edit extension",
+        "regex_expression": "Regex Expression"
+    },
+    "DiseaseMilestone": {
+        "disease_milestone_type": "Type",
+        "repetition_indicator": "Repetition indicator"
+    },
+    "DiseaseMilestoneTable": {
+        "confirm_delete": "The disease milestone '{name}' will be deleted",
+        "delete_success": "Disease milestone deleted",
+        "global_history_title": "Study disease milestones history",
+        "item_history_title": "History for disease milestone [{uid}]"
+    },
+    "DiseaseMilestoneForm": {
+        "add_title": "Add disease milestone",
+        "edit_title": "Edit disease milestone",
+        "add_success": "Disease milestone added",
+        "update_success": "Disease milestone updated"
+    },
+    "CollapsibleVisitGroupForm": {
+        "title": "Add collapsible visit group",
+        "warning": "Automatic creation of a new collapsible visit group failed because selected visits differ in some say. You can still force creation by selecting a visit to act as a template to overwrite the other ones.",
+        "visit_template": "Select a template",
+        "creation_success": "Collapsible visit group created"
     }
 }

@@ -270,7 +270,7 @@ def create_odm_formal_expression_version(uid: str = OdmFormalExpressionUID):
 
 
 @router.post(
-    "/{uid}/approve",
+    "/{uid}/approvals",
     summary="Approve draft version of ODM Formal Expression",
     description="",
     response_model=OdmFormalExpression,
@@ -295,14 +295,14 @@ def approve_odm_formal_expression(uid: str = OdmFormalExpressionUID):
     return odm_formal_expression_service.approve(uid=uid)
 
 
-@router.post(
-    "/{uid}/inactivate",
+@router.delete(
+    "/{uid}/activations",
     summary=" Inactivate final version of ODM Formal Expression",
     description="",
     response_model=OdmFormalExpression,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -321,13 +321,13 @@ def inactivate_odm_formal_expression(uid: str = OdmFormalExpressionUID):
 
 
 @router.post(
-    "/{uid}/reactivate",
+    "/{uid}/activations",
     summary="Reactivate retired version of a ODM Formal Expression",
     description="",
     response_model=OdmFormalExpression,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"

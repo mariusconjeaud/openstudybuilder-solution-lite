@@ -6,10 +6,10 @@
     item-key="uid"
     sort-by="name"
     sort-desc
+    has-api
     :options.sync="options"
     :server-items-length="total"
     @filter="getItemGroups"
-    has-api
     column-data-resource="concepts/odms/item-groups"
     export-data-url="concepts/odms/item-groups"
     export-object-label="CRFItemGroups"
@@ -73,13 +73,16 @@
     >
     <crf-item-group-form
       @close="closeForm"
-      :editItem="editItem"
+      @newVersion="newVersion"
+      @approve="approve"
+      :selectedGroup="selectedGroup"
       class="fullscreen-dialog"
-      :readOnlyProp="editItem.status === 'Final'"
+      :readOnlyProp="selectedGroup && selectedGroup.status === constants.FINAL"
       />
   </v-dialog>
   <v-dialog
     v-model="showGroupHistory"
+    @keydown.esc="closeGroupHistory"
     persistent
     max-width="1200px"
     >
@@ -96,6 +99,7 @@
     :item-to-link="selectedGroup"
     item-type="itemGroup" />
   <v-dialog v-model="showRelations"
+            @keydown.esc="closeRelationsTree()"
             max-width="800px"
             persistent>
     <odm-references-tree
@@ -121,6 +125,8 @@ import OdmReferencesTree from '@/components/library/OdmReferencesTree.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import crfTypes from '@/constants/crfTypes'
 import parameters from '@/constants/parameters'
+import { mapGetters } from 'vuex'
+import _isEmpty from 'lodash/isEmpty'
 
 export default {
   components: {
@@ -137,6 +143,10 @@ export default {
     elementProp: Object
   },
   computed: {
+    ...mapGetters({
+      itemGroups: 'crfs/itemGroups',
+      total: 'crfs/totalItemGroups'
+    }),
     groupHistoryTitle () {
       if (this.selectedGroup) {
         return this.$t(
@@ -228,9 +238,6 @@ export default {
       selectedGroup: null,
       options: {},
       filters: '',
-      total: 0,
-      itemGroups: [],
-      editItem: {},
       showGroupHistory: false,
       linkForm: false,
       showRelations: false,
@@ -238,9 +245,13 @@ export default {
     }
   },
   mounted () {
+    this.getItemGroups()
     if (this.elementProp.tab === 'item-groups' && this.elementProp.type === crfTypes.ITEM_GROUP && this.elementProp.uid) {
       this.edit({ uid: this.elementProp.uid })
     }
+  },
+  created () {
+    this.constants = constants
   },
   methods: {
     getDescription (item) {
@@ -265,11 +276,6 @@ export default {
       this.selectedGroup = null
       this.showRelations = false
     },
-    approve (item) {
-      crfs.approve('item-groups', item.uid).then((resp) => {
-        this.getItemGroups()
-      })
-    },
     async delete (item) {
       let relationships = 0
       await crfs.getGroupRelationship(item.uid).then(resp => {
@@ -292,31 +298,40 @@ export default {
         })
       }
     },
+    approve (item) {
+      crfs.approve('item-groups', item.uid).then((resp) => {
+        this.$emit('updateItemGroup', { type: crfTypes.GROUP, element: resp.data })
+        this.getItemGroups()
+      })
+    },
     inactivate (item) {
       crfs.inactivate('item-groups', item.uid).then((resp) => {
+        this.$emit('updateItemGroup', { type: crfTypes.GROUP, element: resp.data })
         this.getItemGroups()
       })
     },
     reactivate (item) {
       crfs.reactivate('item-groups', item.uid).then((resp) => {
+        this.$emit('updateItemGroup', { type: crfTypes.GROUP, element: resp.data })
         this.getItemGroups()
       })
     },
     newVersion (item) {
       crfs.newVersion('item-groups', item.uid).then((resp) => {
+        this.$emit('updateItemGroup', { type: crfTypes.GROUP, element: resp.data })
         this.getItemGroups()
       })
     },
     edit (item) {
       crfs.getItemGroup(item.uid).then((resp) => {
-        this.editItem = resp.data
+        this.selectedGroup = resp.data
         this.showForm = true
         this.$emit('clearUid')
       })
     },
     view (item) {
       crfs.getItemGroup(item.uid).then((resp) => {
-        this.editItem = resp.data
+        this.selectedGroup = resp.data
         this.showForm = true
       })
     },
@@ -330,12 +345,17 @@ export default {
       this.showGroupHistory = true
     },
     closeGroupHistory () {
-      this.selectedGroup = {}
+      this.selectedGroup = null
       this.showGroupHistory = false
     },
-    closeForm () {
+    async closeForm () {
+      if (!_isEmpty(this.selectedGroup)) {
+        await crfs.getItemGroup(this.selectedGroup.uid).then((resp) => {
+          this.$emit('updateItemGroup', { type: crfTypes.GROUP, element: resp.data })
+        })
+      }
       this.showForm = false
-      this.editItem = {}
+      this.selectedGroup = null
       this.getItemGroups()
     },
     openLinkForm (item) {
@@ -344,16 +364,16 @@ export default {
     },
     closeLinkForm () {
       this.linkForm = false
-      this.selectedGroup = {}
+      this.selectedGroup = null
       this.getItemGroups()
     },
     getItemGroups (filters, sort, filtersUpdated) {
+      if (filters) {
+        this.filters = filters
+      }
       const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
-      crfs.get('item-groups', { params }).then((resp) => {
-        this.itemGroups = resp.data.items
-        this.total = resp.data.total
-      })
+        this.options, this.filters, sort, filtersUpdated)
+      this.$store.dispatch('crfs/fetchItemGroups', params)
     }
   },
   watch: {

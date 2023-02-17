@@ -95,6 +95,7 @@
     />
   <v-dialog
     v-model="showArmHistory"
+    @keydown.esc="closeArmHistory"
     persistent
     max-width="1200px"
     >

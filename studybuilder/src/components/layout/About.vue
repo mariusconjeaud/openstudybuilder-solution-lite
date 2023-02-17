@@ -15,11 +15,11 @@
       <v-simple-table>
         <thead>
           <tr>
-            <th>{{ $t('About.component') }}</th>
-            <th>{{ $t('About.description') }}</th>
-            <th>{{ $t('About.build_number') }}</th>
-            <th>{{ $t('About.license') }}</th>
-            <th>{{ $t('About.sbom') }}</th>
+            <th id="component">{{ $t('About.component') }}</th>
+            <th id="description">{{ $t('About.description') }}</th>
+            <th id="build_number">{{ $t('About.build_number') }}</th>
+            <th id="license">{{ $t('About.license') }}</th>
+            <th id="sbom">{{ $t('About.sbom') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -28,14 +28,14 @@
             <td>{{ component.description }}</td>
             <td>{{ component.build_number }}</td>
             <td>
-                <v-btn v-if="component.license_md" text @click="showLicenseText(component.license_md, component.name)">
-                  {{ $t('_global.view') }}
-                </v-btn>
+              <v-btn v-if="component.component" text @click="showLicenseText(component.component, component.name, 'license')">
+                {{ $t('_global.view') }}
+              </v-btn>
             </td>
             <td>
-                <v-btn v-if="component.sbom_md" text @click="showLicenseText(component.sbom_md, component.name)">
-                  {{ $t('_global.view') }}
-                </v-btn>
+              <v-btn v-if="component.component" text @click="showLicenseText(component.component, component.name, 'sbom')">
+                {{ $t('_global.view') }}
+              </v-btn>
             </td>
           </tr>
         </tbody>
@@ -48,113 +48,39 @@
 </template>
 
 <script>
-import system from '@/api/system'
-import axios from 'axios'
 import AboutLicense from './AboutLicense.vue'
-
-const sboms = {}
-const licenses = {}
-let url = ''
-if (process.env.NODE_ENV === 'development') {
-  url = '/'
-} else {
-  url = `https://${location.host}/`
-}
-try {
-  axios.get(url + 'LICENSE-studybuilder.md').then(resp => {
-    licenses.studyBuilder = resp.data
-  })
-} catch (err) {}
-try {
-  axios.get(url + 'sbom-studybuilder.md').then(resp => {
-    sboms.studyBuilder = resp.data
-  })
-} catch (err) {}
-try {
-  axios.get(url + 'sbom-documentation-portal.md').then(resp => {
-    sboms.documentation = resp.data
-  })
-} catch (err) {}
-try {
-  axios.get(url + 'LICENSE-documentation-portal.md').then(resp => {
-    licenses.documentation = resp.data
-  })
-} catch (err) {}
-try {
-  axios.get(url + 'sbom-clinical-mdr-api.md').then(resp => {
-    sboms.api = resp.data
-  })
-} catch (err) {}
-try {
-  axios.get(url + 'LICENSE-clinical-mdr-api.md').then(resp => {
-    licenses.api = resp.data
-  })
-} catch (err) {}
-try {
-  axios.get(url + 'sbom-data-import.md').then(resp => {
-    sboms.dataImport = resp.data
-  })
-} catch (err) {}
-try {
-  axios.get(url + 'LICENSE-data-import.md').then(resp => {
-    licenses.dataImport = resp.data
-  })
-} catch (err) {}
-try {
-  axios.get(url + 'sbom-mdr-standards-import.md').then(resp => {
-    sboms.standardsImport = resp.data
-  })
-} catch (err) {}
-try {
-  axios.get(url + 'LICENSE-mdr-standards-import.md').then(resp => {
-    licenses.standardsImport = resp.data
-  })
-} catch (err) {}
-try {
-  axios.get(url + 'sbom-neo4j-mdr-db.md').then(resp => {
-    sboms.mdrDb = resp.data
-  })
-} catch (err) {}
-try {
-  axios.get(url + 'LICENSE-neo4j-mdr-db.md').then(resp => {
-    licenses.mdrDb = resp.data
-  })
-} catch (err) {}
+import axios from 'axios'
+import system from '@/api/system'
 
 export default {
-  beforeCreate () {
-    this.licenses = licenses
-    this.sboms = sboms
-  },
   components: {
     AboutLicense
   },
   data () {
     return {
+      licenses: {},
       licenseText: null,
       licenseTitle: '',
+      sboms: {},
       showLicense: false,
       sbComponents: [
         {
           name: this.$t('About.studybuilder'),
           description: this.$t('About.studybuilder_description'),
           build_number: this.$config.FRONTEND_BUILD_NUMBER,
-          license_md: this.licenses.studyBuilder,
-          sbom_md: this.sboms.studyBuilder
+          component: 'studybuilder'
         },
         {
           name: this.$t('About.documentation-portal'),
           description: this.$t('About.documentation-portal_description'),
           build_number: this.$config.DOCUMENTATION_PORTAL_BUILD_NUMBER,
-          license_md: this.licenses.documentation,
-          sbom_md: this.sboms.documentation
+          component: 'documentation_portal'
         },
         {
           name: this.$t('About.clinical-mdr-api'),
           description: this.$t('About.clinical-mdr-api_description'),
           build_number: this.$config.API_BUILD_NUMBER,
-          license_md: this.licenses.api,
-          sbom_md: this.sboms.api
+          component: 'clinical-mdr-api'
         },
         {
           name: this.$t('About.database'),
@@ -164,22 +90,19 @@ export default {
           name: this.$t('About.data-import'),
           description: this.$t('About.data-import_description'),
           build_number: this.$config.DATA_IMPORT_BUILD_NUMBER,
-          license_md: this.licenses.dataImport,
-          sbom_md: this.sboms.dataImport
+          component: 'data-import'
         },
         {
           name: this.$t('About.mdr-standards-import'),
           description: this.$t('About.mdr-standards-import_description'),
           build_number: this.$config.STANDARDS_IMPORT_BUILD_NUMBER,
-          license_md: this.licenses.standardsImport,
-          sbom_md: this.sboms.standardsImport
+          component: 'mdr-standards-import'
         },
         {
           name: this.$t('About.neo4j-mdr-db'),
           description: this.$t('About.neo4j-mdr-db_description'),
           build_number: this.$config.NEO4J_MDR_BUILD_NUMBER,
-          license_md: this.licenses.mdrDb,
-          sbom_md: this.sboms.mdrDb
+          component: 'neo4j-mdr-db'
         }
       ]
     }
@@ -188,10 +111,24 @@ export default {
     system.getInformation().then(response => {
       this.$set(this.sbComponents[3], 'build_number', response.data.db_version)
     })
+    this.fetchFiles()
   },
   methods: {
-    showLicenseText (text, title) {
-      this.licenseText = text
+    async fetchFiles () {
+      const components = [
+        'studybuilder', 'documentation-portal', 'clinical-mdr-api', 'data-import', 'mdr-standards-import',
+        'neo4j-mdr-db'
+      ]
+      const url = (process.env.NODE_ENV === 'development') ? '' : `https://${location.host}`
+      for (const component of components) {
+        const license = await axios.get(`${url}/LICENSE-${component}.md`)
+        this.$set(this.licenses, component, license.data)
+        const sbom = await axios.get(`${url}/sbom-${component}.md`)
+        this.$set(this.sboms, component, sbom.data)
+      }
+    },
+    showLicenseText (component, title, type) {
+      this.licenseText = (type === 'license') ? this.licenses[component] : this.sboms[component]
       this.showLicense = true
       this.licenseTitle = title
     }

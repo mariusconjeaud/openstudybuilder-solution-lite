@@ -9,35 +9,39 @@
     </div>
 
     <v-tabs v-model="tab">
-      <v-tab href="#templates">{{ $t("CrfsView.tab1_title") }}</v-tab>
-      <v-tab href="#forms">{{ $t("CrfsView.tab2_title") }}</v-tab>
-      <v-tab href="#item-groups">{{ $t("CrfsView.tab3_title") }}</v-tab>
-      <v-tab href="#items">{{ $t("CrfsView.tab4_title") }}</v-tab>
+      <v-tab href="#templates"><v-icon color="crfTemplate" class="mr-1">mdi-alpha-t-circle</v-icon>{{ $t("CrfsView.tab1_title") }}</v-tab>
+      <v-tab href="#forms"><v-icon color="crfForm" class="mr-1">mdi-alpha-f-circle</v-icon>{{ $t("CrfsView.tab2_title") }}</v-tab>
+      <v-tab href="#item-groups"><v-icon color="crfGroup" class="mr-1">mdi-alpha-g-circle</v-icon>{{ $t("CrfsView.tab3_title") }}</v-tab>
+      <v-tab href="#items"><v-icon color="crfItem" class="mr-1">mdi-alpha-i-circle</v-icon>{{ $t("CrfsView.tab4_title") }}</v-tab>
       <v-tab href="#crf-tree">{{ $t("CrfsView.tab5_title") }}</v-tab>
       <v-tab href="#odm-viewer">{{ $t("CrfsView.tab6_title") }}</v-tab>
       <v-tab href="#alias">{{ $t("CrfsView.tab7_title") }}</v-tab>
+      <v-tab href="#extensions">{{ $t("CrfsView.tab8_title") }}</v-tab>
     </v-tabs>
     <v-tabs-items v-model="tab">
       <v-tab-item id="templates">
         <crf-template-table :elementProp="{uid: uid, type: type, tab: tab}" @clearUid="clearUid"/>
       </v-tab-item>
       <v-tab-item id="forms">
-        <crf-form-table :elementProp="{uid: uid, type: type, tab: tab}" @clearUid="clearUid"/>
+        <crf-form-table :elementProp="{uid: uid, type: type, tab: tab}" @clearUid="clearUid" @updateForm="updateElement"/>
       </v-tab-item>
       <v-tab-item id="item-groups">
-        <crf-item-group-table :elementProp="{uid: uid, type: type, tab: tab}" @clearUid="clearUid"/>
+        <crf-item-group-table :elementProp="{uid: uid, type: type, tab: tab}" @clearUid="clearUid" @updateItemGroup="updateElement"/>
       </v-tab-item>
       <v-tab-item id="items">
-        <crf-item-table :elementProp="{uid: uid, type: type, tab: tab}" @clearUid="clearUid"/>
+        <crf-item-table :elementProp="{uid: uid, type: type, tab: tab}" @clearUid="clearUid" @updateItem="updateElement"/>
       </v-tab-item>
       <v-tab-item id="crf-tree">
-        <crf-tree :refresh="tab" @redirectToPage="redirectToPage"/>
+        <crf-tree :refresh="tab" @redirectToPage="redirectToPage" :updatedElement="updatedElement"/>
       </v-tab-item>
       <v-tab-item id="odm-viewer">
-        <odm-viewer :elementProp="uid"/>
+        <odm-viewer :elementProp="uid" @clearUid="clearUid" :refresh="tab"/>
       </v-tab-item>
       <v-tab-item id="alias">
         <crf-alias-table/>
+      </v-tab-item>
+      <v-tab-item id="extensions">
+        <crf-extensions-table/>
       </v-tab-item>
     </v-tabs-items>
 </div>
@@ -52,6 +56,7 @@ import CrfItemTable from '@/components/library/CrfItemTable'
 import CrfTree from '@/components/library/CrfTree'
 import OdmViewer from '@/components/library/OdmViewer'
 import CrfAliasTable from '@/components/library/CrfAliasTable'
+import CrfExtensionsTable from '@/components/library/CrfExtensionsTable'
 
 export default {
   components: {
@@ -62,13 +67,15 @@ export default {
     CrfItemTable,
     CrfTree,
     OdmViewer,
-    CrfAliasTable
+    CrfAliasTable,
+    CrfExtensionsTable
   },
   data () {
     return {
       tab: 1,
       type: '',
-      uid: ''
+      uid: '',
+      updatedElement: {}
     }
   },
   mounted () {
@@ -85,6 +92,9 @@ export default {
     clearUid () {
       this.uid = null
       this.type = null
+    },
+    updateElement (element) {
+      this.updatedElement = element
     }
   },
   watch: {

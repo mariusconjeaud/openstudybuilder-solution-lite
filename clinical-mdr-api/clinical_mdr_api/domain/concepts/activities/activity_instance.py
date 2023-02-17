@@ -93,38 +93,38 @@ class ActivityInstanceVO(ConceptVO):
 
         if activity_exists_by_name_callback(self.name) and self.name != previous_name:
             raise ValueError(
-                f"{self.__class__.__name__} with name ({self.name}) already exists"
+                f"{type(self).__name__} with name ({self.name}) already exists"
             )
 
         for activity in self.activity_uids:
             if not activity_hierarchy_exists_by_uid_callback(activity):
                 raise ValueError(
-                    f"{self.__class__.__name__} tried to connect to non existing Activity identified by uid ({activity})"
+                    f"{type(self).__name__} tried to connect to non existing Activity identified by uid ({activity})"
                 )
 
         if self.sdtm_variable_uid is not None and not ct_term_exists_callback(
             self.sdtm_variable_uid
         ):
             raise ValueError(
-                f"{self.__class__.__name__} tried to connect to non existing sdtm variable identified by uid ({self.sdtm_variable_uid})"
+                f"{type(self).__name__} tried to connect to non existing sdtm variable identified by uid ({self.sdtm_variable_uid})"
             )
         if self.sdtm_subcat_uid is not None and not ct_term_exists_callback(
             self.sdtm_subcat_uid
         ):
             raise ValueError(
-                f"{self.__class__.__name__} tried to connect to non existing sdtm subcat identified by uid ({self.sdtm_subcat_uid})"
+                f"{type(self).__name__} tried to connect to non existing sdtm subcat identified by uid ({self.sdtm_subcat_uid})"
             )
         if self.sdtm_cat_uid is not None and not ct_term_exists_callback(
             self.sdtm_cat_uid
         ):
             raise ValueError(
-                f"{self.__class__.__name__} tried to connect to non existing sdtm cat identified by uid ({self.sdtm_cat_uid})"
+                f"{type(self).__name__} tried to connect to non existing sdtm cat identified by uid ({self.sdtm_cat_uid})"
             )
         if self.sdtm_domain_uid is not None and not ct_term_exists_callback(
             self.sdtm_domain_uid
         ):
             raise ValueError(
-                f"{self.__class__.__name__} tried to connect to non existing sdtm domain identified by uid ({self.sdtm_domain_uid})"
+                f"{type(self).__name__} tried to connect to non existing sdtm domain identified by uid ({self.sdtm_domain_uid})"
             )
 
 

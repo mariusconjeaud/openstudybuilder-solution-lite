@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Sequence
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
@@ -14,7 +14,7 @@ from clinical_mdr_api.models import (
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.odm_common_models import (
     OdmElementWithParentUid,
-    OdmXmlExtensionRelationPostInput,
+    OdmVendorRelationPostInput,
 )
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -115,7 +115,7 @@ def get_distinct_values_for_header(
     "/templates",
     summary="Get all ODM Forms that belongs to an ODM Template",
     description="",
-    response_model=Sequence[OdmElementWithParentUid],
+    response_model=List[OdmElementWithParentUid],
     status_code=200,
     responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
 )
@@ -280,7 +280,7 @@ def create_odm_form_version(uid: str = OdmFormUID):
 
 
 @router.post(
-    "/{uid}/approve",
+    "/{uid}/approvals",
     summary="Approve draft version of ODM Form",
     description="",
     response_model=OdmForm,
@@ -305,14 +305,14 @@ def approve_odm_form(uid: str = OdmFormUID):
     return odm_form_service.approve(uid=uid)
 
 
-@router.post(
-    "/{uid}/inactivate",
+@router.delete(
+    "/{uid}/activations",
     summary=" Inactivate final version of ODM Form",
     description="",
     response_model=OdmForm,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -331,13 +331,13 @@ def inactivate_odm_form(uid: str = OdmFormUID):
 
 
 @router.post(
-    "/{uid}/reactivate",
+    "/{uid}/activations",
     summary="Reactivate retired version of a ODM Form",
     description="",
     response_model=OdmForm,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -382,7 +382,7 @@ def add_activity_groups_to_odm_form(
         False,
         description="If true, all existing activity group relationships will be replaced with the provided activity group relationships.",
     ),
-    odm_form_activity_group_post_input: Sequence[OdmFormActivityGroupPostInput] = Body(
+    odm_form_activity_group_post_input: List[OdmFormActivityGroupPostInput] = Body(
         None, description=""
     ),
 ):
@@ -421,7 +421,7 @@ def add_item_groups_to_odm_form(
         False,
         description="If true, all existing item group relationships will be replaced with the provided item group relationships.",
     ),
-    odm_form_item_group_post_input: Sequence[OdmFormItemGroupPostInput] = Body(
+    odm_form_item_group_post_input: List[OdmFormItemGroupPostInput] = Body(
         None, description=""
     ),
 ):
@@ -434,14 +434,14 @@ def add_item_groups_to_odm_form(
 
 
 @router.post(
-    "/{uid}/xml-extension-tags",
-    summary="Adds xml extension tags to the ODM Form.",
+    "/{uid}/vendor-elements",
+    summary="Adds ODM Vendor Elements to the ODM Form.",
     description="",
     response_model=OdmForm,
     status_code=201,
     responses={
         201: {
-            "description": "Created - The xml extension tags were successfully added to the ODM Form."
+            "description": "Created - The ODM Vendor Elements were successfully added to the ODM Form."
         },
         403: {
             "model": ErrorResponse,
@@ -449,38 +449,38 @@ def add_item_groups_to_odm_form(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The xml extension tags with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Vendor Elements with the specified 'uid' wasn't found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
-def add_xml_extension_tags_to_odm_form(
+def add_vendor_elements_to_odm_form(
     uid: str = OdmFormUID,
     override: bool = Query(
         False,
-        description="If true, all existing xml extension tag relationships will be replaced with the provided xml extension tag relationships.",
+        description="If true, all existing ODM Vendor Element relationships will be replaced with the provided ODM Vendor Element relationships.",
     ),
-    odm_xml_extension_relation_post_input: Sequence[
-        OdmXmlExtensionRelationPostInput
-    ] = Body(None, description=""),
+    odm_vendor_relation_post_input: List[OdmVendorRelationPostInput] = Body(
+        None, description=""
+    ),
 ):
     odm_form_service = OdmFormService()
-    return odm_form_service.add_xml_extension_tags(
+    return odm_form_service.add_vendor_elements(
         uid=uid,
-        odm_xml_extension_relation_post_input=odm_xml_extension_relation_post_input,
+        odm_vendor_relation_post_input=odm_vendor_relation_post_input,
         override=override,
     )
 
 
 @router.post(
-    "/{uid}/xml-extension-attributes",
-    summary="Adds xml extension attributes to the ODM Form.",
+    "/{uid}/vendor-attributes",
+    summary="Adds ODM Vendor Attributes to the ODM Form.",
     description="",
     response_model=OdmForm,
     status_code=201,
     responses={
         201: {
-            "description": "Created - The xml extension attributes were successfully added to the ODM Form."
+            "description": "Created - The ODM Vendor Attributes were successfully added to the ODM Form."
         },
         403: {
             "model": ErrorResponse,
@@ -488,39 +488,39 @@ def add_xml_extension_tags_to_odm_form(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The xml extension attributes with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Vendor Attributes with the specified 'uid' wasn't found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
-def add_xml_extension_attributes_to_odm_form(
+def add_vendor_attributes_to_odm_form(
     uid: str = OdmFormUID,
     override: bool = Query(
         False,
-        description="""If true, all existing xml extension attribute relationships will
-        be replaced with the provided xml extension attribute relationships.""",
+        description="""If true, all existing ODM Vendor Attribute relationships will
+        be replaced with the provided ODM Vendor Attribute relationships.""",
     ),
-    odm_xml_extension_relation_post_input: Sequence[
-        OdmXmlExtensionRelationPostInput
-    ] = Body(None, description=""),
+    odm_vendor_relation_post_input: List[OdmVendorRelationPostInput] = Body(
+        None, description=""
+    ),
 ):
     odm_form_service = OdmFormService()
-    return odm_form_service.add_xml_extension_attributes(
+    return odm_form_service.add_vendor_attributes(
         uid=uid,
-        odm_xml_extension_relation_post_input=odm_xml_extension_relation_post_input,
+        odm_vendor_relation_post_input=odm_vendor_relation_post_input,
         override=override,
     )
 
 
 @router.post(
-    "/{uid}/xml-extension-tag-attributes",
-    summary="Adds xml extension tag attributes to the ODM Form.",
+    "/{uid}/vendor-element-attributes",
+    summary="Adds ODM Vendor Element attributes to the ODM Form.",
     description="",
     response_model=OdmForm,
     status_code=201,
     responses={
         201: {
-            "description": "Created - The xml extension tag attributes were successfully added to the ODM Form."
+            "description": "Created - The ODM Vendor Element attributes were successfully added to the ODM Form."
         },
         403: {
             "model": ErrorResponse,
@@ -528,26 +528,26 @@ def add_xml_extension_attributes_to_odm_form(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The xml extension tag attributes with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Vendor Element attributes with the specified 'uid' wasn't found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
-def add_xml_extension_tag_attributes_to_odm_form(
+def add_vendor_element_attributes_to_odm_form(
     uid: str = OdmFormUID,
     override: bool = Query(
         False,
-        description="""If true, all existing xml extension tag attribute relationships
-        will be replaced with the provided xml extension tag attribute relationships.""",
+        description="""If true, all existing ODM Vendor Element attribute relationships
+        will be replaced with the provided ODM Vendor Element attribute relationships.""",
     ),
-    odm_xml_extension_relation_post_input: Sequence[
-        OdmXmlExtensionRelationPostInput
-    ] = Body(None, description=""),
+    odm_vendor_relation_post_input: List[OdmVendorRelationPostInput] = Body(
+        None, description=""
+    ),
 ):
     odm_form_service = OdmFormService()
-    return odm_form_service.add_xml_extension_tag_attributes(
+    return odm_form_service.add_vendor_element_attributes(
         uid=uid,
-        odm_xml_extension_relation_post_input=odm_xml_extension_relation_post_input,
+        odm_vendor_relation_post_input=odm_vendor_relation_post_input,
         override=override,
     )
 

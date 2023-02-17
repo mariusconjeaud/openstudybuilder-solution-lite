@@ -8,6 +8,7 @@
     <v-tab href="#activities">{{ $t('ActivityTable.activities') }}</v-tab>
     <v-tab href="#activity-groups">{{ $t('ActivityTable.activities_overview') }}</v-tab>
     <v-tab href="#activity-instances">{{ $t('ActivityTable.instances') }}</v-tab>
+    <v-tab href="#requested-activities">{{ $t('ActivityTable.requested') }}</v-tab>
   </v-tabs>
   <v-tabs-items v-model="tab">
     <v-tab-item id="activities">
@@ -21,6 +22,10 @@
     <v-tab-item id="activity-instances">
       <activities-table
         source="activity-instances"/>
+    </v-tab-item>
+    <v-tab-item id="requested-activities">
+      <activities-table
+        source="activities" requested/>
     </v-tab-item>
   </v-tabs-items>
 </div>

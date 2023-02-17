@@ -3,7 +3,7 @@ from mdr_standards_import.cdisc_ct.entities.inconsistency import Inconsistency
 from mdr_standards_import.cdisc_ct.entities.term import Term
 from mdr_standards_import.cdisc_ct.entities.codelist import Codelist
 from mdr_standards_import.cdisc_ct.entities.package import Package
-from mdr_standards_import.cdisc_ct.utils import are_sets_equal
+from mdr_standards_import.cdisc_ct.utils import are_sets_equal, make_uid_from_concept_and_submval
 
 
 class CTImport:
@@ -48,8 +48,9 @@ class CTImport:
         self.__codelists[codelist_concept_id] = codelist
         return codelist
 
+    # TODO code_submission_value
     def merge_term(self, term_concept_id: str, code_submission_value: str) -> Term:
-        key: str = f"{term_concept_id}_{code_submission_value}"
+        key: str = make_uid_from_concept_and_submval(term_concept_id, code_submission_value)
         term: Term = self.__terms.get(
             key, Term(term_concept_id, code_submission_value))
         self.__terms[key] = term

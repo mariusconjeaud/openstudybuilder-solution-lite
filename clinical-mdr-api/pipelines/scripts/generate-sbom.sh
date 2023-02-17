@@ -61,7 +61,7 @@ EOF
 
 all_license_files="$(mktemp)" || fatal "couldn't get a temporary file"
 temp_files="$temp_files $all_license_files"
-find "$search_dirs" -iname "*licen[cs]e*" -type f > "$all_license_files"
+find "$search_dirs" -iregex ".*\(licen[cs]e\|copying\).*" -type f > "$all_license_files"
 
 while IFS="=" read -a line; do
     # actually this can find multiple files
@@ -80,12 +80,12 @@ while IFS="=" read -a line; do
     cat <<EOF
 
 
+---
+
 ### License for 3rd party library ${line[0]}
 
 EOF
-    echo '```'
     cat $license_files
-    echo '```'
 
 done < "$package_list"
 

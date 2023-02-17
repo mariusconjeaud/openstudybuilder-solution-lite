@@ -16,7 +16,11 @@ from typing import (
 from neomodel import NodeMeta, db  # type: ignore
 from neomodel.exceptions import DoesNotExist  # type: ignore
 
-from clinical_mdr_api.config import CT_UID_BOOLEAN_NO, CT_UID_BOOLEAN_YES
+from clinical_mdr_api.config import (
+    CT_UID_BOOLEAN_NO,
+    CT_UID_BOOLEAN_YES,
+    STUDY_FIELD_PREFERRED_TIME_UNIT_NAME,
+)
 from clinical_mdr_api.domain.study_definition_aggregate.root import (
     StudyDefinitionSnapshot,
 )
@@ -32,7 +36,11 @@ from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
 from clinical_mdr_api.domain_repositories.generic_repository import (
     RepositoryImpl,  # type: ignore
 )
-from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
+from clinical_mdr_api.domain_repositories.models._utils import (
+    CustomNodeSet,
+    convert_to_datetime,
+)
+from clinical_mdr_api.domain_repositories.models.concepts import UnitDefinitionRoot
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
@@ -64,6 +72,7 @@ from clinical_mdr_api.domain_repositories.models.study_field import (
 from clinical_mdr_api.domain_repositories.study_definition.study_definition_repository import (
     StudyDefinitionRepository,  # type: ignore
 )
+from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.study import (
     HighLevelStudyDesignJsonModel,
     RegistryIdentifiersJsonModel,
@@ -527,56 +536,28 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             expected_latest_value,
             date,
         )
-
-        # Last, maintain study objectives, endpoints and criteria in the graph.
-        self._maintain_has_study_objective_relationship_on_save(
-            expected_latest_value, previous_value
-        )
-        self._maintain_has_study_endpoint_relationship_on_save(
-            expected_latest_value, previous_value
-        )
-        self._maintain_has_study_criteria_relationship_on_save(
-            expected_latest_value, previous_value
-        )
-        self._maintain_has_study_activity_relationship_on_save(
-            expected_latest_value, previous_value
-        )
-        self._maintain_has_study_activity_schedule_relationship_on_save(
-            expected_latest_value, previous_value
-        )
-        self._maintain_has_study_epoch_relationship_on_save(
-            expected_latest_value, previous_value
-        )
-        self._maintain_has_study_visit_relationship_on_save(
-            expected_latest_value, previous_value
-        )
-        self._maintain_has_study_arm_relationship_on_save(
-            expected_latest_value, previous_value
-        )
-
-        self._maintain_has_study_branch_arm_relationship_on_save(
-            expected_latest_value, previous_value
-        )
-        self._maintain_has_study_cohort_relationship_on_save(
-            expected_latest_value, previous_value
-        )
-        self._maintain_has_study_element_relationship_on_save(
-            expected_latest_value, previous_value
-        )
-        self._maintain_has_study_design_cell_relationship_on_save(
-            expected_latest_value, previous_value
-        )
-
-        self._maintain_has_study_activity_instruction_relationship_on_save(
-            expected_latest_value, previous_value
-        )
-
-        self._maintain_has_study_compound_relationship_on_save(
-            expected_latest_value, previous_value
-        )
-        self._maintain_has_study_compound_dosing_relationship_on_save(
-            expected_latest_value, previous_value
-        )
+        for rel in [
+            "has_study_objective",
+            "has_study_endpoint",
+            "has_study_criteria",
+            "has_study_activity",
+            "has_study_activity_schedule",
+            "has_study_epoch",
+            "has_study_visit",
+            "has_study_arm",
+            "has_study_branch_arm",
+            "has_study_cohort",
+            "has_study_element",
+            "has_study_activity_schedule",
+            "has_study_design_cell",
+            "has_study_activity_instruction",
+            "has_study_compound",
+            "has_study_compound_dosing",
+            "has_study_disease_milestone",
+        ]:
+            self._maintain_study_relationship_on_save(
+                rel, expected_latest_value, previous_value
+            )
 
     def _maintain_study_relationship_on_save(
         self,
@@ -595,111 +576,6 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                 getattr(expected_latest_value, relation_name).connect(
                     study_selection_node
                 )
-
-    def _maintain_has_study_endpoint_relationship_on_save(
-        self, expected_latest_value: StudyValue, previous_value: StudyValue
-    ):
-        self._maintain_study_relationship_on_save(
-            "has_study_endpoint", expected_latest_value, previous_value
-        )
-
-    def _maintain_has_study_objective_relationship_on_save(
-        self, expected_latest_value: StudyValue, previous_value: StudyValue
-    ):
-        self._maintain_study_relationship_on_save(
-            "has_study_objective", expected_latest_value, previous_value
-        )
-
-    def _maintain_has_study_criteria_relationship_on_save(
-        self, expected_latest_value: StudyValue, previous_value: StudyValue
-    ):
-        self._maintain_study_relationship_on_save(
-            "has_study_criteria", expected_latest_value, previous_value
-        )
-
-    def _maintain_has_study_activity_relationship_on_save(
-        self, expected_latest_value: StudyValue, previous_value: StudyValue
-    ):
-        self._maintain_study_relationship_on_save(
-            "has_study_activity", expected_latest_value, previous_value
-        )
-
-    def _maintain_has_study_activity_schedule_relationship_on_save(
-        self, expected_latest_value: StudyValue, previous_value: StudyValue
-    ):
-        self._maintain_study_relationship_on_save(
-            "has_study_activity_schedule", expected_latest_value, previous_value
-        )
-
-    def _maintain_has_study_activity_instruction_relationship_on_save(
-        self, expected_latest_value: StudyValue, previous_value: StudyValue
-    ):
-        self._maintain_study_relationship_on_save(
-            "has_study_activity_instruction", expected_latest_value, previous_value
-        )
-
-    def _maintain_has_study_visit_relationship_on_save(
-        self, expected_latest_value: StudyValue, previous_value: StudyValue
-    ):
-        self._maintain_study_relationship_on_save(
-            "has_study_visit", expected_latest_value, previous_value
-        )
-
-    def _maintain_has_study_epoch_relationship_on_save(
-        self, expected_latest_value: StudyValue, previous_value: StudyValue
-    ):
-        self._maintain_study_relationship_on_save(
-            "has_study_epoch", expected_latest_value, previous_value
-        )
-
-    def _maintain_has_study_arm_relationship_on_save(
-        self, expected_latest_value: StudyValue, previous_value: StudyValue
-    ):
-        self._maintain_study_relationship_on_save(
-            "has_study_arm", expected_latest_value, previous_value
-        )
-
-    def _maintain_has_study_branch_arm_relationship_on_save(
-        self, expected_latest_value: StudyValue, previous_value: StudyValue
-    ):
-        self._maintain_study_relationship_on_save(
-            "has_study_branch_arm", expected_latest_value, previous_value
-        )
-
-    def _maintain_has_study_cohort_relationship_on_save(
-        self, expected_latest_value: StudyValue, previous_value: StudyValue
-    ):
-        self._maintain_study_relationship_on_save(
-            "has_study_cohort", expected_latest_value, previous_value
-        )
-
-    def _maintain_has_study_element_relationship_on_save(
-        self, expected_latest_value: StudyValue, previous_value: StudyValue
-    ):
-        self._maintain_study_relationship_on_save(
-            "has_study_element", expected_latest_value, previous_value
-        )
-
-    def _maintain_has_study_design_cell_relationship_on_save(
-        self, expected_latest_value: StudyValue, previous_value: StudyValue
-    ):
-        self._maintain_study_relationship_on_save(
-            "has_study_design_cell", expected_latest_value, previous_value
-        )
-
-    def _maintain_has_study_compound_relationship_on_save(
-        self, expected_latest_value: StudyValue, previous_value: StudyValue
-    ):
-        self._maintain_study_relationship_on_save(
-            "has_study_compound", expected_latest_value, previous_value
-        )
-
-    def _maintain_has_study_compound_dosing_relationship_on_save(
-        self, expected_latest_value: StudyValue, previous_value: StudyValue
-    ):
-        self._maintain_study_relationship_on_save(
-            "has_study_compound_dosing", expected_latest_value, previous_value
-        )
 
     def _maintain_latest_value_and_relationship_on_save(
         self,
@@ -1938,19 +1814,19 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         For a given field name, find what logical section of the study properties it belongs to.
         """
         if field in StudyIdentificationMetadataJsonModel.__fields__:
-            return "IdentificationMetadata"
+            return "identification_metadata"
         if field in RegistryIdentifiersJsonModel.__fields__:
-            return "RegistryIdentifiers"
+            return "registry_identifiers"
         if field in StudyVersionMetadataJsonModel.__fields__:
-            return "VersionMetadata"
+            return "version_metadata"
         if field in HighLevelStudyDesignJsonModel.__fields__:
-            return "HighLevelStudyDesign"
+            return "high_level_study_design"
         if field in StudyPopulationJsonModel.__fields__:
-            return "StudyPopulation"
+            return "study_population"
         if field in StudyInterventionJsonModel.__fields__:
-            return "StudyIntervention"
+            return "study_intervention"
         if field in StudyDescriptionJsonModel.__fields__:
-            return "StudyDescription"
+            return "study_description"
         # A study field was found in the audit trail that does not belong to any sections:
         return "Unknown"
 
@@ -2035,8 +1911,8 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             study_acronym: sv.study_acronym,
                             study_id_prefix: sv.study_id_prefix,
                             project_number: head([(sv)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(p:Project) | p.project_number]),
-                            study_title: head([(sv)-[:HAS_TEXT_FIELD]->(t:StudyTextField) WHERE t.field_name = "StudyTitle" | t.value]),
-                            study_short_title: head([(sv)-[:HAS_TEXT_FIELD]->(st:StudyTextField) WHERE st.field_name = "StudyShortTitle" | st.value]),
+                            study_title: head([(sv)-[:HAS_TEXT_FIELD]->(t:StudyTextField) WHERE t.field_name = "study_title" | t.value]),
+                            study_short_title: head([(sv)-[:HAS_TEXT_FIELD]->(st:StudyTextField) WHERE st.field_name = "study_short_title" | st.value]),
                             version_timestamp: CASE WHEN ldr.end_date IS NULL THEN ldr.start_date ELSE llr.start_date END
                         } AS current_metadata,
                         CASE WHEN has_latest_locked THEN
@@ -2048,8 +1924,8 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                     study_acronym: svlh.study_acronym,
                                     study_id_prefix: svlh.study_id_prefix,
                                     project_number: head([(svlh)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(p:Project) | p.project_number]),
-                                    study_title: head([(svlh)-[:HAS_TEXT_FIELD]->(t:StudyTextField) WHERE t.field_name = "StudyTitle" | t.value]),
-                                    study_short_title: head([(sv)-[:HAS_TEXT_FIELD]->(st:StudyTextField) WHERE st.field_name = "StudyShortTitle" | st.value]),
+                                    study_title: head([(svlh)-[:HAS_TEXT_FIELD]->(t:StudyTextField) WHERE t.field_name = "study_title" | t.value]),
+                                    study_short_title: head([(sv)-[:HAS_TEXT_FIELD]->(st:StudyTextField) WHERE st.field_name = "study_short_title" | st.value]),
                                     version_timestamp: has_version.start_date
                                 })
                             ]
@@ -2061,8 +1937,8 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             study_acronym: svr.study_acronym,
                             study_id_prefix: svr.study_id_prefix,
                             project_number: head([(svr)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(p:Project) | p.project_number]),
-                            study_title: head([(svr)-[:HAS_TEXT_FIELD]->(t:StudyTextField) WHERE t.field_name = "StudyTitle" | t.value]),
-                            study_short_title: head([(sv)-[:HAS_TEXT_FIELD]->(st:StudyTextField) WHERE st.field_name = "StudyShortTitle" | st.value]),
+                            study_title: head([(svr)-[:HAS_TEXT_FIELD]->(t:StudyTextField) WHERE t.field_name = "study_title" | t.value]),
+                            study_short_title: head([(sv)-[:HAS_TEXT_FIELD]->(st:StudyTextField) WHERE st.field_name = "study_short_title" | st.value]),
                             version_timestamp: lrr.start_date
                         }  END AS released_metadata,
                         has_study_objective, has_study_endpoint, has_study_criteria, has_study_activity, has_study_activity_instruction
@@ -2150,3 +2026,98 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
 
         study_root_node.audit_trail.connect(audit_node)
         return audit_node
+
+    def get_preferred_time_unit(self, study_uid: str) -> CustomNodeSet:
+        nodes = (
+            StudyTimeField.nodes.fetch_relations(
+                "has_unit_definition__has_latest_value"
+            )
+            .filter(
+                has_time_field__latest_value__uid=study_uid,
+                field_name=STUDY_FIELD_PREFERRED_TIME_UNIT_NAME,
+            )
+            .has(has_before=False)
+            .to_relation_trees()
+        )
+        return nodes
+
+    def post_preferred_time_unit(
+        self, study_uid: str, unit_definition_uid: str
+    ) -> CustomNodeSet:
+        nodes = self.get_preferred_time_unit(study_uid=study_uid)
+        if nodes:
+            raise BusinessLogicException(
+                f"There already exists a preferred time unit for the following study ({study_uid})"
+            )
+        study_root = StudyRoot.nodes.get(uid=study_uid)
+        latest_study_value = study_root.latest_value.single()
+        unit_definition = UnitDefinitionRoot.nodes.get(uid=unit_definition_uid)
+        preferred_time_field_sf = StudyTimeField.create(
+            {
+                "value": unit_definition_uid,
+                "field_name": STUDY_FIELD_PREFERRED_TIME_UNIT_NAME,
+            }
+        )[0]
+        preferred_time_field_sf.has_unit_definition.connect(unit_definition)
+        latest_study_value.has_time_field.connect(preferred_time_field_sf)
+
+        self._generate_study_field_audit_node(
+            study_root_node=study_root,
+            study_field_node_after=preferred_time_field_sf,
+            study_field_node_before=None,
+            change_status=None,
+            user_initials=self.audit_info.user,
+            date=datetime.now(timezone.utc),
+        )
+        return self.get_preferred_time_unit(study_uid=study_uid)
+
+    def edit_preferred_time_unit(
+        self, study_uid: str, unit_definition_uid: str
+    ) -> CustomNodeSet:
+        # getting previous preferred time unit study field
+        previous_time_field = self.get_preferred_time_unit(study_uid=study_uid)
+        if len(previous_time_field) > 1:
+            raise BusinessLogicException(
+                "Returned more than one previous preferred StudyTimeField nodes"
+            )
+        if len(previous_time_field) == 0:
+            raise BusinessLogicException(
+                "The previous preferred StudyTimeField node was not found"
+            )
+        previous_time_field = previous_time_field[0]
+
+        study_root = StudyRoot.nodes.get(uid=study_uid)
+        latest_study_value = study_root.latest_value.single()
+        unit_definition = UnitDefinitionRoot.nodes.get(uid=unit_definition_uid)
+
+        # creating preferred_time_unit StudyTimeField node
+        preferred_time_field_sf = StudyTimeField.create(
+            {
+                "value": unit_definition_uid,
+                "field_name": STUDY_FIELD_PREFERRED_TIME_UNIT_NAME,
+            }
+        )[0]
+
+        # connecting preferred_time_unit StudyTimeField node to the UnitDefinitionRoot node
+        preferred_time_field_sf.has_unit_definition.connect(unit_definition)
+
+        # connecting StudyValue node to the StudyTimeField node
+        latest_study_value.has_time_field.connect(preferred_time_field_sf)
+
+        if previous_time_field.value == unit_definition_uid:
+            raise BusinessLogicException(
+                f"The preferred_time_unit for the following study ({study_uid}) is already ({unit_definition_uid})"
+            )
+
+        self._generate_study_field_audit_node(
+            study_root_node=study_root,
+            study_field_node_after=preferred_time_field_sf,
+            study_field_node_before=previous_time_field,
+            change_status=None,
+            user_initials=self.audit_info.user,
+            date=datetime.now(timezone.utc),
+        )
+        return self.get_preferred_time_unit(study_uid=study_uid)
+
+    def study_exists_by_uid(self, study_uid: str) -> bool:
+        return bool(StudyRoot.nodes.get_or_none(uid=study_uid))

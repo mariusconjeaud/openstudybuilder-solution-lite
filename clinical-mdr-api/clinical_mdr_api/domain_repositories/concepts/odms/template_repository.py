@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import List, Optional
 
 from clinical_mdr_api.domain.concepts.odms.template import OdmTemplateAR, OdmTemplateVO
 from clinical_mdr_api.domain.versioned_object_aggregate import (
@@ -89,7 +89,7 @@ class TemplateRepository(OdmGenericRepository[OdmTemplateAR]):
         return odm_form_ar
 
     def specific_alias_clause(
-        self, only_specific_status: Optional[Sequence[str]] = None
+        self, only_specific_status: Optional[List[str]] = None
     ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]

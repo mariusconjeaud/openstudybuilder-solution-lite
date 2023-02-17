@@ -64,15 +64,15 @@
   </v-dialog>
   <v-dialog
     v-model="showHistory"
+    @keydown.esc="closeHistory"
     persistent
     max-width="1200px"
     >
     <history-table
+      :title="historyTitle"
       @close="closeHistory"
-      type="compoundAlias"
-      url-prefix="compound-aliases"
-      :item="selectedItem"
-      :title-label="$t('CompoundAliasTable.compound_alias')"
+      :headers="headers"
+      :items="historyItems"
       />
   </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
@@ -85,7 +85,8 @@ import { bus } from '@/main'
 import CompoundAliasForm from './CompoundAliasForm'
 import compoundAliases from '@/api/concepts/compoundAliases'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
-import HistoryTable from '@/components/library/HistoryTable'
+import dataFormating from '@/utils/dataFormating'
+import HistoryTable from '@/components/tools/HistoryTable'
 import NNTable from '@/components/tools/NNTable'
 import StatusChip from '@/components/tools/StatusChip'
 
@@ -100,6 +101,14 @@ export default {
   },
   props: {
     tabClickedAt: Number
+  },
+  computed: {
+    historyTitle () {
+      if (this.selectedItem) {
+        return this.$t('CompoundAliasTable.history_title', { compoundAlias: this.selectedItem.uid })
+      }
+      return ''
+    }
   },
   data () {
     return {
@@ -166,6 +175,7 @@ export default {
         { text: this.$t('_global.version'), value: 'version' },
         { text: this.$t('_global.status'), value: 'status' }
       ],
+      historyItems: [],
       options: {},
       selectedItem: null,
       showForm: false,
@@ -209,7 +219,7 @@ export default {
       this.showForm = true
     },
     approveItem (item) {
-      compoundAliases.approve(item.uid).then(resp => {
+      compoundAliases.approve(item.uid).then(() => {
         this.fetchItems()
         bus.$emit('notification', { msg: this.$t('CompoundAliasTable.approve_success'), type: 'success' })
       })
@@ -224,25 +234,32 @@ export default {
       }
     },
     createNewVersion (item) {
-      compoundAliases.newVersion(item.uid).then(resp => {
+      compoundAliases.newVersion(item.uid).then(() => {
         this.fetchItems()
         bus.$emit('notification', { msg: this.$t('CompoundAliasTable.new_version_success'), type: 'success' })
       })
     },
     inactivateItem (item) {
-      compoundAliases.inactivate(item.uid).then(resp => {
+      compoundAliases.inactivate(item.uid).then(() => {
         this.fetchItems()
         bus.$emit('notification', { msg: this.$t('CompoundAliasTable.inactivate_success'), type: 'success' })
       })
     },
     reactivateItem (item) {
-      compoundAliases.reactivate(item.uid).then(resp => {
+      compoundAliases.reactivate(item.uid).then(() => {
         this.fetchItems()
         bus.$emit('notification', { msg: this.$t('CompoundAliasTable.reactivate_success'), type: 'success' })
       })
     },
-    openHistory (item) {
+    async openHistory (item) {
       this.selectedItem = item
+      const resp = await compoundAliases.getVersions(this.selectedItem.uid)
+      this.historyItems = resp.data
+      for (const historyItem of this.historyItems) {
+        if (historyItem.is_preferred_synonym !== undefined) {
+          historyItem.is_preferred_synonym = dataFormating.yesno(historyItem.is_preferred_synonym)
+        }
+      }
       this.showHistory = true
     },
     closeHistory () {
@@ -253,8 +270,14 @@ export default {
     this.fetchItems()
   },
   watch: {
-    tabClickedAt (value) {
+    tabClickedAt () {
       this.fetchItems()
+    },
+    options: {
+      handler () {
+        this.fetchItems()
+      },
+      deep: true
     }
   }
 }

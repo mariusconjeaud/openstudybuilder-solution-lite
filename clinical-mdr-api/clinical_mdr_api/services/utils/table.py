@@ -32,7 +32,7 @@ def table_to_html(
                             with tag("tr"):
                                 for c, txt in enumerate(table.data[r]):
                                     meta = table.meta[r][c]
-                                    _html_cell(line, meta, td, txt)
+                                    _html_cell(doc, meta, td, txt)
 
                 with tag("tbody"):
                     for r in range(table.num_header_rows, table.data.size):
@@ -42,15 +42,24 @@ def table_to_html(
                                 td = "th" if c < table.num_header_columns else "td"
 
                                 meta = table.meta[r][c]
-                                _html_cell(line, meta, td, txt)
+                                _html_cell(doc, meta, td, txt)
 
     return doc
 
 
-def _html_cell(line, meta, td, txt):
+def _html_cell(doc, meta, tag, txt):
     if not meta.get("merged"):
         attrs = _meta_to_html_attrs(meta)
-        line(td, txt, *attrs)
+
+        if "\n" in txt:
+            with doc.tag(tag, *attrs):
+                for i, t in enumerate(txt.split("\n")):
+                    if i:
+                        doc.stag("br")
+                    doc.text(t)
+
+        else:
+            doc.line(tag, txt, *attrs)
 
 
 def _meta_to_html_attrs(meta):

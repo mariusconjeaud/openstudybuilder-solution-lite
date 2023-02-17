@@ -18,7 +18,7 @@ from clinical_mdr_api.domain_repositories.study_selection.study_selection_arm_re
 )
 from clinical_mdr_api.models.ct_term import SimpleTermModel
 from clinical_mdr_api.models.study_selection import (
-    EndpointUnits,
+    EndpointUnitsInput,
     StudySelectionEndpointInput,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
@@ -375,7 +375,7 @@ class StudyArmSelectionService(StudySelectionMixin):
         transformed_current = StudySelectionEndpointInput(
             endpoint_uid=current_study_endpoint.endpoint_uid,
             endpoint_level_uid=current_study_endpoint.endpoint_level_uid,
-            endpoint_units=EndpointUnits(
+            endpoint_units=EndpointUnitsInput(
                 units=current_study_endpoint.endpoint_units,
                 separator=current_study_endpoint.unit_separator,
             ),

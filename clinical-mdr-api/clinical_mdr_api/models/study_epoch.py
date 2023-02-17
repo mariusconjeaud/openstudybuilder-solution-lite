@@ -167,6 +167,12 @@ class StudyEpoch(StudyEpochCreateInput):
     end_day: Optional[int] = Field(
         None, title="End Day", description="Study Epoch end day"
     )
+    start_week: Optional[int] = Field(
+        None, title="Start Week", description="Study Epoch start week"
+    )
+    end_week: Optional[int] = Field(
+        None, title="End Week", description="Study Epoch end week"
+    )
     start_date: str = Field(
         ..., title="Modification date", description="Study Epoch last modification date"
     )

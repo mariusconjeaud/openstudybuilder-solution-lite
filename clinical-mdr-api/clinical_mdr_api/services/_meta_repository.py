@@ -76,14 +76,14 @@ from clinical_mdr_api.domain_repositories.concepts.odms.method_repository import
 from clinical_mdr_api.domain_repositories.concepts.odms.template_repository import (
     TemplateRepository,
 )
-from clinical_mdr_api.domain_repositories.concepts.odms.xml_extension_attribute_repository import (
-    XmlExtensionAttributeRepository,
+from clinical_mdr_api.domain_repositories.concepts.odms.vendor_attribute_repository import (
+    VendorAttributeRepository,
 )
-from clinical_mdr_api.domain_repositories.concepts.odms.xml_extension_repository import (
-    XmlExtensionRepository,
+from clinical_mdr_api.domain_repositories.concepts.odms.vendor_element_repository import (
+    VendorElementRepository,
 )
-from clinical_mdr_api.domain_repositories.concepts.odms.xml_extension_tag_repository import (
-    XmlExtensionTagRepository,
+from clinical_mdr_api.domain_repositories.concepts.odms.vendor_namespace_repository import (
+    VendorNamespaceRepository,
 )
 from clinical_mdr_api.domain_repositories.concepts.simple_concepts.lag_time_repository import (
     LagTimeRepository,
@@ -202,6 +202,9 @@ from clinical_mdr_api.domain_repositories.study_selection.study_compound_dosing_
 )
 from clinical_mdr_api.domain_repositories.study_selection.study_design_cell_repository import (
     StudyDesignCellRepository,
+)
+from clinical_mdr_api.domain_repositories.study_selection.study_disease_milestone_repository import (
+    StudyDiseaseMilestoneRepository,
 )
 from clinical_mdr_api.domain_repositories.study_selection.study_epoch_repository import (
     StudyEpochRepository,
@@ -450,16 +453,16 @@ class MetaRepository:
         return AliasRepository()
 
     @property
-    def odm_xml_extension_repository(self) -> XmlExtensionRepository:
-        return XmlExtensionRepository()
+    def odm_vendor_namespace_repository(self) -> VendorNamespaceRepository:
+        return VendorNamespaceRepository()
 
     @property
-    def odm_xml_extension_tag_repository(self) -> XmlExtensionTagRepository:
-        return XmlExtensionTagRepository()
+    def odm_vendor_element_repository(self) -> VendorElementRepository:
+        return VendorElementRepository()
 
     @property
-    def odm_xml_extension_attribute_repository(self) -> XmlExtensionAttributeRepository:
-        return XmlExtensionAttributeRepository()
+    def odm_vendor_attribute_repository(self) -> VendorAttributeRepository:
+        return VendorAttributeRepository()
 
     @property
     def criteria_repository(self) -> CriteriaRepository:
@@ -620,6 +623,10 @@ class MetaRepository:
     @property
     def study_epoch_repository(self) -> StudyEpochRepository:
         return StudyEpochRepository(self._user)
+
+    @property
+    def study_disease_milestone_repository(self) -> StudyDiseaseMilestoneRepository:
+        return StudyDiseaseMilestoneRepository(self._user)
 
     @property
     def study_visit_repository(self) -> StudyVisitRepository:

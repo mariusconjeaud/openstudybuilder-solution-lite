@@ -1,9 +1,11 @@
-from typing import Sequence
+from typing import Optional, Sequence
 
 from pydantic import BaseModel
 
 
-def list_concept_wildcard_properties(target_model: BaseModel = None) -> Sequence[str]:
+def list_concept_wildcard_properties(
+    target_model: Optional[BaseModel] = None,
+) -> Sequence[str]:
     """
     Returns a list of properties on which to apply wildcard filtering, formatted as defined in the Cypher query.
 
@@ -16,7 +18,7 @@ def list_concept_wildcard_properties(target_model: BaseModel = None) -> Sequence
         # Wildcard filtering only searches in properties of type string
         if (
             attr_desc.type_ is str
-            and not attribute in ["possible_actions"]
+            and attribute not in ["possible_actions"]
             # remove fields that shouldn't be included in wildcard filter
             and not attr_desc.field_info.extra.get("remove_from_wildcard", False)
         ):

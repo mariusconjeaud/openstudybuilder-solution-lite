@@ -27,6 +27,7 @@
             v-if="!options.noCancel"
             color="white"
             @click.native="cancel"
+            data-cy="cancel-popup"
             outlined
             class="mr-2"
             elevation="2"
@@ -38,6 +39,7 @@
               v-if="!options.noAgree && options.redirect === ''"
               color="white"
               @click.native="agree"
+              data-cy="continue-popup"
               outlined
               elevation="2"
               >
@@ -47,6 +49,7 @@
               v-else
               color="white"
               @click.native="agreeAndRedirect"
+              data-cy="continue-popup"
               outlined
               elevation="2"
               >

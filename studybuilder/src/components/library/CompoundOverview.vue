@@ -46,9 +46,9 @@
           <template v-slot:default>
             <thead>
               <tr class="text-left">
-                <th>{{ $t('CompoundOverview.compound_alias') }}</th>
-                <th>{{ $t('_global.definition') }}</th>
-                <th>{{ $t('CompoundOverview.preferred_alias') }}</th>
+                <th scope="col">{{ $t('CompoundOverview.compound_alias') }}</th>
+                <th scope="col">{{ $t('_global.definition') }}</th>
+                <th scope="col">{{ $t('CompoundOverview.preferred_alias') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -119,8 +119,8 @@
           <template v-slot:default>
             <thead>
               <tr class="text-left">
-                <th>{{ $t('CompoundOverview.value') }}</th>
-                <th>{{ $t('CompoundOverview.unit') }}</th>
+                <th scope="col">{{ $t('CompoundOverview.value') }}</th>
+                <th scope="col">{{ $t('CompoundOverview.unit') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -142,8 +142,8 @@
           <template v-slot:default>
             <thead>
               <tr class="text-left">
-                <th>{{ $t('CompoundOverview.value') }}</th>
-                <th>{{ $t('CompoundOverview.unit') }}</th>
+                <th scope="col">{{ $t('CompoundOverview.value') }}</th>
+                <th scope="col">{{ $t('CompoundOverview.unit') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -229,9 +229,9 @@
           <template v-slot:default>
             <thead>
               <tr class="text-left">
-                <th>{{ $t('CompoundOverview.sdtm_domain') }}</th>
-                <th>{{ $t('CompoundOverview.value') }}</th>
-                <th>{{ $t('CompoundOverview.unit') }}</th>
+                <th scope="col">{{ $t('CompoundOverview.sdtm_domain') }}</th>
+                <th scope="col">{{ $t('CompoundOverview.value') }}</th>
+                <th scope="col">{{ $t('CompoundOverview.unit') }}</th>
               </tr>
             </thead>
             <tbody>

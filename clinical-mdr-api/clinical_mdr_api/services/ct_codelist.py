@@ -148,7 +148,7 @@ class CTCodelistService:
                 for term in codelist_input.terms:
                     if (
                         parent_codelist_uid
-                        and not len(
+                        and len(
                             self._repos.ct_term_aggregated_repository.find_all_aggregated_result(
                                 filter_by={
                                     "codelist_uid": {
@@ -159,10 +159,10 @@ class CTCodelistService:
                                 }
                             ).items
                         )
-                        > 0
+                        <= 0
                     ):
                         raise exceptions.BusinessLogicException(
-                            f"The term identifed by ({term.term_uid}) is not in use by parent codelist identifed by ({parent_codelist_uid})"
+                            f"The term identified by ({term.term_uid}) is not in use by parent codelist identified by ({parent_codelist_uid})"
                         )
 
                     ct_codelist_name_ar = (
@@ -337,7 +337,7 @@ class CTCodelistService:
             )
             if (
                 parent_codelist_uid
-                and not len(
+                and len(
                     self._repos.ct_term_aggregated_repository.find_all_aggregated_result(
                         filter_by={
                             "codelist_uid": {
@@ -348,10 +348,10 @@ class CTCodelistService:
                         }
                     ).items
                 )
-                > 0
+                <= 0
             ):
                 raise exceptions.BusinessLogicException(
-                    f"The term identifed by ({term_uid}) is not in use by parent codelist identifed by ({parent_codelist_uid})"
+                    f"The term identified by ({term_uid}) is not in use by parent codelist identified by ({parent_codelist_uid})"
                 )
 
         ct_codelist_name_ar = self._repos.ct_codelist_name_repository.find_by_uid(
@@ -406,8 +406,8 @@ class CTCodelistService:
                 ).items
                 if len(terms) > 0:
                     raise exceptions.BusinessLogicException(
-                        f"""The term identifed by ({term_uid}) is in use by child codelists
-                        identifed by {[term[1]._ct_term_attributes_vo.codelist_uid for term in terms]}"""
+                        f"The term identified by ({term_uid}) is in use by child codelists"
+                        f" identified by {[term[1]._ct_term_attributes_vo.codelist_uid for term in terms]}"
                     )
         ct_codelist_name_ar = self._repos.ct_codelist_name_repository.find_by_uid(
             codelist_uid=codelist_uid

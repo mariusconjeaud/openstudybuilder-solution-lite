@@ -23,6 +23,8 @@ from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
     StudyPopulationVO,
 )
 from clinical_mdr_api.domain.unit_definition.unit_definition import UnitDefinitionAR
+from clinical_mdr_api.domain_repositories.models._utils import CustomNodeSet
+from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.study import (
     HighLevelStudyDesignJsonModel,
     Study,
@@ -33,6 +35,7 @@ from clinical_mdr_api.models.study import (
     StudyInterventionJsonModel,
     StudyPatchRequestJsonModel,
     StudyPopulationJsonModel,
+    StudyPreferredTimeUnit,
     StudyProtocolTitle,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
@@ -148,9 +151,9 @@ class StudyService:
                 raise ValueError(
                     "Specify a list of sections to filter the audit trail by. "
                     "Each section name must be preceded by a '+' or a '-', "
-                    "valid values are: 'IdentificationMetadata, RegistryIdentifiers, VersionMetadata, "
-                    "HighLevelStudyDesign, StudyPopulation, StudyIntervention, StudyDescription'. "
-                    "Example valid input: '-IdentificationMetadata,+StudyPopulation'."
+                    "valid values are: 'identification_metadata, registry_identifiers, version_metadata, "
+                    "high_level_study_design, study_population, study_intervention, study_description'. "
+                    "Example valid input: '-identification_metadata,+study_population'."
                 )
         return filtered_sections
 
@@ -184,16 +187,16 @@ class StudyService:
 
         # Create entries from the audit trail value objects and filter by section.
         all_sections = [
-            "IdentificationMetadata",
-            "RegistryIdentifiers",
-            "VersionMetadata",
-            "HighLevelStudyDesign",
-            "StudyPopulation",
-            "StudyIntervention",
-            "StudyDescription",
+            "identification_metadata",
+            "registry_identifiers",
+            "version_metadata",
+            "high_level_study_design",
+            "study_population",
+            "study_intervention",
+            "study_description",
             "Unknown",
         ]
-        default_sections = ["IdentificationMetadata", "VersionMetadata"]
+        default_sections = ["identification_metadata", "version_metadata"]
         # If no filter is specified, return all default sections of the audit trail.
         # Else, use filtering.
         sections_selected = (
@@ -241,7 +244,6 @@ class StudyService:
 
     def get_all(
         self,
-        fields: Optional[str] = None,
         has_study_objective: Optional[bool] = None,
         has_study_endpoint: Optional[bool] = None,
         has_study_criteria: Optional[bool] = None,
@@ -280,7 +282,7 @@ class StudyService:
                     find_project_by_project_number=self._repos.project_repository.find_by_project_number,
                     find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
                     find_all_study_time_units=self._repos.unit_definition_repository.find_all,
-                    fields=fields,
+                    fields=None,
                 )
                 for item in all_items.items
             ]
@@ -538,29 +540,29 @@ class StudyService:
                 therapeutic_area_codes=[
                     get_term_uid_or_none(therapeutic_area)
                     for therapeutic_area in _helper(
-                        request_study_population.therapeutic_areas_codes
+                        request_study_population.therapeutic_area_codes
                     )
                 ],
                 therapeutic_area_null_value_code=get_term_uid_or_none(
-                    request_study_population.therapeutic_areas_null_value_code
+                    request_study_population.therapeutic_area_null_value_code
                 ),
                 disease_condition_or_indication_codes=[
                     get_term_uid_or_none(disease_condition)
                     for disease_condition in _helper(
-                        request_study_population.disease_conditions_or_indications_codes
+                        request_study_population.disease_condition_or_indication_codes
                     )
                 ],
                 disease_condition_or_indication_null_value_code=get_term_uid_or_none(
-                    request_study_population.disease_conditions_or_indications_null_value_code
+                    request_study_population.disease_condition_or_indication_null_value_code
                 ),
                 diagnosis_group_codes=[
                     get_term_uid_or_none(diagnosis_group)
                     for diagnosis_group in _helper(
-                        request_study_population.diagnosis_groups_codes
+                        request_study_population.diagnosis_group_codes
                     )
                 ],
                 diagnosis_group_null_value_code=get_term_uid_or_none(
-                    request_study_population.diagnosis_groups_null_value_code
+                    request_study_population.diagnosis_group_null_value_code
                 ),
                 sex_of_participants_code=get_term_uid_or_none(
                     request_study_population.sex_of_participants_code
@@ -689,11 +691,11 @@ class StudyService:
                 trial_type_codes=[
                     get_term_uid_or_none(trial_type_code)
                     for trial_type_code in _helper(
-                        request_high_level_study_design.trial_types_codes
+                        request_high_level_study_design.trial_type_codes
                     )
                 ],
                 trial_type_null_value_code=get_term_uid_or_none(
-                    request_high_level_study_design.trial_types_null_value_code
+                    request_high_level_study_design.trial_type_null_value_code
                 ),
                 trial_phase_code=get_term_uid_or_none(
                     request_high_level_study_design.trial_phase_code
@@ -972,3 +974,63 @@ class StudyService:
                         getattr(reference_study_component, name),
                     )
         return study
+
+    def _check_if_study_exists(self, study_uid: str):
+        if not self._repos.study_definition_repository.study_exists_by_uid(
+            study_uid=study_uid
+        ):
+            raise exceptions.NotFoundException(
+                f"Study with specified uid '{study_uid}' was not found."
+            )
+
+    def _check_if_unit_definition_exists(self, unit_definition_uid: str):
+        if not self._repos.unit_definition_repository.final_concept_exists(
+            uid=unit_definition_uid
+        ):
+            raise exceptions.NotFoundException(
+                f"Unit definition with specified uid '{unit_definition_uid}' was not found."
+            )
+
+    def _check_repository_output(self, nodes: CustomNodeSet, study_uid: str):
+        if len(nodes) > 1:
+            raise BusinessLogicException(
+                f"Found more than one preferred study time StudyTimeField node for the following study_uid='{study_uid}'."
+            )
+        if len(nodes) == 0:
+            raise BusinessLogicException(
+                f"The preferred study time StudyTimeField node for the following study_uid='{study_uid}' could not be found."
+            )
+        return nodes[0]
+
+    @db.transaction
+    def get_study_preferred_time_unit(self, study_uid: str) -> StudyPreferredTimeUnit:
+        self._check_if_study_exists(study_uid=study_uid)
+        nodes = self._repos.study_definition_repository.get_preferred_time_unit(
+            study_uid=study_uid
+        )
+        return_node = self._check_repository_output(nodes=nodes, study_uid=study_uid)
+        return StudyPreferredTimeUnit.from_orm(return_node)
+
+    @db.transaction
+    def post_study_preferred_time_unit(
+        self, study_uid: str, unit_definition_uid: str
+    ) -> StudyPreferredTimeUnit:
+        self._check_if_study_exists(study_uid=study_uid)
+        self._check_if_unit_definition_exists(unit_definition_uid=unit_definition_uid)
+        nodes = self._repos.study_definition_repository.post_preferred_time_unit(
+            study_uid=study_uid, unit_definition_uid=unit_definition_uid
+        )
+        return_node = self._check_repository_output(nodes=nodes, study_uid=study_uid)
+        return StudyPreferredTimeUnit.from_orm(return_node)
+
+    @db.transaction
+    def patch_study_preferred_time_unit(
+        self, study_uid: str, unit_definition_uid: str
+    ) -> StudyPreferredTimeUnit:
+        self._check_if_study_exists(study_uid=study_uid)
+        self._check_if_unit_definition_exists(unit_definition_uid=unit_definition_uid)
+        nodes = self._repos.study_definition_repository.edit_preferred_time_unit(
+            study_uid=study_uid, unit_definition_uid=unit_definition_uid
+        )
+        return_node = self._check_repository_output(nodes=nodes, study_uid=study_uid)
+        return StudyPreferredTimeUnit.from_orm(return_node)

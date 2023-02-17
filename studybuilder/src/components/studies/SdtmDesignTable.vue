@@ -89,6 +89,13 @@ export default {
         { text: this.$t('SdtmDesignTable.reference_term_name'), value: 'TSVCDREF' },
         { text: this.$t('SdtmDesignTable.reference_term_version'), value: 'TSVCDVER' }
       ],
+      tdmHeaders: [
+        { text: this.$t('SdtmDesignTable.study_id'), value: 'STUDYID' },
+        { text: this.$t('SdtmDesignTable.domain_abbr'), value: 'DOMAIN' },
+        { text: this.$t('SdtmDesignTable.disease_milestone_type'), value: 'MIDSTYPE' },
+        { text: this.$t('SdtmDesignTable.disease_milestone_definition'), value: 'TMDEF' },
+        { text: this.$t('SdtmDesignTable.disease_milestone_rep_ind'), value: 'TMRPT' }
+      ],
       items: [],
       options: {},
       total: 0
@@ -118,6 +125,8 @@ export default {
       this.headers = this.tiHeaders
     } else if (this.type === 'TS') {
       this.headers = this.tsHeaders
+    } else if (this.type === 'TDM') {
+      this.headers = this.tdmHeaders
     }
   },
   watch: {
@@ -135,6 +144,8 @@ export default {
         this.headers = this.tiHeaders
       } else if (this.type === 'TS') {
         this.headers = this.tsHeaders
+      } else if (this.type === 'TDM') {
+        this.headers = this.tdmHeaders
       }
     }
   }

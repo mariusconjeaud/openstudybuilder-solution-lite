@@ -32,7 +32,9 @@ def get_stats(
     # Use get_all method from codelist repo with order by start_date desc and page_size = latest_count
     ct_codelist_service = CTCodelistService(user=current_user_id)
     latest_codelists = ct_codelist_service.get_all_codelists(
-        sort_by={"name.start_date": True}, page_number=1, page_size=latest_count
+        sort_by={"name.start_date": False, "codelist_uid": True},
+        page_number=1,
+        page_size=latest_count,
     )
 
     return ct_stats_service.get_stats(latest_codelists=latest_codelists.items)

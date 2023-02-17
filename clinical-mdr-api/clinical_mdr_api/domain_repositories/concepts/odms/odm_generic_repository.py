@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from neomodel import db
 
@@ -23,8 +23,8 @@ from clinical_mdr_api.domain_repositories.models.odm import (
     OdmFormRoot,
     OdmItemGroupRoot,
     OdmItemRoot,
-    OdmXmlExtensionAttributeRoot,
-    OdmXmlExtensionTagRoot,
+    OdmVendorAttributeRoot,
+    OdmVendorElementRoot,
 )
 from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.odm_common_models import OdmElementWithParentUid
@@ -38,9 +38,7 @@ from clinical_mdr_api.services._utils import strip_suffix
 
 
 class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
-    def generic_match_clause(
-        self, only_specific_status: Optional[Sequence[str]] = None
-    ):
+    def generic_match_clause(self, only_specific_status: Optional[List[str]] = None):
         if not only_specific_status:
             return super().generic_match_clause()
 
@@ -58,9 +56,9 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
         filter_by: Optional[dict] = None,
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         total_count: bool = False,
-        only_specific_status: Optional[Sequence[str]] = None,
+        only_specific_status: Optional[List[str]] = None,
         **kwargs,
-    ) -> Tuple[Sequence[_AggregateRootType], int]:
+    ) -> Tuple[List[_AggregateRootType], int]:
         """
         Method runs a cypher query to fetch all needed data to create objects of type AggregateRootType.
         In the case of the following repository it will be some Concept aggregates.
@@ -145,19 +143,15 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
         elif relationship_type == RelationType.UNIT_DEFINITION:
             relation_node = UnitDefinitionRoot.nodes.get_or_none(uid=relation_uid)
             origin = root_class_node.has_unit_definition
-        elif relationship_type == RelationType.XML_EXTENSION_TAG:
-            relation_node = OdmXmlExtensionTagRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.has_xml_extension_tag
-        elif relationship_type == RelationType.XML_EXTENSION_ATTRIBUTE:
-            relation_node = OdmXmlExtensionAttributeRoot.nodes.get_or_none(
-                uid=relation_uid
-            )
-            origin = root_class_node.has_xml_extension_attribute
-        elif relationship_type == RelationType.XML_EXTENSION_TAG_ATTRIBUTE:
-            relation_node = OdmXmlExtensionAttributeRoot.nodes.get_or_none(
-                uid=relation_uid
-            )
-            origin = root_class_node.has_xml_extension_tag_attribute
+        elif relationship_type == RelationType.VENDOR_ELEMENT:
+            relation_node = OdmVendorElementRoot.nodes.get_or_none(uid=relation_uid)
+            origin = root_class_node.has_vendor_element
+        elif relationship_type == RelationType.VENDOR_ATTRIBUTE:
+            relation_node = OdmVendorAttributeRoot.nodes.get_or_none(uid=relation_uid)
+            origin = root_class_node.has_vendor_attribute
+        elif relationship_type == RelationType.VENDOR_ELEMENT_ATTRIBUTE:
+            relation_node = OdmVendorAttributeRoot.nodes.get_or_none(uid=relation_uid)
+            origin = root_class_node.has_vendor_element_attribute
         else:
             raise BusinessLogicException("Invalid relation type.")
 
@@ -174,7 +168,7 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
         uid: str,
         relation_uid: str,
         relationship_type: RelationType,
-        parameters: dict = None,
+        parameters: Optional[dict] = None,
     ) -> None:
         origin, relation_node = self.__class__._get_origin_and_relation_node(
             uid, relation_uid, relationship_type

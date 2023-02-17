@@ -89,6 +89,7 @@
     :arms="arms"/>
   <v-dialog
     v-model="showBranchHistory"
+    @keydown.esc="closeBranchHistory"
     persistent
     max-width="1200px"
     >
@@ -238,7 +239,7 @@ export default {
     },
     async deleteBranchArm (item) {
       let cellsInBranch = 0
-      await arms.getAllCellsForBranch(this.selectedStudy.uid, item.branchArmUid).then(resp => {
+      await arms.getAllCellsForBranch(this.selectedStudy.uid, item.branch_arm_uid).then(resp => {
         cellsInBranch = resp.data.length
       })
       const options = {
@@ -247,12 +248,12 @@ export default {
         agreeLabel: this.$t('_global.continue')
       }
       if (cellsInBranch === 0) {
-        arms.deleteBranchArm(this.selectedStudy.uid, item.branchArmUid).then(resp => {
+        arms.deleteBranchArm(this.selectedStudy.uid, item.branch_arm_uid).then(resp => {
           this.fetchStudyBranchArms()
           bus.$emit('notification', { msg: this.$t('StudyBranchArms.branch_deleted') })
         })
       } else if (await this.$refs.confirm.open(this.$t('StudyBranchArms.branch_delete_notification'), options)) {
-        arms.deleteBranchArm(this.selectedStudy.uid, item.branchArmUid).then(resp => {
+        arms.deleteBranchArm(this.selectedStudy.uid, item.branch_arm_uid).then(resp => {
           this.fetchStudyBranchArms()
           bus.$emit('notification', { msg: this.$t('StudyBranchArms.branch_deleted') })
         })
@@ -278,7 +279,7 @@ export default {
       const newOrder = {
         new_order: this.branchArms[event.moved.newIndex].order
       }
-      arms.updateBranchArmOrder(this.selectedStudy.uid, branch.branchArmUid, newOrder).then(resp => {
+      arms.updateBranchArmOrder(this.selectedStudy.uid, branch.branch_arm_uid, newOrder).then(resp => {
         this.fetchStudyBranchArms()
       })
     }

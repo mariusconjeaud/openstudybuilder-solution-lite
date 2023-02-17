@@ -25,11 +25,13 @@ RUN cd /tmp/build/mdr-standards-import && pipenv install
 
 # Run neo4j and init
 COPY ./neo4j-mdr-db/init_neo4j.py /tmp/build/init
+COPY ./neo4j-mdr-db/db_schema.py /tmp/build/init
 COPY ./env /tmp/build/init/.env
 COPY ./env /tmp/build/mdr-standards-import/.env
 RUN echo dbms.memory.heap.initial_size=2g >> /var/lib/neo4j/conf/neo4j.conf \
  && echo dbms.memory.heap.max_size=2g >> /var/lib/neo4j/conf/neo4j.conf \
  && echo dbms.memory.pagecache.size=2g >> /var/lib/neo4j/conf/neo4j.conf \
+ && echo dbms.security.procedures.unrestricted=algo.*,apoc.* >> /var/lib/neo4j/conf/neo4j.conf \
  && /var/lib/neo4j/bin/neo4j start && while ! nc -z localhost 7687; do sleep 0.10; done \
  && cd /tmp/build/init && pipenv run init_neo4j \
  && cd /tmp/build/mdr-standards-import && pipenv run pipeline_bulk_import TESTUSER "packages" true \

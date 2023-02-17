@@ -250,7 +250,7 @@ const routes = [
     }
   },
   {
-    path: '/library/criteria_templates',
+    path: '/library/criteria_templates/:tab?',
     name: 'CriteriaTemplates',
     component: () => import('../views/library/CriteriaTemplates.vue'),
     meta: {
@@ -377,6 +377,14 @@ const routes = [
     component: () => import('../views/library/Timeframes.vue'),
     meta: {
       documentation: { page: 'userguide/library/template_instatiations/timeframes.html' },
+      authRequired: true
+    }
+  },
+  {
+    path: '/library/criteria_instances',
+    name: 'CriteriaInstances',
+    component: () => import('../views/library/CriteriaInstances.vue'),
+    meta: {
       authRequired: true
     }
   },
@@ -554,6 +562,14 @@ const routes = [
     path: '/studies/odm_specification',
     name: 'OdmSpecification',
     component: () => import('../views/studies/OdmSpecification.vue'),
+    meta: {
+      authRequired: true
+    }
+  },
+  {
+    path: '/studies/ctr_odm_xml',
+    name: 'CtrOdmXml',
+    component: () => import('../views/studies/CtrOdmXml.vue'),
     meta: {
       authRequired: true
     }

@@ -1,4 +1,4 @@
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Union
 
 from fastapi import status
 from neomodel import db
@@ -12,6 +12,7 @@ from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.domain_repositories.study_selection.study_selection_activity_repository import (
     SelectionHistory,
 )
+from clinical_mdr_api.models import StudySelectionActivityRequestUpdate
 from clinical_mdr_api.models.error import BatchErrorResponse
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -354,7 +355,9 @@ class StudyActivitySelectionService(StudySelectionMixin):
 
     def _patch_prepare_new_study_activity(
         self,
-        request_study_activity: models.StudySelectionActivityInput,
+        request_study_activity: Union[
+            models.StudySelectionActivityInput, StudySelectionActivityRequestUpdate
+        ],
         current_study_activity: StudySelectionActivityVO,
     ) -> StudySelectionActivityVO:
         # transform current to input model
@@ -371,10 +374,13 @@ class StudyActivitySelectionService(StudySelectionMixin):
             base_model_with_missing_values=request_study_activity,
             reference_base_model=transformed_current,
         )
-
         return StudySelectionActivityVO.from_input_values(
             study_uid=current_study_activity.study_uid,
-            activity_uid=current_study_activity.activity_uid,
+            activity_uid=request_study_activity.replaced_activity_uid
+            if isinstance(
+                request_study_activity, models.StudySelectionActivityRequestUpdate
+            )
+            else current_study_activity.activity_uid,
             activity_version=current_study_activity.activity_version,
             activity_order=current_study_activity.activity_order,
             flowchart_group_uid=request_study_activity.flowchart_group_uid,
@@ -391,7 +397,9 @@ class StudyActivitySelectionService(StudySelectionMixin):
         self,
         study_uid: str,
         study_selection_uid: str,
-        selection_update_input: models.StudySelectionActivityInput,
+        selection_update_input: Union[
+            models.StudySelectionActivityInput, StudySelectionActivityRequestUpdate
+        ],
     ) -> models.StudySelectionActivity:
         repos = self._repos
         try:
@@ -422,7 +430,7 @@ class StudyActivitySelectionService(StudySelectionMixin):
                 # let the aggregate update the value object
                 selection_aggregate.update_selection(
                     updated_study_object_selection=updated_selection,
-                    object_exist_callback=self._repos.activity_repository.check_exists_final_version,
+                    object_exist_callback=self._repos.activity_repository.final_or_replaced_retired_activity_exists,
                     ct_term_level_exist_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
                 )
                 selection_aggregate.validate()
@@ -506,3 +514,33 @@ class StudyActivitySelectionService(StudySelectionMixin):
         )
 
         return header_values
+
+    def update_activity_request_with_sponsor_activity(
+        self,
+        study_uid: str,
+        study_selection_uid: str,
+    ) -> models.StudySelectionActivity:
+        repos = self._repos
+        # Load aggregate
+        selection_aggregate = repos.study_selection_activity_repository.find_by_study(
+            study_uid=study_uid, for_update=True
+        )
+
+        assert selection_aggregate is not None
+        # Load the current VO for updates
+        try:
+            current_vo, _ = selection_aggregate.get_specific_object_selection(
+                study_selection_uid=study_selection_uid
+            )
+            activity_ar = self._repos.activity_repository.find_by_uid_2(
+                current_vo.activity_uid
+            )
+        except ValueError as value_error:
+            raise exceptions.NotFoundException(value_error.args[0])
+        return self.patch_selection(
+            study_uid=study_uid,
+            study_selection_uid=study_selection_uid,
+            selection_update_input=StudySelectionActivityRequestUpdate(
+                replaced_activity_uid=activity_ar.concept_vo.replaced_by_activity
+            ),
+        )

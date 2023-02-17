@@ -46,6 +46,7 @@
   </v-dialog>
   <v-dialog
     v-model="showCompoundHistory"
+    @keydown.esc="closeStudyCompoundHistory"
     persistent
     max-width="1200px"
     >
@@ -193,7 +194,8 @@ export default {
       })
     },
     editStudyCompound (studyCompound) {
-      this.selectedStudyCompound = studyCompound
+      const originalItem = this.studyCompounds.find(item => item.study_compound_uid === studyCompound.study_compound_uid)
+      this.selectedStudyCompound = originalItem
       this.showForm = true
     },
     async openStudyCompoundHistory (studyCompound) {

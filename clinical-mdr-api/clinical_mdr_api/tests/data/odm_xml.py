@@ -1,7 +1,7 @@
 # pylint:disable=too-many-lines, line-too-long
 export_template = """<?xml version="1.0" encoding="utf-8"?>
                 <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3"
-                xmlns:osb="namespace2" xmlns:prefix="namespace1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
+                xmlns:osb="url2" xmlns:prefix="url1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
                     <Study OID="name1-odm_template1">
                         <GlobalVariables>
                             <ProtocolName>name1</ProtocolName>
@@ -9,7 +9,7 @@ export_template = """<?xml version="1.0" encoding="utf-8"?>
                             <StudyDescription>name1</StudyDescription>
                         </GlobalVariables>
                         <BasicDefinitions>
-                            <MeasurementUnit OID="name1" Name="term_root1_uid">
+                            <MeasurementUnit OID="name1" Name="term_root1_uid" osb:version="0.1">
                                 <Symbol>
                                     <TranslatedText xml:lang="en">name1</TranslatedText>
                                 </Symbol>
@@ -21,7 +21,7 @@ export_template = """<?xml version="1.0" encoding="utf-8"?>
                                     <TranslatedText xml:lang="en" osb:version="1.0">description1</TranslatedText>
                                 </Description>
                                 <Alias Name="name1" Context="context1" osb:version="0.1" />
-                                <ItemGroupRef ItemGroupOID="oid1" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="oid2" osb:locked="No" />
+                                <ItemGroupRef ItemGroupOID="oid1" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="oid2" prefix:nameThree="No" />
                                 <prefix:nameOne>test value</prefix:nameOne>
                             </FormDef>
                             <ItemGroupDef OID="oid1" Name="name1" Repeating="No" Purpose="purpose1" SASDatasetName="sas_dataset_name1" Domain="code_submission_value1:preferred_term1|code_submission_value2:preferred_term2" osb:version="1.0" osb:instruction="instruction1" osb:sponsorInstruction="sponsor_instruction1">
@@ -31,8 +31,7 @@ export_template = """<?xml version="1.0" encoding="utf-8"?>
                                     <TranslatedText xml:lang="en" osb:version="1.0">description1</TranslatedText>
                                 </Description>
                                 <Alias Name="name1" Context="context1" osb:version="0.1" />
-                                <ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1"
-                                osb:sdv="No" osb:locked="No" osb:dataEntryRequired="No" />
+                                <ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" prefix:nameThree="No" />
                             </ItemGroupDef>
                             <ItemDef OID="oid1" Name="name1" Origin="origin1" DataType="datatype1" Length="1" SASFieldName="sasfieldname1" SDSVarName="sdsvarname1" osb:version="1.0" osb:instruction="instruction1" osb:sponsorInstruction="sponsor_instruction1">
                                 <Question>
@@ -57,10 +56,10 @@ export_template = """<?xml version="1.0" encoding="utf-8"?>
                                 </Description>
                                 <FormalExpression Context="context1" osb:version="0.1">expression1</FormalExpression>
                             </ConditionDef>
-                            <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1">
-                                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:OID="term1">
+                            <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
+                                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
                                     <Decode>
-                                        <TranslatedText xml:lang="en">preferred_term1</TranslatedText>
+                                        <TranslatedText xml:lang="en">custom text</TranslatedText>
                                     </Decode>
                                 </CodeListItem>
                             </CodeList>
@@ -68,7 +67,7 @@ export_template = """<?xml version="1.0" encoding="utf-8"?>
                     </Study>
                 </ODM>"""
 export_form = """<?xml version="1.0" encoding="utf-8"?>
-<ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="namespace2" xmlns:prefix="namespace1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
+<ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="url2" xmlns:prefix="url1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
     <Study OID="name1-odm_form1">
         <GlobalVariables>
             <ProtocolName>name1</ProtocolName>
@@ -76,7 +75,7 @@ export_form = """<?xml version="1.0" encoding="utf-8"?>
             <StudyDescription>name1</StudyDescription>
         </GlobalVariables>
         <BasicDefinitions>
-            <MeasurementUnit OID="name1" Name="term_root1_uid">
+            <MeasurementUnit OID="name1" Name="term_root1_uid" osb:version="0.1">
                 <Symbol>
                     <TranslatedText xml:lang="en">name1</TranslatedText>
                 </Symbol>
@@ -88,7 +87,7 @@ export_form = """<?xml version="1.0" encoding="utf-8"?>
                     <TranslatedText xml:lang="en" osb:version="1.0">description1</TranslatedText>
                 </Description>
                 <Alias Name="name1" Context="context1" osb:version="0.1" />
-                <ItemGroupRef ItemGroupOID="oid1" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="oid2" osb:locked="No" />
+                <ItemGroupRef ItemGroupOID="oid1" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="oid2" prefix:nameThree="No" />
                 <prefix:nameOne>test value</prefix:nameOne>
             </FormDef>
             <ItemGroupDef OID="oid1" Name="name1" Repeating="No" Purpose="purpose1" SASDatasetName="sas_dataset_name1" Domain="code_submission_value1:preferred_term1|code_submission_value2:preferred_term2" osb:version="1.0" osb:instruction="instruction1" osb:sponsorInstruction="sponsor_instruction1">
@@ -98,7 +97,7 @@ export_form = """<?xml version="1.0" encoding="utf-8"?>
                     <TranslatedText xml:lang="en" osb:version="1.0">description1</TranslatedText>
                 </Description>
                 <Alias Name="name1" Context="context1" osb:version="0.1" />
-                <ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" osb:sdv="No" osb:locked="No" osb:dataEntryRequired="No" />
+                <ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" prefix:nameThree="No" />
             </ItemGroupDef>
             <ItemDef OID="oid1" Name="name1" Origin="origin1" DataType="datatype1" Length="1" SASFieldName="sasfieldname1" SDSVarName="sdsvarname1" osb:version="1.0" osb:instruction="instruction1" osb:sponsorInstruction="sponsor_instruction1">
                 <Question>
@@ -123,10 +122,10 @@ export_form = """<?xml version="1.0" encoding="utf-8"?>
                 </Description>
                 <FormalExpression Context="context1" osb:version="0.1">expression1</FormalExpression>
             </ConditionDef>
-            <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1">
-                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:OID="term1">
+            <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
+                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
                     <Decode>
-                        <TranslatedText xml:lang="en">preferred_term1</TranslatedText>
+                        <TranslatedText xml:lang="en">custom text</TranslatedText>
                     </Decode>
                 </CodeListItem>
             </CodeList>
@@ -134,7 +133,7 @@ export_form = """<?xml version="1.0" encoding="utf-8"?>
     </Study>
 </ODM>"""
 export_item_group = """<?xml version="1.0" encoding="utf-8"?>
-<ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="namespace2" xmlns:prefix="namespace1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
+<ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="url2" xmlns:prefix="url1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
     <Study OID="name1-odm_item_group1">
         <GlobalVariables>
             <ProtocolName>name1</ProtocolName>
@@ -142,7 +141,7 @@ export_item_group = """<?xml version="1.0" encoding="utf-8"?>
             <StudyDescription>name1</StudyDescription>
         </GlobalVariables>
         <BasicDefinitions>
-            <MeasurementUnit OID="name1" Name="term_root1_uid">
+            <MeasurementUnit OID="name1" Name="term_root1_uid" osb:version="0.1">
                 <Symbol>
                     <TranslatedText xml:lang="en">name1</TranslatedText>
                 </Symbol>
@@ -156,7 +155,7 @@ export_item_group = """<?xml version="1.0" encoding="utf-8"?>
                     <TranslatedText xml:lang="en" osb:version="1.0">description1</TranslatedText>
                 </Description>
                 <Alias Name="name1" Context="context1" osb:version="0.1" />
-                <ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" osb:sdv="No" osb:locked="No" osb:dataEntryRequired="No" />
+                <ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" prefix:nameThree="No" />
             </ItemGroupDef>
             <ItemDef OID="oid1" Name="name1" Origin="origin1" DataType="datatype1" Length="1" SASFieldName="sasfieldname1" SDSVarName="sdsvarname1" osb:version="1.0" osb:instruction="instruction1" osb:sponsorInstruction="sponsor_instruction1">
                 <Question>
@@ -175,10 +174,10 @@ export_item_group = """<?xml version="1.0" encoding="utf-8"?>
                 </Description>
                 <FormalExpression Context="context1" osb:version="0.1">expression1</FormalExpression>
             </ConditionDef>
-            <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1">
-                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:OID="term1">
+            <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
+                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
                     <Decode>
-                        <TranslatedText xml:lang="en">preferred_term1</TranslatedText>
+                        <TranslatedText xml:lang="en">custom text</TranslatedText>
                     </Decode>
                 </CodeListItem>
             </CodeList>
@@ -186,7 +185,7 @@ export_item_group = """<?xml version="1.0" encoding="utf-8"?>
     </Study>
 </ODM>"""
 export_item = """<?xml version="1.0" encoding="utf-8"?>
-                <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="namespace2" xmlns:prefix="namespace1" ODMVersion="1.3.2"
+                <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="url2" xmlns:prefix="url1" ODMVersion="1.3.2"
                 FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
                     <Study OID="name1-odm_item1">
                         <GlobalVariables>
@@ -195,7 +194,7 @@ export_item = """<?xml version="1.0" encoding="utf-8"?>
                             <StudyDescription>name1</StudyDescription>
                         </GlobalVariables>
                         <BasicDefinitions>
-                            <MeasurementUnit OID="name1" Name="term_root1_uid">
+                            <MeasurementUnit OID="name1" Name="term_root1_uid" osb:version="0.1">
                                 <Symbol>
                                     <TranslatedText xml:lang="en">name1</TranslatedText>
                                 </Symbol>
@@ -214,10 +213,10 @@ export_item = """<?xml version="1.0" encoding="utf-8"?>
                                 <CodeListRef CodeListOID="submission_value1@oid1" />
                                 <MeasurementUnitRef MeasurementUnitOID="name1" />
                             </ItemDef>
-                            <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1">
-                                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:OID="term1">
+                            <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
+                                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
                                     <Decode>
-                                        <TranslatedText xml:lang="en">preferred_term1</TranslatedText>
+                                        <TranslatedText xml:lang="en">custom text</TranslatedText>
                                     </Decode>
                                 </CodeListItem>
                             </CodeList>
@@ -225,7 +224,7 @@ export_item = """<?xml version="1.0" encoding="utf-8"?>
                     </Study>
                 </ODM>"""
 export_with_csv = """<?xml version="1.0" encoding="utf-8"?>
-<ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="namespace2" xmlns:prefix="namespace1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
+<ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="url2" xmlns:prefix="url1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
     <Study OID="name1-odm_template1">
         <GlobalVariables>
             <ProtocolName>name1</ProtocolName>
@@ -233,7 +232,7 @@ export_with_csv = """<?xml version="1.0" encoding="utf-8"?>
             <StudyDescription>name1</StudyDescription>
         </GlobalVariables>
         <BasicDefinitions>
-            <MeasurementUnit OID="name1" Name="term_root1_uid">
+            <MeasurementUnit OID="name1" Name="term_root1_uid" osb:version="0.1">
                 <Symbol>
                     <TranslatedText xml:lang="en">name1</TranslatedText>
                 </Symbol>
@@ -245,7 +244,7 @@ export_with_csv = """<?xml version="1.0" encoding="utf-8"?>
                     <TranslatedText xml:lang="en" osb:version="1.0">description1</TranslatedText>
                 </Description>
                 <Alias Name="name1" Context="context1" osb:version="0.1" />
-                <osb:ItemGroupRef ItemGroupOID="oid1" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="oid2" osb:locked="No" />
+                <osb:ItemGroupRef ItemGroupOID="oid1" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="oid2" prefix:nameThree="No" />
                 <prefix:nameOne>test value</prefix:nameOne>
                 <Alias Name="instruction1" Context="CompletionInstructions" />
                 <Alias Name="sponsor_instruction1" Context="ImplementationNotes" />
@@ -257,7 +256,7 @@ export_with_csv = """<?xml version="1.0" encoding="utf-8"?>
                     <TranslatedText xml:lang="en" osb:version="1.0">description1</TranslatedText>
                 </Description>
                 <Alias Name="name1" Context="context1" osb:version="0.1" />
-                <osb:ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" osb:sdv="No" osb:locked="No" osb:dataEntryRequired="No" />
+                <osb:ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" prefix:nameThree="No" />
                 <Alias Name="instruction1" Context="CompletionInstructions" />
                 <Alias Name="sponsor_instruction1" Context="ImplementationNotes" />
             </ItemGroupDef>
@@ -286,18 +285,18 @@ export_with_csv = """<?xml version="1.0" encoding="utf-8"?>
                 </Description>
                 <FormalExpression Context="context1" osb:version="0.1">expression1</FormalExpression>
             </ConditionDef>
-            <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1">
-                <CodeListItem CodedValue="code_submission_value1" OrderNumber='1' Mandatory='False' osb:OID="term1">
+            <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
+                <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
                     <Decode>
-                        <TranslatedText xml:lang="en">preferred_term1</TranslatedText>
+                        <TranslatedText xml:lang="en">custom text</TranslatedText>
                     </Decode>
                 </CodeListItem>
             </CodeList>
         </MetaDataVersion>
     </Study>
 </ODM>"""
-export_with_extension = """<?xml version="1.0" encoding="utf-8"?>
-<ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:prefix="namespace1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
+export_with_namespace = """<?xml version="1.0" encoding="utf-8"?>
+<ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:prefix="url1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
     <Study OID="name1-odm_template1">
         <GlobalVariables>
             <ProtocolName>name1</ProtocolName>
@@ -317,7 +316,7 @@ export_with_extension = """<?xml version="1.0" encoding="utf-8"?>
                     <TranslatedText xml:lang="en">description1</TranslatedText>
                 </Description>
                 <Alias Name="name1" Context="context1" />
-                <ItemGroupRef ItemGroupOID="oid1" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="oid2" />
+                <ItemGroupRef ItemGroupOID="oid1" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="oid2" prefix:nameThree="No" />
                 <prefix:nameOne>test value</prefix:nameOne>
             </FormDef>
             <ItemGroupDef OID="oid1" Name="name1" Repeating="No" Purpose="purpose1" SASDatasetName="sas_dataset_name1" Domain="code_submission_value1:preferred_term1|code_submission_value2:preferred_term2">
@@ -325,7 +324,7 @@ export_with_extension = """<?xml version="1.0" encoding="utf-8"?>
                     <TranslatedText xml:lang="en">description1</TranslatedText>
                 </Description>
                 <Alias Name="name1" Context="context1" />
-                <ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" />
+                <ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" prefix:nameThree="No" />
             </ItemGroupDef>
             <ItemDef OID="oid1" Name="name1" Origin="origin1" DataType="datatype1" Length="1" SASFieldName="sasfieldname1" SDSVarName="sdsvarname1">
                 <Question>
@@ -353,7 +352,7 @@ export_with_extension = """<?xml version="1.0" encoding="utf-8"?>
             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1">
                 <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False">
                     <Decode>
-                        <TranslatedText xml:lang="en">preferred_term1</TranslatedText>
+                        <TranslatedText xml:lang="en">custom text</TranslatedText>
                     </Decode>
                 </CodeListItem>
             </CodeList>
@@ -364,7 +363,7 @@ export_with_extension = """<?xml version="1.0" encoding="utf-8"?>
 
 import_input1 = """<?xml version="1.0" encoding="utf-8"?>
         <?xml-stylesheet type="text/xsl" href="odm_template_sdtmcrf.xsl"?>
-        <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1666353293513" CreationDateTime="2022-10-21 13:54:53.513447" Granularity="All" xmlns:osb="https://openstudybuilder.org" xmlns:clinspark="https://www.clinspark.com">
+        <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1666353293513" CreationDateTime="2022-10-21 13:54:53.513447" Granularity="All" xmlns:osb="url2" xmlns:clinspark="https://www.clinspark.com">
             <Study OID="ODM version 1.3.2 with DoB-T.ODM-1-3-2-V1">
                 <GlobalVariables>
                     <ProtocolName>ODM version 1.3.2 with DoB</ProtocolName>
@@ -383,8 +382,8 @@ import_input1 = """<?xml version="1.0" encoding="utf-8"?>
                         <Description>
                             <TranslatedText xml:lang="en" osb:version="0.1">Informed Consent and Demography form</TranslatedText>
                         </Description>
-                        <ItemGroupRef ItemGroupOID="G.DM.IC" Mandatory="Yes" OrderNumber="1" osb:locked="Yes" />
-                        <ItemGroupRef ItemGroupOID="G.DM.DM" Mandatory="Yes" OrderNumber="2" osb:locked="Yes" />
+                        <ItemGroupRef ItemGroupOID="G.DM.IC" Mandatory="Yes" OrderNumber="1" osb:locked="Yes" clinspark:connectivity="Yes" />
+                        <ItemGroupRef ItemGroupOID="G.DM.DM" Mandatory="Yes" OrderNumber="2" osb:locked="No" clinspark:connectivity="Yes" />
                     </FormDef>
                     <FormDef OID="F.VS" Name="Vital Signs" Repeating="No" osb:version="1.0" osb:instruction="form instruction" osb:sponsorInstruction="form sponsor instruction" osb:allows="second">
                         <Description>
@@ -398,50 +397,50 @@ import_input1 = """<?xml version="1.0" encoding="utf-8"?>
                         <Description>
                             <TranslatedText xml:lang="en" osb:version="0.1">Blood pressure and pulse</TranslatedText>
                         </Description>
-                        <ItemRef ItemOID="I.SYSBP" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="C.OID1" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.DIABP" Mandatory="Yes" OrderNumber="2" osb:sdv="Yes" osb:locked="Yes" osb:dataEntryRequired="Yes" />
-                        <ItemRef ItemOID="I.POSITION" Mandatory="Yes" OrderNumber="3" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.LATERALITY" Mandatory="Yes" OrderNumber="4" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.LOC" Mandatory="Yes" OrderNumber="5" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.PULSE" Mandatory="Yes" OrderNumber="6" osb:sdv="Yes" osb:locked="Yes" />
+                        <ItemRef ItemOID="I.SYSBP" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="C.OID1" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.DIABP" Mandatory="Yes" OrderNumber="2" osb:sdv="Yes" osb:dataEntryRequired="Yes" />
+                        <ItemRef ItemOID="I.POSITION" Mandatory="Yes" OrderNumber="3" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.LATERALITY" Mandatory="Yes" OrderNumber="4" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.LOC" Mandatory="Yes" OrderNumber="5" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.PULSE" Mandatory="Yes" OrderNumber="6" osb:sdv="Yes" />
                     </ItemGroupDef>
                     <ItemGroupDef OID="G.DM.DM" Name="General Demography " Repeating="No" Purpose="Tabulation" SASDatasetName="DEMOG" Domain="DM:Demographics Domain" osb:version="1.0" osb:instruction="item group instruction" osb:sponsorInstruction="item group sponsor instruction" osb:gr="ig2">
                         <osb:DomainColor>DM:#bfffff;</osb:DomainColor>
                         <Description>
                             <TranslatedText xml:lang="en" osb:version="0.1">General Demographic item group</TranslatedText>
                         </Description>
-                        <ItemRef ItemOID="I.BRTHDTCARGUS" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="C.OID2" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.BRTHDTC" Mandatory="Yes" OrderNumber="2" osb:sdv="Yes" osb:locked="Yes" MethodOID="M.OID1" />
-                        <ItemRef ItemOID="I.AGE" Mandatory="Yes" OrderNumber="3" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.SEX" Mandatory="Yes" OrderNumber="4" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.SEXDEA" Mandatory="Yes" OrderNumber="5" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.ETHNIC" Mandatory="Yes" OrderNumber="6" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.RACE" Mandatory="Yes" OrderNumber="7" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.RACEOTH" Mandatory="Yes" OrderNumber="8" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.SUBJID" Mandatory="Yes" OrderNumber="9" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.PREVSUBJ" Mandatory="Yes" OrderNumber="10" osb:sdv="Yes" osb:locked="Yes" />
+                        <ItemRef ItemOID="I.BRTHDTCARGUS" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="C.OID2" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.BRTHDTC" Mandatory="Yes" OrderNumber="2" osb:sdv="Yes" MethodOID="M.OID1" />
+                        <ItemRef ItemOID="I.AGE" Mandatory="Yes" OrderNumber="3" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.SEX" Mandatory="Yes" OrderNumber="4" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.SEXDEA" Mandatory="Yes" OrderNumber="5" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.ETHNIC" Mandatory="Yes" OrderNumber="6" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.RACE" Mandatory="Yes" OrderNumber="7" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.RACEOTH" Mandatory="Yes" OrderNumber="8" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.SUBJID" Mandatory="Yes" OrderNumber="9" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.PREVSUBJ" Mandatory="Yes" OrderNumber="10" osb:sdv="Yes" />
                     </ItemGroupDef>
                     <ItemGroupDef OID="G.DM.IC" Name="Informed Consent" Repeating="No" Purpose="Tabulation" SASDatasetName="DEMOG" Domain="DM:Demographics Domain" osb:version="1.0" osb:instruction="item group instruction" osb:sponsorInstruction="item group sponsor instruction" osb:gr="ig3">
                         <osb:DomainColor>DM:#bfffff;</osb:DomainColor>
                         <Description>
                             <TranslatedText xml:lang="en" osb:version="0.1">Informed Consent item group</TranslatedText>
                         </Description>
-                        <ItemRef ItemOID="I.STUDYID" Mandatory="Yes" OrderNumber="1" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.RFICDAT" Mandatory="Yes" OrderNumber="2" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.RFICTIM" Mandatory="Yes" OrderNumber="3" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.RFICDATLAR1" Mandatory="Yes" OrderNumber="4" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.RFICTIMLAR1" Mandatory="Yes" OrderNumber="5" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.RFICDATLAR2" Mandatory="Yes" OrderNumber="6" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.RFICTIMLAR2" Mandatory="Yes" OrderNumber="7" osb:sdv="Yes" osb:locked="Yes" />
+                        <ItemRef ItemOID="I.STUDYID" Mandatory="Yes" OrderNumber="1" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.RFICDAT" Mandatory="Yes" OrderNumber="2" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.RFICTIM" Mandatory="Yes" OrderNumber="3" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.RFICDATLAR1" Mandatory="Yes" OrderNumber="4" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.RFICTIMLAR1" Mandatory="Yes" OrderNumber="5" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.RFICDATLAR2" Mandatory="Yes" OrderNumber="6" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.RFICTIMLAR2" Mandatory="Yes" OrderNumber="7" osb:sdv="Yes" />
                     </ItemGroupDef>
                     <ItemGroupDef OID="G.VS.VS" Name="Vital Signs" Repeating="Yes" Purpose="Tabulation" SASDatasetName="VITALSIGNS" Domain="VS:Vital Signs Domain" osb:version="1.0" osb:instruction="item group instruction" osb:sponsorInstruction="item group sponsor instruction" osb:gr="ig4">
                         <osb:DomainColor>VS:#bfffff;</osb:DomainColor>
                         <Description>
                             <TranslatedText xml:lang="en" osb:version="0.1">Vital signs</TranslatedText>
                         </Description>
-                        <ItemRef ItemOID="I.STUDYID" Mandatory="Yes" OrderNumber="1" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.SUBJID" Mandatory="Yes" OrderNumber="2" osb:sdv="Yes" osb:locked="Yes" />
-                        <ItemRef ItemOID="I.VSDAT" Mandatory="Yes" OrderNumber="3" osb:sdv="Yes" osb:locked="Yes" />
+                        <ItemRef ItemOID="I.STUDYID" Mandatory="Yes" OrderNumber="1" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.SUBJID" Mandatory="Yes" OrderNumber="2" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.VSDAT" Mandatory="Yes" OrderNumber="3" osb:sdv="Yes" />
                     </ItemGroupDef>
                     <ItemDef OID="I.AGE" Name="Age" Origin="Collected Value" DataType="integer" Length="3" SASFieldName="AGE" SDSVarName="AGE" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction" osb:allowsMultiChoice="true">
                         <Question>
@@ -676,15 +675,15 @@ import_input1 = """<?xml version="1.0" encoding="utf-8"?>
                         </Question>
                         <FormalExpression Context="XPath">Formal Expression 1</FormalExpression>
                     </MethodDef>
-                    <CodeList OID="codelist submission value1@I.STUDYID" Name="editable_cr" DataType="string" SASFormatName="codelist submission value1">
-                        <CodeListItem CodedValue="codeSubmissionValue" OrderNumber="2" Mandatory="True" osb:OID="term_root_final">
+                    <CodeList OID="codelist submission value1@I.STUDYID" Name="editable_cr" DataType="string" SASFormatName="codelist submission value1" osb:version="1.0">
+                        <CodeListItem CodedValue="codeSubmissionValue" OrderNumber="2" Mandatory="True" osb:name="term_value_name1" osb:OID="term_root_final" osb:version="1.0">
                             <Decode>
                                 <TranslatedText xml:lang="en">preferred_term</TranslatedText>
                             </Decode>
                         </CodeListItem>
                     </CodeList>
-                    <CodeList OID="codelist submission value1@I.AGE" Name="editable_cr" DataType="string" SASFormatName="codelist submission value1">
-                        <CodeListItem CodedValue="codeSubmissionValue" OrderNumber="1" Mandatory="False" osb:OID="term_root_final">
+                    <CodeList OID="codelist submission value1@I.AGE" Name="editable_cr" DataType="string" SASFormatName="codelist submission value1" osb:version="1.0">
+                        <CodeListItem CodedValue="codeSubmissionValue" OrderNumber="1" Mandatory="False" osb:name="term_value_name1" osb:OID="term_root_final" osb:version="1.0">
                             <Decode>
                                 <TranslatedText xml:lang="en">preferred_term</TranslatedText>
                             </Decode>
@@ -694,7 +693,7 @@ import_input1 = """<?xml version="1.0" encoding="utf-8"?>
             </Study>
         </ODM>"""
 import_output1 = {
-    "xml_extensions": [
+    "vendor_namespaces": [
         {
             "start_date": "2022-12-01T13:06:35.864543+00:00",
             "end_date": None,
@@ -702,13 +701,15 @@ import_output1 = {
             "version": "1.0",
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
-            "uid": "OdmXmlExtension_000001",
+            "uid": "OdmVendorNamespace_000001",
             "name": "CLINSPARK",
             "library_name": "Sponsor",
             "prefix": "clinspark",
-            "namespace": "https://www.clinspark.com",
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
+            "url": "https://www.clinspark.com",
+            "vendor_elements": [],
+            "vendor_attributes": [
+                {"uid": "OdmVendorAttribute_000008", "name": "connectivity"}
+            ],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -718,23 +719,27 @@ import_output1 = {
             "version": "1.0",
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
-            "uid": "OdmXmlExtension_000002",
+            "uid": "odm_vendor_namespace2",
             "name": "OSB",
             "library_name": "Sponsor",
             "prefix": "osb",
-            "namespace": "https://openstudybuilder.org",
-            "xml_extension_tags": [
-                {"uid": "OdmXmlExtensionTag_000001", "name": "Sometag"}
+            "url": "url2",
+            "vendor_elements": [
+                {"uid": "OdmVendorElement_000001", "name": "Sometag"},
+                {"uid": "odm_vendor_element2", "name": "nameTwo"},
             ],
-            "xml_extension_attributes": [
-                {"uid": "OdmXmlExtensionAttribute_000004", "name": "allows"},
-                {"uid": "OdmXmlExtensionAttribute_000001", "name": "allowsMultiChoice"},
-                {"uid": "OdmXmlExtensionAttribute_000003", "name": "gr"},
+            "vendor_attributes": [
+                {"uid": "OdmVendorAttribute_000006", "name": "allows"},
+                {"uid": "OdmVendorAttribute_000001", "name": "allowsMultiChoice"},
+                {"uid": "OdmVendorAttribute_000005", "name": "dataEntryRequired"},
+                {"uid": "OdmVendorAttribute_000003", "name": "gr"},
+                {"uid": "OdmVendorAttribute_000007", "name": "locked"},
+                {"uid": "OdmVendorAttribute_000004", "name": "sdv"},
             ],
             "possible_actions": ["inactivate", "new_version"],
         },
     ],
-    "xml_extension_attributes": [
+    "vendor_attributes": [
         {
             "start_date": "2022-12-01T13:06:51.550638+00:00",
             "end_date": None,
@@ -742,17 +747,19 @@ import_output1 = {
             "version": "1.0",
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
-            "uid": "OdmXmlExtensionAttribute_000004",
+            "uid": "OdmVendorAttribute_000006",
             "name": "allows",
             "library_name": "Sponsor",
+            "compatible_types": ["FormDef"],
             "data_type": "string",
-            "xml_extension": {
-                "uid": "OdmXmlExtension_000002",
+            "value_regex": None,
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace2",
                 "name": "OSB",
                 "prefix": "osb",
-                "namespace": "https://openstudybuilder.org",
+                "url": "url2",
             },
-            "xml_extension_tag": None,
+            "vendor_element": None,
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -762,17 +769,63 @@ import_output1 = {
             "version": "1.0",
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
-            "uid": "OdmXmlExtensionAttribute_000001",
+            "uid": "OdmVendorAttribute_000001",
             "name": "allowsMultiChoice",
             "library_name": "Sponsor",
+            "compatible_types": ["ItemDef"],
             "data_type": "string",
-            "xml_extension": {
-                "uid": "OdmXmlExtension_000002",
+            "value_regex": None,
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace2",
                 "name": "OSB",
                 "prefix": "osb",
-                "namespace": "https://openstudybuilder.org",
+                "url": "url2",
             },
-            "xml_extension_tag": None,
+            "vendor_element": None,
+            "possible_actions": ["inactivate", "new_version"],
+        },
+        {
+            "start_date": "2022-12-08T07:29:45.187324+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO user initials",
+            "change_description": "Approved version",
+            "uid": "OdmVendorAttribute_000008",
+            "name": "connectivity",
+            "library_name": "Sponsor",
+            "compatible_types": ["ItemGroupRef"],
+            "data_type": "string",
+            "value_regex": None,
+            "vendor_namespace": {
+                "uid": "OdmVendorNamespace_000001",
+                "name": "CLINSPARK",
+                "prefix": "clinspark",
+                "url": "https://www.clinspark.com",
+            },
+            "vendor_element": None,
+            "possible_actions": ["inactivate", "new_version"],
+        },
+        {
+            "start_date": "2022-12-01T13:06:51.550638+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO user initials",
+            "change_description": "Approved version",
+            "uid": "OdmVendorAttribute_000005",
+            "name": "dataEntryRequired",
+            "library_name": "Sponsor",
+            "compatible_types": ["ItemRef"],
+            "data_type": "string",
+            "value_regex": None,
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace2",
+                "name": "OSB",
+                "prefix": "osb",
+                "url": "url2",
+            },
+            "vendor_element": None,
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -782,17 +835,63 @@ import_output1 = {
             "version": "1.0",
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
-            "uid": "OdmXmlExtensionAttribute_000003",
+            "uid": "OdmVendorAttribute_000003",
             "name": "gr",
             "library_name": "Sponsor",
+            "compatible_types": ["ItemGroupDef"],
             "data_type": "string",
-            "xml_extension": {
-                "uid": "OdmXmlExtension_000002",
+            "value_regex": None,
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace2",
                 "name": "OSB",
                 "prefix": "osb",
-                "namespace": "https://openstudybuilder.org",
+                "url": "url2",
             },
-            "xml_extension_tag": None,
+            "vendor_element": None,
+            "possible_actions": ["inactivate", "new_version"],
+        },
+        {
+            "start_date": "2022-12-01T13:06:51.550638+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO user initials",
+            "change_description": "Approved version",
+            "uid": "OdmVendorAttribute_000007",
+            "name": "locked",
+            "library_name": "Sponsor",
+            "compatible_types": ["ItemGroupRef"],
+            "data_type": "string",
+            "value_regex": None,
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace2",
+                "name": "OSB",
+                "prefix": "osb",
+                "url": "url2",
+            },
+            "vendor_element": None,
+            "possible_actions": ["inactivate", "new_version"],
+        },
+        {
+            "start_date": "2022-12-01T13:06:51.550638+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO user initials",
+            "change_description": "Approved version",
+            "uid": "OdmVendorAttribute_000004",
+            "name": "sdv",
+            "library_name": "Sponsor",
+            "compatible_types": ["ItemRef"],
+            "data_type": "string",
+            "value_regex": None,
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace2",
+                "name": "OSB",
+                "prefix": "osb",
+                "url": "url2",
+            },
+            "vendor_element": None,
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -802,19 +901,21 @@ import_output1 = {
             "version": "1.0",
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
-            "uid": "OdmXmlExtensionAttribute_000002",
+            "uid": "OdmVendorAttribute_000002",
             "name": "someAttr",
             "library_name": "Sponsor",
+            "compatible_types": [],
             "data_type": "string",
-            "xml_extension": None,
-            "xml_extension_tag": {
-                "uid": "OdmXmlExtensionTag_000001",
+            "value_regex": None,
+            "vendor_namespace": None,
+            "vendor_element": {
+                "uid": "OdmVendorElement_000001",
                 "name": "Sometag",
             },
             "possible_actions": ["inactivate", "new_version"],
         },
     ],
-    "xml_extension_tags": [
+    "vendor_elements": [
         {
             "start_date": "2022-12-01T13:06:41.819393+00:00",
             "end_date": None,
@@ -822,20 +923,39 @@ import_output1 = {
             "version": "1.0",
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
-            "uid": "OdmXmlExtensionTag_000001",
+            "uid": "OdmVendorElement_000001",
             "name": "Sometag",
             "library_name": "Sponsor",
-            "xml_extension": {
-                "uid": "OdmXmlExtension_000002",
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace2",
                 "name": "OSB",
                 "prefix": "osb",
-                "namespace": "https://openstudybuilder.org",
+                "url": "url2",
             },
-            "xml_extension_attributes": [
-                {"uid": "OdmXmlExtensionAttribute_000002", "name": "someAttr"}
+            "vendor_attributes": [
+                {"uid": "OdmVendorAttribute_000002", "name": "someAttr"}
             ],
             "possible_actions": ["inactivate", "new_version"],
-        }
+        },
+        {
+            "start_date": "2022-12-12T09:16:09.313000+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO initials",
+            "change_description": "Approved version",
+            "uid": "odm_vendor_element2",
+            "name": "nameTwo",
+            "library_name": "Sponsor",
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace2",
+                "name": "OSB",
+                "prefix": "osb",
+                "url": "url2",
+            },
+            "vendor_attributes": [],
+            "possible_actions": ["inactivate", "new_version"],
+        },
     ],
     "templates": [
         {
@@ -908,8 +1028,27 @@ import_output1 = {
                     "name": "Informed Consent",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "locked": "Yes",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000007",
+                                "name": "locked",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                            {
+                                "uid": "OdmVendorAttribute_000008",
+                                "name": "connectivity",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "OdmVendorNamespace_000001",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItemGroup_000002",
@@ -917,21 +1056,41 @@ import_output1 = {
                     "name": "General Demography ",
                     "order_number": 2,
                     "mandatory": "Yes",
-                    "locked": "Yes",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000007",
+                                "name": "locked",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "No",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                            {
+                                "uid": "OdmVendorAttribute_000008",
+                                "name": "connectivity",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "OdmVendorNamespace_000001",
+                            },
+                        ],
+                    },
                 },
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [
+            "vendor_elements": [],
+            "vendor_attributes": [
                 {
-                    "uid": "OdmXmlExtensionAttribute_000004",
+                    "uid": "OdmVendorAttribute_000006",
                     "name": "allows",
                     "data_type": "string",
+                    "value_regex": None,
                     "value": "uds",
-                    "xml_extension_uid": "OdmXmlExtension_000002",
+                    "vendor_namespace_uid": "odm_vendor_namespace2",
                 }
             ],
-            "xml_extension_tag_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -968,8 +1127,19 @@ import_output1 = {
                     "name": "Vital Signs",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "locked": "Yes",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000007",
+                                "name": "locked",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            }
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItemGroup_000001",
@@ -977,21 +1147,33 @@ import_output1 = {
                     "name": "Blood pressure and pulse",
                     "order_number": 2,
                     "mandatory": "Yes",
-                    "locked": "Yes",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000007",
+                                "name": "locked",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            }
+                        ]
+                    },
                 },
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [
+            "vendor_elements": [],
+            "vendor_attributes": [
                 {
-                    "uid": "OdmXmlExtensionAttribute_000004",
+                    "uid": "OdmVendorAttribute_000006",
                     "name": "allows",
                     "data_type": "string",
+                    "value_regex": None,
                     "value": "second",
-                    "xml_extension_uid": "OdmXmlExtension_000002",
+                    "vendor_namespace_uid": "odm_vendor_namespace2",
                 }
             ],
-            "xml_extension_tag_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
     ],
@@ -1034,15 +1216,24 @@ import_output1 = {
                     "name": "Systolic blood pressure",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "C.OID1",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000009",
@@ -1050,15 +1241,32 @@ import_output1 = {
                     "name": "Diastolic blood pressure",
                     "order_number": 2,
                     "mandatory": "Yes",
-                    "data_entry_required": "Yes",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                            {
+                                "uid": "OdmVendorAttribute_000005",
+                                "name": "dataEntryRequired",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000014",
@@ -1066,15 +1274,24 @@ import_output1 = {
                     "name": "Position",
                     "order_number": 3,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000013",
@@ -1082,15 +1299,24 @@ import_output1 = {
                     "name": "Laterality",
                     "order_number": 4,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000002",
@@ -1098,15 +1324,24 @@ import_output1 = {
                     "name": "Anatomical Location",
                     "order_number": 5,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000016",
@@ -1114,28 +1349,38 @@ import_output1 = {
                     "name": "Pulse",
                     "order_number": 6,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [
+            "vendor_elements": [],
+            "vendor_attributes": [
                 {
-                    "uid": "OdmXmlExtensionAttribute_000003",
+                    "uid": "OdmVendorAttribute_000003",
                     "name": "gr",
                     "data_type": "string",
+                    "value_regex": None,
                     "value": "ig1",
-                    "xml_extension_uid": "OdmXmlExtension_000002",
+                    "vendor_namespace_uid": "odm_vendor_namespace2",
                 }
             ],
-            "xml_extension_tag_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -1176,15 +1421,24 @@ import_output1 = {
                     "name": "Date of birth (only for Argus interface) [hidden]",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "C.OID2",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000006",
@@ -1192,15 +1446,24 @@ import_output1 = {
                     "name": "Date of birth",
                     "order_number": 2,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": "M.OID1",
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000001",
@@ -1208,15 +1471,24 @@ import_output1 = {
                     "name": "Age",
                     "order_number": 3,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000020",
@@ -1224,15 +1496,24 @@ import_output1 = {
                     "name": "Sex [read-only]",
                     "order_number": 4,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000019",
@@ -1240,15 +1521,24 @@ import_output1 = {
                     "name": "Sex [de-activated]",
                     "order_number": 5,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000010",
@@ -1256,15 +1546,24 @@ import_output1 = {
                     "name": "Ethnicity",
                     "order_number": 6,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000017",
@@ -1272,15 +1571,24 @@ import_output1 = {
                     "name": "Race",
                     "order_number": 7,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000018",
@@ -1288,15 +1596,24 @@ import_output1 = {
                     "name": "Race other",
                     "order_number": 8,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000022",
@@ -1304,15 +1621,24 @@ import_output1 = {
                     "name": "Subject No. [read-only]",
                     "order_number": 9,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000015",
@@ -1320,28 +1646,38 @@ import_output1 = {
                     "name": "Previous Subject No.",
                     "order_number": 10,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [
+            "vendor_elements": [],
+            "vendor_attributes": [
                 {
-                    "uid": "OdmXmlExtensionAttribute_000003",
+                    "uid": "OdmVendorAttribute_000003",
                     "name": "gr",
                     "data_type": "string",
+                    "value_regex": None,
                     "value": "ig2",
-                    "xml_extension_uid": "OdmXmlExtension_000002",
+                    "vendor_namespace_uid": "odm_vendor_namespace2",
                 }
             ],
-            "xml_extension_tag_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -1382,15 +1718,24 @@ import_output1 = {
                     "name": "Study ID",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000003",
@@ -1398,15 +1743,24 @@ import_output1 = {
                     "name": "Date informed consent obtained",
                     "order_number": 2,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000024",
@@ -1414,15 +1768,24 @@ import_output1 = {
                     "name": "Time informed consent obtained",
                     "order_number": 3,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000005",
@@ -1430,15 +1793,24 @@ import_output1 = {
                     "name": "Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) [de-activated]",
                     "order_number": 4,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000011",
@@ -1446,15 +1818,24 @@ import_output1 = {
                     "name": "Informed Consent TIME obtained by Parents/Legally Acceptable Representative (LAR) [de-activated]",
                     "order_number": 5,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000004",
@@ -1462,15 +1843,24 @@ import_output1 = {
                     "name": "Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated]",
                     "order_number": 6,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000012",
@@ -1478,28 +1868,38 @@ import_output1 = {
                     "name": "Informed Consent Time obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated]",
                     "order_number": 7,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [
+            "vendor_elements": [],
+            "vendor_attributes": [
                 {
-                    "uid": "OdmXmlExtensionAttribute_000003",
+                    "uid": "OdmVendorAttribute_000003",
                     "name": "gr",
                     "data_type": "string",
+                    "value_regex": None,
                     "value": "ig3",
-                    "xml_extension_uid": "OdmXmlExtension_000002",
+                    "vendor_namespace_uid": "odm_vendor_namespace2",
                 }
             ],
-            "xml_extension_tag_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -1540,15 +1940,24 @@ import_output1 = {
                     "name": "Study ID",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000022",
@@ -1556,15 +1965,24 @@ import_output1 = {
                     "name": "Subject No. [read-only]",
                     "order_number": 2,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
                 {
                     "uid": "OdmItem_000008",
@@ -1572,28 +1990,38 @@ import_output1 = {
                     "name": "Date of examination",
                     "order_number": 3,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "Yes",
-                    "locked": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "sdv",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "Yes",
+                                "vendor_namespace_uid": "odm_vendor_namespace2",
+                            },
+                        ]
+                    },
                 },
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [
+            "vendor_elements": [],
+            "vendor_attributes": [
                 {
-                    "uid": "OdmXmlExtensionAttribute_000003",
+                    "uid": "OdmVendorAttribute_000003",
                     "name": "gr",
                     "data_type": "string",
+                    "value_regex": None,
                     "value": "ig4",
-                    "xml_extension_uid": "OdmXmlExtension_000002",
+                    "vendor_namespace_uid": "odm_vendor_namespace2",
                 }
             ],
-            "xml_extension_tag_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
     ],
@@ -1656,32 +2084,35 @@ import_output1 = {
                     "mandatory": False,
                     "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 }
             ],
             "activities": [],
-            "xml_extension_tags": [
+            "vendor_elements": [
                 {
-                    "uid": "OdmXmlExtensionTag_000001",
+                    "uid": "OdmVendorElement_000001",
                     "name": "Sometag",
                     "value": "inner text",
                 }
             ],
-            "xml_extension_attributes": [
+            "vendor_attributes": [
                 {
-                    "uid": "OdmXmlExtensionAttribute_000001",
+                    "uid": "OdmVendorAttribute_000001",
                     "name": "allowsMultiChoice",
                     "data_type": "string",
+                    "value_regex": None,
                     "value": "true",
-                    "xml_extension_uid": "OdmXmlExtension_000002",
+                    "vendor_namespace_uid": "odm_vendor_namespace2",
                 }
             ],
-            "xml_extension_tag_attributes": [
+            "vendor_element_attributes": [
                 {
-                    "uid": "OdmXmlExtensionAttribute_000002",
+                    "uid": "OdmVendorAttribute_000002",
                     "name": "someAttr",
                     "data_type": "string",
+                    "value_regex": None,
                     "value": "a value",
-                    "xml_extension_tag_uid": "OdmXmlExtensionTag_000001",
+                    "vendor_element_uid": "OdmVendorElement_000001",
                 }
             ],
             "possible_actions": ["inactivate", "new_version"],
@@ -1721,29 +2152,31 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [
+            "vendor_elements": [
                 {
-                    "uid": "OdmXmlExtensionTag_000001",
+                    "uid": "OdmVendorElement_000001",
                     "name": "Sometag",
                     "value": "inner text",
                 }
             ],
-            "xml_extension_attributes": [
+            "vendor_attributes": [
                 {
-                    "uid": "OdmXmlExtensionAttribute_000001",
+                    "uid": "OdmVendorAttribute_000001",
                     "name": "allowsMultiChoice",
                     "data_type": "string",
+                    "value_regex": None,
                     "value": "false",
-                    "xml_extension_uid": "OdmXmlExtension_000002",
+                    "vendor_namespace_uid": "odm_vendor_namespace2",
                 }
             ],
-            "xml_extension_tag_attributes": [
+            "vendor_element_attributes": [
                 {
-                    "uid": "OdmXmlExtensionAttribute_000002",
+                    "uid": "OdmVendorAttribute_000002",
                     "name": "someAttr",
                     "data_type": "string",
+                    "value_regex": None,
                     "value": "a value",
-                    "xml_extension_tag_uid": "OdmXmlExtensionTag_000001",
+                    "vendor_element_uid": "OdmVendorElement_000001",
                 }
             ],
             "possible_actions": ["inactivate", "new_version"],
@@ -1783,9 +2216,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -1823,9 +2256,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -1863,9 +2296,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -1903,9 +2336,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -1943,9 +2376,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -1983,9 +2416,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2036,9 +2469,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2076,9 +2509,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2116,9 +2549,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2156,9 +2589,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2196,9 +2629,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2236,9 +2669,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2276,9 +2709,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2329,9 +2762,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2369,9 +2802,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2409,9 +2842,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2449,9 +2882,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2489,9 +2922,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2539,12 +2972,13 @@ import_output1 = {
                     "mandatory": True,
                     "order": 2,
                     "display_text": None,
+                    "version": "1.0",
                 }
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2582,9 +3016,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2635,9 +3069,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2675,9 +3109,9 @@ import_output1 = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
     ],
@@ -2823,7 +3257,7 @@ import_output1 = {
     ],
 }
 import_input2 = """<?xml version="1.0" encoding="utf-8"?>
-        <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="http://openstudybuilder.org" xmlns:cs="http://clinspark.org" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1666353293513" CreationDateTime="2022-10-21 13:54:53.513447" Granularity="All">
+        <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="url2" xmlns:cs="http://clinspark.org" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1666353293513" CreationDateTime="2022-10-21 13:54:53.513447" Granularity="All">
             <Study OID="ODM version 1.3.2 with DoB-T.ODM-1-3-2-V1">
                 <GlobalVariables>
                     <ProtocolName>ODM version 1.3.2 with DoB</ProtocolName>
@@ -2844,7 +3278,7 @@ import_input2 = """<?xml version="1.0" encoding="utf-8"?>
             </Study>
         </ODM>"""
 import_output2 = {
-    "xml_extensions": [
+    "vendor_namespaces": [
         {
             "start_date": "2022-11-18T11:01:34.916840",
             "end_date": None,
@@ -2852,18 +3286,18 @@ import_output2 = {
             "version": "1.0",
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
-            "uid": "OdmXmlExtension_000001",
+            "uid": "OdmVendorNamespace_000001",
             "name": "CS",
             "library_name": "Sponsor",
             "prefix": "cs",
-            "namespace": "http://clinspark.org",
-            "xml_extension_tags": [
+            "url": "http://clinspark.org",
+            "vendor_elements": [
                 {
-                    "uid": "OdmXmlExtensionTag_000001",
+                    "uid": "OdmVendorElement_000001",
                     "name": "nameOne",
                 }
             ],
-            "xml_extension_attributes": [],
+            "vendor_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
@@ -2873,22 +3307,22 @@ import_output2 = {
             "version": "1.0",
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
-            "uid": "OdmXmlExtension_000002",
+            "uid": "odm_vendor_namespace2",
             "name": "OSB",
             "library_name": "Sponsor",
             "prefix": "osb",
-            "namespace": "http://openstudybuilder.org",
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [
+            "url": "url2",
+            "vendor_elements": [{"uid": "odm_vendor_element2", "name": "nameTwo"}],
+            "vendor_attributes": [
                 {
-                    "uid": "OdmXmlExtensionAttribute_000001",
+                    "uid": "OdmVendorAttribute_000001",
                     "name": "newAttribute",
                 }
             ],
             "possible_actions": ["inactivate", "new_version"],
         },
     ],
-    "xml_extension_attributes": [
+    "vendor_attributes": [
         {
             "start_date": "2022-11-18T10:29:58.815197",
             "end_date": None,
@@ -2896,21 +3330,23 @@ import_output2 = {
             "version": "1.0",
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
-            "uid": "OdmXmlExtensionAttribute_000001",
+            "uid": "OdmVendorAttribute_000001",
             "name": "newAttribute",
             "library_name": "Sponsor",
+            "compatible_types": ["FormDef"],
             "data_type": "string",
-            "xml_extension": {
-                "uid": "OdmXmlExtension_000002",
+            "value_regex": None,
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace2",
                 "name": "OSB",
                 "prefix": "osb",
-                "namespace": "http://openstudybuilder.org",
+                "url": "url2",
             },
-            "xml_extension_tag": None,
+            "vendor_element": None,
             "possible_actions": ["inactivate", "new_version"],
         }
     ],
-    "xml_extension_tags": [
+    "vendor_elements": [
         {
             "start_date": "2022-11-18T11:04:33.435405",
             "end_date": None,
@@ -2918,18 +3354,37 @@ import_output2 = {
             "version": "1.0",
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
-            "uid": "OdmXmlExtensionTag_000001",
+            "uid": "OdmVendorElement_000001",
             "name": "nameOne",
             "library_name": "Sponsor",
-            "xml_extension": {
-                "uid": "OdmXmlExtension_000001",
+            "vendor_namespace": {
+                "uid": "OdmVendorNamespace_000001",
                 "name": "CS",
                 "prefix": "cs",
-                "namespace": "http://clinspark.org",
+                "url": "http://clinspark.org",
             },
-            "xml_extension_attributes": [],
+            "vendor_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
-        }
+        },
+        {
+            "start_date": "2022-12-12T09:16:09.313000+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO initials",
+            "change_description": "Approved version",
+            "uid": "odm_vendor_element2",
+            "name": "nameTwo",
+            "library_name": "Sponsor",
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace2",
+                "name": "OSB",
+                "prefix": "osb",
+                "url": "url2",
+            },
+            "vendor_attributes": [],
+            "possible_actions": ["inactivate", "new_version"],
+        },
     ],
     "templates": [
         {
@@ -2988,23 +3443,24 @@ import_output2 = {
             "aliases": [],
             "activity_groups": [],
             "item_groups": [],
-            "xml_extension_tags": [
+            "vendor_elements": [
                 {
-                    "uid": "OdmXmlExtensionTag_000001",
+                    "uid": "OdmVendorElement_000001",
                     "name": "nameOne",
                     "value": "test value",
                 }
             ],
-            "xml_extension_attributes": [
+            "vendor_attributes": [
                 {
-                    "uid": "OdmXmlExtensionAttribute_000001",
+                    "uid": "OdmVendorAttribute_000001",
                     "name": "newAttribute",
                     "data_type": "string",
+                    "value_regex": None,
                     "value": "someValue",
-                    "xml_extension_uid": "OdmXmlExtension_000002",
+                    "vendor_namespace_uid": "odm_vendor_namespace2",
                 }
             ],
-            "xml_extension_tag_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         }
     ],
@@ -3031,9 +3487,40 @@ import_input3 = """<?xml version="1.0" encoding="utf-8"?>
                 <MetaDataVersion OID="MDV.0.1" Name="MDV.0.1" Description="Draft version" />
             </Study>
         </ODM>"""
+import_input4 = """<?xml version="1.0" encoding="utf-8"?>
+        <ODM ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1666353293513" CreationDateTime="2022-10-21 13:54:53.513447" Granularity="All" xmlns:prefix="url1">
+            <Study OID="ODM version 1.3.2 with DoB-T.ODM-1-3-2-V1">
+                <GlobalVariables>
+                    <ProtocolName>ODM version 1.3.2 with DoB</ProtocolName>
+                    <StudyName>ODM version 1.3.2 with DoB</StudyName>
+                    <StudyDescription>ODM version 1.3.2 with DoB</StudyDescription>
+                </GlobalVariables>
+                <BasicDefinitions/>
+                <MetaDataVersion OID="MDV.0.1" Name="MDV.0.1" Description="Draft version">
+                    <FormDef OID="oid1" Name="name1" Repeating="Yes" prefix:nameThree="1234" />
+                </MetaDataVersion>
+            </Study>
+        </ODM>"""
+import_input5 = """<?xml version="1.0" encoding="utf-8"?>
+        <ODM ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1666353293513" CreationDateTime="2022-10-21 13:54:53.513447" Granularity="All" xmlns:prefix="url1">
+            <Study OID="ODM version 1.3.2 with DoB-T.ODM-1-3-2-V1">
+                <GlobalVariables>
+                    <ProtocolName>ODM version 1.3.2 with DoB</ProtocolName>
+                    <StudyName>ODM version 1.3.2 with DoB</StudyName>
+                    <StudyDescription>ODM version 1.3.2 with DoB</StudyDescription>
+                </GlobalVariables>
+                <BasicDefinitions/>
+                <MetaDataVersion OID="MDV.0.1" Name="MDV.0.1" Description="Draft version">
+                    <FormDef OID="oid1" Name="name1" Repeating="Yes">
+                        <ItemGroupRef prefix:nameThree="1234" ItemGroupOID="G.1" Mandatory="Yes" OrderNumber="6"/>
+                    </FormDef>
+                    <ItemGroupDef OID="G.1" Name="Blood pressure and pulse" Repeating="No" Purpose="Tabulation" SASDatasetName="VITALSIGNSBPP" Domain="VS:Vital Signs Domain"/>
+                </MetaDataVersion>
+            </Study>
+        </ODM>"""
 
 clinspark_input = """<?xml version="1.0" encoding="UTF-8"?>
-<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" FileType="Snapshot" Granularity="Metadata" FileOID="ODM.1665487443144" CreationDateTime="2022-10-11T13:24:03+02:00" ODMVersion="1.3.2">
+<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" FileType="Snapshot" Granularity="Metadata" FileOID="ODM.1665487443144" CreationDateTime="2022-10-11T13:24:03+02:00" ODMVersion="1.3.2" xmlns:prefix="url1">
    <Study OID="S.2">
       <GlobalVariables>
          <StudyName>Global Standards CRF Library</StudyName>
@@ -3056,8 +3543,9 @@ clinspark_input = """<?xml version="1.0" encoding="UTF-8"?>
 
 
       <MetaDataVersion OID="SM.4" Name="Global Standards CRF Library Metadata">
-         <FormDef OID="F.47" Name="Informed Consent" Repeating="No">
-            <ItemGroupRef ItemGroupOID="IG.124" OrderNumber="1" Mandatory="Yes" />
+         <FormDef OID="F.47" Name="Informed Consent" Repeating="No" prefix:clinAttribute="form value">
+            <ItemGroupRef ItemGroupOID="IG.124" OrderNumber="1" Mandatory="Yes" prefix:clinRefAttribute="item grouop ref" />
+            <prefix:ClinTag prefix:clinVendorElementAttribute="vendor element attribute value">vendor element value</prefix:ClinTag>
          </FormDef>
          <FormDef OID="F.98" Name="Demography" Repeating="Yes">
             <ItemGroupRef ItemGroupOID="IG.262" OrderNumber="1" Mandatory="Yes" />
@@ -3081,7 +3569,7 @@ clinspark_input = """<?xml version="1.0" encoding="UTF-8"?>
 
 
 
-         <ItemGroupDef OID="IG.124" Name="Informed Consent" Repeating="No" Domain="DS" Purpose="Tabulation">
+         <ItemGroupDef OID="IG.124" Name="Informed Consent" Repeating="No" Domain="DS" Purpose="Tabulation" prefix:newClinAttribute="item group attr">
             <ItemRef ItemOID="I.579" OrderNumber="1" Mandatory="Yes" />
             <ItemRef ItemOID="I.661" OrderNumber="2" Mandatory="Yes" />
             <ItemRef ItemOID="I.566" OrderNumber="3" Mandatory="Yes" />
@@ -3845,9 +4333,250 @@ clinspark_input = """<?xml version="1.0" encoding="UTF-8"?>
    </Study>
 </ODM>"""
 clinspark_output = {
+    "vendor_namespaces": [
+        {
+            "start_date": "2022-12-21T11:35:18.111000+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO initials",
+            "change_description": "Approved version",
+            "uid": "odm_vendor_namespace1",
+            "name": "nameOne",
+            "library_name": "Sponsor",
+            "prefix": "prefix",
+            "url": "url1",
+            "vendor_elements": [
+                {"uid": "OdmVendorElement_000001", "name": "ClinTag"},
+                {"uid": "odm_vendor_element1", "name": "nameOne"},
+            ],
+            "vendor_attributes": [
+                {"uid": "OdmVendorAttribute_000002", "name": "clinAttribute"},
+                {"uid": "OdmVendorAttribute_000004", "name": "clinRefAttribute"},
+                {"uid": "odm_vendor_attribute5", "name": "nameFive"},
+                {"uid": "odm_vendor_attribute4", "name": "nameFour"},
+                {"uid": "odm_vendor_attribute3", "name": "nameThree"},
+                {"uid": "OdmVendorAttribute_000001", "name": "newClinAttribute"},
+            ],
+            "possible_actions": ["inactivate", "new_version"],
+        }
+    ],
+    "vendor_attributes": [
+        {
+            "start_date": "2022-12-21T11:36:30.962515+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO user initials",
+            "change_description": "Approved version",
+            "uid": "OdmVendorAttribute_000002",
+            "name": "clinAttribute",
+            "library_name": "Sponsor",
+            "compatible_types": ["FormDef"],
+            "data_type": "string",
+            "value_regex": None,
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace1",
+                "name": "nameOne",
+                "prefix": "prefix",
+                "url": "url1",
+            },
+            "vendor_element": None,
+            "possible_actions": ["inactivate", "new_version"],
+        },
+        {
+            "start_date": "2022-12-21T11:36:39.139846+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO user initials",
+            "change_description": "Approved version",
+            "uid": "OdmVendorAttribute_000004",
+            "name": "clinRefAttribute",
+            "library_name": "Sponsor",
+            "compatible_types": ["ItemGroupRef"],
+            "data_type": "string",
+            "value_regex": None,
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace1",
+                "name": "nameOne",
+                "prefix": "prefix",
+                "url": "url1",
+            },
+            "vendor_element": None,
+            "possible_actions": ["inactivate", "new_version"],
+        },
+        {
+            "start_date": "2022-12-21T11:36:38.235658+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO user initials",
+            "change_description": "Approved version",
+            "uid": "OdmVendorAttribute_000003",
+            "name": "clinVendorElementAttribute",
+            "library_name": "Sponsor",
+            "compatible_types": [],
+            "data_type": "string",
+            "value_regex": None,
+            "vendor_namespace": None,
+            "vendor_element": {"uid": "OdmVendorElement_000001", "name": "ClinTag"},
+            "possible_actions": ["inactivate", "new_version"],
+        },
+        {
+            "start_date": "2022-12-21T11:35:18.689000+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO initials",
+            "change_description": "Approved version",
+            "uid": "odm_vendor_attribute5",
+            "name": "nameFive",
+            "library_name": "Sponsor",
+            "compatible_types": [
+                "NonCompatibleVendor",
+            ],
+            "data_type": "string",
+            "value_regex": None,
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace1",
+                "name": "nameOne",
+                "prefix": "prefix",
+                "url": "url1",
+            },
+            "vendor_element": None,
+            "possible_actions": ["inactivate", "new_version"],
+        },
+        {
+            "start_date": "2022-12-21T11:35:18.689000+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO initials",
+            "name": "nameFour",
+            "change_description": "Approved version",
+            "uid": "odm_vendor_attribute4",
+            "library_name": "Sponsor",
+            "compatible_types": [
+                "FormDef",
+                "ItemGroupDef",
+                "ItemDef",
+                "ItemGroupRef",
+                "ItemRef",
+            ],
+            "data_type": "string",
+            "value_regex": None,
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace1",
+                "name": "nameOne",
+                "prefix": "prefix",
+                "url": "url1",
+            },
+            "vendor_element": None,
+            "possible_actions": ["inactivate", "new_version"],
+        },
+        {
+            "start_date": "2022-12-21T11:35:18.689000+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO initials",
+            "change_description": "Approved version",
+            "uid": "odm_vendor_attribute3",
+            "name": "nameThree",
+            "library_name": "Sponsor",
+            "compatible_types": [
+                "FormDef",
+                "ItemGroupDef",
+                "ItemDef",
+                "ItemGroupRef",
+                "ItemRef",
+            ],
+            "data_type": "string",
+            "value_regex": "^[a-zA-Z]+$",
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace1",
+                "name": "nameOne",
+                "prefix": "prefix",
+                "url": "url1",
+            },
+            "vendor_element": None,
+            "possible_actions": ["inactivate", "new_version"],
+        },
+        {
+            "start_date": "2022-12-21T11:36:31.234872+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO user initials",
+            "change_description": "Approved version",
+            "uid": "OdmVendorAttribute_000001",
+            "name": "newClinAttribute",
+            "library_name": "Sponsor",
+            "compatible_types": ["ItemGroupDef"],
+            "data_type": "string",
+            "value_regex": None,
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace1",
+                "name": "nameOne",
+                "prefix": "prefix",
+                "url": "url1",
+            },
+            "vendor_element": None,
+            "possible_actions": ["inactivate", "new_version"],
+        },
+    ],
+    "vendor_elements": [
+        {
+            "start_date": "2022-12-21T11:36:37.975727+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO user initials",
+            "change_description": "Approved version",
+            "uid": "OdmVendorElement_000001",
+            "name": "ClinTag",
+            "library_name": "Sponsor",
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace1",
+                "name": "nameOne",
+                "prefix": "prefix",
+                "url": "url1",
+            },
+            "vendor_attributes": [
+                {
+                    "uid": "OdmVendorAttribute_000003",
+                    "name": "clinVendorElementAttribute",
+                }
+            ],
+            "possible_actions": ["inactivate", "new_version"],
+        },
+        {
+            "start_date": "2022-12-21T11:35:18.375000+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO initials",
+            "change_description": "Approved version",
+            "uid": "odm_vendor_element1",
+            "name": "nameOne",
+            "library_name": "Sponsor",
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace1",
+                "name": "nameOne",
+                "prefix": "prefix",
+                "url": "url1",
+            },
+            "vendor_attributes": [
+                {"uid": "odm_vendor_attribute1", "name": "nameOne"},
+                {"uid": "odm_vendor_attribute2", "name": "nameTwo"},
+            ],
+            "possible_actions": ["inactivate", "new_version"],
+        },
+    ],
     "templates": [
         {
-            "start_date": "2022-12-05T08:20:11.662686+00:00",
+            "start_date": "2022-12-21T11:36:41.661594+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -3862,16 +4591,8 @@ clinspark_output = {
             "description": None,
             "forms": [
                 {
-                    "uid": "OdmForm_000001",
-                    "name": "Informed Consent@F.47",
-                    "order_number": 999999,
-                    "mandatory": "Yes",
-                    "locked": "No",
-                    "collection_exception_condition_oid": None,
-                },
-                {
-                    "uid": "OdmForm_000002",
-                    "name": "Demography@F.98",
+                    "uid": "OdmForm_000005",
+                    "name": "Administration of <Investigational medicinal product>@F.38",
                     "order_number": 999999,
                     "mandatory": "Yes",
                     "locked": "No",
@@ -3886,16 +4607,24 @@ clinspark_output = {
                     "collection_exception_condition_oid": None,
                 },
                 {
-                    "uid": "OdmForm_000004",
-                    "name": "Vital Signs (Single Measurement)@F.37",
+                    "uid": "OdmForm_000002",
+                    "name": "Demography@F.98",
                     "order_number": 999999,
                     "mandatory": "Yes",
                     "locked": "No",
                     "collection_exception_condition_oid": None,
                 },
                 {
-                    "uid": "OdmForm_000005",
-                    "name": "Administration of <Investigational medicinal product>@F.38",
+                    "uid": "OdmForm_000001",
+                    "name": "Informed Consent@F.47",
+                    "order_number": 999999,
+                    "mandatory": "Yes",
+                    "locked": "No",
+                    "collection_exception_condition_oid": None,
+                },
+                {
+                    "uid": "OdmForm_000004",
+                    "name": "Vital Signs (Single Measurement)@F.37",
                     "order_number": 999999,
                     "mandatory": "Yes",
                     "locked": "No",
@@ -3907,7 +4636,7 @@ clinspark_output = {
     ],
     "forms": [
         {
-            "start_date": "2022-12-05T08:20:10.936290+00:00",
+            "start_date": "2022-12-21T11:36:40.909269+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -3930,8 +4659,8 @@ clinspark_output = {
                     "name": "Prescribed dose of <Investigational medicinal product>@IG.97",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "locked": "No",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItemGroup_000006",
@@ -3939,8 +4668,8 @@ clinspark_output = {
                     "name": "Preparation for dosing@IG.98",
                     "order_number": 2,
                     "mandatory": "Yes",
-                    "locked": "No",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItemGroup_000007",
@@ -3948,8 +4677,8 @@ clinspark_output = {
                     "name": "Administration of <Investigational medicinal product>@IG.99",
                     "order_number": 3,
                     "mandatory": "Yes",
-                    "locked": "No",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItemGroup_000008",
@@ -3957,17 +4686,17 @@ clinspark_output = {
                     "name": "Post dose@IG.267",
                     "order_number": 4,
                     "mandatory": "Yes",
-                    "locked": "No",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:10.511235+00:00",
+            "start_date": "2022-12-21T11:36:40.362236+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -4000,17 +4729,17 @@ clinspark_output = {
                     "name": "Body Measurements@IG.153",
                     "order_number": 2,
                     "mandatory": "Yes",
-                    "locked": "No",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 }
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:10.155622+00:00",
+            "start_date": "2022-12-21T11:36:39.974375+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -4033,17 +4762,17 @@ clinspark_output = {
                     "name": "Demography@IG.262",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "locked": "No",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 }
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:09.869623+00:00",
+            "start_date": "2022-12-21T11:36:39.686457+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -4066,17 +4795,52 @@ clinspark_output = {
                     "name": "Informed Consent@IG.124",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "locked": "No",
                     "collection_exception_condition_oid": "",
+                    "vendor": {
+                        "attributes": [
+                            {
+                                "uid": "OdmVendorAttribute_000004",
+                                "name": "clinRefAttribute",
+                                "data_type": "string",
+                                "value_regex": None,
+                                "value": "item grouop ref",
+                                "vendor_namespace_uid": "odm_vendor_namespace1",
+                            }
+                        ]
+                    },
                 }
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [
+                {
+                    "uid": "OdmVendorElement_000001",
+                    "name": "ClinTag",
+                    "value": "vendor element value",
+                }
+            ],
+            "vendor_attributes": [
+                {
+                    "uid": "OdmVendorAttribute_000002",
+                    "name": "clinAttribute",
+                    "data_type": "string",
+                    "value_regex": None,
+                    "value": "form value",
+                    "vendor_namespace_uid": "odm_vendor_namespace1",
+                }
+            ],
+            "vendor_element_attributes": [
+                {
+                    "uid": "OdmVendorAttribute_000003",
+                    "name": "clinVendorElementAttribute",
+                    "data_type": "string",
+                    "value_regex": None,
+                    "value": "vendor element attribute value",
+                    "vendor_element_uid": "OdmVendorElement_000001",
+                }
+            ],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:10.694318+00:00",
+            "start_date": "2022-12-21T11:36:40.641659+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -4099,19 +4863,19 @@ clinspark_output = {
                     "name": "Vital Signs@IG.72",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "locked": "No",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 }
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
     ],
     "item_groups": [
         {
-            "start_date": "2022-12-05T08:20:08.682203+00:00",
+            "start_date": "2022-12-21T11:36:36.811353+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -4148,15 +4912,13 @@ clinspark_output = {
                     "name": "EC_seq_no_ECREFID@I.754",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": "M.34",
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000027",
@@ -4164,15 +4926,13 @@ clinspark_output = {
                     "name": "EC_ECCAT@I.471",
                     "order_number": 2,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000028",
@@ -4180,15 +4940,13 @@ clinspark_output = {
                     "name": "EC_ECMOOD@I.473",
                     "order_number": 3,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000029",
@@ -4196,15 +4954,13 @@ clinspark_output = {
                     "name": "EC_ECPRESP@I.475",
                     "order_number": 4,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000030",
@@ -4212,15 +4968,13 @@ clinspark_output = {
                     "name": "EC_<IMP>_ECTRT@I.474",
                     "order_number": 5,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000039",
@@ -4228,15 +4982,13 @@ clinspark_output = {
                     "name": "EC_adm_imp_ECOCCUR@I.565",
                     "order_number": 6,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000040",
@@ -4244,15 +4996,13 @@ clinspark_output = {
                     "name": "EC_specify_reason_ECREASOC@I.578",
                     "order_number": 7,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000041",
@@ -4260,15 +5010,13 @@ clinspark_output = {
                     "name": "EC_type_of_treatment_ECSCAT@I.576",
                     "order_number": 8,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000042",
@@ -4276,15 +5024,13 @@ clinspark_output = {
                     "name": "EC_bleed_no_ECXB@I.580",
                     "order_number": 9,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000043",
@@ -4292,15 +5038,13 @@ clinspark_output = {
                     "name": "EC_surgery_no_ECPR@I.581",
                     "order_number": 10,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000044",
@@ -4308,15 +5052,13 @@ clinspark_output = {
                     "name": "EC_start_datetime_ECSTDTC@I.582",
                     "order_number": 11,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000045",
@@ -4324,15 +5066,13 @@ clinspark_output = {
                     "name": "EC_end_datetime_ECENDTC@I.583",
                     "order_number": 12,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000046",
@@ -4340,15 +5080,13 @@ clinspark_output = {
                     "name": "EC_dose_ECDOSE@I.560",
                     "order_number": 13,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000033",
@@ -4356,15 +5094,13 @@ clinspark_output = {
                     "name": "EC_dose_form_ECDOSFRM@I.561",
                     "order_number": 14,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000047",
@@ -4372,15 +5108,13 @@ clinspark_output = {
                     "name": "EC_route_ECROUTE@I.562",
                     "order_number": 15,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000048",
@@ -4388,15 +5122,13 @@ clinspark_output = {
                     "name": "EC_laterality_ECLAT@I.563",
                     "order_number": 16,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000049",
@@ -4404,24 +5136,22 @@ clinspark_output = {
                     "name": "EC_inj_site_ECLOC@I.564",
                     "order_number": 17,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:06.921380+00:00",
+            "start_date": "2022-12-21T11:36:34.902720+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -4458,15 +5188,13 @@ clinspark_output = {
                     "name": "VS_fasting_FASTING@I.596",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000007",
@@ -4474,15 +5202,13 @@ clinspark_output = {
                     "name": "VS_VSCAT@I.597",
                     "order_number": 2,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000008",
@@ -4490,15 +5216,13 @@ clinspark_output = {
                     "name": "VS_date and time of exam_VSDTC@I.637",
                     "order_number": 3,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000009",
@@ -4506,15 +5230,13 @@ clinspark_output = {
                     "name": "VS_height_VSTESTCD-VSORRES@I.600",
                     "order_number": 4,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000010",
@@ -4522,15 +5244,13 @@ clinspark_output = {
                     "name": "VS_weight_VSTESTCD-VSORRES@I.601",
                     "order_number": 5,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000011",
@@ -4538,24 +5258,22 @@ clinspark_output = {
                     "name": "VS_BMI_VSORRES-VSTESTCD@I.621",
                     "order_number": 6,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": "M.2",
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:06.417374+00:00",
+            "start_date": "2022-12-21T11:36:34.391314+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -4592,15 +5310,13 @@ clinspark_output = {
                     "name": "DM_age_AGECOLL@I.1056",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000013",
@@ -4608,15 +5324,13 @@ clinspark_output = {
                     "name": "DM Sex@I.1057",
                     "order_number": 2,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000014",
@@ -4624,15 +5338,13 @@ clinspark_output = {
                     "name": "DM Race - American Indian Or Alaska Native@I.1058",
                     "order_number": 3,
                     "mandatory": "No",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000015",
@@ -4640,15 +5352,13 @@ clinspark_output = {
                     "name": "DM Race - Asian@I.1059",
                     "order_number": 4,
                     "mandatory": "No",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000016",
@@ -4656,15 +5366,13 @@ clinspark_output = {
                     "name": "DM Race - Black Or African American@I.1060",
                     "order_number": 5,
                     "mandatory": "No",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000017",
@@ -4672,15 +5380,13 @@ clinspark_output = {
                     "name": "DM Race - Native Hawaiian Or Other Pacific Islander@I.1061",
                     "order_number": 6,
                     "mandatory": "No",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000018",
@@ -4688,15 +5394,13 @@ clinspark_output = {
                     "name": "DM Race - White@I.1062",
                     "order_number": 7,
                     "mandatory": "No",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000019",
@@ -4704,15 +5408,13 @@ clinspark_output = {
                     "name": "DM Ethnicity@I.1063",
                     "order_number": 8,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000020",
@@ -4720,24 +5422,22 @@ clinspark_output = {
                     "name": "DM_previous _subject_number_PREVSUBJ@I.1260",
                     "order_number": 9,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:05.767772+00:00",
+            "start_date": "2022-12-21T11:36:33.722232+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -4764,15 +5464,13 @@ clinspark_output = {
                     "name": "DS_DSCAT@I.579",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000002",
@@ -4780,15 +5478,13 @@ clinspark_output = {
                     "name": "DS_DSDECOD@I.661",
                     "order_number": 2,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000003",
@@ -4796,15 +5492,13 @@ clinspark_output = {
                     "name": "ICFVER_eS@I.566",
                     "order_number": 3,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000004",
@@ -4812,15 +5506,13 @@ clinspark_output = {
                     "name": "DS_inf_consent_DSSTDTC@I.567",
                     "order_number": 4,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000005",
@@ -4828,24 +5520,31 @@ clinspark_output = {
                     "name": "ICFNOTES_eS@I.568",
                     "order_number": 5,
                     "mandatory": "No",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [
+                {
+                    "uid": "OdmVendorAttribute_000001",
+                    "name": "newClinAttribute",
+                    "data_type": "string",
+                    "value_regex": None,
+                    "value": "item group attr",
+                    "vendor_namespace_uid": "odm_vendor_namespace1",
+                },
+            ],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:08.900444+00:00",
+            "start_date": "2022-12-21T11:36:37.032891+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -4872,15 +5571,13 @@ clinspark_output = {
                     "name": "EC_admin_by_eS@I.589",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000051",
@@ -4888,15 +5585,13 @@ clinspark_output = {
                     "name": "EC_check_by_eS@I.590",
                     "order_number": 2,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000052",
@@ -4904,24 +5599,22 @@ clinspark_output = {
                     "name": "EC_comment_eS@I.594",
                     "order_number": 3,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:08.130590+00:00",
+            "start_date": "2022-12-21T11:36:36.158563+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -4948,15 +5641,13 @@ clinspark_output = {
                     "name": "EC_req_met_eS@I.585",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000035",
@@ -4964,15 +5655,13 @@ clinspark_output = {
                     "name": "EC_morph_inj_site_eS@I.586",
                     "order_number": 2,
                     "mandatory": "No",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000036",
@@ -4980,15 +5669,13 @@ clinspark_output = {
                     "name": "EC_dun_eS@I.588",
                     "order_number": 3,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000037",
@@ -4996,15 +5683,13 @@ clinspark_output = {
                     "name": "EC_no_inj_eS@I.592",
                     "order_number": 4,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000038",
@@ -5012,24 +5697,22 @@ clinspark_output = {
                     "name": "EC_volume_eS@I.593",
                     "order_number": 5,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:07.821840+00:00",
+            "start_date": "2022-12-21T11:36:35.847304+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -5066,15 +5749,13 @@ clinspark_output = {
                     "name": "EC_seq_no_ECREFID@I.754",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": "M.34",
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000027",
@@ -5082,15 +5763,13 @@ clinspark_output = {
                     "name": "EC_ECCAT@I.471",
                     "order_number": 2,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000028",
@@ -5098,15 +5777,13 @@ clinspark_output = {
                     "name": "EC_ECMOOD@I.473",
                     "order_number": 3,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000029",
@@ -5114,15 +5791,13 @@ clinspark_output = {
                     "name": "EC_ECPRESP@I.475",
                     "order_number": 4,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000030",
@@ -5130,15 +5805,13 @@ clinspark_output = {
                     "name": "EC_<IMP>_ECTRT@I.474",
                     "order_number": 5,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000031",
@@ -5146,15 +5819,13 @@ clinspark_output = {
                     "name": "EC_datetime_prescription_ECSTDTC@I.595",
                     "order_number": 6,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000032",
@@ -5162,15 +5833,13 @@ clinspark_output = {
                     "name": "EC_prescribed_dose_ECDOSE@I.559",
                     "order_number": 7,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000033",
@@ -5178,24 +5847,22 @@ clinspark_output = {
                     "name": "EC_dose_form_ECDOSFRM@I.561",
                     "order_number": 8,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:07.334563+00:00",
+            "start_date": "2022-12-21T11:36:35.351984+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -5232,15 +5899,13 @@ clinspark_output = {
                     "name": "VS_VSCAT@I.406",
                     "order_number": 1,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000022",
@@ -5248,15 +5913,13 @@ clinspark_output = {
                     "name": "VS_date of exam_VSDTC@I.354",
                     "order_number": 2,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000023",
@@ -5264,15 +5927,13 @@ clinspark_output = {
                     "name": "VS_syst_blood_pres_ORRES_SYSBP@I.355",
                     "order_number": 4,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000024",
@@ -5280,15 +5941,13 @@ clinspark_output = {
                     "name": "VS_diast_blood_pres_ORRES_DIABP@I.356",
                     "order_number": 5,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
                 {
                     "uid": "OdmItem_000025",
@@ -5296,26 +5955,24 @@ clinspark_output = {
                     "name": "VS_pulse_ORRES_PULSE@I.347",
                     "order_number": 6,
                     "mandatory": "Yes",
-                    "data_entry_required": "No",
-                    "sdv": "No",
-                    "locked": "No",
                     "key_sequence": "None",
                     "method_oid": None,
                     "imputation_method_oid": "None",
                     "role": "None",
                     "role_codelist_oid": "None",
                     "collection_exception_condition_oid": "",
+                    "vendor": {"attributes": []},
                 },
             ],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
     ],
     "items": [
         {
-            "start_date": "2022-12-05T08:19:51.158756+00:00",
+            "start_date": "2022-12-21T11:36:15.992084+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -5349,13 +6006,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:49.562877+00:00",
+            "start_date": "2022-12-21T11:36:14.306878+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -5389,13 +6046,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:49.876511+00:00",
+            "start_date": "2022-12-21T11:36:14.645699+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -5429,13 +6086,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:50.188800+00:00",
+            "start_date": "2022-12-21T11:36:14.972105+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -5469,13 +6126,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:50.522558+00:00",
+            "start_date": "2022-12-21T11:36:15.340405+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -5509,13 +6166,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:50.843875+00:00",
+            "start_date": "2022-12-21T11:36:15.667687+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -5549,13 +6206,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:49.249081+00:00",
+            "start_date": "2022-12-21T11:36:13.978468+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -5597,25 +6254,27 @@ clinspark_output = {
                     "term_uid": "CTTerm_000017",
                     "name": "FEMALE",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000018",
                     "name": "MALE",
                     "mandatory": True,
-                    "order": 1,
+                    "order": 2,
                     "display_text": None,
+                    "version": "1.0",
                 },
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:48.762959+00:00",
+            "start_date": "2022-12-21T11:36:13.457466+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -5662,13 +6321,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:51.474715+00:00",
+            "start_date": "2022-12-21T11:36:16.325406+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -5702,13 +6361,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:43.205758+00:00",
+            "start_date": "2022-12-21T11:36:07.412780+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -5750,32 +6409,35 @@ clinspark_output = {
                     "term_uid": "CTTerm_000003",
                     "name": "Disposition event",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000004",
                     "name": "Protocol milestone",
                     "mandatory": True,
-                    "order": 1,
+                    "order": 2,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000005",
                     "name": "Other event",
                     "mandatory": True,
-                    "order": 2,
+                    "order": 3,
                     "display_text": None,
+                    "version": "1.0",
                 },
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:44.089534+00:00",
+            "start_date": "2022-12-21T11:36:08.346051+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -5817,74 +6479,83 @@ clinspark_output = {
                     "term_uid": "CTTerm_000006",
                     "name": "First date on trial product",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000007",
                     "name": "Last date on trial product",
                     "mandatory": True,
-                    "order": 1,
+                    "order": 2,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000008",
                     "name": "Treatment discontinuation",
                     "mandatory": True,
-                    "order": 2,
+                    "order": 3,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000009",
                     "name": "Treatment unblinded",
                     "mandatory": True,
-                    "order": 3,
+                    "order": 4,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000010",
                     "name": "Informed consent obtained",
                     "mandatory": True,
-                    "order": 4,
+                    "order": 5,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000011",
                     "name": "Eligibility criteria met",
                     "mandatory": True,
-                    "order": 5,
+                    "order": 6,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000012",
                     "name": "Randomized",
                     "mandatory": True,
-                    "order": 6,
+                    "order": 7,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000013",
                     "name": "Future research biosample consent obtained",
                     "mandatory": True,
-                    "order": 7,
+                    "order": 8,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000014",
                     "name": "Future research biosample consent withdrawn",
                     "mandatory": True,
-                    "order": 8,
+                    "order": 9,
                     "display_text": None,
+                    "version": "1.0",
                 },
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:44.785973+00:00",
+            "start_date": "2022-12-21T11:36:09.089752+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -5918,13 +6589,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:55.698729+00:00",
+            "start_date": "2022-12-21T11:36:20.684162+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -5966,32 +6637,35 @@ clinspark_output = {
                     "term_uid": "CTTerm_000022",
                     "name": "<Investigational medicinal product 1>",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000023",
                     "name": "<Investigational medicinal product 2>",
                     "mandatory": True,
-                    "order": 1,
+                    "order": 2,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000024",
                     "name": "<Investigational medicinal product 3>",
                     "mandatory": True,
-                    "order": 2,
+                    "order": 3,
                     "display_text": None,
+                    "version": "1.0",
                 },
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:54.203402+00:00",
+            "start_date": "2022-12-21T11:36:19.123838+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6033,18 +6707,19 @@ clinspark_output = {
                     "term_uid": "CTTerm_000019",
                     "name": "Administration of trial product",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 }
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:54.702988+00:00",
+            "start_date": "2022-12-21T11:36:19.630002+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6086,25 +6761,27 @@ clinspark_output = {
                     "term_uid": "CTTerm_000020",
                     "name": "Scheduled",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000021",
                     "name": "Performed",
                     "mandatory": True,
-                    "order": 1,
+                    "order": 2,
                     "display_text": None,
+                    "version": "1.0",
                 },
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:55.172589+00:00",
+            "start_date": "2022-12-21T11:36:20.104491+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6146,18 +6823,19 @@ clinspark_output = {
                     "term_uid": "CTTerm_000001",
                     "name": "Yes",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 }
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:59.402287+00:00",
+            "start_date": "2022-12-21T11:36:24.341147+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6199,25 +6877,27 @@ clinspark_output = {
                     "term_uid": "CTTerm_000001",
                     "name": "Yes",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000002",
                     "name": "No",
                     "mandatory": True,
-                    "order": 1,
+                    "order": 2,
                     "display_text": None,
+                    "version": "1.0",
                 },
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:04.037573+00:00",
+            "start_date": "2022-12-21T11:36:28.935309+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6251,13 +6931,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:00.730599+00:00",
+            "start_date": "2022-12-21T11:36:25.682690+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6291,13 +6971,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:04.360409+00:00",
+            "start_date": "2022-12-21T11:36:29.260287+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6331,13 +7011,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:04.696901+00:00",
+            "start_date": "2022-12-21T11:36:29.592149+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6371,13 +7051,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:56.024522+00:00",
+            "start_date": "2022-12-21T11:36:21.004983+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6411,13 +7091,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:02.059561+00:00",
+            "start_date": "2022-12-21T11:36:27.026955+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6451,13 +7131,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:56.951405+00:00",
+            "start_date": "2022-12-21T11:36:21.964398+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6499,25 +7179,27 @@ clinspark_output = {
                     "term_uid": "CTTerm_000025",
                     "name": "Tablet",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000026",
                     "name": "Injection",
                     "mandatory": True,
-                    "order": 1,
+                    "order": 2,
                     "display_text": None,
+                    "version": "1.0",
                 },
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:58.124543+00:00",
+            "start_date": "2022-12-21T11:36:23.118066+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6551,13 +7233,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:01.738233+00:00",
+            "start_date": "2022-12-21T11:36:26.703316+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6591,13 +7273,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:03.678990+00:00",
+            "start_date": "2022-12-21T11:36:28.602920+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6639,32 +7321,35 @@ clinspark_output = {
                     "term_uid": "CTTerm_000037",
                     "name": "Upper arm (arm)",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000038",
                     "name": "Thigh",
                     "mandatory": True,
-                    "order": 1,
+                    "order": 2,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000039",
                     "name": "Stomach (abdominal skin)",
                     "mandatory": True,
-                    "order": 2,
+                    "order": 3,
                     "display_text": None,
+                    "version": "1.0",
                 },
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:03.153875+00:00",
+            "start_date": "2022-12-21T11:36:28.064261+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6706,25 +7391,27 @@ clinspark_output = {
                     "term_uid": "CTTerm_000035",
                     "name": "Right",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000036",
                     "name": "Left",
                     "mandatory": True,
-                    "order": 1,
+                    "order": 2,
                     "display_text": None,
+                    "version": "1.0",
                 },
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:57.769762+00:00",
+            "start_date": "2022-12-21T11:36:22.797283+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6758,13 +7445,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:58.446829+00:00",
+            "start_date": "2022-12-21T11:36:23.436791+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6798,13 +7485,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:56.341946+00:00",
+            "start_date": "2022-12-21T11:36:21.328907+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6838,13 +7525,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:57.449073+00:00",
+            "start_date": "2022-12-21T11:36:22.470927+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6886,25 +7573,27 @@ clinspark_output = {
                     "term_uid": "CTTerm_000001",
                     "name": "Yes",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000002",
                     "name": "No",
                     "mandatory": True,
-                    "order": 1,
+                    "order": 2,
                     "display_text": None,
+                    "version": "1.0",
                 },
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:02.625514+00:00",
+            "start_date": "2022-12-21T11:36:27.541401+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6946,25 +7635,27 @@ clinspark_output = {
                     "term_uid": "CTTerm_000033",
                     "name": "Subcutaneous",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000034",
                     "name": "Oral",
                     "mandatory": True,
-                    "order": 1,
+                    "order": 2,
                     "display_text": None,
+                    "version": "1.0",
                 },
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:53.759151+00:00",
+            "start_date": "2022-12-21T11:36:18.651232+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -6998,13 +7689,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:59.721201+00:00",
+            "start_date": "2022-12-21T11:36:24.686862+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7038,13 +7729,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:01.380676+00:00",
+            "start_date": "2022-12-21T11:36:26.340779+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7078,13 +7769,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:01.051150+00:00",
+            "start_date": "2022-12-21T11:36:26.004203+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7118,13 +7809,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:20:00.357547+00:00",
+            "start_date": "2022-12-21T11:36:25.345007+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7166,53 +7857,59 @@ clinspark_output = {
                     "term_uid": "CTTerm_000027",
                     "name": "Pre-prophylaxis dose",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000028",
                     "name": "Trial scheduled prophylaxis dose",
                     "mandatory": True,
-                    "order": 1,
+                    "order": 2,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000029",
                     "name": "Upcoming physical activity",
                     "mandatory": True,
-                    "order": 2,
+                    "order": 3,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000030",
                     "name": "Other preventive treatment",
                     "mandatory": True,
-                    "order": 3,
+                    "order": 4,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000031",
                     "name": "Treatment of bleeding episode",
                     "mandatory": True,
-                    "order": 4,
+                    "order": 5,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000032",
                     "name": "Surgery",
                     "mandatory": True,
-                    "order": 5,
+                    "order": 6,
                     "display_text": None,
+                    "version": "1.0",
                 },
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:58.865024+00:00",
+            "start_date": "2022-12-21T11:36:23.840443+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7259,13 +7956,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:45.146275+00:00",
+            "start_date": "2022-12-21T11:36:09.526382+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7299,13 +7996,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:44.412292+00:00",
+            "start_date": "2022-12-21T11:36:08.690435+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7339,13 +8036,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:48.322827+00:00",
+            "start_date": "2022-12-21T11:36:12.992778+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7392,13 +8089,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:51.980962+00:00",
+            "start_date": "2022-12-21T11:36:16.852810+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7440,25 +8137,27 @@ clinspark_output = {
                     "term_uid": "CTTerm_000015",
                     "name": "Vital Signs",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000016",
                     "name": "Body measurement",
                     "mandatory": True,
-                    "order": 1,
+                    "order": 2,
                     "display_text": None,
+                    "version": "1.0",
                 },
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:46.185317+00:00",
+            "start_date": "2022-12-21T11:36:10.711772+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7500,25 +8199,27 @@ clinspark_output = {
                     "term_uid": "CTTerm_000015",
                     "name": "Vital Signs",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000016",
                     "name": "Body measurement",
                     "mandatory": True,
-                    "order": 1,
+                    "order": 2,
                     "display_text": None,
+                    "version": "1.0",
                 },
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:46.506831+00:00",
+            "start_date": "2022-12-21T11:36:11.049901+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7552,13 +8253,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:52.297672+00:00",
+            "start_date": "2022-12-21T11:36:17.180503+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7592,13 +8293,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:53.129581+00:00",
+            "start_date": "2022-12-21T11:36:18.007900+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7645,13 +8346,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:45.680348+00:00",
+            "start_date": "2022-12-21T11:36:10.104927+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7693,25 +8394,27 @@ clinspark_output = {
                     "term_uid": "CTTerm_000001",
                     "name": "Yes",
                     "mandatory": True,
-                    "order": 0,
+                    "order": 1,
                     "display_text": None,
+                    "version": "1.0",
                 },
                 {
                     "term_uid": "CTTerm_000002",
                     "name": "No",
                     "mandatory": True,
-                    "order": 1,
+                    "order": 2,
                     "display_text": None,
+                    "version": "1.0",
                 },
             ],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:47.320644+00:00",
+            "start_date": "2022-12-21T11:36:11.954279+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7758,13 +8461,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:53.443686+00:00",
+            "start_date": "2022-12-21T11:36:18.329739+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7798,13 +8501,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:52.689257+00:00",
+            "start_date": "2022-12-21T11:36:17.609186+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7851,13 +8554,13 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-05T08:19:47.800735+00:00",
+            "start_date": "2022-12-21T11:36:12.456401+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",
@@ -7904,16 +8607,16 @@ clinspark_output = {
             "codelist": None,
             "terms": [],
             "activities": [],
-            "xml_extension_tags": [],
-            "xml_extension_attributes": [],
-            "xml_extension_tag_attributes": [],
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
             "possible_actions": ["inactivate", "new_version"],
         },
     ],
     "conditions": [],
     "methods": [
         {
-            "start_date": "2022-12-05T08:19:41.319314+00:00",
+            "start_date": "2022-12-21T11:36:05.487419+00:00",
             "end_date": None,
             "status": "Final",
             "version": "1.0",

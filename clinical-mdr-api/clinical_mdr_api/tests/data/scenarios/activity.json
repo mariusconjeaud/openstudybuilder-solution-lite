@@ -25,12 +25,12 @@
             "abbreviation": "abbv",
             "library_name": "Sponsor",
             "activity_subgroup": {
-                  "uid": "activity_subgroup_root1",
-                  "name": "name1"
+               "uid": "activity_subgroup_root1",
+               "name": "name1"
             },
             "activity_group": {
-                  "uid": "activity_group_root1",
-                  "name": "name1"
+               "uid": "activity_group_root1",
+               "name": "name1"
             },
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
@@ -42,7 +42,9 @@
                "approve",
                "delete",
                "edit"
-            ]
+            ],
+            "request_rationale": null,
+            "replaced_by_activity": null
          }
       }
    },
@@ -67,12 +69,12 @@
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
                   "activity_subgroup": {
-                        "uid": "activity_subgroup_root1",
-                        "name": "name1"
+                     "uid": "activity_subgroup_root1",
+                     "name": "name1"
                   },
                   "activity_group": {
-                        "uid": "activity_group_root1",
-                        "name": "name1"
+                     "uid": "activity_group_root1",
+                     "name": "name1"
                   },
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
@@ -84,7 +86,9 @@
                      "approve",
                      "delete",
                      "edit"
-                  ]
+                  ],
+                  "request_rationale": null,
+                  "replaced_by_activity": null
                },
                {
                   "uid": "activity_root1",
@@ -94,12 +98,12 @@
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
                   "activity_subgroup": {
-                        "uid": "activity_subgroup_root1",
-                        "name": "name1"
+                     "uid": "activity_subgroup_root1",
+                     "name": "name1"
                   },
                   "activity_group": {
-                        "uid": "activity_group_root1",
-                        "name": "name1"
+                     "uid": "activity_group_root1",
+                     "name": "name1"
                   },
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
@@ -110,7 +114,9 @@
                   "possible_actions": [
                      "inactivate",
                      "new_version"
-                  ]
+                  ],
+                  "request_rationale": null,
+                  "replaced_by_activity": null
                },
                {
                   "uid": "activity_root2",
@@ -120,12 +126,12 @@
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
                   "activity_subgroup": {
-                        "uid": "activity_subgroup_root2",
-                        "name": "name2"
+                     "uid": "activity_subgroup_root2",
+                     "name": "name2"
                   },
                   "activity_group": {
-                        "uid": "activity_group_root2",
-                        "name": "name2"
+                     "uid": "activity_group_root2",
+                     "name": "name2"
                   },
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
@@ -137,7 +143,9 @@
                      "approve",
                      "delete",
                      "edit"
-                  ]
+                  ],
+                  "request_rationale": null,
+                  "replaced_by_activity": null
                }
             ],
             "total": 3,
@@ -167,12 +175,12 @@
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
                   "activity_subgroup": {
-                        "uid": "activity_subgroup_root2",
-                        "name": "name2"
+                     "uid": "activity_subgroup_root2",
+                     "name": "name2"
                   },
                   "activity_group": {
-                        "uid": "activity_group_root2",
-                        "name": "name2"
+                     "uid": "activity_group_root2",
+                     "name": "name2"
                   },
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
@@ -184,7 +192,9 @@
                      "approve",
                      "delete",
                      "edit"
-                  ]
+                  ],
+                  "request_rationale": null,
+                  "replaced_by_activity": null
                }
             ],
             "total": 1,
@@ -214,12 +224,12 @@
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
                   "activity_subgroup": {
-                        "uid": "activity_subgroup_root2",
-                        "name": "name2"
+                     "uid": "activity_subgroup_root2",
+                     "name": "name2"
                   },
                   "activity_group": {
-                        "uid": "activity_group_root2",
-                        "name": "name2"
+                     "uid": "activity_group_root2",
+                     "name": "name2"
                   },
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
@@ -231,7 +241,9 @@
                      "approve",
                      "delete",
                      "edit"
-                  ]
+                  ],
+                  "request_rationale": null,
+                  "replaced_by_activity": null
                }
             ],
             "total": 1,
@@ -261,12 +273,12 @@
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
                   "activity_subgroup": {
-                        "uid": "activity_subgroup_root2",
-                        "name": "name2"
+                     "uid": "activity_subgroup_root2",
+                     "name": "name2"
                   },
                   "activity_group": {
-                        "uid": "activity_group_root2",
-                        "name": "name2"
+                     "uid": "activity_group_root2",
+                     "name": "name2"
                   },
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
@@ -278,7 +290,9 @@
                      "approve",
                      "delete",
                      "edit"
-                  ]
+                  ],
+                  "request_rationale": null,
+                  "replaced_by_activity": null
                }
             ],
             "total": 1,
@@ -308,12 +322,12 @@
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
                   "activity_subgroup": {
-                        "uid": "activity_subgroup_root2",
-                        "name": "name2"
+                     "uid": "activity_subgroup_root2",
+                     "name": "name2"
                   },
                   "activity_group": {
-                        "uid": "activity_group_root2",
-                        "name": "name2"
+                     "uid": "activity_group_root2",
+                     "name": "name2"
                   },
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
@@ -325,7 +339,9 @@
                      "approve",
                      "delete",
                      "edit"
-                  ]
+                  ],
+                  "request_rationale": null,
+                  "replaced_by_activity": null
                }
             ],
             "total": 1,
@@ -340,7 +356,7 @@
          "headers": {},
          "method": "POST",
          "request": {},
-         "url": "/concepts/activities/activities/Activity_000001/approve"
+         "url": "/concepts/activities/activities/Activity_000001/approvals"
       },
       "response": {
          "code": 201,
@@ -353,12 +369,12 @@
             "abbreviation": "abbv",
             "library_name": "Sponsor",
             "activity_subgroup": {
-                  "uid": "activity_subgroup_root1",
-                  "name": "name1"
+               "uid": "activity_subgroup_root1",
+               "name": "name1"
             },
             "activity_group": {
-                  "uid": "activity_group_root1",
-                  "name": "name1"
+               "uid": "activity_group_root1",
+               "name": "name1"
             },
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
@@ -369,7 +385,9 @@
             "possible_actions": [
                "inactivate",
                "new_version"
-            ]
+            ],
+            "request_rationale": null,
+            "replaced_by_activity": null
          }
       }
    },
@@ -392,12 +410,12 @@
             "abbreviation": "abbv",
             "library_name": "Sponsor",
             "activity_subgroup": {
-                  "uid": "activity_subgroup_root1",
-                  "name": "name1"
+               "uid": "activity_subgroup_root1",
+               "name": "name1"
             },
             "activity_group": {
-                  "uid": "activity_group_root1",
-                  "name": "name1"
+               "uid": "activity_group_root1",
+               "name": "name1"
             },
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
@@ -408,20 +426,22 @@
             "possible_actions": [
                "approve",
                "edit"
-            ]
+            ],
+            "request_rationale": null,
+            "replaced_by_activity": null
          }
       }
    },
    {
-      "name": "Test POST inactivate activity",
+      "name": "Test DELETE activations activity",
       "request": {
          "headers": {},
-         "method": "POST",
+         "method": "DELETE",
          "request": {},
-         "url": "/concepts/activities/activities/activity_root1/inactivate"
+         "url": "/concepts/activities/activities/activity_root1/activations"
       },
       "response": {
-         "code": 201,
+         "code": 200,
          "headers": {},
          "result": {
             "uid": "activity_root1",
@@ -431,35 +451,37 @@
             "abbreviation": "abbv",
             "library_name": "Sponsor",
             "activity_subgroup": {
-                  "uid": "activity_subgroup_root1",
-                  "name": "name1"
+               "uid": "activity_subgroup_root1",
+               "name": "name1"
             },
             "activity_group": {
-                  "uid": "activity_group_root1",
-                  "name": "name1"
+               "uid": "activity_group_root1",
+               "name": "name1"
             },
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
             "status": "Retired",
             "version": "1.0",
-            "change_description": "Deactivated version",
+            "change_description": "Inactivated version",
             "user_initials": "TODO user initials",
             "possible_actions": [
                "reactivate"
-            ]
+            ],
+            "request_rationale": null,
+            "replaced_by_activity": null
          }
       }
    },
    {
-      "name": "Test POST reactivate activity",
+      "name": "Test POST activations activity",
       "request": {
          "headers": {},
          "method": "POST",
          "request": {},
-         "url": "/concepts/activities/activities/activity_root1/reactivate"
+         "url": "/concepts/activities/activities/activity_root1/activations"
       },
       "response": {
-         "code": 201,
+         "code": 200,
          "headers": {},
          "result": {
             "uid": "activity_root1",
@@ -469,12 +491,12 @@
             "abbreviation": "abbv",
             "library_name": "Sponsor",
             "activity_subgroup": {
-                  "uid": "activity_subgroup_root1",
-                  "name": "name1"
+               "uid": "activity_subgroup_root1",
+               "name": "name1"
             },
             "activity_group": {
-                  "uid": "activity_group_root1",
-                  "name": "name1"
+               "uid": "activity_group_root1",
+               "name": "name1"
             },
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
@@ -485,7 +507,9 @@
             "possible_actions": [
                "inactivate",
                "new_version"
-            ]
+            ],
+            "request_rationale": null,
+            "replaced_by_activity": null
          }
       }
    },

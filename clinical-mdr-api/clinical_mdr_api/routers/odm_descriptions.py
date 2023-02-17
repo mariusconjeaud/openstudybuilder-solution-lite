@@ -1,7 +1,7 @@
-from typing import Any, Optional, Sequence
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, Path, Query
-from pydantic.types import Json, List
+from pydantic.types import Json
 
 from clinical_mdr_api import config
 from clinical_mdr_api.models import (
@@ -180,14 +180,14 @@ def create_odm_description(
     "/batch",
     summary="Batch operations (create, edit) for ODM Descriptions",
     description="",
-    response_model=Sequence[OdmDescriptionBatchOutput],
-    status_code=201,
+    response_model=List[OdmDescriptionBatchOutput],
+    status_code=207,
     responses={
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def odm_description_batch_operations(
-    operations: Sequence[OdmDescriptionBatchInput] = Body(
+    operations: List[OdmDescriptionBatchInput] = Body(
         None, description="List of operation to perform"
     ),
 ):
@@ -268,7 +268,7 @@ def create_odm_description_version(uid: str = OdmDescriptionUID):
 
 
 @router.post(
-    "/{uid}/approve",
+    "/{uid}/approvals",
     summary="Approve an ODM Description",
     description="",
     response_model=OdmDescription,
@@ -293,14 +293,14 @@ def approve_odm_description(uid: str = OdmDescriptionUID):
     return odm_description_service.approve(uid=uid)
 
 
-@router.post(
-    "/{uid}/inactivate",
+@router.delete(
+    "/{uid}/activations",
     summary=" Inactivate an ODM Description",
     description="",
     response_model=OdmDescription,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -319,13 +319,13 @@ def inactivate_odm_description(uid: str = OdmDescriptionUID):
 
 
 @router.post(
-    "/{uid}/reactivate",
+    "/{uid}/activations",
     summary="Reactivate an ODM Description",
     description="",
     response_model=OdmDescription,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"

@@ -4,14 +4,15 @@
     :headers="headers"
     :items="items"
     item-key="uid"
+    sort-by="name"
     sort-desc
     has-api
-    column-data-resource="concepts/odms/items"
-    export-data-url="concepts/odms/items"
-    export-object-label="CRFItems"
     :options.sync="options"
     :server-items-length="total"
     @filter="getItems"
+    column-data-resource="concepts/odms/items"
+    export-data-url="concepts/odms/items"
+    export-object-label="CRFItems"
     >
     <template v-slot:actions="">
       <v-btn
@@ -69,13 +70,16 @@
     >
     <crf-item-form
       @close="closeForm"
-      :editItem="editItem"
+      @newVersion="newVersion"
+      @approve="approve"
+      :selectedItem="selectedItem"
       class="fullscreen-dialog"
-      :readOnlyProp="editItem.status === 'Final'"
+      :readOnlyProp="selectedItem && selectedItem.status === constants.FINAL"
       />
   </v-dialog>
   <v-dialog
     v-model="showItemHistory"
+    @keydown.esc="closeItemHistory"
     persistent
     max-width="1200px"
     >
@@ -92,6 +96,7 @@
     :item-to-link="selectedItem"
     item-type="item" />
   <v-dialog v-model="showRelations"
+            @keydown.esc="closeRelationsTree()"
             max-width="800px"
             persistent>
     <odm-references-tree
@@ -119,6 +124,8 @@ import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import crfTypes from '@/constants/crfTypes'
 import parameters from '@/constants/parameters'
 import dataFormating from '@/utils/dataFormating'
+import { mapGetters } from 'vuex'
+import _isEmpty from 'lodash/isEmpty'
 
 export default {
   components: {
@@ -136,6 +143,10 @@ export default {
     elementProp: Object
   },
   computed: {
+    ...mapGetters({
+      items: 'crfs/items',
+      total: 'crfs/totalItems'
+    }),
     itemHistoryTitle () {
       if (this.selectedItem) {
         return this.$t(
@@ -227,20 +238,21 @@ export default {
       showForm: false,
       options: {},
       filters: '',
-      total: 0,
-      items: [],
       selectedItem: null,
       showItemHistory: false,
-      editItem: {},
       linkForm: false,
       showRelations: false,
       itemHistoryItems: []
     }
   },
   mounted () {
+    this.getItems()
     if (this.elementProp.tab === 'items' && this.elementProp.type === crfTypes.ITEM && this.elementProp.uid) {
       this.edit(this.elementProp)
     }
+  },
+  created () {
+    this.constants = constants
   },
   methods: {
     getDescription (item) {
@@ -269,12 +281,18 @@ export default {
       this.showForm = true
     },
     closeForm () {
+      if (!_isEmpty(this.selectedItem)) {
+        crfs.getItem(this.selectedItem.uid).then((resp) => {
+          this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
+        })
+      }
       this.showForm = false
-      this.editItem = {}
+      this.selectedItem = null
       this.getItems()
     },
     approve (item) {
       crfs.approve('items', item.uid).then((resp) => {
+        this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
         this.getItems()
       })
     },
@@ -302,29 +320,32 @@ export default {
     },
     inactivate (item) {
       crfs.inactivate('items', item.uid).then((resp) => {
+        this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
         this.getItems()
       })
     },
     reactivate (item) {
       crfs.reactivate('items', item.uid).then((resp) => {
+        this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
         this.getItems()
       })
     },
     newVersion (item) {
       crfs.newVersion('items', item.uid).then((resp) => {
+        this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
         this.getItems()
       })
     },
     edit (item) {
       crfs.getItem(item.uid).then((resp) => {
-        this.editItem = resp.data
+        this.selectedItem = resp.data
         this.showForm = true
         this.$emit('clearUid')
       })
     },
     view (item) {
       crfs.getItem(item.uid).then((resp) => {
-        this.editItem = resp.data
+        this.selectedItem = resp.data
         this.showForm = true
       })
     },
@@ -335,7 +356,7 @@ export default {
       this.showItemHistory = true
     },
     closeItemHistory () {
-      this.selectedItem = {}
+      this.selectedItem = null
       this.showItemHistory = false
     },
     transformItems (items) {
@@ -357,16 +378,16 @@ export default {
     },
     closeLinkForm () {
       this.linkForm = false
-      this.selectedItem = {}
+      this.selectedItem = null
       this.getItems()
     },
     getItems (filters, sort, filtersUpdated) {
+      if (filters) {
+        this.filters = filters
+      }
       const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
-      crfs.get('items', { params }).then((resp) => {
-        this.items = resp.data.items
-        this.total = resp.data.total
-      })
+        this.options, this.filters, sort, filtersUpdated)
+      this.$store.dispatch('crfs/fetchItems', params)
     }
   },
   watch: {

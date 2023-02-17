@@ -252,7 +252,7 @@ def format_term_filter_sort_keys(key: str, prefix: str = None) -> str:
 
 
 def list_term_wildcard_properties(
-    is_aggregated: bool = True, target_model: BaseModel = None
+    is_aggregated: bool = True, target_model: Optional[BaseModel] = None
 ) -> Sequence[str]:
     """
     Returns a list of properties on which to apply wildcard filtering, formatted as defined in the database and/or Cypher query
@@ -273,7 +273,7 @@ def list_term_wildcard_properties(
                 # Wildcard filtering only searches in properties of type string
                 if (
                     attr_desc.type_ is str
-                    and not attribute in ["possible_actions"]
+                    and attribute not in ["possible_actions"]
                     and not attr_desc.field_info.extra.get(
                         "remove_from_wildcard", False
                     )
@@ -286,7 +286,7 @@ def list_term_wildcard_properties(
                 # Wildcard filtering only searches in properties of type string
                 if (
                     attr_desc.type_ is str
-                    and not attribute in ["possible_actions"]
+                    and attribute not in ["possible_actions"]
                     and not attr_desc.field_info.extra.get(
                         "remove_from_wildcard", False
                     )
@@ -499,7 +499,7 @@ def list_codelist_wildcard_properties(
                 # Wildcard filtering only searches in properties of type string
                 if (
                     attr_desc.type_ is str
-                    and not attribute in ["possible_actions"]
+                    and attribute not in ["possible_actions"]
                     # remove fields that shouldn't be included in wildcard filter
                     and not attr_desc.field_info.extra.get(
                         "remove_from_wildcard", False
@@ -513,7 +513,7 @@ def list_codelist_wildcard_properties(
                 # Wildcard filtering only searches in properties of type string
                 if (
                     attr_desc.type_ is str
-                    and not attribute in ["possible_actions"]
+                    and attribute not in ["possible_actions"]
                     # remove fields that shouldn't be included in wildcard filter
                     and not attr_desc.field_info.extra.get(
                         "remove_from_wildcard", False

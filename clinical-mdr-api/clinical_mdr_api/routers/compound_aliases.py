@@ -3,6 +3,7 @@ from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, Depends, Path, Query
 from pydantic.types import Json
+from starlette.requests import Request
 
 from clinical_mdr_api import config
 from clinical_mdr_api.models.compound_alias import (
@@ -14,7 +15,7 @@ from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.repositories._utils import FilterOperator
-from clinical_mdr_api.routers import _generic_descriptions
+from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.concepts.compound_alias_service import (
     CompoundAliasService,
 )
@@ -43,7 +44,30 @@ Possible errors:
     status_code=200,
     responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "compound=compound.name",
+            "name",
+            "name_sentence_case",
+            "is_preferred_synonym",
+            "definition",
+            "start_date",
+            "version",
+            "status",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_all(
+    request: Request,  # request is actually required by the allow_exports decorator
     library: Optional[str] = Query(None, description="The library name"),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: Optional[int] = Query(
@@ -277,7 +301,7 @@ def edit(
 
 
 @router.post(
-    "/compound-aliases/{uid}/approve",
+    "/compound-aliases/{uid}/approvals",
     summary="Approve draft version of a compound alias",
     description="""
 State before:
@@ -362,8 +386,8 @@ def create_new_version(
     return service.create_new_version(uid=uid)
 
 
-@router.post(
-    "/compound-aliases/{uid}/inactivate",
+@router.delete(
+    "/compound-aliases/{uid}/activations",
     summary=" Inactivate final version of an compound alias",
     description="""
 State before:
@@ -383,9 +407,9 @@ Possible errors:
  - Invalid uid or status not Final.
     """,
     response_model=CompoundAlias,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
@@ -406,7 +430,7 @@ def inactivate(
 
 
 @router.post(
-    "/compound-aliases/{uid}/reactivate",
+    "/compound-aliases/{uid}/activations",
     summary="Reactivate retired version of an compound alias",
     description="""
 State before:
@@ -426,9 +450,9 @@ Possible errors:
  - Invalid uid or status not Retired.
     """,
     response_model=CompoundAlias,
-    status_code=201,
+    status_code=200,
     responses={
-        201: {"description": "OK."},
+        200: {"description": "OK."},
         403: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"

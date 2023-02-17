@@ -6,6 +6,7 @@
   @close="cancel"
   @submit="submit"
   :open="open"
+  :form-url="formUrl"
   >
   <template v-slot:body>
     <validation-observer ref="observer">
@@ -16,7 +17,7 @@
             rules="required"
             >
             <v-text-field
-              :label="$t('_global.name') + '*'"
+              :label="$t('CrfTemplates.name') + '*'"
               data-cy="crf-template-name"
               v-model="form.name"
               :error-messages="errors"
@@ -107,6 +108,13 @@
       >
       {{ $t('_global.new_version') }}
     </v-btn>
+    <v-btn
+      @click="approve"
+      class="primary mr-2"
+      v-else-if="selectedTemplate && selectedTemplate.status === statuses.DRAFT"
+      >
+      {{ $t('_global.approve') }}
+    </v-btn>
   </template>
 </simple-form-dialog>
 </template>
@@ -116,6 +124,7 @@ import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
 import crfs from '@/api/crfs'
 import { bus } from '@/main'
 import _isEqual from 'lodash/isEqual'
+import statuses from '@/constants/statuses'
 
 export default {
   components: {
@@ -128,7 +137,7 @@ export default {
   },
   computed: {
     title () {
-      return (this.isEdit(this.selectedTemplate))
+      return (this.isEdit())
         ? this.$t('CrfTemplates.edit_template') + ' - ' + this.form.name
         : this.$t('CrfTemplates.add_template')
     },
@@ -137,16 +146,30 @@ export default {
     },
     retiredDateDisp () {
       return this.form.retired_date
+    },
+    formUrl () {
+      if (this.isEdit()) {
+        return `${window.location.href.replace('crf-tree', 'templates')}/template/${this.selectedTemplate.uid}`
+      }
+      return null
     }
   },
   data () {
     return {
       form: {},
-      helpItems: [],
+      helpItems: [
+        'CrfTemplates.name',
+        'CrfTemplates.oid',
+        'CrfTemplates.effective_date',
+        'CrfTemplates.retired_date'
+      ],
       effectiveDateMenu: false,
       retiredDateMenu: false,
       readOnly: this.readOnlyProp
     }
+  },
+  created () {
+    this.statuses = statuses
   },
   methods: {
     newVersion () {
@@ -154,10 +177,15 @@ export default {
         this.readOnly = false
       })
     },
+    approve () {
+      crfs.approve('templates', this.selectedTemplate.uid).then((resp) => {
+        this.readOnly = true
+      })
+    },
     async submit () {
       const isValid = await this.$refs.observer.validate()
       if (!isValid) return
-      if (this.isEdit(this.selectedTemplate)) {
+      if (this.isEdit()) {
         crfs.updateTemplate(this.form, this.selectedTemplate.uid).then(resp => {
           bus.$emit('notification', { msg: this.$t('CrfTemplates.template_updated') })
           this.close()
@@ -188,14 +216,15 @@ export default {
       this.$refs.observer.reset()
       this.$emit('close')
     },
-    isEdit (value) {
-      if (value) {
-        return Object.keys(value).length !== 0
+    isEdit () {
+      if (this.selectedTemplate) {
+        return Object.keys(this.selectedTemplate).length !== 0
       }
+      return false
     }
   },
   mounted () {
-    if (this.isEdit(this.selectedTemplate)) {
+    if (this.isEdit()) {
       this.form = { ...this.selectedTemplate }
       this.$store.commit('form/SET_FORM', this.form)
     }

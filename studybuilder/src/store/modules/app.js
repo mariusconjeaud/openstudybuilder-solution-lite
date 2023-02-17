@@ -147,10 +147,6 @@ const state = {
               title: i18n.t('Sidebar.library.objective_instances'),
               url: { name: 'Objectives' }
             },
-            // {
-            //   title: i18n.t('Sidebar.library.estimand_instances'), // Empty page, removed for now
-            //   url: { name: 'EstimandTemplates' }
-            // },
             {
               title: i18n.t('Sidebar.library.endpoint_instances'),
               url: { name: 'Endpoints' }
@@ -158,11 +154,11 @@ const state = {
             {
               title: i18n.t('Sidebar.library.timeframe_instances'),
               url: { name: 'Timeframes' }
+            },
+            {
+              title: i18n.t('Sidebar.library.criteria_instances'),
+              url: { name: 'CriteriaInstances' }
             }
-            // {
-            //   title: i18n.t('Sidebar.library.criteria_instances'), // Empty page, removed for now
-            //   url: { name: 'CriteriaInstances' }
-            // }
           ]
         },
         {
@@ -369,6 +365,10 @@ const state = {
             {
               title: i18n.t('Sidebar.study.odm_specification'),
               url: { name: 'OdmSpecification' }
+            },
+            {
+              title: i18n.t('Sidebar.study.ctr_odm_xml'),
+              url: { name: 'CtrOdmXml' }
             },
             {
               title: i18n.t('Sidebar.study.sdtm_specification'),

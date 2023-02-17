@@ -241,7 +241,7 @@ export default {
     },
     setNullValueStratificationFactor () {
       this.$set(this.form, 'stratification_factor', '')
-      if (this.form.disease_conditions_or_indications_null_value_code) {
+      if (this.form.stratification_factor_null_value_code) {
         this.$set(this.form, 'stratification_factor_null_value_code', null)
       } else {
         this.$set(this.form, 'stratification_factor_null_value_code', { term_uid: this.$t('_global.na_uid'), name: this.$t('_global.not_applicable_full_name') })

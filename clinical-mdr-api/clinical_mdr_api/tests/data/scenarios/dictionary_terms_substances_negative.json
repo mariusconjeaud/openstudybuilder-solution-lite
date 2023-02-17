@@ -140,7 +140,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/dictionaries/terms/DictionaryTerm_000003/approve"
+            "url": "/dictionaries/terms/DictionaryTerm_000003/approvals"
         },
         "response": {
             "code": 201,

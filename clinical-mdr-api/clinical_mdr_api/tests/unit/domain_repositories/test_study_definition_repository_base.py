@@ -34,6 +34,7 @@ from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
 from clinical_mdr_api.domain_repositories.study_definition.study_definition_repository import (
     StudyDefinitionRepository,
 )
+from clinical_mdr_api.models.study import StudyPreferredTimeUnit
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._utils import service_level_generic_filtering
@@ -134,6 +135,25 @@ class StudyDefinitionsDBFake(GenericInMemoryDB[StudyDefinitionSnapshot]):
 
 
 class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
+    def get_preferred_time_unit(self, study_uid: str) -> StudyPreferredTimeUnit:
+        return NotImplementedError()
+
+    def post_preferred_time_unit(
+        self, study_uid: str, unit_definition_uid: str
+    ) -> StudyPreferredTimeUnit:
+        return NotImplementedError
+
+    def edit_preferred_time_unit(
+        self, study_uid: str, unit_definition_uid: str
+    ) -> StudyPreferredTimeUnit:
+        return NotImplementedError()
+
+    def study_exists_by_uid(self, study_uid: str) -> bool:
+        snapshot: Optional[StudyDefinitionSnapshot] = self._simulated_db.find_by_id(
+            study_uid
+        )
+        return bool(snapshot)
+
     _simulated_db: StudyDefinitionsDBFake
 
     def __init__(self, _simulated_db: StudyDefinitionsDBFake):

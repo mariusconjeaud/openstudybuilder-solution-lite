@@ -11,9 +11,9 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_ODM_ALIASES,
     STARTUP_ODM_DESCRIPTIONS,
     STARTUP_ODM_ITEM_GROUPS,
-    STARTUP_ODM_XML_EXTENSION_ATTRIBUTES,
-    STARTUP_ODM_XML_EXTENSION_TAGS,
-    STARTUP_ODM_XML_EXTENSIONS,
+    STARTUP_ODM_VENDOR_ATTRIBUTES,
+    STARTUP_ODM_VENDOR_ELEMENTS,
+    STARTUP_ODM_VENDOR_NAMESPACES,
 )
 
 BASE_SCENARIO_PATH = "clinical_mdr_api/tests/data/scenarios/"
@@ -29,9 +29,9 @@ class OdmFormTest(api.APITest):
         db.cypher_query(STARTUP_ODM_DESCRIPTIONS)
         db.cypher_query(STARTUP_ODM_ALIASES)
         db.cypher_query(STARTUP_ODM_ITEM_GROUPS)
-        db.cypher_query(STARTUP_ODM_XML_EXTENSIONS)
-        db.cypher_query(STARTUP_ODM_XML_EXTENSION_TAGS)
-        db.cypher_query(STARTUP_ODM_XML_EXTENSION_ATTRIBUTES)
+        db.cypher_query(STARTUP_ODM_VENDOR_NAMESPACES)
+        db.cypher_query(STARTUP_ODM_VENDOR_ELEMENTS)
+        db.cypher_query(STARTUP_ODM_VENDOR_ATTRIBUTES)
 
         from clinical_mdr_api import main
 
@@ -55,9 +55,9 @@ class OdmFormNegativeTest(api.APITest):
         db.cypher_query(STARTUP_ODM_DESCRIPTIONS)
         db.cypher_query(STARTUP_ODM_ALIASES)
         db.cypher_query(STARTUP_ODM_ITEM_GROUPS)
-        db.cypher_query(STARTUP_ODM_XML_EXTENSIONS)
-        db.cypher_query(STARTUP_ODM_XML_EXTENSION_TAGS)
-        db.cypher_query(STARTUP_ODM_XML_EXTENSION_ATTRIBUTES)
+        db.cypher_query(STARTUP_ODM_VENDOR_NAMESPACES)
+        db.cypher_query(STARTUP_ODM_VENDOR_ELEMENTS)
+        db.cypher_query(STARTUP_ODM_VENDOR_ATTRIBUTES)
 
         from clinical_mdr_api import main
 
