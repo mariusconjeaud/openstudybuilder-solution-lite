@@ -17,10 +17,11 @@
     single-expand
     :filters-modify-function="modifyFilters"
     :modifiable-table="!isExpand()"
+    class="tableMinWidth"
     >
     <template v-slot:item="{ item, expand, isExpanded }" v-if="isExpand()">
       <tr style="background-color: lightskyblue">
-        <td width="5%">
+        <td width="1%">
           <v-btn @click="expand(!isExpanded)" v-if="isExpanded" icon>
             <v-icon dark>
               mdi-chevron-down
@@ -32,12 +33,13 @@
             </v-icon>
           </v-btn>
         </td>
-        <td width="5%">
-          <actions-menu :actions="actions" :item="item"/>
+        <td width="40%" :class="'font-weight-bold'">
+          <v-row class="mt-2">
+            <actions-menu :actions="actions" :item="item"/>{{ item.name }}
+          </v-row>
         </td>
-        <td width="41%" :class="'font-weight-bold'">{{ item.name }}</td>
-        <td width="24%">{{ item.start_date | date }}</td>
-        <td width="14%"><status-chip :status="item.status" /></td>
+        <td width="25%">{{ item.start_date | date }}</td>
+        <td width="15%"><status-chip :status="item.status" /></td>
         <td width="10%">{{ item.version }}</td>
       </tr>
     </template>
@@ -47,7 +49,17 @@
       </div>
     </template>
     <template v-slot:item.name="{ item }">
-      <div :class="isExpand() ? 'font-weight-bold' : ''"> {{ item.name }} </div>
+      <template v-if="source === 'activity-instances'">
+        <router-link :to="{ name: 'ActivityInstanceOverview', params: { id: item.uid } }">
+          {{ item.name }}
+        </router-link>
+      </template>
+      <template v-else-if="source === 'activities'">
+        <router-link :to="{ name: 'ActivityOverview', params: { id: item.uid } }">
+          {{ item.name }}
+        </router-link>
+      </template>
+      <div v-else :class="isExpand() ? 'font-weight-bold' : ''"> {{ item.name }} </div>
     </template>
     <template v-slot:item.status="{ item }">
       <status-chip :status="item.status" />
@@ -82,7 +94,7 @@
           >
           <template v-slot:item="{ item, expand, isExpanded }">
             <tr>
-              <td width="5%">
+              <td width="1%">
                 <v-btn @click="expand(!isExpanded)" v-if="isExpanded" icon>
                   <v-icon dark>
                     mdi-chevron-down
@@ -94,12 +106,15 @@
                   </v-icon>
                 </v-btn>
               </td>
-              <td width="5%">
-                <actions-menu :actions="actions" :item="item" :source="'activity-sub-groups'"/>
+              <td width="40%" class="font-weight-bold">
+                <div class="ml-6">
+                  <v-row class="mt-2">
+                    <actions-menu :actions="actions" :item="item" :source="'activity-sub-groups'"/>{{ item.name }}
+                  </v-row>
+                </div>
               </td>
-              <td width="41%" class="font-weight-bold">{{ item.name }}</td>
-              <td width="24%">{{ item.start_date | date }}</td>
-              <td width="14%"><status-chip :status="item.status" /></td>
+              <td width="25%">{{ item.start_date | date }}</td>
+              <td width="15%"><status-chip :status="item.status" /></td>
               <td width="10%">{{ item.version }}</td>
             </tr>
           </template>
@@ -119,13 +134,19 @@
                 >
                 <template v-slot:item="{ item }">
                   <tr>
-                    <td width="5%">&nbsp;</td>
-                    <td width="5%">
-                      <actions-menu :actions="actions" :item="item" :source="'activities'"/>
+                    <td width="1%">
+                      <v-btn icon>
+                      </v-btn>
                     </td>
-                    <td width="41%">{{ item.name }}</td>
-                    <td width="24%">{{ item.start_date | date }}</td>
-                    <td width="14%"><status-chip :status="item.status" /></td>
+                    <td width="40%">
+                      <div class="ml-12">
+                        <v-row class="mt-2">
+                          <actions-menu :actions="actions" :item="item" :source="'activities'"/>{{ item.name }}
+                        </v-row>
+                      </div>
+                    </td>
+                    <td width="25%">{{ item.start_date | date }}</td>
+                    <td width="15%"><status-chip :status="item.status" /></td>
                     <td width="10%">{{ item.version }}</td>
                   </tr>
                 </template>
@@ -195,6 +216,7 @@
 <script>
 import activities from '@/api/activities'
 import ActionsMenu from '@/components/tools/ActionsMenu'
+import { bus } from '@/main'
 import NNTable from '@/components/tools/NNTable'
 import StatusChip from '@/components/tools/StatusChip'
 import ActivitiesForm from '@/components/library/ActivitiesForm'
@@ -292,7 +314,7 @@ export default {
       instantiationsHeaders: [
         { text: '', value: 'possible_actions', width: '5%' },
         { text: this.$t('_global.library'), value: 'library_name' },
-        { text: this.$t('ActivityTable.type'), value: 'type' },
+        { text: this.$t('ActivityTable.type'), value: 'activity_instance_class.name' },
         { text: this.$t('ActivityTable.activity'), value: 'activities', externalFilterSource: 'concepts/activities/activities$name' },
         { text: this.$t('ActivityTable.instance'), value: 'name' },
         { text: this.$t('_global.definition'), value: 'definition' },
@@ -309,11 +331,10 @@ export default {
         { text: this.$t('_global.version'), value: 'version' }
       ],
       groupsHeaders: [
-        { text: '', value: 'possible_actions', width: '5%' },
-        { text: this.$t('ActivityTable.group_or_subgroup'), value: 'name', width: '43%' },
-        { text: this.$t('_global.modified'), value: 'start_date', width: '25%' },
-        { text: this.$t('_global.status'), value: 'status', width: '15%' },
-        { text: this.$t('_global.version'), value: 'version', width: '10%' }
+        { text: this.$t('ActivityTable.group_or_subgroup'), value: 'name' },
+        { text: this.$t('_global.modified'), value: 'start_date' },
+        { text: this.$t('_global.status'), value: 'status' },
+        { text: this.$t('_global.version'), value: 'version' }
       ],
       requestedHeaders: [
         { text: '', value: 'possible_actions', width: '5%' },
@@ -510,30 +531,35 @@ export default {
     inactivateActivity (item, source) {
       source = (source === undefined) ? this.source : source
       activities.inactivate(item.uid, source).then(() => {
+        bus.$emit('notification', { msg: this.$t(`ActivitiesTable.inactivate_${this.source}_success`), type: 'success' })
         this.fetchActivities()
       })
     },
     reactivateActivity (item, source) {
       source = (source === undefined) ? this.source : source
       activities.reactivate(item.uid, source).then(() => {
+        bus.$emit('notification', { msg: this.$t(`ActivitiesTable.reactivate_${this.source}_success`), type: 'success' })
         this.fetchActivities()
       })
     },
     deleteActivity (item, source) {
       source = (source === undefined) ? this.source : source
       activities.delete(item.uid, source).then(() => {
+        bus.$emit('notification', { msg: this.$t(`ActivitiesTable.delete_${this.source}_success`), type: 'success' })
         this.fetchActivities()
       })
     },
     approveActivity (item, source) {
       source = (source === undefined) ? this.source : source
       activities.approve(item.uid, source).then(() => {
+        bus.$emit('notification', { msg: this.$t(`ActivitiesTable.approve_${this.source}_success`), type: 'success' })
         this.fetchActivities()
       })
     },
     newActivityVersion (item, source) {
       source = (source === undefined) ? this.source : source
       activities.newVersion(item.uid, source).then(() => {
+        bus.$emit('notification', { msg: this.$t('_global.new_version_success'), type: 'success' })
         this.fetchActivities()
       })
     },
@@ -615,3 +641,8 @@ export default {
   }
 }
 </script>
+<style scoped>
+.tableMinWidth {
+  min-width: 1440px !important;
+}
+</style>

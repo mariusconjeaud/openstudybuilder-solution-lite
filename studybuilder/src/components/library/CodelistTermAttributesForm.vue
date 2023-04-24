@@ -152,7 +152,7 @@ export default {
       if (!isValid) return
       this.working = true
       try {
-        const resp = await controlledTerminology.updateCodelistTermAttributes(this.value.termUid, this.form)
+        const resp = await controlledTerminology.updateCodelistTermAttributes(this.value.term_uid, this.form)
         this.$emit('input', resp.data)
         bus.$emit('notification', { msg: this.$t('CodelistTermNamesForm.update_success') })
         this.close()

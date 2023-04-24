@@ -98,7 +98,7 @@ export default {
       return `studies/${this.selectedStudy.uid}/study-design-cells`
     },
     filteredStudyEpochs () {
-      return this.studyEpochs.filter(item => item.epochName !== visitConstants.EPOCH_BASIC)
+      return this.studyEpochs.filter(item => item.epoch_name !== visitConstants.EPOCH_BASIC)
     }
   },
   props: {

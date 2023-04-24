@@ -7,8 +7,13 @@
     :itemsPerPage="15"
     disable-filtering
     hide-export-button
+    hide-default-switches
     >
     <template v-slot:actions="">
+      <slot
+        name="topActions"
+        >
+      </slot>
       <v-btn
         v-if="copyFromStudy"
         color="primary"
@@ -104,7 +109,11 @@ export default {
       type: Boolean,
       default: false
     },
-    component: String
+    component: String,
+    withReasonForMissing: {
+      type: Boolean,
+      default: true
+    }
   },
   computed: {
     ...mapGetters({
@@ -133,12 +142,17 @@ export default {
     }
   },
   data () {
-    return {
-      headers: [
-        { text: this.firstColLabel, value: 'name', width: '30%' },
-        { text: this.$t('StudyMetadataSummary.selected_values'), value: 'values' },
+    const headers = [
+      { text: this.firstColLabel, value: 'name', width: '30%' },
+      { text: this.$t('StudyMetadataSummary.selected_values'), value: 'values' }
+    ]
+    if (this.withReasonForMissing) {
+      headers.push(
         { text: this.$t('StudyMetadataSummary.reason_for_missing'), value: 'reason_for_missing' }
-      ],
+      )
+    }
+    return {
+      headers,
       historyHeaders: [
         { text: this.$t('HistoryTable.field'), value: 'field' },
         { text: this.$t('HistoryTable.value_before'), value: 'before_value.term_uid' },

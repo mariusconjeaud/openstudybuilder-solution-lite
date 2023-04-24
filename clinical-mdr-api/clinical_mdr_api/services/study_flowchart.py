@@ -1,4 +1,5 @@
 import logging
+import sys
 from collections import defaultdict
 from itertools import count
 from typing import Iterable, List, Mapping, Sequence
@@ -72,7 +73,6 @@ class StudyFlowchartService:
     def get_epoch_ct_term_names(self) -> Sequence[CTTermName]:
         tracer = execution_context.get_opencensus_tracer()
         with tracer.span("StudyFlowchartService.get_epoch_ct_term_names"):
-
             return (
                 CTTermNameService(user=self._current_user_id)
                 .get_all_ct_terms(codelist_name="Epoch")
@@ -84,7 +84,6 @@ class StudyFlowchartService:
     ) -> Sequence[StudyActivitySchedule]:
         tracer = execution_context.get_opencensus_tracer()
         with tracer.span("StudyFlowchartService.get_study_activity_schedules"):
-
             return StudyActivityScheduleService(
                 author=self._current_user_id
             ).get_all_schedules(study_uid)
@@ -126,7 +125,6 @@ class StudyFlowchartService:
     def get_study_activities(self, study_uid: str) -> Sequence[StudySelectionActivity]:
         tracer = execution_context.get_opencensus_tracer()
         with tracer.span("StudyFlowchartService.get_study_activities"):
-
             return (
                 StudyActivitySelectionService(author=self._current_user_id)
                 .get_all_selection(study_uid)
@@ -146,7 +144,6 @@ class StudyFlowchartService:
 
         tracer = execution_context.get_opencensus_tracer()
         with tracer.span("StudyFlowchartService._build_docx_document"):
-
             docx = DocxBuilder(
                 styles=DOCX_STYLES, landscape=True, margins=[0.5, 0.5, 0.5, 0.5]
             )
@@ -202,7 +199,6 @@ class StudyFlowchartService:
 
         tracer = execution_context.get_opencensus_tracer()
         with tracer.span("StudyFlowchartService._build_html_document"):
-
             doc, tag, _text, line = yattag.Doc().ttl()
             doc.asis("<!DOCTYPE html>")
 
@@ -235,7 +231,6 @@ class StudyFlowchartService:
     def get_table(self, study_uid: str, time_unit: str) -> TableWithHeaders:
         tracer = execution_context.get_opencensus_tracer()
         with tracer.span("StudyFlowchartService.get_table"):
-
             study_visits_grouped = tuple(
                 self.iter_visits_grouped(self.get_study_visits(study_uid))
             )
@@ -341,6 +336,59 @@ class StudyFlowchartService:
         return headers
 
     @staticmethod
+    def sort_study_activities(study_activities: Sequence[StudySelectionActivity]):
+        """
+        Returns a list of sorted StudyActivities
+
+        Study activities are sorted by flowchart_group -> activity_group -> activity_subgroup
+        """
+        # sort list of study activities to group them by flowchart_group->activity_group->activity_subgroup
+        uniq_flowchart_groups = defaultdict(dict)
+
+        for study_activity in study_activities:
+            flowchart_group = study_activity.flowchart_group.term_uid
+            uniq_flowchart_groups[flowchart_group].setdefault(
+                "order", len(uniq_flowchart_groups)
+            )
+            # the sort order of activity_groups and activity_subgroups is kept for each flowchart_group
+            # because we may have the same activity_subgroups, activity_groups for different flowchart_group
+            uniq_flowchart_groups[flowchart_group].setdefault("groups_order", dict())
+            uniq_flowchart_groups[flowchart_group].setdefault("subgroups_order", dict())
+
+            # create list of unique activity_groups in the order they should be sorted
+            if study_activity.activity.activity_group:
+                activity_group = study_activity.activity.activity_group.uid
+                uniq_flowchart_groups[flowchart_group]["groups_order"].setdefault(
+                    activity_group,
+                    len(uniq_flowchart_groups[flowchart_group]["groups_order"]),
+                )
+
+            # create list of unique activity_subgroups in the order they should be sorted
+            if study_activity.activity.activity_subgroup:
+                activity_subgroup = study_activity.activity.activity_subgroup.uid
+                uniq_flowchart_groups[flowchart_group]["subgroups_order"].setdefault(
+                    activity_subgroup,
+                    len(uniq_flowchart_groups[flowchart_group]["subgroups_order"]),
+                )
+
+        return sorted(
+            study_activities,
+            key=lambda sa: (
+                uniq_flowchart_groups[sa.flowchart_group.term_uid]["order"],
+                uniq_flowchart_groups[sa.flowchart_group.term_uid]["groups_order"][
+                    sa.activity.activity_group.uid
+                ]
+                if sa.activity.activity_group is not None
+                else sys.maxsize,
+                uniq_flowchart_groups[sa.flowchart_group.term_uid]["subgroups_order"][
+                    sa.activity.activity_subgroup.uid
+                ]
+                if sa.activity.activity_subgroup is not None
+                else sys.maxsize,
+            ),
+        )
+
+    @staticmethod
     def get_activity_rows(
         study_activities: Sequence[StudySelectionActivity],
         activity_schedules: Mapping[str, Sequence[str]],
@@ -352,6 +400,10 @@ class StudyFlowchartService:
         """
         rows = []
         fch_group, ass_group, ass_subgroup = None, None, None
+
+        study_activities = StudyFlowchartService.sort_study_activities(
+            study_activities=study_activities
+        )
 
         for study_activity in study_activities:
             # Create a row for Flowchart group if not yet created

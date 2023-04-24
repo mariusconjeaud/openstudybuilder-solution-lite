@@ -47,7 +47,6 @@ class CompoundAliasRepository(ConceptGenericRepository):
         return value_node
 
     def _has_data_changed(self, ar: _AggregateRootType, value: VersionValue) -> bool:
-
         was_parent_data_modified = super()._has_data_changed(ar=ar, value=value)
 
         are_props_changed = (
@@ -98,7 +97,6 @@ class CompoundAliasRepository(ConceptGenericRepository):
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> CompoundAliasAR:
-
         return CompoundAliasAR.from_repository_values(
             uid=root.uid,
             concept_vo=CompoundAliasVO.from_repository_values(

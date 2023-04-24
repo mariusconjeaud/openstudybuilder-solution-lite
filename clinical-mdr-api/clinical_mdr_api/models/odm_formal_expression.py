@@ -45,7 +45,6 @@ class OdmFormalExpressionSimpleModel(BaseModel):
         uid: str,
         find_odm_formal_expression_by_uid: Callable[[str], Optional[ConceptARBase]],
     ) -> Optional["OdmFormalExpressionSimpleModel"]:
-
         if uid is not None:
             odm_formal_expression = find_odm_formal_expression_by_uid(uid)
 

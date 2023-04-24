@@ -168,7 +168,7 @@ export default {
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: '#', value: 'order', width: '5%' },
-        { text: this.$t('StudyElements.el_type'), value: 'element_type' },
+        { text: this.$t('StudyElements.el_type'), value: 'element_type.sponsor_preferred_name' },
         { text: this.$t('StudyElements.el_sub_type'), value: 'element_subtype.sponsor_preferred_name' },
         { text: this.$t('StudyElements.el_name'), value: 'name' },
         { text: this.$t('StudyElements.el_short_name'), value: 'short_name' },

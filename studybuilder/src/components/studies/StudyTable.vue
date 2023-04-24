@@ -2,19 +2,18 @@
 <div>
   <n-n-table
     :headers="headers"
-    :items="studies.items"
     item-key="uid"
     export-object-label="Studies"
-    export-data-url="studies"
-    :options.sync="options"
+    :export-data-url="exportDataUrl"
     has-api
     column-data-resource="studies"
-    @filter="fetchStudies"
-    :server-items-length="total"
+    v-bind="$attrs"
+    v-on="$listeners"
     >
     <template v-slot:actions="">
       <v-btn
         data-cy="add-study"
+        v-if="!readOnly"
         fab
         dark
         small
@@ -37,7 +36,11 @@
       {{ $t('_global.unknown_user') }}
     </template>
     <template v-slot:item.actions="{ item }">
-      <actions-menu :actions="actions" :item="item" />
+      <actions-menu
+        v-if="!readOnly"
+        :actions="actions"
+        :item="item"
+        />
     </template>
   </n-n-table>
   <study-form
@@ -52,8 +55,6 @@ import { mapGetters } from 'vuex'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import NNTable from '@/components/tools/NNTable'
 import StudyForm from '@/components/studies/StudyForm'
-import study from '@/api/study'
-import filteringParameters from '@/utils/filteringParameters'
 
 export default {
   components: {
@@ -61,12 +62,24 @@ export default {
     NNTable,
     StudyForm
   },
+  props: {
+    readOnly: {
+      type: Boolean,
+      default: false
+    }
+  },
   computed: {
     ...mapGetters({
       getProjectByNumber: 'manageStudies/getProjectByNumber',
-      selectedStudy: 'studiesGeneral/selectedStudy',
-      studies: 'manageStudies/studies'
-    })
+      selectedStudy: 'studiesGeneral/selectedStudy'
+    }),
+    exportDataUrl () {
+      let result = '/studies'
+      if (this.readOnly) {
+        result += '?deleted=true'
+      }
+      return result
+    }
   },
   data () {
     return {
@@ -89,7 +102,7 @@ export default {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil',
           iconColor: 'primary',
-          condition: (item) => item.study_status === 'DRAFT',
+          condition: (item) => item.current_metadata.version_metadata.study_status === 'DRAFT',
           click: this.editStudy
         }
       ],
@@ -108,27 +121,16 @@ export default {
         { text: this.$t('_global.modified_by'), value: 'current_metadata.version_metadata.locked_version_author' }
       ],
       showForm: false,
-      activeStudy: null,
-      total: 0,
-      filters: '',
-      options: {}
+      activeStudy: null
     }
   },
   methods: {
-    fetchStudies (filters, sort, filtersUpdated) {
-      const params = filteringParameters.prepareParameters(
-        this.options, filters, sort, filtersUpdated)
-      study.get(params).then(resp => {
-        this.studies.items = resp.data.items
-        this.total = resp.data.total
-      })
-    },
     closeForm () {
       this.showForm = false
       this.activeStudy = null
     },
     selectStudy (study) {
-      this.$store.commit('studiesGeneral/SELECT_STUDY', study)
+      this.$store.dispatch('studiesGeneral/selectStudy', study)
     },
     unSelectStudy (study) {
       this.$store.commit('studiesGeneral/UNSELECT_STUDY', study)
@@ -140,20 +142,6 @@ export default {
     getBrandName (study) {
       const project = this.getProjectByNumber(study.current_metadata.identification_metadata.project_number)
       return (project !== undefined) ? project.brand_name : ''
-    },
-    initialSortByDate () {
-      this.options.sortBy = ['current_metadata.version_metadata.version_timestamp']
-      this.options.sortDesc = [true]
-    }
-  },
-  mounted () {
-    this.$store.dispatch('manageStudies/fetchProjects')
-    this.$store.dispatch('manageStudies/fetchStudies')
-    this.initialSortByDate()
-  },
-  watch: {
-    options () {
-      this.fetchStudies()
     }
   }
 }

@@ -189,7 +189,6 @@ class ListingsService:
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         result_count: int = 10,
     ):
-
         all_items = action()
 
         header_values = service_level_generic_header_filtering(

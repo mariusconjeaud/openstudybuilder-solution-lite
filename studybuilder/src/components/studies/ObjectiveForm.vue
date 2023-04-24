@@ -33,7 +33,7 @@
             :label="$t('StudySelectionTable.studies')"
             :items="studies"
             :error-messages="errors"
-            item-text="study_id"
+            item-text="current_metadata.identification_metadata.study_id"
             clearable
             multiple
             return-object
@@ -118,7 +118,7 @@
           :column-data-resource="`objective-templates`"
           @filter="getObjectiveTemplates"
           >
-          <template v-slot:item.categories="{ item }">
+          <template v-slot:item.categories.name.sponsor_preferred_name="{ item }">
             <template v-if="item.defaultParameterValuesSet === undefined">
               <template v-if="item.categories">
                 {{ item.categories|terms }}
@@ -128,10 +128,10 @@
               </template>
             </template>
           </template>
-          <template v-slot:item.confirmatoryTesting="{ item }">
+          <template v-slot:item.is_confirmatory_testing="{ item }">
             <template v-if="item.defaultParameterValuesSet === undefined">
-              <template v-if="item.confirmatoryTesting !== null">
-                {{ item.confirmatoryTesting|yesno }}
+              <template v-if="item.is_confirmatory_testing !== null">
+                {{ item.is_confirmatory_testing|yesno }}
               </template>
               <template v-else>
                 {{ $t('_global.not_applicable_long') }}
@@ -307,8 +307,8 @@ export default {
     },
     selectedDefaultParameterValues () {
       if (this.form.objective_template) {
-        if (Array.isArray(this.form.objective_template.default_parameter_values)) {
-          return this.form.objective_template.default_parameter_values
+        if (Array.isArray(this.form.objective_template.default_parameter_terms)) {
+          return this.form.objective_template.default_parameter_terms
         }
       }
       return []
@@ -386,13 +386,18 @@ export default {
       tplHeaders: [
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('_global.indications'), value: 'indications', filteringName: 'indications.name' },
-        { text: this.$t('ObjectiveTemplateTable.objective_cat'), value: 'categories' },
-        { text: this.$t('ObjectiveTemplateTable.confirmatory_testing'), value: 'confirmatory_testing' },
-        { text: this.$t('_global.template'), value: 'name', width: '30%' }
+        { text: this.$t('ObjectiveTemplateTable.objective_cat'), value: 'categories.name.sponsor_preferred_name' },
+        { text: this.$t('ObjectiveTemplateTable.confirmatory_testing'), value: 'is_confirmatory_testing' },
+        {
+          text: this.$t('_global.template'),
+          value: 'name',
+          width: '30%',
+          filteringName: 'name_plain'
+        }
       ],
       objectiveHeaders: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('Study.study_id'), value: 'study_uid' },
+        { text: this.$t('Study.study_id'), value: 'study_id' },
         { text: this.$t('StudyObjectiveForm.study_objective'), value: 'objective.name' },
         { text: this.$t('StudyObjectiveForm.objective_level'), value: 'objective_level.sponsor_preferred_name' }
       ],
@@ -465,8 +470,8 @@ export default {
         this.loadingParameters = true
         const resp = await objectiveTemplates.getParameters(template.uid, { study_uid: this.selectedStudy.uid })
         this.parameters = resp.data
-        if (template.default_parameter_values.length) {
-          instances.loadParameterValues(template.default_parameter_values, this.parameters, true)
+        if (template.default_parameter_terms.length) {
+          instances.loadParameterValues(template.default_parameter_terms, this.parameters, true)
         }
         this.loadingParameters = false
       } else {
@@ -543,7 +548,7 @@ export default {
     async getStudyObjectiveNamePreview () {
       const objectiveData = {
         objective_template_uid: this.form.objective.objective_template.uid,
-        parameter_values: await instances.formatParameterValues(this.parameters),
+        parameter_terms: await instances.formatParameterValues(this.parameters),
         library_name: this.form.objective_template ? this.form.objective_template.library.name : this.form.objective.library.name
       }
       const resp = await study.getStudyObjectivePreview(this.selectedStudy.uid, { objective_data: objectiveData })
@@ -620,7 +625,7 @@ export default {
     templateParameterTypes.getTypes().then(resp => {
       this.parameterTypes = resp.data
     })
-    study.get({ hasStudyObjective: true }).then(resp => {
+    study.get({ hasStudyObjective: true, page_size: 0 }).then(resp => {
       this.studies = resp.data.items.filter(study => study.uid !== this.selectedStudy.uid)
     })
   },

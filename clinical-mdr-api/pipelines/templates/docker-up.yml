@@ -1,3 +1,10 @@
+# Pipeline parameters
+parameters:
+
+  - name: SERVICE_CONN
+    type: string
+    default: IaCAgent-ClinicalMDR-DEV
+
 steps:
 
   - script: |
@@ -8,9 +15,18 @@ steps:
       docker volume prune -f
     displayName: "Reset docker environment"
 
-  - script: |    
-      docker compose build
-    displayName: "Build docker images"
+  - task: AzureCLI@2
+    displayName: Log in to container registry
+    inputs:
+      azureSubscription: ${{parameters.SERVICE_CONN}}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        az acr login -n '$(azmd.acrname)'
+
+  - script: |
+      docker compose build api --build-arg BUILD_TARGET=prod --build-arg PYTHON_IMAGE=$(azmd.acrname).azurecr.io/novo-python-3-7-12-slim:latest --progress=plain
+    displayName: "Build api docker image"
 
   - script: |    
       docker compose up --detach --renew-anon-volumes

@@ -4,11 +4,8 @@
     {{ $t('Sidebar.library.activities') }}
     <help-button :help-text="$t('_help.ActivitiesTable.general')" />
   </div>
-   <v-tabs v-model="tab">
-    <v-tab href="#activities">{{ $t('ActivityTable.activities') }}</v-tab>
-    <v-tab href="#activity-groups">{{ $t('ActivityTable.activities_overview') }}</v-tab>
-    <v-tab href="#activity-instances">{{ $t('ActivityTable.instances') }}</v-tab>
-    <v-tab href="#requested-activities">{{ $t('ActivityTable.requested') }}</v-tab>
+  <v-tabs v-model="tab">
+    <v-tab v-for="tab of tabs" :key="tab.tab" :href="tab.tab">{{ tab.name }}</v-tab>
   </v-tabs>
   <v-tabs-items v-model="tab">
     <v-tab-item id="activities">
@@ -34,6 +31,7 @@
 <script>
 import ActivitiesTable from '@/components/library/ActivitiesTable'
 import HelpButton from '@/components/tools/HelpButton'
+import { mapActions } from 'vuex'
 
 export default {
   components: {
@@ -42,17 +40,43 @@ export default {
   },
   data () {
     return {
-      tab: 0
+      tab: 0,
+      tabs: [
+        { tab: '#activities', name: this.$t('ActivityTable.activities') },
+        { tab: '#activity-groups', name: this.$t('ActivityTable.activities_overview') },
+        { tab: '#activity-instances', name: this.$t('ActivityTable.instances') },
+        { tab: '#requested-activities', name: this.$t('ActivityTable.requested') }
+      ]
     }
   },
   mounted () {
     this.tab = this.$route.params.tab
+    const tabName = this.tab ? this.tabs.find(el => el.tab.substring(1) === this.tab).name : this.tabs[0].name
+    setTimeout(() => {
+      this.addBreadcrumbsLevel({
+        text: tabName,
+        to: { name: 'StudyProperties', params: { tab: tabName } },
+        index: 3,
+        replace: true
+      })
+    }, 100)
+  },
+  methods: {
+    ...mapActions({
+      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
+    })
   },
   watch: {
     tab (newValue) {
       this.$router.push({
         name: 'Activities',
         params: { tab: newValue }
+      })
+      const tabName = newValue ? this.tabs.find(el => el.tab.substring(1) === newValue).name : this.tabs[0].name
+      this.addBreadcrumbsLevel({
+        text: tabName,
+        index: 3,
+        replace: true
       })
     }
   }

@@ -11,17 +11,26 @@
     <validation-observer ref="observer">
       <v-row>
         <v-col cols="12">
+          <ucum-unit-field
+            v-model="ucumUnit"
+            :label="$t('UCUM.code')"
+            return-object
+            @input="setValues"
+            />
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col cols="12">
           <validation-provider
             v-slot="{ errors }"
             rules="required"
             >
-            <ucum-unit-field
+            <v-text-field
               v-model="form.name"
-              :label="$t('UCUM.code')"
+              :label="$t('_global.name')"
               :error-messages="errors"
-              return-object
-              @input="setValues"
-              />
+              dense
+              clearable/>
           </validation-provider>
         </v-col>
       </v-row>
@@ -69,7 +78,8 @@ export default {
         'UCUM.code',
         'UCUM.description'
       ],
-      form: {}
+      form: {},
+      ucumUnit: {}
     }
   },
   methods: {
@@ -80,6 +90,7 @@ export default {
     },
     setValues (code) {
       this.$set(this.form, 'definition', code.guidance)
+      this.$set(this.form, 'name', code.code)
     },
     submit () {
       const valid = this.$refs.observer.validate()
@@ -87,19 +98,20 @@ export default {
         return
       }
       this.$refs.form.working = true
-      const data = { ...this.form }
-      data.library_name = 'UCUM'
-      data.name = data.name.code
-      data.dictionaryId = data.name_sentence_case = data.name
-      dictionaries.create(data).then(resp => {
+      this.$set(this.form, 'library_name', 'UCUM')
+      this.$set(this.form, 'name_sentence_case', this.form.name)
+      this.$set(this.form, 'dictionary_id', this.form.name)
+      dictionaries.create(this.form).then(resp => {
         bus.$emit('notification', { msg: this.$t('DictionaryTermForm.create_success') })
         this.$emit('save')
         this.close()
       })
     }
   },
-  mounted () {
-    this.form.codelistUid = this.codelistUid
+  watch: {
+    codelistUid () {
+      this.form.codelist_uid = this.codelistUid
+    }
   }
 }
 </script>

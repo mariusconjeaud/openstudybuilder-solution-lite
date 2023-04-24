@@ -157,6 +157,5 @@ class UnitDefinitionPatchInput(ConceptPatchInput):
 
 
 class UnitDefinitionSimpleModel(BaseModel):
-
     uid: str = Field(..., title="uid", description="")
     name: Optional[str] = Field(None, title="name", description="")

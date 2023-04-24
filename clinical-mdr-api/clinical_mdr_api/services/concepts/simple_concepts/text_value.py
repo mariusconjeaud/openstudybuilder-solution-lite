@@ -12,7 +12,6 @@ from clinical_mdr_api.services.concepts.simple_concepts.simple_concept_generic i
 
 
 class TextValueService(SimpleConceptGenericService[TextValueAR]):
-
     aggregate_class = TextValueAR
     value_object_class = TextValueVO
     repository_interface = TextValueRepository

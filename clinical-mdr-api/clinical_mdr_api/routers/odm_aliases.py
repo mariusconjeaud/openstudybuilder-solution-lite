@@ -2,6 +2,7 @@ from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
+from starlette.requests import Request
 
 from clinical_mdr_api import config
 from clinical_mdr_api.models import (
@@ -14,7 +15,7 @@ from clinical_mdr_api.models import (
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.repositories._utils import FilterOperator
-from clinical_mdr_api.routers import _generic_descriptions
+from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.odm_aliases import OdmAliasService
 
 router = APIRouter()
@@ -26,12 +27,37 @@ OdmAliasUID = Path(None, description="The unique id of the ODM Alias.")
 @router.get(
     "",
     summary="Return a listing of ODM Aliases",
-    description="",
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=CustomPage[OdmAlias],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "library_name",
+            "name",
+            "context",
+            "start_date",
+            "end_date",
+            "status",
+            "version",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_all_odm_aliases(
+    request: Request,  # request is actually required by the allow_exports decorator
     library: Optional[str] = Query(None),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: Optional[int] = Query(
@@ -77,7 +103,7 @@ def get_all_odm_aliases(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -113,7 +139,10 @@ def get_distinct_values_for_header(
     description="",
     response_model=dict,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_active_relationships(uid: str = OdmAliasUID):
     odm_alias_service = OdmAliasService()
@@ -144,7 +173,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The ODM Alias with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_odm_alias_versions(uid: str = OdmAliasUID):
@@ -166,12 +195,10 @@ def get_odm_alias_versions(uid: str = OdmAliasUID):
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
-def create_odm_alias(
-    odm_alias_create_input: OdmAliasPostInput = Body(None, description="")
-):
+def create_odm_alias(odm_alias_create_input: OdmAliasPostInput = Body(description="")):
     odm_alias_service = OdmAliasService()
     return odm_alias_service.create(concept_input=odm_alias_create_input)
 
@@ -183,12 +210,13 @@ def create_odm_alias(
     response_model=List[OdmAliasBatchOutput],
     status_code=207,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def odm_alias_batch_operations(
     operations: List[OdmAliasBatchInput] = Body(
-        None, description="List of operation to perform"
+        description="List of operation to perform"
     ),
 ):
     odm_alias_service = OdmAliasService()
@@ -214,12 +242,12 @@ def odm_alias_batch_operations(
             "model": ErrorResponse,
             "description": "Not Found - The ODM Alias with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_alias(
     uid: str = OdmAliasUID,
-    odm_alias_edit_input: OdmAliasPatchInput = Body(None, description=""),
+    odm_alias_edit_input: OdmAliasPatchInput = Body(description=""),
 ):
     odm_alias_service = OdmAliasService()
     return odm_alias_service.edit_draft(
@@ -259,7 +287,7 @@ Possible errors:
             "- The ODM Alias is not in final status.\n"
             "- The ODM Alias with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_alias_version(uid: str = OdmAliasUID):
@@ -285,7 +313,7 @@ def create_odm_alias_version(uid: str = OdmAliasUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Alias with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve_odm_alias(uid: str = OdmAliasUID):
@@ -310,7 +338,7 @@ def approve_odm_alias(uid: str = OdmAliasUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Alias with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate_odm_alias(uid: str = OdmAliasUID):
@@ -335,7 +363,7 @@ def inactivate_odm_alias(uid: str = OdmAliasUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Alias with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate_odm_alias(uid: str = OdmAliasUID):
@@ -362,7 +390,7 @@ def reactivate_odm_alias(uid: str = OdmAliasUID):
             "model": ErrorResponse,
             "description": "Not Found - An ODM Alias with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_odm_alias(uid: str = OdmAliasUID):

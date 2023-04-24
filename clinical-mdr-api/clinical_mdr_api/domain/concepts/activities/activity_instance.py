@@ -14,6 +14,30 @@ from clinical_mdr_api.domain.versioned_object_aggregate import (
 
 
 @dataclass(frozen=True)
+class SimpleActivityItemVO:
+    uid: str
+    name: Optional[str]
+    activity_item_class_uid: Optional[str]
+    activity_item_class_name: Optional[str]
+
+    @classmethod
+    def from_repository_values(
+        cls,
+        uid: str,
+        name: Optional[str],
+        activity_item_class_uid: Optional[str],
+        activity_item_class_name: Optional[str],
+    ) -> "SimpleActivityItemVO":
+        simple_activity_item_vo = cls(
+            uid=uid,
+            name=name,
+            activity_item_class_uid=activity_item_class_uid,
+            activity_item_class_name=activity_item_class_name,
+        )
+        return simple_activity_item_vo
+
+
+@dataclass(frozen=True)
 class ActivityInstanceVO(ConceptVO):
     """
     The ActivityInstanceVO acts as the value object for a single ActivityInstance aggregate
@@ -22,18 +46,10 @@ class ActivityInstanceVO(ConceptVO):
     topic_code: str
     adam_param_code: str
     legacy_description: Optional[str]
-    sdtm_variable_uid: Optional[str]
-    sdtm_variable_name: Optional[str]
-    sdtm_subcat_uid: Optional[str]
-    sdtm_subcat_name: Optional[str]
-    sdtm_cat_uid: Optional[str]
-    sdtm_cat_name: Optional[str]
-    sdtm_domain_uid: Optional[str]
-    sdtm_domain_name: Optional[str]
     activity_uids: Sequence[str]
-    specimen_uid: Optional[str]
-    specimen_name: Optional[str]
-    activity_type: Optional[str]
+    activity_instance_class_uid: str
+    activity_instance_class_name: Optional[str]
+    activity_items: Sequence[SimpleActivityItemVO]
 
     @classmethod
     def from_repository_values(
@@ -45,18 +61,10 @@ class ActivityInstanceVO(ConceptVO):
         topic_code: str,
         adam_param_code: str,
         legacy_description: Optional[str],
-        sdtm_variable_uid: Optional[str],
-        sdtm_variable_name: Optional[str],
-        sdtm_subcat_uid: Optional[str],
-        sdtm_subcat_name: Optional[str],
-        sdtm_cat_uid: Optional[str],
-        sdtm_cat_name: Optional[str],
-        sdtm_domain_uid: Optional[str],
-        sdtm_domain_name: Optional[str],
         activity_uids: Sequence[str],
-        specimen_uid: Optional[str],
-        specimen_name: Optional[str],
-        activity_type: Optional[str],
+        activity_instance_class_uid: str,
+        activity_instance_class_name: Optional[str],
+        activity_items: Sequence[SimpleActivityItemVO],
     ) -> "ActivityInstanceVO":
         activity_instance_vo = cls(
             name=name,
@@ -64,21 +72,13 @@ class ActivityInstanceVO(ConceptVO):
             definition=definition,
             abbreviation=abbreviation,
             is_template_parameter=True,
-            activity_type=activity_type,
+            activity_instance_class_uid=activity_instance_class_uid,
+            activity_instance_class_name=activity_instance_class_name,
             topic_code=topic_code,
             adam_param_code=adam_param_code,
             legacy_description=legacy_description,
-            sdtm_variable_uid=sdtm_variable_uid,
-            sdtm_variable_name=sdtm_variable_name,
-            sdtm_subcat_uid=sdtm_subcat_uid,
-            sdtm_subcat_name=sdtm_subcat_name,
-            sdtm_cat_uid=sdtm_cat_uid,
-            sdtm_cat_name=sdtm_cat_name,
-            sdtm_domain_uid=sdtm_domain_uid,
-            sdtm_domain_name=sdtm_domain_name,
-            specimen_uid=specimen_uid,
-            specimen_name=specimen_name,
             activity_uids=activity_uids if activity_uids is not None else [],
+            activity_items=activity_items if activity_items is not None else [],
         )
 
         return activity_instance_vo
@@ -86,11 +86,11 @@ class ActivityInstanceVO(ConceptVO):
     def validate(
         self,
         activity_hierarchy_exists_by_uid_callback: Callable[[str], bool],
-        ct_term_exists_callback: Callable[[str], bool],
+        activity_instance_class_exists_by_uid_callback: Callable[[str], bool],
+        activity_item_exists_by_uid_callback: Callable[[str], bool],
         activity_exists_by_name_callback: Callable[[str], bool] = None,
         previous_name: Optional[str] = None,
     ) -> None:
-
         if activity_exists_by_name_callback(self.name) and self.name != previous_name:
             raise ValueError(
                 f"{type(self).__name__} with name ({self.name}) already exists"
@@ -101,30 +101,16 @@ class ActivityInstanceVO(ConceptVO):
                 raise ValueError(
                     f"{type(self).__name__} tried to connect to non existing Activity identified by uid ({activity})"
                 )
-
-        if self.sdtm_variable_uid is not None and not ct_term_exists_callback(
-            self.sdtm_variable_uid
+        for activity_item in self.activity_items:
+            if not activity_item_exists_by_uid_callback(activity_item.uid):
+                raise ValueError(
+                    f"{type(self).__name__} tried to connect to non existing Activity item identified by uid ({activity_item.uid})"
+                )
+        if not activity_instance_class_exists_by_uid_callback(
+            self.activity_instance_class_uid
         ):
             raise ValueError(
-                f"{type(self).__name__} tried to connect to non existing sdtm variable identified by uid ({self.sdtm_variable_uid})"
-            )
-        if self.sdtm_subcat_uid is not None and not ct_term_exists_callback(
-            self.sdtm_subcat_uid
-        ):
-            raise ValueError(
-                f"{type(self).__name__} tried to connect to non existing sdtm subcat identified by uid ({self.sdtm_subcat_uid})"
-            )
-        if self.sdtm_cat_uid is not None and not ct_term_exists_callback(
-            self.sdtm_cat_uid
-        ):
-            raise ValueError(
-                f"{type(self).__name__} tried to connect to non existing sdtm cat identified by uid ({self.sdtm_cat_uid})"
-            )
-        if self.sdtm_domain_uid is not None and not ct_term_exists_callback(
-            self.sdtm_domain_uid
-        ):
-            raise ValueError(
-                f"{type(self).__name__} tried to connect to non existing sdtm domain identified by uid ({self.sdtm_domain_uid})"
+                f"ActivityInstanceClass with specified uid ({self.activity_instance_class_uid}) doesn't exist"
             )
 
 
@@ -165,7 +151,8 @@ class ActivityInstanceAR(ConceptARBase):
         library: LibraryVO,
         concept_exists_by_name_callback: Callable[[str], bool],
         activity_hierarchy_exists_by_uid_callback: Callable[[str], bool],
-        ct_term_exists_callback: Callable[[str], bool],
+        activity_instance_class_exists_by_uid_callback: Callable[[str], bool],
+        activity_item_exists_by_uid_callback: Callable[[str], bool],
         generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
     ) -> _AggregateRootType:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
@@ -178,7 +165,8 @@ class ActivityInstanceAR(ConceptARBase):
         concept_vo.validate(
             activity_exists_by_name_callback=concept_exists_by_name_callback,
             activity_hierarchy_exists_by_uid_callback=activity_hierarchy_exists_by_uid_callback,
-            ct_term_exists_callback=ct_term_exists_callback,
+            activity_instance_class_exists_by_uid_callback=activity_instance_class_exists_by_uid_callback,
+            activity_item_exists_by_uid_callback=activity_item_exists_by_uid_callback,
         )
 
         activity_ar = cls(
@@ -195,8 +183,9 @@ class ActivityInstanceAR(ConceptARBase):
         change_description: Optional[str],
         concept_vo: _ConceptVOType,
         concept_exists_by_name_callback: Callable[[str], bool],
+        activity_item_exists_by_uid_callback: Callable[[str], bool] = None,
         activity_hierarchy_exists_by_uid_callback: Callable[[str], bool] = None,
-        ct_term_exists_callback: Callable[[str], bool] = None,
+        activity_instance_class_exists_by_uid_callback: Callable[[str], bool] = None,
     ) -> None:
         """
         Creates a new draft version for the object.
@@ -204,7 +193,8 @@ class ActivityInstanceAR(ConceptARBase):
         concept_vo.validate(
             activity_exists_by_name_callback=concept_exists_by_name_callback,
             activity_hierarchy_exists_by_uid_callback=activity_hierarchy_exists_by_uid_callback,
-            ct_term_exists_callback=ct_term_exists_callback,
+            activity_instance_class_exists_by_uid_callback=activity_instance_class_exists_by_uid_callback,
+            activity_item_exists_by_uid_callback=activity_item_exists_by_uid_callback,
             previous_name=self.name,
         )
         if self._concept_vo != concept_vo:

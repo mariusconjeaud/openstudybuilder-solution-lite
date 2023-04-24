@@ -46,7 +46,6 @@ class OdmVendorNamespaceVO(ConceptVO):
         previous_prefix: Optional[str] = None,
         previous_url: Optional[str] = None,
     ) -> None:
-
         if concept_exists_by_callback("name", self.name) and previous_name != self.name:
             raise BusinessLogicException(
                 f"ODM Vendor Namespace with name ({self.name}) already exists."

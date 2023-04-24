@@ -116,7 +116,6 @@ class CTTermNameVersion(CTTermName):
 
 
 class CTTermNameInput(BaseModel):
-
     sponsor_preferred_name: Optional[str] = Field(
         None,
         title="sponsor_preferred_name",

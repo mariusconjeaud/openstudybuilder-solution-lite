@@ -9,6 +9,7 @@ from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
 )
 from clinical_mdr_api.domain.study_selection import study_epoch
 from clinical_mdr_api.domain.study_selection.study_epoch import StudyEpochVO
+from clinical_mdr_api.domain_repositories.models._utils import to_relation_trees
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
@@ -39,7 +40,7 @@ class StudyEpochRepository:
     def __init__(self, author: str):
         self.author = author
 
-    def create_ctlist(self, code_list_name: str):
+    def fetch_ctlist(self, code_list_name: str):
         return get_ctlist_terms_by_name(code_list_name)
 
     def get_allowed_configs(self):
@@ -60,6 +61,7 @@ class StudyEpochRepository:
         cypher_query = """
         MATCH (study_root:StudyRoot {uid:$study_uid})-[:LATEST]->(:StudyValue)-[:HAS_STUDY_EPOCH]->(study_epoch:StudyEpoch)-[:HAS_EPOCH_SUB_TYPE]->(:CTTermRoot)-
         [:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST_FINAL]->(:CTTermNameValue {name:$basic_epoch_name})
+        WHERE NOT exists((:Delete)-[:BEFORE]->(study_epoch))
         return study_epoch.uid
         """
         basic_visit, _ = db.cypher_query(
@@ -73,13 +75,14 @@ class StudyEpochRepository:
             self._from_neomodel_to_vo(
                 study_epoch_ogm_input=StudyEpochOGM.from_orm(sas_node)
             )
-            for sas_node in StudyEpoch.nodes.fetch_relations(
-                "has_epoch", "has_epoch_subtype", "has_epoch_type", "has_after"
+            for sas_node in to_relation_trees(
+                StudyEpoch.nodes.fetch_relations(
+                    "has_epoch", "has_epoch_subtype", "has_epoch_type", "has_after"
+                )
+                .fetch_optional_relations("has_duration_unit")
+                .filter(has_study_epoch__study_root__uid=study_uid, is_deleted=False)
+                .order_by("order")
             )
-            .fetch_optional_relations("has_duration_unit")
-            .filter(has_study_epoch__study_root__uid=study_uid, is_deleted=False)
-            .order_by("order")
-            .to_relation_trees()
         ]
         return all_epochs
 
@@ -91,15 +94,15 @@ class StudyEpochRepository:
         :return:
         """
 
-        sdc_node = (
-            StudyEpoch.nodes.fetch_relations("has_design_cell", "has_after")
-            .filter(study_value__study_root__uid=study_uid, uid=epoch_uid)
-            .to_relation_trees()
+        sdc_node = to_relation_trees(
+            StudyEpoch.nodes.fetch_relations("has_design_cell", "has_after").filter(
+                study_value__study_root__uid=study_uid, uid=epoch_uid
+            )
         )
         return len(sdc_node) > 0
 
     def find_by_uid(self, uid: str) -> StudyEpochVO:
-        epoch_node = (
+        epoch_node = to_relation_trees(
             StudyEpoch.nodes.fetch_relations(
                 "has_study_epoch__study_root",
                 "has_epoch",
@@ -109,7 +112,6 @@ class StudyEpochRepository:
             )
             .fetch_optional_relations("has_duration_unit")
             .filter(uid=uid)  # ADD study_uid filtering
-            .to_relation_trees()
         )
 
         if len(epoch_node) > 1:
@@ -125,15 +127,16 @@ class StudyEpochRepository:
             self._from_neomodel_to_vo(
                 study_epoch_ogm_input=StudyEpochOGMVer.from_orm(se_node)
             )
-            for se_node in StudyEpoch.nodes.fetch_relations(
-                "has_after__audit_trail",
-                "has_epoch",
-                "has_epoch_subtype",
-                "has_epoch_type",
+            for se_node in to_relation_trees(
+                StudyEpoch.nodes.fetch_relations(
+                    "has_after__audit_trail",
+                    "has_epoch",
+                    "has_epoch_subtype",
+                    "has_epoch_type",
+                )
+                .fetch_optional_relations("has_duration_unit")
+                .filter(uid=uid, has_after__audit_trail__uid=study_uid)
             )
-            .fetch_optional_relations("has_duration_unit")
-            .filter(uid=uid, has_after__audit_trail__uid=study_uid)
-            .to_relation_trees()
         ]
         return sorted(version_nodes, key=lambda item: item.start_date, reverse=True)
 
@@ -142,16 +145,17 @@ class StudyEpochRepository:
             self._from_neomodel_to_vo(
                 study_epoch_ogm_input=StudyEpochOGMVer.from_orm(se_node)
             )
-            for se_node in StudyEpoch.nodes.fetch_relations(
-                "has_after__audit_trail",
-                "has_epoch",
-                "has_epoch_subtype",
-                "has_epoch_type",
+            for se_node in to_relation_trees(
+                StudyEpoch.nodes.fetch_relations(
+                    "has_after__audit_trail",
+                    "has_epoch",
+                    "has_epoch_subtype",
+                    "has_epoch_type",
+                )
+                .fetch_optional_relations("has_duration_unit")
+                .filter(has_after__audit_trail__uid=study_uid)
+                .order_by("order")
             )
-            .fetch_optional_relations("has_duration_unit")
-            .filter(has_after__audit_trail__uid=study_uid)
-            .order_by("order")
-            .to_relation_trees()
         ]
         return sorted(version_nodes, key=lambda item: item.start_date, reverse=True)
 
@@ -203,7 +207,7 @@ class StudyEpochRepository:
 
     def _update(self, item: StudyEpochVO, create: bool = False):
         study_root = StudyRoot.nodes.get(uid=item.study_uid)
-        study_value = study_root.latest_draft.get_or_none()
+        study_value = study_root.latest_value.get_or_none()
         if study_value is None:
             raise ValueError("Study does not have draft version")
         new_study_epoch = StudyEpoch(
@@ -271,10 +275,7 @@ class StudyEpochRepository:
         if expected_latest_value is not previous_value:
             # remove the relation from the old value node
             study_selection_nodes = getattr(previous_value, relation_name).all()
-            # only the has_design_cell is deleted because
-            # the cardinality and the function of the study_design cell is to have just one StudyEpoch at the time
-            if "has_design_cell" in relation_name:
-                getattr(previous_value, relation_name).disconnect_all()
+            getattr(previous_value, relation_name).disconnect_all()
 
             # add the relation to the new node
             for study_selection_node in study_selection_nodes:

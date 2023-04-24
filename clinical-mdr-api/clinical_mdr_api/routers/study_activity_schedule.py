@@ -5,6 +5,7 @@ from fastapi import Body, Depends, Response, status
 from clinical_mdr_api import models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.routers import study_router as router
 from clinical_mdr_api.routers import utils
 from clinical_mdr_api.services.study_activity_schedule import (
@@ -23,7 +24,7 @@ from clinical_mdr_api.services.study_activity_schedule import (
             "model": ErrorResponse,
             "description": "Not Found - there is no study with the given uid.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_selected_activities(
@@ -48,13 +49,13 @@ def get_all_selected_activities(
             "model": ErrorResponse,
             "description": "Not Found - Study, study activity or study visit is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def post_new_activity_schedule_create(
     uid: str = utils.studyUID,
     selection: models.StudyActivityScheduleCreateInput = Body(
-        None, description="Related parameters of the schedule that shall be created."
+        description="Related parameters of the schedule that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudyActivitySchedule:
@@ -73,7 +74,7 @@ def post_new_activity_schedule_create(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the activity schedule and the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_activity_schedule(
@@ -101,7 +102,8 @@ The following values should be returned for all study activities:
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_schedules_audit_trail(
@@ -116,12 +118,15 @@ def get_all_schedules_audit_trail(
     summary="Batch operations (create, delete) for study activity schedules",
     response_model=Sequence[models.StudyActivityScheduleBatchOutput],
     status_code=207,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def activity_schedule_batch_operations(
     uid: str = utils.studyUID,
     operations: Sequence[models.StudyActivityScheduleBatchInput] = Body(
-        None, description="List of operation to perform"
+        description="List of operation to perform"
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> Sequence[models.StudyActivityScheduleBatchOutput]:

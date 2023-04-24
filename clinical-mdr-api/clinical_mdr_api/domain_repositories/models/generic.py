@@ -70,7 +70,6 @@ class ClinicalMdrNode(StructuredNode):
         }
 
     def to_dict(self):
-
         defined_props = self.get_definition()
         props = vars(self)
         return {key: props[key] for key, value in defined_props.items()}
@@ -189,6 +188,7 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
         return super().save()
 
 
+# pylint: disable=abstract-method
 class ClinicalMdrRel(StructuredRel):
     __abstract_node__ = True
     """
@@ -216,16 +216,19 @@ class ClinicalMdrRel(StructuredRel):
         return return_dict
 
 
+# pylint: disable=abstract-method
 class TemplateUsesParameterRelation(ClinicalMdrRel):
     position = IntegerProperty()
 
 
+# pylint: disable=abstract-method
 class ObjectUsesParameterRelation(ClinicalMdrRel):
     position = IntegerProperty()
     index = IntegerProperty()
     set_number = IntegerProperty()
 
 
+# pylint: disable=abstract-method
 class ConjunctionRelation(ClinicalMdrRel):
     position = IntegerProperty()
     set_number = IntegerProperty()
@@ -236,6 +239,7 @@ class Library(ClinicalMdrNode):
     is_editable = BooleanProperty()
 
 
+# pylint: disable=abstract-method
 class VersionRelationship(ClinicalMdrRel):
     """
     A `VersionRelationship` represents a relationship between a `VersionRoot`
@@ -300,16 +304,9 @@ class VersionRoot(ClinicalMdrNodeWithUID):
 
     has_version = RelationshipTo(VersionValue, "HAS_VERSION", model=VersionRelationship)
     has_latest_value = RelationshipTo(VersionValue, "LATEST")
-
-    latest_draft = RelationshipTo(
-        VersionValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        VersionValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        VersionValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    latest_draft = RelationshipTo(VersionValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(VersionValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(VersionValue, "LATEST_RETIRED")
 
     has_library = RelationshipFrom(Library, LIBRARY_REL_LABEL)
     has_parameters = RelationshipTo(
@@ -319,15 +316,8 @@ class VersionRoot(ClinicalMdrNodeWithUID):
     )
 
     def get_final_before(self, date_before: datetime):
-        # pylint: disable=no-member
-        value = self.latest_final.get_or_none()
-        if value is not None:
-            rel = self.latest_final.relationship(value)
-            if rel.start_date <= date_before:
-                return value
         past_final_versions = self.has_version.match(
             start_date__lte=date_before,
-            end_date__gte=date_before,
             status=LibraryItemStatus.FINAL.value,
         )
         # I expect only one or zero elements here
@@ -337,50 +327,35 @@ class VersionRoot(ClinicalMdrNodeWithUID):
         return None
 
     def get_retired_before(self, date_before: datetime):
-        # pylint: disable=no-member
-        value = self.latest_retired.get_or_none()
-        if value is not None:
-            rel = self.latest_retired.relationship(value)
-            if rel.start_date <= date_before:
-                return value
-            past_retired_versions = self.has_version.match(
-                start_date__lte=date_before,
-                end_date__gte=date_before,
-                status=LibraryItemStatus.RETIRED.value,
-            )
-            # I expect only one or zero elements here
-            # otherwise it would mean overreaching entries for the same status
-            if len(past_retired_versions) > 0:
-                return past_retired_versions[0]
+        past_retired_versions = self.has_version.match(
+            start_date__lte=date_before,
+            status=LibraryItemStatus.RETIRED.value,
+        )
+        # I expect only one or zero elements here
+        # otherwise it would mean overreaching entries for the same status
+        if len(past_retired_versions) > 0:
+            return past_retired_versions[0]
         return None
 
     def get_value_for_version(self, version: str):
-        # pylint: disable=no-member
-        matching_values = self.latest_final.match(version=version)
-        if len(matching_values) == 0:
-            matching_values = self.latest_draft.match(version=version)
-        if len(matching_values) == 0:
-            matching_values = self.latest_retired.match(version=version)
-        if len(matching_values) == 0:
-            matching_values = self.has_version.match(version=version)
+        matching_values = self.has_version.match(version=version)
         if len(matching_values) > 0:
             return matching_values[0]
         return None
 
     def get_relation_for_version(self, version: str):
-        # pylint: disable=no-member
         value = self.get_value_for_version(version)
-        relationships = self.latest_final.all_relationships(value)
-        if len(relationships) == 0:
-            relationships = self.latest_draft.all_relationships(value)
-        if len(relationships) == 0:
-            relationships = self.latest_retired.all_relationships(value)
-        if len(relationships) == 0:
-            relationships = self.has_version.all_relationships(value)
-
-        if len(relationships) > 0:
-            return relationships[0]
-        return None
+        relationships = self.has_version.all_relationships(value)
+        all_matching = [rel for rel in relationships if rel.version == version]
+        all_without_end = [rel for rel in all_matching if rel.end_date is None]
+        if len(all_without_end) == 1:
+            # There is only one relationship without end date
+            return all_without_end[0]
+        if len(all_without_end) > 1:
+            # There are several relationships without end date, return the latest one based on start date
+            return max(all_without_end, key=lambda d: d.start_date)
+        # There are no relationships without end date, return the latest one based on end date
+        return max(all_matching, key=lambda d: d.end_date)
 
     def get_instantiations_count(self):
         cypher_query = """

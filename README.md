@@ -1,13 +1,17 @@
 [[_TOC_]]
 
+
 # Status quo of the OpenStudyBuilder
+
 The OpenStudyBuilder solution introduces a new approach for working with studies that once fully implemented will drive end-to-end consistency and more efficient processes - all the way from protocol development and CRF design - to creation of datasets, analysis, reporting, submission to health authorities and public disclosure of study information.
 
 OpenStudyBuilder is the first MVP of the solution covering the foundational capabilities for the front-end application, the data standards and study definition repository as well as the initial integrations.
 
 OpenStudyBuilder is the open source version of the internal StudyBuilder solution at Novo Nordisk. Not all titles or logos in the application are yet changed to be 'OpenStudyBuilder' - when the term 'StudyBuilder' is used, it is therefore a synonym for 'OpenStudyBuilder'. This will be changed in coming updates.
 
+
 # Introduction
+
 StudyBuilder consists of a few main components, that are all included as subdirectories in this repository.
 
 - neo4j-mdr-db: Configuration files and initialization scripts for the Neo4j database.
@@ -17,80 +21,27 @@ StudyBuilder consists of a few main components, that are all included as subdire
 - studybuilder: The Vue.js frontend.
 - documentation-portal: Project documentation.
 
-Each directory contains a more detailed readme for that component.
+Each directory contains a more detailed ReadMe for that component.
 
-# This repository
-This is a build (Docker) project for the complete StudyBuilder application.
-The project is used to combine multiple repositories into a single folder structure
-to make is possible to use docker compose and builds across the different repos.
 
-Currently the following containers are part of the docker compose solution.
+# Software dependencies
 
-- database (A neo4j graph database container including a initial data load)
-- api (A fastAPI container hosting the clinical-mdr-api application)
-- frontend (A nginx container hosting Vue.js StudyBuilder client application)
-- documentation (A nginx container hosting Vue.js Study Builder documentation portal)
-- sonarqube (A container a Sonarqube server for code validation. This is not started by default)
+A Docker environment with at least 6GB of memory allocated is required.
 
-# Getting Started
+The solution is tested on Ubuntu and Windows (WSL 2).
+For alternative platforms, please refer to [Platform architecture notes](platform-architecture-notes).
 
-## Preperations
-Currently there are two main ways of settings up a development environment of the OpenStudyBuilder (each with their own advantages and disadvantages):
-1. Using docker method. Yo use this, simply follow the instructions in the [Software Dependencies](#software-dependencies) section.
-2. Using the maunual method without docker (except for the database). To use the this method follow the [Developer Setup Guide](DeveloperSetupGuide.md).
-## System Overview
-A number of steps must be performed in order to get the StudyBuilder application running.
-This can either be accomplished by using docker-compose as descibed in [Build and Test](#build-and-test),
-or by manually performing the following steps in the listed order. Note that it is also possible to run step 5 before step 4, but for performance reasons it's still recommended to run them in the listed order.
+The Docker environment can be either Docker Desktop or Docker Engine 
+(community version), with Compose V2 integrated as a CLI plugin. 
 
-1. Start and initialize the database.
+OpenStudyBuilder has been tested on the following Docker environments:
 
-   See the readme in the `neo4j-mdr-db` directory.
-   This will start the database and prepare it for use.
+- Windows 11 (WSL 2)
+- Ubuntu 20.04 Focal - Docker Engine community version 23.0.1 
 
-2. Populate the database with clinical standards.
+To see versions of the installed Docker engine, run: `docker version`
 
-   This imports all CDISC terms.
-   Follow the instructions in the `mdr-standards-import` directory.
-   The import is performed by directly accessing the Neo4j database,
-   and the FastAPI backend is not required.
-
-3. Start the API.
-
-   See the readme in the `clinical-mdr-api` directory.
-   This starts the backend that provides the StudyBuilder API as well as
-   exposing the Swagger UI with auto-generated API documentation.
-
-4. Populate the database with sponsor standards.
-
-   This creates all needed codelists in the sponsor library.
-   It also includes a set of mockup data to create example projects, studies etc.
-   Follow the instructions in the `data-import` repository.
-   This step performs the import by calling the StudyBuilder API,
-   and thus the backend must be running.
-
-5. Start the frontend.
-
-   See the readme in the `studybuilder` directory.
-
-6. All done.
-
-   The StudyBuilder GUI should now be accessible by pointing a brower at
-   the host and port used in [step 5](#start-the-frontend).
-
-## Software dependencies
-
-A Docker environment with at least 6GB of docker memory allocated is required.
-The solution is tested on Ubuntu and Windows (WSL 2) docker environment. For alternative platforms, please refer to [Platform architecture notes](platform-architecture-notes).
-It can be either Docker Desktop or docker binaries that can run
-docker compose version 3.9 files and related docker commands.
-The following docker environments have been tested:
-
-Windows 11 - Docker version: 20.10.17, Docker compose version: 2.7.0 (WSL 2 configuration)
-
-Ubuntu 20.04 - Docker version: 20.10.17, Docker compose version: 2.6.0
-
-To list Docker version use: `docker version` and `docker compose version`
+To check if the Docker Compose V2 is also included, run: `docker compose version`
 
 Windows installation link: [Windows installation](https://docs.docker.com/desktop/install/windows-install/)
 
@@ -102,15 +53,17 @@ in a non administrator or root shell: `docker run hello-world`
 If this is not working see this link for Ubuntu rootless configuration:
 [Docker Rootless](https://docs.docker.com/engine/security/rootless/)
 
-For low-end systems, the database container may fail.
-If this happens, change the following three lines of `databasedockerfile`:
+For low-end systems, the database container may fail for low-on-memory 
+reasons. In that case, update the following values in `compose.yaml`
 ```
-RUN echo dbms.memory.heap.initial_size=2g >> /var/lib/neo4j/conf/neo4j.conf \
- && echo dbms.memory.heap.max_size=2g >> /var/lib/neo4j/conf/neo4j.conf \
- && echo dbms.memory.pagecache.size=2g >> /var/lib/neo4j/conf/neo4j.conf \
+        NEO4J_dbms_memory_heap_initial__size: "1G"
+        NEO4J_dbms_memory_heap_max__size: "1G"
+        NEO4J_dbms_memory_pagecache_size: "500M"
 ```
-Instead of `2g`, use a lower value, such as `1g` or `500m` etc., depending on the system.
-This will affect the performance of the neo4j database.
+
+Mind that this will choke the performance of the Neo4j database,
+which leads to increased building time of the database component,
+up to a few hours.
 
 On Windows installations the WSL engine can take up all system resources.
 It is recommended to configure limits. Create a `.wslconfig` file in the user directory, typically `C:\Users\username\`.
@@ -123,17 +76,18 @@ memory=6GB
 See [Advanced settings configuration in WSL](https://docs.microsoft.com/en-us/windows/wsl/wsl-config)
 for all available options.
 
-### Platform architecture notes
+
+## Platform architecture notes
+
 An issue has been reported related to running the dockerfiles on aarch64 architecture [(ref)](https://gitlab.com/Novo-Nordisk/nn-public/openstudybuilder/OpenStudyBuilder-Solution/-/issues/3). 
-This can be resolved by setting an environment variable to: `DOCKER_DEFAULT_PLATFORM=linux/x86_64`. Note that since this is a global setting, it will also affect other docker commands in the same session.
+This can be resolved by setting an environment variable to: `DOCKER_DEFAULT_PLATFORM=linux/x86_64`.
+Note that since this is a global setting, it will also affect other docker commands in the same session.
+Alternatively you can try adding this to the `.env` file in the root folder of this repository .
 
 As a long-term solution, we are investigating the possibility of extending the compose file with additional configuration compose files to provide easy to use configurations fitting for various architectures (if interested, see [compose/extends](https://docs.docker.com/compose/extends/) for more information).
 
-# Build and Test
 
-By this point, you should have a Git clone of the OpenStudyBuilder-Solution repo (with submodules initiated)
-or a zip file with complete folder structure including sub modules.
-If you don't have that, jump back to the [Getting Started](getting-started) section above.
+# Using the preview environment
 
 Your folder structure should look like this:
 ```
@@ -148,114 +102,111 @@ Your folder structure should look like this:
   └─ studybuilder (Submodule Azure DevOps repo)
 ```
 
-Use the docker-compose.yml file in the root folder (OpenStudyBuilder-Solution) to build
-and bring up the environment with this docker command:
-`docker compose up -d --build`
+The Docker Compose configuration is `compose.yaml` for the preview 
+environment and building containers in pipelines.
 
-**NOTE** The docker-compose build runs the steps 1, 2, 3 and 5 listed in [Overview](#overview).
-Step 4, the import of sponsor standards, must still be run after the environment has been brought up. See the readme in the `data-import` directory for instructions.
-This means that step 4 runs after step 5, which is possible but makes the import run slightly slower.
+The following services are part of this Docker Compose environment.
 
-If a local Sonarqube server is also needed use this docker command:
-`docker compose up -d --build sonarqube`
+- _database_ (A Neo4j graph database container including initial data)
+- _api_ (A FastAPI container hosting the clinical-mdr-api backend application)
+- _frontend_ (A Nginx container hosting Vue.js StudyBuilder UI application)
+- _documentation_ (A Nginx container hosting Vue.js Study Builder documentation portal)
 
-Initial build can take up to 15 min. or more depending on computer resources
-and internet network bandwidth.
 
-After build is complete the api container will restart a few times
-until the neo4j database is running and accessible.
-During this process, the API will throw an error if it attempts to connect to the DB
-before it has finished booting up, and will then try again after a small break.
-If you run docker-compose detached from the console (using the `-d` flag),
-you will not see this error, but the localhost API port will not be available
-before the API is able to contact the DB.
+## Building the Docker images
 
-To validate that the environment is running use this docker command:
-`docker container ls`
+The Docker container images has to be built before the first use,
+and rebuilt on each subsequent release:
 
-This should show an output looking something like this:
-```
-IMAGE                       COMMAND                  CREATED              STATUS              PORTS
-OpenStudyBuilder-Solution_documentation   "/docker-entrypoint.…"   About a minute ago   Up About a minute   80/tcp, 0.0.0.0:5006->5006/tcp, :::5006->5006/tcp
-OpenStudyBuilder-Solution_frontend        "/docker-entrypoint.…"   About a minute ago   Up About a minute   80/tcp, 0.0.0.0:5005->5005/tcp, :::5005->5005/tcp
-OpenStudyBuilder-Solution_api             "uvicorn clinical_md…"   About a minute ago   Up 47 seconds       0.0.0.0:5003->5003/tcp, :::5003->5003/tcp
-OpenStudyBuilder-Solution_database        "/sbin/tini -g -- /d…"   About a minute ago   Up About a minute   7473-7474/tcp, 0.0.0.0:5001-5002->5001-5002/tcp,
+```shell
+docker compose build
 ```
 
-To access the application the following links can be used:
+Building the Docker images may take 30 minutes or more to complete, 
+especially for the database image.
 
-- Study Builder main application: <http://localhost:5005/>
 
-- Study Builder documentation: <http://localhost:5005/doc/>
+## Starting the services
 
-  It can also be accessed from main web application from the ? sign in top right.
-  Is also directly exposed on <http://localhost:5006/>
+To start up the services for a local evaluation environment, use:
 
-- API backend: <http://localhost:5005/api/docs>
-
-  FastAPI requests documentation. Is also directly exposed on <http://localhost:5003/docs>
-
-- Neo4j database web client: <http://localhost:5001/>
-
-  Username and password default is user: `neo4j` and password: `changeme1234`
-
-- Neo4j database bolt connection: <neo4j://localhost:5002>
-
-  The main neo4j database is named `mdrdb`.
-
-- Sonarqube server: <http://localhost:9000/>
-
-  Username and password default is user: `admin` password: `admin`
-
-To stop the environment again use these docker commands (Due to multiple profiles):
-```
-docker compose stop
-docker compose down -v
-docker compose rm -f
+```shell
+docker compose up
 ```
 
-To restart the environment again without rebuilding use this docker command:
+If you add the `-d` option to the command, it will bring up the services to 
+run in the background, detached from the terminal.
 
-`docker compose up -d`
+To validate that the environment is running, inspect the output of this command:
 
-or
+```shell
+docker compose ps
+```
 
-`docker compose up -d sonarqube`
-
-To clean up the entire docker environment use the following commands (**Will delete, volumes and cache NOT only Clinical MDR related docker components.**)
+The output should look like this:
 
 ```
+NAME                          IMAGE                       COMMAND                  SERVICE             CREATED            STATUS                   PORTS
+OpenStudyBuilder-Solution-api-1             build-tools-api             "/bin/sh -c 'pipenv …"   api                 4 minutes ago      Up 3 minutes (healthy)   5003/tcp
+OpenStudyBuilder-Solution-database-1        build-tools-database        "tini -g -- /startup…"   database            4 minutes ago      Up 4 minutes (healthy)   7473/tcp, 127.0.0.1:5001->7474/tcp, 127.0.0.1:5002->7687/tcp
+OpenStudyBuilder-Solution-documentation-1   build-tools-documentation   "/docker-entrypoint.…"   documentation       4 minutes ago      Up 4 minutes (healthy)   80/tcp, 5006/tcp
+OpenStudyBuilder-Solution-frontend-1        build-tools-frontend        "/docker-entrypoint.…"   frontend            4 minutes ago      Up 3 minutes (healthy)   80/tcp, 127.0.0.1:5005->5005/tcp
+```
+
+
+## Accessing the application
+
+- StudyBuilder main application: <http://localhost:5005/>
+
+- StudyBuilder documentation: <http://localhost:5005/doc/>
+
+  It can also be accessed from main web application from the ? sign in top right corner.
+
+- StudyBuilder API (backend application): <http://localhost:5005/api/docs>
+
+- Neo4j database web client: <http://localhost:5001/browser/>
+
+  The default username is `neo4j` and the default password is `changeme1234`
+
+
+## Stopping the services
+
+This command will stop the docker containers, but keep the contents of the 
+database for the next start.
+
+```shell
+docker compose down --remove-orphans
+```
+
+
+## Updating to a new release
+
+When checking out a new release, the Docker images has to be rebuilt.
+Usually the database schema gets changed between releases, so
+**the old database has to be destroyed**.
+A new database will be initialized when starting the  _database_ service
+from the recently rebuilt Docker image.
+(The OpenStudyBuilder release does not come with a database migration tool.)
+
+```shell
+docker compose build --no-cache  # rebuilds the docker images
+docker compose down --remove-orphans --volumes # DESTROYS THE DATABASE volume 
+docker compose up -d  # the database service re-creates the database volume on the first start 
+```
+
+## Cleaning up the Docker environment
+
+To clean up the entire Docker environment use the following commands:
+
+**Will delete volumes and cache NOT restricted for the OpenStudyBuilder components.**
+
+```shell
+docker compose down --remove-orphans --volumes
 docker rmi $(docker images --filter=reference="*_database" -q) -f
 docker rmi $(docker images --filter=reference="*_api" -q) -f
-docker rmi $(docker images --filter=reference="*_frontend" -q) -f
-docker rmi $(docker images --filter=reference="*_documentation" -q) -f
+docker rmi $(docker images --filter=reference="*_ui" -q) -f
+docker rmi $(docker images --filter=reference="*_docs" -q) -f
 docker rmi $(docker images --filter=reference="*_sonarqube" -q) -f
-docker volume prune (Will delete all volumes not used, only needed if -v was not used on docker-compose down command)
-docker builder prune --all (Will clean all docker cache files)
+docker volume prune # (Will delete all volumes not used, only needed if -v was not used on docker-compose down command)
+docker builder prune --all # (Will clean all docker cache files)
 ```
-
-# Using this setup for development
-If you're working on a change for the studybuilder frontend,
-you might only want the database and api containers running
-and connect to those from your local studybuilder instance.
-```
-docker compose build
-docker compose up api
-```
-This will build all containers and then start the `api` and dependant containers (the database).
-
-Similarly, if you want to develop the API or test API functionality,
-you can simply boot up the database:
-```
-docker compose up database
-```
-
-The names used for single components of the system here corresponds to
-the container names (`container_name`) within the docker-compose file.
-
-The names are:
-- database
-- api
-- frontend
-- documentation
-- sonarqube

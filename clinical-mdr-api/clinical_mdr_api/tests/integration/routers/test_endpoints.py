@@ -5,7 +5,9 @@ from starlette.testclient import TestClient
 
 from clinical_mdr_api.models import EndpointTemplate
 from clinical_mdr_api.services._meta_repository import MetaRepository
-from clinical_mdr_api.services.endpoint_templates import EndpointTemplateService
+from clinical_mdr_api.services.syntax_templates.endpoint_templates import (
+    EndpointTemplateService,
+)
 from clinical_mdr_api.tests.integration.utils import api
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
@@ -24,7 +26,7 @@ class EndpointTest(api.APITest):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_PARAMETERS_CYPHER)
 
-        import clinical_mdr_api.models.endpoint_template as ep_models
+        import clinical_mdr_api.models.syntax_templates.endpoint_template as ep_models
         import clinical_mdr_api.services.libraries as library_service
         from clinical_mdr_api import main
 
@@ -53,14 +55,13 @@ class EndpointNegativeTest(EndpointTest):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_PARAMETERS_CYPHER)
 
-        import clinical_mdr_api.models.endpoint_template as ep_models
+        import clinical_mdr_api.models.syntax_templates.endpoint_template as ep_models
         import clinical_mdr_api.services.libraries as library_service
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)
         self.library = library_service.create(name="Test library", is_editable=True)
         etdata = template_data.copy()
-        etdata["editable_instance"] = False
         endpoint_template = ep_models.EndpointTemplateCreateInput(**etdata)
         self.et = EndpointTemplateService().create(endpoint_template)
         assert isinstance(self.et, EndpointTemplate)
@@ -95,7 +96,7 @@ class EndpointVersioningTest(EndpointTest):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_PARAMETERS_CYPHER)
 
-        import clinical_mdr_api.models.endpoint_template as ep_models
+        import clinical_mdr_api.models.syntax_templates.endpoint_template as ep_models
         import clinical_mdr_api.services.libraries as library_service
         from clinical_mdr_api import main
 

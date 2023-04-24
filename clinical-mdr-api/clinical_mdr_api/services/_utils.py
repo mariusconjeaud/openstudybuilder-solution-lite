@@ -29,7 +29,7 @@ from clinical_mdr_api.models.simple_dictionary_item import SimpleDictionaryItem
 from clinical_mdr_api.models.template_parameter import (
     ComplexTemplateParameter,
     TemplateParameter,
-    TemplateParameterValue,
+    TemplateParameterTerm,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import (
@@ -198,7 +198,6 @@ class FieldsDirective:
     def _from_include_and_exclude_spec_sets(
         cls, include_spec_set: AbstractSet[str], exclude_spec_set: AbstractSet[str]
     ) -> "FieldsDirective":
-
         _included_fields: Set[str] = set()
         _excluded_fields: Set[str] = set()
         _nested_include_specs: MutableMapping[str, Set[str]] = {}
@@ -545,6 +544,9 @@ def extract_properties_for_wildcard(item, prefix: str = ""):
             return extract_properties_for_wildcard(item[0], prefix[:-1])
         # Otherwise, let's iterate over all the attributes of the single item we have
         for attribute, attr_desc in item.__fields__.items():
+            # if we have marked a field to be removed from wildcard filtering we have to continue to next row
+            if attr_desc.field_info.extra.get("remove_from_wildcard", False):
+                continue
             # The attribute might be a non-class dictionary
             # In that case, we extract the first value and make a recursive call on it
             if (
@@ -630,7 +632,7 @@ def apply_filter_operator(
     # An empty filter_values list means that the returned item's property value should be null
     if ComparisonOperator(operator) == ComparisonOperator.EQUALS:
         return value is None
-    return exceptions.ValidationException(
+    raise exceptions.ValidationException(
         "Filtering on a null value can be only be used with the 'equal' operator."
     )
 
@@ -650,24 +652,24 @@ def rgetattr(obj, attr, *args):
 def process_complex_parameters(parameters, parameter_repository):
     return_parameters = []
     for _, item in enumerate(parameters):
-        item_values = []
+        item_terms = []
         if item["definition"] is not None:
             param_names = extract_parameters(item["template"])
             params = []
             for param_name in param_names:
-                param_value_list = []
+                param_term_list = []
                 if param_name != "NumericValue":
-                    param = parameter_repository.get_parameter_including_values(
+                    param = parameter_repository.get_parameter_including_terms(
                         param_name
                     )
                     if param is not None:
-                        for val in param["values"]:
+                        for val in param["terms"]:
                             if val["uid"] is not None:
-                                tpv = TemplateParameterValue(
+                                tpt = TemplateParameterTerm(
                                     name=val["name"], uid=val["uid"], type=val["type"]
                                 )
-                                param_value_list.append(tpv)
-                tp = TemplateParameter(name=param_name, values=param_value_list)
+                                param_term_list.append(tpt)
+                tp = TemplateParameter(name=param_name, terms=param_term_list)
                 params.append(tp)
             return_parameters.append(
                 ComplexTemplateParameter(
@@ -675,14 +677,14 @@ def process_complex_parameters(parameters, parameter_repository):
                 )
             )
         else:
-            for v in item["values"]:
+            for v in item["terms"]:
                 if v["uid"] is not None:
-                    tpv = TemplateParameterValue(
+                    tpt = TemplateParameterTerm(
                         name=v["name"], uid=v["uid"], type=v["type"]
                     )
-                    item_values.append(tpv)
+                    item_terms.append(tpt)
             return_parameters.append(
-                TemplateParameter(name=item["name"], values=item_values)
+                TemplateParameter(name=item["name"], terms=item_terms)
             )
     return return_parameters
 

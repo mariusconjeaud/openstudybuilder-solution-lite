@@ -4,10 +4,12 @@ from neomodel import db
 from pydantic import BaseModel
 from starlette.testclient import TestClient
 
-import clinical_mdr_api.models.objective_template as ct_models
+import clinical_mdr_api.models.syntax_templates.objective_template as ct_models
 import clinical_mdr_api.services.libraries as library_service
 from clinical_mdr_api import main
-from clinical_mdr_api.services.objective_templates import ObjectiveTemplateService
+from clinical_mdr_api.services.syntax_templates.objective_templates import (
+    ObjectiveTemplateService,
+)
 from clinical_mdr_api.tests.integration.utils import api
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (

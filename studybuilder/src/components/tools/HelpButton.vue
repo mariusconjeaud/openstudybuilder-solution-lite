@@ -6,7 +6,7 @@
   <v-dialog
     v-model="showHelp"
     @keydown.esc="showHelp = false"
-    width="495"
+    :width="width"
     persistent
     hide-overlay
     content-class="upperRight"
@@ -40,6 +40,10 @@ export default {
     title: {
       type: String,
       default: 'Online help'
+    },
+    width: {
+      type: String,
+      default: '495px'
     }
   },
   data () {

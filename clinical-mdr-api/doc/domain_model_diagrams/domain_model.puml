@@ -84,9 +84,9 @@ package StudyDefinition <<Aggregate>> {
     class StudyVersionMetadataVO {
         + study_status: StudyStatus
         + version_timestamp: datetime
-        + locked_version_number: Optional[int]
-        + locked_version_info: Optional[str]
-        + locked_version_author: Optional[str]
+        + version_number: Optional[int]
+        + version_description: Optional[str]
+        + version_author: Optional[str]
         + validate()
     }
     StudyVersionMetadataVO::study_status -[norank]-> "1" StudyStatus

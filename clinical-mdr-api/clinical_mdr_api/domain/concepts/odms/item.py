@@ -31,7 +31,7 @@ class OdmItemVO(ConceptVO):
     unit_definition_uids: List[str]
     codelist_uid: Optional[str]
     term_uids: List[str]
-    activity_uids: List[str]
+    activity_uid: Optional[str]
     vendor_attribute_uids: List[str]
     vendor_element_uids: List[str]
     vendor_element_attribute_uids: List[str]
@@ -54,7 +54,7 @@ class OdmItemVO(ConceptVO):
         unit_definition_uids: List[str],
         codelist_uid: Optional[str],
         term_uids: List[str],
-        activity_uids: List[str],
+        activity_uid: Optional[str],
         vendor_element_uids: List[str],
         vendor_attribute_uids: List[str],
         vendor_element_attribute_uids: List[str],
@@ -75,7 +75,7 @@ class OdmItemVO(ConceptVO):
             unit_definition_uids=unit_definition_uids,
             codelist_uid=codelist_uid,
             term_uids=term_uids,
-            activity_uids=activity_uids,
+            activity_uid=activity_uid,
             vendor_element_uids=vendor_element_uids,
             vendor_attribute_uids=vendor_attribute_uids,
             vendor_element_attribute_uids=vendor_element_attribute_uids,
@@ -98,7 +98,6 @@ class OdmItemVO(ConceptVO):
         previous_name: Optional[str] = None,
         previous_oid: Optional[str] = None,
     ) -> None:
-
         if concept_exists_by_callback("name", self.name) and previous_name != self.name:
             raise BusinessLogicException(
                 f"ODM Item with name ({self.name}) already exists."

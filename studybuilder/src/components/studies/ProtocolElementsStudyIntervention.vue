@@ -45,12 +45,8 @@ export default {
     downloadDocx () {
       this.loadingMessage = this.$t('ProtocolInterventionsTable.downloading')
       study.getStudyProtocolInterventionsTableDocx(this.studyUid).then(response => {
-        const blob = new Blob([response.data], {
-          type: response.headers['content-type'] ||
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        })
-        const fileName = `${this.studyUid} interventions.docx`
-        exportLoader.generateDownload(blob, fileName)
+        exportLoader.downloadFile(response.data, response.headers['content-type'] ||
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', `${this.studyUid} interventions.docx`)
       }).then(this.finally).catch(this.finally)
     },
     finally (error) {

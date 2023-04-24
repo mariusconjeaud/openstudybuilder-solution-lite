@@ -115,7 +115,7 @@ class DictionaryTermSubstanceRepository(
             -[:HAS_TERM|HAD_TERM]->(dictionary_term_root:DictionaryTermRoot)-[:LATEST]->(dictionary_term_value)
             
             WHERE EXISTS {
-            (dictionary_codelist_root)-[LATEST_FINAL]->(DictionaryCodelistValue {name: $codelist_name})
+            (dictionary_codelist_root)-[:LATEST_FINAL]->(DictionaryCodelistValue {name: $codelist_name})
             }   
             """
 

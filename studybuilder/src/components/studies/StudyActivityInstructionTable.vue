@@ -235,19 +235,20 @@ export default {
     },
     async getVisitsPerActivity () {
       const resp = await studyEpochs.getStudyVisits(this.selectedStudy.uid, { page_size: 0 })
+      const schedules = await study.getStudyActivitySchedules(this.selectedStudy.uid)
       const visitNamePerUid = {}
 
       for (const visit of resp.data.items) {
         visitNamePerUid[visit.uid] = visit.visit_short_name
-      }
-      study.getStudyActivitySchedules(this.selectedStudy.uid).then(resp => {
-        for (const schedule of resp.data) {
-          if (this.visitsPerStudyActivity[schedule.study_activity_uid] === undefined) {
-            this.$set(this.visitsPerStudyActivity, schedule.study_activity_uid, [])
+        for (const schedule of schedules.data) {
+          if (schedule.study_visit_uid === visit.uid) {
+            if (this.visitsPerStudyActivity[schedule.study_activity_uid] === undefined) {
+              this.$set(this.visitsPerStudyActivity, schedule.study_activity_uid, [])
+            }
+            this.visitsPerStudyActivity[schedule.study_activity_uid].push(visitNamePerUid[schedule.study_visit_uid])
           }
-          this.visitsPerStudyActivity[schedule.study_activity_uid].push(visitNamePerUid[schedule.study_visit_uid])
         }
-      })
+      }
     },
     getStudyActivityVisits (studyActivityUid) {
       if (this.visitsPerStudyActivity[studyActivityUid] === undefined) {
@@ -348,8 +349,8 @@ export default {
       }
     }
   },
-  mounted () {
-    this.$store.dispatch('studyActivities/fetchStudyActivities', { studyUid: this.selectedStudy.uid })
+  async mounted () {
+    await this.$store.dispatch('studyActivities/fetchStudyActivities', { studyUid: this.selectedStudy.uid })
     this.getVisitsPerActivity()
     this.getInstructionsPerActivity()
   }

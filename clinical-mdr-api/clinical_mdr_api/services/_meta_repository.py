@@ -1,5 +1,14 @@
 from typing import Any, Callable, Mapping, MutableMapping
 
+from clinical_mdr_api.domain_repositories.biomedical_concepts.activity_instance_class_repository import (
+    ActivityInstanceClassRepository,
+)
+from clinical_mdr_api.domain_repositories.biomedical_concepts.activity_item_class_repository import (
+    ActivityItemClassRepository,
+)
+from clinical_mdr_api.domain_repositories.biomedical_concepts.activity_item_repository import (
+    ActivityItemRepository,
+)
 from clinical_mdr_api.domain_repositories.brand.brand_repository import BrandRepository
 from clinical_mdr_api.domain_repositories.clinical_programme.clinical_programme_repository import (
     ClinicalProgrammeRepository,
@@ -15,33 +24,6 @@ from clinical_mdr_api.domain_repositories.concepts.activities.activity_repositor
 )
 from clinical_mdr_api.domain_repositories.concepts.activities.activity_sub_group_repository import (
     ActivitySubGroupRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.activities.categoric_finding_repository import (
-    CategoricFindingRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.activities.compound_dosing_repository import (
-    CompoundDosingRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.activities.event_repository import (
-    EventRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.activities.laboratory_activity_repository import (
-    LaboratoryActivityRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.activities.numeric_finding_repository import (
-    NumericFindingRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.activities.rating_scale_repository import (
-    RatingScaleRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.activities.reminder_repository import (
-    ReminderRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.activities.special_purpose_repository import (
-    SpecialPurposeRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.activities.textual_finding_repository import (
-    TextualFindingRepository,
 )
 from clinical_mdr_api.domain_repositories.concepts.compound_alias_repository import (
     CompoundAliasRepository,
@@ -154,23 +136,8 @@ from clinical_mdr_api.domain_repositories.dictionaries.dictionary_term_repositor
 from clinical_mdr_api.domain_repositories.dictionaries.dictionary_term_substance_repository import (
     DictionaryTermSubstanceRepository,
 )
-from clinical_mdr_api.domain_repositories.library.criteria_repository import (
-    CriteriaRepository,
-)
-from clinical_mdr_api.domain_repositories.library.endpoint_repository import (
-    EndpointRepository,
-)
 from clinical_mdr_api.domain_repositories.library.library_repository import (
     LibraryRepository,
-)
-from clinical_mdr_api.domain_repositories.library.objective_repository import (
-    ObjectiveRepository,
-)
-from clinical_mdr_api.domain_repositories.library.template_parameters_repository import (
-    TemplateParameterRepository,
-)
-from clinical_mdr_api.domain_repositories.library.timeframe_repository import (
-    TimeframeRepository,
 )
 from clinical_mdr_api.domain_repositories.project.project_repository import (
     ProjectRepository,
@@ -179,6 +146,15 @@ from clinical_mdr_api.domain_repositories.project.project_repository import (
 # noinspection PyProtectedMember
 from clinical_mdr_api.domain_repositories.simple_dictionaries._simple_terminology_item_repository import (
     SimpleTerminologyItemRepository,
+)
+from clinical_mdr_api.domain_repositories.standard_data_models.data_model_ig_repository import (
+    DataModelIGRepository,
+)
+from clinical_mdr_api.domain_repositories.standard_data_models.dataset_repository import (
+    DatasetRepository,
+)
+from clinical_mdr_api.domain_repositories.standard_data_models.dataset_variable_repository import (
+    DatasetVariableRepository,
 )
 from clinical_mdr_api.domain_repositories.study_definition.study_definition_repository import (
     StudyDefinitionRepository,
@@ -194,11 +170,29 @@ from clinical_mdr_api.domain_repositories.study_definition.study_title.study_tit
 from clinical_mdr_api.domain_repositories.study_selection.study_activity_instruction_repository import (
     StudyActivityInstructionRepository,
 )
+from clinical_mdr_api.domain_repositories.study_selection.study_activity_repository import (
+    StudySelectionActivityRepository,
+)
 from clinical_mdr_api.domain_repositories.study_selection.study_activity_schedule_repository import (
     StudyActivityScheduleRepository,
 )
+from clinical_mdr_api.domain_repositories.study_selection.study_arm_repository import (
+    StudySelectionArmRepository,
+)
+from clinical_mdr_api.domain_repositories.study_selection.study_branch_arm_repository import (
+    StudySelectionBranchArmRepository,
+)
+from clinical_mdr_api.domain_repositories.study_selection.study_cohort_repository import (
+    StudySelectionCohortRepository,
+)
 from clinical_mdr_api.domain_repositories.study_selection.study_compound_dosing_repository import (
     StudyCompoundDosingRepository,
+)
+from clinical_mdr_api.domain_repositories.study_selection.study_compound_repository import (
+    StudySelectionCompoundRepository,
+)
+from clinical_mdr_api.domain_repositories.study_selection.study_criteria_repository import (
+    StudySelectionCriteriaRepository,
 )
 from clinical_mdr_api.domain_repositories.study_selection.study_design_cell_repository import (
     StudyDesignCellRepository,
@@ -206,52 +200,61 @@ from clinical_mdr_api.domain_repositories.study_selection.study_design_cell_repo
 from clinical_mdr_api.domain_repositories.study_selection.study_disease_milestone_repository import (
     StudyDiseaseMilestoneRepository,
 )
+from clinical_mdr_api.domain_repositories.study_selection.study_element_repository import (
+    StudySelectionElementRepository,
+)
+from clinical_mdr_api.domain_repositories.study_selection.study_endpoint_repository import (
+    StudySelectionEndpointRepository,
+)
 from clinical_mdr_api.domain_repositories.study_selection.study_epoch_repository import (
     StudyEpochRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_activity_repository import (
-    StudySelectionActivityRepository,
-)
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_arm_repository import (
-    StudySelectionArmRepository,
-)
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_branch_arm_repository import (
-    StudySelectionBranchArmRepository,
-)
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_cohort_repository import (
-    StudySelectionCohortRepository,
-)
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_compound_repository import (
-    StudySelectionCompoundRepository,
-)
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_criteria_repository import (
-    StudySelectionCriteriaRepository,
-)
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_element_repository import (
-    StudySelectionElementRepository,
-)
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_endpoint_repository import (
-    StudySelectionEndpointRepository,
-)
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_objective_repository import (
+from clinical_mdr_api.domain_repositories.study_selection.study_objective_repository import (
     StudySelectionObjectiveRepository,
 )
 from clinical_mdr_api.domain_repositories.study_selection.study_visit_repository import (
     StudyVisitRepository,
 )
-from clinical_mdr_api.domain_repositories.templates.activity_description_template_repository import (
-    ActivityDescriptionTemplateRepository,
+from clinical_mdr_api.domain_repositories.syntax_instances.criteria_repository import (
+    CriteriaRepository,
 )
-from clinical_mdr_api.domain_repositories.templates.criteria_template_repository import (
+from clinical_mdr_api.domain_repositories.syntax_instances.endpoint_repository import (
+    EndpointRepository,
+)
+from clinical_mdr_api.domain_repositories.syntax_instances.objective_repository import (
+    ObjectiveRepository,
+)
+from clinical_mdr_api.domain_repositories.syntax_instances.template_parameters_repository import (
+    TemplateParameterRepository,
+)
+from clinical_mdr_api.domain_repositories.syntax_instances.timeframe_repository import (
+    TimeframeRepository,
+)
+from clinical_mdr_api.domain_repositories.syntax_pre_instances.activity_instruction_pre_instance_repository import (
+    ActivityInstructionPreInstanceRepository,
+)
+from clinical_mdr_api.domain_repositories.syntax_pre_instances.criteria_pre_instance_repository import (
+    CriteriaPreInstanceRepository,
+)
+from clinical_mdr_api.domain_repositories.syntax_pre_instances.endpoint_pre_instance_repository import (
+    EndpointPreInstanceRepository,
+)
+from clinical_mdr_api.domain_repositories.syntax_pre_instances.objective_pre_instance_repository import (
+    ObjectivePreInstanceRepository,
+)
+from clinical_mdr_api.domain_repositories.syntax_templates.activity_instruction_template_repository import (
+    ActivityInstructionTemplateRepository,
+)
+from clinical_mdr_api.domain_repositories.syntax_templates.criteria_template_repository import (
     CriteriaTemplateRepository,
 )
-from clinical_mdr_api.domain_repositories.templates.endpoint_template_repository import (
+from clinical_mdr_api.domain_repositories.syntax_templates.endpoint_template_repository import (
     EndpointTemplateRepository,
 )
-from clinical_mdr_api.domain_repositories.templates.objective_template_repository import (
+from clinical_mdr_api.domain_repositories.syntax_templates.objective_template_repository import (
     ObjectiveTemplateRepository,
 )
-from clinical_mdr_api.domain_repositories.templates.timeframe_template_repository import (
+from clinical_mdr_api.domain_repositories.syntax_templates.timeframe_template_repository import (
     TimeframeTemplateRepository,
 )
 
@@ -317,12 +320,28 @@ class MetaRepository:
         return ActivityInstanceRepository()
 
     @property
-    def reminder_repository(self) -> ReminderRepository:
-        return ReminderRepository()
+    def activity_instance_class_repository(self) -> ActivityInstanceClassRepository:
+        return ActivityInstanceClassRepository()
 
     @property
-    def compound_dosing_repository(self) -> CompoundDosingRepository:
-        return CompoundDosingRepository()
+    def data_model_ig_repository(self) -> DataModelIGRepository:
+        return DataModelIGRepository()
+
+    @property
+    def dataset_repository(self) -> DatasetRepository:
+        return DatasetRepository()
+
+    @property
+    def dataset_variable_repository(self) -> DatasetVariableRepository:
+        return DatasetVariableRepository()
+
+    @property
+    def activity_item_class_repository(self) -> ActivityItemClassRepository:
+        return ActivityItemClassRepository()
+
+    @property
+    def activity_item_repository(self) -> ActivityItemRepository:
+        return ActivityItemRepository()
 
     @property
     def compound_repository(self) -> CompoundRepository:
@@ -331,34 +350,6 @@ class MetaRepository:
     @property
     def compound_alias_repository(self) -> CompoundAliasRepository:
         return CompoundAliasRepository()
-
-    @property
-    def categoric_finding_repository(self) -> CategoricFindingRepository:
-        return CategoricFindingRepository()
-
-    @property
-    def numeric_finding_repository(self) -> NumericFindingRepository:
-        return NumericFindingRepository()
-
-    @property
-    def textual_finding_repository(self) -> TextualFindingRepository:
-        return TextualFindingRepository()
-
-    @property
-    def rating_scale_repository(self) -> RatingScaleRepository:
-        return RatingScaleRepository()
-
-    @property
-    def laboratory_activity_repository(self) -> LaboratoryActivityRepository:
-        return LaboratoryActivityRepository()
-
-    @property
-    def special_purpose_repository(self) -> SpecialPurposeRepository:
-        return SpecialPurposeRepository()
-
-    @property
-    def event_repository(self) -> EventRepository:
-        return EventRepository()
 
     @property
     def activity_repository(self) -> ActivityRepository:
@@ -485,10 +476,10 @@ class MetaRepository:
         return TemplateParameterRepository()
 
     @property
-    def activity_description_template_repository(
+    def activity_instruction_template_repository(
         self,
-    ) -> ActivityDescriptionTemplateRepository:
-        return ActivityDescriptionTemplateRepository(self._user)
+    ) -> ActivityInstructionTemplateRepository:
+        return ActivityInstructionTemplateRepository(self._user)
 
     @property
     def criteria_template_repository(self) -> CriteriaTemplateRepository:
@@ -505,6 +496,24 @@ class MetaRepository:
     @property
     def timeframe_template_repository(self) -> TimeframeTemplateRepository:
         return TimeframeTemplateRepository(self._user)
+
+    @property
+    def activity_instruction_pre_instance_repository(
+        self,
+    ) -> ActivityInstructionPreInstanceRepository:
+        return ActivityInstructionPreInstanceRepository(self._user)
+
+    @property
+    def criteria_pre_instance_repository(self) -> CriteriaPreInstanceRepository:
+        return CriteriaPreInstanceRepository(self._user)
+
+    @property
+    def endpoint_pre_instance_repository(self) -> EndpointPreInstanceRepository:
+        return EndpointPreInstanceRepository(self._user)
+
+    @property
+    def objective_pre_instance_repository(self) -> ObjectivePreInstanceRepository:
+        return ObjectivePreInstanceRepository(self._user)
 
     @property
     def library_repository(self) -> LibraryRepository:
@@ -577,15 +586,15 @@ class MetaRepository:
         return SimpleTerminologyItemRepository()
 
     @property
-    def study_selection_objective_repository(self) -> StudySelectionObjectiveRepository:
+    def study_objective_repository(self) -> StudySelectionObjectiveRepository:
         return StudySelectionObjectiveRepository()
 
     @property
-    def study_selection_endpoint_repository(self) -> StudySelectionEndpointRepository:
+    def study_endpoint_repository(self) -> StudySelectionEndpointRepository:
         return StudySelectionEndpointRepository()
 
     @property
-    def study_selection_compound_repository(self) -> StudySelectionCompoundRepository:
+    def study_compound_repository(self) -> StudySelectionCompoundRepository:
         return StudySelectionCompoundRepository()
 
     @property
@@ -593,11 +602,11 @@ class MetaRepository:
         return StudyCompoundDosingRepository()
 
     @property
-    def study_selection_criteria_repository(self) -> StudySelectionCriteriaRepository:
+    def study_criteria_repository(self) -> StudySelectionCriteriaRepository:
         return StudySelectionCriteriaRepository()
 
     @property
-    def study_selection_activity_repository(
+    def study_activity_repository(
         self,
     ) -> StudySelectionActivityRepository:
         return StudySelectionActivityRepository()
@@ -637,19 +646,19 @@ class MetaRepository:
         return CTConfigRepository(self._user)
 
     @property
-    def study_selection_arm_repository(self) -> StudySelectionArmRepository:
+    def study_arm_repository(self) -> StudySelectionArmRepository:
         return StudySelectionArmRepository()
 
     @property
-    def study_selection_element_repository(self) -> StudySelectionElementRepository:
+    def study_element_repository(self) -> StudySelectionElementRepository:
         return StudySelectionElementRepository()
 
     @property
-    def study_selection_branch_arm_repository(
+    def study_branch_arm_repository(
         self,
     ) -> StudySelectionBranchArmRepository:
         return StudySelectionBranchArmRepository()
 
     @property
-    def study_selection_cohort_repository(self) -> StudySelectionCohortRepository:
+    def study_cohort_repository(self) -> StudySelectionCohortRepository:
         return StudySelectionCohortRepository()

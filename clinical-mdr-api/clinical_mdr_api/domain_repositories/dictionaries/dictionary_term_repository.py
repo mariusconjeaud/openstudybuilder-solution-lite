@@ -137,12 +137,9 @@ class DictionaryTermGenericRepository(
     def generic_alias_clause(self):
         return """
             DISTINCT dictionary_codelist_root, dictionary_term_root, dictionary_term_value,
-            head([(library:Library)-[:CONTAINS_DICTIONARY_CODELIST]->(dictionary_codelist_root) | library]) AS library,
-            head([(dictionary_term_root)-[ld:LATEST_DRAFT]->(dictionary_term_value) | ld]) AS ld,
-            head([(dictionary_term_root)-[lf:LATEST_FINAL]->(dictionary_term_value) | lf]) AS lf,
-            head([(dictionary_term_root)-[lr:LATEST_RETIRED]->(dictionary_term_value) | lr]) AS lr,
-            head([(dictionary_term_root)-[hv:HAS_VERSION]->(dictionary_term_value) | hv]) AS hv
+            head([(library:Library)-[:CONTAINS_DICTIONARY_CODELIST]->(dictionary_codelist_root) | library]) AS library
             WITH
+                dictionary_term_root,
                 dictionary_term_value,
                 dictionary_codelist_root.uid as codelist_uid,
                 dictionary_term_root.uid AS term_uid,
@@ -152,18 +149,19 @@ class DictionaryTermGenericRepository(
                 dictionary_term_value.abbreviation as abbreviation,
                 dictionary_term_value.definition AS definition,
                 library.name AS library_name,
-                library.is_editable AS is_library_editable,
-                ld, lf, lr, hv
-                CALL apoc.case(
-                 [
-                   ld IS NOT NULL AND ld.end_date IS NULL, 'RETURN ld as version_rel',
-                   lf IS NOT NULL AND lf.end_date IS NULL, 'RETURN lf as version_rel',
-                   lr IS NOT NULL AND lr.end_date IS NULL, 'RETURN lr as version_rel',
-                   ld IS NULL AND lf IS NULL AND lr IS NULL, 'RETURN hv as version_rel'
-                 ],
-                 '',
-                 {ld:ld, lf:lf, lr:lr, hv:hv})
-                 yield value
+                library.is_editable AS is_library_editable
+                CALL {
+                    WITH dictionary_term_root, dictionary_term_value
+                    MATCH (dictionary_term_root)-[hv:HAS_VERSION]-(dictionary_term_value)
+                    WITH hv
+                    ORDER BY
+                        toInteger(split(hv.version, '.')[0]) ASC,
+                        toInteger(split(hv.version, '.')[1]) ASC,
+                        hv.end_date ASC,
+                        hv.start_date ASC
+                    WITH collect(hv) as hvs
+                    RETURN last(hvs) AS version_rel
+                }
             WITH 
                 dictionary_term_value,
                 codelist_uid,
@@ -175,11 +173,11 @@ class DictionaryTermGenericRepository(
                 definition,
                 library_name,
                 is_library_editable,
-                value.version_rel.start_date AS start_date,
-                value.version_rel.status AS status,
-                value.version_rel.version AS version,
-                value.version_rel.change_description AS change_description,
-                value.version_rel.user_initials AS user_initials
+                version_rel.start_date AS start_date,
+                version_rel.status AS status,
+                version_rel.version AS version,
+                version_rel.change_description AS change_description,
+                version_rel.user_initials AS user_initials
         """
 
     def specific_alias_clause(self) -> str:
@@ -275,7 +273,6 @@ class DictionaryTermGenericRepository(
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence[str]:
-
         # Match clause
         match_clause = self.generic_match_clause()
 
@@ -311,18 +308,18 @@ class DictionaryTermGenericRepository(
             else []
         )
 
-    def get_template_indications(
-        self, root_class: type, template_uid: str
+    def get_syntax_indications(
+        self, root_class: type, syntax_uid: str
     ) -> Optional[Sequence[DictionaryTermAR]]:
         """
-        This method returns the indications for the template with provided uid
+        This method returns the indications for the syntax with provided uid
 
-        :param root_class: The class of the root node for the template
-        :param template_uid: UID of the template
+        :param root_class: The class of the root node for the syntax
+        :param syntax_uid: UID of the syntax
         :return Sequence[DictionaryTermAR]:
         """
-        template = root_class.nodes.get(uid=template_uid)
-        indication_nodes = template.has_indication.all()
+        syntax = root_class.nodes.get(uid=syntax_uid)
+        indication_nodes = syntax.has_indication.all()
         if indication_nodes:
             indications = []
             for node in indication_nodes:
@@ -378,7 +375,13 @@ class DictionaryTermGenericRepository(
 
         self._db_save_node(root)
 
-        (root, value, _, _, _,) = self._db_create_and_link_nodes(
+        (
+            root,
+            value,
+            _,
+            _,
+            _,
+        ) = self._db_create_and_link_nodes(
             root, value, self._library_item_metadata_vo_to_datadict(relation_data)
         )
 
@@ -457,9 +460,9 @@ class DictionaryTermGenericRepository(
                 (dictionary_codelist_value:TemplateParameter)
             WITH dictionary_codelist_root, dictionary_codelist_value
             MATCH (dictionary_term_root:DictionaryTermRoot {uid: $term_uid})-[:LATEST]->(dictionary_term_value)
-            MERGE (dictionary_codelist_value)-[hv:HAS_VALUE]->(dictionary_term_root)
-            SET dictionary_term_root:TemplateParameterValueRoot
-            SET dictionary_term_value:TemplateParameterValue
+            MERGE (dictionary_codelist_value)-[hpt:HAS_PARAMETER_TERM]->(dictionary_term_root)
+            SET dictionary_term_root:TemplateParameterTermRoot
+            SET dictionary_term_value:TemplateParameterTermValue
         """
         db.cypher_query(
             maintain_template_parameter_query,

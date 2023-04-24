@@ -2,6 +2,7 @@
 <div>
   <v-autocomplete
     :label="$t('UCUMUnitField.label')"
+    data-cy='ucum-unit-field'
     :value="value"
     :items="ucumUnits"
     :item-text="getUcumDisplay"
@@ -30,6 +31,9 @@ export default {
   },
   methods: {
     searchForUnit (value) {
+      if (!value) {
+        value = ''
+      }
       const result = utils.checkSynonyms(value)
       if (result.status === 'succeeded') {
         this.ucumUnits = result.units

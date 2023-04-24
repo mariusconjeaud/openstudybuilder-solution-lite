@@ -55,7 +55,7 @@ export default {
         ...this.preparePayloadFunc(this.form)
       }
       const api = templates(this.urlPrefix)
-      api.updateGroupings(this.template.uid, data).then(resp => {
+      api.updateIndexings(this.template.uid, data).then(() => {
         this.$emit('updated')
         this.$emit('close')
         bus.$emit('notification', { msg: this.$t('TemplateIndexingDialog.update_success'), type: 'success' })

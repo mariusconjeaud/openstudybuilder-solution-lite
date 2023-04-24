@@ -76,7 +76,9 @@ class StudyDefinitionRepository(ABC):
         return self.__audit_info
 
     def find_by_uid(
-        self, uid: str, for_update: bool = False
+        self,
+        uid: str,
+        for_update: bool = False,
     ) -> Optional[StudyDefinitionAR]:
         """
         Public repository method for bringing an instance of study aggregate (StudyDefinitionAR class) restored from its
@@ -108,7 +110,10 @@ class StudyDefinitionRepository(ABC):
         # now get the data from db
         snapshot: Optional[StudyDefinitionSnapshot]
         additional_closure: Any
-        (snapshot, additional_closure) = self._retrieve_snapshot_by_uid(uid, for_update)
+        (snapshot, additional_closure) = self._retrieve_snapshot_by_uid(
+            uid=uid,
+            for_update=for_update,
+        )
 
         # if no data, then no object
         if snapshot is None:
@@ -204,6 +209,7 @@ class StudyDefinitionRepository(ABC):
         filter_by: Optional[dict] = None,
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         total_count: bool = False,
+        deleted: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionAR]:
         """
         Public method which is to retrieve (a part of) whole Study repository content in the form of Study aggregate
@@ -253,6 +259,7 @@ class StudyDefinitionRepository(ABC):
             total_count=total_count,
             filter_by=filter_by,
             filter_operator=filter_operator,
+            deleted=deleted,
         )
         # projecting results to StudyDefinitionAR instances
         studies: Sequence[StudyDefinitionAR] = [
@@ -270,6 +277,45 @@ class StudyDefinitionRepository(ABC):
         return GenericFilteringReturn.create(
             items=studies, total_count=snapshots.total_count
         )
+
+    def find_study_snapshot_history(
+        self,
+        study_uid: str,
+        sort_by: Optional[dict] = None,
+        page_number: int = 1,
+        page_size: int = 0,
+        filter_by: Optional[dict] = None,
+        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        total_count: bool = False,
+    ) -> GenericFilteringReturn[StudyDefinitionAR]:
+        study_snapshots = self._retrieve_study_snapshot_history(
+            study_uid=study_uid,
+            sort_by=sort_by,
+            page_number=page_number,
+            page_size=page_size,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            total_count=total_count,
+        )
+
+        studies: Sequence[StudyDefinitionAR] = [
+            StudyDefinitionAR.from_snapshot(s) for s in study_snapshots.items
+        ]
+
+        study_snapshots.items = studies
+        return study_snapshots
+
+    def _retrieve_study_snapshot_history(
+        self,
+        study_uid: str,
+        sort_by: Optional[dict] = None,
+        page_number: int = 1,
+        page_size: int = 0,
+        filter_by: Optional[dict] = None,
+        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        total_count: bool = False,
+    ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
+        raise NotImplementedError
 
     def find_all_by_library_item_uid(
         self,
@@ -333,7 +379,9 @@ class StudyDefinitionRepository(ABC):
 
     @abstractmethod
     def _retrieve_snapshot_by_uid(
-        self, uid: str, for_update: bool
+        self,
+        uid: str,
+        for_update: bool,
     ) -> Tuple[Optional[StudyDefinitionSnapshot], Any]:
         """
         Abstract method of the study repository, which is supposed to:
@@ -410,6 +458,7 @@ class StudyDefinitionRepository(ABC):
         total_count: bool = False,
         study_selection_object_node_id: Optional[int] = None,
         study_selection_object_node_type: Optional[NodeMeta] = None,
+        deleted: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
         """
         Abstract method which is expected to retrieve (a part of) whole Study
@@ -500,5 +549,19 @@ class StudyDefinitionRepository(ABC):
     def study_exists_by_uid(self, study_uid: str) -> bool:
         """
         A method that checks whether a Study exists with a specified study_uid
+        :return: bool
+        """
+
+    @abstractmethod
+    def check_if_study_is_locked(self, study_uid: str) -> bool:
+        """
+        A method that checks whether a Study with specified study_uid is locked
+        :return: bool
+        """
+
+    @abstractmethod
+    def check_if_study_is_deleted(self, study_uid: str) -> bool:
+        """
+        A method that checks whether a Study with specified study_uid is deleted
         :return: bool
         """

@@ -7,16 +7,8 @@
         :help-text="$t('HelpMessages.crfs')"
       />
     </div>
-
     <v-tabs v-model="tab">
-      <v-tab href="#templates"><v-icon color="crfTemplate" class="mr-1">mdi-alpha-t-circle</v-icon>{{ $t("CrfsView.tab1_title") }}</v-tab>
-      <v-tab href="#forms"><v-icon color="crfForm" class="mr-1">mdi-alpha-f-circle</v-icon>{{ $t("CrfsView.tab2_title") }}</v-tab>
-      <v-tab href="#item-groups"><v-icon color="crfGroup" class="mr-1">mdi-alpha-g-circle</v-icon>{{ $t("CrfsView.tab3_title") }}</v-tab>
-      <v-tab href="#items"><v-icon color="crfItem" class="mr-1">mdi-alpha-i-circle</v-icon>{{ $t("CrfsView.tab4_title") }}</v-tab>
-      <v-tab href="#crf-tree">{{ $t("CrfsView.tab5_title") }}</v-tab>
-      <v-tab href="#odm-viewer">{{ $t("CrfsView.tab6_title") }}</v-tab>
-      <v-tab href="#alias">{{ $t("CrfsView.tab7_title") }}</v-tab>
-      <v-tab href="#extensions">{{ $t("CrfsView.tab8_title") }}</v-tab>
+      <v-tab v-for="tab of tabs" :key="tab.tab" :href="tab.tab"><v-icon v-if="tab.icon" :color="tab.iconColor" class="mr-1">{{ tab.icon }}</v-icon>{{ tab.name }}</v-tab>
     </v-tabs>
     <v-tabs-items v-model="tab">
       <v-tab-item id="templates">
@@ -49,14 +41,15 @@
 
 <script>
 import HelpButton from '@/components/tools/HelpButton'
-import CrfTemplateTable from '@/components/library/CrfTemplateTable'
-import CrfFormTable from '@/components/library/CrfFormTable'
-import CrfItemGroupTable from '@/components/library/CrfItemGroupTable'
-import CrfItemTable from '@/components/library/CrfItemTable'
-import CrfTree from '@/components/library/CrfTree'
-import OdmViewer from '@/components/library/OdmViewer'
-import CrfAliasTable from '@/components/library/CrfAliasTable'
-import CrfExtensionsTable from '@/components/library/CrfExtensionsTable'
+import CrfTemplateTable from '@/components/library/crfs/CrfTemplateTable'
+import CrfFormTable from '@/components/library/crfs/CrfFormTable'
+import CrfItemGroupTable from '@/components/library/crfs/CrfItemGroupTable'
+import CrfItemTable from '@/components/library/crfs/CrfItemTable'
+import CrfTree from '@/components/library/crfs/CrfTree'
+import OdmViewer from '@/components/library/crfs/OdmViewer'
+import CrfAliasTable from '@/components/library/crfs/CrfAliasTable'
+import CrfExtensionsTable from '@/components/library/crfs/CrfExtensionsTable'
+import { mapActions } from 'vuex'
 
 export default {
   components: {
@@ -75,15 +68,37 @@ export default {
       tab: 1,
       type: '',
       uid: '',
-      updatedElement: {}
+      updatedElement: {},
+      tabs: [
+        { tab: '#templates', name: this.$t('CrfsView.tab1_title'), icon: 'mdi-alpha-t-circle', iconColor: 'crfTemplate' },
+        { tab: '#forms', name: this.$t('CrfsView.tab2_title'), icon: 'mdi-alpha-f-circle', iconColor: 'crfForm' },
+        { tab: '#item-groups', name: this.$t('CrfsView.tab3_title'), icon: 'mdi-alpha-g-circle', iconColor: 'crfGroup' },
+        { tab: '#items', name: this.$t('CrfsView.tab4_title'), icon: 'mdi-alpha-i-circle', iconColor: 'crfItem' },
+        { tab: '#crf-tree', name: this.$t('CrfsView.tab5_title') },
+        { tab: '#odm-viewer', name: this.$t('CrfsView.tab6_title') },
+        { tab: '#alias', name: this.$t('CrfsView.tab7_title') },
+        { tab: '#extensions', name: this.$t('CrfsView.tab8_title') }
+      ]
     }
   },
   mounted () {
     this.tab = this.$route.params.tab
     this.type = this.$route.params.type
     this.uid = this.$route.params.uid
+    const tabName = this.tab ? this.tabs.find(el => el.tab.substring(1) === this.tab).name : this.tabs[0].name
+    setTimeout(() => {
+      this.addBreadcrumbsLevel({
+        text: tabName,
+        to: { name: 'StudyProperties', params: { tab: tabName } },
+        index: 3,
+        replace: true
+      })
+    }, 100)
   },
   methods: {
+    ...mapActions({
+      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
+    }),
     redirectToPage (data) {
       this.uid = data.uid
       this.type = data.type
@@ -107,6 +122,12 @@ export default {
       this.$router.push({
         name: 'Crfs',
         params: params
+      })
+      const tabName = newValue ? this.tabs.find(el => el.tab.substring(1) === newValue).name : this.tabs[0].name
+      this.addBreadcrumbsLevel({
+        text: tabName,
+        index: 3,
+        replace: true
       })
     }
   }

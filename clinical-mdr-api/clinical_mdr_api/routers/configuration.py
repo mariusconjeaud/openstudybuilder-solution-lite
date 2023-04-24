@@ -6,12 +6,13 @@ from fastapi import status as fast_api_status
 
 from clinical_mdr_api.models.configuration import (
     CTConfigModel,
+    CTConfigOGM,
     CTConfigPatchInput,
     CTConfigPostInput,
 )
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.oauth import get_current_user_id
-from clinical_mdr_api.routers import decorators
+from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.configuration import CTConfigService
 
 router = APIRouter()
@@ -26,7 +27,7 @@ CodelistConfigUID = Path(None, description="The unique id of configuration.")
 @router.get(
     "",
     summary="Returns all configurations in their latest/newest version.",
-    response_model=Sequence[CTConfigModel],
+    response_model=Sequence[CTConfigOGM],
     status_code=200,
     responses={
         200: {
@@ -45,7 +46,7 @@ CodelistConfigUID = Path(None, description="The unique id of configuration.")
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
             }
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 @decorators.allow_exports(
@@ -72,7 +73,7 @@ CodelistConfigUID = Path(None, description="The unique id of configuration.")
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
     service: Service = Depends(),
-) -> Sequence[CTConfigModel]:
+) -> Sequence[CTConfigOGM]:
     return service.get_all()
 
 
@@ -89,7 +90,7 @@ def get_all(
             "description": """Not Found - The configuration with the specified 'uid'
             (and the specified date/time, version and/or status) wasn't found.""",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_by_uid(
@@ -155,7 +156,7 @@ def get_by_uid(
             "model": ErrorResponse,
             "description": "Not Found - The configuration with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 @decorators.allow_exports(
@@ -207,12 +208,12 @@ If the request succeeds:
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The configuration name is not valid.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def post(
     post_input: CTConfigPostInput = Body(
-        None, description="The configuration that shall be created."
+        description="The configuration that shall be created."
     ),
     service: Service = Depends(),
 ) -> CTConfigModel:
@@ -243,13 +244,12 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The configuration with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def patch(
     uid: str = CodelistConfigUID,
     patch_input: CTConfigPatchInput = Body(
-        None,
         description="The new content of the configuration including the change description.",
     ),
     service: Service = Depends(),
@@ -282,7 +282,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The  configuration with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def new_version(
@@ -315,7 +315,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The configuration with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
@@ -348,7 +348,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The configuration with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
@@ -381,7 +381,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The configuration with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
     dependencies=[Depends(get_current_user_id)],
 )
@@ -414,7 +414,7 @@ def reactivate(
             "model": ErrorResponse,
             "description": "Not Found - An configuration with the specified uid could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
     dependencies=[Depends(get_current_user_id)],
 )

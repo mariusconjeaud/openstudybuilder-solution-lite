@@ -27,7 +27,10 @@ OdmVendorElementUID = Path(None, description="The unique id of the ODM Vendor El
     description="",
     response_model=CustomPage[OdmVendorElement],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_all_odm_vendor_elements(
     library: Optional[str] = Query(None),
@@ -75,7 +78,7 @@ def get_all_odm_vendor_elements(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -111,7 +114,10 @@ def get_distinct_values_for_header(
     description="",
     response_model=OdmVendorElement,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_odm_vendor_element(uid: str = OdmVendorElementUID):
     odm_vendor_element_service = OdmVendorElementService()
@@ -124,7 +130,10 @@ def get_odm_vendor_element(uid: str = OdmVendorElementUID):
     description="",
     response_model=dict,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_active_relationships(uid: str = OdmVendorElementUID):
     odm_vendor_element_service = OdmVendorElementService()
@@ -155,7 +164,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The ODM Vendor Element with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_odm_vendor_element_versions(uid: str = OdmVendorElementUID):
@@ -179,13 +188,11 @@ def get_odm_vendor_element_versions(uid: str = OdmVendorElementUID):
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_vendor_element(
-    odm_vendor_element_create_input: OdmVendorElementPostInput = Body(
-        None, description=""
-    )
+    odm_vendor_element_create_input: OdmVendorElementPostInput = Body(description=""),
 ):
     odm_vendor_element_service = OdmVendorElementService()
     return odm_vendor_element_service.create(
@@ -212,14 +219,12 @@ def create_odm_vendor_element(
             "model": ErrorResponse,
             "description": "Not Found - The ODM Vendor Element with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_vendor_element(
     uid: str = OdmVendorElementUID,
-    odm_vendor_element_edit_input: OdmVendorElementPatchInput = Body(
-        None, description=""
-    ),
+    odm_vendor_element_edit_input: OdmVendorElementPatchInput = Body(description=""),
 ):
     odm_vendor_element_service = OdmVendorElementService()
     return odm_vendor_element_service.edit_draft(
@@ -259,7 +264,7 @@ Possible errors:
             "- The ODM Vendor Element is not in final status.\n"
             "- The ODM Vendor Element with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_vendor_element_version(uid: str = OdmVendorElementUID):
@@ -285,7 +290,7 @@ def create_odm_vendor_element_version(uid: str = OdmVendorElementUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Vendor Element with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve_odm_vendor_element(uid: str = OdmVendorElementUID):
@@ -310,7 +315,7 @@ def approve_odm_vendor_element(uid: str = OdmVendorElementUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Vendor Element with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate_odm_vendor_element(uid: str = OdmVendorElementUID):
@@ -335,7 +340,7 @@ def inactivate_odm_vendor_element(uid: str = OdmVendorElementUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Vendor Element with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate_odm_vendor_element(uid: str = OdmVendorElementUID):
@@ -364,7 +369,7 @@ def reactivate_odm_vendor_element(uid: str = OdmVendorElementUID):
             "model": ErrorResponse,
             "description": "Not Found - An ODM Vendor Element with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_odm_vendor_element(uid: str = OdmVendorElementUID):

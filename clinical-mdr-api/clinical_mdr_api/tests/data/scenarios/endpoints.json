@@ -31,11 +31,11 @@
                 "library_name": "Test library",
                 "name": "Test endpoint",
                 "objective_uid": "{ouid}",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": "and",
                         "position": 1,
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "type 2 diabetes",
@@ -79,11 +79,11 @@
                 "library_name": "Test library",
                 "name": "Test objective",
                 "objective_uid": "{ouid}",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": "and",
                         "position": 1,
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "type 2 diabetes",
@@ -108,6 +108,7 @@
                 "endpoint_template": {
                     "name": "Test [Indication]",
                     "name_plain": "Test [Indication]",
+                    "guidance_text": null,
                     "uid": "{otuid}"
                 },
                 "library": {
@@ -116,11 +117,11 @@
                 },
                 "name": "Test [type 2 diabetes]",
                 "name_plain": "Test type 2 diabetes",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": "and",
                         "position": 1,
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "type 2 diabetes",
@@ -154,11 +155,11 @@
                 "library_name": "Test library",
                 "name": "Test objective",
                 "objective_uid": "{ouid}",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": "and",
                         "position": 1,
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "type 2 diabetes",
@@ -183,6 +184,7 @@
                 "endpoint_template": {
                     "name": "Test [Indication]",
                     "name_plain": "Test [Indication]",
+                    "guidance_text": null,
                     "uid": "{otuid}"
                 },
                 "library": {
@@ -191,11 +193,11 @@
                 },
                 "name": "Test [type 2 diabetes]",
                 "name_plain": "Test type 2 diabetes",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": "and",
                         "position": 1,
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "type 2 diabetes",
@@ -229,11 +231,11 @@
                 "library_name": "Test library",
                 "name": "Test objective",
                 "objective_uid": "{ouid}",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": "and",
                         "position": 1,
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "type 2 diabetes",
@@ -258,81 +260,6 @@
                 "path": "http://testserver/endpoints",
                 "time": "2020-11-10T01:32:16.234697",
                 "type": "BusinessLogicException"
-            }
-        }
-    },
-    {
-        "name": "Test overriding the template name",
-        "request": {
-            "headers": {},
-            "method": "POST",
-            "request": {
-                "library_name": "Test library",
-                "endpoint_template_uid": "{etuid}",
-                "name_override": "Test [Indication] - edited instance name",
-                "objective_uid": "{ouid}",
-                "parameter_values": [
-                    {
-                        "conjunction": "and",
-                        "position": 1,
-                        "values": [
-                            {
-                                "index": 1,
-                                "name": "type 2 diabetes",
-                                "type": "Indication",
-                                "uid": "Indication-99991"
-                            }
-                        ]
-                    }
-                ]
-            },
-            "url": "/endpoints"
-        },
-        "response": {
-            "code": 201,
-            "headers": {
-                "content-length": "459",
-                "content-type": "application/json"
-            },
-            "result": {
-                "change_description": "Initial version",
-                "end_date": null,
-                "endpoint_template": {
-                    "name": "Test [Indication] - edited instance name",
-                    "name_plain": "Test [Indication] - edited instance name",
-                    "uid": "{otuid}"
-                },
-                "library": {
-                    "is_editable": true,
-                    "name": "Test library"
-                },
-                "name": "Test [type 2 diabetes] - edited instance name",
-                "name_plain": "Test type 2 diabetes - edited instance name",
-                "parameter_values": [
-                    {
-                        "conjunction": "and",
-                        "position": 1,
-                        "values": [
-                            {
-                                "index": 1,
-                                "name": "type 2 diabetes",
-                                "type": "Indication",
-                                "uid": "Indication-99991"
-                            }
-                        ]
-                    }
-                ],
-                "possible_actions": [
-                    "approve",
-                    "delete",
-                    "edit"
-                ],
-                "start_date": "2020-11-25T00:34:19+00:00",
-                "status": "Draft",
-                "study_count": null,
-                "uid": "64b411b1-b022-4b95-8b9b-52c300d6f988",
-                "user_initials": "TEST_USER",
-                "version": "0.1"
             }
         }
     },

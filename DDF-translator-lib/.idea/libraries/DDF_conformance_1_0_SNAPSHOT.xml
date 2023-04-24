@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="DDF-conformance-1.0-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../DDF-conformance/build/libs/DDF-conformance-1.0-SNAPSHOT.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

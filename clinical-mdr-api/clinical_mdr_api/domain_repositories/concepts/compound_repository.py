@@ -100,7 +100,6 @@ class CompoundRepository(ConceptGenericRepository):
         return value_node
 
     def _has_data_changed(self, ar: _AggregateRootType, value: VersionValue) -> bool:
-
         was_parent_data_modified = super()._has_data_changed(ar=ar, value=value)
 
         are_props_changed = (
@@ -206,7 +205,6 @@ class CompoundRepository(ConceptGenericRepository):
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> CompoundAR:
-
         return CompoundAR.from_repository_values(
             uid=root.uid,
             concept_vo=CompoundVO.from_repository_values(

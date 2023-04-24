@@ -23,7 +23,7 @@ class ErrorResponse(BaseModel):
             time=datetime.utcnow().strftime(config.DATE_TIME_FORMAT),
             path=str(request.url),
             method=request.method,
-            **data
+            **data,
         )
 
 

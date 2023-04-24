@@ -1,12 +1,20 @@
-from mdr_standards_import.cdisc_ct.entities.codelist import Codelist
-from mdr_standards_import.cdisc_ct.entities.codelist_attributes import CodelistAttributes
-from mdr_standards_import.cdisc_ct.entities.ct_import import CTImport
-from mdr_standards_import.cdisc_ct.entities.inconsistency import Inconsistency
-from mdr_standards_import.cdisc_ct.entities.package import Package
-from mdr_standards_import.cdisc_ct.entities.term import Term
-from mdr_standards_import.cdisc_ct.entities.term_attributes import TermAttributes
-from mdr_standards_import.cdisc_ct.entities.term_submission_value_pair import TermSubmissionValuePair
-from mdr_standards_import.cdisc_ct.entities.codelist_term_submission_value import CodelistTermSubmissionValue
+from mdr_standards_import.scripts.entities.cdisc_ct.codelist import Codelist
+from mdr_standards_import.scripts.entities.cdisc_ct.codelist_attributes import (
+    CodelistAttributes,
+)
+from mdr_standards_import.scripts.entities.cdisc_ct.ct_import import CTImport
+from mdr_standards_import.scripts.entities.inconsistency import Inconsistency
+from mdr_standards_import.scripts.entities.cdisc_ct.package import Package
+from mdr_standards_import.scripts.entities.cdisc_ct.term import Term
+from mdr_standards_import.scripts.entities.cdisc_ct.term_attributes import (
+    TermAttributes,
+)
+from mdr_standards_import.scripts.entities.cdisc_ct.term_submission_value_pair import (
+    TermSubmissionValuePair,
+)
+from mdr_standards_import.scripts.entities.cdisc_ct.codelist_term_submission_value import (
+    CodelistTermSubmissionValue,
+)
 
 
 class TestCTImport:
@@ -18,23 +26,23 @@ class TestCTImport:
         package = Package(ct_import)
 
         term_T01 = {
-            'conceptId': 'T01',
-            'submissionValue': 'SM T01',
-            'definition': 'Definition T01',
-            'preferredTerm': 'Peferred Term T01',
-            'synonyms': ['Synonym T01']
+            "conceptId": "T01",
+            "submissionValue": "SM T01",
+            "definition": "Definition T01",
+            "preferredTerm": "Peferred Term T01",
+            "synonyms": ["Synonym T01"],
         }
         json_data = {
-            'name': 'TEST A CT 2024-06-30',
-            'codelists': [
+            "name": "TEST A CT 2024-06-30",
+            "codelists": [
                 {
-                    'conceptId': 'C01',
-                    'extensible': 'true',
-                    'name': 'Codelist C01 Code',  # <- inconsistency
-                    'submissionValue': 'SM C01',
-                    'terms': [term_T01]
+                    "conceptId": "C01",
+                    "extensible": "true",
+                    "name": "Codelist C01 Code",  # <- inconsistency
+                    "submissionValue": "SM C01",
+                    "terms": [term_T01],
                 }
-            ]
+            ],
         }
 
         # when
@@ -57,21 +65,21 @@ class TestCTImport:
         package = Package(ct_import)
 
         term_C43820 = {
-            'conceptId': 'C43820',
-            'submissionValue': 'MedDRA',
-            'preferredTerm': 'MedDRA',
+            "conceptId": "C43820",
+            "submissionValue": "MedDRA",
+            "preferredTerm": "MedDRA",
         }
         json_data = {
-            'name': 'SDTM CT 2014-09-26',
-            'codelists': [
+            "name": "SDTM CT 2014-09-26",
+            "codelists": [
                 {
-                    'conceptId': 'C66788',
-                    'extensible': 'true',
-                    'name': 'Dictionary Name',  # <- inconsistency
-                    'submissionValue': 'DICTNAM',
-                    'terms': [term_C43820]
+                    "conceptId": "C66788",
+                    "extensible": "true",
+                    "name": "Dictionary Name",  # <- inconsistency
+                    "submissionValue": "DICTNAM",
+                    "terms": [term_C43820],
                 }
-            ]
+            ],
         }
 
         # when
@@ -90,47 +98,47 @@ class TestCTImport:
     # Test-Case i03
     def test__check_for_inconsistencies__i03__ok(self):
         # given
-        ct_import = CTImport('2024-06-30', 'TST')
+        ct_import = CTImport("2024-06-30", "TST")
         package_a = Package(ct_import)
         package_b = Package(ct_import)
 
         term_T01 = {
-            'conceptId': 'T01',
-            'submissionValue': 'SM T01',
-            'definition': 'Definition T01',
-            'preferredTerm': 'Peferred Term T01',
-            'synonyms': ['Synonym T01']
+            "conceptId": "T01",
+            "submissionValue": "SM T01",
+            "definition": "Definition T01",
+            "preferredTerm": "Peferred Term T01",
+            "synonyms": ["Synonym T01"],
         }
         term_T02 = {
-            'conceptId': 'T02',
-            'submissionValue': 'SM T02',
-            'definition': 'Definition T02',
-            'preferredTerm': 'Peferred Term T02',
-            'synonyms': ['Synonym T02']
+            "conceptId": "T02",
+            "submissionValue": "SM T02",
+            "definition": "Definition T02",
+            "preferredTerm": "Peferred Term T02",
+            "synonyms": ["Synonym T02"],
         }
         json_data_a = {
-            'name': 'TEST A CT 2024-06-30',
-            'codelists': [
+            "name": "TEST A CT 2024-06-30",
+            "codelists": [
                 {
-                    'conceptId': 'C01',
-                    'extensible': 'true',
-                    'name': 'Codelist C01',
-                    'submissionValue': 'SM C01',  # <- inconsistency
-                    'terms': [term_T01, term_T02]  # <- inconsistency
+                    "conceptId": "C01",
+                    "extensible": "true",
+                    "name": "Codelist C01",
+                    "submissionValue": "SM C01",  # <- inconsistency
+                    "terms": [term_T01, term_T02],  # <- inconsistency
                 }
-            ]
+            ],
         }
         json_data_b = {
-            'name': 'TEST B CT 2024-06-30',
-            'codelists': [
+            "name": "TEST B CT 2024-06-30",
+            "codelists": [
                 {
-                    'conceptId': 'C01',
-                    'extensible': 'true',
-                    'name': 'Codelist C01',
-                    'submissionValue': 'SM C01 !!',  # <- inconsistency
-                    'terms': [term_T01]  # <- inconsistency
+                    "conceptId": "C01",
+                    "extensible": "true",
+                    "name": "Codelist C01",
+                    "submissionValue": "SM C01 !!",  # <- inconsistency
+                    "terms": [term_T01],  # <- inconsistency
                 }
-            ]
+            ],
         }
 
         # when
@@ -151,10 +159,8 @@ class TestCTImport:
         codelist_C01: Codelist = list(ct_import.get_codelists())[0]
         assert codelist_C01.has_consistent_attributes() == False
         assert codelist_C01.has_inconsistent_terms() == True
-        assert len(package_a.get_term_concept_ids_for_codelist(
-            codelist_C01)) == 2
-        assert len(package_b.get_term_concept_ids_for_codelist(
-            codelist_C01)) == 1
+        assert len(package_a.get_term_concept_ids_for_codelist(codelist_C01)) == 2
+        assert len(package_b.get_term_concept_ids_for_codelist(codelist_C01)) == 1
         for term in codelist_C01.get_terms():
             assert term.has_consistent_attributes()
             assert term.has_consistent_submission_values()
@@ -162,48 +168,48 @@ class TestCTImport:
     # Test-Case i04
     def test__check_for_inconsistencies__i04__ok(self):
         # given
-        ct_import = CTImport('2024-06-30', 'TST')
+        ct_import = CTImport("2024-06-30", "TST")
         package_a = Package(ct_import)
         package_b = Package(ct_import)
 
         term_T01a = {
-            'conceptId': 'T01',
-            'submissionValue': 'SM T01',
-            'definition': 'Definition T01',
-            'preferredTerm': 'Peferred Term T01',
-            'synonyms': ['Synonym T01']
+            "conceptId": "T01",
+            "submissionValue": "SM T01",
+            "definition": "Definition T01",
+            "preferredTerm": "Peferred Term T01",
+            "synonyms": ["Synonym T01"],
         }
         term_T01b = {
-            'conceptId': 'T01',
-            'submissionValue': 'SM T01',
-            'definition': 'Definition T01',
-            'preferredTerm': 'Peferred Term T01 !!',  # <- inconsistency
-            'synonyms': ['Synonym T01']
+            "conceptId": "T01",
+            "submissionValue": "SM T01",
+            "definition": "Definition T01",
+            "preferredTerm": "Peferred Term T01 !!",  # <- inconsistency
+            "synonyms": ["Synonym T01"],
         }
 
         json_data_a = {
-            'name': 'TEST A CT 2024-06-30',
-            'codelists': [
+            "name": "TEST A CT 2024-06-30",
+            "codelists": [
                 {
-                    'conceptId': 'C01',
-                    'extensible': 'true',
-                    'name': 'Codelist C01',
-                    'submissionValue': 'SM C01',
-                    'terms': [term_T01a]
+                    "conceptId": "C01",
+                    "extensible": "true",
+                    "name": "Codelist C01",
+                    "submissionValue": "SM C01",
+                    "terms": [term_T01a],
                 }
-            ]
+            ],
         }
         json_data_b = {
-            'name': 'TEST B CT 2024-06-30',
-            'codelists': [
+            "name": "TEST B CT 2024-06-30",
+            "codelists": [
                 {
-                    'conceptId': 'C01',
-                    'extensible': 'true',
-                    'name': 'Codelist C01',
-                    'submissionValue': 'SM C01',
-                    'terms': [term_T01b]
+                    "conceptId": "C01",
+                    "extensible": "true",
+                    "name": "Codelist C01",
+                    "submissionValue": "SM C01",
+                    "terms": [term_T01b],
                 }
-            ]
+            ],
         }
 
         # when
@@ -228,12 +234,9 @@ class TestCTImport:
     # Test-Case i05
     def test__check_for_inconsistencies__i05__ok(self):
         # given
-        ct_import = CTImport('2024-06-30', 'TST')
+        ct_import = CTImport("2024-06-30", "TST")
         package = Package(ct_import)
-        json_data = {
-            'name': 'TEST A CT 2024-06-30',
-            'codelists': []
-        }
+        json_data = {"name": "TEST A CT 2024-06-30", "codelists": []}
 
         # when
         package.load_from_json_data(json_data)
@@ -249,62 +252,62 @@ class TestCTImport:
     # Test-Case i06
     def test__check_for_inconsistencies__i06__ok(self):
         # given
-        ct_import = CTImport('2024-06-30', 'TST')
+        ct_import = CTImport("2024-06-30", "TST")
         package_a = Package(ct_import)
         package_b = Package(ct_import)
 
         term_T01a = {
-            'conceptId': 'T01',
-            'submissionValue': 'SM T01 Code',
-            'definition': 'Definition T01',
-            'preferredTerm': 'Peferred Term T01',
-            'synonyms': ['Synonym T01']
+            "conceptId": "T01",
+            "submissionValue": "SM T01 Code",
+            "definition": "Definition T01",
+            "preferredTerm": "Peferred Term T01",
+            "synonyms": ["Synonym T01"],
         }
         term_T01b = {
-            'conceptId': 'T01',
-            'submissionValue': 'SM T01 Name',
-            'definition': 'Definition T01',
-            'preferredTerm': 'Peferred Term T01',
-            'synonyms': ['Synonym T01']
+            "conceptId": "T01",
+            "submissionValue": "SM T01 Name",
+            "definition": "Definition T01",
+            "preferredTerm": "Peferred Term T01",
+            "synonyms": ["Synonym T01"],
         }
         term_T01c = {
-            'conceptId': 'T01',
-            'submissionValue': 'SM T01 !!',  # <- inconsistency
-            'definition': 'Definition T01',
-            'preferredTerm': 'Peferred Term T01',
-            'synonyms': ['Synonym T01']
+            "conceptId": "T01",
+            "submissionValue": "SM T01 !!",  # <- inconsistency
+            "definition": "Definition T01",
+            "preferredTerm": "Peferred Term T01",
+            "synonyms": ["Synonym T01"],
         }
 
         json_data_a = {
-            'name': 'TEST A CT 2024-06-30',
-            'codelists': [
+            "name": "TEST A CT 2024-06-30",
+            "codelists": [
                 {
-                    'conceptId': 'C01',
-                    'extensible': 'true',
-                    'name': 'Codelist C01 Code',
-                    'submissionValue': 'SM C01',
-                    'terms': [term_T01a]
+                    "conceptId": "C01",
+                    "extensible": "true",
+                    "name": "Codelist C01 Code",
+                    "submissionValue": "SM C01",
+                    "terms": [term_T01a],
                 },
                 {
-                    'conceptId': 'C02',
-                    'extensible': 'true',
-                    'name': 'Codelist C01 Name',
-                    'submissionValue': 'SM C02',
-                    'terms': [term_T01b]
-                }
-            ]
+                    "conceptId": "C02",
+                    "extensible": "true",
+                    "name": "Codelist C01 Name",
+                    "submissionValue": "SM C02",
+                    "terms": [term_T01b],
+                },
+            ],
         }
         json_data_b = {
-            'name': 'TEST B CT 2024-06-30',
-            'codelists': [  # <- inconsistency
+            "name": "TEST B CT 2024-06-30",
+            "codelists": [  # <- inconsistency
                 {
-                    'conceptId': 'C02',
-                    'extensible': 'true',
-                    'name': 'Codelist C01 Name',
-                    'submissionValue': 'SM C02',
-                    'terms': [term_T01c]  # <- inconsistency
+                    "conceptId": "C02",
+                    "extensible": "true",
+                    "name": "Codelist C01 Name",
+                    "submissionValue": "SM C02",
+                    "terms": [term_T01c],  # <- inconsistency
                 }
-            ]
+            ],
         }
 
         # when
@@ -326,42 +329,42 @@ class TestCTImport:
     # Test-Case i07
     def test__check_for_inconsistencies__i07__ok(self):
         # given
-        ct_import = CTImport('2024-06-30', 'TST')
+        ct_import = CTImport("2024-06-30", "TST")
         package_a = Package(ct_import)
 
         term_T01a = {
-            'conceptId': 'T01',
+            "conceptId": "T01",
             # <- inconsistency
-            'definition': 'Definition T01',
-            'preferredTerm': 'Peferred Term T01',
-            'synonyms': ['Synonym T01']
+            "definition": "Definition T01",
+            "preferredTerm": "Peferred Term T01",
+            "synonyms": ["Synonym T01"],
         }
         term_T01b = {
-            'conceptId': 'T01',
-            'submissionValue': 'SM T01 Name',
-            'definition': 'Definition T01',
-            'preferredTerm': 'Peferred Term T01',
-            'synonyms': ['Synonym T01']
+            "conceptId": "T01",
+            "submissionValue": "SM T01 Name",
+            "definition": "Definition T01",
+            "preferredTerm": "Peferred Term T01",
+            "synonyms": ["Synonym T01"],
         }
 
         json_data = {
-            'name': 'TEST A CT 2024-06-30',
-            'codelists': [
+            "name": "TEST A CT 2024-06-30",
+            "codelists": [
                 {
-                    'conceptId': 'C01',
-                    'extensible': 'true',
-                    'name': 'Codelist C01',
-                    'submissionValue': 'SM CD',
-                    'terms': [term_T01a]
+                    "conceptId": "C01",
+                    "extensible": "true",
+                    "name": "Codelist C01",
+                    "submissionValue": "SM CD",
+                    "terms": [term_T01a],
                 },
                 {
-                    'conceptId': 'C02',
-                    'extensible': 'true',
-                    'name': 'Codelist C01',
-                    'submissionValue': 'SM',
-                    'terms': [term_T01b]
-                }
-            ]
+                    "conceptId": "C02",
+                    "extensible": "true",
+                    "name": "Codelist C01",
+                    "submissionValue": "SM",
+                    "terms": [term_T01b],
+                },
+            ],
         }
 
         # when

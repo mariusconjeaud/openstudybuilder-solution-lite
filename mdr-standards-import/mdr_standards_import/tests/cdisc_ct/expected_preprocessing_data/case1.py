@@ -1,4 +1,4 @@
-from mdr_standards_import.cdisc_ct.load_ct_preprocessing import Term, Codelist
+from mdr_standards_import.scripts.load_ct_preprocessing import Term, Codelist
 from mdr_standards_import.tests.cdisc_ct.test_pipeline import Package, Import
 
 
@@ -23,7 +23,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C001",
         extensible=True,
         synonyms=["Analysis Purpose"],
-
         terms=[term1],
     )
 
@@ -36,11 +35,16 @@ def get_expected_imports(effective_date, user_initials):
         description="Test-Case 1: Only 'Codelist 001' without another codelist. -> import as code_submission_value; no inconsistency.",
         source="Test source",
         href="/mdr/ct/packages/case1-2020-01-01",
-
         terms=[term1],
         codelists=[codelist1],
         discontinued_codelists=[],
     )
-    import1 = Import(effective_date, user_initials, packages=[package1], discontinued_codelists=[], log_entries=[])
+    import1 = Import(
+        effective_date,
+        user_initials,
+        packages=[package1],
+        discontinued_codelists=[],
+        log_entries=[],
+    )
 
     return [import1]

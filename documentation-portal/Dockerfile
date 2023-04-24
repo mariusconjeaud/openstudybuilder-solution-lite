@@ -1,0 +1,34 @@
+ARG NGINX_IMAGE=nginx:alpine
+ARG NODE_IMAGE=node:lts-alpine3.14
+
+## Build stage
+FROM $NODE_IMAGE as build-stage
+
+WORKDIR /app
+
+## Install Node packages
+COPY ./package*.json ./
+RUN yarn install
+
+# Build the app
+COPY ./ .
+RUN yarn docs:build
+
+## Production stage
+FROM $NGINX_IMAGE as production-stage
+
+COPY --from=build-stage /app/docs/.vuepress/dist /usr/share/nginx/html
+COPY ./nginx/default.conf /etc/nginx/conf.d/
+
+ARG PORT=5006
+ENV PORT=$PORT
+EXPOSE $PORT
+
+## Runs healthcheck on the application root
+## checks every `interval` seconds, fails if `timeout`,
+## unhealthy status is reached if `retries` number of consecutive failures,
+## but failures does not count within `start-period` seconds of start.
+HEALTHCHECK --start-period=10s --timeout=2s --interval=10s --retries=2 CMD \
+    curl --fail --silent --show-error --max-time 1 \
+    "http://localhost:$PORT/" \
+    > /dev/null || exit 1

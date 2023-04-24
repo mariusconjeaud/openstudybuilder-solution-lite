@@ -3,13 +3,14 @@ from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Response, status
 from pydantic.types import Json
+from starlette.requests import Request
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.repositories._utils import FilterOperator
-from clinical_mdr_api.routers import _generic_descriptions
+from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.dictionary_term_generic_service import (
     DictionaryTermGenericService,
 )
@@ -25,7 +26,7 @@ DictionaryTermUID = Path(None, description="The unique id of the DictionaryTerm"
 @router.get(
     "/terms",
     summary="List terms in the dictionary codelist.",
-    description="""
+    description=f"""
 Business logic:
  - List dictionary terms in the repository for the dictionary codelist (being a subset of terms)
  - The term uid property is the dictionary concept_id.
@@ -34,13 +35,44 @@ State after:
  - No change
  
 Possible errors:
- - Invalid codelist_uid""",
+ - Invalid codelist_uid
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+""",
     response_model=CustomPage[models.DictionaryTerm],
     response_model_exclude_unset=True,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "library_name",
+            "abbreviation",
+            "definition",
+            "dictionary_id",
+            "end_date",
+            "name",
+            "name_sentence_case",
+            "start_date",
+            "status",
+            "term_uid",
+            "version",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_terms(
+    request: Request,  # request is actually required by the allow_exports decorator
     codelist_uid: str = Query(
         ..., description="The unique id of the DictionaryCodelist"
     ),
@@ -89,7 +121,7 @@ def get_terms(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -140,12 +172,12 @@ def get_distinct_values_for_header(
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create(
     dictionary_term_input: models.DictionaryTermCreateInput = Body(
-        None, description="Properties to create DictionaryTermValue node."
+        description="Properties to create DictionaryTermValue node."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
@@ -171,7 +203,10 @@ Possible errors:
     response_model=models.DictionaryTerm,
     response_model_exclude_unset=True,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_codelists(
     uid: str = DictionaryTermUID, current_user_id: str = Depends(get_current_user_id)
@@ -204,7 +239,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The dictionary term with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_versions(
@@ -253,14 +288,13 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The term with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
     uid: str = DictionaryTermUID,
     dictionary_term_input: models.DictionaryTermEditInput = Body(
-        None,
-        description="The new parameter values for the dictionary term including the change description.",
+        description="The new parameter terms for the dictionary term including the change description.",
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
@@ -306,7 +340,7 @@ Possible errors:
             "- The dictionary term is not in final status.\n"
             "- The dictionary term with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_new_version(
@@ -351,7 +385,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The term with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
@@ -395,7 +429,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The term with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
@@ -439,7 +473,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The term with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
@@ -481,7 +515,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - An term with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_ct_term(
@@ -510,12 +544,12 @@ def delete_ct_term(
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_substance(
     dictionary_term_input: models.DictionaryTermSubstanceCreateInput = Body(
-        None, description="Properties to create DictionaryTermValue node."
+        description="Properties to create DictionaryTermValue node."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
@@ -541,7 +575,10 @@ Possible errors:
     response_model=models.DictionaryTermSubstance,
     response_model_exclude_unset=True,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_substance_by_id(
     uid: str = DictionaryTermUID, current_user_id: str = Depends(get_current_user_id)
@@ -565,7 +602,10 @@ Possible errors:
     response_model=CustomPage[models.DictionaryTermSubstance],
     response_model_exclude_unset=True,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_substances(
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
@@ -586,7 +626,6 @@ def get_substances(
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
-
     dictionary_term_service = DictionaryTermSubstanceService(user=current_user_id)
     results = dictionary_term_service.get_all_dictionary_terms(
         codelist_name=config.LIBRARY_SUBSTANCES_CODELIST_NAME,
@@ -639,14 +678,13 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The term with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_substance(
     uid: str = DictionaryTermUID,
     dictionary_term_input: models.DictionaryTermSubstanceEditInput = Body(
-        None,
-        description="The new parameter values for the dictionary term including the change description.",
+        description="The new parameter terms for the dictionary term including the change description.",
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):

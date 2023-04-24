@@ -25,20 +25,13 @@ class CTConfigValue(VersionValue):
 
 
 class CTConfigRoot(VersionRoot):
-
     has_version = RelationshipTo(
         CTConfigValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(CTConfigValue, "LATEST")
-    latest_draft = RelationshipTo(
-        CTConfigValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        CTConfigValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        CTConfigValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    latest_draft = RelationshipTo(CTConfigValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(CTConfigValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(CTConfigValue, "LATEST_RETIRED")
 
 
 class FieldNameConfigRoot(CTConfigRoot):

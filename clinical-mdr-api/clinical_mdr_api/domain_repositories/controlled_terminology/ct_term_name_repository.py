@@ -32,7 +32,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionValue,
 )
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
-    TemplateParameterValueRoot,
+    TemplateParameterTermRoot,
 )
 from clinical_mdr_api.exceptions import BusinessLogicException
 
@@ -136,7 +136,13 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
         )
         self._db_save_node(root)
 
-        (root, value, _, _, _,) = self._db_create_and_link_nodes(
+        (
+            root,
+            value,
+            _,
+            _,
+            _,
+        ) = self._db_create_and_link_nodes(
             root, value, self._library_item_metadata_vo_to_datadict(relation_data)
         )
 
@@ -153,7 +159,7 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
         value: VersionValue,
     ) -> None:
         """
-        Method maintains TemplateParameterValueRoot and TemplateParameterValue labels when saving CTTermNameAR.
+        Method maintains TemplateParameterTermRoot and TemplateParameterTermValue labels when saving CTTermNameAR.
         :param versioned_object:
         :param root:
         :param value:
@@ -209,9 +215,9 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
                 (codelist_ver_value:TemplateParameter)
             WITH codelist_root, codelist_ver_value
             MATCH (term_root:CTTermRoot {uid: $term_uid})-[:HAS_NAME_ROOT]->(term_ver_root)-[:LATEST]->(term_ver_value)
-            MERGE (codelist_ver_value)-[hv:HAS_VALUE]->(term_ver_root)
-            SET term_ver_root:TemplateParameterValueRoot
-            SET term_ver_value:TemplateParameterValue
+            MERGE (codelist_ver_value)-[hpt:HAS_PARAMETER_TERM]->(term_ver_root)
+            SET term_ver_root:TemplateParameterTermRoot
+            SET term_ver_value:TemplateParameterTermValue
         """
         db.cypher_query(
             maintain_template_parameter_query,
@@ -220,7 +226,7 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
                 "term_uid": versioned_object.uid,
             },
         )
-        TemplateParameterValueRoot.generate_node_uids_if_not_present()
+        TemplateParameterTermRoot.generate_node_uids_if_not_present()
 
     def is_repository_related_to_attributes(self) -> bool:
         """

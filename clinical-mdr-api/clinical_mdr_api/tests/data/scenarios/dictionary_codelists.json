@@ -1,5 +1,56 @@
 [
     {
+        "name": "Test GET dictionary codelists",
+        "request": {
+            "headers": {},
+            "method": "GET",
+            "request": {},
+            "url": "/dictionaries/codelists/SNOMED"
+        },
+        "response": {
+            "code": 200,
+            "headers": {},
+            "result": {
+                "items": [
+                    {
+                        "codelist_uid": "codelist_root2_uid",
+                        "name": "name2",
+                        "template_parameter": false,
+                        "library_name": "SNOMED",
+                        "start_date": "2021-03-18T11:54:20.898Z",
+                        "end_date": null,
+                        "status": "Draft",
+                        "version": "0.1",
+                        "change_description": "New draft version",
+                        "user_initials": "TODO user initials",
+                        "possible_actions": [
+                            "approve",
+                            "edit"
+                        ]
+                    },
+                    {
+                        "codelist_uid": "codelist_root1_uid",
+                        "name": "name1",
+                        "template_parameter": true,
+                        "library_name": "SNOMED",
+                        "start_date": "2021-03-18T11:54:20.898Z",
+                        "end_date": null,
+                        "status": "Final",
+                        "version": "1.0",
+                        "change_description": "Approved version",
+                        "user_initials": "TODO initials",
+                        "possible_actions": [
+                            "new_version"
+                        ]
+                    }
+                ],
+                "size": 10,
+                "page": 1,
+                "total": 0
+            }
+        }
+    },
+    {
         "name": "Test POST /versions codelist",
         "request": {
             "headers": {},

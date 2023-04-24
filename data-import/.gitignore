@@ -114,3 +114,4 @@ cdisc_data/
 .vscode
 .swp
 .idea/*
+.DS_STORE

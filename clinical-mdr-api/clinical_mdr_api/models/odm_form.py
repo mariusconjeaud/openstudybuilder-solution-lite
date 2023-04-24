@@ -194,7 +194,6 @@ class OdmFormRefModel(BaseModel):
             [str, str], Optional[OdmFormRefVO]
         ],
     ) -> Optional["OdmFormRefModel"]:
-
         if uid is not None:
             odm_form_ref_vo = find_odm_form_by_uid_with_template_relation(
                 uid, template_uid

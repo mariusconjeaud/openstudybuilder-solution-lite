@@ -34,8 +34,8 @@
                 "repeating": "No",
                 "scope_uid": "term1",
                 "descriptions": [
-                    "odm_description1",
-                    "odm_description2"
+                    "odm_description2",
+                    "odm_description3"
                 ],
                 "alias_uids": [
                     "odm_alias1"
@@ -69,21 +69,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -144,21 +144,21 @@
                         },
                         "descriptions": [
                             {
-                                "uid": "odm_description1",
-                                "name": "name1",
-                                "language": "ENG",
-                                "description": "description1",
-                                "instruction": "instruction1",
-                                "sponsor_instruction": "sponsor_instruction1",
-                                "version": "0.1"
-                            },
-                            {
                                 "uid": "odm_description2",
                                 "name": "name2",
                                 "language": "language2",
                                 "description": "description2",
                                 "instruction": "instruction2",
                                 "sponsor_instruction": "sponsor_instruction2",
+                                "version": "0.1"
+                            },
+                            {
+                                "uid": "odm_description3",
+                                "name": "name3",
+                                "language": "ENG",
+                                "description": "description3",
+                                "instruction": "instruction3",
+                                "sponsor_instruction": "sponsor_instruction3",
                                 "version": "0.1"
                             }
                         ],
@@ -241,21 +241,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -315,21 +315,21 @@
                     },
                     "descriptions": [
                         {
-                            "uid": "odm_description1",
-                            "name": "name1",
-                            "language": "ENG",
-                            "description": "description1",
-                            "instruction": "instruction1",
-                            "sponsor_instruction": "sponsor_instruction1",
-                            "version": "0.1"
-                        },
-                        {
                             "uid": "odm_description2",
                             "name": "name2",
                             "language": "language2",
                             "description": "description2",
                             "instruction": "instruction2",
                             "sponsor_instruction": "sponsor_instruction2",
+                            "version": "0.1"
+                        },
+                        {
+                            "uid": "odm_description3",
+                            "name": "name3",
+                            "language": "ENG",
+                            "description": "description3",
+                            "instruction": "instruction3",
+                            "sponsor_instruction": "sponsor_instruction3",
                             "version": "0.1"
                         }
                     ],
@@ -369,8 +369,8 @@
                 "change_description": "repeating changed to Yes",
                 "scope_uid": "term1",
                 "descriptions": [
-                    "odm_description1",
-                    "odm_description2"
+                    "odm_description2",
+                    "odm_description3"
                 ],
                 "alias_uids": [
                     "odm_alias1"
@@ -404,21 +404,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -477,21 +477,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -549,21 +549,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -621,21 +621,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -697,21 +697,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -778,21 +778,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -871,21 +871,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -985,21 +985,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1088,21 +1088,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1197,21 +1197,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1306,21 +1306,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1424,21 +1424,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1542,21 +1542,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1669,21 +1669,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1758,12 +1758,31 @@
         }
     },
     {
-        "name": "Test creating a new ODM Form version",
+        "name": "Test managing ODM Vendors of a specific ODM Form",
         "request": {
             "headers": {},
             "method": "POST",
-            "request": {},
-            "url": "concepts/odms/forms/OdmForm_000001/versions"
+            "request": {
+                "elements": [
+                    {
+                        "uid": "odm_vendor_element3",
+                        "value": "value"
+                    }
+                ],
+                "element_attributes": [
+                    {
+                        "uid": "odm_vendor_attribute7",
+                        "value": "value"
+                    }
+                ],
+                "attributes": [
+                    {
+                        "uid": "odm_vendor_attribute4",
+                        "value": "value"
+                    }
+                ]
+            },
+            "url": "concepts/odms/forms/OdmForm_000001/vendors"
         },
         "response": {
             "code": 201,
@@ -1778,12 +1797,12 @@
                 "oid": "oid1",
                 "sdtm_version": "0.1",
                 "repeating": "Yes",
-                "start_date": "2022-03-03T11:17:56.799074",
+                "start_date": "2022-03-03T13:18:03.230000",
                 "end_date": null,
-                "status": "Draft",
-                "version": "1.1",
-                "change_description": "New draft created",
-                "user_initials": "TODO user initials",
+                "status": "Final",
+                "version": "1.0",
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
                 "scope": {
                     "uid": "term1",
                     "code_submission_value": "code_submission_value1",
@@ -1791,21 +1810,21 @@
                 },
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1847,8 +1866,8 @@
                 ],
                 "vendor_elements": [
                     {
-                        "uid": "odm_vendor_element1",
-                        "name": "nameOne",
+                        "uid": "odm_vendor_element3",
+                        "name": "nameThree",
                         "value": "value"
                     }
                 ],
@@ -1864,12 +1883,134 @@
                 ],
                 "vendor_element_attributes": [
                     {
-                        "uid": "odm_vendor_attribute2",
-                        "name": "nameTwo",
+                        "uid": "odm_vendor_attribute7",
+                        "name": "nameSeven",
                         "data_type": "string",
                         "value_regex": null,
                         "value": "value",
-                        "vendor_element_uid": "odm_vendor_element1"
+                        "vendor_element_uid": "odm_vendor_element3"
+                    }
+                ],
+                "possible_actions": [
+                    "inactivate",
+                    "new_version"
+                ]
+            }
+        }
+    },
+    {
+        "name": "Test creating a new ODM Form version",
+        "request": {
+            "headers": {},
+            "method": "POST",
+            "request": {},
+            "url": "concepts/odms/forms/OdmForm_000001/versions"
+        },
+        "response": {
+            "code": 201,
+            "headers": {
+                "content-length": "459",
+                "content-type": "application/json"
+            },
+            "result": {
+                "uid": "OdmForm_000001",
+                "name": "name1",
+                "library_name": "Sponsor",
+                "oid": "oid1",
+                "sdtm_version": "0.1",
+                "repeating": "Yes",
+                "start_date": "2022-03-03T11:17:56.799074",
+                "end_date": null,
+                "status": "Draft",
+                "version": "1.1",
+                "change_description": "New draft created",
+                "user_initials": "TODO user initials",
+                "scope": {
+                    "uid": "term1",
+                    "code_submission_value": "code_submission_value1",
+                    "preferred_term": "preferred_term1"
+                },
+                "descriptions": [
+                    {
+                        "uid": "odm_description2",
+                        "name": "name2",
+                        "language": "language2",
+                        "description": "description2",
+                        "instruction": "instruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
+                        "version": "0.1"
+                    }
+                ],
+                "aliases": [
+                    {
+                        "uid": "odm_alias1",
+                        "context": "context1",
+                        "name": "name1",
+                        "version": "0.1"
+                    }
+                ],
+                "activity_groups": [
+                    {
+                        "uid": "activity_group_root2",
+                        "name": "name2"
+                    }
+                ],
+                "item_groups": [
+                    {
+                        "uid": "odm_item_group2",
+                        "oid": "oid2",
+                        "name": "name2",
+                        "order_number": 2,
+                        "mandatory": "Yes",
+                        "collection_exception_condition_oid": "collection_exception_condition_oid2",
+                        "vendor": {
+                            "attributes": [
+                                {
+                                    "uid": "odm_vendor_attribute3",
+                                    "name": "nameThree",
+                                    "data_type": "string",
+                                    "value_regex": null,
+                                    "value": "No",
+                                    "vendor_namespace_uid": "odm_vendor_namespace1"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "vendor_elements": [
+                    {
+                        "uid": "odm_vendor_element3",
+                        "name": "nameThree",
+                        "value": "value"
+                    }
+                ],
+                "vendor_attributes": [
+                    {
+                        "uid": "odm_vendor_attribute4",
+                        "name": "nameFour",
+                        "data_type": "string",
+                        "value_regex": null,
+                        "value": "value",
+                        "vendor_namespace_uid": "odm_vendor_namespace1"
+                    }
+                ],
+                "vendor_element_attributes": [
+                    {
+                        "uid": "odm_vendor_attribute7",
+                        "name": "nameSeven",
+                        "data_type": "string",
+                        "value_regex": null,
+                        "value": "value",
+                        "vendor_element_uid": "odm_vendor_element3"
                     }
                 ],
                 "possible_actions": [
@@ -1892,7 +2033,7 @@
                 "repeating": "No",
                 "scope": null,
                 "descriptions": [
-                    "odm_description1"
+                    "odm_description3"
                 ],
                 "alias_uids": []
             },
@@ -1920,12 +2061,12 @@
                 "scope": null,
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
+                        "uid": "odm_description3",
+                        "name": "name3",
                         "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1973,7 +2114,7 @@
                 "repeating": "No",
                 "scope": null,
                 "descriptions": [
-                    "odm_description1",
+                    "odm_description3",
                     {
                         "name": "string2",
                         "library_name": "Sponsor",
@@ -2009,12 +2150,12 @@
                 "scope": null,
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
+                        "uid": "odm_description3",
+                        "name": "name3",
                         "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     },
                     {
@@ -2056,12 +2197,12 @@
                 "scope": null,
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
+                        "uid": "odm_description3",
+                        "name": "name3",
                         "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "change_description": "nothing changed"
                     },
                     {
@@ -2101,12 +2242,12 @@
                 "scope": null,
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
+                        "uid": "odm_description3",
+                        "name": "name3",
                         "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     },
                     {
@@ -2157,8 +2298,8 @@
                 ],
                 "vendor_elements": [
                     {
-                        "uid": "odm_vendor_element1",
-                        "name": "nameOne",
+                        "uid": "odm_vendor_element3",
+                        "name": "nameThree",
                         "value": "value"
                     }
                 ],
@@ -2174,12 +2315,12 @@
                 ],
                 "vendor_element_attributes": [
                     {
-                        "uid": "odm_vendor_attribute2",
-                        "name": "nameTwo",
+                        "uid": "odm_vendor_attribute7",
+                        "name": "nameSeven",
                         "data_type": "string",
                         "value_regex": null,
                         "value": "value",
-                        "vendor_element_uid": "odm_vendor_element1"
+                        "vendor_element_uid": "odm_vendor_element3"
                     }
                 ],
                 "possible_actions": [

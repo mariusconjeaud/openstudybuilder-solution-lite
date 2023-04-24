@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
-from fastapi_etag.dependency import PreconditionFailed
 from opencensus.ext.azure.trace_exporter import AzureExporter
 from opencensus.trace.samplers import AlwaysOnSampler
 from pydantic import ValidationError
@@ -17,13 +16,10 @@ from starlette_context.middleware import RawContextMiddleware
 
 from clinical_mdr_api import config, exceptions, routers
 from clinical_mdr_api.models.error import ErrorResponse
-from clinical_mdr_api.oauth.config import (
-    OAUTH_ENABLED,
-    OIDC_METADATA_URL,
-    SWAGGER_UI_INIT_OAUTH,
-)
+from clinical_mdr_api.oauth.config import OAUTH_ENABLED, SWAGGER_UI_INIT_OAUTH
 from clinical_mdr_api.telemetry.traceback_middleware import ExceptionTracebackMiddleware
 from clinical_mdr_api.telemetry.tracing_middleware import TracingMiddleware
+from clinical_mdr_api.utils import get_api_version
 
 ALLOW_ORIGIN_REGEX = environ.get("ALLOW_ORIGIN_REGEX")
 
@@ -73,7 +69,7 @@ middlewares.append(
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-        expose_headers=["etag", "traceresponse"],
+        expose_headers=["traceresponse"],
     )
 )
 
@@ -90,8 +86,8 @@ app = FastAPI(
     dependencies=global_dependencies,
     swagger_ui_init_oauth=SWAGGER_UI_INIT_OAUTH,
     title=config.settings.app_name,
-    version="2.0.0",
-    description=f"""
+    version=get_api_version(),
+    description="""
 ## NOTICE
 
 This license information is applicable to the swagger documentation of the clinical-mdr-api, that is the openapi.json.
@@ -110,12 +106,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 This component contains software licensed under different licenses when compiled, please refer to the third-party-licenses.md file for further information and full license texts.
 
-## Authentication:
+## Authentication
 
 Supports OAuth2 [Authorization Code Flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1),
-at paths described in the [OpenID Connect Discovery metadata document]({OIDC_METADATA_URL})
-Microsoft Identity Platform
-([documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)).
+at paths described in the OpenID Connect Discovery metadata document (whose URL is defined by the `OIDC_METADATA_URL` environment variable).
+
+Microsoft Identity Platform documentation can be read 
+([here](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)).
 
 Authentication can be turned off with `OAUTH_ENABLED=false` environment variable. 
 
@@ -124,6 +121,9 @@ When authentication is turned on, all requests to API endpoints must provide a v
 When authentication is turned off, all endpoints accept (optional) custom header `X-Test-User-Id` which 
 allows any request to specify any user id value. If the `X-Test-User-Id` header is missing, the default value of `unknown-user` is assumed.
 
+## System information:
+
+System information is provided by a separate [System Information](../system/docs) sub-app which does not require authentication.
 """,
 )
 
@@ -147,17 +147,6 @@ def pydantic_validation_error_handler(request: Request, exception: ValidationErr
     with supplied payloads or parameters."""
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
-        content=jsonable_encoder(ErrorResponse(request, exception)),
-    )
-
-
-@app.exception_handler(PreconditionFailed)
-def precondition_failed_exception_handler(
-    request: Request, exception: PreconditionFailed
-):
-    """Returns a 412 error when a non matching etag is passed."""
-    return JSONResponse(
-        status_code=status.HTTP_412_PRECONDITION_FAILED,
         content=jsonable_encoder(ErrorResponse(request, exception)),
     )
 
@@ -223,14 +212,24 @@ app.include_router(
     tags=["ODM Metadata Import/Export"],
 )
 app.include_router(
-    routers.activity_description_templates_router,
-    prefix="/activity-description-templates",
-    tags=["Activity Description Templates"],
+    routers.activity_instruction_templates_router,
+    prefix="/activity-instruction-templates",
+    tags=["Activity Instruction Templates"],
+)
+app.include_router(
+    routers.activity_instruction_pre_instances_router,
+    prefix="/activity-instruction-pre-instances",
+    tags=["Activity Instruction Pre Instances"],
 )
 app.include_router(
     routers.criteria_templates_router,
     prefix="/criteria-templates",
     tags=["Criteria Templates"],
+)
+app.include_router(
+    routers.criteria_pre_instances_router,
+    prefix="/criteria-pre-instances",
+    tags=["Criteria Pre Instances"],
 )
 app.include_router(routers.criteria_router, prefix="/criteria", tags=["Criteria"])
 app.include_router(
@@ -238,11 +237,21 @@ app.include_router(
     prefix="/objective-templates",
     tags=["Objective Templates"],
 )
+app.include_router(
+    routers.objective_pre_instances_router,
+    prefix="/objective-pre-instances",
+    tags=["Objective Pre Instances"],
+)
 app.include_router(routers.objectives_router, prefix="/objectives", tags=["Objectives"])
 app.include_router(
     routers.endpoint_templates_router,
     prefix="/endpoint-templates",
     tags=["Endpoint Templates"],
+)
+app.include_router(
+    routers.endpoint_pre_instances_router,
+    prefix="/endpoint-pre-instances",
+    tags=["Endpoint Pre Instances"],
 )
 app.include_router(routers.endpoints_router, prefix="/endpoints", tags=["Endpoints"])
 app.include_router(
@@ -280,51 +289,27 @@ app.include_router(
 )
 app.include_router(
     routers.activity_instances_router,
-    prefix="/concepts/activities",
+    prefix="/concepts/activities/activity-instances",
     tags=["Activity Instances"],
 )
 app.include_router(
-    routers.reminders_router, prefix="/concepts/activities", tags=["Reminders"]
+    routers.activity_instance_classes_router,
+    prefix="/activity-instance-classes",
+    tags=["Activity Instance Classes"],
 )
 app.include_router(
-    routers.compound_dosings_router,
-    prefix="/concepts/activities",
-    tags=["Compound Dosings"],
+    routers.activity_item_classes_router,
+    prefix="/activity-item-classes",
+    tags=["Activity Item Classes"],
+)
+app.include_router(
+    routers.activity_items_router,
+    prefix="/activity-items",
+    tags=["Activity Items"],
 )
 app.include_router(routers.compounds_router, prefix="/concepts", tags=["Compounds"])
 app.include_router(
     routers.compound_aliases_router, prefix="/concepts", tags=["Compound Aliases"]
-)
-app.include_router(
-    routers.special_purposes_router,
-    prefix="/concepts/activities",
-    tags=["Special Purposes"],
-)
-app.include_router(
-    routers.categoric_finding_router,
-    prefix="/concepts/activities",
-    tags=["Categoric Findings"],
-)
-app.include_router(
-    routers.numeric_findings_router,
-    prefix="/concepts/activities",
-    tags=["Numeric Findings"],
-)
-app.include_router(
-    routers.textual_findings_router,
-    prefix="/concepts/activities",
-    tags=["Textual Findings"],
-)
-app.include_router(
-    routers.rating_scales_router, prefix="/concepts/activities", tags=["Rating Scales"]
-)
-app.include_router(
-    routers.laboratory_activities_router,
-    prefix="/concepts/activities",
-    tags=["Laboratory Activities"],
-)
-app.include_router(
-    routers.events_router, prefix="/concepts/activities", tags=["Events"]
 )
 app.include_router(
     routers.activities_router,
@@ -387,7 +372,9 @@ app.include_router(
 )
 app.include_router(routers.admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(routers.brands_router, prefix="/brands", tags=["Brands"])
+
 app.include_router(routers.studies_router, prefix="/studies", tags=["Studies"])
+
 app.include_router(routers.study_router, prefix="", tags=["Study Selections"])
 app.include_router(
     routers.unit_definition_router,
@@ -409,6 +396,9 @@ app.include_router(
     routers.sdtm_listing_router, prefix="/listings", tags=["SDTM Study Design Listings"]
 )
 app.include_router(
+    routers.adam_listing_router, prefix="/listings", tags=["ADaM Study Design Listings"]
+)
+app.include_router(
     routers.study_listing_router, prefix="/listings", tags=["Study Design Listings"]
 )
 app.include_router(
@@ -425,6 +415,21 @@ app.include_router(
     routers.data_model_igs_router,
     prefix="/standards",
     tags=["Data model implementation guides"],
+)
+app.include_router(
+    routers.master_models_router,
+    prefix="/standards/master-models/models",
+    tags=["Master models"],
+)
+app.include_router(
+    routers.master_model_datasets_router,
+    prefix="/standards/master-models/datasets",
+    tags=["Master model datasets"],
+)
+app.include_router(
+    routers.master_model_variables_router,
+    prefix="/standards/master-models/variables",
+    tags=["Master model variables"],
 )
 app.include_router(
     routers.dataset_classes_router,
@@ -469,7 +474,7 @@ def custom_openapi():
         routes=app.routes,
     )
 
-    openapi_schema["servers"] = [{"url": environ.get("API_ROOT_PATH", "/")}]
+    openapi_schema["servers"] = [{"url": config.OPENAPI_SCHEMA_API_ROOT_PATH}]
 
     if OAUTH_ENABLED:
         if "components" not in openapi_schema:
@@ -500,6 +505,21 @@ def custom_openapi():
                 )
                 endpoint_security.append({"BearerJwtAuth": []})
                 openapi_schema["paths"][path][method]["security"] = endpoint_security
+
+    # Add `400 Bad Request` error response to all endpoints
+    for path, path_item in openapi_schema["paths"].items():
+        for method, operation in path_item.items():
+            if "responses" not in operation:
+                operation["responses"] = {}
+            if "400" not in operation["responses"]:
+                operation["responses"]["400"] = {
+                    "description": "Bad Request",
+                    "content": {
+                        "application/json": {
+                            "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+                        }
+                    },
+                }
 
     app.openapi_schema = openapi_schema
     return app.openapi_schema

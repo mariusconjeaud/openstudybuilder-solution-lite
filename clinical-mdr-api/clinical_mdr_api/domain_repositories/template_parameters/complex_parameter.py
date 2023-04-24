@@ -1,6 +1,10 @@
+import logging
 from dataclasses import asdict, dataclass
 
+from neo4j.exceptions import ServiceUnavailable
 from neomodel import db
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -32,6 +36,15 @@ def parameter_concept_create_factory(name, query):
 
 class ComplexTemplateParameterRepository:
     def __init__(self):
+        try:
+            self._fetch_concepts()
+        except ServiceUnavailable:
+            log.error(
+                "The neo4j database is unavailable. API functionality will be severely limited."
+            )
+            self.concepts = None
+
+    def _fetch_concepts(self):
         tu = parameter_concept_create_factory(
             name="TimeUnit",
             query="""
@@ -60,6 +73,8 @@ class ComplexTemplateParameterRepository:
 
     def find_extended(self):
         values = self.find_all_with_samples()
+        if self.concepts is None:
+            self._fetch_concepts()
         for concept in self.concepts:
             values.append(concept.get_values())
         values.sort(key=lambda s: s["name"])
@@ -71,19 +86,19 @@ class ComplexTemplateParameterRepository:
             MATCH (pt:TemplateParameter)
             CALL {
                 WITH pt
-                MATCH (pt)<-[:HAS_PARENT_PARAMETER*0..]-(pt_parents)-[:HAS_VALUE]->(pr)-[:LATEST_FINAL]->(pv)
+                MATCH (pt)<-[:HAS_PARENT_PARAMETER*0..]-(pt_parents)-[:HAS_PARAMETER_TERM]->(pr)-[:LATEST_FINAL]->(pv)
                 WITH  pr, pv,  pt_parents
                 ORDER BY pv.name ASC
                 LIMIT 3
-                RETURN collect({uid: pr.uid, name: pv.name, type: pt_parents.name}) AS values
+                RETURN collect({uid: pr.uid, name: pv.name, type: pt_parents.name}) AS terms
             }
             RETURN
                 pt.name AS name,
-                values
+                terms
             ORDER BY name
         """
         )
-        return_value = [{"name": item[0], "values": item[1]} for item in items]
+        return_value = [{"name": item[0], "terms": item[1]} for item in items]
         return return_value
 
     def find_values(self, template_parameter_name: str):
@@ -92,14 +107,14 @@ class ComplexTemplateParameterRepository:
             MATCH (pt:TemplateParameter {name: $name})
             CALL {
                 WITH pt
-                MATCH (pt)<-[:HAS_PARENT_PARAMETER*0..]-(pt_parents)-[:HAS_VALUE]->(pr)-[:LATEST_FINAL]->(pv)
+                MATCH (pt)<-[:HAS_PARENT_PARAMETER*0..]-(pt_parents)-[:HAS_PARAMETER_TERM]->(pr)-[:LATEST_FINAL]->(pv)
                 WITH  pr, pv,  pt_parents
                 ORDER BY pv.name ASC
-                RETURN collect({uid: pr.uid, name: pv.name, type: pt_parents.name}) AS values
+                RETURN collect({uid: pr.uid, name: pv.name, type: pt_parents.name}) AS terms
             }
             RETURN
                 pt.name AS name,
-                values
+                terms
             ORDER BY name
         """,
             {"name": template_parameter_name},
@@ -108,7 +123,7 @@ class ComplexTemplateParameterRepository:
             return items[0][1]
         return []
 
-    def get_parameter_including_values(self, parameter_name: str):
+    def get_parameter_including_terms(self, parameter_name: str):
         for item in self.find_extended():
             if item["name"] == parameter_name:
                 return item

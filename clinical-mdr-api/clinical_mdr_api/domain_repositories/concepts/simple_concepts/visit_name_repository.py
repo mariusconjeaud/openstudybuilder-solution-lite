@@ -13,7 +13,6 @@ from clinical_mdr_api.models.concept import VisitName as VisitNameAPIModel
 
 
 class VisitNameRepository(TextValueRepository):
-
     root_class = VisitNameRoot
     value_class = VisitNameValue
     aggregate_class = VisitNameAR

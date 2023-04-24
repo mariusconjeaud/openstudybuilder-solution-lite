@@ -32,6 +32,7 @@ import { studySelectedNavigationGuard } from '@/mixins/studies'
 import EligibilityCriteriaTable from '@/components/studies/EligibilityCriteriaTable'
 import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels'
 import terms from '@/api/controlledTerminology/terms'
+import { mapActions } from 'vuex'
 
 export default {
   mixins: [studySelectedNavigationGuard],
@@ -55,11 +56,22 @@ export default {
     })
     this.tab = this.$route.params.tab
   },
+  methods: {
+    ...mapActions({
+      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
+    })
+  },
   watch: {
     tab (newValue) {
       this.$router.push({
         name: 'StudySelectionCriteria',
         params: { tab: newValue }
+      })
+      this.addBreadcrumbsLevel({
+        text: newValue,
+        to: { name: 'StudySelectionCriteria', params: { tab: newValue } },
+        index: 3,
+        replace: true
       })
     }
   }

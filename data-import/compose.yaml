@@ -1,0 +1,20 @@
+services:
+
+  # Import 'command' for local development
+  import:
+    build:
+      args:
+        PYTHON_IMAGE: ${PYTHON_IMAGE:-python:3.7.12-slim}
+        UID: "${UID:-1000}"
+      context: ./
+      dockerfile: Dockerfile
+    entrypoint: ["/bin/sh", "-cx"]
+    command: ["pipenv run import_all"]
+    env_file: .env.import
+    network_mode: host
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      - type: bind
+        source: ./
+        target: /app
+        read_only: true

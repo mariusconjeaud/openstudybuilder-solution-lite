@@ -3,17 +3,13 @@ import os
 from neomodel import db
 from starlette.testclient import TestClient
 
-from clinical_mdr_api.domain_repositories.models.endpoint import EndpointRoot
-from clinical_mdr_api.domain_repositories.models.endpoint_template import (
-    EndpointTemplateRoot,
-)
-from clinical_mdr_api.domain_repositories.models.objective import ObjectiveRoot
-from clinical_mdr_api.domain_repositories.models.objective_template import (
-    ObjectiveTemplateRoot,
-)
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot
-from clinical_mdr_api.domain_repositories.models.timeframe import TimeframeRoot
-from clinical_mdr_api.domain_repositories.models.timeframe_template import (
+from clinical_mdr_api.domain_repositories.models.syntax import (
+    EndpointRoot,
+    EndpointTemplateRoot,
+    ObjectiveRoot,
+    ObjectiveTemplateRoot,
+    TimeframeRoot,
     TimeframeTemplateRoot,
 )
 from clinical_mdr_api.models.study_epoch import StudyEpochEditInput

@@ -30,7 +30,7 @@ CompoundUID = Path(None, description="The unique id of the compound")
 @router.get(
     "/compounds",
     summary="List all compounds (for a given library)",
-    description="""
+    description=f"""
 State before:
  - The library must exist (if specified)
 
@@ -41,10 +41,16 @@ State after:
  - No change
 
 Possible errors:
- - Invalid library name specified.""",
+ - Invalid library name specified.
+ 
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+""",
     response_model=CustomPage[Compound],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 @decorators.allow_exports(
     {
@@ -123,7 +129,10 @@ Possible errors:
  - Invalid library name specified.""",
     response_model=CustomPage[SimpleCompound],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_compounds_simple(
     library: Optional[str] = Query(None, description="The library name"),
@@ -172,7 +181,7 @@ def get_compounds_simple(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -223,7 +232,10 @@ Possible errors:
  """,
     response_model=Compound,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_activity(
     uid: str = CompoundUID, current_user_id: str = Depends(get_current_user_id)
@@ -256,7 +268,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The compound with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_versions(
@@ -299,11 +311,11 @@ Possible errors:
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create(
-    compound_create_input: CompoundCreateInput = Body(None, description=""),
+    compound_create_input: CompoundCreateInput = Body(description=""),
     current_user_id: str = Depends(get_current_user_id),
 ):
     compound_service = CompoundService(user=current_user_id)
@@ -346,12 +358,12 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The compound with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
     uid: str = CompoundUID,
-    compound_edit_input: CompoundEditInput = Body(None, description=""),
+    compound_edit_input: CompoundEditInput = Body(description=""),
     current_user_id: str = Depends(get_current_user_id),
 ):
     compound_service = CompoundService(user=current_user_id)
@@ -392,7 +404,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The compound with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
@@ -434,7 +446,7 @@ Possible errors:
             "- The compound is not in final status.\n"
             "- The compound with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_new_version(
@@ -477,7 +489,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The compound with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
@@ -520,7 +532,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The compound with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
@@ -563,7 +575,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - An compound with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete(uid: str = CompoundUID, current_user_id: str = Depends(get_current_user_id)):

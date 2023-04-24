@@ -146,9 +146,37 @@
                   ],
                   "request_rationale": null,
                   "replaced_by_activity": null
+               },
+               {
+                  "uid": "activity_root3",
+                  "name": "name3",
+                  "name_sentence_case": "name_sentence_case3",
+                  "definition": "definition3",
+                  "abbreviation": "abbv",
+                  "library_name": "Sponsor",
+                  "activity_subgroup": {
+                     "uid": "activity_subgroup_root3",
+                     "name": "name3"
+                  },
+                  "activity_group": {
+                     "uid": "activity_group_root3",
+                     "name": "name3"
+                  },
+                  "start_date": "2021-03-18T11:54:20.898Z",
+                  "end_date": null,
+                  "status": "Final",
+                  "version": "1.0",
+                  "change_description": "Approved version",
+                  "user_initials": "TODO user initials",
+                  "possible_actions": [
+                     "inactivate",
+                     "new_version"
+                  ],
+                  "request_rationale": null,
+                  "replaced_by_activity": null
                }
             ],
-            "total": 3,
+            "total": 4,
             "page": 1,
             "size": 10
          }

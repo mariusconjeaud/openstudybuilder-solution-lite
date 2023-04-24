@@ -1,0 +1,83 @@
+{
+  "items": [
+    {
+      "acceptedVersion": false,
+      "armColour": "#FF0000FF",
+      "armConnectedBranchArms": null,
+      "armType": {
+        "catalogueName": "SDTM CT",
+        "changeDescription": "Approved version",
+        "codelistUid": "CTCodelist_000022",
+        "endDate": null,
+        "libraryName": "Sponsor",
+        "order": 1,
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "sponsorPreferredName": "Investigational Arm",
+        "sponsorPreferredNameSentenceCase": "investigational arm",
+        "startDate": "2022-07-06T19:26:48.453558",
+        "status": "Final",
+        "termUid": "CTTerm_000081",
+        "userInitials": "unknown-user",
+        "version": "1.0"
+      },
+      "armUid": "StudyArm_000003",
+      "changeType": null,
+      "code": null,
+      "description": "AZD6738 + Olaparib",
+      "endDate": null,
+      "name": "OLAPARIB_ADDON",
+      "numberOfSubjects": null,
+      "order": 1,
+      "randomizationGroup": null,
+      "shortName": "OLAPARIB_ADDON",
+      "startDate": "2022-07-07T07:17:16.682624",
+      "status": null,
+      "studyUid": "Study_000036",
+      "userInitials": "unknown-user"
+    },
+    {
+      "acceptedVersion": false,
+      "armColour": "#FF0000FF",
+      "armConnectedBranchArms": null,
+      "armType": {
+        "catalogueName": "SDTM CT",
+        "changeDescription": "Approved version",
+        "codelistUid": "CTCodelist_000022",
+        "endDate": null,
+        "libraryName": "Sponsor",
+        "order": 1,
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "sponsorPreferredName": "Investigational Arm",
+        "sponsorPreferredNameSentenceCase": "investigational arm",
+        "startDate": "2022-07-06T19:26:48.453558",
+        "status": "Final",
+        "termUid": "CTTerm_000081",
+        "userInitials": "unknown-user",
+        "version": "1.0"
+      },
+      "armUid": "StudyArm_000005",
+      "changeType": null,
+      "code": null,
+      "description": "AZD6738 + emerging Therapy 1",
+      "endDate": null,
+      "name": "NEW1_ADDON",
+      "numberOfSubjects": null,
+      "order": 2,
+      "randomizationGroup": null,
+      "shortName": "NEW1_ADDON",
+      "startDate": "2022-07-07T07:17:49.525663",
+      "status": null,
+      "studyUid": "Study_000036",
+      "userInitials": "unknown-user"
+    }
+  ],
+  "page": 1,
+  "size": 0,
+  "total": 0
+}

@@ -12,7 +12,7 @@
         <v-col cols="11">
           <v-autocomplete
             v-model="form.activity_group"
-            :label="$t('ActivityDescriptionTemplateForm.group')"
+            :label="$t('ActivityInstructionTemplateForm.group')"
             :items="groups"
             item-text="name"
             item-value="uid"
@@ -32,7 +32,7 @@
         <v-col cols="11">
           <v-autocomplete
             v-model="form.activity_subgroups"
-            :label="$t('ActivityDescriptionTemplateForm.sub_group')"
+            :label="$t('ActivityInstructionTemplateForm.sub_group')"
             :items="subGroups"
             item-text="name"
             item-value="uid"
@@ -59,7 +59,7 @@
             <v-col cols="11">
               <v-autocomplete
                 v-model="form.activities"
-                :label="$t('ActivityDescriptionTemplateForm.activity')"
+                :label="$t('ActivityInstructionTemplateForm.activity')"
                 :items="activities"
                 item-text="name"
                 return-object

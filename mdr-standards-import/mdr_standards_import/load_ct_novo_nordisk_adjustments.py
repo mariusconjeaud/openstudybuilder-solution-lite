@@ -1,11 +1,14 @@
 import csv
 from os import path
+
 USER_INITIALS = None
 
 
 def update_codelist_names_managed_by_novo_nordisk(tx, csv_import_directory):
-    with open(path.join(csv_import_directory, "sponsor_codelist_names.csv"), 'r') as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',', quotechar='"')
+    with open(
+        path.join(csv_import_directory, "sponsor_codelist_names.csv"), "r"
+    ) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=",", quotechar='"')
 
         # skip the header row
         next(csv_reader, None)
@@ -15,7 +18,7 @@ def update_codelist_names_managed_by_novo_nordisk(tx, csv_import_directory):
             sponsor_preferred_name = row[2]
             use_row = row[3]
 
-            if use_row.lower() != 'yes':
+            if use_row.lower() != "yes":
                 pass
 
             result = tx.run(
@@ -32,10 +35,10 @@ def update_codelist_names_managed_by_novo_nordisk(tx, csv_import_directory):
                     AS update_needed
                 """,
                 concept_id=concept_id,
-                sponsor_preferred_name=sponsor_preferred_name
+                sponsor_preferred_name=sponsor_preferred_name,
             ).single()
 
-            is_update_needed = result['update_needed'] if result is not None else False
+            is_update_needed = result["update_needed"] if result is not None else False
             # print("  Updating " + str(len(rows_to_update)) + " CTCodelistNameValue entries.")
             # print(concept_id + ": " + str(is_update_needed))
 
@@ -43,17 +46,19 @@ def update_codelist_names_managed_by_novo_nordisk(tx, csv_import_directory):
                 # TODO make sure that only the latest CTCodelistNameValue and only the latest CTTermNameValue nodes are marked as template parameter
                 # TODO discuss the exact rules with Mikkel and co.
 
-                result = tx.run(
+                _result = tx.run(
                     """
                     MATCH (:CTCodelistRoot{uid: $concept_id})-[:HAS_NAME_ROOT]->(codelist_name_root)
                     OPTIONAL MATCH (codelist_name_root)-[latest_final:LATEST_FINAL]->(old_codelist_name_value)
-                    WITH codelist_name_root, latest_final, old_codelist_name_value, latest_final.version AS version
+                    OPTIONAL MATCH (codelist_name_root)-[latest_hv:HAS_VERSION {status: "Final"}]->(old_codelist_name_value) WHERE latest_hv.end_date IS NULL
+                    WITH codelist_name_root, latest_final, latest_hv, old_codelist_name_value, latest_hv.version AS version
 
                     // if there is a previous Final version, close this
-                    FOREACH (not_used IN CASE WHEN latest_final IS NOT NULL THEN [1] ELSE [] END |
+                    FOREACH (not_used IN CASE WHEN latest_hv IS NOT NULL THEN [1] ELSE [] END |
                         CREATE (codelist_name_root)-[v:HAS_VERSION]->(old_codelist_name_value)
-                        SET v = latest_final,
-                            v.end_date = datetime()
+                        SET v.end_date = datetime()
+                    )
+                    FOREACH (not_used IN CASE WHEN latest_final IS NOT NULL THEN [1] ELSE [] END |
                         DELETE latest_final
                     )
 
@@ -66,7 +71,8 @@ def update_codelist_names_managed_by_novo_nordisk(tx, csv_import_directory):
                     // create the new LATEST and LATEST_FINAL relationships
                     WITH codelist_name_root, version, old_codelist_name_value
                     CREATE (codelist_name_root)-[:LATEST]->(codelist_name_value:CTCodelistNameValue)
-                    CREATE (codelist_name_root)-[:LATEST_FINAL {
+                    CREATE (codelist_name_root)-[:LATEST_FINAL]->(codelist_name_value:CTCodelistNameValue)
+                    CREATE (codelist_name_root)-[:HAS_VERSION {
                         start_date:         datetime(),
                         status:             'Final',
                         version:             toString(coalesce(toInteger(split(version, '.')[0]), 0) + 1) + '.0',
@@ -81,11 +87,9 @@ def update_codelist_names_managed_by_novo_nordisk(tx, csv_import_directory):
                     """,
                     concept_id=concept_id,
                     sponsor_preferred_name=sponsor_preferred_name,
-                    user_initials=USER_INITIALS
+                    user_initials=USER_INITIALS,
                 )
 
-                # print("result data:")
-                # print(result.data())
                 #
                 # tx.run(
                 #     """
@@ -117,8 +121,10 @@ def update_codelist_names_managed_by_novo_nordisk(tx, csv_import_directory):
 # MATCH path=(:CTTermRoot{uid: 'C38272'})-->()-->()
 # RETURN path
 def update_term_names_managed_by_novo_nordisk(tx, csv_import_directory):
-    with open(path.join(csv_import_directory, "sponsor_term_names.csv"), 'r') as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',', quotechar='"')
+    with open(
+        path.join(csv_import_directory, "sponsor_term_names.csv"), "r"
+    ) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=",", quotechar='"')
 
         # skip the header row
         next(csv_reader, None)
@@ -144,23 +150,24 @@ def update_term_names_managed_by_novo_nordisk(tx, csv_import_directory):
                 """,
                 concept_id=concept_id,
                 sponsor_preferred_name=sponsor_preferred_name,
-                sponsor_preferred_name_sentence_case=sponsor_preferred_name_sentence_case
+                sponsor_preferred_name_sentence_case=sponsor_preferred_name_sentence_case,
             ).single()
 
-            is_update_needed = result['update_needed'] if result is not None else False
+            is_update_needed = result["update_needed"] if result is not None else False
 
             if is_update_needed:
                 tx.run(
                     """
                     MATCH (term_root:CTTermRoot{uid: $concept_id})-[:HAS_NAME_ROOT]->(term_name_root)
                     OPTIONAL MATCH (term_name_root)-[latest_final:LATEST_FINAL]->(old_term_name_value)
-                    WITH term_name_root, latest_final, old_term_name_value, latest_final.version AS version
+                    OPTIONAL MATCH (term_name_root)-[latest_hv:HAS_VERSION {status: "Final"}]->(old_term_name_value) WHERE latest_hv.end_date IS NULL
+                    WITH term_name_root, latest_final, latest_hv, old_term_name_value, latest_hv.version AS version
                     
                     // if there is a previous Final version, close this
+                    FOREACH (not_used IN CASE WHEN latest_hv IS NOT NULL THEN [1] ELSE [] END |
+                        SET v.end_date = datetime()
+                    )
                     FOREACH (not_used IN CASE WHEN latest_final IS NOT NULL THEN [1] ELSE [] END |
-                        CREATE (term_name_root)-[v:HAS_VERSION]->(old_term_name_value)
-                        SET v = latest_final,
-                            v.end_date = datetime()
                         DELETE latest_final
                     )
                     
@@ -173,7 +180,8 @@ def update_term_names_managed_by_novo_nordisk(tx, csv_import_directory):
                     // create the new LATEST and LATEST_FINAL relationships
                     WITH term_name_root, version
                     CREATE (term_name_root)-[:LATEST]->(term_name_value:CTTermNameValue)
-                    CREATE (term_name_root)-[:LATEST_FINAL {
+                    CREATE (term_name_root)-[:LATEST_FINAL]->(term_name_value:CTTermNameValue)
+                    CREATE (term_name_root)-[:HAS_VERSION {
                         start_date:         datetime(),
                         status:             'Final',
                         version:            toString(coalesce(toInteger(split(version, '.')[0]), 0) + 1) + '.0',
@@ -186,18 +194,16 @@ def update_term_names_managed_by_novo_nordisk(tx, csv_import_directory):
                     concept_id=concept_id,
                     sponsor_preferred_name=sponsor_preferred_name,
                     sponsor_preferred_name_sentence_case=sponsor_preferred_name_sentence_case,
-                    user_initials=USER_INITIALS
+                    user_initials=USER_INITIALS,
                 )
 
 
 def flag_specific_codelists_as_parameters(tx, csv_import_directory):
-    with open(path.join(csv_import_directory, "codelist_parameter_names.csv"), 'r') as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',', quotechar='"')
-        csv_data = [
-            {
-                "concept_id": row[0]
-            } for row in csv_reader
-        ]
+    with open(
+        path.join(csv_import_directory, "codelist_parameter_names.csv"), "r"
+    ) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=",", quotechar='"')
+        csv_data = [{"concept_id": row[0]} for row in csv_reader]
 
         tx.run(
             """
@@ -213,7 +219,7 @@ def flag_specific_codelists_as_parameters(tx, csv_import_directory):
                 MATCH (term_name_root)-[:LATEST]->(term_name_value)
                 SET term_name_value:TemplateParameterValue
             """,
-            csv_data=csv_data
+            csv_data=csv_data,
         )
 
         # result = tx.run(
@@ -235,7 +241,9 @@ def flag_specific_codelists_as_parameters(tx, csv_import_directory):
         #     print(missing_names)
 
 
-def run_novo_nordisk_adjustments(mdr_neo4j_driver, mdr_db_name, csv_import_directory, user_initials):
+def run_novo_nordisk_adjustments(
+    mdr_neo4j_driver, mdr_db_name, csv_import_directory, user_initials
+):
     global USER_INITIALS
     USER_INITIALS = user_initials
 

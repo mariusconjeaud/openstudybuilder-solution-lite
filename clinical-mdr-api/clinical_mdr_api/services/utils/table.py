@@ -9,7 +9,6 @@ from clinical_mdr_api.services.utils.docx_builder import DocxBuilder
 def table_to_html(
     table: Table, id_: Optional[str] = None, title: Optional[str] = None
 ) -> yattag.simpledoc.SimpleDoc:
-
     doc, tag, _, line = yattag.Doc().ttl()
     doc.asis("<!DOCTYPE html>")
 
@@ -22,13 +21,11 @@ def table_to_html(
             attrs = [("id", id_)] if id_ else []
 
             with tag("table", *attrs):
-
                 if table.num_header_rows:
                     with tag("thead"):
                         td = "th"
 
                         for r in range(table.num_header_rows):
-
                             with tag("tr"):
                                 for c, txt in enumerate(table.data[r]):
                                     meta = table.meta[r][c]
@@ -36,7 +33,6 @@ def table_to_html(
 
                 with tag("tbody"):
                     for r in range(table.num_header_rows, table.data.size):
-
                         with tag("tr"):
                             for c, txt in enumerate(table.data[r]):
                                 td = "th" if c < table.num_header_columns else "td"

@@ -17,7 +17,9 @@ module.exports = {
                     title: 'User Guides',
                     collapsable: true,
                     children: [
-                        'userguide/userguides_introduction'
+                        'userguide/userguides_introduction',
+                        'userguide/studies/manage_studies',
+                        'userguide/studies/guide_study_structure'
                     ]
                 },
                 {

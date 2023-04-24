@@ -31,13 +31,12 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionValue,
 )
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
-    TemplateParameterValueRoot,
+    TemplateParameterTermRoot,
 )
 from clinical_mdr_api.models.unit_definition import UnitDefinitionModel
 
 
 class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
-
     value_class = UnitDefinitionValue
     root_class = UnitDefinitionRoot
     user: str
@@ -266,11 +265,41 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
 
         return value_node
 
+    def _get_uid_or_none(self, node):
+        return node.uid if node is not None else None
+
     def _has_data_changed(
         self, ar: UnitDefinitionAR, value: UnitDefinitionValue
     ) -> bool:
-
-        return value != ar.concept_vo
+        ucum_term = value.has_ucum_term.get_or_none()
+        unit_dimension = value.has_ct_dimension.get_or_none()
+        ar_ct_units = set(unit.uid for unit in ar.concept_vo.ct_units)
+        ar_unit_subsets = set(subset.uid for subset in ar.concept_vo.unit_subsets)
+        value_ct_unit_nodes = value.has_ct_unit.all()
+        value_ct_units = set(unit.uid for unit in value_ct_unit_nodes)
+        value_ct_unit_subset_nodes = value.has_unit_subset.all()
+        value_ct_unit_subsets = set(ss.uid for ss in value_ct_unit_subset_nodes)
+        return (
+            ar.concept_vo.name != value.name
+            or ar.concept_vo.name_sentence_case != value.name_sentence_case
+            or ar.concept_vo.definition != value.definition
+            or ar.concept_vo.ucum_uid != self._get_uid_or_none(ucum_term)
+            or ar.concept_vo.unit_dimension_uid != self._get_uid_or_none(unit_dimension)
+            or ar.concept_vo.convertible_unit != value.convertible_unit
+            or ar.concept_vo.display_unit != value.display_unit
+            or ar.concept_vo.master_unit != value.master_unit
+            or ar.concept_vo.si_unit != value.si_unit
+            or ar.concept_vo.us_conventional_unit != value.us_conventional_unit
+            or ar.concept_vo.legacy_code != value.legacy_code
+            or ar.concept_vo.molecular_weight_conv_expon
+            != value.molecular_weight_conv_expon
+            or ar.concept_vo.conversion_factor_to_master
+            != value.conversion_factor_to_master
+            or ar.concept_vo.order != value.order
+            or ar.concept_vo.comment != value.comment
+            or ar_ct_units != value_ct_units
+            or ar_unit_subsets != value_ct_unit_subsets
+        )
 
     def _maintain_parameters(
         self,
@@ -278,7 +307,6 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
         root: UnitDefinitionRoot,
         value: UnitDefinitionValue,
     ) -> None:
-
         if versioned_object.concept_vo.is_template_parameter:
             # neomodel can't add custom label to already existing node, we have to manage that by executing cypher query
             # unit definitions should link to the template parameter with the name of the associated unit dimension
@@ -293,7 +321,7 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
                     query = """
                         MATCH (template_parameter:TemplateParameter {name:$template_parameter_name})
                         MATCH (concept_root:ConceptRoot {uid: $uid})-[:LATEST]->(concept_value)
-                        MERGE (template_parameter)-[:HAS_VALUE]->(concept_root)
+                        MERGE (template_parameter)-[:HAS_PARAMETER_TERM]->(concept_root)
                     """
                     db.cypher_query(
                         query,
@@ -305,9 +333,9 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
             query = """
                 MATCH (concept_root:ConceptRoot {uid: $uid})-[:LATEST]->(concept_value)
                 MATCH (unit:TemplateParameter {name: "Unit"})
-                MERGE (unit)-[:HAS_VALUE]->(concept_root)
-                SET concept_root:TemplateParameterValueRoot
-                SET concept_value:TemplateParameterValue
+                MERGE (unit)-[:HAS_PARAMETER_TERM]->(concept_root)
+                SET concept_root:TemplateParameterTermRoot
+                SET concept_value:TemplateParameterTermValue
             """
             db.cypher_query(
                 query,
@@ -315,7 +343,7 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
                     "uid": versioned_object.uid,
                 },
             )
-            TemplateParameterValueRoot.generate_node_uids_if_not_present()
+            TemplateParameterTermRoot.generate_node_uids_if_not_present()
 
     def master_unit_exists_by_unit_dimension(self, unit_dimension: str) -> bool:
         cypher_query = f"""

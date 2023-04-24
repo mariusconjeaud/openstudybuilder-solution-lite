@@ -1,55 +1,90 @@
-FROM python:3.7.12-slim
+ARG PYTHON_IMAGE=python:3.7.12-slim
+ARG TARGET=dev
 
+## In shared stage we create the environment and settings that are shared between prod and dev
+FROM $PYTHON_IMAGE as common-stage
+
+## Create non-root user (arg has to be exported to env for later build stages)
 ARG UID=1000
 ARG USER=appuser
-ARG WORKDIR=/app
-ARG UVICORN_PORT="8000"
-ARG UVICORN_HOST="0.0.0.0"
-ARG UVICORN_ROOT_PATH=""
-
-## Install system packages
-RUN apt-get update \
-    && apt-get -y upgrade \
-    && apt-get -y install git curl python3-cffi python3-brotli libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 \
-    # required on ARM Mac
-    && [ "x$(arch)" = "xx86_64" ] || apt-get install -y libgeos-dev \
-    # clean-up
-    && apt-get clean && rm -r /var/lib/apt/lists
-
-# Install pipenv and upgrade setup tools system-wide
-RUN pip install --upgrade pip pipenv wheel \
-    # clean-up
-    && rm -rf ~/.cache
-
-## Create non-root user
+ENV USER="$USER"
 RUN useradd --home-dir /home/$USER --user-group --create-home --uid $UID $USER
 
 ## Commands below run relative to this working directory
+ARG WORKDIR=/app
 WORKDIR $WORKDIR
 
-## Create virtual environment according to Pipfile.lock into user's home as root
+## Copy Pipfiles into the working direcotyr
 COPY ./Pipfile* ./
-RUN HOME=/home/$USER pipenv sync \
+
+
+## In build stage we remove test files and pre-compile the Python code to be copied into the prod image
+FROM $PYTHON_IMAGE as build-stage
+
+WORKDIR /wd
+
+COPY ./ ./
+
+## Delete tests and byte-code compile application
+RUN echo "Building build-stage" 1>&2 ; \
+    rm -r clinical_mdr_api/tests \
+    && python -m compileall -f -j 0 .
+
+
+# In the prod image, we install packages and copy the compiled Python code
+FROM common-stage as prod-stage
+
+## Create virtual environment according to Pipfile.lock into user's home as root
+RUN echo "Building prod-stage" 1>&2 ; \
+    HOME=/home/$USER pipenv sync \
     # clean-up
     && rm -rf ~/.cache
 
 ## Copy the rest of the application owned by root
-COPY . ./
+COPY --from=build-stage /wd $wORKDIR
 
-## Byte-code compile application as root
-RUN python -m compileall -f -j 0 $WORKDIR
 
-## Run the rest as non-root user
-USER $USER
+## In dev stage we install dev packages too, and copy all Python code (non-compiled), including tests
+FROM common-stage as dev-stage
+
+## Install required system packages
+RUN apt-get update \
+    && apt-get -y install \
+        git \
+        curl \
+        python3-cffi \
+        python3-brotli \
+        libpango-1.0-0 \
+        libharfbuzz0b \
+        libpangoft2-1.0-0 \
+    && pip install --upgrade pip pipenv wheel \
+    # clean-up
+    && apt-get clean && rm -rf /var/lib/apt/lists && rm -rf ~/.cache
+
+## Create virtual environment according to Pipfile.lock into user's home as root
+RUN echo "Building dev-stage" 1>&2 ; \
+    HOME=/home/$USER pipenv sync --dev \
+    # clean-up
+    && rm -rf ~/.cache
+
+## Copy the rest of the application owned by root
+COPY ./ ./
+
+FROM ${TARGET}-stage as final
+
+## Preferred to configure Uvicorn using env vars with UVICORN_ prefix, default values from build arguments
+ARG UVICORN_HOST="0.0.0.0"
+ARG UVICORN_PORT="8000"
+ARG UVICORN_ROOT_PATH="/"
+ENV UVICORN_PORT="$UVICORN_PORT" \
+    UVICORN_HOST="$UVICORN_HOST" \
+    UVICORN_ROOT_PATH="$UVICORN_ROOT_PATH"
 
 ## Open up a port to listen on
 EXPOSE $UVICORN_PORT
 
-## Environment variables, use sane defaults, then override them at instantiation
-## Preferred to configure Uvicorn using env vars with UVICORN_ prefix
-ENV UVICORN_PORT="$UVICORN_PORT" \
-    UVICORN_HOST="$UVICORN_HOST" \
-    UVICORN_ROOT_PATH="$UVICORN_ROOT_PATH"
+## Run as non-root user
+USER $USER
 
 ## Run healthcheck on the API endpoint:
 ## checks every `interval` seconds, fails if `timeout`,
@@ -60,4 +95,5 @@ HEALTHCHECK --start-period=60s --timeout=3s --interval=10s --retries=2 CMD \
     "http://localhost:$UVICORN_PORT/system/healthcheck" \
     > /dev/null || exit 1
 
+## Preferred to configure Uvicorn using env vars with UVICORN_ prefix instead of cmd-line arguments
 CMD pipenv run uvicorn clinical_mdr_api.main:app

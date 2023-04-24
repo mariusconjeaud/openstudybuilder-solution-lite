@@ -66,16 +66,9 @@ class CompoundRoot(ConceptRoot):
         CompoundValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(CompoundValue, "LATEST")
-
-    latest_draft = RelationshipTo(
-        CompoundValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        CompoundValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        CompoundValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    latest_draft = RelationshipTo(CompoundValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(CompoundValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(CompoundValue, "LATEST_RETIRED")
 
 
 class CompoundAliasValue(ConceptValue):
@@ -93,13 +86,6 @@ class CompoundAliasRoot(ConceptRoot):
         CompoundAliasValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(CompoundAliasValue, "LATEST")
-
-    latest_draft = RelationshipTo(
-        CompoundAliasValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        CompoundAliasValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        CompoundAliasValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    latest_draft = RelationshipTo(CompoundAliasValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(CompoundAliasValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(CompoundAliasValue, "LATEST_RETIRED")

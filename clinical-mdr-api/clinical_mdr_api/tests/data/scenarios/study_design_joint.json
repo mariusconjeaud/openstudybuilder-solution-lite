@@ -853,6 +853,7 @@
         "end_rule": null,
         "element_colour": null,
         "study_compound_dosing_count": 0,
+        "element_type": null,
         "element_subtype": {
           "term_uid": "ElementType_0001",
           "catalogue_name": "catalogue",

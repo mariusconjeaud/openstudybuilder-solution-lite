@@ -54,8 +54,8 @@ class ActivityVO(ConceptVO):
         activity_subgroup_exists: Callable[[str], bool],
         previous_name: Optional[str] = None,
     ) -> None:
-
-        if activity_exists_by_name_callback(self.name) and previous_name != self.name:
+        ex = activity_exists_by_name_callback(self.name)
+        if ex and previous_name != self.name:
             raise ValueError(f"Activity with name ({self.name}) already exists.")
         if self.activity_subgroup and not activity_subgroup_exists(
             self.activity_subgroup
@@ -67,7 +67,6 @@ class ActivityVO(ConceptVO):
 
 @dataclass
 class ActivityAR(ConceptARBase):
-
     _concept_vo: ActivityVO
 
     @property

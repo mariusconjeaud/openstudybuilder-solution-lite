@@ -30,7 +30,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionValue,
 )
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
-    TemplateParameterValueRoot,
+    TemplateParameterTermRoot,
 )
 
 
@@ -112,7 +112,13 @@ class CTCodelistNameRepository(CTCodelistGenericRepository[CTCodelistNameAR]):
         value = self.value_class(name=item.name)
         self._db_save_node(root)
 
-        (root, value, _, _, _,) = self._db_create_and_link_nodes(
+        (
+            root,
+            value,
+            _,
+            _,
+            _,
+        ) = self._db_create_and_link_nodes(
             root, value, self._library_item_metadata_vo_to_datadict(relation_data)
         )
 
@@ -142,13 +148,13 @@ class CTCodelistNameRepository(CTCodelistGenericRepository[CTCodelistNameAR]):
                 WITH codelist_root, codelist_ver_value
 
                 MATCH (codelist_root)-[:HAS_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(term_ver_root)-[:LATEST]->(term_ver_value)
-                MERGE (codelist_ver_value)-[hv:HAS_VALUE]->(term_ver_root)
+                MERGE (codelist_ver_value)-[hpt:HAS_PARAMETER_TERM]->(term_ver_root)
 
-                SET term_ver_root:TemplateParameterValueRoot
-                SET term_ver_value:TemplateParameterValue
+                SET term_ver_root:TemplateParameterTermRoot
+                SET term_ver_value:TemplateParameterTermValue
             """
             db.cypher_query(query, {"codelist_uid": versioned_object.uid})
-            TemplateParameterValueRoot.generate_node_uids_if_not_present()
+            TemplateParameterTermRoot.generate_node_uids_if_not_present()
         else:
             query = """
                 MATCH (codelist_root:CTCodelistRoot {uid: $codelist_uid})-[:HAS_NAME_ROOT]->()-[:LATEST]->(codelist_ver_value)
@@ -156,11 +162,11 @@ class CTCodelistNameRepository(CTCodelistGenericRepository[CTCodelistNameAR]):
                 WITH codelist_root, codelist_ver_value
                 
                 MATCH (codelist_root)-[:HAS_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(term_ver_root)-[:LATEST]->(term_ver_value)
-                MATCH (codelist_ver_value)-[hv:HAS_VALUE]->(term_ver_root)
-                DELETE hv
+                MATCH (codelist_ver_value)-[hpt:HAS_PARAMETER_TERM]->(term_ver_root)
+                DELETE hpt
                 REMOVE term_ver_root.uid
-                REMOVE term_ver_root:TemplateParameterValueRoot
-                REMOVE term_ver_value:TemplateParameterValue
+                REMOVE term_ver_root:TemplateParameterTermRoot
+                REMOVE term_ver_value:TemplateParameterTermValue
             """
             db.cypher_query(query, {"codelist_uid": versioned_object.uid})
 

@@ -96,7 +96,7 @@ export default {
     async getStudyCriteriaNamePreview () {
       const criteriaData = {
         criteria_template_uid: this.studyCriteria.criteria.criteria_template.uid,
-        parameter_values: await instances.formatParameterValues(this.parameters),
+        parameter_terms: await instances.formatParameterValues(this.parameters),
         library_name: this.studyCriteria.criteria.library.name
       }
       const resp = await study.getStudyCriteriaPreview(this.selectedStudy.uid, { criteria_data: criteriaData })
@@ -118,7 +118,7 @@ export default {
       const parameterValues = await instances.formatParameterValues(this.parameters)
       const data = {
         criteria_template_uid: this.template.uid,
-        parameter_values: parameterValues,
+        parameter_terms: parameterValues,
         library_name: this.library.name
       }
       await study.patchStudyCriteria(this.selectedStudy.uid, this.studyCriteria.study_criteria_uid, data)

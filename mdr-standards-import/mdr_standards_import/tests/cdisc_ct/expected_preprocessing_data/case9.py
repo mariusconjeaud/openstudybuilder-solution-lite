@@ -1,4 +1,4 @@
-from mdr_standards_import.cdisc_ct.load_ct_preprocessing import Term, Codelist
+from mdr_standards_import.scripts.load_ct_preprocessing import Term, Codelist
 from mdr_standards_import.tests.cdisc_ct.test_pipeline import Package, Import, Log
 
 
@@ -34,7 +34,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition 1A",
         extensible=True,
         synonyms=None,
-
         terms=[term1_a],
     )
 
@@ -47,7 +46,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition 1B",
         extensible=True,
         synonyms=None,
-
         terms=[term1_b],
     )
 
@@ -60,7 +58,6 @@ def get_expected_imports(effective_date, user_initials):
         description="Test-Case 9: no differentiation for the submission values possible -> use each as code submission value.",
         source="Test source",
         href="/mdr/ct/packages/cat9-2020-01-01",
-
         terms=[term1_a, term1_b],
         codelists=[codelist1, codelist2],
         discontinued_codelists=[],
@@ -71,7 +68,7 @@ def get_expected_imports(effective_date, user_initials):
         user_initials=user_initials,
         packages=[package1],
         discontinued_codelists=[],
-        log_entries=[]
+        log_entries=[],
     )
 
     return [import1]

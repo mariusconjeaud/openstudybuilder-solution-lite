@@ -30,7 +30,6 @@ class OdmVendorAttributeVO(ConceptVO):
         vendor_namespace_uid: Optional[str],
         vendor_element_uid: Optional[str],
     ) -> "OdmVendorAttributeVO":
-
         return cls(
             name=name,
             compatible_types=compatible_types,
@@ -54,7 +53,6 @@ class OdmVendorAttributeVO(ConceptVO):
             [dict], Optional[Tuple[List["OdmVendorAttributeAR"], int]]
         ],
     ) -> None:
-
         if self.vendor_namespace_uid is not None:
             if not self.compatible_types:
                 raise BusinessLogicException(

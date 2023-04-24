@@ -44,7 +44,6 @@ class CTCodelistNameVO:
         catalogue_exists_callback: Callable[[str], bool],
         codelist_exists_by_name_callback: Callable[[str], bool] = lambda _: False,
     ) -> "CTCodelistNameVO":
-
         if not catalogue_exists_callback(catalogue_name):
             raise ValueError(
                 f"There is no catalogue identified by provided catalogue name ({catalogue_name})"

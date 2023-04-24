@@ -1,0 +1,114 @@
+{
+  "currentMetadata": {
+    "highLevelStudyDesign": {
+      "confirmedResponseMinimumDuration": null,
+      "confirmedResponseMinimumDurationNullValueCode": null,
+      "isAdaptiveDesign": null,
+      "isAdaptiveDesignNullValueCode": null,
+      "isExtensionTrial": null,
+      "isExtensionTrialNullValueCode": null,
+      "postAuthIndicator": null,
+      "postAuthIndicatorNullValueCode": null,
+      "studyStopRules": null,
+      "studyStopRulesNullValueCode": null,
+      "studyTypeCode": {
+        "name": "Interventional Study",
+        "termUid": "C98388_INTERVENTIONAL"
+      },
+      "studyTypeNullValueCode": null,
+      "trialPhaseCode": {
+        "name": "Phase II Trial",
+        "termUid": "C15601_PHASE II TRIAL"
+      },
+      "trialPhaseNullValueCode": null,
+      "trialTypesCodes": [],
+      "trialTypesNullValueCode": null
+    },
+    "identificationMetadata": {
+      "clinicalProgrammeName": "CDISC Development programme",
+      "projectName": "CDISC Dev",
+      "projectNumber": "CDISC DEV",
+      "registryIdentifiers": {
+        "ctGovId": "NCT0000001",
+        "ctGovIdNullValueCode": null,
+        "eudractId": null,
+        "eudractIdNullValueCode": null,
+        "investigationalNewDrugApplicationNumberIND": null,
+        "investigationalNewDrugApplicationNumberINDNullValueCode": null,
+        "japaneseTrialRegistryIdJAPIC": null,
+        "japaneseTrialRegistryIdJAPICNullValueCode": null,
+        "universalTrialNumberUTN": null,
+        "universalTrialNumberUTNNullValueCode": null
+      },
+      "studyAcronym": "DDF-SampleData-0001",
+      "studyId": "CDISC DEV-0001",
+      "studyNumber": "0001"
+    },
+    "studyDescription": {
+      "studyShortTitle": "Umbrella Study of DDR (DNA-Damage Response) Targeting Agents in Advanced Biliary Tract Cancer",
+      "studyTitle": "Umbrella Study of DDR (DNA-Damage Response) Targeting Agents in Advanced Biliary Tract Cancer"
+    },
+    "studyIntervention": {
+      "addOnToExistingTreatments": null,
+      "addOnToExistingTreatmentsNullValueCode": null,
+      "controlTypeCode": null,
+      "controlTypeNullValueCode": null,
+      "interventionModelCode": {
+        "name": "Parallel Study",
+        "termUid": "C82639_PARALLEL"
+      },
+      "interventionModelNullValueCode": null,
+      "interventionTypeCode": null,
+      "interventionTypeNullValueCode": null,
+      "isTrialRandomised": null,
+      "isTrialRandomisedNullValueCode": null,
+      "plannedStudyLength": null,
+      "plannedStudyLengthNullValueCode": null,
+      "stratificationFactor": null,
+      "stratificationFactorNullValueCode": null,
+      "trialBlindingSchemaCode": null,
+      "trialBlindingSchemaNullValueCode": null,
+      "trialIntentTypesCodes": [],
+      "trialIntentTypesNullValueCode": null
+    },
+    "studyPopulation": {
+      "diagnosisGroupsCodes": [],
+      "diagnosisGroupsNullValueCode": null,
+      "diseaseConditionsOrIndicationsCodes": [
+        {
+          "name": "Primary malignant neoplasm of biliary tract",
+          "termUid": "DictionaryTerm_000965"
+        },
+        {
+          "name": "Influenza due to Influenza virus, type B",
+          "termUid": "DictionaryTerm_000966"
+        }
+      ],
+      "diseaseConditionsOrIndicationsNullValueCode": null,
+      "healthySubjectIndicator": null,
+      "healthySubjectIndicatorNullValueCode": null,
+      "pediatricInvestigationPlanIndicator": null,
+      "pediatricInvestigationPlanIndicatorNullValueCode": null,
+      "pediatricPostmarketStudyIndicator": null,
+      "pediatricPostmarketStudyIndicatorNullValueCode": null,
+      "pediatricStudyIndicator": null,
+      "pediatricStudyIndicatorNullValueCode": null,
+      "plannedMaximumAgeOfSubjects": null,
+      "plannedMaximumAgeOfSubjectsNullValueCode": null,
+      "plannedMinimumAgeOfSubjects": null,
+      "plannedMinimumAgeOfSubjectsNullValueCode": null,
+      "rareDiseaseIndicator": null,
+      "rareDiseaseIndicatorNullValueCode": null,
+      "relapseCriteria": null,
+      "relapseCriteriaNullValueCode": null,
+      "sexOfParticipantsCode": null,
+      "sexOfParticipantsNullValueCode": null,
+      "stableDiseaseMinimumDuration": null,
+      "stableDiseaseMinimumDurationNullValueCode": null,
+      "therapeuticAreasCodes": [],
+      "therapeuticAreasNullValueCode": null
+    }
+  },
+  "studyStatus": "DRAFT",
+  "uid": "Study_000036"
+}

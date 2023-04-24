@@ -189,7 +189,7 @@ class StudySelectionEndpointVO:
             raise ValueError(
                 f"There is no approved timeframe identified by provided uid ({self.timeframe_uid})"
             )
-        # Check if the the study objective exists
+        # Check if the study objective exists
         if self.study_objective_uid is not None and not study_objective_exist_callback(
             normalize_string(self.study_objective_uid)
         ):

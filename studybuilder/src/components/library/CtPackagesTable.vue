@@ -20,6 +20,7 @@
           fab
           small
           @click="goToPackagesHistory(catalogue_name)"
+          :title="$t('CtPackageHistory.ct_packages_history')"
           >
           <v-icon>mdi-calendar-clock</v-icon>
         </v-btn>

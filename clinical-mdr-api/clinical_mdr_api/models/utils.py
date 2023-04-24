@@ -52,15 +52,31 @@ def from_duration_object_to_value_and_unit(
 class BaseModel(PydanticBaseModel):
     @classmethod
     def from_orm(cls, obj):
-        """We override this method to allow flattening on nested models.
+        """
+        We override this method to allow flattening on nested models.
 
         It is now possible to declare a source property on a Field()
         call to specify the location where this method should get a
         field's value from.
-
-        NOTE: we still have an issue with nested models
-
         """
+
+        def _extract_part_from_node(node_to_extract, path):
+            """
+            Traverse specified path in the node_to_extract.
+            The possible paths for the traversal are stored in the node _relations dictionary.
+            """
+            if not hasattr(node_to_extract, "_relations"):
+                return None
+            if path not in node_to_extract._relations.keys():
+                # it means that the field is Optional and None was set to be a default value
+                if field.field_info.default is None:
+                    return None
+                raise RuntimeError(
+                    f"{path} is not present in node relations (did you forget to fetch it?)"
+                )
+            return node_to_extract._relations[path]
+
+        ret = []
         for name, field in cls.__fields__.items():
             source = field.field_info.extra.get("source")
             if field.field_info.extra.get("exclude_from_orm"):
@@ -73,11 +89,17 @@ class BaseModel(PydanticBaseModel):
                     # added copy to not override properties in main obj
                     value = field.type_.from_orm(copy(obj))
                     # if some value of nested model is initialized then set the whole nested object
-                    if any(value.dict().values()):
-                        setattr(obj, name, value)
-                    # if all values of nested model are None set the whole object to None
+                    if isinstance(value, list):
+                        if value:
+                            setattr(obj, name, value)
+                        else:
+                            setattr(obj, name, [])
                     else:
-                        setattr(obj, name, None)
+                        if any(value.dict().values()):
+                            setattr(obj, name, value)
+                        # if all values of nested model are None set the whole object to None
+                        else:
+                            setattr(obj, name, None)
                 # Quick fix to provide default None value to fields that allow it
                 # Not the best place to do this...
                 elif field.field_info.default is Ellipsis and not hasattr(obj, name):
@@ -90,22 +112,26 @@ class BaseModel(PydanticBaseModel):
                 node = obj
                 parts = parts[:-1]
                 for _, part in enumerate(parts):
-                    if not hasattr(node, "_relations"):
-                        node = None
+                    # if node is a list of nodes we want to extract property/relationship
+                    # from all nodes in list of nodes
+                    if isinstance(node, list):
+                        return_node = []
+                        for n in node:
+                            extracted = _extract_part_from_node(
+                                node_to_extract=n, path=part
+                            )
+                            return_node.extend(extracted)
+                        node = return_node
+                    else:
+                        node = _extract_part_from_node(node_to_extract=node, path=part)
+                    if node is None:
                         break
-                    if part not in node._relations.keys():
-                        # it means that the field is Optional and None was set to be a default value
-                        if field.field_info.default is None:
-                            node = None
-                            break
-                        raise RuntimeError(
-                            f"{part} is not present in node relations (did you forget to fetch it?)"
-                        )
-                    node = node._relations[part]
             else:
                 node = obj
             if node is not None:
-                if field.sub_fields and isinstance(node, list):
+                # if node is a list we want to
+                # extract property from each element of list and return list of property values
+                if isinstance(node, list):
                     value = [getattr(n, source) for n in node]
                 else:
                     value = getattr(node, source)
@@ -113,8 +139,30 @@ class BaseModel(PydanticBaseModel):
                 value = None
             if issubclass(field.type_, BaseModel):
                 value = field.type_.from_orm(node._relations[source])
-            setattr(obj, name, value)
-        return super().from_orm(obj)
+            # if obtained value is a list and field type is not List
+            # it means that we are building some List[BaseModel] but its fields are not of List type
+            if isinstance(value, list) and not field.sub_fields:
+                # if ret array is not instantiated
+                # it means that the first property out of the whole List[BaseModel] is being instantiated
+                if not ret:
+                    for val in value:
+                        temp_obj = copy(obj)
+                        setattr(temp_obj, name, val)
+                        ret.append(temp_obj)
+                # if ret exists it means that some properties out of whole List[BaseModel] are already instantiated
+                else:
+                    for val, item in zip(value, ret):
+                        setattr(item, name, val)
+            else:
+                setattr(obj, name, value)
+
+        if not ret:
+            return super().from_orm(obj)
+        # if ret exists it means that the list of BaseModels is being returned
+        objs_to_return = []
+        for item in ret:
+            objs_to_return.append(super().from_orm(item))
+        return objs_to_return
 
     class Config:
         # Configuration applies to all our models #
@@ -235,7 +283,6 @@ class CustomPage(GenericModel, Generic[T]):
     def create(
         cls, items: Sequence[T], total: int, page: int, size: int
     ) -> "CustomPage":
-
         return cls(total=total, items=items, page=page, size=size)
 
 
@@ -245,7 +292,6 @@ class GenericFilteringReturn(GenericModel, Generic[T]):
 
     @classmethod
     def create(cls, items: Sequence[T], total_count: int) -> "GenericFilteringReturn":
-
         return cls(items=items, total_count=total_count)
 
 

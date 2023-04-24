@@ -41,11 +41,7 @@
       },
       "result": {
         "uid": "{study_uid}",
-        "study_number": "007",
-        "study_id": "123-007",
-        "study_acronym": "Study-007",
-        "project_number": "123",
-        "study_status": "DRAFT",
+        "possible_actions": ["delete", "lock", "release"],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "007",
@@ -69,10 +65,10 @@
           },
           "version_metadata": {
             "study_status": "DRAFT",
-            "locked_version_number": null,
+            "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "locked_version_author": null,
-            "locked_version_info": null
+            "version_author": null,
+            "version_description": null
           }
         }
       },
@@ -103,11 +99,7 @@
       },
       "result": {
         "uid": "{study_uid}",
-        "study_number": "007",
-        "study_id": "123-007",
-        "study_acronym": "Study-007",
-        "project_number": "123",
-        "study_status": "DRAFT",
+        "possible_actions": ["delete", "lock", "release"],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "007",
@@ -131,10 +123,10 @@
           },
           "version_metadata": {
             "study_status": "DRAFT",
-            "locked_version_number": null,
+            "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "locked_version_author": null,
-            "locked_version_info": null
+            "version_author": null,
+            "version_description": null
           }
         }
       }
@@ -162,11 +154,7 @@
       },
       "result": {
         "uid": "{study_uid}",
-        "study_number": "007",
-        "study_id": "123-007",
-        "study_acronym": "Study-007",
-        "project_number": "123",
-        "study_status": "DRAFT",
+        "possible_actions": ["delete", "lock", "release"],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "007",
@@ -190,10 +178,10 @@
           },
           "version_metadata": {
             "study_status": "DRAFT",
-            "locked_version_number": null,
+            "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "locked_version_author": null,
-            "locked_version_info": null
+            "version_author": null,
+            "version_description": null
           }
         }
       }
@@ -221,11 +209,7 @@
       },
       "result": {
         "uid": "{study_uid}",
-        "study_number": "007",
-        "study_id": "123-007",
-        "study_acronym": "Study-007",
-        "project_number": "123",
-        "study_status": "DRAFT",
+        "possible_actions": ["delete", "lock", "release"],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "007",
@@ -249,10 +233,10 @@
           },
           "version_metadata": {
             "study_status": "DRAFT",
-            "locked_version_number": null,
+            "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "locked_version_author": null,
-            "locked_version_info": null
+            "version_author": null,
+            "version_description": null
           }
         }
       }
@@ -305,11 +289,7 @@
       },
       "result": {
         "uid": "{study_uid}",
-        "study_number": "007",
-        "study_id": "456-007",
-        "study_acronym": "Study-007",
-        "project_number": "456",
-        "study_status": "DRAFT",
+        "possible_actions": ["delete", "lock", "release"],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "007",
@@ -333,10 +313,10 @@
           },
           "version_metadata": {
             "study_status": "DRAFT",
-            "locked_version_number": null,
+            "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "locked_version_author": null,
-            "locked_version_info": null
+            "version_author": null,
+            "version_description": null
           }
         }
       }
@@ -395,11 +375,7 @@
       },
       "result": {
         "uid": "{study_uid}",
-        "study_number": "007",
-        "study_id": "456-007",
-        "study_acronym": "Study-007",
-        "project_number": "456",
-        "study_status": "DRAFT",
+        "possible_actions": ["delete", "lock", "release"],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "007",
@@ -423,10 +399,10 @@
           },
           "version_metadata": {
             "study_status": "DRAFT",
-            "locked_version_number": null,
+            "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "locked_version_author": null,
-            "locked_version_info": null
+            "version_author": null,
+            "version_description": null
           }
         }
       }
@@ -454,11 +430,7 @@
       },
       "result": {
         "uid": "{study_uid}",
-        "study_number": "007",
-        "study_id": "456-007",
-        "project_number": "456",
-        "study_acronym": "new acronym",
-        "study_status": "DRAFT",
+        "possible_actions": ["delete", "lock", "release"],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "007",
@@ -482,10 +454,10 @@
           },
           "version_metadata": {
             "study_status": "DRAFT",
-            "locked_version_number": null,
+            "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "locked_version_author": null,
-            "locked_version_info": null
+            "version_author": null,
+            "version_description": null
           }
         }
       }
@@ -618,7 +590,7 @@
             },
             {
               "section": "study_intervention",
-              "field": "trial_intent_types",
+              "field": "trial_intent_type",
               "before_value": {
                 "term_uid": "",
                 "name": null
@@ -747,7 +719,7 @@
             },
             {
               "section": "study_intervention",
-              "field": "trial_intent_types",
+              "field": "trial_intent_type",
               "before_value": null,
               "after_value": {
                 "term_uid": "",
@@ -818,6 +790,23 @@
                 "name": null
               },
               "action": "Create"
+            }
+          ]
+        },
+        {
+          "study_uid": "{study_uid}",
+          "user_initials": "unknown-user",
+          "date": "2021-04-12T12:03:09.285447+02:00",
+          "actions": [
+             {
+              "section":"Unknown",
+              "field":"preferred_time_unit",
+              "before_value":null,
+              "after_value":{
+                 "term_uid":"UnitDefinition_000002",
+                 "name":null
+              },
+              "action":"Create"
             }
           ]
         },
@@ -1034,11 +1023,7 @@
       },
       "result": {
         "uid": "Study_000002",
-        "study_number": "1910",
-        "study_id": "123-1910",
-        "study_acronym": null,
-        "project_number": "123",
-        "study_status": "DRAFT",
+        "possible_actions": ["delete", "lock", "release"],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "1910",
@@ -1062,10 +1047,10 @@
           },
           "version_metadata": {
             "study_status": "DRAFT",
-            "locked_version_number": null,
+            "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "locked_version_author": null,
-            "locked_version_info": null
+            "version_author": null,
+            "version_description": null
           }
         }
       }
@@ -1086,11 +1071,7 @@
       },
       "result": {
         "uid": "Study_000002",
-        "study_number": "1910",
-        "study_id": "123-1910",
-        "study_acronym": null,
-        "project_number": "123",
-        "study_status": "DRAFT",
+        "possible_actions": ["delete", "lock", "release"],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "1910",
@@ -1114,10 +1095,10 @@
           },
           "version_metadata": {
             "study_status": "DRAFT",
-            "locked_version_number": null,
+            "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "locked_version_author": null,
-            "locked_version_info": null
+            "version_author": null,
+            "version_description": null
           },
           "high_level_study_design": {
             "study_type_code": null,
@@ -1165,11 +1146,7 @@
       },
       "result": {
         "uid": "Study_000002",
-        "study_number": "1910",
-        "study_id": "123-1910",
-        "study_acronym": null,
-        "project_number": "123",
-        "study_status": "DRAFT",
+        "possible_actions": ["delete", "lock", "release"],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "1910",
@@ -1193,10 +1170,10 @@
           },
           "version_metadata": {
             "study_status": "DRAFT",
-            "locked_version_number": null,
+            "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "locked_version_author": null,
-            "locked_version_info": null
+            "version_author": null,
+            "version_description": null
           },
           "high_level_study_design": null,
           "study_population": null,
@@ -1226,10 +1203,6 @@
               }
             },
             "planned_study_length_null_value_code": null,
-            "drug_study_indication": null,
-            "drug_study_indication_null_value_code": null,
-            "device_study_indication": null,
-            "device_study_indication_null_value_code": null,
             "trial_intent_types_codes": [
               {
                 "term_uid": "C49654",
@@ -1266,11 +1239,7 @@
       },
       "result": {
         "uid": "Study_000002",
-        "study_number": "1910",
-        "study_id": "123-1910",
-        "study_acronym": null,
-        "project_number": "123",
-        "study_status": "DRAFT",
+        "possible_actions": ["delete", "lock", "release"],
         "current_metadata": {
           "identification_metadata": {
             "study_number": "1910",
@@ -1294,10 +1263,10 @@
           },
           "version_metadata": {
             "study_status": "DRAFT",
-            "locked_version_number": null,
+            "version_number": null,
             "version_timestamp": "2021-04-06T13:51:58.468263",
-            "locked_version_author": null,
-            "locked_version_info": null
+            "version_author": null,
+            "version_description": null
           },
           "high_level_study_design": null,
           "study_population": {

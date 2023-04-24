@@ -41,7 +41,6 @@ class TracingMiddleware:
         self.propagator = propagator or TraceContextPropagator()
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-
         if scope["type"] not in ("http", "websocket"):  # pragma: no cover
             log.debug(
                 "Bypassing middleware %s because of request type is {scope['type']}",
@@ -87,7 +86,6 @@ class TracingMiddleware:
             self.add_attributes_form_request_scope(span, scope, headers=headers)
 
             async def send_wrapped(message: Message) -> None:
-
                 if message["type"] == "http.response.start":
                     self.add_traceresponse_header(message)
                     self.log_access(scope, message)

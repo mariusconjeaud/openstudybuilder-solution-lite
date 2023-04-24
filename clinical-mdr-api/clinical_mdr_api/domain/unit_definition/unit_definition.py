@@ -189,7 +189,6 @@ class UnitDefinitionValueVO(ConceptVO):
 
 @dataclass
 class UnitDefinitionAR(ConceptARBase):
-
     _concept_vo: UnitDefinitionValueVO
 
     def get_possible_actions(self) -> AbstractSet[ObjectAction]:
@@ -273,7 +272,6 @@ class UnitDefinitionAR(ConceptARBase):
         unit_definition_exists_by_legacy_code: Callable[[str], bool],
         uid_supplier: Callable[[], str] = lambda: None,  # type: ignore
     ) -> "UnitDefinitionAR":
-
         if unit_definition_exists_by_name_predicate(unit_definition_value.name):
             raise ValueError(
                 f"Attempt to create an unit definition with non-unique name: {unit_definition_value.name}"

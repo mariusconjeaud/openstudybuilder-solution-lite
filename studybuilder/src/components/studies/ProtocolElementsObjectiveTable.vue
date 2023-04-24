@@ -45,12 +45,8 @@ export default {
     downloadDocx () {
       this.loadingMessage = this.$t('ProtocolElementsObjectiveTable.downloading')
       study.getStudyObjectivesDocx(this.studyUid).then(response => {
-        const blob = new Blob([response.data], {
-          type: response.headers['content-type'] ||
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        })
-        const fileName = `${this.studyUid} study-objectives.docx`
-        exportLoader.generateDownload(blob, fileName)
+        exportLoader.downloadFile(response.data, response.headers['content-type'] ||
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', `${this.studyUid} study-objectives.docx`)
       }).then(this.finally).catch(this.finally)
     },
     finally (error) {

@@ -7,7 +7,7 @@ from clinical_mdr_api.domain.study_selection.study_selection_cohort import (
     StudySelectionCohortAR,
     StudySelectionCohortVO,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_cohort_repository import (
+from clinical_mdr_api.domain_repositories.study_selection.study_cohort_repository import (
     SelectionHistoryCohort,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
@@ -73,7 +73,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
     ) -> GenericFilteringReturn[models.StudySelectionCohort]:
         repos = self._repos
         try:
-            cohort_selection_ar = repos.study_selection_cohort_repository.find_by_study(
+            cohort_selection_ar = repos.study_cohort_repository.find_by_study(
                 study_uid,
                 arm_uid=arm_uid,
                 project_name=project_name,
@@ -107,7 +107,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             # Load aggregate
-            selection_aggregate = repos.study_selection_cohort_repository.find_by_study(
+            selection_aggregate = repos.study_cohort_repository.find_by_study(
                 study_uid=study_uid, for_update=True
             )
 
@@ -115,9 +115,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
             selection_aggregate.remove_cohort_selection(study_selection_uid)
 
             # sync with DB and save the update
-            repos.study_selection_cohort_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_cohort_repository.save(selection_aggregate, self.author)
         finally:
             repos.close()
 
@@ -128,7 +126,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             # Load aggregate
-            selection_aggregate = repos.study_selection_cohort_repository.find_by_study(
+            selection_aggregate = repos.study_cohort_repository.find_by_study(
                 study_uid=study_uid, for_update=True
             )
 
@@ -138,9 +136,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
             )
 
             # sync with DB and save the update
-            repos.study_selection_cohort_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_cohort_repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just added
             new_selection, order = selection_aggregate.get_specific_cohort_selection(
@@ -170,9 +166,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
         try:
             try:
                 selection_history = (
-                    repos.study_selection_cohort_repository.find_selection_history(
-                        study_uid
-                    )
+                    repos.study_cohort_repository.find_selection_history(study_uid)
                 )
             except ValueError as value_error:
                 raise exceptions.NotFoundException(value_error.args[0])
@@ -208,10 +202,8 @@ class StudyCohortSelectionService(StudySelectionMixin):
     ) -> Sequence[models.StudySelectionCohortVersion]:
         repos = self._repos
         try:
-            selection_history = (
-                repos.study_selection_cohort_repository.find_selection_history(
-                    study_uid, study_selection_uid
-                )
+            selection_history = repos.study_cohort_repository.find_selection_history(
+                study_uid, study_selection_uid
             )
             versions = [
                 self._transform_each_history_to_response_model(_, study_uid).dict()
@@ -241,7 +233,11 @@ class StudyCohortSelectionService(StudySelectionMixin):
     def _get_specific_branch_arm_selection(
         self, study_uid: str, study_selection_uid: str
     ) -> models.StudySelectionBranchArm:
-        (_, new_selection, order,) = self._get_specific_branch_arm_selection_by_uids(
+        (
+            _,
+            new_selection,
+            order,
+        ) = self._get_specific_branch_arm_selection_by_uids(
             study_uid, study_selection_uid
         )
         return models.StudySelectionBranchArm.from_study_selection_branch_arm_ar_and_order(
@@ -273,11 +269,11 @@ class StudyCohortSelectionService(StudySelectionMixin):
                     number_of_subjects=selection_create_input.number_of_subjects,
                     branch_arm_root_uids=selection_create_input.branch_arm_uids,
                     arm_root_uids=selection_create_input.arm_uids,
-                    generate_uid_callback=repos.study_selection_cohort_repository.generate_uid,
+                    generate_uid_callback=repos.study_cohort_repository.generate_uid,
                 )
                 # add VO to aggregate
                 selection_aggregate: StudySelectionCohortAR = (
-                    repos.study_selection_cohort_repository.find_by_study(
+                    repos.study_cohort_repository.find_by_study(
                         study_uid=study_uid, for_update=True
                     )
                 )
@@ -285,17 +281,15 @@ class StudyCohortSelectionService(StudySelectionMixin):
                 try:
                     selection_aggregate.add_cohort_selection(
                         study_cohort_selection=new_selection,
-                        study_arm_exists_callback=self._repos.study_selection_arm_repository.arm_specific_exists_by_uid,
-                        study_branch_arm_exists_callback=self._repos.study_selection_branch_arm_repository.branch_arm_specific_exists_by_uid,
-                        cohort_exists_callback_by=repos.study_selection_cohort_repository.cohort_exists_by,
+                        study_arm_exists_callback=self._repos.study_arm_repository.arm_specific_exists_by_uid,
+                        study_branch_arm_exists_callback=self._repos.study_branch_arm_repository.branch_arm_specific_exists_by_uid,
+                        cohort_exists_callback_by=repos.study_cohort_repository.cohort_exists_by,
                     )
                 except ValueError as value_error:
                     raise exceptions.ValidationException(value_error.args[0])
 
                 # sync with DB and save the update
-                repos.study_selection_cohort_repository.save(
-                    selection_aggregate, self.author
-                )
+                repos.study_cohort_repository.save(selection_aggregate, self.author)
 
                 # Fetch the new selection which was just added
                 (
@@ -365,7 +359,7 @@ class StudyCohortSelectionService(StudySelectionMixin):
         try:
             # Load aggregate
             selection_aggregate: StudySelectionCohortAR = (
-                repos.study_selection_cohort_repository.find_by_study(
+                repos.study_cohort_repository.find_by_study(
                     study_uid=study_uid, for_update=True
                 )
             )
@@ -390,16 +384,14 @@ class StudyCohortSelectionService(StudySelectionMixin):
                 # let the aggregate update the value object
                 selection_aggregate.update_selection(
                     updated_study_cohort_selection=updated_selection,
-                    study_arm_exists_callback=self._repos.study_selection_arm_repository.arm_specific_exists_by_uid,
-                    study_branch_arm_exists_callback=self._repos.study_selection_branch_arm_repository.branch_arm_specific_exists_by_uid,
-                    cohort_exists_callback_by=repos.study_selection_cohort_repository.cohort_exists_by,
+                    study_arm_exists_callback=self._repos.study_arm_repository.arm_specific_exists_by_uid,
+                    study_branch_arm_exists_callback=self._repos.study_branch_arm_repository.branch_arm_specific_exists_by_uid,
+                    cohort_exists_callback_by=repos.study_cohort_repository.cohort_exists_by,
                 )
             except ValueError as value_error:
                 raise exceptions.ValidationException(value_error.args[0])
             # sync with DB and save the update
-            repos.study_selection_cohort_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_cohort_repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just updated
             new_selection, order = selection_aggregate.get_specific_object_selection(

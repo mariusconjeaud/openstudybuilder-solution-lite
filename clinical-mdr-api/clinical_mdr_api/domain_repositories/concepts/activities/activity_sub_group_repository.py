@@ -43,7 +43,7 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
                 name_sentence_case=input_dict.get("name_sentence_case"),
                 definition=input_dict.get("definition"),
                 abbreviation=input_dict.get("abbreviation"),
-                activity_group=input_dict.get("activity_group"),
+                activity_group=input_dict.get("activity_group").get("uid"),
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=input_dict.get("library_name"),
@@ -96,7 +96,7 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
         return """
         WITH *,
             head([(concept_value)-[:IN_GROUP]->(activity_group_value:ActivityGroupValue)<-[:LATEST]-(activity_group_root:ActivityGroupRoot) | 
-                activity_group_root.uid]) AS activity_group
+                {uid:activity_group_root.uid, name:activity_group_value.name}]) AS activity_group
         """
 
     def create_query_filter_statement(
@@ -165,18 +165,18 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
 
         return are_concept_properties_changed or are_rels_changed
 
-    def get_template_activity_subgroups(
-        self, root_class: type, template_uid: str
+    def get_syntax_activity_subgroups(
+        self, root_class: type, syntax_uid: str
     ) -> Optional[Sequence[ActivitySubGroupAR]]:
         """
-        This method returns the activity sub groups for the template with provided uid
+        This method returns the activity sub groups for the syntax with provided uid
 
-        :param root_class: The class of the root node for the template
-        :param template_uid: UID of the template
+        :param root_class: The class of the root node for the syntax
+        :param syntax_uid: UID of the syntax
         :return Sequence[ActivitySubGroupAR]:
         """
-        template = root_class.nodes.get(uid=template_uid)
-        activity_subgroup_nodes = template.has_activity_subgroup.all()
+        syntax = root_class.nodes.get(uid=syntax_uid)
+        activity_subgroup_nodes = syntax.has_activity_subgroup.all()
         if activity_subgroup_nodes:
             groups = []
             for node in activity_subgroup_nodes:

@@ -61,6 +61,12 @@ MDR_MIGRATION_TRIAL_BLINDING_SCHEMA = load_env("MDR_MIGRATION_TRIAL_BLINDING_SCH
 MDR_MIGRATION_ROLE = load_env("MDR_MIGRATION_ROLE")
 MDR_MIGRATION_DISEASE_MILESTONE = load_env("MDR_MIGRATION_DISEASE_MILESTONE")
 MDR_MIGRATION_REGISTID = load_env("MDR_MIGRATION_REGISTID")
+MDR_MIGRATION_FINDING_CATEGORIES = load_env("MDR_MIGRATION_FINDING_CATEGORIES")
+MDR_MIGRATION_EVENT_CATEGORIES = load_env("MDR_MIGRATION_EVENT_CATEGORIES")
+MDR_MIGRATION_INTERVENTION_CATEGORIES = load_env("MDR_MIGRATION_INTERVENTION_CATEGORIES")
+MDR_MIGRATION_FINDING_SUBCATEGORIES = load_env("MDR_MIGRATION_FINDING_SUBCATEGORIES")
+MDR_MIGRATION_EVENT_SUBCATEGORIES = load_env("MDR_MIGRATION_EVENT_SUBCATEGORIES")
+MDR_MIGRATION_INTERVENTION_SUBCATEGORIES = load_env("MDR_MIGRATION_INTERVENTION_SUBCATEGORIES")
 
 # Import terms to standard codelists in sponsor library
 class StandardCodelistTerms2(BaseImporter):
@@ -98,17 +104,22 @@ class StandardCodelistTerms2(BaseImporter):
                 value="term_uid",
             )
         for row in readCSV:
+            # Fix for files that don't have a NAME_SENTENCE_CASE column
+            name_sentence_case = row.get("NAME_SENTENSE_CASE", row["CT_NAME"].lower())
+            name_submval = row.get("NAME_SUBMVAL", row["CT_SUBMVAL"])
+            if name_submval == "":
+                name_submval = None
             data = {
                 "path": "/ct/terms",
                 "codelist": row["CT_CD_LIST_SUBMVAL"],
                 "body": {
                     "catalogue_name": "SDTM CT",
                     "code_submission_value": row["CT_SUBMVAL"],
-                    "name_submission_value": row["CT_SUBMVAL"],
+                    "name_submission_value": name_submval,
                     "nci_preferred_name": row.get("NCI_PREFERRED_NAME", "UNK"),
                     "definition": row["DEFINITION"],
                     "sponsor_preferred_name": row["CT_NAME"],
-                    "sponsor_preferred_name_sentence_case": row["NAME_SENTENSE_CASE"],
+                    "sponsor_preferred_name_sentence_case": name_sentence_case,
                     "library_name": "Sponsor",
                     "order": row["ORDER"] if row["ORDER"] != "" else None,
                 },
@@ -358,6 +369,43 @@ class StandardCodelistTerms2(BaseImporter):
                 code_lists_uids=code_lists_uids,
                 session=session,
             )
+            await self.migrate_term(
+                MDR_MIGRATION_EVENT_CATEGORIES,
+                codelist_name="Event Category Definition",
+                code_lists_uids=code_lists_uids,
+                session=session,
+            )
+            await self.migrate_term(
+                MDR_MIGRATION_EVENT_SUBCATEGORIES,
+                codelist_name="Event Subcategory Definition",
+                code_lists_uids=code_lists_uids,
+                session=session,
+            )
+            await self.migrate_term(
+                MDR_MIGRATION_FINDING_CATEGORIES,
+                codelist_name="Finding Category Definition",
+                code_lists_uids=code_lists_uids,
+                session=session,
+            )
+            await self.migrate_term(
+                MDR_MIGRATION_FINDING_SUBCATEGORIES,
+                codelist_name="Finding Subcategory Definition",
+                code_lists_uids=code_lists_uids,
+                session=session,
+            )
+            await self.migrate_term(
+                MDR_MIGRATION_INTERVENTION_CATEGORIES,
+                codelist_name="Intervention Category Definition",
+                code_lists_uids=code_lists_uids,
+                session=session,
+            )
+            await self.migrate_term(
+                MDR_MIGRATION_INTERVENTION_SUBCATEGORIES,
+                codelist_name="Intervention Subcategory Definition",
+                code_lists_uids=code_lists_uids,
+                session=session,
+            )
+
 
     def run(self):
         self.log.info("Migrating sponsor terms")

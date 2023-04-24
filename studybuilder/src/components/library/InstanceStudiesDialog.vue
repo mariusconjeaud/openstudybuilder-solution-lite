@@ -80,10 +80,10 @@ export default {
         { text: this.$t('InstanceStudiesDialog.project_id'), value: 'current_metadata.identification_metadata.project_number' },
         { text: this.$t('InstanceStudiesDialog.project_name'), value: 'current_metadata.identification_metadata.project_name' },
         { text: this.$t('InstanceStudiesDialog.brand_name'), value: 'current_metadata.identification_metadata.brand_name' },
-        { text: this.$t('InstanceStudiesDialog.study_number'), value: 'study_number' },
-        { text: this.$t('InstanceStudiesDialog.study_id'), value: 'study_id' },
-        { text: this.$t('InstanceStudiesDialog.study_acronym'), value: 'study_acronym' },
-        { text: this.$t('_global.status'), value: 'study_status' }
+        { text: this.$t('InstanceStudiesDialog.study_number'), value: 'current_metadata.identification_metadata.study_number' },
+        { text: this.$t('InstanceStudiesDialog.study_id'), value: 'current_metadata.identification_metadata.study_id' },
+        { text: this.$t('InstanceStudiesDialog.study_acronym'), value: 'current_metadata.identification_metadata.study_acronym' },
+        { text: this.$t('_global.status'), value: 'current_metadata.version_metadata.study_status' }
       ]
     }
   },
@@ -92,7 +92,7 @@ export default {
       this.$emit('close')
     },
     goToStudy (study) {
-      this.$store.commit('studiesGeneral/SELECT_STUDY', study)
+      this.$store.dispatch('studiesGeneral/selectStudy', study)
       this.$router.push({ name: 'StudyPurpose' })
     }
   }

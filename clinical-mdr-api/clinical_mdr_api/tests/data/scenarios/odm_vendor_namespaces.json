@@ -480,7 +480,13 @@
                     "uid": "OdmVendorNamespace_000001",
                     "name": "name1",
                     "prefix": "prefix",
-                    "url": "new url"
+                    "url": "new url",
+                    "status": "Draft",
+                    "version": "1.1",
+                    "possible_actions": [
+                        "approve",
+                        "edit"
+                    ]
                 },
                 "vendor_element": null,
                 "possible_actions": [
@@ -523,7 +529,13 @@
                     "uid": "OdmVendorNamespace_000001",
                     "name": "name1",
                     "prefix": "prefix",
-                    "url": "new url"
+                    "url": "new url",
+                    "status": "Draft",
+                    "version": "1.1",
+                    "possible_actions": [
+                        "approve",
+                        "edit"
+                    ]
                 },
                 "vendor_attributes": [],
                 "possible_actions": [

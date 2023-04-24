@@ -32,11 +32,11 @@
                 "library_name": "Test library",
                 "name": "Test objective",
                 "objective_uid": "{ouid}",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": ",",
                         "name": "Indication",
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "Indication",
@@ -62,6 +62,7 @@
                 "endpoint_template": {
                     "name": "Test [Indication]",
                     "name_plain": "Test [Indication]",
+                    "guidance_text": null,
                     "uid": "{otuid}"
                 },
                 "library": {
@@ -70,11 +71,11 @@
                 },
                 "name": "Test [type 2 diabetes]",
                 "name_plain": "Test type 2 diabetes",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": ",",
                         "position": 1,
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "type": "Indication",
@@ -121,6 +122,7 @@
                 "endpoint_template": {
                     "name": "Test [Indication]",
                     "name_plain": "Test [Indication]",
+                    "guidance_text": null,
                     "uid": "{otuid}"
                 },
                 "library": {
@@ -129,11 +131,11 @@
                 },
                 "name": "Test [type 2 diabetes]",
                 "name_plain": "Test type 2 diabetes",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": ",",
                         "position": 1,
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "type": "Indication",
@@ -213,7 +215,7 @@
             "result": [
                 {
                     "name": "Indication",
-                    "values": [
+                    "terms": [
                         {
                             "name": "breathing problems",
                             "uid": "Indication-99993",
@@ -241,11 +243,11 @@
             "method": "PATCH",
             "request": {
                 "name": "test{test-uid}",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": ",",
                         "position": 1,
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "type": "Indication",
@@ -286,11 +288,11 @@
             "request": {
                 "change_description": "Change test",
                 "name": "test{test-uid}",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": ",",
                         "name": "Indication",
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "type": "Indication",

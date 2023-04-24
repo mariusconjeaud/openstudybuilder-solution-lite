@@ -285,7 +285,7 @@ export default {
       return undefined
     },
     filterEditAction (item) {
-      if ((item.criteria && item.criteria.parameter_values.length > 0) || (item.criteria_template && item.criteria_template.parameters.length > 0)) {
+      if ((item.criteria && item.criteria.parameter_terms.length > 0) || (item.criteria_template && item.criteria_template.parameters.length > 0)) {
         return this.actions
       } else {
         return this.actions.slice(1)

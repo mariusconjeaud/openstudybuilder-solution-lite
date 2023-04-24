@@ -88,7 +88,7 @@ export default {
       } else {
         this.addBreadcrumbsLevel({ text: target.item.title, to: target.item.url, index: 1 })
         if (target.subitem !== undefined) {
-          this.addBreadcrumbsLevel({ text: target.subitem.title, to: target.subitem.url })
+          this.addBreadcrumbsLevel({ text: target.subitem.title, to: target.subitem.url, index: 2 })
         }
       }
     },

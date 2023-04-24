@@ -1,4 +1,4 @@
-from mdr_standards_import.cdisc_ct.load_ct_preprocessing import Term, Codelist
+from mdr_standards_import.scripts.load_ct_preprocessing import Term, Codelist
 from mdr_standards_import.tests.cdisc_ct.test_pipeline import Package, Import, Log
 
 
@@ -23,7 +23,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C001",
         extensible=True,
         synonyms=["Analysis Purpose"],
-
         terms=[term1],
     )
 
@@ -36,7 +35,6 @@ def get_expected_imports(effective_date, user_initials):
         description="Test-Case 3: Only 'Codelist 001 Name' without another codelist. -> import as code_submission_value and log inconsistency.",
         source="Test source",
         href="/mdr/ct/packages/cat3-2020-01-01",
-
         terms=[term1],
         codelists=[codelist1],
         discontinued_codelists=[],
@@ -46,7 +44,7 @@ def get_expected_imports(effective_date, user_initials):
         level="Info",
         tagline="unexpected codelist name",
         message="",
-        affected_uid=f"{effective_date}_C001"
+        affected_uid=f"{effective_date}_C001",
     )
 
     import1 = Import(
@@ -54,7 +52,7 @@ def get_expected_imports(effective_date, user_initials):
         user_initials=user_initials,
         packages=[package1],
         discontinued_codelists=[],
-        log_entries=[info1]
+        log_entries=[info1],
     )
 
     return [import1]

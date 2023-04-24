@@ -1,0 +1,20 @@
+{
+  "add_on_to_existing_treatments": null,
+  "add_on_to_existing_treatments_null_value_code": null,
+  "control_type_code": null,
+  "control_type_null_value_code": null,
+  "intervention_model_code": null,
+  "intervention_model_null_value_code": null,
+  "intervention_type_code": null,
+  "intervention_type_null_value_code": null,
+  "is_trial_randomised": null,
+  "is_trial_randomised_null_value_code": null,
+  "planned_study_length": null,
+  "planned_study_length_null_value_code": null,
+  "stratification_factor": null,
+  "stratification_factor_null_value_code": null,
+  "trial_blinding_schema_code": null,
+  "trial_blinding_schema_null_value_code": null,
+  "trial_intent_types_codes": [],
+  "trial_intent_types_null_value_code": null
+}

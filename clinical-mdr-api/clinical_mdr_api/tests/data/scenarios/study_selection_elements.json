@@ -63,6 +63,7 @@
         "change_type": null,
         "accepted_version": null,
         "study_compound_dosing_count": 0,  
+        "element_type":null,
         "element_subtype": {
           "term_uid": "term_root_final",
           "catalogue_name": "SDTM CT",
@@ -129,6 +130,7 @@
             "change_type": null,
             "accepted_version": null,
             "study_compound_dosing_count": 0,
+            "element_type":null,
             "element_subtype": {
               "term_uid": "term_root_final",
               "catalogue_name": "SDTM CT",
@@ -205,6 +207,7 @@
         "change_type": null,
         "accepted_version": null,
         "study_compound_dosing_count": 0,
+        "element_type":null,
         "element_subtype": {
           "term_uid": "term_root_final",
           "catalogue_name": "SDTM CT",
@@ -265,6 +268,7 @@
             "change_type": null,
             "accepted_version": null,
             "study_compound_dosing_count": 0,
+            "element_type":null,
             "element_subtype": {
               "term_uid": "term_root_final",
               "catalogue_name": "SDTM CT",
@@ -310,6 +314,7 @@
           "change_type": null,
           "accepted_version": null,
           "study_compound_dosing_count": 0,
+          "element_type":null,
           "element_subtype": {
             "term_uid": "term_root_final",
             "catalogue_name": "SDTM CT",
@@ -376,6 +381,7 @@
         "element_colour": "element_colour",
         "user_initials": "TODO initials",
         "element_uid": "StudyElement_000003",
+        "element_type":null,
         "element_subtype": {
           "term_uid": "term_root_final",
           "catalogue_name": "SDTM CT",
@@ -446,6 +452,7 @@
         "element_colour": "element_colour",
         "user_initials": "TODO initials",
         "element_uid": "StudyElement_000003",
+        "element_type":null,
         "element_subtype": {
           "term_uid": "term_root_final_non_edit",
           "catalogue_name": "SDTM CT",
@@ -503,6 +510,7 @@
           "start_rule": "start_rule...",
           "end_rule": "end_rule...",
           "element_colour": "element_colour",
+          "element_type":null,
           "element_subtype": {
           "term_uid": "term_root_final_non_edit",
           "catalogue_name": "SDTM CT",
@@ -541,6 +549,7 @@
           "start_rule": false,
           "end_rule": false,
           "element_colour": false,
+          "element_type": false,
           "element_subtype": true,
           "study_compound_dosing_count": false,
           "start_date": true,
@@ -564,6 +573,7 @@
           "start_rule": "start_rule...",
           "end_rule": "end_rule...",
           "element_colour": "element_colour",
+          "element_type":null,
           "element_subtype": {
           "term_uid": "term_root_final",
           "catalogue_name": "SDTM CT",
@@ -634,6 +644,7 @@
         "element_colour": "element_colour",
         "user_initials": "TODO initials",
         "element_uid": "StudyElement_000003",
+        "element_type":null,
         "element_subtype": {
           "term_uid": "term_root_final_non_edit",
           "catalogue_name": "SDTM CT",
@@ -691,6 +702,7 @@
           "start_rule": "start_rule...",
           "end_rule": "end_rule...",
           "element_colour": "element_colour",
+          "element_type":null,
           "element_subtype": {
           "term_uid": "term_root_final",
           "catalogue_name": "SDTM CT",
@@ -729,6 +741,7 @@
           "start_rule": false,
           "end_rule": false,
           "element_colour": false,
+          "element_type": false,
           "element_subtype": false,
           "study_compound_dosing_count": false,
           "start_date": true,
@@ -757,6 +770,7 @@
           "start_rule": "start_rule...",
           "end_rule": "end_rule...",
           "element_colour": "element_colour",
+          "element_type":null,
           "element_subtype": {
           "term_uid": "term_root_final",
           "catalogue_name": "SDTM CT",
@@ -803,6 +817,7 @@
           "start_rule": "start_rule...",
           "end_rule": "end_rule...",
           "element_colour": "element_colour",
+          "element_type":null,
           "element_subtype": {
           "term_uid": "term_root_final_non_edit",
           "catalogue_name": "SDTM CT",
@@ -841,6 +856,7 @@
           "start_rule": false,
           "end_rule": false,
           "element_colour": false,
+          "element_type": false,
           "element_subtype": false,
           "study_compound_dosing_count": false,
           "start_date": true,
@@ -869,6 +885,7 @@
           "start_rule": "start_rule...",
           "end_rule": "end_rule...",
           "element_colour": "element_colour",
+          "element_type":null,
           "element_subtype": {
           "term_uid": "term_root_final_non_edit",
           "catalogue_name": "SDTM CT",
@@ -907,6 +924,7 @@
           "start_rule": false,
           "end_rule": false,
           "element_colour": false,
+          "element_type": false,
           "element_subtype": true,
           "study_compound_dosing_count": false,
           "start_date": true,
@@ -930,6 +948,7 @@
           "start_rule": "start_rule...",
           "end_rule": "end_rule...",
           "element_colour": "element_colour",
+          "element_type":null,
           "element_subtype": {
           "term_uid": "term_root_final",
           "catalogue_name": "SDTM CT",
@@ -1049,6 +1068,7 @@
         "element_colour": "element_colour",
         "user_initials": "TODO initials",
         "element_uid": "StudyElement_000001",
+        "element_type":null,
         "element_subtype": {
           "term_uid": "term_root_final",
           "catalogue_name": "SDTM CT",

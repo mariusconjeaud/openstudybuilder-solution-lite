@@ -1,15 +1,14 @@
 from dataclasses import dataclass
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping, Optional, Tuple
 
 from cachetools import TTLCache
-from neomodel import NeomodelException, RelationshipManager
+from neomodel import RelationshipDefinition, RelationshipManager
 
 from clinical_mdr_api import config
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
     VersionRelationship,
     VersionRoot,
-    VersionValue,
 )
 from clinical_mdr_api.repositories._utils import sb_clear_cache
 
@@ -49,26 +48,33 @@ class RepositoryImpl:
     def __init__(self, user: str = None):
         self._user_initials = user
 
-    def _get_neomodel_objects(self, uid: str):
+    def _get_version_relation_keys(
+        self, root_node: VersionRoot
+    ) -> Tuple[
+        RelationshipDefinition,
+        RelationshipDefinition,
+        RelationshipDefinition,
+        RelationshipDefinition,
+        RelationshipDefinition,
+    ]:
         """
-        This function calls the DB (several times) to retrieve the data layer Neomodel objects.
-        The aggregate state can then be changed by the service, after which
-        this repository writes the state back to the DB.
-        """
-        try:
-            root: VersionRoot = self.root_class.nodes.get(uid=uid)
-            value: VersionValue = root.has_latest_value.single()
-            latest_value: VersionRelationship = root.has_latest_value.relationship(
-                value
-            )
-            latest_draft: VersionRelationship = root.latest_draft.relationship(value)
-            latest_final: VersionRelationship = root.latest_final.relationship(value)
-        except NeomodelException as exc:
-            raise EntityNotFoundError(
-                "Entity with " + uid + " is not found in the database."
-            ) from exc
+        Returns the keys used in the neomodel definition for the relationship definition.
+        By default, all library objects use "has_version", "has_draft", etc...
+        But some objects use an override, like MasterModel with "has_master_model_version"
 
-        return root, value, latest_value, latest_draft, latest_final
+        Args:
+            root_node (VersionRoot): Root node for which to return the relationship manager
+
+        Returns:
+            The relationships managers for the various versioning relationships.
+        """
+        return (
+            root_node.has_version,
+            root_node.has_latest_value,
+            root_node.latest_draft,
+            root_node.latest_final,
+            root_node.latest_retired,
+        )
 
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def _db_create_and_link_nodes(
@@ -76,28 +82,33 @@ class RepositoryImpl:
         root: ClinicalMdrNode,
         value: ClinicalMdrNode,
         rel_properties: Mapping[str, Any],
+        save_root: Optional[bool] = True,
     ):
         """
         Creates versioned root and versioned object nodes.
         # TODO - GEneration of uids should be removed (additional service?)
         """
-        self._db_save_node(root)
+        if save_root:
+            self._db_save_node(root)
         self._db_save_node(value)
-        latest_value = self._db_create_relationship(root.has_latest_value, value)
+
+        (
+            has_version,
+            has_latest_value,
+            latest_draft,
+            latest_final,
+            _,
+        ) = self._get_version_relation_keys(root)
+        latest_value = self._db_create_relationship(has_latest_value, value)
+        self._db_create_relationship(has_version, value, rel_properties)
 
         if rel_properties["status"] != "Final":
-            latest_draft = self._db_create_relationship(
-                root.latest_draft, value, rel_properties
-            )
+            latest_draft = self._db_create_relationship(latest_draft, value)
             latest_final = None
         else:
             # if we create an object that is immediately in a final state, we create a LATEST_FINAL relationship.
             latest_draft = None
-            latest_final = self._db_create_relationship(
-                root.latest_final, value, rel_properties
-            )
-
-        # self._db_create_relationship(root.has_version, value, rel_properties)
+            latest_final = self._db_create_relationship(latest_final, value)
         return root, value, latest_value, latest_draft, latest_final
 
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
@@ -108,16 +119,6 @@ class RepositoryImpl:
         """
         if node is not None:
             node.save()
-        return node
-
-    @sb_clear_cache(caches=["cache_store_item_by_uid"])
-    def _db_delete_node(self, node: ClinicalMdrNode) -> ClinicalMdrNode:
-        """
-        Deletes a Neomodel node object in the graph.
-        TODO: optionally accept multiple nodes and handle in same DB transaction.
-        """
-        if node is not None:
-            node.delete()
         return node
 
     @sb_clear_cache(caches=["cache_store_item_by_uid"])

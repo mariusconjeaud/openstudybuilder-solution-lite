@@ -40,9 +40,9 @@ class Compound(Concept):
         ),
     )
 
-    analyte_number: Optional[str]
-    nnc_short_number: Optional[str]
-    nnc_long_number: Optional[str]
+    analyte_number: Optional[str] = Field(None, nullable=True)
+    nnc_short_number: Optional[str] = Field(None, nullable=True)
+    nnc_long_number: Optional[str] = Field(None, nullable=True)
     is_sponsor_compound: Optional[bool] = True
     is_name_inn: Optional[bool] = True
     substances: Optional[Sequence[CompoundSubstance]]

@@ -104,7 +104,7 @@
                         "name_plain": null,
                         "uid": null
                     },
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "library": {
                         "name": "Sponsor",
                         "is_editable": true
@@ -182,7 +182,7 @@
                                 "name_plain": null,
                                 "uid": null
                             },
-                            "parameter_values": [],
+                            "parameter_terms": [],
                             "library": {
                                 "name": "Sponsor",
                                 "is_editable": true
@@ -262,7 +262,7 @@
                                 "name_plain": null,
                                 "uid": null
                             },
-                            "parameter_values": [],
+                            "parameter_terms": [],
                             "library": {
                                 "name": "Sponsor",
                                 "is_editable": true
@@ -319,7 +319,7 @@
                         "name_plain": null,
                         "uid": null
                     },
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "library": {
                         "name": "Sponsor",
                         "is_editable": true
@@ -395,7 +395,7 @@
                                 "name_plain": null,
                                 "uid": null
                             },
-                            "parameter_values": [],
+                            "parameter_terms": [],
                             "library": {
                                 "name": "Sponsor",
                                 "is_editable": true
@@ -434,7 +434,7 @@
                                 "name_plain": null,
                                 "name": null
                             },
-                            "parameter_values": [],
+                            "parameter_terms": [],
                             "library": {
                                 "name": "Sponsor",
                                 "is_editable": true
@@ -491,7 +491,7 @@
                         "name_plain": null,
                         "uid": null
                     },
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "library": {
                         "name": "Sponsor",
                         "is_editable": true
@@ -546,7 +546,7 @@
                         "name_plain": null,
                         "uid": null
                     },
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "library": {
                         "name": "Sponsor",
                         "is_editable": true
@@ -603,7 +603,7 @@
                         "name_plain": null,
                         "uid": null
                     },
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "library": {
                         "name": "Sponsor",
                         "is_editable": true
@@ -672,7 +672,7 @@
                             "name_plain": "objective_1",
                             "uid": "ObjectiveTemplate_000001"
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "library": {
                             "name": "Sponsor",
                             "is_editable": true
@@ -726,7 +726,7 @@
                             "name_plain": "objective_1",
                             "uid": "ObjectiveTemplate_000001"
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "library": {
                             "name": "Sponsor",
                             "is_editable": true
@@ -762,7 +762,7 @@
                             "name_plain": "objective_2",
                             "uid": "ObjectiveTemplate_000002"
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "library": {
                             "name": "Sponsor",
                             "is_editable": true
@@ -798,7 +798,7 @@
                             "name_plain": "objective_2",
                             "uid": "ObjectiveTemplate_000002"
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "library": {
                             "name": "Sponsor",
                             "is_editable": true
@@ -834,7 +834,7 @@
                             "name_plain": "objective_2",
                             "uid": "ObjectiveTemplate_000002"
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "library": {
                             "name": "Sponsor",
                             "is_editable": true
@@ -888,7 +888,7 @@
                             "name_plain": "objective_2",
                             "uid": "ObjectiveTemplate_000002"
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "library": {
                             "name": "Sponsor",
                             "is_editable": true
@@ -924,7 +924,7 @@
                             "name_plain": "objective_2",
                             "uid": "ObjectiveTemplate_000002"
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "library": {
                             "name": "Sponsor",
                             "is_editable": true
@@ -960,7 +960,7 @@
                             "name_plain": "objective_2",
                             "uid": "ObjectiveTemplate_000002"
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "library": {
                             "name": "Sponsor",
                             "is_editable": true
@@ -1021,7 +1021,7 @@
                         "name_plain": null,
                         "uid": null
                     },
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "library": {
                         "name": "Sponsor",
                         "is_editable": true
@@ -1041,7 +1041,7 @@
                     "library_name": "Sponsor",
                     "name": "objective_4",
                     "objective_template_uid": "ObjectiveTemplate_000004",
-                    "parameter_values": []
+                    "parameter_terms": []
                 },
                 "objective_level_uid": "term_root_final"
             },
@@ -1083,7 +1083,7 @@
                         "name_plain": null,
                         "uid": null
                     },
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "library": {
                         "name": "Sponsor",
                         "is_editable": true
@@ -1106,7 +1106,7 @@
                     "library_name": "Sponsor",
                     "name": "objective_4",
                     "objective_template_uid": "ObjectiveTemplate_000004",
-                    "parameter_values": []
+                    "parameter_terms": []
                 },
                 "objective_level_uid": "term_root_final"
             },
@@ -1166,7 +1166,7 @@
                         "name_plain": null,
                         "uid": null
                     },
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "library": {
                         "name": "Sponsor",
                         "is_editable": true
@@ -1211,9 +1211,10 @@
                         "objective_template": {
                             "name": "objective_4",
                             "name_plain": "objective_4",
+                            "guidance_text": null,
                             "uid": "ObjectiveTemplate_000004"
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "library": {
                             "name": "Sponsor",
                             "is_editable": true
@@ -1236,9 +1237,10 @@
                         "objective_template": {
                             "name": "objective_3",
                             "name_plain": "objective_3",
+                            "guidance_text": null,
                             "uid": "ObjectiveTemplate_000003"
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "library": {
                             "name": "Sponsor",
                             "is_editable": true
@@ -1261,9 +1263,10 @@
                         "objective_template": {
                             "name": "objective_1",
                             "name_plain": "objective_1",
+                            "guidance_text": null,
                             "uid": "ObjectiveTemplate_000001"
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "library": {
                             "name": "Sponsor",
                             "is_editable": true

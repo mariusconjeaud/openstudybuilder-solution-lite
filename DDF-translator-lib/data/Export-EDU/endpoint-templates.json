@@ -1,0 +1,2240 @@
+[
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {},
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "User Defined"
+    },
+    "name": "<p>Survival rate after cycle 8 of treatment</p>",
+    "namePlain": "Survival rate after cycle 8 of treatment",
+    "parameters": [],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-20T11:48:24.543334",
+    "status": "Final",
+    "studyCount": 1,
+    "subCategories": null,
+    "uid": "EndpointTemplate_000025",
+    "userInitials": "MT",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": [
+      {
+        "abbreviation": null,
+        "changeDescription": "Approved version",
+        "definition": null,
+        "dictionaryId": "371970002",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Primary malignant neoplasm of biliary tract (disorder)",
+        "nameSentenceCase": "primary malignant neoplasm of biliary tract (disorder)",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-16T08:28:04.903469",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000965",
+        "userInitials": "MT",
+        "version": "1.0"
+      }
+    ],
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>Disease control rate of [Compound] + [Compound] cohort</p>",
+    "namePlain": "Disease control rate of [Compound] + [Compound] cohort",
+    "parameters": [
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "Compound",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-20T11:42:19.651184",
+    "status": "Final",
+    "studyCount": 1,
+    "subCategories": null,
+    "uid": "EndpointTemplate_000024",
+    "userInitials": "MT",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": [
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Hereditary factor IX deficiency disease without inhibitor (disorder)",
+        "dictionaryId": "438792009",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Hereditary factor IX deficiency disease without inhibitor",
+        "nameSentenceCase": "hereditary factor IX deficiency disease without inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:59.047756",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000034",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Severe hereditary factor VIII deficiency disease without inhibitor (disorder)",
+        "dictionaryId": "440993008",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Severe hereditary factor VIII deficiency disease without inhibitor",
+        "nameSentenceCase": "severe hereditary factor VIII deficiency disease without inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:59.286257",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000035",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Hereditary factor VIII deficiency disease without inhibitor (disorder)",
+        "dictionaryId": "438360006",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Hereditary factor VIII deficiency disease without inhibitor",
+        "nameSentenceCase": "hereditary factor VIII deficiency disease without inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:57.724052",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000031",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Severe hereditary factor VIII deficiency disease with inhibitor (disorder)",
+        "dictionaryId": "438373005",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Severe hereditary factor VIII deficiency disease with inhibitor",
+        "nameSentenceCase": "severe hereditary factor VIII deficiency disease with inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:58.801723",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000033",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Hereditary factor IX deficiency disease with inhibitor (disorder)",
+        "dictionaryId": "438372000",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Hereditary factor IX deficiency disease with inhibitor",
+        "nameSentenceCase": "hereditary factor IX deficiency disease with inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:58.551211",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000032",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      }
+    ],
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>Occurrence of anti-[Compound] binding antibodies against [TextValue]</p>",
+    "namePlain": "Occurrence of anti-[Compound] binding antibodies against [TextValue]",
+    "parameters": [
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "TextValue",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-16T12:56:15.261389",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": [
+      {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codeSubmissionValue": "Count",
+          "codelistUid": null,
+          "conceptId": null,
+          "definition": "Count endpoint",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": "Count",
+          "nciPreferredName": "UNK",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-09-12T10:32:19.809693",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000016",
+        "libraryName": "Sponsor",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 5,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Count",
+          "sponsorPreferredNameSentenceCase": "count",
+          "startDate": "2022-09-12T10:32:19.372360",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "termUid": "CTTerm_000047"
+      }
+    ],
+    "uid": "EndpointTemplate_000023",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": [
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Severe hereditary factor VIII deficiency disease with inhibitor (disorder)",
+        "dictionaryId": "438373005",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Severe hereditary factor VIII deficiency disease with inhibitor",
+        "nameSentenceCase": "severe hereditary factor VIII deficiency disease with inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:58.801723",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000033",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Severe hereditary factor IX deficiency disease without inhibitor (disorder)",
+        "dictionaryId": "441190003",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Severe hereditary factor IX deficiency disease without inhibitor",
+        "nameSentenceCase": "severe hereditary factor IX deficiency disease without inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:59.588026",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000036",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Severe hereditary factor VIII deficiency disease without inhibitor (disorder)",
+        "dictionaryId": "440993008",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Severe hereditary factor VIII deficiency disease without inhibitor",
+        "nameSentenceCase": "severe hereditary factor VIII deficiency disease without inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:59.286257",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000035",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Hereditary factor IX deficiency disease without inhibitor (disorder)",
+        "dictionaryId": "438792009",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Hereditary factor IX deficiency disease without inhibitor",
+        "nameSentenceCase": "hereditary factor IX deficiency disease without inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:59.047756",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000034",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      }
+    ],
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>Haemostatic effect of [Compound] (success/failure)</p>",
+    "namePlain": "Haemostatic effect of [Compound] (success/failure)",
+    "parameters": [
+      {
+        "name": "Compound",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-16T12:56:17.318072",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": [
+      {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codeSubmissionValue": "Count",
+          "codelistUid": null,
+          "conceptId": null,
+          "definition": "Count endpoint",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": "Count",
+          "nciPreferredName": "UNK",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-09-12T10:32:19.809693",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000016",
+        "libraryName": "Sponsor",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 5,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Count",
+          "sponsorPreferredNameSentenceCase": "count",
+          "startDate": "2022-09-12T10:32:19.372360",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "termUid": "CTTerm_000047"
+      }
+    ],
+    "uid": "EndpointTemplate_000022",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {},
+    "editableInstance": false,
+    "endDate": null,
+    "indications": [
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Hereditary factor IX deficiency disease without inhibitor (disorder)",
+        "dictionaryId": "438792009",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Hereditary factor IX deficiency disease without inhibitor",
+        "nameSentenceCase": "hereditary factor IX deficiency disease without inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:59.047756",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000034",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Severe hereditary factor VIII deficiency disease with inhibitor (disorder)",
+        "dictionaryId": "438373005",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Severe hereditary factor VIII deficiency disease with inhibitor",
+        "nameSentenceCase": "severe hereditary factor VIII deficiency disease with inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:58.801723",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000033",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Severe hereditary factor VIII deficiency disease without inhibitor (disorder)",
+        "dictionaryId": "440993008",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Severe hereditary factor VIII deficiency disease without inhibitor",
+        "nameSentenceCase": "severe hereditary factor VIII deficiency disease without inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:59.286257",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000035",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Severe hereditary factor IX deficiency disease without inhibitor (disorder)",
+        "dictionaryId": "441190003",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Severe hereditary factor IX deficiency disease without inhibitor",
+        "nameSentenceCase": "severe hereditary factor IX deficiency disease without inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:59.588026",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000036",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      }
+    ],
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>Occurrence of at least one bleed (yes/no)</p>",
+    "namePlain": "Occurrence of at least one bleed (yes/no)",
+    "parameters": [],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-16T12:56:19.442773",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": [
+      {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codeSubmissionValue": "Count",
+          "codelistUid": null,
+          "conceptId": null,
+          "definition": "Count endpoint",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": "Count",
+          "nciPreferredName": "UNK",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-09-12T10:32:19.809693",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000016",
+        "libraryName": "Sponsor",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 5,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Count",
+          "sponsorPreferredNameSentenceCase": "count",
+          "startDate": "2022-09-12T10:32:19.372360",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "termUid": "CTTerm_000047"
+      }
+    ],
+    "uid": "EndpointTemplate_000021",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {},
+    "editableInstance": false,
+    "endDate": null,
+    "indications": [
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Hereditary factor IX deficiency disease without inhibitor (disorder)",
+        "dictionaryId": "438792009",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Hereditary factor IX deficiency disease without inhibitor",
+        "nameSentenceCase": "hereditary factor IX deficiency disease without inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:59.047756",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000034",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Hereditary factor IX deficiency disease (disorder)",
+        "dictionaryId": "41788008",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Hereditary factor IX deficiency disease",
+        "nameSentenceCase": "hereditary factor IX deficiency disease",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:51.013241",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000006",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Hereditary factor IX deficiency disease with inhibitor (disorder)",
+        "dictionaryId": "438372000",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Hereditary factor IX deficiency disease with inhibitor",
+        "nameSentenceCase": "hereditary factor IX deficiency disease with inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:58.551211",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000032",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Severe hereditary factor VIII deficiency disease with inhibitor (disorder)",
+        "dictionaryId": "438373005",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Severe hereditary factor VIII deficiency disease with inhibitor",
+        "nameSentenceCase": "severe hereditary factor VIII deficiency disease with inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:58.801723",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000033",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Severe hereditary factor VIII deficiency disease (disorder)",
+        "dictionaryId": "16872008",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Severe hereditary factor VIII deficiency disease",
+        "nameSentenceCase": "severe hereditary factor VIII deficiency disease",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:49.972174",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000002",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Hereditary factor VIII deficiency disease (disorder)",
+        "dictionaryId": "28293008",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Hereditary factor VIII deficiency disease",
+        "nameSentenceCase": "hereditary factor VIII deficiency disease",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:50.690891",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000005",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Hereditary factor VIII deficiency disease without inhibitor (disorder)",
+        "dictionaryId": "438360006",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Hereditary factor VIII deficiency disease without inhibitor",
+        "nameSentenceCase": "hereditary factor VIII deficiency disease without inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:57.724052",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000031",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Severe hereditary factor VIII deficiency disease without inhibitor (disorder)",
+        "dictionaryId": "440993008",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Severe hereditary factor VIII deficiency disease without inhibitor",
+        "nameSentenceCase": "severe hereditary factor VIII deficiency disease without inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:59.286257",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000035",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Hereditary factor VIII deficiency disease with inhibitor (disorder)",
+        "dictionaryId": "234442002",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Hereditary factor VIII deficiency disease with inhibitor",
+        "nameSentenceCase": "hereditary factor VIII deficiency disease with inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:54.971598",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000020",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Severe hereditary factor IX deficiency disease without inhibitor (disorder)",
+        "dictionaryId": "441190003",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Severe hereditary factor IX deficiency disease without inhibitor",
+        "nameSentenceCase": "severe hereditary factor IX deficiency disease without inhibitor",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:59.588026",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000036",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "",
+        "changeDescription": "Approved version",
+        "definition": "Hereditary coagulation factor deficiency (disorder)",
+        "dictionaryId": "16922007",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Hereditary coagulation factor deficiency",
+        "nameSentenceCase": "hereditary coagulation factor deficiency",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:50.214085",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000003",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      }
+    ],
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>The number of treated spontaneus and traumatic bleeding episodes</p>",
+    "namePlain": "The number of treated spontaneus and traumatic bleeding episodes",
+    "parameters": [],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-19T11:52:07.546336",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": [
+      {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codeSubmissionValue": "Count",
+          "codelistUid": null,
+          "conceptId": null,
+          "definition": "Count endpoint",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": "Count",
+          "nciPreferredName": "UNK",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-09-12T10:32:19.809693",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000016",
+        "libraryName": "Sponsor",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 5,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Count",
+          "sponsorPreferredNameSentenceCase": "count",
+          "startDate": "2022-09-12T10:32:19.372360",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "termUid": "CTTerm_000047"
+      }
+    ],
+    "uid": "EndpointTemplate_000020",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>Responder definition value for [TextValue] score</p>",
+    "namePlain": "Responder definition value for [TextValue] score",
+    "parameters": [
+      {
+        "name": "TextValue",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-16T12:31:45.830774",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": [
+      {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codeSubmissionValue": "Count",
+          "codelistUid": null,
+          "conceptId": null,
+          "definition": "Count endpoint",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": "Count",
+          "nciPreferredName": "UNK",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-09-12T10:32:19.809693",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000016",
+        "libraryName": "Sponsor",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 5,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Count",
+          "sponsorPreferredNameSentenceCase": "count",
+          "startDate": "2022-09-12T10:32:19.372360",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "termUid": "CTTerm_000047"
+      }
+    ],
+    "uid": "EndpointTemplate_000019",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 4,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>[Activity] reduction [Operator] [NumericValue] [Unit] (yes/no)</p>",
+    "namePlain": "[Activity] reduction [Operator] [NumericValue] [Unit] (yes/no)",
+    "parameters": [
+      {
+        "name": "Activity",
+        "values": null
+      },
+      {
+        "name": "Operator",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-16T12:31:43.158534",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": null,
+    "uid": "EndpointTemplate_000018",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>Score of [TextValue]</p>",
+    "namePlain": "Score of [TextValue]",
+    "parameters": [
+      {
+        "name": "TextValue",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-16T12:31:40.096757",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": null,
+    "uid": "EndpointTemplate_000017",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>Change in [TextValue] ( [TextValue]) in total treatment satisfaction</p>",
+    "namePlain": "Change in [TextValue] ( [TextValue]) in total treatment satisfaction",
+    "parameters": [
+      {
+        "name": "TextValue",
+        "values": null
+      },
+      {
+        "name": "TextValue",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-16T12:31:37.021284",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": null,
+    "uid": "EndpointTemplate_000016",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 4,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 5,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 6,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>Time in range [NumericValue] - [NumericValue] [Unit] ( [NumericValue] - [NumericValue] [Unit])</p>",
+    "namePlain": "Time in range [NumericValue] - [NumericValue] [Unit] ( [NumericValue] - [NumericValue] [Unit])",
+    "parameters": [
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-16T12:31:34.042466",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": null,
+    "uid": "EndpointTemplate_000015",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>[TextValue] dose</p>",
+    "namePlain": "[TextValue] dose",
+    "parameters": [
+      {
+        "name": "TextValue",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-16T12:31:31.028858",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": null,
+    "uid": "EndpointTemplate_000014",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 4,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 5,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 6,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 7,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 8,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 9,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 10,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 11,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": [
+      {
+        "abbreviation": "DM",
+        "changeDescription": "Approved version",
+        "definition": "Diabetes mellitus (disorder)",
+        "dictionaryId": "73211009",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Diabetes mellitus",
+        "nameSentenceCase": "diabetes mellitus",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:53.120945",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000013",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "T1DM",
+        "changeDescription": "Approved version",
+        "definition": "Diabetes mellitus type 1 (disorder)",
+        "dictionaryId": "46635009",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Type 1 Diabetes mellitus",
+        "nameSentenceCase": "type 1 diabetes mellitus",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:51.742434",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000008",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      },
+      {
+        "abbreviation": "T2DM",
+        "changeDescription": "Approved version",
+        "definition": "Diabetes mellitus type 2 (disorder)",
+        "dictionaryId": "44054006",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Type 2 diabetes mellitus",
+        "nameSentenceCase": "type 2 diabetes mellitus",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:51.466908",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000007",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      }
+    ],
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>[Activity] [Operator] [NumericValue] [Unit] without clinically significant [Event]s (level [NumericValue] ( [Operator] [NumericValue] [Unit] ( [NumericValue] [Unit]) confirmed by BG meter (yes/no)</p>",
+    "namePlain": "[Activity] [Operator] [NumericValue] [Unit] without clinically significant [Event]s (level [NumericValue] ( [Operator] [NumericValue] [Unit] ( [NumericValue] [Unit]) confirmed by BG meter (yes/no)",
+    "parameters": [
+      {
+        "name": "Activity",
+        "values": null
+      },
+      {
+        "name": "Operator",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      },
+      {
+        "name": "Event",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Operator",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-16T12:31:28.218330",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": [
+      {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codeSubmissionValue": "Count",
+          "codelistUid": null,
+          "conceptId": null,
+          "definition": "Count endpoint",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": "Count",
+          "nciPreferredName": "UNK",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-09-12T10:32:19.809693",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000016",
+        "libraryName": "Sponsor",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 5,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Count",
+          "sponsorPreferredNameSentenceCase": "count",
+          "startDate": "2022-09-12T10:32:19.372360",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "termUid": "CTTerm_000047"
+      }
+    ],
+    "uid": "EndpointTemplate_000013",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 4,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>[Activity] [Operator] [NumericValue] [Unit] (yes/no)</p>",
+    "namePlain": "[Activity] [Operator] [NumericValue] [Unit] (yes/no)",
+    "parameters": [
+      {
+        "name": "Activity",
+        "values": null
+      },
+      {
+        "name": "Operator",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-16T12:31:24.282024",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": [
+      {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codeSubmissionValue": "Count",
+          "codelistUid": null,
+          "conceptId": null,
+          "definition": "Count endpoint",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": "Count",
+          "nciPreferredName": "UNK",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-09-12T10:32:19.809693",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000016",
+        "libraryName": "Sponsor",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 5,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Count",
+          "sponsorPreferredNameSentenceCase": "count",
+          "startDate": "2022-09-12T10:32:19.372360",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "termUid": "CTTerm_000047"
+      }
+    ],
+    "uid": "EndpointTemplate_000012",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>Number of [TextValue] [Event]s</p>",
+    "namePlain": "Number of [TextValue] [Event]s",
+    "parameters": [
+      {
+        "name": "TextValue",
+        "values": null
+      },
+      {
+        "name": "Event",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-16T12:31:21.499605",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": [
+      {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codeSubmissionValue": "Count",
+          "codelistUid": null,
+          "conceptId": null,
+          "definition": "Count endpoint",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": "Count",
+          "nciPreferredName": "UNK",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-09-12T10:32:19.809693",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000016",
+        "libraryName": "Sponsor",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 5,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Count",
+          "sponsorPreferredNameSentenceCase": "count",
+          "startDate": "2022-09-12T10:32:19.372360",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "termUid": "CTTerm_000047"
+      }
+    ],
+    "uid": "EndpointTemplate_000011",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>Number of [Event]s</p>",
+    "namePlain": "Number of [Event]s",
+    "parameters": [
+      {
+        "name": "Event",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-16T12:31:18.330180",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": [
+      {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codeSubmissionValue": "Count",
+          "codelistUid": null,
+          "conceptId": null,
+          "definition": "Count endpoint",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": "Count",
+          "nciPreferredName": "UNK",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-09-12T10:32:19.809693",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000016",
+        "libraryName": "Sponsor",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 5,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Count",
+          "sponsorPreferredNameSentenceCase": "count",
+          "startDate": "2022-09-12T10:32:19.372360",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "termUid": "CTTerm_000047"
+      }
+    ],
+    "uid": "EndpointTemplate_000010",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Initial version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>Number of [TextValue] </p>",
+    "namePlain": "Number of [TextValue] ",
+    "parameters": [
+      {
+        "name": "TextValue",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "approve",
+      "delete",
+      "edit"
+    ],
+    "startDate": "2022-09-16T12:09:49.281723",
+    "status": "Draft",
+    "studyCount": 0,
+    "subCategories": [
+      {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codeSubmissionValue": "Count",
+          "codelistUid": null,
+          "conceptId": null,
+          "definition": "Count endpoint",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": "Count",
+          "nciPreferredName": "UNK",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-09-12T10:32:19.809693",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000016",
+        "libraryName": "Sponsor",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 5,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Count",
+          "sponsorPreferredNameSentenceCase": "count",
+          "startDate": "2022-09-12T10:32:19.372360",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "termUid": "CTTerm_000047"
+      }
+    ],
+    "uid": "EndpointTemplate_000009",
+    "userInitials": "AJLD",
+    "version": "0.1"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Initial version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>Change in [Frequency] [TextValue]</p>",
+    "namePlain": "Change in [Frequency] [TextValue]",
+    "parameters": [
+      {
+        "name": "Frequency",
+        "values": null
+      },
+      {
+        "name": "TextValue",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "approve",
+      "delete",
+      "edit"
+    ],
+    "startDate": "2022-09-16T12:08:57.017125",
+    "status": "Draft",
+    "studyCount": 0,
+    "subCategories": null,
+    "uid": "EndpointTemplate_000008",
+    "userInitials": "AJLD",
+    "version": "0.1"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Initial version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>Mean [Activity] level</p>",
+    "namePlain": "Mean [Activity] level",
+    "parameters": [
+      {
+        "name": "Activity",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "approve",
+      "delete",
+      "edit"
+    ],
+    "startDate": "2022-09-16T12:07:42.549387",
+    "status": "Draft",
+    "studyCount": 0,
+    "subCategories": null,
+    "uid": "EndpointTemplate_000007",
+    "userInitials": "AJLD",
+    "version": "0.1"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Initial version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>Relative change in [Activity]</p>",
+    "namePlain": "Relative change in [Activity]",
+    "parameters": [
+      {
+        "name": "Activity",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "approve",
+      "delete",
+      "edit"
+    ],
+    "startDate": "2022-09-16T12:06:47.660688",
+    "status": "Draft",
+    "studyCount": 0,
+    "subCategories": [
+      {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codeSubmissionValue": "Continuous (relative change)",
+          "codelistUid": null,
+          "conceptId": null,
+          "definition": "Continuous (relative change) endpoint",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": "Continuous (relative change)",
+          "nciPreferredName": "UNK",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-09-12T10:32:19.601536",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000016",
+        "libraryName": "Sponsor",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 3,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Continuous (relative change)",
+          "sponsorPreferredNameSentenceCase": "continuous (relative change)",
+          "startDate": "2022-09-12T10:32:19.146969",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "termUid": "CTTerm_000045"
+      }
+    ],
+    "uid": "EndpointTemplate_000006",
+    "userInitials": "AJLD",
+    "version": "0.1"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>Change in [Activity]</p>",
+    "namePlain": "Change in [Activity]",
+    "parameters": [
+      {
+        "name": "Activity",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-15T09:42:54.337400",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": null,
+    "uid": "EndpointTemplate_000005",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "test user defined [ActivityInstance]",
+    "namePlain": "test user defined [ActivityInstance]",
+    "parameters": [
+      {
+        "name": "ActivityInstance",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-12T10:57:54.912222",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": null,
+    "uid": "EndpointTemplate_000004",
+    "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "User Defined"
+    },
+    "name": "test user defined [ActivityInstance]",
+    "namePlain": "test user defined [ActivityInstance]",
+    "parameters": [
+      {
+        "name": "ActivityInstance",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-12T10:57:32.816615",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": null,
+    "uid": "EndpointTemplate_000003",
+    "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "test [ActivityInstance] and [DiseaseDisorder]",
+    "namePlain": "test [ActivityInstance] and [DiseaseDisorder]",
+    "parameters": [
+      {
+        "name": "ActivityInstance",
+        "values": null
+      },
+      {
+        "name": "DiseaseDisorder",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-12T10:57:32.481623",
+    "status": "Final",
+    "studyCount": 1,
+    "subCategories": null,
+    "uid": "EndpointTemplate_000002",
+    "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "test [ActivityInstance]",
+    "namePlain": "test [ActivityInstance]",
+    "parameters": [
+      {
+        "name": "ActivityInstance",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-12T10:57:31.614737",
+    "status": "Final",
+    "studyCount": 0,
+    "subCategories": null,
+    "uid": "EndpointTemplate_000001",
+    "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+    "version": "1.0"
+  }
+]

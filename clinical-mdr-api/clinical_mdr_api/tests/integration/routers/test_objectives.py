@@ -5,7 +5,9 @@ from pydantic import BaseModel
 from starlette.testclient import TestClient
 
 from clinical_mdr_api.services._meta_repository import MetaRepository
-from clinical_mdr_api.services.objective_templates import ObjectiveTemplateService
+from clinical_mdr_api.services.syntax_templates.objective_templates import (
+    ObjectiveTemplateService,
+)
 from clinical_mdr_api.tests.integration.utils import api
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
@@ -26,7 +28,7 @@ class ObjectiveTest(api.APITest):
         db.cypher_query(STARTUP_PARAMETERS_CYPHER)
         db.cypher_query(CREATE_BASE_TEMPLATE_PARAMETER_TREE)
 
-        import clinical_mdr_api.models.objective_template as ct_models
+        import clinical_mdr_api.models.syntax_templates.objective_template as ct_models
         import clinical_mdr_api.services.libraries as library_service
         from clinical_mdr_api import main
 
@@ -54,14 +56,13 @@ class ObjectiveNegativeTest(api.APITest):
     def setUp(self):
         inject_and_clear_db(self.TEST_DB_NAME)
 
-        import clinical_mdr_api.models.objective_template as ct_models
+        import clinical_mdr_api.models.syntax_templates.objective_template as ct_models
         import clinical_mdr_api.services.libraries as library_service
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)
         self.library = library_service.create(name="Test library", is_editable=True)
         otdata = template_data.copy()
-        otdata["editable_instance"] = False
         objective_template = ct_models.ObjectiveTemplateCreateInput(**otdata)
         self.ot = ObjectiveTemplateService().create(objective_template)
         if isinstance(self.ot, BaseModel):
@@ -97,7 +98,7 @@ class ObjectiveVersioningTest(api.APITest):
     def setUp(self):
         inject_and_clear_db(self.TEST_DB_NAME)
 
-        import clinical_mdr_api.models.objective_template as ct_models
+        import clinical_mdr_api.models.syntax_templates.objective_template as ct_models
         import clinical_mdr_api.services.libraries as library_service
         from clinical_mdr_api import main
 

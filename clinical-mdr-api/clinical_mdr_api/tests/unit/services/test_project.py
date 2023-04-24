@@ -8,7 +8,6 @@ from clinical_mdr_api.services.project import ProjectService
 
 
 class TestProjectService(unittest.TestCase):
-
     service = ProjectService()
 
     @patch(

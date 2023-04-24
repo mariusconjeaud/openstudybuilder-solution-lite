@@ -19,7 +19,6 @@ from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
 )
 from clinical_mdr_api.domain_repositories.models._utils import (
-    convert_to_datetime,
     format_generic_header_values,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
@@ -33,7 +32,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRelationship,
 )
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
-    TemplateParameterValueRoot,
+    TemplateParameterTermRoot,
 )
 from clinical_mdr_api.models.ct_codelist_attributes import CTCodelistAttributes
 from clinical_mdr_api.models.ct_codelist_name import CTCodelistName
@@ -53,27 +52,24 @@ class CTCodelistGenericRepository(
     root_class = type
     value_class = type
     relationship_from_root = type
-
     generic_alias_clause = """
         DISTINCT codelist_root, codelist_ver_root, codelist_ver_value
         ORDER BY codelist_root.uid
         WITH DISTINCT codelist_root, codelist_ver_root, codelist_ver_value, 
         head([(cat)-[:HAS_CODELIST]->(codelist_root) | cat]) AS catalogue,
-        head([(lib)-[:CONTAINS_CODELIST]->(codelist_root) | lib]) AS library,
-        head([(codelist_ver_root)-[ld:LATEST_DRAFT]->(codelist_ver_value) | ld]) AS ld,
-        head([(codelist_ver_root)-[lf:LATEST_FINAL]->(codelist_ver_value) | lf]) AS lf,
-        head([(codelist_ver_root)-[lr:LATEST_RETIRED]->(codelist_ver_value) | lr]) AS lr,
-        head([(codelist_ver_root)-[hv:HAS_VERSION]->(codelist_ver_value) | hv]) AS hv
-        CALL apoc.case(
-            [
-                ld IS NOT NULL AND ld.end_date IS NULL, 'RETURN ld as rel',
-                lf IS NOT NULL AND lf.end_date IS NULL, 'RETURN lf as rel',
-                lr IS NOT NULL AND lr.end_date IS NULL, 'RETURN lr as rel',
-                ld IS NULL AND lf IS NULL AND lr IS NULL, 'RETURN hv as rel'
-            ],
-            '',
-            {ld:ld, lf:lf, lr:lr, hv:hv})
-        YIELD value as rel_data
+        head([(lib)-[:CONTAINS_CODELIST]->(codelist_root) | lib]) AS library
+        CALL {
+                WITH codelist_ver_root, codelist_ver_value
+                MATCH (codelist_ver_root)-[hv:HAS_VERSION]-(codelist_ver_value)
+                WITH hv
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.end_date ASC,
+                    hv.start_date ASC
+                WITH collect(hv) as hvs
+                RETURN last(hvs) AS rel_data
+            }
         WITH 
             codelist_root.uid AS codelist_uid,
             catalogue.name AS catalogue_name,
@@ -84,12 +80,12 @@ class CTCodelistGenericRepository(
             library.name AS library_name,
             library.is_editable AS is_library_editable,
             {
-                start_date: rel_data.rel.start_date,
+                start_date: rel_data.start_date,
                 end_date: NULL,
-                status: rel_data.rel.status,
-                version: rel_data.rel.version,
-                change_description: rel_data.rel.change_description,
-                user_initials: rel_data.rel.user_initials
+                status: rel_data.status,
+                version: rel_data.version,
+                change_description: rel_data.change_description,
+                user_initials: rel_data.user_initials
             } AS rel_data
     """
 
@@ -336,7 +332,6 @@ class CTCodelistGenericRepository(
         at_specific_date: Optional[datetime] = None,
         for_update: bool = False,
     ) -> Optional[_AggregateRootType]:
-
         ct_codelist_root: CTCodelistRoot = CTCodelistRoot.nodes.get_or_none(
             uid=codelist_uid
         )
@@ -413,9 +408,9 @@ class CTCodelistGenericRepository(
         Method adds term identified by term_uid to the codelist identified by codelist_uid.
         Adding a term means creating a HAS_TERM relationship from CTCodelistRoot to CTTermRoot.
         When codelist identified by codelist_uid is a TemplateParameter, then the added term
-        will become TemplateParameter value, which means creating HAS_VALUE relationship from
-        CTCodelistNameValue to the CTTermNameRoot and labeling CTTermNameRoot as TemplateParameterValueRoot
-        and CTTermNameValue as TemplateParameterValue.
+        will become TemplateParameter term, which means creating HAS_PARAMETER_TERM relationship from
+        CTCodelistNameValue to the CTTermNameRoot and labeling CTTermNameRoot as TemplateParameterTermRoot
+        and CTTermNameValue as TemplateParameterTermValue.
         :param codelist_uid:
         :param term_uid:
         :param author:
@@ -467,12 +462,12 @@ class CTCodelistGenericRepository(
                 (codelist_ver_value:TemplateParameter)
             WITH codelist_ver_value
             MATCH (term_root:CTTermRoot {uid: $term_uid})-[:HAS_NAME_ROOT]->(term_ver_root)-[:LATEST]->(term_ver_value)
-            MERGE (codelist_ver_value)-[hv:HAS_VALUE]->(term_ver_root)
-            SET term_ver_root:TemplateParameterValueRoot
-            SET term_ver_value:TemplateParameterValue
+            MERGE (codelist_ver_value)-[:HAS_PARAMETER_TERM]->(term_ver_root)
+            SET term_ver_root:TemplateParameterTermRoot
+            SET term_ver_value:TemplateParameterTermValue
         """
         db.cypher_query(query, {"codelist_uid": codelist_uid, "term_uid": term_uid})
-        TemplateParameterValueRoot.generate_node_uids_if_not_present()
+        TemplateParameterTermRoot.generate_node_uids_if_not_present()
 
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def remove_term(self, codelist_uid: str, term_uid: str, author: str) -> None:
@@ -480,9 +475,9 @@ class CTCodelistGenericRepository(
         Method removes term identified by term_uid from the codelist identified by codelist_uid.
         Removing a term means deleting existing HAS_TERM relationship from CTCodelistRoot to CTTermRoot and
         creating HAD_TERM relationship from CTCodelistRoot to CTTermRoot.
-        When term that is being removed is a TemplateParameter value, then also HAS_VALUE relationship from
-        CTCodelistNameValue node to the CTTermNameRoot node is deleted. We leave the TemplateParameterValueRoot
-        and template_parameter_value labels as other codelist may use that term as TemplateParameter value.
+        When term that is being removed is a TemplateParameter value, then also HAS_PARAMETER_TERM relationship from
+        CTCodelistNameValue node to the CTTermNameRoot node is deleted. We leave the TemplateParameterTermRoot
+        and template_parameter_term labels as other codelist may use that term as TemplateParameter value.
         :param codelist_uid:
         :param term_uid:
         :param author:
@@ -531,7 +526,7 @@ class CTCodelistGenericRepository(
 
                 query = """
                     MATCH (codelist_root:CTCodelistRoot {uid: $codelist_uid})-[:HAS_NAME_ROOT]->()-[:LATEST]->
-                        (codelist_ver_value:TemplateParameter)-[r:HAS_VALUE]-(term_ver_root)
+                        (codelist_ver_value:TemplateParameter)-[r:HAS_PARAMETER_TERM]-(term_ver_root)
                     DELETE r
                 """
                 db.cypher_query(query, {"codelist_uid": codelist_uid})
@@ -548,21 +543,3 @@ class CTCodelistGenericRepository(
         :return bool:
         """
         return True
-
-    def get_codelist_etag_value(self, codelist_uid: str) -> Optional[str]:
-        """
-        Method created to get etag for codelist identified by codelist_uid
-        that can be used to verify if given codelist was changed.
-        :param codelist_uid:
-        :return str:
-        """
-        query = f"""
-        MATCH (codelist_root:CTCodelistRoot {{uid: $codelist_uid}})-[:{cast(str, self.relationship_from_root).upper()}]-
-        (codelist_ver_root)-[:LATEST]-(codelist_ver_value)
-        MATCH (codelist_ver_root)-[version]->(codelist_ver_value)
-        RETURN max(version.start_date)
-        """
-        result, _ = db.cypher_query(query, {"codelist_uid": codelist_uid})
-        if len(result[0]) > 0 and result[0][0] is not None:
-            return str(convert_to_datetime(result[0][0]))
-        return None

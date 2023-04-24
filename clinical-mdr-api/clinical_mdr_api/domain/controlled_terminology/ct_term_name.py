@@ -52,7 +52,6 @@ class CTTermNameVO:
         codelist_exists_callback: Callable[[str], bool],
         catalogue_exists_callback: Callable[[str], bool],
     ) -> "CTTermNameVO":
-
         if not codelist_exists_callback(codelist_uid):
             raise ValueError(
                 f"There is no codelist identified by provided codelist uid ({codelist_uid})"

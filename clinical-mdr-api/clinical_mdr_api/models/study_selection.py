@@ -49,47 +49,58 @@ from clinical_mdr_api.domain.study_selection.study_selection_objective import (
     StudySelectionObjectivesAR,
 )
 from clinical_mdr_api.domain.unit_definition.unit_definition import UnitDefinitionAR
+from clinical_mdr_api.domain_repositories.study_selection.study_activity_repository import (
+    SelectionHistory as StudyActivitySelectionHistory,
+)
+from clinical_mdr_api.domain_repositories.study_selection.study_arm_repository import (
+    SelectionHistoryArm,
+)
+from clinical_mdr_api.domain_repositories.study_selection.study_branch_arm_repository import (
+    SelectionHistoryBranchArm,
+)
+from clinical_mdr_api.domain_repositories.study_selection.study_cohort_repository import (
+    SelectionHistoryCohort,
+)
 from clinical_mdr_api.domain_repositories.study_selection.study_compound_dosing_repository import (
     SelectionHistory as StudyCompoundDosingSelectionHistory,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_activity_repository import (
-    SelectionHistory as StudyActivitySelectionHistory,
-)
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_arm_repository import (
-    SelectionHistoryArm,
-)
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_branch_arm_repository import (
-    SelectionHistoryBranchArm,
-)
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_cohort_repository import (
-    SelectionHistoryCohort,
-)
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_compound_repository import (
+from clinical_mdr_api.domain_repositories.study_selection.study_compound_repository import (
     StudyCompoundSelectionHistory,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_criteria_repository import (
+from clinical_mdr_api.domain_repositories.study_selection.study_criteria_repository import (
     SelectionHistory as StudyCriteriaSelectionHistory,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_element_repository import (
+from clinical_mdr_api.domain_repositories.study_selection.study_element_repository import (
     SelectionHistoryElement,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_objective_repository import (
+from clinical_mdr_api.domain_repositories.study_selection.study_objective_repository import (
     SelectionHistory as StudyObjectiveSelectionHistory,
 )
 from clinical_mdr_api.models.activities.activity import Activity
-from clinical_mdr_api.models.activity_instruction import ActivityInstructionCreateInput
 from clinical_mdr_api.models.compound import Compound
 from clinical_mdr_api.models.compound_alias import CompoundAlias
 from clinical_mdr_api.models.concept import SimpleNumericValueWithUnit
-from clinical_mdr_api.models.criteria import Criteria, CriteriaCreateInput
-from clinical_mdr_api.models.criteria_template import CriteriaTemplate
 from clinical_mdr_api.models.ct_term import SimpleTermModel
 from clinical_mdr_api.models.ct_term_name import CTTermName
 from clinical_mdr_api.models.duration import DurationJsonModel
-from clinical_mdr_api.models.endpoint import Endpoint, EndpointCreateInput
 from clinical_mdr_api.models.error import BatchErrorResponse
-from clinical_mdr_api.models.objective import Objective, ObjectiveCreateInput
-from clinical_mdr_api.models.timeframe import Timeframe
+from clinical_mdr_api.models.syntax_instances.activity_instruction import (
+    ActivityInstructionCreateInput,
+)
+from clinical_mdr_api.models.syntax_instances.criteria import (
+    Criteria,
+    CriteriaCreateInput,
+)
+from clinical_mdr_api.models.syntax_instances.endpoint import (
+    Endpoint,
+    EndpointCreateInput,
+)
+from clinical_mdr_api.models.syntax_instances.objective import (
+    Objective,
+    ObjectiveCreateInput,
+)
+from clinical_mdr_api.models.syntax_instances.timeframe import Timeframe
+from clinical_mdr_api.models.syntax_templates.criteria_template import CriteriaTemplate
 from clinical_mdr_api.models.utils import BaseModel
 
 
@@ -126,9 +137,9 @@ class StudySelection(BaseModel):
         :return:
         """
         used_template_parameters = []
-        for parameter_value in object_to_clear.parameter_values:
-            for value in parameter_value.values:
-                used_template_parameters.append(value.name)
+        for parameter_term in object_to_clear.parameter_terms:
+            for term in parameter_term.terms:
+                used_template_parameters.append(term.name)
         for template_parameter in used_template_parameters:
             object_to_clear.name = re.sub(
                 rf"\[?{template_parameter}\]?", template_parameter, object_to_clear.name
@@ -188,7 +199,6 @@ class StudySelectionObjectiveCore(StudySelection):
         get_ct_term_objective_level: Callable[[str], CTTermName],
         get_objective_by_uid_version_callback: Callable[[str], Objective],
     ) -> "StudySelectionObjectiveCore":
-
         if study_selection_history.objective_level_uid:
             objective_level = get_ct_term_objective_level(
                 study_selection_history.objective_level_uid
@@ -246,7 +256,6 @@ class StudySelectionObjective(StudySelectionObjectiveCore):
         no_brackets: bool = False,
         accepted_version: bool = False,
     ) -> "StudySelectionObjective":
-
         study_objective_selection = (
             study_selection_objectives_ar.study_objectives_selection
         )
@@ -455,7 +464,6 @@ class StudySelectionEndpoint(StudySelection):
         accepted_version: bool = False,
         no_brackets: bool = False,
     ) -> "StudySelectionEndpoint":
-
         project = find_project_by_study_uid(study_uid)
         assert project is not None
 
@@ -905,7 +913,6 @@ class StudySelectionCompound(StudySelection):
 
 
 class StudySelectionCompoundInput(BaseModel):
-
     compound_alias_uid: Optional[str] = Field(
         None,
         title="compound_alias_uid",
@@ -1036,7 +1043,6 @@ class StudySelectionCriteriaCore(StudySelection):
             [str], CriteriaTemplate
         ],
     ) -> "StudySelectionCriteriaCore":
-
         return cls(
             study_criteria_uid=study_selection_history.study_selection_uid,
             order=study_selection_history.criteria_type_order,
@@ -1060,7 +1066,6 @@ class StudySelectionCriteriaCore(StudySelection):
         study_uid: str,
         get_criteria_by_uid_version_callback: Callable[[str], Criteria],
     ) -> "StudySelectionCriteriaCore":
-
         return cls(
             study_criteria_uid=study_selection_history.study_selection_uid,
             order=study_selection_history.criteria_type_order,
@@ -1172,7 +1177,6 @@ class StudySelectionCriteria(StudySelectionCriteriaCore):
         no_brackets: bool = False,
         accepted_version: bool = False,
     ) -> "StudySelectionCriteria":
-
         study_uid = study_selection_criteria_ar.study_uid
 
         project = find_project_by_study_uid(study_uid)
@@ -1345,7 +1349,6 @@ class StudySelectionActivityCore(CommonStudyActivity, StudySelection):
         get_ct_term_flowchart_group: Callable[[str], CTTermName],
         get_activity_by_uid_version_callback: Callable[[str], Activity],
     ) -> "StudySelectionActivityCore":
-
         return cls(
             study_activity_uid=study_selection_history.study_selection_uid,
             order=study_selection_history.activity_order,
@@ -1394,7 +1397,6 @@ class StudySelectionActivity(StudySelectionActivityCore):
         get_ct_term_flowchart_group: Callable[[str], CTTermName],
         accepted_version: bool = False,
     ) -> "StudySelectionActivity":
-
         study_activity_selection = study_selection_activity_ar.study_objects_selection
         study_uid = study_selection_activity_ar.study_uid
         single_study_selection = study_activity_selection[activity_order - 1]
@@ -1630,7 +1632,6 @@ class StudyActivityScheduleHistory(BaseModel):
 
 
 class StudyActivityScheduleCreateInput(BaseModel):
-
     study_activity_uid: str = Field(
         ..., title="study_activity_uid", description="The related study activity uid"
     )
@@ -2163,7 +2164,6 @@ class StudySelectionArm(StudySelection):
         study_uid: str,
         get_ct_term_arm_type: Callable[[str], CTTermName],
     ) -> "StudySelectionArm":
-
         if study_selection_history.arm_type:
             arm_type_call_back = get_ct_term_arm_type(study_selection_history.arm_type)
         else:
@@ -2191,7 +2191,6 @@ class StudySelectionArm(StudySelection):
 
 
 class StudySelectionArmWithConnectedBranchArms(StudySelectionArm):
-
     arm_connected_branch_arms: Optional[
         Sequence[StudySelectionBranchArmWithoutStudyArm]
     ] = Field(
@@ -2243,7 +2242,6 @@ class StudySelectionArmWithConnectedBranchArms(StudySelectionArm):
 
 
 class StudySelectionArmCreateInput(BaseModel):
-
     name: str = Field(
         None,
         title="study_arm_name",
@@ -2294,7 +2292,6 @@ class StudySelectionArmCreateInput(BaseModel):
 
 
 class StudySelectionArmInput(StudySelectionArmCreateInput):
-
     arm_uid: str = Field(
         None,
         title="study_arm_uid",
@@ -2303,7 +2300,6 @@ class StudySelectionArmInput(StudySelectionArmCreateInput):
 
 
 class StudySelectionArmNewOrder(BaseModel):
-
     new_order: int = Field(
         ...,
         title="new_order",
@@ -2510,6 +2506,10 @@ class StudySelectionElement(StudySelection):
         ..., title="study_element_subtype", description="subtype for the study element"
     )
 
+    element_type: Optional[CTTermName] = Field(
+        ..., title="study_element_type", description="type for the study element"
+    )
+
     study_compound_dosing_count: Optional[int] = Field(
         None, description="Number of compound dosing linked to Study Element"
     )
@@ -2547,9 +2547,20 @@ class StudySelectionElement(StudySelection):
         study_uid: str,
         selection: StudySelectionElementVO,
         order: int,
-        find_simple_term_element_subtype_by_term_uid: Callable,
+        find_simple_term_element_by_term_uid: Callable[[str], CTTermName],
+        get_term_element_type_by_element_subtype: Callable[[str], CTTermName],
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
     ) -> "StudySelectionElement":
+        element_subtype = find_simple_term_element_by_term_uid(
+            selection.element_subtype_uid
+        )
+        element_type = (
+            find_simple_term_element_by_term_uid(
+                get_term_element_type_by_element_subtype(selection.element_subtype_uid)
+            )
+            if get_term_element_type_by_element_subtype(selection.element_subtype_uid)
+            else None
+        )
         return cls(
             study_uid=study_uid,
             element_uid=selection.study_selection_uid,
@@ -2569,9 +2580,8 @@ class StudySelectionElement(StudySelection):
             end_rule=selection.end_rule,
             element_colour=selection.element_colour,
             order=order,
-            element_subtype=find_simple_term_element_subtype_by_term_uid(
-                selection.element_subtype_uid
-            ),
+            element_subtype=element_subtype,
+            element_type=element_type,
             study_compound_dosing_count=selection.study_compound_dosing_count,
             start_date=selection.start_date,
             user_initials=selection.user_initials,
@@ -2587,8 +2597,23 @@ class StudySelectionElement(StudySelection):
         study_selection_history: SelectionHistoryElement,
         study_uid: str,
         get_ct_term_element_subtype: Callable[[str], CTTermName],
+        get_term_element_type_by_element_subtype: Callable[[str], CTTermName],
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
     ) -> "StudySelectionElement":
+        element_subtype = get_ct_term_element_subtype(
+            study_selection_history.element_subtype
+        )
+        element_type = (
+            get_ct_term_element_subtype(
+                get_term_element_type_by_element_subtype(
+                    study_selection_history.element_subtype
+                )
+            )
+            if get_term_element_type_by_element_subtype(
+                study_selection_history.element_subtype
+            )
+            else None
+        )
         return cls(
             study_uid=study_uid,
             order=study_selection_history.order,
@@ -2608,9 +2633,8 @@ class StudySelectionElement(StudySelection):
             start_rule=study_selection_history.element_start_rule,
             end_rule=study_selection_history.element_end_rule,
             element_colour=study_selection_history.element_colour,
-            element_subtype=get_ct_term_element_subtype(
-                study_selection_history.element_subtype
-            ),
+            element_subtype=element_subtype,
+            element_type=element_type,
             start_date=study_selection_history.start_date,
             user_initials=study_selection_history.user_initials,
             end_date=study_selection_history.end_date,
@@ -2621,7 +2645,6 @@ class StudySelectionElement(StudySelection):
 
 
 class StudySelectionElementCreateInput(BaseModel):
-
     name: str = Field(
         None,
         title="study_element_name",
@@ -2678,7 +2701,6 @@ class StudySelectionElementCreateInput(BaseModel):
 
 
 class StudySelectionElementInput(StudySelectionElementCreateInput):
-
     element_uid: str = Field(
         None,
         title="study_element_uid",
@@ -2722,7 +2744,6 @@ class StudyElementTypes(BaseModel):
 
 
 class StudySelectionElementNewOrder(BaseModel):
-
     new_order: int = Field(
         ...,
         title="new_order",
@@ -2740,7 +2761,6 @@ class StudySelectionElementVersion(StudySelectionElement):
 
 
 class StudySelectionBranchArm(StudySelectionBranchArmWithoutStudyArm):
-
     arm_root: StudySelectionArm = Field(
         ..., title="study_arm_root", description="Root for the study branch arm"
     )
@@ -2842,7 +2862,6 @@ class StudySelectionBranchArmHistory(StudySelectionBranchArmWithoutStudyArm):
 
 
 class StudySelectionBranchArmCreateInput(BaseModel):
-
     name: str = Field(
         None,
         title="study_branch_arm_name",
@@ -2893,7 +2912,6 @@ class StudySelectionBranchArmCreateInput(BaseModel):
 
 
 class StudySelectionBranchArmEditInput(StudySelectionBranchArmCreateInput):
-
     branch_arm_uid: str = Field(
         None,
         title="study_branch_arm_uid",
@@ -2902,7 +2920,6 @@ class StudySelectionBranchArmEditInput(StudySelectionBranchArmCreateInput):
 
 
 class StudySelectionBranchArmNewOrder(BaseModel):
-
     new_order: int = Field(
         ...,
         title="new_order",
@@ -2991,7 +3008,6 @@ class StudySelectionCohortWithoutArmBranArmRoots(StudySelection):
 
 
 class StudySelectionCohort(StudySelectionCohortWithoutArmBranArmRoots):
-
     branch_arm_roots: Optional[Sequence[StudySelectionBranchArm]] = Field(
         None,
         title="study_branch_arm_roots",
@@ -3008,10 +3024,9 @@ class StudySelectionCohort(StudySelectionCohortWithoutArmBranArmRoots):
         study_uid: str,
         selection: StudySelectionCohortVO,
         order: int,
-        find_arm_root_by_uid: Callable = None,
+        find_arm_root_by_uid: Optional[Callable] = None,
         find_branch_arm_root_cohort_by_uid: Union[Callable, None] = None,
     ):
-
         """
         Factory method
         :param study_uid
@@ -3060,7 +3075,6 @@ class StudySelectionCohort(StudySelectionCohortWithoutArmBranArmRoots):
 
 
 class StudySelectionCohortHistory(StudySelectionCohortWithoutArmBranArmRoots):
-
     branch_arm_roots_uids: Optional[Sequence[str]] = Field(
         None,
         title="study_branch_arm_roots_uids",
@@ -3079,7 +3093,6 @@ class StudySelectionCohortHistory(StudySelectionCohortWithoutArmBranArmRoots):
         study_selection_history: SelectionHistoryCohort,
         study_uid: str,
     ) -> "StudySelectionCohortHistory":
-
         if study_selection_history.branch_arm_roots:
             branch_arm_roots_uids = study_selection_history.branch_arm_roots
         else:
@@ -3112,7 +3125,6 @@ class StudySelectionCohortHistory(StudySelectionCohortWithoutArmBranArmRoots):
 
 
 class StudySelectionCohortCreateInput(BaseModel):
-
     name: str = Field(
         None,
         title="study_cohort_name",
@@ -3163,7 +3175,6 @@ class StudySelectionCohortCreateInput(BaseModel):
 
 
 class StudySelectionCohortEditInput(StudySelectionCohortCreateInput):
-
     cohort_uid: str = Field(
         None,
         title="study_cohort_uid",
@@ -3172,7 +3183,6 @@ class StudySelectionCohortEditInput(StudySelectionCohortCreateInput):
 
 
 class StudySelectionCohortNewOrder(BaseModel):
-
     new_order: int = Field(
         ...,
         title="new_order",
@@ -3190,7 +3200,6 @@ class StudySelectionCohortVersion(StudySelectionCohortHistory):
 
 
 class StudyCompoundDosing(StudySelection):
-
     study_compound_dosing_uid: Optional[str] = Field(
         ...,
         title="study_compound_dosing_uid",
@@ -3298,7 +3307,6 @@ class StudyCompoundDosing(StudySelection):
 
 
 class StudyCompoundDosingInput(BaseModel):
-
     study_compound_uid: str = Field(
         ..., title="study_compound_uid", description="The related study compound uid"
     )

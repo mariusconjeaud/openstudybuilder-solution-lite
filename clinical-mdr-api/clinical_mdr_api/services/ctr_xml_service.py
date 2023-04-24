@@ -178,7 +178,6 @@ class ODMBuilder:
         odm_global = ctrxml.GlobalVariables()
 
         if self.study_description:
-
             if self.study_description.study_short_title:
                 translated_title = [
                     ctrxml.TranslatedText(
@@ -211,11 +210,11 @@ class ODMBuilder:
     def get_odm_meta_data_version(self) -> ctrxml.MetaDataVersion:
         return ctrxml.MetaDataVersion(
             oid=(
-                self.study_version_metadata.locked_version_number
+                self.study_version_metadata.version_number
                 or self.study_version_metadata.version_timestamp.isoformat()
             ),
             name=self.study_version_metadata.study_status,
-            description=self.study_version_metadata.locked_version_info,
+            description=self.study_version_metadata.version_description,
             study_event_def=self.get_odm_study_event_defs(),
             form_def=self.get_odm_form_defs(),
             item_group_def=self.get_odm_item_group_defs(),

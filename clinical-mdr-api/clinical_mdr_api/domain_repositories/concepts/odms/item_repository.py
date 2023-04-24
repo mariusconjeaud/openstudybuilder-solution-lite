@@ -79,7 +79,9 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                 if root.has_codelist.get_or_none()
                 else None,
                 term_uids=[term.uid for term in root.has_codelist_term.all()],
-                activity_uids=[activity.uid for activity in root.has_activity.all()],
+                activity_uid=root.has_activity.get_or_none().uid
+                if root.has_activity.get_or_none()
+                else None,
                 vendor_element_uids=[
                     vendor_element.uid
                     for vendor_element in root.has_vendor_element.all()
@@ -122,7 +124,7 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                 unit_definition_uids=input_dict.get("unit_definition_uids"),
                 codelist_uid=input_dict.get("codelist_uid"),
                 term_uids=input_dict.get("term_uids"),
-                activity_uids=input_dict.get("activity_uids"),
+                activity_uid=input_dict.get("activity_uid"),
                 vendor_element_uids=input_dict.get("vendor_element_uids"),
                 vendor_attribute_uids=input_dict.get("vendor_attribute_uids"),
                 vendor_element_attribute_uids=input_dict.get(
@@ -171,7 +173,7 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hud:HAS_UNIT_DEFINITION]->(udr:UnitDefinitionRoot)-[:LATEST]->(udv:UnitDefinitionValue) | {{uid: udr.uid, name: udv.name, mandatory: hud.mandatory, order: hud.order}}] AS unit_definitions,
         head([(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[:HAS_CODELIST]->(ctcr:CTCodelistRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTCodelistAttributesRoot)-[:LATEST]->(ctcav:CTCodelistAttributesValue) | ctcr.uid]) AS codelist_uid,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hct:HAS_CODELIST_TERM]->(cttr:CTTermRoot)-[:HAS_NAME_ROOT]->(cttnr:CTTermNameRoot)-[:LATEST]->(cttnv:CTTermNameValue) | {{uid: cttr.uid, name: cttnv.name, mandatory: hct.mandatory, order: hct.order}}] AS terms,
-        [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[:HAS_ACTIVITY]->(ar:ActivityRoot)-[:LATEST]->(av:ActivityValue) | {{uid: ar.uid, name: av.name}}] AS activities,
+        head([(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[:HAS_ACTIVITY]->(ar:ActivityRoot)-[:LATEST]->(av:ActivityValue) | ar.uid]) AS activity_uid,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hve:HAS_VENDOR_ELEMENT]->(ver:OdmVendorElementRoot)-[:LATEST]->(vev:OdmVendorElementValue) | {{uid: ver.uid, name: vev.name, value: hve.value}}] AS vendor_elements,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hva:HAS_VENDOR_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name, value: hva.value}}] AS vendor_attributes,
         [(concept_value)<-[:{"|".join(only_specific_status)}]-(:OdmItemRoot)-[hvea:HAS_VENDOR_ELEMENT_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) | {{uid: var.uid, name: vav.name, value: hvea.value}}] AS vendor_element_attributes
@@ -181,7 +183,6 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
         [alias in aliases | alias.uid] AS alias_uids,
         [unit_definition in unit_definitions | unit_definition.uid] AS unit_definition_uids,
         [term in terms | term.uid] AS term_uids,
-        [activity in activities | activity.uid] AS activity_uids,
         [vendor_element in vendor_elements | vendor_element.uid] AS vendor_element_uids,
         [vendor_attribute in vendor_attributes | vendor_attribute.uid] AS vendor_attribute_uids,
         [vendor_element_attribute in vendor_element_attributes | vendor_element_attribute.uid] AS vendor_element_attribute_uids
@@ -294,17 +295,32 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
             vendor=rel.vendor,
         )
 
+    def _get_latest_version_for_status(
+        self, root: VersionRoot, value: VersionValue, status: LibraryItemStatus
+    ) -> VersionRelationship:
+        all_rels = root.has_version.all_relationships(value)
+        rels = [rel for rel in all_rels if rel.status == status.value]
+        if len(rels) == 0:
+            raise RuntimeError(f"No HAS_VERSION was found with status {status}")
+        latest = max(rels, key=lambda r: float(r.version))
+        return latest
+
     def find_term_with_item_relation_by_item_uid(self, uid: str, term_uid: str):
         def _get_relationship():
             if ct_term_attributes_value_draft:
-                rel_data = ct_term_attributes_root.latest_draft.relationship(
-                    ct_term_attributes_value
+                rel_data = self._get_latest_version_for_status(
+                    ct_term_attributes_root,
+                    ct_term_attributes_value,
+                    LibraryItemStatus.DRAFT,
                 )
                 if rel_data and not rel_data.end_date:
                     return rel_data
+
             if ct_term_attributes_value_final:
-                rel_data = ct_term_attributes_root.latest_final.relationship(
-                    ct_term_attributes_value
+                rel_data = self._get_latest_version_for_status(
+                    ct_term_attributes_root,
+                    ct_term_attributes_value,
+                    LibraryItemStatus.FINAL,
                 )
                 if not rel_data.end_date:
                     return rel_data

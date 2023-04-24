@@ -4,7 +4,6 @@ from typing import Any, Generic, Optional, Sequence, TypeVar
 
 from neomodel import db
 from pydantic import BaseModel
-from starlette.requests import Request
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain.versioned_object_aggregate import (
@@ -33,11 +32,6 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
         self, input_property: Any, previous_property: Any
     ):
         return input_property if input_property is not None else previous_property
-
-    def get_codelist_etag(self, request: Request) -> str:
-        codelist_uid = request.path_params["codelist_uid"]
-        etag = self.repository.get_codelist_etag_value(codelist_uid=codelist_uid)
-        return f"{codelist_uid}_{etag}"
 
     aggregate_class: type
     version_class: type
@@ -70,7 +64,6 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[BaseModel]:
-
         self.enforce_catalogue_library_package(catalogue_name, library, package)
 
         all_ct_codelists = self.repository.find_all(
@@ -102,7 +95,6 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence:
-
         self.enforce_catalogue_library_package(catalogue_name, library, package)
 
         header_values = self.repository.get_distinct_headers(
@@ -126,7 +118,6 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
         at_specific_date: Optional[datetime] = None,
         status: Optional[str] = None,
     ) -> BaseModel:
-
         item = self._find_by_uid_or_raise_not_found(
             codelist_uid=codelist_uid,
             version=version,

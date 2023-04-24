@@ -8,18 +8,16 @@
         "library_name": "Test library",
         "name": "Test objective",
         "objective_template_uid": "{otuid}",
-        "parameter_values": [
+        "parameter_terms": [
           {
             "position": 1,
             "conjunction": "and",
-            "values": [
-            ]
+            "terms": []
           },
           {
             "position": 2,
             "conjunction": "and",
-            "values": [
-            ]
+            "terms": []
           }
         ]
       },
@@ -50,20 +48,19 @@
         "objective_template": {
           "name": "{otname}",
           "name_plain": "{otname}",
+          "guidance_text": null,
           "uid": "{otuid}"
         },
-        "parameter_values": [
+        "parameter_terms": [
           {
             "position": 1,
             "conjunction": "and",
-            "values": [
-            ]
+            "terms": []
           },
           {
             "position": 2,
             "conjunction": "and",
-            "values": [
-            ]
+            "terms": []
           }
         ],
         "library": {
@@ -74,7 +71,7 @@
     }
   },
   {
-    "name": "Test name generation of objective with 1 template parameter value + 0 template parameter values",
+    "name": "Test name generation of objective with 1 template parameter term + 0 template parameter terms",
     "request": {
       "headers": {},
       "method": "POST",
@@ -82,11 +79,11 @@
         "library_name": "Test library",
         "name": "Test objective",
         "objective_template_uid": "{otuid}",
-        "parameter_values": [
+        "parameter_terms": [
           {
             "position": 1,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Indication",
@@ -98,8 +95,7 @@
           {
             "position": 2,
             "conjunction": "and",
-            "values": [
-            ]
+            "terms": []
           }
         ]
       },
@@ -130,13 +126,14 @@
         "objective_template": {
           "name": "{otname}",
           "name_plain": "{otname}",
+          "guidance_text": null,
           "uid": "{otuid}"
         },
-        "parameter_values": [
+        "parameter_terms": [
           {
             "position": 1,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Indication",
@@ -148,8 +145,7 @@
           {
             "position": 2,
             "conjunction": "and",
-            "values": [
-            ]
+            "terms": []
           }
         ],
         "library": {
@@ -160,7 +156,7 @@
     }
   },
   {
-    "name": "Test name generation of objective with 2 template parameters values + 0 template parameter values",
+    "name": "Test name generation of objective with 2 template parameters terms + 0 template parameter terms",
     "request": {
       "headers": {},
       "method": "POST",
@@ -168,11 +164,11 @@
         "library_name": "Test library",
         "name": "Test objective",
         "objective_template_uid": "{otuid}",
-        "parameter_values": [
+        "parameter_terms": [
           {
             "position": 1,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Indication",
@@ -190,8 +186,7 @@
           {
             "position": 2,
             "conjunction": "and",
-            "values": [
-            ]
+            "terms": []
           }
         ]
       },
@@ -222,13 +217,14 @@
         "objective_template": {
           "name": "{otname}",
           "name_plain": "{otname}",
+          "guidance_text": null,
           "uid": "{otuid}"
         },
-        "parameter_values": [
+        "parameter_terms": [
           {
             "position": 1,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Indication",
@@ -246,8 +242,7 @@
           {
             "position": 2,
             "conjunction": "and",
-            "values": [
-            ]
+            "terms": []
           }
         ],
         "library": {
@@ -258,7 +253,7 @@
     }
   },
   {
-    "name": "Test name generation of objective with 3 template parameters values + 0 template parameter values",
+    "name": "Test name generation of objective with 3 template parameters terms + 0 template parameter terms",
     "request": {
       "headers": {},
       "method": "POST",
@@ -266,11 +261,11 @@
         "library_name": "Test library",
         "name": "Test objective",
         "objective_template_uid": "{otuid}",
-        "parameter_values": [
+        "parameter_terms": [
           {
             "position": 1,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Indication",
@@ -294,8 +289,7 @@
           {
             "position": 2,
             "conjunction": "and",
-            "values": [
-            ]
+            "terms": []
           }
         ]
       },
@@ -326,13 +320,14 @@
         "objective_template": {
           "name": "{otname}",
           "name_plain": "{otname}",
+          "guidance_text": null,
           "uid": "{otuid}"
         },
-        "parameter_values": [
+        "parameter_terms": [
           {
             "position": 1,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Indication",
@@ -356,8 +351,7 @@
           {
             "position": 2,
             "conjunction": "and",
-            "values": [
-            ]
+            "terms": []
           }
         ],
         "library": {
@@ -368,7 +362,7 @@
     }
   },
   {
-    "name": "Test name generation of objective with 0 template parameter values + 1 template parameter value",
+    "name": "Test name generation of objective with 0 template parameter terms + 1 template parameter term",
     "request": {
       "headers": {},
       "method": "POST",
@@ -376,17 +370,16 @@
         "library_name": "Test library",
         "name": "Test objective",
         "objective_template_uid": "{otuid}",
-        "parameter_values": [
+        "parameter_terms": [
           {
             "position": 1,
             "conjunction": "and",
-            "values": [
-            ]
+            "terms": []
           },
-           {
+          {
             "position": 2,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Intervention",
@@ -424,19 +417,19 @@
         "objective_template": {
           "name": "{otname}",
           "name_plain": "{otname}",
+          "guidance_text": null,
           "uid": "{otuid}"
         },
-        "parameter_values": [
+        "parameter_terms": [
           {
             "position": 1,
             "conjunction": "and",
-            "values": [
-            ]
+            "terms": []
           },
-           {
+          {
             "position": 2,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Intervention",
@@ -454,7 +447,7 @@
     }
   },
   {
-    "name": "Test name generation of objective with 1 template parameter value + 1 template parameter value",
+    "name": "Test name generation of objective with 1 template parameter term + 1 template parameter term",
     "request": {
       "headers": {},
       "method": "POST",
@@ -462,11 +455,11 @@
         "library_name": "Test library",
         "name": "Test objective",
         "objective_template_uid": "{otuid}",
-        "parameter_values": [
+        "parameter_terms": [
           {
             "position": 1,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Indication",
@@ -478,7 +471,7 @@
           {
             "position": 2,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Intervention",
@@ -516,13 +509,14 @@
         "objective_template": {
           "name": "{otname}",
           "name_plain": "{otname}",
+          "guidance_text": null,
           "uid": "{otuid}"
         },
-        "parameter_values": [
+        "parameter_terms": [
           {
             "position": 1,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Indication",
@@ -531,10 +525,10 @@
               }
             ]
           },
-             {
+          {
             "position": 2,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Intervention",
@@ -552,7 +546,7 @@
     }
   },
   {
-    "name": "Test name generation of objective with 2 template parameters values + 1 template parameter value",
+    "name": "Test name generation of objective with 2 template parameters terms + 1 template parameter term",
     "request": {
       "headers": {},
       "method": "POST",
@@ -560,11 +554,11 @@
         "library_name": "Test library",
         "name": "Test objective",
         "objective_template_uid": "{otuid}",
-        "parameter_values": [
+        "parameter_terms": [
           {
             "position": 1,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Indication",
@@ -582,7 +576,7 @@
           {
             "position": 2,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Intervention",
@@ -620,13 +614,14 @@
         "objective_template": {
           "name": "{otname}",
           "name_plain": "{otname}",
+          "guidance_text": null,
           "uid": "{otuid}"
         },
-        "parameter_values": [
+        "parameter_terms": [
           {
             "position": 1,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Indication",
@@ -644,7 +639,7 @@
           {
             "position": 2,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Intervention",
@@ -662,7 +657,7 @@
     }
   },
   {
-    "name": "Test name generation of objective with 3 template parameters values + 1 template parameter value",
+    "name": "Test name generation of objective with 3 template parameters terms + 1 template parameter term",
     "request": {
       "headers": {},
       "method": "POST",
@@ -670,11 +665,11 @@
         "library_name": "Test library",
         "name": "Test objective",
         "objective_template_uid": "{otuid}",
-        "parameter_values": [
+        "parameter_terms": [
           {
             "position": 1,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Indication",
@@ -695,10 +690,10 @@
               }
             ]
           },
-           {
+          {
             "position": 2,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Intervention",
@@ -736,13 +731,14 @@
         "objective_template": {
           "name": "{otname}",
           "name_plain": "{otname}",
+          "guidance_text": null,
           "uid": "{otuid}"
         },
-        "parameter_values": [
+        "parameter_terms": [
           {
             "position": 1,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Indication",
@@ -763,10 +759,10 @@
               }
             ]
           },
-           {
+          {
             "position": 2,
             "conjunction": "and",
-            "values": [
+            "terms": [
               {
                 "index": 1,
                 "type": "Intervention",

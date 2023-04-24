@@ -118,7 +118,13 @@ export default {
       if (!isValid) return
       this.working = true
       try {
-        const resp = await controlledTerminology.updateCodelistTermNames(this.value.termUid, this.form)
+        let resp = await controlledTerminology.updateCodelistTermNames(this.value.term_uid, this.form)
+        const orderData = {
+          codelist_uid: this.value.codelist_uid,
+          new_order: this.form.order
+        }
+        resp = await controlledTerminology.updateCodelistTermOrder(this.value.term_uid, orderData)
+        resp = await controlledTerminology.getCodelistTermNames(this.value.term_uid)
         this.$emit('input', resp.data)
         bus.$emit('notification', { msg: this.$t('CodelistTermNamesForm.update_success') })
         this.close()

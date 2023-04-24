@@ -1,0 +1,13 @@
+services:
+  frontend:
+    build:
+      args:
+        NGINX_IMAGE: ${NGINX_IMAGE:-nginx:alpine}
+        NODE_IMAGE: ${NODE_IMAGE:-node:lts-alpine}
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5005:5005"
+    depends_on:
+      - "api"
+      - "documentation"

@@ -38,7 +38,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionValue,
 )
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
-    TemplateParameterValueRoot,
+    TemplateParameterTermRoot,
 )
 from clinical_mdr_api.models import DictionaryCodelist
 from clinical_mdr_api.repositories._utils import (
@@ -53,7 +53,6 @@ from clinical_mdr_api.repositories._utils import (
 class DictionaryCodelistGenericRepository(
     LibraryItemRepositoryImplBase[DictionaryCodelistAR]
 ):
-
     root_class = DictionaryCodelistRoot
     value_class = DictionaryCodelistValue
 
@@ -146,10 +145,6 @@ class DictionaryCodelistGenericRepository(
     def generic_alias_clause(self):
         return """
             DISTINCT dictionary_codelist_root, dictionary_codelist_value, library,
-            head([(dictionary_codelist_root)-[ld:LATEST_DRAFT]->(dictionary_codelist_value) | ld]) AS ld,
-            head([(dictionary_codelist_root)-[lf:LATEST_FINAL]->(dictionary_codelist_value) | lf]) AS lf,
-            head([(dictionary_codelist_root)-[lr:LATEST_RETIRED]->(dictionary_codelist_value) | lr]) AS lr,
-            head([(dictionary_codelist_root)-[hv:HAS_VERSION]->(dictionary_codelist_value) | hv]) AS hv,
             [(dictionary_codelist_root)-[has_term:HAS_TERM]->(dictionary_term_root) | {
                 term_uid: dictionary_term_root.uid,
                 author: has_term.author
@@ -159,35 +154,37 @@ class DictionaryCodelistGenericRepository(
                 author: had_term.author
             }] as had_terms
             WITH
+                dictionary_codelist_root, dictionary_codelist_value,
                 dictionary_codelist_root.uid AS codelist_uid,
                 dictionary_codelist_value.name AS name,
                 "TemplateParameter" IN labels(dictionary_codelist_value) AS template_parameter,
                 library.name AS library_name,
                 library.is_editable AS is_library_editable,
                 has_terms,
-                had_terms,
-                ld, lf, lr, hv
-                CALL apoc.case(
-                 [
-                   ld IS NOT NULL AND ld.end_date IS NULL, 'RETURN ld as version_rel',
-                   lf IS NOT NULL AND lf.end_date IS NULL, 'RETURN lf as version_rel',
-                   lr IS NOT NULL AND lr.end_date IS NULL, 'RETURN lr as version_rel',
-                   ld IS NULL AND lf IS NULL AND lr IS NULL, 'RETURN hv as version_rel'
-                 ],
-                 '',
-                 {ld:ld, lf:lf, lr:lr, hv:hv})
-                 yield value
+                had_terms
+                CALL {
+                    WITH dictionary_codelist_root, dictionary_codelist_value
+                    MATCH (dictionary_codelist_root)-[hv:HAS_VERSION]-(dictionary_codelist_value)
+                    WITH hv
+                    ORDER BY
+                        toInteger(split(hv.version, '.')[0]) ASC,
+                        toInteger(split(hv.version, '.')[1]) ASC,
+                        hv.end_date ASC,
+                        hv.start_date ASC
+                    WITH collect(hv) as hvs
+                    RETURN last(hvs) AS version_rel
+                }
             WITH
                 codelist_uid,
                 name,
                 template_parameter,
                 library_name,
                 is_library_editable,
-                value.version_rel.start_date AS start_date,
-                value.version_rel.status AS status,
-                value.version_rel.version AS version,
-                value.version_rel.change_description AS change_description,
-                value.version_rel.user_initials AS user_initials,
+                version_rel.start_date AS start_date,
+                version_rel.status AS status,
+                version_rel.version AS version,
+                version_rel.change_description AS change_description,
+                version_rel.user_initials AS user_initials,
                 has_terms AS current_terms,
                 had_terms AS previous_terms
         """
@@ -232,7 +229,6 @@ class DictionaryCodelistGenericRepository(
             total_count=total_count,
             return_model=DictionaryCodelist,
         )
-
         result_array, attributes_names = query.execute()
         extracted_items = self._retrieve_codelists_from_cypher_res(
             result_array, attributes_names
@@ -278,7 +274,6 @@ class DictionaryCodelistGenericRepository(
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence[str]:
-
         # Match clause
         match_clause = self.generic_match_clause(dictionary_type=library)
 
@@ -335,7 +330,13 @@ class DictionaryCodelistGenericRepository(
         value = self.value_class(name=item.name)
         self._db_save_node(root)
 
-        (root, value, _, _, _,) = self._db_create_and_link_nodes(
+        (
+            root,
+            value,
+            _,
+            _,
+            _,
+        ) = self._db_create_and_link_nodes(
             root, value, self._library_item_metadata_vo_to_datadict(relation_data)
         )
 
@@ -424,12 +425,12 @@ class DictionaryCodelistGenericRepository(
                 WITH dictionary_codelist_root, dictionary_codelist_value
 
                 MATCH (dictionary_codelist_root)-[:HAS_TERM]->(dictionary_term_root:DictionaryTermRoot)-[:LATEST]->(dictionary_term_value)
-                MERGE (dictionary_codelist_value)-[hv:HAS_VALUE]->(dictionary_term_root)
-                SET dictionary_term_root:TemplateParameterValueRoot
-                SET dictionary_term_value:TemplateParameterValue
+                MERGE (dictionary_codelist_value)-[hpt:HAS_PARAMETER_TERM]->(dictionary_term_root)
+                SET dictionary_term_root:TemplateParameterTermRoot
+                SET dictionary_term_value:TemplateParameterTermValue
             """
             db.cypher_query(query, {"codelist_uid": versioned_object.uid})
-            TemplateParameterValueRoot.generate_node_uids_if_not_present()
+            TemplateParameterTermRoot.generate_node_uids_if_not_present()
         else:
             query = """
                 MATCH (dictionary_codelist_root:DictionaryCodelistRoot {uid: $codelist_uid})-[:LATEST]->(dictionary_codelist_value)
@@ -437,10 +438,10 @@ class DictionaryCodelistGenericRepository(
                 WITH dictionary_codelist_root, dictionary_codelist_value
 
                 MATCH (dictionary_codelist_root)-[:HAS_TERM]->(dictionary_term_root:DictionaryTermRoot)-[:LATEST]->(dictionary_term_value)
-                MATCH (dictionary_codelist_value)-[hv:HAS_VALUE]->(dictionary_term_root)
-                DELETE hv
-                REMOVE dictionary_term_root:TemplateParameterValueRoot
-                REMOVE dictionary_term_value:TemplateParameterValue
+                MATCH (dictionary_codelist_value)-[hpt:HAS_PARAMETER_TERM]->(dictionary_term_root)
+                DELETE hpt
+                REMOVE dictionary_term_root:TemplateParameterTermRoot
+                REMOVE dictionary_term_value:TemplateParameterTermValue
             """
             db.cypher_query(query, {"codelist_uid": versioned_object.uid})
 

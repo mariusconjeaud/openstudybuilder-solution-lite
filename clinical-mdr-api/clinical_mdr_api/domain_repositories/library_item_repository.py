@@ -3,7 +3,6 @@ import copy
 from datetime import datetime
 from typing import (
     Any,
-    Dict,
     Iterable,
     List,
     Mapping,
@@ -21,14 +20,8 @@ from neomodel.exceptions import DoesNotExist
 
 from clinical_mdr_api import config, exceptions
 from clinical_mdr_api.domain._utils import convert_to_plain
-from clinical_mdr_api.domain.library.parameter_value import (
-    ComplexParameterValue,
-    NumericParameterValueVO,
-    ParameterValueEntryVO,
-    SimpleParameterValueVO,
-)
+from clinical_mdr_api.domain.syntax_templates.template import InstantiationCountsVO
 from clinical_mdr_api.domain.versioned_object_aggregate import (
-    InstantiationCountsVO,
     LibraryItemAggregateRootBase,
     LibraryItemMetadataVO,
     LibraryItemStatus,
@@ -40,19 +33,12 @@ from clinical_mdr_api.domain_repositories._generic_repository_interface import (
 from clinical_mdr_api.domain_repositories.generic_repository import RepositoryImpl
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     ControlledTerminology,
-    CTTermRoot,
 )
-from clinical_mdr_api.domain_repositories.models.dictionary import DictionaryTermRoot
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
     VersionRoot,
     VersionValue,
-)
-from clinical_mdr_api.domain_repositories.models.template_parameter import (
-    ParameterTemplateRoot,
-    TemplateParameterComplexRoot,
-    TemplateParameterComplexValue,
 )
 from clinical_mdr_api.exceptions import BusinessLogicException, NotFoundException
 from clinical_mdr_api.repositories._utils import sb_clear_cache
@@ -94,10 +80,6 @@ class LibraryItemRepositoryImplBase(
     value_class: type
     root_class: type
 
-    def check_usage_count(self, uid: str) -> int:
-        itm: VersionRoot = self.root_class.nodes.get(uid=uid)
-        return len(itm.has_template.all())
-
     def exists_by(self, property_name: str, value: str, on_root: bool = False) -> bool:
         if not on_root:
             query = f"""
@@ -127,14 +109,6 @@ class LibraryItemRepositoryImplBase(
 
     def check_exists_by_name(self, name: str) -> bool:
         return self.exists_by("name", name)
-
-    def check_exists_by_name_in_library(self, name: str, library: str) -> bool:
-        query = f"""
-            MATCH (:Library {{name: $library}})-[:{self.root_class.LIBRARY_REL_LABEL}]->(or:{self.root_class.__label__})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED|LATEST]->(:{self.value_class.__label__} {{name: $name}})
-            RETURN or
-            """
-        result, _ = db.cypher_query(query, {"name": name, "library": library})
-        return len(result) > 0 and len(result[0]) > 0
 
     def find_uid_by_name(self, name: str) -> Optional[str]:
         cypher_query = f"""
@@ -167,16 +141,23 @@ class LibraryItemRepositoryImplBase(
     def _get_or_create_value(
         self, root: VersionRoot, ar: _AggregateRootType
     ) -> VersionValue:
-        for itm in root.has_version.filter(name=ar.name):
+        (
+            has_version_rel,
+            _,
+            latest_draft_rel,
+            latest_final_rel,
+            latest_retired_rel,
+        ) = self._get_version_relation_keys(root)
+        for itm in has_version_rel.filter(name=ar.name):
             return itm
 
-        latest_draft = root.latest_draft.get_or_none()
+        latest_draft = latest_draft_rel.get_or_none()
         if latest_draft and not self._has_data_changed(ar, latest_draft):
             return latest_draft
-        latest_final = root.latest_final.get_or_none()
+        latest_final = latest_final_rel.get_or_none()
         if latest_final and not self._has_data_changed(ar, latest_final):
             return latest_final
-        latest_retired = root.latest_retired.get_or_none()
+        latest_retired = latest_retired_rel.get_or_none()
         if latest_retired and not self._has_data_changed(ar, latest_retired):
             return latest_retired
 
@@ -240,7 +221,7 @@ class LibraryItemRepositoryImplBase(
                 if not library.is_editable:
                     raise BusinessLogicException(
                         f"The library with the name='{new_library.name}' does not allow to create objects."
-                    )  # noqa: E501
+                    )
             except DoesNotExist as exc:
                 raise NotFoundException(
                     f"The library with the name='{versioned_object.library.name}' could not be found."
@@ -251,15 +232,21 @@ class LibraryItemRepositoryImplBase(
         if self._is_repository_related_to_ct():
             root, _, _, _ = versioned_object.repository_closure_data
 
-        # self._db_save_node(root)
+        (
+            _,
+            has_latest_value_rel,
+            latest_draft_rel,
+            latest_final_rel,
+            latest_retired_rel,
+        ) = self._get_version_relation_keys(root)
         is_data_changed = False
         if self._is_new_version_necessary(versioned_object, value):
             # Creating nev value object if necessary
             new_value = self._get_or_create_value(root, versioned_object)
 
             # recreating latest_value relationship
-            self._db_remove_relationship(root.has_latest_value, value)
-            self._db_create_relationship(root.has_latest_value, new_value)
+            self._db_remove_relationship(has_latest_value_rel)
+            self._db_create_relationship(has_latest_value_rel, new_value)
             is_data_changed = True
         else:
             new_value = value
@@ -272,24 +259,22 @@ class LibraryItemRepositoryImplBase(
             # Updating latest_draft nad latest_final relationship if necessary
             if versioned_object.item_metadata.status == LibraryItemStatus.DRAFT:
                 self._recreate_relationship(
-                    root, root.latest_draft, new_value, versioning_data
+                    root, latest_draft_rel, new_value, versioning_data
                 )
-                self._close_relationship(root, root.latest_final, versioning_data)
+                self._close_relationship(root, latest_final_rel, versioning_data)
 
             elif versioned_object.item_metadata.status == LibraryItemStatus.FINAL:
                 self._recreate_relationship(
-                    root, root.latest_final, new_value, versioning_data
+                    root, latest_final_rel, new_value, versioning_data
                 )
-                self._close_relationship(root, root.latest_draft, versioning_data)
-                self._close_relationship(root, root.latest_retired, versioning_data)
+                self._close_relationship(root, latest_draft_rel, versioning_data)
+                self._close_relationship(root, latest_retired_rel, versioning_data)
 
-            elif (
-                versioned_object.item_metadata.status == LibraryItemStatus.RETIRED
-            ):  # noqa: E501
+            elif versioned_object.item_metadata.status == LibraryItemStatus.RETIRED:
                 self._recreate_relationship(
-                    root, root.latest_retired, new_value, versioning_data
+                    root, latest_retired_rel, new_value, versioning_data
                 )
-                self._close_relationship(root, root.latest_final, versioning_data)
+                self._close_relationship(root, latest_final_rel, versioning_data)
 
         # recreating parameters connections
         self._maintain_parameters(versioned_object, root, new_value)
@@ -305,14 +290,24 @@ class LibraryItemRepositoryImplBase(
         parameters: Mapping[str, Any],
     ):
         old_value = relation.get_or_none()
+        (
+            has_version_rel,
+            _,
+            _,
+            _,
+            _,
+        ) = self._get_version_relation_keys(root)
 
         if old_value is not None:
-            old_rel = relation.relationship(old_value)
-            old_parameters = old_rel.to_dict()
             self._db_remove_relationship(relation)
-            old_parameters["end_date"] = parameters["start_date"]
-            root.has_version.connect(old_value, old_parameters)
-        self._db_create_relationship(relation, value, parameters)
+        all_hvs = has_version_rel.all_relationships(value)
+        # Set any missing end_date to the new start_date
+        for hv in all_hvs:
+            if hv.end_date is None:
+                hv.end_date = parameters["start_date"]
+                hv.save()
+        has_version_rel.connect(value, parameters)
+        self._db_create_relationship(relation, value)
 
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def _close_relationship(
@@ -321,27 +316,26 @@ class LibraryItemRepositoryImplBase(
         relation: VersionRelationship,
         parameters: Mapping[str, Any],
     ):
-        old_value = relation.get_or_none()
-
-        if old_value is not None:
-            old_rel = relation.relationship(old_value)
-            if old_rel.end_date is None:
-                old_parameters = old_rel.to_dict()
-                self._db_remove_relationship(relation)
-                old_parameters["end_date"] = parameters["start_date"]
-                root.has_version.connect(old_value, old_parameters)
+        (
+            has_version_rel,
+            _,
+            _,
+            _,
+            _,
+        ) = self._get_version_relation_keys(root)
+        all_values = has_version_rel.all()
+        for value in all_values:
+            all_rels = has_version_rel.all_relationships(value)
+            self._db_remove_relationship(relation)
+            # Set any missing end_date to the new start_date, for all except the new version
+            for rel in all_rels:
+                if rel.version != parameters["version"] and rel.end_date is None:
+                    rel.end_date = parameters["start_date"]
+                    rel.save()
 
     def _get_library(self, library_name: str) -> Library:
         # Finds library in database based on library name
         return Library.nodes.get(name=library_name)
-
-    def _get_indication(self, uid: str) -> DictionaryTermRoot:
-        # Finds indication in database based on root node uid
-        return DictionaryTermRoot.nodes.get(uid=uid)
-
-    def _get_category(self, uid: str) -> CTTermRoot:
-        # Finds category in database based on root node uid
-        return CTTermRoot.nodes.get(uid=uid)
 
     def find_all(
         self,
@@ -367,18 +361,25 @@ class LibraryItemRepositoryImplBase(
         for item in items:
             root: VersionRoot = item
             library: Library = root.has_library.get_or_none()
+            (
+                _,
+                has_latest_value_rel,
+                latest_draft_rel,
+                latest_final_rel,
+                latest_retired_rel,
+            ) = self._get_version_relation_keys(root)
 
             if library and library_name is not None and library_name != library.name:
                 continue
 
             if status is None:
-                value: VersionValue = root.has_latest_value.single()
+                value: VersionValue = has_latest_value_rel.single()
             elif status == LibraryItemStatus.FINAL:
-                value: VersionValue = root.latest_final.single()
+                value: VersionValue = latest_final_rel.single()
             elif status == LibraryItemStatus.DRAFT:
-                value: VersionValue = root.latest_draft.single()
+                value: VersionValue = latest_draft_rel.single()
             elif status == LibraryItemStatus.RETIRED:
-                value: VersionValue = root.latest_retired.single()
+                value: VersionValue = latest_retired_rel.single()
 
             relationship: VersionRelationship = self._get_latest_version(root, value)
             if return_study_count:
@@ -401,35 +402,70 @@ class LibraryItemRepositoryImplBase(
     def _get_study_count(self, item: VersionValue) -> int:
         return item.get_study_count()
 
-    def _get_latest_version(
-        self, root: VersionRoot, value: VersionValue, status: LibraryItemStatus = None
+    def _get_latest_version_for_status(
+        self, root: VersionRoot, value: VersionValue, status: LibraryItemStatus
     ) -> VersionRelationship:
+        (
+            has_version_rel,
+            _,
+            _,
+            _,
+            _,
+        ) = self._get_version_relation_keys(root)
 
-        if status is not None:
-            if status == LibraryItemStatus.DRAFT:
-                rel_data = root.latest_draft.relationship(value)
-            elif status == LibraryItemStatus.FINAL:
-                rel_data = root.latest_final.relationship(value)
-            elif status == LibraryItemStatus.RETIRED:
-                rel_data = root.latest_retired.relationship(value)
-            return rel_data
+        all_rels = has_version_rel.all_relationships(value)
+        rels = [rel for rel in all_rels if rel.status == status.value]
+        if len(rels) == 0:
+            raise RuntimeError(f"No HAS_VERSION was found with status {status}")
+        if len(rels) == 1:
+            return rels[0]
+        all_versions = [rel.version for rel in rels]
+        highest_version = max(
+            all_versions,
+            key=lambda v: 1000000 * int(v.split(".")[0]) + int(v.split(".")[1]),
+        )
+        all_latest = [rel for rel in all_rels if rel.version == highest_version]
+        return self._find_latest_version_in(all_latest)
 
-        latest_draft = root.latest_draft.get_or_none()
-        latest_final = root.latest_final.get_or_none()
-        latest_retired = root.latest_retired.get_or_none()
-        if latest_draft:
-            rel_data = root.latest_draft.relationship(value)
-            if rel_data and not rel_data.end_date:
-                return rel_data
+    def _get_latest_version(
+        self,
+        root: VersionRoot,
+        value: VersionValue,
+        status: LibraryItemStatus = None,
+    ) -> VersionRelationship:
+        (
+            has_version_rel,
+            _,
+            _,
+            _,
+            _,
+        ) = self._get_version_relation_keys(root)
+        if status is None:
+            all_rels = has_version_rel.all_relationships(value)
+            if len(all_rels) == 0:
+                raise RuntimeError("No HAS_VERSION relationship was found")
+            highest_version = self._get_max_version(all_rels)
+            all_latest = [rel for rel in all_rels if rel.version == highest_version]
+            return self._find_latest_version_in(all_latest)
+        return self._get_latest_version_for_status(root, value, status)
 
-        if latest_final:
-            rel_data = root.latest_final.relationship(value)
-            if not rel_data.end_date:
-                return rel_data
-        assert latest_retired  # this must be true at this stage if not something is very wrong
-        rel_data = root.latest_retired.relationship(value)
-        assert not rel_data.end_date  # this must be true as well
-        return rel_data
+    def _get_max_version(self, relationships):
+        all_versions = [rel.version for rel in relationships]
+        highest_version = max(
+            all_versions,
+            key=lambda v: 1000000 * int(v.split(".")[0]) + int(v.split(".")[1]),
+        )
+        return highest_version
+
+    def _find_latest_version_in(self, relationships):
+        if len(relationships) == 1:
+            return relationships[0]
+        all_without_end = [rel for rel in relationships if rel.end_date is None]
+        if len(all_without_end) == 1:
+            return all_without_end[0]
+        if len(all_without_end) > 1:
+            return max(all_without_end, key=lambda d: d.start_date)
+        return max(relationships, key=lambda d: d.end_date)
 
     def _get_item_versions(
         self,
@@ -447,20 +483,22 @@ class LibraryItemRepositoryImplBase(
         relation HAS_VERSION) possible between
         single root and value objects)
         """
-        latest_final: Optional[VersionRelationship] = None
-        latest_draft: Optional[VersionRelationship] = None
-        latest_retired: Optional[VersionRelationship] = None
-        latest_draft_object: Optional[VersionValue] = root.latest_draft.single()
+        (
+            has_version_rel,
+            _,
+            latest_draft_rel,
+            latest_final_rel,
+            _,
+        ) = self._get_version_relation_keys(root)
+        latest_final = None
+        latest_draft = None
+        latest_draft_object: Optional[VersionValue] = latest_draft_rel.single()
         if latest_draft_object is not None:
-            latest_draft = root.latest_draft.relationship(latest_draft_object)
+            latest_draft = latest_draft_rel.relationship(latest_draft_object)
 
-        latest_final_object: Optional[VersionValue] = root.latest_final.single()
+        latest_final_object: Optional[VersionValue] = latest_final_rel.single()
         if latest_final_object is not None:
-            latest_final = root.latest_final.relationship(latest_final_object)
-
-        latest_retired_object: Optional[VersionValue] = root.latest_retired.single()
-        if latest_retired_object is not None:
-            latest_retired = root.latest_retired.relationship(latest_retired_object)
+            latest_final = latest_final_rel.relationship(latest_final_object)
 
         managed: List[VersionValue] = []
         versions: List[Tuple[Mapping, VersionValue, VersionRelationship]] = []
@@ -482,27 +520,15 @@ class LibraryItemRepositoryImplBase(
                 continue
 
             managed.append(itm)
-            rels: Iterable[VersionRelationship] = root.has_version.all_relationships(
-                itm
-            )
+            rels: Iterable[VersionRelationship] = has_version_rel.all_relationships(itm)
 
             for rel in rels:
                 assert isinstance(
                     rel, VersionRelationship
                 )  # PIWQ: again to check whether I understand
-                versions.append(self._get_version_data_from_db(root, itm, rel))
+                d = self._get_version_data_from_db(root, itm, rel)
+                versions.append(d)
 
-        if latest_draft is not None:
-            d = self._get_version_data_from_db(root, latest_draft_object, latest_draft)
-            versions.append(d)
-        if latest_final is not None:
-            d = self._get_version_data_from_db(root, latest_final_object, latest_final)
-            versions.append(d)
-        if latest_retired:
-            d = self._get_version_data_from_db(
-                root, latest_retired_object, latest_retired
-            )
-            versions.append(d)
         versions = sorted(versions, key=lambda x: x[2].start_date, reverse=True)
         return versions, latest_draft, latest_final
 
@@ -571,19 +597,6 @@ class LibraryItemRepositoryImplBase(
                 _.repository_closure_data = RETRIEVED_READ_ONLY_MARK
         return result
 
-    def find_releases_referenced_by_any_study(self) -> Iterable[_AggregateRootType]:
-        aggregates = []
-        items = self.root_class.nodes.order_by("-uid")
-
-        for item in items:
-            # Find releases for given root node
-            aggregates += self._find_releases(item, True)
-
-        # Filter out aggregates that don't have studies referencing them
-        aggregates_with_study = [agg for agg in aggregates if agg.study_count > 0]
-
-        return aggregates_with_study
-
     def find_releases(
         self, uid: str, return_study_count: Optional[bool] = True
     ) -> Iterable[_AggregateRootType]:
@@ -606,12 +619,19 @@ class LibraryItemRepositoryImplBase(
         """
         library: Library = root.has_library.get()
         releases: Sequence[VersionValue] = []
+        (
+            has_version_rel,
+            _,
+            _,
+            latest_final_rel,
+            _,
+        ) = self._get_version_relation_keys(root)
 
-        final_versions = root.has_version.match(
+        final_versions = has_version_rel.match(
             status=LibraryItemStatus.FINAL.value
         ).all()
         releases += final_versions
-        latest_final = root.latest_final.get_or_none()
+        latest_final = latest_final_rel.get_or_none()
         if latest_final is not None:
             releases.append(latest_final)
 
@@ -623,17 +643,15 @@ class LibraryItemRepositoryImplBase(
 
         aggregates = []
         for release in deduped_releases:
-            latest_final = root.latest_final.relationship(release)
+            latest_final = latest_final_rel.relationship(release)
             latest_version = next(
                 filter(
                     lambda v: v.status == LibraryItemStatus.FINAL.value,
-                    root.has_version.all_relationships(release),
+                    has_version_rel.all_relationships(release),
                 ),
                 None,
             )
-            relationship: VersionRelationship = (
-                latest_final if latest_final else latest_version
-            )
+            relationship: VersionRelationship = latest_version
 
             if return_study_count:
                 study_count: int = self._get_study_count(release)
@@ -652,17 +670,6 @@ class LibraryItemRepositoryImplBase(
             aggregates.append(ar)
 
         return aggregates
-
-    def _query_uid_by_id(self, node_id: int) -> Optional[str]:
-        result, _ = db.cypher_query(
-            "MATCH (node) WHERE ID(node) = $id RETURN node.uid as uid", {"id": node_id}
-        )
-        return result[0][0] if len(result) > 0 else None
-
-    def find_related_objects_by_uid(self, uid) -> Sequence[_AggregateRootType]:
-        root: VersionRoot = self.root_class.nodes.get(uid=uid)
-        items = root.has_template.all()
-        return [self.find_by_uid_2(it.uid) for it in items]
 
     def hashkey_library_item(
         self,
@@ -745,10 +752,17 @@ class LibraryItemRepositoryImplBase(
                 library = None
 
         value: Optional[VersionValue]
+        (
+            has_version_rel,
+            has_latest_value_rel,
+            latest_draft_rel,
+            latest_final_rel,
+            latest_retired_rel,
+        ) = self._get_version_relation_keys(root)
         if version is None:
             if status is None:
                 if at_specific_date is None:
-                    value = root.has_latest_value.single()
+                    value = has_latest_value_rel.single()
                     if return_instantiation_counts:
                         final, draft, retired = self._get_counts(root)
                         counts = InstantiationCountsVO.from_counts(
@@ -798,7 +812,7 @@ class LibraryItemRepositoryImplBase(
                             copy.deepcopy(result),
                         )
                     return result
-                matching_values: Sequence[VersionValue] = root.has_version.match(
+                matching_values: Sequence[VersionValue] = has_version_rel.match(
                     start_date__lte=at_specific_date
                 )
                 latest_matching_relationship: Optional[VersionRelationship] = None
@@ -806,7 +820,7 @@ class LibraryItemRepositoryImplBase(
                 for matching_value in matching_values:
                     relationships: Sequence[
                         VersionRelationship
-                    ] = root.has_version.all_relationships(matching_value)
+                    ] = has_version_rel.all_relationships(matching_value)
                     for relationship in relationships:
                         if (
                             latest_matching_relationship is None
@@ -819,28 +833,28 @@ class LibraryItemRepositoryImplBase(
             else:
                 relationship_for_retrieve: Optional[VersionRelationship] = None
                 value_for_retrieve: Optional[VersionValue] = None
-                relationship_manager_to_use: RelationshipManager = root.latest_retired
+                relationship_manager_to_use: RelationshipManager = latest_retired_rel
                 if status == LibraryItemStatus.FINAL:
-                    relationship_manager_to_use = root.latest_final
+                    relationship_manager_to_use = latest_final_rel
                 elif status == LibraryItemStatus.DRAFT:
-                    relationship_manager_to_use = root.latest_draft
+                    relationship_manager_to_use = latest_draft_rel
                 value_for_retrieve = relationship_manager_to_use.get_or_none()
                 if value_for_retrieve is None:
-                    value_for_retrieve = root.has_version.match(
+                    value_for_retrieve = has_version_rel.match(
                         status=status.value
                     ).all()
                     if not value_for_retrieve:
                         return None
                     end_dates = {
-                        root.has_version.relationship(node).end_date: node
+                        has_version_rel.relationship(node).end_date: node
                         for node in value_for_retrieve
                     }
                     last_date = max(end_dates.keys())
                     value_for_retrieve = end_dates[last_date]
-                    relationship_manager_to_use = root.has_version
+                relationship_manager_to_use = has_version_rel
 
-                relationship_for_retrieve = relationship_manager_to_use.relationship(
-                    value_for_retrieve
+                relationship_for_retrieve = self._get_latest_version_for_status(
+                    root, value_for_retrieve, status
                 )
                 if return_study_count:
                     study_count = self._get_study_count(value_for_retrieve)
@@ -925,12 +939,6 @@ class LibraryItemRepositoryImplBase(
 
         return rdata, value, relation
 
-    # noinspection PyMethodMayBeStatic
-    def _get_current_user_initials(self) -> Optional[str]:
-        # return None  # means this base implementation does not know current user
-        # in which case it's going ot be taken from domain layer object (see below)
-        return self.user_initials
-
     def _library_item_metadata_vo_to_datadict(
         self, item_metadata: LibraryItemMetadataVO
     ) -> Mapping[str, Any]:
@@ -957,17 +965,20 @@ class LibraryItemRepositoryImplBase(
         """
         relation_data: LibraryItemMetadataVO = item.item_metadata
         root = self.root_class(uid=item.uid)
-        # If the item is a template, it might have an "editable_instance" property
-        # Instances don't have this property, so we need to check for it
-        if hasattr(item, "editable_instance"):
-            root.editable_instance = item.editable_instance
+
         self._db_save_node(root)
 
         value = self._get_or_create_value(root=root, ar=item)
 
         library = self._get_library(item.library.name)
 
-        (root, value, _, _, _,) = self._db_create_and_link_nodes(
+        (
+            root,
+            value,
+            _,
+            _,
+            _,
+        ) = self._db_create_and_link_nodes(
             root, value, self._library_item_metadata_vo_to_datadict(relation_data)
         )
 
@@ -993,37 +1004,6 @@ class LibraryItemRepositoryImplBase(
             minor_version=int(minor),
         )
 
-    def _create_from_neomodel_objects(
-        self, root: VersionRoot, value: VersionValue, library: Library
-    ) -> _AggregateRootType:
-        """
-        Creates a VOAR representation from a set of neomodel objects
-        (c.q. the nodes in the graph).
-        """
-        # template_vo = self._get_template(root, value)
-        # try:
-        #    library = root.has_library.get()
-        #    library_vo = LibraryVO.from_input_values_2(library_name=library.name,
-        #                                               is_library_editable_callback=(lambda _: library.is_editable))
-        # except DoesNotExist:
-        #    raise NotFoundException(
-        #        "The library for object could not be found.")
-
-        relationship: VersionRelationship = self._get_latest_version(root, value)
-
-        versioned_object_ar = self._create_aggregate_root_instance_from_version_root_relationship_and_value(
-            root=root, library=library, relationship=relationship, value=value
-        )
-
-        # injecting database objects into versioned_object_ar
-        versioned_object_ar.repository_closure_data = (
-            root,
-            value,
-            library,
-            copy.deepcopy(versioned_object_ar),
-        )
-        return versioned_object_ar
-
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def save(self, item: _AggregateRootType) -> None:
         if item.repository_closure_data is RETRIEVED_READ_ONLY_MARK:
@@ -1044,11 +1024,13 @@ class LibraryItemRepositoryImplBase(
             f"""
             MATCH (otr:{label} {{uid: $uid}})-[latest_draft:LATEST_DRAFT]->(otv)
             WHERE NOT (otr)-[:LATEST_FINAL|HAS_VERSION {{version:'Final'}}]->()
-            CREATE (otr)-[v:HAS_VERSION]->(otv)
-            SET v = latest_draft,
-                v.end_date = datetime(apoc.date.toISO8601(datetime().epochSeconds, 's'))
             SET otr:Deleted{label}
+            WITH otr
             REMOVE otr:{label}
+            WITH otr
+            MATCH (otr)-[v:HAS_VERSION]->()
+            WHERE v.end_date IS NULL
+            SET v.end_date = datetime(apoc.date.toISO8601(datetime().epochSeconds, 's'))
             """,
             {"uid": uid},
         )
@@ -1058,154 +1040,6 @@ class LibraryItemRepositoryImplBase(
         if root_node is not None:
             return root_node.latest_final.get_or_none() is not None
         return False
-
-    def _parse_parameter_values(
-        self, instance_parameters
-    ) -> Dict[int, Sequence[ParameterValueEntryVO]]:
-        # Note that this method is used both by templates for default values and instances for values
-        # Hence the checks we have to make on the existence of the set_number property
-        parameter_strings = []
-        # First, parse results from the database
-        for position_parameters in instance_parameters:
-            position, param_name, param_values, _ = position_parameters
-            if len(param_values) == 0:
-                # If we find an empty (NA) parameter value, temporary save a none object that will be replaced later
-                parameter_strings.append(
-                    {
-                        "set_number": 0,
-                        "position": position,
-                        "index": None,
-                        "definition": None,
-                        "template": None,
-                        "parameter_uid": None,
-                        "parameter_value": None,
-                        "parameter_name": param_name,
-                    }
-                )
-
-            for parameter in param_values:
-                parameter_strings.append(
-                    {
-                        "set_number": parameter["set_number"]
-                        if "set_number" in parameter
-                        else 0,
-                        "position": parameter["position"],
-                        "index": parameter["index"],
-                        "parameter_name": parameter["parameter_name"],
-                        "parameter_value": parameter["parameter_value"],
-                        "parameter_uid": parameter["parameter_uid"],
-                        "definition": parameter["definition"],
-                        "template": parameter["template"],
-                    }
-                )
-
-        # Then, start building the nested dictionary to group parameter values in a list
-        data_dict = {}
-        # Create the first two levels, like
-        # set_number
-        # --> position
-        for param in parameter_strings:
-            if param["set_number"] not in data_dict:
-                data_dict[param["set_number"]] = {}
-            data_dict[param["set_number"]][param["position"]] = {
-                "parameter_name": param["parameter_name"],
-                "definition": param["definition"],
-                "template": param["template"],
-                "parameter_uids": [],
-                "conjunction": next(
-                    filter(
-                        lambda x, param=param: x[0] == param["position"]
-                        and (
-                            len(x[2]) == 0
-                            or (
-                                "set_number" in x[2][0]
-                                and x[2][0]["set_number"] == param["set_number"]
-                            )
-                        ),
-                        instance_parameters,
-                    )
-                )[3],
-            }
-
-        # Then, unwind to create the third level, like:
-        # set_number
-        # --> position
-        # -----> [parameter_uids]
-        for param in parameter_strings:
-            data_dict[param["set_number"]][param["position"]]["parameter_uids"].append(
-                {
-                    "index": param["index"],
-                    "parameter_uid": param["parameter_uid"],
-                    "parameter_name": param["parameter_name"],
-                    "parameter_value": param["parameter_value"],
-                }
-            )
-
-        # Finally, convert the nested dictionary to a list of ParameterValueEntryVO objects, grouped by value set
-        return_dict = {}
-        for set_number, value_set in data_dict.items():
-            value_set = [x[1] for x in sorted(value_set.items(), key=lambda x: x[0])]
-            parameter_list = []
-            for item in value_set:
-                value_list = []
-                if item.get("definition"):
-                    tpcr = TemplateParameterComplexRoot.nodes.get(
-                        uid=item["parameter_uids"][0]["parameter_uid"]
-                    )
-                    defr: ParameterTemplateRoot = tpcr.has_complex_value.get()
-                    tpcv: TemplateParameterComplexValue = tpcr.latest_final.get()
-                    items = tpcv.get_all()
-                    cpx_params = []
-                    param_values = []
-                    for itemp in items:
-                        param_values.append(
-                            {
-                                "position": itemp[2],
-                                "value": itemp[3],
-                                "vv": itemp[4],
-                                "item": itemp[1],
-                            }
-                        )
-                    param_values = sorted(param_values, key=lambda x: x["position"])
-                    for param in param_values:
-                        if param["value"] is not None:
-                            tp = NumericParameterValueVO(
-                                uid=param["item"], value=param["value"]
-                            )
-                        else:
-                            tp = SimpleParameterValueVO(
-                                uid=param["item"], value=param["vv"]
-                            )
-                        cpx_params.append(tp)
-                    parameter_list.append(
-                        ComplexParameterValue(
-                            uid=defr.uid,
-                            parameter_template=item["template"],
-                            parameters=cpx_params,
-                        )
-                    )
-                else:
-                    for value in sorted(
-                        item["parameter_uids"],
-                        key=lambda x: x["index"] or 0,
-                    ):
-                        if value["parameter_uid"]:
-                            pv = self._parameter_from_repository_values(value)
-                            value_list.append(pv)
-                    pve = ParameterValueEntryVO.from_repository_values(
-                        parameters=value_list,
-                        parameter_name=item["parameter_name"],
-                        conjunction=item.get("conjunction", ""),
-                    )
-                    parameter_list.append(pve)
-            return_dict[set_number] = parameter_list
-        return return_dict
-
-    def _parameter_from_repository_values(self, value):
-        pv = SimpleParameterValueVO.from_repository_values(
-            uid=value["parameter_uid"], value=value["parameter_value"]
-        )
-        return pv
 
     def close(self) -> None:
         pass

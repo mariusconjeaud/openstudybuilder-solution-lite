@@ -27,6 +27,7 @@ from clinical_mdr_api.domain.study_definition_aggregate.root import (
     StudyDefinitionSnapshot,
 )
 from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
+    StudyDescriptionVO,
     StudyFieldAuditTrailEntryAR,
     StudyIdentificationMetadataVO,
     StudyStatus,
@@ -135,6 +136,12 @@ class StudyDefinitionsDBFake(GenericInMemoryDB[StudyDefinitionSnapshot]):
 
 
 class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
+    def check_if_study_is_deleted(self, study_uid: str) -> bool:
+        return False
+
+    def check_if_study_is_locked(self, study_uid: str) -> bool:
+        return False
+
     def get_preferred_time_unit(self, study_uid: str) -> StudyPreferredTimeUnit:
         return NotImplementedError()
 
@@ -197,6 +204,7 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
         filter_by: Optional[dict] = None,
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         total_count: bool = False,
+        deleted: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
         everything: List[StudyDefinitionSnapshot] = list(
             self._simulated_db.get_all_instances()
@@ -268,7 +276,6 @@ class TestStudyDefinitionsRepositoryBase(unittest.TestCase):
 
     @staticmethod
     def create_random_study() -> StudyDefinitionAR:
-
         new_id_metadata = StudyIdentificationMetadataVO.from_input_values(
             study_number=_random_study_number(),
             study_acronym=random_str(),
@@ -307,18 +314,31 @@ class TestStudyDefinitionsRepositoryBase(unittest.TestCase):
         """
         study = TestStudyDefinitionsRepositoryBase.create_random_study()
         while random.random() > 0.2:
-            study.lock(
-                locked_version_info=random_str(), locked_version_author=random_str()
+            study.edit_metadata(
+                study_title_exists_callback=(lambda _, study_number: False),
+                study_short_title_exists_callback=(lambda _, study_number: False),
+                new_study_description=StudyDescriptionVO.from_input_values(
+                    study_title="new_study_title", study_short_title="study_short_title"
+                ),
             )
+            study.lock(version_description=random_str(), version_author=random_str())
             study.unlock()
             TestStudyDefinitionsRepositoryBase.make_random_study_edit(study)
         if random.random() < 0.667:
             if random.random() < 0.5:
-                study.release()
+                study.release(change_description="making a release in test")
                 TestStudyDefinitionsRepositoryBase.make_random_study_edit(study)
             else:
+                study.edit_metadata(
+                    study_title_exists_callback=(lambda _, study_number: False),
+                    study_short_title_exists_callback=(lambda _, study_number: False),
+                    new_study_description=StudyDescriptionVO.from_input_values(
+                        study_title="new_study_title",
+                        study_short_title="study_short_title",
+                    ),
+                )
                 study.lock(
-                    locked_version_info=random_str(), locked_version_author=random_str()
+                    version_description=random_str(), version_author=random_str()
                 )
         return study
 

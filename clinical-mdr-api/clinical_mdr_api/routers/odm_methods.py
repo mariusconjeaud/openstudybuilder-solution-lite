@@ -23,7 +23,10 @@ OdmMethodUID = Path(None, description="The unique id of the ODM Method.")
     description="",
     response_model=CustomPage[OdmMethod],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_all_odm_methods(
     library: Optional[str] = Query(None),
@@ -71,7 +74,7 @@ def get_all_odm_methods(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -107,7 +110,10 @@ def get_distinct_values_for_header(
     description="",
     response_model=OdmMethod,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_odm_method(uid: str = OdmMethodUID):
     odm_method_service = OdmMethodService()
@@ -120,7 +126,10 @@ def get_odm_method(uid: str = OdmMethodUID):
     description="",
     response_model=dict,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_active_relationships(uid: str = OdmMethodUID):
     odm_method_service = OdmMethodService()
@@ -151,7 +160,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The ODM Method with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_odm_method_versions(uid: str = OdmMethodUID):
@@ -173,11 +182,11 @@ def get_odm_method_versions(uid: str = OdmMethodUID):
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_method(
-    odm_method_create_input: OdmMethodPostInput = Body(None, description="")
+    odm_method_create_input: OdmMethodPostInput = Body(description=""),
 ):
     odm_method_service = OdmMethodService()
     return odm_method_service.create_with_relations(
@@ -204,12 +213,12 @@ def create_odm_method(
             "model": ErrorResponse,
             "description": "Not Found - The ODM Method with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_method(
     uid: str = OdmMethodUID,
-    odm_method_edit_input: OdmMethodPatchInput = Body(None, description=""),
+    odm_method_edit_input: OdmMethodPatchInput = Body(description=""),
 ):
     odm_method_service = OdmMethodService()
     return odm_method_service.update_with_relations(
@@ -249,7 +258,7 @@ Possible errors:
             "- The ODM Method is not in final status.\n"
             "- The ODM Method with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_method_version(uid: str = OdmMethodUID):
@@ -275,7 +284,7 @@ def create_odm_method_version(uid: str = OdmMethodUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Method with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve_odm_method(uid: str = OdmMethodUID):
@@ -300,7 +309,7 @@ def approve_odm_method(uid: str = OdmMethodUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Method with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate_odm_method(uid: str = OdmMethodUID):
@@ -325,7 +334,7 @@ def inactivate_odm_method(uid: str = OdmMethodUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Method with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate_odm_method(uid: str = OdmMethodUID):
@@ -352,7 +361,7 @@ def reactivate_odm_method(uid: str = OdmMethodUID):
             "model": ErrorResponse,
             "description": "Not Found - An ODM Method with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_odm_method(uid: str = OdmMethodUID):

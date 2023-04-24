@@ -118,25 +118,27 @@ const mutations = {
 }
 
 const actions = {
-  initialize ({ commit }) {
+  async initialize ({ commit, dispatch }) {
     const selectedStudy = localStorage.getItem('selectedStudy')
     if (selectedStudy) {
       const parsedStudy = JSON.parse(selectedStudy)
-      commit('SELECT_STUDY', parsedStudy)
-      study.getStudyPreferredTimeUnit(parsedStudy.uid).then(resp => {
-        commit('SET_STUDY_PREFERRED_TIME_UNIT', resp.data)
-      })
+      dispatch('selectStudy', parsedStudy)
+      try {
+        await study.getStudy(parsedStudy.uid, true)
+      } catch (error) {
+        commit('UNSELECT_STUDY')
+      }
     }
+  },
+  selectStudy ({ commit }, studyObj) {
+    commit('SELECT_STUDY', studyObj)
+    study.getStudyPreferredTimeUnit(studyObj.uid).then(resp => {
+      commit('SET_STUDY_PREFERRED_TIME_UNIT', resp.data)
+    })
   },
   setStudyPreferredTimeUnit ({ commit, state }, timeUnitUid) {
     const data = { unit_definition_uid: timeUnitUid }
-    let func
-    if (!state.studyPreferredTimeUnit) {
-      func = study.createStudyPreferredTimeUnit
-    } else {
-      func = study.updateStudyPreferredTimeUnit
-    }
-    return func(state.selectedStudy.uid, data).then(resp => {
+    return study.updateStudyPreferredTimeUnit(state.selectedStudy.uid, data).then(resp => {
       commit('SET_STUDY_PREFERRED_TIME_UNIT', resp.data)
     })
   },

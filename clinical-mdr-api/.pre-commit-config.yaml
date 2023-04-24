@@ -1,10 +1,10 @@
 repos:
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 23.3.0
     hooks:
       - id: black
   - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
+    rev: 5.11.5
     hooks:
       - id: isort
   - repo: local
@@ -14,3 +14,5 @@ repos:
       entry: ./.git-hooks/absolute-import-paths.sh
       language: system
       require_serial: true
+default_language_version:
+  python: python3.7

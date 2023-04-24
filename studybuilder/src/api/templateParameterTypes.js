@@ -6,7 +6,7 @@ export default {
   getTypes () {
     return repository.get(`/${resource}`)
   },
-  getValues (templateParameterName) {
-    return repository.get(`${resource}/${templateParameterName}/values`)
+  getTerms (templateParameterName) {
+    return repository.get(`${resource}/${templateParameterName}/terms`)
   }
 }

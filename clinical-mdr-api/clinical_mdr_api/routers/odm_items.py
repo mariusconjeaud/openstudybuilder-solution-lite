@@ -2,6 +2,7 @@ from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
+from starlette.requests import Request
 
 from clinical_mdr_api import config
 from clinical_mdr_api.models import (
@@ -14,10 +15,11 @@ from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.odm_common_models import (
     OdmElementWithParentUid,
     OdmVendorRelationPostInput,
+    OdmVendorsPostInput,
 )
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.repositories._utils import FilterOperator
-from clinical_mdr_api.routers import _generic_descriptions
+from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.odm_items import OdmItemService
 
 router = APIRouter()
@@ -29,12 +31,95 @@ OdmItemUID = Path(None, description="The unique id of the ODM Item.")
 @router.get(
     "",
     summary="Return every variable related to the selected status and version of the ODM Items",
-    description="",
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=CustomPage[OdmItem],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "oid",
+            "library_name",
+            "name",
+            "aliases",
+            "codelist",
+            "comment",
+            "datatype",
+            "length",
+            "significant_digits",
+            "origin",
+            "prompt",
+            "descriptions=descriptions.description",
+            "instructions=descriptions.instruction",
+            "languages=descriptions.language",
+            "instructions=descriptions.instruction",
+            "sponsor_instructions=descriptions.sponsor_instruction",
+            "repeating",
+            "start_date",
+            "end_date",
+            "effective_date",
+            "retired_date",
+            "end_date",
+            "status",
+            "version",
+            "sas_field_name",
+            "sds_var_name",
+            "terms",
+            "unit_definitions",
+            "sas_dataset_name",
+            "activity",
+            "vendor_attributes",
+            "vendor_element_attributes",
+            "vendor_elements",
+        ],
+        "text/xml": [
+            "uid",
+            "oid",
+            "library_name",
+            "name",
+            "aliases",
+            "codelist",
+            "comment",
+            "datatype",
+            "length",
+            "significant_digits",
+            "origin",
+            "prompt",
+            "descriptions",
+            "repeating",
+            "start_date",
+            "end_date",
+            "effective_date",
+            "retired_date",
+            "end_date",
+            "status",
+            "version",
+            "sas_field_name",
+            "sds_var_name",
+            "terms",
+            "unit_definitions",
+            "sas_dataset_name",
+            "activity",
+            "vendor_attributes",
+            "vendor_element_attributes",
+            "vendor_elements",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_all_odm_items(
+    request: Request,  # request is actually required by the allow_exports decorator
     library: Optional[str] = Query(None),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: Optional[int] = Query(
@@ -80,7 +165,7 @@ def get_all_odm_items(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -116,7 +201,10 @@ def get_distinct_values_for_header(
     description="",
     response_model=List[OdmElementWithParentUid],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_odm_items_that_belongs_to_item_group():
     odm_item_service = OdmItemService()
@@ -129,7 +217,10 @@ def get_odm_items_that_belongs_to_item_group():
     description="",
     response_model=OdmItem,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_odm_item(uid: str = OdmItemUID):
     odm_item_service = OdmItemService()
@@ -142,7 +233,10 @@ def get_odm_item(uid: str = OdmItemUID):
     description="",
     response_model=dict,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_active_relationships(uid: str = OdmItemUID):
     odm_item_service = OdmItemService()
@@ -173,7 +267,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The ODM Item with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_odm_item_versions(uid: str = OdmItemUID):
@@ -195,12 +289,10 @@ def get_odm_item_versions(uid: str = OdmItemUID):
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
-def create_odm_item(
-    odm_item_create_input: OdmItemPostInput = Body(None, description="")
-):
+def create_odm_item(odm_item_create_input: OdmItemPostInput = Body(description="")):
     odm_item_service = OdmItemService()
     return odm_item_service.create_with_relations(concept_input=odm_item_create_input)
 
@@ -224,12 +316,12 @@ def create_odm_item(
             "model": ErrorResponse,
             "description": "Not Found - The ODM Item with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_item(
     uid: str = OdmItemUID,
-    odm_item_edit_input: OdmItemPatchInput = Body(None, description=""),
+    odm_item_edit_input: OdmItemPatchInput = Body(description=""),
 ):
     odm_item_service = OdmItemService()
     return odm_item_service.update_with_relations(
@@ -269,7 +361,7 @@ Possible errors:
             "- The ODM Item is not in final status.\n"
             "- The ODM Item with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_item_version(uid: str = OdmItemUID):
@@ -295,7 +387,7 @@ def create_odm_item_version(uid: str = OdmItemUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Item with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve_odm_item(uid: str = OdmItemUID):
@@ -320,7 +412,7 @@ def approve_odm_item(uid: str = OdmItemUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Item with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate_odm_item(uid: str = OdmItemUID):
@@ -345,7 +437,7 @@ def inactivate_odm_item(uid: str = OdmItemUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Item with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate_odm_item(uid: str = OdmItemUID):
@@ -355,13 +447,13 @@ def reactivate_odm_item(uid: str = OdmItemUID):
 
 @router.post(
     "/{uid}/activities",
-    summary="Adds activities to the ODM Item.",
+    summary="Add an activity to the ODM Item.",
     description="",
     response_model=OdmItem,
     status_code=201,
     responses={
         201: {
-            "description": "Created - The activities were successfully added to the ODM Item."
+            "description": "Created - The activity was successfully added to the ODM Item."
         },
         403: {
             "model": ErrorResponse,
@@ -369,23 +461,21 @@ def reactivate_odm_item(uid: str = OdmItemUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activities with the specified 'uid' wasn't found.",
+            "description": "Not Found - The activity with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
-def add_activities_to_odm_item(
+def add_activity_to_odm_item(
     uid: str = OdmItemUID,
     override: bool = Query(
         False,
-        description="If true, all existing activity relationships will be replaced with the provided activity relationships.",
+        description="If true, the existing activity relationship will be replaced with the provided activity relationship.",
     ),
-    odm_item_activity_post_input: List[OdmItemActivityPostInput] = Body(
-        None, description=""
-    ),
+    odm_item_activity_post_input: OdmItemActivityPostInput = Body(description=""),
 ):
     odm_item_service = OdmItemService()
-    return odm_item_service.add_activities(
+    return odm_item_service.add_activity(
         uid=uid,
         odm_item_activity_post_input=odm_item_activity_post_input,
         override=override,
@@ -410,7 +500,7 @@ def add_activities_to_odm_item(
             "model": ErrorResponse,
             "description": "Not Found - The ODM Vendor Elements with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def add_vendor_elements_to_odm_item(
@@ -420,7 +510,7 @@ def add_vendor_elements_to_odm_item(
         description="If true, all existing ODM Vendor Element relationships will be replaced with the provided ODM Vendor Element relationships.",
     ),
     odm_vendor_relation_post_input: List[OdmVendorRelationPostInput] = Body(
-        None, description=""
+        description=""
     ),
 ):
     odm_item_service = OdmItemService()
@@ -449,7 +539,7 @@ def add_vendor_elements_to_odm_item(
             "model": ErrorResponse,
             "description": "Not Found - The ODM Vendor Attributes with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def add_vendor_attributes_to_odm_item(
@@ -460,7 +550,7 @@ def add_vendor_attributes_to_odm_item(
         be replaced with the provided ODM Vendor Attribute relationships.""",
     ),
     odm_vendor_relation_post_input: List[OdmVendorRelationPostInput] = Body(
-        None, description=""
+        description=""
     ),
 ):
     odm_item_service = OdmItemService()
@@ -489,7 +579,7 @@ def add_vendor_attributes_to_odm_item(
             "model": ErrorResponse,
             "description": "Not Found - The ODM Vendor Element attributes with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def add_vendor_element_attributes_to_odm_item(
@@ -500,7 +590,7 @@ def add_vendor_element_attributes_to_odm_item(
         be replaced with the provided ODM Vendor Element attribute relationships.""",
     ),
     odm_vendor_relation_post_input: List[OdmVendorRelationPostInput] = Body(
-        None, description=""
+        description=""
     ),
 ):
     odm_item_service = OdmItemService()
@@ -508,6 +598,37 @@ def add_vendor_element_attributes_to_odm_item(
         uid=uid,
         odm_vendor_relation_post_input=odm_vendor_relation_post_input,
         override=override,
+    )
+
+
+@router.post(
+    "/{uid}/vendors",
+    summary="Manages all ODM Vendors by replacing existing ODM Vendors by provided ODM Vendors.",
+    description="",
+    response_model=OdmItem,
+    status_code=201,
+    responses={
+        201: {
+            "description": "Created - The ODM Vendors were successfully added to the ODM Item."
+        },
+        403: {
+            "model": ErrorResponse,
+            "description": "Forbidden - Reasons include e.g.: \n",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The ODM Vendors with the specified 'uid' wasn't found.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def manage_vendors_of_odm_item_group(
+    uid: str = OdmItemUID,
+    odm_vendors_post_input: OdmVendorsPostInput = Body(description=""),
+):
+    odm_item_group_service = OdmItemService()
+    return odm_item_group_service.manage_vendors(
+        uid=uid, odm_vendors_post_input=odm_vendors_post_input
     )
 
 
@@ -530,7 +651,7 @@ def add_vendor_element_attributes_to_odm_item(
             "model": ErrorResponse,
             "description": "Not Found - An ODM Item with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_odm_item(uid: str = OdmItemUID):

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable, Optional
 
-from clinical_mdr_api.domain._utils import normalize_string  # type: ignore
+from clinical_mdr_api.domain._utils import normalize_string
 
 
 @dataclass(frozen=True)

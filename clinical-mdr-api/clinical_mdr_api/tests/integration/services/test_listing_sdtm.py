@@ -395,8 +395,6 @@ class TestTEListing(unittest.TestCase):
         )
         add_parent_ct_term(element_subtype_term_uid2, element_type_term_uid1)
 
-        catalogue_name = "catalogue"
-        library_name = "Sponsor"
         codelist = create_codelist(
             name="time",
             uid="C66781",

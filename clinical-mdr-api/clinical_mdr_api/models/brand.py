@@ -43,7 +43,6 @@ class Brand(BaseModel):
 
 
 class BrandCreateInput(BaseModel):
-
     name: Optional[str] = Field(
         ...,
         title="name",

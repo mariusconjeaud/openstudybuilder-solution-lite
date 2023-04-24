@@ -31,7 +31,7 @@
             :label="$t('StudySelectionTable.studies')"
             :items="studies"
             :error-messages="errors"
-            item-text="study_id"
+            item-text="current_metadata.identification_metadata.study_id"
             clearable
             multiple
             return-object
@@ -251,6 +251,7 @@ import templateParameterTypes from '@/api/templateParameterTypes'
 import criteriaTemplates from '@/api/criteriaTemplates'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm'
 import instances from '@/utils/instances'
+import libraries from '@/constants/libraries'
 import { mapGetters } from 'vuex'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
 import NNTable from '@/components/tools/NNTable'
@@ -299,7 +300,7 @@ export default {
       ],
       creationMode: 'select',
       extraDataFetcherFilters: {
-        'criteria.library.name': { v: ['Sponsor'] },
+        'criteria.library.name': { v: [libraries.LIBRARY_SPONSOR] },
         'criteria_type.sponsor_preferred_name': { v: [this.criteriaType.sponsor_preferred_name] }
       },
       tplHeaders: [
@@ -347,7 +348,7 @@ export default {
     templateParameterTypes.getTypes().then(resp => {
       this.parameterTypes = resp.data
     })
-    study.get({ hasStudyCriteria: true }).then(resp => {
+    study.get({ hasStudyCriteria: true, page_size: 0 }).then(resp => {
       this.studies = resp.data.items.filter(study => study.uid !== this.selectedStudy.uid)
     })
   },
@@ -457,7 +458,7 @@ export default {
             } else {
               const payload = {
                 criteria_data: {
-                  parameter_values: studyCriteria.criteria.parameter_values,
+                  parameter_terms: studyCriteria.criteria.parameter_terms,
                   criteria_template_uid: studyCriteria.criteria.criteria_template.uid,
                   library_name: studyCriteria.criteria.library.name
                 }
@@ -471,8 +472,8 @@ export default {
         const data = {
           criteria_data: {
             criteria_template_uid: this.form.criteria_template.uid,
-            parameter_values: await instances.formatParameterValues(this.parameters),
-            library_name: 'Sponsor' // FIXME
+            parameter_terms: await instances.formatParameterValues(this.parameters),
+            library_name: libraries.LIBRARY_SPONSOR
           }
         }
         await study.createStudyCriteria(this.selectedStudy.uid, data)

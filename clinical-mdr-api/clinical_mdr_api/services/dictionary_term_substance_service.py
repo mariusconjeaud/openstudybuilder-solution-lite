@@ -77,7 +77,6 @@ class DictionaryTermSubstanceService(
         item: DictionaryTermSubstanceAR,
         term_input: DictionaryTermSubstanceEditInput,
     ) -> DictionaryTermSubstanceAR:
-
         item.edit_draft(
             author=self.user_initials,
             change_description=term_input.change_description,
@@ -106,7 +105,6 @@ class DictionaryTermSubstanceService(
         total_count: bool = False,
         codelist_name: str = "",
     ) -> GenericFilteringReturn[DictionaryTermSubstance]:
-
         items, total_count = self.repository.find_all(
             codelist_name=codelist_name,
             sort_by=sort_by,

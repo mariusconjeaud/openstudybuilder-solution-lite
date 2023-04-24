@@ -8,6 +8,7 @@ from clinical_mdr_api import exceptions, models
 from clinical_mdr_api.domain.study_selection.study_activity_schedule import (
     StudyActivityScheduleVO,
 )
+from clinical_mdr_api.domain_repositories.models._utils import to_relation_trees
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyActivitySchedule as StudyActivityScheduleNeoModel,
 )
@@ -19,7 +20,6 @@ from clinical_mdr_api.services.study_endpoint_selection import StudySelectionMix
 
 
 class StudyActivityScheduleService(StudySelectionMixin):
-
     _repos: MetaRepository
 
     def __init__(self, author: str):
@@ -32,13 +32,13 @@ class StudyActivityScheduleService(StudySelectionMixin):
     ) -> Sequence[models.StudyActivitySchedule]:
         return [
             models.StudyActivitySchedule.from_orm(sas_node)
-            for sas_node in StudyActivityScheduleNeoModel.nodes.fetch_relations(
-                "has_after",
-                "study_visit__has_visit_name__has_latest_value",
-                "study_activity__has_selected_activity",
+            for sas_node in to_relation_trees(
+                StudyActivityScheduleNeoModel.nodes.fetch_relations(
+                    "has_after",
+                    "study_visit__has_visit_name__has_latest_value",
+                    "study_activity__has_selected_activity",
+                ).filter(study_value__study_root__uid=study_uid)
             )
-            .filter(study_value__study_root__uid=study_uid)
-            .to_relation_trees()
         ]
 
     def get_all_schedules_for_specific_visit(
@@ -46,27 +46,44 @@ class StudyActivityScheduleService(StudySelectionMixin):
     ) -> Sequence[models.StudyActivitySchedule]:
         return [
             models.StudyActivitySchedule.from_orm(sas_node)
-            for sas_node in StudyActivityScheduleNeoModel.nodes.fetch_relations(
-                "has_after",
-                "study_visit__has_visit_name__has_latest_value",
-                "study_activity__has_selected_activity",
+            for sas_node in to_relation_trees(
+                StudyActivityScheduleNeoModel.nodes.fetch_relations(
+                    "has_after",
+                    "study_visit__has_visit_name__has_latest_value",
+                    "study_activity__has_selected_activity",
+                ).filter(
+                    study_value__study_root__uid=study_uid,
+                    study_visit__uid=study_visit_uid,
+                )
             )
-            .filter(
-                study_value__study_root__uid=study_uid, study_visit__uid=study_visit_uid
+        ]
+
+    def get_all_schedules_for_specific_activity(
+        self, study_uid: str, study_activity_uid: str
+    ) -> Sequence[models.StudyActivitySchedule]:
+        return [
+            models.StudyActivitySchedule.from_orm(sas_node)
+            for sas_node in to_relation_trees(
+                StudyActivityScheduleNeoModel.nodes.fetch_relations(
+                    "has_after",
+                    "study_visit__has_visit_name__has_latest_value",
+                    "study_activity__has_selected_activity",
+                    "study_activity__has_study_activity",
+                ).filter(
+                    study_value__study_root__uid=study_uid,
+                    study_activity__uid=study_activity_uid,
+                )
             )
-            .to_relation_trees()
         ]
 
     @db.transaction
     def get_specific_schedule(
         self, study_uid: str, schedule_uid: str
     ) -> models.StudyActivitySchedule:
-        sas_node = (
+        sas_node = to_relation_trees(
             StudyActivityScheduleNeoModel.nodes.fetch_relations(
                 "study_activity", "study_visit", "has_after"
-            )
-            .filter(study_value__study_root__uid=study_uid, uid=schedule_uid)
-            .to_relation_trees()
+            ).filter(study_value__study_root__uid=study_uid, uid=schedule_uid)
         )
         if sas_node is None or len(sas_node) == 0:
             raise exceptions.NotFoundException(

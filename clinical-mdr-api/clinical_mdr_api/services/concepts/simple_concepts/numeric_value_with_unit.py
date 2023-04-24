@@ -16,7 +16,6 @@ from clinical_mdr_api.services.concepts.simple_concepts.simple_concept_generic i
 
 
 class NumericValueWithUnitService(SimpleConceptGenericService[NumericValueWithUnitAR]):
-
     aggregate_class = NumericValueWithUnitAR
     value_object_class = NumericValueWithUnitVO
     repository_interface = NumericValueWithUnitRepository

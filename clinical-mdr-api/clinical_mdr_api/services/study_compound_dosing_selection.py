@@ -43,7 +43,6 @@ class StudyCompoundDosingRelationMixin:
 
 
 class StudyCompoundDosingSelectionService(StudySelectionMixin):
-
     _repos: MetaRepository
 
     def __init__(self, author: str):
@@ -60,7 +59,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         (
             study_compound,
             order,
-        ) = self._repos.study_selection_compound_repository.find_by_uid(
+        ) = self._repos.study_compound_repository.find_by_uid(
             study_uid, study_compound_uid
         )
         compound = self._transform_compound_model(compound_uid)
@@ -84,14 +83,15 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         (
             study_element,
             order,
-        ) = self._repos.study_selection_element_repository.find_by_uid(
+        ) = self._repos.study_element_repository.find_by_uid(
             study_uid, study_element_uid
         )
-        return models.study_selection.StudySelectionElement.from_study_selection_element_ar_and_order(
+        return models.StudySelectionElement.from_study_selection_element_ar_and_order(
             study_uid,
             study_element,
             order,
             self._find_by_uid_or_raise_not_found,
+            get_term_element_type_by_element_subtype=self._repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
             find_all_study_time_units=self._repos.unit_definition_repository.find_all,
         )
 
@@ -278,7 +278,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
             (
                 study_compound_vo,
                 _order,
-            ) = repos.study_selection_compound_repository.find_by_uid(
+            ) = repos.study_compound_repository.find_by_uid(
                 study_uid=study_uid,
                 study_compound_uid=selection_create_input.study_compound_uid,
             )

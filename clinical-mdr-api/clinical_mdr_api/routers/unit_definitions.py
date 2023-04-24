@@ -30,7 +30,11 @@ UnitDefinitionUID = Path(None, description="The unique id of unit definition.")
 @router.get(
     "",
     summary="Returns all unit definitions in their latest/newest version.",
-    description="Allowed parameters include : filter on fields, sort by field name with sort direction, pagination",
+    description=f"""
+Allowed parameters include : filter on fields, sort by field name with sort direction, pagination.
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+""",
     response_model=CustomPage[UnitDefinitionModel],
     status_code=200,
     responses={
@@ -50,7 +54,7 @@ UnitDefinitionUID = Path(None, description="The unique id of unit definition.")
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
             }
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 @decorators.allow_exports(
@@ -142,7 +146,7 @@ def get_all(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -195,7 +199,7 @@ def get_distinct_values_for_header(
             "description": """Not Found - The unit definition with the specified
             'uid' (and the specified date/time, version and/or status) wasn't found.""",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_by_uid(
@@ -236,8 +240,11 @@ def get_by_uid(
 @router.get(
     "/{uid}/versions",
     summary="Returns the version history of a specific concept identified by 'uid'.",
-    description="The returned versions are ordered by\n"
-    "0. start_date descending (newest entries first)",
+    description=f"""
+The returned versions are ordered by `start_date` descending (newest entries first)
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+""",
     response_model=Sequence[UnitDefinitionModel],
     status_code=200,
     responses={
@@ -261,7 +268,7 @@ def get_by_uid(
             "model": ErrorResponse,
             "description": "Not Found - The concept with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 @decorators.allow_exports(
@@ -330,12 +337,12 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The library with the specified 'library_name' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def post(
     unit_definition_post_input: UnitDefinitionPostInput = Body(
-        None, description="The concept that shall be created."
+        description="The concept that shall be created."
     ),
     service: Service = Depends(),
 ) -> UnitDefinitionModel:
@@ -368,13 +375,12 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The concept with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def patch(
     uid: str = UnitDefinitionUID,
     patch_input: UnitDefinitionPatchInput = Body(
-        None,
         description="The new content of the concept including the change description.",
     ),
     service: Service = Depends(),
@@ -409,7 +415,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The  concept with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def new_version(
@@ -444,7 +450,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The unit definition with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
@@ -477,7 +483,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The unit definition with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
@@ -510,7 +516,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The concept with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
@@ -541,7 +547,7 @@ def reactivate(
             "model": ErrorResponse,
             "description": "Not Found - An concept with the specified uid could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
     dependencies=[Depends(get_current_user_id)],
 )

@@ -42,28 +42,40 @@ class StudyField(ClinicalMdrNode):
 
     @classmethod
     def get_specific_field_currently_used_in_study(
-        cls, field_name: str, value: Optional[str], study_uid: str
+        cls,
+        field_name: str,
+        value: Optional[str],
+        study_uid: str,
+        null_value_code: Optional[str] = None,
     ):
         """
         Checks whether the StudyField with a given value has historically already been used in this study.
         """
-        if value is None:
-            all_similar_study_fields = cls.nodes.filter(
-                field_name=field_name, value__isnull=True
+        if not null_value_code:
+            query = (
+                "MATCH (f:StudyField {value:$value, field_name:$field_name})<--(:StudyValue)"
+                "<-[:HAS_VERSION]-(s:StudyRoot{uid: $study_uid}) "
+                "RETURN f"
             )
         else:
-            all_similar_study_fields = cls.nodes.filter(
-                field_name=field_name, value=value
-            )
-        all_fields = all_similar_study_fields.all()
-        for field_node in all_fields:
             query = (
-                "MATCH (f:StudyField)<--(:StudyValue)<-[:HAS_VERSION]-(s:StudyRoot{uid: $study_uid}) "
-                "WHERE id(f) = $self RETURN id(f)"
+                "MATCH (term_root {uid:$null_value_code})<-[:HAS_REASON_FOR_NULL_VALUE]-"
+                "(f:StudyField {field_name:$field_name})<--(:StudyValue)<-[:HAS_VERSION]-"
+                "(s:StudyRoot{uid: $study_uid}) "
+                "RETURN f"
             )
-            result, _ = field_node.cypher(query, params={"study_uid": study_uid})
-            if len(result) > 0:
-                return field_node
+        result, _ = db.cypher_query(
+            query,
+            params={
+                "study_uid": study_uid,
+                "value": value,
+                "field_name": field_name,
+                "null_value_code": null_value_code,
+            },
+            resolve_objects=True,
+        )
+        if len(result) > 0 and len(result[0]) > 0:
+            return result[0][0]
         return None
 
 

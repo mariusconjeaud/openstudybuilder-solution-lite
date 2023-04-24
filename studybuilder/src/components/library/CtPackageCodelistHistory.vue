@@ -1,8 +1,8 @@
 <template>
-<div>
+<div v-resize="onResize">
   <p><span class="v-label">{{ $t('CtPackageCodelistHistory.codelist_label') }}</span> {{ codelistAttributes.name }} [{{ codelistAttributes.codelist_uid }}]</p>
   <div class="v-data-table">
-    <div class="v-data-table__wrapper">
+    <div ref="tableContainer" class="v-data-table__wrapper sticky-header" :style="`height: ${tableHeight}px`">
       <table class="mt-4 white" :aria-label="$t('CtPackageCodelistHistory.codelist_label')">
         <thead>
           <tr class="greyBackground">
@@ -60,8 +60,12 @@ export default {
       codelistChanges: {},
       loading: true,
       terms: {},
-      termLabels: {}
+      termLabels: {},
+      tableHeight: 500
     }
+  },
+  mounted () {
+    this.onResize()
   },
   methods: {
     getButtonColor (change) {
@@ -102,6 +106,9 @@ export default {
         })
       }
       this.addChangeToList(item, this.terms[item.uid], type)
+    },
+    onResize () {
+      this.tableHeight = window.innerHeight - this.$refs.tableContainer.getBoundingClientRect().y - 40
     }
   },
   created () {
@@ -135,3 +142,23 @@ export default {
   }
 }
 </script>
+<style scoped lang="scss">
+table {
+  border-collapse: collapse;
+}
+tbody tr {
+  border-bottom: 1px solid var(--v-greyBackground-base);
+}
+th {
+  background-color: var(--v-greyBackground-base);
+}
+.sticky-header {
+  overflow-y: auto;
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+  }
+}
+</style>

@@ -52,7 +52,7 @@
 </template>
 
 <script>
-import activityDescriptionTemplates from '@/api/activityDescriptionTemplates'
+import activityInstructionTemplates from '@/api/activityInstructionTemplates'
 import { bus } from '@/main'
 import instances from '@/utils/instances'
 import { mapGetters } from 'vuex'
@@ -95,7 +95,7 @@ export default {
     async loadParameters (template) {
       if (template) {
         this.loadingParameters = true
-        const resp = await activityDescriptionTemplates.getObjectTemplateParameters(template.uid)
+        const resp = await activityInstructionTemplates.getObjectTemplateParameters(template.uid)
         this.parameters = resp.data
         this.loadingParameters = false
       } else {
@@ -127,7 +127,7 @@ export default {
             content: {
               activity_instruction_data: {
                 activity_instruction_template_uid: this.form.activity_instruction_template.uid,
-                parameter_values: await instances.formatParameterValues(this.parameters),
+                parameter_terms: await instances.formatParameterValues(this.parameters),
                 library_name: this.form.activity_instruction_template.library.name
               },
               study_activity_uid: item.study_activity_uid
@@ -178,7 +178,7 @@ export default {
       },
       operator: 'or'
     }
-    activityDescriptionTemplates.get(params).then(resp => {
+    activityInstructionTemplates.get(params).then(resp => {
       this.templates = resp.data.items
     })
   }

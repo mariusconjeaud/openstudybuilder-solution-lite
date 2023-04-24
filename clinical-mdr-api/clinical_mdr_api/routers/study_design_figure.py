@@ -3,7 +3,7 @@
 from fastapi import Path, Query
 from fastapi.responses import Response
 
-from clinical_mdr_api.models.error import ErrorResponse
+from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.routers import studies_router as router
 from clinical_mdr_api.services.study_design_figure import StudyDesignFigureService
 
@@ -24,7 +24,10 @@ class SVGResponse(Response):
     "/{uid}/design.svg",
     summary="Builds and returns a Study Design visualization image in SVG format",
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
     response_class=SVGResponse,
 )
 def get_study_flowchart_html(

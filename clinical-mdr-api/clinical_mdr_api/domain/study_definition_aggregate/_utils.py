@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Callable, Iterable, Optional
 
+from clinical_mdr_api import exceptions
+
 
 def default_failure_callback_for_variable(variable_name: str) -> Callable[[str], bool]:
     """
@@ -11,7 +13,7 @@ def default_failure_callback_for_variable(variable_name: str) -> Callable[[str],
     """
 
     def raise_value_error(msg: str) -> bool:
-        raise ValueError(msg)
+        raise exceptions.ValidationException(msg)
 
     return lambda _: raise_value_error(
         f"A proper existence check callback not provided for {variable_name}"

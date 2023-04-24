@@ -51,7 +51,7 @@ const actions = {
   async addStudyObjectiveFromTemplate ({ commit, dispatch }, { studyUid, form, parameters }) {
     const objective = {
       objective_template_uid: form.objective_template.uid,
-      parameter_values: await instances.formatParameterValues(parameters),
+      parameter_terms: await instances.formatParameterValues(parameters),
       library_name: form.objective_template.library.name
     }
     const objectiveLevelUid = (form.objective_level) ? form.objective_level.term_uid : undefined
@@ -84,7 +84,7 @@ const actions = {
         // Create objective since an objective with specified name does not exist
         const objective = {
           objective_template_uid: form.objective.objective_template.uid,
-          parameter_values: await instances.formatParameterValues(form.parameters),
+          parameter_terms: await instances.formatParameterValues(form.parameters),
           library_name: form.objectiveTemplate ? form.objective_template.library.name : form.objective.library.name
         }
         const resp = await objectives.create(objective)

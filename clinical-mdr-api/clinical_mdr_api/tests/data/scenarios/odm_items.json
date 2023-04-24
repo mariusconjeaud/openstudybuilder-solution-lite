@@ -39,8 +39,8 @@
                 "origin": "origin1",
                 "comment": "comment1",
                 "descriptions": [
-                    "odm_description1",
-                    "odm_description2"
+                    "odm_description2",
+                    "odm_description3"
                 ],
                 "alias_uids": [
                     "odm_alias1"
@@ -92,21 +92,21 @@
                 "user_initials": "TODO user initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -152,7 +152,7 @@
                         "version": "1.0"
                     }
                 ],
-                "activities": [],
+                "activity": null,
                 "vendor_elements": [],
                 "vendor_attributes": [],
                 "vendor_element_attributes": [],
@@ -201,21 +201,21 @@
                         "user_initials": "TODO user initials",
                         "descriptions": [
                             {
-                                "uid": "odm_description1",
-                                "name": "name1",
-                                "language": "ENG",
-                                "description": "description1",
-                                "instruction": "instruction1",
-                                "sponsor_instruction": "sponsor_instruction1",
-                                "version": "0.1"
-                            },
-                            {
                                 "uid": "odm_description2",
                                 "name": "name2",
                                 "language": "language2",
                                 "description": "description2",
                                 "instruction": "instruction2",
                                 "sponsor_instruction": "sponsor_instruction2",
+                                "version": "0.1"
+                            },
+                            {
+                                "uid": "odm_description3",
+                                "name": "name3",
+                                "language": "ENG",
+                                "description": "description3",
+                                "instruction": "instruction3",
+                                "sponsor_instruction": "sponsor_instruction3",
                                 "version": "0.1"
                             }
                         ],
@@ -261,7 +261,7 @@
                                 "version": "1.0"
                             }
                         ],
-                        "activities": [],
+                        "activity": null,
                         "vendor_elements": [],
                         "vendor_attributes": [],
                         "vendor_element_attributes": [],
@@ -332,21 +332,21 @@
                 "user_initials": "TODO user initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -392,7 +392,7 @@
                         "version": "1.0"
                     }
                 ],
-                "activities": [],
+                "activity": null,
                 "vendor_elements": [],
                 "vendor_attributes": [],
                 "vendor_element_attributes": [],
@@ -440,21 +440,21 @@
                     "user_initials": "TODO user initials",
                     "descriptions": [
                         {
-                            "uid": "odm_description1",
-                            "name": "name1",
-                            "language": "ENG",
-                            "description": "description1",
-                            "instruction": "instruction1",
-                            "sponsor_instruction": "sponsor_instruction1",
-                            "version": "0.1"
-                        },
-                        {
                             "uid": "odm_description2",
                             "name": "name2",
                             "language": "language2",
                             "description": "description2",
                             "instruction": "instruction2",
                             "sponsor_instruction": "sponsor_instruction2",
+                            "version": "0.1"
+                        },
+                        {
+                            "uid": "odm_description3",
+                            "name": "name3",
+                            "language": "ENG",
+                            "description": "description3",
+                            "instruction": "instruction3",
+                            "sponsor_instruction": "sponsor_instruction3",
                             "version": "0.1"
                         }
                     ],
@@ -500,7 +500,7 @@
                             "version": "1.0"
                         }
                     ],
-                    "activities": [],
+                    "activity": null,
                     "vendor_elements": [],
                     "vendor_attributes": [],
                     "vendor_element_attributes": [],
@@ -532,8 +532,8 @@
                 "comment": "new comment",
                 "change_description": "comment added",
                 "descriptions": [
-                    "odm_description1",
-                    "odm_description2"
+                    "odm_description2",
+                    "odm_description3"
                 ],
                 "alias_uids": [
                     "odm_alias1"
@@ -585,21 +585,21 @@
                 "user_initials": "TODO user initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -645,7 +645,7 @@
                         "version": "1.0"
                     }
                 ],
-                "activities": [],
+                "activity": null,
                 "vendor_elements": [],
                 "vendor_attributes": [],
                 "vendor_element_attributes": [],
@@ -692,21 +692,21 @@
                 "user_initials": "TODO initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -752,7 +752,7 @@
                         "version": "1.0"
                     }
                 ],
-                "activities": [],
+                "activity": null,
                 "vendor_elements": [],
                 "vendor_attributes": [],
                 "vendor_element_attributes": [],
@@ -798,21 +798,21 @@
                 "user_initials": "TODO initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -858,7 +858,7 @@
                         "version": "1.0"
                     }
                 ],
-                "activities": [],
+                "activity": null,
                 "vendor_elements": [],
                 "vendor_attributes": [],
                 "vendor_element_attributes": [],
@@ -904,21 +904,21 @@
                 "user_initials": "TODO initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -964,7 +964,7 @@
                         "version": "1.0"
                     }
                 ],
-                "activities": [],
+                "activity": null,
                 "vendor_elements": [],
                 "vendor_attributes": [],
                 "vendor_element_attributes": [],
@@ -976,15 +976,13 @@
         }
     },
     {
-        "name": "Test adding activities to a specific ODM Item",
+        "name": "Test adding activity to a specific ODM Item",
         "request": {
             "headers": {},
             "method": "POST",
-            "request": [
-                {
-                    "uid": "activity_root1"
-                }
-            ],
+            "request": {
+                "uid": "activity_root1"
+            },
             "url": "concepts/odms/items/OdmItem_000001/activities"
         },
         "response": {
@@ -1014,21 +1012,21 @@
                 "user_initials": "TODO initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1074,12 +1072,10 @@
                         "version": "1.0"
                     }
                 ],
-                "activities": [
-                    {
-                        "uid": "activity_root1",
-                        "name": "name1"
-                    }
-                ],
+                "activity": {
+                    "uid": "activity_root1",
+                    "name": "name1"
+                },
                 "vendor_elements": [],
                 "vendor_attributes": [],
                 "vendor_element_attributes": [],
@@ -1091,15 +1087,13 @@
         }
     },
     {
-        "name": "Test overriding activities from a specific ODM Item",
+        "name": "Test overriding activity from a specific ODM Item",
         "request": {
             "headers": {},
             "method": "POST",
-            "request": [
-                {
-                    "uid": "activity_root2"
-                }
-            ],
+            "request": {
+                "uid": "activity_root2"
+            },
             "url": "concepts/odms/items/OdmItem_000001/activities?override=true"
         },
         "response": {
@@ -1129,21 +1123,21 @@
                 "user_initials": "TODO initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1189,12 +1183,10 @@
                         "version": "1.0"
                     }
                 ],
-                "activities": [
-                    {
-                        "uid": "activity_root2",
-                        "name": "name2"
-                    }
-                ],
+                "activity": {
+                    "uid": "activity_root2",
+                    "name": "name2"
+                },
                 "vendor_elements": [],
                 "vendor_attributes": [],
                 "vendor_element_attributes": [],
@@ -1245,21 +1237,21 @@
                 "user_initials": "TODO initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1305,12 +1297,10 @@
                         "version": "1.0"
                     }
                 ],
-                "activities": [
-                    {
-                        "uid": "activity_root2",
-                        "name": "name2"
-                    }
-                ],
+                "activity": {
+                    "uid": "activity_root2",
+                    "name": "name2"
+                },
                 "vendor_elements": [
                     {
                         "uid": "odm_vendor_element2",
@@ -1367,21 +1357,21 @@
                 "user_initials": "TODO initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1427,12 +1417,10 @@
                         "version": "1.0"
                     }
                 ],
-                "activities": [
-                    {
-                        "uid": "activity_root2",
-                        "name": "name2"
-                    }
-                ],
+                "activity": {
+                    "uid": "activity_root2",
+                    "name": "name2"
+                },
                 "vendor_elements": [
                     {
                         "uid": "odm_vendor_element1",
@@ -1489,21 +1477,21 @@
                 "user_initials": "TODO initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1549,12 +1537,10 @@
                         "version": "1.0"
                     }
                 ],
-                "activities": [
-                    {
-                        "uid": "activity_root2",
-                        "name": "name2"
-                    }
-                ],
+                "activity": {
+                    "uid": "activity_root2",
+                    "name": "name2"
+                },
                 "vendor_elements": [
                     {
                         "uid": "odm_vendor_element1",
@@ -1620,21 +1606,21 @@
                 "user_initials": "TODO initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1680,12 +1666,10 @@
                         "version": "1.0"
                     }
                 ],
-                "activities": [
-                    {
-                        "uid": "activity_root2",
-                        "name": "name2"
-                    }
-                ],
+                "activity": {
+                    "uid": "activity_root2",
+                    "name": "name2"
+                },
                 "vendor_elements": [
                     {
                         "uid": "odm_vendor_element1",
@@ -1751,21 +1735,21 @@
                 "user_initials": "TODO initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1811,12 +1795,10 @@
                         "version": "1.0"
                     }
                 ],
-                "activities": [
-                    {
-                        "uid": "activity_root2",
-                        "name": "name2"
-                    }
-                ],
+                "activity": {
+                    "uid": "activity_root2",
+                    "name": "name2"
+                },
                 "vendor_elements": [
                     {
                         "uid": "odm_vendor_element1",
@@ -1891,21 +1873,21 @@
                 "user_initials": "TODO initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -1951,12 +1933,10 @@
                         "version": "1.0"
                     }
                 ],
-                "activities": [
-                    {
-                        "uid": "activity_root2",
-                        "name": "name2"
-                    }
-                ],
+                "activity": {
+                    "uid": "activity_root2",
+                    "name": "name2"
+                },
                 "vendor_elements": [
                     {
                         "uid": "odm_vendor_element1",
@@ -1982,6 +1962,158 @@
                         "value_regex": null,
                         "value": "value",
                         "vendor_element_uid": "odm_vendor_element1"
+                    }
+                ],
+                "possible_actions": [
+                    "inactivate",
+                    "new_version"
+                ]
+            }
+        }
+    },
+    {
+        "name": "Test overriding ODM Vendor Element attribute from a specific ODM Item",
+        "request": {
+            "headers": {},
+            "method": "POST",
+            "request": {
+                "elements": [
+                    {
+                        "uid": "odm_vendor_element3",
+                        "value": "value"
+                    }
+                ],
+                "element_attributes": [
+                    {
+                        "uid": "odm_vendor_attribute7",
+                        "value": "value"
+                    }
+                ],
+                "attributes": [
+                    {
+                        "uid": "odm_vendor_attribute4",
+                        "value": "value"
+                    }
+                ]
+            },
+            "url": "concepts/odms/items/OdmItem_000001/vendors"
+        },
+        "response": {
+            "code": 201,
+            "headers": {
+                "content-length": "459",
+                "content-type": "application/json"
+            },
+            "result": {
+                "uid": "OdmItem_000001",
+                "library_name": "Sponsor",
+                "name": "name1",
+                "oid": "oid1",
+                "prompt": "prompt1",
+                "datatype": "datatype1",
+                "length": 22,
+                "significant_digits": 11,
+                "sas_field_name": "sas_field_name1",
+                "sds_var_name": "sds_var_name1",
+                "origin": "origin1",
+                "comment": "new comment",
+                "start_date": "2022-03-03T13:18:03.230000",
+                "end_date": null,
+                "status": "Final",
+                "version": "1.0",
+                "change_description": "Reactivated version",
+                "user_initials": "TODO initials",
+                "descriptions": [
+                    {
+                        "uid": "odm_description2",
+                        "name": "name2",
+                        "language": "language2",
+                        "description": "description2",
+                        "instruction": "instruction2",
+                        "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
+                        "version": "0.1"
+                    }
+                ],
+                "aliases": [
+                    {
+                        "uid": "odm_alias1",
+                        "context": "context1",
+                        "name": "name1",
+                        "version": "0.1"
+                    }
+                ],
+                "unit_definitions": [
+                    {
+                        "uid": "unit_definition_root1",
+                        "name": "name1",
+                        "mandatory": false,
+                        "order": 1,
+                        "ucum": {
+                            "term_uid": "term_root1_uid",
+                            "name": "name1"
+                        },
+                        "ct_units": [
+                            {
+                                "term_uid": "C25532_name1",
+                                "name": "name1"
+                            }
+                        ]
+                    }
+                ],
+                "codelist": {
+                    "uid": "editable_cr",
+                    "name": "codelist attributes value1",
+                    "submission_value": "codelist submission value1",
+                    "preferred_term": "codelist preferred term"
+                },
+                "terms": [
+                    {
+                        "term_uid": "term_root_final",
+                        "name": "term_value_name1",
+                        "mandatory": true,
+                        "order": 1,
+                        "display_text": "display text",
+                        "version": "1.0"
+                    }
+                ],
+                "activity": {
+                    "uid": "activity_root2",
+                    "name": "name2"
+                },
+                "vendor_elements": [
+                    {
+                        "uid": "odm_vendor_element3",
+                        "name": "nameThree",
+                        "value": "value"
+                    }
+                ],
+                "vendor_attributes": [
+                    {
+                        "uid": "odm_vendor_attribute4",
+                        "name": "nameFour",
+                        "data_type": "string",
+                        "value_regex": null,
+                        "value": "value",
+                        "vendor_namespace_uid": "odm_vendor_namespace1"
+                    }
+                ],
+                "vendor_element_attributes": [
+                    {
+                        "uid": "odm_vendor_attribute7",
+                        "name": "nameSeven",
+                        "data_type": "string",
+                        "value_regex": null,
+                        "value": "value",
+                        "vendor_element_uid": "odm_vendor_element3"
                     }
                 ],
                 "possible_actions": [
@@ -2026,21 +2158,21 @@
                 "user_initials": "TODO user initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -2086,16 +2218,14 @@
                         "version": "1.0"
                     }
                 ],
-                "activities": [
-                    {
-                        "uid": "activity_root2",
-                        "name": "name2"
-                    }
-                ],
+                "activity": {
+                    "uid": "activity_root2",
+                    "name": "name2"
+                },
                 "vendor_elements": [
                     {
-                        "uid": "odm_vendor_element1",
-                        "name": "nameOne",
+                        "uid": "odm_vendor_element3",
+                        "name": "nameThree",
                         "value": "value"
                     }
                 ],
@@ -2111,12 +2241,12 @@
                 ],
                 "vendor_element_attributes": [
                     {
-                        "uid": "odm_vendor_attribute2",
-                        "name": "nameTwo",
+                        "uid": "odm_vendor_attribute7",
+                        "name": "nameSeven",
                         "data_type": "string",
                         "value_regex": null,
                         "value": "value",
-                        "vendor_element_uid": "odm_vendor_element1"
+                        "vendor_element_uid": "odm_vendor_element3"
                     }
                 ],
                 "possible_actions": [
@@ -2144,7 +2274,7 @@
                 "origin": "origin1",
                 "comment": "comment1",
                 "descriptions": [
-                    "odm_description1"
+                    "odm_description3"
                 ],
                 "alias_uids": [],
                 "unit_definitions": [
@@ -2186,12 +2316,12 @@
                 "user_initials": "TODO user initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
+                        "uid": "odm_description3",
+                        "name": "name3",
                         "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -2216,7 +2346,7 @@
                 ],
                 "codelist": null,
                 "terms": [],
-                "activities": [],
+                "activity": null,
                 "vendor_elements": [],
                 "vendor_attributes": [],
                 "vendor_element_attributes": [],
@@ -2263,7 +2393,7 @@
                 "origin": "string",
                 "comment": "string",
                 "descriptions": [
-                    "odm_description1",
+                    "odm_description3",
                     {
                         "name": "string1",
                         "library_name": "Sponsor",
@@ -2307,12 +2437,12 @@
                 "user_initials": "TODO user initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
+                        "uid": "odm_description3",
+                        "name": "name3",
                         "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     },
                     {
@@ -2329,7 +2459,7 @@
                 "unit_definitions": [],
                 "codelist": null,
                 "terms": [],
-                "activities": [],
+                "activity": null,
                 "vendor_elements": [],
                 "vendor_attributes": [],
                 "vendor_element_attributes": [],
@@ -2369,12 +2499,12 @@
                         "sponsor_instruction": "string3"
                     },
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
+                        "uid": "odm_description3",
+                        "name": "name3",
                         "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "change_description": "nothing changed"
                     }
                 ],
@@ -2426,12 +2556,12 @@
                 "user_initials": "TODO user initials",
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
+                        "uid": "odm_description3",
+                        "name": "name3",
                         "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     },
                     {
@@ -2486,16 +2616,14 @@
                         "version": "1.0"
                     }
                 ],
-                "activities": [
-                    {
-                        "uid": "activity_root2",
-                        "name": "name2"
-                    }
-                ],
+                "activity": {
+                    "uid": "activity_root2",
+                    "name": "name2"
+                },
                 "vendor_elements": [
                     {
-                        "uid": "odm_vendor_element1",
-                        "name": "nameOne",
+                        "uid": "odm_vendor_element3",
+                        "name": "nameThree",
                         "value": "value"
                     }
                 ],
@@ -2511,12 +2639,12 @@
                 ],
                 "vendor_element_attributes": [
                     {
-                        "uid": "odm_vendor_attribute2",
-                        "name": "nameTwo",
+                        "uid": "odm_vendor_attribute7",
+                        "name": "nameSeven",
                         "data_type": "string",
                         "value_regex": null,
                         "value": "value",
-                        "vendor_element_uid": "odm_vendor_element1"
+                        "vendor_element_uid": "odm_vendor_element3"
                     }
                 ],
                 "possible_actions": [

@@ -40,7 +40,10 @@ Possible errors:
  - Invalid library name specified.""",
     response_model=CustomPage[NumericValueWithUnit],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_numeric_values(
     library: Optional[str] = Query(None, description="The library name"),
@@ -89,7 +92,7 @@ def get_numeric_values(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -135,7 +138,10 @@ Possible errors:
  """,
     response_model=NumericValueWithUnit,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_numeric_value(
     uid: str = NumericValueUID, current_user_id: str = Depends(get_current_user_id)
@@ -167,11 +173,11 @@ Possible errors:
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create(
-    numeric_value_create_input: NumericValueWithUnitInput = Body(None, description=""),
+    numeric_value_create_input: NumericValueWithUnitInput = Body(description=""),
     current_user_id: str = Depends(get_current_user_id),
 ):
     numeric_value_service = NumericValueWithUnitService(user=current_user_id)

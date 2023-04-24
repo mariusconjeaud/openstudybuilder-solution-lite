@@ -29,7 +29,10 @@ OdmFormalExpressionUID = Path(
     description="",
     response_model=CustomPage[OdmFormalExpression],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_all_odm_formal_expressions(
     library: Optional[str] = Query(None),
@@ -77,7 +80,7 @@ def get_all_odm_formal_expressions(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -113,7 +116,10 @@ def get_distinct_values_for_header(
     description="",
     response_model=OdmFormalExpression,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_odm_formal_expression(uid: str = OdmFormalExpressionUID):
     odm_formal_expression_service = OdmFormalExpressionService()
@@ -126,7 +132,10 @@ def get_odm_formal_expression(uid: str = OdmFormalExpressionUID):
     description="",
     response_model=dict,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_active_relationships(uid: str = OdmFormalExpressionUID):
     odm_formal_expression_service = OdmFormalExpressionService()
@@ -157,7 +166,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The ODM Formal Expression with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_odm_formal_expression_versions(uid: str = OdmFormalExpressionUID):
@@ -181,13 +190,13 @@ def get_odm_formal_expression_versions(uid: str = OdmFormalExpressionUID):
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_formal_expression(
     odm_formal_expression_create_input: OdmFormalExpressionPostInput = Body(
-        None, description=""
-    )
+        description=""
+    ),
 ):
     odm_formal_expression_service = OdmFormalExpressionService()
     return odm_formal_expression_service.create(
@@ -214,13 +223,13 @@ def create_odm_formal_expression(
             "model": ErrorResponse,
             "description": "Not Found - The ODM Formal Expression with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_formal_expression(
     uid: str = OdmFormalExpressionUID,
     odm_formal_expression_edit_input: OdmFormalExpressionPatchInput = Body(
-        None, description=""
+        description=""
     ),
 ):
     odm_formal_expression_service = OdmFormalExpressionService()
@@ -261,7 +270,7 @@ Possible errors:
             "- The ODM Formal Expression is not in final status.\n"
             "- The ODM Formal Expression with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_formal_expression_version(uid: str = OdmFormalExpressionUID):
@@ -287,7 +296,7 @@ def create_odm_formal_expression_version(uid: str = OdmFormalExpressionUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Formal Expression with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve_odm_formal_expression(uid: str = OdmFormalExpressionUID):
@@ -312,7 +321,7 @@ def approve_odm_formal_expression(uid: str = OdmFormalExpressionUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Formal Expression with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate_odm_formal_expression(uid: str = OdmFormalExpressionUID):
@@ -337,7 +346,7 @@ def inactivate_odm_formal_expression(uid: str = OdmFormalExpressionUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Formal Expression with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate_odm_formal_expression(uid: str = OdmFormalExpressionUID):
@@ -366,7 +375,7 @@ def reactivate_odm_formal_expression(uid: str = OdmFormalExpressionUID):
             "model": ErrorResponse,
             "description": "Not Found - An ODM Formal Expression with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_odm_formal_expression(uid: str = OdmFormalExpressionUID):

@@ -14,25 +14,28 @@ from clinical_mdr_api.domain.controlled_terminology.ct_term_name import (
     CTTermNameVO,
 )
 from clinical_mdr_api.domain.library.object import (
-    ParameterValueEntryVO,
+    ParameterTermEntryVO,
     ParametrizedTemplateVO,
 )
-from clinical_mdr_api.domain.library.objectives import ObjectiveAR
 from clinical_mdr_api.domain.study_definition_aggregate.registry_identifiers import (
     RegistryIdentifiersVO,
 )
 from clinical_mdr_api.domain.study_definition_aggregate.root import StudyDefinitionAR
 from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
+    StudyDescriptionVO,
     StudyIdentificationMetadataVO,
 )
 from clinical_mdr_api.domain.study_selection.study_selection_objective import (
     StudySelectionObjectiveVO,
 )
-from clinical_mdr_api.domain.templates.objective_template import ObjectiveTemplateAR
+from clinical_mdr_api.domain.syntax_instances.objective import ObjectiveAR
+from clinical_mdr_api.domain.syntax_templates.objective_template import (
+    ObjectiveTemplateAR,
+)
+from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
 from clinical_mdr_api.domain.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
-    TemplateVO,
     VersioningException,
 )
 from clinical_mdr_api.domain_repositories.controlled_terminology.ct_term_attributes_repository import (
@@ -41,17 +44,17 @@ from clinical_mdr_api.domain_repositories.controlled_terminology.ct_term_attribu
 from clinical_mdr_api.domain_repositories.controlled_terminology.ct_term_name_repository import (
     CTTermNameRepository,
 )
-from clinical_mdr_api.domain_repositories.library.objective_repository import (
-    ObjectiveRepository,
-)
 from clinical_mdr_api.domain_repositories.study_definition.study_definition_repository import (
     StudyDefinitionRepository,
 )
 from clinical_mdr_api.domain_repositories.study_definition.study_title.study_title_repository import (
     StudyTitleRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_objective_repository import (
+from clinical_mdr_api.domain_repositories.study_selection.study_objective_repository import (
     StudySelectionObjectiveRepository,
+)
+from clinical_mdr_api.domain_repositories.syntax_instances.objective_repository import (
+    ObjectiveRepository,
 )
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.tests.integration.repositories.concurrency.tools.optimistic_locking_validator import (
@@ -77,7 +80,7 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
     library_name = "Sponsor"
     user_initials = "TEST"
     template_name = "Example Template"
-    parameter_values: Sequence[ParameterValueEntryVO] = []
+    parameter_terms: Sequence[ParameterTermEntryVO] = []
     study_title_repository: StudyTitleRepository
     studies_repository: StudyDefinitionRepository
     ct_term_attributes_repository: CTTermAttributesRepository
@@ -113,7 +116,7 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
         self.ct_term_attributes_repository = self._repos.ct_term_attributes_repository
         self.ct_term_names_repository = self._repos.ct_term_name_repository
         self.study_objective_selection_repository = (
-            self._repos.study_selection_objective_repository
+            self._repos.study_objective_repository
         )
         self.objective_repository = self._repos.objective_repository
 
@@ -144,8 +147,18 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
                 study_short_title_exists_callback=(lambda _, study_number: False),
                 study_number_exists_callback=(lambda _: False),
             )
-
             self.studies_repository.save(study_ar)
+
+            # update study_title because it has to be set before locking
+            study = self.studies_repository.find_by_uid(study_ar.uid, for_update=True)
+            study.edit_metadata(
+                study_title_exists_callback=(lambda _, study_number: False),
+                study_short_title_exists_callback=(lambda _, study_number: False),
+                new_study_description=StudyDescriptionVO.from_input_values(
+                    study_title="new_study_title", study_short_title="study_short_title"
+                ),
+            )
+            self.studies_repository.save(study)
 
         # add CT terms that the study depends on
         terms = [
@@ -174,7 +187,6 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
             self.create_and_approve_term(codelist_uid=codelist_uid, term_uid=term)
 
     def create_and_approve_term(self, codelist_uid, term_uid):
-
         with db.transaction:
             library_name = "Sponsor"
             library_vo = LibraryVO.from_repository_values(
@@ -247,7 +259,6 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
             library=library_vo,
             template_value_exists_callback=(lambda _: False),
             generate_uid_callback=(lambda: self.template_uid),
-            editable_instance=False,
         )
         # Create template
         with db.transaction:
@@ -260,10 +271,10 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
             objective_template_ar.approve(author=self.user_initials)
             self.template_repository.save(objective_template_ar)
         self.parameterized_template_vo = (
-            ParametrizedTemplateVO.from_name_and_parameter_values(
+            ParametrizedTemplateVO.from_name_and_parameter_terms(
                 name=self.template_name,
                 template_uid=self.template_uid,
-                parameter_values=self.parameter_values,
+                parameter_terms=self.parameter_terms,
             )
         )
         library_vo = LibraryVO.from_input_values_2(
@@ -276,22 +287,22 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
         )
         self.object_repository.save(self.object_ar)
 
-    def test_study_selection_create_cancelled_on_concurrent_study_release(self):
+    def test_study_selection_create_cancelled_on_concurrent_study_lock(self):
         self.setUp_base_graph_for_studies()
         self.setUp_base_graph_for_objectives_without_clearing_graph()
 
         with self.assertRaises(VersioningException) as message:
             OptimisticLockingValidator().assert_optimistic_locking_ensures_execution_order(
-                main_operation_before=self.release_study_without_save,
+                main_operation_before=self.lock_study_without_save,
                 concurrent_operation=self.create_study_objective_with_save,
                 main_operation_after=self.save_study,
             )
         self.assertEqual(
-            "You cannot add or reorder a study selection when the study is in a released state.",
+            "You cannot add or reorder a study selection when the study is in a locked state.",
             str(message.exception),
         )
 
-    def test_study_selection_reorder_cancelled_on_concurrent_study_release(self):
+    def test_study_selection_reorder_cancelled_on_concurrent_study_lock(self):
         self.setUp_base_graph_for_studies()
         self.setUp_base_graph_for_objectives_without_clearing_graph()
 
@@ -300,20 +311,20 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
 
         with self.assertRaises(VersioningException) as message:
             OptimisticLockingValidator().assert_optimistic_locking_ensures_execution_order(
-                main_operation_before=self.release_study_without_save,
+                main_operation_before=self.lock_study_without_save,
                 concurrent_operation=self.reorder_study_objective_with_save,
                 main_operation_after=self.save_study,
             )
         self.assertEqual(
-            "You cannot add or reorder a study selection when the study is in a released state.",
+            "You cannot add or reorder a study selection when the study is in a locked state.",
             str(message.exception),
         )
 
-    def release_study_without_save(self):
+    def lock_study_without_save(self):
         self.study_ar = self.studies_repository.find_by_uid(
             "Study_000001", for_update=True
         )
-        self.study_ar.release()
+        self.study_ar.lock(version_description="info", version_author="TODO Initials")
 
     def save_study(self):
         self.studies_repository.save(self.study_ar)

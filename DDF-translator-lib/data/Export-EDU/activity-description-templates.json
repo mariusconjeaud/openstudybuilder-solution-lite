@@ -1,0 +1,354 @@
+[
+  {
+    "activities": null,
+    "activityGroups": [
+      {
+        "abbreviation": null,
+        "changeDescription": "Approved version",
+        "definition": "Definition not provided",
+        "endDate": null,
+        "libraryName": "Sponsor",
+        "name": "Clinical Outcome Assessments",
+        "nameSentenceCase": "clinical outcome assessments",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:35:07.864235",
+        "status": "Final",
+        "uid": "ActivityGroup_000003",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      }
+    ],
+    "activitySubGroups": [
+      {
+        "abbreviation": null,
+        "activityGroups": [
+          {
+            "name": "Clinical Outcome Assessments",
+            "uid": "ActivityGroup_000003"
+          }
+        ],
+        "changeDescription": "Approved version",
+        "definition": null,
+        "endDate": null,
+        "libraryName": "Sponsor",
+        "name": "Diabetes Treatment Satisfaction Questionnaire Status (DTSQS)",
+        "nameSentenceCase": "diabetes treatment satisfaction questionnaire status (dtsqs)",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:35:25.948049",
+        "status": "Final",
+        "uid": "ActivitySubGroup_000072",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      }
+    ],
+    "changeDescription": "Initial version",
+    "defaultParameterValues": {},
+    "editableInstance": false,
+    "endDate": null,
+    "indications": [
+      {
+        "abbreviation": "DM",
+        "changeDescription": "Approved version",
+        "definition": "Diabetes mellitus (disorder)",
+        "dictionaryId": "73211009",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Diabetes mellitus",
+        "nameSentenceCase": "diabetes mellitus",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:53.120945",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000013",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      }
+    ],
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>Test</p>",
+    "namePlain": "Test",
+    "parameters": [],
+    "possibleActions": [
+      "approve",
+      "delete",
+      "edit"
+    ],
+    "startDate": "2022-09-15T09:42:40.979630",
+    "status": "Draft",
+    "studyCount": 0,
+    "uid": "ActivityDescriptionTemplate_000003",
+    "userInitials": "XMGM",
+    "version": "0.1"
+  },
+  {
+    "activities": null,
+    "activityGroups": [
+      {
+        "abbreviation": null,
+        "changeDescription": "Approved version",
+        "definition": "Definition not provided",
+        "endDate": null,
+        "libraryName": "Sponsor",
+        "name": "Clinical Outcome Assessments",
+        "nameSentenceCase": "clinical outcome assessments",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:35:07.864235",
+        "status": "Final",
+        "uid": "ActivityGroup_000003",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      }
+    ],
+    "activitySubGroups": [
+      {
+        "abbreviation": null,
+        "activityGroups": [
+          {
+            "name": "Clinical Outcome Assessments",
+            "uid": "ActivityGroup_000003"
+          }
+        ],
+        "changeDescription": "Approved version",
+        "definition": null,
+        "endDate": null,
+        "libraryName": "Sponsor",
+        "name": "SF36 Health Survey Standard V2.0",
+        "nameSentenceCase": "sf36 health survey standard v2.0",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:35:10.585186",
+        "status": "Final",
+        "uid": "ActivitySubGroup_000002",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      }
+    ],
+    "changeDescription": "Approved version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": [
+            {
+              "index": 1,
+              "name": "SF36 Health Survey Standard V2.0",
+              "type": "ActivitySubGroup",
+              "uid": "ActivitySubGroup_000002"
+            }
+          ]
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": [
+            {
+              "index": 1,
+              "name": "Short Form 12 Health Survey Standard, US Version 2.0 Questionnaire",
+              "type": "Category of Questionnaire",
+              "uid": "TemplateParameterValue_000721"
+            }
+          ]
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<ul><li>PRO (generic)&nbsp;</li><li>The [ActivitySubGroup] measure consists of 36 items yielding 8 health domain scores and 2 component summary scores. SF-36v2 scores are norm-based scores, i.e. transformed to a scale where the 2009 US general population has a mean of 50 and an standard deviation of 10. Higher scores indicate better functional health and well-being.</li><li>Health domain scores (score range): Physical Functioning (19.3 to 57.5), Role limitation due to physical health problems (Role-Physical) (21.2 to 57.2), Bodily Pain (21.7 to 62.0), General Health (19.0 to 66.5), Social Functioning (17.2 to 57.3), Role limitation due to emotional problems (Role-Emotional) (14.4 to 56.2), Vitality (22.9 to 70.4), Mental Health (11.6 to 63.9).</li><li>Component summary scores (score range): Physical Component Summary (5.0 to 79.8), Mental Component Summary (-3.3 to 80.1).</li><li>Data collection mode:&nbsp;[Data Collection Mode].</li><li>Approximate completion time: 5-10 minutes.</li><li>Recall/Observation Period: 4 weeks.</li></ul><p><br></p><p>&lt;For reference&gt;</p><p>SDTM Category : [Category of Questionnaire].</p><p>References:</p><ol><li>Ware JE Jr, Gandek B. Overview of the SF-36 Health Survey and the International Quality of Life Assessment (IQOLA) Project. J Clin Epidemiol. 1998 Nov;51(11):903-12. doi: 10.1016/s0895-4356(98)00081-x. PMID: 9817107.&nbsp;</li><li>Ware J, Kosinski M, Bjorner J, Turner-Bowker D, Gandek B, Maruish M. Determining important differences in scores. User's Manual for the SF-36v2 Health Survey. Lincoln (RI): QualityMetric Incorporated; 2007:125-133&nbsp;</li></ol><p><br></p>",
+    "namePlain": "PRO (generic)\u00a0The [ActivitySubGroup] measure consists of 36 items yielding 8 health domain scores and 2 component summary scores. SF-36v2 scores are norm-based scores, i.e. transformed to a scale where the 2009 US general population has a mean of 50 and an standard deviation of 10. Higher scores indicate better functional health and well-being.Health domain scores (score range): Physical Functioning (19.3 to 57.5), Role limitation due to physical health problems (Role-Physical) (21.2 to 57.2), Bodily Pain (21.7 to 62.0), General Health (19.0 to 66.5), Social Functioning (17.2 to 57.3), Role limitation due to emotional problems (Role-Emotional) (14.4 to 56.2), Vitality (22.9 to 70.4), Mental Health (11.6 to 63.9).Component summary scores (score range): Physical Component Summary (5.0 to 79.8), Mental Component Summary (-3.3 to 80.1).Data collection mode:\u00a0[Data Collection Mode].Approximate completion time: 5-10 minutes.Recall/Observation Period: 4 weeks.<For reference>SDTM Category : [Category of Questionnaire].References:Ware JE Jr, Gandek B. Overview of the SF-36 Health Survey and the International Quality of Life Assessment (IQOLA) Project. J Clin Epidemiol. 1998 Nov;51(11):903-12. doi: 10.1016/s0895-4356(98)00081-x. PMID: 9817107.\u00a0Ware J, Kosinski M, Bjorner J, Turner-Bowker D, Gandek B, Maruish M. Determining important differences in scores. User's Manual for the SF-36v2 Health Survey. Lincoln (RI): QualityMetric Incorporated; 2007:125-133\u00a0",
+    "parameters": [
+      {
+        "name": "ActivitySubGroup",
+        "values": null
+      },
+      {
+        "name": "Data Collection Mode",
+        "values": null
+      },
+      {
+        "name": "Category of Questionnaire",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-15T08:33:21.412889",
+    "status": "Final",
+    "studyCount": 0,
+    "uid": "ActivityDescriptionTemplate_000002",
+    "userInitials": "MT",
+    "version": "1.0"
+  },
+  {
+    "activities": null,
+    "activityGroups": [
+      {
+        "abbreviation": null,
+        "changeDescription": "Approved version",
+        "definition": "Definition not provided",
+        "endDate": null,
+        "libraryName": "Sponsor",
+        "name": "Clinical Outcome Assessments",
+        "nameSentenceCase": "clinical outcome assessments",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:35:07.864235",
+        "status": "Final",
+        "uid": "ActivityGroup_000003",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      }
+    ],
+    "activitySubGroups": [
+      {
+        "abbreviation": null,
+        "activityGroups": [
+          {
+            "name": "Clinical Outcome Assessments",
+            "uid": "ActivityGroup_000003"
+          }
+        ],
+        "changeDescription": "Approved version",
+        "definition": null,
+        "endDate": null,
+        "libraryName": "Sponsor",
+        "name": "Diabetes Treatment Satisfaction Questionnaire Change (DTSQC)",
+        "nameSentenceCase": "diabetes treatment satisfaction questionnaire change (dtsqc)",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:35:21.130603",
+        "status": "Final",
+        "uid": "ActivitySubGroup_000050",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      }
+    ],
+    "changeDescription": "Initial version",
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "or",
+          "position": 1,
+          "values": [
+            {
+              "index": 1,
+              "name": "Diabetes Treatment Satisfaction Questionnaire Change (DTSQC)",
+              "type": "ActivitySubGroup",
+              "uid": "ActivitySubGroup_000050"
+            }
+          ]
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": [
+            {
+              "index": 1,
+              "name": "eCOA",
+              "type": "Data Collection Mode",
+              "uid": "TemplateParameterValue_000495"
+            }
+          ]
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": [
+            {
+              "index": 1,
+              "name": "DTSQc",
+              "type": "Category of Questionnaire",
+              "uid": "TemplateParameterValue_000592"
+            }
+          ]
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": [
+      {
+        "abbreviation": "DM",
+        "changeDescription": "Approved version",
+        "definition": "Diabetes mellitus (disorder)",
+        "dictionaryId": "73211009",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Diabetes mellitus",
+        "nameSentenceCase": "diabetes mellitus",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:53.120945",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000013",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      }
+    ],
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<ul><li>PRO (disease-specific).</li><li>[ActivitySubGroup] measures treatment satisfaction and diabetes-specific quality of life (QoL). The measure consists of 8 items yielding 1 global score and 2 single item scores. Higher scores on the global score indicate greater improvement in satisfaction with treatment, while lower scores indicate greater deterioration in satisfaction with treatment. Negative scores on the single-item scores indicate fewer problems with blood glucose levels, while positive scores indicate more problems than before.</li><li>Single-item scores (score range): Perceived frequency of hyperglycaemia (+3 to -3), Perceived frequency of hypoglycaemia (+3 to -3).</li><li>Global score (score range): Total Treatment Satisfaction (+18 to -18).</li><li>Data collection mode:&nbsp;[Data Collection Mode].</li><li>Approximate completion time: 3-5 minutes.</li></ul><p><br></p><p><em>&lt;For reference&gt;</em></p><p>SDTM Category: [Category of Questionnaire].</p><p>References:&nbsp;</p><ol><li>Bradley C. Diabetes treatment satisfaction questionnaire. Change version for use alongside status version provides appropriate solution where ceiling effects occur. Diabetes Care. 1999 Mar;22(3):530-2.</li><li>Howorka K, Pumprla J, Schlusche C, Wagner-Nosiska D, Schabmann A, Bradley C. Dealing with ceiling baseline treatment satisfaction level in patients with diabetes under flexible, functional insulin treatment: assessment of improvements in treatment satisfaction with a new insulin analogue. Qual Life Res. 2000;9(8):915-30. doi: 10.1023/a:1008921419108.&nbsp;</li></ol>",
+    "namePlain": "PRO (disease-specific).[ActivitySubGroup] measures treatment satisfaction and diabetes-specific quality of life (QoL). The measure consists of 8 items yielding 1 global score and 2 single item scores. Higher scores on the global score indicate greater improvement in satisfaction with treatment, while lower scores indicate greater deterioration in satisfaction with treatment. Negative scores on the single-item scores indicate fewer problems with blood glucose levels, while positive scores indicate more problems than before.Single-item scores (score range): Perceived frequency of hyperglycaemia (+3 to -3), Perceived frequency of hypoglycaemia (+3 to -3).Global score (score range): Total Treatment Satisfaction (+18 to -18).Data collection mode:\u00a0[Data Collection Mode].Approximate completion time: 3-5 minutes.<For reference>SDTM Category: [Category of Questionnaire].References:\u00a0Bradley C. Diabetes treatment satisfaction questionnaire. Change version for use alongside status version provides appropriate solution where ceiling effects occur. Diabetes Care. 1999 Mar;22(3):530-2.Howorka K, Pumprla J, Schlusche C, Wagner-Nosiska D, Schabmann A, Bradley C. Dealing with ceiling baseline treatment satisfaction level in patients with diabetes under flexible, functional insulin treatment: assessment of improvements in treatment satisfaction with a new insulin analogue. Qual Life Res. 2000;9(8):915-30. doi: 10.1023/a:1008921419108.\u00a0",
+    "parameters": [
+      {
+        "name": "ActivitySubGroup",
+        "values": null
+      },
+      {
+        "name": "Data Collection Mode",
+        "values": null
+      },
+      {
+        "name": "Category of Questionnaire",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "approve",
+      "delete",
+      "edit"
+    ],
+    "startDate": "2022-09-15T06:41:03.316914",
+    "status": "Draft",
+    "studyCount": 0,
+    "uid": "ActivityDescriptionTemplate_000001",
+    "userInitials": "MT",
+    "version": "0.1"
+  }
+]

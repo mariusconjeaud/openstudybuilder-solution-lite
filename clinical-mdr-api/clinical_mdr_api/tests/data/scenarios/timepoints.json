@@ -26,7 +26,7 @@
                 "library_name": "Test library",
                 "name": "Test timepoint",
                 "timepoint_template_uid": "{otuid}",
-                "parameter_values": []
+                "parameter_terms": []
             },
             "url": "/timepoints/preview"
         },
@@ -48,7 +48,7 @@
                     "name": "Test_Name_Template",
                     "uid": "{otuid}"
                 },
-                "parameter_values": [],
+                "parameter_terms": [],
                 "possible_actions": [
                     "approve",
                     "delete",
@@ -74,7 +74,7 @@
                 "library_name": "Test library",
                 "name": "Test timepoint",
                 "timepoint_template_uid": "{otuid}",
-                "parameter_values": []
+                "parameter_terms": []
             },
             "url": "/timepoints/"
         },
@@ -96,7 +96,7 @@
                     "name": "Test_Name_Template",
                     "uid": "{otuid}"
                 },
-                "parameter_values": [],
+                "parameter_terms": [],
                 "possible_actions": [
                     "approve",
                     "delete",
@@ -135,7 +135,7 @@
                     "name": "Test library"
                 },
                 "name": "Test_Name_Template",
-                "parameter_values": [],
+                "parameter_terms": [],
                 "possible_actions": [
                     "inactivate"
                 ],
@@ -239,7 +239,7 @@
                         "name": "Test_Name_Template",
                         "uid": "{otuid}"
                     },
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "library": {
                         "name": "Test library",
                         "is_editable": true
@@ -256,7 +256,7 @@
                         "possible_actions": true,
                         "timepoint_template": false,
                         "library": false,
-                        "parameter_values": false
+                        "parameter_terms": false
                     }
                 },
                 {
@@ -277,7 +277,7 @@
                         "name": "Test_Name_Template",
                         "uid": "{otuid}"
                     },
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "library": {
                         "name": "Test library",
                         "is_editable": true
@@ -294,10 +294,10 @@
             "method": "PATCH",
             "request": {
                 "name": "test{test-uid}",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "name": "Intervention",
-                        "values": [
+                        "terms": [
                             {
                                 "uid": "TemplateParameter_000003",
                                 "type": "Intervention",
@@ -340,7 +340,7 @@
             "request": {
                 "change_description": "Change test",
                 "name": "test{test-uid}",
-                "parameter_values": []
+                "parameter_terms": []
             },
             "url": "/timepoints/{uid}"
         },
@@ -388,7 +388,7 @@
             "request": {
                 "change_description": "Change test",
                 "name": "test{test-uid}",
-                "parameter_values": []
+                "parameter_terms": []
             },
             "url": "/timepoints/{uid}"
         },

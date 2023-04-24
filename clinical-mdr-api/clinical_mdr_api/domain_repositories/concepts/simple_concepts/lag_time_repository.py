@@ -30,7 +30,6 @@ from clinical_mdr_api.models.concept import LagTime as LagTimeAPIModel
 
 
 class LagTimeRepository(NumericValueWithUnitRepository):
-
     root_class = LagTimeRoot
     value_class = LagTimeValue
     aggregate_class = LagTimeAR
@@ -92,7 +91,6 @@ class LagTimeRepository(NumericValueWithUnitRepository):
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> LagTimeAR:
-
         return self.aggregate_class.from_repository_values(
             uid=root.uid,
             simple_concept_vo=self.value_object_class.from_repository_values(

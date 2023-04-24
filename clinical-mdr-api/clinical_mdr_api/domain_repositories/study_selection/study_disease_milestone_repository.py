@@ -6,6 +6,7 @@ from neomodel import Q, db
 from clinical_mdr_api.domain.study_selection.study_disease_milestone import (
     StudyDiseaseMilestoneVO,
 )
+from clinical_mdr_api.domain_repositories.models._utils import to_relation_trees
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
@@ -76,17 +77,16 @@ class StudyDiseaseMilestoneRepository:
             sort_by=sort_by, model=StudyDiseaseMilestoneOGM
         )
         page_number = decrement_page_number(page_number)
-        nodes = (
+        start: int = page_number * page_size
+        end: int = start + page_size
+        nodes = to_relation_trees(
             StudyDiseaseMilestone.nodes.fetch_relations(
                 "has_after__audit_trail",
                 "has_disease_milestone_type__has_name_root__latest_final",
                 "has_disease_milestone_type__has_attributes_root__latest_final",
             )
             .order_by(sort_paths[0] if len(sort_paths) > 0 else "uid")
-            .filter(*q_filters)
-            .limit_results(page_size)
-            .skip_results(page_number * page_size)
-            .to_relation_trees()
+            .filter(*q_filters)[start:end]
         )
         all_activities = [
             StudyDiseaseMilestoneOGM.from_orm(activity_node) for activity_node in nodes
@@ -111,27 +111,26 @@ class StudyDiseaseMilestoneRepository:
     ) -> Optional[_StandardsReturnType]:
         all_disease_milestones = [
             StudyDiseaseMilestoneOGM.from_orm(sas_node)
-            for sas_node in StudyDiseaseMilestone.nodes.fetch_relations(
-                "has_after__audit_trail",
-                "has_disease_milestone_type__has_name_root__latest_final",
-                "has_disease_milestone_type__has_attributes_root__latest_final",
+            for sas_node in to_relation_trees(
+                StudyDiseaseMilestone.nodes.fetch_relations(
+                    "has_after__audit_trail",
+                    "has_disease_milestone_type__has_name_root__latest_final",
+                    "has_disease_milestone_type__has_attributes_root__latest_final",
+                )
+                .filter(has_study_disease_milestone__study_root__uid=study_uid)
+                .order_by("order")
             )
-            .filter(has_study_disease_milestone__study_root__uid=study_uid)
-            .order_by("order")
-            .to_relation_trees()
         ]
         return all_disease_milestones
 
     def find_by_uid(self, uid: str) -> StudyDiseaseMilestoneVO:
-        disease_milestone_node = (
+        disease_milestone_node = to_relation_trees(
             StudyDiseaseMilestone.nodes.fetch_relations(
                 "has_after__audit_trail",
                 "has_study_disease_milestone",
                 "has_disease_milestone_type__has_name_root__latest_final",
                 "has_disease_milestone_type__has_attributes_root__latest_final",
-            )
-            .filter(uid=uid)
-            .to_relation_trees()
+            ).filter(uid=uid)
         )
 
         if len(disease_milestone_node) > 1:
@@ -147,27 +146,28 @@ class StudyDiseaseMilestoneRepository:
     def get_all_versions(self, uid: str, study_uid):
         version_nodes = [
             StudyDiseaseMilestoneOGMVer.from_orm(se_node)
-            for se_node in StudyDiseaseMilestone.nodes.fetch_relations(
-                "has_after__audit_trail",
-                "has_disease_milestone_type__has_name_root__latest_final",
-                "has_disease_milestone_type__has_attributes_root__latest_final",
+            for se_node in to_relation_trees(
+                StudyDiseaseMilestone.nodes.fetch_relations(
+                    "has_after__audit_trail",
+                    "has_disease_milestone_type__has_name_root__latest_final",
+                    "has_disease_milestone_type__has_attributes_root__latest_final",
+                ).filter(uid=uid, has_after__audit_trail__uid=study_uid)
             )
-            .filter(uid=uid, has_after__audit_trail__uid=study_uid)
-            .to_relation_trees()
         ]
         return sorted(version_nodes, key=lambda item: item.start_date, reverse=True)
 
     def get_all_disease_milestone_versions(self, study_uid: str):
         version_nodes = [
             StudyDiseaseMilestoneOGMVer.from_orm(se_node)
-            for se_node in StudyDiseaseMilestone.nodes.fetch_relations(
-                "has_after__audit_trail",
-                "has_disease_milestone_type__has_name_root__latest_final",
-                "has_disease_milestone_type__has_attributes_root__latest_final",
+            for se_node in to_relation_trees(
+                StudyDiseaseMilestone.nodes.fetch_relations(
+                    "has_after__audit_trail",
+                    "has_disease_milestone_type__has_name_root__latest_final",
+                    "has_disease_milestone_type__has_attributes_root__latest_final",
+                )
+                .filter(has_after__audit_trail__uid=study_uid)
+                .order_by("order")
             )
-            .filter(has_after__audit_trail__uid=study_uid)
-            .order_by("order")
-            .to_relation_trees()
         ]
         return sorted(version_nodes, key=lambda item: item.start_date, reverse=True)
 
@@ -189,7 +189,7 @@ class StudyDiseaseMilestoneRepository:
         self, item: StudyDiseaseMilestoneVO, create: bool = False, delete=False
     ):
         study_root = StudyRoot.nodes.get(uid=item.study_uid)
-        study_value = study_root.latest_draft.get_or_none()
+        study_value = study_root.latest_value.get_or_none()
         if study_value is None:
             raise ValueError("Study does not have draft version")
         new_study_disease_milestone = StudyDiseaseMilestone(
@@ -328,14 +328,11 @@ class StudyDiseaseMilestoneRepository:
         if "__" in field_path:
             values = (
                 StudyDiseaseMilestone.nodes.collect_values(field_path)
-                .filter(*q_filters)
-                .limit_results(result_count)
+                .filter(*q_filters)[:result_count]
                 .all()
             )
         else:
-            values = (
-                StudyDiseaseMilestone.nodes.filter(*q_filters)
-                .limit_results(result_count)
-                .to_relation_trees()
+            values = to_relation_trees(
+                StudyDiseaseMilestone.nodes.filter(*q_filters)[:result_count]
             )
         return values

@@ -49,10 +49,10 @@ study_patch = {
         },
         "version_metadata": {
             "study_status": "string",
-            "locked_version_number": 0,
+            "version_number": 0,
             "version_timestamp": "2022-06-10T13:15:22.182Z",
-            "locked_version_author": "string",
-            "locked_version_info": "string",
+            "version_author": "string",
+            "version_description": "string",
         },
         "high_level_study_design": {
             "study_type_code": {"term_uid": "string", "name": "string"},
@@ -62,11 +62,20 @@ study_patch = {
             "trial_phase_code": {"term_uid": "string", "name": "string"},
             "trial_phase_null_value_code": {"term_uid": "string", "name": "string"},
             "is_extension_trial": True,
-            "is_extension_trial_null_value_code": {"term_uid": "string", "name": "string"},
+            "is_extension_trial_null_value_code": {
+                "term_uid": "string",
+                "name": "string",
+            },
             "is_adaptive_design": True,
-            "is_adaptive_design_null_value_code": {"term_uid": "string", "name": "string"},
+            "is_adaptive_design_null_value_code": {
+                "term_uid": "string",
+                "name": "string",
+            },
             "study_stop_rules": "string",
-            "study_stop_rules_null_value_code": {"term_uid": "string", "name": "string"},
+            "study_stop_rules_null_value_code": {
+                "term_uid": "string",
+                "name": "string",
+            },
             "confirmed_response_minimum_duration": {
                 "duration_value": 0,
                 "duration_unit_code": {"uid": "string", "name": "string"},
@@ -76,11 +85,17 @@ study_patch = {
                 "name": "string",
             },
             "post_auth_indicator": True,
-            "post_auth_indicator_null_value_code": {"term_uid": "string", "name": "string"},
+            "post_auth_indicator_null_value_code": {
+                "term_uid": "string",
+                "name": "string",
+            },
         },
         "study_population": {
             "therapeutic_areas_codes": [{"term_uid": "string", "name": "string"}],
-            "therapeutic_areas_null_value_code": {"term_uid": "string", "name": "string"},
+            "therapeutic_areas_null_value_code": {
+                "term_uid": "string",
+                "name": "string",
+            },
             "disease_conditions_or_indications_codes": [
                 {"term_uid": "string", "name": "string"}
             ],
@@ -89,9 +104,15 @@ study_patch = {
                 "name": "string",
             },
             "diagnosis_groups_codes": [{"term_uid": "string", "name": "string"}],
-            "diagnosis_groups_null_value_code": {"term_uid": "string", "name": "string"},
+            "diagnosis_groups_null_value_code": {
+                "term_uid": "string",
+                "name": "string",
+            },
             "sex_of_participants_code": {"term_uid": "string", "name": "string"},
-            "sex_of_participants_null_value_code": {"term_uid": "string", "name": "string"},
+            "sex_of_participants_null_value_code": {
+                "term_uid": "string",
+                "name": "string",
+            },
             "rare_disease_indicator": True,
             "rare_disease_indicator_null_value_code": {
                 "term_uid": "string",
@@ -142,11 +163,17 @@ study_patch = {
                 "name": "string",
             },
             "relapse_criteria": "string",
-            "relapse_criteria_null_value_code": {"term_uid": "string", "name": "string"},
+            "relapse_criteria_null_value_code": {
+                "term_uid": "string",
+                "name": "string",
+            },
         },
         "study_intervention": {
             "intervention_type_code": {"term_uid": "string", "name": "string"},
-            "intervention_type_null_value_code": {"term_uid": "string", "name": "string"},
+            "intervention_type_null_value_code": {
+                "term_uid": "string",
+                "name": "string",
+            },
             "add_on_to_existing_treatments": True,
             "add_on_to_existing_treatments_null_value_code": {
                 "term_uid": "string",
@@ -155,30 +182,48 @@ study_patch = {
             "control_type_code": {"term_uid": "string", "name": "string"},
             "control_type_null_value_code": {"term_uid": "string", "name": "string"},
             "intervention_model_code": {"term_uid": "string", "name": "string"},
-            "intervention_model_null_value_code": {"term_uid": "string", "name": "string"},
+            "intervention_model_null_value_code": {
+                "term_uid": "string",
+                "name": "string",
+            },
             "is_trial_randomised": True,
-            "is_trial_randomised_null_value_code": {"term_uid": "string", "name": "string"},
+            "is_trial_randomised_null_value_code": {
+                "term_uid": "string",
+                "name": "string",
+            },
             "stratification_factor": "string",
             "stratification_factor_null_value_code": {
                 "term_uid": "string",
                 "name": "string",
             },
             "trial_blinding_schema_code": {"term_uid": "string", "name": "string"},
-            "trial_blinding_schema_null_value_code": {"term_uid": "string", "name": "string"},
+            "trial_blinding_schema_null_value_code": {
+                "term_uid": "string",
+                "name": "string",
+            },
             "planned_study_length": {
                 "duration_value": 0,
                 "duration_unit_code": {"uid": "string", "name": "string"},
             },
-            "planned_study_length_null_value_code": {"term_uid": "string", "name": "string"},
+            "planned_study_length_null_value_code": {
+                "term_uid": "string",
+                "name": "string",
+            },
             "drug_study_indication": True,
-            "drug_study_indication_null_value_code": {"term_uid": "string", "name": "string"},
+            "drug_study_indication_null_value_code": {
+                "term_uid": "string",
+                "name": "string",
+            },
             "device_study_indication": "string",
             "device_study_indication_null_value_code": {
                 "term_uid": "string",
                 "name": "string",
             },
             "trial_intent_types_codes": [{"term_uid": "string", "name": "string"}],
-            "trial_intent_types_null_value_code": {"term_uid": "string", "name": "string"},
+            "trial_intent_types_null_value_code": {
+                "term_uid": "string",
+                "name": "string",
+            },
         },
         "study_description": {"study_title": "string"},
     }
@@ -196,18 +241,14 @@ study_arm = {
 }
 
 study_cohort = {
-  "name": "string",
-  "short_name": "string",
-  "code": "string",
-  "description": "string",
-  "colour_code": "string",
-  "number_of_subjects": 0,
-  "branch_arm_uids": [
-    "string"
-  ],
-  "arm_uids": [
-    "string"
-  ]
+    "name": "string",
+    "short_name": "string",
+    "code": "string",
+    "description": "string",
+    "colour_code": "string",
+    "number_of_subjects": 0,
+    "branch_arm_uids": ["string"],
+    "arm_uids": ["string"],
 }
 
 study_element = {
@@ -293,36 +334,36 @@ study_activity = {
 objective_template = {
     "name": "string",
     "guidance_text": "string",
+    "study_uid": "string",
     "library_name": "Sponsor",
-    "default_parameter_values": [
+    "default_parameter_terms": [
         {
             "position": 0,
             "conjunction": "string",
-            "values": [
+            "terms": [
                 {"uid": "string", "name": "string", "type": "string", "index": 0}
             ],
         }
     ],
-    "editable_instance": False,
     "indication_uids": ["string"],
-    "confirmatory_testing": True,
+    "is_confirmatory_testing": True,
     "category_uids": ["string"],
 }
 
 criteria_template = {
     "name": "string",
     "guidance_text": "string",
+    "study_uid": "string",
     "library_name": "Sponsor",
-    "default_parameter_values": [
+    "default_parameter_terms": [
         {
             "position": 0,
             "conjunction": "string",
-            "values": [
+            "terms": [
                 {"uid": "string", "name": "string", "type": "string", "index": 0}
             ],
         }
     ],
-    "editable_instance": False,
     "type_uid": "string",
     "indication_uids": ["string"],
     "category_uids": ["string"],
@@ -333,42 +374,40 @@ timeframe_template = {
     "name": "string",
     "guidance_text": "string",
     "library_name": "Sponsor",
-    "editable_instance": False,
 }
 
 endpoint_template = {
     "name": "string",
     "guidance_text": "string",
+    "study_uid": "string",
     "library_name": "Sponsor",
-    "default_parameter_values": [
+    "default_parameter_terms": [
         {
             "position": 0,
             "conjunction": "string",
-            "values": [
+            "terms": [
                 {"uid": "string", "name": "string", "type": "string", "index": 0}
             ],
         }
     ],
-    "editable_instance": False,
     "indication_uids": ["string"],
     "category_uids": ["string"],
     "sub_category_uids": ["string"],
 }
 
-activity_description_template = {
+activity_instruction_template = {
     "name": "string",
     "guidance_text": "string",
     "library_name": "Sponsor",
-    "default_parameter_values": [
+    "default_parameter_terms": [
         {
             "position": 0,
             "conjunction": "string",
-            "values": [
+            "terms": [
                 {"uid": "string", "name": "string", "type": "string", "index": 0}
             ],
         }
     ],
-    "editable_instance": False,
     "indication_uids": ["string"],
     "activity_uids": ["string"],
     "activity_group_uids": ["string"],
@@ -378,39 +417,36 @@ activity_description_template = {
 study_objective = {
     "objective_level_uid": "string",
     "objective_data": {
-        "parameter_values": [
+        "parameter_terms": [
             {
-                "values": [
+                "terms": [
                     {"uid": "string", "name": "string", "type": "string", "index": 0}
                 ],
-                "position": 0,
                 "value": 0,
                 "conjunction": "string",
             }
         ],
         "objective_template_uid": "string",
-        "name_override": "string",
         "library_name": "string",
     },
 }
+
 
 study_endpoint = {
     "study_objective_uid": "string",
     "endpoint_level_uid": "string",
     "endpoint_sublevel_uid": "string",
     "endpoint_data": {
-        "parameter_values": [
+        "parameter_terms": [
             {
-                "values": [
+                "terms": [
                     {"uid": "string", "name": "string", "type": "string", "index": 0}
                 ],
-                "position": 0,
                 "value": 0,
                 "conjunction": "string",
             }
         ],
         "endpoint_template_uid": "string",
-        "name_override": "string",
         "library_name": "string",
     },
     "endpoint_units": {"units": ["string"], "separator": "string"},
@@ -419,32 +455,30 @@ study_endpoint = {
 
 study_criteria = {
     "criteria_data": {
-        "parameter_values": [
+        "parameter_terms": [
             {
-                "values": [
+                "terms": [
                     {"uid": "string", "name": "string", "type": "string", "index": 0}
                 ],
-                "position": 0,
                 "value": 0,
                 "conjunction": "string",
             }
         ],
         "criteria_template_uid": "string",
-        "name_override": "string",
         "library_name": "string",
     }
 }
 
 study_activity_schedule = {
-  "study_activity_uid": "string",
-  "study_visit_uid": "string",
-  "note": "string"
+    "study_activity_uid": "string",
+    "study_visit_uid": "string",
+    "note": "string",
 }
 
 timeframes = {
-    "parameter_values": [
+    "parameter_terms": [
         {
-            "values": [
+            "terms": [
                 {"uid": "string", "name": "string", "type": "string", "index": 0}
             ],
             "position": 0,
@@ -493,13 +527,13 @@ compound = {
 }
 
 numeric_value = {
-  "name": "string",
-  "name_sentence_case": "string",
-  "definition": "string",
-  "abbreviation": "string",
-  "library_name": "string",
-  "template_parameter": False,
-  "value": 0
+    "name": "string",
+    "name_sentence_case": "string",
+    "definition": "string",
+    "abbreviation": "string",
+    "library_name": "string",
+    "template_parameter": False,
+    "value": 0,
 }
 
 numeric_value_with_unit = {
@@ -514,73 +548,73 @@ numeric_value_with_unit = {
 }
 
 text_value = {
-  "name": "string",
-  "name_sentence_case": "string",
-  "definition": "string",
-  "abbreviation": "string",
-  "library_name": "string",
-  "template_parameter": False
+    "name": "string",
+    "name_sentence_case": "string",
+    "definition": "string",
+    "abbreviation": "string",
+    "library_name": "string",
+    "template_parameter": False,
 }
 
 visit_name = {
-  "name": "string",
-  "name_sentence_case": "string",
-  "definition": "string",
-  "abbreviation": "string",
-  "library_name": "string",
-  "template_parameter": False
+    "name": "string",
+    "name_sentence_case": "string",
+    "definition": "string",
+    "abbreviation": "string",
+    "library_name": "string",
+    "template_parameter": False,
 }
 
 study_day = {
-  "name": "string",
-  "name_sentence_case": "string",
-  "definition": "string",
-  "abbreviation": "string",
-  "library_name": "string",
-  "template_parameter": False,
-  "value": 0
+    "name": "string",
+    "name_sentence_case": "string",
+    "definition": "string",
+    "abbreviation": "string",
+    "library_name": "string",
+    "template_parameter": False,
+    "value": 0,
 }
 
 study_week = {
-  "name": "string",
-  "name_sentence_case": "string",
-  "definition": "string",
-  "abbreviation": "string",
-  "library_name": "string",
-  "template_parameter": False,
-  "value": 0
+    "name": "string",
+    "name_sentence_case": "string",
+    "definition": "string",
+    "abbreviation": "string",
+    "library_name": "string",
+    "template_parameter": False,
+    "value": 0,
 }
 
 study_duration_days = {
-  "name": "string",
-  "name_sentence_case": "string",
-  "definition": "string",
-  "abbreviation": "string",
-  "library_name": "string",
-  "template_parameter": False,
-  "value": 0
+    "name": "string",
+    "name_sentence_case": "string",
+    "definition": "string",
+    "abbreviation": "string",
+    "library_name": "string",
+    "template_parameter": False,
+    "value": 0,
 }
 
 study_duration_weeks = {
-  "name": "string",
-  "name_sentence_case": "string",
-  "definition": "string",
-  "abbreviation": "string",
-  "library_name": "string",
-  "template_parameter": False,
-  "value": 0
+    "name": "string",
+    "name_sentence_case": "string",
+    "definition": "string",
+    "abbreviation": "string",
+    "library_name": "string",
+    "template_parameter": False,
+    "value": 0,
 }
 
 time_point = {
-  "name": "string",
-  "name_sentence_case": "string",
-  "definition": "string",
-  "abbreviation": "string",
-  "library_name": "string",
-  "template_parameter": False,
-  "numeric_value_uid": "string",
-  "unit_definition_uid": "string",
-  "time_reference_uid": "string"
+    "name": "string",
+    "name_sentence_case": "string",
+    "definition": "string",
+    "abbreviation": "string",
+    "library_name": "string",
+    "template_parameter": False,
+    "numeric_value_uid": "string",
+    "unit_definition_uid": "string",
+    "time_reference_uid": "string",
 }
 
 lag_time = {
@@ -639,41 +673,41 @@ activity = {
 }
 
 activity_groups = {
-  "name": "string",
-  "name_sentence_case": "string",
-  "definition": "string",
-  "abbreviation": "string",
-  "library_name": "string"
+    "name": "string",
+    "name_sentence_case": "string",
+    "definition": "string",
+    "abbreviation": "string",
+    "library_name": "string",
 }
 
 activity_subgroups = {
-  "name": "string",
-  "name_sentence_case": "string",
-  "definition": "string",
-  "abbreviation": "string",
-  "library_name": "string",
-  "activity_group": "string"
+    "name": "string",
+    "name_sentence_case": "string",
+    "definition": "string",
+    "abbreviation": "string",
+    "library_name": "string",
+    "activity_group": "string",
 }
 
 ct_term = {
-  "catalogue_name": "string",
-  "codelist_uid": "string",
-  "code_submission_value": "string",
-  "name_submission_value": "string",
-  "nci_preferred_name": "string",
-  "definition": "string",
-  "sponsor_preferred_name": "string",
-  "sponsor_preferred_name_sentence_case": "string",
-  "order": None,
-  "library_name": "string"
+    "catalogue_name": "string",
+    "codelist_uid": "string",
+    "code_submission_value": "string",
+    "name_submission_value": "string",
+    "nci_preferred_name": "string",
+    "definition": "string",
+    "sponsor_preferred_name": "string",
+    "sponsor_preferred_name_sentence_case": "string",
+    "order": None,
+    "library_name": "string",
 }
 
 dictionary_term = {
-  "dictionary_id": "string",
-  "name": "string",
-  "name_sentence_case": "string",
-  "abbreviation": "string",
-  "definition": "string",
-  "codelist_uid": "string",
-  "library_name": "string"
+    "dictionary_id": "string",
+    "name": "string",
+    "name_sentence_case": "string",
+    "abbreviation": "string",
+    "definition": "string",
+    "codelist_uid": "string",
+    "library_name": "string",
 }

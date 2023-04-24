@@ -30,7 +30,6 @@ class OdmAliasVO(ConceptVO):
         odm_alias_exists_by_name_callback: Callable[[str], bool],
         previous_name: Optional[str] = None,
     ) -> None:
-
         if odm_alias_exists_by_name_callback(self.name) and previous_name != self.name:
             raise BusinessLogicException(
                 f"ODM Alias with name ({self.name}) already exists."

@@ -42,11 +42,11 @@
         "name_plain": "To compare the effect of [Compound] relative to [Comparator] on [ActivityInstance]",
         "uid": "ObjectiveTemplate_000004"
       },
-      "parameter_values": [
+      "parameter_terms": [
         {
           "position": 1,
           "conjunction": "",
-          "values": [
+          "terms": [
             {
               "uid": "Compound_000001",
               "name": "metformin",
@@ -58,7 +58,7 @@
         {
           "position": 2,
           "conjunction": "",
-          "values": [
+          "terms": [
             {
               "uid": "Compound_000002",
               "name": "nph insulin",
@@ -70,7 +70,7 @@
         {
           "position": 3,
           "conjunction": "",
-          "values": [
+          "terms": [
             {
               "uid": "NumericFinding_000020",
               "name": "body weight",

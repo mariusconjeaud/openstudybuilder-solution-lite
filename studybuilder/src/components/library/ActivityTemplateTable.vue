@@ -87,7 +87,7 @@ export default {
         { text: this.$t('_global.version'), value: 'version' }
       ],
       test: true,
-      urlPrefix: '/activity-description-templates'
+      urlPrefix: '/activity-instruction-templates'
     }
   },
   methods: {

@@ -13,7 +13,6 @@ from clinical_mdr_api.models.concept import NumericValue as NumericValueAPIModel
 
 
 class StudyDayRepository(NumericValueRepository):
-
     root_class = StudyDayRoot
     value_class = StudyDayValue
     aggregate_class = StudyDayAR

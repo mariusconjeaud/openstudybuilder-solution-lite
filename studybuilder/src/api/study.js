@@ -18,14 +18,26 @@ export default {
     const url = `/${resource}`
     return repository.get(url, { params: { page_size: 0 } })
   },
-  getStudy (studyUid) {
-    return repository.get(`${resource}/${studyUid}`)
+  getStudy (studyUid, ignoreErrors) {
+    return repository.get(`${resource}/${studyUid}`, { ignoreErrors: ignoreErrors })
+  },
+  getStudySnapshotHistory (studyUid, params) {
+    return repository.get(`${resource}/${studyUid}/snapshot-history`, { params })
+  },
+  deleteStudy (studyUid) {
+    return repository.delete(`${resource}/${studyUid}`)
+  },
+  releaseStudy (studyUid, data) {
+    return repository.post(`${resource}/${studyUid}/release`, data)
+  },
+  lockStudy (studyUid, data) {
+    return repository.post(`${resource}/${studyUid}/lock`, data)
+  },
+  unlockStudy (studyUid) {
+    return repository.post(`${resource}/${studyUid}/unlock`)
   },
   getStudyPreferredTimeUnit (studyUid) {
     return repository.get(`${resource}/${studyUid}/time-units`, { ignoreErrors: true })
-  },
-  createStudyPreferredTimeUnit (studyUid, data) {
-    return repository.post(`${resource}/${studyUid}/time-units`, data)
   },
   updateStudyPreferredTimeUnit (studyUid, data) {
     return repository.patch(`${resource}/${studyUid}/time-units`, data)
@@ -50,7 +62,12 @@ export default {
     return repository.get(`${resource}/${studyUid}?fields=${fields}`)
   },
   getStudyFieldsAuditTrail (studyUid, section) {
-    const params = { sections: `+${section},-identification_metadata` }
+    let params
+    if (section === 'identification_metadata') {
+      params = {}
+    } else {
+      params = { sections: `+${section},-identification_metadata` }
+    }
     return repository.get(`${resource}/${studyUid}/fields-audit-trail`, { params })
   },
   getAllStudyObjectives (params) {

@@ -18,6 +18,7 @@ from clinical_mdr_api.domain_repositories.configuration.configuration_repository
 from clinical_mdr_api.domain_repositories.controlled_terminology.ct_codelist_name_repository import (
     CTCodelistNameRepository,
 )
+from clinical_mdr_api.exceptions import BusinessLogicException
 
 
 class StudyFieldType(Enum):
@@ -121,23 +122,11 @@ def from_database():
     dataset = []
     repo = CTConfigRepository()
     items = repo.find_all()
-    all_codelists = []
-    if items:
-        codelist_repo = CTCodelistNameRepository()
-        all_codelists = codelist_repo.find_all().items
     for item in items:
-        line = item.value
-        linedata = asdict(line)
+        line = item
+        linedata = line.dict()
         data = {}
         for k, v in linedata.items():
-            # creating a mapping based on codelist name
-            if linedata.get("configured_codelist_name") is not None:
-                for codelist in all_codelists:
-                    if (
-                        codelist.ct_codelist_vo.name
-                        == linedata["configured_codelist_name"]
-                    ):
-                        linedata["configured_codelist_uid"] = codelist.uid
             if k in fieldnames:
                 if k == "study_field_data_type":
                     data[k] = StudyFieldType(v)
@@ -159,7 +148,7 @@ def from_database():
                     elif v == "id_metadata.registry_identifiers":
                         data["study_value_object_class"] = RegistryIdentifiersVO
                     else:
-                        raise ValueError(f"Unknow field {v}")
+                        raise ValueError(f"Unknown field {v}")
         item = StudyFieldConfigurationEntry(**data)
         dataset.append(item)
     return dataset
@@ -183,4 +172,8 @@ class FieldConfiguration:
     def default_field_config(cls):
         if not cls.field_config:
             cls.field_config = from_database()
+        if len(cls.field_config) == 0:
+            raise BusinessLogicException(
+                "CTConfig nodes are not present, load them by running sponsor migration"
+            )
         return cls.field_config

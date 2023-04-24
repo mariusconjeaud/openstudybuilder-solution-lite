@@ -86,7 +86,6 @@ class QueryService:
             filter_query = """
                 WHERE (type(l)='HAS_VERSION' and l.status='Final'
                       and l.start_date < datetime($at_specific_date) <= l.end_date)
-                      OR (type(l)='LATEST_FINAL' and l.start_date <= datetime($at_specific_date))
             """
         else:
             filter_query = """
@@ -424,6 +423,102 @@ class QueryService:
 
         return helpers.db_result_to_list(result_array)
 
+    def get_mdvisit(self, study_uid) -> list:
+        query = """
+        MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_VISIT]->(v:StudyVisit)
+        OPTIONAL MATCH  (v)-->(nr:VisitNameRoot)-[:LATEST]->(nv:VisitNameValue)
+        OPTIONAL MATCH  (v)-->(dr:StudyDayRoot)-[:LATEST]->(dv:StudyDayValue)
+        OPTIONAL MATCH  (v)-->(wr:StudyWeekRoot)-[:LATEST]->(wv:StudyWeekValue)
+        OPTIONAL MATCH  (v)-[:HAS_VISIT_TYPE]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]-(vtnv:CTTermNameValue)
+        RETURN 
+            toUpper(sv.study_id_prefix + '-' + sv.study_number) AS STUDYID,
+            toInteger(v.unique_visit_number) AS VISIT_NUM,
+            toUpper(nv.name) AS VISIT_NAME,
+            toInteger(dv.value) AS DAY_VALUE,
+            v.short_visit_label as VISIT_SHORT_LABEL,
+            dv.name AS DAY_NAME,
+            wv.name AS WEEK_NAME,
+            toInteger(wv.value) AS WEEK_VALUE,   
+            vtnv.name as VISIT_TYPE_NAME
+        ORDER BY v.unique_visit_number;
+        """
+        result_array = db.cypher_query(
+            query=query, params={"study_uid": str(study_uid)}
+        )
+
+        return helpers.db_result_to_list(result_array)
+
+    def get_mdendpnt(self, study_uid) -> list:
+        query = """
+        MATCH (s_r:StudyRoot{uid: $study_uid})-[:LATEST]-(s_v:StudyValue)
+        MATCH (s_v)-[:HAS_STUDY_OBJECTIVE]-(s_obj:StudyObjective)
+        // fetch objective data
+        OPTIONAL MATCH (s_obj)-[:HAS_OBJECTIVE_LEVEL]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(obj_lev:CTTermNameValue)
+        OPTIONAL MATCH (s_obj)-[:HAS_SELECTED_OBJECTIVE]->(obj_val:ObjectiveValue)<--(obj_roo:ObjectiveRoot)
+        OPTIONAL MATCH (s_obj)<-[:STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE]-(s_end:StudyEndpoint)<-[:HAS_STUDY_ENDPOINT]-(s_v)
+        // fetch endpoint data
+        OPTIONAL MATCH (s_end)-[:HAS_ENDPOINT_LEVEL]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(end_lev:CTTermNameValue)
+        OPTIONAL MATCH (s_end)-[:HAS_ENDPOINT_SUB_LEVEL]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(end_sublev:CTTermNameValue)
+        OPTIONAL MATCH (s_end)-[:HAS_SELECTED_ENDPOINT]->(end_val:EndpointValue)<--(end_roo:EndpointRoot)
+        OPTIONAL MATCH (s_end)-[:HAS_UNIT]->(:UnitDefinitionRoot)-[:LATEST]->(uni_value:UnitDefinitionValue)-[:HAS_CT_UNIT]->(uni_ctt_roo:CTTermRoot)
+        OPTIONAL MATCH (s_end)-[:HAS_SELECTED_TIMEFRAME]->(tim_fra_val:TimeframeValue)<--(tim_fra_roo:TimeframeRoot)
+        // fetch any Activities instantiated in ObjectiveTemplate or EndpointTemplate
+        OPTIONAL MATCH (study_end_obj)-[:HAS_SELECTED_ENDPOINT|HAS_SELECTED_OBJECTIVE|HAS_SELECTED_TIMEFRAME]->(:SyntaxInstanceValue)-[:USES_VALUE]->(activity_tem_par_root)<-[:HAS_PARAMETER_TERM]-(t:TemplateParameter)
+            WHERE t.name IN ["Activity"] AND (study_end_obj = s_obj OR study_end_obj = s_end)
+        OPTIONAL MATCH (study_end_obj2)-[:HAS_SELECTED_ENDPOINT|HAS_SELECTED_OBJECTIVE|HAS_SELECTED_TIMEFRAME]->(:SyntaxInstanceValue)-[:USES_VALUE]->(activity_subgroup_tem_par_root)<-[:HAS_PARAMETER_TERM]-(t2:TemplateParameter)
+            WHERE t2.name IN ['ActivitySubGroup'] AND (study_end_obj2 = s_obj OR study_end_obj2 = s_end)
+        OPTIONAL MATCH (study_end_obj3)-[:HAS_SELECTED_ENDPOINT|HAS_SELECTED_OBJECTIVE|HAS_SELECTED_TIMEFRAME]->(:SyntaxInstanceValue)-[:USES_VALUE]->(activity_group_tem_par_root)<-[:HAS_PARAMETER_TERM]-(t3:TemplateParameter)
+            WHERE t3.name IN [ "ActivityGroup"] AND (study_end_obj3 = s_obj OR study_end_obj3 = s_end)
+        OPTIONAL MATCH (study_end_obj4)-[:HAS_SELECTED_ENDPOINT|HAS_SELECTED_OBJECTIVE|HAS_SELECTED_TIMEFRAME]->(:SyntaxInstanceValue)-[:USES_VALUE]->(activity_instance_tem_par_root)<-[:HAS_PARAMETER_TERM]-(t4:TemplateParameter)
+            WHERE t4.name IN ['ActivityInstance'] AND (study_end_obj4 = s_obj OR study_end_obj4 = s_end)
+        OPTIONAL MATCH (activity_tem_par_root)-[:LATEST]->(activity_tem_par_value)
+        OPTIONAL MATCH (activity_subgroup_tem_par_root)-[:LATEST]->(activity_subgroup_tem_par_value)
+        OPTIONAL MATCH (activity_group_tem_par_root)-[:LATEST]->(activity_group_tem_par_value)
+        OPTIONAL MATCH (activity_instance_tem_par_root)-[:LATEST]->(activity_instance_tem_par_value)
+        WITH 
+            s_r, 
+            s_v, 
+            s_obj, 
+            obj_lev,
+            obj_val,
+            obj_roo,
+            s_end,
+            end_lev,
+            end_sublev,
+            end_val,
+            end_roo,
+            uni_value,
+            uni_ctt_roo,
+            tim_fra_val,
+            tim_fra_roo,
+            COLLECT(DISTINCT activity_tem_par_value.name) as activity_tem_par_root_uid_collected,
+            COLLECT(DISTINCT activity_subgroup_tem_par_value.name) as activity_subgroup_tem_par_root_uid_collected,
+            COLLECT(DISTINCT activity_group_tem_par_value.name) as activity_group_tem_par_root_uid_collected,
+            COLLECT(DISTINCT activity_instance_tem_par_value.name) as activity_instance_tem_par_root_uid_collected
+        return 
+            s_r.uid as STUDYID, 
+            obj_lev.name AS OBJTVLVL,
+            obj_val.name AS OBJTV,
+            obj_val.name_plain AS OBJTVPT,
+            end_lev.name AS ENDPNTLVL,
+            end_sublev.name AS ENDPNTSL,
+            end_val.name AS  ENDPNT, 
+            end_val.name_plain AS ENDPNTPT, 
+            uni_value.definition AS UNITDEF,
+            uni_ctt_roo.uid AS UNIT,
+            tim_fra_val.name AS TMFRM,
+            tim_fra_val.name_plain AS TMFRMPT,
+            activity_tem_par_root_uid_collected AS RACT,
+            activity_subgroup_tem_par_root_uid_collected AS RACTSGRP,
+            activity_group_tem_par_root_uid_collected AS RACTGRP,
+            activity_instance_tem_par_root_uid_collected AS RACTINST
+        """
+        result_array = db.cypher_query(
+            query=query, params={"study_uid": str(study_uid)}
+        )
+
+        return helpers.db_result_to_list(result_array)
+
     def get_ta(self, study_uid) -> list:
         query = """
         CALL 
@@ -494,7 +589,7 @@ class QueryService:
     def get_ti(self, study_uid) -> list:
         query = """
         MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-->(sc:StudyCriteria)
-        OPTIONAL MATCH (sc)-->(cv:CriteriaValue)<-[:LATEST]-(cr:CriteriaRoot)<--(ctr:CriteriaTemplateRoot)-->(i:CTTermRoot)-->(atr:CTTermAttributesRoot)-[:LATEST]->(atv:CTTermAttributesValue)
+        MATCH (sc)-->(cv:CriteriaValue)<-[:LATEST]-(cr:CriteriaRoot)<--(ctr:CriteriaTemplateRoot)-->(i:CTTermRoot)-->(atr:CTTermAttributesRoot)-[:LATEST]->(atv:CTTermAttributesValue)
         WHERE atv.concept_id = 'C25532' or atv.concept_id = 'C25370'
         RETURN  toUpper(sv.study_id_prefix) + '-' + toUpper(sv.study_number) AS STUDYID,
                 'TI' AS DOMAIN,
@@ -800,7 +895,7 @@ class QueryService:
         MATCH (sdm)-[:HAS_DISEASE_MILESTONE_TYPE]-(tr:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST]-(sdm_term:CTTermNameValue)
         MATCH (tr)-[HAS_ATTRIBUTES_ROOT]->(CTTermAttributesRoot)-[LATEST]->(ctav:CTTermAttributesValue)
         RETURN DISTINCT toUpper(sv.study_id_prefix + '-' + sv.study_number) AS STUDYID,
-            'TA' AS DOMAIN,
+            'TM' AS DOMAIN,
             sdm_term.name AS MIDSTYPE ,
             ctav.definition AS TMDEF,
             case sdm.repetition_indicator

@@ -38,6 +38,9 @@ export default (basePath) => {
     getStudies (uid) {
       return repository.get(`${basePath}/${uid}/studies`)
     },
+    getPreview (data) {
+      return repository.post(`${basePath}/preview`, data)
+    },
     create (data) {
       return repository.post(`${basePath}`, data)
     },

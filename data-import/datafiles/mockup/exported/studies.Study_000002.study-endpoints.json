@@ -15,11 +15,11 @@
       },
       "name": "<p>Mean change from baseline in [hba1c]</p>",
       "name_plain": "Mean change from baseline in hba1c",
-      "parameter_values": [
+      "parameter_terms": [
         {
           "conjunction": "",
           "position": 1,
-          "values": [
+          "terms": [
             {
               "index": 1,
               "name": "hba1c",
@@ -90,7 +90,7 @@
           "name_plain": "Time to first occurrence of MACE+, a composite endpoint consisting of: CV death, nonfatal MI,nonfatal stroke, or hospitalization for unstable\u00a0angina",
           "uid": "ObjectiveTemplate_000005"
         },
-        "parameter_values": [],
+        "parameter_terms": [],
         "possible_actions": [
           "inactivate"
         ],
@@ -138,11 +138,11 @@
       },
       "name": "<p>after [26 weeks]</p>",
       "name_plain": "after 26 weeks",
-      "parameter_values": [
+      "parameter_terms": [
         {
           "conjunction": "",
           "position": 1,
-          "values": [
+          "terms": [
             {
               "index": 1,
               "name": "26 weeks",
@@ -184,11 +184,11 @@
       },
       "name": "<p>Proportion of subjects with [hba1c] [<] [7] [%]</p>",
       "name_plain": "Proportion of subjects with hba1c < 7 %",
-      "parameter_values": [
+      "parameter_terms": [
         {
           "conjunction": "",
           "position": 1,
-          "values": [
+          "terms": [
             {
               "index": 1,
               "name": "hba1c",
@@ -200,7 +200,7 @@
         {
           "conjunction": "",
           "position": 2,
-          "values": [
+          "terms": [
             {
               "index": 1,
               "name": "<",
@@ -212,7 +212,7 @@
         {
           "conjunction": "",
           "position": 3,
-          "values": [
+          "terms": [
             {
               "index": 1,
               "name": "7",
@@ -224,7 +224,7 @@
         {
           "conjunction": "",
           "position": 4,
-          "values": [
+          "terms": [
             {
               "index": 1,
               "name": "%",
@@ -295,7 +295,7 @@
           "name_plain": "Time from randomisation to all cause death",
           "uid": "ObjectiveTemplate_000006"
         },
-        "parameter_values": [],
+        "parameter_terms": [],
         "possible_actions": [
           "inactivate"
         ],
@@ -343,11 +343,11 @@
       },
       "name": "<p>after [26 weeks]</p>",
       "name_plain": "after 26 weeks",
-      "parameter_values": [
+      "parameter_terms": [
         {
           "conjunction": "",
           "position": 1,
-          "values": [
+          "terms": [
             {
               "index": 1,
               "name": "26 weeks",

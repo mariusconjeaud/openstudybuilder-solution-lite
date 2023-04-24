@@ -45,6 +45,7 @@
         small
         class="ml-2"
         color="primary"
+        data-cy="add-study-activity"
         @click.stop="showActivityForm = true"
         :title="$t('StudyActivityForm.add_title')"
         >
@@ -305,13 +306,12 @@ export default {
       this.selectedStudyActivity = null
       this.showHistory = false
     },
-    getStudyActivities (filters, sort, filtersUpdated) {
+    async getStudyActivities (filters, sort, filtersUpdated) {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
       params.studyUid = this.selectedStudy.uid
-      this.$store.dispatch('studyActivities/fetchStudyActivities', params).then(resp => {
-        this.total = resp.data.total
-      })
+      const resp = await this.$store.dispatch('studyActivities/fetchStudyActivities', params)
+      this.total = resp.data.total
     },
     openBatchEditForm (selection) {
       if (!selection.length) {

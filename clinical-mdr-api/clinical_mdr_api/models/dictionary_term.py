@@ -117,7 +117,6 @@ class DictionaryTermSubstance(DictionaryTerm):
 
 
 class CompoundSubstance(BaseModel):
-
     substance_term_uid: str
     substance_name: str
     substance_unii: str

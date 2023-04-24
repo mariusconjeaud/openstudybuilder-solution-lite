@@ -6,6 +6,7 @@
   @submit="submit"
   :open="open"
   max-width="400px"
+  :help-items="helpItems"
   >
   <template v-slot:body>
     <validation-observer ref="observer">
@@ -65,7 +66,11 @@ export default {
   data () {
     return {
       timeUnits: [],
-      form: {}
+      form: {},
+      helpItems: [
+        'StudyVisitDuplicate.time_value',
+        'StudyVisitDuplicate.time_unit'
+      ]
     }
   },
   methods: {

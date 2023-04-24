@@ -5,8 +5,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Path, Query
 
 from clinical_mdr_api import models
-from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.ct_package import CTPackageService
 
 router = APIRouter()
@@ -18,7 +18,10 @@ CTCodelistUid = Path(None, description="The unique id of the CTCodelist")
     summary="Returns all controlled terminology packages.",
     response_model=List[models.CTPackage],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_packages(
     catalogue_name: Optional[str] = Query(
@@ -36,7 +39,10 @@ def get_packages(
     summary="Returns changes between codelists and terms inside two different packages.",
     response_model=models.CTPackageChanges,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_packages_changes_between_codelists_and_terms(
     catalogue_name: str,
@@ -65,7 +71,10 @@ def get_packages_changes_between_codelists_and_terms(
     summary="Returns changes from given codelist and all associated terms inside two different packages.",
     response_model=models.CTPackageChangesSpecificCodelist,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_packages_changes_between_codelist_and_all_associated_terms(
     catalogue_name: str,
@@ -96,7 +105,10 @@ def get_packages_changes_between_codelist_and_all_associated_terms(
     summary="Returns all effective dates for packages in a given catalogue.",
     response_model=models.CTPackageDates,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_package_dates(
     catalogue_name: str, current_user_id: str = Depends(get_current_user_id)

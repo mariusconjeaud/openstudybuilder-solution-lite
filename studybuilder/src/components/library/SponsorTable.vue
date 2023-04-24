@@ -26,7 +26,7 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import CodelistTable from './CodelistTable'
 
 export default {
@@ -48,7 +48,20 @@ export default {
       tab: null
     }
   },
+  mounted () {
+    this.$store.dispatch('ctCatalogues/fetchCatalogues')
+    setTimeout(() => {
+      this.addBreadcrumbsLevel({
+        text: this.tab,
+        index: 3,
+        replace: true
+      })
+    }, 100)
+  },
   methods: {
+    ...mapActions({
+      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
+    }),
     openCodelistTerms ({ codelist, catalogueName }) {
       this.$router.push({
         name: 'CodelistTerms',
@@ -56,8 +69,14 @@ export default {
       })
     }
   },
-  mounted () {
-    this.$store.dispatch('ctCatalogues/fetchCatalogues')
+  watch: {
+    tab (newValue) {
+      this.addBreadcrumbsLevel({
+        text: newValue,
+        index: 3,
+        replace: true
+      })
+    }
   }
 }
 </script>

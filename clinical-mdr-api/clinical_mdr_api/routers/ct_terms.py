@@ -3,13 +3,14 @@ from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, Depends, Path, Query
 from pydantic.types import Json
+from starlette.requests import Request
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.repositories._utils import FilterOperator
-from clinical_mdr_api.routers import _generic_descriptions
+from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.ct_term import CTTermService
 
 router = APIRouter()
@@ -37,12 +38,12 @@ CTTermUID = Path(None, description="The unique id of the ct term.")
             "- The library does not exist..\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create(
     term_input: models.CTTermCreateInput = Body(
-        None, description="Properties to create CTTermAttributes and CTTermName."
+        description="Properties to create CTTermAttributes and CTTermName."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
@@ -53,12 +54,53 @@ def create(
 @router.get(
     "/terms",
     summary="Returns all terms names and attributes.",
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=CustomPage[models.CTTermNameAndAttributes],
     response_model_exclude_unset=True,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "term_uid",
+            "catalogue_name",
+            "codelist_uid",
+            "library_name",
+            "name.sponsor_preferred_name",
+            "name.sponsor_preferred_name_sentence_case",
+            "name.order",
+            "name.start_date",
+            "name.end_date",
+            "name.status",
+            "name.version",
+            "name.change_description",
+            "name.user_initials",
+            "attributes.code_submission_value",
+            "attributes.name_submission_value",
+            "attributes.nci_preferred_name",
+            "attributes.definition",
+            "attributes.start_date",
+            "attributes.end_date",
+            "attributes.status",
+            "attributes.version",
+            "attributes.change_description",
+            "attributes.user_initials",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_all_terms(
+    request: Request,  # request is actually required by the allow_exports decorator
     codelist_uid: Optional[str] = Query(
         None, description="If specified, only terms from given codelist are returned."
     ),
@@ -119,7 +161,7 @@ def get_all_terms(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -183,7 +225,7 @@ def get_distinct_values_for_header(
             "model": ErrorResponse,
             "description": "Not Found - The term with the specified 'term-uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def add_parent(
@@ -221,7 +263,7 @@ def add_parent(
             "model": ErrorResponse,
             "description": "Not Found - The term with the specified 'term-uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def remove_parent(
@@ -255,13 +297,13 @@ def remove_parent(
             "model": ErrorResponse,
             "description": "Not Found - When there exist no study endpoint with the study endpoint uid.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def patch_new_term_order(
     term_uid: str = CTTermUID,
     new_order_input: models.CTTermNewOrder = Body(
-        None, description="Parameters needed for the reorder action."
+        description="Parameters needed for the reorder action."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.CTTerm:

@@ -13,7 +13,6 @@
       v-model="parameters"
       :template="template.name"
       load-parameter-values-from-template
-      :with-pin-button="false"
       preview-text=" "
       :edit-mode="setNumber !== undefined"
       />

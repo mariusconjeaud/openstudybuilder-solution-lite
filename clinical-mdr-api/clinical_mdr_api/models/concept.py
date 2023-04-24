@@ -15,13 +15,25 @@ from clinical_mdr_api.domain.concepts.simple_concepts.text_value import TextValu
 from clinical_mdr_api.domain.concepts.simple_concepts.time_point import TimePointAR
 from clinical_mdr_api.domain.controlled_terminology.ct_term_name import CTTermNameAR
 from clinical_mdr_api.domain.unit_definition.unit_definition import UnitDefinitionAR
+from clinical_mdr_api.models import _generic_descriptions
 from clinical_mdr_api.models.library import Library
 from clinical_mdr_api.models.utils import BaseModel
 
 
 class NoLibraryConceptModelNoName(BaseModel, ABC):
-    start_date: datetime
-    end_date: Optional[datetime]
+    start_date: datetime = Field(
+        ...,
+        title="endDate",
+        description=_generic_descriptions.START_DATE,
+        source="latest_version|start_date",
+    )
+    end_date: Optional[datetime] = Field(
+        None,
+        title="endDate",
+        description=_generic_descriptions.END_DATE,
+        source="latest_version|end_date",
+        nullable=True,
+    )
     status: str
     version: str
     user_initials: str
@@ -54,16 +66,15 @@ class VersionProperties(BaseModel):
     start_date: Optional[datetime] = Field(
         None,
         title="startDate",
-        description="The most recent point in time when the study epoch was edited."
-        "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
+        description=_generic_descriptions.START_DATE,
         source="latest_version|start_date",
     )
     end_date: Optional[datetime] = Field(
         None,
         title="endDate",
-        description="The most recent point in time when the study epoch was edited."
-        "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
+        description=_generic_descriptions.END_DATE,
         source="latest_version|end_date",
+        nullable=True,
     )
     status: Optional[str] = Field(
         None,
@@ -109,16 +120,21 @@ class Concept(VersionProperties):
         source="has_latest_value.name_sentence_case",
     )
     definition: Optional[str] = Field(
-        None, title="definition", description="", source="has_latest_value.definition"
+        None,
+        title="definition",
+        description="",
+        source="has_latest_value.definition",
+        nullable=True,
     )
     abbreviation: Optional[str] = Field(
         None,
         title="abbreviation",
         description="",
         source="has_latest_value.abbreviation",
+        nullable=True,
     )
     library_name: str = Field(
-        None,
+        ...,
         title="libraryName",
         description="",
         source="has_library.name",

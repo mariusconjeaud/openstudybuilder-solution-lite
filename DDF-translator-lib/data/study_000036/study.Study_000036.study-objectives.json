@@ -1,0 +1,353 @@
+[
+  {
+    "acceptedVersion": false,
+    "endpointCount": 1,
+    "latestObjective": null,
+    "objective": {
+      "changeDescription": "Approved version",
+      "endDate": null,
+      "library": {
+        "isEditable": true,
+        "name": "Sponsor"
+      },
+      "name": "<p>To assess the effect of [AZD6738] and [Durvalumab] combination or [AZD6738] and [Olaparib] combination in [Primary malignant neoplasm of biliary tract] patients who have failed to 1st-line chemotherapy</p>",
+      "namePlain": "To assess the effect of AZD6738 and Durvalumab combination or AZD6738 and Olaparib combination in Primary malignant neoplasm of biliary tract patients who have failed to 1st-line chemotherapy",
+      "objectiveTemplate": {
+        "name": "<p>To assess the effect of [Compound] and [Compound] combination or [Compound] and [Compound] combination in [DiseaseDisorder] patients who have failed to 1st-line chemotherapy</p>",
+        "namePlain": "To assess the effect of [Compound] and [Compound] combination or [Compound] and [Compound] combination in [DiseaseDisorder] patients who have failed to 1st-line chemotherapy",
+        "uid": "ObjectiveTemplate_000005"
+      },
+      "parameterValues": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": [
+            {
+              "index": 1,
+              "name": "AZD6738",
+              "type": "Compound",
+              "uid": "Compound_000139"
+            }
+          ]
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": [
+            {
+              "index": 1,
+              "name": "Durvalumab",
+              "type": "Comparator",
+              "uid": "Compound_000137"
+            }
+          ]
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": [
+            {
+              "index": 1,
+              "name": "AZD6738",
+              "type": "Compound",
+              "uid": "Compound_000139"
+            }
+          ]
+        },
+        {
+          "conjunction": "",
+          "position": 4,
+          "values": [
+            {
+              "index": 1,
+              "name": "Olaparib",
+              "type": "Compound",
+              "uid": "Compound_000138"
+            }
+          ]
+        },
+        {
+          "conjunction": "",
+          "position": 5,
+          "values": [
+            {
+              "index": 1,
+              "name": "Primary malignant neoplasm of biliary tract",
+              "type": "DiseaseDisorder",
+              "uid": "DictionaryTerm_000965"
+            }
+          ]
+        }
+      ],
+      "possibleActions": [
+        "inactivate"
+      ],
+      "startDate": "2022-07-08T05:13:15.867940",
+      "status": "Final",
+      "studyCount": null,
+      "uid": "Objective_000003",
+      "userInitials": "MT",
+      "version": "1.0"
+    },
+    "objectiveLevel": {
+      "catalogueName": "SDTM CT",
+      "changeDescription": "Approved version",
+      "codelistUid": "CTCodelist_000002",
+      "endDate": null,
+      "libraryName": "CDISC",
+      "order": 1,
+      "possibleActions": [
+        "inactivate",
+        "newVersion"
+      ],
+      "sponsorPreferredName": "Primary Objective",
+      "sponsorPreferredNameSentenceCase": "primary objective",
+      "startDate": "2022-07-06T19:26:25.414998",
+      "status": "Final",
+      "termUid": "C85826_OBJPRIM",
+      "userInitials": "unknown-user",
+      "version": "2.0"
+    },
+    "order": 1,
+    "projectName": "CDISC Dev",
+    "projectNumber": "CDISC DEV",
+    "startDate": "2022-07-08T05:13:15.960517",
+    "studyObjectiveUid": "StudyObjective_000002",
+    "studyUid": "Study_000036",
+    "userInitials": "MT"
+  },
+  {
+    "acceptedVersion": false,
+    "endpointCount": 0,
+    "latestObjective": null,
+    "objective": {
+      "changeDescription": "Approved version",
+      "endDate": null,
+      "library": {
+        "isEditable": true,
+        "name": "Sponsor"
+      },
+      "name": "<p>To assess the safety of [AZD6738] and [Durvalumab] combination or [AZD6738] and [Olaparib] combination in [Primary malignant neoplasm of biliary tract] patients</p>",
+      "namePlain": "To assess the safety of AZD6738 and Durvalumab combination or AZD6738 and Olaparib combination in Primary malignant neoplasm of biliary tract patients",
+      "objectiveTemplate": {
+        "name": "<p>To assess the safety of [Compound] and [Compound] combination or [Compound] and [Compound] combination in [DiseaseDisorder] patients</p>",
+        "namePlain": "To assess the safety of [Compound] and [Compound] combination or [Compound] and [Compound] combination in [DiseaseDisorder] patients",
+        "uid": "ObjectiveTemplate_000006"
+      },
+      "parameterValues": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": [
+            {
+              "index": 1,
+              "name": "AZD6738",
+              "type": "Compound",
+              "uid": "Compound_000139"
+            }
+          ]
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": [
+            {
+              "index": 1,
+              "name": "Durvalumab",
+              "type": "Comparator",
+              "uid": "Compound_000137"
+            }
+          ]
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": [
+            {
+              "index": 1,
+              "name": "AZD6738",
+              "type": "Compound",
+              "uid": "Compound_000139"
+            }
+          ]
+        },
+        {
+          "conjunction": "",
+          "position": 4,
+          "values": [
+            {
+              "index": 1,
+              "name": "Olaparib",
+              "type": "Compound",
+              "uid": "Compound_000138"
+            }
+          ]
+        },
+        {
+          "conjunction": "",
+          "position": 5,
+          "values": [
+            {
+              "index": 1,
+              "name": "Primary malignant neoplasm of biliary tract",
+              "type": "DiseaseDisorder",
+              "uid": "DictionaryTerm_000965"
+            }
+          ]
+        }
+      ],
+      "possibleActions": [
+        "inactivate"
+      ],
+      "startDate": "2022-07-08T05:14:17.019847",
+      "status": "Final",
+      "studyCount": null,
+      "uid": "Objective_000004",
+      "userInitials": "MT",
+      "version": "1.0"
+    },
+    "objectiveLevel": {
+      "catalogueName": "SDTM CT",
+      "changeDescription": "Approved version",
+      "codelistUid": "CTCodelist_000002",
+      "endDate": null,
+      "libraryName": "CDISC",
+      "order": 2,
+      "possibleActions": [
+        "inactivate",
+        "newVersion"
+      ],
+      "sponsorPreferredName": "Secondary Objective",
+      "sponsorPreferredNameSentenceCase": "secondary objective",
+      "startDate": "2022-07-06T19:26:25.978939",
+      "status": "Final",
+      "termUid": "C85827_OBJSEC",
+      "userInitials": "unknown-user",
+      "version": "2.0"
+    },
+    "order": 2,
+    "projectName": "CDISC Dev",
+    "projectNumber": "CDISC DEV",
+    "startDate": "2022-07-08T05:14:17.091913",
+    "studyObjectiveUid": "StudyObjective_000003",
+    "studyUid": "Study_000036",
+    "userInitials": "MT"
+  },
+  {
+    "acceptedVersion": false,
+    "endpointCount": 0,
+    "latestObjective": null,
+    "objective": {
+      "changeDescription": "Approved version",
+      "endDate": null,
+      "library": {
+        "isEditable": true,
+        "name": "Sponsor"
+      },
+      "name": "<p>To assess the effect of [AZD6738] and [Durvalumab] combination or [AZD6738] and [Olaparib] combination in [Primary malignant neoplasm of biliary tract] patients who have failed to 1st-line chemotherapy&nbsp;and are in second phase of disease</p>",
+      "namePlain": "To assess the effect of AZD6738 and Durvalumab combination or AZD6738 and Olaparib combination in Primary malignant neoplasm of biliary tract patients who have failed to 1st-line chemotherapy\u00a0and are in second phase of disease",
+      "objectiveTemplate": {
+        "name": "<p>To assess the effect of [Compound] and [Compound] combination or [Compound] and [Compound] combination in [DiseaseDisorder] patients who have failed to 1st-line chemotherapy&nbsp;and are in second phase of disease</p>",
+        "namePlain": "To assess the effect of [Compound] and [Compound] combination or [Compound] and [Compound] combination in [DiseaseDisorder] patients who have failed to 1st-line chemotherapy\u00a0and are in second phase of disease",
+        "uid": "ObjectiveTemplate_000007"
+      },
+      "parameterValues": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": [
+            {
+              "index": 1,
+              "name": "AZD6738",
+              "type": "Compound",
+              "uid": "Compound_000139"
+            }
+          ]
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": [
+            {
+              "index": 1,
+              "name": "Durvalumab",
+              "type": "Comparator",
+              "uid": "Compound_000137"
+            }
+          ]
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": [
+            {
+              "index": 1,
+              "name": "AZD6738",
+              "type": "Compound",
+              "uid": "Compound_000139"
+            }
+          ]
+        },
+        {
+          "conjunction": "",
+          "position": 4,
+          "values": [
+            {
+              "index": 1,
+              "name": "Olaparib",
+              "type": "Compound",
+              "uid": "Compound_000138"
+            }
+          ]
+        },
+        {
+          "conjunction": "",
+          "position": 5,
+          "values": [
+            {
+              "index": 1,
+              "name": "Primary malignant neoplasm of biliary tract",
+              "type": "DiseaseDisorder",
+              "uid": "DictionaryTerm_000965"
+            }
+          ]
+        }
+      ],
+      "possibleActions": [
+        "inactivate"
+      ],
+      "startDate": "2022-07-08T05:18:26.636300",
+      "status": "Final",
+      "studyCount": null,
+      "uid": "Objective_000005",
+      "userInitials": "MT",
+      "version": "1.0"
+    },
+    "objectiveLevel": {
+      "catalogueName": "SDTM CT",
+      "changeDescription": "Approved version",
+      "codelistUid": "CTCodelist_000002",
+      "endDate": null,
+      "libraryName": "CDISC",
+      "order": 2,
+      "possibleActions": [
+        "inactivate",
+        "newVersion"
+      ],
+      "sponsorPreferredName": "Secondary Objective",
+      "sponsorPreferredNameSentenceCase": "secondary objective",
+      "startDate": "2022-07-06T19:26:25.978939",
+      "status": "Final",
+      "termUid": "C85827_OBJSEC",
+      "userInitials": "unknown-user",
+      "version": "2.0"
+    },
+    "order": 3,
+    "projectName": "CDISC Dev",
+    "projectNumber": "CDISC DEV",
+    "startDate": "2022-07-08T05:18:26.706345",
+    "studyObjectiveUid": "StudyObjective_000004",
+    "studyUid": "Study_000036",
+    "userInitials": "MT"
+  }
+]

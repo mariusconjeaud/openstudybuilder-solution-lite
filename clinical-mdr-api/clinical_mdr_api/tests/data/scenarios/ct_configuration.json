@@ -24,6 +24,8 @@
       "request": {
         "user_initials": "TEST_USER",
         "study_field_name": "unit1",
+        "study_field_data_type": "string",
+        "study_field_name_api": "unit1",
         "study_field_grouping": "sbtab",
         "is_dictionary_term": false
       },
@@ -48,11 +50,11 @@
         "status": "Draft",
         "version": "0.1",
         "change_description": "Initial version",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -79,11 +81,11 @@
           "status": "Draft",
           "version": "0.1",
           "change_description": "Initial version",
-          "study_field_data_type": null,
+          "study_field_data_type": "string",
           "study_field_null_value_code": null,
           "configured_codelist_uid": null,
           "configured_term_uid": null,
-          "study_field_name_api": null,
+          "study_field_name_api": "unit1",
           "is_dictionary_term": false
         }
       ]
@@ -128,6 +130,8 @@
       "request": {
         "user_initials": "TEST_USER",
         "study_field_name": "unit1",
+        "study_field_data_type": "string",
+        "study_field_name_api": "unit1",
         "study_field_grouping": "sbtab",
         "is_dictionary_term": false
       },
@@ -153,11 +157,11 @@
         "version": "0.1",
         "change_description": "Initial version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -244,11 +248,11 @@
           "version": "0.1",
           "change_description": "Initial version",
           "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-          "study_field_data_type": null,
+          "study_field_data_type": "string",
           "study_field_null_value_code": null,
           "configured_codelist_uid": null,
           "configured_term_uid": null,
-          "study_field_name_api": null,
+          "study_field_name_api": "unit1",
           "is_dictionary_term": false
         }
       ]
@@ -275,11 +279,11 @@
         "version": "0.1",
         "change_description": "Initial version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -305,11 +309,11 @@
         "version": "0.1",
         "change_description": "Initial version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -335,11 +339,11 @@
         "version": "0.1",
         "change_description": "Initial version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -365,11 +369,11 @@
         "version": "0.1",
         "change_description": "Initial version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -441,7 +445,10 @@
       "method": "PATCH",
       "request": {
         "change_description": "Patched version",
-        "study_field_name": "unit1-patched"
+        "study_field_name": "unit1-patched",
+        "study_field_data_type": "string",
+        "study_field_name_api": "unit1",
+        "is_dictionary_term": false
       },
       "url": "/configurations/{uid}"
     },
@@ -461,11 +468,11 @@
         "version": "0.2",
         "change_description": "Patched version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -492,11 +499,11 @@
           "version": "0.2",
           "change_description": "Patched version",
           "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-          "study_field_data_type": null,
+          "study_field_data_type": "string",
           "study_field_null_value_code": null,
           "configured_codelist_uid": null,
           "configured_term_uid": null,
-          "study_field_name_api": null,
+          "study_field_name_api": "unit1",
           "is_dictionary_term": false
         }
       ]
@@ -523,11 +530,11 @@
         "version": "0.2",
         "change_description": "Patched version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -553,11 +560,11 @@
         "version": "0.2",
         "change_description": "Patched version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -583,11 +590,11 @@
         "version": "0.2",
         "change_description": "Patched version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -613,11 +620,11 @@
         "version": "0.2",
         "change_description": "Patched version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -643,11 +650,11 @@
         "version": "0.1",
         "change_description": "Initial version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -715,11 +722,11 @@
         "version": "1.0",
         "change_description": "Approved version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -746,11 +753,11 @@
           "version": "1.0",
           "change_description": "Approved version",
           "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-          "study_field_data_type": null,
+          "study_field_data_type": "string",
           "study_field_null_value_code": null,
           "configured_codelist_uid": null,
           "configured_term_uid": null,
-          "study_field_name_api": null,
+          "study_field_name_api": "unit1",
           "is_dictionary_term": false
         }
       ]
@@ -777,11 +784,11 @@
         "version": "1.0",
         "change_description": "Approved version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -807,11 +814,11 @@
         "version": "1.0",
         "change_description": "Approved version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -837,11 +844,11 @@
         "version": "1.0",
         "change_description": "Approved version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -895,7 +902,10 @@
         "change_description": "Patched version 2 (failed)",
         "study_field_name": "unit1-patched-fail",
         "unit_dimension": "unit1-dimension-patched-fail",
-        "legacy_code": "unit1-legacy-code-patched-fail"
+        "legacy_code": "unit1-legacy-code-patched-fail",
+        "study_field_data_type": "string",
+        "study_field_name_api": "unit1",
+        "is_dictionary_term": false
       },
       "url": "/configurations/{uid}"
     },
@@ -952,11 +962,11 @@
         "version": "1.0",
         "change_description": "Inactivated version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -1030,7 +1040,10 @@
         "change_description": "Patched version 2 (failed)",
         "study_field_name": "unit1-patched-fail",
         "unit_dimension": "unit1-dimension-patched-fail",
-        "legacy_code": "unit1-legacy-code-patched-fail"
+        "legacy_code": "unit1-legacy-code-patched-fail",
+        "study_field_data_type": "string",
+        "study_field_name_api": "unit1",
+        "is_dictionary_term": false
       },
       "url": "/configurations/{uid}"
     },
@@ -1089,11 +1102,11 @@
         "version": "1.0",
         "change_description": "Reactivated version",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -1147,7 +1160,10 @@
         "change_description": "Patched version 2 (failed)",
         "study_field_name": "unit1-patched-fail",
         "unit_dimension": "unit1-dimension-patched-fail",
-        "legacy_code": "unit1-legacy-code-patched-fail"
+        "legacy_code": "unit1-legacy-code-patched-fail",
+        "study_field_data_type": "string",
+        "study_field_name_api": "unit1",
+        "is_dictionary_term": false
       },
       "url": "/configurations/{uid}"
     },
@@ -1206,11 +1222,11 @@
         "version": "1.1",
         "change_description": "New draft created",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -1302,7 +1318,10 @@
       "method": "PATCH",
       "request": {
         "change_description": "Patched version 2",
-        "study_field_name": "unit1-patched-2"
+        "study_field_name": "unit1-patched-2",
+        "study_field_data_type": "string",
+        "study_field_name_api": "unit1",
+        "is_dictionary_term": false
       },
       "url": "/configurations/{uid}"
     },
@@ -1319,11 +1338,11 @@
         "version": "1.2",
         "study_field_name": "unit1-patched-2",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -1349,11 +1368,11 @@
         "version": "1.2",
         "study_field_name": "unit1-patched-2",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -1379,11 +1398,11 @@
         "version": "1.0",
         "study_field_name": "unit1-patched",
         "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-        "study_field_data_type": null,
+        "study_field_data_type": "string",
         "study_field_null_value_code": null,
         "configured_codelist_uid": null,
         "configured_term_uid": null,
-        "study_field_name_api": null,
+        "study_field_name_api": "unit1",
         "is_dictionary_term": false
       }
     }
@@ -1410,11 +1429,11 @@
           "version": "1.2",
           "change_description": "Patched version 2",
           "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-          "study_field_data_type": null,
+          "study_field_data_type": "string",
           "study_field_null_value_code": null,
           "configured_codelist_uid": null,
           "configured_term_uid": null,
-          "study_field_name_api": null,
+          "study_field_name_api": "unit1",
           "is_dictionary_term": false
         },
         {
@@ -1427,11 +1446,11 @@
           "version": "1.1",
           "change_description": "New draft created",
           "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-          "study_field_data_type": null,
+          "study_field_data_type": "string",
           "study_field_null_value_code": null,
           "configured_codelist_uid": null,
           "configured_term_uid": null,
-          "study_field_name_api": null,
+          "study_field_name_api": "unit1",
           "is_dictionary_term": false
         },
         {
@@ -1444,11 +1463,11 @@
           "version": "1.0",
           "change_description": "Reactivated version",
           "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-          "study_field_data_type": null,
+          "study_field_data_type": "string",
           "study_field_null_value_code": null,
           "configured_codelist_uid": null,
           "configured_term_uid": null,
-          "study_field_name_api": null,
+          "study_field_name_api": "unit1",
           "is_dictionary_term": false
         },
         {
@@ -1461,11 +1480,11 @@
           "version": "1.0",
           "change_description": "Inactivated version",
           "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-          "study_field_data_type": null,
+          "study_field_data_type": "string",
           "study_field_null_value_code": null,
           "configured_codelist_uid": null,
           "configured_term_uid": null,
-          "study_field_name_api": null,
+          "study_field_name_api": "unit1",
           "is_dictionary_term": false
         },
         {
@@ -1478,11 +1497,11 @@
           "version": "1.0",
           "change_description": "Approved version",
           "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-          "study_field_data_type": null,
+          "study_field_data_type": "string",
           "study_field_null_value_code": null,
           "configured_codelist_uid": null,
           "configured_term_uid": null,
-          "study_field_name_api": null,
+          "study_field_name_api": "unit1",
           "is_dictionary_term": false
         },
         {
@@ -1495,11 +1514,11 @@
           "version": "0.2",
           "change_description": "Patched version",
           "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-          "study_field_data_type": null,
+          "study_field_data_type": "string",
           "study_field_null_value_code": null,
           "configured_codelist_uid": null,
           "configured_term_uid": null,
-          "study_field_name_api": null,
+          "study_field_name_api": "unit1",
           "is_dictionary_term": false
         },
         {
@@ -1512,11 +1531,11 @@
           "version": "0.1",
           "change_description": "Initial version",
           "uid": "de2bc4d4-3269-4269-b128-7267ea6d1cb1",
-          "study_field_data_type": null,
+          "study_field_data_type": "string",
           "study_field_null_value_code": null,
           "configured_codelist_uid": null,
           "configured_term_uid": null,
-          "study_field_name_api": null,
+          "study_field_name_api": "unit1",
           "is_dictionary_term": false
         }
       ]

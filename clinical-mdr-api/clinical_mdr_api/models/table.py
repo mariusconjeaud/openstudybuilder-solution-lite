@@ -6,7 +6,6 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class TableDimension(dict):
-
     default_factory: Callable[..., VT] = None
     _size: int = 0
 
@@ -70,14 +69,12 @@ class TableDimension(dict):
 
 
 class TableCellMetadata(BaseModel):
-
     col_span: int = 0
     row_span: int = 0
     klass: Optional[str] = None
 
 
 class Table(BaseModel):
-
     data: TableDimension = Field(
         ...,
         title="Table data matrix",

@@ -11,7 +11,7 @@ from clinical_mdr_api.domain.study_selection.study_selection_element import (
 from clinical_mdr_api.domain_repositories.study_selection.study_design_cell_repository import (
     StudyDesignCellRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_element_repository import (
+from clinical_mdr_api.domain_repositories.study_selection.study_element_repository import (
     SelectionHistoryElement,
 )
 from clinical_mdr_api.models.study_selection import StudyElementTypes
@@ -64,21 +64,25 @@ class StudyElementSelectionService(
         order: int,
         study_uid: str,
     ) -> models.StudySelectionElement:
-        return models.study_selection.StudySelectionElement.from_study_selection_element_ar_and_order(
+        repos = self._repos
+        return models.StudySelectionElement.from_study_selection_element_ar_and_order(
             study_uid,
             study_selection,
             order,
-            self._find_by_uid_or_raise_not_found,
+            find_simple_term_element_by_term_uid=self._find_by_uid_or_raise_not_found,
+            get_term_element_type_by_element_subtype=repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
             find_all_study_time_units=self._repos.unit_definition_repository.find_all,
         )
 
     def _transform_each_history_to_response_model(
         self, study_selection_history: SelectionHistoryElement, study_uid: str
     ) -> Sequence[models.StudySelectionElement]:
+        repos = self._repos
         return models.StudySelectionElement.from_study_selection_history(
             study_selection_history=study_selection_history,
             study_uid=study_uid,
             get_ct_term_element_subtype=self._find_by_uid_or_raise_not_found,
+            get_term_element_type_by_element_subtype=repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
             find_all_study_time_units=self._repos.unit_definition_repository.find_all,
         )
 
@@ -90,9 +94,7 @@ class StudyElementSelectionService(
         try:
             try:
                 selection_history = (
-                    repos.study_selection_element_repository.find_selection_history(
-                        study_uid
-                    )
+                    repos.study_element_repository.find_selection_history(study_uid)
                 )
             except ValueError as value_error:
                 raise exceptions.NotFoundException(value_error.args[0])
@@ -129,10 +131,8 @@ class StudyElementSelectionService(
     ) -> Sequence[models.StudySelectionElementVersion]:
         repos = self._repos
         try:
-            selection_history = (
-                repos.study_selection_element_repository.find_selection_history(
-                    study_uid, study_selection_uid
-                )
+            selection_history = repos.study_element_repository.find_selection_history(
+                study_uid, study_selection_uid
             )
             versions = [
                 self._transform_each_history_to_response_model(_, study_uid).dict()
@@ -177,17 +177,16 @@ class StudyElementSelectionService(
                     element_colour=selection_create_input.element_colour,
                     element_subtype_uid=selection_create_input.element_subtype_uid,
                     study_compound_dosing_count=0,
-                    generate_uid_callback=repos.study_selection_element_repository.generate_uid,
+                    generate_uid_callback=repos.study_element_repository.generate_uid,
                 )
                 # add VO to aggregate
                 selection_aggregate: StudySelectionElementAR = (
-                    repos.study_selection_element_repository.find_by_study(
+                    repos.study_element_repository.find_by_study(
                         study_uid=study_uid, for_update=True
                     )
                 )
                 assert selection_aggregate is not None
                 try:
-
                     selection_aggregate.add_element_selection(
                         new_selection,
                         self._repos.ct_term_name_repository.term_specific_exists_by_uid,
@@ -196,9 +195,7 @@ class StudyElementSelectionService(
                     raise exceptions.ValidationException(value_error.args[0])
 
                 ## sync with DB and save the update
-                repos.study_selection_element_repository.save(
-                    selection_aggregate, self.author
-                )
+                repos.study_element_repository.save(selection_aggregate, self.author)
 
                 # Fetch the new selection which was just added
                 (
@@ -213,7 +210,8 @@ class StudyElementSelectionService(
                     study_uid=study_uid,
                     selection=new_selection,
                     order=order,
-                    find_simple_term_element_subtype_by_term_uid=self._find_by_uid_or_raise_not_found,
+                    find_simple_term_element_by_term_uid=self._find_by_uid_or_raise_not_found,
+                    get_term_element_type_by_element_subtype=repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
                     find_all_study_time_units=self._repos.unit_definition_repository.find_all,
                 )
         finally:
@@ -232,8 +230,8 @@ class StudyElementSelectionService(
     ) -> GenericFilteringReturn[models.StudySelectionElement]:
         repos = MetaRepository()
         try:
-            element_selection_ar = (
-                repos.study_selection_element_repository.find_by_study(study_uid)
+            element_selection_ar = repos.study_element_repository.find_by_study(
+                study_uid
             )
             filtered_items = service_level_generic_filtering(
                 items=self._transform_all_to_response_model(element_selection_ar),
@@ -256,7 +254,7 @@ class StudyElementSelectionService(
             # cascade delete
             # if the element has connected design cells
             design_cells_on_element = None
-            if repos.study_selection_element_repository.element_specific_has_connected_cell(
+            if repos.study_element_repository.element_specific_has_connected_cell(
                 study_uid=study_uid, element_uid=study_selection_uid
             ):
                 design_cells_on_element = (
@@ -286,10 +284,8 @@ class StudyElementSelectionService(
                         )
 
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_element_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_element_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             # remove the connection
@@ -301,9 +297,7 @@ class StudyElementSelectionService(
             )
 
             # sync with DB and save the update
-            repos.study_selection_element_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_element_repository.save(selection_aggregate, self.author)
         finally:
             repos.close()
 
@@ -311,6 +305,7 @@ class StudyElementSelectionService(
     def get_specific_selection(
         self, study_uid: str, study_selection_uid: str
     ) -> models.StudySelectionElement:
+        repos = self._repos
         (
             _selection_aggregate,
             new_selection,
@@ -320,7 +315,8 @@ class StudyElementSelectionService(
             study_uid=study_uid,
             selection=new_selection,
             order=order,
-            find_simple_term_element_subtype_by_term_uid=self._find_by_uid_or_raise_not_found,
+            find_simple_term_element_by_term_uid=self._find_by_uid_or_raise_not_found,
+            get_term_element_type_by_element_subtype=repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
             find_all_study_time_units=self._repos.unit_definition_repository.find_all,
         )
 
@@ -330,7 +326,6 @@ class StudyElementSelectionService(
         current_study_element: StudySelectionElementVO,
         find_duration_name_by_code: Callable[[str], Optional[CTTermNameAR]],
     ) -> StudySelectionElementVO:
-
         # transform current to input model
         transformed_current = models.StudySelectionElementInput.from_study_selection_element(
             selection=current_study_element,
@@ -380,7 +375,7 @@ class StudyElementSelectionService(
         try:
             # Load aggregate
             selection_aggregate: StudySelectionElementAR = (
-                repos.study_selection_element_repository.find_by_study(
+                repos.study_element_repository.find_by_study(
                     study_uid=study_uid, for_update=True
                 )
             )
@@ -411,9 +406,7 @@ class StudyElementSelectionService(
             except ValueError as value_error:
                 raise exceptions.ValidationException(value_error.args[0])
             # sync with DB and save the update
-            repos.study_selection_element_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_element_repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just updated
             new_selection, order = selection_aggregate.get_specific_object_selection(
@@ -425,7 +418,8 @@ class StudyElementSelectionService(
                 study_uid=study_uid,
                 selection=new_selection,
                 order=order,
-                find_simple_term_element_subtype_by_term_uid=self._find_by_uid_or_raise_not_found,
+                find_simple_term_element_by_term_uid=self._find_by_uid_or_raise_not_found,
+                get_term_element_type_by_element_subtype=repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
             )
         finally:
@@ -433,9 +427,7 @@ class StudyElementSelectionService(
 
     def get_allowed_configs(self):
         resp = []
-        for (
-            item
-        ) in self._repos.study_selection_element_repository.get_allowed_configs():
+        for item in self._repos.study_element_repository.get_allowed_configs():
             resp.append(
                 StudyElementTypes(
                     subtype=item[0],
@@ -453,10 +445,8 @@ class StudyElementSelectionService(
         repos = self._repos
         try:
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_element_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_element_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             # remove the connection
@@ -465,9 +455,7 @@ class StudyElementSelectionService(
             )
 
             # sync with DB and save the update
-            repos.study_selection_element_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_element_repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just added
             new_selection, order = selection_aggregate.get_specific_element_selection(

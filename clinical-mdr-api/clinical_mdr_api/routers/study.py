@@ -37,9 +37,7 @@ from clinical_mdr_api.services.study_objective_selection import (
 from clinical_mdr_api.services.study_objectives import StudyObjectivesService
 
 router = APIRouter()
-
 studyUID = Path(None, description="The unique id of the study.")
-
 study_selection_uid = Path(None, description="The unique id of the study selection.")
 
 """
@@ -54,7 +52,8 @@ study_selection_uid = Path(None, description="The unique id of the study selecti
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_selected_objectives_for_all_studies(
@@ -121,7 +120,7 @@ def get_all_selected_objectives_for_all_studies(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_objective_values_for_header(
@@ -163,11 +162,13 @@ def get_distinct_objective_values_for_header(
 @router.get(
     "/studies/{uid}/study-objectives",
     summary="Returns all study objectives currently selected for study with provided uid",
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=GenericFilteringReturn[models.StudySelectionObjective],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 @decorators.allow_exports(
@@ -239,7 +240,7 @@ def get_all_selected_objectives(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -297,7 +298,8 @@ The following values should be return for all study objectives.
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_objectives_audit_trail(
@@ -318,7 +320,7 @@ def get_all_objectives_audit_trail(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the objective for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_objective(
@@ -353,7 +355,7 @@ The following values should be return for selected study objective:
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the objective for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_objective_audit_trail(
@@ -382,15 +384,16 @@ def get_selected_objective_audit_trail(
             "model": ErrorResponse,
             "description": "Not Found - Study or objective is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_new_objective_selection_create(
     uid: str = studyUID,
     selection: Union[
         models.study_selection.StudySelectionObjectiveCreateInput,
         models.study_selection.StudySelectionObjectiveInput,
-    ] = Body(None, description="Parameters of the selection that shall be created."),
+    ] = Body(description="Parameters of the selection that shall be created."),
     create_objective: bool = Query(
         False,
         description="Indicates whether the specified objective should be created in the library.\n"
@@ -423,13 +426,14 @@ def post_new_objective_selection_create(
             "model": ErrorResponse,
             "description": "Not Found - Study or objective is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def preview_new_objective_selection_create(
     uid: str = studyUID,
     selection: models.study_selection.StudySelectionObjectiveCreateInput = Body(
-        None, description="Related parameters of the selection that shall be previewed."
+        description="Related parameters of the selection that shall be previewed."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionObjective:
@@ -450,9 +454,10 @@ def preview_new_objective_selection_create(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the objective and the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def delete_selected_objective(
     uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
@@ -474,14 +479,15 @@ def delete_selected_objective(
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection between the study and objective to reorder.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_new_objective_selection_order(
     uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionObjectiveNewOrder = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionObjective:
@@ -504,14 +510,15 @@ def patch_new_objective_selection_order(
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection between the study and objective.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_update_objective_selection(
     uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
     selection: models.StudySelectionObjectiveInput = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionObjective:
@@ -534,9 +541,10 @@ def patch_update_objective_selection(
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection between the study and objective.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def sync_latest_version(
     uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
@@ -560,7 +568,8 @@ def sync_latest_version(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_selected_endpoints_for_all_studies(
@@ -627,7 +636,7 @@ def get_all_selected_endpoints_for_all_studies(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_endpoint_values_for_header(
@@ -669,7 +678,7 @@ def get_distinct_endpoint_values_for_header(
 @router.get(
     "/studies/{uid}/study-endpoints",
     summary="""List all study endpoints currently selected for study with provided uid""",
-    description="""
+    description=f"""
 State before:
 - Study must exist.
 
@@ -685,12 +694,15 @@ Business logic:
 
 State after:
 - no change.
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
     response_model=GenericFilteringReturn[models.StudySelectionEndpoint],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 @decorators.allow_exports(
@@ -762,7 +774,7 @@ def get_all_selected_endpoints(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_study_endpoint_values_for_header(
@@ -832,7 +844,8 @@ Returned data:
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_endpoints_audit_trail(
@@ -870,7 +883,7 @@ State after:
             "model": ErrorResponse,
             "description": "Not Found - When there exist no study endpoint with the study endpoint uid.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_endpoint(
@@ -918,7 +931,7 @@ Returned data:
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the objective for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_endpoint_audit_trail(
@@ -947,15 +960,16 @@ def get_selected_endpoint_audit_trail(
             "model": ErrorResponse,
             "description": "Not Found - Study or endpoint is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_new_endpoint_selection_create(
     uid: str = studyUID,
     selection: Union[
         models.study_selection.StudySelectionEndpointCreateInput,
         models.study_selection.StudySelectionEndpointInput,
-    ] = Body(None, description="Parameters of the selection that shall be created."),
+    ] = Body(description="Parameters of the selection that shall be created."),
     create_endpoint: bool = Query(
         False,
         description="Indicates whether the specified endpoint should be created in the library.\n"
@@ -987,13 +1001,14 @@ def post_new_endpoint_selection_create(
             "model": ErrorResponse,
             "description": "Not Found - Study or endpoint is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_new_endpoint_selection_preview(
     uid: str = studyUID,
     selection: models.study_selection.StudySelectionEndpointCreateInput = Body(
-        None, description="Related parameters of the selection that shall be previewed."
+        description="Related parameters of the selection that shall be previewed."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionEndpoint:
@@ -1013,7 +1028,7 @@ State before:
 
 Business logic:
  - Remove specified study-endpoint from the study.
- - Reference to the study-endpoint should still exist in the the audit trail.
+ - Reference to the study-endpoint should still exist in the audit trail.
  - If a subsequent study endpoint exist in the list of study endpoints then the order number for following study endpoint must be decreased with 1.
 
 State after:
@@ -1028,9 +1043,10 @@ State after:
             "model": ErrorResponse,
             "description": "Not Found - When there exist no study endpoint with the study endpoint uid.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def delete_selected_endpoint(
     uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
@@ -1069,14 +1085,15 @@ State after:
             "model": ErrorResponse,
             "description": "Not Found - When there exist no study endpoint with the study endpoint uid.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_new_endpoint_selection_order(
     uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionEndpointNewOrder = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionEndpoint:
@@ -1114,14 +1131,15 @@ State after:
             "model": ErrorResponse,
             "description": "Not Found - When there exist no study endpoint with the study endpoint uid.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_update_endpoint_selection(
     uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
     selection: models.StudySelectionEndpointInput = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionEndpoint:
@@ -1138,7 +1156,8 @@ def patch_update_endpoint_selection(
     summary="""Returns Study Objectives and Endpoints table in standard layout DOCX document""",
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_selected_objectives_and_endpoints_standard_docx(
@@ -1165,7 +1184,8 @@ def get_all_selected_objectives_and_endpoints_standard_docx(
     summary="""Returns Study Objectives and Endpoints table in standard layout HTML document""",
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
     response_class=HTMLResponse,
 )
@@ -1189,7 +1209,8 @@ def get_all_selected_objectives_and_endpoints_standard_html(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_selected_compounds_for_all_studies(
@@ -1250,7 +1271,7 @@ def get_all_selected_compounds_for_all_studies(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_compound_values_for_header(
@@ -1292,7 +1313,7 @@ def get_distinct_compound_values_for_header(
 @router.get(
     "/studies/{uid}/study-compounds",
     summary="List all study compounds currently selected for study with provided uid",
-    description="""
+    description=f"""
 State before:
  - Study-uid must exist.
 
@@ -1308,12 +1329,15 @@ Business logic:
  
 State after:
 - no change.
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
     response_model=GenericFilteringReturn[models.StudySelectionCompound],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 @decorators.allow_exports(
@@ -1385,7 +1409,7 @@ def get_all_selected_compounds(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_compounds_values_for_header(
@@ -1455,7 +1479,8 @@ Returned data:
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_compounds_audit_trail(
@@ -1499,7 +1524,7 @@ Returned data:
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the objective for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_compound_audit_trail(
@@ -1540,7 +1565,7 @@ State after:
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the objective for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_compound(
@@ -1596,13 +1621,14 @@ State after:
             "model": ErrorResponse,
             "description": "Not Found - Study or objective is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_new_compound_selection(
     uid: str = studyUID,
     selection: models.StudySelectionCompoundInput = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCompound:
@@ -1619,7 +1645,7 @@ State before:
 
 Business logic:
  - Remove specified study-compound from the study.
- - Reference to the study-compound should still exist in the the audit trail.
+ - Reference to the study-compound should still exist in the audit trail.
  - If a subsequent study compound exist in the list of study compounds then the order number for following study compound must be decreased with 1.
 
 State after:
@@ -1634,9 +1660,10 @@ State after:
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the objective and the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def delete_selected_compound(
     uid: str = studyUID,
     study_compound_uid: str = study_selection_uid,
@@ -1671,14 +1698,15 @@ State after:
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection between the study and objective to reorder.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_new_compound_selection_order(
     uid: str = studyUID,
     study_compound_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionCompoundNewOrder = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCompound:
@@ -1727,14 +1755,15 @@ State after:
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection between the study and objective.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_update_compound_selection(
     uid: str = studyUID,
     study_compound_uid: str = study_selection_uid,
     selection: models.StudySelectionCompoundInput = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCompound:
@@ -1771,9 +1800,10 @@ State after:
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection between the study and endpoint",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def sync_latest_endpoint_version(
     uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
@@ -1810,9 +1840,10 @@ def sync_latest_endpoint_version(
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection between the study and timeframe",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def sync_latest_timeframe_version(
     uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
@@ -1849,9 +1880,10 @@ def sync_latest_timeframe_version(
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection between the study and timeframe",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_endpoint_accept_version(
     uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
@@ -1888,9 +1920,10 @@ def patch_endpoint_accept_version(
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection between the study and timeframe",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_objective_accept_version(
     uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
@@ -1914,7 +1947,8 @@ def patch_objective_accept_version(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_selected_criteria_for_all_studies(
@@ -1981,7 +2015,7 @@ def get_all_selected_criteria_for_all_studies(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_criteria_values_for_header(
@@ -2023,45 +2057,48 @@ def get_distinct_criteria_values_for_header(
 @router.get(
     "/studies/{uid}/study-criteria",
     summary="Returns all study criteria currently selected for study with provided uid",
-    description="""
-    State before:
-    - Study must exist.
-    
-    Business logic:
-    - By default (no study status is provided) list all study criteria for the study uid in status draft. If the study not exist in status draft then return the study criteria for the study in status released. If the study uid only exist as deleted then this is returned.
-    - If a specific study status parameter is provided then return study criteria for this study status.
-    - If the locked study status parameter is requested then a study version should also be provided, and then the study criteria for the specific locked study version is returned.
-    - Indicate by a boolean variable if the study criteria can be updated (if the selected study is in status draft).  
-    - Indicate by a boolean variable if all expected selections have been made for each study criteria, or some are missing.
-    - e.g. a criteria instance is expected.
-    - Indicate by an boolean variable if a study criteria can be re-ordered.
+    description=f"""
+State before:
+- Study must exist.
 
-    State after:
-    - no change.
-    
-    Possible errors:
-    - Invalid study-uid.
-    
-    Returned data:
-    List selected study with the following information:
-    - study_uid
-    - study_criteria_uid
-    - order (Derived Integer, valid in the scope of a criteria_type)
-    - criteria_uid (Selected CriteriaRoot  uid)
-    - criteria_name (String, CriteriaValue name)
-    - criteria_type (String, derived from the selected criteria instance's template, which has a connection to a type node)
-    - note (String)
-    - Modified (as a date of last modification).
-    - Possible Actions (based on study state, version of selected nodes, metadata consistency checks, etc. - see business rules).
-        - Boolean indication if edit is possible.
-        - Boolean indication if all expected selections have been made.
-        - Boolean indication if the study criteria can be re-ordered.
-    """,
+Business logic:
+- By default (no study status is provided) list all study criteria for the study uid in status draft. If the study not exist in status draft then return the study criteria for the study in status released. If the study uid only exist as deleted then this is returned.
+- If a specific study status parameter is provided then return study criteria for this study status.
+- If the locked study status parameter is requested then a study version should also be provided, and then the study criteria for the specific locked study version is returned.
+- Indicate by a boolean variable if the study criteria can be updated (if the selected study is in status draft).  
+- Indicate by a boolean variable if all expected selections have been made for each study criteria, or some are missing.
+- e.g. a criteria instance is expected.
+- Indicate by an boolean variable if a study criteria can be re-ordered.
+
+State after:
+- no change.
+
+Possible errors:
+- Invalid study-uid.
+
+Returned data:
+List selected study with the following information:
+- study_uid
+- study_criteria_uid
+- order (Derived Integer, valid in the scope of a criteria_type)
+- criteria_uid (Selected CriteriaRoot  uid)
+- criteria_name (String, CriteriaValue name)
+- criteria_type (String, derived from the selected criteria instance's template, which has a connection to a type node)
+- note (String)
+- Modified (as a date of last modification).
+- Possible Actions (based on study state, version of selected nodes, metadata consistency checks, etc. - see business rules).
+    - Boolean indication if edit is possible.
+    - Boolean indication if all expected selections have been made.
+    - Boolean indication if the study criteria can be re-ordered.
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+""",
     response_model=CustomPage[models.StudySelectionCriteria],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 @decorators.allow_exports(
@@ -2141,7 +2178,7 @@ def get_all_selected_criteria(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_study_criteria_values_for_header(
@@ -2208,7 +2245,8 @@ def get_distinct_study_criteria_values_for_header(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_criteria_audit_trail(
@@ -2270,7 +2308,7 @@ def get_all_criteria_audit_trail(
             "model": ErrorResponse,
             "description": "Not Found - there exists no selection of the criteria for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_criteria(
@@ -2324,7 +2362,7 @@ def get_selected_criteria(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the criteria for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_criteria_audit_trail(
@@ -2382,13 +2420,14 @@ def get_selected_criteria_audit_trail(
             "model": ErrorResponse,
             "description": "Not Found - Study or criteria is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_new_criteria_selection_create(
     uid: str = studyUID,
     selection: models.study_selection.StudySelectionCriteriaCreateInput = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCriteria:
@@ -2413,13 +2452,14 @@ def post_new_criteria_selection_create(
             "model": ErrorResponse,
             "description": "Not Found - Study or criteria is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def preview_new_criteria_selection_create(
     uid: str = studyUID,
     selection: models.study_selection.StudySelectionCriteriaCreateInput = Body(
-        None, description="Related parameters of the selection that shall be previewed."
+        description="Related parameters of the selection that shall be previewed."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCriteria:
@@ -2469,15 +2509,15 @@ def preview_new_criteria_selection_create(
             "model": ErrorResponse,
             "description": "Not Found - Study or criteria is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_batch_select_criteria_template(
     uid: str = studyUID,
     selection: Sequence[
         models.study_selection.StudySelectionCriteriaTemplateSelectInput
     ] = Body(
-        None,
         description="List of objects with properties needed to identify the templates to select",
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -2523,14 +2563,14 @@ def post_batch_select_criteria_template(
             "model": ErrorResponse,
             "description": "Not Found - Study or study criteria is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_finalize_criteria_selection(
     uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
     criteria_data: models.CriteriaCreateInput = Body(
-        None,
         description="Data necessary to create the criteria instance from the template",
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -2553,7 +2593,7 @@ def patch_finalize_criteria_selection(
 
     Business logic:
     - Remove specified study-criteria from the study.
-    - Reference to the study-criteria should still exist in the the audit trail.
+    - Reference to the study-criteria should still exist in the audit trail.
 
     State after:
     - Study criteria deleted from the study, but still exist as a node in the database with a reference from the audit trail.
@@ -2573,9 +2613,10 @@ def patch_finalize_criteria_selection(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the criteria and the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def delete_selected_criteria(
     uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
@@ -2597,14 +2638,15 @@ def delete_selected_criteria(
             "model": ErrorResponse,
             "description": "Not Found - There exists no selection between the study and criteria to reorder.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_new_criteria_selection_order(
     uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionCriteriaNewOrder = Body(
-        None, description="New value to set for the order property of the selection"
+        description="New value to set for the order property of the selection"
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCriteria:
@@ -2627,14 +2669,14 @@ def patch_new_criteria_selection_order(
             "model": ErrorResponse,
             "description": "Not Found - There exists no selection between the study and criteria to change.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_criteria_selection_key_criteria_property(
     uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
     key_criteria_input: models.StudySelectionCriteriaKeyCriteria = Body(
-        None,
         description="New value to set for the key-criteria property of the selection",
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -2659,7 +2701,8 @@ def patch_criteria_selection_key_criteria_property(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_selected_activities_for_all_studies(
@@ -2724,6 +2767,7 @@ def get_all_selected_activities_for_all_studies(
 @router.get(
     "/studies/{uid}/study-activities",
     summary="Returns all study activities currently selected",
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=CustomPage[models.StudySelectionActivity],
     response_model_exclude_unset=True,
     status_code=200,
@@ -2732,16 +2776,17 @@ def get_all_selected_activities_for_all_studies(
             "model": ErrorResponse,
             "description": "Not Found - there is no study with the given uid.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 @decorators.allow_exports(
     {
         "defaults": [
-            "uid",
+            "uid=study_activity_uid",
+            "order",
             "flowchart_group=flowchart_group.sponsor_preferred_name",
-            "activity_group",
-            "activity_subgroup",
+            "activity_group=activity.activity_group.name",
+            "activity_subgroup=activity.activity_subgroup.name",
             "name=activity.name",
             "note",
             "start_date",
@@ -2808,7 +2853,7 @@ def get_all_selected_activities(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_activity_values_for_header(
@@ -2854,7 +2899,8 @@ The following values should be returned for all study activities:
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_activity_audit_trail(
@@ -2875,7 +2921,7 @@ def get_all_activity_audit_trail(
             "model": ErrorResponse,
             "description": "Not Found - there exists no selection of the activity for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_activity(
@@ -2900,7 +2946,7 @@ def get_selected_activity(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the activity for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_activity_audit_trail(
@@ -2929,13 +2975,14 @@ def get_selected_activity_audit_trail(
             "model": ErrorResponse,
             "description": "Not Found - Study or activity is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_new_activity_selection_create(
     uid: str = studyUID,
     selection: models.study_selection.StudySelectionActivityCreateInput = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivity:
@@ -2949,10 +2996,7 @@ def post_new_activity_selection_create(
     description="""
 State before:
  - Study must exist and be in status draft
-
 Business logic:
- 
-
 State after:
  - Added new entry in the audit trail for the update of the study-activity.""",
     response_model=models.StudySelectionActivity,
@@ -2963,14 +3007,15 @@ State after:
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection between the study and activity.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_update_activity_selection(
     uid: str = studyUID,
     study_activity_uid: str = study_selection_uid,
     selection: models.StudySelectionActivityInput = Body(
-        None, description="Related parameters of the selection that shall be updated."
+        description="Related parameters of the selection that shall be updated."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivity:
@@ -2988,10 +3033,7 @@ def patch_update_activity_selection(
     description="""
 State before:
  - Study must exist and be in status draft
-
 Business logic:
-
-
 State after:
  - Added new entry in the audit trail for the update of the study-activity.""",
     response_model=models.StudySelectionActivity,
@@ -3002,9 +3044,10 @@ State after:
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection between the study and activity.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def update_activity_request_with_sponsor_activity(
     uid: str = studyUID,
     study_activity_uid: str = study_selection_uid,
@@ -3028,9 +3071,10 @@ def update_activity_request_with_sponsor_activity(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the activity and the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def delete_selected_activity(
     uid: str = studyUID,
     study_activity_uid: str = study_selection_uid,
@@ -3046,12 +3090,16 @@ def delete_selected_activity(
     summary="Batch create and/or edit of study activities",
     response_model=Sequence[models.StudySelectionActivityBatchOutput],
     status_code=207,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def activity_selection_batch_operations(
     uid: str = studyUID,
     operations: Sequence[models.StudySelectionActivityBatchInput] = Body(
-        None, description=""
+        description=""
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> Sequence[models.StudySelectionActivityBatchOutput]:
@@ -3070,14 +3118,15 @@ def activity_selection_batch_operations(
             "model": ErrorResponse,
             "description": "Not Found - There exists no selection between the study and activity to reorder.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_new_activity_selection_order(
     uid: str = studyUID,
     study_activity_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionActivityNewOrder = Body(
-        None, description="New value to set for the order property of the selection"
+        description="New value to set for the order property of the selection"
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivity:
@@ -3097,29 +3146,31 @@ Study Selection Arm endpoints
 @router.get(
     "/studies/{uid}/study-arms",
     summary="""List all study arms currently selected for study with provided uid""",
-    description="""
-    State before:
-    - Study must exist.
-     
-    Business logic:
-     - By default (no study status is provided) list all study arms for the study uid in status draft. If the study not exist in status draft then return the study arms for the study in status released. If the study uid only exist as deleted then this is returned.
-     - If a specific study status parameter is provided then return study arm for this study status.
-    - If the locked study status parameter is requested then a study version should also be provided, and then the study arms for the specific locked study version is returned.
-    - Indicate by a boolean variable if the study arm can be updated (if the selected study is in status draft).  
-    - Indicate by a boolean variable if all expected selections have been made for each study arms, or some are missing.
+    description=f"""
+State before:
+- Study must exist.
+    
+Business logic:
+    - By default (no study status is provided) list all study arms for the study uid in status draft. If the study not exist in status draft then return the study arms for the study in status released. If the study uid only exist as deleted then this is returned.
+    - If a specific study status parameter is provided then return study arm for this study status.
+- If the locked study status parameter is requested then a study version should also be provided, and then the study arms for the specific locked study version is returned.
+- Indicate by a boolean variable if the study arm can be updated (if the selected study is in status draft).  
+- Indicate by a boolean variable if all expected selections have been made for each study arms, or some are missing.
 
+State after:
+- no change.
+    
+Possible errors:
+- Invalid study-uid.
 
-    State after:
-    - no change.
-     
-    Possible errors:
-    - Invalid study-uid.
+{_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
     response_model=CustomPage[models.StudySelectionArmWithConnectedBranchArms],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 @decorators.allow_exports(
@@ -3196,7 +3247,7 @@ def get_all_selected_arms(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_arm_values_for_header(
@@ -3234,7 +3285,8 @@ def get_distinct_arm_values_for_header(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_selected_arms_for_all_studies(
@@ -3283,6 +3335,45 @@ def get_all_selected_arms_for_all_studies(
     )
 
 
+@router.patch(
+    "/studies/{uid}/study-arms/{study_arm_uid}",
+    summary="Edit a study arm",
+    description="""
+State before:
+ - Study must exist and be in status draft
+
+Business logic:
+
+State after:
+ - Added new entry in the audit trail for the update of the study-arm.""",
+    response_model=models.StudySelectionArmWithConnectedBranchArms,
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - There exist no selection between the study and arm.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.validate_if_study_is_not_locked("uid")
+def patch_update_arm_selection(
+    uid: str = studyUID,
+    study_arm_uid: str = study_selection_uid,
+    selection: models.StudySelectionArmInput = Body(
+        description="Related parameters of the selection that shall be updated."
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+) -> models.StudySelectionArmWithConnectedBranchArms:
+    service = StudyArmSelectionService(author=current_user_id)
+    return service.patch_selection(
+        study_uid=uid,
+        study_selection_uid=study_arm_uid,
+        selection_update_input=selection,
+    )
+
+
 @router.post(
     "/studies/{uid}/study-arms",
     summary="Creating a study arm selection based on the input data",
@@ -3298,57 +3389,19 @@ def get_all_selected_arms_for_all_studies(
             "model": ErrorResponse,
             "description": "Not Found - Study or arm is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_new_arm_selection_create(
     uid: str = studyUID,
     selection: models.study_selection.StudySelectionArmCreateInput = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionArm:
     service = StudyArmSelectionService(author=current_user_id)
     return service.make_selection(study_uid=uid, selection_create_input=selection)
-
-
-@router.patch(
-    "/studies/{uid}/study-arms/{study_arm_uid}",
-    summary="Edit a study arm",
-    description="""
-State before:
- - Study must exist and be in status draft
-
-Business logic:
-
-
-State after:
- - Added new entry in the audit trail for the update of the study-arm.""",
-    response_model=models.StudySelectionArmWithConnectedBranchArms,
-    response_model_exclude_unset=True,
-    status_code=200,
-    responses={
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - There exist no selection between the study and arm.",
-        },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
-    },
-)
-def patch_update_arm_selection(
-    uid: str = studyUID,
-    study_arm_uid: str = study_selection_uid,
-    selection: models.StudySelectionArmInput = Body(
-        None, description="Related parameters of the selection that shall be updated."
-    ),
-    current_user_id: str = Depends(get_current_user_id),
-) -> models.StudySelectionArmWithConnectedBranchArms:
-    service = StudyArmSelectionService(author=current_user_id)
-    return service.patch_selection(
-        study_uid=uid,
-        study_selection_uid=study_arm_uid,
-        selection_update_input=selection,
-    )
 
 
 @router.get(
@@ -3362,7 +3415,7 @@ def patch_update_arm_selection(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the activity for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_arm_audit_trail(
@@ -3383,7 +3436,8 @@ def get_selected_arm_audit_trail(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_arm_audit_trail(
@@ -3405,7 +3459,7 @@ def get_all_arm_audit_trail(
             "model": ErrorResponse,
             "description": "Not Found - there exists no selection of the arm for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_arm(
@@ -3430,14 +3484,15 @@ def get_selected_arm(
             "model": ErrorResponse,
             "description": "Not Found - There exists no selection between the study and arm to reorder.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_new_arm_selection_order(
     uid: str = studyUID,
     study_arm_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionArmNewOrder = Body(
-        None, description="New value to set for the order property of the selection"
+        description="New value to set for the order property of the selection"
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionArmWithConnectedBranchArms:
@@ -3460,9 +3515,10 @@ def patch_new_arm_selection_order(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the arm and the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def delete_selected_arm(
     uid: str = studyUID,
     study_arm_uid: str = study_selection_uid,
@@ -3493,13 +3549,14 @@ def delete_selected_arm(
             "model": ErrorResponse,
             "description": "Not Found - Study or element is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_new_element_selection_create(
     uid: str = studyUID,
     selection: models.study_selection.StudySelectionElementCreateInput = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionElement:
@@ -3510,24 +3567,50 @@ def post_new_element_selection_create(
 @router.get(
     "/studies/{uid}/study-elements",
     summary="""List all study elements currently selected for study with provided uid""",
-    description="""
-    State before:
-    - Study must exist.
+    description=f"""
+State before:
+- Study must exist.
 
-    State after:
-    - no change.
-     
-    Possible errors:
-    - Invalid study-uid.
+State after:
+- no change.
+    
+Possible errors:
+- Invalid study-uid.
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
     response_model=CustomPage[models.StudySelectionElement],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "element_subtype_name=element_subtype.sponsor_preferred_name",
+            "element_name=name",
+            "element_short_name=short_name",
+            "start_rule",
+            "end_rule",
+            "description",
+            "planned_duration",
+            "start_date",
+            "user_initials",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_all_selected_elements(
+    request: Request,  # request is actually required by the allow_exports decorator
     uid: str = studyUID,
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: Optional[int] = Query(
@@ -3578,7 +3661,7 @@ def get_all_selected_elements(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_element_values_for_header(
@@ -3620,7 +3703,7 @@ def get_distinct_element_values_for_header(
             "model": ErrorResponse,
             "description": "Not Found - there exists no selection of the element for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_element(
@@ -3640,9 +3723,7 @@ def get_selected_element(
     description="""
         State before:
         - Study must exist and be in status draft
-
         Business logic:
-
         State after:
         - Added new entry in the audit trail for the update of the study-element.""",
     response_model=models.StudySelectionElement,
@@ -3653,14 +3734,15 @@ def get_selected_element(
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection between the study and element.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_update_element_selection(
     uid: str = studyUID,
     study_element_uid: str = study_selection_uid,
     selection: models.StudySelectionElementInput = Body(
-        None, description="Related parameters of the selection that shall be updated."
+        description="Related parameters of the selection that shall be updated."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionElement:
@@ -3683,7 +3765,7 @@ def patch_update_element_selection(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the activity for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_element_audit_trail(
@@ -3704,7 +3786,8 @@ def get_selected_element_audit_trail(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_element_audit_trail(
@@ -3726,9 +3809,10 @@ def get_all_element_audit_trail(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the element and the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def delete_selected_element(
     uid: str = studyUID,
     study_element_uid: str = study_selection_uid,
@@ -3746,7 +3830,8 @@ def delete_selected_element(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_configs(
@@ -3767,14 +3852,15 @@ def get_all_configs(
             "model": ErrorResponse,
             "description": "Not Found - There exists no selection between the study and element to reorder.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_new_element_selection_order(
     uid: str = studyUID,
     study_element_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionElementNewOrder = Body(
-        None, description="New value to set for the order property of the selection"
+        description="New value to set for the order property of the selection"
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionElement:
@@ -3806,13 +3892,14 @@ API Study-Branch-Arms endpoints
             "model": ErrorResponse,
             "description": "Not Found - Study or branch arm is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_new_branch_arm_selection_create(
     uid: str = studyUID,
     selection: models.study_selection.StudySelectionBranchArmCreateInput = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionBranchArm:
@@ -3823,33 +3910,60 @@ def post_new_branch_arm_selection_create(
 @router.get(
     "/studies/{uid}/study-branch-arms",
     summary="""List all study branch arms currently selected for study with provided uid""",
-    description="""
-    State before:
-    - Study must exist.
-     
-    Business logic:
-     - By default (no study status is provided) list all study branch arms for the study uid in status draft. If the study not exist in status draft then return the study branch arms for the study in status released. If the study uid only exist as deleted then this is returned.
-     - If a specific study status parameter is provided then return study branch arm for this study status.
-    - If the locked study status parameter is requested then a study version should also be provided, and then the study branch arms for the specific locked study version is returned.
-    - Indicate by a boolean variable if the study branch arm can be updated (if the selected study is in status draft).  
-    - Indicate by a boolean variable if all expected selections have been made for each study branch arms, or some are missing.
+    description=f"""
+State before:
+- Study must exist.
+    
+Business logic:
+    - By default (no study status is provided) list all study branch arms for the study uid in status draft. If the study not exist in status draft then return the study branch arms for the study in status released. If the study uid only exist as deleted then this is returned.
+    - If a specific study status parameter is provided then return study branch arm for this study status.
+- If the locked study status parameter is requested then a study version should also be provided, and then the study branch arms for the specific locked study version is returned.
+- Indicate by a boolean variable if the study branch arm can be updated (if the selected study is in status draft).  
+- Indicate by a boolean variable if all expected selections have been made for each study branch arms, or some are missing.
 
+State after:
+- no change.
+    
+Possible errors:
+- Invalid study-uid.
 
-    State after:
-    - no change.
-     
-    Possible errors:
-    - Invalid study-uid.
+{_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
     response_model=Sequence[models.StudySelectionBranchArm],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "arm_name=arm_root.name",
+            "branch_arm_name=name",
+            "branch_arm_short_name=short_name",
+            "code",
+            "randomization_group",
+            "number_of_subjects",
+            "description",
+            "start_date",
+            "user_initials",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_all_selected_branch_arms(
-    uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
+    request: Request,  # request is actually required by the allow_exports decorator
+    uid: str = studyUID,
+    current_user_id: str = Depends(get_current_user_id),
 ) -> Sequence[models.StudySelectionBranchArm]:
     service = StudyBranchArmSelectionService(author=current_user_id)
     return service.get_all_selection(study_uid=uid)
@@ -3866,7 +3980,7 @@ def get_all_selected_branch_arms(
             "model": ErrorResponse,
             "description": "Not Found - there exists no selection of the branch arm for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_branch_arm(
@@ -3887,7 +4001,6 @@ def get_selected_branch_arm(
             State before:
             - Study must exist and be in status draft
             Business logic:
-
             State after:
             - Added new entry in the audit trail for the update of the study-branch-arm.""",
     response_model=models.StudySelectionBranchArm,
@@ -3898,14 +4011,15 @@ def get_selected_branch_arm(
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection between the study and branch arm.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_update_branch_arm_selection(
     uid: str = studyUID,
     study_branch_arm_uid: str = study_selection_uid,
     selection: models.StudySelectionBranchArmEditInput = Body(
-        None, description="Related parameters of the selection that shall be updated."
+        description="Related parameters of the selection that shall be updated."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionBranchArm:
@@ -3929,7 +4043,7 @@ def patch_update_branch_arm_selection(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the activity for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_branch_arm_audit_trail(
@@ -3950,7 +4064,8 @@ def get_selected_branch_arm_audit_trail(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_branch_arm_audit_trail(
@@ -3972,9 +4087,10 @@ def get_all_branch_arm_audit_trail(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the branch arm and the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def delete_selected_branch_arm(
     uid: str = studyUID,
     study_branch_arm_uid: str = study_selection_uid,
@@ -3996,14 +4112,15 @@ def delete_selected_branch_arm(
             "model": ErrorResponse,
             "description": "Not Found - There exists no selection between the study and branch arm to reorder.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_new_branch_arm_selection_order(
     uid: str = studyUID,
     study_branch_arm_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionBranchArmNewOrder = Body(
-        None, description="New value to set for the order property of the selection"
+        description="New value to set for the order property of the selection"
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionBranchArm:
@@ -4029,7 +4146,6 @@ def patch_new_branch_arm_selection_order(
     - Indicate by a boolean variable if the study branch arm can be updated (if the selected study is in status draft).  
     - Indicate by a boolean variable if all expected selections have been made for each study branch arms, or some are missing.
 
-
     State after:
     - no change.
      
@@ -4040,7 +4156,8 @@ def patch_new_branch_arm_selection_order(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_selected_branch_arms_within_arm(
@@ -4070,13 +4187,14 @@ API Study-Cohorts endpoints
             "model": ErrorResponse,
             "description": "Not Found - Study or cohort is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_new_cohort_selection_create(
     uid: str = studyUID,
     selection: models.StudySelectionCohortCreateInput = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCohort:
@@ -4087,32 +4205,59 @@ def post_new_cohort_selection_create(
 @router.get(
     "/studies/{uid}/study-cohorts",
     summary="""List all study cohorts currently selected for study with provided uid""",
-    description="""
-    State before:
-    - Study must exist.
-     
-    Business logic:
-     - By default (no study status is provided) list all study cohorts for the study uid in status draft. If the study not exist in status draft then return the study cohorts for the study in status released. If the study uid only exist as deleted then this is returned.
-     - If a specific study status parameter is provided then return study cohort for this study status.
-    - If the locked study status parameter is requested then a study version should also be provided, and then the study cohorts for the specific locked study version is returned.
-    - Indicate by a boolean variable if the study cohort can be updated (if the selected study is in status draft).  
-    - Indicate by a boolean variable if all expected selections have been made for each study cohorts, or some are missing.
+    description=f"""
+State before:
+- Study must exist.
+    
+Business logic:
+    - By default (no study status is provided) list all study cohorts for the study uid in status draft. If the study not exist in status draft then return the study cohorts for the study in status released. If the study uid only exist as deleted then this is returned.
+    - If a specific study status parameter is provided then return study cohort for this study status.
+- If the locked study status parameter is requested then a study version should also be provided, and then the study cohorts for the specific locked study version is returned.
+- Indicate by a boolean variable if the study cohort can be updated (if the selected study is in status draft).  
+- Indicate by a boolean variable if all expected selections have been made for each study cohorts, or some are missing.
 
+State after:
+- no change.
+    
+Possible errors:
+- Invalid study-uid.
 
-    State after:
-    - no change.
-     
-    Possible errors:
-    - Invalid study-uid.
+{_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
     response_model=CustomPage[models.StudySelectionCohort],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid=cohort_uid",
+            "arm_name=arm_roots.name",
+            "branch_arm_name=branch_arm_roots.name",
+            "branch_arm_short_name=branch_arm_roots.short_name",
+            "cohort_name=name",
+            "cohort_short_name=short_name",
+            "code",
+            "number_of_subjects",
+            "description",
+            "start_date",
+            "user_initials",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_all_selected_cohorts(
+    request: Request,  # request is actually required by the allow_exports decorator
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
@@ -4167,7 +4312,7 @@ def get_all_selected_cohorts(
             "model": ErrorResponse,
             "description": "Not Found - there exists no selection of the cohort for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_cohort(
@@ -4188,7 +4333,6 @@ def get_selected_cohort(
             State before:
             - Study must exist and be in status draft
             Business logic:
-
             State after:
             - Added new entry in the audit trail for the update of the study-cohort.""",
     response_model=models.StudySelectionCohort,
@@ -4199,14 +4343,15 @@ def get_selected_cohort(
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection between the study and cohort.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_update_cohort_selection(
     uid: str = studyUID,
     study_cohort_uid: str = study_selection_uid,
     selection: models.StudySelectionCohortEditInput = Body(
-        None, description="Related parameters of the selection that shall be updated."
+        description="Related parameters of the selection that shall be updated."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCohort:
@@ -4229,7 +4374,7 @@ def patch_update_cohort_selection(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the activity for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_selected_cohort_audit_trail(
@@ -4250,7 +4395,8 @@ def get_selected_cohort_audit_trail(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_cohort_audit_trail(
@@ -4272,9 +4418,10 @@ def get_all_cohort_audit_trail(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the cohort and the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def delete_selected_cohort(
     uid: str = studyUID,
     study_cohort_uid: str = study_selection_uid,
@@ -4296,14 +4443,15 @@ def delete_selected_cohort(
             "model": ErrorResponse,
             "description": "Not Found - There exists no selection between the study and cohort to reorder.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_new_cohort_selection_order(
     uid: str = studyUID,
     study_cohort_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionCohortNewOrder = Body(
-        None, description="New value to set for the order property of the selection"
+        description="New value to set for the order property of the selection"
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionCohort:

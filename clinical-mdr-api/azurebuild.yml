@@ -55,8 +55,8 @@ jobs:
 
     - script: |    
         docker compose down --volumes
-        docker compose up --detach --renew-anon-volumes db
-      displayName: "Start db docker service"
+        docker compose up --detach --renew-anon-volumes database
+      displayName: "Start database docker service"
 
     - task: PowerShell@2
       displayName: 'Wait for Neo4j database'
@@ -164,7 +164,7 @@ jobs:
 
     # Save logs from Neo4j container
     - script: |
-        docker logs db_testint > neo4j.log
+        docker compose logs --no-color --no-log-prefix database > neo4j.log
       condition: always() # this step will always run, even if the pipeline is canceled
       displayName: Save database logs
 
@@ -228,42 +228,14 @@ jobs:
       parameters:
         PYTHON_VERSION: $(python_version)
 
-    # Generate SBOM
-    - script: |
-        mv sbom.md sbom.md.org
-
-        pipenv run pipelines/scripts/generate-sbom.sh > sbom.md
-
-        if [[ "$(Build.SourceBranchName)" != "main" && "$(Build.Reason)" == "PullRequest" && `git diff --exit-code sbom.md` ]]; then
-          git config --global user.email pipeline@studybuilder.com
-          git config --global user.name "Pipeline $(Build.BuildNumber)"
-          mv sbom.md sbom.md.new && mv sbom.md.org sbom.md
-        fi
-      displayName: Generate full SBOM for clinical-mdr-api
-
-    # Generate openapi.json
-    - script: |
-        if [[ "$(Build.SourceBranchName)" == "main" && `git diff --exit-code openapi.json` ]]; then
-          export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
-          export ALLOW_ORIGIN_REGEX='.*'
-          export OAUTH_ENABLED='False'
-          cp openapi.json openapi.json.org
-          pipenv run openapi
-          git config --global user.email pipeline@studybuilder.com
-          git config --global user.name "Pipeline $(Build.BuildNumber)"
-          cp openapi.json openapi.json.new
-          mv openapi.json.org openapi.json
-        fi
-      displayName: Generate openapi.json
-
-    # Prepare git and commit changes
+    # Checkout git branch
     - script: |
         git fetch -a
 
         if [[ "$(Build.Reason)" == "PullRequest" ]]; then
           gitbranch=`echo $(System.PullRequest.SourceBranch) | sed 's/^refs\/heads\///'`
         else
-          gitbranch=`echo $(Build.SourceBranchName)`
+          gitbranch=`echo $(Build.SourceBranch) | sed 's/^refs\/heads\///'`
         fi
 
         echo "##vso[task.setvariable variable=gitbranch;isOutput=true;]$gitbranch"
@@ -271,30 +243,63 @@ jobs:
         git checkout $gitbranch
         git pull
       displayName: 'Checkout git branch'
-      name: gitref
+      name: gitref        
 
+    # Generate SBOM
     - script: |
-        if [[ "$(Build.SourceBranchName)" == "main" && `git diff --exit-code openapi.json` ]]; then
-          if [[ -f openapi.json.new ]]; then
-            cp openapi.json.new openapi.json
-            git add openapi.json
-            git commit openapi.json -m "Pipeline $(Build.BuildNumber) committed changes to openapi.json swagger documentation"
-            git push https://$SYSTEM_ACCESSTOKEN@dev.azure.com/novonordiskit/Clinical-MDR/_git/clinical-mdr-api $(Build.SourceBranchName)
-          fi
-        fi
+        pipenv run pipelines/scripts/generate-sbom.sh > sbom.md
+
         if [[ "$(Build.SourceBranchName)" != "main" && "$(Build.Reason)" == "PullRequest" && `git diff --exit-code sbom.md` ]]; then
-          if [[ -f sbom.md.new ]]; then
-            mv sbom.md.new sbom.md
-            git add sbom.md
-            pwsh -NoLogo -NonInteractive -File CheckSbom.ps1 -token $(System.AccessToken) -pullRequestId $(System.PullRequest.PullRequestId) -projectName $(System.TeamProject) -repositoryName $(Build.Repository.Name)
-            git commit sbom.md -m "Pipeline $(Build.BuildNumber) committed changes to SBOM"
-            gitbranch=`echo $(System.PullRequest.SourceBranch) | sed 's/^refs\/heads\///'`
-            git push https://$SYSTEM_ACCESSTOKEN@dev.azure.com/novonordiskit/Clinical-MDR/_git/clinical-mdr-api $gitbranch
-          fi
+          git config --global user.email pipeline@studybuilder.com
+          git config --global user.name "Pipeline $(Build.BuildNumber)"
+
+          git add sbom.md
+          pwsh -NoLogo -NonInteractive -File CheckSbom.ps1 -token $(System.AccessToken) -pullRequestId $(System.PullRequest.PullRequestId) -projectName $(System.TeamProject) -repositoryName $(Build.Repository.Name)
+          git commit sbom.md -m "Pipeline $(Build.BuildNumber) committed changes to SBOM"
+          gitbranch=`echo $(System.PullRequest.SourceBranch) | sed 's/^refs\/heads\///'`
+          git push https://$SYSTEM_ACCESSTOKEN@dev.azure.com/novonordiskit/Clinical-MDR/_git/clinical-mdr-api $gitbranch          
         fi
+      displayName: Generate full SBOM for clinical-mdr-api
       env:
         SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-      displayName: Push committed changes
+
+    # Generate openapi.json
+    - script: |
+        export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
+        export ALLOW_ORIGIN_REGEX='.*'
+        export OAUTH_ENABLED='False'
+        pipenv run openapi
+        
+        if [[ `git diff --exit-code openapi.json` ]]; then
+          git config --global user.email pipeline@studybuilder.com
+          git config --global user.name "Pipeline $(Build.BuildNumber)"
+
+          api_version=$(jq -r '.info.version' openapi.json)
+          echo "Changes to API specification detected. New API version is $api_version."
+
+          git add openapi.json            
+          git add apiVersion          
+          git commit openapi.json apiVersion -m "Pipeline $(Build.BuildNumber) committed changes to openapi.json API specification"
+          git push https://$SYSTEM_ACCESSTOKEN@dev.azure.com/novonordiskit/Clinical-MDR/_git/clinical-mdr-api $gitbranch
+          echo "Committed and pushed changes to API specification." 
+        fi
+
+        # Add git tag for api version only when building main branch
+        if [[ "$(Build.SourceBranchName)" == "main" ]]; then
+          git config --global user.email pipeline@studybuilder.com
+          git config --global user.name "Pipeline $(Build.BuildNumber)"
+
+          api_version=$(jq -r '.info.version' openapi.json)
+          api_version_tag="api-v${api_version}"
+   
+          git tag $api_version_tag
+          echo "Add git tag $api_version_tag" 
+          git push https://$SYSTEM_ACCESSTOKEN@dev.azure.com/novonordiskit/Clinical-MDR/_git/clinical-mdr-api --tags
+          echo "Added git tag $api_version_tag" 
+        fi
+      displayName: Generate openapi.json
+      env:
+        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
 
     # Verify that Pipfile.lock is up-to-date
     - script: |

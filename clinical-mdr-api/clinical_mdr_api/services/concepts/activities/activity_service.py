@@ -11,12 +11,14 @@ from clinical_mdr_api.domain.versioned_object_aggregate import (
 from clinical_mdr_api.domain_repositories.concepts.activities.activity_repository import (
     ActivityRepository,
 )
+from clinical_mdr_api.exceptions import NotFoundException
 from clinical_mdr_api.models.activities.activity import (
     Activity,
     ActivityEditInput,
     ActivityFromRequestInput,
     ActivityInput,
     ActivityORM,
+    ActivityOverview,
     ActivityVersion,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
@@ -93,7 +95,6 @@ class ActivityService(ConceptGenericService[ActivityAR]):
         only_specific_status: list = None,
         **kwargs,
     ) -> GenericFilteringReturn[ActivityORM]:
-
         self.enforce_library(library)
         try:
             items, total_count = self.repository.find_all_activities(
@@ -165,3 +166,13 @@ class ActivityService(ConceptGenericService[ActivityAR]):
             return self._transform_aggregate_root_to_pydantic_model(concept_ar)
         except ValueError as value_error:
             raise exceptions.ValidationException(value_error.args[0])
+
+    def get_activity_overview(self, activity_uid: str) -> ActivityOverview:
+        if not self.repository.final_concept_exists(uid=activity_uid):
+            raise NotFoundException(
+                f"Cannot find Activity with the following uid ({activity_uid}) in status (Final)"
+            )
+        overview = self._repos.activity_repository.get_activity_overview(
+            uid=activity_uid
+        )
+        return ActivityOverview.from_repository_input(overview=overview)

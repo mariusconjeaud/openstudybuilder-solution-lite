@@ -72,7 +72,6 @@ class OdmFormVO(ConceptVO):
         previous_name: Optional[str] = None,
         previous_oid: Optional[str] = None,
     ) -> None:
-
         if concept_exists_by_callback("name", self.name) and previous_name != self.name:
             raise BusinessLogicException(
                 f"ODM Form with name ({self.name}) already exists."

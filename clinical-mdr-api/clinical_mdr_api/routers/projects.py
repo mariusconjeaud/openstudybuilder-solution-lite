@@ -5,6 +5,7 @@ from fastapi import APIRouter, Body, Depends
 from clinical_mdr_api import models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.project import ProjectService
 
 router = APIRouter()
@@ -21,7 +22,8 @@ router = APIRouter()
     response_model=Sequence[models.Project],
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_projects() -> Sequence[models.Project]:
@@ -41,12 +43,12 @@ def get_projects() -> Sequence[models.Project]:
             "description": "Some application/business rules forbid to process the request. Expect more detailed"
             " information in response body.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create(
     project_create_input: models.ProjectCreateInput = Body(
-        None, description="Related parameters of the project that shall be created."
+        description="Related parameters of the project that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.Project:

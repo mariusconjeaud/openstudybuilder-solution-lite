@@ -39,7 +39,7 @@ def get_libraries(
 )
 # pylint: disable=unused-argument
 def create_library(
-    library: models.Library = Body(None, description=""),
+    library: models.Library = Body(description=""),
     current_user_id: str = Depends(get_current_user_id),
 ):
     return service.create(library.name, library.is_editable)

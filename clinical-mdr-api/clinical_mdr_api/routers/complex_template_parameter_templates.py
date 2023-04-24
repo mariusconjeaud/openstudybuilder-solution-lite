@@ -16,7 +16,7 @@ from clinical_mdr_api.models.complex_parameter_template import (
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.template_parameter import ComplexTemplateParameter
 from clinical_mdr_api.oauth import get_current_user_id
-from clinical_mdr_api.routers import decorators
+from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.parameter_templates import (
     ComplexParameterTemplateService,
 )
@@ -32,12 +32,11 @@ ComplexParameterTemplateUID = Path(
 
 PARAMETERS_NOTE = """**Parameters in the 'name' property**:
 
-The 'name' of an parameter template may contain parameters, that can - and usually will - be replaced with
-concrete values once an parameter is created out of the complex-parameter template.
+The 'name' of an parameter template may contain parameters, that can - and usually will - be replaced with concrete values once an parameter is created out of the complex-parameter template.
 
 Parameters are referenced by simple strings in square brackets [] that match existing parameters defined in the MDR repository.
 
-See the *[GET] /parameter-templates/* endpoint for available values.
+See the *[GET] /parameter-templates/* endpoint for available terms.
 
 The parameter template will be linked to those parameters defined in the 'name' property.
 
@@ -53,6 +52,7 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
 @router.get(
     "",
     summary="Returns all parameter templates in their latest/newest version.",
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=Sequence[ComplexParameterTemplate],
     status_code=200,
     responses={
@@ -72,7 +72,7 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
             }
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 @decorators.allow_exports(
@@ -126,7 +126,7 @@ def get_parameter_templates(
             "model": ErrorResponse,
             "description": "Not Found - The parameter template with the specified 'uid' (and the specified date/time and/or status) wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 # pylint: disable=unused-argument
@@ -174,8 +174,11 @@ def get_parameter_template(
 @router.get(
     "/{uid}/versions",
     summary="Returns the version history of a specific parameter template identified by 'uid'.",
-    description="The returned versions are ordered by\n"
-    "0. start_date descending (newest entries first)",
+    description=f"""
+The returned versions are ordered by `start_date` descending (newest entries first)
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+""",
     response_model=Sequence[ComplexParameterTemplateVersion],
     status_code=200,
     responses={
@@ -199,7 +202,7 @@ def get_parameter_template(
             "model": ErrorResponse,
             "description": "Not Found - The parameter template with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 @decorators.allow_exports(
@@ -246,7 +249,7 @@ def get_parameter_template_versions(
             "model": ErrorResponse,
             "description": "Not Found - The parameter template with the specified 'uid' and 'version' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_parameter_template_version(
@@ -292,12 +295,12 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The library with the specified 'library_name' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_parameter_template(
     parameter_template: ComplexParameterTemplateCreateInput = (
-        Body(None, description="The parameter template that shall be created.")
+        Body(description="The parameter template that shall be created.")
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> ComplexParameterTemplate:
@@ -337,13 +340,12 @@ Once the parameter template has been approved, only the surrounding text (exclud
             "model": ErrorResponse,
             "description": "Not Found - The parameter template with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
     uid: str = ComplexParameterTemplateUID,
     parameter_template: ComplexParameterTemplateEditInput = Body(
-        None,
         description="The new content of the parameter template including the change description.",
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -381,13 +383,12 @@ Only the surrounding text (excluding the parameters) can be changed.
             "model": ErrorResponse,
             "description": "Not Found - The parameter template with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_new_version(
     uid: str = ComplexParameterTemplateUID,
     parameter_template: ComplexParameterTemplateEditInput = Body(
-        None,
         description="The content of the parameter template for the new 'Draft' version including the change description.",
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -426,7 +427,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Conflict - there are parameters created from template and cascade is false",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
@@ -467,7 +468,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The parameter template with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
@@ -502,7 +503,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The parameter template with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
@@ -538,7 +539,7 @@ def reactivate(
             "model": ErrorResponse,
             "description": "Not Found - An parameter template with the specified uid could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_parameter_template(
@@ -565,7 +566,8 @@ In that case, the same parameter (with the same values) is included multiple tim
     response_model=Sequence[ComplexTemplateParameter],
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_parameters(
@@ -595,12 +597,11 @@ with the same content will succeed.
             "- The syntax of the 'name' is not valid.\n"
             "- One of the parameters wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def pre_validate(
     parameter_template: ComplexParameterTemplateNameInput = Body(
-        None,
         description="The content of the parameter template that shall be validated.",
     ),
     current_user_id: str = Depends(get_current_user_id),

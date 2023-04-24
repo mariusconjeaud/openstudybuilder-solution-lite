@@ -29,7 +29,7 @@ INDEXES = [
     ("StudyBranchArm", "uid"),
     ("StudyDiseaseMilestone", "uid"),
     ("OrderedStudySelectionDiseaseMilestone", "uid"),
-    ("TemplateParameterValue", "name"),
+    ("TemplateParameterTermValue", "name"),
     ("CTCodelistAttributesValue", "name"),
     ("CTCodelistNameValue", "name"),
     ("CTTermNameValue", "name"),
@@ -78,10 +78,11 @@ INDEXES = [
     ("CriteriaTemplateValue", "name"),
     ("TimePointValue", "name"),
     ("CriteriaValue", "name"),
-    ("ActivityDescriptionTemplateValue", "name"),
+    ("ActivityInstructionTemplateValue", "name"),
     ("CTTermAttributesValue", "code_submission_value"),
     ("CTTermAttributesValue", "name_submission_value"),
     ("StudyField", "field_name"),
+    ("DataModelVersion", "uid")
 ]
 
 # array of text indexes to create [label, property]
@@ -108,7 +109,7 @@ REL_INDEXES = [
 
 # array of constraints to create [label, property, type["NODE KEY", "UNIQUE", "NOT NULL"]]
 CONSTRAINTS = [
-    ("TemplateParameterValueRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("TemplateParameterTermRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("CTCodelistRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("CTTermRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("DictionaryCodelistRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
@@ -168,6 +169,15 @@ CONSTRAINTS = [
     ("Brand", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("OdmVendorAttributeRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("OdmVendorNamespaceRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("DataModelCatalogue", "name", CONSTRAINT_TYPE_NODE_KEY),
+    ("DataModelPackage", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("DataModelVersion", "href", CONSTRAINT_TYPE_NODE_KEY),
+    ("DataModelRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("DataModelIGRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("DatasetClassRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("DatasetRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("ClassVariableRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("DatasetVariableRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
 ]
 
 

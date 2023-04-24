@@ -152,8 +152,8 @@ export default {
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: '#', value: 'order', width: '5%' },
-        { text: this.$t('StudyCohorts.arm_name'), value: 'arm_roots' },
-        { text: this.$t('StudyCohorts.branch_arm_name'), value: 'branch_arm_roots' },
+        { text: this.$t('StudyCohorts.arm_name'), value: 'arm_roots', historyHeader: 'arm_roots_uids' },
+        { text: this.$t('StudyCohorts.branch_arm_name'), value: 'branch_arm_roots', historyHeader: 'branch_arm_roots_uids' },
         { text: this.$t('StudyCohorts.cohort_name'), value: 'name' },
         { text: this.$t('StudyCohorts.cohort_short_name'), value: 'short_name' },
         { text: this.$t('StudyCohorts.cohort_code'), value: 'code' },

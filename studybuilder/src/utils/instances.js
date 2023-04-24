@@ -72,7 +72,7 @@ async function formatParameterValues (parameters, onlyDefaultValues) {
       result.push({
         position: position,
         conjunction: conjunction,
-        values: values,
+        terms: values,
         value: value
       })
     }
@@ -94,8 +94,8 @@ function getSeparator (conjunction) {
 function loadParameterValues (parameterValues, parameters, fromDefaultParameterValues) {
   let index = 0
   parameterValues.forEach(item => {
-    if (item.values.length) {
-      item.values.forEach(value => {
+    if (item.terms.length) {
+      item.terms.forEach(value => {
         if (value.type === pconstants.NUM_VALUE || value.type === pconstants.TEXT_VALUE) {
           Object.assign(parameters[index], { selectedSeparator: '', selectedValues: value.name })
         } else {

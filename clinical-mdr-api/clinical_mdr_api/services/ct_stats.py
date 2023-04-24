@@ -25,7 +25,6 @@ class CTStatsService:
     def get_stats(
         self, latest_codelists=Sequence[CTCodelistNameAndAttributes]
     ) -> CTStats:
-
         # Get change details
         yearly_aggregates = get_package_changes_by_year()
 

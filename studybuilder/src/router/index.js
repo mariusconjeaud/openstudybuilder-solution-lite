@@ -178,6 +178,22 @@ const routes = [
     }
   },
   {
+    path: '/library/activities/activities/:id/overview',
+    name: 'ActivityOverview',
+    component: () => import('../views/library/ActivityOverview.vue'),
+    meta: {
+      authRequired: true
+    }
+  },
+  {
+    path: '/library/activities/activity-instances/:id/overview',
+    name: 'ActivityInstanceOverview',
+    component: () => import('../views/library/ActivityInstanceOverview.vue'),
+    meta: {
+      authRequired: true
+    }
+  },
+  {
     path: '/library/units',
     name: 'Units',
     component: () => import('../views/library/Units.vue'),
@@ -406,10 +422,11 @@ const routes = [
     }
   },
   {
-    path: '/studies/study_status',
+    path: '/studies/study_status/:tab?',
     name: 'StudyStatus',
     component: () => import('../views/studies/StudyStatus.vue'),
     meta: {
+      studyRequired: true,
       authRequired: true
     }
   },
@@ -432,7 +449,7 @@ const routes = [
     }
   },
   {
-    path: '/studies/select_or_add_study',
+    path: '/studies/select_or_add_study/:tab?',
     name: 'SelectOrAddStudy',
     component: () => import('../views/studies/SelectOrAddStudy.vue'),
     meta: {
@@ -657,7 +674,7 @@ const routes = [
     }
   },
   {
-    path: '/studies/analysis_study_metadata_new',
+    path: '/studies/analysis_study_metadata_new/:tab?',
     name: 'AnalysisStudyMetadataNew',
     component: () => import('../views/studies/AnalysisStudyMetadataNew.vue'),
     meta: {
@@ -727,6 +744,7 @@ const routes = [
   },
   {
     path: '/oauth-callback',
+    name: 'AuthCallback',
     component: () => import('../views/AuthCallback.vue'),
     meta: {
       layoutTemplate: 'error'

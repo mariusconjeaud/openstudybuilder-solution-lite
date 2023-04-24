@@ -9,14 +9,14 @@ from clinical_mdr_api.domain._utils import (
     extract_parameters,
     strip_html,
 )
-from clinical_mdr_api.domain.library.parameter_value import ParameterValueEntryVO
+from clinical_mdr_api.domain.library.parameter_term import ParameterTermEntryVO
+from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
 from clinical_mdr_api.domain.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
     LibraryItemMetadataVO,
     LibraryItemStatus,
     LibraryVO,
     ObjectAction,
-    TemplateVO,
 )
 
 
@@ -29,7 +29,7 @@ class ParametrizedTemplateVO:
 
     template_name: str
     template_uid: str
-    parameter_values: Sequence[ParameterValueEntryVO]
+    parameter_terms: Sequence[ParameterTermEntryVO]
 
     @classmethod
     def from_repository_values(
@@ -37,7 +37,7 @@ class ParametrizedTemplateVO:
         *,
         template_name: str,
         template_uid: str,
-        parameter_values: Sequence[ParameterValueEntryVO]
+        parameter_terms: Sequence[ParameterTermEntryVO],
     ) -> "ParametrizedTemplateVO":
         """
         Creates object based on repository values
@@ -45,7 +45,7 @@ class ParametrizedTemplateVO:
         return cls(
             template_uid=template_uid,
             template_name=template_name,
-            parameter_values=tuple(parameter_values),
+            parameter_terms=tuple(parameter_terms),
         )
 
     @classmethod
@@ -53,12 +53,10 @@ class ParametrizedTemplateVO:
         cls,
         *,
         template_uid: str,
-        parameter_values: Sequence[ParameterValueEntryVO],
-        name_override: Optional[str] = None,
-        is_instance_editable_callback: Optional[Callable[[str], bool]] = None,
+        parameter_terms: Sequence[ParameterTermEntryVO],
         get_final_template_vo_by_template_uid_callback: Callable[
             [str], Optional[TemplateVO]
-        ]
+        ],
     ) -> "ParametrizedTemplateVO":
         """
         Creates object based on external input
@@ -67,53 +65,39 @@ class ParametrizedTemplateVO:
 
         if template is None:
             raise ValueError(
-                "The template was not found. Make sure that there is a latest 'Final' version."
+                f"The template with uid '{template_uid}' was not found. Make sure that there is a latest 'Final' version."
             )
 
-        # TODO: is there replacement?
-        # if [_.parameter_name for _ in parameter_values] != list(template.parameter_names):
-        #    raise ValueError("Parameter value list does not match template defined parameter list")
-
-        if name_override is not None:
-            if extract_parameters(name_override) != extract_parameters(template.name):
-                raise ValueError(
-                    "Name override does not match template defined parameter list"
-                )
-            if not is_instance_editable_callback(template_uid):
-                raise ValueError(
-                    "Editing the name of an instance of this template is not allowed"
-                )
-
         return cls(
-            template_name=name_override if name_override is not None else template.name,
+            template_name=template.name,
             template_uid=template_uid,
-            parameter_values=tuple(parameter_values),
+            parameter_terms=tuple(parameter_terms),
         )
 
     @classmethod
-    def from_name_and_parameter_values(
+    def from_name_and_parameter_terms(
         cls,
         name: str,
         template_uid: str,
-        parameter_values: Sequence[ParameterValueEntryVO],
+        parameter_terms: Sequence[ParameterTermEntryVO],
     ) -> "ParametrizedTemplateVO":
         return cls(
             template_name=name,
             template_uid=template_uid,
-            parameter_values=parameter_values,
+            parameter_terms=parameter_terms,
         )
 
     @staticmethod
     def _create_name_from_template(
-        template_name: str, parameter_values: Sequence[ParameterValueEntryVO]
+        template_name: str, parameter_terms: Sequence[ParameterTermEntryVO]
     ) -> str:
         """
         Calculates current name based on template name and current list of parameters
         """
         name = template_name
         template_parameters = extract_parameters(template_name)
-        if parameter_values is not None:
-            for i, param in enumerate(parameter_values):
+        if parameter_terms is not None:
+            for i, param in enumerate(parameter_terms):
                 values = param.parameters
                 conjunction = param.conjunction
                 if len(values) == 0:
@@ -131,7 +115,7 @@ class ParametrizedTemplateVO:
                             str(values[x].value)
                             + ParametrizedTemplateVO.generate_template_value_seperator(
                                 template_name,
-                                parameter_values,
+                                parameter_terms,
                                 template_parameters[i],
                                 i,
                                 values,
@@ -180,30 +164,29 @@ class ParametrizedTemplateVO:
     @staticmethod
     def generate_template_value_seperator(
         template,
-        parameter_values,
+        parameter_terms,
         parameter_name,
         template_index,
         values,
         index,
         conjunction,
     ) -> str:
-
-        # We check if there's a 'joined' parameter value following the current one.
+        # We check if there's a 'joined' parameter term following the current one.
         # This, for example, ensure that we generate:
         # "To investigate [A,B,C] and [D]"
         # instead of:
         # "To investigate [A,B and C] and [D]".
         text_after_parameter = template.split("[" + parameter_name + "]")[1]
-        next_parameter_has_value = (
-            template_index < len(parameter_values) - 1
-            and len(parameter_values[template_index + 1].parameters) > 0
+        next_parameter_has_term = (
+            template_index < len(parameter_terms) - 1
+            and len(parameter_terms[template_index + 1].parameters) > 0
         )
-        has_joined_parameter_value = (
-            next_parameter_has_value
+        has_joined_parameter_term = (
+            next_parameter_has_term
             and text_after_parameter.strip().startswith(conjunction)
         )
 
-        if index < (len(values) - 2) or has_joined_parameter_value:
+        if index < (len(values) - 2) or has_joined_parameter_term:
             return ", "
         return " " + conjunction + " "
 
@@ -214,14 +197,14 @@ class ParametrizedTemplateVO:
     @property
     def expanded_template_value(self) -> str:
         return self._create_name_from_template(
-            template_name=self.template_name, parameter_values=self.parameter_values
+            template_name=self.template_name, parameter_terms=self.parameter_terms
         )
 
     @property
     def expanded_plain_template_value(self) -> str:
         name = self._create_name_from_template(
             template_name=self.template_name,
-            parameter_values=self.parameter_values,
+            parameter_terms=self.parameter_terms,
         )
         return convert_to_plain(name)
 
@@ -251,13 +234,13 @@ class ParametrizedTemplateARBase(LibraryItemAggregateRootBase):
         uid: str,
         item_metadata: LibraryItemMetadataVO,
         study_count: Optional[int],
-        **kwargs
+        **kwargs,
     ) -> "LibraryItemAggregateRootBase":
         # noinspection PyArgumentList
         # pylint:disable=no-value-for-parameter
         return cls(
             _uid=uid,
-            _library=library,  # type: ignore
+            _library=library,
             _item_metadata=item_metadata,
             _study_count=study_count**kwargs,
         )
@@ -317,10 +300,10 @@ class ParametrizedTemplateARBase(LibraryItemAggregateRootBase):
         change_description: str = CASCADING_UPDATE_LABEL,
     ):
         change_description = change_description.format(self.template_uid)
-        self._template = ParametrizedTemplateVO.from_name_and_parameter_values(
+        self._template = ParametrizedTemplateVO.from_name_and_parameter_terms(
             new_template_name,
             self.template_uid,
-            self._template.parameter_values,
+            self._template.parameter_terms,
         )
         self._item_metadata = self._item_metadata.new_version_start_date(
             author=author, change_description=change_description, date=date
@@ -346,8 +329,8 @@ class ParametrizedTemplateARBase(LibraryItemAggregateRootBase):
     def name_plain(self) -> str:
         return self._template.expanded_plain_template_value
 
-    def get_parameters(self) -> Sequence[ParameterValueEntryVO]:
-        return self._template.parameter_values
+    def get_parameters(self) -> Sequence[ParameterTermEntryVO]:
+        return self._template.parameter_terms
 
     def get_possible_actions(self) -> AbstractSet[ObjectAction]:
         """

@@ -5,9 +5,9 @@ from typing import Optional
 from fastapi import Depends, Path, Query
 from fastapi.responses import HTMLResponse, StreamingResponse
 
-from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.table_with_headers import TableWithHeaders
 from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.routers import studies_router as router
 from clinical_mdr_api.services.study_flowchart import StudyFlowchartService
 
@@ -24,7 +24,10 @@ time_unit_query = Query(
     "/{uid}/flowchart",
     summary="Returns Study Protocol Flowchart table",
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
     response_model=TableWithHeaders,
 )
 def get_study_flowchart(
@@ -41,7 +44,10 @@ def get_study_flowchart(
     "/{uid}/flowchart.html",
     summary="Builds and returns an HTML document with Study Protocol Flowchart table",
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
     response_class=HTMLResponse,
 )
 def get_study_flowchart_html(
@@ -58,7 +64,10 @@ def get_study_flowchart_html(
     "/{uid}/flowchart.docx",
     summary="Builds and returns a DOCX document with Study Protocol Flowchart table",
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_study_flowchart_docx(
     uid: str = StudyUID,

@@ -29,41 +29,36 @@ from clinical_mdr_api.repositories._utils import (
 
 
 class CTCodelistAggregatedRepository:
-
     generic_alias_clause = """
         DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value
         ORDER BY codelist_root.uid
         WITH DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value, 
         head([(cat:CTCatalogue)-[:HAS_CODELIST]->(codelist_root) | cat]) AS catalogue,
-        head([(lib)-[:CONTAINS_CODELIST]->(codelist_root) | lib]) AS library,
-        head([(codelist_attributes_root)-[ld:LATEST_DRAFT]->(codelist_attributes_value) | ld]) AS ld_attributes,
-        head([(codelist_attributes_root)-[lf:LATEST_FINAL]->(codelist_attributes_value) | lf]) AS lf_attributes,
-        head([(codelist_attributes_root)-[lr:LATEST_RETIRED]->(codelist_attributes_value) | lr]) AS lr_attributes,
-        head([(codelist_attributes_root)-[hv:HAS_VERSION]->(codelist_attributes_value) | hv]) AS hv_attributes,
-        head([(codelist_name_root)-[ld:LATEST_DRAFT]->(codelist_name_value) | ld]) AS ld_name,
-        head([(codelist_name_root)-[lf:LATEST_FINAL]->(codelist_name_value) | lf]) AS lf_name,
-        head([(codelist_name_root)-[lr:LATEST_RETIRED]->(codelist_name_value) | lr]) AS lr_name,
-        head([(codelist_name_root)-[hv:HAS_VERSION]->(codelist_name_value) | hv]) AS hv_name
-        CALL apoc.case(
-            [
-                ld_attributes IS NOT NULL AND ld_attributes.end_date IS NULL, 'RETURN ld_attributes as rel',
-                lf_attributes IS NOT NULL AND lf_attributes.end_date IS NULL, 'RETURN lf_attributes as rel',
-                lr_attributes IS NOT NULL AND lr_attributes.end_date IS NULL, 'RETURN lr_attributes as rel',
-                ld_attributes IS NULL AND lf_attributes IS NULL AND lr_attributes IS NULL, 'RETURN hv_attributes as rel'
-            ],
-            '',
-            {ld_attributes:ld_attributes, lf_attributes:lf_attributes, lr_attributes:lr_attributes, hv_attributes:hv_attributes})
-        YIELD value as rel_data_attributes
-        CALL apoc.case(
-            [
-                ld_name IS NOT NULL AND ld_name.end_date IS NULL, 'RETURN ld_name as rel',
-                lf_name IS NOT NULL AND lf_name.end_date IS NULL, 'RETURN lf_name as rel',
-                lr_name IS NOT NULL AND lr_name.end_date IS NULL, 'RETURN lr_name as rel',
-                ld_name IS NULL AND lf_name IS NULL AND lr_name IS NULL, 'RETURN hv_name as rel'
-            ],
-            '',
-            {ld_name:ld_name, lf_name:lf_name, lr_name:lr_name, hv_name:hv_name})
-        YIELD value as rel_data_name
+        head([(lib)-[:CONTAINS_CODELIST]->(codelist_root) | lib]) AS library
+        CALL {
+                WITH codelist_attributes_root, codelist_attributes_value
+                MATCH (codelist_attributes_root)-[hv:HAS_VERSION]-(codelist_attributes_value)
+                WITH hv 
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.end_date ASC,
+                    hv.start_date ASC
+                WITH collect(hv) as hvs
+                RETURN last(hvs) AS rel_data_attributes
+        }
+        CALL {
+                WITH codelist_name_root, codelist_name_value
+                MATCH (codelist_name_root)-[hv:HAS_VERSION]-(codelist_name_value)
+                WITH hv
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.end_date ASC,
+                    hv.start_date ASC
+                WITH collect(hv) as hvs
+                RETURN last(hvs) AS rel_data_name
+        }
         WITH 
             codelist_root.uid AS codelist_uid,
             head([(codelist_root)-[:HAS_PARENT_CODELIST]->(ccr:CTCodelistRoot) | ccr.uid]) AS parent_codelist_uid,
@@ -75,20 +70,20 @@ class CTCodelistAggregatedRepository:
             library.name AS library_name,
             library.is_editable AS is_library_editable,
             {
-                start_date: rel_data_attributes.rel.start_date,
+                start_date: rel_data_attributes.start_date,
                 end_date: NULL,
-                status: rel_data_attributes.rel.status,
-                version: rel_data_attributes.rel.version,
-                change_description: rel_data_attributes.rel.change_description,
-                user_initials: rel_data_attributes.rel.user_initials
+                status: rel_data_attributes.status,
+                version: rel_data_attributes.version,
+                change_description: rel_data_attributes.change_description,
+                user_initials: rel_data_attributes.user_initials
             } AS rel_data_attributes,
             {
-                start_date: rel_data_name.rel.start_date,
+                start_date: rel_data_name.start_date,
                 end_date: NULL,
-                status: rel_data_name.rel.status,
-                version: rel_data_name.rel.version,
-                change_description: rel_data_name.rel.change_description,
-                user_initials: rel_data_name.rel.user_initials
+                status: rel_data_name.status,
+                version: rel_data_name.version,
+                change_description: rel_data_name.change_description,
+                user_initials: rel_data_name.user_initials
             } AS rel_data_name
     """
 

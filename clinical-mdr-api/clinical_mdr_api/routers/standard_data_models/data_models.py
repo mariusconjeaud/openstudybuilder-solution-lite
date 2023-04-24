@@ -22,7 +22,7 @@ DataModelUID = Path(None, description="The unique id of the DataModel")
 @router.get(
     "/data-models",
     summary="List all data-models",
-    description="""
+    description=f"""
 State before:
 
 Business logic:
@@ -31,11 +31,14 @@ Business logic:
 State after:
  - No change
 
-Possible errors:
+{_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
     response_model=CustomPage[DataModel],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 @decorators.allow_exports(
     {
@@ -70,7 +73,7 @@ def get_data_models(
     current_user_id: str = Depends(get_current_user_id),
 ):
     data_model_service = DataModelService(user=current_user_id)
-    results = data_model_service.get_all_standards(
+    results = data_model_service.get_all_items(
         sort_by=sort_by,
         page_number=page_number,
         page_size=page_size,
@@ -95,7 +98,7 @@ def get_data_models(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -141,7 +144,10 @@ Possible errors:
  """,
     response_model=DataModel,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_data_model(
     uid: str = DataModelUID, current_user_id: str = Depends(get_current_user_id)

@@ -1,7 +1,7 @@
 from typing import Generic, Iterable, Optional, TypeVar
 
-from clinical_mdr_api.domain_repositories.simple_dictionaries._simple_terminology_item_repository import (  # type: ignore
-    SimpleTerminologyItemRepository,
+from clinical_mdr_api.domain_repositories.simple_dictionaries._simple_terminology_item_repository import (
+    SimpleTerminologyItemRepository,  # type: ignore
 )
 
 DictionaryItemType = TypeVar("DictionaryItemType")

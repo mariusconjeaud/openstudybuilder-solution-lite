@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from typing import AbstractSet
 
+from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
 from clinical_mdr_api.domain.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
     LibraryItemMetadataVO,
     LibraryItemStatus,
     LibraryVO,
     ObjectAction,
-    TemplateVO,
 )
 
 
@@ -37,18 +37,18 @@ class ParameterTemplateAR(LibraryItemAggregateRootBase):
         template: TemplateVO,
         parameter_name: str,
         library: LibraryVO,
-        **kwargs
+        **kwargs,
     ) -> "ParameterTemplateAR":
         # noinspection PyArgumentList
         return cls(
-            _uid=None,  # type: ignore
+            _uid=None,
             parameter_name=parameter_name,
             _template=template,
             _library=library,
             _item_metadata=LibraryItemMetadataVO.get_initial_item_metadata(
                 author=author
             ),
-            **kwargs
+            **kwargs,
         )
 
     @classmethod
@@ -60,16 +60,16 @@ class ParameterTemplateAR(LibraryItemAggregateRootBase):
         library: LibraryVO,
         parameter_name: str,
         item_metadata: LibraryItemMetadataVO,
-        **kwargs
+        **kwargs,
     ) -> "ParameterTemplateAR":
         # noinspection PyArgumentList
         return cls(
-            _uid=uid,  # type: ignore
+            _uid=uid,
             _template=template,
             _library=library,
             parameter_name=parameter_name,
             _item_metadata=item_metadata,
-            **kwargs
+            **kwargs,
         )
 
     def get_possible_actions(self) -> AbstractSet[ObjectAction]:

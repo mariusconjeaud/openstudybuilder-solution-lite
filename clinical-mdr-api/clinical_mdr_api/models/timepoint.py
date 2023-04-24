@@ -4,15 +4,15 @@ from typing import Dict, List, Optional
 from pydantic import Field
 
 from clinical_mdr_api.domain._utils import extract_parameters
-from clinical_mdr_api.domain.library.parameter_value import ComplexParameterValue
+from clinical_mdr_api.domain.library.parameter_term import ComplexParameterTerm
 from clinical_mdr_api.domain.library.timepoints import TimepointAR
 from clinical_mdr_api.models.library import Library
 from clinical_mdr_api.models.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
-from clinical_mdr_api.models.template_parameter_value import (
-    IndexedTemplateParameterValue,
-    MultiTemplateParameterValue,
+from clinical_mdr_api.models.template_parameter_term import (
+    IndexedTemplateParameterTerm,
+    MultiTemplateParameterTerm,
     TemplateParameterComplexValue,
 )
 from clinical_mdr_api.models.utils import BaseModel
@@ -37,26 +37,25 @@ class Timepoint(BaseModel):
         ),
     )
 
-    parameter_values: Optional[List[TemplateParameterComplexValue]] = Field(
+    parameter_terms: Optional[List[TemplateParameterComplexValue]] = Field(
         None,
-        description="Holds the parameter values that are used within the timeframe. The values are ordered as they occur in the timeframe name.",
+        description="Holds the parameter terms that are used within the timeframe. The terms are ordered as they occur in the timeframe name.",
     )
     library: Optional[Library] = None
 
     @classmethod
     def from_timepoint_ar(cls, timepoint_ar: TimepointAR) -> "Timepoint":
-
-        parameter_values: List[MultiTemplateParameterValue] = []
+        parameter_terms: List[MultiTemplateParameterTerm] = []
         for position, parameter in enumerate(timepoint_ar.get_parameters()):
-            values: List[IndexedTemplateParameterValue] = []
-            if isinstance(parameter, ComplexParameterValue):
+            terms: List[IndexedTemplateParameterTerm] = []
+            if isinstance(parameter, ComplexParameterTerm):
                 param_names = extract_parameters(parameter.parameter_template)
                 param_list = []
                 for i, param_name in enumerate(param_names):
-                    param_value = parameter.parameters[i]
-                    pp = IndexedTemplateParameterValue(
-                        name=param_value.value,
-                        uid=param_value.uid,
+                    param_term = parameter.parameters[i]
+                    pp = IndexedTemplateParameterTerm(
+                        name=param_term.value,
+                        uid=param_term.uid,
                         index=1,
                         type=param_name,
                     )
@@ -64,24 +63,24 @@ class Timepoint(BaseModel):
                 pv = TemplateParameterComplexValue(
                     position=position + 1,
                     conjunction="",
-                    values=param_list,
+                    terms=param_list,
                     format_string=parameter.parameter_template,
                 )
-                parameter_values.append(pv)
+                parameter_terms.append(pv)
             else:
-                for index, parameter_value in enumerate(parameter.parameters):
-                    pv = IndexedTemplateParameterValue(
+                for index, parameter_term in enumerate(parameter.parameters):
+                    pv = IndexedTemplateParameterTerm(
                         index=index + 1,
-                        uid=parameter_value.uid,
-                        name=parameter_value.value,
+                        uid=parameter_term.uid,
+                        name=parameter_term.value,
                         type=parameter.parameter_name,
                     )
-                    values.append(pv)
+                    terms.append(pv)
                 conjunction = parameter.conjunction
 
-                parameter_values.append(
-                    MultiTemplateParameterValue(
-                        conjunction=conjunction, position=position + 1, values=values
+                parameter_terms.append(
+                    MultiTemplateParameterTerm(
+                        conjunction=conjunction, position=position + 1, terms=terms
                     )
                 )
         return cls(
@@ -97,7 +96,7 @@ class Timepoint(BaseModel):
                 {_.value for _ in timepoint_ar.get_possible_actions()}
             ),
             library=Library.from_library_vo(timepoint_ar.library),
-            parameter_values=parameter_values,
+            parameter_terms=parameter_terms,
         )
 
 
@@ -116,10 +115,10 @@ class TimepointVersion(Timepoint):
 
 
 class TimepointParameterInput(BaseModel):
-    parameter_values: List[TemplateParameterMultiSelectInput] = Field(
+    parameter_terms: List[TemplateParameterMultiSelectInput] = Field(
         None,
-        title="parameter_values",
-        description="An ordered list of selected parameter values that are used to replace the parameters of the timeframe template.",
+        title="parameter_terms",
+        description="An ordered list of selected parameter terms that are used to replace the parameters of the timeframe template.",
     )
 
 

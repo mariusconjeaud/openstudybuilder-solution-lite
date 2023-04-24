@@ -87,7 +87,6 @@ class StudyEpochVO:
         change_description: str,
         color_hash: Optional[str],
     ):
-
         self.start_rule = start_rule
         self.end_rule = end_rule
         self.description = description
@@ -401,7 +400,6 @@ class TimelineAR:
             epoch.set_ordered_visits(epoch_visits[epoch.uid])
         # iterating to the one before last as we are accessing the next element in the for loop
         for i, epoch in enumerate(epochs[:-1]):
-
             # if next epoch has a visit then we set it as the next visit for the current epoch
             if epochs[i + 1].first_visit:
                 epoch.set_next_visit(epochs[i + 1].first_visit)
@@ -420,9 +418,7 @@ class TimelineAR:
                     epoch.set_next_visit(None)
 
         for i, epoch in enumerate(epochs):
-
             if i - 1 >= 0:
-
                 # if previous epoch has a visit then we set it as a previous visit for the current epoch
                 if epochs[i - 1].last_visit:
                     epoch.set_previous_visit(epochs[i - 1].last_visit)

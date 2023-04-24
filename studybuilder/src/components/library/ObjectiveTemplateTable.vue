@@ -18,10 +18,10 @@
       :template="selectedObject"
       />
   </template>
-  <template v-slot:item.confirmatory_testing="{ item }">
+  <template v-slot:item.is_confirmatory_testing="{ item }">
     <template v-if="item.defaultParameterValuesSet === undefined">
-      <template v-if="item.confirmatory_testing !== null">
-        {{ item.confirmatory_testing|yesno }}
+      <template v-if="item.is_confirmatory_testing !== null">
+        {{ item.is_confirmatory_testing|yesno }}
       </template>
       <template v-else>
         {{ $t('_global.not_applicable_long') }}
@@ -84,7 +84,7 @@ export default {
         },
         { text: this.$t('_global.indications'), value: 'indications.name' },
         { text: this.$t('ObjectiveTemplateTable.objective_cat'), value: 'categories.name.sponsor_preferred_name' },
-        { text: this.$t('ObjectiveTemplateTable.confirmatory_testing'), value: 'confirmatory_testing' },
+        { text: this.$t('ObjectiveTemplateTable.confirmatory_testing'), value: 'is_confirmatory_testing' },
         { text: this.$t('_global.template'), value: 'name', width: '30%', filteringName: 'name_plain' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
@@ -101,8 +101,8 @@ export default {
       this.$refs.table.$refs.sponsorTable.filter()
     },
     formatHistoryItem (item) {
-      if (item.confirmatory_testing !== null) {
-        item.confirmatory_testing = dataFormating.yesno(item.confirmatory_testing)
+      if (item.is_confirmatory_testing !== null) {
+        item.is_confirmatory_testing = dataFormating.yesno(item.is_confirmatory_testing)
       }
       if (item.categories && item.categories.length) {
         item.categories = { name: { sponsor_preferred_name: dataFormating.terms(item.categories) } }

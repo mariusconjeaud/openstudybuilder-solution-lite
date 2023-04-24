@@ -52,7 +52,7 @@ const actions = {
     const endpointData = {
       endpoint_template_uid: data.endpoint_template.uid,
       library_name: data.endpoint_template.library.name,
-      parameter_values: await instances.formatParameterValues(endpointParameters)
+      parameter_terms: await instances.formatParameterValues(endpointParameters)
     }
     data.endpoint_data = endpointData
     delete data.endpoint_template
@@ -62,7 +62,7 @@ const actions = {
       const timeframe = {
         timeframe_template_uid: data.timeframe_template.uid,
         library_name: data.timeframe_template.library.name,
-        parameter_values: await instances.formatParameterValues(timeframeParameters)
+        parameter_terms: await instances.formatParameterValues(timeframeParameters)
       }
       const timeframeTemplate = data.timeframe_template
       delete data.timeframe_template
@@ -149,7 +149,7 @@ const actions = {
         const endpoint = {
           endpoint_template_uid: form.endpoint_template.uid,
           library_name: form.endpoint_template.library.name,
-          parameter_values: await instances.formatParameterValues(form.endpoint_parameters)
+          parameter_terms: await instances.formatParameterValues(form.endpoint_parameters)
         }
         const resp = await endpoints.create(endpoint)
         data.endpoint_uid = resp.data.uid
@@ -173,7 +173,7 @@ const actions = {
         const timeframe = {
           timeframe_template_uid: form.timeframe_template.uid,
           library_name: form.timeframe_template.library.name,
-          parameter_values: await instances.formatParameterValues(form.timeframe_parameters)
+          parameter_terms: await instances.formatParameterValues(form.timeframe_parameters)
         }
         const resp = await timeframes.create(timeframe)
         data.timeframe_uid = resp.data.uid

@@ -225,7 +225,14 @@
                     "uid": "OdmVendorNamespace_000001",
                     "name": "name1",
                     "prefix": "prefix",
-                    "url": "url1"
+                    "url": "url1",
+                    "status": "Draft",
+                    "version": "0.1",
+                    "possible_actions": [
+                        "approve",
+                        "delete",
+                        "edit"
+                    ]
                 },
                 "vendor_attributes": [],
                 "possible_actions": [

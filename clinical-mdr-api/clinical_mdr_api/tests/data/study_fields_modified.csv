@@ -14,8 +14,9 @@ registry,investigational_new_drug_application_number_ind,investigational_new_dru
 text,investigational_new_drug_application_number_ind_null_value_code,,,,,id_metadata.registry_identifiers,investigational_new_drug_application_number_ind_null_value_code,False
 date,version_timestamp,,,,,ver_metadata,version_timestamp,False
 project,project_number,,,,,id_metadata,project_number,False
-text,locked_version_info,,,,,ver_metadata,locked_version_info,False
-text,locked_version_author,,,,,ver_metadata,locked_version_author,False
+text,version_description,,,,,ver_metadata,version_description,False
+text,version_author,,,,,ver_metadata,version_author,False
+text,version_number,,,,,ver_metadata,version_number,False
 text,study_type_code,study_type_null_value_code,C99077,,,high_level_study_design,study_type_code,False
 text,study_type_null_value_code,,,,,high_level_study_design,study_type_null_value_code,False
 text,trial_phase_code,trial_phase_null_value_code,C66737,,,high_level_study_design,trial_phase_code,False
@@ -78,9 +79,5 @@ time,planned_study_length,planned_study_length_null_value_code,,,,study_interven
 text,planned_study_length_null_value_code,,,,,study_intervention,planned_study_length_null_value_code,False
 text,study_title,,,,,study_description,study_title,False
 text,study_short_title,,,,,study_description,study_short_title,False
-bool,drug_study_indication,drug_study_indication_null_value_code,,,C123630_FDADRIND,study_intervention,drug_study_indication,False
-text,drug_study_indication_null_value_code,,,,,study_intervention,drug_study_indication_null_value_code,False
-bool,device_study_indication,device_study_indication_null_value_code,,,C123629_FDADEIND,study_intervention,device_study_indication,False
-text,device_study_indication_null_value_code,,,,,study_intervention,device_study_indication_null_value_code,False
 time,confirmed_response_minimum_duration,confirmed_response_minimum_duration_null_value_code,,,,high_level_study_design,confirmed_response_minimum_duration,False
 text,confirmed_response_minimum_duration_null_value_code,,,,,high_level_study_design,confirmed_response_minimum_duration_null_value_code,False

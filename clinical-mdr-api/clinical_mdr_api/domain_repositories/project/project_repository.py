@@ -7,7 +7,7 @@ from neomodel import exceptions
 from clinical_mdr_api import config
 from clinical_mdr_api.domain.project.project import ProjectAR
 from clinical_mdr_api.domain_repositories.generic_repository import (
-    RepositoryClosureData,  # type: ignore
+    RepositoryClosureData,
 )
 from clinical_mdr_api.domain_repositories.models.clinical_programme import (
     ClinicalProgramme,

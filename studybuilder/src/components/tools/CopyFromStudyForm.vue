@@ -15,9 +15,9 @@
             <v-autocomplete
               v-model="study"
               :label="$t('StudyQuickSelectForm.study_id')"
-              :items="studies"
+              :items="studiesWithId"
               data-cy="study-id"
-              item-text="study_id"
+              item-text="current_metadata.identification_metadata.study_id"
               item-value="uid"
               return-object
               :error-messages="errors"
@@ -34,8 +34,8 @@
             <v-autocomplete
               v-model="study"
               :label="$t('StudyQuickSelectForm.study_acronym')"
-              :items="studies"
-              item-text="study_acronym"
+              :items="studiesWithAcronym"
+              item-text="current_metadata.identification_metadata.study_acronym"
               item-value="uid"
               return-object
               :error-messages="errors"
@@ -49,7 +49,7 @@
         <v-col cols="6">
           <v-text-field
             v-if="study"
-            v-model="study.study_status"
+            v-model="study.current_metadata.version_metadata.study_status"
             readonly
             filled
             />
@@ -103,7 +103,13 @@ export default {
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy'
-    })
+    }),
+    studiesWithId () {
+      return this.studies.filter(study => study.current_metadata.identification_metadata.study_id)
+    },
+    studiesWithAcronym () {
+      return this.studies.filter(study => study.current_metadata.identification_metadata.study_acronym)
+    }
   },
   data () {
     return {

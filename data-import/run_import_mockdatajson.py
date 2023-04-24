@@ -82,8 +82,13 @@ INCLUDE_STUDY_NUMBERS = environ.get("INCLUDE_STUDY_NUMBERS", "")
 EXCLUDE_STUDY_NUMBERS = environ.get("EXCLUDE_STUDY_NUMBERS", "")
 MDR_MIGRATION_INCLUDE_DUMMY_STUDY = environ.get("MDR_MIGRATION_INCLUDE_DUMMY_STUDY", "False").lower() == "true"
 MDR_MIGRATION_RENUMBER_DUMMY_STUDY = environ.get("MDR_MIGRATION_RENUMBER_DUMMY_STUDY", "False").lower() == "true"
+MDR_MIGRATION_INCLUDE_EXAMPLE_DESIGNS = environ.get("MDR_MIGRATION_INCLUDE_EXAMPLE_DESIGNS", "False").lower() == "true"
 
 DUMMY_STUDY_NUMBER = 9999
+
+EXAMPLE_DESIGNS_START = 9000
+EXAMPLE_DESIGNS_END = 9004
+
 
 IMPORT_DIR = os.path.dirname(IMPORT_PROJECTS)
 
@@ -304,14 +309,14 @@ class MockdataJson(BaseImporter):
         self.log.warning(f"Could not find study with '{key}' == '{value}'")
 
     def lookup_study_uid_from_id(self, study_id):
-        data = self.get_study_by_key("study_id", study_id)
+        data = self.get_study_by_key("current_metadata.identification_metadata.study_id", study_id)
         try:
             return data["uid"]
         except (TypeError, KeyError):
             return None
 
     def lookup_study_uid_from_number(self, study_number):
-        data = self.get_study_by_key("study_number", study_number)
+        data = self.get_study_by_key("current_metadata.identification_metadata.study_number", study_number)
         try:
             return data["uid"]
         except (TypeError, KeyError):
@@ -401,7 +406,7 @@ class MockdataJson(BaseImporter):
     #@lru_cache(maxsize=10000)
     def get_template_parameters(self, param_type):
         items = self.api.get_all_from_api(
-            f"/template-parameters/{param_type}/values", items_only=False
+            f"/template-parameters/{param_type}/terms", items_only=False
         )
         return items
 
@@ -507,7 +512,7 @@ class MockdataJson(BaseImporter):
         self.log.info(f"Looking for {endpoint.replace('-', ' ')} with name '{name}'")
         items = self.api.get_all_from_api(path, items_only=False)
         # Some of the enpoints return the data under "items".
-        if "items" in items:
+        if items is not None and "items" in items:
             items = items["items"]
         if items is not None:
             for item in items:
@@ -685,9 +690,10 @@ class MockdataJson(BaseImporter):
             return False
         for item in existing:
             if (
-                item["compound"]["name"] == new["compound"]["name"]
-                and item["compound_alias"]["name"] == new["compound_alias"]["name"]
-                and item["type_of_treatment"]["name"] == new["type_of_treatment"]["name"]
+                item is not None and new is not None
+                and self._compare_dict_path(item, new, ["compound", "name"])
+                and self._compare_dict_path(item, new, ["compound_alias", "name"])
+                and self._compare_dict_path(item, new, ["type_of_treatment", "name"])
                 and self._compare_dict_path(item, new, ["dosage_form", "name"])
                 and self._compare_dict_path(item, new, ["strength_value", "value"])
                 and self._compare_dict_path(item, new, ["strength_value", "unit_label"])
@@ -748,6 +754,8 @@ class MockdataJson(BaseImporter):
 
     def create_dict_path(self, data, path, key, value):
         pos = data
+        if pos is None:
+            return
         for p in path:
             if p not in pos:
                 pos[p] = {}
@@ -783,6 +791,8 @@ class MockdataJson(BaseImporter):
 
     def get_dict_path(self, data, path, default=None):
         pos = data
+        if pos is None:
+            return default
         # print(json.dumps(pos, indent=2))
         for p in path[0:-1]:
             # print("--- go to", p)
@@ -1066,6 +1076,9 @@ class MockdataJson(BaseImporter):
         # Allow skipping the dummy study
         if not MDR_MIGRATION_INCLUDE_DUMMY_STUDY:
             exclude_numbers.append(DUMMY_STUDY_NUMBER)
+        if not MDR_MIGRATION_INCLUDE_EXAMPLE_DESIGNS:
+            for n in range(EXAMPLE_DESIGNS_START, EXAMPLE_DESIGNS_END+1):
+                exclude_numbers.append(n)
         studies_copy = []
         for study in studies:
             to_copy = True
@@ -1136,7 +1149,7 @@ class MockdataJson(BaseImporter):
             self.log.info(
                 f"Skip adding already existing study '{study_id}' with study number {study_nbr}"
             )
-            study_data = self.get_study_by_key("study_id", study_id)
+            study_data = self.get_study_by_key("current_metadata.identification_metadata.study_id", study_id)
         # Patch it to add more data
         self.log.info(f"Patching study '{study_id}' with study number {study_nbr}")
         patch_data = copy.deepcopy(import_templates.study_patch)
@@ -1785,11 +1798,11 @@ class MockdataJson(BaseImporter):
         timeframe_template_json = os.path.join(IMPORT_DIR, "timeframe-templates.json")
         self.handle_all_templates(timeframe_template_json, "timeframe")
 
-        activity_description_template_json = os.path.join(
-            IMPORT_DIR, "activity-description-templates.json"
+        activity_instruction_template_json = os.path.join(
+            IMPORT_DIR, "activity-instruction-templates.json"
         )
         self.handle_all_templates(
-            activity_description_template_json, "activity_description"
+            activity_instruction_template_json, "activity_instruction"
         )
 
     @open_file()
@@ -1838,30 +1851,31 @@ class MockdataJson(BaseImporter):
             if self.lookup_template_uid(data["name"], template_type, log=True, shortname=shortname) is not None:
                 self.log.info(f"Skipping existing {template_type} template with name '{shortname}'")
                 continue
-            if "default_parameter_values" in post_data:
-                data["default_parameter_values"] = []
-                parameter_template = post_data["default_parameter_values"][0]
-                value_template = parameter_template["values"][0]
+            if "default_parameter_terms" in post_data:
+                data["default_parameter_terms"] = []
+                parameter_template = post_data["default_parameter_terms"][0]
+                value_template = parameter_template["terms"][0]
                 if (
-                    "0" in imported_template["default_parameter_values"]
-                    and imported_template["default_parameter_values"]["0"] is not None
+                    imported_template.get("default_parameter_terms") is not None
+                    and "0" in imported_template["default_parameter_terms"]
+                    and imported_template["default_parameter_terms"]["0"] is not None
                 ):
-                    for parameter in imported_template["default_parameter_values"]["0"]:
+                    for parameter in imported_template["default_parameter_terms"]["0"]:
                         paramdata = copy.deepcopy(parameter_template)
                         for key in paramdata.keys():
                             paramdata[key] = parameter.get(key, None)
-                        paramdata["values"] = []
-                        for val in parameter["values"]:
+                        paramdata["terms"] = []
+                        for val in parameter["terms"]:
                             valuedata = copy.deepcopy(value_template)
                             for key in val.keys():
                                 if not key.lower().endswith("uid"):
                                     valuedata[key] = val.get(key, None)
                                 else:
                                     valuedata[key] = self.lookup_or_create_parameter_value_uid(val)
-                            paramdata["values"].append(valuedata)
+                            paramdata["terms"].append(valuedata)
                         # Only include if the parameter has some content
-                        if len(paramdata["values"]) > 0:
-                            data["default_parameter_values"].append(paramdata)
+                        if len(paramdata["terms"]) > 0:
+                            data["default_parameter_terms"].append(paramdata)
 
             if "indication_uids" in post_data:
                 data["indication_uids"] = []
@@ -1944,37 +1958,34 @@ class MockdataJson(BaseImporter):
                     f"Failed to add {template_type} template with name '{shortname}'"
                 )
 
-    def fill_parameter_values(self, new_data, imported_values, post_template):
+    def fill_parameter_terms(self, new_data, imported_values, post_template):
         data_complete = True
-        if "parameter_values" in post_template:
-            new_data["parameter_values"] = []
-            parameter_template = post_template["parameter_values"][0]
-            value_template = parameter_template["values"][0]
+        if imported_values is not None and "parameter_terms" in post_template:
+            new_data["parameter_terms"] = []
+            parameter_template = post_template["parameter_terms"][0]
+            term_template = parameter_template["terms"][0]
             for parameter in imported_values:
-                if "value" in parameter:
-                    # TODO what is this??
-                    pass
                 paramdata = copy.deepcopy(parameter_template)
                 for key in paramdata.keys():
                     paramdata[key] = parameter.get(key, None)
-                paramdata["values"] = []
-                for val in parameter["values"]:
-                    valuedata = copy.deepcopy(value_template)
+                paramdata["terms"] = []
+                for val in parameter["terms"]:
+                    termdata = copy.deepcopy(term_template)
                     uid_found = True
                     for key in val.keys():
                         if not key.lower().endswith("uid"):
-                            valuedata[key] = val.get(key, None)
+                            termdata[key] = val.get(key, None)
                         else:
-                            valuedata[key] = self.lookup_or_create_parameter_value_uid(val)
-                            if valuedata[key] is None:
+                            termdata[key] = self.lookup_or_create_parameter_value_uid(val)
+                            if termdata[key] is None:
                                 self.log.warning(f"Could not find parameter value '{val.get('name', '')}'")
                                 uid_found = False
                                 data_complete = False
                     if uid_found:
-                        paramdata["values"].append(valuedata)
+                        paramdata["terms"].append(termdata)
                 # Only include if the parameter has some content
-                if len(paramdata["values"]) > 0:
-                    new_data["parameter_values"].append(paramdata)
+                if len(paramdata["terms"]) > 0:
+                    new_data["parameter_terms"].append(paramdata)
         return data_complete
 
     def create_timeframe(self, timeframe_data):
@@ -1989,7 +2000,7 @@ class MockdataJson(BaseImporter):
                 value = timeframe_data.get(key, None)
                 if not isinstance(value, (dict, list, tuple)):
                     data[key] = value
-        self.fill_parameter_values(data, timeframe_data["parameter_values"], post_data)
+        self.fill_parameter_terms(data, timeframe_data.get("parameter_terms"), post_data)
         data["name_override"] = None
         data["library_name"] = timeframe_data["library"]["name"]
         data["timeframe_template_uid"] = self.lookup_template_uid(
@@ -2023,9 +2034,9 @@ class MockdataJson(BaseImporter):
         elif template_type == "endpoint":
             post_data = import_templates.study_endpoint
             path = f"/studies/{study_uid}/study-endpoints"
-        elif template_type == "activity_description":
-            post_data = import_templates.study_activity_description
-            path = f"/studies/{study_uid}/study-activities"
+        #elif template_type == "activity_instruction":
+        #    post_data = import_templates.study_activity_instruction
+        #    path = f"/studies/{study_uid}/study-activities"
         else:
             raise RuntimeError(f"Unknown type {template_type}")
         mapper = ENDPOINT_TO_KEY_MAP[template_type]
@@ -2055,9 +2066,9 @@ class MockdataJson(BaseImporter):
                     value = imported_template.get(key, None)
                     if not isinstance(value, (dict, list, tuple)):
                         data[key] = value
-            parameters_complete = self.fill_parameter_values(
+            parameters_complete = self.fill_parameter_terms(
                 data[data_key_import],
-                instance["parameter_values"],
+                instance.get("parameter_terms"),
                 post_data[data_key_import],
             )
             if not parameters_complete:
@@ -2113,6 +2124,8 @@ class MockdataJson(BaseImporter):
                 else:
                     data["timeframe_uid"] = None
 
+            # print("====================  Data to post for", template_type, "study templates")
+            # print(json.dumps(data, indent=2))
             # TODO check for duplicates before posting
             res = self.api.simple_post_to_api(path, data, path)
             if res is None:

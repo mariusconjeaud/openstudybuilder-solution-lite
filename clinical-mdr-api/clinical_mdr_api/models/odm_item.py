@@ -187,7 +187,7 @@ class OdmItem(ConceptModel):
     unit_definitions: List[OdmItemUnitDefinitionWithRelationship]
     codelist: Optional[CTCodelistAttributesSimpleModel]
     terms: List[OdmItemTermRelationshipModel]
-    activities: List[ActivityHierarchySimpleModel]
+    activity: Optional[ActivityHierarchySimpleModel]
     vendor_elements: List[OdmVendorElementRelationModel]
     vendor_attributes: List[OdmVendorAttributeRelationModel]
     vendor_element_attributes: List[OdmVendorElementAttributeRelationModel]
@@ -292,15 +292,9 @@ class OdmItem(ConceptModel):
                 ],
                 key=lambda item: (item.order is not None, item.order),
             ),
-            activities=sorted(
-                [
-                    ActivityHierarchySimpleModel.from_activity_uid(
-                        uid=activity_uid,
-                        find_activity_by_uid=find_activity_by_uid,
-                    )
-                    for activity_uid in odm_item_ar.concept_vo.activity_uids
-                ],
-                key=lambda item: item.name,
+            activity=ActivityHierarchySimpleModel.from_activity_uid(
+                uid=odm_item_ar.concept_vo.activity_uid,
+                find_activity_by_uid=find_activity_by_uid,
             ),
             vendor_elements=sorted(
                 [
@@ -358,7 +352,6 @@ class OdmItemRefModel(BaseModel):
             [str], Optional[OdmVendorAttributeAR]
         ],
     ) -> Optional["OdmItemRefModel"]:
-
         if uid is not None:
             odm_item_ref_vo = find_odm_item_by_uid_with_item_group_relation(
                 uid, item_group_uid

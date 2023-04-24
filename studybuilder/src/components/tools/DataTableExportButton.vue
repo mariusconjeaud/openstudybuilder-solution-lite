@@ -66,10 +66,9 @@ export default {
   },
   methods: {
     createDownloadLink (content, format) {
-      const blob = new Blob([content], { type: format.mediaType })
       const today = DateTime.local().toFormat('yyyyMMdd')
       const fileName = `MDRSB_Library_${this.objectLabel}_${today}.${format.extension}`
-      exportLoader.generateDownload(blob, fileName)
+      exportLoader.downloadFile(content, format.mediaType, fileName)
     },
     getValue (header, item) {
       let value = item

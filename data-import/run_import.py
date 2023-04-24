@@ -11,6 +11,7 @@ from run_import_compounds import Compounds
 from run_import_crfs import Crfs
 from run_import_mockdata import Mockdata
 from run_import_mockdatajson import MockdataJson
+from run_import_mastermodels import MasterModels
 
 
 def main():
@@ -27,19 +28,22 @@ def main():
     # Import standard codelist terms, part 1
     standardterms1 = StandardCodelistTerms1(metrics_inst=metr)
     standardterms1.run()
-    # cache will be populated now, lets get it
-    cache = standardterms1.get_cache()
 
     # Import standard codelist terms, part 2
-    standardterms2 = StandardCodelistTerms2(metrics_inst=metr, cache=cache)
+    standardterms2 = StandardCodelistTerms2(metrics_inst=metr)
     standardterms2.run()
 
     # Import unit definitions
-    units = Units(metrics_inst=metr, cache=cache)
+    units = Units(metrics_inst=metr)
     units.run()
 
-    activities = Activities(metrics_inst=metr, cache=cache)
+    activities = Activities(metrics_inst=metr)
     activities.run()
+    cache = activities.get_cache()
+
+    # Import master models
+    master_models = MasterModels(metrics_inst=metr, cache=cache)
+    master_models.run()
 
     # Finish up sponsor library
     finishing = StandardCodelistFinish(metrics_inst=metr, cache=cache)

@@ -32,6 +32,7 @@
 import CriteriaTemplateTable from '@/components/library/CriteriaTemplateTable'
 import HelpButton from '@/components/tools/HelpButton'
 import terms from '@/api/controlledTerminology/terms'
+import { mapActions } from 'vuex'
 
 export default {
   components: {
@@ -49,12 +50,29 @@ export default {
       this.criteriaTypes = resp.data.items
     })
     this.tab = this.$route.params.tab
+    setTimeout(() => {
+      this.addBreadcrumbsLevel({
+        text: this.tab,
+        index: 3,
+        replace: true
+      })
+    }, 100)
+  },
+  methods: {
+    ...mapActions({
+      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
+    })
   },
   watch: {
     tab (newValue) {
       this.$router.push({
         name: 'CriteriaTemplates',
         params: { tab: newValue }
+      })
+      this.addBreadcrumbsLevel({
+        text: newValue,
+        index: 3,
+        replace: true
       })
     }
   }

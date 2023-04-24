@@ -4,13 +4,13 @@ from neomodel import db
 from pydantic import BaseModel
 
 from clinical_mdr_api.domain.library.library_ar import LibraryAR
+from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
 from clinical_mdr_api.domain.template_parameters import ParameterTemplateAR
 from clinical_mdr_api.domain.versioned_object_aggregate import (
     LibraryVO,
-    TemplateVO,
     VersioningException,
 )
-from clinical_mdr_api.domain_repositories.templates.parameter_template_repository import (
+from clinical_mdr_api.domain_repositories.syntax_templates.parameter_template_repository import (
     ParameterTemplateRepository,
 )
 from clinical_mdr_api.exceptions import (
@@ -23,12 +23,14 @@ from clinical_mdr_api.models.complex_parameter_template import (
     ComplexParameterTemplateCreateInput,
     ComplexParameterTemplateVersion,
 )
-from clinical_mdr_api.services.generic_template_service import (
-    GenericTemplateService,  # type: ignore
+from clinical_mdr_api.services.syntax_templates.generic_syntax_template_service import (
+    GenericSyntaxTemplateService,
 )
 
 
-class ComplexParameterTemplateService(GenericTemplateService[ParameterTemplateAR]):
+class ComplexParameterTemplateService(
+    GenericSyntaxTemplateService[ParameterTemplateAR]
+):
     aggregate_class = ParameterTemplateAR
     version_class = ComplexParameterTemplateVersion
     repository_interface = ParameterTemplateRepository
@@ -41,9 +43,6 @@ class ComplexParameterTemplateService(GenericTemplateService[ParameterTemplateAR
     def create(
         self, template: ComplexParameterTemplateCreateInput
     ) -> ComplexParameterTemplate:
-        # TODO: do sth for better typing
-        # This function is not decorated with db.transaction as internal transactions
-        # are handled manually by "with" statement.
         try:
             # Transaction that is performing initial save
             with db.transaction:

@@ -1,7 +1,6 @@
 from typing import Optional, Sequence, TypeVar
 
 from neomodel import db
-from starlette.requests import Request
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain.controlled_terminology.ct_codelist_attributes import (
@@ -36,18 +35,6 @@ class CTCodelistService:
 
     def __del__(self):
         self._repos.close()
-
-    def get_codelist_etag(self, request: Request) -> str:
-        codelist_uid = request.path_params["codelist_uid"]
-        attributes_etag = (
-            self._repos.ct_codelist_attribute_repository.get_codelist_etag_value(
-                codelist_uid=codelist_uid
-            )
-        )
-        name_etag = self._repos.ct_codelist_name_repository.get_codelist_etag_value(
-            codelist_uid=codelist_uid
-        )
-        return f"{codelist_uid}_{attributes_etag}_{codelist_uid}_{name_etag}"
 
     def non_transactional_create(
         self, codelist_input: CTCodelistCreateInput
@@ -201,7 +188,6 @@ class CTCodelistService:
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[CTCodelistNameAndAttributes]:
-
         self.enforce_catalogue_library_package(catalogue_name, library, package)
 
         all_aggregated_codelists = (

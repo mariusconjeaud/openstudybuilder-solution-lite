@@ -111,6 +111,18 @@ export default {
   getXml (params) {
     return repository.post(`${resource}/metadata/xmls/export?target_uid=${params.target_uid}&target_type=${params.target_type}&export_to=${params.export_to}&stylesheet=${params.stylesheet}&status=${params.status}`)
   },
+  getPdf (params) {
+    return repository.post(
+      `${resource}/metadata/xmls/export?target_uid=${params.target_uid}&target_type=${params.target_type}&export_to=${params.export_to}&stylesheet=${params.stylesheet}&pdf=true&status=${params.status}`,
+      {},
+      {
+        responseType: 'arraybuffer',
+        headers: {
+          Accept: 'application/octet-stream'
+        }
+      }
+    )
+  },
   getXsl (type) {
     return repository.get(`${resource}/metadata/xmls/stylesheets/${type}`)
   },
@@ -153,14 +165,8 @@ export default {
   deleteCondition (uid) {
     return repository.delete(`${resource}/conditions/${uid}`)
   },
-  getFormRelationship (uid) {
-    return repository.get(`${resource}/forms/${uid}/relationships`)
-  },
-  getGroupRelationship (uid) {
-    return repository.get(`${resource}/item-groups/${uid}/relationships`)
-  },
-  getItemRelationship (uid) {
-    return repository.get(`${resource}/items/${uid}/relationships`)
+  getRelationships (uid, type) {
+    return repository.get(`${resource}/${type}/${uid}/relationships`)
   },
   getCrfForms () {
     return repository.get(`${resource}/forms/templates`)
@@ -198,13 +204,19 @@ export default {
   createElement (data) {
     return repository.post(`${resource}/vendor-elements`, data)
   },
+  editElement (uid, data) {
+    return repository.patch(`${resource}/vendor-elements/${uid}`, data)
+  },
   setElements (source, uid, data) {
-    return repository.post(`${resource}/${source}/${uid}/vendor-elements`, data)
+    return repository.post(`${resource}/${source}/${uid}/vendor-elements?override=true`, data)
   },
   setAttributes (source, uid, data) {
-    return repository.post(`${resource}/${source}/${uid}/vendor-attributes`, data)
+    return repository.post(`${resource}/${source}/${uid}/vendor-attributes?override=true`, data)
   },
   setElementAttributes (source, uid, data) {
-    return repository.post(`${resource}/${source}/${uid}/vendor-element-attributes`, data)
+    return repository.post(`${resource}/${source}/${uid}/vendor-element-attributes?override=true`, data)
+  },
+  setExtensions (source, uid, data) {
+    return repository.post(`${resource}/${source}/${uid}/vendors`, data)
   }
 }

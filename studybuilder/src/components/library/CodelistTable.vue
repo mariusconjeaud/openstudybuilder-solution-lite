@@ -8,6 +8,7 @@
     :page="currentCataloguePage"
     export-object-label="Codelists"
     :export-data-url="columnDataResource"
+    :export-data-url-params="exportUrlParams"
     item-key="codelist_uid"
     @update:page="storeCurrentPage"
     dense
@@ -127,6 +128,19 @@ export default {
         return this.$t('CodelistTable.history_title', { codelist: this.selectedCodelist.codelist_uid })
       }
       return ''
+    },
+    exportUrlParams () {
+      const params = {}
+      if (this.library) {
+        params.library = this.library
+      }
+      if (this.package) {
+        params.package = this.package
+      }
+      if (this.catalogue && this.catalogue !== 'All') {
+        params.catalogue_name = this.catalogue
+      }
+      return params
     }
   },
   data () {

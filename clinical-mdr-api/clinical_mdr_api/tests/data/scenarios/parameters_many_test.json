@@ -15,15 +15,15 @@
             "result": [
                 {
                     "name": "Activity",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "ActivityGroup",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "ActivityInstance",
-                    "values": [
+                    "terms": [
                         {
                             "uid": "Intervention-99992",
                             "name": "Metformin",
@@ -38,31 +38,31 @@
                 },
                 {
                     "name": "ActivitySubGroup",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "CategoricFinding",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "CompoundAlias",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "CompoundDosing",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "Event",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "Finding",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "Indication",
-                    "values": [
+                    "terms": [
                         {
                             "name": "breathing problems",
                             "uid": "Indication-99993",
@@ -82,7 +82,7 @@
                 },
                 {
                     "name": "Intervention",
-                    "values": [
+                    "terms": [
                         {
                             "uid": "Intervention-99992",
                             "name": "Metformin",
@@ -97,75 +97,75 @@
                 },
                 {
                     "name": "LaboratoryActivity",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "LagTime",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "NumericFinding",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "NumericValue",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "NumericValueWithUnit",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "RatingScale",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "Reminder",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "SimpleConcept",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "SpecialPurpose",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "StudyDay",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "StudyDurationDays",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "StudyDurationWeeks",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "StudyEndpoint",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "StudyWeek",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "TextValue",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "TextualFinding",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "TimePoint",
-                    "values": []
+                    "terms": []
                 },
                 {
                     "name": "VisitName",
-                    "values": []
+                    "terms": []
                 }
             ]
         }
@@ -175,7 +175,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/template-parameters/ActivityInstance/values"
+            "url": "/template-parameters/ActivityInstance/terms"
         },
         "response": {
             "code": 200,

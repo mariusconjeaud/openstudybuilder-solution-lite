@@ -29,7 +29,10 @@ OdmDescriptionUID = Path(None, description="The unique id of the ODM Description
     description="",
     response_model=CustomPage[OdmDescription],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_all_odm_descriptions(
     library: Optional[str] = Query(None),
@@ -77,7 +80,7 @@ def get_all_odm_descriptions(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -113,7 +116,10 @@ def get_distinct_values_for_header(
     description="",
     response_model=dict,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_active_relationships(uid: str = OdmDescriptionUID):
     odm_description_service = OdmDescriptionService()
@@ -144,7 +150,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The ODM Description with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_odm_description_versions(uid: str = OdmDescriptionUID):
@@ -166,11 +172,11 @@ def get_odm_description_versions(uid: str = OdmDescriptionUID):
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_description(
-    odm_description_create_input: OdmDescriptionPostInput = Body(None, description="")
+    odm_description_create_input: OdmDescriptionPostInput = Body(description=""),
 ):
     odm_description_service = OdmDescriptionService()
     return odm_description_service.create(concept_input=odm_description_create_input)
@@ -183,12 +189,13 @@ def create_odm_description(
     response_model=List[OdmDescriptionBatchOutput],
     status_code=207,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def odm_description_batch_operations(
     operations: List[OdmDescriptionBatchInput] = Body(
-        None, description="List of operation to perform"
+        description="List of operation to perform"
     ),
 ):
     odm_description_service = OdmDescriptionService()
@@ -214,12 +221,12 @@ def odm_description_batch_operations(
             "model": ErrorResponse,
             "description": "Not Found - The ODM Description with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_description(
     uid: str = OdmDescriptionUID,
-    odm_description_edit_input: OdmDescriptionPatchInput = Body(None, description=""),
+    odm_description_edit_input: OdmDescriptionPatchInput = Body(description=""),
 ):
     odm_description_service = OdmDescriptionService()
     return odm_description_service.edit_draft(
@@ -259,7 +266,7 @@ Possible errors:
             "- The ODM Description is not in final status.\n"
             "- The ODM Description with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_description_version(uid: str = OdmDescriptionUID):
@@ -285,7 +292,7 @@ def create_odm_description_version(uid: str = OdmDescriptionUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Description with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve_odm_description(uid: str = OdmDescriptionUID):
@@ -310,7 +317,7 @@ def approve_odm_description(uid: str = OdmDescriptionUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Description with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate_odm_description(uid: str = OdmDescriptionUID):
@@ -335,7 +342,7 @@ def inactivate_odm_description(uid: str = OdmDescriptionUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Description with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate_odm_description(uid: str = OdmDescriptionUID):
@@ -364,7 +371,7 @@ def reactivate_odm_description(uid: str = OdmDescriptionUID):
             "model": ErrorResponse,
             "description": "Not Found - An ODM Description with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_odm_description(uid: str = OdmDescriptionUID):

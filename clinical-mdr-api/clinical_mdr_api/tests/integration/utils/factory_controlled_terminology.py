@@ -31,14 +31,22 @@ from clinical_mdr_api.services.ct_codelist_attributes import CTCodelistAttribute
 from clinical_mdr_api.services.ct_codelist_name import CTCodelistNameService
 from clinical_mdr_api.services.ct_term_attributes import CTTermAttributesService
 from clinical_mdr_api.services.ct_term_name import CTTermNameService
+from clinical_mdr_api.tests.integration.utils.utils import (
+    CT_CATALOGUE_NAME,
+    LIBRARY_NAME,
+)
 from clinical_mdr_api.tests.unit.domain.controlled_terminology_aggregates.test_ct_codelist_attributes import (
     create_random_ct_codelist_attributes_vo,
 )
 
 
-def get_catalogue_name_library_name():
-    catalogue_name = "catalogue"
-    library_name = "Sponsor"
+def get_catalogue_name_library_name(use_test_utils: bool = False):
+    if use_test_utils is True:
+        catalogue_name = CT_CATALOGUE_NAME
+        library_name = LIBRARY_NAME
+    else:
+        catalogue_name = "catalogue"
+        library_name = "Sponsor"
     return catalogue_name, library_name
 
 

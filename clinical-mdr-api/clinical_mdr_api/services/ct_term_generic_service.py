@@ -64,7 +64,6 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[BaseModel]:
-
         self.enforce_codelist_package_library(
             codelist_uid, codelist_name, library, package
         )
@@ -165,7 +164,6 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
         at_specific_date: Optional[datetime] = None,
         status: Optional[str] = None,
     ) -> BaseModel:
-
         item = self._find_by_uid_or_raise_not_found(
             term_uid=term_uid,
             version=version,

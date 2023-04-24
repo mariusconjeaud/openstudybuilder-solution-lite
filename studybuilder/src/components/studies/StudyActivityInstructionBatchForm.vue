@@ -40,7 +40,7 @@
             :label="$t('StudySelectionTable.select_studies')"
             :items="studies"
             :error-messages="errors"
-            item-text="study_id"
+            item-text="current_metadata.identification_metadata.study_id"
             clearable
             multiple
             class="pt-10"
@@ -128,7 +128,7 @@
           :server-items-length="templatesTotal"
           show-filter-bar-by-default
           has-api
-          column-data-resource="activity-description-templates"
+          column-data-resource="activity-instruction-templates"
           :initial-column-data="prefilteredTplHeaders"
           @filter="getTemplates"
           >
@@ -218,7 +218,7 @@
 </template>
 
 <script>
-import activityDescriptionTemplates from '@/api/activityDescriptionTemplates'
+import activityInstructionTemplates from '@/api/activityInstructionTemplates'
 import ActivityTemplateIndexingForm from '@/components/library/ActivityTemplateIndexingForm'
 import { bus } from '@/main'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm'
@@ -304,7 +304,7 @@ export default {
       parameterTypes: [],
       selectedInstructions: [],
       selectedInstructionsHeaders: [
-        { text: this.$t('Study.study_id'), value: 'study_id' },
+        { text: this.$t('Study.study_id'), value: 'study_uid' },
         { text: this.$t('StudyActivityInstructionBatchForm.instruction_text'), value: 'activity_instruction_name' },
         { text: this.$t('_global.actions'), value: 'actions', width: '5%' }
       ],
@@ -333,12 +333,12 @@ export default {
       templatesFilters: {},
       templatesOptions: {},
       tplHeaders: [
+        { text: '', value: 'actions', width: '5%' },
         { text: this.$t('_global.indications'), value: 'indications.name' },
         { text: this.$t('StudyActivity.activity_group'), value: 'activity_groups.name' },
         { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity_subgroups.name' },
         { text: this.$t('StudyActivity.activity'), value: 'activities.name' },
-        { text: this.$t('_global.template'), value: 'name', width: '30%' },
-        { text: this.$t('_global.actions'), value: 'actions', width: '5%' }
+        { text: this.$t('_global.template'), value: 'name', filteringName: 'name_plain', width: '30%' }
       ]
     }
   },
@@ -356,7 +356,7 @@ export default {
     async loadParameters (template) {
       if (template) {
         this.loadingParameters = true
-        const resp = await activityDescriptionTemplates.getObjectTemplateParameters(template.uid)
+        const resp = await activityInstructionTemplates.getObjectTemplateParameters(template.uid)
         this.parameters = resp.data
         /* Filter received parameters based on current study activity selection */
         for (const parameterValues of this.parameters) {
@@ -382,7 +382,7 @@ export default {
       newFilters['activity_subgroups.uid'] = { v: this.selectedActivitySubGroups.map(item => item.uid) }
       params.filters = JSON.stringify(newFilters)
       params.operator = 'or'
-      return activityDescriptionTemplates.get(params).then(resp => {
+      return activityInstructionTemplates.get(params).then(resp => {
         // Apply filtering on library here because we cannot mix operators in API queries...
         this.templates = resp.data.items.filter(item => item.library.name === libraryConstants.LIBRARY_SPONSOR)
         this.templatesTotal = resp.data.total
@@ -443,8 +443,8 @@ export default {
         delete data.activities
       }
       try {
-        const resp = await activityDescriptionTemplates.create(data)
-        await activityDescriptionTemplates.approve(resp.data.uid)
+        const resp = await activityInstructionTemplates.create(data)
+        await activityInstructionTemplates.approve(resp.data.uid)
         this.$set(this.form, 'activity_instruction_template', resp.data)
       } catch (error) {
         return false
@@ -461,7 +461,7 @@ export default {
             content: {
               activity_instruction_data: {
                 activity_instruction_template_uid: this.form.activity_instruction_template.uid,
-                parameter_values: await instances.formatParameterValues(this.parameters),
+                parameter_terms: await instances.formatParameterValues(this.parameters),
                 library_name: this.form.activity_instruction_template.library.name
               },
               study_activity_uid: studyActivity.study_activity_uid
@@ -497,7 +497,7 @@ export default {
   },
   mounted () {
     this.getTemplates()
-    study.get({ has_study_activity_instruction: true }).then(resp => {
+    study.get({ has_study_activity_instruction: true, page_size: 0 }).then(resp => {
       this.studies = resp.data.items.filter(study => study.uid !== this.selectedStudy.uid)
     })
     templateParameterTypes.getTypes().then(resp => {

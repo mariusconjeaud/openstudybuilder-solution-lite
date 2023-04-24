@@ -106,7 +106,6 @@ class DictionaryTermGenericService(Generic[_AggregateRootType], ABC):
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[DictionaryTerm]:
-
         items, total_count = self.repository.find_all(
             codelist_uid=codelist_uid,
             sort_by=sort_by,
@@ -134,7 +133,6 @@ class DictionaryTermGenericService(Generic[_AggregateRootType], ABC):
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence[str]:
-
         # First, check that attributes provided for filtering exist in the return class
         # Properties can be nested => check if root property exists in class
         if not models.utils.is_attribute_in_model(
@@ -156,7 +154,6 @@ class DictionaryTermGenericService(Generic[_AggregateRootType], ABC):
 
     @db.transaction
     def get_by_uid(self, term_uid: str) -> DictionaryTerm:
-
         item = self._find_by_uid_or_raise_not_found(term_uid=term_uid)
         return self._transform_aggregate_root_to_pydantic_model(item)
 

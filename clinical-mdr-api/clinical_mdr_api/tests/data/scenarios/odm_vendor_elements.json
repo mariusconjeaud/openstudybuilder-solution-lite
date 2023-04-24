@@ -53,7 +53,13 @@
                     "uid": "odm_vendor_namespace1",
                     "name": "nameOne",
                     "prefix": "prefix",
-                    "url": "url1"
+                    "url": "url1",
+                    "status": "Final",
+                    "version": "1.0",
+                    "possible_actions": [
+                        "inactivate",
+                        "new_version"
+                    ]
                 },
                 "vendor_attributes": [],
                 "possible_actions": [
@@ -96,7 +102,13 @@
                     "uid": "odm_vendor_namespace1",
                     "name": "nameOne",
                     "prefix": "prefix",
-                    "url": "url1"
+                    "url": "url1",
+                    "status": "Final",
+                    "version": "1.0",
+                    "possible_actions": [
+                        "inactivate",
+                        "new_version"
+                    ]
                 },
                 "vendor_attributes": [],
                 "possible_actions": [
@@ -137,7 +149,13 @@
                             "uid": "odm_vendor_namespace1",
                             "name": "nameOne",
                             "prefix": "prefix",
-                            "url": "url1"
+                            "url": "url1",
+                            "status": "Final",
+                            "version": "1.0",
+                            "possible_actions": [
+                                "inactivate",
+                                "new_version"
+                            ]
                         },
                         "vendor_attributes": [],
                         "possible_actions": [
@@ -160,7 +178,13 @@
                             "uid": "odm_vendor_namespace1",
                             "name": "nameOne",
                             "prefix": "prefix",
-                            "url": "url1"
+                            "url": "url1",
+                            "status": "Final",
+                            "version": "1.0",
+                            "possible_actions": [
+                                "inactivate",
+                                "new_version"
+                            ]
                         },
                         "vendor_attributes": [],
                         "possible_actions": [
@@ -224,7 +248,13 @@
                     "uid": "odm_vendor_namespace1",
                     "name": "nameOne",
                     "prefix": "prefix",
-                    "url": "url1"
+                    "url": "url1",
+                    "status": "Final",
+                    "version": "1.0",
+                    "possible_actions": [
+                        "inactivate",
+                        "new_version"
+                    ]
                 },
                 "vendor_attributes": [],
                 "possible_actions": [
@@ -264,7 +294,13 @@
                         "uid": "odm_vendor_namespace1",
                         "name": "nameOne",
                         "prefix": "prefix",
-                        "url": "url1"
+                        "url": "url1",
+                        "status": "Final",
+                        "version": "1.0",
+                        "possible_actions": [
+                            "inactivate",
+                            "new_version"
+                        ]
                     },
                     "vendor_attributes": [],
                     "possible_actions": [
@@ -309,7 +345,13 @@
                     "uid": "odm_vendor_namespace1",
                     "name": "nameOne",
                     "prefix": "prefix",
-                    "url": "url1"
+                    "url": "url1",
+                    "status": "Final",
+                    "version": "1.0",
+                    "possible_actions": [
+                        "inactivate",
+                        "new_version"
+                    ]
                 },
                 "vendor_attributes": [],
                 "possible_actions": [
@@ -348,7 +390,13 @@
                     "uid": "odm_vendor_namespace1",
                     "name": "nameOne",
                     "prefix": "prefix",
-                    "url": "url1"
+                    "url": "url1",
+                    "status": "Final",
+                    "version": "1.0",
+                    "possible_actions": [
+                        "inactivate",
+                        "new_version"
+                    ]
                 },
                 "vendor_attributes": [],
                 "possible_actions": [
@@ -386,7 +434,13 @@
                     "uid": "odm_vendor_namespace1",
                     "name": "nameOne",
                     "prefix": "prefix",
-                    "url": "url1"
+                    "url": "url1",
+                    "status": "Final",
+                    "version": "1.0",
+                    "possible_actions": [
+                        "inactivate",
+                        "new_version"
+                    ]
                 },
                 "vendor_attributes": [],
                 "possible_actions": [
@@ -424,7 +478,13 @@
                     "uid": "odm_vendor_namespace1",
                     "name": "nameOne",
                     "prefix": "prefix",
-                    "url": "url1"
+                    "url": "url1",
+                    "status": "Final",
+                    "version": "1.0",
+                    "possible_actions": [
+                        "inactivate",
+                        "new_version"
+                    ]
                 },
                 "vendor_attributes": [],
                 "possible_actions": [
@@ -462,7 +522,13 @@
                     "uid": "odm_vendor_namespace1",
                     "name": "nameOne",
                     "prefix": "prefix",
-                    "url": "url1"
+                    "url": "url1",
+                    "status": "Final",
+                    "version": "1.0",
+                    "possible_actions": [
+                        "inactivate",
+                        "new_version"
+                    ]
                 },
                 "vendor_attributes": [],
                 "possible_actions": [
@@ -504,7 +570,13 @@
                     "uid": "odm_vendor_namespace1",
                     "name": "nameOne",
                     "prefix": "prefix",
-                    "url": "url1"
+                    "url": "url1",
+                    "status": "Final",
+                    "version": "1.0",
+                    "possible_actions": [
+                        "inactivate",
+                        "new_version"
+                    ]
                 },
                 "vendor_attributes": [],
                 "possible_actions": [
@@ -569,7 +641,13 @@
                 "vendor_namespace": null,
                 "vendor_element": {
                     "uid": "OdmVendorElement_000001",
-                    "name": "new name"
+                    "name": "new name",
+                    "status": "Draft",
+                    "version": "1.1",
+                    "possible_actions": [
+                        "approve",
+                        "edit"
+                    ]
                 },
                 "possible_actions": [
                     "approve",

@@ -156,7 +156,6 @@ class StudyObjectivesService:
 
             with tag("body"):
                 with tag("table", id="ObjectivesEndpointsTable"):
-
                     with tag("thead"):
                         with tag("tr"):
                             # TODO: Do we have a CTTermName for these?
@@ -168,7 +167,6 @@ class StudyObjectivesService:
                             tree.values(), key=lambda o: o[0].order
                         ):
                             with tag("tr"):
-
                                 with tag("td"):
                                     line(
                                         "p",
@@ -211,7 +209,6 @@ class StudyObjectivesService:
 
             with tag("body"):
                 with tag("table", id="ObjectivesEndpointsTable"):
-
                     with tag("thead"):
                         with tag("tr"):
                             # TODO: Do we have a CTTermName for these?
@@ -223,7 +220,6 @@ class StudyObjectivesService:
                             tree.values(), key=lambda o: o[0].order
                         ):
                             with tag("tr"):
-
                                 line(
                                     "th",
                                     objective_level.sponsor_preferred_name,

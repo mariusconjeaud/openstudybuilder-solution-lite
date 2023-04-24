@@ -5,6 +5,7 @@ from fastapi import Body, Depends, Response, status
 from clinical_mdr_api import models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers import study_router as router
 from clinical_mdr_api.routers import utils
 from clinical_mdr_api.services.study_design_cell import StudyDesignCellService
@@ -21,7 +22,7 @@ from clinical_mdr_api.services.study_design_cell import StudyDesignCellService
             "model": ErrorResponse,
             "description": "Not Found - there is no study with the given uid.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_design_cells(
@@ -47,13 +48,14 @@ def get_all_design_cells(
             "model": ErrorResponse,
             "description": "Not Found - Study, study arm or study epoch is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_new_design_cell_create(
     uid: str = utils.studyUID,
     selection: models.StudyDesignCellCreateInput = Body(
-        None, description="Related parameters of the design cell that shall be created."
+        description="Related parameters of the design cell that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudyDesignCell:
@@ -96,15 +98,16 @@ def post_new_design_cell_create(
             "model": ErrorResponse,
             "description": "Not Found - The study design cell with the specified 'study_design_cell_uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 #  pylint: disable=unused-argument
 def edit_design_cell(
     uid: str = utils.studyUID,
     study_design_cell_uid: str = utils.study_design_cell_uid,
     selection: models.StudyDesignCellEditInput = Body(
-        None, description="Related parameters of the selection that shall be updated."
+        description="Related parameters of the selection that shall be updated."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudySelectionActivity:
@@ -127,9 +130,10 @@ def edit_design_cell(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the design cell and the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def delete_design_cell(
     uid: str = utils.studyUID,
     study_design_cell_uid: str = utils.study_design_cell_uid,
@@ -155,7 +159,8 @@ The following values should be returned for all study design cells:
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_design_cells_audit_trail(
@@ -176,7 +181,7 @@ def get_all_design_cells_audit_trail(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the design cell for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_specific_schedule_audit_trail(
@@ -195,12 +200,16 @@ def get_specific_schedule_audit_trail(
     summary="Batch operations (create, delete) for study design cells",
     response_model=Sequence[models.StudyDesignCellBatchOutput],
     status_code=207,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def design_cell_batch_operations(
     uid: str = utils.studyUID,
     operations: Sequence[models.StudyDesignCellBatchInput] = Body(
-        None, description="List of operations to perform"
+        description="List of operations to perform"
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> Sequence[models.StudyDesignCellBatchOutput]:
@@ -233,7 +242,8 @@ def design_cell_batch_operations(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_selected_desing_cells_connected_arm(
@@ -272,7 +282,8 @@ def get_all_selected_desing_cells_connected_arm(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_selected_desing_cells_connected_branch_arm(
@@ -309,7 +320,8 @@ def get_all_selected_desing_cells_connected_branch_arm(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_selected_desing_cells_connected_epoch(

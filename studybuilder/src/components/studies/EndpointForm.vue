@@ -551,7 +551,7 @@ export default {
     async getStudyEndpointNamePreview () {
       const endpointData = {
         endpoint_template_uid: this.form.endpoint_template.uid,
-        parameter_values: await instances.formatParameterValues(this.endpointTemplateParameters),
+        parameter_terms: await instances.formatParameterValues(this.endpointTemplateParameters),
         library_name: this.form.endpoint_template.library.name
       }
       const resp = await study.getStudyEndpointPreview(this.selectedStudy.uid, { endpoint_data: endpointData })
@@ -636,7 +636,7 @@ export default {
       )
       endpoints.getObjectParameters(this.form.endpoint.uid).then(resp => {
         this.endpointTemplateParameters = resp.data
-        instances.loadParameterValues(this.form.endpoint.parameter_values, this.endpointTemplateParameters)
+        instances.loadParameterValues(this.form.endpoint.parameter_terms, this.endpointTemplateParameters)
       })
     },
     loadTimeframeTemplate () {
@@ -648,10 +648,11 @@ export default {
       )
       timeframes.getObjectParameters(this.form.timeframe.uid, { study_uid: this.selectedStudy.uid }).then(resp => {
         this.timeframeTemplateParameters = resp.data
-        instances.loadParameterValues(this.form.timeframe.parameter_values, this.timeframeTemplateParameters)
+        instances.loadParameterValues(this.form.timeframe.parameter_terms, this.timeframeTemplateParameters)
       })
     },
     selectStudyObjective (value) {
+      this.selectLater = false
       this.$set(this.form, 'study_objective', value)
     },
     onSelectLaterChange (value) {

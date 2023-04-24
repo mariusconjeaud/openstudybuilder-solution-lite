@@ -83,7 +83,7 @@
                     },
                     "name": "endpoint_1",
                     "name_plain": "endpoint_1",
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "possible_actions": [
                         "inactivate"
                     ],
@@ -169,7 +169,7 @@
                             "name_plain": "objective_1",
                             "uid": null
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "possible_actions": [
                             "inactivate"
                         ],
@@ -192,6 +192,7 @@
                 "study_uid": "study_root",
                 "accepted_version": false,
                 "timeframe": {
+                    "study_count": null,
                     "change_description": "Approved version",
                     "end_date": null,
                     "library": {
@@ -200,7 +201,7 @@
                     },
                     "name": "timeframe_1",
                     "name_plain": "timeframe_1",
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "possible_actions": [
                         "inactivate"
                     ],
@@ -254,7 +255,7 @@
                             },
                             "name": "endpoint_1",
                             "name_plain": "endpoint_1",
-                            "parameter_values": [],
+                            "parameter_terms": [],
                             "possible_actions": [
                                 "inactivate"
                             ],
@@ -343,7 +344,7 @@
                                     "name_plain": "objective_1",
                                     "uid": null
                                 },
-                                "parameter_values": [],
+                                "parameter_terms": [],
                                 "possible_actions": [
                                     "inactivate"
                                 ],
@@ -363,6 +364,7 @@
                         },
                         "study_uid": "study_root",
                         "timeframe": {
+                            "study_count": null,
                             "change_description": "Approved version",
                             "end_date": null,
                             "library": {
@@ -371,7 +373,7 @@
                             },
                             "name": "timeframe_1",
                             "name_plain": "timeframe_1",
-                            "parameter_values": [],
+                            "parameter_terms": [],
                             "possible_actions": [
                                 "inactivate"
                             ],
@@ -442,7 +444,7 @@
                                     "name_plain": "objective_1",
                                     "uid": "ObjectiveTemplate_000001"
                                 },
-                                "parameter_values": [],
+                                "parameter_terms": [],
                                 "library": {
                                     "name": "Sponsor",
                                     "is_editable": true
@@ -524,7 +526,7 @@
                                 "name_plain": "endpoint_1",
                                 "uid": "EndpointTemplate_000001"
                             },
-                            "parameter_values": [],
+                            "parameter_terms": [],
                             "library": {
                                 "name": "Sponsor",
                                 "is_editable": true
@@ -539,6 +541,7 @@
                             "end_date": null,
                             "status": "Final",
                             "version": "1.0",
+                            "study_count": null,
                             "change_description": "Approved version",
                             "user_initials": "TODO initials",
                             "possible_actions": [
@@ -549,7 +552,7 @@
                                 "name_plain": "timeframe_1",
                                 "uid": "TimeframeTemplate_000001"
                             },
-                            "parameter_values": [],
+                            "parameter_terms": [],
                             "library": {
                                 "name": "Sponsor",
                                 "is_editable": true
@@ -595,7 +598,7 @@
                         },
                         "name": "endpoint_1",
                         "name_plain": "endpoint_1",
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "possible_actions": [
                             "inactivate"
                         ],
@@ -684,7 +687,7 @@
                                 "name_plain": "objective_1",
                                 "uid": null
                             },
-                            "parameter_values": [],
+                            "parameter_terms": [],
                             "possible_actions": [
                                 "inactivate"
                             ],
@@ -704,6 +707,7 @@
                     },
                     "study_uid": "study_root",
                     "timeframe": {
+                        "study_count": null,
                         "change_description": "Approved version",
                         "end_date": null,
                         "library": {
@@ -712,7 +716,7 @@
                         },
                         "name": "timeframe_1",
                         "name_plain": "timeframe_1",
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "possible_actions": [
                             "inactivate"
                         ],
@@ -781,7 +785,7 @@
                             "name_plain": "objective_1",
                             "uid": null
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "possible_actions": [
                             "inactivate"
                         ],
@@ -802,6 +806,7 @@
                 },
                 "study_uid": "study_root",
                 "timeframe": {
+                    "study_count": null,
                     "change_description": "Approved version",
                     "end_date": null,
                     "library": {
@@ -810,7 +815,7 @@
                     },
                     "name": "timeframe_1",
                     "name_plain": "timeframe_1",
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "possible_actions": [
                         "inactivate"
                     ],
@@ -865,7 +870,7 @@
                     },
                     "name": "endpoint_1",
                     "name_plain": "endpoint_1",
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "possible_actions": [
                         "inactivate"
                     ],
@@ -905,7 +910,7 @@
                             "name_plain": "objective_1",
                             "uid": null
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "possible_actions": [
                             "inactivate"
                         ],
@@ -1003,7 +1008,7 @@
                             },
                             "name": "endpoint_1",
                             "name_plain": "endpoint_1",
-                            "parameter_values": [],
+                            "parameter_terms": [],
                             "possible_actions": [
                                 "inactivate"
                             ],
@@ -1090,7 +1095,7 @@
                                     "name_plain": "objective_1",
                                     "uid": null
                                 },
-                                "parameter_values": [],
+                                "parameter_terms": [],
                                 "possible_actions": [
                                     "inactivate"
                                 ],
@@ -1111,6 +1116,7 @@
                         },
                         "study_uid": "study_root",
                         "timeframe": {
+                            "study_count": null,
                             "change_description": "Approved version",
                             "end_date": null,
                             "library": {
@@ -1119,7 +1125,7 @@
                             },
                             "name": "timeframe_1",
                             "name_plain": "timeframe_1",
-                            "parameter_values": [],
+                            "parameter_terms": [],
                             "possible_actions": [
                                 "inactivate"
                             ],
@@ -1168,7 +1174,7 @@
                                     "name_plain": "objective_1",
                                     "uid": null
                                 },
-                                "parameter_values": [],
+                                "parameter_terms": [],
                                 "possible_actions": [
                                     "inactivate"
                                 ],
@@ -1189,6 +1195,7 @@
                         },
                         "study_uid": "study_root",
                         "timeframe": {
+                            "study_count": null,
                             "change_description": "Approved version",
                             "end_date": null,
                             "library": {
@@ -1197,7 +1204,7 @@
                             },
                             "name": "timeframe_1",
                             "name_plain": "timeframe_1",
-                            "parameter_values": [],
+                            "parameter_terms": [],
                             "possible_actions": [
                                 "inactivate"
                             ],
@@ -1230,7 +1237,7 @@
                             },
                             "name": "endpoint_1",
                             "name_plain": "endpoint_1",
-                            "parameter_values": [],
+                            "parameter_terms": [],
                             "possible_actions": [
                                 "inactivate"
                             ],
@@ -1270,7 +1277,7 @@
                                     "name_plain": "objective_1",
                                     "uid": null
                                 },
-                                "parameter_values": [],
+                                "parameter_terms": [],
                                 "possible_actions": [
                                     "inactivate"
                                 ],
@@ -1507,7 +1514,7 @@
                             "name_plain": "objective_1",
                             "uid": null
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "possible_actions": [
                             "inactivate"
                         ],
@@ -1616,14 +1623,15 @@
                         "endpoint_template": {
                             "name": "endpoint_1",
                             "name_plain": "endpoint_1",
+                            "guidance_text": null,
                             "uid": "EndpointTemplate_000001"
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "library": {
                             "name": "Sponsor",
                             "is_editable": true
                         },
-                        "study_count": 1
+                        "study_count": null
                     }
                 ],
                 "total": 1,
@@ -1641,7 +1649,7 @@
                 "endpoint_data": {
                     "library_name": "Sponsor",
                     "endpoint_template_uid": "EndpointTemplate_000002",
-                    "parameter_values": []
+                    "parameter_terms": []
                 },
                 "endpoint_level_uid": "term_root_final",
                 "endpoint_units": {
@@ -1686,7 +1694,7 @@
                     },
                     "name": "endpoint_template_2",
                     "name_plain": "endpoint_template_2",
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "possible_actions": [
                         "inactivate"
                     ],
@@ -1698,6 +1706,7 @@
                     "version": "1.0"
                 },
                 "timeframe": {
+                    "study_count": null,
                     "change_description": "Approved version",
                     "end_date": null,
                     "library": {
@@ -1706,7 +1715,7 @@
                     },
                     "name": "timeframe_1",
                     "name_plain": "timeframe_1",
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "possible_actions": [
                         "inactivate"
                     ],
@@ -1741,7 +1750,7 @@
                 "endpoint_data": {
                     "library_name": "Sponsor",
                     "endpoint_template_uid": "EndpointTemplate_000002",
-                    "parameter_values": []
+                    "parameter_terms": []
                 },
                 "endpoint_level_uid": "term_root_final",
                 "endpoint_units": {
@@ -1787,7 +1796,7 @@
                             "name_plain": "objective_1",
                             "uid": "ObjectiveTemplate_000001"
                         },
-                        "parameter_values": [],
+                        "parameter_terms": [],
                         "possible_actions": [
                             "inactivate"
                         ],
@@ -1851,7 +1860,7 @@
                     },
                     "name": "endpoint_template_2",
                     "name_plain": "endpoint_template_2",
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "possible_actions": [
                         "inactivate"
                     ],
@@ -1863,6 +1872,7 @@
                     "version": "1.0"
                 },
                 "timeframe": {
+                    "study_count": null,
                     "change_description": "Approved version",
                     "end_date": null,
                     "library": {
@@ -1871,7 +1881,7 @@
                     },
                     "name": "timeframe_1",
                     "name_plain": "timeframe_1",
-                    "parameter_values": [],
+                    "parameter_terms": [],
                     "possible_actions": [
                         "inactivate"
                     ],

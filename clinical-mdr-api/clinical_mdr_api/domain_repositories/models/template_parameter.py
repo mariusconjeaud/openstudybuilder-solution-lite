@@ -16,56 +16,51 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 
 
 class TemplateParameter(ClinicalMdrNode):
-    RELATION_LABEL = "HAS_VALUE"
-    has_value = RelationshipTo("TemplateParameterValueRoot", RELATION_LABEL)
+    RELATION_LABEL = "HAS_PARAMETER_TERM"
+    has_parameter_term = RelationshipTo("TemplateParameterTermRoot", RELATION_LABEL)
 
     name = StringProperty()
 
 
-class TemplateParameterValue(VersionValue):
+class TemplateParameterTermValue(VersionValue):
     name = StringProperty()
     is_active_template_parameter = BooleanProperty()
 
 
-class TemplateParameterValueRoot(VersionRoot):
-    RELATION_LABEL = "HAS_VALUE"
+class TemplateParameterTermRoot(VersionRoot):
+    RELATION_LABEL = "HAS_PARAMETER_TERM"
     PARAMETERS_LABEL = "USES_DEFAULT_VALUE"
 
     uid = StringProperty()
 
-    has_value = RelationshipFrom(TemplateParameter, RELATION_LABEL)
+    has_parameter_term = RelationshipFrom(TemplateParameter, RELATION_LABEL)
 
     has_version = RelationshipTo(
-        TemplateParameterValue, "HAS_VERSION", model=VersionRelationship
+        TemplateParameterTermValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(TemplateParameterValue, "LATEST")
-
-    latest_draft = RelationshipTo(
-        TemplateParameterValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        TemplateParameterValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        TemplateParameterValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    has_latest_value = RelationshipTo(TemplateParameterTermValue, "LATEST")
+    latest_draft = RelationshipTo(TemplateParameterTermValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(TemplateParameterTermValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(TemplateParameterTermValue, "LATEST_RETIRED")
 
     @classmethod
-    def check_value_exists(cls, parameter_name: str, parameter_value_uid: str) -> bool:
+    def check_parameter_term_exists(
+        cls, parameter_name: str, parameter_term_uid: str
+    ) -> bool:
         cypher_query = """
-            MATCH (pt:TemplateParameter {name: $name})<-[:HAS_PARENT_PARAMETER*0..]-(pt_parents)-[:HAS_VALUE]->(pr {uid: $uid})
+            MATCH (pt:TemplateParameter {name: $name})<-[:HAS_PARENT_PARAMETER*0..]-(pt_parents)-[:HAS_PARAMETER_TERM]->(pr {uid: $uid})
             RETURN
                 pt.name AS name, pt_parents.name AS type, pr.uid AS uid
             """
         dataset, _ = db.cypher_query(
-            cypher_query, {"uid": parameter_value_uid, "name": parameter_name}
+            cypher_query, {"uid": parameter_term_uid, "name": parameter_name}
         )
         if len(dataset) == 0:
             return False
         return True
 
 
-class ParameterTemplateValue(TemplateParameterValue):
+class ParameterTemplateValue(TemplateParameterTermValue):
     template_string = StringProperty()
 
     def get_all(self):
@@ -80,34 +75,27 @@ class ParameterTemplateValue(TemplateParameterValue):
         return dataset
 
 
-class ParameterTemplateRoot(TemplateParameterValueRoot):
+class ParameterTemplateRoot(TemplateParameterTermRoot):
     has_version = RelationshipTo(
         ParameterTemplateValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(ParameterTemplateValue, "LATEST")
+    latest_draft = RelationshipTo(ParameterTemplateValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(ParameterTemplateValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(ParameterTemplateValue, "LATEST_RETIRED")
 
-    latest_draft = RelationshipTo(
-        ParameterTemplateValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        ParameterTemplateValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        ParameterTemplateValue, "LATEST_RETIRED", model=VersionRelationship
-    )
-
-    has_value = RelationshipFrom(TemplateParameter, "HAS_VALUE")
+    has_parameter_term = RelationshipFrom(TemplateParameter, "HAS_PARAMETER_TERM")
     has_definition = RelationshipFrom(TemplateParameter, "HAS_DEFINITION")
 
 
-class TemplateParameterComplexValue(TemplateParameterValue):
+class TemplateParameterComplexValue(TemplateParameterTermValue):
     uses_parameter = RelationshipTo(
-        TemplateParameterValueRoot, "TPCV_USES_TPV", model=TemplateUsesParameterRelation
+        TemplateParameterTermRoot, "TPCV_USES_TPV", model=TemplateUsesParameterRelation
     )
 
     def get_all(self):
         cypher_query = """
-            MATCH (otv:TemplateParameterValue)<-[:LATEST_FINAL]-(ot:TemplateParameterValueRoot)<-[rel:TPCV_USES_TPV]-(pt)
+            MATCH (otv:TemplateParameterTermValue)<-[:LATEST_FINAL]-(ot:TemplateParameterTermRoot)<-[rel:TPCV_USES_TPV]-(pt)
             where ID(pt) = $id
             RETURN
                 pt.name AS name, ot.uid AS uid, rel.position as position, otv.value as value, otv.name as param_value
@@ -117,20 +105,13 @@ class TemplateParameterComplexValue(TemplateParameterValue):
         return dataset
 
 
-class TemplateParameterComplexRoot(TemplateParameterValueRoot):
+class TemplateParameterComplexRoot(TemplateParameterTermRoot):
     has_version = RelationshipTo(
         TemplateParameterComplexValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(TemplateParameterComplexValue, "LATEST")
-
-    latest_draft = RelationshipTo(
-        TemplateParameterComplexValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        TemplateParameterComplexValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        TemplateParameterComplexValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    latest_draft = RelationshipTo(TemplateParameterComplexValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(TemplateParameterComplexValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(TemplateParameterComplexValue, "LATEST_RETIRED")
 
     has_complex_value = RelationshipFrom(ParameterTemplateRoot, "HAS_COMPLEX_VALUE")

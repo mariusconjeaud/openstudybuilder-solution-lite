@@ -5,14 +5,14 @@ from neomodel import db
 
 import clinical_mdr_api.services.libraries as library_service
 from clinical_mdr_api import models
-from clinical_mdr_api.services.activity_description_templates import (
-    ActivityDescriptionTemplateService,
-)
 from clinical_mdr_api.services.study_activity_instruction import (
     StudyActivityInstructionService,
 )
 from clinical_mdr_api.services.study_activity_selection import (
     StudyActivitySelectionService,
+)
+from clinical_mdr_api.services.syntax_templates.activity_instruction_templates import (
+    ActivityInstructionTemplateService,
 )
 from clinical_mdr_api.tests.integration.utils import data_library
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
@@ -36,8 +36,8 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
         data["name"] = "Test [Indication]"
         data["activity_subgroup_uids"] = ["activity_subgroup_root1"]
         data["activity_group_uids"] = ["activity_group_root1"]
-        template_input = models.ActivityDescriptionTemplateCreateInput(**data)
-        service = ActivityDescriptionTemplateService()
+        template_input = models.ActivityInstructionTemplateCreateInput(**data)
+        service = ActivityInstructionTemplateService()
         self.template = service.create(template_input)
         service.approve(self.template.dict()["uid"])
         self._create_study_activities()
@@ -71,11 +71,11 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
             models.StudyActivityInstructionCreateInput(
                 activity_instruction_data=models.ActivityInstructionCreateInput(
                     activity_instruction_template_uid=self.template.uid,
-                    parameter_values=[
+                    parameter_terms=[
                         {
                             "conjunction": "",
                             "position": 1,
-                            "values": [
+                            "terms": [
                                 {
                                     "index": 1,
                                     "name": "type 2 diabetes",
@@ -137,11 +137,11 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
                     content=models.StudyActivityInstructionCreateInput(
                         activity_instruction_data=models.ActivityInstructionCreateInput(
                             activity_instruction_template_uid=self.template.uid,
-                            parameter_values=[
+                            parameter_terms=[
                                 {
                                     "conjunction": "",
                                     "position": 1,
-                                    "values": [
+                                    "terms": [
                                         {
                                             "index": 1,
                                             "name": "type 2 diabetes",
@@ -161,11 +161,11 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
                     content=models.StudyActivityInstructionCreateInput(
                         activity_instruction_data=models.ActivityInstructionCreateInput(
                             activity_instruction_template_uid=self.template.uid,
-                            parameter_values=[
+                            parameter_terms=[
                                 {
                                     "conjunction": "",
                                     "position": 1,
-                                    "values": [
+                                    "terms": [
                                         {
                                             "index": 1,
                                             "name": "type 2 diabetes",

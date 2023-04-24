@@ -50,7 +50,6 @@ class OdmDescriptionSimpleModel(BaseModel):
         uid: str,
         find_odm_description_by_uid: Callable[[str], Optional[ConceptARBase]],
     ) -> Optional["OdmDescriptionSimpleModel"]:
-
         if uid is not None:
             odm_description = find_odm_description_by_uid(uid)
 

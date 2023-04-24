@@ -1,4 +1,5 @@
 from clinical_mdr_api import config
+from clinical_mdr_api.models.error import ErrorResponse
 
 SORT_BY = """
 JSON dictionary of field names and boolean flags specifying the sort order. Supported values for sort order are:
@@ -89,3 +90,19 @@ HEADER_SEARCH_STRING = """Optionally, a (part of the) text for a given field.
 The query result will be values of the field that contain the provided search string."""
 
 HEADER_RESULT_COUNT = "Optionally, the number of results to return. Default = 10."
+
+DATA_EXPORTS_HEADER = """\n
+Response format:\n
+- In addition to retrieving data in JSON format (default behaviour), 
+it is possible to request data to be returned in CSV, XML or Excel formats 
+by sending the `Accept` http request header with one of the following values:
+  - `text/csv`\n
+  - `text/xml`\n
+  - `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`\n
+"""
+
+ERROR_404 = {
+    "model": ErrorResponse,
+    "description": "Entity not found",
+}
+ERROR_500 = {"model": ErrorResponse, "description": "Internal Server Error"}

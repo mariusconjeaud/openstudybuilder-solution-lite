@@ -15,7 +15,7 @@
   v-on="$listeners"
   >
   <template v-slot:item.studyUid="{ item }">
-    {{ item.studyId }}
+    {{ item.study_id }}
   </template>
   <template v-slot:item.actions="{ item }">
     <v-btn
@@ -87,7 +87,7 @@ export default {
       study[this.dataFetcherName](params).then(resp => {
         this.studySelectionItems = resp.data.items
         this.studySelectionItems.forEach(el => {
-          el.study_id = this.studies[this.studies.findIndex((study) => study.uid === el.study_uid)].study_id
+          el.study_id = this.studies[this.studies.findIndex((study) => study.uid === el.study_uid)].current_metadata.identification_metadata.study_id
         })
         this.total = resp.data.total
       })

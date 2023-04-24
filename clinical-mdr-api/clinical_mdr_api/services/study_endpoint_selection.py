@@ -3,13 +3,13 @@ from typing import List, Optional, Sequence
 from neomodel import db
 
 from clinical_mdr_api import exceptions, models
-from clinical_mdr_api.domain.library.endpoints import EndpointAR
-from clinical_mdr_api.domain.library.timeframes import TimeframeAR
 from clinical_mdr_api.domain.study_selection.study_selection_endpoint import (
     StudyEndpointSelectionHistory,
     StudySelectionEndpointsAR,
     StudySelectionEndpointVO,
 )
+from clinical_mdr_api.domain.syntax_instances.endpoint import EndpointAR
+from clinical_mdr_api.domain.syntax_instances.timeframe import TimeframeAR
 from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.study_selection import (
     EndpointUnitsInput,
@@ -24,8 +24,8 @@ from clinical_mdr_api.services._utils import (
     service_level_generic_filtering,
     service_level_generic_header_filtering,
 )
-from clinical_mdr_api.services.endpoints import EndpointService
 from clinical_mdr_api.services.study_selection_base import StudySelectionMixin
+from clinical_mdr_api.services.syntax_instances.endpoints import EndpointService
 
 
 class StudyEndpointSelectionService(StudySelectionMixin):
@@ -39,9 +39,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         self, study_uid: str, study_selection_uid: str, no_brackets: bool = False
     ) -> models.StudySelectionObjective:
         repos = self._repos
-        selection_aggregate = repos.study_selection_objective_repository.find_by_study(
-            study_uid
-        )
+        selection_aggregate = repos.study_objective_repository.find_by_study(study_uid)
         try:
             assert selection_aggregate is not None
             _, order = selection_aggregate.get_specific_objective_selection(
@@ -56,7 +54,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             get_objective_by_uid_version_callback=self._transform_objective_model,
             get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
             get_study_selection_endpoints_ar_by_study_uid_callback=(
-                repos.study_selection_endpoint_repository.find_by_study
+                repos.study_endpoint_repository.find_by_study
             ),
             no_brackets=no_brackets,
             find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
@@ -119,10 +117,8 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_endpoint_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_endpoint_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             endpoint_repo = repos.endpoint_repository
@@ -202,17 +198,16 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 else None,
                 unit_separator=separator,
                 study_objective_uid=selection_create_input.study_objective_uid,
-                generate_uid_callback=repos.study_selection_endpoint_repository.generate_uid,
+                generate_uid_callback=repos.study_endpoint_repository.generate_uid,
                 user_initials=self.author,
                 endpoint_level_order=endpoint_level_order,
             )
 
             # add VO to aggregate
             try:
-
                 selection_aggregate.add_endpoint_selection(
                     study_endpoint_selection=new_selection,
-                    study_objective_exist_callback=repos.study_selection_objective_repository.study_objective_exists,
+                    study_objective_exist_callback=repos.study_objective_repository.study_objective_exists,
                     endpoint_exist_callback=endpoint_repo.check_exists_final_version,
                     timeframe_exist_callback=timeframe_repo.check_exists_final_version,
                     ct_term_exists_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
@@ -223,9 +218,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 raise exceptions.ValidationException(value_error.args[0])
 
             # sync with DB and save the update
-            repos.study_selection_endpoint_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_endpoint_repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just added
             new_selection, order = selection_aggregate.get_specific_endpoint_selection(
@@ -265,10 +258,8 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 )
 
                 # getting selection aggregate
-                selection_aggregate = (
-                    repos.study_selection_endpoint_repository.find_by_study(
-                        study_uid=study_uid, for_update=True
-                    )
+                selection_aggregate = repos.study_endpoint_repository.find_by_study(
+                    study_uid=study_uid, for_update=True
                 )
 
                 # if in draft status - approve
@@ -336,7 +327,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                     if timeframe_ar
                     else None,
                     study_objective_uid=selection_create_input.study_objective_uid,
-                    generate_uid_callback=repos.study_selection_endpoint_repository.generate_uid,
+                    generate_uid_callback=repos.study_endpoint_repository.generate_uid,
                     user_initials=self.author,
                     endpoint_level_order=endpoint_level_order,
                 )
@@ -347,7 +338,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                     selection_aggregate.add_endpoint_selection(
                         study_endpoint_selection=new_selection,
                         endpoint_exist_callback=endpoint_repo.check_exists_final_version,
-                        study_objective_exist_callback=repos.study_selection_objective_repository.study_objective_exists,
+                        study_objective_exist_callback=repos.study_objective_repository.study_objective_exists,
                         timeframe_exist_callback=repos.timeframe_repository.check_exists_final_version,
                         ct_term_exists_callback=repos.ct_term_name_repository.term_specific_exists_by_uid,
                         unit_definition_exists_callback=repos.unit_definition_repository.check_exists_final_version,
@@ -357,9 +348,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                     raise exceptions.ValidationException(value_error.args[0])
 
                 # sync with DB and save the update
-                repos.study_selection_endpoint_repository.save(
-                    selection_aggregate, self.author
-                )
+                repos.study_endpoint_repository.save(selection_aggregate, self.author)
 
                 # Fetch the new selection which was just added
                 (
@@ -391,10 +380,8 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 endpoint_uid = endpoint_ar.uid
                 endpoint_ar.approve(self.author)
                 # getting selection aggregate
-                selection_aggregate = (
-                    repos.study_selection_endpoint_repository.find_by_study(
-                        study_uid=study_uid, for_update=True
-                    )
+                selection_aggregate = repos.study_endpoint_repository.find_by_study(
+                    study_uid=study_uid, for_update=True
                 )
 
                 timeframe_repo = repos.timeframe_repository
@@ -442,7 +429,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 selection_aggregate.add_endpoint_selection(
                     study_endpoint_selection=new_selection,
                     endpoint_exist_callback=(lambda _: True),
-                    study_objective_exist_callback=repos.study_selection_objective_repository.study_objective_exists,
+                    study_objective_exist_callback=repos.study_objective_repository.study_objective_exists,
                     timeframe_exist_callback=repos.timeframe_repository.check_exists_final_version,
                     ct_term_exists_callback=repos.ct_term_name_repository.term_specific_exists_by_uid,
                     unit_definition_exists_callback=repos.unit_definition_repository.check_exists_final_version,
@@ -483,7 +470,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.StudySelectionEndpoint]:
         repos = self._repos
-        endpoint_selection_ars = repos.study_selection_endpoint_repository.find_all(
+        endpoint_selection_ars = repos.study_endpoint_repository.find_all(
             project_name=project_name,
             project_number=project_number,
         )
@@ -522,12 +509,11 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         result_count: int = 10,
     ):
-
         repos = self._repos
 
         if study_uid:
-            endpoint_selection_ars = (
-                repos.study_selection_endpoint_repository.find_by_study(study_uid)
+            endpoint_selection_ars = repos.study_endpoint_repository.find_by_study(
+                study_uid
             )
 
             header_values = service_level_generic_header_filtering(
@@ -543,7 +529,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
 
             return header_values
 
-        endpoint_selection_ars = repos.study_selection_endpoint_repository.find_all(
+        endpoint_selection_ars = repos.study_endpoint_repository.find_all(
             project_name=project_name,
             project_number=project_number,
         )
@@ -583,8 +569,8 @@ class StudyEndpointSelectionService(StudySelectionMixin):
     ) -> GenericFilteringReturn:
         repos = MetaRepository()
         try:
-            endpoint_selection_ar = (
-                repos.study_selection_endpoint_repository.find_by_study(study_uid)
+            endpoint_selection_ar = repos.study_endpoint_repository.find_by_study(
+                study_uid
             )
             selection = self._transform_all_to_response_model(
                 endpoint_selection_ar, no_brackets=no_brackets
@@ -608,10 +594,8 @@ class StudyEndpointSelectionService(StudySelectionMixin):
     ) -> models.StudySelectionEndpoint:
         repos = self._repos
         try:
-            selection_aggregate = (
-                repos.study_selection_endpoint_repository.find_by_study(
-                    study_uid, for_update
-                )
+            selection_aggregate = repos.study_endpoint_repository.find_by_study(
+                study_uid, for_update
             )
             try:
                 (
@@ -633,7 +617,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             # Verify that the study endpoint is not being used as a template parameter
-            if repos.study_selection_endpoint_repository.is_used_as_parameter(
+            if repos.study_endpoint_repository.is_used_as_parameter(
                 study_selection_uid
             ):
                 raise exceptions.BusinessLogicException(
@@ -641,19 +625,15 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 )
 
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_endpoint_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_endpoint_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             # remove the connection
             selection_aggregate.remove_endpoint_selection(study_selection_uid)
 
             # sync with DB and save the update
-            repos.study_selection_endpoint_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_endpoint_repository.save(selection_aggregate, self.author)
         finally:
             repos.close()
 
@@ -664,10 +644,8 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_endpoint_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_endpoint_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             # remove the connection
@@ -676,9 +654,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             )
 
             # sync with DB and save the update
-            repos.study_selection_endpoint_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_endpoint_repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just added
             new_selection, order = selection_aggregate.get_specific_endpoint_selection(
@@ -697,7 +673,6 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         request_study_endpoint: StudySelectionEndpointInput,
         current_study_endpoint: StudySelectionEndpointVO,
     ) -> StudySelectionEndpointVO:
-
         endpoint_repo = self._repos.endpoint_repository
         timeframe_repo = self._repos.timeframe_repository
         if request_study_endpoint.endpoint_uid:
@@ -776,10 +751,8 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_endpoint_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_endpoint_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             # Load the current VO for updates
@@ -802,7 +775,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 # let the aggregate update the value object
                 selection_aggregate.update_selection(
                     updated_study_endpoint_selection=updated_selection,
-                    study_objective_exist_callback=repos.study_selection_objective_repository.study_objective_exists,
+                    study_objective_exist_callback=repos.study_objective_repository.study_objective_exists,
                     endpoint_exist_callback=endpoint_repo.check_exists_final_version,
                     timeframe_exist_callback=timeframe_repo.check_exists_final_version,
                     ct_term_exists_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
@@ -813,9 +786,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 raise exceptions.BusinessLogicException(value_error.args[0])
 
             # sync with DB and save the update
-            repos.study_selection_endpoint_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_endpoint_repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just updated
             new_selection, order = selection_aggregate.get_specific_endpoint_selection(
@@ -851,7 +822,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         selection_ar.update_selection(
             new_selection, endpoint_exist_callback=lambda x: True
         )
-        self._repos.study_selection_endpoint_repository.save(selection_ar, self.author)
+        self._repos.study_endpoint_repository.save(selection_ar, self.author)
 
         return self._transform_single_to_response_model(new_selection, order, study_uid)
 
@@ -877,7 +848,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         selection_ar.update_selection(
             new_selection, timeframe_exist_callback=lambda x: True
         )
-        self._repos.study_selection_endpoint_repository.save(selection_ar, self.author)
+        self._repos.study_endpoint_repository.save(selection_ar, self.author)
 
         return self._transform_single_to_response_model(new_selection, order, study_uid)
 
@@ -902,7 +873,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         selection_ar.update_selection(
             new_selection, endpoint_exist_callback=lambda x: True
         )
-        self._repos.study_selection_endpoint_repository.save(selection_ar, self.author)
+        self._repos.study_endpoint_repository.save(selection_ar, self.author)
 
         return self._transform_single_to_response_model(new_selection, order, study_uid)
 
@@ -932,10 +903,8 @@ class StudyEndpointSelectionService(StudySelectionMixin):
     ) -> Sequence[models.StudySelectionEndpoint]:
         repos = self._repos
         try:
-            selection_history = (
-                repos.study_selection_endpoint_repository.find_selection_history(
-                    study_uid
-                )
+            selection_history = repos.study_endpoint_repository.find_selection_history(
+                study_uid
             )
             return self._transform_history_to_response_model(
                 selection_history, study_uid
@@ -949,10 +918,8 @@ class StudyEndpointSelectionService(StudySelectionMixin):
     ) -> Sequence[models.StudySelectionEndpoint]:
         repos = self._repos
         try:
-            selection_history = (
-                repos.study_selection_endpoint_repository.find_selection_history(
-                    study_uid, study_selection_uid
-                )
+            selection_history = repos.study_endpoint_repository.find_selection_history(
+                study_uid, study_selection_uid
             )
             return self._transform_history_to_response_model(
                 selection_history, study_uid

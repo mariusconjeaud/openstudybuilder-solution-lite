@@ -46,12 +46,17 @@
       text>
       {{ $t('Topbar.select_study') }}
     </v-btn>
-    <v-chip v-if="selectedStudy" data-cy="topbar-selected-study" class="ma-2" color="green">
-      {{ selectedStudy.study_id || selectedStudy.study_acronym }}
+    <v-chip
+      v-if="selectedStudy"
+      data-cy="topbar-selected-study"
+      class="ma-2"
+      :color="currentStudyStatus === 'DRAFT' ? 'green' : 'red'"
+      >
+      {{ selectedStudy.current_metadata.identification_metadata.study_id || selectedStudy.current_metadata.identification_metadata.study_acronym }}
       <v-icon
         right
         small
-        v-if="selectedStudy.current_metadata.version_metadata.study_status === 'DRAFT'"
+        v-if="currentStudyStatus === 'DRAFT'"
       >
         mdi-lock-open-outline
       </v-icon>
@@ -242,6 +247,12 @@ export default {
     },
     isAuthenticated () {
       return this.$config.AUTH_ENABLED === '0' || this.userInfo
+    },
+    currentStudyStatus () {
+      if (!this.selectedStudy) {
+        return null
+      }
+      return this.selectedStudy.current_metadata.version_metadata.study_status
     }
   },
   data () {

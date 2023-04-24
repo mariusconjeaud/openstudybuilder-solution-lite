@@ -4,13 +4,11 @@ from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain.study_selection.study_activity_instruction import (
     StudyActivityInstructionVO,
 )
-from clinical_mdr_api.domain_repositories.models.activity_instruction import (
-    ActivityInstructionRoot,
-)
 from clinical_mdr_api.domain_repositories.models.study import StudyValue
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyActivityInstruction,
 )
+from clinical_mdr_api.domain_repositories.models.syntax import ActivityInstructionRoot
 from clinical_mdr_api.domain_repositories.study_selection import base
 
 

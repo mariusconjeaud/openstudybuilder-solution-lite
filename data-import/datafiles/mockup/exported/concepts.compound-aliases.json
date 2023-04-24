@@ -90,5 +90,74 @@
     "uid": "CompoundAlias_000012",
     "user_initials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
     "version": "1.0"
+  },
+  {
+    "abbreviation": null,
+    "change_description": "Approved version",
+    "compound": {
+      "name": "Olaparib",
+      "uid": "Compound_000011"
+    },
+    "definition": null,
+    "end_date": null,
+    "is_preferred_synonym": false,
+    "library_name": "Sponsor",
+    "name": "OLAPARIB",
+    "name_sentence_case": "olaparib",
+    "possible_actions": [
+      "inactivate",
+      "new_version"
+    ],
+    "start_date": "2023-04-18T06:13:18.273960+00:00",
+    "status": "Final",
+    "uid": "CompoundAlias_000013",
+    "user_initials": "unknown-user",
+    "version": "1.0"
+  },
+  {
+    "abbreviation": null,
+    "change_description": "Approved version",
+    "compound": {
+      "name": "Durvalumab",
+      "uid": "Compound_000012"
+    },
+    "definition": null,
+    "end_date": null,
+    "is_preferred_synonym": false,
+    "library_name": "Sponsor",
+    "name": "DURVALUMAB",
+    "name_sentence_case": "durvalumab",
+    "possible_actions": [
+      "inactivate",
+      "new_version"
+    ],
+    "start_date": "2023-04-18T06:13:09.354403+00:00",
+    "status": "Final",
+    "uid": "CompoundAlias_000014",
+    "user_initials": "unknown-user",
+    "version": "1.0"
+  },
+  {
+    "abbreviation": null,
+    "change_description": "Approved version",
+    "compound": {
+      "name": "AZD6738",
+      "uid": "Compound_000013"
+    },
+    "definition": null,
+    "end_date": null,
+    "is_preferred_synonym": false,
+    "library_name": "Sponsor",
+    "name": "AZD6738",
+    "name_sentence_case": "azd6738",
+    "possible_actions": [
+      "inactivate",
+      "new_version"
+    ],
+    "start_date": "2023-04-18T06:32:00.834895+00:00",
+    "status": "Final",
+    "uid": "CompoundAlias_000015",
+    "user_initials": "unknown-user",
+    "version": "1.0"
   }
 ]

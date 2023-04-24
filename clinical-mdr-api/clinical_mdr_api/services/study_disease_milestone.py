@@ -53,7 +53,6 @@ class StudyDiseaseMilestoneService:
         self,
         disease_milestone: StudyDiseaseMilestoneVO,
     ) -> StudyDiseaseMilestone:
-
         return StudyDiseaseMilestone(
             uid=disease_milestone.uid,
             study_uid=disease_milestone.study_uid,
@@ -173,7 +172,6 @@ class StudyDiseaseMilestoneService:
         study_uid: str,
         study_disease_milestone_create_input: StudyDiseaseMilestoneCreateInput,
     ):
-
         disease_milestone_type = self._instantiate_disease_milestone_items(
             study_disease_milestone_create_input=study_disease_milestone_create_input,
         ).name
@@ -252,7 +250,6 @@ class StudyDiseaseMilestoneService:
         study_disease_milestone_uid: str,
         study_disease_milestone_input: StudyDiseaseMilestoneEditInput,
     ):
-
         study_disease_milestone = self.repo.find_by_uid(study_disease_milestone_uid)
         self._validate_update(study_disease_milestone_input, study_disease_milestone)
         fill_missing_values_in_base_model_from_reference_base_model(
@@ -361,7 +358,6 @@ class StudyDiseaseMilestoneService:
         result_count: int = 10,
         **kwargs,
     ) -> Sequence:
-
         header_values = self.repo.get_distinct_headers(
             field_name=field_name,
             search_string=search_string,

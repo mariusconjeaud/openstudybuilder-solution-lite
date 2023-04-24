@@ -3,21 +3,21 @@ from typing import List, Optional, Sequence
 from neomodel import db
 
 from clinical_mdr_api import exceptions, models
-from clinical_mdr_api.domain.library.criteria import CriteriaAR
 from clinical_mdr_api.domain.study_selection.study_selection_criteria import (
     StudySelectionCriteriaAR,
     StudySelectionCriteriaVO,
 )
+from clinical_mdr_api.domain.syntax_instances.criteria import CriteriaAR
 from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_criteria_repository import (
+from clinical_mdr_api.domain_repositories.study_selection.study_criteria_repository import (
     SelectionHistory,
 )
-from clinical_mdr_api.models.criteria import CriteriaCreateInput
 from clinical_mdr_api.models.study_selection import (
     StudySelectionCriteria,
     StudySelectionCriteriaCreateInput,
     StudySelectionCriteriaTemplateSelectInput,
 )
+from clinical_mdr_api.models.syntax_instances.criteria import CriteriaCreateInput
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
@@ -25,8 +25,8 @@ from clinical_mdr_api.services._utils import (
     service_level_generic_filtering,
     service_level_generic_header_filtering,
 )
-from clinical_mdr_api.services.criteria import CriteriaService
 from clinical_mdr_api.services.study_selection_base import StudySelectionMixin
+from clinical_mdr_api.services.syntax_instances.criteria import CriteriaService
 
 
 class StudyCriteriaSelectionService(StudySelectionMixin):
@@ -112,7 +112,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
 
                         # Get selection aggregate
                         selection_aggregate = (
-                            repos.study_selection_criteria_repository.find_by_study(
+                            repos.study_criteria_repository.find_by_study(
                                 study_uid=study_uid, for_update=True
                             )
                         )
@@ -124,7 +124,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                             syntax_object_version=criteria_template.item_metadata.version,
                             is_instance=False,
                             criteria_type_uid=criteria_type_uid,
-                            generate_uid_callback=repos.study_selection_criteria_repository.generate_uid,
+                            generate_uid_callback=repos.study_criteria_repository.generate_uid,
                         )
 
                         # Add template to selection
@@ -139,7 +139,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                             raise exceptions.ValidationException(value_error.args[0])
 
                         # Sync with DB and save the update
-                        repos.study_selection_criteria_repository.save(
+                        repos.study_criteria_repository.save(
                             selection_aggregate, self.author
                         )
 
@@ -170,7 +170,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                             selection_create_input=StudySelectionCriteriaCreateInput(
                                 criteria_data=CriteriaCreateInput(
                                     criteria_template_uid=template_input.criteria_template_uid,
-                                    parameter_values=[],
+                                    parameter_terms=[],
                                     library_name=template_input.library_name,
                                 )
                             ),
@@ -244,7 +244,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 )
 
                 # Go to repository to reroute the study criteria relationship from template to instance
-                repos.study_selection_criteria_repository.update_selection_to_instance(
+                repos.study_criteria_repository.update_selection_to_instance(
                     study_uid=study_uid,
                     study_criteria_uid=study_criteria_uid,
                     criteria_uid=criteria_ar.uid,
@@ -252,10 +252,8 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 )
 
                 # Fetch the latest state of the selection
-                selection_aggregate = (
-                    repos.study_selection_criteria_repository.find_by_study(
-                        study_uid=study_uid, for_update=False
-                    )
+                selection_aggregate = repos.study_criteria_repository.find_by_study(
+                    study_uid=study_uid, for_update=False
                 )
 
                 _, order = selection_aggregate.get_specific_criteria_selection(
@@ -295,10 +293,8 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             )
 
             # get pre-existing selection aggregate
-            selection_aggregate = (
-                repos.study_selection_criteria_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_criteria_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             # create new selection VO to add
@@ -307,7 +303,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 syntax_object_uid=criteria_ar.uid,
                 syntax_object_version=criteria_ar.item_metadata.version,
                 criteria_type_uid=criteria_type_uid,
-                generate_uid_callback=repos.study_selection_criteria_repository.generate_uid,
+                generate_uid_callback=repos.study_criteria_repository.generate_uid,
             )
 
             # add VO to aggregate
@@ -323,9 +319,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
                 raise exceptions.ValidationException(value_error.args[0])
 
             # sync with DB and save the update
-            repos.study_selection_criteria_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_criteria_repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just added
             (
@@ -370,10 +364,8 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
 
                 criteria_ar.approve(self.author)
                 # get pre-existing selection aggregate
-                selection_aggregate = (
-                    repos.study_selection_criteria_repository.find_by_study(
-                        study_uid=study_uid, for_update=True
-                    )
+                selection_aggregate = repos.study_criteria_repository.find_by_study(
+                    study_uid=study_uid, for_update=True
                 )
 
                 # create new selection VO to add
@@ -437,7 +429,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
     ) -> GenericFilteringReturn[models.StudySelectionCriteria]:
         repos = self._repos
 
-        criteria_selection_ars = repos.study_selection_criteria_repository.find_all(
+        criteria_selection_ars = repos.study_criteria_repository.find_all(
             project_name=project_name,
             project_number=project_number,
         )
@@ -479,8 +471,8 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         repos = self._repos
 
         if study_uid:
-            criteria_selection_ar = (
-                repos.study_selection_criteria_repository.find_by_study(study_uid)
+            criteria_selection_ar = repos.study_criteria_repository.find_by_study(
+                study_uid
             )
 
             header_values = service_level_generic_header_filtering(
@@ -496,7 +488,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
 
             return header_values
 
-        criteria_selection_ars = repos.study_selection_criteria_repository.find_all(
+        criteria_selection_ars = repos.study_criteria_repository.find_all(
             project_name=project_name,
             project_number=project_number,
         )
@@ -537,8 +529,8 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
     ) -> GenericFilteringReturn[models.StudySelectionCriteria]:
         repos = self._repos
         try:
-            criteria_selection_ar = (
-                repos.study_selection_criteria_repository.find_by_study(study_uid)
+            criteria_selection_ar = repos.study_criteria_repository.find_by_study(
+                study_uid
             )
             assert criteria_selection_ar is not None
 
@@ -630,7 +622,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         try:
             try:
                 selection_history = (
-                    repos.study_selection_criteria_repository.find_selection_history(
+                    repos.study_criteria_repository.find_selection_history(
                         study_uid=study_uid, criteria_type_uid=criteria_type_uid
                     )
                 )
@@ -651,7 +643,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         try:
             try:
                 selection_history = (
-                    repos.study_selection_criteria_repository.find_selection_history(
+                    repos.study_criteria_repository.find_selection_history(
                         study_uid=study_uid, study_selection_uid=study_selection_uid
                     )
                 )
@@ -669,10 +661,8 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_criteria_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_criteria_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             # remove the connection
@@ -680,9 +670,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             selection_aggregate.remove_criteria_selection(study_selection_uid)
 
             # sync with DB and save the update
-            repos.study_selection_criteria_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_criteria_repository.save(selection_aggregate, self.author)
         finally:
             repos.close()
 
@@ -693,10 +681,8 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_criteria_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_criteria_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             # Set new order
@@ -706,9 +692,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             )
 
             # sync with DB and save the update
-            repos.study_selection_criteria_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_criteria_repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just added
             new_selection, _ = selection_aggregate.get_specific_criteria_selection(
@@ -745,10 +729,8 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_criteria_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_criteria_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
             # Load the current VO for updates
             try:
@@ -781,9 +763,7 @@ class StudyCriteriaSelectionService(StudySelectionMixin):
             except ValueError as value_error:
                 raise exceptions.ValidationException(value_error.args[0])
             # sync with DB and save the update
-            repos.study_selection_criteria_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_criteria_repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just added
             new_selection, _ = selection_aggregate.get_specific_criteria_selection(

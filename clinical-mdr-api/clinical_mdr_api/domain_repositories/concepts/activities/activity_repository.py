@@ -11,7 +11,11 @@ from clinical_mdr_api.domain.versioned_object_aggregate import (
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
 )
-from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
+from clinical_mdr_api.domain_repositories.models._utils import (
+    LATEST_VERSION_ORDER_BY,
+    convert_to_datetime,
+    to_relation_trees,
+)
 from clinical_mdr_api.domain_repositories.models.activities import (
     ActivityRoot,
     ActivitySubGroupRoot,
@@ -34,7 +38,6 @@ from clinical_mdr_api.repositories._utils import (
 
 
 class ActivityRepository(ConceptGenericRepository[ActivityAR]):
-
     root_class = ActivityRoot
     value_class = ActivityValue
     return_model = Activity
@@ -128,11 +131,9 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 "has_latest_value__in_subgroup__in_group__has_latest_value",
                 "has_latest_value__replaced_by_activity",
             )
-            .fetch_optional_relations_into_one_variable(
+            .fetch_optional_single_relation_of_type(
                 {
-                    "latest_draft": "latest_version",
-                    "latest_final": "latest_version",
-                    "latest_retired": "latest_version",
+                    "has_version": ("latest_version", LATEST_VERSION_ORDER_BY),
                 }
             )
             .order_by(sort_paths[0] if len(sort_paths) > 0 else "uid")
@@ -140,11 +141,9 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         )
         if total_count:
             all_nodes = len(nodes)
-        paginated_nodes = (
-            nodes.limit_results(page_size)
-            .skip_results(page_number * page_size)
-            .to_relation_trees()
-        )
+        start: int = page_number * page_size
+        end: int = start + page_size
+        paginated_nodes = to_relation_trees(nodes[start:end])
         all_activities = [
             ActivityORM.from_orm(activity_node) for activity_node in paginated_nodes
         ]
@@ -208,18 +207,18 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             are_rels_changed = ar.concept_vo.activity_subgroup != sub_group_uid
         return are_concept_properties_changed or are_rels_changed or are_props_changed
 
-    def get_template_activities(
-        self, root_class: type, template_uid: str
+    def get_syntax_activities(
+        self, root_class: type, syntax_uid: str
     ) -> Optional[Sequence[ActivityAR]]:
         """
-        This method returns the activities for the template with provided uid
+        This method returns the activities for the syntax with provided uid
 
-        :param root_class: The class of the root node for the template
-        :param template_uid: UID of the template
+        :param root_class: The class of the root node for the syntax
+        :param syntax_uid: UID of the syntax
         :return Sequence[ActivityAR]:
         """
-        template = root_class.nodes.get(uid=template_uid)
-        activity_nodes = template.has_activity.all()
+        syntax = root_class.nodes.get(uid=syntax_uid)
+        activity_nodes = syntax.has_activity.all()
         if activity_nodes:
             activities = []
             for node in activity_nodes:
@@ -273,3 +272,41 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             result, _ = db.cypher_query(query, {"uid": uid})
             exists = len(result) > 0 and len(result[0]) > 0
         return exists
+
+    def get_activity_overview(self, uid: str) -> dict:
+        query = """
+        MATCH (activity_root:ActivityRoot {uid:$uid})-[:LATEST]->(activity_value:ActivityValue)
+        WITH DISTINCT activity_root,activity_value,
+            head([(library)-[:CONTAINS_CONCEPT]->(activity_root) | library.name]) AS activity_library_name,
+            [(activity_value)<-[:IN_HIERARCHY]-
+            (activity_instance_value:ActivityInstanceValue)-[:ACTIVITY_INSTANCE_CLASS]->
+            (activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue)
+            | {
+                activity_instance_library_name: head([(library)-[:CONTAINS_CONCEPT]->
+                (activity_instance_root:ActivityInstanceRoot)-[:HAS_VERSION]->(activity_instance_value) | library.name]),
+                name:activity_instance_value.name,
+                activity_instance_data: activity_instance_value, 
+                activity_instance_class: activity_instance_class_value
+            }] AS activity_instances,
+            [(activity_value)-[:IN_SUB_GROUP]->(activity_subgroup_value:ActivitySubGroupValue)-[:IN_GROUP]->
+                (activity_group_value:ActivityGroupValue) | 
+                {activity_subgroup_value:activity_subgroup_value, activity_group_value:activity_group_value}
+            ] AS hierarchy
+        WITH *,
+            apoc.coll.sortMaps(activity_instances, '^name') as activity_instances
+        RETURN
+            hierarchy,
+            activity_value,
+            activity_library_name,
+            activity_instances
+        """
+        result_array, attribute_names = db.cypher_query(
+            query=query, params={"uid": uid}
+        )
+        if len(result_array) != 1:
+            raise ValueError(f"The overview query returned broken data: {result_array}")
+        overview = result_array[0]
+        overview_dict = {}
+        for overview_prop, attribute_name in zip(overview, attribute_names):
+            overview_dict[attribute_name] = overview_prop
+        return overview_dict

@@ -11,6 +11,7 @@ from clinical_mdr_api.models.activities.activity import (
     ActivityCreateInput,
     ActivityEditInput,
     ActivityFromRequestInput,
+    ActivityOverview,
 )
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
@@ -29,7 +30,7 @@ ActivityUID = Path(None, description="The unique id of the Activity")
 @router.get(
     "/activities",
     summary="List all activities (for a given library)",
-    description="""
+    description=f"""
 State before:
  - The library must exist (if specified)
 
@@ -40,15 +41,29 @@ State after:
  - No change
 
 Possible errors:
- - Invalid library name specified.""",
+ - Invalid library name specified.
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}  
+""",
     response_model=CustomPage[Activity],
     response_model_exclude_unset=True,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 @decorators.allow_exports(
     {
-        "defaults": ["uid", "name", "start_date", "status", "version"],
+        "defaults": [
+            "uid",
+            "name",
+            "activity_group=activity_group.name",
+            "activity_subgroup=activity_subgroup.name",
+            "start_date",
+            "status",
+            "version",
+        ],
         "formats": [
             "text/csv",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -129,7 +144,7 @@ def get_activities(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -199,13 +214,63 @@ Possible errors:
     response_model=Activity,
     response_model_exclude_unset=True,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_activity(
     uid: str = ActivityUID, current_user_id: str = Depends(get_current_user_id)
 ):
     activity_service = ActivityService(user=current_user_id)
     return activity_service.get_by_uid(uid=uid)
+
+
+@router.get(
+    "/activities/{uid}/overview",
+    summary="Get detailed overview a specific activity",
+    description="""
+Returns detailed description about activity, including information about:
+ - Activity
+ - Activity subgroups
+ - Activity groups
+ - Activity instance
+ - Activity instance class
+
+State before:
+ - an activity with uid must exist.
+
+State after:
+ - No change
+
+Possible errors:
+ - Invalid uid.
+ """,
+    response_model=ActivityOverview,
+    status_code=200,
+    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+)
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "activity",
+            "activity_subgroups",
+            "activity_groups",
+            "activity_instance",
+        ],
+        "formats": [
+            "application/x-yaml",
+        ],
+    }
+)
+# pylint: disable=unused-argument
+def get_activity_overview(
+    request: Request,  # request is actually required by the allow_exports decorator
+    uid: str = ActivityUID,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    activity_service = ActivityService(user=current_user_id)
+    return activity_service.get_activity_overview(activity_uid=uid)
 
 
 @router.get(
@@ -233,7 +298,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The activity with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_versions(
@@ -277,11 +342,12 @@ Possible errors:
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create(
-    activity_create_input: ActivityCreateInput = Body(None, description=""),
+    activity_create_input: ActivityCreateInput = Body(description=""),
     current_user_id: str = Depends(get_current_user_id),
 ):
     activity_service = ActivityService(user=current_user_id)
@@ -322,11 +388,12 @@ Possible errors:
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_sponsor_activity_from_activity_request(
-    activity_create_input: ActivityFromRequestInput = Body(None, description=""),
+    activity_create_input: ActivityFromRequestInput = Body(description=""),
     current_user_id: str = Depends(get_current_user_id),
 ):
     activity_service = ActivityService(user=current_user_id)
@@ -372,12 +439,12 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The activity with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
     uid: str = ActivityUID,
-    activity_edit_input: ActivityEditInput = Body(None, description=""),
+    activity_edit_input: ActivityEditInput = Body(description=""),
     current_user_id: str = Depends(get_current_user_id),
 ):
     activity_service = ActivityService(user=current_user_id)
@@ -417,7 +484,7 @@ Possible errors:
             "- The activity is not in final status.\n"
             "- The activity with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def new_version(
@@ -462,7 +529,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The activity with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
@@ -506,7 +573,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The activity with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
@@ -550,7 +617,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The activity with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
@@ -593,7 +660,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - An activity with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_activity(

@@ -13,7 +13,10 @@ from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.domain_repositories.concepts.odms.item_group_repository import (
     ItemGroupRepository,
 )
-from clinical_mdr_api.models.odm_common_models import OdmVendorRelationPostInput
+from clinical_mdr_api.models.odm_common_models import (
+    OdmVendorRelationPostInput,
+    OdmVendorsPostInput,
+)
 from clinical_mdr_api.models.odm_description import OdmDescriptionBatchPatchInput
 from clinical_mdr_api.models.odm_item_group import (
     OdmItemGroup,
@@ -435,6 +438,27 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
         odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         return self._transform_aggregate_root_to_pydantic_model(odm_item_group_ar)
+
+    def manage_vendors(
+        self,
+        uid: str,
+        odm_vendors_post_input: OdmVendorsPostInput,
+    ) -> OdmItemGroup:
+        odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
+
+        self.pre_management(
+            uid,
+            odm_vendors_post_input,
+            odm_item_group_ar,
+            self._repos.odm_item_group_repository,
+        )
+        self.add_vendor_elements(uid, odm_vendors_post_input.elements, True)
+        self.add_vendor_element_attributes(
+            uid, odm_vendors_post_input.element_attributes, True
+        )
+        self.add_vendor_attributes(uid, odm_vendors_post_input.attributes, True)
+
+        return self.get_by_uid(uid)
 
     @db.transaction
     def get_active_relationships(self, uid: str):

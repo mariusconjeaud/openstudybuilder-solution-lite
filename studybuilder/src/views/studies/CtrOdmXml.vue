@@ -77,11 +77,7 @@ export default {
     downloadXml () {
       this.loadingMessage = this.$t('CtrOdmXmlVue.downloading')
       study.downloadCtrOdmXml(this.selectedStudy.uid).then(response => {
-        const blob = new Blob([response.data], {
-          type: response.headers['content-type'] || 'text/xml'
-        })
-        const fileName = `${this.selectedStudy.uid} CTR-ODM.xml`
-        exportLoader.generateDownload(blob, fileName)
+        exportLoader.downloadFile(response.data, response.headers['content-type'] || 'text/xml', `${this.selectedStudy.uid} CTR-ODM.xml`)
       }).then(this.finally).catch(this.finally)
     },
     finally (error) {

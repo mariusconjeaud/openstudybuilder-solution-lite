@@ -1,9 +1,22 @@
 <template>
   <div>
-    <codelist-summary :codelist-names="codelistNames" :codelist-attributes="codelistAttributes" />
-    <n-n-table :headers="headers" :items="terms" :server-items-length="total" :options.sync="options"
-      export-data-url="ct/terms" export-object-label="Terms" item-key="term_uid" height="40vh" class="mt-4" has-api
-      @filter="fetchTerms" column-data-resource="ct/terms" :codelist-uid="codelistUid">
+    <codelist-summary :codelist-names="codelistNames" :codelist-attributes="codelistAttributes"/>
+    <n-n-table
+      :headers="headers"
+      :items="terms"
+      :server-items-length="total"
+      :options.sync="options"
+      export-data-url="ct/terms"
+      :export-data-url-params="exportUrlParams"
+      export-object-label="Terms"
+      item-key="term_uid"
+      height="40vh"
+      class="mt-4"
+      has-api
+      @filter="fetchTerms"
+      column-data-resource="ct/terms"
+      :codelist-uid="codelistUid"
+    >
       <template v-slot:actions="">
         <v-btn v-if="codelistAttributes.extensible" fab dark small color="primary" data-cy="add-term-button"
           @click.stop="showCreationForm = true" :title="$t('CodelistTermCreationForm.title')">
@@ -69,6 +82,9 @@ export default {
       return (this.historyType === 'termName')
         ? this.$t('CodelistTermTable.history_label_name', { term: this.selectedTerm.term_uid })
         : this.$t('CodelistTermTable.history_label_attributes', { term: this.selectedTerm.term_uid })
+    },
+    exportUrlParams () {
+      return { codelist_uid: this.codelistUid }
     }
   },
   data () {

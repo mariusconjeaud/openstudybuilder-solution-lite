@@ -9,11 +9,11 @@
           "library_name": "Test library",
           "name": "Test objective",
           "objective_template_uid": "{otuid}",
-          "parameter_values": [
+          "parameter_terms": [
             {
               "position": 1,
               "conjunction": "and",
-              "values": []
+              "terms": []
             }
           ]
         },
@@ -70,11 +70,11 @@
             "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001"
           },
-          "parameter_values": [
+          "parameter_terms": [
             {
               "position": 1,
               "conjunction": "and",
-              "values": []
+              "terms": []
             }
           ],
           "library": {
@@ -101,11 +101,11 @@
           "library_name": "Test library",
           "name": "To investigate [Indication]",
           "objective_template_uid": "{otuid}",
-          "parameter_values": [
+          "parameter_terms": [
             {
               "position": 1,
               "conjunction": "and",
-              "values": [
+              "terms": [
                 {
                   "index": 1,
                   "type": "Indication",
@@ -169,11 +169,11 @@
             "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001"
           },
-          "parameter_values": [
+          "parameter_terms": [
             {
               "position": 1,
               "conjunction": "and",
-              "values": [
+              "terms": [
                 {
                   "uid": "Indication-99991",
                   "name": "type 2 diabetes",
@@ -207,11 +207,11 @@
           "library_name": "Test library",
           "name": "To investigate [Indication]",
           "objective_template_uid": "{otuid}",
-          "parameter_values": [
+          "parameter_terms": [
             {
               "position": 1,
               "conjunction": "and",
-              "values": [
+              "terms": [
                 {
                   "index": 1,
                   "type": "Indication",
@@ -281,11 +281,11 @@
             "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001"
           },
-          "parameter_values": [
+          "parameter_terms": [
             {
               "position": 1,
               "conjunction": "and",
-              "values": [
+              "terms": [
                 {
                   "index": 1,
                   "type": "Indication",
@@ -325,11 +325,11 @@
           "library_name": "Test library",
           "name": "To investigate [Indication]",
           "objective_template_uid": "{otuid}",
-          "parameter_values": [
+          "parameter_terms": [
             {
               "position": 1,
               "conjunction": "and",
-              "values": [
+              "terms": [
                 {
                   "index": 1,
                   "type": "Indication",
@@ -405,11 +405,11 @@
             "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001"
           },
-          "parameter_values": [
+          "parameter_terms": [
             {
               "position": 1,
               "conjunction": "and",
-              "values": [
+              "terms": [
                 {
                   "index": 1,
                   "type": "Indication",

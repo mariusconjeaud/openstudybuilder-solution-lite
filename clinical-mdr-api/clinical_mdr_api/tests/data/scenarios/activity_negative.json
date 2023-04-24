@@ -43,9 +43,9 @@
             "headers": {},
             "method": "POST",
             "request": {
-                "name": "name3",
-                "name_sentence_case": "name_sentence_case3",
-                "definition": "definition3",
+                "name": "name99",
+                "name_sentence_case": "name_sentence_case99",
+                "definition": "definition99",
                 "library_name": "Sponsor",
                 "activity_subgroup": "activity_subgroup_root_non_existing"
             },
@@ -69,8 +69,8 @@
             "method": "POST",
             "request": {
                 "name": "name1",
-                "name_sentence_case": "name_sentence_case3",
-                "definition": "definition3",
+                "name_sentence_case": "name_sentence_case999",
+                "definition": "definition999",
                 "library_name": "Sponsor",
                 "activity_subgroup": "activity_subgroup_root1"
             },

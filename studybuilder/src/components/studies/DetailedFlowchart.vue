@@ -701,11 +701,16 @@ export default {
             return
           }
           if (!visit.consecutive_visit_group) {
-            this.$set(
-              this.currentSelectionMatrix[schedule.study_activity_uid],
-              visit.uid,
-              { value: true, uid: schedule.study_activity_schedule_uid }
-            )
+            if (this.currentSelectionMatrix[schedule.study_activity_uid]) {
+              this.$set(
+                this.currentSelectionMatrix[schedule.study_activity_uid],
+                visit.uid,
+                { value: true, uid: schedule.study_activity_schedule_uid }
+              )
+            } else {
+              console.log(`ERROR: found missing activity in current matrix -> ${schedule.study_activity_uid}`)
+              console.log(schedule)
+            }
           } else {
             const visitUid = visit.consecutive_visit_group
             if (!this.currentSelectionMatrix[schedule.study_activity_uid][visitUid].uid) {
@@ -737,15 +742,14 @@ export default {
         this.$router.push({ name: 'StudyStructure', params: { tab: 'visits' } })
       }
     },
-    loadActivities () {
-      this.$store.dispatch('studyActivities/fetchStudyActivities', { studyUid: this.selectedStudy.uid }).then(() => {
-        for (const studyActivity of this.studyActivities) {
-          this.$set(this.currentSelectionMatrix, studyActivity.study_activity_uid, {})
-        }
-        studyEpochs.getStudyVisits(this.selectedStudy.uid, { page_size: 0 }).then(resp => {
-          this.studyVisits = resp.data.items
-          this.getStudyActivitySchedules()
-        })
+    async loadActivities () {
+      await this.$store.dispatch('studyActivities/fetchStudyActivities', { studyUid: this.selectedStudy.uid })
+      for (const studyActivity of this.studyActivities) {
+        this.$set(this.currentSelectionMatrix, studyActivity.study_activity_uid, {})
+      }
+      studyEpochs.getStudyVisits(this.selectedStudy.uid, { page_size: 0 }).then(resp => {
+        this.studyVisits = resp.data.items
+        this.getStudyActivitySchedules()
       })
     },
     onResize () {

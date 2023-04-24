@@ -78,7 +78,6 @@ class OdmVendorAttributeRelationModel(BaseModel):
         ],
         vendor_element_attribute: bool = True,
     ) -> Optional["OdmVendorAttributeRelationModel"]:
-
         if uid is not None:
             odm_vendor_attribute_ref_vo = find_by_uid_with_odm_element_relation(
                 uid, odm_element_uid, odm_element_type, vendor_element_attribute
@@ -128,7 +127,6 @@ class OdmVendorElementAttributeRelationModel(BaseModel):
         ],
         vendor_element_attribute: bool = True,
     ) -> Optional["OdmVendorElementAttributeRelationModel"]:
-
         if uid is not None:
             odm_vendor_element_attribute_ref_vo = find_by_uid_with_odm_element_relation(
                 uid, odm_element_uid, odm_element_type, vendor_element_attribute

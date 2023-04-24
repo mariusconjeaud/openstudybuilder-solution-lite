@@ -83,9 +83,14 @@ def generate_default_input_data_for_visit():
     }
 
 
-def create_study_visit_codelists():
-    catalogue_name, library_name = get_catalogue_name_library_name()
-    create_study_epoch_codelists_ret_cat_and_lib()
+def create_study_visit_codelists(
+    create_unit_definitions=True,
+    use_test_utils: bool = False,
+    create_epoch_codelist: bool = True,
+):
+    catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils)
+    if create_epoch_codelist:
+        create_study_epoch_codelists_ret_cat_and_lib(use_test_utils)
 
     unit_dim_codelist = create_codelist(
         "Unit Dimension", "CTCodelist_UnitDim", catalogue_name, library_name
@@ -126,12 +131,12 @@ def create_study_visit_codelists():
         catalogue_name,
         library_name,
     )
-
-    unit_service = UnitDefinitionService(
-        user_id="some-user", meta_repository=MetaRepository()
-    )
-    unit_service.post(UnitDefinitionPostInput(**WEEK))
-    unit_service.post(UnitDefinitionPostInput(**DAY))
+    if create_unit_definitions:
+        unit_service = UnitDefinitionService(
+            user_id="some-user", meta_repository=MetaRepository()
+        )
+        unit_service.post(UnitDefinitionPostInput(**WEEK))
+        unit_service.post(UnitDefinitionPostInput(**DAY))
 
     codelist = create_codelist(
         "VisitType", "CTCodelist_00004", catalogue_name, library_name
@@ -298,22 +303,24 @@ def create_study_visit_codelists():
     )
 
 
-def create_visit_with_update(**inputs) -> StudyVisit:
+def create_visit_with_update(study_uid="study_root", **inputs) -> StudyVisit:
     visit_service: StudyVisitService = StudyVisitService()
     datadict = generate_default_input_data_for_visit().copy()
     datadict.update(inputs)
     visit_input = StudyVisitCreateInput(**datadict)
-    visit = visit_service.create(study_uid="study_root", study_visit_input=visit_input)
+    visit = visit_service.create(study_uid=study_uid, study_visit_input=visit_input)
     return visit
 
 
-def update_visit_with_update(visit_uid: str, **inputs) -> StudyVisit:
+def update_visit_with_update(
+    visit_uid: str, study_uid="study_root", **inputs
+) -> StudyVisit:
     visit_service: StudyVisitService = StudyVisitService()
     datadict = generate_default_input_data_for_visit().copy()
     datadict.update(inputs)
     visit_input = StudyVisitEditInput(**datadict)
     visit = visit_service.edit(
-        study_uid="study_root",
+        study_uid=study_uid,
         study_visit_uid=visit_uid,
         study_visit_input=visit_input,
     )
@@ -330,12 +337,28 @@ def preview_visit_with_update(study_uid, **inputs) -> StudyVisit:
     return preview
 
 
-def create_some_visits():
-    create_study_visit_codelists()
-    epoch1 = create_study_epoch("EpochSubType_0001")
-    epoch2 = create_study_epoch("EpochSubType_0002")
+def create_some_visits(
+    use_test_utils: bool = False,
+    create_epoch_codelist: bool = True,
+    study_uid="study_root",
+    epoch1=None,
+    epoch2=None,
+):
+    if use_test_utils:
+        create_study_visit_codelists(
+            create_unit_definitions=False,
+            use_test_utils=use_test_utils,
+            create_epoch_codelist=create_epoch_codelist,
+        )
+    else:
+        create_study_visit_codelists(
+            use_test_utils=use_test_utils, create_epoch_codelist=create_epoch_codelist
+        )
+        epoch1 = create_study_epoch("EpochSubType_0001")
+        epoch2 = create_study_epoch("EpochSubType_0002")
     DAYUID = get_unit_uid_by_name("day")
     create_visit_with_update(
+        study_uid=study_uid,
         study_epoch_uid=epoch1.uid,
         visit_type_uid="VisitType_0001",
         time_reference_uid="VisitSubType_0001",
@@ -343,6 +366,7 @@ def create_some_visits():
         time_unit_uid=DAYUID,
     )
     create_visit_with_update(
+        study_uid=study_uid,
         study_epoch_uid=epoch1.uid,
         visit_type_uid="VisitType_0003",
         time_reference_uid="VisitSubType_0001",
@@ -350,6 +374,7 @@ def create_some_visits():
         time_unit_uid=DAYUID,
     )
     create_visit_with_update(
+        study_uid=study_uid,
         study_epoch_uid=epoch1.uid,
         visit_type_uid="VisitType_0003",
         time_reference_uid="VisitSubType_0001",
@@ -358,6 +383,7 @@ def create_some_visits():
     )
 
     v3 = create_visit_with_update(
+        study_uid=study_uid,
         study_epoch_uid=epoch1.uid,
         visit_type_uid="VisitType_0004",
         time_reference_uid="VisitSubType_0001",
@@ -365,6 +391,7 @@ def create_some_visits():
         time_unit_uid=DAYUID,
     )
     v4 = create_visit_with_update(
+        study_uid=study_uid,
         study_epoch_uid=epoch2.uid,
         visit_type_uid="VisitType_0002",
         time_reference_uid="VisitSubType_0001",
@@ -376,6 +403,7 @@ def create_some_visits():
         visit_subclass="ANCHOR_VISIT_IN_GROUP_OF_SUBV",
     )
     create_visit_with_update(
+        study_uid=study_uid,
         study_epoch_uid=epoch2.uid,
         visit_type_uid="VisitType_0003",
         time_reference_uid="VisitSubType_0002",
@@ -389,6 +417,7 @@ def create_some_visits():
 
     update_visit_with_update(
         v3.uid,
+        study_uid=study_uid,
         uid=v3.uid,
         study_epoch_uid=epoch1.uid,
         visit_type_uid="VisitType_0004",

@@ -52,7 +52,7 @@
               v-else
               v-model="parameter.selectedValues"
               :label="parameter.name"
-              :items="parameter.values"
+              :items="parameter.terms"
               :errors="errors"
               return-object
               :disabled="parameter.skip"
@@ -153,7 +153,7 @@
                 v-else
                 v-model="parameter.selectedValues"
                 :label="parameter.name"
-                :items="parameter.values"
+                :items="parameter.terms"
                 :errors="errors"
                 return-object
                 :disabled="parameter.skip"
@@ -164,7 +164,6 @@
           </v-col>
           <v-col cols="2">
             <validation-provider
-              v-if="!loadParameterValuesFromTemplate"
               v-slot="{ errors }"
               :name="`skip-${index}`"
               :vid="`skip-${index}`"
@@ -180,13 +179,6 @@
                 <v-icon v-else>mdi-eye-off-outline</v-icon>
               </v-btn>
             </validation-provider>
-            <v-checkbox
-              v-else-if="withPinButton && parameter.selectedValues && parameter.selectedValues.length"
-              v-model="parameter.saveAsDefault"
-              off-icon="mdi-pin"
-              on-icon="mdi-pin-off"
-              :title="parameter.saveAsDefault ? $t('ObjectiveTemplateForm.default_values_help_off') : $t('ObjectiveTemplateForm.default_values_help')"
-              />
           </v-col>
         </v-row>
         <v-row v-if="parameter.selectedValues && parameter.selectedValues.length > 1 && parameter.name !== 'NumericValue' && parameter.name !== 'TextValue'">
@@ -250,10 +242,6 @@ export default {
       type: Boolean,
       default: false
     },
-    withPinButton: {
-      type: Boolean,
-      default: true
-    },
     previewText: String,
     stacked: {
       type: Boolean,
@@ -269,7 +257,7 @@ export default {
       return this.getNamePreview(true)
     },
     namePlainPreview () {
-      const namePreview = this.getNamePreview(true)
+      const namePreview = this.cleanName(this.getNamePreview())
       if (namePreview !== undefined) {
         const tag = new DOMParser().parseFromString(namePreview, 'text/html')
         if (tag.documentElement.textContent) {
@@ -303,6 +291,27 @@ export default {
       this.$set(parameter, 'selectedSeparator', null)
       this.$set(parameter, 'skip', !parameter.skip)
       this.update()
+    },
+    cleanName (value) {
+      const rules = {
+        '([])': '[]',
+        '  ': ' ',
+        '[] []': '[][]',
+        '[] ([': '[]([',
+        '[) []': '])[]',
+        '] and []': '][]',
+        '[] and [': '[][',
+        '], []': '][]',
+        '[], [': '[][',
+        '] or []': '][]',
+        '[] or [': '[][',
+        '] []': '][]',
+        '[] [': '[]['
+      }
+      for (const original of Object.keys(rules)) {
+        value = value.replace(original, rules[original])
+      }
+      return value.trim()
     },
     getTemplateParametersFromTemplate (template) {
       const result = []
@@ -378,7 +387,7 @@ export default {
     ** on a key for example.
     */
     async template (value) {
-      if (this.editMode || this.updatingParameters) {
+      if (this.updatingParameters) {
         return
       }
       setTimeout(async () => {
@@ -393,10 +402,10 @@ export default {
             this.$emit('input', [])
           }
           for (const param of extractedParams) {
-            const resp = await templateParameterTypes.getValues(param)
+            const resp = await templateParameterTypes.getTerms(param)
             this.parameters.push({
               name: param,
-              values: resp.data
+              terms: resp.data
             })
           }
           if (this.value.length) {

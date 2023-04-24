@@ -1,0 +1,260 @@
+[
+  {
+    "compound": {
+      "abbreviation": null,
+      "analyteNumber": null,
+      "brands": [],
+      "changeDescription": "Approved version",
+      "definition": null,
+      "deliveryDevices": [],
+      "dispensers": [],
+      "dosageForms": [],
+      "doseFrequencies": [],
+      "doseValues": [],
+      "endDate": null,
+      "halfLife": null,
+      "isNameInn": true,
+      "isSponsorCompound": true,
+      "lagTimes": [],
+      "libraryName": "Sponsor",
+      "name": "olaparib",
+      "nameSentenceCase": "olaparib",
+      "nncLongNumber": null,
+      "nncShortNumber": null,
+      "possibleActions": [
+        "inactivate",
+        "newVersion"
+      ],
+      "projects": [],
+      "routesOfAdministration": [],
+      "startDate": "2022-09-17T06:41:18.975191",
+      "status": "Final",
+      "strengthValues": [],
+      "substances": [
+        {
+          "pclassId": null,
+          "pclassName": null,
+          "pclassTermUid": null,
+          "substanceName": "OLAPARIB",
+          "substanceTermUid": "DictionaryTerm_000968",
+          "substanceUnii": "WOH1JD9AR8"
+        }
+      ],
+      "uid": "Compound_000012",
+      "userInitials": "MT",
+      "version": "1.0"
+    },
+    "compoundAlias": {
+      "abbreviation": null,
+      "changeDescription": "Approved version",
+      "compound": {
+        "name": "olaparib",
+        "uid": "Compound_000012"
+      },
+      "definition": null,
+      "endDate": null,
+      "isPreferredSynonym": true,
+      "libraryName": "Sponsor",
+      "name": "Olaparib",
+      "nameSentenceCase": "olaparib",
+      "possibleActions": [
+        "inactivate",
+        "newVersion"
+      ],
+      "startDate": "2022-09-17T06:41:23.614897",
+      "status": "Final",
+      "uid": "CompoundAlias_000004",
+      "userInitials": "MT",
+      "version": "1.0"
+    },
+    "device": null,
+    "dispensedIn": null,
+    "dosageForm": null,
+    "formulation": null,
+    "order": 1,
+    "otherInfo": null,
+    "projectName": "CDISC Dev",
+    "projectNumber": "CDISC DEV",
+    "reasonForMissingNullValue": null,
+    "routeOfAdministration": null,
+    "startDate": "2022-09-17T06:45:31.386279",
+    "strengthValue": null,
+    "studyCompoundDosingCount": 1,
+    "studyCompoundUid": "StudyCompound_000005",
+    "studyUid": "Study_000036",
+    "typeOfTreatment": {
+      "name": "Investigational Product",
+      "termUid": "CTTerm_000128"
+    },
+    "userInitials": "MT"
+  },
+  {
+    "compound": {
+      "abbreviation": null,
+      "analyteNumber": null,
+      "brands": [],
+      "changeDescription": "Approved version",
+      "definition": null,
+      "deliveryDevices": [],
+      "dispensers": [],
+      "dosageForms": [],
+      "doseFrequencies": [],
+      "doseValues": [],
+      "endDate": null,
+      "halfLife": null,
+      "isNameInn": false,
+      "isSponsorCompound": true,
+      "lagTimes": [],
+      "libraryName": "Sponsor",
+      "name": "AZD6738",
+      "nameSentenceCase": "azd6738",
+      "nncLongNumber": null,
+      "nncShortNumber": null,
+      "possibleActions": [
+        "inactivate",
+        "newVersion"
+      ],
+      "projects": [],
+      "routesOfAdministration": [],
+      "startDate": "2022-09-17T06:46:25.572761",
+      "status": "Final",
+      "strengthValues": [],
+      "substances": [],
+      "uid": "Compound_000013",
+      "userInitials": "MT",
+      "version": "1.0"
+    },
+    "compoundAlias": {
+      "abbreviation": null,
+      "changeDescription": "Approved version",
+      "compound": {
+        "name": "AZD6738",
+        "uid": "Compound_000013"
+      },
+      "definition": null,
+      "endDate": null,
+      "isPreferredSynonym": true,
+      "libraryName": "Sponsor",
+      "name": "AZD6738",
+      "nameSentenceCase": "AZD6738",
+      "possibleActions": [
+        "inactivate",
+        "newVersion"
+      ],
+      "startDate": "2022-09-17T06:46:30.915992",
+      "status": "Final",
+      "uid": "CompoundAlias_000005",
+      "userInitials": "MT",
+      "version": "1.0"
+    },
+    "device": null,
+    "dispensedIn": null,
+    "dosageForm": null,
+    "formulation": null,
+    "order": 2,
+    "otherInfo": null,
+    "projectName": "CDISC Dev",
+    "projectNumber": "CDISC DEV",
+    "reasonForMissingNullValue": null,
+    "routeOfAdministration": null,
+    "startDate": "2022-09-17T06:46:59.998763",
+    "strengthValue": null,
+    "studyCompoundDosingCount": 2,
+    "studyCompoundUid": "StudyCompound_000007",
+    "studyUid": "Study_000036",
+    "typeOfTreatment": {
+      "name": "Investigational Product",
+      "termUid": "CTTerm_000128"
+    },
+    "userInitials": "MT"
+  },
+  {
+    "compound": {
+      "abbreviation": null,
+      "analyteNumber": null,
+      "brands": [],
+      "changeDescription": "Approved version",
+      "definition": null,
+      "deliveryDevices": [],
+      "dispensers": [],
+      "dosageForms": [],
+      "doseFrequencies": [],
+      "doseValues": [],
+      "endDate": null,
+      "halfLife": null,
+      "isNameInn": true,
+      "isSponsorCompound": false,
+      "lagTimes": [],
+      "libraryName": "Sponsor",
+      "name": "durvalumab",
+      "nameSentenceCase": "durvalumab",
+      "nncLongNumber": null,
+      "nncShortNumber": null,
+      "possibleActions": [
+        "inactivate",
+        "newVersion"
+      ],
+      "projects": [],
+      "routesOfAdministration": [],
+      "startDate": "2022-09-17T06:39:42.179015",
+      "status": "Final",
+      "strengthValues": [],
+      "substances": [
+        {
+          "pclassId": null,
+          "pclassName": null,
+          "pclassTermUid": null,
+          "substanceName": "DURVALUMAB",
+          "substanceTermUid": "DictionaryTerm_000967",
+          "substanceUnii": "28X28X9OKV"
+        }
+      ],
+      "uid": "Compound_000011",
+      "userInitials": "MT",
+      "version": "1.0"
+    },
+    "compoundAlias": {
+      "abbreviation": null,
+      "changeDescription": "Approved version",
+      "compound": {
+        "name": "durvalumab",
+        "uid": "Compound_000011"
+      },
+      "definition": null,
+      "endDate": null,
+      "isPreferredSynonym": true,
+      "libraryName": "Sponsor",
+      "name": "Durvalumab",
+      "nameSentenceCase": "durvalumab",
+      "possibleActions": [
+        "inactivate",
+        "newVersion"
+      ],
+      "startDate": "2022-09-17T06:39:50.578700",
+      "status": "Final",
+      "uid": "CompoundAlias_000003",
+      "userInitials": "MT",
+      "version": "1.0"
+    },
+    "device": null,
+    "dispensedIn": null,
+    "dosageForm": null,
+    "formulation": null,
+    "order": 3,
+    "otherInfo": null,
+    "projectName": "CDISC Dev",
+    "projectNumber": "CDISC DEV",
+    "reasonForMissingNullValue": null,
+    "routeOfAdministration": null,
+    "startDate": "2022-09-17T06:47:38.104723",
+    "strengthValue": null,
+    "studyCompoundDosingCount": 1,
+    "studyCompoundUid": "StudyCompound_000009",
+    "studyUid": "Study_000036",
+    "typeOfTreatment": {
+      "name": "Investigational Product",
+      "termUid": "CTTerm_000128"
+    },
+    "userInitials": "MT"
+  }
+]

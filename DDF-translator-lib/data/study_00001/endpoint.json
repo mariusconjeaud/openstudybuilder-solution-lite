@@ -1,0 +1,48 @@
+{
+  "uid": "Endpoint_000004",
+  "name": "<p>Mean change from baseline in [HbA1c] after [14 days after Baseline]</p>",
+  "startDate": "2022-03-31T15:30:33.572943",
+  "endDate": null,
+  "status": "Final",
+  "version": "1.0",
+  "changeDescription": "Approved version",
+  "userInitials": "unknown-user",
+  "possibleActions": [
+    "inactivate"
+  ],
+  "endpointTemplate": {
+    "name": "<p>Mean change from baseline in [AssessmentInstance] after [TimePoint]</p>",
+    "uid": "EndpointTemplate_000004"
+  },
+  "parameterValues": [
+    {
+      "position": 1,
+      "conjunction": "",
+      "values": [
+        {
+          "uid": "NumericFinding_000403",
+          "name": "HbA1c",
+          "type": "AssessmentInstance",
+          "index": 1
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "conjunction": "",
+      "values": [
+        {
+          "uid": "TimePoint_000003",
+          "name": "14 days after Baseline",
+          "type": "TimePoint",
+          "index": 1
+        }
+      ]
+    }
+  ],
+  "library": {
+    "name": "Sponsor",
+    "isEditable": true
+  },
+  "studyCount": null
+}

@@ -16,12 +16,12 @@ from clinical_mdr_api.models import study_selection
 from clinical_mdr_api.models.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
-from clinical_mdr_api.models.template_parameter_value import (
-    IndexedTemplateParameterValue,
-)
-from clinical_mdr_api.services.objective_templates import ObjectiveTemplateService
+from clinical_mdr_api.models.template_parameter_term import IndexedTemplateParameterTerm
 from clinical_mdr_api.services.study_objective_selection import (
     StudyObjectiveSelectionService,
+)
+from clinical_mdr_api.services.syntax_templates.objective_templates import (
+    ObjectiveTemplateService,
 )
 from clinical_mdr_api.tests.integration.utils import data_library
 from clinical_mdr_api.tests.integration.utils.api import (
@@ -117,7 +117,7 @@ def test_crud(test_data, study_objective_service, objective_template_service):
     objective_template = TestUtils.create_objective_template(
         name=f"Test objective template with [{STUDY_ENDPOINT_TP_NAME}] parameter"
     )
-    parameter_value_dict = {
+    parameter_term_dict = {
         "index": 1,
         "type": STUDY_ENDPOINT_TP_NAME,
         "uid": study_endpoint.study_endpoint_uid,
@@ -126,23 +126,23 @@ def test_crud(test_data, study_objective_service, objective_template_service):
     study_objective = TestUtils.create_study_objective(
         study_uid=study_uid,
         objective_template_uid=objective_template.uid,
-        parameter_values=[
+        parameter_terms=[
             TemplateParameterMultiSelectInput(
-                values=[IndexedTemplateParameterValue(**parameter_value_dict)]
+                terms=[IndexedTemplateParameterTerm(**parameter_term_dict)]
             )
         ],
     )
 
     expected_study_endpoint_name = f"{study_endpoint.endpoint.name} {f' {unit_separator} '.join([u.name for u in unit_definitions])} {timeframe.name}"
-    expected_return_parameter_value_dict = copy.deepcopy(parameter_value_dict)
-    expected_return_parameter_value_dict["name"] = expected_study_endpoint_name
+    expected_return_parameter_term_dict = copy.deepcopy(parameter_term_dict)
+    expected_return_parameter_term_dict["name"] = expected_study_endpoint_name
     assert (
         study_objective.objective.name
         == f"Test objective template with [{expected_study_endpoint_name}] parameter"
     )
     assert (
-        study_objective.objective.parameter_values[0].values[0]
-        == expected_return_parameter_value_dict
+        study_objective.objective.parameter_terms[0].terms[0]
+        == expected_return_parameter_term_dict
     )
     log.info("Study objective successfully created")
 
@@ -155,8 +155,8 @@ def test_crud(test_data, study_objective_service, objective_template_service):
         == f"Test objective template with [{expected_study_endpoint_name}] parameter"
     )
     assert (
-        study_objective.objective.parameter_values[0].values[0]
-        == expected_return_parameter_value_dict
+        study_objective.objective.parameter_terms[0].terms[0]
+        == expected_return_parameter_term_dict
     )
     log.info("Study objective successfully returned")
 
@@ -165,18 +165,18 @@ def test_crud(test_data, study_objective_service, objective_template_service):
         uid=objective_template.uid, study_uid=study_uid, include_study_endpoints=True
     )
     assert len(available_parameters) == 1
-    assert available_parameters[0].values[0].uid == study_endpoint.study_endpoint_uid
-    log.info("List of available StudyEndpoint parameter values is correct")
+    assert available_parameters[0].terms[0].uid == study_endpoint.study_endpoint_uid
+    log.info("List of available StudyEndpoint parameter terms is correct")
 
     # Try selecting a StudyEndpoint from another study as parameter
-    parameter_value_dict["uid"] = study_endpoint_2.study_endpoint_uid
+    parameter_term_dict["uid"] = study_endpoint_2.study_endpoint_uid
     with pytest.raises(ValueError) as e_info:
         _ = TestUtils.create_study_objective(
             study_uid=study_uid,
             objective_template_uid=objective_template.uid,
-            parameter_values=[
+            parameter_terms=[
                 TemplateParameterMultiSelectInput(
-                    values=[IndexedTemplateParameterValue(**parameter_value_dict)]
+                    terms=[IndexedTemplateParameterTerm(**parameter_term_dict)]
                 )
             ],
         )

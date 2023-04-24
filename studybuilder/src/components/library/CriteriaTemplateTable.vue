@@ -12,6 +12,7 @@
   fullscreen-form
   :history-formating-func="formatHistoryItem"
   :export-data-url-params="columnDataParameters"
+  double-breadcrumb
   >
   <template v-slot:editform="{ closeForm, selectedObject, filter, updateTemplate }">
     <criteria-template-form

@@ -27,42 +27,38 @@ from clinical_mdr_api.repositories._utils import (
 
 
 class CTTermAggregatedRepository:
-
     generic_alias_clause = """
         DISTINCT term_root, term_attributes_root, term_attributes_value, term_name_root, term_name_value, codelist_root, has_term
         ORDER BY has_term.order, term_name_value.name
         WITH DISTINCT term_root, term_attributes_root, term_attributes_value, term_name_root, term_name_value, 
         codelist_root, has_term,
         head([(catalogue:CTCatalogue)-[:HAS_CODELIST]->(codelist_root) | catalogue]) AS catalogue,
-        head([(lib)-[:CONTAINS_TERM]->(term_root) | lib]) AS library,
-        head([(term_attributes_root)-[ld:LATEST_DRAFT]->(term_attributes_value) | ld]) AS ld_attributes,
-        head([(term_attributes_root)-[lf:LATEST_FINAL]->(term_attributes_value) | lf]) AS lf_attributes,
-        head([(term_attributes_root)-[lr:LATEST_RETIRED]->(term_attributes_value) | lr]) AS lr_attributes,
-        head([(term_attributes_root)-[hv:HAS_VERSION]->(term_attributes_value) | hv]) AS hv_attributes,
-        head([(term_name_root)-[ld:LATEST_DRAFT]->(term_name_value) | ld]) AS ld_name,
-        head([(term_name_root)-[lf:LATEST_FINAL]->(term_name_value) | lf]) AS lf_name,
-        head([(term_name_root)-[lr:LATEST_RETIRED]->(term_name_value) | lr]) AS lr_name,
-        head([(term_name_root)-[hv:HAS_VERSION]->(term_name_value) | hv]) AS hv_name
-        CALL apoc.case(
-            [
-                ld_attributes IS NOT NULL AND ld_attributes.end_date IS NULL, 'RETURN ld_attributes AS rel',
-                lf_attributes IS NOT NULL AND lf_attributes.end_date IS NULL, 'RETURN lf_attributes AS rel',
-                lr_attributes IS NOT NULL AND lr_attributes.end_date IS NULL, 'RETURN lr_attributes AS rel',
-                ld_attributes IS NULL AND lf_attributes IS NULL AND lr_attributes IS NULL, 'RETURN hv_attributes AS rel'
-            ],
-            '',
-            {ld_attributes:ld_attributes, lf_attributes:lf_attributes, lr_attributes:lr_attributes, hv_attributes:hv_attributes})
-        YIELD value as rel_data_attributes
-        CALL apoc.case(
-            [
-                ld_name IS NOT NULL AND ld_name.end_date IS NULL, 'RETURN ld_name AS rel',
-                lf_name IS NOT NULL AND lf_name.end_date IS NULL, 'RETURN lf_name AS rel',
-                lr_name IS NOT NULL AND lr_name.end_date IS NULL, 'RETURN lr_name AS rel',
-                ld_name IS NULL AND lf_name IS NULL AND lr_name IS NULL, 'RETURN hv_name as rel'
-            ],
-            '',
-            {ld_name:ld_name, lf_name:lf_name, lr_name:lr_name, hv_name:hv_name})
-        YIELD value as rel_data_name
+        head([(lib)-[:CONTAINS_TERM]->(term_root) | lib]) AS library
+        CALL {
+                WITH term_attributes_root, term_attributes_value
+                MATCH (term_attributes_root)-[hv:HAS_VERSION]-(term_attributes_value)
+                WITH hv
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.end_date ASC,
+                    hv.start_date ASC
+                WITH collect(hv) as hvs
+                RETURN last(hvs) AS rel_data_attributes
+        }
+        CALL {
+                WITH term_name_root, term_name_value
+                MATCH (term_name_root)-[hv:HAS_VERSION]-(term_name_value)
+                WITH hv
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.end_date ASC,
+                    hv.start_date ASC
+                WITH collect(hv) as hvs
+                RETURN last(hvs) AS rel_data_name
+        }
+
         WITH
             term_root.uid AS term_uid,
             codelist_root.uid AS codelist_uid,
@@ -73,20 +69,20 @@ class CTTermAggregatedRepository:
             library.name AS library_name,
             library.is_editable AS is_library_editable,
             {
-                start_date: rel_data_attributes.rel.start_date,
+                start_date: rel_data_attributes.start_date,
                 end_date: NULL,
-                status: rel_data_attributes.rel.status,
-                version: rel_data_attributes.rel.version,
-                change_description: rel_data_attributes.rel.change_description,
-                user_initials: rel_data_attributes.rel.user_initials
+                status: rel_data_attributes.status,
+                version: rel_data_attributes.version,
+                change_description: rel_data_attributes.change_description,
+                user_initials: rel_data_attributes.user_initials
             } AS rel_data_attributes,
             {
-                start_date: rel_data_name.rel.start_date,
+                start_date: rel_data_name.start_date,
                 end_date: NULL,
-                status: rel_data_name.rel.status,
-                version: rel_data_name.rel.version,
-                change_description: rel_data_name.rel.change_description,
-                user_initials: rel_data_name.rel.user_initials
+                status: rel_data_name.status,
+                version: rel_data_name.version,
+                change_description: rel_data_name.change_description,
+                user_initials: rel_data_name.user_initials
             } AS rel_data_name
     """
 
@@ -159,6 +155,7 @@ class CTTermAggregatedRepository:
             match_clause=match_clause,
             alias_clause=alias_clause,
             sort_by=sort_by,
+            implicit_sort_by="term_uid",
             page_number=page_number,
             page_size=page_size,
             filter_by=FilterDict(elements=filter_by),

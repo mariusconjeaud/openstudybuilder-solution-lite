@@ -24,7 +24,7 @@ DatasetClassUID = Path(None, description="The unique id of the DatasetClass")
 @router.get(
     "/dataset-classes",
     summary="List all dataset classes",
-    description="""
+    description=f"""
 State before:
 
 Business logic:
@@ -33,11 +33,14 @@ Business logic:
 State after:
  - No change
 
-Possible errors:
+{_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
     response_model=CustomPage[DatasetClass],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 @decorators.allow_exports(
     {
@@ -72,7 +75,7 @@ def get_dataset_classes(
     current_user_id: str = Depends(get_current_user_id),
 ):
     dataset_class_service = DatasetClassService(user=current_user_id)
-    results = dataset_class_service.get_all_standards(
+    results = dataset_class_service.get_all_items(
         sort_by=sort_by,
         page_number=page_number,
         page_size=page_size,
@@ -97,7 +100,7 @@ def get_dataset_classes(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -143,7 +146,10 @@ Possible errors:
  """,
     response_model=DatasetClass,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_dataset_class(
     uid: str = DatasetClassUID, current_user_id: str = Depends(get_current_user_id)

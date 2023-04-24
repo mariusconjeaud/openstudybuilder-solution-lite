@@ -97,7 +97,7 @@
     v-model="showArmHistory"
     @keydown.esc="closeArmHistory"
     persistent
-    max-width="1200px"
+    max-width="1440px"
     >
     <history-table
       :title="studyArmHistoryTitle"
@@ -159,7 +159,7 @@ export default {
         { text: this.$t('StudyArmsTable.short_name'), value: 'short_name' },
         { text: this.$t('StudyArmsTable.randomisation_group'), value: 'randomization_group' },
         { text: this.$t('StudyArmsTable.code'), value: 'code' },
-        { text: this.$t('StudyArmsTable.number_of_subjects'), value: 'number_of_subjects' },
+        { text: this.$t('StudyArmsTable.number_of_subjects'), value: 'number_of_subjects', width: '1%' },
         { text: this.$t('StudyArmsTable.connected_branches'), value: 'arm_connected_branch_arms' },
         { text: this.$t('StudyArmsTable.description'), value: 'description' },
         { text: this.$t('StudyBranchArms.colour'), value: 'arm_colour' },

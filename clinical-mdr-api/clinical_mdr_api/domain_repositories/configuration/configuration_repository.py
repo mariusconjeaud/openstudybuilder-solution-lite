@@ -1,14 +1,15 @@
-from typing import cast
+from typing import List, cast
 
 from neomodel import db
 
 from clinical_mdr_api.domain.configurations import CTConfigAR, CTConfigValueVO
 from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemMetadataVO
-from clinical_mdr_api.domain_repositories.generic_template_repository import (
-    _AggregateRootType,
-)
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
+)
+from clinical_mdr_api.domain_repositories.models._utils import (
+    LATEST_VERSION_ORDER_BY,
+    to_relation_trees,
 )
 from clinical_mdr_api.domain_repositories.models.configuration import (
     CTConfigRoot,
@@ -24,14 +25,36 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
+from clinical_mdr_api.domain_repositories.syntax_templates.generic_syntax_template_repository import (
+    _AggregateRootType,
+)
+from clinical_mdr_api.models.configuration import CTConfigOGM
 
 
 class CTConfigRepository(LibraryItemRepositoryImplBase[CTConfigAR]):
-
     value_class = CTConfigValue
     root_class = CTConfigRoot
     user: str
     has_library = False
+
+    def find_all(self) -> List[CTConfigOGM]:
+        all_configurations = [
+            CTConfigOGM.from_orm(sas_node)
+            for sas_node in to_relation_trees(
+                self.root_class.nodes.fetch_relations("has_latest_value")
+                .fetch_optional_relations(
+                    "has_latest_value__has_configured_codelist",
+                    "has_latest_value__has_configured_term",
+                )
+                .fetch_optional_single_relation_of_type(
+                    {
+                        "has_version": ("latest_version", LATEST_VERSION_ORDER_BY),
+                    }
+                )
+                .order_by("uid")
+            )
+        ]
+        return all_configurations
 
     def generate_uid(self) -> str:
         return self.root_class.get_next_free_uid_and_increment_counter()
@@ -107,9 +130,31 @@ class CTConfigRepository(LibraryItemRepositoryImplBase[CTConfigAR]):
                 value.has_configured_term.connect(term_root)
         return value
 
+    def _get_target_uid_or_none(self, relatiohship):
+        node = relatiohship.get_or_none()
+        return node.uid if node is not None else None
+
     def _is_new_version_necessary(self, ar: CTConfigAR, value: VersionValue) -> bool:
         codelist_config_value = cast(CTConfigValue, value)
-        return codelist_config_value != ar.value
+        val = (
+            value.study_field_name != ar.value.study_field_name
+            or codelist_config_value.study_field_data_type
+            != ar.value.study_field_data_type
+            or codelist_config_value.study_field_null_value_code
+            != ar.value.study_field_null_value_code
+            or self._get_target_uid_or_none(
+                codelist_config_value.has_configured_codelist
+            )
+            != ar.value.configured_codelist_uid
+            or self._get_target_uid_or_none(codelist_config_value.has_configured_term)
+            != ar.value.configured_term_uid
+            or codelist_config_value.study_field_grouping
+            != ar.value.study_field_grouping
+            or codelist_config_value.study_field_name_api
+            != ar.value.study_field_name_api
+            or codelist_config_value.is_dictionary_term != ar.value.is_dictionary_term
+        )
+        return val
 
     def _create(self, item: CTConfigAR) -> CTConfigAR:
         relation_data: LibraryItemMetadataVO = item.item_metadata
@@ -118,7 +163,13 @@ class CTConfigRepository(LibraryItemRepositoryImplBase[CTConfigAR]):
 
         value = self._get_or_create_value(root=root, ar=item)
 
-        (root, value, _, _, _,) = self._db_create_and_link_nodes(
+        (
+            root,
+            value,
+            _,
+            _,
+            _,
+        ) = self._db_create_and_link_nodes(
             root, value, self._library_item_metadata_vo_to_datadict(relation_data)
         )
         self._maintain_parameters(item, root, value)

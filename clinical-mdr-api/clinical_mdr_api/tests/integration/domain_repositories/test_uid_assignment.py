@@ -2,13 +2,14 @@ import unittest
 
 from neomodel import db
 
-from clinical_mdr_api.domain_repositories.models.endpoint import EndpointRoot
-from clinical_mdr_api.domain_repositories.models.objective import ObjectiveRoot
+from clinical_mdr_api.domain_repositories.models.syntax import (
+    EndpointRoot,
+    ObjectiveRoot,
+)
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 
 
 class TestUIDAssignment(unittest.TestCase):
-
     dbname = "uidassignmenttest"
 
     def setUp(self):

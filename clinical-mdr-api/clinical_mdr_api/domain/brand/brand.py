@@ -19,7 +19,6 @@ class BrandAR:
 
     @staticmethod
     def from_input_values(name: str, generate_uid_callback: Callable[[], str]):
-
         uid = generate_uid_callback()
 
         return BrandAR(

@@ -7,11 +7,14 @@ from fastapi import status
 from neomodel import db
 
 from clinical_mdr_api import exceptions, models
-from clinical_mdr_api.domain.library.activity_instructions import ActivityInstructionAR
 from clinical_mdr_api.domain.study_selection.study_activity_instruction import (
     StudyActivityInstructionVO,
 )
+from clinical_mdr_api.domain.syntax_instances.activity_instruction import (
+    ActivityInstructionAR,
+)
 from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
+from clinical_mdr_api.domain_repositories.models._utils import to_relation_trees
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyActivityInstruction as StudyActivityInstructionNeoModel,
 )
@@ -19,12 +22,13 @@ from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import service_level_generic_filtering
-from clinical_mdr_api.services.activity_instructions import ActivityInstructionService
 from clinical_mdr_api.services.study_selection_base import StudySelectionMixin
+from clinical_mdr_api.services.syntax_instances.activity_instructions import (
+    ActivityInstructionService,
+)
 
 
 class StudyActivityInstructionService(StudySelectionMixin):
-
     _repos: MetaRepository
 
     def __init__(self, author):
@@ -49,7 +53,7 @@ class StudyActivityInstructionService(StudySelectionMixin):
         )
         items = [
             models.StudyActivityInstruction.from_orm(sai_node)
-            for sai_node in query.to_relation_trees()
+            for sai_node in to_relation_trees(query)
         ]
 
         # Do filtering, sorting, pagination and count
@@ -70,13 +74,13 @@ class StudyActivityInstructionService(StudySelectionMixin):
     ) -> Sequence[models.StudyActivityInstruction]:
         return [
             models.StudyActivityInstruction.from_orm(sai_node)
-            for sai_node in StudyActivityInstructionNeoModel.nodes.fetch_relations(
-                "study_activity",
-                "activity_instruction_value__activity_instruction_root",
-                "has_after",
+            for sai_node in to_relation_trees(
+                StudyActivityInstructionNeoModel.nodes.fetch_relations(
+                    "study_activity",
+                    "activity_instruction_value__activity_instruction_root",
+                    "has_after",
+                ).filter(study_value__study_root__uid=study_uid)
             )
-            .filter(study_value__study_root__uid=study_uid)
-            .to_relation_trees()
         ]
 
     def _create_activity_instruction(

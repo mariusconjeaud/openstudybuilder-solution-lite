@@ -10,15 +10,18 @@ pytest = "~=6.2"
 
 [dev-packages]
 pylint = "~=2.15"
+black = "*"
 
 [requires]
 python_version = "3.7"
 
 [scripts]
-import_cdisc_ct_into_cdisc_ct_db = "python -m mdr_standards_import.cdisc_ct.pipelines.pipeline_step_import_cdisc_ct_into_cdisc_ct_db"
-import_from_cdisc_ct_db_into_mdr = "python -m mdr_standards_import.cdisc_ct.pipelines.pipeline_step_import_from_cdisc_ct_db_into_mdr"
-pipeline_bulk_import = "python -m mdr_standards_import.cdisc_ct.pipelines.pipeline_bulk_import"
-
-download_json_data_from_cdisc_api = "python -m mdr_standards_import.cdisc_ct.dev_scripts.download_json_data_from_cdisc_api"
-bulk_import = "python -m mdr_standards_import.cdisc_ct.dev_scripts.bulk_import"
+import_cdisc_ct_into_cdisc_db = "python -m mdr_standards_import.scripts.pipelines.cdisc_ct.pipeline_step_import_into_cdisc_db"
+import_ct_from_cdisc_db_into_mdr = "python -m mdr_standards_import.scripts.pipelines.cdisc_ct.pipeline_step_import_from_cdisc_db_into_mdr"
+import_cdisc_data_models_into_cdisc_db = "python -m mdr_standards_import.scripts.pipelines.cdisc_data_models.pipeline_step_import_into_cdisc_db"
+import_data_models_from_cdisc_db_into_mdr = "python -m mdr_standards_import.scripts.pipelines.cdisc_data_models.pipeline_step_import_from_cdisc_db_into_mdr"
+pipeline_bulk_import = "python -m mdr_standards_import.scripts.pipelines.pipeline_bulk_import"
+download_ct_json_data_from_cdisc_api = "python -m mdr_standards_import.scripts.dev_scripts.cdisc_ct.download_json_data_from_cdisc_api"
+download_data_models_json_data_from_cdisc_api = "python -m mdr_standards_import.scripts.dev_scripts.cdisc_data_models.download_json_data_from_cdisc_api"
+bulk_import = "python -m mdr_standards_import.scripts.dev_scripts.bulk_import"
 test = "pytest"

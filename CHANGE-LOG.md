@@ -1,6 +1,31 @@
 # OpenStudyBuilder Commits changelog
 
-## V 0.3
+## V 0.4
+
+### Fixes and Enhancements
+- UI/UX improvements.
+- Activity Placeholder updates and its corresponded API, UI, Logical and Physical data model updates.
+- Sharing OpenStudyBuilder Solution code to Public gitlab (NN SBOM task file updates).
+- Activity concepts model improvements, logical & physical data model updates.
+- Enabling Study Metadata Listings, properties for generation of SDTM and relevant API endpoint updates.
+- Improvements of CRF Management with vendor extension, CRF display in HTML or PDF format and OID & UID refactoring.
+- Database Consistency Checks for Versioning Relationships on Library Nodes.
+- Additional capabilities on Activity Instance and Item Class Model.
+- Improved support for ODM.XML vendor extensions.
+- Legacy migration of Activity Instance concepts have been adjusted to match the updated data model. Note the content is not fully curated yet, improvements will therefore come in next release.
+- Global Audit Trail report shared as a NeoDash report (intially NeoDash report runs separately).
+
+### New Features
+- Locking and Versioning of Study Metadata (incl. API and UI Designs, Logical and Physical Data model updates).
+- Import of core SDTM and SDTMIG data models from CDISC Library is supported now (Part of the foundational data model representation linked to the Activity Concepts model similar to the CDISC Bio-medical Concepts mode).
+- The Data Model and Data Model IG data structures is extended with a number of attributes to support sponsor needs. Note the UI is not yet made for these part - sample data is loaded into the system database for utilisation by NeoDash reports.
+- Initial version of DDF API adaptor enabling Digital Data Flow (DDF) compatible access to StudyBuilder as a DDF Study Definition Repository (SDR) solution.
+- The data import repository will also include a DDF sample study. 
+- The listing of activity concepts include links to overview pages of bot an Activity Concept and an Activity Instance Concept. This is on two separate tabs, one showing a form based overview and one showing a simplifies YAML based overview. The YAML based overview will in a later release be made fully CDISC COSMoS compliant.
+- A NeoDash Report displayed with outbound relationships from the versioned value node.
+- A NeoDash based report is included with a more comprehensive display and browsing capabilities of Activity Concepts. This NeoDash report in shared in the neo4j-mdr-db git repository and must be launched manually. 
+
+## V 0.3 (17-FEB-2023)
 
 ### Fixes and Enhancements
 - Fixes on CRF library

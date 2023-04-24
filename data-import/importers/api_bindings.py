@@ -543,7 +543,7 @@ class ApiBinding:
         result = response.json()
         temp_dict = {}
         for res in result["items"]:
-            temp_dict[res["study_id"]] = res
+            temp_dict[res["current_metadata"]["identification_metadata"]["study_id"]] = res
         return temp_dict
 
     def simple_approve(self, path: str):

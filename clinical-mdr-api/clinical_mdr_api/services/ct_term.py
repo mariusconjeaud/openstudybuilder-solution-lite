@@ -153,7 +153,6 @@ class CTTermService:
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[CTTermNameAndAttributes]:
-
         self.enforce_codelist_package_library(
             codelist_uid, codelist_name, library, package
         )
@@ -260,7 +259,6 @@ class CTTermService:
     def remove_parent(
         self, term_uid: str, parent_uid: str, relationship_type: str
     ) -> CTTerm:
-
         if not self._repos.ct_term_name_repository.term_exists(
             normalize_string(term_uid)
         ):
@@ -342,7 +340,6 @@ class CTTermService:
             )
 
     def set_new_order(self, term_uid: str, codelist_uid: str, new_order: int) -> CTTerm:
-
         if not self._repos.ct_codelist_name_repository.codelist_exists(
             normalize_string(codelist_uid)
         ):

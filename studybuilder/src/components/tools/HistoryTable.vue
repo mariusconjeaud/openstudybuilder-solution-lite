@@ -19,7 +19,7 @@
       >
       <template v-slot:item="{ item }">
         <tr>
-          <td v-for="(header, index)  in cleanedHeaders" v-bind:key="index">
+          <td v-for="(header, index)  in cleanedHeaders" v-bind:key="index" :class="getTextClass(item)">
             <div :class="getCellClasses(header, item)">
               <span v-if="htmlFields && htmlFields.indexOf(header.value) !== -1" v-html="getDisplay(item, header.value)" />
               <span v-else>{{ getDisplay(item, header.value) }}</span>
@@ -30,7 +30,15 @@
     </v-data-table>
   </v-card-text>
   <v-card-actions>
-    <div class="blue lighten-4 difference">{{ $t('HistoryTable.legend') }}</div>
+    <v-row>
+      <v-col>
+        <div>{{ $t('HistoryTable.legend') }}</div>
+        <div class="ml-2 font-weight-black">{{ $t('HistoryTable.current_version') }}</div>
+        <div class="ml-2">{{ $t('HistoryTable.older_version') }}</div>
+        <div class="ml-2 red--text">{{ $t('HistoryTable.deleted_version') }}</div>
+        <div class="ml-2 blue lighten-4 difference">{{ $t('HistoryTable.changed_value') }}</div>
+      </v-col>
+    </v-row>
     <v-spacer></v-spacer>
     <v-btn
       color="secondary"
@@ -92,6 +100,11 @@ export default {
           excludedHeaders.push(header)
         }
       }
+      for (const header of this.headers) {
+        if (header.historyHeader) {
+          header.value = header.historyHeader
+        }
+      }
       result = this.headers.filter(item => {
         return !excludedHeaders.includes(item.value)
       })
@@ -125,10 +138,14 @@ export default {
   methods: {
     getHighlight (header, item) {
       if (item) {
-        if (header.value.indexOf('Date') !== -1 || header.value.indexOf('changeType') !== -1) {
+        if (header.value.indexOf('date') !== -1 || header.value.indexOf('change_type') !== -1) {
           return false
         } else if (item.changes) {
-          return item.changes[header.value]
+          if (header.value.indexOf('.') !== -1) {
+            return item.changes[header.value.substring(0, header.value.indexOf('.'))]
+          } else {
+            return item.changes[header.value]
+          }
         } else {
           return false
         }
@@ -136,9 +153,18 @@ export default {
     },
     getCellClasses (header, item) {
       if (this.getHighlight(header, item)) {
-        return 'blue lighten-4 difference'
+        return 'blue lighten-4 difference ml-3'
       }
-      return ''
+      return 'ml-3'
+    },
+    getTextClass (item) {
+      if (item.change_type === 'Delete') {
+        return 'red--text'
+      } else if (!item.end_date) {
+        return 'font-weight-black'
+      } else {
+        return ''
+      }
     },
     getDisplay (item, accessor) {
       const accessList = accessor.split('.')
