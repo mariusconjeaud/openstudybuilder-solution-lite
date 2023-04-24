@@ -22,7 +22,6 @@ class ActivityHierarchySimpleModel(BaseModel):
     def from_activity_uid(
         cls, uid: str, find_activity_by_uid: Callable[[str], Optional[ConceptARBase]]
     ) -> Optional["ActivityHierarchySimpleModel"]:
-
         if uid is not None:
             activity = find_activity_by_uid(uid)
 
@@ -40,38 +39,6 @@ class ActivityHierarchySimpleModel(BaseModel):
         description="",
     )
     name: Optional[str] = Field(None, title="name", description="")
-
-
-class ActivityBase(Concept):
-    possible_actions: List[str] = Field(
-        ...,
-        description=(
-            "Holds those actions that can be performed on the ActivityInstances. "
-            "Actions are: 'approve', 'edit', 'new_version'."
-        ),
-    )
-
-    @validator("possible_actions", pre=True, always=True)
-    # pylint:disable=no-self-argument,unused-argument
-    def validate_possible_actions(cls, value, values):
-        if values["status"] == LibraryItemStatus.DRAFT.value and values[
-            "version"
-        ].startswith("0"):
-            return [
-                ObjectAction.APPROVE.value,
-                ObjectAction.DELETE.value,
-                ObjectAction.EDIT.value,
-            ]
-        if values["status"] == LibraryItemStatus.DRAFT.value:
-            return [ObjectAction.APPROVE.value, ObjectAction.EDIT.value]
-        if values["status"] == LibraryItemStatus.FINAL.value:
-            return [
-                ObjectAction.INACTIVATE.value,
-                ObjectAction.NEWVERSION.value,
-            ]
-        if values["status"] == LibraryItemStatus.RETIRED.value:
-            return [ObjectAction.REACTIVATE.value]
-        return []
 
 
 class ActivitySubGroupSimpleModel(ActivityHierarchySimpleModel):
@@ -105,6 +72,38 @@ class ActivityGroupSimpleModel(ActivityHierarchySimpleModel):
         description="",
         source="has_latest_value.in_subgroup.in_group.name",
     )
+
+
+class ActivityBase(Concept):
+    possible_actions: List[str] = Field(
+        ...,
+        description=(
+            "Holds those actions that can be performed on the ActivityInstances. "
+            "Actions are: 'approve', 'edit', 'new_version'."
+        ),
+    )
+
+    @validator("possible_actions", pre=True, always=True)
+    # pylint:disable=no-self-argument,unused-argument
+    def validate_possible_actions(cls, value, values):
+        if values["status"] == LibraryItemStatus.DRAFT.value and values[
+            "version"
+        ].startswith("0"):
+            return [
+                ObjectAction.APPROVE.value,
+                ObjectAction.DELETE.value,
+                ObjectAction.EDIT.value,
+            ]
+        if values["status"] == LibraryItemStatus.DRAFT.value:
+            return [ObjectAction.APPROVE.value, ObjectAction.EDIT.value]
+        if values["status"] == LibraryItemStatus.FINAL.value:
+            return [
+                ObjectAction.INACTIVATE.value,
+                ObjectAction.NEWVERSION.value,
+            ]
+        if values["status"] == LibraryItemStatus.RETIRED.value:
+            return [ObjectAction.REACTIVATE.value]
+        return []
 
 
 class Activity(ActivityBase):
@@ -247,3 +246,122 @@ class ActivityVersion(Activity):
             "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )
+
+
+class SimpleActivity(BaseModel):
+    name: Optional[str] = Field(
+        None,
+        title="name",
+        description="",
+    )
+    name_sentence_case: Optional[str] = Field(
+        None,
+        title="name_sentence_case",
+        description="",
+    )
+    definition: Optional[str] = Field(
+        None,
+        title="definition",
+        description="",
+    )
+    abbreviation: Optional[str] = Field(
+        None,
+        title="abbreviation",
+        description="",
+    )
+    library_name: Optional[str] = Field(
+        None,
+        title="library_name",
+        description="",
+    )
+
+
+class SimpleActivitySubGroup(BaseModel):
+    name: Optional[str] = Field(None, title="name", description="")
+    definition: Optional[str] = Field(None, title="name", description="")
+
+
+class SimpleActivityGroup(BaseModel):
+    name: Optional[str] = Field(None, title="name", description="")
+    definition: Optional[str] = Field(None, title="name", description="")
+
+
+class SimpleActivityInstanceClass(BaseModel):
+    name: str = Field(..., title="name", description="")
+
+
+class SimpleActivityInstance(BaseModel):
+    name: str = Field(..., title="name", description="")
+    name_sentence_case: Optional[str] = Field(None, title="name", description="")
+    abbreviation: Optional[str] = Field(None, title="name", description="")
+    definition: Optional[str] = Field(None, title="name", description="")
+    adam_param_code: Optional[str] = Field(None, title="name", description="")
+    topic_code: Optional[str] = Field(None, title="name", description="")
+    library_name: str = Field(..., title="name", description="")
+    activity_instance_class: SimpleActivityInstanceClass = Field(...)
+
+
+class ActivityOverview(BaseModel):
+    activity: SimpleActivity = Field(...)
+    activity_subgroups: List[SimpleActivitySubGroup] = Field(...)
+    activity_groups: List[SimpleActivityGroup] = Field(...)
+    activity_instances: List[SimpleActivityInstance] = Field(...)
+
+    @classmethod
+    def from_repository_input(cls, overview: dict):
+        return cls(
+            activity=SimpleActivity(
+                name=overview.get("activity_value").get("name"),
+                name_sentence_case=overview.get("activity_value").get(
+                    "name_sentence_case"
+                ),
+                definition=overview.get("activity_value").get("definition"),
+                abbreviation=overview.get("activity_value").get("abbreviation"),
+                library_name=overview.get("activity_library_name"),
+            ),
+            activity_subgroups=[
+                SimpleActivitySubGroup(
+                    name=subgroup.get("activity_subgroup_value").get("name"),
+                    definition=subgroup.get("activity_subgroup_value").get(
+                        "definition"
+                    ),
+                )
+                for subgroup in overview.get("hierarchy")
+            ],
+            activity_groups=[
+                SimpleActivityGroup(
+                    name=group.get("activity_group_value").get("name"),
+                    definition=group.get("activity_group_value").get("definition"),
+                )
+                for group in overview.get("hierarchy")
+            ],
+            activity_instances=[
+                SimpleActivityInstance(
+                    name=activity_instance.get("activity_instance_data").get("name"),
+                    name_sentence_case=activity_instance.get(
+                        "activity_instance_data"
+                    ).get("name_sentence_case"),
+                    abbreviation=activity_instance.get("activity_instance_data").get(
+                        "abbreviation"
+                    ),
+                    definition=activity_instance.get("activity_instance_data").get(
+                        "definition"
+                    ),
+                    adam_param_code=activity_instance.get("activity_instance_data").get(
+                        "adam_param_code"
+                    ),
+                    topic_code=activity_instance.get("activity_instance_data").get(
+                        "topic_code"
+                    ),
+                    library_name=activity_instance.get(
+                        "activity_instance_library_name"
+                    ),
+                    activity_instance_class=SimpleActivityInstanceClass(
+                        name=activity_instance.get("activity_instance_class").get(
+                            "name"
+                        )
+                    ),
+                )
+                for activity_instance in overview.get("activity_instances")
+            ],
+        )

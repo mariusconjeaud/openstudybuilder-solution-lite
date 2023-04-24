@@ -12,17 +12,56 @@ class MetadataRepository:
     OPTIONAL_FORM_MATCH = """
     OPTIONAL MATCH (OdmTemplateRoot)
     -[:FORM_REF]->(OdmFormRoot:OdmFormRoot)
-    -[OdmFormLatest:LATEST_FINAL|LATEST_RETIRED]->(OdmFormValue:OdmFormValue)
+    -[:LATEST_FINAL|LATEST_RETIRED]->(OdmFormValue:OdmFormValue)
+    CALL {
+        WITH OdmFormRoot, OdmFormValue
+        MATCH (OdmFormRoot)-[hv:HAS_VERSION]-(OdmFormValue)
+        WHERE hv.status in ['Final', 'Retired'] 
+        WITH hv
+        ORDER BY
+            toInteger(split(hv.version, '.')[0]) ASC,
+            toInteger(split(hv.version, '.')[1]) ASC,
+            hv.end_date ASC,
+            hv.start_date ASC
+        WITH collect(hv) as hvs
+        RETURN last(hvs) as OdmFormLatest
+    }
     """
     OPTIONAL_ITEM_GROUP_MATCH = """
     OPTIONAL MATCH (OdmFormRoot)
     -[:ITEM_GROUP_REF]->(OdmItemGroupRoot:OdmItemGroupRoot)
-    -[OdmItemGroupLatest:LATEST_FINAL|LATEST_RETIRED]->(OdmItemGroupValue:OdmItemGroupValue)
+    -[:LATEST_FINAL|LATEST_RETIRED]->(OdmItemGroupValue:OdmItemGroupValue)
+    CALL {
+        WITH OdmItemGroupRoot, OdmItemGroupValue
+        MATCH (OdmItemGroupRoot)-[hv:HAS_VERSION]-(OdmItemGroupValue)
+        WHERE hv.status in ['Final', 'Retired'] 
+        WITH hv
+        ORDER BY
+            toInteger(split(hv.version, '.')[0]) ASC,
+            toInteger(split(hv.version, '.')[1]) ASC,
+            hv.end_date ASC,
+            hv.start_date ASC
+        WITH collect(hv) as hvs
+        RETURN last(hvs) as OdmItemGroupLatest
+    }
     """
     OPTIONAL_ITEM_MATCH = """
     OPTIONAL MATCH (OdmItemGroupRoot)
     -[:ITEM_REF]->(OdmItemRoot:OdmItemRoot)
-    -[OdmItemLatest:LATEST_FINAL|LATEST_RETIRED]->(OdmItemValue:OdmItemValue)
+    -[:LATEST_FINAL|LATEST_RETIRED]->(OdmItemValue:OdmItemValue)
+    CALL {
+        WITH OdmItemRoot, OdmItemValue
+        MATCH (OdmItemRoot)-[hv:HAS_VERSION]-(OdmItemValue)
+        WHERE hv.status in ['Final', 'Retired']
+        WITH hv
+        ORDER BY
+            toInteger(split(hv.version, '.')[0]) ASC,
+            toInteger(split(hv.version, '.')[1]) ASC,
+            hv.end_date ASC,
+            hv.start_date ASC
+        WITH collect(hv) as hvs
+        RETURN last(hvs) as OdmItemLatest
+    }
     """
     OPTIONAL_UNIT_DEFINITION_MATCH = """
     OPTIONAL MATCH (OdmItemRoot)
@@ -66,7 +105,20 @@ class MetadataRepository:
             f"""
                 WITH "
                     MATCH (OdmTemplateRoot:OdmTemplateRoot {{uid: $target_uid}})
-                    -[OdmTemplateLatest:LATEST_FINAL|LATEST_RETIRED]->(OdmTemplateValue:OdmTemplateValue)
+                    -[:LATEST_FINAL|LATEST_RETIRED]->(OdmTemplateValue:OdmTemplateValue)
+                    CALL {{
+                        WITH OdmTemplateRoot, OdmTemplateValue
+                        MATCH (OdmTemplateRoot)-[hv:HAS_VERSION]-(OdmTemplateValue)
+                        WHERE hv.status in ['Final', 'Retired']
+                        WITH hv
+                        ORDER BY
+                            toInteger(split(hv.version, '.')[0]) ASC,
+                            toInteger(split(hv.version, '.')[1]) ASC,
+                            hv.end_date ASC,
+                            hv.start_date ASC
+                        WITH collect(hv) as hvs
+                        RETURN last(hvs) as OdmTemplateLatest
+                    }}
                     {self.OPTIONAL_FORM_MATCH}
                     {self.OPTIONAL_ITEM_GROUP_MATCH}
                     {self.OPTIONAL_ITEM_MATCH}
@@ -105,7 +157,20 @@ class MetadataRepository:
         query = (
             f"""
                 WITH "
-                    MATCH (OdmFormRoot:OdmFormRoot {{uid: $target_uid}})-[OdmFormLatest:LATEST_FINAL|LATEST_RETIRED]->(OdmFormValue:OdmFormValue)
+                    MATCH (OdmFormRoot:OdmFormRoot {{uid: $target_uid}})-[:LATEST_FINAL|LATEST_RETIRED]->(OdmFormValue:OdmFormValue)
+                    CALL {{
+                        WITH OdmFormRoot, OdmFormValue
+                        MATCH (OdmFormRoot)-[hv:HAS_VERSION]-(OdmFormValue)
+                        WHERE hv.status in ['Final', 'Retired']
+                        WITH hv
+                        ORDER BY
+                            toInteger(split(hv.version, '.')[0]) ASC,
+                            toInteger(split(hv.version, '.')[1]) ASC,
+                            hv.end_date ASC,
+                            hv.start_date ASC
+                        WITH collect(hv) as hvs
+                        RETURN last(hvs) as OdmFormLatest
+                    }}
                     {self.OPTIONAL_ITEM_GROUP_MATCH}
                     {self.OPTIONAL_ITEM_MATCH}
                     {self.OPTIONAL_UNIT_DEFINITION_MATCH}
@@ -140,7 +205,20 @@ class MetadataRepository:
             f"""
                 WITH "
                     MATCH (OdmItemGroupRoot:OdmItemGroupRoot {{uid: $target_uid}})
-                    -[OdmItemGroupLatest:LATEST_FINAL|LATEST_RETIRED]->(OdmItemGroupValue:OdmItemGroupValue)
+                    -[:LATEST_FINAL|LATEST_RETIRED]->(OdmItemGroupValue:OdmItemGroupValue)
+                    CALL {{
+                        WITH OdmItemGroupRoot, OdmItemGroupValue
+                        MATCH (OdmItemGroupRoot)-[hv:HAS_VERSION]-(OdmItemGroupValue)
+                        WHERE hv.status in ['Final', 'Retired']
+                        WITH hv
+                        ORDER BY
+                            toInteger(split(hv.version, '.')[0]) ASC,
+                            toInteger(split(hv.version, '.')[1]) ASC,
+                            hv.end_date ASC,
+                            hv.start_date ASC
+                        WITH collect(hv) as hvs
+                        RETURN last(hvs) as OdmItemGroupLatest
+                    }}
                     {self.OPTIONAL_ITEM_MATCH}
                     {self.OPTIONAL_UNIT_DEFINITION_MATCH}
                     {self.OPTIONAL_CODELIST_MATCH}
@@ -172,7 +250,20 @@ class MetadataRepository:
         query = (
             f"""
                 WITH "
-                    MATCH (OdmItemRoot:OdmItemRoot {{uid: $target_uid}})-[OdmItemLatest:LATEST_FINAL|LATEST_RETIRED]->(OdmItemValue:OdmItemValue)
+                    MATCH (OdmItemRoot:OdmItemRoot {{uid: $target_uid}})-[:LATEST_FINAL|LATEST_RETIRED]->(OdmItemValue:OdmItemValue)
+                    CALL {{
+                        WITH OdmItemRoot, OdmItemValue
+                        MATCH (OdmItemRoot)-[hv:HAS_VERSION]-(OdmItemValue)
+                        WHERE hv.status in ['Final', 'Retired']
+                        WITH hv
+                        ORDER BY
+                            toInteger(split(hv.version, '.')[0]) ASC,
+                            toInteger(split(hv.version, '.')[1]) ASC,
+                            hv.end_date ASC,
+                            hv.start_date ASC
+                        WITH collect(hv) as hvs
+                        RETURN last(hvs) as OdmItemLatest
+                    }}
                     {self.OPTIONAL_UNIT_DEFINITION_MATCH}
                     {self.OPTIONAL_CODELIST_MATCH}
                     {self.OPTIONAL_CODELIST_TERM_MATCH}

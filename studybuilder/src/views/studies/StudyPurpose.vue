@@ -8,9 +8,7 @@
       />
   </div>
   <v-tabs v-model="tab">
-    <v-tab href="#objectives">{{ $t('StudyPurposeView.study_objectives') }}</v-tab>
-    <v-tab href="#endpoints">{{ $t('StudyPurposeView.study_endpoints') }}</v-tab>
-    <v-tab href="#estimands">{{ $t('StudyPurposeView.study_estimands') }}</v-tab>
+    <v-tab v-for="tab of tabs" :key="tab.tab" :href="tab.tab">{{ tab.name }}</v-tab>
   </v-tabs>
   <v-tabs-items v-model="tab">
     <v-tab-item id="objectives">
@@ -36,6 +34,7 @@ import EndpointTable from '@/components/studies/EndpointTable'
 import ObjectiveTable from '@/components/studies/ObjectiveTable'
 import UnderConstruction from '@/components/layout/UnderConstruction.vue'
 import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels'
+import { mapActions } from 'vuex'
 
 export default {
   mixins: [studySelectedNavigationGuard],
@@ -53,17 +52,43 @@ export default {
         'StudyPurposeView.study_objectives',
         'StudyPurposeView.study_endpoints',
         'StudyPurposeView.study_estimands'
+      ],
+      tabs: [
+        { tab: '#objectives', name: this.$t('StudyPurposeView.study_objectives') },
+        { tab: '#endpoints', name: this.$t('StudyPurposeView.study_endpoints') },
+        { tab: '#estimands', name: this.$t('StudyPurposeView.study_estimands') }
       ]
     }
   },
   mounted () {
     this.tab = this.$route.params.tab
+    const tabName = this.tab ? this.tabs.find(el => el.tab.substring(1) === this.tab).name : this.tabs[0].name
+    setTimeout(() => {
+      this.addBreadcrumbsLevel({
+        text: tabName,
+        to: { name: 'StudyPurpose', params: { tab: tabName } },
+        index: 3,
+        replace: true
+      })
+    }, 100)
+  },
+  methods: {
+    ...mapActions({
+      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
+    })
   },
   watch: {
     tab (newValue) {
+      const tabName = newValue ? this.tabs.find(el => el.tab.substring(1) === newValue).name : this.tabs[0].name
       this.$router.push({
         name: 'StudyPurpose',
         params: { tab: newValue }
+      })
+      this.addBreadcrumbsLevel({
+        text: tabName,
+        to: { name: 'StudyPurpose', params: { tab: tabName } },
+        index: 3,
+        replace: true
       })
       this.helpItems.splice(3, 4)
       if (newValue === 'objectives') {

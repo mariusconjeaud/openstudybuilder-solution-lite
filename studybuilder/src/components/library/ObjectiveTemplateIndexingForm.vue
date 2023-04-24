@@ -27,7 +27,7 @@
       </template>
     </not-applicable-field>
     <not-applicable-field
-      :checked="template && (template.confirmatory_testing === null || template.confirmatory_testing === undefined)"
+      :checked="template && (template.is_confirmatory_testing === null || template.is_confirmatory_testing === undefined)"
       :clean-function="(value) => cleanConfirmatoryTesting(form, value)"
       >
       <template v-slot:mainField="{ notApplicable }">
@@ -37,7 +37,7 @@
           :rules="`requiredIfNotNA:${notApplicable}`"
           >
           <yes-no-field
-            v-model="form.confirmatory_testing"
+            v-model="form.is_confirmatory_testing"
             :label="$t('ObjectiveTemplateForm.confirmatory_testing')"
             :disabled="notApplicable"
             :error-messages="errors"
@@ -80,12 +80,12 @@ export default {
     },
     cleanConfirmatoryTesting (form, value) {
       if (value) {
-        this.$set(form, 'confirmatoryTesting', null)
+        this.$set(form, 'is_confirmatory_testing', null)
       }
     },
     preparePayload (form) {
       const result = {
-        confirmatory_testing: form.confirmatory_testing,
+        is_confirmatory_testing: form.is_confirmatory_testing,
         category_uids: []
       }
       if (form.categories) {

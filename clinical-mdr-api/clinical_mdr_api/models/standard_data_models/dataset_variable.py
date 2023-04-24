@@ -57,11 +57,17 @@ class DatasetVariable(VersionProperties):
         description="dataset_name",
         source="has_latest_value.has_dataset_variable.label",
     )
-    implemented_class_variable: str = Field(
+    implements_variable: str = Field(
         ...,
-        title="implemented_class_variable",
-        description="implemented_class_variable",
-        source="has_latest_value.implements_class_variable.label",
+        title="implements_variable",
+        description="implements_variable",
+        source="has_latest_value.implements_variable.label",
+    )
+    has_mapping_target: Optional[str] = Field(
+        None,
+        title="implements_variable",
+        description="implements_variable",
+        source="has_latest_value.has_mapping_target.label",
     )
     catalogue_name: str = Field(
         ...,
@@ -69,9 +75,3 @@ class DatasetVariable(VersionProperties):
         description="catalogue",
         source="has_dataset_variable.name",
     )
-    # library_name: str = Field(
-    #     None,
-    #     title="library_name",
-    #     description="",
-    #     source="has_library.name",
-    # )

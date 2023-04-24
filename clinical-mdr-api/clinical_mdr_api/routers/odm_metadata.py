@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 
 from clinical_mdr_api.domain._utils import ObjectStatus
 from clinical_mdr_api.domain.concepts.utils import ExporterType, TargetType
-from clinical_mdr_api.models.error import ErrorResponse
+from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.odm_clinspark_import import OdmClinicalXmlImporterService
 from clinical_mdr_api.services.odm_csv_exporter import OdmCsvExporterService
 from clinical_mdr_api.services.odm_xml_exporter import OdmXmlExporterService
@@ -35,7 +35,10 @@ If `parent` is empty or `*` is given then the mapping will apply to all occurren
     summary="Export ODM XML",
     description="",
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_odm_document(
     target_uid: str,
@@ -85,7 +88,10 @@ def get_odm_document(
     summary="Export ODM CSV",
     description="",
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_odm_csv(target_uid: str, target_type: TargetType):
     odm_csv_exporter_service = OdmCsvExporterService(target_uid, target_type)
@@ -104,7 +110,10 @@ def get_odm_csv(target_uid: str, target_type: TargetType):
     summary="Import ODM XML",
     description="",
     status_code=201,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def store_odm_xml(
     xml_file: UploadFile = File(
@@ -133,7 +142,10 @@ def store_odm_xml(
     description="",
     response_model=List[str],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_available_stylesheet_names():
     return OdmXmlStylesheetService.get_available_stylesheet_names()
@@ -144,7 +156,10 @@ def get_available_stylesheet_names():
     summary="Get a specific ODM XML Stylesheet",
     description="",
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_specific_stylesheet(
     stylesheet: str = Path(

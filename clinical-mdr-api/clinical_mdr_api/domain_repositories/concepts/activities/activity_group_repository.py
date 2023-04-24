@@ -119,7 +119,15 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
         return filter_statements_to_return, filter_query_parameters
 
     def specific_alias_clause(self) -> str:
-        return ""
+        # concept_value property comes from the main part of the query
+        # which is specified in the activity_generic_repository_impl
+        return """
+        WITH *,
+            head([(concept_value)<-[:IN_GROUP]-(activity_sub_group_value:ActivitySubGroupValue)<-[:LATEST]-
+            (activity_sub_group_root:ActivitySubGroupRoot) | {uid:activity_sub_group_root.uid, name:activity_sub_group_value.name}]) AS activity_subgroup,
+            head([(concept_value)<-[:IN_GROUP]-(activity_sub_group_value:ActivitySubGroupValue)<-[:IN_SUBGROUP]
+            -(activity_value:ActivityValue)<-[:LATEST]-(activity_root:ActivityRoot) | {uid:activity_root.uid, name:activity_value.name}]) AS activity
+        """
 
     def specific_header_match_clause(self) -> Optional[str]:
         return " MATCH (concept_value)<-[:IN_GROUP]-()<-[:IN_SUB_GROUP]-() "
@@ -129,18 +137,18 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
         value_node.save()
         return value_node
 
-    def get_template_activity_groups(
-        self, root_class: type, template_uid: str
+    def get_syntax_activity_groups(
+        self, root_class: type, syntax_uid: str
     ) -> Optional[Sequence[ActivityGroupAR]]:
         """
-        This method returns the activity groups for the template with provided uid
+        This method returns the activity groups for the syntax with provided uid
 
-        :param root_class: The class of the root node for the template
-        :param template_uid: UID of the template
+        :param root_class: The class of the root node for the syntax
+        :param syntax_uid: UID of the syntax
         :return Sequence[ActivityGroupAR]:
         """
-        template = root_class.nodes.get(uid=template_uid)
-        activity_group_nodes = template.has_activity_group.all()
+        syntax = root_class.nodes.get(uid=syntax_uid)
+        activity_group_nodes = syntax.has_activity_group.all()
         if activity_group_nodes:
             groups = []
             for node in activity_group_nodes:

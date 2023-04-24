@@ -491,7 +491,6 @@ class StudyDesignFigureService:
         total_width = 0
         for r, row in enumerate(table):
             for c, cell in enumerate(row):
-
                 # add margin between Epoch columns
                 if c > 1:
                     x += EPOCH_MARGIN
@@ -866,7 +865,6 @@ class StudyDesignFigureService:
             width=doc_width,
             height=doc_height,
         ):
-
             # Reusable definitions #
             with doc.tag("defs"):
                 self._arrowhead_horizontal(doc, id_="arrowhead1")
@@ -918,7 +916,6 @@ class StudyDesignFigureService:
             klass=cell["klass"],
             transform=f"translate({cell['x']}, {cell['y']})",
         ):
-
             # the box of the cell
             doc.stag(
                 "rect",

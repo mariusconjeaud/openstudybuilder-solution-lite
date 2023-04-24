@@ -9,7 +9,6 @@ from clinical_mdr_api.services._meta_repository import MetaRepository  # type: i
 
 
 class ProjectService:
-
     user_initials: Optional[str]
 
     def __init__(self, user: Optional[str] = None):

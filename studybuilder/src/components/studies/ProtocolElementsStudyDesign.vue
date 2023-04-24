@@ -45,11 +45,7 @@ export default {
     downloadSvg () {
       this.loadingMessage = this.$t('StudyProtocolElementsView.downloading')
       study.getStudyDesignFigureSvgArray(this.studyUid).then(response => {
-        const blob = new Blob([response.data], {
-          type: response.headers['content-type'] || 'image/svg+xml'
-        })
-        const fileName = `${this.studyUid} design.svg`
-        exportLoader.generateDownload(blob, fileName)
+        exportLoader.downloadFile(response.data, response.headers['content-type'] || 'image/svg+xml', `${this.studyUid} design.svg`)
       }).then(this.finally).catch(this.finally)
     },
     finally (error) {

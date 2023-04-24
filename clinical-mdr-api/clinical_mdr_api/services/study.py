@@ -1,8 +1,10 @@
+from datetime import datetime
 from typing import Callable, Collection, Iterable, Optional, Sequence
 
 from neomodel import db  # type: ignore
 
 from clinical_mdr_api import exceptions
+from clinical_mdr_api.config import DAY_UNIT_NAME
 from clinical_mdr_api.domain.clinical_programme.clinical_programme import (
     ClinicalProgrammeAR,
 )
@@ -21,11 +23,13 @@ from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
     StudyIdentificationMetadataVO,
     StudyInterventionVO,
     StudyPopulationVO,
+    StudyStatus,
 )
 from clinical_mdr_api.domain.unit_definition.unit_definition import UnitDefinitionAR
 from clinical_mdr_api.domain_repositories.models._utils import CustomNodeSet
 from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.study import (
+    CompactStudy,
     HighLevelStudyDesignJsonModel,
     Study,
     StudyCreateInput,
@@ -72,7 +76,7 @@ class StudyService:
         default_fields = (
             "current_metadata.identification_metadata,"
             "current_metadata.version_metadata,"
-            "uid,project_number,study_number,study_acronym,"
+            "uid,possible_actions,project_number,study_number,study_acronym,"
             "eudract_id,ct_gov_id,study_id,study_status"
         )
         mandatory_fields = "uid,study_status"
@@ -101,6 +105,10 @@ class StudyService:
             [str], Optional[DictionaryTermAR]
         ] = lambda _: None,
         fields: Optional[str] = None,
+        at_specified_date_time: Optional[datetime] = None,
+        status: Optional[StudyStatus] = None,
+        version: Optional[str] = None,
+        history_endpoint: bool = False,
     ) -> Study:
         result = Study.from_study_definition_ar(
             study_definition_ar=study_definition_ar,
@@ -109,9 +117,34 @@ class StudyService:
             find_all_study_time_units=find_all_study_time_units,
             find_term_by_uid=find_term_by_uid,
             find_dictionary_term_by_uid=find_dictionary_term_by_uid,
+            at_specified_date_time=at_specified_date_time,
+            status=status,
+            version=version,
+            history_endpoint=history_endpoint,
+        )
+        return (
+            StudyService.filter_result_by_requested_fields(result, fields)
+            if result is not None
+            else None
         )
 
-        return StudyService.filter_result_by_requested_fields(result, fields)
+    @staticmethod
+    def _models_compact_study_from_study_definition_ar(
+        study_definition_ar: StudyDefinitionAR,
+        find_project_by_project_number: Callable[[str], ProjectAR],
+        find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
+        fields: Optional[str] = None,
+    ) -> CompactStudy:
+        result = CompactStudy.from_study_definition_ar(
+            study_definition_ar=study_definition_ar,
+            find_project_by_project_number=find_project_by_project_number,
+            find_clinical_programme_by_uid=find_clinical_programme_by_uid,
+        )
+        return (
+            StudyService.filter_result_by_requested_fields(result, fields)
+            if result is not None
+            else None
+        )
 
     def _models_study_protocol_title_from_study_definition_ar(
         self, study_definition_ar: StudyDefinitionAR
@@ -158,10 +191,19 @@ class StudyService:
         return filtered_sections
 
     @db.transaction
-    def get_by_uid(self, uid: str, fields: Optional[str] = None) -> Study:
+    def get_by_uid(
+        self,
+        uid: str,
+        at_specified_date_time: Optional[datetime] = None,
+        status: Optional[StudyStatus] = None,
+        version: Optional[str] = None,
+        fields: Optional[str] = None,
+    ) -> Study:
         try:
             # call relevant finder (we use helper property to get to the repository)
-            study_definition = self._repos.study_definition_repository.find_by_uid(uid)
+            study_definition = self._repos.study_definition_repository.find_by_uid(
+                uid=uid,
+            )
             if study_definition is None:
                 raise exceptions.NotFoundException(
                     f"StudyDefinition '{uid}' not found."
@@ -174,7 +216,97 @@ class StudyService:
                 find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
                 find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
                 fields=fields,
+                at_specified_date_time=at_specified_date_time,
+                status=status,
+                version=version,
             )
+        finally:
+            self._close_all_repos()
+
+    @db.transaction
+    def lock(self, uid: str, change_description: str) -> Study:
+        try:
+            study_definition = self._repos.study_definition_repository.find_by_uid(
+                uid, for_update=True
+            )
+            if study_definition is None:
+                raise exceptions.NotFoundException(
+                    f"StudyDefinition '{uid}' not found."
+                )
+            study_definition.lock(
+                version_description=change_description,
+                version_author=self.user,
+            )
+            self._repos.study_definition_repository.save(study_definition)
+            return self._models_study_from_study_definition_ar(
+                study_definition_ar=study_definition,
+                find_project_by_project_number=self._repos.project_repository.find_by_project_number,
+                find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
+                find_all_study_time_units=self._repos.unit_definition_repository.find_all,
+                find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
+                find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
+            )
+        finally:
+            self._close_all_repos()
+
+    @db.transaction
+    def unlock(self, uid: str) -> Study:
+        try:
+            study_definition = self._repos.study_definition_repository.find_by_uid(
+                uid, for_update=True
+            )
+            if study_definition is None:
+                raise exceptions.NotFoundException(
+                    f"StudyDefinition '{uid}' not found."
+                )
+            study_definition.unlock()
+            self._repos.study_definition_repository.save(study_definition)
+            return self._models_study_from_study_definition_ar(
+                study_definition_ar=study_definition,
+                find_project_by_project_number=self._repos.project_repository.find_by_project_number,
+                find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
+                find_all_study_time_units=self._repos.unit_definition_repository.find_all,
+                find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
+                find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
+            )
+        finally:
+            self._close_all_repos()
+
+    @db.transaction
+    def release(self, uid: str, change_description: Optional[str]) -> Study:
+        try:
+            study_definition = self._repos.study_definition_repository.find_by_uid(
+                uid, for_update=True
+            )
+            if study_definition is None:
+                raise exceptions.NotFoundException(
+                    f"StudyDefinition '{uid}' not found."
+                )
+            study_definition.release(change_description=change_description)
+            self._repos.study_definition_repository.save(study_definition)
+            return self._models_study_from_study_definition_ar(
+                study_definition_ar=study_definition,
+                find_project_by_project_number=self._repos.project_repository.find_by_project_number,
+                find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
+                find_all_study_time_units=self._repos.unit_definition_repository.find_all,
+                find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
+                find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
+            )
+        finally:
+            self._close_all_repos()
+
+    @db.transaction
+    def soft_delete(self, uid: str) -> None:
+        try:
+            study_definition = self._repos.study_definition_repository.find_by_uid(
+                uid, for_update=True
+            )
+            if study_definition is None:
+                raise exceptions.NotFoundException(
+                    f"StudyDefinition '{uid}' not found."
+                )
+            study_definition.mark_deleted()
+            self._repos.study_definition_repository.save(study_definition)
         finally:
             self._close_all_repos()
 
@@ -184,7 +316,6 @@ class StudyService:
         find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
         sections: Optional[str] = None,
     ) -> Sequence[StudyFieldAuditTrailEntry]:
-
         # Create entries from the audit trail value objects and filter by section.
         all_sections = [
             "identification_metadata",
@@ -255,7 +386,8 @@ class StudyService:
         filter_by: Optional[dict] = None,
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         total_count: bool = False,
-    ) -> GenericFilteringReturn[Study]:
+        deleted: bool = False,
+    ) -> GenericFilteringReturn[CompactStudy]:
         try:
             # Note that for this endpoint, we have to override the generic filtering
             # Some transformation logic is happening from an aggregated object to the pydantic return model
@@ -270,6 +402,7 @@ class StudyService:
                 sort_by={},
                 total_count=False,
                 filter_by={},
+                deleted=deleted,
             )
 
             if not sort_by:
@@ -277,11 +410,10 @@ class StudyService:
 
             # then prepare and return response of our service
             parsed_items = [
-                self._models_study_from_study_definition_ar(
+                self._models_compact_study_from_study_definition_ar(
                     study_definition_ar=item,
                     find_project_by_project_number=self._repos.project_repository.find_by_project_number,
                     find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
-                    find_all_study_time_units=self._repos.unit_definition_repository.find_all,
                     fields=None,
                 )
                 for item in all_items.items
@@ -303,6 +435,45 @@ class StudyService:
         finally:
             self._close_all_repos()
 
+    def get_study_snapshot_history(
+        self,
+        study_uid: str,
+        sort_by: Optional[dict] = None,
+        page_number: int = 1,
+        page_size: int = 0,
+        filter_by: Optional[dict] = None,
+        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        total_count: bool = False,
+    ) -> GenericFilteringReturn[CompactStudy]:
+        try:
+            if not sort_by:
+                sort_by = {}
+
+            all_items = (
+                self._repos.study_definition_repository.find_study_snapshot_history(
+                    study_uid=study_uid,
+                    sort_by=sort_by,
+                    page_number=page_number,
+                    page_size=page_size,
+                    filter_by=filter_by,
+                    filter_operator=filter_operator,
+                    total_count=total_count,
+                )
+            )
+
+            parsed_items = [
+                CompactStudy.from_study_definition_ar(
+                    study_definition_ar=item,
+                    find_project_by_project_number=self._repos.project_repository.find_by_project_number,
+                    find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
+                )
+                for item in all_items.items
+            ]
+            all_items.items = parsed_items
+            return all_items
+        finally:
+            self._close_all_repos()
+
     def get_distinct_values_for_header(
         self,
         field_name: str,
@@ -311,7 +482,6 @@ class StudyService:
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         result_count: int = 10,
     ):
-
         # Note that for this endpoint, we have to override the generic filtering
         # Some transformation logic is happening from an aggregated object to the pydantic return model
         # This logic prevents us from doing the filtering, sorting, and pagination on the Cypher side
@@ -352,10 +522,8 @@ class StudyService:
             result = self._models_study_protocol_title_from_study_definition_ar(
                 study_definition
             )
-            compound_selection_ar = (
-                self._repos.study_selection_compound_repository.find_by_study(
-                    uid, type_of_treatment="Investigational Product"
-                )
+            compound_selection_ar = self._repos.study_compound_repository.find_by_study(
+                uid, type_of_treatment="Investigational Product"
             )
             names = []
             for study_compound in compound_selection_ar.study_compounds_selection:
@@ -405,6 +573,14 @@ class StudyService:
             # save the aggregate instance we have just created
             self._repos.study_definition_repository.save(study_definition)
 
+            # create default time unit pointing to 'Day' Unit Definition
+            self.post_study_preferred_time_unit(
+                study_uid=study_definition.uid,
+                unit_definition_uid=self._repos.unit_definition_repository.find_uid_by_name(
+                    DAY_UNIT_NAME
+                ),
+            )
+
             # then prepare and return our response
             return_item = self._models_study_from_study_definition_ar(
                 study_definition,
@@ -423,7 +599,6 @@ class StudyService:
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
         find_unit_definition_by_uid: Callable[[str], Optional[UnitDefinitionAR]],
     ) -> StudyInterventionVO:
-
         fill_missing_values_in_base_model_from_reference_base_model(
             base_model_with_missing_values=request_study_intervention,
             reference_base_model=StudyInterventionJsonModel.from_study_intervention_vo(
@@ -436,7 +611,6 @@ class StudyService:
         # we start a try block to catch any ValueError and report as Forbidden (otherwise it would be
         # reported as Internal)
         try:
-
             new_study_intervention = StudyInterventionVO.from_input_values(
                 intervention_type_code=get_term_uid_or_none(
                     request_study_intervention.intervention_type_code
@@ -473,14 +647,6 @@ class StudyService:
                 ),
                 trial_blinding_schema_null_value_code=get_term_uid_or_none(
                     request_study_intervention.trial_blinding_schema_null_value_code
-                ),
-                drug_study_indication=request_study_intervention.drug_study_indication,
-                device_study_indication=request_study_intervention.device_study_indication,
-                drug_study_indication_null_value_code=get_term_uid_or_none(
-                    request_study_intervention.drug_study_indication_null_value_code
-                ),
-                device_study_indication_null_value_code=get_term_uid_or_none(
-                    request_study_intervention.device_study_indication_null_value_code
                 ),
                 trial_intent_types_codes=[
                     get_term_uid_or_none(trial_intent_type_code)
@@ -656,7 +822,6 @@ class StudyService:
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
         find_unit_definition_by_uid: Callable[[str], Optional[UnitDefinitionAR]],
     ) -> HighLevelStudyDesignVO:
-
         # now we go through fields of request and for those which were not set in the request
         # we substitute values from current metadata
         fill_missing_values_in_base_model_from_reference_base_model(
@@ -744,7 +909,6 @@ class StudyService:
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
     ) -> StudyIdentificationMetadataVO:
-
         fill_missing_values_in_base_model_from_reference_base_model(
             base_model_with_missing_values=request_id_metadata,
             reference_base_model=StudyIdentificationMetadataJsonModel.from_study_identification_vo(
@@ -798,7 +962,6 @@ class StudyService:
         current_study_description_metadata: StudyDescriptionVO,
         request_study_description_metadata: StudyDescriptionJsonModel,
     ) -> StudyDescriptionVO:
-
         fill_missing_values_in_base_model_from_reference_base_model(
             base_model_with_missing_values=request_study_description_metadata,
             reference_base_model=StudyDescriptionJsonModel.from_study_description_vo(
@@ -828,7 +991,6 @@ class StudyService:
         study_patch_request: StudyPatchRequestJsonModel,
         fields: Optional[str] = None,
     ) -> Study:
-
         try:
             study_definition_ar = self._repos.study_definition_repository.find_by_uid(
                 uid, for_update=not dry
@@ -975,6 +1137,11 @@ class StudyService:
                     )
         return study
 
+    def check_if_study_is_locked(self, study_uid: str):
+        return self._repos.study_definition_repository.check_if_study_is_locked(
+            study_uid=study_uid
+        )
+
     def _check_if_study_exists(self, study_uid: str):
         if not self._repos.study_definition_repository.study_exists_by_uid(
             study_uid=study_uid
@@ -1011,10 +1178,7 @@ class StudyService:
         return_node = self._check_repository_output(nodes=nodes, study_uid=study_uid)
         return StudyPreferredTimeUnit.from_orm(return_node)
 
-    @db.transaction
-    def post_study_preferred_time_unit(
-        self, study_uid: str, unit_definition_uid: str
-    ) -> StudyPreferredTimeUnit:
+    def post_study_preferred_time_unit(self, study_uid: str, unit_definition_uid: str):
         self._check_if_study_exists(study_uid=study_uid)
         self._check_if_unit_definition_exists(unit_definition_uid=unit_definition_uid)
         nodes = self._repos.study_definition_repository.post_preferred_time_unit(

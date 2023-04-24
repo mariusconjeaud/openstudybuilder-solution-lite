@@ -21,9 +21,9 @@
                 "study_number": "9999"
             },
             "version_metadata": {
-                "locked_version_author": null,
-                "locked_version_info": null,
-                "locked_version_number": null,
+                "version_author": null,
+                "version_description": null,
+                "version_number": null,
                 "study_status": "DRAFT",
                 "version_timestamp": "2022-06-20T23:35:02.378816"
             }
@@ -58,9 +58,9 @@
                 "study_number": "1234"
             },
             "version_metadata": {
-                "locked_version_author": null,
-                "locked_version_info": null,
-                "locked_version_number": null,
+                "version_author": null,
+                "version_description": null,
+                "version_number": null,
                 "study_status": "DRAFT",
                 "version_timestamp": "2022-06-20T23:35:02.378816"
             }

@@ -179,7 +179,6 @@ class StudySelectionCohortAR:
     def get_specific_cohort_selection(
         self, study_cohort_uid: str
     ) -> Optional[Tuple[StudySelectionCohortVO, int]]:
-
         if study_cohort_uid not in [
             x.study_selection_uid for x in self.study_cohorts_selection
         ]:

@@ -21,7 +21,6 @@ if OAUTH_ENABLED:
         # IdTokenClaims is stored in context by validate_token global dependency
         claims = context.get("access_token_claims")
         if claims:
-
             # in case we have openid scope claimed, we should have a preferred_username claim
             username = claims.preferred_username
             if username:

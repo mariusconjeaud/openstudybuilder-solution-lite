@@ -67,7 +67,6 @@ class TestCTTermRepository(unittest.TestCase):
         cls.codelist_names_repo.close()
 
     def test__find_all__with_possible_filters_applied__returns_filtered_codelists(self):
-
         # given
         available_codelists = []
         available_codelist_names = []
@@ -255,7 +254,6 @@ class TestCTTermRepository(unittest.TestCase):
         )
         for filter_tuple in filter_tuples:
             with self.subTest(filter_tuple):
-
                 all_term_in_db_aggregated_res = (
                     self.term_aggregated_repo.find_all_aggregated_result(
                         codelist_uid=filter_tuple[0],

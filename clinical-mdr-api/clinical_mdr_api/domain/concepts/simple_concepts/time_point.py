@@ -57,7 +57,6 @@ class TimePointVO(SimpleConceptVO):
         find_unit_definition_by_uid: Callable[[str], UnitDefinitionAR],
         find_time_reference_by_uid: Callable[[str], CTTermNameAR],
     ) -> "TimePointVO":
-
         numeric_value = find_numeric_value_by_uid(numeric_value_uid)
         if numeric_value is None:
             raise ValueError(

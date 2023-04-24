@@ -21,6 +21,7 @@ from clinical_mdr_api.domain.unit_definition.unit_definition import UnitDefiniti
 from clinical_mdr_api.domain_repositories.concepts.unit_definition.unit_definition_repository import (
     UnitDefinitionRepository,
 )
+from clinical_mdr_api.domain_repositories.models._utils import to_relation_trees
 from clinical_mdr_api.domain_repositories.models.concepts import (
     StudyDayRoot,
     StudyDurationDaysRoot,
@@ -102,7 +103,7 @@ class StudyVisitRepository:
             if unit.concept_vo.name == "week":
                 self._week_unit = unit
 
-    def create_ctlist(self, code_list_name: str):
+    def fetch_ctlist(self, code_list_name: str):
         return get_ctlist_terms_by_name(code_list_name)
 
     def get_day_week_units(self):
@@ -149,13 +150,14 @@ class StudyVisitRepository:
         return result[0][0] if len(result) > 0 else 0
 
     def count_study_visits(self, study_uid: str) -> int:
-        nodes = StudyVisit.nodes.filter(
-            has_study_visit__study_root__uid=study_uid, is_deleted=False
-        ).to_relation_trees()
+        nodes = to_relation_trees(
+            StudyVisit.nodes.filter(
+                has_study_visit__study_root__uid=study_uid, is_deleted=False
+            )
+        )
         return len(nodes)
 
     def from_neomodel_to_vo(self, study_visit_ogm_input: StudyVisitOGM):
-
         epoch_repository = StudyEpochRepository(author=self.author)
         study_epoch_object = epoch_repository.find_by_uid(
             study_visit_ogm_input.epoch_uid
@@ -278,33 +280,33 @@ class StudyVisitRepository:
     def find_all_visits_by_study_uid(self, study_uid: str) -> Sequence[StudyVisitOGM]:
         all_visits = [
             StudyVisitOGM.from_orm(sas_node)
-            for sas_node in StudyVisit.nodes.fetch_relations(
-                "study_epoch_has_study_visit__has_epoch",
-                "has_visit_type",
-                "has_visit_contact_mode",
-                "has_visit_name__has_latest_value",
-                "has_after",
-                "has_after__audit_trail",
+            for sas_node in to_relation_trees(
+                StudyVisit.nodes.fetch_relations(
+                    "study_epoch_has_study_visit__has_epoch",
+                    "has_visit_type",
+                    "has_visit_contact_mode",
+                    "has_visit_name__has_latest_value",
+                    "has_after__audit_trail",
+                )
+                .fetch_optional_relations(
+                    "has_window_unit__has_latest_value",
+                    "has_timepoint__has_latest_value__has_unit_definition__has_latest_value",
+                    "has_timepoint__has_latest_value__has_time_reference",
+                    "has_timepoint__has_latest_value__has_value__has_latest_value",
+                    "has_study_day__has_latest_value",
+                    "has_study_duration_days__has_latest_value",
+                    "has_study_week__has_latest_value",
+                    "has_study_duration_weeks__has_latest_value",
+                    "has_epoch_allocation",
+                )
+                .filter(has_study_visit__study_root__uid=study_uid, is_deleted=False)
+                .order_by("unique_visit_number")
             )
-            .fetch_optional_relations(
-                "has_window_unit__has_latest_value",
-                "has_timepoint__has_latest_value__has_unit_definition__has_latest_value",
-                "has_timepoint__has_latest_value__has_time_reference",
-                "has_timepoint__has_latest_value__has_value__has_latest_value",
-                "has_study_day__has_latest_value",
-                "has_study_duration_days__has_latest_value",
-                "has_study_week__has_latest_value",
-                "has_study_duration_weeks__has_latest_value",
-                "has_epoch_allocation",
-            )
-            .filter(has_study_visit__study_root__uid=study_uid, is_deleted=False)
-            .order_by("unique_visit_number")
-            .to_relation_trees()
         ]
         return all_visits
 
     def find_by_uid(self, uid: str) -> StudyVisitVO:
-        visit_node = (
+        visit_node = to_relation_trees(
             StudyVisit.nodes.fetch_relations(
                 "has_study_visit__study_root",
                 "study_epoch_has_study_visit__has_epoch",
@@ -312,7 +314,6 @@ class StudyVisitRepository:
                 "has_visit_type",
                 "has_visit_contact_mode",
                 "has_visit_name__has_latest_value",
-                "has_after",
                 "has_after__audit_trail",
             )
             .fetch_optional_relations(
@@ -328,7 +329,6 @@ class StudyVisitRepository:
             )
             .has(has_before=False)
             .filter(uid=uid, is_deleted=False)
-            .to_relation_trees()
         )
         unique_visits = []
         for ith_visit_node in visit_node:
@@ -347,54 +347,54 @@ class StudyVisitRepository:
             self.from_neomodel_to_vo(
                 study_visit_ogm_input=StudyVisitOGMVer.from_orm(se_node)
             )
-            for se_node in StudyVisit.nodes.fetch_relations(
-                "study_epoch_has_study_visit__has_epoch",
-                "has_visit_type",
-                "has_visit_contact_mode",
-                "has_visit_name__has_latest_value",
-                "has_after",
-                "has_after__audit_trail",
+            for se_node in to_relation_trees(
+                StudyVisit.nodes.fetch_relations(
+                    "study_epoch_has_study_visit__has_epoch",
+                    "has_visit_type",
+                    "has_visit_contact_mode",
+                    "has_visit_name__has_latest_value",
+                    "has_after__audit_trail",
+                )
+                .fetch_optional_relations(
+                    "has_window_unit__has_latest_value",
+                    "has_timepoint__has_latest_value__has_unit_definition__has_latest_value",
+                    "has_timepoint__has_latest_value__has_time_reference",
+                    "has_timepoint__has_latest_value__has_value__has_latest_value",
+                    "has_study_day__has_latest_value",
+                    "has_study_duration_days__has_latest_value",
+                    "has_study_week__has_latest_value",
+                    "has_study_duration_weeks__has_latest_value",
+                    "has_epoch_allocation",
+                )
+                .filter(uid=uid, has_after__audit_trail__uid=study_uid)
             )
-            .fetch_optional_relations(
-                "has_window_unit__has_latest_value",
-                "has_timepoint__has_latest_value__has_unit_definition__has_latest_value",
-                "has_timepoint__has_latest_value__has_time_reference",
-                "has_timepoint__has_latest_value__has_value__has_latest_value",
-                "has_study_day__has_latest_value",
-                "has_study_duration_days__has_latest_value",
-                "has_study_week__has_latest_value",
-                "has_study_duration_weeks__has_latest_value",
-                "has_epoch_allocation",
-            )
-            .filter(uid=uid, has_after__audit_trail__uid=study_uid)
-            .to_relation_trees()
         ]
         return sorted(version_nodes, key=lambda item: item.start_date, reverse=True)
 
     def get_all_visit_versions(self, study_uid: str):
         version_nodes = [
             StudyVisitOGMVer.from_orm(se_node)
-            for se_node in StudyVisit.nodes.fetch_relations(
-                "study_epoch_has_study_visit__has_epoch",
-                "has_visit_type",
-                "has_visit_contact_mode",
-                "has_visit_name__has_latest_value",
-                "has_after",
-                "has_after__audit_trail",
+            for se_node in to_relation_trees(
+                StudyVisit.nodes.fetch_relations(
+                    "study_epoch_has_study_visit__has_epoch",
+                    "has_visit_type",
+                    "has_visit_contact_mode",
+                    "has_visit_name__has_latest_value",
+                    "has_after__audit_trail",
+                )
+                .fetch_optional_relations(
+                    "has_window_unit__has_latest_value",
+                    "has_timepoint__has_latest_value__has_unit_definition__has_latest_value",
+                    "has_timepoint__has_latest_value__has_time_reference",
+                    "has_timepoint__has_latest_value__has_value__has_latest_value",
+                    "has_study_day__has_latest_value",
+                    "has_study_duration_days__has_latest_value",
+                    "has_study_week__has_latest_value",
+                    "has_study_duration_weeks__has_latest_value",
+                    "has_epoch_allocation",
+                )
+                .filter(has_after__audit_trail__uid=study_uid)
             )
-            .fetch_optional_relations(
-                "has_window_unit__has_latest_value",
-                "has_timepoint__has_latest_value__has_unit_definition__has_latest_value",
-                "has_timepoint__has_latest_value__has_time_reference",
-                "has_timepoint__has_latest_value__has_value__has_latest_value",
-                "has_study_day__has_latest_value",
-                "has_study_duration_days__has_latest_value",
-                "has_study_week__has_latest_value",
-                "has_study_duration_weeks__has_latest_value",
-                "has_epoch_allocation",
-            )
-            .filter(has_after__audit_trail__uid=study_uid)
-            .to_relation_trees()
         ]
         return version_nodes
 
@@ -446,7 +446,7 @@ class StudyVisitRepository:
 
     def _update(self, study_visit: StudyVisitVO, create: bool = False):
         study_root = StudyRoot.nodes.get(uid=study_visit.study_uid)
-        study_value = study_root.latest_draft.get_or_none()
+        study_value = study_root.latest_value.get_or_none()
         if study_value is None:
             raise ValueError("Study does not have draft version")
 

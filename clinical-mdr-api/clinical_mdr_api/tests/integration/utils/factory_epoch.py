@@ -8,8 +8,8 @@ from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology imp
 )
 
 
-def create_study_epoch_codelists_ret_cat_and_lib():
-    catalogue_name, library_name = get_catalogue_name_library_name()
+def create_study_epoch_codelists_ret_cat_and_lib(use_test_utils: bool = False):
+    catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils)
     ct_term_service = CTTermService()
     codelist = create_codelist(
         "Epoch Type", "CTCodelist_00002", catalogue_name, library_name
@@ -214,9 +214,9 @@ def create_study_epoch_codelists_ret_cat_and_lib():
     )
 
 
-def create_study_epoch(epoch_subtype_uid):
+def create_study_epoch(epoch_subtype_uid, study_uid="study_root"):
     study_epoch_create_input = StudyEpochCreateInput(
-        study_uid="study_root",
+        study_uid=study_uid,
         start_rule="start_rule",
         end_rule="end_rule",
         description="test_description",
@@ -225,6 +225,6 @@ def create_study_epoch(epoch_subtype_uid):
         color_hash="#1100FF",
     )
     item = StudyEpochService().create(
-        "study_root", study_epoch_input=study_epoch_create_input
+        study_uid, study_epoch_input=study_epoch_create_input
     )
     return item

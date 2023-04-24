@@ -95,7 +95,6 @@ class CompoundVO(ConceptVO):
         project_exists_callback: Callable[[str], bool],
         brand_exists_callback: Callable[[str], bool],
     ):
-
         self.validate_uniqueness(
             lookup_callback=compound_uid_by_property_value_callback,
             uid=uid,

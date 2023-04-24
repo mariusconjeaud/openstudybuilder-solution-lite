@@ -46,7 +46,6 @@ class CompoundAliasVO(ConceptVO):
         compound_alias_uid_by_property_value_callback: Callable[[str, str], str],
         compound_existing_preferred_synonyms_callback: Callable[[str], Sequence[str]],
     ):
-
         self.validate_uniqueness(
             lookup_callback=compound_alias_uid_by_property_value_callback,
             uid=uid,

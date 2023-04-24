@@ -24,7 +24,7 @@ ClassVariableUID = Path(None, description="The unique id of the ClassVariable")
 @router.get(
     "/class-variables",
     summary="List all class-variables",
-    description="""
+    description=f"""
 State before:
 
 Business logic:
@@ -33,11 +33,15 @@ Business logic:
 State after:
  - No change
 
-Possible errors:
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+
 """,
     response_model=CustomPage[ClassVariable],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 @decorators.allow_exports(
     {
@@ -72,7 +76,7 @@ def get_class_variables(
     current_user_id: str = Depends(get_current_user_id),
 ):
     class_variable_service = ClassVariableService(user=current_user_id)
-    results = class_variable_service.get_all_standards(
+    results = class_variable_service.get_all_items(
         sort_by=sort_by,
         page_number=page_number,
         page_size=page_size,
@@ -97,7 +101,7 @@ def get_class_variables(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -143,7 +147,10 @@ Possible errors:
  """,
     response_model=ClassVariable,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_class_variable(
     uid: str = ClassVariableUID, current_user_id: str = Depends(get_current_user_id)

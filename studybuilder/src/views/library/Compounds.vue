@@ -8,8 +8,7 @@
       />
   </div>
   <v-tabs v-model="tab">
-    <v-tab href="#compounds">{{ $t("CompoundsView.tab1_title") }}</v-tab>
-    <v-tab href="#aliases">{{ $t("CompoundsView.tab2_title") }}</v-tab>
+    <v-tab v-for="tab of tabs" :key="tab.tab" :href="tab.tab">{{ tab.name }}</v-tab>
   </v-tabs>
   <v-tabs-items v-model="tab">
     <v-tab-item id="compounds">
@@ -43,16 +42,23 @@ export default {
     return {
       tab: 1,
       compoundAliasesTabClickedAt: 0,
-      compoundsTabClickedAt: 0
+      compoundsTabClickedAt: 0,
+      tabs: [
+        { tab: '#compounds', name: this.$t('CompoundsView.tab1_title') },
+        { tab: '#aliases', name: this.$t('CompoundsView.tab2_title') }
+      ]
     }
   },
   mounted () {
     this.tab = this.$route.params.tab
-    this.addBreadcrumbsLevel({
-      text: this.$route.name,
-      to: { name: 'Compounds', params: this.$route.params },
-      index: 2
-    })
+    const tabName = this.tab ? this.tabs.find(el => el.tab.substring(1) === this.tab).name : this.tabs[0].name
+    setTimeout(() => {
+      this.addBreadcrumbsLevel({
+        text: tabName,
+        index: 3,
+        replace: true
+      })
+    }, 1100)
   },
   watch: {
     tab (newValue) {
@@ -67,6 +73,12 @@ export default {
       this.$router.push({
         name: 'Compounds',
         params: { tab: newValue }
+      })
+      const tabName = newValue ? this.tabs.find(el => el.tab.substring(1) === newValue).name : this.tabs[0].name
+      this.addBreadcrumbsLevel({
+        text: tabName,
+        index: 3,
+        replace: true
       })
     }
   }

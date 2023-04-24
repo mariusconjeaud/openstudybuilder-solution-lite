@@ -1,12 +1,17 @@
 """New Activities router."""
 from typing import Any, List, Optional
 
-from fastapi import APIRouter, Depends, Path, Query, Response, status
+from fastapi import APIRouter, Body, Depends, Path, Query, Response, status
 from pydantic.types import Json
 from starlette.requests import Request
 
 from clinical_mdr_api import config
-from clinical_mdr_api.models.activities.activity_instance import ActivityInstance
+from clinical_mdr_api.models.activities.activity_instance import (
+    ActivityInstance,
+    ActivityInstanceCreateInput,
+    ActivityInstanceEditInput,
+    ActivityInstanceOverview,
+)
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id
@@ -22,9 +27,9 @@ ActivityInstanceUID = Path(None, description="The unique id of the ActivityInsta
 
 
 @router.get(
-    "/activity-instances",
+    "",
     summary="List all activity instances (for a given library)",
-    description="""
+    description=f"""
 State before:
  - The library must exist (if specified)
  
@@ -35,10 +40,16 @@ State after:
  - No change
  
 Possible errors:
- - Invalid library name specified.""",
+ - Invalid library name specified.
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+""",
     response_model=CustomPage[ActivityInstance],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 @decorators.allow_exports(
     {
@@ -73,30 +84,10 @@ def get_activities(
         description="A list of activity names to use as a specific filter",
         alias="activity_names[]",
     ),
-    specimen_names: Optional[List[str]] = Query(
+    activity_instance_class_names: Optional[List[str]] = Query(
         None,
-        description="A list of specimen names to use as a specific filter",
-        alias="specimen_names[]",
-    ),
-    sdtm_variable_names: Optional[List[str]] = Query(
-        None,
-        description="A list of sdtm variable names to use as a specific filter",
-        alias="sdtm_variable_names[]",
-    ),
-    sdtm_domain_names: Optional[List[str]] = Query(
-        None,
-        description="A list of sdtm domain names to use as a specific filter",
-        alias="sdtm_domain_names[]",
-    ),
-    sdtm_category_names: Optional[List[str]] = Query(
-        None,
-        description="A list of sdtm category names to use as a specific filter",
-        alias="sdtm_category_names[]",
-    ),
-    sdtm_subcategory_names: Optional[List[str]] = Query(
-        None,
-        description="A list of sdtm sub category names to use as a specific filter",
-        alias="sdtm_subcategory_names[]",
+        description="A list of activity_instance_class names to use as a specific filter",
+        alias="activity_instance_class_names[]",
     ),
     sort_by: Json = Query({}, description=_generic_descriptions.SORT_BY),
     page_number: Optional[int] = Query(
@@ -120,11 +111,7 @@ def get_activities(
     results = activity_instance_service.get_all_concepts(
         library=library,
         activity_names=activity_names,
-        specimen_names=specimen_names,
-        sdtm_category_names=sdtm_category_names,
-        sdtm_subcategory_names=sdtm_subcategory_names,
-        sdtm_domain_names=sdtm_domain_names,
-        sdtm_variable_names=sdtm_variable_names,
+        activity_instance_class_names=activity_instance_class_names,
         sort_by=sort_by,
         page_number=page_number,
         page_size=page_size,
@@ -138,7 +125,7 @@ def get_activities(
 
 
 @router.get(
-    "/activity-instances/headers",
+    "/headers",
     summary="Returns possibles values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
@@ -149,7 +136,7 @@ def get_activities(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -180,8 +167,225 @@ def get_distinct_values_for_header(
     )
 
 
+@router.get(
+    "/{uid}",
+    summary="Get details on a specific activity instance (in a specific version)",
+    description="""
+State before:
+ - a activity instance with uid must exist.
+
+Business logic:
+ - If parameter at_specified_date_time is specified then the latest/newest representation of the concept at this point in time is returned. The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: '2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. If the timezone is ommitted, UTC�0 is assumed.
+ - If parameter status is specified then the representation of the concept in that status is returned (if existent). This is useful if the concept has a status 'Draft' and a status 'Final'.
+ - If parameter version is specified then the latest/newest representation of the concept in that version is returned. Only exact matches are considered. The version is specified in the following format: <major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0', ...
+
+State after:
+ - No change
+
+Possible errors:
+ - Invalid uid, at_specified_date_time, status or version.
+ """,
+    response_model=ActivityInstance,
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_activity(
+    uid: str = ActivityInstanceUID, current_user_id: str = Depends(get_current_user_id)
+):
+    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    return activity_instance_service.get_by_uid(uid=uid)
+
+
+@router.get(
+    "/{uid}/overview",
+    summary="Get detailed overview a specific activity instance",
+    description="""
+Returns detailed description about activity instance, including information about:
+ - Activity
+ - Activity subgroups
+ - Activity groups
+ - Activity instance class
+ - Activity items
+ - Activity item class
+
+State before:
+ - an activity instance with uid must exist.
+
+State after:
+ - No change
+
+Possible errors:
+ - Invalid uid.
+ """,
+    response_model=ActivityInstanceOverview,
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "activity",
+            "activity_subgroups",
+            "activity_groups",
+            "activity_instance",
+            "activity_items",
+        ],
+        "formats": [
+            "application/x-yaml",
+        ],
+    }
+)
+# pylint: disable=unused-argument
+def get_activity_instance_overview(
+    request: Request,  # request is actually required by the allow_exports decorator
+    uid: str = ActivityInstanceUID,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    return activity_instance_service.get_activity_instance_overview(
+        activity_instance_uid=uid
+    )
+
+
+@router.get(
+    "/{uid}/versions",
+    summary="List version history for activity instance",
+    description="""
+State before:
+ - uid must exist.
+
+Business logic:
+ - List version history for activity instance.
+ - The returned versions are ordered by start_date descending (newest entries first).
+
+State after:
+ - No change
+
+Possible errors:
+ - Invalid uid.
+    """,
+    response_model=List[ActivityInstance],
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The activity isntance with the specified 'uid' wasn't found.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_versions(
+    uid: str = ActivityInstanceUID, current_user_id: str = Depends(get_current_user_id)
+):
+    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    return activity_instance_service.get_version_history(uid=uid)
+
+
 @router.post(
-    "/activity-instances/{uid}/versions",
+    "",
+    summary="Creates new activity instance.",
+    description="""
+State before:
+ - The specified library allows creation of concepts (the 'is_editable' property of the library needs to be true).
+
+Business logic:
+ - New node is created for the activity instance with the set properties.
+ - relationships to specified activity parent are created (as in the model)
+ - relationships to specified activity instance class is created (as in the model)
+ - The status of the new created version will be automatically set to 'Draft'.
+ - The 'version' property of the new version will be automatically set to 0.1.
+ - The 'change_description' property will be set automatically to 'Initial version'.
+
+State after:
+ - activity instance is created in status Draft and assigned an initial minor version number as 0.1.
+ - Audit trail entry must be made with action of creating new Draft version.
+
+Possible errors:
+ - Invalid library or control terminology uid's specified.
+""",
+    response_model=ActivityInstance,
+    status_code=201,
+    responses={
+        201: {
+            "description": "Created - The activity instance was successfully created."
+        },
+        403: {
+            "model": ErrorResponse,
+            "description": "Forbidden - Reasons include e.g.: \n"
+            "- The library does not exist.\n"
+            "- The library does not allow to add new items.\n",
+        },
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def create(
+    activity_instance_create_input: ActivityInstanceCreateInput = Body(description=""),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    return activity_instance_service.create(
+        concept_input=activity_instance_create_input
+    )
+
+
+@router.patch(
+    "/{uid}",
+    summary="Update activity instance",
+    description="""
+State before:
+ - uid must exist and activity instance must exist in status draft.
+ - The activity instance must belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).
+
+Business logic:
+ - If activity instance exist in status draft then attributes are updated.
+- If the linked activity instance is updated, the relationships are updated to point to the activity instance value node.
+
+State after:
+ - attributes are updated for the activity instance.
+ - Audit trail entry must be made with update of attributes.
+
+Possible errors:
+ - Invalid uid.
+
+""",
+    response_model=ActivityInstance,
+    status_code=200,
+    responses={
+        200: {"description": "OK."},
+        403: {
+            "model": ErrorResponse,
+            "description": "Forbidden - Reasons include e.g.: \n"
+            "- The activity instance is not in draft status.\n"
+            "- The activity instance had been in 'Final' status before.\n"
+            "- The library does not allow to edit draft versions.\n",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The activity instance with the specified 'uid' wasn't found.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def edit(
+    uid: str = ActivityInstanceUID,
+    activity_instance_edit_input: ActivityInstanceEditInput = Body(description=""),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    activity_instance_service = ActivityInstanceService(user=current_user_id)
+    return activity_instance_service.edit_draft(
+        uid=uid, concept_edit_input=activity_instance_edit_input
+    )
+
+
+@router.post(
+    "/{uid}/versions",
     summary=" Create a new version of an activity instance",
     description="""
 State before:
@@ -212,10 +416,10 @@ Possible errors:
             "- The activity instance is not in final status.\n"
             "- The activity instance with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
-def create(
+def create_new_version(
     uid: str = ActivityInstanceUID,
     current_user_id: str = Depends(get_current_user_id),
 ):
@@ -224,7 +428,7 @@ def create(
 
 
 @router.post(
-    "/activity-instances/{uid}/approvals",
+    "/{uid}/approvals",
     summary="Approve draft version of an activity instance",
     description="""
 State before:
@@ -257,7 +461,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The activity instance with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
@@ -269,7 +473,7 @@ def approve(
 
 
 @router.delete(
-    "/activity-instances/{uid}/activations",
+    "/{uid}/activations",
     summary=" Inactivate final version of an activity instance",
     description="""
 State before:
@@ -301,7 +505,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The activity instance with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
@@ -313,7 +517,7 @@ def inactivate(
 
 
 @router.post(
-    "/activity-instances/{uid}/activations",
+    "/{uid}/activations",
     summary="Reactivate retired version of an activity instance",
     description="""
 State before:
@@ -345,7 +549,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The activity instance with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
@@ -357,7 +561,7 @@ def reactivate(
 
 
 @router.delete(
-    "/activity-instances/{uid}",
+    "/{uid}",
     summary="Delete draft version of an activity instance",
     description="""
 State before:
@@ -391,7 +595,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - An activity instance with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_activity_instance(

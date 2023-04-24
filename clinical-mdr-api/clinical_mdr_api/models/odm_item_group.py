@@ -220,7 +220,6 @@ class OdmItemGroupRefModel(BaseModel):
             [str], Optional[OdmVendorAttributeAR]
         ],
     ) -> Optional["OdmItemGroupRefModel"]:
-
         if uid is not None:
             odm_item_group_ref_vo = find_odm_item_group_by_uid_with_form_relation(
                 uid, form_uid

@@ -5,8 +5,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query
 
 from clinical_mdr_api import models
-from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.ct_catalogue import CTCatalogueService
 
 router = APIRouter()
@@ -17,7 +17,10 @@ router = APIRouter()
     summary="Returns all controlled terminology catalogues.",
     response_model=List[models.CTCatalogue],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 # pylint: disable=unused-argument
 def get_catalogues(
@@ -36,7 +39,10 @@ def get_catalogues(
     summary="List changes between codelists and terms in CT Catalogues.",
     response_model=models.CTCatalogueChanges,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_catalogues_changes(
     library_name: Optional[str] = Query(

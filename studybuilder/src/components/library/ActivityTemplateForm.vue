@@ -1,6 +1,6 @@
 <template>
 <base-template-form
-  object-type="activity-description"
+  object-type="activity-instruction"
   :template="template"
   :prepare-payload-function="preparePayload"
   :help-items="helpItems"

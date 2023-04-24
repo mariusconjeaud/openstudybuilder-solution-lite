@@ -174,7 +174,6 @@ class StudyDiseaseMilestoneTypes(BaseModel):
 
 
 class StudySelectionDiseaseMilestoneNewOrder(BaseModel):
-
     new_order: int = Field(
         ...,
         title="new_order",

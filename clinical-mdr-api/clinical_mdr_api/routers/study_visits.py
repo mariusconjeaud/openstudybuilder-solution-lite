@@ -22,7 +22,7 @@ from clinical_mdr_api.services.study_visit import StudyVisitService
 @router.get(
     "/studies/{uid}/study-visits",
     summary="List all study visits currently defined for the study",
-    description="""
+    description=f"""
 State before:
 - Study must exist.
  
@@ -41,12 +41,15 @@ State after:
  
 Possible errors:
  - Invalid study-uid.
-    """,
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+""",
     response_model=CustomPage[clinical_mdr_api.models.study_visit.StudyVisit],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 @decorators.allow_exports(
@@ -131,7 +134,7 @@ def get_all(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -168,7 +171,8 @@ def get_distinct_values_for_header(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_references(
@@ -246,13 +250,14 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Study or visit is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_new_visit_create(
     uid: str = studyUID,
     selection: clinical_mdr_api.models.study_visit.StudyVisitCreateInput = Body(
-        None, description="Related parameters of the visit that shalll be created."
+        description="Related parameters of the visit that shalll be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> clinical_mdr_api.models.study_visit.StudyVisit:
@@ -271,13 +276,14 @@ def post_new_visit_create(
             "model": ErrorResponse,
             "description": "Not Found - Study is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_preview_visit(
     uid: str = studyUID,
     selection: clinical_mdr_api.models.study_visit.StudyVisitCreateInput = Body(
-        None, description="Related parameters of the visit that shalll be created."
+        description="Related parameters of the visit that shalll be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> clinical_mdr_api.models.study_visit.StudyVisit:
@@ -294,7 +300,8 @@ def post_preview_visit(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_allowed_visit_types_for_epoch_type(
@@ -319,7 +326,8 @@ def get_allowed_visit_types_for_epoch_type(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_allowed_time_references_for_given_study(
@@ -355,14 +363,15 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - There exist no study or visit.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def patch_update_visit(
     uid: str = studyUID,
     study_visit_uid: str = study_visit_uid_description,
     selection: clinical_mdr_api.models.study_visit.StudyVisitEditInput = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> study_epoch.StudyEpoch:
@@ -382,7 +391,7 @@ State before:
 
 Business logic:
  - Remove specified study-visit from the study.
- - Reference to the study-visit should still exist in the the audit trail.
+ - Reference to the study-visit should still exist in the audit trail.
  - Simple concepts that are now unused should continue to be persisted in the database.
 
 State after:
@@ -400,9 +409,10 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the visit and the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def delete_study_visit(
     uid: str = studyUID,
     study_visit_uid: str = study_visit_uid_description,
@@ -438,7 +448,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the study visit for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 # pylint: disable=unused-argument
@@ -476,7 +486,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the study visit for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_study_visits_all_audit_trail(
@@ -516,7 +526,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - there exist no visit for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 # pylint: disable=unused-argument
@@ -550,7 +560,8 @@ Possible errors:
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_amount_of_visits_in_given_epoch(
@@ -584,7 +595,8 @@ Possible errors:
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_global_anchor_visit(
@@ -614,7 +626,8 @@ Possible errors:
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_anchor_visits_in_group_of_subvisits(
@@ -644,7 +657,8 @@ Possible errors:
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_anchor_visits_for_special_visit(
@@ -674,13 +688,14 @@ Possible errors:
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def assign_consecutive_visit_group_for_selected_study_visit(
     uid: str = studyUID,
     consecutive_visit_group_input: clinical_mdr_api.models.study_visit.VisitConsecutiveGroupInput = Body(
-        None,
         description="The properties needed to assign visits into consecutive visit group",
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -712,9 +727,11 @@ Possible errors:
     response_model=None,
     status_code=204,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def remove_consecutive_group(
     uid: str = studyUID,
     consecutive_visit_group_name: str = Path(

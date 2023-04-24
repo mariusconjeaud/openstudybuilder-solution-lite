@@ -7,7 +7,7 @@ from clinical_mdr_api.domain.study_selection.study_selection_compound import (
     StudySelectionCompoundsAR,
     StudySelectionCompoundVO,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_compound_repository import (
+from clinical_mdr_api.domain_repositories.study_selection.study_compound_repository import (
     StudyCompoundSelectionHistory,
 )
 from clinical_mdr_api.models import StudySelectionCompoundInput
@@ -105,10 +105,8 @@ class StudyCompoundSelectionService(
         repos = MetaRepository()
         try:
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_compound_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_compound_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             new_selection = StudySelectionCompoundVO.from_input_values(
@@ -127,14 +125,14 @@ class StudyCompoundSelectionService(
                 other_info=selection_create_input.other_info,
                 reason_for_missing_value_uid=selection_create_input.reason_for_missing_null_value_uid,
                 study_compound_dosing_count=0,
-                generate_uid_callback=repos.study_selection_compound_repository.generate_uid,
+                generate_uid_callback=repos.study_compound_repository.generate_uid,
                 user_initials=self.author,
             )
             # add VO to aggregate
             try:
                 selection_aggregate.add_compound_selection(
                     study_compound_selection=new_selection,
-                    selection_uid_by_details_callback=repos.study_selection_compound_repository.get_selection_uid_by_details,
+                    selection_uid_by_details_callback=repos.study_compound_repository.get_selection_uid_by_details,
                     reason_for_missing_callback=repos.ct_term_name_repository.term_exists,
                     compound_exist_callback=repos.compound_repository.final_concept_exists,
                     compound_alias_exist_callback=repos.compound_alias_repository.final_concept_exists,
@@ -144,15 +142,11 @@ class StudyCompoundSelectionService(
                 raise exceptions.ValidationException(value_error.args[0])
 
             # sync with DB and save the update
-            repos.study_selection_compound_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_compound_repository.save(selection_aggregate, self.author)
 
             # Fetch the AR object of the new selection, this time with name values for the control terminology
-            selection_aggregate = (
-                repos.study_selection_compound_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_compound_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             # Fetch the new selection which was just added
@@ -179,7 +173,7 @@ class StudyCompoundSelectionService(
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.StudySelectionCompound]:
         repos = self._repos
-        compound_selection_ars = repos.study_selection_compound_repository.find_all(
+        compound_selection_ars = repos.study_compound_repository.find_all(
             project_name=project_name,
             project_number=project_number,
         )
@@ -220,8 +214,8 @@ class StudyCompoundSelectionService(
         repos = self._repos
 
         if study_uid:
-            compound_selection_ars = (
-                repos.study_selection_compound_repository.find_by_study(study_uid)
+            compound_selection_ars = repos.study_compound_repository.find_by_study(
+                study_uid
             )
 
             header_values = service_level_generic_header_filtering(
@@ -235,7 +229,7 @@ class StudyCompoundSelectionService(
 
             return header_values
 
-        compound_selection_ars = repos.study_selection_compound_repository.find_all(
+        compound_selection_ars = repos.study_compound_repository.find_all(
             project_name=project_name,
             project_number=project_number,
         )
@@ -272,8 +266,8 @@ class StudyCompoundSelectionService(
     ) -> GenericFilteringReturn[models.StudySelectionCompound]:
         repos = MetaRepository()
         try:
-            compound_selection_ar = (
-                repos.study_selection_compound_repository.find_by_study(study_uid)
+            compound_selection_ar = repos.study_compound_repository.find_by_study(
+                study_uid
             )
             selection = self._transform_all_to_response_model(compound_selection_ar)
             # Do filtering, sorting, pagination and count
@@ -293,8 +287,8 @@ class StudyCompoundSelectionService(
     def get_specific_selection(
         self, study_uid: str, study_selection_uid: str
     ) -> models.StudySelectionCompound:
-        selection_aggregate = (
-            self._repos.study_selection_compound_repository.find_by_study(study_uid)
+        selection_aggregate = self._repos.study_compound_repository.find_by_study(
+            study_uid
         )
         try:
             (
@@ -310,10 +304,8 @@ class StudyCompoundSelectionService(
         repos = MetaRepository()
         try:
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_compound_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_compound_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             # remove the connection
@@ -325,9 +317,7 @@ class StudyCompoundSelectionService(
             )
 
             # sync with DB and save the update
-            repos.study_selection_compound_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_compound_repository.save(selection_aggregate, self.author)
         finally:
             repos.close()
 
@@ -338,10 +328,8 @@ class StudyCompoundSelectionService(
         repos = MetaRepository()
         try:
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_compound_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_compound_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             # remove the connection
@@ -350,9 +338,7 @@ class StudyCompoundSelectionService(
             )
 
             # sync with DB and save the update
-            repos.study_selection_compound_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_compound_repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just added
             new_selection, order = selection_aggregate.get_specific_compound_selection(
@@ -419,10 +405,8 @@ class StudyCompoundSelectionService(
         repos = MetaRepository()
         try:
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_compound_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_compound_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             # Load the current VO for updates
@@ -443,7 +427,7 @@ class StudyCompoundSelectionService(
                 # let the aggregate update the value object
                 selection_aggregate.update_selection(
                     updated_study_compound_selection=updated_selection,
-                    selection_uid_by_details_callback=repos.study_selection_compound_repository.get_selection_uid_by_details,
+                    selection_uid_by_details_callback=repos.study_compound_repository.get_selection_uid_by_details,
                     reason_for_missing_callback=repos.ct_term_name_repository.term_exists,
                     compound_exist_callback=repos.compound_repository.final_concept_exists,
                     compound_alias_exist_callback=repos.compound_alias_repository.final_concept_exists,
@@ -452,9 +436,7 @@ class StudyCompoundSelectionService(
                 raise exceptions.ValidationException(value_error.args[0])
 
             # sync with DB and save the update
-            repos.study_selection_compound_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_compound_repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just updated
             new_selection, order = selection_aggregate.get_specific_compound_selection(
@@ -494,10 +476,8 @@ class StudyCompoundSelectionService(
     ) -> Sequence[models.StudySelectionCompound]:
         repos = self._repos
         try:
-            selection_history = (
-                repos.study_selection_compound_repository.find_selection_history(
-                    study_uid
-                )
+            selection_history = repos.study_compound_repository.find_selection_history(
+                study_uid
             )
             return self._transform_history_to_response_model(
                 selection_history, study_uid
@@ -511,10 +491,8 @@ class StudyCompoundSelectionService(
     ) -> Sequence[models.StudySelectionCompound]:
         repos = self._repos
         try:
-            selection_history = (
-                repos.study_selection_compound_repository.find_selection_history(
-                    study_uid, study_selection_uid
-                )
+            selection_history = repos.study_compound_repository.find_selection_history(
+                study_uid, study_selection_uid
             )
             return self._transform_history_to_response_model(
                 selection_history, study_uid
@@ -526,6 +504,8 @@ class StudyCompoundSelectionService(
     def get_compound_uid_to_arm_uids_mapping(
         self, study_uid: str
     ) -> Dict[str, Set[str]]:
-        return self._repos.study_selection_compound_repository.get_compound_uid_to_arm_uids_mapping(
-            study_uid
+        return (
+            self._repos.study_compound_repository.get_compound_uid_to_arm_uids_mapping(
+                study_uid
+            )
         )

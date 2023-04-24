@@ -1,16 +1,15 @@
-from clinical_mdr_api.domain.library.timeframes import TimeframeAR
 from clinical_mdr_api.domain.library.timepoints import TimepointAR
+from clinical_mdr_api.domain.syntax_instances.timeframe import TimeframeAR
 from clinical_mdr_api.models.timepoint import Timepoint, TimepointVersion
-from clinical_mdr_api.services.generic_object_service import (
-    GenericObjectService,  # type: ignore
+from clinical_mdr_api.services.syntax_instances.generic_syntax_instance_service import (
+    GenericSyntaxInstanceService,
 )
 
 
-class TimepointService(GenericObjectService[TimeframeAR]):
+class TimepointService(GenericSyntaxInstanceService[TimeframeAR]):
     def _transform_aggregate_root_to_pydantic_model(
         self, item_ar: TimeframeAR
     ) -> Timepoint:
-        # return Timeframe(**self._get_datamap(item_ar))
         return Timepoint.from_timepoint_ar(item_ar)
 
     aggregate_class = TimepointAR

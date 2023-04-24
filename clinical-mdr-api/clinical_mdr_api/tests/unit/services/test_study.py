@@ -27,6 +27,7 @@ from clinical_mdr_api.models.study import (
     StudyMetadataJsonModel,
     StudyPatchRequestJsonModel,
     StudyPopulationJsonModel,
+    StudyPreferredTimeUnit,
 )
 from clinical_mdr_api.models.utils import from_duration_object_to_value_and_unit
 from clinical_mdr_api.services._utils import create_duration_object_from_api_input
@@ -360,7 +361,6 @@ class TestStudyService(unittest.TestCase):
         clinical_programme_repository_property_mock: PropertyMock,
         ct_term_name_repository_property_mock: PropertyMock,
     ):
-
         # given
         test_db = StudyDefinitionsDBFake()
 
@@ -408,16 +408,16 @@ class TestStudyService(unittest.TestCase):
             service_response.current_metadata.version_metadata.study_status,
         )
         self.assertEqual(
-            sample_study_definition.current_metadata.ver_metadata.locked_version_number,
-            service_response.current_metadata.version_metadata.locked_version_number,
+            sample_study_definition.current_metadata.ver_metadata.version_number,
+            service_response.current_metadata.version_metadata.version_number,
         )
         self.assertEqual(
-            sample_study_definition.current_metadata.ver_metadata.locked_version_info,
-            service_response.current_metadata.version_metadata.locked_version_info,
+            sample_study_definition.current_metadata.ver_metadata.version_description,
+            service_response.current_metadata.version_metadata.version_description,
         )
         self.assertEqual(
-            sample_study_definition.current_metadata.ver_metadata.locked_version_author,
-            service_response.current_metadata.version_metadata.locked_version_author,
+            sample_study_definition.current_metadata.ver_metadata.version_author,
+            service_response.current_metadata.version_metadata.version_author,
         )
         self.assertEqual(
             sample_study_definition.current_metadata.ver_metadata.version_timestamp,
@@ -500,6 +500,7 @@ class TestStudyService(unittest.TestCase):
             _ref_high_level_study_design.trial_type_null_value_code,
         )
 
+    @patch(StudyService.__module__ + ".MetaRepository.unit_definition_repository")
     @patch(StudyService.__module__ + ".MetaRepository.clinical_programme_repository")
     @patch(StudyService.__module__ + ".MetaRepository.project_repository")
     @patch(
@@ -511,6 +512,7 @@ class TestStudyService(unittest.TestCase):
         study_definition_repository_property_mock: PropertyMock,
         project_repository_property_mock: PropertyMock,
         clinical_programme_repository_property_mock: PropertyMock,
+        unit_definition_repository_property_mock: PropertyMock,
     ):
         # given
         test_db = StudyDefinitionsDBFake()
@@ -525,8 +527,18 @@ class TestStudyService(unittest.TestCase):
             # pylint:disable=unnecessary-lambda
             create_random_clinical_programme(generate_uid_callback=lambda: random_str())
         )
+        unit_definition_repository_property_mock.final_concept_exists.return_value = (
+            True
+        )
         study_create_input = StudyCreateInput(study_acronym="ACRONYM")
         study_service = StudyService(user="PIWQ")
+        study_service.post_study_preferred_time_unit = (
+            lambda study_uid, unit_definition_uid: StudyPreferredTimeUnit(
+                study_uid=study_uid,
+                time_unit_uid="time_unit_uid",
+                time_unit_name="time_unit_name",
+            )
+        )
 
         # when
         study_service.create(study_create_input=study_create_input)
@@ -706,16 +718,16 @@ class TestStudyService(unittest.TestCase):
                 service_response_item.current_metadata.identification_metadata.project_number,
             )
             self.assertEqual(
-                sample_study_definition.current_metadata.ver_metadata.locked_version_number,
-                service_response_item.current_metadata.version_metadata.locked_version_number,
+                sample_study_definition.current_metadata.ver_metadata.version_number,
+                service_response_item.current_metadata.version_metadata.version_number,
             )
             self.assertEqual(
-                sample_study_definition.current_metadata.ver_metadata.locked_version_info,
-                service_response_item.current_metadata.version_metadata.locked_version_info,
+                sample_study_definition.current_metadata.ver_metadata.version_description,
+                service_response_item.current_metadata.version_metadata.version_description,
             )
             self.assertEqual(
-                sample_study_definition.current_metadata.ver_metadata.locked_version_author,
-                service_response_item.current_metadata.version_metadata.locked_version_author,
+                sample_study_definition.current_metadata.ver_metadata.version_author,
+                service_response_item.current_metadata.version_metadata.version_author,
             )
             self.assertEqual(
                 sample_study_definition.current_metadata.ver_metadata.version_timestamp,

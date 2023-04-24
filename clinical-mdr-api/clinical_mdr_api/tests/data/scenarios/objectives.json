@@ -30,11 +30,11 @@
                 "library_name": "Test library",
                 "name": "Test objective",
                 "objective_template_uid": "{otuid}",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "position": 1,
                         "conjunction": "and",
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "type": "ActivityInstance",
@@ -60,7 +60,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "Parameter value Indication-99991 ('type 2 diabetes') not valid for parameter 'ActivityInstance'",
+                "message": "Parameter term Indication-99991 ('type 2 diabetes') not valid for parameter 'ActivityInstance'",
                 "time": "2020-11-11T02:03:45.621381",
                 "path": "http://testserver/objectives",
                 "method": "POST",
@@ -77,11 +77,11 @@
                 "library_name": "Test library",
                 "name": "Test objective",
                 "objective_template_uid": "{otuid}",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "position": 1,
                         "conjunction": "and",
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "type": "Indication",
@@ -125,13 +125,14 @@
                 "objective_template": {
                     "name": "Test [Indication]",
                     "name_plain": "Test [Indication]",
+                    "guidance_text": null,
                     "uid": "{otuid}"
                 },
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "position": 1,
                         "conjunction": "and",
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "type": "Indication",
@@ -163,11 +164,11 @@
                 "library_name": "Test library",
                 "name": "Test objective",
                 "objective_template_uid": "{otuid}",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "position": 1,
                         "conjunction": "and",
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "type": "Indication",
@@ -211,13 +212,14 @@
                 "objective_template": {
                     "name": "Test [Indication]",
                     "name_plain": "Test [Indication]",
+                    "guidance_text": null,
                     "uid": "{otuid}"
                 },
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "position": 1,
                         "conjunction": "and",
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "type": "Indication",
@@ -249,11 +251,11 @@
                 "library_name": "Test library",
                 "name": "Test objective",
                 "objective_template_uid": "{otuid}",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "position": 1,
                         "conjunction": "and",
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "type": "Indication",
@@ -284,92 +286,6 @@
                 "path": "http://testserver/objectives",
                 "time": "2020-11-10T01:32:16.234697",
                 "type": "BusinessLogicException"
-            }
-        }
-    },
-    {
-        "name": "Test overriding the template name",
-        "request": {
-            "headers": {},
-            "method": "POST",
-            "request": {
-                "library_name": "Test library",
-                "objective_template_uid": "{otuid}",
-                "name_override": "Test [Indication] - edited instance name",
-                "parameter_values": [
-                    {
-                        "position": 1,
-                        "conjunction": "and",
-                        "values": [
-                            {
-                                "index": 1,
-                                "type": "Indication",
-                                "name": "type 2 diabetes",
-                                "uid": "Indication-99991"
-                            },
-                            {
-                                "index": 2,
-                                "type": "Indication",
-                                "name": "coronary heart disease",
-                                "uid": "Indication-99992"
-                            }
-                        ]
-                    }
-                ]
-            },
-            "url": "/objectives"
-        },
-        "response": {
-            "code": 201,
-            "headers": {
-                "content-length": "459",
-                "content-type": "application/json"
-            },
-            "result": {
-                "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-                "name": "Test [type 2 diabetes and coronary heart disease] - edited instance name",
-                "name_plain": "Test type 2 diabetes and coronary heart disease - edited instance name",
-                "start_date": "2020-11-11T01:06:37+00:00",
-                "end_date": null,
-                "status": "Draft",
-                "study_count": null,
-                "version": "0.1",
-                "change_description": "Initial version",
-                "user_initials": "TEST_USER",
-                "possible_actions": [
-                    "approve",
-                    "delete",
-                    "edit"
-                ],
-                "objective_template": {
-                    "name": "Test [Indication] - edited instance name",
-                    "name_plain": "Test [Indication] - edited instance name",
-                    "uid": "{otuid}"
-                },
-                "parameter_values": [
-                    {
-                        "position": 1,
-                        "conjunction": "and",
-                        "values": [
-                            {
-                                "index": 1,
-                                "type": "Indication",
-                                "name": "type 2 diabetes",
-                                "uid": "Indication-99991"
-                            },
-                            {
-                                "index": 2,
-                                "type": "Indication",
-                                "name": "coronary heart disease",
-                                "uid": "Indication-99992"
-                            }
-                        ]
-                    }
-                ],
-                "library": {
-                    "name": "Test library",
-                    "is_editable": true
-                }
             }
         }
     },

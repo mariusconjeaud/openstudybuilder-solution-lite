@@ -451,9 +451,8 @@ export default {
     },
     async deleteStudyEndpoint (studyEndpoint) {
       const options = { type: 'warning' }
-      let endpoint = studyEndpoint.endpoint.name
+      const endpoint = studyEndpoint.endpoint ? studyEndpoint.endpoint.name_plain : '(unnamed)'
 
-      endpoint = endpoint.replaceAll(/\[|\]/g, '')
       if (await this.$refs.confirm.open(this.$t('StudyEndpointsTable.confirm_delete', { endpoint }), options)) {
         // Make sure to set current studyObjective so the list of
         // endpoints is updated after deletion

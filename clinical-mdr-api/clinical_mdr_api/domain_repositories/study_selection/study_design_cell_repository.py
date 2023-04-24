@@ -7,7 +7,10 @@ from neomodel import db
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain.study_selection.study_design_cell import StudyDesignCellVO
 from clinical_mdr_api.domain_repositories._utils import helpers
-from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
+from clinical_mdr_api.domain_repositories.models._utils import (
+    convert_to_datetime,
+    to_relation_trees,
+)
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Create,
@@ -48,7 +51,7 @@ class StudyDesignCellRepository:
         )
 
     def find_by_uid(self, study_uid: str, uid: str) -> StudyDesignCellVO:
-        design_cell_node = (
+        design_cell_node = to_relation_trees(
             StudyDesignCell.nodes.fetch_relations(
                 "study_epoch__has_epoch__has_name_root__has_latest_value",
                 "has_after",
@@ -58,7 +61,6 @@ class StudyDesignCellRepository:
             .fetch_optional_relations("study_arm", "study_branch_arm")
             .filter(study_value__study_root__uid=study_uid, uid=uid)
             .order_by("order")
-            .to_relation_trees()
         )
 
         if len(design_cell_node) > 1:
@@ -78,16 +80,17 @@ class StudyDesignCellRepository:
     ) -> Sequence[StudyDesignCellVO]:
         all_design_cells = [
             self._from_repository_values(study_uid=study_uid, design_cell=sas_node)
-            for sas_node in StudyDesignCell.nodes.fetch_relations(
-                "study_epoch__has_epoch__has_name_root__has_latest_value",
-                "has_after",
-                "study_epoch",
-                "study_element",
+            for sas_node in to_relation_trees(
+                StudyDesignCell.nodes.fetch_relations(
+                    "study_epoch__has_epoch__has_name_root__has_latest_value",
+                    "has_after",
+                    "study_epoch",
+                    "study_element",
+                )
+                .fetch_optional_relations("study_arm", "study_branch_arm")
+                .filter(study_value__study_root__uid=study_uid)
+                .order_by("order")
             )
-            .fetch_optional_relations("study_arm", "study_branch_arm")
-            .filter(study_value__study_root__uid=study_uid)
-            .order_by("order")
-            .to_relation_trees()
         ]
         return all_design_cells
 
@@ -131,7 +134,6 @@ class StudyDesignCellRepository:
     def save(
         self, design_cell_vo: StudyDesignCellVO, author: str, create: bool = False
     ) -> StudyDesignCellVO:
-
         # Get nodes and check if they can play together
         study_root_node = StudyRoot.nodes.get_or_none(uid=design_cell_vo.study_uid)
         if study_root_node is None:
@@ -333,7 +335,6 @@ class StudyDesignCellRepository:
     def patch_study_arm(
         self, study_uid: str, design_cell_uid: str, study_arm_uid: str, author: str
     ):
-
         study_design_cell = self.find_by_uid(study_uid=study_uid, uid=design_cell_uid)
         study_design_cell.study_arm_uid = study_arm_uid
         study_design_cell.study_branch_arm_uid = None
@@ -343,7 +344,7 @@ class StudyDesignCellRepository:
     def get_design_cells_connected_to_branch_arm(
         self, study_uid: str, study_branch_arm_uid: str
     ):
-        sdc_node = (
+        sdc_node = to_relation_trees(
             StudyDesignCell.nodes.fetch_relations(
                 "study_epoch__has_epoch__has_name_root__has_latest_value",
                 "has_after",
@@ -357,12 +358,11 @@ class StudyDesignCellRepository:
                 study_branch_arm__study_value__study_root__uid=study_uid,
             )
             .order_by("order")
-            .to_relation_trees()
         )
         return sdc_node
 
     def get_design_cells_connected_to_epoch(self, study_uid: str, study_epoch_uid: str):
-        sdc_node = (
+        sdc_node = to_relation_trees(
             StudyDesignCell.nodes.fetch_relations(
                 "study_epoch__has_epoch__has_name_root__has_latest_value",
                 "has_after",
@@ -376,13 +376,12 @@ class StudyDesignCellRepository:
                 study_epoch__study_value__study_root__uid=study_uid,
             )
             .order_by("order")
-            .to_relation_trees()
         )
 
         return sdc_node
 
     def get_design_cells_connected_to_arm(self, study_uid: str, study_arm_uid: str):
-        sdc_node = (
+        sdc_node = to_relation_trees(
             StudyDesignCell.nodes.fetch_relations(
                 "study_epoch__has_epoch__has_name_root__has_latest_value",
                 "study_arm",
@@ -396,7 +395,6 @@ class StudyDesignCellRepository:
                 study_arm__study_value__study_root__uid=study_uid,
             )
             .order_by("order")
-            .to_relation_trees()
         )
 
         return sdc_node
@@ -404,7 +402,7 @@ class StudyDesignCellRepository:
     def get_design_cells_connected_to_element(
         self, study_uid: str, study_element_uid: str
     ):
-        sdc_node = (
+        sdc_node = to_relation_trees(
             StudyDesignCell.nodes.fetch_relations(
                 "study_element",
                 "has_after",
@@ -415,7 +413,6 @@ class StudyDesignCellRepository:
                 study_element__study_value__study_root__uid=study_uid,
             )
             .order_by("order")
-            .to_relation_trees()
         )
         return sdc_node
 

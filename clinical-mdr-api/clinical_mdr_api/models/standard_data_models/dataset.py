@@ -51,9 +51,3 @@ class Dataset(VersionProperties):
         description="data_model_ig_name",
         source="has_latest_value.has_dataset.name",
     )
-    # library_name: str = Field(
-    #     None,
-    #     title="library_name",
-    #     description="",
-    #     source="has_library.name",
-    # )

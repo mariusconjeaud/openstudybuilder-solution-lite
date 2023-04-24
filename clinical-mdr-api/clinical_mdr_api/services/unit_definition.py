@@ -52,7 +52,7 @@ class UnitDefinitionService:
         self,
         *,
         user_id: str = Depends(_get_current_user_id),
-        meta_repository: MetaRepository = Depends(_get_meta_repository)
+        meta_repository: MetaRepository = Depends(_get_meta_repository),
     ):
         self._repos = meta_repository
         self._user_id = user_id
@@ -109,7 +109,6 @@ class UnitDefinitionService:
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         result_count: int = 10,
     ):
-
         header_values = self._repos.unit_definition_repository.get_distinct_headers(
             library=library_name,
             field_name=field_name,
@@ -130,9 +129,8 @@ class UnitDefinitionService:
         *,
         at_specified_datetime: Optional[datetime],
         status: Optional[str],
-        version: Optional[str]
+        version: Optional[str],
     ) -> UnitDefinitionModel:
-
         status_as_enum = LibraryItemStatus(status) if status is not None else None
 
         unit_definition_ar = self._repos.unit_definition_repository.find_by_uid_2(
@@ -324,7 +322,6 @@ class UnitDefinitionService:
     def _fill_missing_values_in_base_model_from_reference_base_model(
         *, base_model_with_missing_values: BaseModel, reference_base_model: BaseModel
     ) -> None:
-
         for field_name in base_model_with_missing_values.__fields_set__:
             if isinstance(
                 getattr(base_model_with_missing_values, field_name), BaseModel

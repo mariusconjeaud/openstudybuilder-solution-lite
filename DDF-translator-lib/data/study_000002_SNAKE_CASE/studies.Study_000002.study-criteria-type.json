@@ -1,0 +1,19 @@
+{
+  "catalogue_name": "SDTM CT",
+  "change_description": "Initial import from CDISC",
+  "codelist_uid": "CTCodelist_000012",
+  "end_date": null,
+  "library_name": "CDISC",
+  "order": 2,
+  "possible_actions": [
+    "inactivate",
+    "newVersion"
+  ],
+  "sponsor_preferred_name": "Exclusion Criteria",
+  "sponsor_preferred_name_sentence_case": "exclusion criteria",
+  "start_date": "2022-10-18T10:16:18.825000",
+  "status": "Final",
+  "term_uid": "C25370_EXCLUSION",
+  "user_initials": "TESTUSER",
+  "version": "1.0"
+}

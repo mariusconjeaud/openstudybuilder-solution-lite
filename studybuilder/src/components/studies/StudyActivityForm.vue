@@ -13,9 +13,9 @@
       <v-radio-group
         v-model="creationMode"
         >
-        <v-radio :label="$t('StudyActivityForm.select_from_studies')" value="selectFromStudies" />
-        <v-radio :label="$t('StudyActivityForm.select_from_library')" value="selectFromLibrary" />
-        <v-radio :label="$t('StudyActivityForm.create_placeholder_for_activity')" value="createPlaceholder" />
+        <v-radio :label="$t('StudyActivityForm.select_from_studies')" value="selectFromStudies" data-cy="select-from-studies" />
+        <v-radio :label="$t('StudyActivityForm.select_from_library')" value="selectFromLibrary" data-cy="select-from-library"/>
+        <v-radio :label="$t('StudyActivityForm.create_placeholder_for_activity')" value="createPlaceholder" data-cy="create-placeholder"/>
       </v-radio-group>
     </template>
     <template v-slot:step.selectStudies="{ step }">
@@ -27,9 +27,10 @@
           <v-select
             v-model="selectedStudies"
             :label="$t('StudySelectionTable.studies')"
+            data-cy="select-study-for-activity"
             :items="studies"
             :error-messages="errors"
-            item-text="study_id"
+            item-text="current_metadata.identification_metadata.study_id"
             clearable
             multiple
             return-object
@@ -48,6 +49,7 @@
               <v-autocomplete
                 v-model="currentFlowchartGroup"
                 :label="$t('StudyActivityForm.flowchart_group')"
+                data-cy="flowchart-group"
                 :items="flowchartGroups"
                 item-text="sponsor_preferred_name"
                 return-object
@@ -112,6 +114,7 @@
               icon
               :color="getCopyButtonColor(item)"
               :disabled="isStudyActivitySelected(item)"
+              data-cy="copy-activity"
               @click="selectStudyActivity(item)"
               :title="$t('StudyActivityForm.copy_activity')">
               <v-icon>mdi-content-copy</v-icon>
@@ -163,6 +166,7 @@
               icon
               :color="getCopyButtonColor(item)"
               :disabled="isActivitySelected(item)"
+              data-cy="copy-activity"
               @click="selectActivity(item)"
               :title="$t('StudyActivityForm.copy_activity')">
               <v-icon>mdi-content-copy</v-icon>
@@ -191,6 +195,7 @@
             >
             <v-autocomplete
               :label="$t('ActivityForms.activity_group')"
+              data-cy="activity-group"
               :items="groups"
               v-model="form.activity_group"
               item-text="name"
@@ -207,6 +212,7 @@
             >
             <v-autocomplete
               :label="$t('ActivityForms.activity_subgroup')"
+              data-cy="activity-subgroup"
               :items="filteredSubGroups"
               v-model="form.activity_subgroup"
               item-text="name"
@@ -223,6 +229,7 @@
             >
             <v-text-field
               :label="$t('ActivityForms.name')"
+              data-cy="instance-name"
               v-model="form.name"
               dense
               clearable
@@ -232,6 +239,7 @@
           </validation-provider>
           <v-text-field
             :label="$t('ActivityFormsRequested.abbreviation')"
+            data-cy="activity-abbreviation"
             v-model="form.abbreviation"
             dense
             clearable
@@ -242,6 +250,7 @@
             >
             <v-textarea
               :label="$t('ActivityFormsRequested.definition')"
+              data-cy="activity-definition"
               v-model="form.definition"
               dense
               clearable
@@ -256,6 +265,7 @@
             >
             <v-textarea
               :label="$t('ActivityFormsRequested.rationale_for_request')"
+              data-cy="activity-rationale"
               v-model="form.request_rationale"
               dense
               clearable
@@ -278,6 +288,7 @@
                 icon
                 :color="getCopyButtonColor(item)"
                 :disabled="isActivitySelected(item)"
+                data-cy="copy-activity"
                 @click="selectActivityFromPlaceholder(item)"
                 :title="$t('StudyActivityForm.copy_activity')">
                 <v-icon>mdi-content-copy</v-icon>
@@ -381,7 +392,7 @@ export default {
       selectedActivities: [],
       studyActivityHeaders: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('StudyActivityForm.study_id'), value: 'study_uid' },
+        { text: this.$t('StudyActivityForm.study_id'), value: 'study_id' },
         { text: this.$t('_global.library'), value: 'activity.library_name' },
         { text: this.$t('StudyActivityForm.flowchart_group'), value: 'flowchart_group.sponsor_preferred_name' },
         { text: this.$t('StudyActivity.activity_group'), value: 'activity.activity_group.name' },

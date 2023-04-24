@@ -1,9 +1,11 @@
 """Study model."""
 from datetime import datetime
+from decimal import Decimal
 from typing import Callable, Collection, Iterable, List, Optional, Sequence
 
 from pydantic import Field
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain.clinical_programme.clinical_programme import (
     ClinicalProgrammeAR,
 )
@@ -22,6 +24,7 @@ from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
     StudyInterventionVO,
     StudyMetadataVO,
     StudyPopulationVO,
+    StudyStatus,
     StudyVersionMetadataVO,
 )
 from clinical_mdr_api.domain.unit_definition.unit_definition import UnitDefinitionAR
@@ -194,10 +197,10 @@ class StudyVersionMetadataJsonModel(BaseModel):
         description = "Version metadata for study definition."
 
     study_status: Optional[str] = None
-    locked_version_number: Optional[int] = None
-    version_timestamp: Optional[datetime] = None
-    locked_version_author: Optional[str] = None
-    locked_version_info: Optional[str] = None
+    version_number: Optional[Decimal] = None
+    version_timestamp: Optional[datetime] = Field(None, remove_from_wildcard=True)
+    version_author: Optional[str] = None
+    version_description: Optional[str] = None
 
     @classmethod
     def from_study_version_metadata_vo(
@@ -207,10 +210,10 @@ class StudyVersionMetadataJsonModel(BaseModel):
             return None
         return cls(
             study_status=study_version_metadata_vo.study_status.value,
-            locked_version_number=study_version_metadata_vo.locked_version_number,
+            version_number=study_version_metadata_vo.version_number,
             version_timestamp=study_version_metadata_vo.version_timestamp,
-            locked_version_author=study_version_metadata_vo.locked_version_author,
-            locked_version_info=study_version_metadata_vo.locked_version_info,
+            version_author=study_version_metadata_vo.version_author,
+            version_description=study_version_metadata_vo.version_description,
         )
 
 
@@ -525,12 +528,6 @@ class StudyInterventionJsonModel(BaseModel):
     planned_study_length: Optional[DurationJsonModel] = None
     planned_study_length_null_value_code: Optional[SimpleTermModel] = None
 
-    drug_study_indication: Optional[bool] = None
-    drug_study_indication_null_value_code: Optional[SimpleTermModel] = None
-
-    device_study_indication: Optional[str] = None
-    device_study_indication_null_value_code: Optional[SimpleTermModel] = None
-
     trial_intent_types_codes: Optional[Sequence[SimpleTermModel]] = None
     trial_intent_types_null_value_code: Optional[SimpleTermModel] = None
 
@@ -602,20 +599,6 @@ class StudyInterventionJsonModel(BaseModel):
             planned_study_length_null_value_code=SimpleTermModel.from_ct_code(
                 c_code=study_intervention_vo.planned_study_length_null_value_code,
                 find_term_by_uid=find_term_by_uid,
-            ),
-            drug_study_indicator=study_intervention_vo.drug_study_indication,
-            drug_study_indicator_null_value_code=(
-                SimpleTermModel.from_ct_code(
-                    c_code=study_intervention_vo.drug_study_indication_null_value_code,
-                    find_term_by_uid=find_term_by_uid,
-                )
-            ),
-            device_study_indicator=study_intervention_vo.device_study_indication,
-            device_study_indicator_null_value_code=(
-                SimpleTermModel.from_ct_code(
-                    c_code=study_intervention_vo.device_study_indication_null_value_code,
-                    find_term_by_uid=find_term_by_uid,
-                )
             ),
             trial_intent_types_codes=[
                 SimpleTermModel.from_ct_code(
@@ -745,38 +728,15 @@ class CompactStudy(BaseModel):
     uid: str = Field(
         title="uid",
         description="The unique id of the study.",
+        remove_from_wildcard=True,
     )
-
-    study_number: Optional[str] = Field(
-        None,
-        title="study_number",
-        description="DEPRECATED. Use field in current_metadata.identification_metadata.",
+    possible_actions: List[str] = Field(
+        ...,
+        description=(
+            "Holds those actions that can be performed on the ActivityInstances. "
+            "Actions are: 'lock', 'release', 'unlock', 'delete'."
+        ),
     )
-
-    study_id: Optional[str] = Field(
-        None,
-        title="study_id",
-        description="DEPRECATED. Use field in current_metadata.identification_metadata.",
-    )
-
-    study_acronym: Optional[str] = Field(
-        None,
-        title="study_acronym",
-        description="DEPRECATED. Use field in current_metadata.identification_metadata.",
-    )
-
-    project_number: Optional[str] = Field(
-        None,
-        title="project_number",
-        description="DEPRECATED. Use field in current_metadata.identification_metadata.",
-    )
-    study_status: str = Field(
-        None,
-        title="study_status",
-        description="Current status of given StudyDefinition. "
-        "Possible values are: 'DRAFT' or 'LOCKED'.",
-    )
-
     current_metadata: Optional[CompactStudyMetadataJsonModel] = None
 
     @classmethod
@@ -785,27 +745,12 @@ class CompactStudy(BaseModel):
         study_definition_ar: StudyDefinitionAR,
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
-    ) -> "Study":
-        is_id_metadata_none = (
-            True if study_definition_ar.current_metadata.id_metadata is None else None
-        )
+    ) -> "CompactStudy":
         return cls(
             uid=study_definition_ar.uid,
-            study_number=study_definition_ar.current_metadata.id_metadata.study_number
-            if not is_id_metadata_none
-            else None,
-            study_acronym=study_definition_ar.current_metadata.id_metadata.study_acronym
-            if not is_id_metadata_none
-            else None,
-            project_number=study_definition_ar.current_metadata.id_metadata.project_number
-            if not is_id_metadata_none
-            else None,
-            study_id=study_definition_ar.current_metadata.id_metadata.study_id
-            if not is_id_metadata_none
-            else None,
-            study_status=study_definition_ar.current_metadata.ver_metadata.study_status.value
-            if not is_id_metadata_none
-            else None,
+            possible_actions=sorted(
+                [_.value for _ in study_definition_ar.get_possible_actions()]
+            ),
             current_metadata=CompactStudyMetadataJsonModel.from_study_metadata_vo(
                 study_metadata_vo=study_definition_ar.current_metadata,
                 find_project_by_project_number=find_project_by_project_number,
@@ -819,37 +764,13 @@ class Study(BaseModel):
         title="uid",
         description="The unique id of the study.",
     )
-
-    study_number: Optional[str] = Field(
-        None,
-        title="study_number",
-        description="DEPRECATED. Use field in current_metadata.identification_metadata.",
+    possible_actions: List[str] = Field(
+        ...,
+        description=(
+            "Holds those actions that can be performed on the ActivityInstances. "
+            "Actions are: 'lock', 'release', 'unlock', 'delete'."
+        ),
     )
-
-    study_id: Optional[str] = Field(
-        None,
-        title="study_id",
-        description="DEPRECATED. Use field in current_metadata.identification_metadata.",
-    )
-
-    study_acronym: Optional[str] = Field(
-        None,
-        title="study_acronym",
-        description="DEPRECATED. Use field in current_metadata.identification_metadata.",
-    )
-
-    project_number: Optional[str] = Field(
-        None,
-        title="project_number",
-        description="DEPRECATED. Use field in current_metadata.identification_metadata.",
-    )
-    study_status: str = Field(
-        None,
-        title="study_status",
-        description="Current status of given StudyDefinition. "
-        "Possible values are: 'DRAFT' or 'LOCKED'.",
-    )
-
     current_metadata: Optional[StudyMetadataJsonModel] = None
 
     @classmethod
@@ -861,29 +782,44 @@ class Study(BaseModel):
         find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
         find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
         find_dictionary_term_by_uid: Callable[[str], Optional[DictionaryTermAR]],
-    ) -> "Study":
-        is_id_metadata_none = (
-            True if study_definition_ar.current_metadata.id_metadata is None else None
+        # pylint: disable=unused-argument
+        at_specified_date_time: Optional[datetime] = None,
+        status: Optional[StudyStatus] = None,
+        version: Optional[str] = None,
+        history_endpoint: bool = False,
+    ) -> Optional["Study"]:
+        current_metadata = None
+        if status is not None:
+            if status == StudyStatus.DRAFT:
+                current_metadata = study_definition_ar.draft_metadata
+            elif status == StudyStatus.RELEASED:
+                current_metadata = study_definition_ar.released_metadata
+            elif status == StudyStatus.LOCKED:
+                current_metadata = study_definition_ar.latest_locked_metadata
+        else:
+            current_metadata = study_definition_ar.current_metadata
+        if version is not None:
+            current_metadata = study_definition_ar.get_specific_locked_metadata_version(
+                version_number=int(version)
+            )
+        if current_metadata is None:
+            if not history_endpoint:
+                raise exceptions.ValidationException(
+                    f"Study {study_definition_ar.uid} doesn't have a version for status={status} version={version}"
+                )
+            return None
+        is_metadata_the_last_one = bool(
+            study_definition_ar.current_metadata == current_metadata
         )
         return cls(
             uid=study_definition_ar.uid,
-            study_number=study_definition_ar.current_metadata.id_metadata.study_number
-            if not is_id_metadata_none
-            else None,
-            study_acronym=study_definition_ar.current_metadata.id_metadata.study_acronym
-            if not is_id_metadata_none
-            else None,
-            project_number=study_definition_ar.current_metadata.id_metadata.project_number
-            if not is_id_metadata_none
-            else None,
-            study_id=study_definition_ar.current_metadata.id_metadata.study_id
-            if not is_id_metadata_none
-            else None,
-            study_status=study_definition_ar.current_metadata.ver_metadata.study_status.value
-            if not is_id_metadata_none
-            else None,
+            possible_actions=sorted(
+                [_.value for _ in study_definition_ar.get_possible_actions()]
+                if is_metadata_the_last_one
+                else []
+            ),
             current_metadata=StudyMetadataJsonModel.from_study_metadata_vo(
-                study_metadata_vo=study_definition_ar.current_metadata,
+                study_metadata_vo=current_metadata,
                 find_project_by_project_number=find_project_by_project_number,
                 find_clinical_programme_by_uid=find_clinical_programme_by_uid,
                 find_all_study_time_units=find_all_study_time_units,
@@ -894,22 +830,11 @@ class Study(BaseModel):
 
 
 class StudyCreateInput(BaseModel):
-    # project_uid: str = Field(
-    #    ...,
-    #    title="project_uid",
-    #    description="The unique id of the project that holds the study.",
-    # )
     study_number: Optional[str] = Field(
         # ...,
         title="study_number",
         description="",
     )
-
-    # study_id_prefix: Optional[str] = Field(
-    #     ...,
-    #     title="study_id_prefix",
-    #     description="",
-    # )
 
     study_acronym: Optional[str] = Field(
         # ...,
@@ -921,6 +846,14 @@ class StudyCreateInput(BaseModel):
         # ...,
         title="project_number",
         description="",
+    )
+
+
+class StatusChangeDescription(BaseModel):
+    change_description: str = Field(
+        ...,
+        title="Change description",
+        description="The description of the Study status change.",
     )
 
 

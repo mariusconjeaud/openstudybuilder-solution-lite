@@ -1,4 +1,4 @@
-from mdr_standards_import.cdisc_ct.load_ct_preprocessing import Term, Codelist
+from mdr_standards_import.scripts.load_ct_preprocessing import Term, Codelist
 from mdr_standards_import.tests.cdisc_ct.test_pipeline import Package, Import
 
 
@@ -23,7 +23,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition 1A; goes together with 1B; differentiation via codelist submission values",
         extensible=True,
         synonyms=None,
-
         terms=[term1],
     )
 
@@ -36,7 +35,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition 1B; goes together with 1A; differentiation via codelist submission values",
         extensible=True,
         synonyms=None,
-
         terms=[term1],
     )
 
@@ -60,7 +58,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition 2A; goes together with 2B; differentiation via codelist submission values",
         extensible=True,
         synonyms=None,
-
         terms=[term2],
     )
 
@@ -73,7 +70,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition 2B; goes together with 2A; differentiation via codelist submission values",
         extensible=True,
         synonyms=None,
-
         terms=[term2],
     )
 
@@ -106,7 +102,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition 3B; goes together with C3A; differentiation via codelist submission values",
         extensible=True,
         synonyms=None,
-
         terms=[term3, term4],
     )
     codelist6 = Codelist(
@@ -118,7 +113,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition 3A; goes together with C3B; differentiation via codelist submission values",
         extensible=True,
         synonyms=None,
-
         terms=[term3, term4],
     )
 
@@ -131,7 +125,6 @@ def get_expected_imports(effective_date, user_initials):
         description="Test-Case 7: There is a codelist with the name 'Codelist 001' and another codelist with the name 'Codelist 002'. -> import code and name submission values and log as inconsistency.",
         source="Test source",
         href="/mdr/ct/packages/cat7-2020-01-01",
-
         terms=[term1, term2, term3, term4],
         codelists=[codelist1, codelist2, codelist3, codelist4, codelist6, codelist5],
         discontinued_codelists=[],
@@ -142,7 +135,7 @@ def get_expected_imports(effective_date, user_initials):
         user_initials=user_initials,
         packages=[package1],
         discontinued_codelists=[],
-        log_entries=[]
+        log_entries=[],
     )
 
     return [import1]

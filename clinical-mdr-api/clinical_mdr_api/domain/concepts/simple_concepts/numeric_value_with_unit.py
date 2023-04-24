@@ -58,7 +58,6 @@ class NumericValueWithUnitVO(NumericValueVO):
         find_unit_definition_by_uid: Callable[[str], UnitDefinitionAR],
         unit_definition_uid: str,
     ) -> "NumericValueWithUnitVO":
-
         unit_definition = find_unit_definition_by_uid(unit_definition_uid)
         if unit_definition is None:
             raise ValueError(

@@ -92,32 +92,3 @@ class CTCodelistAttributesTestNegativeTest(api.APITest):
 
     def ignored_fields(self):
         return ["start_date", "end_date", "time", "user_initials"]
-
-
-class CTCodelistConcurrencyTest(api.APITest):
-    TEST_DB_NAME = "cttests.codelists"
-
-    def setUp(self):
-        inject_and_clear_db(self.TEST_DB_NAME)
-        db.cypher_query(STARTUP_CT_CODELISTS_ATTRIBUTES_CYPHER)
-        db.cypher_query(STARTUP_CT_CODELISTS_NAME_CYPHER)
-
-        from clinical_mdr_api import main
-
-        self.test_client = TestClient(main.app)
-
-    SCENARIO_PATHS = [os.path.join(BASE_SCENARIO_PATH, "ct_codelist_concurrency.json")]
-
-    def is_check_headers_needed(self):
-        return True
-
-    def ignored_fields(self):
-        return [
-            "start_date",
-            "end_date",
-            "time",
-            "user_initials",
-            "traceresponse",
-            "content-length",
-            "content-type",
-        ]

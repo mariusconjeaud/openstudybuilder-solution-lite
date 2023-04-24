@@ -8,7 +8,6 @@ describe('NotApplicableField', () => {
   const cleanFunc = jest.fn()
   const label = 'My field'
   const hint = 'My field hint'
-  let vuetify
   let wrapper
 
   beforeEach(async () => {

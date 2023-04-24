@@ -5,6 +5,9 @@ from typing import Dict
 from neomodel import db  # type: ignore
 
 from clinical_mdr_api.domain.study_definition_aggregate.root import StudyDefinitionAR
+from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
+    StudyDescriptionVO,
+)
 from clinical_mdr_api.domain_repositories.clinical_programme.clinical_programme_repository import (
     ClinicalProgrammeRepository,
 )
@@ -101,6 +104,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.created_project.project_number
                 },
                 is_study_after_create=True,
+                author=current_function_name(),
             )
             # when
             repository1.save(created_study)
@@ -128,6 +132,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                 new_id_metadata_fixed_values={
                     "project_number": self.created_project.project_number
                 },
+                author=current_function_name(),
             )
             repository1.save(created_study)
             repository1.close()
@@ -136,9 +141,19 @@ class TestStudyDefinitionRepository(unittest.TestCase):
         with db.transaction:
             repository2 = StudyDefinitionRepositoryImpl(current_function_name())
             study_to_lock = repository2.find_by_uid(created_study.uid, for_update=True)
+            study_to_lock.edit_metadata(
+                study_title_exists_callback=(lambda _, study_number: False),
+                study_short_title_exists_callback=(lambda _, study_number: False),
+                new_study_description=StudyDescriptionVO.from_input_values(
+                    study_title="new_study_title", study_short_title="study_short_title"
+                ),
+                author=current_function_name(),
+            )
+            repository2.save(study_to_lock)
+            study_to_lock = repository2.find_by_uid(created_study.uid, for_update=True)
             study_to_lock.lock(
-                locked_version_info="locked version",
-                locked_version_author=current_function_name(),
+                version_description="locked version",
+                version_author=current_function_name(),
             )
             repository2.save(study_to_lock)
             repository2.close()
@@ -165,6 +180,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.created_project.project_number
                 },
                 is_study_after_create=True,
+                author=current_function_name(),
             )
             repository1.save(created_study)
             repository1.close()
@@ -182,6 +198,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.project_to_amend.project_number,
                     "study_number": created_study.current_metadata.id_metadata.study_number,
                 },
+                author=current_function_name(),
             )
             repository2.save(amended_study)
             repository2.close()
@@ -191,7 +208,8 @@ class TestStudyDefinitionRepository(unittest.TestCase):
             repository3 = StudyDefinitionRepositoryImpl(current_function_name())
             final_retrieved_study = repository3.find_by_uid(created_study.uid)
             repository3.close()
-
+        print(f"final {final_retrieved_study}")
+        print(f"amended {amended_study}")
         self.assertEqual(final_retrieved_study, amended_study)
 
     def test__save__after_metadata_edit_with_same_values__result(self):
@@ -204,6 +222,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.created_project.project_number
                 },
                 is_study_after_create=True,
+                author=current_function_name(),
             )
             repository1.save(created_study)
             repository1.close()
@@ -218,6 +237,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
             amended_study.edit_metadata(
                 new_id_metadata=amended_study.current_metadata.id_metadata,
                 project_exists_callback=(lambda _: True),
+                author=current_function_name(),
             )
             repository2.save(amended_study)
             repository2.close()
@@ -240,6 +260,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.created_project.project_number
                 },
                 is_study_after_create=True,
+                author=current_function_name(),
             )
             repo.save(created_study)
             repo.close()
@@ -257,6 +278,15 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.project_to_amend.project_number,
                     "study_number": created_study.current_metadata.id_metadata.study_number,
                 },
+                author=current_function_name(),
+            )
+            amended_study.edit_metadata(
+                study_title_exists_callback=(lambda _, study_number: False),
+                study_short_title_exists_callback=(lambda _, study_number: False),
+                new_study_description=StudyDescriptionVO.from_input_values(
+                    study_title="new_study_title", study_short_title="study_short_title"
+                ),
+                author=current_function_name(),
             )
             repo.save(amended_study)
             repo.close()
@@ -270,8 +300,8 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                 locked_study == amended_study
             )  # not a test, just making sure we're on track
             locked_study.lock(
-                locked_version_info="very important version",
-                locked_version_author=current_function_name(),
+                version_description="very important version",
+                version_author=current_function_name(),
             )
             repo.save(locked_study)
             repo.close()
@@ -283,7 +313,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
             assert (
                 unlocked_study == locked_study
             )  # not a test, just making sure we're on track
-            unlocked_study.unlock()
+            unlocked_study.unlock(author=current_function_name())
             repo.save(unlocked_study)
             repo.close()
 
@@ -305,6 +335,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.created_project.project_number
                 },
                 is_study_after_create=True,
+                author=current_function_name(),
             )
             repo.save(created_study)
             repo.close()
@@ -321,6 +352,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.project_to_amend.project_number,
                     "study_number": created_study.current_metadata.id_metadata.study_number,
                 },
+                author=current_function_name(),
             )
             repo.save(amended_study)
             repo.close()
@@ -331,7 +363,10 @@ class TestStudyDefinitionRepository(unittest.TestCase):
             assert (
                 released_study == amended_study
             )  # not a test, just making sure we're on track
-            released_study.release()
+            released_study.release(
+                change_description="making a release in test",
+                author=current_function_name(),
+            )
             repo.save(released_study)
             repo.close()
 
@@ -353,6 +388,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.created_project.project_number
                 },
                 is_study_after_create=True,
+                author=current_function_name(),
             )
             repo.save(created_study)
             repo.close()
@@ -369,6 +405,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.project_to_amend.project_number,
                     "study_number": created_study.current_metadata.id_metadata.study_number,
                 },
+                author=current_function_name(),
             )
             repo.save(amended_study)
             repo.close()
@@ -376,18 +413,13 @@ class TestStudyDefinitionRepository(unittest.TestCase):
         with db.transaction:
             repo = StudyDefinitionRepositoryImpl(current_function_name())
             released_study = repo.find_by_uid(created_study.uid, for_update=True)
-            print(
-                "REL",
-                released_study._draft_metadata.study_intervention.drug_study_indication_null_value_code,
-            )
-            print(
-                "AMD",
-                amended_study._draft_metadata.study_intervention.drug_study_indication_null_value_code,
-            )
             assert (
                 released_study == amended_study
             )  # not a test, just making sure we're on track
-            released_study.release()
+            released_study.release(
+                change_description="making a release in test",
+                author=current_function_name(),
+            )
             repo.save(released_study)
             repo.close()
 
@@ -403,6 +435,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.project_to_amend.project_number,
                     "study_number": created_study.current_metadata.id_metadata.study_number,
                 },
+                author=current_function_name(),
             )
             repo.save(amended_study)
             repo.close()
@@ -422,6 +455,8 @@ class TestStudyDefinitionRepository(unittest.TestCase):
             final_retrieved_study.current_metadata.id_metadata.project_number,
             amended_study.current_metadata.id_metadata.project_number,
         )
+        print(f"final {final_retrieved_study}")
+        print(f"amended {amended_study}")
         self.assertEqual(final_retrieved_study, amended_study)
 
     def test__save__after_lock_unlock_release_lock__result(self):
@@ -434,6 +469,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.created_project.project_number
                 },
                 is_study_after_create=True,
+                author=current_function_name(),
             )
             repo.save(created_study)
             repo.close()
@@ -454,6 +490,15 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.project_to_amend.project_number,
                     "study_number": created_study.current_metadata.id_metadata.study_number,
                 },
+                author=current_function_name(),
+            )
+            amended_study.edit_metadata(
+                study_title_exists_callback=(lambda _, study_number: False),
+                study_short_title_exists_callback=(lambda _, study_number: False),
+                new_study_description=StudyDescriptionVO.from_input_values(
+                    study_title="new_study_title", study_short_title="study_short_title"
+                ),
+                author=current_function_name(),
             )
             repo.save(amended_study)
             repo.close()
@@ -465,8 +510,8 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                 locked_study == amended_study
             )  # not a test, just making sure we're on track
             locked_study.lock(
-                locked_version_info="very important version",
-                locked_version_author=current_function_name(),
+                version_description="very important version",
+                version_author=current_function_name(),
             )
             repo.save(locked_study)
             repo.close()
@@ -477,7 +522,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
             assert (
                 unlocked_study == locked_study
             )  # not a test, just making sure we are on track
-            unlocked_study.unlock()
+            unlocked_study.unlock(author=current_function_name())
             repo.save(unlocked_study)
             repo.close()
 
@@ -487,7 +532,10 @@ class TestStudyDefinitionRepository(unittest.TestCase):
             assert (
                 released_study == unlocked_study
             )  # not a test, just making sure we are on track
-            released_study.release()
+            released_study.release(
+                change_description="making a release in test",
+                author=current_function_name(),
+            )
             repo.save(released_study)
             repo.close()
 
@@ -498,8 +546,8 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                 locked_study == released_study
             )  # not a test, just making sure we are on track
             locked_study.lock(
-                locked_version_author=current_function_name(),
-                locked_version_info="another very important version",
+                version_author=current_function_name(),
+                version_description="another very important version",
             )
             repo.save(locked_study)
             repo.close()
@@ -522,6 +570,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.created_project.project_number
                 },
                 is_study_after_create=True,
+                author=current_function_name(),
             )
             repo.save(created_study)
             repo.close()
@@ -539,6 +588,15 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.project_to_amend.project_number,
                     "study_number": created_study.current_metadata.id_metadata.study_number,
                 },
+                author=current_function_name(),
+            )
+            amended_study.edit_metadata(
+                study_title_exists_callback=(lambda _, study_number: False),
+                study_short_title_exists_callback=(lambda _, study_number: False),
+                new_study_description=StudyDescriptionVO.from_input_values(
+                    study_title="new_study_title", study_short_title="study_short_title"
+                ),
+                author=current_function_name(),
             )
             repo.save(amended_study)
             repo.close()
@@ -550,8 +608,8 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                 locked_study == amended_study
             )  # not a test, just making sure we're on track
             locked_study.lock(
-                locked_version_info="very important version",
-                locked_version_author=current_function_name(),
+                version_description="very important version",
+                version_author=current_function_name(),
             )
             repo.save(locked_study)
             repo.close()
@@ -562,7 +620,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
             assert (
                 unlocked_study == locked_study
             )  # not a test, just making sure we are on track
-            unlocked_study.unlock()
+            unlocked_study.unlock(author=current_function_name())
             repo.save(unlocked_study)
             repo.close()
 
@@ -584,6 +642,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.project_to_amend.project_number,
                     "study_number": created_study.current_metadata.id_metadata.study_number,
                 },
+                author=current_function_name(),
             )
             repo.save(amended_study)
             repo.close()
@@ -596,7 +655,10 @@ class TestStudyDefinitionRepository(unittest.TestCase):
             assert (
                 released_study == amended_study
             )  # not a test, just making sure we are on track
-            released_study.release()
+            released_study.release(
+                change_description="making a release in test",
+                author=current_function_name(),
+            )
             repo.save(released_study)
             repo.close()
 
@@ -615,6 +677,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                     "project_number": self.project_to_amend.project_number,
                     "study_number": created_study.current_metadata.id_metadata.study_number,
                 },
+                author=current_function_name(),
             )
             repo.save(amended_study)
             repo.close()
@@ -628,8 +691,8 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                 locked_study == amended_study
             )  # not a test, just making sure we are on track
             locked_study.lock(
-                locked_version_author=current_function_name(),
-                locked_version_info="another very important version",
+                version_author=current_function_name(),
+                version_description="another very important version",
             )
             repo.save(locked_study)
             repo.close()
@@ -725,7 +788,6 @@ class TestStudyDefinitionRepository(unittest.TestCase):
 
         # then
         with self.assertRaises(SystemError):
-
             # when
             repo = StudyDefinitionRepositoryImpl(current_function_name())
             repo.find_by_uid(uid, for_update=True)
@@ -739,11 +801,11 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                 new_id_metadata_fixed_values={
                     "project_number": self.created_project.project_number
                 },
+                author=current_function_name(),
             )
 
         # then
         with self.assertRaises(SystemError):
-
             # when
             repo.save(study)
 
@@ -756,6 +818,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
                 new_id_metadata_fixed_values={
                     "project_number": self.created_project.project_number
                 },
+                author=current_function_name(),
             )
             repo.save(study)
             repo.close()
@@ -766,6 +829,5 @@ class TestStudyDefinitionRepository(unittest.TestCase):
 
         # then
         with self.assertRaises(SystemError):
-
             # when
             repo.save(study)

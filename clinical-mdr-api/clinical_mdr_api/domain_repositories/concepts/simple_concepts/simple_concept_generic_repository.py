@@ -16,7 +16,6 @@ _AggregateRootType = TypeVar("_AggregateRootType")
 
 class SimpleConceptGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
     def _create(self, item: _AggregateRootType) -> _AggregateRootType:
-
         relation_data: LibraryItemMetadataVO = item.item_metadata
         root = self.root_class.nodes.get_or_none(uid=item.uid)
 
@@ -29,7 +28,13 @@ class SimpleConceptGenericRepository(ConceptGenericRepository[_AggregateRootType
 
             library = self._get_library(item.library.name)
 
-            (root, value, _, _, _,) = self._db_create_and_link_nodes(
+            (
+                root,
+                value,
+                _,
+                _,
+                _,
+            ) = self._db_create_and_link_nodes(
                 root, value, self._library_item_metadata_vo_to_datadict(relation_data)
             )
 

@@ -7,15 +7,15 @@ from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.activities.activity import Activity
 from clinical_mdr_api.models.compound import Compound
 from clinical_mdr_api.models.compound_alias import CompoundAlias
-from clinical_mdr_api.models.criteria import Criteria
-from clinical_mdr_api.models.criteria_template import CriteriaTemplate
 from clinical_mdr_api.models.ct_term import CTTermName, SimpleTermModel
-from clinical_mdr_api.models.endpoint import Endpoint
-from clinical_mdr_api.models.objective import Objective
 from clinical_mdr_api.models.study_selection import (
     StudySelectionBranchArmWithoutStudyArm,
 )
-from clinical_mdr_api.models.timeframe import Timeframe
+from clinical_mdr_api.models.syntax_instances.criteria import Criteria
+from clinical_mdr_api.models.syntax_instances.endpoint import Endpoint
+from clinical_mdr_api.models.syntax_instances.objective import Objective
+from clinical_mdr_api.models.syntax_instances.timeframe import Timeframe
+from clinical_mdr_api.models.syntax_templates.criteria_template import CriteriaTemplate
 
 
 class StudySelectionMixin:
@@ -188,7 +188,7 @@ class StudySelectionMixin:
         self, study_uid: str, study_arm_uid: str, user_initials: str
     ) -> Sequence[StudySelectionBranchArmWithoutStudyArm]:
         branch_arms_vo = (
-            self._repos.study_selection_branch_arm_repository.find_by_arm_nested_info(
+            self._repos.study_branch_arm_repository.find_by_arm_nested_info(
                 study_uid, study_arm_uid, user_initials
             )
         )
@@ -210,10 +210,8 @@ class StudySelectionMixin:
     ):
         repos = self._repos
         try:
-            selection_aggregate = (
-                repos.study_selection_objective_repository.find_by_study(
-                    study_uid, for_update=for_update
-                )
+            selection_aggregate = repos.study_objective_repository.find_by_study(
+                study_uid, for_update=for_update
             )
             try:
                 assert selection_aggregate is not None
@@ -231,10 +229,8 @@ class StudySelectionMixin:
     ):
         repos = self._repos
         try:
-            selection_aggregate = (
-                repos.study_selection_endpoint_repository.find_by_study(
-                    study_uid, for_update=for_update
-                )
+            selection_aggregate = repos.study_endpoint_repository.find_by_study(
+                study_uid, for_update=for_update
             )
             try:
                 assert selection_aggregate is not None
@@ -252,10 +248,8 @@ class StudySelectionMixin:
     ):
         repos = self._repos
         try:
-            selection_aggregate = (
-                repos.study_selection_criteria_repository.find_by_study(
-                    study_uid, for_update=for_update
-                )
+            selection_aggregate = repos.study_criteria_repository.find_by_study(
+                study_uid, for_update=for_update
             )
             try:
                 assert selection_aggregate is not None
@@ -277,10 +271,8 @@ class StudySelectionMixin:
     ):
         repos = self._repos
         try:
-            selection_aggregate = (
-                repos.study_selection_activity_repository.find_by_study(
-                    study_uid, for_update=for_update
-                )
+            selection_aggregate = repos.study_activity_repository.find_by_study(
+                study_uid, for_update=for_update
             )
             try:
                 assert selection_aggregate is not None
@@ -302,7 +294,7 @@ class StudySelectionMixin:
     ):
         repos = self._repos
         try:
-            selection_aggregate = repos.study_selection_arm_repository.find_by_study(
+            selection_aggregate = repos.study_arm_repository.find_by_study(
                 study_uid, for_update=for_update
             )
             try:
@@ -321,10 +313,8 @@ class StudySelectionMixin:
     ):
         repos = self._repos
         try:
-            selection_aggregate = (
-                repos.study_selection_element_repository.find_by_study(
-                    study_uid, for_update=for_update
-                )
+            selection_aggregate = repos.study_element_repository.find_by_study(
+                study_uid, for_update=for_update
             )
             try:
                 assert selection_aggregate is not None
@@ -342,10 +332,8 @@ class StudySelectionMixin:
     ):
         repos = self._repos
         try:
-            selection_aggregate = (
-                repos.study_selection_branch_arm_repository.find_by_study(
-                    study_uid, for_update=for_update
-                )
+            selection_aggregate = repos.study_branch_arm_repository.find_by_study(
+                study_uid, for_update=for_update
             )
             try:
                 assert selection_aggregate is not None
@@ -366,7 +354,7 @@ class StudySelectionMixin:
     ):
         repos = self._repos
         try:
-            selection_aggregate = repos.study_selection_cohort_repository.find_by_study(
+            selection_aggregate = repos.study_cohort_repository.find_by_study(
                 study_uid, for_update=for_update
             )
             try:

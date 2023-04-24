@@ -198,11 +198,6 @@ class StudyCompoundDosingRepository:
         study_root_node = StudyRoot.nodes.get(uid=study_selection.study_uid)
         latest_study_value_node = study_root_node.latest_value.single()
 
-        if study_root_node.latest_released.get_or_none() == latest_study_value_node:
-            raise VersioningException(
-                "You cannot add or reorder a study selection when the study is in a released state."
-            )
-
         if study_root_node.latest_locked.get_or_none() == latest_study_value_node:
             raise VersioningException(
                 "You cannot add or reorder a study selection when the study is in a locked state."

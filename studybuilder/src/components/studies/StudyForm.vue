@@ -166,13 +166,9 @@ export default {
           agreeLabel: this.$t('_global.continue')
         }
         if (await this.$refs.form.confirm(this.$t('_global.cancel_changes'), options)) {
-          this.form = {}
-          this.project = {}
           this.$emit('close')
         }
       } else {
-        this.form = {}
-        this.project = {}
         this.$emit('close')
       }
     },
@@ -192,7 +188,7 @@ export default {
       data.project_number = this.project.project_number
       return this.$store.dispatch('manageStudies/addStudy', data).then(resp => {
         bus.$emit('notification', { msg: this.$t('StudyForm.add_success') })
-        this.$store.commit('studiesGeneral/SELECT_STUDY', resp.data)
+        this.$store.dispatch('studiesGeneral/selectStudy', resp.data)
         this.$router.push({ name: 'SelectOrAddStudy' })
       })
     },
@@ -212,8 +208,9 @@ export default {
       data.project_number = this.project.project_number
       return this.$store.dispatch('manageStudies/editStudyIdentification', [this.editedStudy.uid, data]).then(resp => {
         if (this.selectedStudy && (this.editedStudy.uid === this.selectedStudy.uid)) {
-          this.$store.commit('studiesGeneral/SELECT_STUDY', resp.data)
+          this.$store.dispatch('studiesGeneral/selectStudy', resp.data)
         }
+        this.$emit('updated', resp.data)
         bus.$emit('notification', { msg: this.$t('StudyForm.update_success') })
       })
     },
@@ -232,7 +229,6 @@ export default {
         } else {
           await this.updateStudy()
         }
-        this.form = {}
         this.project = {}
         this.$emit('close')
       } finally {

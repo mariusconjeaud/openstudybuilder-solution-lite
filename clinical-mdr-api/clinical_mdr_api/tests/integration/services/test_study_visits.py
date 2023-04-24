@@ -4,7 +4,7 @@ from neomodel import db
 
 from clinical_mdr_api.domain.study_selection.study_epoch import StudyEpochVO, TimelineAR
 from clinical_mdr_api.domain.study_selection.study_visit import StudyVisitVO
-from clinical_mdr_api.exceptions import ValidationException
+from clinical_mdr_api.exceptions import NotFoundException, ValidationException
 from clinical_mdr_api.models import StudyVisit
 from clinical_mdr_api.models.study_epoch import StudyEpochEditInput
 from clinical_mdr_api.models.study_visit import (
@@ -608,10 +608,8 @@ class TestStudyVisitManagement(unittest.TestCase):
     def test__get_global_anchor_visit(self):
         visit_service = StudyVisitService()
 
-        global_anchor_visit = visit_service.get_global_anchor_visit(
-            study_uid=self.study.uid
-        )
-        self.assertIsNone(global_anchor_visit)
+        with self.assertRaises(NotFoundException):
+            visit_service.get_global_anchor_visit(study_uid=self.study.uid)
 
         vis = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
@@ -669,7 +667,6 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(anchor_visit.visit_type_name, anchor_visits[0].visit_type_name)
 
     def test__epochs_durations_are_calculated_properly_when_having_empty_epoch(self):
-
         epoch_service = StudyEpochService()
 
         create_visit_with_update(
@@ -718,7 +715,6 @@ class TestStudyVisitManagement(unittest.TestCase):
     def test__epochs_durations_are_calculated_properly_when_having_last_epoch_with_one_visit(
         self,
     ):
-
         epoch_service = StudyEpochService()
 
         create_visit_with_update(
@@ -807,7 +803,6 @@ class TestStudyVisitManagement(unittest.TestCase):
             )
 
     def test__create_unscheduled_visit_without_time_data__no_error_is_raised(self):
-
         visit_service: StudyVisitService = StudyVisitService()
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
@@ -858,7 +853,6 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(all_visits[2].max_visit_window_value, 9999)
 
     def test__create_special_visit(self):
-
         visit_service: StudyVisitService = StudyVisitService()
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
@@ -927,7 +921,6 @@ class TestStudyVisitManagement(unittest.TestCase):
             )
 
     def test__group_subsequent_visits_in_consecutive_group(self):
-
         visit_service: StudyVisitService = StudyVisitService()
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
@@ -996,7 +989,6 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(all_visits[2].consecutive_visit_group, consecutive_visit_group)
 
     def test__group_visits_in_consecutive_group__visits_are_not_equal(self):
-
         visit_service: StudyVisitService = StudyVisitService()
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
@@ -1019,7 +1011,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             visit_subclass="SINGLE_VISIT",
         )
         # assign some study activity schedule
-        ar1 = TestUtils.create_activity_request(name="ar1", library_name="Sponsor")
+        ar1 = TestUtils.create_activity(name="ar1", library_name="Sponsor")
         sa1 = create_study_activity(
             study_uid=self.study.uid,
             activity_uid=ar1.uid,
@@ -1151,7 +1143,6 @@ class TestStudyVisitManagement(unittest.TestCase):
     def test__group_visits_in_consecutive_group__visits_are_already_in_consecutive_groups(
         self,
     ):
-
         visit_service: StudyVisitService = StudyVisitService()
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
@@ -1243,7 +1234,6 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(all_available_consecutive_groups, {consecutive_visit_group})
 
     def test__remove_consecutive_visit_group(self):
-
         visit_service: StudyVisitService = StudyVisitService()
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,

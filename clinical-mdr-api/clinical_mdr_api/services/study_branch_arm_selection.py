@@ -7,7 +7,7 @@ from clinical_mdr_api.domain.study_selection.study_selection_branch_arm import (
     StudySelectionBranchArmAR,
     StudySelectionBranchArmVO,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_branch_arm_repository import (
+from clinical_mdr_api.domain_repositories.study_selection.study_branch_arm_repository import (
     SelectionHistoryBranchArm,
 )
 from clinical_mdr_api.models.study_selection import (
@@ -66,8 +66,8 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
     ) -> Sequence[models.StudySelectionBranchArm]:
         repos = MetaRepository()
         try:
-            branch_arm_selection_ar = (
-                repos.study_selection_branch_arm_repository.find_by_study(study_uid)
+            branch_arm_selection_ar = repos.study_branch_arm_repository.find_by_study(
+                study_uid
             )
             return self._transform_all_to_response_model(branch_arm_selection_ar)
         finally:
@@ -79,10 +79,8 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
     ) -> Sequence[models.StudySelectionBranchArm]:
         repos = MetaRepository()
         try:
-            branch_arm_selection_ar = (
-                repos.study_selection_branch_arm_repository.find_by_arm(
-                    study_uid=study_uid, study_arm_uid=study_arm_uid
-                )
+            branch_arm_selection_ar = repos.study_branch_arm_repository.find_by_arm(
+                study_uid=study_uid, study_arm_uid=study_arm_uid
             )
             return self._transform_all_to_response_model(branch_arm_selection_ar)
         finally:
@@ -93,10 +91,8 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             # Load aggregate
-            branch_arm_aggregate = (
-                repos.study_selection_branch_arm_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            branch_arm_aggregate = repos.study_branch_arm_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
             for selection in branch_arm_aggregate.study_branch_arms_selection:
                 if selection.study_selection_uid == study_selection_uid:
@@ -104,7 +100,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
 
             cascade_deletion_last_branch = False
             # if the branch_arm has connected design cells
-            if repos.study_selection_branch_arm_repository.branch_arm_specific_has_connected_cell(
+            if repos.study_branch_arm_repository.branch_arm_specific_has_connected_cell(
                 study_uid=study_uid,
                 branch_arm_uid=study_selection_uid,
             ):
@@ -112,7 +108,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
                     study_uid=study_uid, study_branch_arm_uid=study_selection_uid
                 )
                 # if the study_branch_arm is the last StudyBranchArm of its StudyArm root
-                if repos.study_selection_branch_arm_repository.branch_arm_specific_is_last_on_arm_root(
+                if repos.study_branch_arm_repository.branch_arm_specific_is_last_on_arm_root(
                     study_uid=study_uid,
                     arm_root_uid=selection_to_delete.arm_root_uid,
                     branch_arm_uid=study_selection_uid,
@@ -147,9 +143,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
             branch_arm_aggregate.remove_branch_arm_selection(study_selection_uid)
 
             # sync with DB and save the update
-            repos.study_selection_branch_arm_repository.save(
-                branch_arm_aggregate, self.author
-            )
+            repos.study_branch_arm_repository.save(branch_arm_aggregate, self.author)
 
             if cascade_deletion_last_branch:
                 for i_design_cell in design_cells_on_branch_arm:
@@ -169,10 +163,8 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_branch_arm_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_branch_arm_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             # remove the connection
@@ -181,9 +173,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
             )
 
             # sync with DB and save the update
-            repos.study_selection_branch_arm_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_branch_arm_repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just added
             (
@@ -216,9 +206,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
         try:
             try:
                 selection_history = (
-                    repos.study_selection_branch_arm_repository.find_selection_history(
-                        study_uid
-                    )
+                    repos.study_branch_arm_repository.find_selection_history(study_uid)
                 )
             except ValueError as value_error:
                 raise exceptions.NotFoundException(value_error.args[0])
@@ -257,7 +245,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             selection_history = (
-                repos.study_selection_branch_arm_repository.find_selection_history(
+                repos.study_branch_arm_repository.find_selection_history(
                     study_uid, study_selection_uid
                 )
             )
@@ -336,11 +324,11 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
                     randomization_group=selection_create_input.randomization_group,
                     number_of_subjects=selection_create_input.number_of_subjects,
                     arm_root_uid=selection_create_input.arm_uid,
-                    generate_uid_callback=repos.study_selection_branch_arm_repository.generate_uid,
+                    generate_uid_callback=repos.study_branch_arm_repository.generate_uid,
                 )
                 # add VO to aggregate
                 selection_aggregate: StudySelectionBranchArmAR = (
-                    repos.study_selection_branch_arm_repository.find_by_study(
+                    repos.study_branch_arm_repository.find_by_study(
                         study_uid=study_uid, for_update=True
                     )
                 )
@@ -349,18 +337,16 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
                     selection_aggregate.add_branch_arm_selection(
                         study_branch_arm_selection=new_selection,
                         study_branch_arm_study_arm_update_conflict_callback=(
-                            repos.study_selection_branch_arm_repository.branch_arm_arm_update_conflict
+                            repos.study_branch_arm_repository.branch_arm_arm_update_conflict
                         ),
-                        study_arm_exists_callback=self._repos.study_selection_arm_repository.arm_specific_exists_by_uid,
-                        branch_arm_exists_callback_by=repos.study_selection_branch_arm_repository.branch_arm_exists_by,
+                        study_arm_exists_callback=self._repos.study_arm_repository.arm_specific_exists_by_uid,
+                        branch_arm_exists_callback_by=repos.study_branch_arm_repository.branch_arm_exists_by,
                     )
                 except ValueError as value_error:
                     raise exceptions.ValidationException(value_error.args[0])
 
                 # sync with DB and save the update
-                repos.study_selection_branch_arm_repository.save(
-                    selection_aggregate, self.author
-                )
+                repos.study_branch_arm_repository.save(selection_aggregate, self.author)
 
                 # Fetch the new selection which was just added
                 (
@@ -380,7 +366,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
         finally:
             repos.close()
             # if the studyarm has studydesigncells connected?
-            if repos.study_selection_arm_repository.arm_specific_has_connected_cell(
+            if repos.study_arm_repository.arm_specific_has_connected_cell(
                 study_uid=study_uid, arm_uid=new_selection.arm_root_uid
             ):
                 # if it is the first study branch to be added
@@ -440,7 +426,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
         try:
             # Load aggregate
             selection_aggregate: StudySelectionBranchArmAR = (
-                repos.study_selection_branch_arm_repository.find_by_study(
+                repos.study_branch_arm_repository.find_by_study(
                     study_uid=study_uid, for_update=True
                 )
             )
@@ -465,16 +451,14 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
                 # let the aggregate update the value object
                 selection_aggregate.update_selection(
                     updated_study_branch_arm_selection=updated_selection,
-                    study_branch_arm_study_arm_update_conflict_callback=repos.study_selection_branch_arm_repository.branch_arm_arm_update_conflict,
-                    study_arm_exists_callback=self._repos.study_selection_arm_repository.arm_specific_exists_by_uid,
-                    branch_arm_exists_callback_by=repos.study_selection_branch_arm_repository.branch_arm_exists_by,
+                    study_branch_arm_study_arm_update_conflict_callback=repos.study_branch_arm_repository.branch_arm_arm_update_conflict,
+                    study_arm_exists_callback=self._repos.study_arm_repository.arm_specific_exists_by_uid,
+                    branch_arm_exists_callback_by=repos.study_branch_arm_repository.branch_arm_exists_by,
                 )
             except ValueError as value_error:
                 raise exceptions.ValidationException(value_error.args[0])
             # sync with DB and save the update
-            repos.study_selection_branch_arm_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_branch_arm_repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just updated
             new_selection, order = selection_aggregate.get_specific_object_selection(
@@ -495,7 +479,11 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
     def get_specific_selection(
         self, study_uid: str, study_selection_uid: str
     ) -> models.StudySelectionBranchArm:
-        (_, new_selection, order,) = self._get_specific_branch_arm_selection_by_uids(
+        (
+            _,
+            new_selection,
+            order,
+        ) = self._get_specific_branch_arm_selection_by_uids(
             study_uid, study_selection_uid
         )
         return models.StudySelectionBranchArm.from_study_selection_branch_arm_ar_and_order(

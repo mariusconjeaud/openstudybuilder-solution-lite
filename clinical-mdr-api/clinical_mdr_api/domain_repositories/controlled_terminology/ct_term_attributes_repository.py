@@ -154,7 +154,13 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
         )
         self._db_save_node(root)
 
-        (root, value, _, _, _,) = self._db_create_and_link_nodes(
+        (
+            root,
+            value,
+            _,
+            _,
+            _,
+        ) = self._db_create_and_link_nodes(
             root, value, self._library_item_metadata_vo_to_datadict(relation_data)
         )
 

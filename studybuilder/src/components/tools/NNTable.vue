@@ -46,7 +46,7 @@
           >
         </slot>
         <v-btn
-          v-if="!disableFiltering && returnHasApi()"
+          v-if="!disableFiltering && returnHasApi() && !onlyTextSearch"
           class="ml-2 white--text"
           fab
           small
@@ -189,7 +189,7 @@
                 <template v-if="!currentSortDirection">mdi-arrow-up-thin</template>
                 <template v-else>mdi-arrow-down-thin</template>
               </v-icon>
-              <v-menu offset-y v-if="header.text !== ''">
+              <v-menu offset-y v-if="header.text !== '' && (modifiableTable && !onlyTextSearch)">
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn
                     icon

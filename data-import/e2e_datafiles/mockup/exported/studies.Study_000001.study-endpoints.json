@@ -48,11 +48,11 @@
                   "name_plain": "To compare the effect of [Compound] relative to [Comparator] on [ActivityInstance]",
                   "uid": "ObjectiveTemplate_000004"
               },
-              "parameter_values": [
+              "parameter_terms": [
                   {
                       "position": 1,
                       "conjunction": "",
-                      "values": [
+                      "terms": [
                           {
                               "uid": "Compound_000002",
                               "name": "NPH Insulin",
@@ -64,7 +64,7 @@
                   {
                       "position": 2,
                       "conjunction": "",
-                      "values": [
+                      "terms": [
                           {
                               "uid": "Compound_000001",
                               "name": "Metformin",
@@ -76,7 +76,7 @@
                   {
                       "position": 3,
                       "conjunction": "",
-                      "values": [
+                      "terms": [
                           {
                               "uid": "NumericFinding_000145",
                               "name": "1,5 AG (Anhydroglucitol)",
@@ -160,11 +160,11 @@
               "name_plain": "test [ActivityInstance] and [DiseaseDisorder]",
               "uid": "EndpointTemplate_000002"
           },
-          "parameter_values": [
+          "parameter_terms": [
               {
                   "position": 1,
                   "conjunction": "",
-                  "values": [
+                  "terms": [
                       {
                           "uid": "Event_000001",
                           "name": "Accidental Misadministration",
@@ -176,7 +176,7 @@
               {
                   "position": 2,
                   "conjunction": "",
-                  "values": [
+                  "terms": [
                       {
                           "uid": "DictionaryTerm_000004",
                           "name": "Alzheimer's disease",
@@ -210,11 +210,11 @@
               "name_plain": "test [ActivityInstance]",
               "uid": "TimeframeTemplate_000001"
           },
-          "parameter_values": [
+          "parameter_terms": [
               {
                   "position": 1,
                   "conjunction": "",
-                  "values": [
+                  "terms": [
                       {
                           "uid": "NumericFinding_000002",
                           "name": "25-Hydroxyvitamin D",

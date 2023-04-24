@@ -16,7 +16,7 @@
               v-model="studyById"
               :label="$t('StudyQuickSelectForm.study_id')"
               :items="studiesWithId"
-              item-text="study_id"
+              item-text="current_metadata.identification_metadata.study_id"
               return-object
               :error-messages="errors"
               clearable
@@ -34,7 +34,7 @@
               v-model="studyByAcronym"
               :label="$t('StudyQuickSelectForm.study_acronym')"
               :items="studiesWithAcronym"
-              item-text="study_acronym"
+              item-text="current_metadata.identification_metadata.study_acronym"
               return-object
               :error-messages="errors"
               clearable
@@ -73,10 +73,10 @@ import study from '@/api/study'
 export default {
   computed: {
     studiesWithId () {
-      return this.studies.filter(study => study.study_id !== null)
+      return this.studies.filter(study => study.current_metadata.identification_metadata.study_id !== null)
     },
     studiesWithAcronym () {
-      return this.studies.filter(study => study.study_acronym !== null)
+      return this.studies.filter(study => study.current_metadata.identification_metadata.study_acronym !== null)
     }
   },
   data () {
@@ -98,20 +98,20 @@ export default {
         return
       }
       if (this.studyById) {
-        this.$store.commit('studiesGeneral/SELECT_STUDY', this.studyById)
+        this.$store.dispatch('studiesGeneral/selectStudy', this.studyById)
       } else {
-        this.$store.commit('studiesGeneral/SELECT_STUDY', this.studyByAcronym)
+        this.$store.dispatch('studiesGeneral/selectStudy', this.studyByAcronym)
       }
       this.$emit('selected')
       this.close()
     },
     autoPopulateAcronym (study) {
-      if (study && study.study_acronym) {
+      if (study && study.current_metadata.identification_metadata.study_acronym) {
         this.studyByAcronym = study
       }
     },
     autoPopulateId (study) {
-      if (study && study.study_id) {
+      if (study && study.current_metadata.identification_metadata.study_id) {
         this.studyById = study
       }
     }

@@ -3,10 +3,10 @@ from typing import Collection, Optional
 
 from clinical_mdr_api.domain.project.project import ProjectAR
 from clinical_mdr_api.domain_repositories._utils.json_file_based_static_repo import (
-    JsonFileBasedStaticRepo,  # type: ignore
+    JsonFileBasedStaticRepo,
 )
 from clinical_mdr_api.domain_repositories.project.project_repository import (
-    ProjectRepository,  # type: ignore
+    ProjectRepository,
 )
 
 _DEFAULT_PROJECTS_JSON_FILE_PATH = os.path.join(

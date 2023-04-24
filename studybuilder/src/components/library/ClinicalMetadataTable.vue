@@ -6,6 +6,7 @@
   @filter="fetchListings"
   has-api
   :column-data-resource="`listings/libraries/all/gcmd/${source}`"
+  :export-data-url="`listings/libraries/all/gcmd/${source}`"
   :server-items-length="total"
   item-key="topic_cd"
   show-column-names-toggle-button

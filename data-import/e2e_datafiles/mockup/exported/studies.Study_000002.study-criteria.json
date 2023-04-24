@@ -42,7 +42,7 @@
             "guidance_text": null,
             "uid": "CriteriaTemplate_000001"
         },
-        "parameter_values": [],
+        "parameter_terms": [],
         "library": {
             "name": "Sponsor",
             "is_editable": true

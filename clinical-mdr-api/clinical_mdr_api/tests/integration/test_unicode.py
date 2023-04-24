@@ -90,7 +90,15 @@ def test_unicode_patch(app_client):
     test_string = create_unicode_test_string()
     property_name = "study_field_name"
     response = request_with_json_payload(
-        app_client, "POST", "/configurations", {property_name: test_string}
+        app_client,
+        "POST",
+        "/configurations",
+        {
+            property_name: test_string,
+            "study_field_data_type": "string",
+            "study_field_name_api": "some_field",
+            "is_dictionary_term": False,
+        },
     )
     response.raise_for_status()
     payload = response.json()
@@ -107,7 +115,13 @@ def test_unicode_patch(app_client):
             app_client,
             "PATCH",
             f"/configurations/{uid}",
-            {property_name: test_string, "change_description": "testing"},
+            {
+                property_name: test_string,
+                "change_description": "testing",
+                "study_field_data_type": "string",
+                "study_field_name_api": "some_field",
+                "is_dictionary_term": False,
+            },
         )
         response.raise_for_status()
         payload = response.json()
@@ -146,7 +160,16 @@ def test_non_unicode_patch_error_response(app_client):
     test_string = create_unicode_test_string()
     property_name = "study_field_name"
     response = request_with_json_payload(
-        app_client, "POST", "/configurations", {property_name: test_string}
+        app_client,
+        "POST",
+        "/configurations",
+        {
+            property_name: test_string,
+            "change_description": "testing",
+            "study_field_data_type": "string",
+            "study_field_name_api": "some_field",
+            "is_dictionary_term": False,
+        },
     )
     response.raise_for_status()
     payload = response.json()

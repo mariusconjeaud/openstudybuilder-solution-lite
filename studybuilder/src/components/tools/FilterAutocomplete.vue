@@ -216,7 +216,7 @@ export default {
         jsonFilter = filters.jsonFilter
         params = filters.params
       }
-      if (!this.item.externalFilterSource && !_isEmpty(jsonFilter)) {
+      if (!_isEmpty(jsonFilter)) {
         params.filters = jsonFilter
       }
       if (this.resource[1] !== undefined) {

@@ -40,16 +40,23 @@ AE Requiring Additional Data,Laboratory Assessment,Albumin
 AE Requiring Additional Data,Laboratory Assessment,Albumin/Creatinine
 Laboratory Assessments,Urinalysis,Albumin/Creatinine
 Laboratory Assessments,Urinalysis,Albumin
+Laboratory Assessments,Biochemistry,Albumin
 AE Requiring Additional Data,Laboratory Assessment,Alkaline Phosphatase
 AE Requiring Additional Data,Laboratory Assessment,Alanine Aminotransferase
+Laboratory Assessments,Biochemistry,Alanine Aminotransferase
 AE Requiring Additional Data,Laboratory Assessment,Ammonia
 AE Requiring Additional Data,Laboratory Assessment,Amylase
+Laboratory Assessments,Biochemistry,Amylase
+Laboratory Assessments,Biochemistry,Alkaline Phosphatase
 AE Requiring Additional Data,Laboratory Assessment,Aspartate Aminotransferase
+Laboratory Assessments,Biochemistry,Aspartate Aminotransferase
 Laboratory Assessments,Glucose Metabolism,Glucose
 AE Requiring Additional Data,Laboratory Assessment,Direct Bilirubin
 AE Requiring Additional Data,Laboratory Assessment,Bilirubin
 AE Requiring Additional Data,Laboratory Assessment,Indirect Bilirubin
+Laboratory Assessments,Biochemistry,Bilirubin
 Laboratory Assessments,Urinalysis,Bilirubin
+General,Urine Dipstick,Bilirubin
 General,Collection of Samples for Laboratory,Have all blood samples been taken
 AE Requiring Additional Data,Laboratory Assessment,Urea Nitrogen
 General,Vital Signs,Temperature
@@ -61,25 +68,34 @@ Event Adjudication,Acute Pancreatitis,Imaging Findings Characteristic of Pancrea
 General,Childbearing Potential,Childbearing Potential
 Event Adjudication,Acute Coronary Syndrome,Classification of Myocardial Infarction
 AE Requiring Additional Data,Laboratory Assessment,Creatinine Clearance
+Laboratory Assessments,Biochemistry,Creatinine
 AE Requiring Additional Data,Laboratory Assessment,C Reactive Protein
+Laboratory Assessments,Biochemistry,C Reactive Protein
 AE Requiring Additional Data,Laboratory Assessment,Cystatin C
 Laboratory Assessments,Glucose Metabolism,C-peptide
 General,Informed Consent and Demography,Date of Birth
 Event Adjudication,Death,Location of Death Occurrence
+General,Biochemistry,"Glomerular Filtration Rate, Estimated"
 Event Adjudication,Acute Pancreatitis,"Elevated Blood Levels of Pancreatic Enzymes (Lipase, Amylase) >=3xUNL"
 General,Eligibility Criteria,Eligibility Criteria Met
 General,End of Study,End of Study
+Laboratory Assessments,Haematology Differential Count,Eosinophils
 AE Requiring Additional Data,Laboratory Assessment,Eosinophils
+Laboratory Assessments,Haematology,Erythrocytes
 AE Requiring Additional Data,Laboratory Assessment,"Glomerular Filtration Rate, Estimated"
 General,Informed Consent and Demography,Ethnicity
 Event Adjudication,General,Evaluated Event Onset Date
 Event Adjudication,General,Event Confirmation
 General,End of Study,First Date on Trial Product
 Laboratory Assessments,Glucose Metabolism,Insulin
+Laboratory Assessments,Biochemistry,"Glomerular Filtration Rate, Estimated"
 AE Requiring Additional Data,Laboratory Assessment,Gamma Glutamyl Transferase
+Laboratory Assessments,Biochemistry,Gamma Glutamyl Transferase
 Laboratory Assessments,Glucose Metabolism,Glucagon
 AE Requiring Additional Data,Laboratory Assessment,Glucose
 Laboratory Assessments,Urinalysis,Glucose
+General,Self Measured Plasma Glucose,Glucose
+General,Urine Dipstick,Glucose
 Laboratory Assessments,Glucose Metabolism,HbA1c
 Event Adjudication,Heart Failure,Heart Failure Classification
 General,Body Measurements,Height
@@ -88,13 +104,16 @@ General,Adverse Event,Hospitalisation
 Event Adjudication,Hypoglycaemic Episode,Did the Subject Feel Better After the Treatment
 General,Informed Consent and Demography,Informed Consent Obtained
 AE Requiring Additional Data,Laboratory Assessment,Prothrombin Intl. Normalized Ratio
+Laboratory Assessments,Coagulation Parameters,Prothrombin Intl. Normalized Ratio
 General,End of Study,Last Date on Trial Product
 AE Requiring Additional Data,Laboratory Assessment,Lipase
+Laboratory Assessments,Biochemistry,Lipase
 AE Requiring Additional Data,Laboratory Assessment,Glomerular Filtration Rate
 General,Medical History/Concomitant Illness,Medical History/Concomitant Illness
 Event Adjudication,Coronary Revascularisation,Method of Coronary Revascularisation
 AE Requiring Additional Data,Laboratory Assessment,Nitrite
 Laboratory Assessments,Urinalysis,Nitrite
+General,Urine Dipstick,Nitrite
 Event Adjudication,General,Other Adjudicated Event Type
 General,Vital Signs,Oxygen Saturation
 Clinical Outcome Assessments,Pain Rating,Pain Rating - How Would You Rate the Pain at Its Worst in Your Target Knee
@@ -139,15 +158,20 @@ AE Requiring Additional Data,Pancreatitis,Risk factor - Trauma to the Pancreas
 AE Requiring Additional Data,Pancreatitis,Treatment Type
 AE Requiring Additional Data,Pancreatitis,Imaging method - Ultrasound
 AE Requiring Additional Data,Pancreatitis,Vomiting as Symptom
+General,Urine Dipstick,pH
 Laboratory Assessments,Urinalysis,pH
 AE Requiring Additional Data,Laboratory Assessment,Platelets
 AE Requiring Additional Data,Laboratory Assessment,Potassium
+Laboratory Assessments,Biochemistry,Potassium
 AE Requiring Additional Data,Laboratory Assessment,Protein
 AE Requiring Additional Data,Laboratory Assessment,Prothrombin Time
+General,Urine Dipstick,Protein
+Laboratory Assessments,Coagulation Parameters,Prothrombin Time
 General,Vital Signs,Pulse Rate
 General,Informed Consent and Demography,Race
 General,Randomisation,Randomized
 AE Requiring Additional Data,Laboratory Assessment,Erythrocytes
+General,Urine Dipstick,Erythrocytes
 Event Adjudication,Death,Reason for Undetermined Death Cause 1
 General,Vital Signs,Respiratory Rate
 Event Adjudication,Hypoglycaemic Episode,Seizure
@@ -156,6 +180,7 @@ Event Adjudication,Acute Pancreatitis,Severe Acute Upper Abdominal Pain
 Event Adjudication,Acute Pancreatitis,Severity of Pancreatitis
 General,Informed Consent and Demography,Sex
 AE Requiring Additional Data,Laboratory Assessment,Sodium
+Laboratory Assessments,Biochemistry,Sodium
 Event Adjudication,General,Source of Adjudicated Event
 General,Collection of Samples for Laboratory,Subject fasting
 Event Adjudication,Hypoglycaemic Episode,Subject Died
@@ -166,13 +191,17 @@ Event Adjudication,Acute Coronary Syndrome,Symptom of Unstable Angina Pectoris 1
 Event Adjudication,Acute Coronary Syndrome,Symptom of Unstable Angina Pectoris 2
 Event Adjudication,Acute Coronary Syndrome,Symptom of Unstable Angina Pectoris 3
 Event Adjudication,Acute Coronary Syndrome,Symptom of Unstable Angina Pectoris 4
+Laboratory Assessments,Haematology,Platelets
 Clinical Outcome Assessments,Treadmill Test,Treadmill - Pain-Free Walking Distance on Flat Treadmill
 Clinical Outcome Assessments,Treadmill Test,Treadmill - Pain-Free Walking Distance on Inclined Treadmill
 Clinical Outcome Assessments,Treadmill Test,Treadmill - Max Walking Distance on Inclined Treadmill
 Event Adjudication,Cerebrovascular Event,TOAST Classification
+Laboratory Assessments,Biochemistry,Protein
 Event Adjudication,Heart Failure,Type of Heart Failure
 Event Adjudication,Acute Coronary Syndrome,Type of Myocardial Infarction
 Event Adjudication,Cerebrovascular Event,Type of Stroke
+General,Biochemistry,Bilirubin
+Laboratory Assessments,Haematology,Leukocytes
 Event Adjudication,Hypoglycaemic Episode,Unconscious/Coma
 Event Adjudication,Cerebrovascular Event,Undetermined Etiology Reason
 Event Adjudication,Death,Details in Source Data
@@ -180,5 +209,7 @@ AE Requiring Additional Data,Laboratory Assessment,Urine Culture
 AE Requiring Additional Data,Laboratory Assessment,Microscopy
 General,Collection of Samples for Laboratory,Have all urine samples been taken
 Laboratory Assessments,Urinalysis,Urobilinogen
+General,Urine Dipstick,Urobilinogen
 General,Body Measurements,Waist Circumference
 AE Requiring Additional Data,Laboratory Assessment,Leukocytes
+General,Urine Dipstick,Leukocytes

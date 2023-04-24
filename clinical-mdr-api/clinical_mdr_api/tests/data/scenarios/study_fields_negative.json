@@ -42,11 +42,7 @@
          },
          "result": {
             "uid": "Study_000001",
-            "study_number": "007",
-            "study_id": "123-007",
-            "study_acronym": "Study-007",
-            "project_number": "123",
-            "study_status": "DRAFT",
+            "possible_actions": ["delete", "lock", "release"],
             "current_metadata": {
                "identification_metadata": {
                   "study_number": "007",
@@ -70,10 +66,10 @@
                },
                "version_metadata": {
                   "study_status": "DRAFT",
-                  "locked_version_number": null,
+                  "version_number": null,
                   "version_timestamp": "2021-04-06T13:51:58.468263",
-                  "locked_version_author": null,
-                  "locked_version_info": null
+                  "version_author": null,
+                  "version_description": null
                }
             }
          }

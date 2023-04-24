@@ -9,7 +9,7 @@ from clinical_mdr_api.domain.study_selection.study_selection_activity import (
     StudySelectionActivityVO,
 )
 from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
-from clinical_mdr_api.domain_repositories.study_selection.study_selection_activity_repository import (
+from clinical_mdr_api.domain_repositories.study_selection.study_activity_repository import (
     SelectionHistory,
 )
 from clinical_mdr_api.models import StudySelectionActivityRequestUpdate
@@ -24,6 +24,9 @@ from clinical_mdr_api.services._utils import (
 )
 from clinical_mdr_api.services.concepts.activities.activity_service import (
     ActivityService,
+)
+from clinical_mdr_api.services.study_activity_schedule import (
+    StudyActivityScheduleService,
 )
 from clinical_mdr_api.services.study_selection_base import StudySelectionMixin
 
@@ -93,14 +96,12 @@ class StudyActivitySelectionService(StudySelectionMixin):
                     activity_version=activity_ar.item_metadata.version,
                     flowchart_group_uid=selection_create_input.flowchart_group_uid,
                     activity_order=None,
-                    generate_uid_callback=repos.study_selection_activity_repository.generate_uid,
+                    generate_uid_callback=repos.study_activity_repository.generate_uid,
                 )
 
                 # add VO to aggregate
-                selection_aggregate = (
-                    repos.study_selection_activity_repository.find_by_study(
-                        study_uid=study_uid, for_update=True
-                    )
+                selection_aggregate = repos.study_activity_repository.find_by_study(
+                    study_uid=study_uid, for_update=True
                 )
                 assert selection_aggregate is not None
                 try:
@@ -115,9 +116,7 @@ class StudyActivitySelectionService(StudySelectionMixin):
                     raise exceptions.ValidationException(value_error.args[0])
 
                 # sync with DB and save the update
-                repos.study_selection_activity_repository.save(
-                    selection_aggregate, self.author
-                )
+                repos.study_activity_repository.save(selection_aggregate, self.author)
 
                 # Fetch the new selection which was just added
                 (
@@ -154,7 +153,7 @@ class StudyActivitySelectionService(StudySelectionMixin):
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.StudySelectionObjective]:
         repos = self._repos
-        selection_ars = repos.study_selection_activity_repository.find_all(
+        selection_ars = repos.study_activity_repository.find_all(
             project_name=project_name,
             project_number=project_number,
             activity_names=activity_names,
@@ -195,8 +194,8 @@ class StudyActivitySelectionService(StudySelectionMixin):
     ) -> GenericFilteringReturn[models.StudySelectionActivity]:
         repos = self._repos
         try:
-            activity_selection_ar = (
-                repos.study_selection_activity_repository.find_by_study(study_uid)
+            activity_selection_ar = repos.study_activity_repository.find_by_study(
+                study_uid
             )
             assert activity_selection_ar is not None
 
@@ -237,9 +236,7 @@ class StudyActivitySelectionService(StudySelectionMixin):
         try:
             try:
                 selection_history = (
-                    repos.study_selection_activity_repository.find_selection_history(
-                        study_uid
-                    )
+                    repos.study_activity_repository.find_selection_history(study_uid)
                 )
             except ValueError as value_error:
                 raise exceptions.NotFoundException(value_error.args[0])
@@ -258,7 +255,7 @@ class StudyActivitySelectionService(StudySelectionMixin):
         try:
             try:
                 selection_history = (
-                    repos.study_selection_activity_repository.find_selection_history(
+                    repos.study_activity_repository.find_selection_history(
                         study_uid, study_selection_uid
                     )
                 )
@@ -294,22 +291,33 @@ class StudyActivitySelectionService(StudySelectionMixin):
     @db.transaction
     def delete_selection(self, study_uid: str, study_selection_uid: str):
         repos = self._repos
+        # add check if visits that we want to group are the same
+        schedules_service = StudyActivityScheduleService(author=self.author)
         try:
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_activity_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
+            selection_aggregate = repos.study_activity_repository.find_by_study(
+                study_uid=study_uid, for_update=True
+            )
+
+            # Load aggregate
+            study_activity_schedules = (
+                schedules_service.get_all_schedules_for_specific_activity(
+                    study_uid=study_uid, study_activity_uid=study_selection_uid
                 )
             )
+            for study_activity_schedule in study_activity_schedules:
+                self._repos.study_activity_schedule_repository.delete(
+                    study_uid,
+                    study_activity_schedule.study_activity_schedule_uid,
+                    self.author,
+                )
 
             # remove the connection
             assert selection_aggregate is not None
             selection_aggregate.remove_object_selection(study_selection_uid)
 
             # sync with DB and save the update
-            repos.study_selection_activity_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_activity_repository.save(selection_aggregate, self.author)
         finally:
             repos.close()
 
@@ -320,10 +328,8 @@ class StudyActivitySelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_activity_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_activity_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             # remove the connection
@@ -333,9 +339,7 @@ class StudyActivitySelectionService(StudySelectionMixin):
             )
 
             # sync with DB and save the update
-            repos.study_selection_activity_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_activity_repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just added
             _, order = selection_aggregate.get_specific_object_selection(
@@ -404,10 +408,8 @@ class StudyActivitySelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             # Load aggregate
-            selection_aggregate = (
-                repos.study_selection_activity_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
+            selection_aggregate = repos.study_activity_repository.find_by_study(
+                study_uid=study_uid, for_update=True
             )
 
             assert selection_aggregate is not None
@@ -438,9 +440,7 @@ class StudyActivitySelectionService(StudySelectionMixin):
                 raise exceptions.ValidationException(value_error.args[0])
 
             # sync with DB and save the update
-            repos.study_selection_activity_repository.save(
-                selection_aggregate, self.author
-            )
+            repos.study_activity_repository.save(selection_aggregate, self.author)
 
             # Fetch the new selection which was just updated
             _, order = selection_aggregate.get_specific_object_selection(
@@ -522,7 +522,7 @@ class StudyActivitySelectionService(StudySelectionMixin):
     ) -> models.StudySelectionActivity:
         repos = self._repos
         # Load aggregate
-        selection_aggregate = repos.study_selection_activity_repository.find_by_study(
+        selection_aggregate = repos.study_activity_repository.find_by_study(
             study_uid=study_uid, for_update=True
         )
 

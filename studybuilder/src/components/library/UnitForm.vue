@@ -11,7 +11,7 @@
   <template v-slot:body>
     <validation-observer ref="observer">
       <validation-provider
-        v-if="!unit"
+        v-if="!Object.keys(unit).length"
         v-slot="{ errors }"
         name="Library"
         rules="required"
@@ -21,6 +21,7 @@
             <v-select
               v-model="form.library_name"
               :label="$t('_global.library')"
+              data-cy="unit-library"
               :items="libraries"
               item-text="name"
               item-value="name"
@@ -39,6 +40,7 @@
           <v-col cols="12">
             <v-text-field
               v-model="form.name"
+              autocomplete="off"
               :label="$t('_global.name')"
               data-cy="unit-name"
               :error-messages="errors"

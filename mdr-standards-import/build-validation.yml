@@ -4,6 +4,7 @@ trigger:
   branches:  
     include: 
     - main
+    - release/*
 
 # Identify which agent to run the pipeline on
 pool:

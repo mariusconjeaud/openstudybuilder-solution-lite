@@ -68,7 +68,7 @@ class SimpleTerminologyItemRepositoryFileBasedImpl(
         frozen_new_code_list: MutableMapping[
             str, AbstractSet[SimpleTerminologyItem]
         ] = {}
-        for (codelist_code, terminology_items) in new_by_code_list.items():
+        for codelist_code, terminology_items in new_by_code_list.items():
             frozen_new_code_list[codelist_code] = frozenset(terminology_items)
         cls._by_code_list = frozen_new_code_list
 

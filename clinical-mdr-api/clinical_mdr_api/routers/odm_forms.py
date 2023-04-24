@@ -2,6 +2,7 @@ from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
+from starlette.requests import Request
 
 from clinical_mdr_api import config
 from clinical_mdr_api.models import (
@@ -15,10 +16,11 @@ from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.odm_common_models import (
     OdmElementWithParentUid,
     OdmVendorRelationPostInput,
+    OdmVendorsPostInput,
 )
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.repositories._utils import FilterOperator
-from clinical_mdr_api.routers import _generic_descriptions
+from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.odm_forms import OdmFormService
 
 router = APIRouter()
@@ -30,12 +32,79 @@ OdmFormUID = Path(None, description="The unique id of the ODM Form.")
 @router.get(
     "",
     summary="Return every variable related to the selected status and version of the ODM Forms",
-    description="",
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=CustomPage[OdmForm],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "oid",
+            "library_name",
+            "name",
+            "descriptions=descriptions.description",
+            "instructions=descriptions.instruction",
+            "languages=descriptions.language",
+            "instructions=descriptions.instruction",
+            "sponsor_instructions=descriptions.sponsor_instruction",
+            "forms",
+            "start_date",
+            "end_date",
+            "effective_date",
+            "retired_date",
+            "end_date",
+            "item_groups",
+            "aliases",
+            "activity_groups",
+            "status",
+            "version",
+            "repeating",
+            "scope",
+            "sdtm_version",
+            "vendor_attributes",
+            "vendor_element_attributes",
+            "vendor_elements",
+        ],
+        "text/xml": [
+            "uid",
+            "oid",
+            "library_name",
+            "name",
+            "descriptions",
+            "forms",
+            "start_date",
+            "end_date",
+            "effective_date",
+            "retired_date",
+            "end_date",
+            "item_groups",
+            "aliases",
+            "activity_groups",
+            "status",
+            "version",
+            "repeating",
+            "scope",
+            "sdtm_version",
+            "vendor_attributes",
+            "vendor_element_attributes",
+            "vendor_elements",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_all_odm_forms(
+    request: Request,  # request is actually required by the allow_exports decorator
     library: Optional[str] = Query(None),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: Optional[int] = Query(
@@ -81,7 +150,7 @@ def get_all_odm_forms(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -114,12 +183,43 @@ def get_distinct_values_for_header(
 @router.get(
     "/templates",
     summary="Get all ODM Forms that belongs to an ODM Template",
-    description="",
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=List[OdmElementWithParentUid],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
-def get_odm_form_that_belongs_to_template():
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "oid",
+            "library_name",
+            "name",
+            "description",
+            "forms",
+            "start_date",
+            "end_date",
+            "effective_date",
+            "retired_date",
+            "end_date",
+            "status",
+            "version",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
+def get_odm_form_that_belongs_to_template(
+    request: Request,  # request is actually required by the allow_exports decorator
+):
     odm_form_service = OdmFormService()
     return odm_form_service.get_forms_that_belongs_to_template()
 
@@ -130,7 +230,10 @@ def get_odm_form_that_belongs_to_template():
     description="",
     response_model=OdmForm,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_odm_form(uid: str = OdmFormUID):
     odm_form_service = OdmFormService()
@@ -143,7 +246,10 @@ def get_odm_form(uid: str = OdmFormUID):
     description="",
     response_model=dict,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_active_relationships(uid: str = OdmFormUID):
     odm_form_service = OdmFormService()
@@ -174,7 +280,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The ODM Form with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_odm_form_versions(uid: str = OdmFormUID):
@@ -196,11 +302,11 @@ def get_odm_form_versions(uid: str = OdmFormUID):
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_form(
-    odm_form_create_input: OdmFormPostInput = Body(None, description=""),
+    odm_form_create_input: OdmFormPostInput = Body(description=""),
 ):
     odm_form_service = OdmFormService()
 
@@ -226,12 +332,12 @@ def create_odm_form(
             "model": ErrorResponse,
             "description": "Not Found - The ODM Form with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_form(
     uid: str = OdmFormUID,
-    odm_form_edit_input: OdmFormPatchInput = Body(None, description=""),
+    odm_form_edit_input: OdmFormPatchInput = Body(description=""),
 ):
     odm_form_service = OdmFormService()
     return odm_form_service.update_with_relations(
@@ -271,7 +377,7 @@ Possible errors:
             "- The ODM Form is not in final status.\n"
             "- The ODM Form with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_form_version(uid: str = OdmFormUID):
@@ -297,7 +403,7 @@ def create_odm_form_version(uid: str = OdmFormUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Form with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve_odm_form(uid: str = OdmFormUID):
@@ -322,7 +428,7 @@ def approve_odm_form(uid: str = OdmFormUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Form with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate_odm_form(uid: str = OdmFormUID):
@@ -347,7 +453,7 @@ def inactivate_odm_form(uid: str = OdmFormUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Form with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate_odm_form(uid: str = OdmFormUID):
@@ -373,7 +479,7 @@ def reactivate_odm_form(uid: str = OdmFormUID):
             "model": ErrorResponse,
             "description": "Not Found - The activity groups with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def add_activity_groups_to_odm_form(
@@ -383,7 +489,7 @@ def add_activity_groups_to_odm_form(
         description="If true, all existing activity group relationships will be replaced with the provided activity group relationships.",
     ),
     odm_form_activity_group_post_input: List[OdmFormActivityGroupPostInput] = Body(
-        None, description=""
+        description=""
     ),
 ):
     odm_form_service = OdmFormService()
@@ -412,7 +518,7 @@ def add_activity_groups_to_odm_form(
             "model": ErrorResponse,
             "description": "Not Found - The item groups with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def add_item_groups_to_odm_form(
@@ -422,7 +528,7 @@ def add_item_groups_to_odm_form(
         description="If true, all existing item group relationships will be replaced with the provided item group relationships.",
     ),
     odm_form_item_group_post_input: List[OdmFormItemGroupPostInput] = Body(
-        None, description=""
+        description=""
     ),
 ):
     odm_form_service = OdmFormService()
@@ -451,7 +557,7 @@ def add_item_groups_to_odm_form(
             "model": ErrorResponse,
             "description": "Not Found - The ODM Vendor Elements with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def add_vendor_elements_to_odm_form(
@@ -461,7 +567,7 @@ def add_vendor_elements_to_odm_form(
         description="If true, all existing ODM Vendor Element relationships will be replaced with the provided ODM Vendor Element relationships.",
     ),
     odm_vendor_relation_post_input: List[OdmVendorRelationPostInput] = Body(
-        None, description=""
+        description=""
     ),
 ):
     odm_form_service = OdmFormService()
@@ -490,7 +596,7 @@ def add_vendor_elements_to_odm_form(
             "model": ErrorResponse,
             "description": "Not Found - The ODM Vendor Attributes with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def add_vendor_attributes_to_odm_form(
@@ -501,7 +607,7 @@ def add_vendor_attributes_to_odm_form(
         be replaced with the provided ODM Vendor Attribute relationships.""",
     ),
     odm_vendor_relation_post_input: List[OdmVendorRelationPostInput] = Body(
-        None, description=""
+        description=""
     ),
 ):
     odm_form_service = OdmFormService()
@@ -530,7 +636,7 @@ def add_vendor_attributes_to_odm_form(
             "model": ErrorResponse,
             "description": "Not Found - The ODM Vendor Element attributes with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def add_vendor_element_attributes_to_odm_form(
@@ -541,7 +647,7 @@ def add_vendor_element_attributes_to_odm_form(
         will be replaced with the provided ODM Vendor Element attribute relationships.""",
     ),
     odm_vendor_relation_post_input: List[OdmVendorRelationPostInput] = Body(
-        None, description=""
+        description=""
     ),
 ):
     odm_form_service = OdmFormService()
@@ -549,6 +655,37 @@ def add_vendor_element_attributes_to_odm_form(
         uid=uid,
         odm_vendor_relation_post_input=odm_vendor_relation_post_input,
         override=override,
+    )
+
+
+@router.post(
+    "/{uid}/vendors",
+    summary="Manages all ODM Vendors by replacing existing ODM Vendors by provided ODM Vendors.",
+    description="",
+    response_model=OdmForm,
+    status_code=201,
+    responses={
+        201: {
+            "description": "Created - The ODM Vendors were successfully added to the ODM Form."
+        },
+        403: {
+            "model": ErrorResponse,
+            "description": "Forbidden - Reasons include e.g.: \n",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The ODM Vendors with the specified 'uid' wasn't found.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def manage_vendors_of_odm_form(
+    uid: str = OdmFormUID,
+    odm_vendors_post_input: OdmVendorsPostInput = Body(description=""),
+):
+    odm_form_service = OdmFormService()
+    return odm_form_service.manage_vendors(
+        uid=uid, odm_vendors_post_input=odm_vendors_post_input
     )
 
 
@@ -571,7 +708,7 @@ def add_vendor_element_attributes_to_odm_form(
             "model": ErrorResponse,
             "description": "Not Found - An ODM Form with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_odm_form(uid: str = OdmFormUID):

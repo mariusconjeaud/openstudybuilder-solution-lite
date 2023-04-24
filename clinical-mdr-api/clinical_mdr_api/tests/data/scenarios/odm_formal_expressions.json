@@ -418,7 +418,7 @@
                     "OdmFormalExpression_000001"
                 ],
                 "descriptions": [
-                    "odm_description1"
+                    "odm_description3"
                 ],
                 "alias_uids": []
             },
@@ -451,12 +451,12 @@
                 ],
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
+                        "uid": "odm_description3",
+                        "name": "name3",
                         "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],

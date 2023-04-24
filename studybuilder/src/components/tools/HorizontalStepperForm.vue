@@ -26,6 +26,7 @@
             :complete="currentStep > index + 1 || editable"
             :step="index + 1"
             color="secondary"
+            :class="currentStep === index + 1 ? 'gray' : ''"
             :editable="editable"
             :edit-icon="editable ? '$complete' : '$edit'"
             >
@@ -74,7 +75,7 @@
                   </v-btn>
                   <v-btn
                     :data-cy="step.name + '-save-button'"
-                    v-if="currentStep >= steps.length"
+                    v-if="currentStep >= steps.length || saveFromAnyStep"
                     color="secondary"
                     class="ml-2"
                     @click="submit"
@@ -85,50 +86,54 @@
                   <slot :name="`step.${step.name}.afterActions`" v-bind:step="index + 1" />
                 </div>
               </v-col>
-              <v-col :cols="step.belowDisplay ? 12 : 8" class="pr-0">
+              <v-col :cols="step.belowDisplay ? 12 : 10" class="pr-0">
                 <slot :name="`step.${step.name}`" v-bind:step="index + 1" />
               </v-col>
-              <v-col v-if="!step.belowDisplay" cols="4" class="d-flex align-start justify-end py-4">
+              <v-col v-if="!step.belowDisplay" cols="2" class="d-flex align-start justify-end py-4">
                 <div v-if="currentStep === 1">
                   <slot name="actions"></slot>
                 </div>
                 <div class="mx-2">
-                  <v-btn
-                    color="white"
-                    class="secondary-btn"
-                    @click="cancel"
-                    >
-                    {{ $t('_global.cancel') }}
-                  </v-btn>
-                  <v-btn
-                    v-if="currentStep > 1"
-                    color="white"
-                    class="secondary-btn ml-2"
-                    @click="currentStep = index"
-                    >
-                    {{ $t('_global.previous') }}
-                  </v-btn>
-                  <slot :name="`step.${step.name}.actions.middle`" v-bind:step="index + 1" />
-                  <v-btn
-                   :data-cy="step.name + '-continue-button'"
-                    v-if="currentStep < steps.length"
-                    color="secondary"
-                    class="ml-2"
-                    @click="goToStep(index + 1, index + 2)"
-                    >
-                    {{ $t('_global.continue') }}
-                  </v-btn>
-                  <v-btn
-                    :data-cy="step.name + '-save-button'"
-                    v-if="currentStep >= steps.length"
-                    color="secondary"
-                    class="ml-2"
-                    @click="submit"
-                    :loading="loading"
-                    >
-                    {{ $t('_global.save') }}
-                  </v-btn>
-                  <slot :name="`step.${step.name}.afterActions`" v-bind:step="index + 1" />
+                  <v-col cols="12">
+                    <v-btn
+                      color="white"
+                      class="secondary-btn"
+                      @click="cancel"
+                      >
+                      {{ $t('_global.cancel') }}
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="12" v-if="currentStep > 1">
+                    <v-btn
+                      color="white"
+                      class="secondary-btn"
+                      @click="currentStep = index"
+                      >
+                      {{ $t('_global.previous') }}
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="12" v-if="currentStep < steps.length">
+                    <v-btn
+                      :data-cy="step.name + '-continue-button'"
+                      color="secondary"
+                      @click="goToStep(index + 1, index + 2)"
+                      >
+                      {{ $t('_global.continue') }}
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="12" v-if="currentStep >= steps.length || saveFromAnyStep">
+                    <v-btn
+                      :data-cy="step.name + '-save-button'"
+                      color="secondary"
+                      @click="submit"
+                      :loading="loading"
+                      >
+                      {{ $t('_global.save') }}
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="12">
+                    <slot :name="`step.${step.name}.afterActions`" v-bind:step="index + 1" />
+                  </v-col>
                 </div>
               </v-col>
               <slot :name="`step.${step.name}.after`" v-bind:step="index + 1" />
@@ -179,7 +184,11 @@ export default {
     },
     editData: Object,
     debug: Boolean,
-    formUrl: String
+    formUrl: String,
+    saveFromAnyStep: {
+      type: Boolean,
+      default: false
+    }
   },
   data () {
     return {
@@ -285,6 +294,9 @@ export default {
 }
 .step-title-inactive {
   color: rgba(0, 0, 0, 0.6);
+}
+.gray {
+  background: rgb(233, 233, 233);
 }
 
 .debug {

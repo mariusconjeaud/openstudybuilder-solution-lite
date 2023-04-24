@@ -115,7 +115,6 @@ class DictionaryCodelistGenericService:
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence[str]:
-
         self.enforce_library(library)
 
         # First, check that attributes provided for filtering exist in the return class
@@ -141,7 +140,6 @@ class DictionaryCodelistGenericService:
 
     @db.transaction
     def get_by_uid(self, codelist_uid: str, version: Optional[str] = None) -> BaseModel:
-
         item = self._find_by_uid_or_raise_not_found(
             codelist_uid=codelist_uid, version=version
         )
@@ -283,7 +281,6 @@ class DictionaryCodelistGenericService:
 
     @db.transaction
     def add_term(self, codelist_uid: str, term_uid: str) -> DictionaryCodelist:
-
         if not self.repository.codelist_exists(normalize_string(codelist_uid)):
             raise exceptions.BusinessLogicException(
                 f"There is no DictionaryCodelistRoot identified by provided codelist_uid ({codelist_uid})"
@@ -313,7 +310,6 @@ class DictionaryCodelistGenericService:
 
     @db.transaction
     def remove_term(self, codelist_uid: str, term_uid: str) -> DictionaryCodelist:
-
         if not self.repository.codelist_exists(normalize_string(codelist_uid)):
             raise exceptions.BusinessLogicException(
                 f"There is no DictionaryCodelistRoot identified by provided codelist_uid ({codelist_uid})"

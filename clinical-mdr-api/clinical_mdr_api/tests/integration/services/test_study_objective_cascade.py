@@ -2,38 +2,42 @@ import unittest
 
 from neomodel import db
 
-from clinical_mdr_api.domain.templates.objective_template import ObjectiveTemplateAR
+from clinical_mdr_api.domain.syntax_templates.objective_template import (
+    ObjectiveTemplateAR,
+)
+from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
 from clinical_mdr_api.domain.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
-    TemplateVO,
 )
 from clinical_mdr_api.domain_repositories.models.generic import Library
-from clinical_mdr_api.domain_repositories.models.objective import ObjectiveRoot
-from clinical_mdr_api.domain_repositories.models.objective_template import (
+from clinical_mdr_api.domain_repositories.models.study import StudyRoot
+from clinical_mdr_api.domain_repositories.models.syntax import (
+    ObjectiveRoot,
     ObjectiveTemplateRoot,
 )
-from clinical_mdr_api.domain_repositories.models.study import StudyRoot
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameter,
-    TemplateParameterValue,
-    TemplateParameterValueRoot,
+    TemplateParameterTermRoot,
+    TemplateParameterTermValue,
 )
-from clinical_mdr_api.domain_repositories.templates.objective_template_repository import (
+from clinical_mdr_api.domain_repositories.syntax_templates.objective_template_repository import (
     ObjectiveTemplateRepository,
 )
-from clinical_mdr_api.models.objective import ObjectiveCreateInput
 from clinical_mdr_api.models.study_selection import (
     StudySelectionObjective,
     StudySelectionObjectiveInput,
 )
+from clinical_mdr_api.models.syntax_instances.objective import ObjectiveCreateInput
 from clinical_mdr_api.models.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
-from clinical_mdr_api.services.objective_templates import ObjectiveTemplateService
-from clinical_mdr_api.services.objectives import ObjectiveService
 from clinical_mdr_api.services.study_objective_selection import (
     StudyObjectiveSelectionService,
+)
+from clinical_mdr_api.services.syntax_instances.objectives import ObjectiveService
+from clinical_mdr_api.services.syntax_templates.objective_templates import (
+    ObjectiveTemplateService,
 )
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
@@ -44,8 +48,8 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
 
 class TestStudyObjectiveUpversion(unittest.TestCase):
     TPR_LABEL = "ParameterName"
-    value_roots: list = []
-    value_values: list = []
+    term_roots: list = []
+    term_values: list = []
 
     def setUp(self):
         inject_and_clear_db("studyobjectiveselectionupversion")
@@ -78,7 +82,6 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
             _template=self.tv,
             _library=self.library,
             _item_metadata=self.im,
-            _editable_instance=False,
         )
         self.tfr.save(self.ar)
 
@@ -108,36 +111,36 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
 
     def create_template_parameters(self, label=TPR_LABEL, count=1000):
         for i in range(count):
-            vr = TemplateParameterValueRoot(uid=label + "uid__" + str(i))
+            vr = TemplateParameterTermRoot(uid=label + "uid__" + str(i))
             vr.save()
-            vv = TemplateParameterValue(name=label + "__" + str(i))
+            vv = TemplateParameterTermValue(name=label + "__" + str(i))
             vv.save()
-            vr.has_value.connect(self.tpr)
+            vr.has_parameter_term.connect(self.tpr)
             vr.latest_final.connect(vv)
-        for vr in self.tpr.has_value.all():
-            self.value_roots.append(vr)
+        for vr in self.tpr.has_parameter_term.all():
+            self.term_roots.append(vr)
             vv = vr.latest_final.single()
-            self.value_values.append(vv)
+            self.term_values.append(vv)
 
     def create_objectives(self, count=100, approved=False, retired=False):
         for i in range(count):
             pv = TemplateParameterMultiSelectInput(
                 template_parameter=self.TPR_LABEL,
                 conjunction="",
-                values=[
+                terms=[
                     {
                         "position": 1,
                         "index": 1,
-                        "name": self.value_values[i].name,
+                        "name": self.term_values[i].name,
                         "type": self.TPR_LABEL,
-                        "uid": self.value_roots[i].uid,
+                        "uid": self.term_roots[i].uid,
                     }
                 ],
             )
             template = ObjectiveCreateInput(
                 objective_template_uid=self.ar.uid,
                 library_name="Library",
-                parameter_values=[pv],
+                parameter_terms=[pv],
             )
 
             item = self.objective_service.create(template)

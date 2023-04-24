@@ -22,3 +22,4 @@ DATATYPE,Incomplete Date,incomplete date,INCOMPLETEDATE,Incomplete Date data typ
 DATATYPE,Incomplete Time,incomplete time,INCOMPLETETIME,Incomplete Time data type,21,,Incomplete time
 DATATYPE,URI,uri,URI,URI data type,22,,Uri
 DATATYPE,Comment,comment,COMMENT,Term to describe an ODM ItemDef as a Comment,23,,Comment (not ODM specified)
+DATATYPE,BIT,bit,BIT,Term to describe a BIT that can only have 0 and 1,24,,BIT (Sponsor Term)

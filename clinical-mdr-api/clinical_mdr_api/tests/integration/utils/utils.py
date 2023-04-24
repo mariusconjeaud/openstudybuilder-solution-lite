@@ -1,10 +1,14 @@
 # pylint:disable=broad-except
 import csv
+import io
 import logging
 from datetime import datetime, timedelta, timezone
 from random import randint
 from typing import List, Optional, Sequence
+from xml.etree import ElementTree
 
+import openpyxl
+from fastapi.testclient import TestClient
 from neomodel import db
 
 from clinical_mdr_api import config, models
@@ -22,9 +26,25 @@ from clinical_mdr_api.models.activities.activity_group import (
     ActivityGroup,
     ActivityGroupCreateInput,
 )
+from clinical_mdr_api.models.activities.activity_instance import (
+    ActivityInstance,
+    ActivityInstanceCreateInput,
+)
 from clinical_mdr_api.models.activities.activity_sub_group import (
     ActivitySubGroup,
     ActivitySubGroupCreateInput,
+)
+from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
+    ActivityInstanceClass,
+    ActivityInstanceClassInput,
+)
+from clinical_mdr_api.models.biomedical_concepts.activity_item import (
+    ActivityItem,
+    ActivityItemCreateInput,
+)
+from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
+    ActivityItemClass,
+    ActivityItemClassCreateInput,
 )
 from clinical_mdr_api.models.compound import Compound, CompoundCreateInput
 from clinical_mdr_api.models.compound_alias import (
@@ -33,30 +53,15 @@ from clinical_mdr_api.models.compound_alias import (
 )
 from clinical_mdr_api.models.concept import TextValue, TextValueInput
 from clinical_mdr_api.models.configuration import CTConfigPostInput
-from clinical_mdr_api.models.criteria import CriteriaCreateInput
-from clinical_mdr_api.models.criteria_template import (
-    CriteriaTemplate,
-    CriteriaTemplateCreateInput,
-)
-from clinical_mdr_api.models.endpoint import EndpointCreateInput
-from clinical_mdr_api.models.endpoint_template import (
-    EndpointTemplate,
-    EndpointTemplateCreateInput,
-)
-from clinical_mdr_api.models.objective import ObjectiveCreateInput
-from clinical_mdr_api.models.objective_template import (
-    ObjectiveTemplate,
-    ObjectiveTemplateCreateInput,
-)
+from clinical_mdr_api.models.standard_data_models.class_variable import ClassVariable
 from clinical_mdr_api.models.standard_data_models.data_model import DataModel
 from clinical_mdr_api.models.standard_data_models.data_model_ig import DataModelIG
 from clinical_mdr_api.models.standard_data_models.dataset import Dataset
 from clinical_mdr_api.models.standard_data_models.dataset_class import DatasetClass
-from clinical_mdr_api.models.study import (
-    Study,
-    StudyCreateInput,
-    StudyPreferredTimeUnit,
+from clinical_mdr_api.models.standard_data_models.dataset_variable import (
+    DatasetVariable,
 )
+from clinical_mdr_api.models.study import Study, StudyCreateInput
 from clinical_mdr_api.models.study_disease_milestone import (
     StudyDiseaseMilestone,
     StudyDiseaseMilestoneCreateInput,
@@ -83,24 +88,74 @@ from clinical_mdr_api.models.study_selection import (
     StudySelectionObjective,
     StudySelectionObjectiveCreateInput,
 )
-from clinical_mdr_api.models.template_parameter_multi_select_input import (
-    TemplateParameterMultiSelectInput,
+from clinical_mdr_api.models.syntax_instances.criteria import CriteriaCreateInput
+from clinical_mdr_api.models.syntax_instances.endpoint import EndpointCreateInput
+from clinical_mdr_api.models.syntax_instances.objective import ObjectiveCreateInput
+from clinical_mdr_api.models.syntax_instances.timeframe import (
+    Timeframe,
+    TimeframeCreateInput,
 )
-from clinical_mdr_api.models.template_parameter_value import MultiTemplateParameterValue
-from clinical_mdr_api.models.timeframe import Timeframe, TimeframeCreateInput
-from clinical_mdr_api.models.timeframe_template import (
+from clinical_mdr_api.models.syntax_pre_instances.activity_instruction_pre_instance import (
+    ActivityInstructionPreInstance,
+    ActivityInstructionPreInstanceCreateInput,
+)
+from clinical_mdr_api.models.syntax_pre_instances.criteria_pre_instance import (
+    CriteriaPreInstance,
+    CriteriaPreInstanceCreateInput,
+)
+from clinical_mdr_api.models.syntax_pre_instances.endpoint_pre_instance import (
+    EndpointPreInstance,
+    EndpointPreInstanceCreateInput,
+)
+from clinical_mdr_api.models.syntax_pre_instances.objective_pre_instance import (
+    ObjectivePreInstance,
+    ObjectivePreInstanceCreateInput,
+)
+from clinical_mdr_api.models.syntax_templates.activity_instruction_template import (
+    ActivityInstructionTemplate,
+    ActivityInstructionTemplateCreateInput,
+)
+from clinical_mdr_api.models.syntax_templates.criteria_template import (
+    CriteriaTemplate,
+    CriteriaTemplateCreateInput,
+)
+from clinical_mdr_api.models.syntax_templates.endpoint_template import (
+    EndpointTemplate,
+    EndpointTemplateCreateInput,
+)
+from clinical_mdr_api.models.syntax_templates.objective_template import (
+    ObjectiveTemplate,
+    ObjectiveTemplateCreateInput,
+)
+from clinical_mdr_api.models.syntax_templates.timeframe_template import (
     TimeframeTemplate,
     TimeframeTemplateCreateInput,
 )
+from clinical_mdr_api.models.template_parameter_multi_select_input import (
+    TemplateParameterMultiSelectInput,
+)
+from clinical_mdr_api.models.template_parameter_term import MultiTemplateParameterTerm
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.services import libraries as library_service
 from clinical_mdr_api.services._meta_repository import MetaRepository
+from clinical_mdr_api.services.biomedical_concepts.activity_instance_class import (
+    ActivityInstanceClassService,
+)
+from clinical_mdr_api.services.biomedical_concepts.activity_item import (
+    ActivityItemService,
+)
+from clinical_mdr_api.services.biomedical_concepts.activity_item_class import (
+    ActivityItemClassService,
+)
 from clinical_mdr_api.services.brand import BrandService
 from clinical_mdr_api.services.clinical_programme import (
     create as create_clinical_programme,
 )
 from clinical_mdr_api.services.concepts.activities.activity_group_service import (
     ActivityGroupService,
+)
+from clinical_mdr_api.services.concepts.activities.activity_instance_service import (
+    ActivityInstanceService,
 )
 from clinical_mdr_api.services.concepts.activities.activity_service import (
     ActivityService,
@@ -120,7 +175,6 @@ from clinical_mdr_api.services.concepts.simple_concepts.text_value import (
     TextValueService,
 )
 from clinical_mdr_api.services.configuration import CTConfigService
-from clinical_mdr_api.services.criteria_templates import CriteriaTemplateService
 from clinical_mdr_api.services.ct_codelist import CTCodelistService
 from clinical_mdr_api.services.ct_codelist_attributes import CTCodelistAttributesService
 from clinical_mdr_api.services.ct_codelist_name import CTCodelistNameService
@@ -133,8 +187,6 @@ from clinical_mdr_api.services.dictionary_codelist_generic_service import (
 from clinical_mdr_api.services.dictionary_term_generic_service import (
     DictionaryTermGenericService as DictionaryTermService,
 )
-from clinical_mdr_api.services.endpoint_templates import EndpointTemplateService
-from clinical_mdr_api.services.objective_templates import ObjectiveTemplateService
 from clinical_mdr_api.services.project import ProjectService
 from clinical_mdr_api.services.standard_data_models.class_variable import (
     ClassVariableService,
@@ -178,8 +230,34 @@ from clinical_mdr_api.services.study_epoch import StudyEpochService
 from clinical_mdr_api.services.study_objective_selection import (
     StudyObjectiveSelectionService,
 )
-from clinical_mdr_api.services.timeframe_templates import TimeframeTemplateService
-from clinical_mdr_api.services.timeframes import TimeframeService
+from clinical_mdr_api.services.syntax_instances.timeframes import TimeframeService
+from clinical_mdr_api.services.syntax_pre_instances.activity_instruction_pre_instances import (
+    ActivityInstructionPreInstanceService,
+)
+from clinical_mdr_api.services.syntax_pre_instances.criteria_pre_instances import (
+    CriteriaPreInstanceService,
+)
+from clinical_mdr_api.services.syntax_pre_instances.endpoint_pre_instances import (
+    EndpointPreInstanceService,
+)
+from clinical_mdr_api.services.syntax_pre_instances.objective_pre_instances import (
+    ObjectivePreInstanceService,
+)
+from clinical_mdr_api.services.syntax_templates.activity_instruction_templates import (
+    ActivityInstructionTemplateService,
+)
+from clinical_mdr_api.services.syntax_templates.criteria_templates import (
+    CriteriaTemplateService,
+)
+from clinical_mdr_api.services.syntax_templates.endpoint_templates import (
+    EndpointTemplateService,
+)
+from clinical_mdr_api.services.syntax_templates.objective_templates import (
+    ObjectiveTemplateService,
+)
+from clinical_mdr_api.services.syntax_templates.timeframe_templates import (
+    TimeframeTemplateService,
+)
 from clinical_mdr_api.services.unit_definition import UnitDefinitionService
 from clinical_mdr_api.tests.unit.domain.study_definition_aggregate.test_study_metadata import (
     initialize_ct_data_map,
@@ -213,6 +291,55 @@ class TestUtils:
     def assert_timestamp_is_newer_than(cls, val: str, seconds: int):
         ts: datetime = datetime.strptime(val, config.DATE_TIME_FORMAT)
         assert abs(datetime.now(timezone.utc) - ts) < timedelta(seconds=seconds)
+
+    @classmethod
+    def assert_valid_csv(cls, val: str):
+        csv_file = io.StringIO(val)
+        try:
+            csv_reader = csv.reader(csv_file)
+            for _row in csv_reader:
+                pass  # Do nothing, just iterate through the rows
+        except csv.Error:
+            assert False, "Returned content is not a valid CSV file"
+
+    @classmethod
+    def assert_valid_xml(cls, val: str):
+        # Attempt to parse the XML content using ElementTree
+        try:
+            _root = ElementTree.fromstring(val)
+        except ElementTree.ParseError:
+            assert False, "Content is not valid XML"
+
+    @classmethod
+    def assert_valid_excel(cls, content):
+        excel_file = io.BytesIO(content)
+        # Attempt to open the Excel file using openpyxl
+        try:
+            _workbook = openpyxl.load_workbook(excel_file)
+        except openpyxl.utils.exceptions.InvalidFileException:
+            assert False, "File does not contain valid Excel data"
+
+    @classmethod
+    def verify_exported_data_format(
+        cls, api_client: TestClient, export_format: str, url: str
+    ):
+        """Verifies that the specified endpoint returns valid csv/xml/Excel content"""
+        headers = {"Accept": export_format}
+        log.info("GET %s | %s", url, headers)
+        response = api_client.get(url, headers=headers)
+
+        assert response.status_code == 200
+        assert export_format in response.headers["content-type"]
+
+        if export_format == "text/csv":
+            TestUtils.assert_valid_csv(response.content.decode("utf-8"))
+        if export_format == "text/xml":
+            TestUtils.assert_valid_xml(response.content.decode("utf-8"))
+        if (
+            export_format
+            == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ):
+            TestUtils.assert_valid_excel(response.content)
 
     @classmethod
     def random_str(cls, max_length: int, prefix: str = ""):
@@ -271,10 +398,9 @@ class TestUtils:
         guidance_text: Optional[str] = None,
         study_uid: Optional[str] = None,
         library_name: Optional[str] = LIBRARY_NAME,
-        default_parameter_values: Optional[MultiTemplateParameterValue] = None,
-        editable_instance: Optional[bool] = False,
+        default_parameter_terms: Optional[List[MultiTemplateParameterTerm]] = None,
         indication_uids: Optional[List[str]] = None,
-        confirmatory_testing: Optional[bool] = False,
+        is_confirmatory_testing: Optional[bool] = False,
         category_uids: Optional[List[str]] = None,
         approve: bool = True,
     ) -> ObjectiveTemplate:
@@ -284,10 +410,9 @@ class TestUtils:
             guidance_text=guidance_text,
             study_uid=study_uid,
             library_name=library_name,
-            default_parameter_values=default_parameter_values,
-            editable_instance=editable_instance,
+            default_parameter_terms=default_parameter_terms,
             indication_uids=indication_uids,
-            confirmatory_testing=confirmatory_testing,
+            is_confirmatory_testing=is_confirmatory_testing,
             category_uids=category_uids,
         )
 
@@ -303,10 +428,9 @@ class TestUtils:
         guidance_text: Optional[str] = None,
         study_uid: Optional[str] = None,
         library_name: Optional[str] = LIBRARY_NAME,
-        default_parameter_values: Optional[MultiTemplateParameterValue] = None,
-        editable_instance: Optional[bool] = False,
+        default_parameter_terms: Optional[List[MultiTemplateParameterTerm]] = None,
         indication_uids: Optional[List[str]] = None,
-        confirmatory_testing: Optional[bool] = False,
+        is_confirmatory_testing: Optional[bool] = False,
         category_uids: Optional[List[str]] = None,
         sub_category_uids: Optional[List[str]] = None,
         approve: bool = True,
@@ -317,15 +441,46 @@ class TestUtils:
             guidance_text=guidance_text,
             study_uid=study_uid,
             library_name=library_name,
-            default_parameter_values=default_parameter_values,
-            editable_instance=editable_instance,
+            default_parameter_terms=default_parameter_terms,
             indication_uids=indication_uids,
-            confirmatory_testing=confirmatory_testing,
+            is_confirmatory_testing=is_confirmatory_testing,
             category_uids=category_uids,
             sub_category_uids=sub_category_uids,
         )
 
         result: ObjectiveTemplate = service.create(payload)
+        if approve:
+            service.approve(result.uid)
+        return result
+
+    @classmethod
+    def create_activity_instruction_template(
+        cls,
+        name: Optional[str] = None,
+        guidance_text: Optional[str] = None,
+        library_name: Optional[str] = LIBRARY_NAME,
+        default_parameter_terms: Optional[List[MultiTemplateParameterTerm]] = None,
+        indication_uids: Optional[List[str]] = None,
+        activity_uids: Optional[List[str]] = None,
+        activity_group_uids: Optional[List[str]] = None,
+        activity_subgroup_uids: Optional[List[str]] = None,
+        approve: bool = True,
+    ) -> ActivityInstructionTemplate:
+        service = ActivityInstructionTemplateService()
+        payload: ActivityInstructionTemplateCreateInput = (
+            ActivityInstructionTemplateCreateInput(
+                name=cls.random_if_none(name, prefix="ct-"),
+                guidance_text=cls.random_if_none(guidance_text),
+                library_name=library_name,
+                default_parameter_terms=default_parameter_terms,
+                indication_uids=indication_uids,
+                activity_uids=activity_uids,
+                activity_group_uids=activity_group_uids,
+                activity_subgroup_uids=activity_subgroup_uids,
+            )
+        )
+
+        result: ActivityInstructionTemplate = service.create(payload)
         if approve:
             service.approve(result.uid)
         return result
@@ -337,8 +492,7 @@ class TestUtils:
         guidance_text: Optional[str] = None,
         study_uid: Optional[str] = None,
         library_name: Optional[str] = LIBRARY_NAME,
-        default_parameter_values: Optional[MultiTemplateParameterValue] = None,
-        editable_instance: Optional[bool] = False,
+        default_parameter_terms: Optional[List[MultiTemplateParameterTerm]] = None,
         type_uid: Optional[str] = None,
         indication_uids: Optional[List[str]] = None,
         category_uids: Optional[List[str]] = None,
@@ -351,8 +505,7 @@ class TestUtils:
             guidance_text=cls.random_if_none(guidance_text),
             study_uid=study_uid,
             library_name=library_name,
-            default_parameter_values=default_parameter_values,
-            editable_instance=editable_instance,
+            default_parameter_terms=default_parameter_terms,
             type_uid=type_uid,
             indication_uids=indication_uids,
             category_uids=category_uids,
@@ -370,7 +523,6 @@ class TestUtils:
         name: Optional[str] = None,
         guidance_text: Optional[str] = None,
         library_name: Optional[str] = LIBRARY_NAME,
-        editable_instance: Optional[bool] = False,
         approve: bool = True,
     ) -> TimeframeTemplate:
         service = TimeframeTemplateService()
@@ -378,7 +530,6 @@ class TestUtils:
             name=cls.random_if_none(name, prefix="tt-"),
             guidance_text=guidance_text,
             library_name=library_name,
-            editable_instance=editable_instance,
         )
 
         result: TimeframeTemplate = service.create(payload)
@@ -387,6 +538,154 @@ class TestUtils:
         return result
 
     # endregion
+
+    @classmethod
+    def create_activity_instruction_pre_instance(
+        cls,
+        template_uid: Optional[str] = None,
+        parameter_terms: Optional[List[MultiTemplateParameterTerm]] = None,
+        indication_uids: Optional[List[str]] = None,
+        activity_uids: Optional[List[str]] = None,
+        activity_group_uids: Optional[List[str]] = None,
+        activity_subgroup_uids: Optional[List[str]] = None,
+        library_name: Optional[str] = LIBRARY_NAME,
+    ) -> ActivityInstructionPreInstance:
+        if not template_uid:
+            activity_group_uid = cls.create_activity_group(name="test").uid
+            template_uid = cls.create_activity_instruction_template(
+                name="name",
+                guidance_text="guidance text",
+                library_name="Sponsor",
+                default_parameter_terms=[],
+                indication_uids=[],
+                activity_uids=[],
+                activity_group_uids=[activity_group_uid],
+                activity_subgroup_uids=[
+                    cls.create_activity_subgroup(
+                        name="test", activity_group=activity_group_uid
+                    ).uid
+                ],
+                approve=False,
+            ).uid
+
+        service = ActivityInstructionPreInstanceService()
+        payload: ActivityInstructionPreInstanceCreateInput = (
+            ActivityInstructionPreInstanceCreateInput(
+                library_name=library_name,
+                parameter_terms=parameter_terms,
+                indication_uids=indication_uids,
+                activity_uids=activity_uids,
+                activity_group_uids=activity_group_uids,
+                activity_subgroup_uids=activity_subgroup_uids,
+            )
+        )
+
+        result: ActivityInstructionPreInstance = service.create(
+            payload, template_uid=template_uid
+        )
+        return result
+
+    @classmethod
+    def create_endpoint_pre_instance(
+        cls,
+        template_uid: Optional[str] = None,
+        parameter_terms: Optional[List[MultiTemplateParameterTerm]] = None,
+        indication_uids: Optional[List[str]] = None,
+        category_uids: Optional[List[str]] = None,
+        sub_category_uids: Optional[List[str]] = None,
+        library_name: Optional[str] = LIBRARY_NAME,
+    ) -> EndpointPreInstance:
+        if not template_uid:
+            template_uid = cls.create_endpoint_template(
+                name="name",
+                guidance_text="guidance text",
+                study_uid=None,
+                library_name="Sponsor",
+                default_parameter_terms=[],
+                indication_uids=[],
+                category_uids=[],
+                sub_category_uids=[],
+            ).uid
+
+        service = EndpointPreInstanceService()
+        payload: EndpointPreInstanceCreateInput = EndpointPreInstanceCreateInput(
+            library_name=library_name,
+            parameter_terms=parameter_terms,
+            indication_uids=indication_uids,
+            category_uids=category_uids,
+            sub_category_uids=sub_category_uids,
+        )
+
+        result: EndpointPreInstance = service.create(payload, template_uid=template_uid)
+        return result
+
+    @classmethod
+    def create_objective_pre_instance(
+        cls,
+        template_uid: Optional[str] = None,
+        is_confirmatory_testing: Optional[bool] = None,
+        parameter_terms: Optional[List[MultiTemplateParameterTerm]] = None,
+        indication_uids: Optional[List[str]] = None,
+        category_uids: Optional[List[str]] = None,
+        library_name: Optional[str] = LIBRARY_NAME,
+    ) -> ObjectivePreInstance:
+        if not template_uid:
+            template_uid = cls.create_objective_template(
+                name="name",
+                guidance_text="guidance text",
+                study_uid=None,
+                library_name="Sponsor",
+                default_parameter_terms=[],
+                indication_uids=[],
+                category_uids=[],
+            ).uid
+
+        service = ObjectivePreInstanceService()
+        payload: ObjectivePreInstanceCreateInput = ObjectivePreInstanceCreateInput(
+            library_name=library_name,
+            is_confirmatory_testing=is_confirmatory_testing,
+            parameter_terms=parameter_terms,
+            indication_uids=indication_uids,
+            category_uids=category_uids,
+        )
+
+        result: ObjectivePreInstance = service.create(
+            payload, template_uid=template_uid
+        )
+        return result
+
+    @classmethod
+    def create_criteria_pre_instance(
+        cls,
+        template_uid: Optional[str] = None,
+        parameter_terms: Optional[List[MultiTemplateParameterTerm]] = None,
+        indication_uids: Optional[List[str]] = None,
+        category_uids: Optional[List[str]] = None,
+        sub_category_uids: Optional[List[str]] = None,
+        library_name: Optional[str] = LIBRARY_NAME,
+    ) -> CriteriaPreInstance:
+        if not template_uid:
+            template_uid = cls.create_criteria_template(
+                name="name",
+                guidance_text="guidance text",
+                study_uid=None,
+                library_name="Sponsor",
+                default_parameter_terms=[],
+                indication_uids=[],
+                category_uids=[],
+            ).uid
+
+        service = CriteriaPreInstanceService()
+        payload: CriteriaPreInstanceCreateInput = CriteriaPreInstanceCreateInput(
+            library_name=library_name,
+            parameter_terms=parameter_terms,
+            indication_uids=indication_uids,
+            category_uids=category_uids,
+            sub_category_uids=sub_category_uids,
+        )
+
+        result: CriteriaPreInstance = service.create(payload, template_uid=template_uid)
+        return result
 
     @classmethod
     def create_compound(
@@ -483,7 +782,117 @@ class TestUtils:
         return result
 
     @classmethod
-    def create_activity_request(
+    def create_activity_instance(
+        cls,
+        name: str,
+        activity_instance_class_uid: str,
+        name_sentence_case: Optional[str] = None,
+        topic_code: Optional[str] = None,
+        adam_param_code: Optional[str] = None,
+        legacy_description: Optional[bool] = None,
+        activities: Optional[Sequence] = None,
+        activity_item_uids: Optional[Sequence] = None,
+        library_name: Optional[str] = LIBRARY_NAME,
+        approve: bool = True,
+    ) -> ActivityInstanceClass:
+        service = ActivityInstanceService()
+        activity_instance_input: ActivityInstanceCreateInput = (
+            ActivityInstanceCreateInput(
+                name=name,
+                name_sentence_case=name_sentence_case,
+                topic_code=topic_code,
+                adam_param_code=adam_param_code,
+                legacy_description=legacy_description,
+                activities=activities if activities else [],
+                activity_instance_class_uid=activity_instance_class_uid,
+                activity_item_uids=activity_item_uids if activity_item_uids else [],
+                library_name=library_name,
+            )
+        )
+        result: ActivityInstance = service.create(concept_input=activity_instance_input)
+        if approve:
+            service.approve(result.uid)
+        return result
+
+    @classmethod
+    def create_activity_instance_class(
+        cls,
+        name: str,
+        order: Optional[int] = None,
+        definition: Optional[str] = None,
+        is_domain_specific: Optional[bool] = None,
+        parent_uid: Optional[str] = None,
+        library_name: Optional[str] = LIBRARY_NAME,
+        approve: bool = True,
+    ) -> ActivityInstanceClass:
+        service = ActivityInstanceClassService()
+        activity_instance_class_input: ActivityInstanceClassInput = (
+            ActivityInstanceClassInput(
+                name=name,
+                order=order,
+                definition=definition,
+                is_domain_specific=is_domain_specific,
+                parent_uid=parent_uid,
+                library_name=library_name,
+            )
+        )
+        result: ActivityInstanceClass = service.create(
+            item_input=activity_instance_class_input
+        )
+        if approve:
+            service.approve(result.uid)
+        return result
+
+    @classmethod
+    def create_activity_item_class(
+        cls,
+        name: str,
+        order: int,
+        mandatory: bool,
+        activity_instance_class_uids: List[str],
+        library_name: Optional[str] = LIBRARY_NAME,
+        approve: bool = True,
+    ) -> ActivityItemClass:
+        service = ActivityItemClassService()
+        activity_item_class_input: ActivityItemClassCreateInput = (
+            ActivityItemClassCreateInput(
+                name=name,
+                order=order,
+                mandatory=mandatory,
+                activity_instance_class_uids=activity_instance_class_uids,
+                library_name=library_name,
+            )
+        )
+        result: ActivityItemClass = service.create(item_input=activity_item_class_input)
+        if approve:
+            service.approve(result.uid)
+        return result
+
+    @classmethod
+    def create_activity_item(
+        cls,
+        name: str,
+        activity_item_class_uid: str,
+        ct_term_uid: Optional[str] = None,
+        unit_definition_uid: Optional[str] = None,
+        library_name: Optional[str] = LIBRARY_NAME,
+        approve: bool = True,
+    ) -> ActivityItem:
+        service = ActivityItemService()
+        activity_item_input: ActivityItemCreateInput = ActivityItemCreateInput(
+            name=name,
+            activity_item_class_uid=activity_item_class_uid,
+            ct_term_uid=ct_term_uid,
+            unit_definition_uid=unit_definition_uid,
+            library_name=library_name,
+        )
+        result: ActivityItem = service.create(item_input=activity_item_input)
+        if approve:
+            service.approve(result.uid)
+        return result
+
+    @classmethod
+    def create_activity(
         cls,
         name: str,
         name_sentence_case: Optional[str] = None,
@@ -491,7 +900,7 @@ class TestUtils:
         abbreviation: Optional[str] = None,
         activity_subgroup: Optional[str] = None,
         request_rationale: Optional[str] = None,
-        library_name: Optional[str] = REQUESTED_LIBRARY_NAME,
+        library_name: Optional[str] = LIBRARY_NAME,
         approve: bool = True,
     ) -> Activity:
         service = ActivityService()
@@ -589,13 +998,13 @@ class TestUtils:
 
     # region Study selection
     @classmethod
-    def _complete_parameter_values(
-        cls, parameter_values: List[TemplateParameterMultiSelectInput]
+    def _complete_parameter_terms(
+        cls, parameter_terms: List[TemplateParameterMultiSelectInput]
     ):
-        for value in parameter_values:
+        for value in parameter_terms:
             if value.conjunction is None:
                 value.conjunction = ""
-        return parameter_values
+        return parameter_terms
 
     @classmethod
     def create_study_objective(
@@ -603,9 +1012,8 @@ class TestUtils:
         study_uid: str,
         objective_template_uid: str,
         library_name: Optional[str] = LIBRARY_NAME,
-        name_override: Optional[str] = None,
         objective_level_uid: Optional[str] = None,
-        parameter_values: Optional[List[TemplateParameterMultiSelectInput]] = None,
+        parameter_terms: Optional[List[TemplateParameterMultiSelectInput]] = None,
     ) -> StudySelectionObjective:
         service = StudyObjectiveSelectionService(AUTHOR)
         objective_create_input: StudySelectionObjectiveCreateInput = (
@@ -614,8 +1022,7 @@ class TestUtils:
                 objective_data=ObjectiveCreateInput(
                     objective_template_uid=objective_template_uid,
                     library_name=library_name,
-                    name_override=name_override,
-                    parameter_values=cls._complete_parameter_values(parameter_values),
+                    parameter_terms=cls._complete_parameter_terms(parameter_terms),
                 ),
             )
         )
@@ -634,14 +1041,13 @@ class TestUtils:
         study_objective_uid: Optional[str] = None,
         endpoint_level_uid: Optional[str] = None,
         endpoint_sublevel_uid: Optional[str] = None,
-        name_override: Optional[str] = None,
-        parameter_values: Optional[List[TemplateParameterMultiSelectInput]] = None,
+        parameter_terms: Optional[List[TemplateParameterMultiSelectInput]] = None,
         endpoint_units: Optional[EndpointUnitsInput] = None,
         timeframe_uid: Optional[str] = None,
     ) -> StudySelectionEndpoint:
         service = StudyEndpointSelectionService(AUTHOR)
-        if parameter_values is None:
-            parameter_values = []
+        if parameter_terms is None:
+            parameter_terms = []
         endpoint_create_input: StudySelectionEndpointCreateInput = (
             StudySelectionEndpointCreateInput(
                 study_objective_uid=study_objective_uid,
@@ -650,8 +1056,7 @@ class TestUtils:
                 endpoint_data=EndpointCreateInput(
                     endpoint_template_uid=endpoint_template_uid,
                     library_name=library_name,
-                    name_override=name_override,
-                    parameter_values=cls._complete_parameter_values(parameter_values),
+                    parameter_terms=cls._complete_parameter_terms(parameter_terms),
                 ),
                 endpoint_units=endpoint_units,
                 timeframe_uid=timeframe_uid,
@@ -669,19 +1074,17 @@ class TestUtils:
         study_uid: str,
         criteria_template_uid: str,
         library_name: Optional[str] = LIBRARY_NAME,
-        name_override: Optional[str] = None,
-        parameter_values: Optional[List[TemplateParameterMultiSelectInput]] = None,
+        parameter_terms: Optional[List[TemplateParameterMultiSelectInput]] = None,
     ) -> StudySelectionCriteria:
         service = StudyCriteriaSelectionService(AUTHOR)
-        if parameter_values is None:
-            parameter_values = []
+        if parameter_terms is None:
+            parameter_terms = []
         criteria_create_input: StudySelectionCriteriaCreateInput = (
             StudySelectionCriteriaCreateInput(
                 criteria_data=CriteriaCreateInput(
                     criteria_template_uid=criteria_template_uid,
                     library_name=library_name,
-                    name_override=name_override,
-                    parameter_values=cls._complete_parameter_values(parameter_values),
+                    parameter_terms=cls._complete_parameter_terms(parameter_terms),
                 )
             )
         )
@@ -696,17 +1099,15 @@ class TestUtils:
         cls,
         timeframe_template_uid: str,
         library_name: Optional[str] = LIBRARY_NAME,
-        name_override: Optional[str] = None,
-        parameter_values: Optional[List[TemplateParameterMultiSelectInput]] = None,
+        parameter_terms: Optional[List[TemplateParameterMultiSelectInput]] = None,
     ) -> Timeframe:
         service = TimeframeService(AUTHOR)
-        if parameter_values is None:
-            parameter_values = []
+        if parameter_terms is None:
+            parameter_terms = []
         timeframe_create_input: TimeframeCreateInput = TimeframeCreateInput(
             timeframe_template_uid=timeframe_template_uid,
             library_name=library_name,
-            name_override=name_override,
-            parameter_values=cls._complete_parameter_values(parameter_values),
+            parameter_terms=cls._complete_parameter_terms(parameter_terms),
         )
 
         result: Timeframe = service.create(timeframe_create_input)
@@ -897,15 +1298,6 @@ class TestUtils:
         return service.create(payload)
 
     @classmethod
-    def create_study_preferred_time_unit(
-        cls, study_uid: str, unit_definition_uid: str
-    ) -> StudyPreferredTimeUnit:
-        service = StudyService()
-        return service.post_study_preferred_time_unit(
-            study_uid=study_uid, unit_definition_uid=unit_definition_uid
-        )
-
-    @classmethod
     def create_ct_term(
         cls,
         catalogue_name: str = CT_CATALOGUE_NAME,
@@ -949,6 +1341,17 @@ class TestUtils:
             CTTermAttributesService().approve(term_uid=ct_term.term_uid)
             CTTermNameService().approve(term_uid=ct_term.term_uid)
         return ct_term
+
+    @classmethod
+    def add_ct_term_parent(
+        cls, term, parent, relationship_type: str = "type"
+    ) -> models.CTTerm:
+        service = CTTermService()
+        service.add_parent(
+            term_uid=term.term_uid,
+            parent_uid=parent.term_uid,
+            relationship_type=relationship_type,
+        )
 
     @classmethod
     def create_ct_codelist(
@@ -1055,7 +1458,6 @@ class TestUtils:
         value: float = None,
         unit_definition_uid: str = None,
     ) -> models.NumericValueWithUnit:
-
         # First make sure that the specified unit exists
         if unit_definition_uid is None:
             try:
@@ -1117,7 +1519,6 @@ class TestUtils:
         unit_definition_uid: str = None,
         sdtm_domain_uid: str = None,
     ) -> models.LagTime:
-
         # First make sure that the specified unit exists
         if unit_definition_uid is None:
             try:
@@ -1187,6 +1588,23 @@ class TestUtils:
         return unit_uid
 
     @classmethod
+    def get_unit_by_uid(
+        cls,
+        unit_uid: str,
+        at_specified_datetime: Optional[datetime] = None,
+        status: Optional[str] = None,
+        version: Optional[str] = None,
+    ) -> models.UnitDefinitionModel:
+        return UnitDefinitionService(
+            user_id=AUTHOR, meta_repository=MetaRepository(AUTHOR)
+        ).get_by_uid(
+            uid=unit_uid,
+            at_specified_datetime=at_specified_datetime,
+            status=status,
+            version=version,
+        )
+
+    @classmethod
     def get_ct_terms_by_name(
         cls, name
     ) -> GenericFilteringReturn[models.CTTermNameAndAttributes]:
@@ -1240,12 +1658,13 @@ class TestUtils:
             MERGE (term_root:CTTermRoot {uid: $uid})-[:HAS_NAME_ROOT]->(term_ver_root:CTTermNameRoot)-
                 [:LATEST]->(term_ver_value:CTTermNameValue {name: $name, name_sentence_case: toLower($name)})
             MERGE (term_ver_root)-[final:LATEST_FINAL]->(term_ver_value)
+            MERGE (term_ver_root)-[hasver:HAS_VERSION]->(term_ver_value)
             MERGE (codelist_root)-[:HAS_TERM]->(term_root)
-            WITH term_root, final
+            WITH term_root, final, hasver
             MATCH (library:Library {name:$library_name})
-            WITH library, term_root, final
+            WITH library, term_root, final, hasver
             MERGE (library)-[:CONTAINS_TERM]->(term_root)""" + cls.set_final_props(
-            "final"
+            "hasver"
         )
         create_dictionary_term_with_custom_uid_query = """
             MATCH (dictionary_codelist_root:DictionaryCodelistRoot {uid:$dictionary_codelist_uid})
@@ -1253,12 +1672,14 @@ class TestUtils:
             MERGE (dictionary_term_root:DictionaryTermRoot {uid: $uid})-[:LATEST]->(dictionary_term_value:DictionaryTermValue
             {name: $name, name_sentence_case: toLower($name)})
             MERGE (dictionary_term_root)-[final:LATEST_FINAL]->(dictionary_term_value)
+            MERGE (dictionary_term_root)-[hasver:HAS_VERSION]->(dictionary_term_value)
             MERGE (dictionary_codelist_root)-[:HAS_TERM]->(dictionary_term_root)
-            WITH dictionary_term_root, final
+            
+            WITH dictionary_term_root, final, hasver
             MATCH (library:Library {name:$library_name})
-            WITH library, dictionary_term_root, final
+            WITH library, dictionary_term_root, final, hasver
             MERGE (library)-[:CONTAINS_DICTIONARY_TERM]->(dictionary_term_root)""" + cls.set_final_props(
-            "final"
+            "hasver"
         )
         for field_name, value in ct_data_map.items():
             if field_name in [
@@ -1310,13 +1731,16 @@ class TestUtils:
                     name: $uid + 'name',
                     name_sentence_case: $uid + 'name'})
                     MERGE (codelist_root)-[:HAS_ATTRIBUTES_ROOT]->(codelist_a_root:CTCodelistAttributesRoot)
-                    -[:LATEST]->(codelist_a_value:CTCodelistAttributesValue {code_submission_value:$uid + 'NAME', extensible:true})
+                    -[:LATEST]->(codelist_a_value:CTCodelistAttributesValue {definition:$uid + ' DEF',
+                    name:$uid + ' NAME', preferred_term:$uid + ' PREF', submission_value:$uid + ' SUMBVAL', extensible:true})
                     MERGE (catalogue)-[:HAS_CODELIST]->(codelist_root)
                     MERGE (codelist_ver_root)-[name_final:LATEST_FINAL]->(codelist_ver_value)
+                    MERGE (codelist_ver_root)-[name_hasver:HAS_VERSION]->(codelist_ver_value)
                     MERGE (codelist_a_root)-[attributes_final:LATEST_FINAL]->(codelist_a_value)
+                    MERGE (codelist_a_root)-[attributes_hasver:HAS_VERSION]->(codelist_a_value)
                     """
-                        + cls.set_final_props("name_final")
-                        + cls.set_final_props("attributes_final"),
+                        + cls.set_final_props("name_hasver")
+                        + cls.set_final_props("attributes_hasver"),
                         {
                             "uid": line.get("configured_codelist_uid"),
                             "library": LIBRARY_NAME,
@@ -1336,14 +1760,16 @@ class TestUtils:
                     SET term_ver_value.name_sentence_case=$uid + 'name'
                     MERGE (term_root)-[:HAS_ATTRIBUTES_ROOT]->(term_a_root:CTTermAttributesRoot)
                     -[:LATEST]->(term_a_value:CTTermAttributesValue {
-                    preferred_term: $uid + 'nci', definition: $uid + 'def'})
+                    preferred_term: $uid + 'nci', definition: $uid + 'def', name:$uid + ' NAME', submission_value:$uid + 'submval'})
                     MERGE (codelist_root)-[:HAS_TERM]->(term_root)
                     MERGE (catalogue)-[:HAS_CODELIST]->(codelist_root)
                     MERGE (term_ver_root)-[name_final:LATEST_FINAL]->(term_ver_value)
+                    MERGE (term_ver_root)-[name_hasver:HAS_VERSION]->(term_ver_value)
                     MERGE (term_a_root)-[attributes_final:LATEST_FINAL]->(term_a_value)
+                    MERGE (term_a_root)-[attributes_hasver:HAS_VERSION]->(term_a_value)
                     """
-                        + cls.set_final_props("name_final")
-                        + cls.set_final_props("attributes_final"),
+                        + cls.set_final_props("name_hasver")
+                        + cls.set_final_props("attributes_hasver"),
                         {
                             "uid": line.get("configured_term_uid"),
                             "codelist": CT_CODELIST_UID,
@@ -1408,12 +1834,13 @@ class TestUtils:
             MERGE (data_model_root:DataModelRoot {uid: $data_model_uid})-[:LATEST]->(data_model_value:DataModelValue
             {name: $name, description: $description})
             MERGE (data_model_root)-[final:LATEST_FINAL]->(data_model_value)
-            WITH data_model_root, data_model_value, final
+            MERGE (data_model_root)-[hv:HAS_VERSION]->(data_model_value)
+            WITH data_model_root, data_model_value, final, hv
             MATCH (library:Library {name:$library_name})
-            WITH library, data_model_root, data_model_value, final
+            WITH library, data_model_root, data_model_value, final, hv
             MERGE (library)-[:CONTAINS_DATA_MODEL]->(data_model_root)
             """
-            + cls.set_final_props("final")
+            + cls.set_final_props("hv")
             + """ WITH data_model_root, data_model_value, final
             UNWIND CASE WHEN $implementation_guides = [] THEN [NULL] 
             ELSE $implementation_guides END as implementation_guide
@@ -1454,12 +1881,13 @@ class TestUtils:
             MERGE (data_model_ig_root:DataModelIGRoot {uid: $data_model_ig_uid})-[:LATEST]->(data_model_ig_value:DataModelIGValue
             {name: $name, description: $description})
             MERGE (data_model_ig_root)-[final:LATEST_FINAL]->(data_model_ig_value)
-            WITH data_model_ig_root, data_model_ig_value, final
+            MERGE (data_model_ig_root)-[hv:HAS_VERSION]->(data_model_ig_value)
+            WITH data_model_ig_root, data_model_ig_value, final, hv
             MATCH (library:Library {name:$library_name})
-            WITH library, data_model_ig_root, data_model_ig_value, final
+            WITH library, data_model_ig_root, data_model_ig_value, final, hv
             MERGE (library)-[:CONTAINS_DATA_MODEL_IG]->(data_model_ig_root)
             """
-            + cls.set_final_props("final")
+            + cls.set_final_props("hv")
             + """WITH data_model_ig_root, data_model_ig_value, final
             MATCH (data_model_root:DataModelRoot {uid:$implemented_data_model})-[:LATEST]->(data_model_value)
             MERGE (data_model_ig_value)-[:IMPLEMENTS]->(data_model_value)"""
@@ -1503,14 +1931,15 @@ class TestUtils:
             MERGE (dataset_class_root:DatasetClassRoot {uid: $implemented_dataset_class_name})-[:LATEST]->(dataset_class_value:DatasetClassValue
             {label: $label, description: $description, title: $title})
             MERGE (dataset_class_root)-[final:LATEST_FINAL]->(dataset_class_value)
-            WITH dataset_class_root, dataset_class_value, final
+            MERGE (dataset_class_root)-[hv:HAS_VERSION]->(dataset_class_value)
+            WITH dataset_class_root, dataset_class_value, final, hv
             MATCH (data_model_catalogue:DataModelCatalogue {name: $data_model_catalogue_name})
             MERGE (data_model_catalogue)-[:HAS_DATASET_CLASS]->(dataset_class_root)
             //MATCH (library:Library {name:$library_name})
-            //WITH library, dataset_class_root, dataset_class_value, final
+            //WITH library, dataset_class_root, dataset_class_value, final, hv
             //MERGE (library)-[:CONTAINS_DATASET_CLASS]->(dataset_class_root)
             """
-            + cls.set_final_props("final")
+            + cls.set_final_props("hv")
             + """ WITH dataset_class_root, dataset_class_value, final
             MATCH (data_model_root:DataModelRoot {uid:$data_model_uid})-[:LATEST]->(data_model_value)
             MERGE (dataset_class_value)<-[:HAS_DATASET_CLASS]-(data_model_value)"""
@@ -1558,14 +1987,15 @@ class TestUtils:
             MERGE (dataset_root:DatasetRoot {uid: $dataset_uid})-[:LATEST]->(dataset_value:DatasetValue
             {label: $label, description: $description, title: $title})
             MERGE (dataset_root)-[final:LATEST_FINAL]->(dataset_value)
-            WITH dataset_root, dataset_value, final
+            MERGE (dataset_root)-[hv:HAS_VERSION]->(dataset_value)
+            WITH dataset_root, dataset_value, final, hv
             MATCH (data_model_catalogue:DataModelCatalogue {name: $data_model_catalogue_name})
             MERGE (data_model_catalogue)-[:HAS_DATASET]->(dataset_root)
             //MATCH (library:Library {name:$library_name})
-            //WITH library, dataset_root, dataset_value, final
+            //WITH library, dataset_root, dataset_value, final, hv
             //MERGE (library)-[:CONTAINS_DATASET]->(dataset_root)
             """
-            + cls.set_final_props("final")
+            + cls.set_final_props("hv")
             + """ WITH dataset_root, dataset_value, final
             MATCH (data_model_ig_root:DataModelIGRoot {uid:$data_model_ig_uid})-[:LATEST]->(data_model_ig_value)
             MERGE (dataset_value)<-[:HAS_DATASET]-(data_model_ig_value)
@@ -1623,7 +2053,7 @@ class TestUtils:
         simple_datatype: str = "simple_datatype",
         role: str = "role",
         library_name: str = LIBRARY_NAME,
-    ) -> Dataset:
+    ) -> ClassVariable:
         """
         Method uses cypher query to create ClassVariable nodes because we don't have POST endpoints to instantiate these entities.
 
@@ -1648,14 +2078,15 @@ class TestUtils:
             implementation_notes: $implementation_notes, mapping_instructions: $mapping_instructions, prompt: $prompt,
             question_text: $question_text, simple_datatype: $simple_datatype, role: $role})
             MERGE (class_variable_root)-[final:LATEST_FINAL]->(class_variable_value)
-            WITH class_variable_root, class_variable_value, final
+            MERGE (class_variable_root)-[hv:HAS_VERSION]->(class_variable_value)
+            WITH class_variable_root, class_variable_value, final, hv
             MATCH (data_model_catalogue:DataModelCatalogue {name: $data_model_catalogue_name})
             MERGE (data_model_catalogue)-[:HAS_CLASS_VARIABLE]->(class_variable_root)
             //MATCH (library:Library {name:$library_name})
             //WITH library, class_variable_root, class_variable_value, final
             //MERGE (library)-[:CONTAINS_CLASS_VARIABLE]->(class_variable_root)
             """
-            + cls.set_final_props("final")
+            + cls.set_final_props("hv")
             + """ WITH class_variable_root, class_variable_value, final
             MATCH (dataset_class_root:DatasetClassRoot {uid:$dataset_class_uid})-[:LATEST]->(dataset_class_value)
             MERGE (class_variable_value)<-[:HAS_CLASS_VARIABLE]-(dataset_class_value)"""
@@ -1694,7 +2125,7 @@ class TestUtils:
         role: str = "role",
         core: str = "core",
         library_name: str = LIBRARY_NAME,
-    ) -> Dataset:
+    ) -> DatasetVariable:
         """
         Method uses cypher query to create DatasetVariable nodes because we don't have POST endpoints to instantiate these entities.
 
@@ -1716,20 +2147,21 @@ class TestUtils:
             {label: $label, description: $description, title: $title,
             simple_datatype: $simple_datatype, role: $role, core: $core})
             MERGE (dataset_variable_root)-[final:LATEST_FINAL]->(dataset_variable_value)
-            WITH dataset_variable_root, dataset_variable_value, final
+            MERGE (dataset_variable_root)-[hv:HAS_VERSION]->(dataset_variable_value)
+            WITH dataset_variable_root, dataset_variable_value, final, hv
             MATCH (data_model_catalogue:DataModelCatalogue {name: $data_model_catalogue_name})
             MERGE (data_model_catalogue)-[:HAS_DATASET_VARIABLE]->(dataset_variable_root)
             //MATCH (library:Library {name:$library_name})
             //WITH library, dataset_variable_root, dataset_variable_value, final
             //MERGE (library)-[:CONTAINS_DATASET_VARIABLE]->(dataset_variable_root)
             """
-            + cls.set_final_props("final")
+            + cls.set_final_props("hv")
             + """ WITH dataset_variable_root, dataset_variable_value, final
             MATCH (dataset_root:DatasetRoot {uid:$dataset_uid})-[:LATEST]->(dataset_value)
             MERGE (dataset_variable_value)<-[:HAS_DATASET_VARIABLE]-(dataset_value)
             WITH dataset_variable_root, dataset_variable_value
             MATCH (class_variable_root:ClassVariableRoot {uid: $class_variable_uid})-[:LATEST]->(class_variable_value)
-            MERGE (dataset_variable_value)-[:IMPLEMENTS_CLASS_VARIABLE]->(class_variable_value)"""
+            MERGE (dataset_variable_value)-[:IMPLEMENTS_VARIABLE]->(class_variable_value)"""
         )
         dataset_variable_uid = (
             DatasetVariableRoot.get_next_free_uid_and_increment_counter()

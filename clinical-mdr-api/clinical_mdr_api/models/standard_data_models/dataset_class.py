@@ -45,9 +45,9 @@ class DatasetClass(VersionProperties):
         description="data_model_name",
         source="has_latest_value.has_dataset_class.name",
     )
-    # library_name: str = Field(
-    #     None,
-    #     title="library_name",
-    #     description="",
-    #     source="has_library.name",
-    # )
+    parent_class: Optional[str] = Field(
+        None,
+        title="parent_class_name",
+        description="parent_class_name",
+        source="has_latest_value.has_parent_class.label",
+    )

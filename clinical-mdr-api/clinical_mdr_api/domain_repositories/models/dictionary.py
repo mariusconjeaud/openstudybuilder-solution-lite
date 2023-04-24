@@ -12,7 +12,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 
 
 class DictionaryTermValue(VersionValue):
-    __optional_labels__ = ["TemplateParameterValue"]
+    __optional_labels__ = ["TemplateParameterTermValue"]
     name = StringProperty()
     dictionary_id = StringProperty()
     name_sentence_case = StringProperty()
@@ -21,7 +21,7 @@ class DictionaryTermValue(VersionValue):
 
 
 class DictionaryTermRoot(VersionRoot):
-    __optional_labels__ = ["TemplateParameterValueRoot"]
+    __optional_labels__ = ["TemplateParameterTermRoot"]
     LIBRARY_REL_LABEL = "CONTAINS_DICTIONARY_TERM"
 
     has_library = RelationshipFrom(Library, LIBRARY_REL_LABEL)
@@ -29,15 +29,9 @@ class DictionaryTermRoot(VersionRoot):
         DictionaryTermValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(DictionaryTermValue, "LATEST")
-    latest_final = RelationshipTo(
-        DictionaryTermValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        DictionaryTermValue, "LATEST_RETIRED", model=VersionRelationship
-    )
-    latest_draft = RelationshipTo(
-        DictionaryTermValue, "LATEST_DRAFT", model=VersionRelationship
-    )
+    latest_final = RelationshipTo(DictionaryTermValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(DictionaryTermValue, "LATEST_RETIRED")
+    latest_draft = RelationshipTo(DictionaryTermValue, "LATEST_DRAFT")
     has_term = RelationshipFrom(
         "DictionaryCodelistRoot", "HAS_TERM", model=CodelistTermRelationship
     )
@@ -59,15 +53,9 @@ class DictionaryCodelistRoot(VersionRoot):
         DictionaryCodelistValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(DictionaryCodelistValue, "LATEST")
-    latest_final = RelationshipTo(
-        DictionaryCodelistValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        DictionaryCodelistValue, "LATEST_RETIRED", model=VersionRelationship
-    )
-    latest_draft = RelationshipTo(
-        DictionaryCodelistValue, "LATEST_DRAFT", model=VersionRelationship
-    )
+    latest_final = RelationshipTo(DictionaryCodelistValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(DictionaryCodelistValue, "LATEST_RETIRED")
+    latest_draft = RelationshipTo(DictionaryCodelistValue, "LATEST_DRAFT")
     has_term = RelationshipTo(
         DictionaryTermRoot, "HAS_TERM", model=CodelistTermRelationship
     )
@@ -85,15 +73,9 @@ class SnomedTermRoot(DictionaryTermRoot):
         SnomedTermValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(SnomedTermValue, "LATEST")
-    latest_final = RelationshipTo(
-        SnomedTermValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        SnomedTermValue, "LATEST_RETIRED", model=VersionRelationship
-    )
-    latest_draft = RelationshipTo(
-        SnomedTermValue, "LATEST_DRAFT", model=VersionRelationship
-    )
+    latest_final = RelationshipTo(SnomedTermValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(SnomedTermValue, "LATEST_RETIRED")
+    latest_draft = RelationshipTo(SnomedTermValue, "LATEST_DRAFT")
 
 
 class MEDRTTermValue(DictionaryTermValue):
@@ -105,15 +87,9 @@ class MEDRTTermRoot(DictionaryTermRoot):
         MEDRTTermValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(MEDRTTermValue, "LATEST")
-    latest_final = RelationshipTo(
-        MEDRTTermValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        MEDRTTermValue, "LATEST_RETIRED", model=VersionRelationship
-    )
-    latest_draft = RelationshipTo(
-        MEDRTTermValue, "LATEST_DRAFT", model=VersionRelationship
-    )
+    latest_final = RelationshipTo(MEDRTTermValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(MEDRTTermValue, "LATEST_RETIRED")
+    latest_draft = RelationshipTo(MEDRTTermValue, "LATEST_DRAFT")
 
 
 class UNIITermValue(DictionaryTermValue):
@@ -125,15 +101,9 @@ class UNIITermRoot(DictionaryTermRoot):
         UNIITermValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(UNIITermValue, "LATEST")
-    latest_final = RelationshipTo(
-        UNIITermValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        UNIITermValue, "LATEST_RETIRED", model=VersionRelationship
-    )
-    latest_draft = RelationshipTo(
-        UNIITermValue, "LATEST_DRAFT", model=VersionRelationship
-    )
+    latest_final = RelationshipTo(UNIITermValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(UNIITermValue, "LATEST_RETIRED")
+    latest_draft = RelationshipTo(UNIITermValue, "LATEST_DRAFT")
 
 
 class UCUMTermValue(DictionaryTermValue):
@@ -145,12 +115,6 @@ class UCUMTermRoot(DictionaryTermRoot):
         UCUMTermValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(UCUMTermValue, "LATEST")
-    latest_final = RelationshipTo(
-        UCUMTermValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        UCUMTermValue, "LATEST_RETIRED", model=VersionRelationship
-    )
-    latest_draft = RelationshipTo(
-        UCUMTermValue, "LATEST_DRAFT", model=VersionRelationship
-    )
+    latest_final = RelationshipTo(UCUMTermValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(UCUMTermValue, "LATEST_RETIRED")
+    latest_draft = RelationshipTo(UCUMTermValue, "LATEST_DRAFT")

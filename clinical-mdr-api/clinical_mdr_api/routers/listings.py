@@ -3,12 +3,13 @@ from typing import Any, Optional, Sequence
 
 from fastapi import APIRouter, Query
 from pydantic.types import Json
+from starlette.requests import Request
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.repositories._utils import FilterOperator
-from clinical_mdr_api.routers import _generic_descriptions
+from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.listings import ListingsService
 
 router = APIRouter()
@@ -23,7 +24,8 @@ metadata_router = APIRouter()
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_metadata(
@@ -80,7 +82,7 @@ def get_metadata(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -112,14 +114,38 @@ def get_distinct_values_for_header(
 @router.get(
     "/libraries/all/gcmd/topic-cd-def",  # might be different if we introduce a parameter
     summary="List library metadata for Activities in the legacy format for CDW-MMA General Clinical Metadata",
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=CustomPage[models.TopicCdDef],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "general_domain_class",
+            "label=lb",
+            "molecular_weight",
+            "sas_display_format",
+            "short_topic_code=short_topic_cd",
+            "sub_domain_class",
+            "sub_domain_type",
+            "topic_code=topic_cd",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_all_activities_report(
+    request: Request,  # request is actually required by the allow_exports decorator
     at_specified_date_time: Optional[datetime] = Query(
         None,
         description="Optional parameter to specify the retrieve the status of the MDR at a specific timepoint, "
@@ -173,7 +199,7 @@ def get_all_activities_report(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_topic_cd_def_values_for_header(
@@ -209,7 +235,8 @@ def get_distinct_topic_cd_def_values_for_header(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_cdisc_ct_ver_data(
@@ -272,7 +299,7 @@ def get_cdisc_ct_ver_data(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_cdisc_ct_ver_values_for_header(
@@ -308,7 +335,8 @@ def get_distinct_cdisc_ct_ver_values_for_header(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_cdisc_ct_pkg_data(
@@ -371,7 +399,7 @@ def get_cdisc_ct_pkg_data(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_cdisc_ct_pkg_values_for_header(
@@ -407,7 +435,8 @@ def get_distinct_cdisc_ct_pkg_values_for_header(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_cdisc_ct_list_data(
@@ -443,7 +472,6 @@ def get_cdisc_ct_list_data(
         False, description=_generic_descriptions.TOTAL_COUNT
     ),
 ):
-
     service = ListingsService()
     all_items = service.list_cdisc_ct_list(
         catalogue_name=catalogue_name,
@@ -477,7 +505,7 @@ def get_cdisc_ct_list_data(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_cdisc_ct_list_values_for_header(
@@ -513,7 +541,8 @@ def get_distinct_cdisc_ct_list_values_for_header(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_cdisc_ct_val_data(
@@ -582,7 +611,7 @@ def get_cdisc_ct_val_data(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_cdisc_ct_val_values_for_header(

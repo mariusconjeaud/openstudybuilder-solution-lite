@@ -1,7 +1,7 @@
 # Combines the first and the last step of the CDICS CT Pipeline outlined in the documentation portal at
 # /guides/cdisc/building-blocks.html#building-blocks
-# 1. Import CDISC CT into CDISC CT DB
-# 3. Import from CDISC CT DB into MDR DB
+# 1. Import CDISC CT into CDISC DB
+# 3. Import from CDISC DB into MDR DB
 
 trigger: none
 
@@ -90,6 +90,7 @@ stages:
           pip install pipenv
           python -m pipenv install
         displayName: Install packages and prepare
+
       
       # Load CT and adjust
       - script: |
@@ -108,7 +109,7 @@ stages:
           python -m pipenv run pipeline_bulk_import TESTUSER "packages" true
         env:
             CDISC_DATA_DIR: ${{parameters.CDISC_DATA_DIR}}
-        displayName: Download CT from CDISC API and import into CDISC CT DB
+        displayName: Download CT from CDISC API and import into CDISC DB
 
       - task: WhiteSource@21
         inputs:

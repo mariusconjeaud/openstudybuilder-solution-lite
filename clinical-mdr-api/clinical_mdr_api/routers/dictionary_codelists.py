@@ -30,7 +30,7 @@ TermUID = Path(None, description="The unique id of the Codelist Term")
 @router.get(
     "/codelists/{library}",
     summary="List all dictionary codelists.",
-    description="""
+    description=f"""
 State before:
  - The library must exist.
  
@@ -41,10 +41,16 @@ State after:
  - No change
 
 Possible errors:
- - Invalid library name.""",
+ - Invalid library name.
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+""",
     response_model=CustomPage[models.DictionaryCodelist],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 @decorators.allow_exports(
     {
@@ -115,7 +121,7 @@ def get_codelists(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -165,12 +171,12 @@ def get_distinct_values_for_header(
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create(
     dictionary_codelist_input: models.DictionaryCodelistCreateInput = Body(
-        None, description="Properties to create DictionaryCodelistValue node."
+        description="Properties to create DictionaryCodelistValue node."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
@@ -192,7 +198,10 @@ State after:
  - No change""",
     response_model=models.DictionaryCodelist,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_codelist(
     uid: str = DictionaryCodelistUID,
@@ -233,7 +242,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The dictionary codelist with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_versions(
@@ -277,14 +286,13 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The codelist with the specified 'codelist_uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
     uid: str = DictionaryCodelistUID,
     dictionary_codelist_input: models.DictionaryCodelistEditInput = Body(
-        None,
-        description="The new parameter values for the dictionary codelist including the change description.",
+        description="The new parameter terms for the dictionary codelist including the change description.",
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
@@ -332,7 +340,7 @@ Possible errors:
             "- The dictionary codelist is not in final status.\n"
             "- The dictionary codelist with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_new_version(
@@ -377,7 +385,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The codelist with the specified 'codelist_uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
@@ -408,7 +416,7 @@ Possible errors:
     responses={
         201: {
             "description": "The HAS_TERM relationship was successfully created.\n"
-            "The TemplateParameter labels and HAS_VALUE relationship were successfully added "
+            "The TemplateParameter labels and HAS_PARAMETER_TERM relationship were successfully added "
             "if dictionary codelist identified by 'uid' is a TemplateParameter."
         },
         403: {
@@ -418,13 +426,13 @@ Possible errors:
             "- The dictionary term does not exist.\n"
             "- The dictionary codelist already has passed term.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def add_term(
     uid: str = DictionaryCodelistUID,
     term_input: models.DictionaryCodelistTermInput = Body(
-        None, description="UID of the DictionaryTermRoot node."
+        description="UID of the DictionaryTermRoot node."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
@@ -458,7 +466,7 @@ Possible errors:
         201: {
             "description": "The HAS_TERM relationship was successfully deleted and "
             "HAD_TERM relationship was successfully created.\n"
-            "The HAS_VALUE relationship was successfully deleted if codelist identified by "
+            "The HAS_PARAMETER_TERM relationship was successfully deleted if codelist identified by "
             "uid is a TemplateParameter"
         },
         403: {
@@ -468,7 +476,7 @@ Possible errors:
             "- The term does not exist.\n"
             "- The codelist doesn't have passed term.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def remove_term(

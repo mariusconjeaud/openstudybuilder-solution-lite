@@ -326,9 +326,8 @@ export default {
     },
     async deleteStudyObjective (studyObjective) {
       const options = { type: 'warning' }
-      let objective = studyObjective.objective.name
+      const objective = studyObjective.objective ? studyObjective.objective.name_plain : '(unnamed)'
 
-      objective = objective.replaceAll(/\[|\]/g, '')
       if (await this.$refs.confirm.open(this.$t('StudyObjectivesTable.confirm_delete', { objective }), options)) {
         this.$store.dispatch('studyObjectives/deleteStudyObjective', {
           studyUid: this.selectedStudy.uid,

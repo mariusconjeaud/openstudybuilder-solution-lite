@@ -1,0 +1,551 @@
+[
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:42:53.814282",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000046",
+    "studyActivityUid": "StudyActivity_000032",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000028",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T10:48:00.004974",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000113",
+    "studyActivityUid": "StudyActivity_000047",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000028",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T10:47:59.547353",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000112",
+    "studyActivityUid": "StudyActivity_000046",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000028",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T10:47:43.017214",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000111",
+    "studyActivityUid": "StudyActivity_000047",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000037",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T10:47:42.421590",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000110",
+    "studyActivityUid": "StudyActivity_000046",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000037",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T10:47:41.641496",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000109",
+    "studyActivityUid": "StudyActivity_000034",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000037",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T10:47:40.747332",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000108",
+    "studyActivityUid": "StudyActivity_000047",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000034",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T10:47:40.177554",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000107",
+    "studyActivityUid": "StudyActivity_000046",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000034",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T10:47:39.639696",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000106",
+    "studyActivityUid": "StudyActivity_000034",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000034",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T10:47:39.106020",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000105",
+    "studyActivityUid": "StudyActivity_000047",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000033",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T10:47:38.498134",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000104",
+    "studyActivityUid": "StudyActivity_000046",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000033",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T10:47:37.860918",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000103",
+    "studyActivityUid": "StudyActivity_000034",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000033",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T10:47:20.797939",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000095",
+    "studyActivityUid": "StudyActivity_000047",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000029",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T10:47:20.231367",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000094",
+    "studyActivityUid": "StudyActivity_000046",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000029",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T10:47:19.746344",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000093",
+    "studyActivityUid": "StudyActivity_000034",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000029",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:47.785423",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000092",
+    "studyActivityUid": "StudyActivity_000045",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000028",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:46.710830",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000091",
+    "studyActivityUid": "StudyActivity_000044",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000037",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:46.082923",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000090",
+    "studyActivityUid": "StudyActivity_000044",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000036",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:45.409028",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000089",
+    "studyActivityUid": "StudyActivity_000044",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000035",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:44.336354",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000088",
+    "studyActivityUid": "StudyActivity_000044",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000034",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:43.464223",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000087",
+    "studyActivityUid": "StudyActivity_000044",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000033",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:42.722367",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000086",
+    "studyActivityUid": "StudyActivity_000044",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000032",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:42.116474",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000085",
+    "studyActivityUid": "StudyActivity_000044",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000031",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:41.397806",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000084",
+    "studyActivityUid": "StudyActivity_000044",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000030",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:40.883867",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000083",
+    "studyActivityUid": "StudyActivity_000044",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000029",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:39.649892",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000082",
+    "studyActivityUid": "StudyActivity_000044",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000028",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:34.922198",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000081",
+    "studyActivityUid": "StudyActivity_000043",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000028",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:33.936293",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000080",
+    "studyActivityUid": "StudyActivity_000042",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000028",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:33.140005",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000079",
+    "studyActivityUid": "StudyActivity_000041",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000028",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:29.238945",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000078",
+    "studyActivityUid": "StudyActivity_000039",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000037",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:28.163713",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000077",
+    "studyActivityUid": "StudyActivity_000038",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000037",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:27.700888",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000076",
+    "studyActivityUid": "StudyActivity_000037",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000037",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:26.865289",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000075",
+    "studyActivityUid": "StudyActivity_000039",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000036",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:26.350623",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000074",
+    "studyActivityUid": "StudyActivity_000038",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000036",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:25.835611",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000073",
+    "studyActivityUid": "StudyActivity_000037",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000036",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:25.135715",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000072",
+    "studyActivityUid": "StudyActivity_000039",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000035",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:24.529867",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000071",
+    "studyActivityUid": "StudyActivity_000038",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000035",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:23.737323",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000070",
+    "studyActivityUid": "StudyActivity_000037",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000035",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:22.728373",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000069",
+    "studyActivityUid": "StudyActivity_000039",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000034",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:22.132500",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000068",
+    "studyActivityUid": "StudyActivity_000038",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000034",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:21.399791",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000067",
+    "studyActivityUid": "StudyActivity_000037",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000034",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:19.355801",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000066",
+    "studyActivityUid": "StudyActivity_000039",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000033",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:18.723960",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000065",
+    "studyActivityUid": "StudyActivity_000038",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000033",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:18.124242",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000064",
+    "studyActivityUid": "StudyActivity_000037",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000033",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:17.284869",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000063",
+    "studyActivityUid": "StudyActivity_000039",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000032",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:16.532652",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000062",
+    "studyActivityUid": "StudyActivity_000038",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000032",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:15.988531",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000061",
+    "studyActivityUid": "StudyActivity_000037",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000032",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:15.031452",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000060",
+    "studyActivityUid": "StudyActivity_000039",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000031",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:14.405726",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000059",
+    "studyActivityUid": "StudyActivity_000038",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000031",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:13.897154",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000058",
+    "studyActivityUid": "StudyActivity_000037",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000031",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:13.321569",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000057",
+    "studyActivityUid": "StudyActivity_000039",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000030",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:12.694942",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000056",
+    "studyActivityUid": "StudyActivity_000038",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000030",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:12.050461",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000055",
+    "studyActivityUid": "StudyActivity_000037",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000030",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:11.285070",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000054",
+    "studyActivityUid": "StudyActivity_000039",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000029",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:10.524182",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000053",
+    "studyActivityUid": "StudyActivity_000038",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000029",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:09.961879",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000052",
+    "studyActivityUid": "StudyActivity_000037",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000029",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:08.579945",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000051",
+    "studyActivityUid": "StudyActivity_000040",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000028",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:03.689496",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000050",
+    "studyActivityUid": "StudyActivity_000039",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000028",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:02.940294",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000049",
+    "studyActivityUid": "StudyActivity_000038",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000028",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:02.183457",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000048",
+    "studyActivityUid": "StudyActivity_000037",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000028",
+    "userInitials": "MT"
+  },
+  {
+    "note": null,
+    "startDate": "2022-09-20T08:43:00.277364",
+    "studyActivityScheduleUid": "StudyActivitySchedule_000047",
+    "studyActivityUid": "StudyActivity_000033",
+    "studyUid": "Study_000043",
+    "studyVisitUid": "StudyVisit_000028",
+    "userInitials": "MT"
+  }
+]

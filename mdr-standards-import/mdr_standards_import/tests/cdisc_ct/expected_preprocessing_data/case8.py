@@ -1,4 +1,4 @@
-from mdr_standards_import.cdisc_ct.load_ct_preprocessing import Term, Codelist
+from mdr_standards_import.scripts.load_ct_preprocessing import Term, Codelist
 from mdr_standards_import.tests.cdisc_ct.test_pipeline import Package, Import, Log
 
 
@@ -43,7 +43,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition 1A",
         extensible=True,
         synonyms=None,
-
         terms=[term1_a],
     )
 
@@ -56,7 +55,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition 1B",
         extensible=True,
         synonyms=None,
-
         terms=[term1_b],
     )
 
@@ -69,7 +67,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition 1C",
         extensible=True,
         synonyms=None,
-
         terms=[term1_c],
     )
 
@@ -92,7 +89,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition 2",
         extensible=True,
         synonyms=None,
-
         terms=[term2],
     )
 
@@ -105,7 +101,6 @@ def get_expected_imports(effective_date, user_initials):
         description="Test-Case 8: a) there are three submission values for the same term T1 and b) there is no submission value for T2 -> log as inconsistency.",
         source="Test source",
         href="/mdr/ct/packages/cat8-2020-01-01",
-
         terms=[term1_a, term1_b, term1_c, term2],
         codelists=[codelist1, codelist2, codelist3, codelist4],
         discontinued_codelists=[],
@@ -115,7 +110,7 @@ def get_expected_imports(effective_date, user_initials):
         level="Warning",
         tagline="no term submission value",
         message="",
-        affected_uid=f"{effective_date}_T2"
+        affected_uid=f"{effective_date}_T2",
     )
 
     import1 = Import(
@@ -123,7 +118,7 @@ def get_expected_imports(effective_date, user_initials):
         user_initials=user_initials,
         packages=[package1],
         discontinued_codelists=[],
-        log_entries=[warning1]
+        log_entries=[warning1],
     )
 
     return [import1]

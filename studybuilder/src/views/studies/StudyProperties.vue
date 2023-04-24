@@ -8,8 +8,7 @@
       />
   </div>
   <v-tabs v-model="tab">
-    <v-tab href="#type">{{ $t('Sidebar.study.study_type') }}</v-tab>
-    <v-tab href="#attributes">{{ $t('Sidebar.study.study_attributes') }}</v-tab>
+    <v-tab v-for="tab of tabs" :key="tab.tab" :href="tab.tab">{{ tab.name }}</v-tab>
   </v-tabs>
   <v-tabs-items v-model="tab">
     <v-tab-item id="type">
@@ -27,6 +26,7 @@ import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels'
 import InterventionTypeSummary from '@/components/studies/InterventionTypeSummary'
 import { studySelectedNavigationGuard } from '@/mixins/studies'
 import StudyTypeSummary from '@/components/studies/StudyTypeSummary'
+import { mapActions } from 'vuex'
 
 export default {
   mixins: [studySelectedNavigationGuard],
@@ -40,17 +40,42 @@ export default {
       helpItems: [
         'StudyProperties.study_type'
       ],
-      tab: null
+      tab: null,
+      tabs: [
+        { tab: '#type', name: this.$t('Sidebar.study.study_type') },
+        { tab: '#attributes', name: this.$t('Sidebar.study.study_attributes') }
+      ]
     }
   },
   mounted () {
     this.tab = this.$route.params.tab
+    const tabName = this.tab ? this.tabs.find(el => el.tab.substring(1) === this.tab).name : this.tabs[0].name
+    setTimeout(() => {
+      this.addBreadcrumbsLevel({
+        text: tabName,
+        to: { name: 'StudyProperties', params: { tab: tabName } },
+        index: 3,
+        replace: true
+      })
+    }, 100)
+  },
+  methods: {
+    ...mapActions({
+      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
+    })
   },
   watch: {
     tab (newValue) {
       this.$router.push({
         name: 'StudyProperties',
         params: { tab: newValue }
+      })
+      const tabName = newValue ? this.tabs.find(el => el.tab.substring(1) === newValue).name : this.tabs[0].name
+      this.addBreadcrumbsLevel({
+        text: tabName,
+        to: { name: 'StudyProperties', params: { tab: tabName } },
+        index: 3,
+        replace: true
       })
     }
   }

@@ -29,7 +29,6 @@ class TestApi(TestCase):
                 is_specific = route["is_specific"]
                 print(route)
                 try:
-
                     response = self.test_client.get(path)
                     if is_specific:
                         # TODO: passed because some calls respond
@@ -76,6 +75,9 @@ class TestApi(TestCase):
                         # This test fails because of mandatory query parameter
                         self.assertIn(response.status_code, [422])
                     elif path == "/study-visits/allowed-time-references":
+                        # This test fails because of mandatory query parameter
+                        self.assertIn(response.status_code, [422])
+                    elif path == "/listings/studies/{study_uid}/adam/{adam_report}":
                         # This test fails because of mandatory query parameter
                         self.assertIn(response.status_code, [422])
                     elif path == "/system/check/secured":

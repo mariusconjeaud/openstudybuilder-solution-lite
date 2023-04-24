@@ -61,22 +61,22 @@ class StudyEpochService:
         self._create_ctlist_map()
 
     def _create_ctlist_map(self):
-        self.study_epoch_types = self.repo.create_ctlist(settings.STUDY_EPOCH_TYPE_NAME)
-        self.study_epoch_subtypes = self.repo.create_ctlist(
+        self.study_epoch_types = self.repo.fetch_ctlist(settings.STUDY_EPOCH_TYPE_NAME)
+        self.study_epoch_subtypes = self.repo.fetch_ctlist(
             settings.STUDY_EPOCH_SUBTYPE_NAME
         )
-        self.study_epoch_epochs = self.repo.create_ctlist(
+        self.study_epoch_epochs = self.repo.fetch_ctlist(
             settings.STUDY_EPOCH_EPOCH_NAME
         )
 
-        self.study_visit_types = self.repo.create_ctlist(settings.STUDY_VISIT_TYPE_NAME)
-        self.study_visit_timeref = self.repo.create_ctlist(
+        self.study_visit_types = self.repo.fetch_ctlist(settings.STUDY_VISIT_TYPE_NAME)
+        self.study_visit_timeref = self.repo.fetch_ctlist(
             settings.STUDY_VISIT_TIMEREF_NAME
         )
-        self.study_visit_contact_mode = self.repo.create_ctlist(
+        self.study_visit_contact_mode = self.repo.fetch_ctlist(
             settings.STUDY_VISIT_CONTACT_MODE_NAME
         )
-        self.study_visit_epoch_allocation = self.repo.create_ctlist(
+        self.study_visit_epoch_allocation = self.repo.fetch_ctlist(
             settings.STUDY_VISIT_EPOCH_ALLOCATION_NAME
         )
 
@@ -113,7 +113,6 @@ class StudyEpochService:
     def _transform_all_to_response_model(
         self, epoch: StudyEpochVO, study_visit_count: Optional[int] = None
     ) -> StudyEpoch:
-
         return StudyEpoch(
             uid=epoch.uid,
             study_uid=epoch.study_uid,
@@ -422,7 +421,6 @@ class StudyEpochService:
         study_epoch_create_input: StudyEpochCreateInput,
         preview: bool = False,
     ):
-
         epoch, subtype, epoch_type = self._instantiate_epoch_items(
             study_uid=study_uid,
             study_epoch_create_input=study_epoch_create_input,
@@ -519,7 +517,6 @@ class StudyEpochService:
             if new_order_in_subtype != self._get_epoch_number_from_epoch_name(
                 epoch.epoch.value
             ):
-
                 # if we are creating a new epoch we need to add 1 to the total amount of epochs withing subtype
                 # as newly created epoch doesn't exist yet in epoch subtype
                 amount_of_epochs_in_subtype = (
@@ -685,7 +682,6 @@ class StudyEpochService:
 
     @db.transaction
     def delete(self, study_uid: str, study_epoch_uid: str):
-
         # get the possible connected StudyDesign Cells attached to it
         design_cells_on_epoch = None
         if self.repo.epoch_specific_has_connected_design_cell(
@@ -698,7 +694,6 @@ class StudyEpochService:
         # delete those StudyDesignCells attached to the StudyEpoch
         if design_cells_on_epoch is not None:
             for i_design_cell in design_cells_on_epoch:
-
                 study_design_cell = (
                     self._repos.study_design_cell_repository.find_by_uid(
                         study_uid=study_uid, uid=i_design_cell.uid

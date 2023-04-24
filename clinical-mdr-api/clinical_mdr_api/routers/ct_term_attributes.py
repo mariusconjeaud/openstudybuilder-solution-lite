@@ -25,7 +25,10 @@ CTTermUID = Path(None, description="The unique id of the CTTermAttributes")
     response_model=CustomPage[models.CTTermAttributes],
     response_model_exclude_unset=True,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_terms(
     codelist_uid: Optional[str] = Query(
@@ -88,7 +91,7 @@ def get_terms(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -138,7 +141,10 @@ def get_distinct_values_for_header(
     summary="Returns the latest/newest version of a specific ct term identified by 'term_uid'",
     response_model=models.CTTermAttributes,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_term_attributes(
     term_uid: str = CTTermUID,
@@ -186,7 +192,7 @@ def get_term_attributes(
             "model": ErrorResponse,
             "description": "Not Found - The codelist with the specified 'codelist_uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_versions(
@@ -222,14 +228,13 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The term with the specified 'term_uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
     term_uid: str = CTTermUID,
     term_input: models.CTTermAttributesEditInput = Body(
-        None,
-        description="The new parameter values for the term including the change description.",
+        description="The new parameter terms for the term including the change description.",
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
@@ -266,7 +271,7 @@ If the request succeeds:
             "- The term is not in final status.\n"
             "- The term with the specified 'codelist_uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create(
@@ -302,7 +307,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The term with the specified 'term_uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
@@ -336,7 +341,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The term with the specified 'term_uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
@@ -370,7 +375,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The term with the specified 'term_uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
@@ -402,7 +407,7 @@ def reactivate(
             "model": ErrorResponse,
             "description": "Not Found - An term with the specified 'term_uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_ct_term(

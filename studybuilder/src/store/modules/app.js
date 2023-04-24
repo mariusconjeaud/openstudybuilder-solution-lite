@@ -266,7 +266,8 @@ const state = {
             },
             {
               title: i18n.t('Sidebar.study.study_status'),
-              url: { name: 'StudyStatus' }
+              url: { name: 'StudyStatus' },
+              studyRequired: true
             },
             {
               title: i18n.t('Sidebar.study.project_std'),
@@ -496,9 +497,9 @@ const mutations = {
   },
   ADD_BREADCRUMBS_LEVEL (state, { item, pos, replace }) {
     function appendToBreadcrumbs () {
-      state.breadcrumbs.forEach(level => {
+      for (const level of state.breadcrumbs) {
         Vue.set(level, 'disabled', false)
-      })
+      }
       item.disabled = true
       state.breadcrumbs.push(item)
     }

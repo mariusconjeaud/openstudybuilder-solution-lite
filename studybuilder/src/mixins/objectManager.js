@@ -4,7 +4,7 @@ import instances from '@/utils/instances'
 export const objectManagerMixin = {
   methods: {
     async setParameterValues (data, parameters) {
-      data.parameter_values = await instances.formatParameterValues(parameters)
+      data.parameter_terms = await instances.formatParameterValues(parameters)
     },
     getInitialFormContent () {
       return {
@@ -30,8 +30,8 @@ export const objectManagerMixin = {
             parameters.push(value)
           }
         })
-        if (useDefaultValues && template.default_parameter_values) {
-          instances.loadParameterValues(template.default_parameter_values, parameters, true)
+        if (useDefaultValues && template.default_parameter_terms) {
+          instances.loadParameterValues(template.default_parameter_terms, parameters, true)
         }
         this.parameters = parameters
       })
@@ -57,7 +57,7 @@ export const objectManagerMixin = {
         })
         this.parameters = parameters
         this.apiEndpoint.getObject(object.uid).then(resp => {
-          instances.loadParameterValues(resp.data.parameter_values, this.parameters)
+          instances.loadParameterValues(resp.data.parameter_terms, this.parameters)
         })
       })
     },

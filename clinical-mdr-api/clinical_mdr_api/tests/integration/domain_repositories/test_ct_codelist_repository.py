@@ -44,7 +44,6 @@ class TestCTCodelistRepository(unittest.TestCase):
         cls.codelist_names_repo.close()
 
     def test__find_all__with_possible_filters_applied__returns_filtered_codelists(self):
-
         # given
         available_libraries = ["CDISC", "Sponsor1"]
         available_catalogues = ["SDTM CT", "CDASH CT"]

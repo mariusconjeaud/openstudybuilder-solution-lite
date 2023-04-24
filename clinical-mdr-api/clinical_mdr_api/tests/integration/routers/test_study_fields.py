@@ -35,7 +35,6 @@ class StudyFieldsTest(api.APITest):
         library = TestUtils.create_library(name="Sponsor", is_editable=True)
         TestUtils.create_library(name="UCUM", is_editable=True)
         # create catalogue
-
         catalogue_name = TestUtils.create_ct_catalogue()
         codelist = TestUtils.create_ct_codelist()
         TestUtils.create_study_ct_data_map(codelist_uid=codelist.codelist_uid)
@@ -77,6 +76,10 @@ class StudyFieldsTest(api.APITest):
             ct_units=[hour_term.uid],
             unit_subsets=[study_time_subset.uid],
         )
+
+        # create Unit Definitions
+        TestUtils.create_unit_definition(name="day")
+        TestUtils.create_unit_definition(name="week")
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)
@@ -117,6 +120,8 @@ class StudyFieldsNegativeTest(api.APITest):
         TestUtils.create_library(name="Sponsor", is_editable=True)
         TestUtils.create_library(name="UCUM", is_editable=True)
         TestUtils.create_ct_catalogue()
+        TestUtils.create_unit_definition(name="day")
+        TestUtils.create_unit_definition(name="week")
         codelist = TestUtils.create_ct_codelist()
         TestUtils.create_study_ct_data_map(codelist_uid=codelist.codelist_uid)
         TestUtils.create_study_fields_configuration()

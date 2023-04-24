@@ -181,7 +181,7 @@ class ItemDef:
         aliases,
         codelist_ref,
         measurement_unit_refs,
-        **kwargs
+        **kwargs,
     ):
         self.oid = oid
         self.name = name
@@ -218,7 +218,7 @@ class ItemRef:
         order_number,
         method_oid,
         collection_exception_condition_oid,
-        **kwargs
+        **kwargs,
     ):
         self.item_oid = item_oid
         self.mandatory = mandatory
@@ -266,7 +266,7 @@ class ItemGroupDef:
         description,
         aliases,
         item_refs,
-        **kwargs
+        **kwargs,
     ):
         self.oid = oid
         self.name = name
@@ -295,7 +295,7 @@ class ItemGroupRef:
         mandatory,
         order_number,
         collection_exception_condition_oid,
-        **kwargs
+        **kwargs,
     ):
         self.item_group_oid = item_group_oid
         self.mandatory = mandatory
@@ -417,7 +417,7 @@ class ODM:
         creation_date_time,
         granularity,
         study,
-        **kwargs
+        **kwargs,
     ):
         self.odm_ns = odm_ns
         self.odm_version = odm_version

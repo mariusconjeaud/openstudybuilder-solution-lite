@@ -2,62 +2,72 @@ import unittest
 
 from neomodel import db
 
-from clinical_mdr_api.domain.templates.endpoint_template import EndpointTemplateAR
-from clinical_mdr_api.domain.templates.objective_template import ObjectiveTemplateAR
-from clinical_mdr_api.domain.templates.timeframe_templates import TimeframeTemplateAR
+from clinical_mdr_api.domain.syntax_templates.endpoint_template import (
+    EndpointTemplateAR,
+)
+from clinical_mdr_api.domain.syntax_templates.objective_template import (
+    ObjectiveTemplateAR,
+)
+from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
+from clinical_mdr_api.domain.syntax_templates.timeframe_template import (
+    TimeframeTemplateAR,
+)
 from clinical_mdr_api.domain.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
-    TemplateVO,
-)
-from clinical_mdr_api.domain_repositories.models.endpoint import EndpointRoot
-from clinical_mdr_api.domain_repositories.models.endpoint_template import (
-    EndpointTemplateRoot,
 )
 from clinical_mdr_api.domain_repositories.models.generic import Library
-from clinical_mdr_api.domain_repositories.models.objective import ObjectiveRoot
-from clinical_mdr_api.domain_repositories.models.objective_template import (
+from clinical_mdr_api.domain_repositories.models.study import StudyRoot
+from clinical_mdr_api.domain_repositories.models.syntax import (
+    EndpointRoot,
+    EndpointTemplateRoot,
+    ObjectiveRoot,
     ObjectiveTemplateRoot,
 )
-from clinical_mdr_api.domain_repositories.models.study import StudyRoot
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameter,
-    TemplateParameterValue,
-    TemplateParameterValueRoot,
+    TemplateParameterTermRoot,
+    TemplateParameterTermValue,
 )
-from clinical_mdr_api.domain_repositories.templates.endpoint_template_repository import (
+from clinical_mdr_api.domain_repositories.syntax_templates.endpoint_template_repository import (
     EndpointTemplateRepository,
 )
-from clinical_mdr_api.domain_repositories.templates.objective_template_repository import (
+from clinical_mdr_api.domain_repositories.syntax_templates.objective_template_repository import (
     ObjectiveTemplateRepository,
 )
-from clinical_mdr_api.domain_repositories.templates.timeframe_template_repository import (
+from clinical_mdr_api.domain_repositories.syntax_templates.timeframe_template_repository import (
     TimeframeTemplateRepository,
 )
-from clinical_mdr_api.models.endpoint import EndpointCreateInput
-from clinical_mdr_api.models.objective import ObjectiveCreateInput
 from clinical_mdr_api.models.study_selection import (
     StudySelectionEndpoint,
     StudySelectionEndpointInput,
     StudySelectionObjective,
     StudySelectionObjectiveInput,
 )
+from clinical_mdr_api.models.syntax_instances.endpoint import EndpointCreateInput
+from clinical_mdr_api.models.syntax_instances.objective import ObjectiveCreateInput
+from clinical_mdr_api.models.syntax_instances.timeframe import TimeframeCreateInput
 from clinical_mdr_api.models.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
-from clinical_mdr_api.models.timeframe import TimeframeCreateInput
-from clinical_mdr_api.services.endpoint_templates import EndpointTemplateService
-from clinical_mdr_api.services.endpoints import EndpointService
-from clinical_mdr_api.services.objective_templates import ObjectiveTemplateService
-from clinical_mdr_api.services.objectives import ObjectiveService
 from clinical_mdr_api.services.study_endpoint_selection import (
     StudyEndpointSelectionService,
 )
 from clinical_mdr_api.services.study_objective_selection import (
     StudyObjectiveSelectionService,
 )
-from clinical_mdr_api.services.timeframe_templates import TimeframeTemplateService
-from clinical_mdr_api.services.timeframes import TimeframeService
+from clinical_mdr_api.services.syntax_instances.endpoints import EndpointService
+from clinical_mdr_api.services.syntax_instances.objectives import ObjectiveService
+from clinical_mdr_api.services.syntax_instances.timeframes import TimeframeService
+from clinical_mdr_api.services.syntax_templates.endpoint_templates import (
+    EndpointTemplateService,
+)
+from clinical_mdr_api.services.syntax_templates.objective_templates import (
+    ObjectiveTemplateService,
+)
+from clinical_mdr_api.services.syntax_templates.timeframe_templates import (
+    TimeframeTemplateService,
+)
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_PARAMETERS_CYPHER,
@@ -109,7 +119,6 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             _template=self.tv,
             _library=self.library,
             _item_metadata=self.im,
-            _editable_instance=False,
         )
         self.otr.save(self.ot_ar)
 
@@ -133,7 +142,6 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             _template=self.tv,
             _library=self.library,
             _item_metadata=self.im,
-            _editable_instance=False,
         )
         self.etr.save(self.et_ar)
 
@@ -157,7 +165,6 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             _template=self.tv,
             _library=self.library,
             _item_metadata=self.im,
-            _editable_instance=False,
         )
         self.ttr.save(self.tt_ar)
 
@@ -219,39 +226,39 @@ class TestStudyEndpointUpversion(unittest.TestCase):
         self.etr.save(self.et_ar)
 
     def create_template_parameters(self, label=TPR_LABEL, count=10):
-        self.value_roots = []
-        self.value_values = []
+        self.term_roots = []
+        self.term_values = []
         for i in range(count):
-            vr = TemplateParameterValueRoot(uid=label + "uid__" + str(i))
+            vr = TemplateParameterTermRoot(uid=label + "uid__" + str(i))
             vr.save()
-            vv = TemplateParameterValue(name=label + "__" + str(i))
+            vv = TemplateParameterTermValue(name=label + "__" + str(i))
             vv.save()
-            vr.has_value.connect(self.tpr)
+            vr.has_parameter_term.connect(self.tpr)
             vr.latest_final.connect(vv)
-        for vr in self.tpr.has_value.all():
-            self.value_roots.append(vr)
+        for vr in self.tpr.has_parameter_term.all():
+            self.term_roots.append(vr)
             vv = vr.latest_final.single()
-            self.value_values.append(vv)
+            self.term_values.append(vv)
 
     def create_objectives(self, count=10, approved=False, retired=False):
         for i in range(count):
             pv = TemplateParameterMultiSelectInput(
                 template_parameter=self.TPR_LABEL,
                 conjunction="",
-                values=[
+                terms=[
                     {
                         "position": 1,
                         "index": 1,
-                        "name": self.value_values[i].name,
+                        "name": self.term_values[i].name,
                         "type": self.TPR_LABEL,
-                        "uid": self.value_roots[i].uid,
+                        "uid": self.term_roots[i].uid,
                     }
                 ],
             )
             template = ObjectiveCreateInput(
                 objective_template_uid=self.ot_ar.uid,
                 library_name="Library",
-                parameter_values=[pv],
+                parameter_terms=[pv],
             )
 
             print("CREATE", pv)
@@ -266,20 +273,20 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             pv = TemplateParameterMultiSelectInput(
                 template_parameter=self.TPR_LABEL,
                 conjunction="",
-                values=[
+                terms=[
                     {
                         "position": 1,
                         "index": 1,
-                        "name": self.value_values[i].name,
+                        "name": self.term_values[i].name,
                         "type": self.TPR_LABEL,
-                        "uid": self.value_roots[i].uid,
+                        "uid": self.term_roots[i].uid,
                     }
                 ],
             )
             template = TimeframeCreateInput(
                 timeframe_template_uid=self.tt_ar.uid,
                 library_name="Library",
-                parameter_values=[pv],
+                parameter_terms=[pv],
             )
 
             item = self.timeframe_service.create(template)
@@ -293,20 +300,20 @@ class TestStudyEndpointUpversion(unittest.TestCase):
             pv = TemplateParameterMultiSelectInput(
                 template_parameter=self.TPR_LABEL,
                 conjunction="",
-                values=[
+                terms=[
                     {
                         "position": 1,
                         "index": 1,
-                        "name": self.value_values[i].name,
+                        "name": self.term_values[i].name,
                         "type": self.TPR_LABEL,
-                        "uid": self.value_roots[i].uid,
+                        "uid": self.term_roots[i].uid,
                     }
                 ],
             )
             template = EndpointCreateInput(
                 endpoint_template_uid=self.et_ar.uid,
                 library_name="Library",
-                parameter_values=[pv],
+                parameter_terms=[pv],
             )
             item = self.endpoint_service.create(template)
             if approved:

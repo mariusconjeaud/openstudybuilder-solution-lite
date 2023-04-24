@@ -7,7 +7,7 @@
                 "library_name": "non existent library",
                 "name": "Test objective",
                 "objective_template_uid": "{otuid}",
-                "parameter_values": []
+                "parameter_terms": []
             },
             "url": "/objectives"
         },
@@ -34,7 +34,7 @@
                 "library_name": "Test library",
                 "name": "Test objective",
                 "objective_template_uid": "wrong-uid",
-                "parameter_values": []
+                "parameter_terms": []
             },
             "url": "/objectives"
         },
@@ -45,7 +45,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "The template was not found. Make sure that there is a latest 'Final' version.",
+                "message": "The template with uid 'wrong-uid' was not found. Make sure that there is a latest 'Final' version.",
                 "time": "2020-11-10T01:52:30.985556",
                 "path": "http://testserver/objectives",
                 "method": "POST",
@@ -61,7 +61,7 @@
                 "library_name": "Test library",
                 "name": "Test objective",
                 "objective_template_uid": "{otuidna}",
-                "parameter_values": []
+                "parameter_terms": []
             },
             "url": "/objectives"
         },
@@ -72,37 +72,8 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "The template was not found. Make sure that there is a latest 'Final' version.",
+                "message": "The template with uid '{otuidna}' was not found. Make sure that there is a latest 'Final' version.",
                 "time": "2020-11-10T01:52:30.985556",
-                "path": "http://testserver/objectives",
-                "method": "POST",
-                "type": "ValidationException"
-            }
-        }
-    },
-    {
-        "name": "Test overriding the template name",
-        "request": {
-            "headers": {},
-            "method": "POST",
-            "request": {
-                "library_name": "Test library",
-                "name": "Test objective",
-                "objective_template_uid": "{otuid}",
-                "name_override": "Name not approved - edited instance name",
-                "parameter_values": []
-            },
-            "url": "/objectives"
-        },
-        "response": {
-            "code": 400,
-            "headers": {
-                "content-length": "172",
-                "content-type": "application/json"
-            },
-            "result": {
-                "message": "Editing the name of an instance of this template is not allowed",
-                "time": "2022-04-12T10:34:00.680202",
                 "path": "http://testserver/objectives",
                 "method": "POST",
                 "type": "ValidationException"

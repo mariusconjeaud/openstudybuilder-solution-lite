@@ -40,7 +40,10 @@ Possible errors:
  - Invalid library name specified.""",
     response_model=CustomPage[ActivitySubGroup],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_activity_subgroups(
     library: Optional[str] = Query(None, description="The library name"),
@@ -99,7 +102,7 @@ def get_activity_subgroups(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -162,7 +165,10 @@ Possible errors:
  """,
     response_model=ActivitySubGroup,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_activity(
     uid: str = ActivitySubGroupUID,
@@ -196,7 +202,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The activity sub group with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_versions(
@@ -242,11 +248,11 @@ Possible errors:
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create(
-    activity_create_input: ActivitySubGroupCreateInput = Body(None, description=""),
+    activity_create_input: ActivitySubGroupCreateInput = Body(description=""),
     current_user_id: str = Depends(get_current_user_id),
 ):
     activity_subgroup_service = ActivitySubGroupService(user=current_user_id)
@@ -289,12 +295,12 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The activity sub group with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
     uid: str = ActivitySubGroupUID,
-    activity_edit_input: ActivitySubGroupEditInput = Body(None, description=""),
+    activity_edit_input: ActivitySubGroupEditInput = Body(description=""),
     current_user_id: str = Depends(get_current_user_id),
 ):
     activity_subgroup_service = ActivitySubGroupService(user=current_user_id)
@@ -335,7 +341,7 @@ Possible errors:
             "- The activity sub group is not in final status.\n"
             "- The activity sub group with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def new_version(
@@ -380,7 +386,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The activity sub group with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
@@ -424,7 +430,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The activity sub group with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
@@ -468,7 +474,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The activity sub group with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
@@ -514,7 +520,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - An activity sub group with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_activity_subgroup(

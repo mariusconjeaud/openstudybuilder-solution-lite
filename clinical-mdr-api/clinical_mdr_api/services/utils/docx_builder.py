@@ -24,7 +24,6 @@ log = logging.getLogger(__name__)
 
 
 class DocxBuilder:
-
     TEMPLATE_FILENAME = "template.docx"
 
     def __init__(
@@ -168,7 +167,6 @@ class DocxBuilder:
 
         def recursion(children, paragraph, paragraph_style, run_styles):
             for element in children:
-
                 if isinstance(element, Tag):
                     paragraph_style = style_map.get(element.name, (paragraph_style,))[0]
 

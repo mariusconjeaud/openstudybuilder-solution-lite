@@ -11,9 +11,6 @@ from neomodel import (
 )
 
 from clinical_mdr_api.domain_repositories.models.activities import ActivityValue
-from clinical_mdr_api.domain_repositories.models.activity_instruction import (
-    ActivityInstructionValue,
-)
 from clinical_mdr_api.domain_repositories.models.compounds import CompoundAliasValue
 from clinical_mdr_api.domain_repositories.models.concepts import (
     NumericValueWithUnitRoot,
@@ -22,20 +19,21 @@ from clinical_mdr_api.domain_repositories.models.concepts import (
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
-from clinical_mdr_api.domain_repositories.models.criteria import CriteriaValue
-from clinical_mdr_api.domain_repositories.models.criteria_template import (
-    CriteriaTemplateValue,
-)
-from clinical_mdr_api.domain_repositories.models.endpoint import EndpointValue
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNodeWithUID,
     ClinicalMdrRel,
     Conjunction,
     ConjunctionRelation,
 )
-from clinical_mdr_api.domain_repositories.models.objective import ObjectiveValue
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import StudyAction
-from clinical_mdr_api.domain_repositories.models.timeframe import TimeframeValue
+from clinical_mdr_api.domain_repositories.models.syntax import (
+    ActivityInstructionValue,
+    CriteriaTemplateValue,
+    CriteriaValue,
+    EndpointValue,
+    ObjectiveValue,
+    TimeframeValue,
+)
 
 
 class AuditTrailMixin:
@@ -62,12 +60,13 @@ class StudyObjective(StudySelection):
     )
 
 
+# pylint: disable=abstract-method
 class StudyEndpointUnitRel(ClinicalMdrRel):
     index = IntegerProperty()
 
 
 class StudyEndpoint(StudySelection):
-    __optional_labels__ = ["TemplateParameterValueRoot"]
+    __optional_labels__ = ["TemplateParameterTermRoot"]
     text = StringProperty()
     study_endpoint_has_study_objective = RelationshipTo(
         StudyObjective, "STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE", model=ClinicalMdrRel
@@ -138,7 +137,6 @@ class StudyCriteria(StudySelection):
 
 
 class StudyActivity(StudySelection):
-
     has_study_activity = RelationshipFrom(".study.StudyValue", "HAS_STUDY_ACTIVITY")
     has_selected_activity = RelationshipTo(
         ActivityValue, "HAS_SELECTED_ACTIVITY", model=ClinicalMdrRel
@@ -197,7 +195,6 @@ class StudyDesignCell(ClinicalMdrNodeWithUID, AuditTrailMixin):
 
 
 class StudyArm(StudySelection):
-
     name = StringProperty()
     short_name = StringProperty()
     arm_code = StringProperty()
@@ -261,7 +258,6 @@ class StudyActivityInstruction(AuditTrailMixin, ClinicalMdrNodeWithUID):
 
 
 class StudyBranchArm(StudySelection):
-
     name = StringProperty()
     short_name = StringProperty()
     branch_arm_code = StringProperty()
@@ -288,7 +284,6 @@ class StudyBranchArm(StudySelection):
 
 
 class StudyCohort(StudySelection):
-
     name = StringProperty()
     short_name = StringProperty()
     cohort_code = StringProperty()
@@ -306,7 +301,6 @@ class StudyCohort(StudySelection):
 
 
 class StudyCompoundDosing(StudySelection):
-
     study_value = RelationshipFrom(".study.StudyValue", "HAS_STUDY_COMPOUND_DOSING")
 
     has_dose_frequency = RelationshipTo(

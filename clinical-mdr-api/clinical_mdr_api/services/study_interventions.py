@@ -82,7 +82,6 @@ class StudyInterventionsService:
         arms: Mapping[str, Sequence[models.StudySelectionArm]],
         dosings: Mapping[str, Sequence[models.StudyCompoundDosing]],
     ) -> Table:
-
         table = Table.new()
         table.num_header_rows = 1
         table.num_header_columns = 1

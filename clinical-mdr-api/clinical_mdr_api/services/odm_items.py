@@ -9,7 +9,10 @@ from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.domain_repositories.concepts.odms.item_repository import (
     ItemRepository,
 )
-from clinical_mdr_api.models.odm_common_models import OdmVendorRelationPostInput
+from clinical_mdr_api.models.odm_common_models import (
+    OdmVendorRelationPostInput,
+    OdmVendorsPostInput,
+)
 from clinical_mdr_api.models.odm_description import OdmDescriptionBatchPatchInput
 from clinical_mdr_api.models.odm_item import (
     OdmItem,
@@ -76,7 +79,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                 ],
                 codelist_uid=concept_input.codelist_uid,
                 term_uids=[term.uid for term in concept_input.terms],
-                activity_uids=[],
+                activity_uid=None,
                 vendor_element_uids=[],
                 vendor_attribute_uids=[],
                 vendor_element_attribute_uids=[],
@@ -116,7 +119,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                 ],
                 codelist_uid=concept_edit_input.codelist_uid,
                 term_uids=[term.uid for term in concept_edit_input.terms],
-                activity_uids=[],
+                activity_uid=None,
                 vendor_element_uids=[],
                 vendor_attribute_uids=[],
                 vendor_element_attribute_uids=[],
@@ -332,16 +335,21 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         )
 
     @db.transaction
-    def add_activities(
+    def add_activity(
         self,
         uid: str,
-        odm_item_activity_post_input: List[OdmItemActivityPostInput],
+        odm_item_activity_post_input: OdmItemActivityPostInput,
         override: bool = False,
     ) -> OdmItem:
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         if odm_item_ar.item_metadata.status == LibraryItemStatus.RETIRED:
             raise exceptions.BusinessLogicException(self.OBJECT_IS_INACTIVE)
+
+        if odm_item_ar.concept_vo.activity_uid and not override:
+            raise exceptions.BusinessLogicException(
+                "Only one activity can be linked to an ODM Item"
+            )
 
         if override:
             self._repos.odm_item_repository.remove_relation(
@@ -352,12 +360,11 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
             )
 
         try:
-            for activity in odm_item_activity_post_input:
-                self._repos.odm_item_repository.add_relation(
-                    uid=uid,
-                    relation_uid=activity.uid,
-                    relationship_type=RelationType.ACTIVITY,
-                )
+            self._repos.odm_item_repository.add_relation(
+                uid=uid,
+                relation_uid=odm_item_activity_post_input.uid,
+                relationship_type=RelationType.ACTIVITY,
+            )
         except ValueError as exception:
             raise exceptions.ValidationException(exception.args[0])
 
@@ -490,6 +497,24 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         return self._transform_aggregate_root_to_pydantic_model(odm_item_ar)
+
+    def manage_vendors(
+        self,
+        uid: str,
+        odm_vendors_post_input: OdmVendorsPostInput,
+    ) -> OdmItem:
+        odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
+
+        self.pre_management(
+            uid, odm_vendors_post_input, odm_item_ar, self._repos.odm_item_repository
+        )
+        self.add_vendor_elements(uid, odm_vendors_post_input.elements, True)
+        self.add_vendor_element_attributes(
+            uid, odm_vendors_post_input.element_attributes, True
+        )
+        self.add_vendor_attributes(uid, odm_vendors_post_input.attributes, True)
+
+        return self.get_by_uid(uid)
 
     @db.transaction
     def get_active_relationships(self, uid: str):

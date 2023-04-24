@@ -78,7 +78,6 @@ class OdmVendorElementRelationModel(BaseModel):
             [str, str, RelationType], Optional[OdmVendorElementRelationVO]
         ],
     ) -> Optional["OdmVendorElementRelationModel"]:
-
         if uid is not None:
             odm_vendor_element_ref_vo = find_by_uid_with_odm_element_relation(
                 uid, odm_element_uid, odm_element_type

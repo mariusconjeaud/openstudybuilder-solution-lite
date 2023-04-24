@@ -49,7 +49,6 @@ class DictionaryTermSubstanceVO(DictionaryTermVO):
         definition: Optional[str],
         pclass_uid: Optional[str],
     ) -> "DictionaryTermSubstanceVO":
-
         dictionary_term_vo = cls(
             codelist_uid=codelist_uid,
             dictionary_id=dictionary_id,

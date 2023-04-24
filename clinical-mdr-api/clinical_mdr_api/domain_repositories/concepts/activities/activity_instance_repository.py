@@ -1,8 +1,11 @@
 from typing import Optional, Tuple
 
+from neomodel import db
+
 from clinical_mdr_api.domain.concepts.activities.activity_instance import (
     ActivityInstanceAR,
     ActivityInstanceVO,
+    SimpleActivityItemVO,
 )
 from clinical_mdr_api.domain.concepts.concept_base import _AggregateRootType
 from clinical_mdr_api.domain.versioned_object_aggregate import (
@@ -15,26 +18,24 @@ from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository im
 )
 from clinical_mdr_api.domain_repositories.models._utils import convert_to_datetime
 from clinical_mdr_api.domain_repositories.models.activities import (
-    ActivityDefinition,
     ActivityInstanceRoot,
     ActivityInstanceValue,
     ActivityRoot,
 )
-from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
-    CTTermRoot,
+from clinical_mdr_api.domain_repositories.models.biomedical_concepts import (
+    ActivityDefinition,
+    ActivityInstanceClassRoot,
+    ActivityItemRoot,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
-    ClinicalMdrNodeWithUID,
     Library,
     VersionRelationship,
-    VersionRoot,
     VersionValue,
 )
 from clinical_mdr_api.models.activities.activity_instance import ActivityInstance
 
 
 class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
-
     root_class = ActivityInstanceRoot
     value_class = ActivityInstanceValue
     aggregate_class = ActivityInstanceAR
@@ -63,7 +64,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         value_node.defined_by.connect(activity_definition)
         return activity_definition
 
-    def _create_new_value_node(self, ar: _AggregateRootType) -> VersionValue:
+    def _create_new_value_node(self, ar: _AggregateRootType) -> ActivityInstanceValue:
         value_node = super()._create_new_value_node(ar=ar)
         value_node.topic_code = ar.concept_vo.topic_code
         value_node.adam_param_code = ar.concept_vo.adam_param_code
@@ -71,46 +72,29 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
 
         value_node.save()
 
-        # TODO : Update when distinction between ActivityDefinition and ActivityCollection is defined
-        if ar.concept_vo.sdtm_variable_uid is not None:
-            activity_definition = self._create_activity_definition(value_node)
-            activity_definition.has_sdtm_variable.connect(
-                CTTermRoot.nodes.get(uid=ar.concept_vo.sdtm_variable_uid)
-            )
-
-        # TODO : Uncomment when distinction between ActivityDefinition and ActivityCollection is defined
-        # if ar.concept_vo.cdash_variable_uid is not None:
-        #     activity_definition = self._create_activity_definition(value_node)
-        #     activity_definition.has_cdash_variable.connect(
-        #         CTTermRoot.nodes.get(uid=ar.concept_vo.cdash_variable_uid)
-        #     )
-
-        if ar.concept_vo.sdtm_subcat_uid is not None:
-            activity_definition = self._create_activity_definition(value_node)
-            activity_definition.has_sdtm_subcat.connect(
-                CTTermRoot.nodes.get(uid=ar.concept_vo.sdtm_subcat_uid)
-            )
-
-        if ar.concept_vo.sdtm_cat_uid is not None:
-            activity_definition = self._create_activity_definition(value_node)
-            activity_definition.has_sdtm_cat.connect(
-                CTTermRoot.nodes.get(uid=ar.concept_vo.sdtm_cat_uid)
-            )
-
-        if ar.concept_vo.sdtm_domain_uid is not None:
-            activity_definition = self._create_activity_definition(value_node)
-            activity_definition.has_sdtm_domain.connect(
-                CTTermRoot.nodes.get(uid=ar.concept_vo.sdtm_domain_uid)
-            )
+        activity_instance_class = ActivityInstanceClassRoot.nodes.get(
+            uid=ar.concept_vo.activity_instance_class_uid
+        )
+        value_node.activity_instance_class.connect(activity_instance_class)
 
         for activity_uid in ar.concept_vo.activity_uids:
             activity_hierarchy_value = ActivityRoot.nodes.get(
                 uid=activity_uid
             ).has_latest_value.get()
             value_node.in_hierarchy.connect(activity_hierarchy_value)
+
+        for activity_item_uid in (
+            activity_item.uid for activity_item in ar.concept_vo.activity_items
+        ):
+            activity_item_value = ActivityItemRoot.nodes.get(
+                uid=activity_item_uid
+            ).has_latest_value.get()
+            value_node.contains_activity_item.connect(activity_item_value)
         return value_node
 
-    def _has_data_changed(self, ar: _AggregateRootType, value: VersionValue) -> bool:
+    def _has_data_changed(
+        self, ar: ActivityInstanceAR, value: ActivityInstanceValue
+    ) -> bool:
         are_concept_properties_changed = super()._has_data_changed(ar=ar, value=value)
         are_props_changed = (
             ar.concept_vo.topic_code != value.topic_code
@@ -121,17 +105,17 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         activity_uids = [
             activity.has_latest_value.get().uid for activity in value.in_hierarchy.all()
         ]
-
+        activity_item_uids = [
+            node.has_version.single().uid for node in value.contains_activity_item.all()
+        ]
         are_rels_changed = (
-            ar.concept_vo.sdtm_variable_uid
-            != self._get_uid_or_none(self._get_sdtm_variable(value))
-            or ar.concept_vo.sdtm_subcat_uid
-            != self._get_uid_or_none(self._get_sdtm_subcat(value))
-            or ar.concept_vo.sdtm_cat_uid
-            != self._get_uid_or_none(self._get_sdtm_cat(value))
-            or ar.concept_vo.sdtm_domain_uid
-            != self._get_uid_or_none(self._get_sdtm_domain(value))
-            or ar.concept_vo.activity_uids != activity_uids
+            ar.concept_vo.activity_instance_class_uid
+            != value.activity_instance_class.get().uid
+            or sorted(ar.concept_vo.activity_uids) != sorted(activity_uids)
+            or sorted(
+                [activity_item.uid for activity_item in ar.concept_vo.activity_items]
+            )
+            != sorted(activity_item_uids)
         )
         return are_concept_properties_changed or are_props_changed or are_rels_changed
 
@@ -149,43 +133,36 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         self, input_dict: dict
     ) -> ActivityInstanceAR:
         major, minor = input_dict.get("version").split(".")
-        sdtm_variable_name, sdtm_variable_uid = self._get_item_name_and_uid(
-            input_dict, "sdtm_variable"
-        )
-        sdtm_subcat_name, sdtm_subcat_uid = self._get_item_name_and_uid(
-            input_dict, "sdtm_subcat"
-        )
-        sdtm_cat_name, sdtm_cat_uid = self._get_item_name_and_uid(
-            input_dict, "sdtm_cat"
-        )
-        sdtm_domain_name, sdtm_domain_uid = self._get_item_name_and_uid(
-            input_dict, "sdtm_domain"
-        )
-        specimen_name, specimen_uid = self._get_item_name_and_uid(
-            input_dict, "specimen"
-        )
         return self.aggregate_class.from_repository_values(
             uid=input_dict.get("uid"),
             concept_vo=self.value_object_class.from_repository_values(
                 name=input_dict.get("name"),
                 name_sentence_case=input_dict.get("name_sentence_case"),
-                activity_type=input_dict.get("type"),
+                activity_instance_class_uid=input_dict.get(
+                    "activity_instance_class"
+                ).get("uid"),
+                activity_instance_class_name=input_dict.get(
+                    "activity_instance_class"
+                ).get("name"),
                 definition=input_dict.get("definition"),
                 abbreviation=input_dict.get("abbreviation"),
                 topic_code=input_dict.get("topic_code"),
                 adam_param_code=input_dict.get("adam_param_code"),
                 legacy_description=input_dict.get("legacy_description"),
-                sdtm_variable_uid=sdtm_variable_uid,
-                sdtm_variable_name=sdtm_variable_name,
-                sdtm_subcat_uid=sdtm_subcat_uid,
-                sdtm_subcat_name=sdtm_subcat_name,
-                sdtm_cat_uid=sdtm_cat_uid,
-                sdtm_cat_name=sdtm_cat_name,
-                sdtm_domain_uid=sdtm_domain_uid,
-                sdtm_domain_name=sdtm_domain_name,
                 activity_uids=input_dict.get("activities", {}),
-                specimen_uid=specimen_uid,
-                specimen_name=specimen_name,
+                activity_items=[
+                    SimpleActivityItemVO.from_repository_values(
+                        uid=activity_item.get("uid"),
+                        name=activity_item.get("name"),
+                        activity_item_class_uid=activity_item.get(
+                            "activity_item_class_uid"
+                        ),
+                        activity_item_class_name=activity_item.get(
+                            "activity_item_class_name"
+                        ),
+                    )
+                    for activity_item in input_dict.get("activity_items", [])
+                ],
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=input_dict.get("library_name"),
@@ -206,41 +183,44 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
-        root: VersionRoot,
+        root: ActivityInstanceRoot,
         library: Optional[Library],
         relationship: VersionRelationship,
-        value: VersionValue,
+        value: ActivityInstanceValue,
     ) -> ActivityInstanceAR:
-        sdtm_variable = self._get_sdtm_variable(value)
-        sdtm_subcat = self._get_sdtm_subcat(value)
-        sdtm_cat = self._get_sdtm_cat(value)
-        sdtm_domain = self._get_sdtm_domain(value)
-        specimen = self._get_specimen(value)
+        activity_instance_class = value.activity_instance_class.get()
+        activity_items = value.contains_activity_item.all()
+        activity_item_vos = []
+        for activity_item in activity_items:
+            activity_item_root = activity_item.has_version.single()
+            activity_item_class_root = (
+                activity_item_root.has_activity_item_class.get_or_none()
+            )
+            activity_item_vos.append(
+                SimpleActivityItemVO.from_repository_values(
+                    uid=activity_item_root.uid,
+                    name=activity_item.name,
+                    activity_item_class_uid=activity_item_class_root.uid,
+                    activity_item_class_name=activity_item_class_root.has_latest_value.get_or_none().name,
+                )
+            )
         return self.aggregate_class.from_repository_values(
             uid=root.uid,
             concept_vo=self.value_object_class.from_repository_values(
                 name=value.name,
                 name_sentence_case=value.name_sentence_case,
-                activity_type=value.activity_type(),
+                activity_instance_class_uid=activity_instance_class.uid,
+                activity_instance_class_name=activity_instance_class.has_latest_value.get().name,
                 definition=value.definition,
                 abbreviation=value.abbreviation,
                 topic_code=value.topic_code,
                 adam_param_code=value.adam_param_code,
                 legacy_description=value.legacy_description,
-                sdtm_variable_uid=self._get_uid_or_none(sdtm_variable),
-                sdtm_subcat_uid=self._get_uid_or_none(sdtm_subcat),
-                sdtm_cat_uid=self._get_uid_or_none(sdtm_cat),
-                sdtm_domain_uid=self._get_uid_or_none(sdtm_domain),
-                sdtm_variable_name=self._get_name_or_none(sdtm_variable),
-                sdtm_subcat_name=self._get_name_or_none(sdtm_subcat),
-                sdtm_cat_name=self._get_name_or_none(sdtm_cat),
-                sdtm_domain_name=self._get_name_or_none(sdtm_domain),
-                specimen_uid=self._get_uid_or_none(specimen),
-                specimen_name=self._get_name_or_none(specimen),
                 activity_uids=[
                     activity.has_latest_value.get().uid
                     for activity in value.in_hierarchy.all()
                 ],
+                activity_items=activity_item_vos,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -256,11 +236,19 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
             concept_value.adam_param_code AS adam_param_code,
             concept_value.legacy_description AS legacy_description,
             
-            head([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:TABULATED_IN]->(sdtm_variable_term)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) | {uid:sdtm_variable_term.uid, name: value.name}]) AS sdtm_variable,
-            head([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SDTM_SUBCAT]->(sdtm_subcat_term)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) | {uid:sdtm_subcat_term.uid, name: value.name}]) AS sdtm_subcat,
-            head([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SDTM_CAT]->(sdtm_cat_term)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) | {uid:sdtm_cat_term.uid, name: value.name}]) AS sdtm_cat,
-            head([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SDTM_DOMAIN]->(sdtm_domain_term)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) | {uid:sdtm_domain_term.uid, name: value.name}]) AS sdtm_domain,
-            head([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SPECIMEN]->(specimen_term)-[:HAS_NAME_ROOT]-()-[:LATEST_FINAL]-(value) | {uid:specimen_term.uid, name: value.name}]) AS specimen,
+            head([(concept_value)-[:ACTIVITY_INSTANCE_CLASS]->
+            (activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue)
+                | {uid:activity_instance_class_root.uid, name:activity_instance_class_value.name}]) AS activity_instance_class,
+            [(concept_value)-[:CONTAINS_ACTIVITY_ITEM]->
+            (activity_item_value:ActivityItemValue)<-[:HAS_VERSION]-(activity_item_root:ActivityItemRoot)
+            <-[:HAS_ACTIVITY_ITEM]-(activity_item_class_root:ActivityItemClassRoot)-[:LATEST]->
+            (activity_item_class_value:ActivityItemClassValue)
+                | {
+                    uid:activity_item_root.uid, 
+                    name:activity_item_value.name,
+                    activity_item_class_uid:activity_item_class_root.uid,
+                    activity_item_class_name:activity_item_class_value.name
+                }] AS activity_items,
             [(concept_value)-[:IN_HIERARCHY]->(activity_hierarchy_value)<-[:LATEST]-(activity_hierarchy_root) 
                 | activity_hierarchy_root.uid] AS activities
         """
@@ -273,43 +261,25 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
             filter_query_parameters,
         ) = super().create_query_filter_statement(library=library)
         filter_parameters = []
-        # TODO Add sdtm_domain, sdtm_variable, sdtm_cat, sdtm_subcat
         if kwargs.get("activity_names") is not None:
             activity_names = kwargs.get("activity_names")
-            filter_by_activity_names = """
-            size([(concept_value)-[:IN_HIERARCHY]->(activity_hierarchy_value) WHERE activity_hierarchy_value.name IN $activity_names | activity_hierarchy_value.name]) > 0"""
+            filter_by_activity_names = (
+                "size([(concept_value)-[:IN_HIERARCHY]->(activity_hierarchy_value) "
+                "WHERE activity_hierarchy_value.name IN $activity_names | activity_hierarchy_value.name]) > 0"
+            )
             filter_parameters.append(filter_by_activity_names)
             filter_query_parameters["activity_names"] = activity_names
-        if kwargs.get("specimen_names") is not None:
-            specimen_names = kwargs.get("specimen_names")
-            filter_by_specimen_names = """
-            size([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SPECIMEN]->(sp)-[:HAS_NAME_ROOT]->(nameroot)-[:LATEST]->(name) WHERE name.name IN $specimen_names | name.name]) > 0"""
-            filter_parameters.append(filter_by_specimen_names)
-            filter_query_parameters["specimen_names"] = specimen_names
-        if kwargs.get("sdtm_variable_names") is not None:
-            sdtm_variable_names = kwargs.get("sdtm_variable_names")
-            filter_by_sdtm_variable_names = """
-            size([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:TABULATED_IN]->(sdtm_var)-[:HAS_NAME_ROOT]->(nameroot)-[:LATEST]->(name) WHERE name.name IN $sdtm_variable_names | name.name]) > 0"""
-            filter_parameters.append(filter_by_sdtm_variable_names)
-            filter_query_parameters["sdtm_variable_names"] = sdtm_variable_names
-        if kwargs.get("sdtm_catergory_names") is not None:
-            sdtm_category_names = kwargs.get("sdtm_catergory_names")
-            filter_by_sdtm_category_names = """
-            size([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SDTM_CAT]->(sdtm_cat)-[:HAS_NAME_ROOT]->(nameroot)-[:LATEST]->(name) WHERE name.name IN $sdtm_category_names | name.name]) > 0"""
-            filter_parameters.append(filter_by_sdtm_category_names)
-            filter_query_parameters["sdtm_category_names"] = sdtm_category_names
-        if kwargs.get("sdtm_subcategory_names") is not None:
-            sdtm_subcategory_names = kwargs.get("sdtm_subcategory_names")
-            filter_by_sdtm_subcategory_names = """
-            size([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SDTM_SUBCAT]->(sdtm_cat)-[:HAS_NAME_ROOT]->(nameroot)-[:LATEST]->(name) WHERE name.name IN $sdtm_subcategory_names | name.name]) > 0"""
-            filter_parameters.append(filter_by_sdtm_subcategory_names)
-            filter_query_parameters["sdtm_subcategory_names"] = sdtm_subcategory_names
-        if kwargs.get("sdtm_domain_names") is not None:
-            sdtm_domain_names = kwargs.get("sdtm_domain_names")
-            filter_by_sdtm_domain_names = """
-            size([(concept_value)-[:DEFINED_BY]->(:ActivityDefinition)-[:HAS_SDTM_DOMAIN]->(sdtm_domain)-[:HAS_NAME_ROOT]->(nameroot)-[:LATEST]->(name) WHERE name.name IN $sdtm_domain_names | name.name]) > 0"""
-            filter_parameters.append(filter_by_sdtm_domain_names)
-            filter_query_parameters["sdtm_domain_names"] = sdtm_domain_names
+        if kwargs.get("activity_instance_class_names") is not None:
+            instance_class_names = kwargs.get("activity_instance_class_names")
+            filter_by_instance_classes = (
+                "size([(concept_value)-[:ACTIVITY_INSTANCE_CLASS]->(:ActivityInstanceClassRoot)"
+                "-[:LATEST]->(instance_class_value:ActivityInstanceClassValue)"
+                "WHERE instance_class_value.name IN $activity_instance_class_names | instance_class_value.name]) > 0"
+            )
+            filter_parameters.append(filter_by_instance_classes)
+            filter_query_parameters[
+                "activity_instance_class_names"
+            ] = instance_class_names
         extended_filter_statements = " AND ".join(filter_parameters)
         if filter_statements_from_concept != "":
             if len(extended_filter_statements) > 0:
@@ -326,47 +296,49 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
             )
         return filter_statements_to_return, filter_query_parameters
 
-    def _get_sdtm_domain(
-        self, value: ActivityInstanceValue
-    ) -> Optional[ClinicalMdrNodeWithUID]:
-        for definition in value.defined_by.all():
-            domain = definition.has_sdtm_domain.get_or_none()
-            if domain is not None:
-                return domain
-        return None
-
-    def _get_sdtm_cat(
-        self, value: ActivityInstanceValue
-    ) -> Optional[ClinicalMdrNodeWithUID]:
-        for definition in value.defined_by.all():
-            cat = definition.has_sdtm_cat.get_or_none()
-            if cat is not None:
-                return cat
-        return None
-
-    def _get_sdtm_subcat(
-        self, value: ActivityInstanceValue
-    ) -> Optional[ClinicalMdrNodeWithUID]:
-        for definition in value.defined_by.all():
-            subcat = definition.has_sdtm_subcat.get_or_none()
-            if subcat is not None:
-                return subcat
-        return None
-
-    def _get_sdtm_variable(
-        self, value: ActivityInstanceValue
-    ) -> Optional[ClinicalMdrNodeWithUID]:
-        for definition in value.defined_by.all():
-            variable = definition.has_sdtm_variable.get_or_none()
-            if variable is not None:
-                return variable
-        return None
-
-    def _get_specimen(
-        self, value: ActivityInstanceValue
-    ) -> Optional[ClinicalMdrNodeWithUID]:
-        for definition in value.defined_by.all():
-            specimen = definition.has_findings_specimen.get_or_none()
-            if specimen is not None:
-                return specimen
-        return None
+    def get_activity_instance_overview(self, uid: str) -> dict:
+        query = """
+        MATCH (activity_instance_root:ActivityInstanceRoot {uid:$uid})-[:LATEST]->(activity_instance_value:ActivityInstanceValue)
+        WITH activity_instance_root,activity_instance_value,
+            head([(library)-[:CONTAINS_CONCEPT]->(activity_instance_root) | library.name]) AS instance_library_name,
+            head([(activity_instance_value)-[:ACTIVITY_INSTANCE_CLASS]->
+            (activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue) 
+            | activity_instance_class_value]) AS activity_instance_class,
+            head([(activity_instance_value)-[:IN_HIERARCHY]->(activity_value:ActivityValue)<-[:HAS_VERSION]-
+            (activity_root:ActivityRoot)<-[:CONTAINS_CONCEPT]-(library) | library.name]) AS activity_library_name,
+            head([(activity_instance_value)-[:IN_HIERARCHY]->(activity_value) | activity_value]) as activity_value
+        WITH *,
+            [(activity_value)-[:IN_SUB_GROUP]->(activity_subgroup_value:ActivitySubGroupValue)-[:IN_GROUP]->
+                (activity_group_value:ActivityGroupValue) | 
+                {activity_subgroup_value:activity_subgroup_value, activity_group_value:activity_group_value}
+            ] AS hierarchy,
+            [(activity_instance_value)-[:CONTAINS_ACTIVITY_ITEM]->(activity_item_value)<-[:HAS_VERSION]-(activity_item_root)
+            <-[HAS_ACTIVITY_ITEM]-(activity_item_class_root)-[:LATEST]->(activity_item_class_value) | 
+            {
+                name: activity_item_value.name,
+                activity_item_class: activity_item_class_value,
+                activity_item: activity_item_value,
+                ct_term: head([(activity_item_value)-[:HAS_CT_TERM]->(term_root)-[:HAS_NAME_ROOT]->(term_name_root)-[:LATEST]->(term_name_value) | term_name_value]),
+                unit_definition: head([(activity_item_value)-[:HAS_UNIT_DEFINITION]->(unit_definition_root)-[:LATEST]->(unit_definition_value) | unit_definition_value])
+            }
+            ] AS activity_items
+        WITH DISTINCT 
+            activity_instance_value,
+            instance_library_name,
+            activity_instance_class,
+            activity_library_name,
+            activity_value,
+            hierarchy,
+            apoc.coll.sortMaps(activity_items, '^name') as activity_items
+        RETURN *
+        """
+        result_array, attribute_names = db.cypher_query(
+            query=query, params={"uid": uid}
+        )
+        if len(result_array) != 1:
+            raise ValueError(f"The overview query returned broken data: {result_array}")
+        overview = result_array[0]
+        overview_dict = {}
+        for overview_prop, attribute_name in zip(overview, attribute_names):
+            overview_dict[attribute_name] = overview_prop
+        return overview_dict

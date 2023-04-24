@@ -29,7 +29,7 @@ study_disease_milestone_uid_description = Path(
 @router.get(
     "/studies/{uid}/study-disease-milestones",
     summary="List all study disease_milestones currently selected for the study.",
-    description="""
+    description=f"""
 State before:
  - Study must exist.
  
@@ -45,12 +45,16 @@ State after:
  - no change.
  
 Possible errors:
- - Invalid study-uid.""",
+ - Invalid study-uid.
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+""",
     response_model=CustomPage[study_disease_milestone.StudyDiseaseMilestone],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 @decorators.allow_exports(
@@ -59,6 +63,9 @@ Possible errors:
             "uid",
             "order",
             "disease_milestone_type",
+            "disease_milestone_type_named",
+            "disease_milestone_type_definition",
+            "repetition_indicator",
         ],
         "formats": [
             "text/csv",
@@ -90,7 +97,6 @@ def get_all(
     uid: str = Path(description="the study"),
     current_user_id: str = Depends(get_current_user_id),
 ):
-
     disease_milestone_service = StudyDiseaseMilestoneService(current_user_id)
     all_items = disease_milestone_service.get_all_disease_milestones(
         study_uid=uid,
@@ -122,7 +128,7 @@ def get_all(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -176,7 +182,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the provided study.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_study_disease_milestones_all_audit_trail(
@@ -217,7 +223,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - there exist no disease_milestone for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 # pylint: disable=unused-argument
@@ -255,7 +261,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the disease milestone provided for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_study_disease_milestone_audit_trail(
@@ -299,13 +305,14 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Study is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_new_disease_milestone_create(
     uid: str = studyUID,
     selection: study_disease_milestone.StudyDiseaseMilestoneCreateInput = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> study_disease_milestone.StudyDiseaseMilestone:
@@ -323,7 +330,7 @@ State before:
 
 Business logic:
  - Remove specified study-disease_milestone from the study.
- - Reference to the study-disease_milestone should still exist in the the audit trail.
+ - Reference to the study-disease_milestone should still exist in the audit trail.
 - Update the order value of all other disease_milestones for this study to be consecutive.
 
 State after:
@@ -341,9 +348,10 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - the study or disease_milestone does not exist.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def delete_study_disease_milestone(
     study_disease_milestone_uid: str = study_disease_milestone_uid_description,
     current_user_id: str = Depends(get_current_user_id),
@@ -391,14 +399,15 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection between the study and disease_milestone to reorder.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 # pylint: disable=unused-argument
 def patch_reorder(
     study_disease_milestone_uid: str = study_disease_milestone_uid_description,
     new_order_input: study_disease_milestone.StudySelectionDiseaseMilestoneNewOrder = Body(
-        None, description="New value to set for the order property of the selection"
+        description="New value to set for the order property of the selection"
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> study_disease_milestone.StudyDiseaseMilestone:
@@ -437,15 +446,16 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - There exist no study or disease_milestone .",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 # pylint: disable=unused-argument
 def patch_update_disease_milestone(
     uid: str = studyUID,
     study_disease_milestone_uid: str = study_disease_milestone_uid_description,
     selection: study_disease_milestone.StudyDiseaseMilestoneEditInput = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> study_disease_milestone.StudyDiseaseMilestone:

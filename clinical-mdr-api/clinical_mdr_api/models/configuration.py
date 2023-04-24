@@ -1,23 +1,75 @@
 from typing import Optional
 
-from pydantic import validator
+from pydantic import Field, validator
 
 from clinical_mdr_api.domain.configurations import CTConfigAR
-from clinical_mdr_api.models.concept import NoLibraryConceptModelNoName
+from clinical_mdr_api.models.concept import (
+    NoLibraryConceptModelNoName,
+    VersionProperties,
+)
 from clinical_mdr_api.models.utils import BaseModel
 
 
 class CTConfigBaseModel(BaseModel):
-    study_field_name: Optional[str]
-    study_field_data_type: Optional[str]
-    study_field_null_value_code: Optional[str]
+    study_field_name: str
+    study_field_data_type: str
+    study_field_null_value_code: Optional[str] = Field(
+        None,
+        nullable=True,
+    )
 
-    configured_codelist_uid: Optional[str]
-    configured_term_uid: Optional[str]
+    configured_codelist_uid: Optional[str] = Field(
+        None,
+        nullable=True,
+    )
+    configured_term_uid: Optional[str] = Field(
+        None,
+        nullable=True,
+    )
 
-    study_field_grouping: Optional[str]
-    study_field_name_api: Optional[str]
-    is_dictionary_term: Optional[bool]
+    study_field_grouping: Optional[str] = Field(
+        None,
+        nullable=True,
+    )
+    study_field_name_api: str
+    is_dictionary_term: bool
+
+
+class CTConfigOGM(VersionProperties):
+    class Config:
+        orm_mode = True
+
+    uid: str = Field(..., source="uid")
+    study_field_name: str = Field(..., source="has_latest_value.study_field_name")
+    study_field_data_type: Optional[str] = Field(
+        None, source="has_latest_value.study_field_data_type"
+    )
+    study_field_null_value_code: Optional[str] = Field(
+        None,
+        source="has_latest_value.study_field_null_value_code",
+        nullable=True,
+    )
+
+    configured_codelist_uid: Optional[str] = Field(
+        None,
+        source="has_latest_value.has_configured_codelist.uid",
+        nullable=True,
+    )
+    configured_term_uid: Optional[str] = Field(
+        None,
+        source="has_latest_value.has_configured_term.uid",
+        nullable=True,
+    )
+
+    study_field_grouping: Optional[str] = Field(
+        None,
+        source="has_latest_value.study_field_grouping",
+        nullable=True,
+    )
+    study_field_name_api: Optional[str] = Field(
+        None, source="has_latest_value.study_field_name_api"
+    )
+    is_dictionary_term: bool = Field(..., source="has_latest_value.is_dictionary_term")
 
 
 class CTConfigModel(CTConfigBaseModel, NoLibraryConceptModelNoName):

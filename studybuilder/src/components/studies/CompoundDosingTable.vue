@@ -128,7 +128,8 @@ export default {
       ],
       selectedStudyCompoundDosing: null,
       showForm: false,
-      showHistory: false
+      showHistory: false,
+      compoundDosingHistoryItems: []
     }
   },
   methods: {

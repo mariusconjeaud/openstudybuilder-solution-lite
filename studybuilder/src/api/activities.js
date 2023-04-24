@@ -9,6 +9,15 @@ export default {
     }
     return repository.get(`${resource}/${source}`, { params })
   },
+  getObjectOverview (source, uid, format) {
+    const options = {}
+    if (format === 'yaml') {
+      options.headers = {
+        Accept: 'application/x-yaml'
+      }
+    }
+    return repository.get(`${resource}/${source}/${uid}/overview`, options)
+  },
   inactivate (uid, source) {
     return repository.delete(`${resource}/${source}/${uid}/activations`)
   },

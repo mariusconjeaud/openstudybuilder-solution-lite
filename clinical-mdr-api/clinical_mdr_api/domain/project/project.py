@@ -38,7 +38,6 @@ class ProjectAR:
         generate_uid_callback: Callable[[], str],
         clinical_programme_exists_callback: Callable[[str], bool],
     ):
-
         if not clinical_programme_exists_callback(
             normalize_string(clinical_programme_uid)
         ):

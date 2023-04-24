@@ -31,7 +31,13 @@
                     "uid": "odm_vendor_namespace1",
                     "name": "nameOne",
                     "prefix": "prefix",
-                    "url": "url1"
+                    "url": "url1",
+                    "status": "Final",
+                    "version": "1.0",
+                    "possible_actions": [
+                        "inactivate",
+                        "new_version"
+                    ]
                 },
                 "vendor_attributes": [],
                 "possible_actions": [

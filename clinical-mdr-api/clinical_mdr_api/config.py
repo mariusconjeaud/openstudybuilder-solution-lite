@@ -86,3 +86,5 @@ APPINSIGHTS_CONNECTION = os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING",
 
 BUILD_ID = os.environ.get("BUILD_ID") or "unknown-build"
 COMMIT_ID = os.environ.get("COMMIT_ID") or "unknown-commit"
+
+OPENAPI_SCHEMA_API_ROOT_PATH = environ.get("UVICORN_ROOT_PATH", "/")

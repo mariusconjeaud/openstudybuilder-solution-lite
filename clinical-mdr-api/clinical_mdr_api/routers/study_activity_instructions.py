@@ -23,7 +23,8 @@ from clinical_mdr_api.services.study_activity_instruction import (
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_activity_instructions_for_all_studies(
@@ -73,7 +74,7 @@ def get_all_activity_instructions_for_all_studies(
             "model": ErrorResponse,
             "description": "Not Found - there is no study with the given uid.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_selected_instructions(
@@ -94,7 +95,7 @@ def get_all_selected_instructions(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the activity instruction and the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_activity_instructon(
@@ -112,12 +113,15 @@ def delete_activity_instructon(
     summary="Batch operations (create, delete) for study activity instructions",
     response_model=Sequence[models.StudyActivityInstructionBatchOutput],
     status_code=207,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def activity_instruction_batch_operations(
     uid: str = utils.studyUID,
     operations: Sequence[models.StudyActivityInstructionBatchInput] = Body(
-        None, description="List of operation to perform"
+        description="List of operation to perform"
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> Sequence[models.StudyActivityInstructionBatchOutput]:

@@ -8,8 +8,9 @@ export const studySelectedNavigationGuard = {
       selectedStudy: 'studiesGeneral/selectedStudy'
     }),
     studyId () {
-      return (this.selectedStudy.study_number !== undefined && this.selectedStudy.study_number !== null)
-        ? this.selectedStudy.study_id : this.selectedStudy.study_acronym
+      const studyNumber = this.selectedStudy.current_metadata.identification_metadata.study_number
+      return (studyNumber !== undefined && studyNumber !== null)
+        ? this.selectedStudy.current_metadata.identification_metadata.study_id : this.selectedStudy.current_metadata.identification_metadata.study_acronym
     }
   },
 
@@ -18,7 +19,12 @@ export const studySelectedNavigationGuard = {
   */
   async beforeRouteEnter (to, from, next) {
     if (to.meta && to.meta.studyRequired && !store.state.studiesGeneral.selectedStudy) {
-      next(false)
+      if (from.name === 'AuthCallback') {
+        // Special case for after-login process
+        next({ name: 'SelectOrAddStudy' })
+      } else {
+        next(false)
+      }
     } else {
       next()
     }

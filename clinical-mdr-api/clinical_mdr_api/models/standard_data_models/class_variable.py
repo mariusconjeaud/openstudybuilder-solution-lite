@@ -80,7 +80,7 @@ class ClassVariable(VersionProperties):
         None,
         title="dataset_variable_name",
         description="dataset_variable_name",
-        source="has_latest_value.implements_class_variable.label",
+        source="has_latest_value.implements_variable.label",
     )
     catalogue_name: str = Field(
         ...,
@@ -88,9 +88,3 @@ class ClassVariable(VersionProperties):
         description="catalogue",
         source="has_class_variable.name",
     )
-    # library_name: str = Field(
-    #     None,
-    #     title="library_name",
-    #     description="",
-    #     source="has_library.name",
-    # )

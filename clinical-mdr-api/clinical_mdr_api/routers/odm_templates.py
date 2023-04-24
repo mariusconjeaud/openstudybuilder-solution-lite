@@ -2,6 +2,7 @@ from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
+from starlette.requests import Request
 
 from clinical_mdr_api import config
 from clinical_mdr_api.models import (
@@ -13,7 +14,7 @@ from clinical_mdr_api.models import (
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.repositories._utils import FilterOperator
-from clinical_mdr_api.routers import _generic_descriptions
+from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.odm_templates import OdmTemplateService
 
 router = APIRouter()
@@ -25,12 +26,41 @@ OdmTemplateUID = Path(None, description="The unique id of the ODM Template.")
 @router.get(
     "",
     summary="Return every variable related to the selected status and version of the ODM Templates",
-    description="",
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=CustomPage[OdmTemplate],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "oid",
+            "library_name",
+            "name",
+            "description",
+            "forms",
+            "start_date",
+            "end_date",
+            "effective_date",
+            "retired_date",
+            "status",
+            "version",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_all_odm_templates(
+    request: Request,  # request is actually required by the allow_exports decorator
     library: Optional[str] = Query(None),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: Optional[int] = Query(
@@ -76,7 +106,7 @@ def get_all_odm_templates(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -112,7 +142,10 @@ def get_distinct_values_for_header(
     description="",
     response_model=OdmTemplate,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_odm_template(uid: str = OdmTemplateUID):
     odm_template_service = OdmTemplateService()
@@ -125,7 +158,10 @@ def get_odm_template(uid: str = OdmTemplateUID):
     description="",
     response_model=dict,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_active_relationships(uid: str = OdmTemplateUID):
     odm_template_service = OdmTemplateService()
@@ -156,7 +192,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The ODM Template with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_odm_template_versions(uid: str = OdmTemplateUID):
@@ -178,11 +214,11 @@ def get_odm_template_versions(uid: str = OdmTemplateUID):
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_template(
-    odm_template_create_input: OdmTemplatePostInput = Body(None, description="")
+    odm_template_create_input: OdmTemplatePostInput = Body(description=""),
 ):
     odm_template_service = OdmTemplateService()
     return odm_template_service.create(concept_input=odm_template_create_input)
@@ -207,12 +243,12 @@ def create_odm_template(
             "model": ErrorResponse,
             "description": "Not Found - The ODM Template with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_template(
     uid: str = OdmTemplateUID,
-    odm_template_edit_input: OdmTemplatePatchInput = Body(None, description=""),
+    odm_template_edit_input: OdmTemplatePatchInput = Body(description=""),
 ):
     odm_template_service = OdmTemplateService()
     return odm_template_service.edit_draft(
@@ -252,7 +288,7 @@ Possible errors:
             "- The ODM Template is not in final status.\n"
             "- The ODM Template with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_template_version(uid: str = OdmTemplateUID):
@@ -278,7 +314,7 @@ def create_odm_template_version(uid: str = OdmTemplateUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Template with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve_odm_template(uid: str = OdmTemplateUID):
@@ -303,7 +339,7 @@ def approve_odm_template(uid: str = OdmTemplateUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Template with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate_odm_template(uid: str = OdmTemplateUID):
@@ -328,7 +364,7 @@ def inactivate_odm_template(uid: str = OdmTemplateUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Template with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate_odm_template(uid: str = OdmTemplateUID):
@@ -354,7 +390,7 @@ def reactivate_odm_template(uid: str = OdmTemplateUID):
             "model": ErrorResponse,
             "description": "Not Found - The forms with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def add_forms_to_odm_template(
@@ -363,9 +399,7 @@ def add_forms_to_odm_template(
         False,
         description="If true, all existing form relationships will be replaced with the provided form relationships.",
     ),
-    odm_template_form_post_input: List[OdmTemplateFormPostInput] = Body(
-        None, description=""
-    ),
+    odm_template_form_post_input: List[OdmTemplateFormPostInput] = Body(description=""),
 ):
     odm_template_service = OdmTemplateService()
     return odm_template_service.add_forms(
@@ -394,7 +428,7 @@ def add_forms_to_odm_template(
             "model": ErrorResponse,
             "description": "Not Found - An ODM Template with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_odm_template(uid: str = OdmTemplateUID):

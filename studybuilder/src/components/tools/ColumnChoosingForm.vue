@@ -106,8 +106,10 @@ export default {
       this.save()
     },
     save () {
-      const check = new Set()
-      this.displayedColumns = this.displayedColumns.filter(obj => !check.has(obj.value) && check.add(obj.value))
+      const orderedColumns = this.availableColumns.filter(el => {
+        return this.displayedColumns.includes(el)
+      })
+      this.displayedColumns = orderedColumns
       const actionsIndex = this.displayedColumns.findIndex(i => i.text === '')
       if (actionsIndex !== -1) {
         this.displayedColumns.unshift(this.displayedColumns.splice(actionsIndex, 1)[0])

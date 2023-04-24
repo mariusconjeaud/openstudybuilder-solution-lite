@@ -125,6 +125,9 @@ export default {
   removeTermFromCodelist (codelistUid, termUid) {
     return repository.delete(`${resource}/codelists/${codelistUid}/terms/${termUid}`)
   },
+  updateCodelistTermOrder (termUid, data) {
+    return repository.patch(`${resource}/terms/${termUid}/order`, data)
+  },
   updateCodelistTermNames (termUid, data) {
     return repository.patch(`${resource}/terms/${termUid}/names`, data)
   },

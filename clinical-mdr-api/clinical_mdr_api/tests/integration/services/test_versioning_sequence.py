@@ -2,9 +2,9 @@ from unittest import TestCase
 
 from pydantic import BaseModel
 
-import clinical_mdr_api.models.objective_template as models
+import clinical_mdr_api.models.syntax_templates.objective_template as models
 import clinical_mdr_api.services.libraries as library_service
-import clinical_mdr_api.services.objective_templates as service
+import clinical_mdr_api.services.syntax_templates.objective_templates as service
 from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db

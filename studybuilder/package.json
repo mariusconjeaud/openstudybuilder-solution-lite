@@ -20,7 +20,7 @@
     "exceljs": "4.2.1",
     "lodash": "4.17.20",
     "luxon": "1.25.0",
-    "oidc-client-ts": "2.0.1",
+    "oidc-client-ts": "2.2.1",
     "vee-validate": "3.4.1",
     "vue": "~2.6.11",
     "vue-chartjs": "3.5.1",
@@ -30,7 +30,8 @@
     "vue2-editor": "2.10.3",
     "vuedraggable": "2.24.3",
     "vuetify": "2.6.9",
-    "vuex": "3.6.2"
+    "vuex": "3.6.2",
+    "yaml": "~2.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",

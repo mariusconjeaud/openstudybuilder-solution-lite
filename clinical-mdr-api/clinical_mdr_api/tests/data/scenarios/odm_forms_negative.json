@@ -11,8 +11,8 @@
                 "sdtm_version": "0.1",
                 "repeating": "No",
                 "descriptions": [
-                    "odm_description1",
-                    "odm_description2"
+                    "odm_description2",
+                    "odm_description3"
                 ],
                 "alias_uids": [
                     "odm_alias1"
@@ -42,21 +42,21 @@
                 "scope": null,
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -172,21 +172,21 @@
                 "scope": null,
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -252,21 +252,21 @@
                 "scope": null,
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -318,7 +318,7 @@
                 "sdtm_version": "0.1",
                 "repeating": "No",
                 "descriptions": [
-                    "odm_description1"
+                    "odm_description3"
                 ],
                 "alias_uids": []
             },
@@ -351,7 +351,7 @@
                 "sdtm_version": "0.1",
                 "repeating": "No",
                 "descriptions": [
-                    "odm_description1"
+                    "odm_description3"
                 ],
                 "alias_uids": []
             },
@@ -653,21 +653,21 @@
                 "scope": null,
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],
@@ -842,21 +842,21 @@
                 "scope": null,
                 "descriptions": [
                     {
-                        "uid": "odm_description1",
-                        "name": "name1",
-                        "language": "ENG",
-                        "description": "description1",
-                        "instruction": "instruction1",
-                        "sponsor_instruction": "sponsor_instruction1",
-                        "version": "0.1"
-                    },
-                    {
                         "uid": "odm_description2",
                         "name": "name2",
                         "language": "language2",
                         "description": "description2",
                         "instruction": "instruction2",
                         "sponsor_instruction": "sponsor_instruction2",
+                        "version": "0.1"
+                    },
+                    {
+                        "uid": "odm_description3",
+                        "name": "name3",
+                        "language": "ENG",
+                        "description": "description3",
+                        "instruction": "instruction3",
+                        "sponsor_instruction": "sponsor_instruction3",
                         "version": "0.1"
                     }
                 ],

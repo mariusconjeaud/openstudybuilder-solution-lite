@@ -468,8 +468,9 @@ class Mockdata(BaseImporter):
         study_headers = next(readCSV)
         # Fetching existing data
         all_studies = self.api.get_all_identifiers(
-            self.api.get_all_from_api("/studies"), "study_number"
+            self.api.get_all_from_api("/studies"), "current_metadata"
         )
+        all_studies = [study["identification_metadata"]["study_number"] for study in all_studies]
         for row in readCSV:
             # only for not empty rows
             if row:

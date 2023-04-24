@@ -39,7 +39,6 @@ class OdmVendorElementVO(ConceptVO):
             [dict], Optional[Tuple[List["OdmVendorElementAR"], int]]
         ],
     ) -> None:
-
         if (
             self.vendor_namespace_uid is not None
             and not odm_vendor_namespace_exists_by_callback(

@@ -18,11 +18,11 @@
         "name_plain": "To compare the effect of [Compound] relative to [Comparator] on [ActivityInstance]",
         "uid": "ObjectiveTemplate_000004"
       },
-      "parameter_values": [
+      "parameter_terms": [
         {
           "conjunction": "",
           "position": 1,
-          "values": [
+          "terms": [
             {
               "index": 1,
               "name": "NPH Insulin",
@@ -34,7 +34,7 @@
         {
           "conjunction": "",
           "position": 2,
-          "values": [
+          "terms": [
             {
               "index": 1,
               "name": "Metformin",
@@ -46,7 +46,7 @@
         {
           "conjunction": "",
           "position": 3,
-          "values": [
+          "terms": [
             {
               "index": 1,
               "name": "1,5 AG (Anhydroglucitol)",

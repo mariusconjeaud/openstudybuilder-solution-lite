@@ -5,7 +5,7 @@ from pydantic.types import Json
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
-from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
@@ -19,7 +19,8 @@ from clinical_mdr_api.services.study_compound_dosing_selection import (
 @router.get(
     "/studies/{uid}/study-compound-dosings",
     summary="List all study compound dosings currently defined for the study",
-    response_model=GenericFilteringReturn[models.StudyCompoundDosing],
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
+    response_model=CustomPage[models.StudyCompoundDosing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -27,7 +28,7 @@ from clinical_mdr_api.services.study_compound_dosing_selection import (
             "model": ErrorResponse,
             "description": "Not Found - there is no study with the given uid.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 @decorators.allow_exports(
@@ -50,8 +51,9 @@ from clinical_mdr_api.services.study_compound_dosing_selection import (
         ],
     }
 )
+# pylint: disable=unused-argument
 def get_all_selected_compound_dosings(
-    _request: Request,  # request is actually required by the allow_exports decorator
+    request: Request,  # request is actually required by the allow_exports decorator
     uid: str = utils.studyUID,
     current_user_id: str = Depends(get_current_user_id),
     filters: Optional[Json] = Query(
@@ -71,13 +73,20 @@ def get_all_selected_compound_dosings(
     ),
 ):
     service = StudyCompoundDosingSelectionService(author=current_user_id)
-    return service.get_all_compound_dosings(
+    all_items = service.get_all_compound_dosings(
         study_uid=uid,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
+    )
+
+    return CustomPage.create(
+        items=all_items.items,
+        total=all_items.total_count,
+        page=page_number,
+        size=page_size,
     )
 
 
@@ -93,7 +102,7 @@ def get_all_selected_compound_dosings(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -136,7 +145,7 @@ def get_distinct_values_for_header(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_compound_dosings_values_for_header(
@@ -194,7 +203,8 @@ Returned data:
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_compound_dosings_audit_trail(
@@ -238,7 +248,7 @@ Returned data:
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the compound dosing for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_compound_dosing_audit_trail(
@@ -267,13 +277,12 @@ def get_compound_dosing_audit_trail(
             "model": ErrorResponse,
             "description": "Not Found - Study, study compound or study element is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_study_compound_dosing(
     uid: str = utils.studyUID,
     selection: models.StudyCompoundDosingInput = Body(
-        None,
         description="Related parameters of the compound dosing that shall be created.",
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -293,7 +302,7 @@ def create_study_compound_dosing(
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the compound dosing and the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_compound_dosing(
@@ -332,14 +341,14 @@ State after:
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection with the given uid.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def update_compound_dosing(
     uid: str = utils.studyUID,
     study_compound_dosing_uid: str = utils.study_compound_dosing_uid,
     selection: models.StudyCompoundDosingInput = Body(
-        None, description="Related parameters of the selection that shall be updated."
+        description="Related parameters of the selection that shall be updated."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.StudyCompoundDosing:

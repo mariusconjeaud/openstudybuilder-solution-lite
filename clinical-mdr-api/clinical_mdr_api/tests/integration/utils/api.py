@@ -59,6 +59,20 @@ def inject_and_clear_db(db_name):
     return db
 
 
+def drop_db(db_name):
+    from clinical_mdr_api import config
+
+    config.settings = config.Settings()
+
+    from neomodel import config as neoconfig
+
+    full_dsn = f"{config.settings.neo4j_dsn}"
+    neoconfig.DATABASE_URL = full_dsn
+    neoconfig.DATABASE_NAME = db_name
+    db.set_connection(full_dsn)
+    db.cypher_query("DROP DATABASE $db IF EXISTS", {"db": db_name})
+
+
 class APITest(TestCase):
     TEST_DB_NAME = "apitests"
     SCENARIO_PATHS = ""

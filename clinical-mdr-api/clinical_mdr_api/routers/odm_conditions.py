@@ -27,7 +27,10 @@ OdmConditionUID = Path(None, description="The unique id of the ODM Condition.")
     description="",
     response_model=CustomPage[OdmCondition],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_all_odm_conditions(
     library: Optional[str] = Query(None),
@@ -75,7 +78,7 @@ def get_all_odm_conditions(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -111,7 +114,10 @@ def get_distinct_values_for_header(
     description="",
     response_model=OdmCondition,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_odm_condition(uid: str = OdmConditionUID):
     odm_condition_service = OdmConditionService()
@@ -124,7 +130,10 @@ def get_odm_condition(uid: str = OdmConditionUID):
     description="",
     response_model=dict,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_active_relationships(uid: str = OdmConditionUID):
     odm_condition_service = OdmConditionService()
@@ -155,7 +164,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The ODM Condition with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_odm_condition_versions(uid: str = OdmConditionUID):
@@ -177,11 +186,11 @@ def get_odm_condition_versions(uid: str = OdmConditionUID):
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_condition(
-    odm_condition_create_input: OdmConditionPostInput = Body(None, description="")
+    odm_condition_create_input: OdmConditionPostInput = Body(description=""),
 ):
     odm_condition_service = OdmConditionService()
     return odm_condition_service.create_with_relations(
@@ -208,12 +217,12 @@ def create_odm_condition(
             "model": ErrorResponse,
             "description": "Not Found - The ODM Condition with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_condition(
     uid: str = OdmConditionUID,
-    odm_condition_edit_input: OdmConditionPatchInput = Body(None, description=""),
+    odm_condition_edit_input: OdmConditionPatchInput = Body(description=""),
 ):
     odm_condition_service = OdmConditionService()
     return odm_condition_service.update_with_relations(
@@ -253,7 +262,7 @@ Possible errors:
             "- The ODM Condition is not in final status.\n"
             "- The ODM Condition with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_condition_version(uid: str = OdmConditionUID):
@@ -279,7 +288,7 @@ def create_odm_condition_version(uid: str = OdmConditionUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Condition with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve_odm_condition(uid: str = OdmConditionUID):
@@ -304,7 +313,7 @@ def approve_odm_condition(uid: str = OdmConditionUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Condition with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate_odm_condition(uid: str = OdmConditionUID):
@@ -329,7 +338,7 @@ def inactivate_odm_condition(uid: str = OdmConditionUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Condition with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate_odm_condition(uid: str = OdmConditionUID):
@@ -358,7 +367,7 @@ def reactivate_odm_condition(uid: str = OdmConditionUID):
             "model": ErrorResponse,
             "description": "Not Found - An ODM Condition with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_odm_condition(uid: str = OdmConditionUID):

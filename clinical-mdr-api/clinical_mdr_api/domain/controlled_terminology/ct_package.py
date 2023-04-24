@@ -35,7 +35,6 @@ class CTPackageAR:
         effective_date: date,
         user_initials: str,
     ):
-
         return CTPackageAR(
             _uid=uid,
             catalogue_name=catalogue_name,

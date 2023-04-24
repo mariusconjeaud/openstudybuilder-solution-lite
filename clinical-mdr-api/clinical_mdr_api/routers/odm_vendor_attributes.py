@@ -29,7 +29,10 @@ OdmVendorAttributeUID = Path(
     description="",
     response_model=CustomPage[OdmVendorAttribute],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_all_odm_vendor_attributes(
     library: Optional[str] = Query(None),
@@ -77,7 +80,7 @@ def get_all_odm_vendor_attributes(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -113,7 +116,10 @@ def get_distinct_values_for_header(
     description="",
     response_model=OdmVendorAttribute,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
     odm_vendor_attribute_service = OdmVendorAttributeService()
@@ -126,7 +132,10 @@ def get_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
     description="",
     response_model=dict,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_active_relationships(uid: str = OdmVendorAttributeUID):
     odm_vendor_attribute_service = OdmVendorAttributeService()
@@ -157,7 +166,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The ODM Vendor Attribute with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_odm_vendor_attribute_versions(uid: str = OdmVendorAttributeUID):
@@ -181,13 +190,13 @@ def get_odm_vendor_attribute_versions(uid: str = OdmVendorAttributeUID):
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_vendor_attribute(
     odm_vendor_attribute_create_input: OdmVendorAttributePostInput = Body(
-        None, description=""
-    )
+        description=""
+    ),
 ):
     odm_vendor_attribute_service = OdmVendorAttributeService()
     return odm_vendor_attribute_service.create(
@@ -214,13 +223,13 @@ def create_odm_vendor_attribute(
             "model": ErrorResponse,
             "description": "Not Found - The ODM Vendor Attribute with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_vendor_attribute(
     uid: str = OdmVendorAttributeUID,
     odm_vendor_attribute_edit_input: OdmVendorAttributePatchInput = Body(
-        None, description=""
+        description=""
     ),
 ):
     odm_vendor_attribute_service = OdmVendorAttributeService()
@@ -261,7 +270,7 @@ Possible errors:
             "- The ODM Vendor Attribute is not in final status.\n"
             "- The ODM Vendor Attribute with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_odm_vendor_attribute_version(uid: str = OdmVendorAttributeUID):
@@ -287,7 +296,7 @@ def create_odm_vendor_attribute_version(uid: str = OdmVendorAttributeUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Vendor Attribute with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
@@ -312,7 +321,7 @@ def approve_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Vendor Attribute with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
@@ -337,7 +346,7 @@ def inactivate_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
             "model": ErrorResponse,
             "description": "Not Found - The ODM Vendor Attribute with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
@@ -366,7 +375,7 @@ def reactivate_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
             "model": ErrorResponse,
             "description": "Not Found - An ODM Vendor Attribute with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):

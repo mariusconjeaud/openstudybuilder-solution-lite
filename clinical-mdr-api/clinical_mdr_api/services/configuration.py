@@ -19,6 +19,7 @@ from clinical_mdr_api.exceptions import (
 )
 from clinical_mdr_api.models.configuration import (
     CTConfigModel,
+    CTConfigOGM,
     CTConfigPatchInput,
     CTConfigPostInput,
 )
@@ -38,12 +39,12 @@ class CTConfigService:
         self._user_id = user_id
 
     @db.transaction
-    def get_all(self) -> Sequence[CTConfigModel]:
-        configs = [
-            CTConfigModel.from_ct_config_ar(_)
-            for _ in self._repos.ct_config_repository.find_all()
-        ]
-        return configs
+    def get_all(self) -> Sequence[CTConfigOGM]:
+        # configs = [
+        #     CTConfigModel.from_ct_config_ar(_)
+        #     for _ in self._repos.ct_config_repository.find_all()
+        # ]
+        return self._repos.ct_config_repository.find_all()
 
     @db.transaction
     def get_by_uid(
@@ -54,7 +55,6 @@ class CTConfigService:
         status: Optional[str],
         version: Optional[str],
     ) -> CTConfigModel:
-
         status_as_enum = LibraryItemStatus(status) if status is not None else None
 
         ct_config_ar = self._repos.ct_config_repository.find_by_uid_2(
@@ -207,7 +207,6 @@ class CTConfigService:
     def _fill_missing_values_in_base_model_from_reference_base_model(
         *, base_model_with_missing_values: BaseModel, reference_base_model: BaseModel
     ) -> None:
-
         for field_name in base_model_with_missing_values.__fields_set__:
             if isinstance(
                 getattr(base_model_with_missing_values, field_name), BaseModel

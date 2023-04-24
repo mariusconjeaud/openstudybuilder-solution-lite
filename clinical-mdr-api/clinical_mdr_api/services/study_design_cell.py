@@ -6,6 +6,7 @@ from neomodel import db
 
 from clinical_mdr_api import exceptions, models
 from clinical_mdr_api.domain.study_selection.study_design_cell import StudyDesignCellVO
+from clinical_mdr_api.domain_repositories.models._utils import to_relation_trees
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyDesignCell as StudyDesignCellNeoModel,
 )
@@ -21,7 +22,6 @@ from clinical_mdr_api.services.study_endpoint_selection import StudySelectionMix
 
 
 class StudyDesignCellService(StudySelectionMixin):
-
     _repos: MetaRepository
 
     def __init__(self, author: str):
@@ -32,22 +32,22 @@ class StudyDesignCellService(StudySelectionMixin):
     def get_all_design_cells(self, study_uid: str) -> Sequence[models.StudyDesignCell]:
         return [
             models.StudyDesignCell.from_orm(sdc_node)
-            for sdc_node in StudyDesignCellNeoModel.nodes.fetch_relations(
-                "study_epoch__has_epoch__has_name_root__has_latest_value",
-                "study_element",
-                "has_after",
+            for sdc_node in to_relation_trees(
+                StudyDesignCellNeoModel.nodes.fetch_relations(
+                    "study_epoch__has_epoch__has_name_root__has_latest_value",
+                    "study_element",
+                    "has_after",
+                )
+                .fetch_optional_relations("study_arm", "study_branch_arm")
+                .filter(study_value__study_root__uid=study_uid)
+                .order_by("order")
             )
-            .fetch_optional_relations("study_arm", "study_branch_arm")
-            .filter(study_value__study_root__uid=study_uid)
-            .order_by("order")
-            .to_relation_trees()
         ]
 
     @db.transaction
     def get_all_selection_within_arm(
         self, study_uid: str, study_arm_uid: str
     ) -> Sequence[models.StudyDesignCell]:
-
         sdc_nodes = (
             self._repos.study_design_cell_repository.get_design_cells_connected_to_arm(
                 study_uid, study_arm_uid
@@ -60,7 +60,6 @@ class StudyDesignCellService(StudySelectionMixin):
     def get_all_selection_within_branch_arm(
         self, study_uid: str, study_branch_arm_uid: str
     ) -> Sequence[models.StudyDesignCell]:
-
         sdc_nodes = self._repos.study_design_cell_repository.get_design_cells_connected_to_branch_arm(
             study_uid, study_branch_arm_uid
         )
@@ -71,7 +70,6 @@ class StudyDesignCellService(StudySelectionMixin):
     def get_all_selection_within_epoch(
         self, study_uid: str, study_epoch_uid: str
     ) -> Sequence[models.StudyDesignCell]:
-
         sdc_nodes = self._repos.study_design_cell_repository.get_design_cells_connected_to_epoch(
             study_uid, study_epoch_uid
         )
@@ -81,7 +79,7 @@ class StudyDesignCellService(StudySelectionMixin):
     def get_specific_design_cell(
         self, study_uid: str, design_cell_uid: str
     ) -> models.StudyDesignCell:
-        sdc_node = (
+        sdc_node = to_relation_trees(
             StudyDesignCellNeoModel.nodes.fetch_relations(
                 "study_epoch__has_epoch__has_name_root__has_latest_value",
                 "study_element",
@@ -89,7 +87,6 @@ class StudyDesignCellService(StudySelectionMixin):
             )
             .fetch_optional_relations("study_arm", "study_branch_arm")
             .filter(study_value__study_root__uid=study_uid, uid=design_cell_uid)
-            .to_relation_trees()
         )
         if sdc_node is None or len(sdc_node) == 0:
             raise exceptions.NotFoundException(
@@ -120,7 +117,6 @@ class StudyDesignCellService(StudySelectionMixin):
     def create(
         self, study_uid: str, design_cell_input: models.StudyDesignCellCreateInput
     ) -> models.StudyDesignCell:
-
         # all_design_cells: Sequence[StudyDesignCellVO]
         all_design_cells = (
             self._repos.study_design_cell_repository.find_all_design_cells_by_study(
@@ -171,7 +167,6 @@ class StudyDesignCellService(StudySelectionMixin):
     def patch(
         self, study_uid: str, design_cell_update_input: models.StudyDesignCellEditInput
     ) -> models.StudyDesignCell:
-
         # study_design_cell: StudyDesignCellVO
         study_design_cell = self._repos.study_design_cell_repository.find_by_uid(
             study_uid=study_uid, uid=design_cell_update_input.study_design_cell_uid

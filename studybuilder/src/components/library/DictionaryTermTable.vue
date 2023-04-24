@@ -4,6 +4,7 @@
     :headers="actualHeaders"
     export-object-label="Snomed"
     :export-data-url="columnDataResource"
+    :export-data-url-params="exportUrlParams"
     item-key="uid"
     :server-items-length="total"
     :options.sync="options"
@@ -141,6 +142,9 @@ export default {
   computed: {
     actualHeaders () {
       return (this.headers) ? this.headers : this.defaultHeaders
+    },
+    exportUrlParams () {
+      return { codelist_uid: this.codelistUid }
     }
   },
   methods: {

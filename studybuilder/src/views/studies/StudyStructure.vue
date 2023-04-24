@@ -9,15 +9,7 @@
 
   </div>
   <v-tabs v-model="tab">
-    <v-tab href="#overview" @click="refreshOverview()">{{ $t('_global.overview') }}</v-tab>
-    <v-tab href="#arms">{{ $t('Sidebar.study.study_arms') }}</v-tab>
-    <v-tab href="#branches">{{ $t('Sidebar.study.study_branches') }}</v-tab>
-    <v-tab href="#cohorts">{{ $t('Sidebar.study.study_cohorts') }}</v-tab>
-    <v-tab href="#epochs">{{ $t('Sidebar.study.study_epochs') }}</v-tab>
-    <v-tab href="#elements">{{ $t('Sidebar.study.study_elements') }}</v-tab>
-    <v-tab href="#visits">{{ $t('Sidebar.study.study_visits') }}</v-tab>
-    <v-tab href="#design_matrix" @click="refreshMatrix()">{{ $t('Sidebar.study.design_matrix') }}</v-tab>
-    <v-tab href="#disease_milestones">{{ $t('Sidebar.study.disease_milestones') }}</v-tab>
+    <v-tab v-for="tab of tabs" :key="tab.tab" :href="tab.tab">{{ tab.name }}</v-tab>
   </v-tabs>
   <v-tabs-items v-model="tab">
     <v-tab-item id="overview">
@@ -63,6 +55,7 @@ import StudyVisitTable from '@/components/studies/StudyVisitTable'
 import StudyElementsTable from '@/components/studies/StudyElementsTable'
 import StudyCohortsTable from '@/components/studies/StudyCohortsTable'
 import StudyStructureOverview from '@/components/studies/StudyStructureOverview'
+import { mapActions } from 'vuex'
 
 export default {
   mixins: [studySelectedNavigationGuard],
@@ -92,13 +85,36 @@ export default {
       ],
       key: 0,
       overviewKey: 0,
-      tab: null
+      tab: null,
+      tabs: [
+        { tab: '#overview', name: this.$t('_global.overview') },
+        { tab: '#arms', name: this.$t('Sidebar.study.study_arms') },
+        { tab: '#branches', name: this.$t('Sidebar.study.study_branches') },
+        { tab: '#cohorts', name: this.$t('Sidebar.study.study_cohorts') },
+        { tab: '#epochs', name: this.$t('Sidebar.study.study_epochs') },
+        { tab: '#elements', name: this.$t('Sidebar.study.study_elements') },
+        { tab: '#visits', name: this.$t('Sidebar.study.study_visits') },
+        { tab: '#design_matrix', name: this.$t('Sidebar.study.design_matrix') },
+        { tab: '#disease_milestones', name: this.$t('Sidebar.study.disease_milestones') }
+      ]
     }
   },
   mounted () {
     this.tab = this.$route.params.tab
+    const tabName = this.tab ? this.tabs.find(el => el.tab.substring(1) === this.tab).name : this.tabs[0].name
+    setTimeout(() => {
+      this.addBreadcrumbsLevel({
+        text: tabName,
+        to: { name: 'StudyStructure', params: { tab: tabName } },
+        index: 3,
+        replace: true
+      })
+    }, 100)
   },
   methods: {
+    ...mapActions({
+      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
+    }),
     refreshMatrix () {
       this.key += 1
     },
@@ -108,9 +124,18 @@ export default {
   },
   watch: {
     tab (newValue) {
+      if (newValue === 'overview') this.refreshOverview()
+      if (newValue === 'design_matrix') this.refreshMatrix()
+      const tabName = newValue ? this.tabs.find(el => el.tab.substring(1) === newValue).name : this.tabs[0].name
       this.$router.push({
         name: 'StudyStructure',
         params: { tab: newValue }
+      })
+      this.addBreadcrumbsLevel({
+        text: tabName,
+        to: { name: 'StudyProperties', params: { tab: tabName } },
+        index: 3,
+        replace: true
       })
     }
   }

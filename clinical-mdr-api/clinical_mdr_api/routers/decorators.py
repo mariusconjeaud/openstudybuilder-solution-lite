@@ -2,15 +2,18 @@
 
 import collections
 import csv
-import datetime
 import functools
 import io
 
+import yaml
 from dict2xml import dict2xml
 from fastapi.responses import StreamingResponse
 from openpyxl import Workbook
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.models import utils
+from clinical_mdr_api.models.utils import BaseModel
+from clinical_mdr_api.services.study import StudyService
 
 REGISTERED_EXPORT_FORMATS = {}
 
@@ -76,7 +79,9 @@ def _convert_data_to_rows(data: dict, headers: list):
     yield list(dict_headers.keys())
     for value in _extract_values_from_data(data, dict_headers):
         yield [
-            str(x) if isinstance(x, datetime.datetime) else x for x in value.values()
+            # openpyxl library only supports these data types: int, float, str, bool
+            x if isinstance(x, (bool, float, int, str)) else str(x)
+            for x in value.values()
         ]
 
 
@@ -132,6 +137,13 @@ def _export_to_xml(data: dict, headers: list):
     return dict2xml(export_dict, wrap="items", indent="  ")
 
 
+@register_export_format("application/x-yaml")
+# pylint: disable=unused-argument
+def _export_to_yaml(data: BaseModel, headers: list):
+    """Export given data to YAML."""
+    return yaml.dump(data.dict())
+
+
 def export(export_format: str, data: dict, export_definition: dict, *args, **kwargs):
     """Generic export function.
 
@@ -171,6 +183,27 @@ def allow_exports(export_definition: dict):
             if accept and accept in formats:
                 result = export(accept, result, export_definition)
             return result
+
+        return wrapper
+
+    return decorator
+
+
+def validate_if_study_is_not_locked(study_uid_property_name: str):
+    """Decorator used to whether a Study with given study_uid is not locked."""
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            study_uid = kwargs.get(study_uid_property_name)
+            is_study_locked = StudyService().check_if_study_is_locked(
+                study_uid=study_uid
+            )
+            if is_study_locked:
+                raise exceptions.ValidationException(
+                    f"Study with specified uid '{study_uid}' is locked."
+                )
+            return func(*args, **kwargs)
 
         return wrapper
 

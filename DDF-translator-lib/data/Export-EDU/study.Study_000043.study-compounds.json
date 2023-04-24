@@ -1,0 +1,82 @@
+[
+  {
+    "compound": {
+      "abbreviation": null,
+      "analyteNumber": null,
+      "brands": [],
+      "changeDescription": "Approved version",
+      "definition": "DDF sample intervention drug",
+      "deliveryDevices": [],
+      "dispensers": [],
+      "dosageForms": [],
+      "doseFrequencies": [],
+      "doseValues": [],
+      "endDate": null,
+      "halfLife": null,
+      "isNameInn": false,
+      "isSponsorCompound": true,
+      "lagTimes": [],
+      "libraryName": "Sponsor",
+      "name": "SubstX",
+      "nameSentenceCase": "substx",
+      "nncLongNumber": "XX031ZA",
+      "nncShortNumber": "XX031ZA",
+      "possibleActions": [
+        "inactivate",
+        "newVersion"
+      ],
+      "projects": [],
+      "routesOfAdministration": [],
+      "startDate": "2022-09-20T05:51:47.291341",
+      "status": "Final",
+      "strengthValues": [],
+      "substances": [],
+      "uid": "Compound_000014",
+      "userInitials": "MT",
+      "version": "1.0"
+    },
+    "compoundAlias": {
+      "abbreviation": null,
+      "changeDescription": "Approved version",
+      "compound": {
+        "name": "SubstX",
+        "uid": "Compound_000014"
+      },
+      "definition": null,
+      "endDate": null,
+      "isPreferredSynonym": true,
+      "libraryName": "Sponsor",
+      "name": "SubstX",
+      "nameSentenceCase": "substx",
+      "possibleActions": [
+        "inactivate",
+        "newVersion"
+      ],
+      "startDate": "2022-09-20T05:52:48.970415",
+      "status": "Final",
+      "uid": "CompoundAlias_000006",
+      "userInitials": "MT",
+      "version": "1.0"
+    },
+    "device": null,
+    "dispensedIn": null,
+    "dosageForm": null,
+    "formulation": null,
+    "order": 1,
+    "otherInfo": null,
+    "projectName": "CDISC Dev",
+    "projectNumber": "CDISC DEV",
+    "reasonForMissingNullValue": null,
+    "routeOfAdministration": null,
+    "startDate": "2022-09-20T05:53:13.803858",
+    "strengthValue": null,
+    "studyCompoundDosingCount": 0,
+    "studyCompoundUid": "StudyCompound_000011",
+    "studyUid": "Study_000043",
+    "typeOfTreatment": {
+      "name": "Investigational Product",
+      "termUid": "CTTerm_000128"
+    },
+    "userInitials": "MT"
+  }
+]

@@ -1,4 +1,4 @@
-from mdr_standards_import.cdisc_ct.load_ct_preprocessing import Term, Codelist
+from mdr_standards_import.scripts.load_ct_preprocessing import Term, Codelist
 from mdr_standards_import.tests.cdisc_ct.test_pipeline import Package, Import, Log
 
 
@@ -34,7 +34,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C03",
         extensible=True,
         synonyms=["Analysis Purpose"],
-
         terms=[term1, term2],
     )
 
@@ -47,7 +46,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C02",
         extensible=True,
         synonyms=["Analysis Purpose"],
-
         terms=[term1, term2],
     )
 
@@ -56,7 +54,7 @@ def get_expected_imports(effective_date, user_initials):
         level="Warning",
         tagline="inconsistent terms",
         message="",
-        affected_uid=f"{effective_date}_C02"
+        affected_uid=f"{effective_date}_C02",
     )
 
     package1 = Package(
@@ -68,7 +66,6 @@ def get_expected_imports(effective_date, user_initials):
         description="Terms of codelist C02 are inconsistent (cf. cat2-2020-01-01)",
         source="Cat1 source",
         href="/mdr/ct/packages/cat1-2020-01-01",
-
         terms=[term1, term2],
         codelists=[codelist2, codelist3],
         discontinued_codelists=[],
@@ -83,7 +80,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C01",
         extensible=True,
         synonyms=["Analysis Purpose"],
-
         terms=[term1],
     )
 
@@ -96,7 +92,6 @@ def get_expected_imports(effective_date, user_initials):
         description="Terms of codelist C02 are inconsistent (cf. Cat1-2020-01-01)",
         source="Cat2 source",
         href="/mdr/ct/packages/cat2-2020-01-01",
-
         terms=[term1],
         codelists=[codelist1, codelist2],
         discontinued_codelists=[],
@@ -155,7 +150,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C04",
         extensible=True,
         synonyms=["C04 X"],
-
         terms=[term3],
     )
 
@@ -168,7 +162,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C05",
         extensible=True,
         synonyms=None,
-
         terms=[term4],
     )
 
@@ -181,7 +174,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C06",
         extensible=True,
         synonyms=None,
-
         terms=[term5, term6],
     )
 
@@ -216,7 +208,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C07",
         extensible=True,
         synonyms=None,
-
         terms=[term7_a],
     )
 
@@ -229,7 +220,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C08",
         extensible=True,
         synonyms=None,
-
         terms=[term7_b],
     )
 
@@ -238,21 +228,21 @@ def get_expected_imports(effective_date, user_initials):
         level="Warning",
         tagline="no term submission value",
         message="",
-        affected_uid=f"{effective_date}_T03"
+        affected_uid=f"{effective_date}_T03",
     )
 
     info1 = Log(
         level="Info",
         tagline="unexpected codelist name",
         message="",
-        affected_uid=f"{effective_date}_C05"
+        affected_uid=f"{effective_date}_C05",
     )
 
     info2 = Log(
         level="Info",
         tagline="unexpected codelist name",
         message="",
-        affected_uid=f"{effective_date}_C06"
+        affected_uid=f"{effective_date}_C06",
     )
 
     package3 = Package(
@@ -264,7 +254,6 @@ def get_expected_imports(effective_date, user_initials):
         description="T03 has no submission value: -> log inconsistency",
         source="Cat3 source",
         href="/mdr/ct/packages/cat3-2020-01-01",
-
         terms=[term3, term4, term5, term6],
         codelists=[codelist4, codelist5, codelist6],
         discontinued_codelists=[],
@@ -279,7 +268,6 @@ def get_expected_imports(effective_date, user_initials):
         description="The codelists C07 and C08 have the same term, however we don't know how to differentiate between code- and name-submission-value: -> log inconsistency",
         source="Cat4 source",
         href="/mdr/ct/packages/cat4-2020-01-01",
-
         terms=[term7_b, term7_a],
         codelists=[codelist7, codelist8],
         discontinued_codelists=[],
@@ -289,7 +277,7 @@ def get_expected_imports(effective_date, user_initials):
         level="Warning",
         tagline="no codelists defined",
         message="",
-        affected_uid="2020-01-01_CAT5 CT"
+        affected_uid="2020-01-01_CAT5 CT",
     )
 
     package5 = Package(
@@ -301,7 +289,6 @@ def get_expected_imports(effective_date, user_initials):
         description="No codelists defined -> log inconsistency",
         source="Cat5 source",
         href="/mdr/ct/packages/cat5-2020-01-01",
-
         terms=[],
         codelists=[],
         discontinued_codelists=[],
@@ -349,7 +336,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C09",
         extensible=True,
         synonyms=None,
-
         terms=[term8_a],
     )
 
@@ -362,7 +348,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C10",
         extensible=True,
         synonyms=None,
-
         terms=[term8_b],
     )
 
@@ -375,7 +360,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C11",
         extensible=True,
         synonyms=None,
-
         terms=[term8_c],
     )
 
@@ -388,7 +372,6 @@ def get_expected_imports(effective_date, user_initials):
         description="The codelists C09, C10 and C11 have the same term with different submission values -> log inconsistency",
         source="Cat6 source",
         href="/mdr/ct/packages/cat6-2020-01-01",
-
         terms=[term8_b, term8_a, term8_c],
         codelists=[codelist9, codelist10, codelist11],
         discontinued_codelists=[],
@@ -403,7 +386,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C12 - same name-T08 submission value as codelist C09 from 'Cat6 CT 2020-01-01'",
         extensible=True,
         synonyms=None,
-
         terms=[term8_a],
     )
 
@@ -416,7 +398,6 @@ def get_expected_imports(effective_date, user_initials):
         description="The codelist C12 contains the same term as in codelist C09 from 'Cat6 CT 2020-01-01'",
         source="Cat7 source",
         href="/mdr/ct/packages/cat7-2020-01-01",
-
         terms=[term8_a],
         codelists=[codelist12],
         discontinued_codelists=[],
@@ -427,7 +408,7 @@ def get_expected_imports(effective_date, user_initials):
         user_initials=user_initials,
         packages=[package1, package2, package3, package4, package5, package6, package7],
         discontinued_codelists=[],
-        log_entries=[warning1, warning4, warning2, info1, info2]
+        log_entries=[warning1, warning4, warning2, info1, info2],
     )
 
     return [import1]

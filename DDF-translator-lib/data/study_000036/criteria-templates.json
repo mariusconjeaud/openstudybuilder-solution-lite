@@ -1,0 +1,96 @@
+{
+  "items": [
+    {
+      "categories": null,
+      "changeDescription": "Deactivated version",
+      "defaultParameterValues": {},
+      "editableInstance": false,
+      "endDate": null,
+      "guidanceText": "<p>The criterion will address the assessments made at the screening visit, to evaluate whether the subject is considered not to have any co-morbidities that prohibit inclusion in the trial. Consider if certain organ systems need to be assessed and if \u2018abnormal, not clinically significant\u2019 is acceptable in certain circumstances/for certain organ systems, or this needs to be more stringent.&nbsp;</p><p>If lipids are to be assessed at screening, this is covered by laboratory tests in this criterion, but are to be clearly specified in the flow chart</p>",
+      "indications": [
+        {
+          "abbreviation": "",
+          "changeDescription": "Approved version",
+          "definition": "Obesity (disorder)",
+          "dictionaryId": "414916001",
+          "endDate": null,
+          "libraryName": "SNOMED",
+          "name": "Obesity",
+          "nameSentenceCase": "obesity",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-07-06T19:20:05.951545",
+          "status": "Final",
+          "termUid": "DictionaryTerm_000027",
+          "userInitials": "unknown-user",
+          "version": "1.0"
+        }
+      ],
+      "library": {
+        "isEditable": true,
+        "name": "Sponsor"
+      },
+      "name": "<p>Considered eligible based on the medical history, physical examination, and the results of vital signs, electrocardiogram and clinical laboratory tests performed during the screening visit, as judged by the investigator</p>",
+      "namePlain": "Considered eligible based on the medical history, physical examination, and the results of vital signs, electrocardiogram and clinical laboratory tests performed during the screening visit, as judged by the investigator",
+      "parameters": [],
+      "possibleActions": [
+        "reactivate"
+      ],
+      "startDate": "2022-07-07T17:01:35.484972",
+      "status": "Retired",
+      "studyCount": 0,
+      "subCategories": null,
+      "type": {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Imported from CDISC",
+          "codeSubmissionValue": "Inclusion Criteria",
+          "codelistUid": null,
+          "conceptId": "C25532",
+          "definition": "The criteria in a protocol that prospective subjects must meet to be eligible for participation in a study. NOTE: Exclusion and inclusion criteria define the study population. See also exclusion criteria. (CDISC glossary)",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": null,
+          "nciPreferredName": "Inclusion Criteria",
+          "possibleActions": [],
+          "startDate": "2017-09-29T00:00:00",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "TESTUSER",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000012",
+        "libraryName": "CDISC",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Initial import from CDISC",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 1,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Inclusion Criteria",
+          "sponsorPreferredNameSentenceCase": "inclusion criteria",
+          "startDate": "2022-07-06T10:23:13.916000",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "TESTUSER",
+          "version": "1.0"
+        },
+        "termUid": "C25532_Inclusion Criteria"
+      },
+      "uid": "CriteriaTemplate_000002",
+      "userInitials": "AVQ",
+      "version": "1.0"
+    }
+  ],
+  "page": 1,
+  "size": 0,
+  "total": 0
+}

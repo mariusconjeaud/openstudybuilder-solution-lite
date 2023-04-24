@@ -2,11 +2,11 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Iterable, Optional, Sequence, Tuple, cast
 
-from cachetools import TTLCache, cached
+from cachetools import cached
 from cachetools.keys import hashkey
 from neomodel import db
 
-from clinical_mdr_api import config, models
+from clinical_mdr_api import models
 from clinical_mdr_api.domain.controlled_terminology.utils import TermParentType
 from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
@@ -44,30 +44,27 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
     root_class = type
     value_class = type
     relationship_from_root = type
-    cache_store_item_by_uid: TTLCache = TTLCache(
-        maxsize=config.CACHE_MAX_SIZE, ttl=config.CACHE_TTL
-    )
-
+    # cache_store_item_by_uid: TTLCache = TTLCache(
+    #    maxsize=config.CACHE_MAX_SIZE, ttl=config.CACHE_TTL
+    # )
     generic_alias_clause = """
         DISTINCT term_root, term_ver_root, term_ver_value, codelist_root, has_term
         ORDER BY has_term.order, term_ver_value.name
         WITH DISTINCT codelist_root, has_term, term_root, term_ver_root, term_ver_value,
         head([(catalogue)-[:HAS_CODELIST]->(codelist_root) | catalogue]) AS catalogue,
-        head([(lib)-[:CONTAINS_TERM]->(term_root) | lib]) AS library,
-        head([(term_ver_root)-[ld:LATEST_DRAFT]->(term_ver_value) | ld]) AS ld,
-        head([(term_ver_root)-[lf:LATEST_FINAL]->(term_ver_value) | lf]) AS lf,
-        head([(term_ver_root)-[lr:LATEST_RETIRED]->(term_ver_value) | lr]) AS lr,
-        head([(term_ver_root)-[hv:HAS_VERSION]->(term_ver_value) | hv]) AS hv
-        CALL apoc.case(
-            [
-                ld IS NOT NULL AND ld.end_date IS NULL, 'RETURN ld as rel',
-                lf IS NOT NULL AND lf.end_date IS NULL, 'RETURN lf as rel',
-                lr IS NOT NULL AND lr.end_date IS NULL, 'RETURN lr as rel',
-                ld IS NULL AND lf IS NULL AND lr IS NULL, 'RETURN hv as rel'
-            ],
-            '',
-            {ld:ld, lf:lf, lr:lr, hv:hv})
-        YIELD value as rel_data
+        head([(lib)-[:CONTAINS_TERM]->(term_root) | lib]) AS library
+        CALL {
+                WITH term_ver_root, term_ver_value
+                MATCH (term_ver_root)-[hv:HAS_VERSION]-(term_ver_value)
+                WITH hv
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.end_date ASC,
+                    hv.start_date ASC
+                WITH collect(hv) as hvs
+                RETURN last(hvs) AS rel_data
+            }
         WITH
             term_root.uid AS term_uid,
             codelist_root.uid AS codelist_uid,
@@ -77,12 +74,12 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             library.name AS library_name,
             library.is_editable AS is_library_editable,
             {
-                start_date: rel_data.rel.start_date,
+                start_date: rel_data.start_date,
                 end_date: NULL,
-                status: rel_data.rel.status,
-                version: rel_data.rel.version,
-                change_description: rel_data.rel.change_description,
-                user_initials: rel_data.rel.user_initials
+                status: rel_data.status,
+                version: rel_data.version,
+                change_description: rel_data.change_description,
+                user_initials: rel_data.user_initials
             } AS rel_data
         """
 
@@ -223,10 +220,12 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             if self.is_repository_related_to_attributes()
             else models.CTTermName
         )
+
         query = CypherQueryBuilder(
             match_clause=match_clause,
             alias_clause=alias_clause,
             sort_by=sort_by,
+            implicit_sort_by="term_uid",
             page_number=page_number,
             page_size=page_size,
             filter_by=FilterDict(elements=filter_by),
@@ -339,33 +338,33 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
 
         return terms_ars
 
-    def get_template_criteria_type(
-        self, root_class: type, template_uid: str
+    def get_syntax_criteria_type(
+        self, root_class: type, syntax_uid: str
     ) -> _AggregateRootType:
         """
-        This method returns the criteria type for the template with provided uid.
+        This method returns the criteria type for the syntax with provided uid.
 
-        :param root_class: The class of the root node for the template
-        :param template_uid: UID of the template
+        :param root_class: The class of the root node for the syntax
+        :param syntax_uid: UID of the syntax
         :return _AggregateRootType:
         """
-        template = root_class.nodes.get(uid=template_uid)
-        criteria_type_node = template.has_type.single()
+        syntax = root_class.nodes.get(uid=syntax_uid)
+        criteria_type_node = syntax.has_type.single()
         criteria_type = self.find_by_uid(term_uid=criteria_type_node.uid)
         return criteria_type
 
-    def get_template_categories(
-        self, root_class: type, template_uid: str
+    def get_syntax_categories(
+        self, root_class: type, syntax_uid: str
     ) -> Optional[Sequence[_AggregateRootType]]:
         """
-        This method returns the categories for the template with provided uid.
+        This method returns the categories for the syntax with provided uid.
 
-        :param root_class: The class of the root node for the template
-        :param template_uid: UID of the template
+        :param root_class: The class of the root node for the syntax
+        :param syntax_uid: UID of the syntax
         :return Sequence[_AggregateRootType]:
         """
-        template = root_class.nodes.get(uid=template_uid)
-        category_nodes = template.has_category.all()
+        syntax = root_class.nodes.get(uid=syntax_uid)
+        category_nodes = syntax.has_category.all()
         if category_nodes:
             categories = []
             for node in category_nodes:
@@ -374,18 +373,18 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             return sorted(categories, key=lambda c: c.uid)
         return None
 
-    def get_template_subcategories(
-        self, root_class: type, template_uid: str
+    def get_syntax_subcategories(
+        self, root_class: type, syntax_uid: str
     ) -> Optional[Sequence[_AggregateRootType]]:
         """
-        This method returns the sub_categories for the template with provided uid.
+        This method returns the sub_categories for the syntax with provided uid.
 
-        :param root_class: The class of the root node for the template
-        :param template_uid: UID of the template
+        :param root_class: The class of the root node for the syntax
+        :param syntax_uid: UID of the syntax
         :return Sequence[_AggregateRootType]:
         """
-        template = root_class.nodes.get(uid=template_uid)
-        sub_category_nodes = template.has_subcategory.all()
+        syntax = root_class.nodes.get(uid=syntax_uid)
+        sub_category_nodes = syntax.has_subcategory.all()
         if sub_category_nodes:
             sub_categories = []
             for node in sub_category_nodes:
@@ -419,7 +418,9 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
             for_update,
         )
 
-    @cached(cache=cache_store_item_by_uid, key=hashkey_ct_term)
+    @cached(
+        cache=LibraryItemRepositoryImplBase.cache_store_item_by_uid, key=hashkey_ct_term
+    )
     def find_by_uid(
         self,
         term_uid: str,
@@ -428,7 +429,6 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         at_specific_date: Optional[datetime] = None,
         for_update: bool = False,
     ) -> Optional[_AggregateRootType]:
-
         ct_term_root: CTTermRoot = CTTermRoot.nodes.get_or_none(uid=term_uid)
         if ct_term_root is None:
             return None

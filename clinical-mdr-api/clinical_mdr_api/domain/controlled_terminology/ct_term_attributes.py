@@ -62,7 +62,6 @@ class CTTermAttributesVO:
             [str], bool
         ] = lambda _: False,
     ) -> "CTTermAttributesVO":
-
         if not codelist_exists_callback(codelist_uid):
             raise ValueError(
                 f"There is no codelist identified by provided codelist uid ({codelist_uid})"

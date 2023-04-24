@@ -108,6 +108,9 @@ export default {
         page_size: this.options.itemsPerPage,
         total_count: true
       }
+      if (this.type === 'TV') {
+        params.sort_by = { VISITNUM: true }
+      }
       listings.getAllSdtm(this.selectedStudy.uid, params, this.type).then(resp => {
         this.items = resp.data.items
         this.total = resp.data.total

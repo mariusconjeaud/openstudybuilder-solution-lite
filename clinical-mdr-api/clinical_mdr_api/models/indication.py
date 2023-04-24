@@ -3,11 +3,11 @@ from typing import Optional
 
 from pydantic import Field
 
-from clinical_mdr_api.models.template_parameter_value import TemplateParameterValue
+from clinical_mdr_api.models.template_parameter_term import TemplateParameterTerm
 from clinical_mdr_api.models.utils import BaseModel
 
 
-class Indication(TemplateParameterValue):
+class Indication(TemplateParameterTerm):
     uid: str = Field(
         ...,
         title="uid",

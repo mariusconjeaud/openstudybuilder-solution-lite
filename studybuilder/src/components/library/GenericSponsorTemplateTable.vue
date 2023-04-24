@@ -379,7 +379,7 @@ export default Vue.extend({
       })
     },
     async approveTemplate (template) {
-      if (template.uid.includes('ActivityDescriptionTemplate')) { // Temporary workaround for Activity Templates, will be deleted after backend instantiations activities implement
+      if (template.uid.includes('ActivityInstructionTemplate')) { // Temporary workaround for Activity Templates, will be deleted after backend instantiations activities implement
         this.api.approveCascade(template.uid, false).then(resp => {
           this.updateTemplate(resp.data, template.status)
           bus.$emit('notification', { msg: this.$t(this.translationType + '.approve_success') })
@@ -497,7 +497,7 @@ export default Vue.extend({
     getBaseObjectType () {
       let result = this.objectType.replace('Templates', '')
       if (result === 'activity') {
-        result = 'activity-description'
+        result = 'activity-instruction'
       }
       return result
     },

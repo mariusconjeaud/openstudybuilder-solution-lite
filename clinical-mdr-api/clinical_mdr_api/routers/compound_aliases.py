@@ -28,7 +28,7 @@ CompoundAliasUID = Path(None, description="The unique id of the compound alias")
 @router.get(
     "/compound-aliases",
     summary="List all compound aliases (for a given library)",
-    description="""
+    description=f"""
 State before:
  - The library must exist (if specified)
 
@@ -39,10 +39,16 @@ State after:
  - No change
 
 Possible errors:
- - Invalid library name specified.""",
+ - Invalid library name specified.
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+""",
     response_model=CustomPage[CompoundAlias],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 @decorators.allow_exports(
     {
@@ -114,7 +120,7 @@ def get_all(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -165,7 +171,10 @@ Possible errors:
  """,
     response_model=CompoundAlias,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get(
     uid: str = CompoundAliasUID, current_user_id: str = Depends(get_current_user_id)
@@ -198,7 +207,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The compound alias with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_versions(
@@ -241,11 +250,11 @@ Possible errors:
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create(
-    compound_create_input: CompoundAliasCreateInput = Body(None, description=""),
+    compound_create_input: CompoundAliasCreateInput = Body(description=""),
     current_user_id: str = Depends(get_current_user_id),
 ):
     service = CompoundAliasService(user=current_user_id)
@@ -288,12 +297,12 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The compound alias with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
     uid: str = CompoundAliasUID,
-    compound_edit_input: CompoundAliasEditInput = Body(None, description=""),
+    compound_edit_input: CompoundAliasEditInput = Body(description=""),
     current_user_id: str = Depends(get_current_user_id),
 ):
     service = CompoundAliasService(user=current_user_id)
@@ -334,7 +343,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The compound alias with the specified 'uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
@@ -376,7 +385,7 @@ Possible errors:
             "- The compound alias is not in final status.\n"
             "- The compound alias with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create_new_version(
@@ -419,7 +428,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The compound alias with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
@@ -462,7 +471,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - The compound alias with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
@@ -507,7 +516,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - An compound alias with the specified 'uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete(

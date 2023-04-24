@@ -152,7 +152,6 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         only_specific_status: Optional[Sequence[str]] = None,
         **kwargs,
     ) -> GenericFilteringReturn[BaseModel]:
-
         self.enforce_library(library)
 
         try:
@@ -210,7 +209,6 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         at_specific_date: Optional[datetime] = None,
         status: Optional[str] = None,
     ) -> BaseModel:
-
         item = self._find_by_uid_or_raise_not_found(
             uid=uid, version=version, at_specific_date=at_specific_date, status=status
         )

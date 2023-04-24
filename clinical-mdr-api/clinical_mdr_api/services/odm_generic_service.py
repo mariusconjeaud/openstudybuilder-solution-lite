@@ -2,10 +2,25 @@ import re
 from abc import ABC
 from typing import Dict, List, Optional, Union
 
+from clinical_mdr_api.domain.concepts.odms.form import OdmFormAR
+from clinical_mdr_api.domain.concepts.odms.item import OdmItemAR
+from clinical_mdr_api.domain.concepts.odms.item_group import OdmItemGroupAR
 from clinical_mdr_api.domain.concepts.odms.vendor_attribute import OdmVendorAttributeAR
-from clinical_mdr_api.domain.concepts.utils import VendorCompatibleType
+from clinical_mdr_api.domain.concepts.utils import RelationType, VendorCompatibleType
+from clinical_mdr_api.domain_repositories.concepts.odms.form_repository import (
+    FormRepository,
+)
+from clinical_mdr_api.domain_repositories.concepts.odms.item_group_repository import (
+    ItemGroupRepository,
+)
+from clinical_mdr_api.domain_repositories.concepts.odms.item_repository import (
+    ItemRepository,
+)
 from clinical_mdr_api.exceptions import BusinessLogicException
-from clinical_mdr_api.models.odm_common_models import OdmVendorRelationPostInput
+from clinical_mdr_api.models.odm_common_models import (
+    OdmVendorRelationPostInput,
+    OdmVendorsPostInput,
+)
 from clinical_mdr_api.services.concepts.concept_generic_service import (
     ConceptGenericService,
     _AggregateRootType,
@@ -176,3 +191,37 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
                 }
             }
         )[0]
+
+    def pre_management(
+        self,
+        uid,
+        odm_vendors_post_input: OdmVendorsPostInput,
+        odm_ar: Union[OdmFormAR, OdmItemGroupAR, OdmItemAR],
+        repo: Union[FormRepository, ItemGroupRepository, ItemRepository],
+    ):
+        removed_vendor_attribute_uids = set(
+            odm_ar.concept_vo.vendor_element_attribute_uids
+        ) - {
+            element_attribute.uid
+            for element_attribute in odm_vendors_post_input.element_attributes
+        }
+        for removed_vendor_attribute_uid in removed_vendor_attribute_uids:
+            repo.remove_relation(
+                uid=uid,
+                relation_uid=removed_vendor_attribute_uid,
+                relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
+            )
+
+        new_vendor_element_uids = {
+            element.uid for element in odm_vendors_post_input.elements
+        } - set(odm_ar.concept_vo.vendor_element_uids)
+        for element in odm_vendors_post_input.elements:
+            if element.uid in new_vendor_element_uids:
+                repo.add_relation(
+                    uid=uid,
+                    relation_uid=element.uid,
+                    relationship_type=RelationType.VENDOR_ELEMENT,
+                    parameters={
+                        "value": element.value,
+                    },
+                )

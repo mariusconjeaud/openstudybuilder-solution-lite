@@ -4,7 +4,6 @@ from fastapi import APIRouter, Path, Query
 from pydantic.types import Json
 
 from clinical_mdr_api import config, models
-from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions
@@ -16,13 +15,14 @@ router = APIRouter()
 
 
 @router.get(
-    "/studies/all/sdtm/tv/{study_uid}",
+    "/studies/{study_uid}/sdtm/tv",
     summary="SDTM TV domain listing",
     response_model=CustomPage[models.listings_sdtm.StudyVisitListing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_tv(
@@ -67,13 +67,14 @@ def get_tv(
 
 
 @router.get(
-    "/studies/all/sdtm/ta/{study_uid}",
+    "/studies/{study_uid}/sdtm/ta",
     summary="SDTM TA domain listing",
     response_model=CustomPage[models.StudyArmListing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_ta(
@@ -118,13 +119,14 @@ def get_ta(
 
 
 @router.get(
-    "/studies/all/sdtm/ti/{study_uid}",
+    "/studies/{study_uid}/sdtm/ti",
     summary="SDTM TI domain listing",
     response_model=CustomPage[models.listings_sdtm.StudyCriterionListing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_ti(
@@ -169,13 +171,14 @@ def get_ti(
 
 
 @router.get(
-    "/studies/all/sdtm/ts/{study_uid}",
+    "/studies/{study_uid}/sdtm/ts",
     summary="SDTM TS domain listing",
     response_model=CustomPage[models.listings_sdtm.StudySummaryListing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_ts(
@@ -220,13 +223,14 @@ def get_ts(
 
 
 @router.get(
-    "/studies/all/sdtm/ts/{study_uid}",
+    "/studies/{study_uid}/sdtm/te",
     summary="SDTM TE domain listing",
     response_model=CustomPage[models.StudyElementListing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_te(
@@ -271,13 +275,14 @@ def get_te(
 
 
 @router.get(
-    "/studies/all/sdtm/tdm/{study_uid}",
+    "/studies/{study_uid}/sdtm/tdm",
     summary="SDTM TDM domain listing",
     response_model=CustomPage[models.StudyDiseaseMilestoneListing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_tdm(

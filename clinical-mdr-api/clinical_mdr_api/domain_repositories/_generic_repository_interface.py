@@ -19,12 +19,8 @@ class GenericRepository(Generic[_AggregateRootType], abc.ABC):
         self,
         *,
         status: Optional[LibraryItemStatus] = None,
-        library_name: Optional[str] = None
+        library_name: Optional[str] = None,
     ) -> Iterable[_AggregateRootType]:
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def find_releases_referenced_by_any_study(self) -> Iterable[_AggregateRootType]:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -35,7 +31,7 @@ class GenericRepository(Generic[_AggregateRootType], abc.ABC):
         version: Optional[str] = None,
         status: Optional[LibraryItemStatus] = None,
         at_specific_date: Optional[datetime] = None,
-        for_update: bool = False
+        for_update: bool = False,
     ) -> Optional[_AggregateRootType]:
         raise NotImplementedError()
 
@@ -43,12 +39,12 @@ class GenericRepository(Generic[_AggregateRootType], abc.ABC):
     def save(self, item: _AggregateRootType) -> None:
         raise NotImplementedError()
 
-    @property  # type: ignore
+    @property
     @abc.abstractmethod
     def user_initials(self) -> Optional[str]:
         raise NotImplementedError()
 
-    @user_initials.setter  # type: ignore
+    @user_initials.setter
     @abc.abstractmethod
     def user_initials(self, user_initials: str) -> None:
         raise NotImplementedError()
@@ -70,15 +66,7 @@ class GenericRepository(Generic[_AggregateRootType], abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def check_exists_by_name_in_library(self, name: str, library: str) -> bool:
-        raise NotImplementedError
-
-    @abc.abstractmethod
     def check_exists_final_version(self, uid: str) -> bool:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def check_usage_count(self, uid: str) -> int:
         raise NotImplementedError
 
     @abc.abstractmethod

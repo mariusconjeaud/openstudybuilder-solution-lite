@@ -24,7 +24,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 
 
 class ConceptValue(VersionValue):
-    __optional_labels__ = ["TemplateParameterValue"]
+    __optional_labels__ = ["TemplateParameterTermValue"]
     name = StringProperty()
     name_sentence_case = StringProperty()
     definition = StringProperty()
@@ -32,7 +32,7 @@ class ConceptValue(VersionValue):
 
 
 class ConceptRoot(VersionRoot):
-    __optional_labels__ = ["TemplateParameterValueRoot"]
+    __optional_labels__ = ["TemplateParameterTermRoot"]
     LIBRARY_REL_LABEL = "CONTAINS_CONCEPT"
 
     has_library = RelationshipFrom(Library, LIBRARY_REL_LABEL, model=ClinicalMdrRel)
@@ -61,20 +61,13 @@ class UnitDefinitionValue(ConceptValue):
 
 
 class UnitDefinitionRoot(ConceptRoot):
-
     has_version = RelationshipTo(
         UnitDefinitionValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(UnitDefinitionValue, "LATEST")
-    latest_draft = RelationshipTo(
-        UnitDefinitionValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        UnitDefinitionValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        UnitDefinitionValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    latest_draft = RelationshipTo(UnitDefinitionValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(UnitDefinitionValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(UnitDefinitionValue, "LATEST_RETIRED")
 
 
 class SimpleConceptValue(ConceptValue):
@@ -92,12 +85,9 @@ class TextValue(SimpleConceptValue):
 class TextValueRoot(SimpleConceptRoot):
     has_version = RelationshipTo(TextValue, "HAS_VERSION", model=VersionRelationship)
     has_latest_value = RelationshipTo(TextValue, "LATEST")
-
-    latest_draft = RelationshipTo(TextValue, "LATEST_DRAFT", model=VersionRelationship)
-    latest_final = RelationshipTo(TextValue, "LATEST_FINAL", model=VersionRelationship)
-    latest_retired = RelationshipTo(
-        TextValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    latest_draft = RelationshipTo(TextValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(TextValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(TextValue, "LATEST_RETIRED")
 
 
 class VisitNameValue(SimpleConceptValue):
@@ -109,16 +99,9 @@ class VisitNameRoot(SimpleConceptRoot):
         VisitNameValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(VisitNameValue, "LATEST")
-
-    latest_draft = RelationshipTo(
-        VisitNameValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        VisitNameValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        VisitNameValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    latest_draft = RelationshipTo(VisitNameValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(VisitNameValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(VisitNameValue, "LATEST_RETIRED")
 
 
 class NumericValue(SimpleConceptValue):
@@ -127,19 +110,11 @@ class NumericValue(SimpleConceptValue):
 
 
 class NumericValueRoot(SimpleConceptRoot):
-
     has_version = RelationshipTo(NumericValue, "HAS_VERSION", model=VersionRelationship)
     has_latest_value = RelationshipTo(NumericValue, "LATEST")
-
-    latest_draft = RelationshipTo(
-        NumericValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        NumericValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        NumericValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    latest_draft = RelationshipTo(NumericValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(NumericValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(NumericValue, "LATEST_RETIRED")
 
 
 class StudyDayValue(NumericValue):
@@ -147,21 +122,13 @@ class StudyDayValue(NumericValue):
 
 
 class StudyDayRoot(NumericValueRoot):
-
     has_version = RelationshipTo(
         StudyDayValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(StudyDayValue, "LATEST")
-
-    latest_draft = RelationshipTo(
-        StudyDayValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        StudyDayValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        StudyDayValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    latest_draft = RelationshipTo(StudyDayValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(StudyDayValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(StudyDayValue, "LATEST_RETIRED")
 
 
 class StudyWeekValue(NumericValue):
@@ -169,21 +136,13 @@ class StudyWeekValue(NumericValue):
 
 
 class StudyWeekRoot(NumericValueRoot):
-
     has_version = RelationshipTo(
         StudyWeekValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(StudyWeekValue, "LATEST")
-
-    latest_draft = RelationshipTo(
-        StudyWeekValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        StudyWeekValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        StudyWeekValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    latest_draft = RelationshipTo(StudyWeekValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(StudyWeekValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(StudyWeekValue, "LATEST_RETIRED")
 
 
 class StudyDurationDaysValue(NumericValue):
@@ -191,21 +150,13 @@ class StudyDurationDaysValue(NumericValue):
 
 
 class StudyDurationDaysRoot(NumericValueRoot):
-
     has_version = RelationshipTo(
         StudyDurationDaysValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(StudyDurationDaysValue, "LATEST")
-
-    latest_draft = RelationshipTo(
-        StudyDurationDaysValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        StudyDurationDaysValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        StudyDurationDaysValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    latest_draft = RelationshipTo(StudyDurationDaysValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(StudyDurationDaysValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(StudyDurationDaysValue, "LATEST_RETIRED")
 
 
 class StudyDurationWeeksValue(NumericValue):
@@ -213,21 +164,13 @@ class StudyDurationWeeksValue(NumericValue):
 
 
 class StudyDurationWeeksRoot(NumericValueRoot):
-
     has_version = RelationshipTo(
         StudyDurationWeeksValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(StudyDurationWeeksValue, "LATEST")
-
-    latest_draft = RelationshipTo(
-        StudyDurationWeeksValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        StudyDurationWeeksValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        StudyDurationWeeksValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    latest_draft = RelationshipTo(StudyDurationWeeksValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(StudyDurationWeeksValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(StudyDurationWeeksValue, "LATEST_RETIRED")
 
 
 class TimePointValue(SimpleConceptValue):
@@ -245,16 +188,9 @@ class TimePointRoot(SimpleConceptRoot):
         TimePointValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(TimePointValue, "LATEST")
-
-    latest_draft = RelationshipTo(
-        TimePointValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        TimePointValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        TimePointValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    latest_draft = RelationshipTo(TimePointValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(TimePointValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(TimePointValue, "LATEST_RETIRED")
 
 
 class NumericValueWithUnitValue(NumericValue):
@@ -264,21 +200,13 @@ class NumericValueWithUnitValue(NumericValue):
 
 
 class NumericValueWithUnitRoot(NumericValueRoot):
-
     has_version = RelationshipTo(
         NumericValueWithUnitValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(NumericValueWithUnitValue, "LATEST")
-
-    latest_draft = RelationshipTo(
-        NumericValueWithUnitValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        NumericValueWithUnitValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        NumericValueWithUnitValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    latest_draft = RelationshipTo(NumericValueWithUnitValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(NumericValueWithUnitValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(NumericValueWithUnitValue, "LATEST_RETIRED")
 
 
 class LagTimeValue(NumericValue):
@@ -290,16 +218,8 @@ class LagTimeValue(NumericValue):
 
 
 class LagTimeRoot(NumericValueRoot):
-
     has_version = RelationshipTo(LagTimeValue, "HAS_VERSION", model=VersionRelationship)
     has_latest_value = RelationshipTo(LagTimeValue, "LATEST")
-
-    latest_draft = RelationshipTo(
-        LagTimeValue, "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_final = RelationshipTo(
-        LagTimeValue, "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_retired = RelationshipTo(
-        LagTimeValue, "LATEST_RETIRED", model=VersionRelationship
-    )
+    latest_draft = RelationshipTo(LagTimeValue, "LATEST_DRAFT")
+    latest_final = RelationshipTo(LagTimeValue, "LATEST_FINAL")
+    latest_retired = RelationshipTo(LagTimeValue, "LATEST_RETIRED")

@@ -10,6 +10,7 @@ import pytest
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis.strategies import sampled_from
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain.study_definition_aggregate.registry_identifiers import (
     RegistryIdentifiersVO,
 )
@@ -386,7 +387,6 @@ def random_valid_study_population(
 
 class TestStudyPopulation(unittest.TestCase):
     def test__validate__valid_data__success(self):
-
         # given
         for test_data in [random_valid_study_population() for _ in range(0, 1000)]:
             with self.subTest():
@@ -397,7 +397,6 @@ class TestStudyPopulation(unittest.TestCase):
                 # nothing (i.e. no exception)
 
     def test__validate__both_value_and_null_value_provided__failure(self):
-
         series_of_data_with_both_value_and_null_value_provided_for_one_of_values = [
             random.choice(
                 [
@@ -468,12 +467,11 @@ class TestStudyPopulation(unittest.TestCase):
         ) in series_of_data_with_both_value_and_null_value_provided_for_one_of_values:
             with self.subTest():
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_data.validate()
 
     def test__validate__invalid_therapeutic_area_code__failure(self):
-
         # given
         for test_data in [
             random_valid_study_population().fix_some_values(
@@ -484,14 +482,13 @@ class TestStudyPopulation(unittest.TestCase):
         ]:
             with self.subTest():
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_data.validate(
                         therapeutic_area_exists_callback=(lambda _: False)
                     )
 
     def test__validate__invalid_disease_condition_or_indication_code__failure(self):
-
         # given
         for test_data in [
             random_valid_study_population().fix_some_values(
@@ -502,7 +499,7 @@ class TestStudyPopulation(unittest.TestCase):
         ]:
             with self.subTest():
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_data.validate(
                         disease_condition_or_indication_exists_callback=(
@@ -511,7 +508,6 @@ class TestStudyPopulation(unittest.TestCase):
                     )
 
     def test__validate__invalid_diagnostic_group_code__failure(self):
-
         # given
         for test_data in [
             random_valid_study_population().fix_some_values(
@@ -522,14 +518,13 @@ class TestStudyPopulation(unittest.TestCase):
         ]:
             with self.subTest():
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_data.validate(
                         diagnosis_group_exists_callback=(lambda _: False)
                     )
 
     def test__validate__invalid_sex_of_participants_code__failure(self):
-
         # given
         for test_data in [
             random_valid_study_population().fix_some_values(
@@ -540,14 +535,13 @@ class TestStudyPopulation(unittest.TestCase):
         ]:
             with self.subTest():
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_data.validate(
                         sex_of_participants_exists_callback=(lambda _: False)
                     )
 
     def test__validate__invalid_null_value_code_provided__failure(self):
-
         series_of_data_with_one_of_null_value_provided = [
             random.choice(
                 [
@@ -612,7 +606,7 @@ class TestStudyPopulation(unittest.TestCase):
         for test_data in series_of_data_with_one_of_null_value_provided:
             with self.subTest():
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_data.validate(null_value_exists_callback=(lambda _: False))
 
@@ -640,7 +634,6 @@ def random_valid_id_metadata(
 
     count: int = 0
     while True:
-
         result = StudyIdentificationMetadataVO(
             study_number=fixed_or_default("study_number", random_study_number()),
             study_acronym=fixed_or_default("study_acronym", random_opt_str()),
@@ -683,7 +676,7 @@ def random_valid_id_metadata_sequence(
 class TestIdentificationMetadataVO(unittest.TestCase):
     def test__study_id__results(self):
         # test data in form of tuples
-        # (study_number, study_acronym, study_id_prefix, ct_gov_id, eudract_id, study_status, locked_version_number,
+        # (study_number, study_acronym, study_id_prefix, ct_gov_id, eudract_id, study_status, version_number,
         #       project_number)
         test_tuples = [
             ("study-num", "study-acronym", "id-prefix", "proj-num"),
@@ -752,7 +745,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                 )
 
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     study_id_metadata.validate()
 
@@ -785,7 +778,6 @@ class TestIdentificationMetadataVO(unittest.TestCase):
             # nothing (just no exceptions)
 
     def test__validate__neither_study_number_nor_study_acronym__failure(self):
-
         for id_metadata in [
             _.fix_some_values(study_acronym=None, study_number=None)
             for _ in random_valid_id_metadata_sequence(100)
@@ -798,7 +790,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                 )
 
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     id_metadata.validate(project_exists_callback=(lambda _: True))
 
@@ -810,7 +802,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                 return False
             try:
                 id_m.validate(project_exists_callback=(lambda _: True))
-            except ValueError:
+            except exceptions.ValidationException:
                 return False
             return True
 
@@ -822,7 +814,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                 assert has_project_number_and_validates_when_it_is_ok(id_metadata)
 
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     id_metadata.validate(project_exists_callback=(lambda _: False))
 
@@ -1083,7 +1075,7 @@ def test__high_level_study_design__validate__invalid_null_value_code_failure(
     )
 
     # then
-    with pytest.raises(ValueError):
+    with pytest.raises(exceptions.ValidationException):
         # when
         high_level_study_design.validate(
             null_value_exists_callback=(
@@ -1186,7 +1178,7 @@ class TestStudyDescriptionVO(unittest.TestCase):
         for test_item in test_sequence:
             with self.subTest():
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     test_item.validate(
                         study_number="study_number",
                         study_title_exists_callback=(lambda _, study_number: True),
@@ -1218,7 +1210,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
         for test_item in test_sequence:
             with self.subTest():
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_item.validate(
                         null_value_exists_callback=(lambda _: False),
@@ -1229,7 +1221,6 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                     )
 
     def test__validate__both_study_stop_rules_and_its_null_value_present__failure(self):
-
         # given
         test_sequence = list(
             random_valid_high_level_study_design_sequence(
@@ -1247,7 +1238,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
         for test_item in test_sequence:
             with self.subTest():
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_item.validate(
                         null_value_exists_callback=(lambda _: True),
@@ -1260,7 +1251,6 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
     def test__validate__both_is_adaptive_design_and_its_null_value_present__failure(
         self,
     ):
-
         # given
         test_sequence = list(
             random_valid_high_level_study_design_sequence(
@@ -1278,7 +1268,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
         for test_item in test_sequence:
             with self.subTest():
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_item.validate(
                         null_value_exists_callback=(lambda _: True),
@@ -1291,7 +1281,6 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
     def test__validate__both_is_extension_trial_and_its_null_value_present__failure(
         self,
     ):
-
         # given
         test_sequence = list(
             random_valid_high_level_study_design_sequence(
@@ -1309,7 +1298,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
         for test_item in test_sequence:
             with self.subTest():
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_item.validate(
                         null_value_exists_callback=(lambda _: True),
@@ -1320,7 +1309,6 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                     )
 
     def test__validate__both_trial_types_and_its_null_value_present__failure(self):
-
         # given
         test_sequence = list(
             random_valid_high_level_study_design_sequence(
@@ -1338,7 +1326,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
         for test_item in test_sequence:
             with self.subTest():
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_item.validate(
                         null_value_exists_callback=(lambda _: True),
@@ -1349,7 +1337,6 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                     )
 
     def test__validate__both_trial_phase_and_its_null_value_present__failure(self):
-
         # given
         test_sequence = list(
             random_valid_high_level_study_design_sequence(
@@ -1366,7 +1353,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
         for test_item in test_sequence:
             with self.subTest():
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_item.validate(
                         null_value_exists_callback=(lambda _: True),
@@ -1379,7 +1366,6 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
     def test__validate__both_study_type_and_study_type_null_value_present__failure(
         self,
     ):
-
         # given
         test_sequence = random_valid_high_level_study_design_sequence(
             count=10, condition=(lambda _: _.is_valid())
@@ -1394,7 +1380,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
         for test_item in test_sequence:
             with self.subTest():
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_item.validate(
                         null_value_exists_callback=(lambda _: True),
@@ -1405,7 +1391,6 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                     )
 
     def test__validate__neither_main_nor_null_values__success(self):
-
         # given
         test_sequence = random_valid_high_level_study_design_sequence(
             count=1,
@@ -1442,7 +1427,6 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 # nothing (just no exceptions)
 
     def test__validate__no_main_values__success(self):
-
         # given
         test_sequence = random_valid_high_level_study_design_sequence(
             count=100,
@@ -1472,7 +1456,6 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 # nothing (just no exceptions)
 
     def test__validate__no_null_values__success(self):
-
         # given
         test_sequence = random_valid_high_level_study_design_sequence(
             count=100,
@@ -1550,7 +1533,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 return False
             try:
                 d.validate(trial_phase_exists_callback=(lambda _: True))
-            except ValueError:
+            except exceptions.ValidationException:
                 return False
             return True
 
@@ -1564,7 +1547,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 )
 
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     high_level_study_design.validate(
                         trial_phase_exists_callback=(lambda _: False)
@@ -1578,7 +1561,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 return False
             try:
                 d.validate(study_type_exists_callback=(lambda _: True))
-            except ValueError:
+            except exceptions.ValidationException:
                 return False
             return True
 
@@ -1592,7 +1575,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 )
 
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     high_level_study_design.validate(
                         study_type_exists_callback=(lambda _: False)
@@ -1606,8 +1589,8 @@ def random_ver_metadata(
     count: int = 0
     while True:
         result = StudyVersionMetadataVO(
-            locked_version_info=random_opt_str(),
-            locked_version_author=random_opt_str(),
+            version_description=random_opt_str(),
+            version_author=random_opt_str(),
             version_timestamp=random.choice(
                 [
                     None,
@@ -1618,7 +1601,7 @@ def random_ver_metadata(
             study_status=random.choice(
                 [StudyStatus.DRAFT, StudyStatus.RELEASED, StudyStatus.LOCKED]
             ),
-            locked_version_number=random.choice([None, random.randint(-100, 100)]),
+            version_number=random.choice([None, random.randint(-100, 100)]),
         )
         if condition is None or condition(result):
             return result
@@ -1772,26 +1755,6 @@ def random_valid_study_intervention(
             else random_opt_c_code(initialize_ct_data_map["NullValueCodes"])
         )
 
-        use_drug_study_indication = random.choice([True, False])
-        drug_study_indication = (
-            random.choice([True, False]) if use_drug_study_indication else None
-        )
-        drug_study_indication_null_value_code = (
-            None
-            if use_drug_study_indication
-            else random_opt_c_code(initialize_ct_data_map["NullValueCodes"])
-        )
-
-        use_device_study_indication = random.choice([True, False])
-        device_study_indication = (
-            random.choice([True, False]) if use_device_study_indication else None
-        )
-        device_study_indication_null_value_code = (
-            None
-            if use_device_study_indication
-            else random_opt_c_code(initialize_ct_data_map["NullValueCodes"])
-        )
-
         use_trial_intent_type = random.choice([True, False])
         trial_intent_types_codes = (
             [random.choice(initialize_ct_data_map["TrialIntentType"])[0]]
@@ -1822,10 +1785,6 @@ def random_valid_study_intervention(
             trial_blinding_schema_null_value_code=trial_blinding_schema_null_value_code,
             planned_study_length=planned_study_length,
             planned_study_length_null_value_code=planned_study_length_null_value_code,
-            drug_study_indication=drug_study_indication,
-            device_study_indication=device_study_indication,
-            drug_study_indication_null_value_code=drug_study_indication_null_value_code,
-            device_study_indication_null_value_code=device_study_indication_null_value_code,
             trial_intent_types_codes=trial_intent_types_codes,
             trial_intent_type_null_value_code=trial_intent_type_null_value_code,
         )
@@ -1843,7 +1802,7 @@ def random_valid_study_intervention(
 class TestStudyMetadataVO(unittest.TestCase):
     def test__validate__all_components_valid__success(self):
         # test data in form of tuples
-        # (study_number, study_acronym, study_id_prefix, ct_gov_id, eudract_id, study_status, locked_version_number,
+        # (study_number, study_acronym, study_id_prefix, ct_gov_id, eudract_id, study_status, version_number,
         #       project_number, version_info, version_author)
 
         def all_components_valid(_: StudyMetadataVO) -> bool:
@@ -1852,7 +1811,7 @@ class TestStudyMetadataVO(unittest.TestCase):
                 _.ver_metadata.validate()
                 _.high_level_study_design.validate()
                 _.study_intervention.validate()
-            except ValueError:
+            except exceptions.ValidationException:
                 return False
             return True
 
@@ -1874,7 +1833,7 @@ class TestStudyMetadataVO(unittest.TestCase):
         ) -> bool:
             try:
                 _.validate()
-            except ValueError:
+            except exceptions.ValidationException:
                 return False
             return True
 
@@ -2013,6 +1972,6 @@ class TestStudyMetadataVO(unittest.TestCase):
                 # study_metadata
 
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     study_metadata.validate()

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Dict, List, Optional, Sequence, TypeVar
+from typing import Callable, Dict, List, Optional, Sequence
 
 from pydantic import Field
 
@@ -11,37 +11,38 @@ from clinical_mdr_api.domain.concepts.activities.activity_instance import (
 from clinical_mdr_api.domain.concepts.activities.activity_sub_group import (
     ActivitySubGroupAR,
 )
-from clinical_mdr_api.domain.concepts.concept_base import ConceptVO
 from clinical_mdr_api.models import Library
 from clinical_mdr_api.models.activities.activity import (
     ActivityBase,
     ActivityHierarchySimpleModel,
+    SimpleActivityGroup,
+    SimpleActivityInstance,
+    SimpleActivityInstanceClass,
+    SimpleActivitySubGroup,
+)
+from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
+    CompactActivityInstanceClass,
 )
 from clinical_mdr_api.models.concept import ConceptInput
-from clinical_mdr_api.models.ct_term import SimpleTermModel
+from clinical_mdr_api.models.utils import BaseModel
 
-_AggregateRootType = TypeVar("_AggregateRootType", bound=ActivityInstanceAR)
+
+class SimpleActivityItem(BaseModel):
+    uid: str
+    name: Optional[str] = None
+    activity_item_class_uid: Optional[str] = None
+    activity_item_class_name: Optional[str] = None
 
 
 class ActivityInstance(ActivityBase):
     @classmethod
-    def _get_term_model(
-        cls, item: ConceptVO, uid_attribute: str, name_attribute: str
-    ) -> Optional[SimpleTermModel]:
-        uid_value = getattr(item, uid_attribute)
-        if uid_value is None:
-            return None
-        return SimpleTermModel(term_uid=uid_value, name=getattr(item, name_attribute))
-
-    @classmethod
     def from_activity_ar(
         cls,
-        activity_ar: _AggregateRootType,
+        activity_ar: ActivityInstanceAR,
         find_activity_hierarchy_by_uid: Callable[[str], Optional[ActivityAR]],
         find_activity_subgroup_by_uid: Callable[[str], Optional[ActivitySubGroupAR]],
         find_activity_group_by_uid: Callable[[str], Optional[ActivityGroupAR]],
     ) -> "ActivityInstance":
-
         activity_subgroup_uids = [
             find_activity_hierarchy_by_uid(activity_uid).concept_vo.activity_subgroup
             for activity_uid in activity_ar.concept_vo.activity_uids
@@ -50,25 +51,9 @@ class ActivityInstance(ActivityBase):
             find_activity_subgroup_by_uid(subgroup_uid).concept_vo.activity_group
             for subgroup_uid in activity_subgroup_uids
         ]
-        sdtm_variable = cls._get_term_model(
-            activity_ar.concept_vo, "sdtm_variable_uid", "sdtm_variable_name"
-        )
-        sdtm_subcat = cls._get_term_model(
-            activity_ar.concept_vo, "sdtm_subcat_uid", "sdtm_subcat_name"
-        )
-        sdtm_cat = cls._get_term_model(
-            activity_ar.concept_vo, "sdtm_cat_uid", "sdtm_cat_name"
-        )
-        sdtm_domain = cls._get_term_model(
-            activity_ar.concept_vo, "sdtm_domain_uid", "sdtm_domain_name"
-        )
-        specimen = cls._get_term_model(
-            activity_ar.concept_vo, "specimen_uid", "specimen_name"
-        )
 
         return cls(
             uid=activity_ar.uid,
-            type=activity_ar.concept_vo.activity_type,
             name=activity_ar.name,
             name_sentence_case=activity_ar.concept_vo.name_sentence_case,
             definition=activity_ar.concept_vo.definition,
@@ -76,10 +61,6 @@ class ActivityInstance(ActivityBase):
             topic_code=activity_ar.concept_vo.topic_code,
             adam_param_code=activity_ar.concept_vo.adam_param_code,
             legacy_description=activity_ar.concept_vo.legacy_description,
-            sdtm_variable=sdtm_variable,
-            sdtm_subcat=sdtm_subcat,
-            sdtm_cat=sdtm_cat,
-            sdtm_domain=sdtm_domain,
             activities=sorted(
                 [
                     ActivityHierarchySimpleModel.from_activity_uid(
@@ -110,7 +91,19 @@ class ActivityInstance(ActivityBase):
                 ],
                 key=lambda item: item.name,
             ),
-            specimen=specimen,
+            activity_instance_class=CompactActivityInstanceClass(
+                uid=activity_ar.concept_vo.activity_instance_class_uid,
+                name=activity_ar.concept_vo.activity_instance_class_name,
+            ),
+            activity_items=[
+                SimpleActivityItem(
+                    uid=activity_item_vo.uid,
+                    name=activity_item_vo.name,
+                    activity_item_class_uid=activity_item_vo.activity_item_class_uid,
+                    activity_item_class_name=activity_item_vo.activity_item_class_name,
+                )
+                for activity_item_vo in activity_ar.concept_vo.activity_items
+            ],
             library_name=Library.from_library_vo(activity_ar.library).name,
             start_date=activity_ar.item_metadata.start_date,
             end_date=activity_ar.item_metadata.end_date,
@@ -123,42 +116,19 @@ class ActivityInstance(ActivityBase):
             ),
         )
 
-    type: Optional[str] = Field(
-        None, title="type", description="The subtype of ActivityInstance"
-    )
-    topic_code: str = Field(
-        ...,
+    topic_code: Optional[str] = Field(
+        None,
         title="topic_code",
         description="",
     )
-    adam_param_code: str = Field(
-        ...,
+    adam_param_code: Optional[str] = Field(
+        None,
         title="adam_param_code",
         description="",
     )
     legacy_description: Optional[str] = Field(
         None,
         title="legacy_description",
-        description="",
-    )
-    sdtm_variable: Optional[SimpleTermModel] = Field(
-        ...,
-        title="sdtm_variable",
-        description="",
-    )
-    sdtm_subcat: Optional[SimpleTermModel] = Field(
-        ...,
-        title="sdtm_subcat",
-        description="",
-    )
-    sdtm_cat: Optional[SimpleTermModel] = Field(
-        ...,
-        title="sdtm_cat",
-        description="",
-    )
-    sdtm_domain: Optional[SimpleTermModel] = Field(
-        ...,
-        title="sdtm_domain",
         description="",
     )
     activities: Sequence[ActivityHierarchySimpleModel] = Field(
@@ -176,10 +146,15 @@ class ActivityInstance(ActivityBase):
         title="activity_groups",
         description="List of activity group unique identifiers",
     )
-    specimen: Optional[SimpleTermModel] = Field(
+    activity_instance_class: CompactActivityInstanceClass = Field(
         ...,
-        title="specimen",
-        description="",
+        title="The class of an activity instance",
+        description="The uid and the name of the linked activity instance class",
+    )
+    activity_items: Sequence[SimpleActivityItem] = Field(
+        ...,
+        title="activity_items",
+        description="List of activity items",
     )
     start_date: datetime
     end_date: Optional[datetime] = None
@@ -222,29 +197,19 @@ class ActivityInstanceCreateInput(ConceptInput):
         title="legacy_description",
         description="",
     )
-    sdtm_variable: Optional[str] = Field(
-        None,
-        title="sdtm_variable",
-        description="",
-    )
-    sdtm_subcat: Optional[str] = Field(
-        None,
-        title="sdtm_subcat",
-        description="",
-    )
-    sdtm_cat: Optional[str] = Field(
-        None,
-        title="sdtm_cat",
-        description="",
-    )
-    sdtm_domain: Optional[str] = Field(
-        None,
-        title="sdtm_domain",
-        description="",
-    )
     activities: Optional[Sequence[str]] = Field(
         None,
         title="activity",
+        description="",
+    )
+    activity_instance_class_uid: str = Field(
+        ...,
+        title="activity_instance_class_uid",
+        description="",
+    )
+    activity_item_uids: Optional[Sequence[str]] = Field(
+        None,
+        title="activity_item_uids",
         description="",
     )
     library_name: str
@@ -276,34 +241,19 @@ class ActivityInstanceEditInput(ConceptInput):
         title="legacy_description",
         description="",
     )
-    sdtm_variable: Optional[str] = Field(
+    activity_instance_class_uid: Optional[str] = Field(
         None,
-        title="sdtm_variable",
-        description="",
-    )
-    sdtm_subcat: Optional[str] = Field(
-        None,
-        title="sdtm_subcat",
-        description="",
-    )
-    sdtm_cat: Optional[str] = Field(
-        None,
-        title="sdtm_cat",
-        description="",
-    )
-    sdtm_domain: Optional[str] = Field(
-        None,
-        title="sdtm_domain",
-        description="",
-    )
-    specimen: Optional[str] = Field(
-        None,
-        title="specimen",
+        title="activity_instance_class_uid",
         description="",
     )
     activities: Optional[Sequence[str]] = Field(
         None,
         title="activity",
+        description="",
+    )
+    activity_item_uids: Optional[Sequence[str]] = Field(
+        None,
+        title="activity_item_uids",
         description="",
     )
     change_description: str = Field(..., title="change_description", description="")
@@ -321,3 +271,103 @@ class ActivityInstanceVersion(ActivityInstance):
             "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
     )
+
+
+class SimpleActivity(BaseModel):
+    name: Optional[str] = Field(
+        None,
+        title="name",
+        description="",
+    )
+    definition: Optional[str] = Field(
+        None,
+        title="name",
+        description="",
+    )
+    library_name: Optional[str] = Field(
+        None,
+        title="name",
+        description="",
+    )
+
+
+class SimpleActivityItemClass(BaseModel):
+    name: str = Field(..., title="name", description="")
+    order: int = Field(..., title="name", description="")
+    mandatory: bool = Field(..., title="name", description="")
+
+
+class SimplifiedActivityItem(BaseModel):
+    name: str = Field(..., title="name", description="")
+    ct_term_name: Optional[str] = Field(None, title="name", description="")
+    unit_definition_name: Optional[str] = Field(None, title="name", description="")
+    activity_item_class: SimpleActivityItemClass = Field(...)
+
+
+class ActivityInstanceOverview(BaseModel):
+    activity: SimpleActivity = Field(...)
+    activity_subgroups: List[SimpleActivitySubGroup] = Field(...)
+    activity_groups: List[SimpleActivityGroup] = Field(...)
+    activity_instance: SimpleActivityInstance = Field(...)
+    activity_items: List[SimplifiedActivityItem] = Field(...)
+
+    @classmethod
+    def from_repository_input(cls, overview: dict):
+        return cls(
+            activity=SimpleActivity(
+                name=overview.get("activity_value").get("name"),
+                definition=overview.get("activity_value").get("definition"),
+                library_name=overview.get("activity_library_name"),
+            ),
+            activity_subgroups=[
+                SimpleActivitySubGroup(
+                    name=subgroup.get("activity_subgroup_value").get("name"),
+                    definition=subgroup.get("activity_subgroup_value").get(
+                        "definition"
+                    ),
+                )
+                for subgroup in overview.get("hierarchy")
+            ],
+            activity_groups=[
+                SimpleActivityGroup(
+                    name=group.get("activity_group_value").get("name"),
+                    definition=group.get("activity_group_value").get("definition"),
+                )
+                for group in overview.get("hierarchy")
+            ],
+            activity_instance=SimpleActivityInstance(
+                name=overview.get("activity_instance_value").get("name"),
+                name_sentence_case=overview.get("activity_instance_value").get(
+                    "name_sentence_case"
+                ),
+                abbreviation=overview.get("activity_instance_value").get(
+                    "abbreviation"
+                ),
+                definition=overview.get("activity_instance_value").get("definition"),
+                adam_param_code=overview.get("activity_instance_value").get(
+                    "adam_param_code"
+                ),
+                topic_code=overview.get("activity_instance_value").get("topic_code"),
+                library_name=overview.get("instance_library_name"),
+                activity_instance_class=SimpleActivityInstanceClass(
+                    name=overview.get("activity_instance_class").get("name")
+                ),
+            ),
+            activity_items=[
+                SimplifiedActivityItem(
+                    name=activity_item.get("activity_item").get("name"),
+                    ct_term_name=(activity_item.get("ct_term") or {}).get("name"),
+                    unit_definition_name=(
+                        activity_item.get("unit_definition") or {}
+                    ).get("name"),
+                    activity_item_class=SimpleActivityItemClass(
+                        name=activity_item.get("activity_item_class").get("name"),
+                        order=activity_item.get("activity_item_class").get("order"),
+                        mandatory=activity_item.get("activity_item_class").get(
+                            "mandatory"
+                        ),
+                    ),
+                )
+                for activity_item in overview.get("activity_items")
+            ],
+        )

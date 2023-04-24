@@ -108,8 +108,10 @@ export default {
       selectedStudy: 'studiesGeneral/selectedStudy'
     }),
     studyId () {
-      return (this.selectedStudy.study_number !== undefined && this.selectedStudy.study_number !== null)
-        ? this.selectedStudy.study_id : this.selectedStudy.study_acronym
+      return (this.selectedStudy.current_metadata.identification_metadata.study_number !== undefined &&
+              this.selectedStudy.current_metadata.identification_metadata.study_number !== null)
+        ? this.selectedStudy.current_metadata.identification_metadata.study_id
+        : this.selectedStudy.current_metadata.identification_metadata.study_acronym
     },
     currentTitleLength () {
       if (this.form.study_title) {

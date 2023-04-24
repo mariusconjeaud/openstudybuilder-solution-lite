@@ -28,11 +28,11 @@
             "method": "POST",
             "request": {
                 "library_name": "Test library",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": ",",
                         "name": "Intervention",
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "Intervention",
@@ -54,7 +54,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "Parameter value Indication-99991 ('type 2 diabetes') not valid for parameter 'Intervention'",
+                "message": "Parameter term Indication-99991 ('type 2 diabetes') not valid for parameter 'Intervention'",
                 "method": "POST",
                 "path": "http://testserver/timeframes",
                 "time": "2020-11-11T02:03:45.621381",
@@ -69,11 +69,11 @@
             "method": "POST",
             "request": {
                 "library_name": "Test library",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": ",",
                         "name": "Indication",
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "Indication",
@@ -102,6 +102,7 @@
                 "content-type": "application/json"
             },
             "result": {
+                "study_count": null,
                 "change_description": "Initial version",
                 "end_date": null,
                 "library": {
@@ -110,11 +111,11 @@
                 },
                 "name": "Test [type 2 diabetes , coronary heart disease]",
                 "name_plain": "Test type 2 diabetes , coronary heart disease",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": ",",
                         "position": 1,
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "type 2 diabetes",
@@ -140,6 +141,7 @@
                 "timeframe_template": {
                     "name": "Test [Indication]",
                     "name_plain": "Test [Indication]",
+                    "guidance_text": null,
                     "uid": "{ttuid}"
                 },
                 "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
@@ -155,11 +157,11 @@
             "method": "POST",
             "request": {
                 "library_name": "Test library",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": ",",
                         "name": "Indication",
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "Indication",
@@ -188,6 +190,7 @@
                 "content-type": "application/json"
             },
             "result": {
+                "study_count": null,
                 "change_description": "Initial version",
                 "end_date": null,
                 "library": {
@@ -196,11 +199,11 @@
                 },
                 "name": "Test [type 2 diabetes , coronary heart disease]",
                 "name_plain": "Test type 2 diabetes , coronary heart disease",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": ",",
                         "position": 1,
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "type 2 diabetes",
@@ -226,6 +229,7 @@
                 "timeframe_template": {
                     "name": "Test [Indication]",
                     "name_plain": "Test [Indication]",
+                    "guidance_text": null,
                     "uid": "{ttuid}"
                 },
                 "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
@@ -241,11 +245,11 @@
             "method": "POST",
             "request": {
                 "library_name": "Test library",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": ",",
                         "name": "Indication",
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "type 2 diabetes",
@@ -263,7 +267,7 @@
                     {
                         "conjunction": "and",
                         "name": "Intervention",
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "Metformin",
@@ -290,6 +294,7 @@
                 "content-type": "application/json"
             },
             "result": {
+                "study_count": null,
                 "change_description": "Initial version",
                 "end_date": null,
                 "library": {
@@ -298,11 +303,11 @@
                 },
                 "name": "Test [type 2 diabetes , coronary heart disease] and [human insulin and Metformin]",
                 "name_plain": "Test type 2 diabetes , coronary heart disease and human insulin and Metformin",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": ",",
                         "position": 1,
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "type 2 diabetes",
@@ -320,7 +325,7 @@
                     {
                         "conjunction": "and",
                         "position": 2,
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "human insulin",
@@ -346,6 +351,7 @@
                 "timeframe_template": {
                     "name": "Test [Indication] and [Intervention]",
                     "name_plain": "Test [Indication] and [Intervention]",
+                    "guidance_text": null,
                     "uid": "{ttuid}"
                 },
                 "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
@@ -371,6 +377,7 @@
             "result": {
                 "items": [
                     {
+                        "study_count": 0,
                         "change_description": "Initial version",
                         "end_date": null,
                         "library": {
@@ -379,11 +386,11 @@
                         },
                         "name": "Test [type 2 diabetes , coronary heart disease] and [human insulin and Metformin]",
                         "name_plain": "Test type 2 diabetes , coronary heart disease and human insulin and Metformin",
-                        "parameter_values": [
+                        "parameter_terms": [
                             {
                                 "conjunction": ",",
                                 "position": 1,
-                                "values": [
+                                "terms": [
                                     {
                                         "index": 1,
                                         "name": "type 2 diabetes",
@@ -401,7 +408,7 @@
                             {
                                 "conjunction": "and",
                                 "position": 2,
-                                "values": [
+                                "terms": [
                                     {
                                         "index": 1,
                                         "name": "human insulin",
@@ -427,6 +434,7 @@
                         "timeframe_template": {
                             "name": "Test [Indication] and [Intervention]",
                             "name_plain": "Test [Indication] and [Intervention]",
+                            "guidance_text": null,
                             "uid": "{ttuid}"
                         },
                         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
@@ -434,6 +442,7 @@
                         "version": "0.1"
                     },
                     {
+                        "study_count": 0,
                         "change_description": "Initial version",
                         "end_date": null,
                         "library": {
@@ -442,11 +451,11 @@
                         },
                         "name": "Test [type 2 diabetes , coronary heart disease]",
                         "name_plain": "Test type 2 diabetes , coronary heart disease",
-                        "parameter_values": [
+                        "parameter_terms": [
                             {
                                 "conjunction": ",",
                                 "position": 1,
-                                "values": [
+                                "terms": [
                                     {
                                         "index": 1,
                                         "name": "type 2 diabetes",
@@ -472,6 +481,7 @@
                         "timeframe_template": {
                             "name": "Test [Indication]",
                             "name_plain": "Test [Indication]",
+                            "guidance_text": null,
                             "uid": "{ttuid}"
                         },
                         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
@@ -492,11 +502,11 @@
             "method": "POST",
             "request": {
                 "library_name": "Test library",
-                "parameter_values": [
+                "parameter_terms": [
                     {
                         "conjunction": ",",
                         "position": 1,
-                        "values": [
+                        "terms": [
                             {
                                 "index": 1,
                                 "name": "type 2 diabetes",
@@ -548,6 +558,7 @@
             "result": {
                 "items": [
                     {
+                        "study_count": 0,
                         "change_description": "Initial version",
                         "end_date": null,
                         "library": {
@@ -556,11 +567,11 @@
                         },
                         "name": "Test [type 2 diabetes , coronary heart disease] and [human insulin and Metformin]",
                         "name_plain": "Test type 2 diabetes , coronary heart disease and human insulin and Metformin",
-                        "parameter_values": [
+                        "parameter_terms": [
                             {
                                 "conjunction": ",",
                                 "position": 1,
-                                "values": [
+                                "terms": [
                                     {
                                         "index": 1,
                                         "name": "type 2 diabetes",
@@ -578,7 +589,7 @@
                             {
                                 "conjunction": "and",
                                 "position": 2,
-                                "values": [
+                                "terms": [
                                     {
                                         "index": 1,
                                         "name": "human insulin",
@@ -604,6 +615,7 @@
                         "timeframe_template": {
                             "name": "Test [Indication] and [Intervention]",
                             "name_plain": "Test [Indication] and [Intervention]",
+                            "guidance_text": null,
                             "uid": "{ttuid}"
                         },
                         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
@@ -611,6 +623,7 @@
                         "version": "0.1"
                     },
                     {
+                        "study_count": 0,
                         "change_description": "Initial version",
                         "end_date": null,
                         "library": {
@@ -619,11 +632,11 @@
                         },
                         "name": "Test [type 2 diabetes , coronary heart disease]",
                         "name_plain": "Test type 2 diabetes , coronary heart disease",
-                        "parameter_values": [
+                        "parameter_terms": [
                             {
                                 "conjunction": ",",
                                 "position": 1,
-                                "values": [
+                                "terms": [
                                     {
                                         "index": 1,
                                         "name": "type 2 diabetes",
@@ -649,6 +662,7 @@
                         "timeframe_template": {
                             "name": "Test [Indication]",
                             "name_plain": "Test [Indication]",
+                            "guidance_text": null,
                             "uid": "{ttuid}"
                         },
                         "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
@@ -659,93 +673,6 @@
                 "total": 2,
                 "page": 1,
                 "size": 10
-            }
-        }
-    },
-    {
-        "name": "Test overriding the template name",
-        "request": {
-            "headers": {},
-            "method": "POST",
-            "request": {
-                "library_name": "Test library",
-                "name_override": "Test [Indication] - edited instance name",
-                "parameter_values": [
-                    {
-                        "conjunction": ",",
-                        "name": "Indication",
-                        "values": [
-                            {
-                                "index": 1,
-                                "name": "Indication",
-                                "type": "Indication",
-                                "uid": "Indication-99991",
-                                "value": "type 2 diabetes"
-                            },
-                            {
-                                "index": 2,
-                                "name": "Indication",
-                                "type": "Indication",
-                                "uid": "Indication-99992",
-                                "value": "coronary heart disease"
-                            }
-                        ]
-                    }
-                ],
-                "timeframe_template_uid": "{ttuid}"
-            },
-            "url": "/timeframes"
-        },
-        "response": {
-            "code": 201,
-            "headers": {
-                "content-length": "459",
-                "content-type": "application/json"
-            },
-            "result": {
-                "change_description": "Initial version",
-                "end_date": null,
-                "library": {
-                    "is_editable": true,
-                    "name": "Test library"
-                },
-                "name": "Test [type 2 diabetes , coronary heart disease] - edited instance name",
-                "name_plain": "Test type 2 diabetes , coronary heart disease - edited instance name",
-                "parameter_values": [
-                    {
-                        "conjunction": ",",
-                        "position": 1,
-                        "values": [
-                            {
-                                "index": 1,
-                                "name": "type 2 diabetes",
-                                "type": "Indication",
-                                "uid": "Indication-99991"
-                            },
-                            {
-                                "index": 2,
-                                "name": "coronary heart disease",
-                                "type": "Indication",
-                                "uid": "Indication-99992"
-                            }
-                        ]
-                    }
-                ],
-                "possible_actions": [
-                    "approve",
-                    "delete",
-                    "edit"
-                ],
-                "start_date": "2020-11-11T01:06:37+00:00",
-                "status": "Draft",
-                "timeframe_template": {
-                    "name": "Test [Indication] - edited instance name",
-                    "name_plain": "Test [Indication] - edited instance name",
-                    "uid": "{ttuid}"
-                },
-                "uid": "8220b276-0bd3-4308-8e27-91231f1e4c9d",
-                "user_initials": "TEST_USER",
-                "version": "0.1"
             }
         }
     },

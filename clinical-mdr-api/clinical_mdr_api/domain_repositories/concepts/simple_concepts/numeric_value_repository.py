@@ -27,7 +27,6 @@ from clinical_mdr_api.models.concept import NumericValue as NumericValueAPIModel
 
 
 class NumericValueRepository(SimpleConceptGenericRepository[NumericValueAR]):
-
     root_class = NumericValueRoot
     value_class = NumericValue
     aggregate_class = NumericValueAR
@@ -86,7 +85,6 @@ class NumericValueRepository(SimpleConceptGenericRepository[NumericValueAR]):
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> NumericValueAR:
-
         return self.aggregate_class.from_repository_values(
             uid=root.uid,
             simple_concept_vo=self.value_object_class.from_repository_values(

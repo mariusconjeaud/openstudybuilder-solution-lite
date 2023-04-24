@@ -91,7 +91,9 @@ objective_level = {
         "body": {
             "order": row[headers.index("ORDER")],
             "sponsor_preferred_name": row[headers.index("CT_NAME")],
-            "sponsor_preferred_name_sentence_case": row[headers.index("NAME_SENTENSE_CASE")],
+            "sponsor_preferred_name_sentence_case": row[
+                headers.index("NAME_SENTENSE_CASE")
+            ],
             "change_description": "Migration",
         },
     }
@@ -106,7 +108,7 @@ time_units = {
 }
 
 # ---------------------------------------------------------------
-# Utilites for parsing and converting data
+# Utilities for parsing and converting data
 # ---------------------------------------------------------------
 #
 
@@ -450,7 +452,6 @@ class StandardCodelistTerms1(BaseImporter):
         headers = next(readCSV)
         api_tasks = []
         for row in readCSV:
-
             codelist_name = None
             if (
                 row[headers.index("CD_LIST_ID")]
@@ -558,7 +559,9 @@ class StandardCodelistTerms1(BaseImporter):
         api_tasks = []
 
         for row in readCSV:
-            url = path_join("/ct/codelists", row[headers.index("CODELIST_CONCEPT_ID")], "names")
+            url = path_join(
+                "/ct/codelists", row[headers.index("CODELIST_CONCEPT_ID")], "names"
+            )
             change_description = f"Marking {row[headers.index('DESCRIPTION')]} as TemplateParameter in the migration"
             data = {
                 "get_path": url,

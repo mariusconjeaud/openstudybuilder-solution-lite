@@ -5,6 +5,7 @@ from fastapi import APIRouter, Body, Depends, Path, Response, status
 from clinical_mdr_api import models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.brand import BrandService
 
 router = APIRouter()
@@ -19,7 +20,8 @@ Service = BrandService
     response_model=Sequence[models.Brand],
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_brands(
@@ -34,7 +36,8 @@ def get_brands(
     response_model=models.Brand,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_brand(
@@ -56,12 +59,12 @@ def get_brand(
             "description": "Some application/business rules forbid to process the request. Expect more detailed"
             " information in response body.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create(
     brand_create_input: models.BrandCreateInput = Body(
-        None, description="Related parameters of the brand that shall be created."
+        description="Related parameters of the brand that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.Brand:
@@ -75,7 +78,7 @@ def create(
     status_code=204,
     responses={
         204: {"description": "No Content - The item was successfully deleted."},
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def delete(

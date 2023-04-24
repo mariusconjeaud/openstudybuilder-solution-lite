@@ -4,7 +4,7 @@ import pytest
 from hypothesis import given
 from hypothesis.strategies import composite, from_regex, lists
 
-from clinical_mdr_api.domain.versioned_object_aggregate import TemplateVO
+from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
 
 
 @composite

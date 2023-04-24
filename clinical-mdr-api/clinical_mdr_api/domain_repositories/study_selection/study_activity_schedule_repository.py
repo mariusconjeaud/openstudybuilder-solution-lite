@@ -147,7 +147,7 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
             cypher
             + """
             MATCH (all_sas)<-[:STUDY_ACTIVITY_HAS_SCHEDULE]-(sa:StudyActivity)
-            MATCH (all_sas)<-[:STUDY_VISIT_HAS_SCHEDULE]-(svi:StudyVisit)w
+            MATCH (all_sas)<-[:STUDY_VISIT_HAS_SCHEDULE]-(svi:StudyVisit)
             MATCH (all_sas)<-[:AFTER]-(asa:StudyAction)
             OPTIONAL MATCH (all_sas)<-[:BEFORE]-(bsa:StudyAction)
             WITH all_sas, sa, svi, asa, bsa

@@ -4,7 +4,9 @@ from neomodel import db
 from pydantic import BaseModel
 from starlette.testclient import TestClient
 
-from clinical_mdr_api.models.timeframe_template import TimeframeTemplate
+from clinical_mdr_api.models.syntax_templates.timeframe_template import (
+    TimeframeTemplate,
+)
 from clinical_mdr_api.tests.integration.utils import api
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
@@ -24,10 +26,10 @@ class TimeframeTest(api.APITest):
         db.cypher_query(STARTUP_PARAMETERS_CYPHER)
 
         import clinical_mdr_api.services.libraries as library_service
-        import clinical_mdr_api.services.timeframe_templates as tt_service
+        import clinical_mdr_api.services.syntax_templates.timeframe_templates as tt_service
 
         _service = tt_service.TimeframeTemplateService()
-        import clinical_mdr_api.models.timeframe_template as tt_models
+        import clinical_mdr_api.models.syntax_templates.timeframe_template as tt_models
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)
@@ -63,17 +65,16 @@ class TimeframeNegativeTest(api.APITest):
         db.cypher_query(STARTUP_PARAMETERS_CYPHER)
 
         import clinical_mdr_api.services.libraries as library_service
-        import clinical_mdr_api.services.timeframe_templates as tt_service
+        import clinical_mdr_api.services.syntax_templates.timeframe_templates as tt_service
 
         _service = tt_service.TimeframeTemplateService()
-        import clinical_mdr_api.models.timeframe_template as tt_models
+        import clinical_mdr_api.models.syntax_templates.timeframe_template as tt_models
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)
         self.library = library_service.create(name="Test library", is_editable=True)
         ttdata = template_data.copy()
         ttdata["name"] = "Test [Indication]"
-        ttdata["editable_instance"] = False
         timeframe_template = tt_models.TimeframeTemplateCreateInput(**ttdata)
         self.tt = _service.create(timeframe_template)
         tt_uid = (
@@ -96,7 +97,7 @@ class TimeframeNegativeTest(api.APITest):
 
     def post_test(self):
         def check_timeframes_empty():
-            from clinical_mdr_api.domain_repositories.library.timeframe_repository import (  # noqa: E501
+            from clinical_mdr_api.domain_repositories.syntax_instances.timeframe_repository import (
                 TimeframeRepository,
             )
 
@@ -118,10 +119,10 @@ class TimeframeVersioningTest(api.APITest):
         db.cypher_query(STARTUP_PARAMETERS_CYPHER)
 
         import clinical_mdr_api.services.libraries as library_service
-        import clinical_mdr_api.services.timeframe_templates as tt_service
+        import clinical_mdr_api.services.syntax_templates.timeframe_templates as tt_service
 
         _service = tt_service.TimeframeTemplateService()
-        import clinical_mdr_api.models.timeframe_template as tt_models
+        import clinical_mdr_api.models.syntax_templates.timeframe_template as tt_models
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)

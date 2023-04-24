@@ -2,7 +2,6 @@
 from typing import Any, List, Optional, Sequence
 
 from fastapi import APIRouter, Body, Depends, Path, Query
-from fastapi_etag import Etag
 from pydantic.types import Json
 from starlette.requests import Request
 
@@ -17,11 +16,6 @@ from clinical_mdr_api.services.ct_codelist import CTCodelistService
 router = APIRouter()
 CTCodelistUID = Path(None, description="The unique id of the CTCodelistRoot")
 TermUID = Path(None, description="The unique id of the Codelist Term")
-
-
-def get_etag(request: Request) -> str:
-    ct_codelist_service = CTCodelistService()
-    return ct_codelist_service.get_codelist_etag(request)
 
 
 @router.post(
@@ -45,12 +39,11 @@ def get_etag(request: Request) -> str:
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create(
     codelist_input: models.CTCodelistCreateInput = Body(
-        None,
         description="Properties to create CTCodelistAttributes and CTCodelistName.",
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -62,10 +55,14 @@ def create(
 @router.get(
     "/codelists",
     summary="Returns all codelists names and attributes.",
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=CustomPage[models.CTCodelistNameAndAttributes],
     response_model_exclude_unset=True,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 @decorators.allow_exports(
     {
@@ -147,7 +144,10 @@ def get_codelists(
     response_model=CustomPage[models.CTCodelistNameAndAttributes],
     response_model_exclude_unset=True,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_sub_codelists_that_have_given_terms(
     codelist_uid: str = CTCodelistUID,
@@ -198,7 +198,7 @@ def get_sub_codelists_that_have_given_terms(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -242,14 +242,13 @@ def get_distinct_values_for_header(
 
 @router.post(
     "/codelists/{codelist_uid}/terms",
-    dependencies=[Depends(Etag(get_etag))],
     summary="Adds new CTTerm to CTCodelist.",
     response_model=models.CTCodelist,
     status_code=201,
     responses={
         201: {
             "description": "The HAS_TERM relationship was successfully created.\n"
-            "The TemplateParameter labels and HAS_VALUE relationship were successfully added "
+            "The TemplateParameter labels and HAS_PARAMETER_TERM relationship were successfully added "
             "if codelist identified by codelist_uid is a TemplateParameter."
         },
         403: {
@@ -260,13 +259,13 @@ def get_distinct_values_for_header(
             "- The codelist is not extensible.\n"
             "- The codelist already has passed term.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def add_term(
     codelist_uid: str = CTCodelistUID,
     term_input: models.CTCodelistTermInput = Body(
-        None, description="UID of the CTTermRoot node."
+        description="UID of the CTTermRoot node."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
@@ -279,14 +278,13 @@ def add_term(
 @router.delete(
     "/codelists/{codelist_uid}/terms/{term_uid}",
     summary="Removes given CTTerm from CTCodelist.",
-    dependencies=[Depends(Etag(get_etag))],
     response_model=models.CTCodelist,
     status_code=201,
     responses={
         201: {
             "description": "The HAS_TERM relationship was successfully deleted and "
             "HAD_TERM relationship was successfully created.\n"
-            "The HAS_VALUE relationship was successfully deleted if codelist identified by "
+            "The HAS_PARAMETER_TERM relationship was successfully deleted if codelist identified by "
             "codelist_uid is a TemplateParameter"
         },
         403: {
@@ -297,7 +295,7 @@ def add_term(
             "- The codelist is not extensible.\n"
             "- The codelist doesn't have passed term.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def remove_term(

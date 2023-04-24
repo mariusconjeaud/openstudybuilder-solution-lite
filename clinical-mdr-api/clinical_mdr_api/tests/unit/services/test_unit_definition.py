@@ -55,7 +55,6 @@ from clinical_mdr_api.tests.utils.common_strategies import (
 
 
 class UnitDefinitionRepositoryFakeBase(UnitDefinitionRepository):
-
     verified_names: MutableSet[str]
     verified_dimensions: MutableSet[str]
     verified_legacy_codes: MutableSet[str]
@@ -102,9 +101,6 @@ class UnitDefinitionRepositoryFakeBase(UnitDefinitionRepository):
     ) -> Tuple[Sequence, int]:
         raise AssertionError("Call not expected")
 
-    def find_releases_referenced_by_any_study(self) -> Iterable[UnitDefinitionAR]:
-        return AssertionError("Call not expected")
-
     def find_releases(
         self, uid: str, return_study_count: Optional[bool] = True
     ) -> Iterable[UnitDefinitionAR]:
@@ -136,9 +132,6 @@ class UnitDefinitionRepositoryFakeBase(UnitDefinitionRepository):
         raise AssertionError("Call not expected")
 
     def get_all_versions_2(self, uid: str) -> Iterable[UnitDefinitionAR]:
-        raise AssertionError("Call not expected")
-
-    def check_usage_count(self, uid: str) -> int:
         raise AssertionError("Call not expected")
 
     def close(self) -> None:
@@ -753,7 +746,6 @@ def test__unit_definition_service__delete__result(
     assume(unit_definition_ar.item_metadata.major_version == 0)
 
     class UnitDefinitionRepositoryFake(UnitDefinitionRepositoryFakeBase):
-
         saved_item: Optional[UnitDefinitionAR] = None
 
         def save(self, item: UnitDefinitionAR) -> None:
@@ -802,7 +794,6 @@ def test__unit_definition_service__approve__result(
     unit_definition_ar: UnitDefinitionAR,
 ):
     class UnitDefinitionRepositoryFake(UnitDefinitionRepositoryFakeBase):
-
         saved_item: Optional[UnitDefinitionAR] = None
 
         def save(self, item: UnitDefinitionAR) -> None:
@@ -858,7 +849,6 @@ def test__unit_definition_service__inactivate__result(
     unit_definition_ar: UnitDefinitionAR,
 ):
     class UnitDefinitionRepositoryFake(UnitDefinitionRepositoryFakeBase):
-
         saved_item: Optional[UnitDefinitionAR] = None
 
         def save(self, item: UnitDefinitionAR) -> None:
@@ -914,7 +904,6 @@ def test__unit_definition_service__reactivate__result(
     unit_definition_ar: UnitDefinitionAR,
 ):
     class UnitDefinitionRepositoryFake(UnitDefinitionRepositoryFakeBase):
-
         saved_item: Optional[UnitDefinitionAR] = None
 
         def save(self, item: UnitDefinitionAR) -> None:
@@ -970,7 +959,6 @@ def test__unit_definition_service__new_version__result(
     unit_definition_ar: UnitDefinitionAR,
 ):
     class UnitDefinitionRepositoryFake(UnitDefinitionRepositoryFakeBase):
-
         saved_item: Optional[UnitDefinitionAR] = None
 
         def save(self, item: UnitDefinitionAR) -> None:
@@ -1110,7 +1098,6 @@ def test__unit_definition_service__patch__result(
     unit_definition_ar: UnitDefinitionAR,
     unit_definition_patch_input: UnitDefinitionPatchInput,
 ):
-
     assume(
         unit_definition_ar.concept_vo.ct_units == []
         or "unit_ct" not in unit_definition_patch_input.__fields_set__

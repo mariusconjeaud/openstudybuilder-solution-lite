@@ -1,0 +1,361 @@
+{
+  "title": "OpenStudyBuilder Activity Library Dashboard",
+  "version": "2.2",
+  "settings": {
+    "pagenumber": 0,
+    "editable": true,
+    "fullscreenEnabled": false,
+    "parameters": {
+      "undefined": "",
+      "neodash_activitysubgroup_name": "Body Measurements",
+      "neodash_has_name": "",
+      "neodash_$neodash_activitygroup_name_": "",
+      "neodash_activitygroup_name": "",
+      "neodash_ctcodelist_name": "",
+      "neodash_activityinstanceclass_name": "Finding",
+      "neodash_activity_name": "Diastolic Blood Pressure",
+      "neodash_activity_name_display": "Diastolic Blood Pressure",
+      "neodash_activityinstance_name": "BMI",
+      "neodash_activityinstance_name_display": "BMI",
+      "neodash_activitygroup_name_display": "",
+      "neodash_activitysubgroup_name_display": "Body Measurements",
+      "neodash_activityinstance_adam_param_code": "DIABP",
+      "neodash_activityinstance_adam_param_code_display": "DIABP",
+      "neodash_activityinstanceclass_name_display": "Finding",
+      "neodash_activityinstanceclass_name_subtype": "",
+      "neodash_activityinstanceclass_name_subtype_display": "",
+      "neodash_ctcodelist_submission_value": "NY",
+      "neodash_ctcodelist_submission_value_display": "NY",
+      "neodash_ctterm_nci_preferred_name": "No",
+      "neodash_ctterm_nci_preferred_name_display": "No",
+      "neodash_activityinstance_nci_preferred_name": "",
+      "neodash_activityinstance_nci_preferred_name_display": "",
+      "neodash_activityinstance_name_submission_value": "",
+      "neodash_activityinstance_name_submission_value_display": ""
+    }
+  },
+  "pages": [
+    {
+      "title": "Activity Library Content",
+      "reports": [
+        {
+          "title": "List of Activities",
+          "query": "CALL apoc.case([not $neodash_activityinstanceclass_name='' and $neodash_activityinstanceclass_name_subtype='' and $neodash_activitygroup_name='' and $neodash_activitysubgroup_name='', 'MATCH(agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]-> (ai:ActivityInstance),(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) where aicp.name in [$a] return aicp.name as ActivityType, aic.name as ActivitySubType, agrp.name as ActivityGroup, asgrp.name as ActivitySubGroup, act.name as Activity, ai.adam_param_code as ActivityInstance', not $neodash_activityinstanceclass_name='' and $neodash_activityinstanceclass_name_subtype='' and not $neodash_activitygroup_name='' and $neodash_activitysubgroup_name='', 'MATCH(agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]-> (ai:ActivityInstance),(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) where aicp.name in [$a] and agrp.name in [$b] return aicp.name as ActivityType, aic.name as ActivitySubType, agrp.name as ActivityGroup, asgrp.name as ActivitySubGroup, act.name as Activity, ai.adam_param_code as ActivityInstance', not $neodash_activityinstanceclass_name='' and $neodash_activityinstanceclass_name_subtype='' and $neodash_activitygroup_name='' and not $neodash_activitysubgroup_name='', 'MATCH(agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]-> (ai:ActivityInstance),(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) where aicp.name in [$a] and asgrp.name in [$c] return aicp.name as ActivityType, aic.name as ActivitySubType, agrp.name as ActivityGroup, asgrp.name as ActivitySubGroup, act.name as Activity, ai.adam_param_code as ActivityInstance', $neodash_activityinstanceclass_name='' and $neodash_activityinstanceclass_name_subtype='' and $neodash_activitygroup_name='' and not $neodash_activitysubgroup_name='','MATCH(agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]-> (ai:ActivityInstance),(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) where asgrp.name in [$c] return aicp.name as ActivityType, aic.name as ActivitySubType, agrp.name as ActivityGroup, asgrp.name as ActivitySubGroup, act.name as Activity, ai.adam_param_code as ActivityInstance',$neodash_activityinstanceclass_name='' and $neodash_activityinstanceclass_name_subtype='' and not $neodash_activitygroup_name='' and $neodash_activitysubgroup_name='','MATCH(agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]-> (ai:ActivityInstance),(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) where agrp.name in [$b] return aicp.name as ActivityType, aic.name as ActivitySubType, agrp.name as ActivityGroup, asgrp.name as ActivitySubGroup, act.name as Activity, ai.adam_param_code as ActivityInstance',$neodash_activityinstanceclass_name='' and  $neodash_activityinstanceclass_name_subtype='' and not $neodash_activitygroup_name='' and not $neodash_activitysubgroup_name='','MATCH(agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]-> (ai:ActivityInstance),(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) where agrp.name in [$b] and asgrp.name in [$c] return aicp.name as ActivityType, aic.name as ActivitySubType, agrp.name as ActivityGroup, asgrp.name as ActivitySubGroup, act.name as Activity, ai.adam_param_code as ActivityInstance',not $neodash_activityinstanceclass_name='' and  $neodash_activityinstanceclass_name_subtype='' and not $neodash_activitygroup_name='' and not $neodash_activitysubgroup_name='','MATCH(agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]-> (ai:ActivityInstance),(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) where aicp.name in [$a] and agrp.name in [$b] and asgrp.name in [$c] return aicp.name as ActivityType, aic.name as ActivitySubType, agrp.name as ActivityGroup, asgrp.name as ActivitySubGroup, act.name as Activity, ai.adam_param_code as ActivityInstance',$neodash_activityinstanceclass_name='' and not $neodash_activityinstanceclass_name_subtype='' and $neodash_activitygroup_name='' and  $neodash_activitysubgroup_name='','MATCH(agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]-> (ai:ActivityInstance),(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) where aic.name in [$d] return aicp.name as ActivityType, aic.name as ActivitySubType, agrp.name as ActivityGroup, asgrp.name as ActivitySubGroup, act.name as Activity, ai.adam_param_code as ActivityInstance',not $neodash_activityinstanceclass_name='' and not $neodash_activityinstanceclass_name_subtype='' and $neodash_activitygroup_name='' and  $neodash_activitysubgroup_name='','MATCH(agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]-> (ai:ActivityInstance),(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) where aicp.name in [$a] and aic.name in [$d] return aicp.name as ActivityType, aic.name as ActivitySubType, agrp.name as ActivityGroup, asgrp.name as ActivitySubGroup, act.name as Activity, ai.adam_param_code as ActivityInstance',$neodash_activityinstanceclass_name='' and not $neodash_activityinstanceclass_name_subtype='' and not $neodash_activitygroup_name='' and  $neodash_activitysubgroup_name='','MATCH(agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]-> (ai:ActivityInstance),(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) where agrp.name in [$b] and aic.name in [$d] return aicp.name as ActivityType, aic.name as ActivitySubType, agrp.name as ActivityGroup, asgrp.name as ActivitySubGroup, act.name as Activity, ai.adam_param_code as ActivityInstance',$neodash_activityinstanceclass_name='' and not $neodash_activityinstanceclass_name_subtype='' and $neodash_activitygroup_name='' and not $neodash_activitysubgroup_name='','MATCH(agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]-> (ai:ActivityInstance),(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) where asgrp.name in [$c] and aic.name in [$d] return aicp.name as ActivityType, aic.name as ActivitySubType, agrp.name as ActivityGroup, asgrp.name as ActivitySubGroup, act.name as Activity, ai.adam_param_code as ActivityInstance',not $neodash_activityinstanceclass_name='' and not $neodash_activityinstanceclass_name_subtype='' and not $neodash_activitygroup_name='' and  $neodash_activitysubgroup_name='','MATCH(agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]-> (ai:ActivityInstance),(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) where aicp.name in [$a] and agrp.name in [$b] and aic.name in [$d] return aicp.name as ActivityType, aic.name as ActivitySubType, agrp.name as ActivityGroup, asgrp.name as ActivitySubGroup, act.name as Activity, ai.adam_param_code as ActivityInstance',not $neodash_activityinstanceclass_name='' and not $neodash_activityinstanceclass_name_subtype='' and $neodash_activitygroup_name='' and not $neodash_activitysubgroup_name='','MATCH(agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]-> (ai:ActivityInstance),(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) where aicp.name in [$a] and asgrp.name in [$c] and aic.name in [$d] return aicp.name as ActivityType, aic.name as ActivitySubType, agrp.name as ActivityGroup, asgrp.name as ActivitySubGroup, act.name as Activity, ai.adam_param_code as ActivityInstance',$neodash_activityinstanceclass_name='' and not $neodash_activityinstanceclass_name_subtype='' and not $neodash_activitygroup_name='' and not $neodash_activitysubgroup_name='','MATCH(agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]-> (ai:ActivityInstance),(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) where agrp.name in [$b] and asgrp.name in [$c] and aic.name in [$d] return aicp.name as ActivityType, aic.name as ActivitySubType, agrp.name as ActivityGroup, asgrp.name as ActivitySubGroup, act.name as Activity, ai.adam_param_code as ActivityInstance'],'MATCH(agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]-> (ai:ActivityInstance),(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) where aicp.name in [$a] and agrp.name in [$b] and asgrp.name in [$c] and aic.name in [$d] return aicp.name as ActivityType, aic.name as ActivitySubType, agrp.name as ActivityGroup, asgrp.name as ActivitySubGroup, act.name as Activity, ai.adam_param_code as ActivityInstance',{a:$neodash_activityinstanceclass_name,b:$neodash_activitygroup_name, c:$neodash_activitysubgroup_name,d: $neodash_activityinstanceclass_name_subtype}) YIELD value return value.ActivityType as `Activity Type`,value.ActivitySubType as `Activity Sub-Type`, value.ActivityGroup as `Activity Group` ,value.ActivitySubGroup as `Activity SubGroup` , value.Activity as Activity, value.ActivityInstance as `Activity Instance` order by `Activity Type`, `Activity Group`, `Activity SubGroup`, Activity, `Activity Instance`",
+          "width": 10,
+          "height": 2,
+          "x": 0,
+          "y": 3,
+          "type": "table",
+          "selection": {},
+          "settings": {
+            "compact": true
+          }
+        },
+        {
+          "title": "Activity Sub-group",
+          "query": "MATCH (n:`ActivitySubGroup`) \nWHERE toLower(toString(n.`name`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`name` as value ORDER BY size(toString(value)) ASC LIMIT 5",
+          "width": 3,
+          "height": 1,
+          "x": 7,
+          "y": 2,
+          "type": "select",
+          "selection": {},
+          "settings": {
+            "type": "Node Property",
+            "entityType": "ActivitySubGroup",
+            "propertyType": "name",
+            "parameterName": "neodash_activitysubgroup_name"
+          }
+        },
+        {
+          "title": "Number of Activities by groups",
+          "query": "MATCH (agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]->(ai:ActivityInstance),(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) \nreturn\nagrp.name as `Activity Group`, \nasgrp.name as `Activity Sub-group`,\naicp.name as `Activity Type`,\naic.name as `Activity Sub-Type`,\ncount(ai.name) as `Number of Activity Instances`,\ncount(act.name) as `Number of Activities`\n\n\n\n",
+          "width": 10,
+          "height": 2,
+          "x": 0,
+          "y": 0,
+          "type": "bar",
+          "selection": {
+            "index": "Activity Sub-Type",
+            "value": "Number of Activities",
+            "key": "Activity Sub-group"
+          },
+          "settings": {
+            "legend": true,
+            "showOptionalSelections": true,
+            "barValues": true,
+            "layout": "vertical",
+            "groupMode": "grouped",
+            "positionLabel": "top",
+            "hideSelections": false,
+            "marginBottom": 80,
+            "legendWidth": 160,
+            "labelSkipWidth": 8
+          }
+        },
+        {
+          "title": "Activity Group",
+          "query": "MATCH (n:`ActivityGroup`) \nWHERE toLower(toString(n.`name`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`name` as value ORDER BY size(toString(value)) ASC LIMIT 5",
+          "width": 2,
+          "height": 1,
+          "x": 5,
+          "y": 2,
+          "type": "select",
+          "selection": {},
+          "settings": {
+            "type": "Node Property",
+            "entityType": "ActivityGroup",
+            "propertyType": "name",
+            "parameterName": "neodash_activitygroup_name"
+          }
+        },
+        {
+          "title": "Activity Type",
+          "query": "MATCH (n:`ActivityInstanceClass`)<-[:PARENT_CLASS]-() \nWHERE toLower(toString(n.`name`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`name` as value ORDER BY size(toString(value)) ASC LIMIT 5",
+          "width": 2,
+          "height": 1,
+          "x": 0,
+          "y": 2,
+          "type": "select",
+          "selection": {},
+          "settings": {
+            "type": "Node Property",
+            "entityType": "ActivityInstanceClass",
+            "propertyType": "name",
+            "parameterName": "neodash_activityinstanceclass_name"
+          }
+        },
+        {
+          "title": "Select Activity to display graphically",
+          "query": "MATCH (n:`Activity`) \nWHERE toLower(toString(n.`name`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`name` as value ORDER BY size(toString(value)) ASC LIMIT 5",
+          "width": 3,
+          "height": 1,
+          "x": 0,
+          "y": 5,
+          "type": "select",
+          "selection": {},
+          "settings": {
+            "type": "Node Property",
+            "entityType": "Activity",
+            "propertyType": "name",
+            "parameterName": "neodash_activity_name"
+          }
+        },
+        {
+          "title": "Activity as a graph-view",
+          "query": "CALL apoc.when($neodash_activityinstance_adam_param_code='','MATCH (agrp)-[r1]->(asgrp)-[r2]->(act)-[r3]->(ai:ActivityInstance)-[r4]->(aitm1:ActivityItem),(aitm1)-[r5]->(aitmc1:ActivityItemClass),(ai)-[r6]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) WHERE act.name in [$a] OPTIONAL MATCH (aitm1)-[r16]->(ct2:CTTerm)<-[r17:HAS]-(cl:CTCodeList),(aitmc1)-[r18:HAS_ROLE|HAS_TYPE]->(q:CTTerm)<-[r19:HAS]-(codelist:CTCodeList) return *','MATCH (agrp)-[r1]->(asgrp)-[r2]->(act)-[r3]->(ai:ActivityInstance)-[r4]->(aitm1:ActivityItem),(aitm1)-[r5]->(aitmc1:ActivityItemClass),(ai)-[r6]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass) WHERE act.name in [$a] and ai.adam_param_code in [$b] OPTIONAL MATCH (aitm1)-[r16]->(ct2:CTTerm)<-[r17:HAS]-(cl:CTCodeList),(aitmc1)-[r18:HAS_ROLE|HAS_TYPE]->(q:CTTerm)<-[r19:HAS]-(codelist:CTCodeList) return *',{a:$neodash_activity_name,b:$neodash_activityinstance_adam_param_code}) YIELD value return value.agrp, value.asgrp,value.act,value.ai,value.aitm1,value.aitmc1,value.aic,value.aicp,value.ct2,value.cl, value.q, value.codelist, value.r1, value.r2,value.r3,value.r4,value.r5,value.r6, value.r7,value.r16,value.r17, value.r18, value.r19",
+          "width": 11,
+          "height": 3,
+          "x": 0,
+          "y": 6,
+          "type": "graph",
+          "selection": {
+            "Concept": "name",
+            "ActivityGroup": "name",
+            "ActivitySubGroup": "name",
+            "Activity": "name",
+            "ActivityInstance": "name",
+            "Finding": "name",
+            "NumericFinding": "name",
+            "ActivityItem": "(label)",
+            "ActivityItemClass": "name",
+            "ActivityInstanceClass": "name",
+            "CTTerm": "uid",
+            "CTCodeList": "submission_value"
+          },
+          "settings": {
+            "nodePositions": {},
+            "nodeColorScheme": "set3",
+            "relationshipParticles": false,
+            "hideSelections": true,
+            "frozen": false,
+            "defaultNodeSize": 3,
+            "refreshButtonEnabled": true,
+            "rightClickToExpandNodes": true
+          }
+        },
+        {
+          "title": "Select Activity Instance",
+          "query": "MATCH (a:Activity)-[:HAS]->(n) where a.name in [$neodash_activity_name] with n MATCH (n:`ActivityInstance`) \nWHERE toLower(toString(n.`adam_param_code`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`adam_param_code` as value,  n.`adam_param_code` as display ORDER BY size(toString(value)) ASC LIMIT 5",
+          "width": 3,
+          "height": 1,
+          "x": 7,
+          "y": 5,
+          "type": "select",
+          "selection": {},
+          "settings": {
+            "type": "Node Property",
+            "entityType": "ActivityInstance",
+            "propertyType": "adam_param_code",
+            "propertyTypeDisplay": "adam_param_code",
+            "parameterName": "neodash_activityinstance_adam_param_code"
+          }
+        },
+        {
+          "title": "Instances info",
+          "query": "match(a:Activity)-[:HAS]->(ai:ActivityInstance)\nwhere a.name = $neodash_activity_name\nreturn 'Number of intances for '+ $neodash_activity_name + ': '+count(ai)+'. Select instances in panel to the right.'\n\n\n",
+          "width": 4,
+          "height": 1,
+          "x": 3,
+          "y": 5,
+          "type": "value",
+          "selection": {},
+          "settings": {
+            "fontSize": 20,
+            "color": "#0433FF"
+          }
+        },
+        {
+          "title": "Activity Sub-type",
+          "query": "MATCH (n:`ActivityInstanceClass`)<-[:OF_CLASS]-() \nWHERE toLower(toString(n.`name`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`name` as value,  n.`name` as display ORDER BY size(toString(value)) ASC LIMIT 5",
+          "width": 3,
+          "height": 1,
+          "x": 2,
+          "y": 2,
+          "type": "select",
+          "selection": {},
+          "settings": {
+            "type": "Node Property",
+            "entityType": "ActivityInstanceClass",
+            "propertyType": "name",
+            "propertyTypeDisplay": "name",
+            "parameterName": "neodash_activityinstanceclass_name_subtype"
+          }
+        },
+        {
+          "title": "Activity in tabular format",
+          "query": "MATCH (agrp:ActivityGroup)-[r1]->(asgrp:ActivitySubGroup)-[r2]->(act:Activity)-[r3]->(ai:ActivityInstance)-[r4]->(aitm:ActivityItem)-[r5]->(aitmc:ActivityItemClass),\n(ai)-[r6]->(aic:ActivityInstanceClass) where ai.adam_param_code= $neodash_activityinstance_adam_param_code\nOPTIONAL MATCH (dt:CTTerm)<-[:HAS_TYPE]-(aitmc)-[:HAS_ROLE]->(rl:CTTerm)\nOPTIONAL MATCH (aitm)-[r7]->(ct:CTTerm)\nRETURN  distinct\n       //agrp.name as ActivityGroup,\n       //asgrp.name as ActivitySubGroup,\n       //act.name as Activity,\n       ai.name as `Activity Instance`,\n       aitmc.name as `Class of Activity Item`,\n       aitmc.mandatory as Mandatory,\n       toInteger(aitmc.order) as `Variable Order`,\n       dt.code_submission_value as `Data Type`,\n       rl.code_submission_value as Role,\n       aitmc.data_collection as `For collection` order by `Variable Order`;\n\n\n\n\n\n",
+          "width": 11,
+          "height": 2,
+          "x": 0,
+          "y": 9,
+          "type": "table",
+          "selection": {},
+          "settings": {}
+        },
+        {
+          "title": "Activity Concept linked to SDTM",
+          "query": "MATCH (agrp)-[r1]->(asgrp)-[r2]->(act)-[r3]->(ai:ActivityInstance)-[r4]->(aitm1:ActivityItem),\n(aitm1)-[r5]->(aitmc1:ActivityItemClass),\n(ai)-[r6]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass)-[r8]->(dc:DatasetClass) where ai.adam_param_code= $neodash_activityinstance_adam_param_code\nOPTIONAL MATCH (dc)-[r9]->(ds:Dataset),\n(ai)-[r10]->(aitm2:ActivityItem)-[r11]->(aitmc2:ActivityItemClass)-[r12]->(vc2:VariableClass)-[r15]->(v2:Variable)<-[r16]-(ds),\n(aitm1)-[r17]->(ct1:CTTerm)-[r18]->(ds:Dataset)\nOPTIONAL MATCH (ds)<-[r19]-(dmig:DataModelIG)\nOPTIONAL MATCH (aitm2)-[r20]->(ct2:CTTerm)\nRETURN distinct dmig.uid as DataModelIG,\n       ds.code as Dataset,\n       ai.name as ActivityInstance,\n       aitmc2.name as ActivityItemClass,\n       vc2.name as VariableClass,\n       vc2.label as VariableClassLabel,\n       v2.uid as Variable,\n       v2.label as VariableLabel;\n\n\n",
+          "width": 12,
+          "height": 2,
+          "x": 0,
+          "y": 11,
+          "type": "table",
+          "selection": {},
+          "settings": {
+            "compact": true,
+            "columnWidths": "[1,1,2,2,1,2,1,2]"
+          }
+        }
+      ]
+    },
+    {
+      "title": "Term impact assessment",
+      "reports": [
+        {
+          "title": "Select Term",
+          "query": "MATCH (n:`CTTerm`) \nWHERE toLower(toString(n.`nci_preferred_name`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`nci_preferred_name` as value,  n.`nci_preferred_name` as display ORDER BY size(toString(value)) ASC LIMIT 5",
+          "width": 4,
+          "height": 1,
+          "x": 0,
+          "y": 0,
+          "type": "select",
+          "selection": {},
+          "settings": {
+            "type": "Node Property",
+            "entityType": "CTTerm",
+            "propertyType": "nci_preferred_name",
+            "clearParameterOnFieldClear": false,
+            "parameterName": "neodash_ctterm_nci_preferred_name",
+            "propertyTypeDisplay": "nci_preferred_name"
+          }
+        },
+        {
+          "title": "Select Code List",
+          "query": "MATCH (n:`CTCodeList`)-[:HAS]->(t) where t.nci_preferred_name in [$neodash_ctterm_nci_preferred_name] with n match(n) \nWHERE toLower(toString(n.`submission_value`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`submission_value` as value,  n.`submission_value` as display ORDER BY size(toString(value)) ASC LIMIT 5",
+          "width": 4,
+          "height": 1,
+          "x": 4,
+          "y": 0,
+          "type": "select",
+          "selection": {},
+          "settings": {
+            "type": "Node Property",
+            "entityType": "CTCodeList",
+            "propertyType": "submission_value",
+            "parameterName": "neodash_ctcodelist_submission_value"
+          }
+        },
+        {
+          "title": "Activities being impacted if terms/code lists are being changed",
+          "query": "CALL apoc.when($neodash_ctcodelist_submission_value='','MATCH (agrp)-[r1]->(asgrp)-[r2]->(act)-[r3]->(ai:ActivityInstance)-[r4]->(aitm1:ActivityItem),(aitm1)-[r5]->(aitmc1:ActivityItemClass),(aitm1)-[r16]->(ct2:CTTerm)<-[r17:HAS]-(cl:CTCodeList) where ct2.nci_preferred_name in [$b] return agrp.name as ActivityGroup, asgrp.name as ActivitySubGroup,ai.name as ActivityInstance,aitmc1.name as ActivityItemClass,ct2.code_submission_value as Term, cl.submission_value as CodeList','MATCH (agrp)-[r1]->(asgrp)-[r2]->(act)-[r3]->(ai:ActivityInstance)-[r4]->(aitm1:ActivityItem),(aitm1)-[r5]->(aitmc1:ActivityItemClass),(aitm1)-[r16]->(ct2:CTTerm)<-[r17:HAS]-(cl:CTCodeList) where cl.submission_value in [$a] and ct2.nci_preferred_name in [$b] return agrp.name as ActivityGroup,asgrp.name as ActivitySubGroup,ai.name as ActivityInstance,aitmc1.name as ActivityItemClass,ct2.code_submission_value as Term,cl.submission_value as CodeList', {a:$neodash_ctcodelist_submission_value,b:$neodash_ctterm_nci_preferred_name}) YIELD value\nreturn value.ActivityGroup as `Activity Group`,\nvalue.ActivitySubGroup as `Activity Sub-group`,\nvalue.ActivityInstance as `Activity Instance` ,\nvalue.ActivityItemClass as `Activity Item Class`,\nvalue.CodeList as `Code List`,\nvalue.Term as Term\n\n",
+          "width": 8,
+          "height": 2,
+          "x": 0,
+          "y": 1,
+          "type": "table",
+          "selection": {},
+          "settings": {}
+        }
+      ]
+    },
+    {
+      "title": "Activity in COSMOS format",
+      "reports": [
+        {
+          "title": "Select Activity Instance",
+          "query": "MATCH (n:`ActivityInstance`) \nWHERE toLower(toString(n.`adam_param_code`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`adam_param_code` as value,  n.`adam_param_code` as display ORDER BY size(toString(value)) ASC LIMIT 5",
+          "width": 11,
+          "height": 1,
+          "x": 0,
+          "y": 0,
+          "type": "select",
+          "selection": {},
+          "settings": {
+            "type": "Node Property",
+            "entityType": "ActivityInstance",
+            "propertyType": "adam_param_code",
+            "propertyTypeDisplay": "adam_param_code",
+            "parameterName": "neodash_activityinstance_adam_param_code"
+          }
+        },
+        {
+          "title": "Display Activity in CDISC Cosmos YAML format",
+          "query": "MATCH (agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]->(ai:ActivityInstance)-[r4:HAS]->(aitm1:ActivityItem),\n(aitm1)-[r5:OF_CLASS]->(aitmc1:ActivityItemClass),\n(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass)\nwhere ai.adam_param_code in [$neodash_activityinstance_adam_param_code]\nOPTIONAL MATCH(aitmc1)-[r8:HAS]->(varclass:VariableClass)-[r9:HAS]->(var:Variable)<-[r10:HAS]-(ds:Dataset)<-[r11:HAS]-(dmig:DataModelIG),\n(ai)-[r12:HAS]->(aitm2:ActivityItem)-[r13:FOR]->(ct:CTTerm)-[r15:IMPLEMENTED_IN]->(ds:Dataset)\nOPTIONAL MATCH (aitm1)-[r16:FOR]->(ct2:CTTerm)<-[r17:HAS]-(cl:CTCodeList),\n(aitmc1)-[r18:HAS_ROLE]->(role:CTTerm)<-[r19:HAS]-(cd_role:CTCodeList),\n(aitmc1)-[r20:HAS_TYPE]->(type:CTTerm)<-[r21:HAS]-(cd_type:CTCodeList)\nwith aic, asgrp, aitmc1,dmig, ai, ds, ct2, ct, var,role,type,cd_role, cd_type,\napoc.map.fromPairs([\n                   ['conceptId',cl.uid],\n                   ['href','https://ncithesaurus.nci.nih.gov/ncitbrowser/ConceptReport.jsp?dictionary=NCI_Thesaurus&ns=ncit&code='+cl.uid],\n                   ['submissionValue',cl.submission_value]\n                   ]) as cdlist,\nCASE WHEN var.uid contains 'TEST' or var.uid contains 'TERM' THEN\napoc.map.fromPairs([\n                   ['conceptId',ct2.uid],\n                   ['value',ct2.code_submission_value]\n                   ])\nEND as assignedTerms,\nCASE when aitmc1.data_collection='Yes' THEN 'Collected' ELSE 'Not Collected' END as collected\nWITH aic, asgrp, aitmc1,dmig,ai,ds,var,cdlist,role,type,cd_type,assignedTerms,collected,\ncollect(distinct(ct2.code_submission_value)) as val_list\nWITH aic, asgrp, aitmc1,dmig,ai,ds,var,cdlist,role,type,cd_type,assignedTerms,collected,val_list,\napoc.map.sortedProperties(apoc.map.fromPairs( [\n                    ['0name', var.uid],\n                    ['1codelist',cdlist],\n                    ['2valueList', val_list],\n                    ['3subsetCodelist',cd_type.name],\n                    ['4AssignedTerm',assignedTerms],\n                    ['5role',role.nci_preferred_name],\n                    ['6dataType', type.code_submission_value],\n                    ['7originType', collected],\n                    ['8mandatoryVariable', aitmc1.mandatory],\n                    ['9var_order',toInteger(aitmc1.order)]\n                    ])) as varlist order by varlist[9][1]\nWITH aic, asgrp, dmig, ai,ds,collect(varlist) as vars\nWITH aic, asgrp, dmig, ai,ds,vars, \nCASE when aic.name='NumericFinding' THEN 'Quantitative' ELSE \n CASE WHEN aic.name='CategoricFinding' THEN 'Ordinal' ELSE \n null END END as aiclass\nWITH asgrp, dmig, ai,ds,vars, aiclass\nUNWIND vars as v\nWITH asgrp, dmig, ai,ds,vars, v, aiclass,\nCASE WHEN v[0][1] contains 'TESTCD' THEN v[4][1]['conceptId'] END as conceptId\nWITH asgrp, dmig, ai,ds,vars, aiclass,  collect(distinct(conceptId)) as conceptId\nWITH asgrp, dmig, ai,ds,vars, aiclass,conceptId,\napoc.map.sortedProperties(apoc.map.fromPairs([\n                   ['0packageDate', \"2022-11-13\"],\n                   ['1packageType', 'SDTM'],\n                   ['2datasetSpecialisationID',ai.topic_code],\n                   ['3domain',ds.code],\n                   ['4shortName',ai.name],\n                   ['5source',ds.code+'.'+ds.code+'TESTCD'],\n                   ['6sdtmigStartVersion',dmig.version],\n                   ['7sdtmigEndVersion',\"\"],\n                   ['8biomedicalConceptId',apoc.text.join(conceptId, ', ')],\n                   ['9variables',vars]\n                   ])) as BC\n\nUNWIND BC as b\nUNWIND b[1] as val\nUNWIND val as v\nWITH b,v,substring(b[0],1) as Variable,\nCASE WHEN apoc.meta.type(v) = \"STRING\" THEN v ELSE \n CASE WHEN apoc.meta.type(v)='LIST' AND apoc.meta.type(v[1])='STRING' THEN    \n  apoc.text.join([substring(v[0],1),apoc.convert.toString(v[1])],' : ') ELSE \n CASE WHEN apoc.meta.type(v)='LIST' AND apoc.meta.type(v[1])='MAP' THEN \n  substring(v[0],1) END \n END \n END as Value,\nCASE WHEN apoc.meta.type(v)='LIST' AND apoc.meta.type(v[1]) = \"MAP\" THEN v[1] END as Detail,\nCASE WHEN apoc.meta.type(v)='LIST' AND apoc.meta.type(v[1])='STRING' AND v[0]='0name' THEN v[1] END as `Variable Name`\nWITH Variable, Value, `Variable Name`,Detail where Value is not null\nReturn Variable, `Variable Name`, Value, apoc.convert.toString(Detail) as Detail\n\n",
+          "width": 12,
+          "height": 7,
+          "x": 0,
+          "y": 1,
+          "type": "table",
+          "selection": {},
+          "settings": {
+            "compact": true,
+            "columnWidths": "[1,0.5,1,3]"
+          }
+        },
+        {
+          "title": "Activity in CDISC COSMOS yaml format",
+          "query": "MATCH (agrp)-[r1:HAS]->(asgrp)-[r2:HAS]->(act)-[r3:HAS]->(ai:ActivityInstance)-[r4:HAS]->(aitm1:ActivityItem),\n(aitm1)-[r5:OF_CLASS]->(aitmc1:ActivityItemClass),\n(ai)-[r6:OF_CLASS]->(aic:ActivityInstanceClass)-[r7:PARENT_CLASS]->(aicp:ActivityInstanceClass)\nwhere ai.adam_param_code in [$neodash_activityinstance_adam_param_code]\nOPTIONAL MATCH(aitmc1)-[r8:HAS]->(varclass:VariableClass)-[r9:HAS]->(var:Variable)<-[r10:HAS]-(ds:Dataset)<-[r11:HAS]-(dmig:DataModelIG),\n(ai)-[r12:HAS]->(aitm2:ActivityItem)-[r13:FOR]->(ct:CTTerm)-[r15:IMPLEMENTED_IN]->(ds:Dataset)\nOPTIONAL MATCH (aitm1)-[r16:FOR]->(ct2:CTTerm)<-[r17:HAS]-(cl:CTCodeList),\n(aitmc1)-[r18:HAS_ROLE]->(role:CTTerm)<-[r19:HAS]-(cd_role:CTCodeList),\n(aitmc1)-[r20:HAS_TYPE]->(type:CTTerm)<-[r21:HAS]-(cd_type:CTCodeList)\nwith aic, asgrp, aitmc1,dmig, ai, ds, ct2, ct, var,role,type,cd_role, cd_type,\napoc.map.fromPairs([\n                   ['conceptId',cl.uid],\n                   ['submissionValue',cl.submission_value]\n                   ]) as cdlist,\nCASE WHEN var.uid contains 'TEST' or var.uid contains 'TESTCD' or var.uid contains 'TERM' THEN\napoc.map.fromPairs([\n                   ['conceptId',ct2.uid],\n                   ['value',ct2.code_submission_value]\n                   ]) \nEND as assignedTerms,\nCASE when aitmc1.data_collection='Yes' THEN 'Collected' ELSE 'Not Collected' END as collected\nWITH aic, asgrp, aitmc1,dmig,ai,ds,var,cdlist,role,type,cd_type,assignedTerms,collected,\ncollect(distinct(ct2.code_submission_value)) as val_list\nWITH aic, asgrp, aitmc1,dmig,ai,ds,var,cdlist,role,type,cd_type,assignedTerms,collected,val_list,\napoc.map.fromPairs( [\n                    ['name', var.uid],\n                    ['codelist',cdlist],\n                    ['valueList', val_list],\n                    ['subsetCodelist',cdlist['submissionValue']],\n                    ['AssignedTerm',assignedTerms],\n                    ['role',role.nci_preferred_name],\n                    ['dataType', type.code_submission_value],\n                    ['originType', collected],\n                    ['mandatoryVariable', aitmc1.mandatory],\n                    ['var_order',toInteger(aitmc1.order)]\n                    ]) as varlist order by varlist['var_order']\nWITH aic, asgrp, dmig, ai,ds,collect(varlist) as vars\nWITH aic, asgrp, dmig, ai,ds, vars, \nCASE when aic.name='NumericFinding' THEN 'Quantitative' ELSE \n CASE WHEN aic.name='CategoricFinding' THEN 'Ordinal' ELSE \n null END END as aiclass\nWITH asgrp, dmig, ai,ds, vars, aiclass,\napoc.map.fromPairs([ \n                    ['packageType',dmig.name],\n                    ['datasetSpecializationId',ai.topic_code],\n                    ['domain',ds.code],\n                    ['shortName',ai.name],\n                    ['source',ds.code+'.'+ds.code+'TESTCD'],\n                    ['sdtmigStartVersion',dmig.version],\n                    ['Variables',vars],\n                    ['category',asgrp.name],\n                    ['resultScale',aiclass]\n                    ]) as activity\nWITH activity\nUNWIND activity['Variables'] as vars\nWITH activity, vars,\nCASE WHEN (vars['name'] contains 'TEST' or vars['name'] contains 'TERM') THEN \n  'name: '+vars['name']+'\n   isNonStandard: false'+'\n   codelist:'+'\n     conceptId: '+vars['codelist']['conceptId']+' \n     href: https://ncithesaurus.nci.nih.gov/ncitbrowser/ConceptReport.jsp?dictionary=NCI_Thesaurus&ns=ncitcode='+vars['codelist']['conceptId']+'\n     submissionValue: '+vars['codelist']['submissionValue']+'\n     assignedTerm:'+'\n       conceptId: '+vars['AssignedTerm']['conceptId']+'\n       value: '+vars['AssignedTerm']['value']+'\n     role: '+vars['role']+'\n     relationship: []'+'\n     mandatoryVariable: true'+'\n     mandatoryValue: false'+'\n     comparator: EQ'\nELSE\n CASE WHEN toLower(vars['dataType']) in ['integer','float'] THEN\n  'name: '+vars['name']+'\n    dataElementConceptId: '+' \n    isNonStandard: false'+' \n    role: '+vars['role']+'\n    dataType: '+vars['dataType']+'\n    length: '+'\n    relationship:\n      subject: \n      linkingPhrase: \n      predicateTerm: \n      object: +\n    mandatoryVariable: '+vars['mandatoryVariable']+'\n    mandatoryValue: '+'\n    originType: '+vars['originType']+'\n    originSource: \n    vlmTarget: ' \n ELSE\n  'name: '+vars['name']+'\n    dataElementConceptId: '+' \n    isNonStandard: false'+' \n    codelist:'+' \n      conceptId: '+vars['codelist']['conceptId']+'\n      href: https://ncit.nci.nih.gov/ncitbrowser/ConceptReport.jsp?dictionary=NCI_Thesaurus&ns=ncit&code='+vars['codelist']['conceptId']+'\n      submissionValue: '+vars['codelist']['submissionValue']+'\n      subsetCodelist: '+vars['subsetCodelist']+'    \n    valueList: '+'\n    '+apoc.text.join(apoc.coll.sort(vars['valueList']),\"       \\n    \")+'\n    role: '+vars['role']+'\n    relationship'+'\n    mandatoryVariable: '+vars['mandatoryVariable']+'\n    mandatoryValue: '+'\n    comparator:' \nEND END as yaml_var\nWITH activity, apoc.text.join(collect(yaml_var),\"\\n\") as yaml_vars,\n[v in activity['Variables'] where v['name'] contains 'TEST' or v['name'] contains 'TERM'][0] as bc_header\nWITH activity, bc_header, yaml_vars,\n'packageDate: 2023-04-30'+'\npackageType: '+activity['packageType']+'\ndatasetSpecializationId: '+ activity['datasetSpecializationId']+'\ndomain: '+activity['domain']+'\nshortName: '+activity['shortName']+'\nsource: '+activity['source']+'\nsdtmigStartVersion: 3.2'+'\nsdtmigEndVersion:'+'\nbiomedicalConceptId: '+bc_header['AssignedTerm']['conceptId'] +'\nvariables:' as yaml_bc_header\nWITH yaml_bc_header, yaml_vars, yaml_bc_header+'\\n'+yaml_vars as yaml_bc\nreturn yaml_bc",
+          "width": 12,
+          "height": 2,
+          "x": 0,
+          "y": 8,
+          "type": "value",
+          "selection": {},
+          "settings": {
+            "fontSize": 12,
+            "refreshButtonEnabled": true,
+            "fullscreenEnabled": true,
+            "downloadImageEnabled": false
+          }
+        }
+      ]
+    }
+  ],
+  "parameters": {},
+  "extensions": {
+    "advanced-charts": true,
+    "styling": true,
+    "actions": true
+  }
+}

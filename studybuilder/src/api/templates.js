@@ -55,8 +55,8 @@ export default (basePath) => {
     deleteDefaultParameterValuesSet (uid, setNumber) {
       return repository.patch(`${basePath}/${uid}/default-parameter-values`, { setNumber: parseInt(setNumber), defaultParameterValues: [] })
     },
-    updateGroupings (uid, data) {
-      return repository.patch(`${basePath}/${uid}/groupings`, data)
+    updateIndexings (uid, data) {
+      return repository.patch(`${basePath}/${uid}/indexings`, data)
     }
   }
 }

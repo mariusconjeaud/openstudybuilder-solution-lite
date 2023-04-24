@@ -3,17 +3,13 @@ import unittest
 from neomodel import db
 
 from clinical_mdr_api import models
-from clinical_mdr_api.domain_repositories.models.endpoint import (
+from clinical_mdr_api.domain_repositories.models.study import StudyRoot
+from clinical_mdr_api.domain_repositories.models.syntax import (
     EndpointRoot,
     EndpointValue,
-)
-from clinical_mdr_api.domain_repositories.models.objective import (
     ObjectiveRoot,
     ObjectiveValue,
 )
-from clinical_mdr_api.domain_repositories.models.study import StudyRoot
-from clinical_mdr_api.services.endpoints import EndpointService
-from clinical_mdr_api.services.objectives import ObjectiveService
 from clinical_mdr_api.services.study import StudyService
 from clinical_mdr_api.services.study_activity_instruction import (
     StudyActivityInstructionService,
@@ -24,8 +20,11 @@ from clinical_mdr_api.services.study_activity_selection import (
 from clinical_mdr_api.services.study_criteria_selection import (
     StudyCriteriaSelectionService,
 )
+from clinical_mdr_api.services.syntax_instances.endpoints import EndpointService
+from clinical_mdr_api.services.syntax_instances.objectives import ObjectiveService
 from clinical_mdr_api.tests.integration.utils import data_library
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
+from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 
 class TestListStudiesForObjectiveAndEndpoint(unittest.TestCase):
@@ -34,6 +33,7 @@ class TestListStudiesForObjectiveAndEndpoint(unittest.TestCase):
     def setUp(self):
         inject_and_clear_db("liststudiestest")
         db.cypher_query(data_library.STARTUP_STUDY_LIST_CYPHER)
+        TestUtils.create_study_fields_configuration()
 
         # Generate UIDs
         StudyRoot.generate_node_uids_if_not_present()
@@ -68,6 +68,7 @@ class TestListStudies(unittest.TestCase):
             data_library.get_codelist_with_term_cypher("EFFICACY", "Flowchart Group")
         )
         db.cypher_query(data_library.STARTUP_CRITERIA)
+        TestUtils.create_study_fields_configuration()
 
         # Generate UIDs
         StudyRoot.generate_node_uids_if_not_present()
@@ -85,45 +86,49 @@ class TestListStudies(unittest.TestCase):
         # Create a criteria template
         db.cypher_query(
             """
-MATCH (incl:CTTermRoot {uid: "C25532"})
-MATCH (library:Library {name: "Sponsor"})
-MERGE (incl)<-[:HAS_TYPE]-(ctr1:CriteriaTemplateRoot {uid: "incl_criteria_1"})
--[relt:LATEST_FINAL]->(ctv1:CriteriaTemplateValue {name : "incl_criteria_1", name_plain : "incl_criteria_1"})
-MERGE (ctr1)-[:LATEST]->(ctv1)
-set relt.change_description="Approved version"
-set relt.start_date= datetime()
-set relt.status = "Final"
-set relt.user_initials = "TODO Initials"
-set relt.version = "1.0"
-MERGE (library)-[:CONTAINS_CRITERIA_TEMPLATE]->(ctr1)
-"""
+            MATCH (incl:CTTermRoot {uid: "C25532"})
+            MATCH (library:Library {name: "Sponsor"})
+            MERGE (incl)<-[:HAS_TYPE]-(ctr1:CriteriaTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid: "incl_criteria_1"})
+            -[relt:LATEST_FINAL]->(ctv1:CriteriaTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue
+              {name : "incl_criteria_1", name_plain : "incl_criteria_1"})
+            MERGE (ctr1)-[:LATEST]->(ctv1)
+            MERGE (ctr1)-[hv:HAS_VERSION]->(ctv1)
+            set hv.change_description="Approved version"
+            set hv.start_date= datetime()
+            set hv.status = "Final"
+            set hv.user_initials = "TODO Initials"
+            set hv.version = "1.0"
+            MERGE (library)-[:CONTAINS_SYNTAX_TEMPLATE]->(ctr1)
+            """
         )
 
         # Create a study criteria
         StudyCriteriaSelectionService("AZNG").make_selection_create_criteria(
             "study_root",
             models.study_selection.StudySelectionCriteriaCreateInput(
-                criteria_data=models.criteria.CriteriaCreateInput(
+                criteria_data=models.syntax_instances.criteria.CriteriaCreateInput(
                     criteria_template_uid="incl_criteria_1",
                     library_name="Sponsor",
-                    parameter_values=[],
+                    parameter_terms=[],
                 )
             ),
         )
 
-        # Create an Activity Description Template
+        # Create an Activity Instruction Template
         db.cypher_query(
             """
-MATCH (lib:Library {name: "Sponsor"})
-MERGE (adt:ActivityDescriptionTemplateRoot {uid: "ActivityDescriptionTemplate_000001"})
--[relt:LATEST_FINAL]->(adtv:ActivityDescriptionTemplateValue {name : "activity_description_1", name_plain : "activity_description_1"})
-MERGE (lib)-[:CONTAINS_ACTIVITY_DESCRIPTION_TEMPLATE]->(adt)
-set relt.change_description="Approved version"
-set relt.start_date= datetime()
-set relt.status = "Final"
-set relt.user_initials = "TODO Initials"
-set relt.version = "1.0"
-"""
+            MATCH (lib:Library {name: "Sponsor"})
+            MERGE (adt:ActivityInstructionTemplateRoot:SyntaxTemplateRoot {uid: "ActivityInstructionTemplate_000001"})
+            -[relt:LATEST_FINAL]->(adtv:ActivityInstructionTemplateValue:SyntaxTemplateValue
+              {name : "activity_description_1", name_plain : "activity_description_1"})
+            MERGE (lib)-[:CONTAINS_SYNTAX_TEMPLATE]->(adt)
+            MERGE (adt)-[hv:HAS_VERSION]->(adtv)
+            set hv.change_description="Approved version"
+            set hv.start_date= datetime()
+            set hv.status = "Final"
+            set hv.user_initials = "TODO Initials"
+            set hv.version = "1.0"
+            """
         )
 
         # Create a study activity instruction
@@ -131,8 +136,8 @@ set relt.version = "1.0"
             "study_root",
             models.StudyActivityInstructionCreateInput(
                 activity_instruction_data=models.ActivityInstructionCreateInput(
-                    activity_instruction_template_uid="ActivityDescriptionTemplate_000001",
-                    parameter_values=[],
+                    activity_instruction_template_uid="ActivityInstructionTemplate_000001",
+                    parameter_terms=[],
                     library_name="Sponsor",
                 ),
                 study_activity_uid="StudyActivity_000001",
@@ -142,17 +147,19 @@ set relt.version = "1.0"
         # Let's create an empty study
         db.cypher_query(
             """
-MERGE (sr:StudyRoot {uid: "study_root2"})-[:LATEST]->(sv:StudyValue{study_id_prefix: "some_id2", study_number:"1"})
-MERGE (sr)-[hv:HAS_VERSION]->(sv)
-MERGE (sr)-[ld:LATEST_DRAFT]->(sv)
-set hv.status = "DRAFT"
-set hv.start_date = datetime()
-set hv.user_initials = "AZNG"
-set ld = hv
-WITH sv
-MATCH (p:Project {uid: "Project_000001"})
-MERGE (p)-[:HAS_FIELD]->(sf:StudyField:StudyProjectField)<-[:HAS_PROJECT]-(sv)
-"""
+            MERGE (sr:StudyRoot {uid: "study_root2"})-[:LATEST]->(sv:StudyValue{study_id_prefix: "some_id2", study_number:"1"})
+            MERGE (sr)-[hv:HAS_VERSION]->(sv)
+            MERGE (sr)-[ld:LATEST_DRAFT]->(sv)
+            set hv.status = "DRAFT"
+            set hv.start_date = datetime()
+            set hv.user_initials = "AZNG"
+            set ld.status = "DRAFT"
+            set ld.start_date = datetime()
+            set ld.user_initials = "AZNG"
+            WITH sv
+            MATCH (p:Project {uid: "Project_000001"})
+            MERGE (p)-[:HAS_FIELD]->(sf:StudyField:StudyProjectField)<-[:HAS_PROJECT]-(sv)
+            """
         )
 
         self.study_service = StudyService()

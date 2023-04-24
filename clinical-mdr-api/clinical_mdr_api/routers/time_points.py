@@ -37,7 +37,10 @@ Possible errors:
  - Invalid library name specified.""",
     response_model=CustomPage[TimePoint],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_time_points(
     library: Optional[str] = Query(None, description="The library name"),
@@ -86,7 +89,7 @@ def get_time_points(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -132,7 +135,10 @@ Possible errors:
  """,
     response_model=TimePoint,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_time_point(
     uid: str = TimePointUID, current_user_id: str = Depends(get_current_user_id)
@@ -164,11 +170,11 @@ Possible errors:
             "- The library does not exist.\n"
             "- The library does not allow to add new items.\n",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create(
-    time_point_create_input: TimePointInput = Body(None, description=""),
+    time_point_create_input: TimePointInput = Body(description=""),
     current_user_id: str = Depends(get_current_user_id),
 ):
     time_point_service = TimePointService(user=current_user_id)

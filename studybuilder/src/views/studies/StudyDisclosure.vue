@@ -1,10 +1,7 @@
 <template>
 <div>
   <v-tabs v-model="tab">
-    <v-tab href="#tab-0">{{ $t('Sidebar.study.cdisc_ctr') }}</v-tab>
-    <v-tab href="#tab-1">{{ $t('Sidebar.study.clinical_trials_gov') }}</v-tab>
-    <v-tab href="#tab-2">{{ $t('Sidebar.study.eudra_ct') }}</v-tab>
-    <v-tab href="#tab-3">{{ $t('Sidebar.study.who_ictrp') }}</v-tab>
+    <v-tab v-for="tab of tabs" :key="tab.tab" :href="tab.tab">{{ tab.name }}</v-tab>
   </v-tabs>
   <v-tabs-items v-model="tab">
     <v-tab-item id="tab-0">
@@ -25,6 +22,7 @@
 
 <script>
 import UnderConstruction from '../../components/layout/UnderConstruction.vue'
+import { mapActions } from 'vuex'
 
 export default {
   components: {
@@ -33,15 +31,41 @@ export default {
   },
   data () {
     return {
-      tab: null
+      tab: null,
+      tabs: [
+        { tab: '#tab-0', name: this.$t('Sidebar.study.cdisc_ctr') },
+        { tab: '#tab-1', name: this.$t('Sidebar.study.clinical_trials_gov') },
+        { tab: '#tab-2', name: this.$t('Sidebar.study.eudra_ct') },
+        { tab: '#tab-3', name: this.$t('Sidebar.study.who_ictrp') }
+      ]
     }
   },
   mounted () {
     this.tab = localStorage.getItem('templatesTab') || 'tab-0'
+    const tabName = this.tab ? this.tabs.find(el => el.tab.substring(1) === this.tab).name : this.tabs[0].name
+    setTimeout(() => {
+      this.addBreadcrumbsLevel({
+        text: tabName,
+        index: 3,
+        replace: true
+      })
+    }, 100)
+  },
+  methods: {
+    ...mapActions({
+      addBreadcrumbsLevel: 'app/addBreadcrumbsLevel'
+    })
   },
   watch: {
     tab (value) {
       localStorage.setItem('templatesTab', value)
+      const tabName = value ? this.tabs.find(el => el.tab.substring(1) === value).name : this.tabs[0].name
+      this.addBreadcrumbsLevel({
+        text: tabName,
+        to: { name: 'StudyProperties', params: { tab: tabName } },
+        index: 3,
+        replace: true
+      })
     }
   }
 }

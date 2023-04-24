@@ -1,0 +1,1666 @@
+[
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "confirmatoryTesting": null,
+    "defaultParameterValues": {},
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "User Defined"
+    },
+    "name": "<p>Evaluate sensitivity index from baseline to end of study (16 weeks)</p>",
+    "namePlain": "Evaluate sensitivity index from baseline to end of study (16 weeks)",
+    "parameters": [],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-20T11:47:40.036856",
+    "status": "Final",
+    "studyCount": 1,
+    "uid": "ObjectiveTemplate_000014",
+    "userInitials": "MT",
+    "version": "1.0"
+  },
+  {
+    "categories": [
+      {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codeSubmissionValue": "Safety",
+          "codelistUid": null,
+          "conceptId": null,
+          "definition": "Safety",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": "Safety",
+          "nciPreferredName": "UNK",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-09-12T10:32:17.515978",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000013",
+        "libraryName": "Sponsor",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 2,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Safety",
+          "sponsorPreferredNameSentenceCase": "safety",
+          "startDate": "2022-09-12T10:32:17.178442",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "termUid": "CTTerm_000041"
+      }
+    ],
+    "changeDescription": "Approved version",
+    "confirmatoryTesting": null,
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 4,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 5,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": [
+      {
+        "abbreviation": null,
+        "changeDescription": "Approved version",
+        "definition": null,
+        "dictionaryId": "371970002",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Primary malignant neoplasm of biliary tract (disorder)",
+        "nameSentenceCase": "primary malignant neoplasm of biliary tract (disorder)",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-16T08:28:04.903469",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000965",
+        "userInitials": "MT",
+        "version": "1.0"
+      }
+    ],
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>To assess the safety of [Compound] and [Compound] combination or  [Compound] and [Compound]  combination in [DiseaseDisorder] patients</p>",
+    "namePlain": "To assess the safety of [Compound] and [Compound] combination or  [Compound] and [Compound]  combination in [DiseaseDisorder] patients",
+    "parameters": [
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "DiseaseDisorder",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-20T11:36:14.128890",
+    "status": "Final",
+    "studyCount": 1,
+    "uid": "ObjectiveTemplate_000013",
+    "userInitials": "MT",
+    "version": "1.0"
+  },
+  {
+    "categories": [
+      {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codeSubmissionValue": "Efficacy",
+          "codelistUid": null,
+          "conceptId": null,
+          "definition": "Efficacy",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": "Efficacy",
+          "nciPreferredName": "UNK",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-09-12T10:32:17.627687",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000013",
+        "libraryName": "Sponsor",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 1,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Efficacy",
+          "sponsorPreferredNameSentenceCase": "efficacy",
+          "startDate": "2022-09-12T10:32:17.417033",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "termUid": "CTTerm_000043"
+      }
+    ],
+    "changeDescription": "Approved version",
+    "confirmatoryTesting": null,
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 4,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 5,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": [
+      {
+        "abbreviation": null,
+        "changeDescription": "Approved version",
+        "definition": null,
+        "dictionaryId": "371970002",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Primary malignant neoplasm of biliary tract (disorder)",
+        "nameSentenceCase": "primary malignant neoplasm of biliary tract (disorder)",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-16T08:28:04.903469",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000965",
+        "userInitials": "MT",
+        "version": "1.0"
+      }
+    ],
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>To assess the effect of [Compound] and [Compound] combination or [Compound] and [Compound] combination in [DiseaseDisorder] patients who have failed to 1st-line chemotherapy.</p>",
+    "namePlain": "To assess the effect of [Compound] and [Compound] combination or [Compound] and [Compound] combination in [DiseaseDisorder] patients who have failed to 1st-line chemotherapy.",
+    "parameters": [
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "DiseaseDisorder",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-20T11:34:27.974551",
+    "status": "Final",
+    "studyCount": 1,
+    "uid": "ObjectiveTemplate_000012",
+    "userInitials": "MT",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "confirmatoryTesting": false,
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 4,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 5,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 6,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 7,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 8,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 9,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 10,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>To [Non-confirmatory Purpose] the [TextValue]  with respect to [TextValue] of [Compound] [NumericValue] [Unit] [Route of Administration] [Frequency] in combination with [TextValue] in [TextValue].</p>",
+    "namePlain": "To [Non-confirmatory Purpose] the [TextValue]  with respect to [TextValue] of [Compound] [NumericValue] [Unit] [Route of Administration] [Frequency] in combination with [TextValue] in [TextValue].",
+    "parameters": [
+      {
+        "name": "Non-confirmatory Purpose",
+        "values": null
+      },
+      {
+        "name": "TextValue",
+        "values": null
+      },
+      {
+        "name": "TextValue",
+        "values": null
+      },
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      },
+      {
+        "name": "Route of Administration",
+        "values": null
+      },
+      {
+        "name": "Frequency",
+        "values": null
+      },
+      {
+        "name": "TextValue",
+        "values": null
+      },
+      {
+        "name": "TextValue",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-19T11:51:54.375510",
+    "status": "Final",
+    "studyCount": 0,
+    "uid": "ObjectiveTemplate_000011",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "confirmatoryTesting": false,
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 4,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>To [Non-confirmatory Purpose] the [TextValue] of [Compound] in [TextValue]</p>",
+    "namePlain": "To [Non-confirmatory Purpose] the [TextValue] of [Compound] in [TextValue]",
+    "parameters": [
+      {
+        "name": "Non-confirmatory Purpose",
+        "values": null
+      },
+      {
+        "name": "TextValue",
+        "values": null
+      },
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "TextValue",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-19T11:46:15.755164",
+    "status": "Final",
+    "studyCount": 0,
+    "uid": "ObjectiveTemplate_000010",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "confirmatoryTesting": false,
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 4,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 5,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 6,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 7,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 8,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 9,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>To [Non-confirmatory Purpose] the [TextValue] of [Compound] [Route of Administration] [NumericValue] [Unit] [Frequency] in [TextValue] with [DiseaseDisorder]</p>",
+    "namePlain": "To [Non-confirmatory Purpose] the [TextValue] of [Compound] [Route of Administration] [NumericValue] [Unit] [Frequency] in [TextValue] with [DiseaseDisorder]",
+    "parameters": [
+      {
+        "name": "Non-confirmatory Purpose",
+        "values": null
+      },
+      {
+        "name": "TextValue",
+        "values": null
+      },
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "Route of Administration",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      },
+      {
+        "name": "Frequency",
+        "values": null
+      },
+      {
+        "name": "TextValue",
+        "values": null
+      },
+      {
+        "name": "DiseaseDisorder",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-19T11:46:13.344635",
+    "status": "Final",
+    "studyCount": 0,
+    "uid": "ObjectiveTemplate_000009",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "confirmatoryTesting": true,
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 4,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 5,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 6,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 7,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 8,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 9,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 10,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 11,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 12,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 13,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 14,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 15,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 16,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 17,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 18,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 19,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 20,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 21,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 22,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>To [Confirmatory Purpose] the efficacy of [Compound] [Route of Administration] [NumericValue] [Unit] [Frequency] by showing non-inferiority (indirect superiority versus placebo) with respect to change in [Activity] from [VisitType] / [StudyDay] to [VisitType] / [StudyDay] versus [Comparator] [Route of Administration] [NumericValue] [Unit] [Frequency] in combination with [TextValue] [Route of Administration] [NumericValue] [Unit] [Frequency] in patients with [DiseaseDisorder].</p>",
+    "namePlain": "To [Confirmatory Purpose] the efficacy of [Compound] [Route of Administration] [NumericValue] [Unit] [Frequency] by showing non-inferiority (indirect superiority versus placebo) with respect to change in [Activity] from [VisitType] / [StudyDay] to [VisitType] / [StudyDay] versus [Comparator] [Route of Administration] [NumericValue] [Unit] [Frequency] in combination with [TextValue] [Route of Administration] [NumericValue] [Unit] [Frequency] in patients with [DiseaseDisorder].",
+    "parameters": [
+      {
+        "name": "Confirmatory Purpose",
+        "values": null
+      },
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "Route of Administration",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      },
+      {
+        "name": "Frequency",
+        "values": null
+      },
+      {
+        "name": "Activity",
+        "values": null
+      },
+      {
+        "name": "VisitType",
+        "values": null
+      },
+      {
+        "name": "StudyDay",
+        "values": null
+      },
+      {
+        "name": "VisitType",
+        "values": null
+      },
+      {
+        "name": "StudyDay",
+        "values": null
+      },
+      {
+        "name": "Comparator",
+        "values": null
+      },
+      {
+        "name": "Route of Administration",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      },
+      {
+        "name": "Frequency",
+        "values": null
+      },
+      {
+        "name": "TextValue",
+        "values": null
+      },
+      {
+        "name": "Route of Administration",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      },
+      {
+        "name": "Frequency",
+        "values": null
+      },
+      {
+        "name": "DiseaseDisorder",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-19T11:40:36.589522",
+    "status": "Final",
+    "studyCount": 0,
+    "uid": "ObjectiveTemplate_000008",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": [
+      {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codeSubmissionValue": "Efficacy",
+          "codelistUid": null,
+          "conceptId": null,
+          "definition": "Efficacy",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": "Efficacy",
+          "nciPreferredName": "UNK",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-09-12T10:32:17.627687",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000013",
+        "libraryName": "Sponsor",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 1,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Efficacy",
+          "sponsorPreferredNameSentenceCase": "efficacy",
+          "startDate": "2022-09-12T10:32:17.417033",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "termUid": "CTTerm_000043"
+      }
+    ],
+    "changeDescription": "Approved version",
+    "confirmatoryTesting": true,
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 4,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 5,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 6,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 7,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 8,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 9,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 10,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 11,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 12,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 13,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 14,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 15,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 16,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 17,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 18,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 19,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 20,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 21,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>To [Confirmatory Purpose] the efficacy of [Compound] [Route of Administration] [NumericValue] [Unit] [Frequency] by showing that it is superior to [Comparator] [Route of Administration] [NumericValue] [Unit] [Frequency], both in combination with [TextValue] [Route of Administration] [NumericValue] [Unit] with respect to change in [Activity] from [VisitName]/ [StudyDay] to [VisitName]/ [StudyDay] in patients with [DiseaseDisorder].</p>",
+    "namePlain": "To [Confirmatory Purpose] the efficacy of [Compound] [Route of Administration] [NumericValue] [Unit] [Frequency] by showing that it is superior to [Comparator] [Route of Administration] [NumericValue] [Unit] [Frequency], both in combination with [TextValue] [Route of Administration] [NumericValue] [Unit] with respect to change in [Activity] from [VisitName]/ [StudyDay] to [VisitName]/ [StudyDay] in patients with [DiseaseDisorder].",
+    "parameters": [
+      {
+        "name": "Confirmatory Purpose",
+        "values": null
+      },
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "Route of Administration",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      },
+      {
+        "name": "Frequency",
+        "values": null
+      },
+      {
+        "name": "Comparator",
+        "values": null
+      },
+      {
+        "name": "Route of Administration",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      },
+      {
+        "name": "Frequency",
+        "values": null
+      },
+      {
+        "name": "TextValue",
+        "values": null
+      },
+      {
+        "name": "Route of Administration",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      },
+      {
+        "name": "Activity",
+        "values": null
+      },
+      {
+        "name": "VisitName",
+        "values": null
+      },
+      {
+        "name": "StudyDay",
+        "values": null
+      },
+      {
+        "name": "VisitName",
+        "values": null
+      },
+      {
+        "name": "StudyDay",
+        "values": null
+      },
+      {
+        "name": "DiseaseDisorder",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-19T11:40:27.719407",
+    "status": "Final",
+    "studyCount": 0,
+    "uid": "ObjectiveTemplate_000007",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": [
+      {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codeSubmissionValue": "Safety",
+          "codelistUid": null,
+          "conceptId": null,
+          "definition": "Safety",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": "Safety",
+          "nciPreferredName": "UNK",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-09-12T10:32:17.515978",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000013",
+        "libraryName": "Sponsor",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 2,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Safety",
+          "sponsorPreferredNameSentenceCase": "safety",
+          "startDate": "2022-09-12T10:32:17.178442",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "termUid": "CTTerm_000041"
+      },
+      {
+        "attributes": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codeSubmissionValue": "Efficacy",
+          "codelistUid": null,
+          "conceptId": null,
+          "definition": "Efficacy",
+          "endDate": null,
+          "libraryName": null,
+          "nameSubmissionValue": "Efficacy",
+          "nciPreferredName": "UNK",
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "startDate": "2022-09-12T10:32:17.627687",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "catalogueName": "SDTM CT",
+        "codelistUid": "CTCodelist_000013",
+        "libraryName": "Sponsor",
+        "name": {
+          "catalogueName": null,
+          "changeDescription": "Approved version",
+          "codelistUid": null,
+          "endDate": null,
+          "libraryName": null,
+          "order": 1,
+          "possibleActions": [
+            "inactivate",
+            "newVersion"
+          ],
+          "sponsorPreferredName": "Efficacy",
+          "sponsorPreferredNameSentenceCase": "efficacy",
+          "startDate": "2022-09-12T10:32:17.417033",
+          "status": "Final",
+          "termUid": null,
+          "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+          "version": "1.0"
+        },
+        "termUid": "CTTerm_000043"
+      }
+    ],
+    "changeDescription": "Approved version",
+    "confirmatoryTesting": true,
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 4,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 5,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 6,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 7,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 8,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 9,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 10,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 11,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 12,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 13,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 14,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 15,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 16,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 17,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 18,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 19,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 20,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 21,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 22,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "<p>To [Confirmatory Purpose] the superiority of [Compound] [Route of Administration] [NumericValue] [Unit] [Frequency] versus [Comparator] [Route of Administration] [NumericValue] [Unit] [Frequency], both in combination  with [TextValue] [Route of Administration] [NumericValue] [Unit] [Frequency] with respect to  change in [Activity] from [Time Point Reference] ( [StudyDay]) to [Time Point Reference] ( [StudyDay]) in patients with [DiseaseDisorder].</p>",
+    "namePlain": "To [Confirmatory Purpose] the superiority of [Compound] [Route of Administration] [NumericValue] [Unit] [Frequency] versus [Comparator] [Route of Administration] [NumericValue] [Unit] [Frequency], both in combination  with [TextValue] [Route of Administration] [NumericValue] [Unit] [Frequency] with respect to  change in [Activity] from [Time Point Reference] ( [StudyDay]) to [Time Point Reference] ( [StudyDay]) in patients with [DiseaseDisorder].",
+    "parameters": [
+      {
+        "name": "Confirmatory Purpose",
+        "values": null
+      },
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "Route of Administration",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      },
+      {
+        "name": "Frequency",
+        "values": null
+      },
+      {
+        "name": "Comparator",
+        "values": null
+      },
+      {
+        "name": "Route of Administration",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      },
+      {
+        "name": "Frequency",
+        "values": null
+      },
+      {
+        "name": "TextValue",
+        "values": null
+      },
+      {
+        "name": "Route of Administration",
+        "values": null
+      },
+      {
+        "name": "NumericValue",
+        "values": null
+      },
+      {
+        "name": "Unit",
+        "values": null
+      },
+      {
+        "name": "Frequency",
+        "values": null
+      },
+      {
+        "name": "Activity",
+        "values": null
+      },
+      {
+        "name": "Time Point Reference",
+        "values": null
+      },
+      {
+        "name": "StudyDay",
+        "values": null
+      },
+      {
+        "name": "Time Point Reference",
+        "values": null
+      },
+      {
+        "name": "StudyDay",
+        "values": null
+      },
+      {
+        "name": "DiseaseDisorder",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-19T11:40:22.423236",
+    "status": "Final",
+    "studyCount": 1,
+    "uid": "ObjectiveTemplate_000006",
+    "userInitials": "AJLD",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "confirmatoryTesting": null,
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "test user defined [ActivityInstance]",
+    "namePlain": "test user defined [ActivityInstance]",
+    "parameters": [
+      {
+        "name": "ActivityInstance",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-12T10:57:52.257133",
+    "status": "Final",
+    "studyCount": 0,
+    "uid": "ObjectiveTemplate_000005",
+    "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "confirmatoryTesting": false,
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 3,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": [
+      {
+        "abbreviation": "HF",
+        "changeDescription": "Approved version",
+        "definition": "Heart failure (disorder)",
+        "dictionaryId": "84114007",
+        "endDate": null,
+        "libraryName": "SNOMED",
+        "name": "Heart failure",
+        "nameSentenceCase": "heart failure",
+        "possibleActions": [
+          "inactivate",
+          "newVersion"
+        ],
+        "startDate": "2022-09-12T10:24:53.581929",
+        "status": "Final",
+        "termUid": "DictionaryTerm_000015",
+        "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+        "version": "1.0"
+      }
+    ],
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "To compare the effect of [Compound] relative to [Comparator] on [ActivityInstance]",
+    "namePlain": "To compare the effect of [Compound] relative to [Comparator] on [ActivityInstance]",
+    "parameters": [
+      {
+        "name": "Compound",
+        "values": null
+      },
+      {
+        "name": "Comparator",
+        "values": null
+      },
+      {
+        "name": "ActivityInstance",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-12T10:57:27.349220",
+    "status": "Final",
+    "studyCount": 0,
+    "uid": "ObjectiveTemplate_000004",
+    "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "confirmatoryTesting": null,
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "User Defined"
+    },
+    "name": "test user defined [ActivityInstance]",
+    "namePlain": "test user defined [ActivityInstance]",
+    "parameters": [
+      {
+        "name": "ActivityInstance",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-12T10:57:26.527011",
+    "status": "Final",
+    "studyCount": 0,
+    "uid": "ObjectiveTemplate_000003",
+    "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "confirmatoryTesting": null,
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        },
+        {
+          "conjunction": "",
+          "position": 2,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "test [ActivityInstance] and [DiseaseDisorder]",
+    "namePlain": "test [ActivityInstance] and [DiseaseDisorder]",
+    "parameters": [
+      {
+        "name": "ActivityInstance",
+        "values": null
+      },
+      {
+        "name": "DiseaseDisorder",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-12T10:57:26.116718",
+    "status": "Final",
+    "studyCount": 0,
+    "uid": "ObjectiveTemplate_000002",
+    "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+    "version": "1.0"
+  },
+  {
+    "categories": null,
+    "changeDescription": "Approved version",
+    "confirmatoryTesting": null,
+    "defaultParameterValues": {
+      "0": [
+        {
+          "conjunction": "",
+          "position": 1,
+          "values": []
+        }
+      ]
+    },
+    "editableInstance": false,
+    "endDate": null,
+    "indications": null,
+    "library": {
+      "isEditable": true,
+      "name": "Sponsor"
+    },
+    "name": "test [ActivityInstance]",
+    "namePlain": "test [ActivityInstance]",
+    "parameters": [
+      {
+        "name": "ActivityInstance",
+        "values": null
+      }
+    ],
+    "possibleActions": [
+      "inactivate",
+      "newVersion"
+    ],
+    "startDate": "2022-09-12T10:57:25.452432",
+    "status": "Final",
+    "studyCount": 0,
+    "uid": "ObjectiveTemplate_000001",
+    "userInitials": "84fafb9e-ee1c-4c73-b791-9e9d2d95402f",
+    "version": "1.0"
+  }
+]

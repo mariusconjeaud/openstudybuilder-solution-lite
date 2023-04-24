@@ -18,11 +18,11 @@
           <v-row>
             <v-col>
               <v-select
-                v-model="type"
-                :items="types"
+                v-model="form.activity_instance_class_uid"
+                :items="activityInstanceClasses"
                 :label="$t('ActivityForms.type')"
                 item-text="name"
-                item-value="value"
+                item-value="uid"
                 dense
                 clearable
                 :error-messages="errors"
@@ -139,77 +139,21 @@
         </validation-provider>
       </validation-observer>
     </template>
-    <template v-slot:step.additionalData1="{ step }">
-      <validation-observer :ref="`observer_${step}`">
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-        <v-row>
-          <v-col>
-            <v-text-field
-              v-model="form.name"
-              label="additionalData1"
-              hide-details
-              class="mb-4"
-              :error-messages="errors"
-            />
-          </v-col>
-        </v-row>
-        </validation-provider>
-      </validation-observer>
-    </template>
-    <template v-slot:step.additionalData2="{ step }">
-      <validation-observer :ref="`observer_${step}`">
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-        <v-row>
-          <v-col>
-            <v-text-field
-              v-model="form.name"
-              label="additionalData2"
-              hide-details
-              class="mb-4"
-              :error-messages="errors"
-            />
-          </v-col>
-        </v-row>
-        </validation-provider>
-      </validation-observer>
-    </template>
-    <template v-slot:step.additionalData3="{ step }">
-      <validation-observer :ref="`observer_${step}`">
-        <validation-provider
-          v-slot="{ errors }"
-          rules="required"
-          >
-        <v-row>
-          <v-col>
-            <v-text-field
-              v-model="form.name"
-              label="additionalData3"
-              hide-details
-              class="mb-4"
-              :error-messages="errors"
-            />
-          </v-col>
-        </v-row>
-        </validation-provider>
-      </validation-observer>
-    </template>
   </stepper-form>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
 </v-card>
 </template>
 
 <script>
+import _isEqual from 'lodash/isEqual'
+import activityInstanceClasses from '@/api/activityInstanceClasses'
+import activities from '@/api/activities'
 import { bus } from '@/main'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
-import _isEqual from 'lodash/isEqual'
+import libraries from '@/constants/libraries'
 import StepperForm from '@/components/tools/StepperForm'
-import activities from '@/api/activities'
+
+const source = 'activity-instances'
 
 export default {
   components: {
@@ -229,35 +173,9 @@ export default {
   data () {
     return {
       form: {},
-      working: false,
       type: '',
       activities: [],
-      types: [
-        { name: 'Reminders', value: 'reminders' },
-        { name: 'Special Purposes', value: 'special-purposes' },
-        { name: 'Events', value: 'events' },
-        { name: 'Compound Dosings', value: 'compound-dosings' },
-        { name: 'Categoric Findings', value: 'categoric-findings' },
-        { name: 'Numeric Findings', value: 'numeric-findings' },
-        { name: 'Textual Findings', value: 'textual-findings' },
-        { name: 'Rating Scales', value: 'rating-scales' },
-        { name: 'Laboratory Activities', value: 'laboratory-activities' }
-      ],
-      advancedSteps1: [
-        { name: 'type', title: this.$t('ActivityForms.select_type') },
-        { name: 'basicData', title: this.$t('ActivityForms.addBasicData') },
-        { name: 'additionalData1', title: this.$t('ActivityForms.addAdditionalData') }
-      ],
-      advancedSteps2: [
-        { name: 'type', title: this.$t('ActivityForms.select_type') },
-        { name: 'basicData', title: this.$t('ActivityForms.addBasicData') },
-        { name: 'additionalData2', title: this.$t('ActivityForms.addAdditionalData') }
-      ],
-      advancedSteps3: [
-        { name: 'type', title: this.$t('ActivityForms.select_type') },
-        { name: 'basicData', title: this.$t('ActivityForms.addBasicData') },
-        { name: 'additionalData3', title: this.$t('ActivityForms.addAdditionalData') }
-      ],
+      activityInstanceClasses: [],
       steps: this.getInitialSteps(),
       helpItems: [
         'ActivityFormsInstantiations.select_type',
@@ -272,9 +190,9 @@ export default {
   },
   methods: {
     initForm (value) {
-      this.type = value.type
       this.form = {
         name: value.name,
+        activity_instance_class_uid: value.activity_instance_class.uid,
         name_sentence_case: value.name_sentence_case,
         definition: value.definition,
         change_description: value.change_description,
@@ -282,7 +200,7 @@ export default {
         topic_code: value.topic_code,
         adam_param_code: value.adam_param_code,
         legacy_description: value.legacy_description,
-        activities: value.activities
+        activities: value.activities.map(item => item.uid)
       }
       this.$store.commit('form/SET_FORM', this.form)
     },
@@ -310,19 +228,18 @@ export default {
       this.$emit('close')
       this.form = {}
       this.$store.commit('form/CLEAR_FORM')
-      this.$refs.observer.reset()
+      this.$refs.stepper.loading = false
     },
     async submit () {
-      this.form.library_name = 'Sponsor' // Hardcoded for now at the Sinna and Mikkel request
+      this.form.library_name = libraries.LIBRARY_SPONSOR
       this.form.name_sentence_case = this.form.name.charAt(0).toUpperCase() + this.form.name.slice(1)
-      this.working = true
       if (!this.editedActivity) {
-        activities.create(this.form, this.type).then(resp => {
+        activities.create(this.form, source).then(() => {
           bus.$emit('notification', { msg: this.$t('ActivityForms.activity_created') })
           this.close()
         })
       } else {
-        activities.update(this.editedActivity.uid, this.form, this.type).then(resp => {
+        activities.update(this.editedActivity.uid, this.form, source).then(() => {
           bus.$emit('notification', { msg: this.$t('ActivityForms.activity_updated') })
           this.close()
         })
@@ -342,6 +259,9 @@ export default {
       this.initForm(this.editedActivity)
     }
     this.getActivities()
+    activityInstanceClasses.getAll({ page_size: 0 }).then(resp => {
+      this.activityInstanceClasses = resp.data.items
+    })
   },
   watch: {
     editedActivity: {
@@ -351,27 +271,6 @@ export default {
         }
       },
       immediate: true
-    },
-    type (value) {
-      switch (value) {
-        case 'events':
-        case 'special-purposes':
-        case 'reminders':
-          this.steps = this.getInitialSteps()
-          return
-        case 'laboratory-activities':
-        case 'rating-scales':
-        case 'categoric-findings':
-          this.steps = this.advancedSteps1
-          return
-        case 'compund-dosigns':
-        case 'compounds':
-          this.steps = this.advancedSteps2
-          return
-        case 'textual-findings':
-        case 'numeric-findings':
-          this.steps = this.advancedSteps3
-      }
     }
   }
 }

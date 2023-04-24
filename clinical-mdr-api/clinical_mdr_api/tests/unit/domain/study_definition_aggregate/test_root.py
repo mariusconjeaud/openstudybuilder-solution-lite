@@ -1,9 +1,11 @@
 import random
 import unittest
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Any, Callable, Mapping, Optional, Sequence
 from unittest.mock import patch
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.config import DEFAULT_STUDY_FIELD_CONFIG_FILE
 from clinical_mdr_api.domain.study_definition_aggregate import study_configuration
 from clinical_mdr_api.domain.study_definition_aggregate.registry_identifiers import (
@@ -14,7 +16,6 @@ from clinical_mdr_api.domain.study_definition_aggregate.root import (
     _DEF_INITIAL_STUDY_INTERVENTION,
     _DEF_INITIAL_STUDY_POPULATION,
     StudyDefinitionAR,
-    StudyDefinitionSnapshot,
 )
 from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
     HighLevelStudyDesignVO,
@@ -65,6 +66,7 @@ def create_random_study(
     ] = lambda _: True,
     max_tries: int = 100,
     is_study_after_create: bool = False,
+    author: Optional[str] = None,
 ) -> StudyDefinitionAR:
     if new_id_metadata_fixed_values is None:
         new_id_metadata_fixed_values = _dict()
@@ -116,6 +118,7 @@ def create_random_study(
             trial_blinding_schema_exists_callback=(lambda _: True),
             study_title_exists_callback=(lambda _, study_number: False),
             study_short_title_exists_callback=(lambda _, study_number: False),
+            author=author,
         )
 
         if condition(result):
@@ -145,6 +148,7 @@ def make_random_study_metadata_edit(
         [StudyInterventionVO], bool
     ] = lambda _: True,
     max_tries: int = 100,
+    author: Optional[str] = None,
 ):
     if new_id_metadata_fixed_values is None:
         new_id_metadata_fixed_values = _dict()
@@ -212,6 +216,7 @@ def make_random_study_metadata_edit(
         control_type_exists_callback=(lambda _: True),
         intervention_model_exists_callback=(lambda _: True),
         trial_blinding_schema_exists_callback=(lambda _: True),
+        author=author,
     )
 
 
@@ -238,9 +243,16 @@ def prepare_random_study(
             condition=is_lockable, generate_uid_callback=generate_uid_callback
         )
         while random.random() > 0.2:
+            study.edit_metadata(
+                study_title_exists_callback=(lambda _, study_number: False),
+                study_short_title_exists_callback=(lambda _, study_number: False),
+                new_study_description=StudyDescriptionVO.from_input_values(
+                    study_title="new_study_title", study_short_title="study_short_title"
+                ),
+            )
             study.lock(
-                locked_version_info=str(random_str()),
-                locked_version_author=random_str(),
+                version_description=str(random_str()),
+                version_author=random_str(),
             )
             study.unlock()
             make_random_study_metadata_edit(
@@ -251,7 +263,7 @@ def prepare_random_study(
             )
         if random.random() < 0.667:
             if random.random() < 0.5:
-                study.release()
+                study.release(change_description="making a release")
                 make_random_study_metadata_edit(
                     study,
                     new_id_metadata_fixed_values={
@@ -259,9 +271,17 @@ def prepare_random_study(
                     },
                 )
             else:
+                study.edit_metadata(
+                    study_title_exists_callback=(lambda _, study_number: False),
+                    study_short_title_exists_callback=(lambda _, study_number: False),
+                    new_study_description=StudyDescriptionVO.from_input_values(
+                        study_title="new_study_title",
+                        study_short_title="study_short_title",
+                    ),
+                )
                 study.lock(
-                    locked_version_info=str(random_str()),
-                    locked_version_author=str(random_str()),
+                    version_description=str(random_str()),
+                    version_author=str(random_str()),
                 )
         if condition(study):
             return study
@@ -314,7 +334,6 @@ class TestStudyDefinitionAR(unittest.TestCase):
     def test__study_ar_from_initial_values__no_proper_callback_for_project_num_provided__failure(
         self,
     ):
-
         for id_metadata in random_valid_id_metadata_sequence(
             count=10, condition=(lambda _: _.project_number is not None)
         ):
@@ -323,7 +342,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 assert id_metadata.project_number is not None and id_metadata.is_valid()
 
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     StudyDefinitionAR.from_initial_values(
                         # project_exists_callback=(lambda _: True),
@@ -484,16 +503,12 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         trial_blinding_schema_null_value_code=None,
                         planned_study_length=None,
                         planned_study_length_null_value_code=None,
-                        drug_study_indication=None,
-                        drug_study_indication_null_value_code=None,
-                        device_study_indication=None,
-                        device_study_indication_null_value_code=None,
                         trial_intent_types_codes=[],
                         trial_intent_type_null_value_code=None,
                     ),
                     ver_metadata=StudyVersionMetadataVO(
                         study_status=StudyStatus.DRAFT,
-                        locked_version_number=None,
+                        version_number=None,
                         version_timestamp=expected_timestamp,
                     ),
                     study_description=StudyDescriptionVO(
@@ -611,9 +626,6 @@ class TestStudyDefinitionAR(unittest.TestCase):
                             study_snapshot.released_metadata.project_number,
                             study.latest_released_or_locked_metadata.id_metadata.project_number,
                         )
-                else:
-                    # if given study is locked there should not be released metadata in snapshot
-                    self.assertIsNone(study_snapshot.released_metadata)
 
     def test__study_ar_from_snapshot__results(self):
         for _ in range(0, 10):
@@ -641,13 +653,16 @@ class TestStudyDefinitionAR(unittest.TestCase):
             with self.subTest():
                 # given
                 given_study_metadata = study.current_metadata
+                given_study_released_metadata = study.released_metadata
                 given_study_latest_locked_metadata = study.latest_locked_metadata
                 start_timestamp = datetime.now(timezone.utc)
 
                 # when
-                study.release()
-                study_title = None
-                study_short_title = None
+                study.release(change_description="making a release")
+                study_title = study.current_metadata.study_description.study_title
+                study_short_title = (
+                    study.current_metadata.study_description.study_short_title
+                )
 
                 # then
                 end_timestamp = datetime.now(timezone.utc)
@@ -664,7 +679,14 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 expected_released_timestamp = (
                     study.latest_released_or_locked_metadata.ver_metadata.version_timestamp
                 )
-
+                expected_released_description = (
+                    study.latest_released_or_locked_metadata.ver_metadata.version_description
+                )
+                exp_released_ver_number = (
+                    given_study_released_metadata.ver_metadata.version_number
+                    if given_study_released_metadata
+                    else Decimal("0")
+                )
                 expected_released_metadata = StudyMetadataVO(
                     id_metadata=given_study_metadata.id_metadata,
                     high_level_study_design=given_study_metadata.high_level_study_design,
@@ -673,7 +695,8 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     ver_metadata=StudyVersionMetadataVO(
                         study_status=StudyStatus.RELEASED,
                         version_timestamp=expected_released_timestamp,
-                        locked_version_number=None,
+                        version_description=expected_released_description,
+                        version_number=exp_released_ver_number + Decimal("0.1"),
                     ),
                     study_description=StudyDescriptionVO(
                         study_title=study_title, study_short_title=study_short_title
@@ -688,13 +711,12 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     ver_metadata=StudyVersionMetadataVO(
                         study_status=StudyStatus.DRAFT,
                         version_timestamp=expected_released_timestamp,
-                        locked_version_number=None,
+                        version_number=given_study_metadata.ver_metadata.version_number,
                     ),
                     study_description=StudyDescriptionVO(
                         study_title=study_title, study_short_title=study_short_title
                     ),
                 )
-
                 self.assertEqual(
                     study.latest_released_or_locked_metadata, expected_released_metadata
                 )
@@ -718,9 +740,9 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 )
 
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
-                    study.release()
+                    study.release(change_description="making a release")
 
     def test__lock__result(self):
         tested = False
@@ -741,18 +763,25 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 start_timestamp = datetime.now(timezone.utc)
                 version_author = str(random_str())
                 version_info = str(random_str())
-                study_title = None
-                study_short_title = None
+                study_title = "new_study_title"
+                study_short_title = "study_short_title"
                 # when
+                study.edit_metadata(
+                    study_title_exists_callback=(lambda _, study_number: False),
+                    study_short_title_exists_callback=(lambda _, study_number: False),
+                    new_study_description=StudyDescriptionVO.from_input_values(
+                        study_title=study_title, study_short_title=study_short_title
+                    ),
+                )
                 study.lock(
-                    locked_version_author=version_author,
-                    locked_version_info=version_info,
+                    version_author=version_author,
+                    version_description=version_info,
                 )
 
                 # then
                 end_timestamp = datetime.now(timezone.utc)
-                expected_locked_version_number = (
-                    given_latest_locked_metadata.ver_metadata.locked_version_number + 1
+                expected_version_number = (
+                    given_latest_locked_metadata.ver_metadata.version_number + 1
                     if given_latest_locked_metadata is not None
                     else 1
                 )
@@ -773,10 +802,10 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     study_intervention=given_study_metadata.study_intervention,
                     ver_metadata=StudyVersionMetadataVO(
                         study_status=StudyStatus.LOCKED,
-                        locked_version_number=expected_locked_version_number,
+                        version_number=expected_version_number,
                         version_timestamp=study.latest_released_or_locked_metadata.ver_metadata.version_timestamp,
-                        locked_version_author=version_author,
-                        locked_version_info=version_info,
+                        version_author=version_author,
+                        version_description=version_info,
                     ),
                     study_description=StudyDescriptionVO(
                         study_title=study_title, study_short_title=study_short_title
@@ -805,11 +834,21 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 )
 
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
+                    study.edit_metadata(
+                        study_title_exists_callback=(lambda _, study_number: False),
+                        study_short_title_exists_callback=(
+                            lambda _, study_number: False
+                        ),
+                        new_study_description=StudyDescriptionVO.from_input_values(
+                            study_title="new_study_title",
+                            study_short_title="study_short_title",
+                        ),
+                    )
                     study.lock(
-                        locked_version_info=str(random_str()),
-                        locked_version_author=str(random_str()),
+                        version_description=str(random_str()),
+                        version_author=str(random_str()),
                     )
 
     def test__unlock__result(self):
@@ -826,8 +865,8 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     study.latest_released_or_locked_metadata
                 )
                 start_timestamp = datetime.now(timezone.utc)
-                study_title = None
-                study_short_title = None
+                study_title = "new_study_title"
+                study_short_title = "study_short_title"
                 # when
                 study.unlock()
 
@@ -848,7 +887,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     study_intervention=given_study_metadata.study_intervention,
                     ver_metadata=StudyVersionMetadataVO(
                         study_status=StudyStatus.DRAFT,
-                        locked_version_number=None,
+                        version_number=None,
                         # the last one is checked before so we assume it's teh right one
                         version_timestamp=study.current_metadata.ver_metadata.version_timestamp,
                     ),
@@ -880,7 +919,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 )
 
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     study.unlock()
 
@@ -1014,7 +1053,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 )
 
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     study.edit_metadata(
                         new_id_metadata=new_id_metadata,
@@ -1057,7 +1096,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 )
 
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     study.edit_metadata(
                         new_id_metadata=new_id_metadata,
@@ -1118,56 +1157,9 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 assert study.latest_locked_metadata is not None
 
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     study.mark_deleted()
-
-    def test__mark_deleted__results(self):
-        for study in prepare_random_study_sequence(
-            count=10,
-            generate_uid_callback=_test_uid_generator,
-            condition=lambda s: s.latest_locked_metadata is None,
-        ):
-            with self.subTest():
-                # given
-                assert study.latest_locked_metadata is None
-                study_uid = study.uid
-                current_metadata = study.current_metadata
-
-                # when
-                study.mark_deleted()
-
-                # then
-                self.assertEqual(
-                    study.get_snapshot(),
-                    StudyDefinitionSnapshot(
-                        uid=study_uid,
-                        deleted=True,
-                        current_metadata=None,
-                        locked_metadata_versions=[],
-                        released_metadata=None,
-                        study_status=None,
-                    ),
-                )
-                with self.assertRaises(ValueError):
-                    print(study.uid)
-                with self.assertRaises(ValueError):
-                    print(study.current_metadata)
-                with self.assertRaises(ValueError):
-                    print(study.latest_released_or_locked_metadata)
-                with self.assertRaises(ValueError):
-                    print(study.latest_locked_metadata)
-                with self.assertRaises(ValueError):
-                    study.edit_metadata(
-                        new_id_metadata=current_metadata.id_metadata,
-                        project_exists_callback=(lambda _: True),
-                    )
-                with self.assertRaises(ValueError):
-                    study.release()
-                with self.assertRaises(ValueError):
-                    study.lock(
-                        locked_version_info="whatever", locked_version_author="who-ever"
-                    )
 
     def test__edit_id_metadata__changing_project_for_never_locked_study__results(self):
         for study in prepare_random_study_sequence(
@@ -1359,7 +1351,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                 )
 
                 # then
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     # when
                     StudyDefinitionAR.from_initial_values(
                         generate_uid_callback=generate_uid_callback,

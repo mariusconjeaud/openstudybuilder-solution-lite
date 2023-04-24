@@ -32,7 +32,7 @@ study_visit_uid_description = Path(
 @router.get(
     "/studies/{uid}/study-epochs",
     summary="List all study epochs currently selected for the study.",
-    description="""
+    description=f"""
 State before:
  - Study must exist.
  
@@ -48,12 +48,16 @@ State after:
  - no change.
  
 Possible errors:
- - Invalid study-uid.""",
+ - Invalid study-uid.
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+""",
     response_model=CustomPage[study_epoch.StudyEpoch],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 @decorators.allow_exports(
@@ -132,7 +136,7 @@ def get_all(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -193,7 +197,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - there exist no epoch for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 # pylint: disable=unused-argument
@@ -231,7 +235,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the visit for the study provided.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_study_epoch_audit_trail(
@@ -268,7 +272,7 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - there exist no selection of the provided study.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_study_epochs_all_audit_trail(
@@ -309,13 +313,14 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Study is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_new_epoch_create(
     uid: str = studyUID,
     selection: study_epoch.StudyEpochCreateInput = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> study_epoch.StudyEpoch:
@@ -334,13 +339,14 @@ def post_new_epoch_create(
             "model": ErrorResponse,
             "description": "Not Found - Study is not found with the passed 'uid'.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def post_preview_epoch(
     uid: str = studyUID,
     selection: study_epoch.StudyEpochCreateInput = Body(
-        None, description="Related parameters of the epoch that shall be created."
+        description="Related parameters of the epoch that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> study_epoch.StudyEpoch:
@@ -358,7 +364,7 @@ State before:
 
 Business logic:
  - Remove specified study-epoch from the study.
- - Reference to the study-epoch should still exist in the the audit trail.
+ - Reference to the study-epoch should still exist in the audit trail.
 - Update the order value of all other epochs for this study to be consecutive.
 
 State after:
@@ -376,9 +382,10 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - the study or epoch does not exist.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 def delete_study_epoch(
     uid: str = studyUID,
     study_epoch_uid: str = study_epoch_uid_description,
@@ -427,9 +434,10 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - There exist no selection between the study and epoch to reorder.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 # pylint: disable=unused-argument
 def patch_reorder(
     uid: str = studyUID,
@@ -469,15 +477,16 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - There exist no study or epoch .",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
+@decorators.validate_if_study_is_not_locked("uid")
 # pylint: disable=unused-argument
 def patch_update_epoch(
     uid: str = studyUID,
     study_epoch_uid: str = study_epoch_uid_description,
     selection: study_epoch.StudyEpochEditInput = Body(
-        None, description="Related parameters of the selection that shall be created."
+        description="Related parameters of the selection that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> study_epoch.StudyEpoch:
@@ -492,7 +501,8 @@ def patch_update_epoch(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_configs(
@@ -514,7 +524,8 @@ def get_all_configs(
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_all_consecutive_groups(

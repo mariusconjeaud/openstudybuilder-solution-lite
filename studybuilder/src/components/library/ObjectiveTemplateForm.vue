@@ -40,7 +40,7 @@ export default {
   },
   methods: {
     loadForm (form) {
-      form.confirmatoryTesting = this.template ? this.template.confirmatoryTesting : null
+      form.is_confirmatory_testing = this.template ? this.template.is_confirmatory_testing : null
       if (this.template.categories && this.template.categories.length) {
         this.$set(form, 'categories', this.template.categories)
       }

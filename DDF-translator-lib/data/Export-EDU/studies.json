@@ -1,0 +1,76 @@
+[
+  {
+    "currentMetadata": {
+      "identificationMetadata": {
+        "clinicalProgrammeName": "CDISC Development programme",
+        "projectName": "CDISC Dev",
+        "projectNumber": "CDISC DEV",
+        "registryIdentifiers": {
+          "ctGovId": null,
+          "ctGovIdNullValueCode": null,
+          "eudractId": null,
+          "eudractIdNullValueCode": null,
+          "investigationalNewDrugApplicationNumberIND": null,
+          "investigationalNewDrugApplicationNumberINDNullValueCode": null,
+          "japaneseTrialRegistryIdJAPIC": null,
+          "japaneseTrialRegistryIdJAPICNullValueCode": null,
+          "universalTrialNumberUTN": null,
+          "universalTrialNumberUTNNullValueCode": null
+        },
+        "studyAcronym": "DDF-SampleData-0001",
+        "studyId": "CDISC DEV-0001",
+        "studyNumber": "0001"
+      },
+      "versionMetadata": {
+        "lockedVersionAuthor": null,
+        "lockedVersionInfo": null,
+        "lockedVersionNumber": null,
+        "studyStatus": "DRAFT",
+        "versionTimestamp": "2022-09-17T06:33:26.106580"
+      }
+    },
+    "projectNumber": "CDISC DEV",
+    "studyAcronym": "DDF-SampleData-0001",
+    "studyId": "CDISC DEV-0001",
+    "studyNumber": "0001",
+    "studyStatus": "DRAFT",
+    "uid": "Study_000036"
+  },
+  {
+    "currentMetadata": {
+      "identificationMetadata": {
+        "clinicalProgrammeName": "CDISC Development programme",
+        "projectName": "CDISC Dev",
+        "projectNumber": "CDISC DEV",
+        "registryIdentifiers": {
+          "ctGovId": null,
+          "ctGovIdNullValueCode": null,
+          "eudractId": null,
+          "eudractIdNullValueCode": null,
+          "investigationalNewDrugApplicationNumberIND": null,
+          "investigationalNewDrugApplicationNumberINDNullValueCode": null,
+          "japaneseTrialRegistryIdJAPIC": null,
+          "japaneseTrialRegistryIdJAPICNullValueCode": null,
+          "universalTrialNumberUTN": null,
+          "universalTrialNumberUTNNullValueCode": null
+        },
+        "studyAcronym": "DDF-SampleData-0002",
+        "studyId": "CDISC DEV-0002",
+        "studyNumber": "0002"
+      },
+      "versionMetadata": {
+        "lockedVersionAuthor": null,
+        "lockedVersionInfo": null,
+        "lockedVersionNumber": null,
+        "studyStatus": "DRAFT",
+        "versionTimestamp": "2022-09-20T05:48:47.585582"
+      }
+    },
+    "projectNumber": "CDISC DEV",
+    "studyAcronym": "DDF-SampleData-0002",
+    "studyId": "CDISC DEV-0002",
+    "studyNumber": "0002",
+    "studyStatus": "DRAFT",
+    "uid": "Study_000043"
+  }
+]

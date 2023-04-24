@@ -37,7 +37,6 @@ class TestStudyDiseaseMilestoneManagement(unittest.TestCase):
         create_study_disease_milestone_codelists_ret_cat_and_lib()
 
     def test__list_disease_milestone_studies(self):
-
         disease_milestone_service = StudyDiseaseMilestoneService()
         disease_milestones = disease_milestone_service.get_all_disease_milestones(
             self.study.uid

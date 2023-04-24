@@ -45,12 +45,8 @@ export default {
     downloadDocx () {
       this.loadingMessage = this.$t('ProtocolFlowchart.downloading')
       study.getStudyProtocolFlowchartDocx(this.studyUid).then(response => {
-        const blob = new Blob([response.data], {
-          type: response.headers['content-type'] ||
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        })
-        const fileName = `${this.studyUid} flowchart.docx`
-        exportLoader.generateDownload(blob, fileName)
+        exportLoader.downloadFile(response.data, response.headers['content-type'] ||
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', `${this.studyUid} flowchart.docx`)
       }).then(this.finally).catch(this.finally)
     },
     finally (error) {

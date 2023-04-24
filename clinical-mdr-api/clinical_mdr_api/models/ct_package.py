@@ -206,7 +206,6 @@ class CTPackageDates(BaseModel):
     def from_repository_output(
         cls, catalogue_name: str, effective_dates: Sequence[date]
     ) -> "CTPackageDates":
-
         return cls(catalogue_name=catalogue_name, effective_dates=effective_dates)
 
     catalogue_name: str = Field(

@@ -134,7 +134,6 @@ class CTTermAttributesVersion(CTTermAttributes):
 
 
 class CTTermAttributesInput(BaseModel):
-
     code_submission_value: Optional[str] = Field(
         None,
         title="code_submission_value",

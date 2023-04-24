@@ -34,7 +34,6 @@ class TestStudyEpochManagement(unittest.TestCase):
         create_study_epoch_codelists_ret_cat_and_lib()
 
     def test__list_epoch_studies(self):
-
         epoch_service = StudyEpochService()
         epochs = epoch_service.get_all_epochs(self.study.uid).items
 

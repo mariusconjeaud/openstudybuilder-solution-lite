@@ -2,11 +2,13 @@ import re
 from collections import abc
 from dataclasses import Field, dataclass, field
 from datetime import datetime, timezone
+from decimal import Decimal
 from enum import Enum
 from typing import Any, Callable, Iterable, List, Optional, Sequence
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain._utils import normalize_string
-from clinical_mdr_api.domain.study_definition_aggregate._utils import (  # type: ignore
+from clinical_mdr_api.domain.study_definition_aggregate._utils import (
     call_default_init,
     dataclass_with_default_init,
 )
@@ -20,6 +22,18 @@ class StudyStatus(Enum):
     DRAFT = "DRAFT"
     RELEASED = "RELEASED"
     LOCKED = "LOCKED"
+    DELETED = "DELETED"
+
+
+class StudyAction(Enum):
+    """
+    Enumerator for Study item actions that can change Study item status
+    """
+
+    LOCK = "lock"
+    RELEASE = "release"
+    UNLOCK = "unlock"
+    DELETE = "delete"
 
 
 class StudyComponentEnum(str, Enum):
@@ -89,7 +103,7 @@ class StudyIdentificationMetadataVO:
         null_value_exists_callback: Callable[[str], bool] = (lambda _: True),
     ) -> None:
         """
-        Raises ValueError if values do not comply with relevant business rules.
+        Raises exceptions.ValidationException if values do not comply with relevant business rules.
 
         :param null_value_exists_callback:
         :param project_exists_callback: optional, if provided makes the method to include validity (existence)
@@ -102,14 +116,14 @@ class StudyIdentificationMetadataVO:
         )
 
         if self.study_number is None and self.study_acronym is None:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 "Either study number or study acronym must be given in study metadata."
             )
 
         if self.study_number is not None and not _STUDY_NUMBER_PATTERN.fullmatch(
             self.study_number
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"Provided study number can only be up to 4 digits string ({self.study_number})."
             )
 
@@ -118,7 +132,7 @@ class StudyIdentificationMetadataVO:
             and project_exists_callback is not None
             and not project_exists_callback(self.project_number)
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no project identified by provided project_number ({self.project_number})"
             )
         if self.study_number is not None and study_number_exists_callback(
@@ -135,14 +149,14 @@ class StudyIdentificationMetadataVO:
     ) -> bool:
         """
         Convenience method (mostly for testing purposes).
-        :return: False when self.validate raises ValueError (True otherwise)
+        :return: False when self.validate raises exceptions.ValidationException (True otherwise)
         """
         try:
             self.validate(
                 project_exists_callback=project_exists_callback,
                 null_value_exists_callback=null_value_exists_callback,
             )
-        except ValueError:
+        except exceptions.ValidationException:
             return False
         return True
 
@@ -179,18 +193,18 @@ class StudyIdentificationMetadataVO:
 @dataclass_with_default_init(frozen=True)
 class StudyVersionMetadataVO:
     study_status: StudyStatus = StudyStatus.DRAFT
-    locked_version_number: Optional[int] = None
     version_timestamp: Optional[datetime] = field(default_factory=datetime.today)
-    locked_version_author: Optional[str] = None
-    locked_version_info: Optional[str] = None
+    version_author: Optional[str] = None
+    version_description: Optional[str] = None
+    version_number: Optional[Decimal] = None
 
     def __init__(
         self,
         study_status: StudyStatus = StudyStatus.DRAFT,
-        locked_version_number: Optional[int] = None,
         version_timestamp: Optional[datetime] = field(default_factory=datetime.today),
-        locked_version_author: Optional[str] = None,
-        locked_version_info: Optional[str] = None,
+        version_author: Optional[str] = None,
+        version_description: Optional[str] = None,
+        version_number: Optional[Decimal] = None,
     ):
         if isinstance(version_timestamp, Field):
             version_timestamp = datetime.now(timezone.utc)
@@ -202,54 +216,53 @@ class StudyVersionMetadataVO:
         call_default_init(
             self,
             study_status=study_status,
-            locked_version_number=locked_version_number,
+            version_number=version_number,
             version_timestamp=version_timestamp,
-            locked_version_author=norm_str(locked_version_author),
-            locked_version_info=norm_str(locked_version_info),
+            version_author=norm_str(version_author),
+            version_description=norm_str(version_description),
         )
 
     def validate(self) -> None:
         """
-        Raises ValueError if values do not comply with relevant business rules.
+        Raises exceptions.ValidationException if values do not comply with relevant business rules.
         Only business rules relevant to content of this object are evaluated.
         """
 
-        if (
-            self.study_status == StudyStatus.LOCKED
-            and self.locked_version_number is None
-        ):
-            raise ValueError("LOCKED study must have locked version number.")
+        if self.study_status == StudyStatus.LOCKED and self.version_number is None:
+            raise exceptions.ValidationException(
+                "LOCKED study must have locked version number."
+            )
 
-        if (
-            self.study_status != StudyStatus.LOCKED
-            and self.locked_version_number is not None
-        ):
-            raise ValueError("Non-LOCKED study must not have locked version number.")
+        if self.study_status != StudyStatus.LOCKED and self.version_number is not None:
+            raise exceptions.ValidationException(
+                "Non-LOCKED study must not have locked version number."
+            )
 
-        if (
-            self.study_status != StudyStatus.LOCKED
-            and self.locked_version_number is not None
-        ):
-            raise ValueError("Non-LOCKED study must not have locked version number.")
+        if self.study_status != StudyStatus.LOCKED and self.version_number is not None:
+            raise exceptions.ValidationException(
+                "Non-LOCKED study must not have locked version number."
+            )
 
         if self.version_timestamp is None:
-            raise ValueError("timestamp mandatory in VersionMetadataVO")
+            raise exceptions.ValidationException(
+                "timestamp mandatory in VersionMetadataVO"
+            )
 
         if self.study_status == StudyStatus.LOCKED and (
-            self.locked_version_author is None or self.locked_version_info is None
+            self.version_author is None or self.version_description is None
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 "version_info and version_author mandatory for LOCKED version"
             )
 
     def is_valid(self) -> bool:
         """
         Convenience method (mostly for testing purposes).
-        :return: False when self.validate raises ValueError (True otherwise)
+        :return: False when self.validate raises exceptions.ValidationException (True otherwise)
         """
         try:
             self.validate()
-        except ValueError:
+        except exceptions.ValidationException:
             return False
         return True
 
@@ -297,7 +310,7 @@ class HighLevelStudyDesignVO:
     ) -> None:
         """
         Validates content disregarding state of the study. Optionally (if relevant callback are provided as
-        parameters) validates also values of codes referring to various coded values. Raises ValueError with proper
+        parameters) validates also values of codes referring to various coded values. Raises exceptions.ValidationException with proper
         message on first failure (order of checking is indeterminate, however starts with lightest tests).
         :param study_type_exists_callback: (optional) callback for checking study_type_codes
         :param trial_intent_type_exists_callback: (optional) callback for checking intent_type_codes
@@ -317,7 +330,7 @@ class HighLevelStudyDesignVO:
             if associated_null_value_code is not None and not (
                 value is None or (isinstance(value, abc.Collection) and len(value) == 0)
             ):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"{name_of_verified_value} and associated null value code cannot be both provided."
                 )
 
@@ -325,7 +338,7 @@ class HighLevelStudyDesignVO:
                 associated_null_value_code is not None
                 and not null_value_exists_callback(associated_null_value_code)
             ):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"Unknown null value code (reason for missing) provided for {name_of_verified_value}"
                 )
 
@@ -374,20 +387,20 @@ class HighLevelStudyDesignVO:
         if self.trial_phase_code is not None and not trial_phase_exists_callback(
             self.trial_phase_code
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"Non-existing trial phase code provided ({self.trial_phase_code})"
             )
 
         if self.study_type_code is not None and not study_type_exists_callback(
             self.study_type_code
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"Non-existing study type code provided ({self.study_type_code})"
             )
 
         for trial_type_code in self.trial_type_codes:
             if not trial_type_exists_callback(trial_type_code):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"Non-existing trial type code provided ({trial_type_code})"
                 )
 
@@ -400,7 +413,7 @@ class HighLevelStudyDesignVO:
     ) -> bool:
         """
         Convenience method (mostly for testing purposes).
-        :return: False when self.validate raises ValueError (True otherwise)
+        :return: False when self.validate raises exceptions.ValidationException (True otherwise)
         """
         try:
             self.validate(
@@ -409,7 +422,7 @@ class HighLevelStudyDesignVO:
                 trial_type_exists_callback=trial_type_exists_callback,
                 trial_phase_exists_callback=trial_phase_exists_callback,
             )
-        except ValueError:
+        except exceptions.ValidationException:
             return False
         return True
 
@@ -705,7 +718,7 @@ class StudyPopulationVO:
             if associated_null_value_code is not None and not (
                 value is None or (isinstance(value, abc.Collection) and len(value) == 0)
             ):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"{name_of_verified_value} and associated null value code cannot be both provided."
                 )
 
@@ -713,7 +726,7 @@ class StudyPopulationVO:
                 associated_null_value_code is not None
                 and not null_value_exists_callback(associated_null_value_code)
             ):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"Unknown null value code (reason for missing) provided for {name_of_verified_value}"
                 )
 
@@ -797,13 +810,13 @@ class StudyPopulationVO:
 
         for therapeutic_area_code in self.therapeutic_area_codes:
             if not therapeutic_area_exists_callback(therapeutic_area_code):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"Unknown therapeutic area code ({therapeutic_area_code})"
                 )
 
         for diagnosis_group_code in self.diagnosis_group_codes:
             if not diagnosis_group_exists_callback(diagnosis_group_code):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"Unknown diagnosis group code ({diagnosis_group_code})"
                 )
 
@@ -813,7 +826,7 @@ class StudyPopulationVO:
             if not disease_condition_or_indication_exists_callback(
                 disease_condition_or_indication_code
             ):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"Unknown disease_condition_or_indication_code "
                     f"({disease_condition_or_indication_code})"
                 )
@@ -822,7 +835,7 @@ class StudyPopulationVO:
             self.sex_of_participants_code is not None
             and not sex_of_participants_exists_callback(self.sex_of_participants_code)
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"Unknown sex of participants code({self.sex_of_participants_code})"
             )
 
@@ -845,7 +858,7 @@ class StudyPopulationVO:
                 disease_condition_or_indication_exists_callback=disease_condition_or_indication_exists_callback,
                 sex_of_participants_exists_callback=sex_of_participants_exists_callback,
             )
-        except ValueError:
+        except exceptions.ValidationException:
             return False
         return True
 
@@ -1017,12 +1030,6 @@ class StudyInterventionVO:
     planned_study_length: Optional[str] = None
     planned_study_length_null_value_code: Optional[str] = None
 
-    drug_study_indication: Optional[bool] = None
-    drug_study_indication_null_value_code: Optional[str] = None
-
-    device_study_indication: Optional[bool] = None
-    device_study_indication_null_value_code: Optional[str] = None
-
     @staticmethod
     def from_input_values(
         *,
@@ -1042,14 +1049,9 @@ class StudyInterventionVO:
         trial_blinding_schema_null_value_code: Optional[str],
         planned_study_length: Optional[str],
         planned_study_length_null_value_code: Optional[str],
-        drug_study_indication: Optional[bool],
-        drug_study_indication_null_value_code: Optional[str],
-        device_study_indication: Optional[bool],
-        device_study_indication_null_value_code: Optional[str],
         trial_intent_types_codes: Sequence[str],
         trial_intent_type_null_value_code: Optional[str],
     ) -> "StudyInterventionVO":
-
         return StudyInterventionVO(
             intervention_type_code=normalize_string(intervention_type_code),
             intervention_type_null_value_code=normalize_string(
@@ -1081,14 +1083,6 @@ class StudyInterventionVO:
             planned_study_length_null_value_code=normalize_string(
                 planned_study_length_null_value_code
             ),
-            drug_study_indication=drug_study_indication,
-            drug_study_indication_null_value_code=normalize_string(
-                drug_study_indication_null_value_code
-            ),
-            device_study_indication=device_study_indication,
-            device_study_indication_null_value_code=normalize_string(
-                device_study_indication_null_value_code
-            ),
             trial_intent_types_codes=(
                 [] if trial_intent_types_codes is None else trial_intent_types_codes
             ),
@@ -1112,7 +1106,7 @@ class StudyInterventionVO:
             if associated_null_value_code is not None and not (
                 value is None or (isinstance(value, abc.Collection) and len(value) == 0)
             ):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"{name_of_verified_value} and associated null value code cannot be both provided."
                 )
 
@@ -1120,7 +1114,7 @@ class StudyInterventionVO:
                 associated_null_value_code is not None
                 and not null_value_exists_callback(associated_null_value_code)
             ):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"Unknown null value code (reason for missing) provided for {name_of_verified_value}"
                 )
 
@@ -1182,20 +1176,22 @@ class StudyInterventionVO:
             self.intervention_type_code is not None
             and not intervention_type_exists_callback(self.intervention_type_code)
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"Unknown intervention type code ({self.intervention_type_code})"
             )
 
         if self.control_type_code is not None and not control_type_exists_callback(
             self.control_type_code
         ):
-            raise ValueError(f"Unknown control  type code ({self.control_type_code})")
+            raise exceptions.ValidationException(
+                f"Unknown control  type code ({self.control_type_code})"
+            )
 
         if (
             self.intervention_model_code is not None
             and not intervention_model_exists_callback(self.intervention_model_code)
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"Unknown intervention model code ({self.intervention_model_code})"
             )
 
@@ -1205,7 +1201,7 @@ class StudyInterventionVO:
                 self.trial_blinding_schema_code
             )
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"Unknown trial blinding schema code({self.trial_blinding_schema_code})"
             )
 
@@ -1226,7 +1222,7 @@ class StudyInterventionVO:
                 intervention_model_exists_callback=intervention_model_exists_callback,
                 trial_blinding_schema_exists_callback=trial_blinding_schema_exists_callback,
             )
-        except ValueError:
+        except exceptions.ValidationException:
             return False
         return True
 
@@ -1249,10 +1245,6 @@ class StudyInterventionVO:
         trial_blinding_schema_null_value_code: Optional[str] = field(),
         planned_study_length: Optional[str] = field(),
         planned_study_length_null_value_code: Optional[str] = field(),
-        drug_study_indication: Optional[bool] = field(),
-        drug_study_indication_null_value_code: Optional[str] = field(),
-        device_study_indication: Optional[bool] = field(),
-        device_study_indication_null_value_code: Optional[str] = field(),
         trial_intent_types_codes: Sequence[str] = field(),
         trial_itent_type_null_value_code: Optional[str] = field(),
     ) -> "StudyInterventionVO":
@@ -1311,20 +1303,6 @@ class StudyInterventionVO:
                 planned_study_length_null_value_code,
                 self.planned_study_length_null_value_code,
             ),
-            drug_study_indication=helper(
-                drug_study_indication, self.drug_study_indication
-            ),
-            drug_study_indication_null_value_code=helper(
-                drug_study_indication_null_value_code,
-                self.drug_study_indication_null_value_code,
-            ),
-            device_study_indication=helper(
-                device_study_indication, self.device_study_indication
-            ),
-            device_study_indication_null_value_code=helper(
-                device_study_indication_null_value_code,
-                self.device_study_indication_null_value_code,
-            ),
             trial_intent_types_codes=helper(
                 trial_intent_types_codes, self.trial_intent_types_codes
             ),
@@ -1359,11 +1337,12 @@ class StudyDescriptionVO:
             lambda _, study_number: True
         ),
     ) -> None:
-
         if study_title_exists_callback(self.study_title, study_number):
-            raise ValueError(f"Study title already exists ({self.study_title})")
+            raise exceptions.ValidationException(
+                f"Study title already exists ({self.study_title})"
+            )
         if study_short_title_exists_callback(self.study_short_title, study_number):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"Study short title already exists ({self.study_short_title})"
             )
 
@@ -1382,7 +1361,7 @@ class StudyDescriptionVO:
                 study_short_title_exists_callback=short_title_exists_callback,
                 study_number=study_number,
             )
-        except ValueError:
+        except exceptions.ValidationException:
             return False
         return True
 
@@ -1495,7 +1474,7 @@ class StudyMetadataVO:
         ),
     ) -> None:
         """
-        Raises ValueError if values do not comply with relevant business rules. As a parameters takes
+        Raises exceptions.ValidationException if values do not comply with relevant business rules. As a parameters takes
         callback which are supposed to verify validity (existence) of relevant coded values. If not provided
         codes are assumed valid.
         """

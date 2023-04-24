@@ -63,7 +63,6 @@ class LagTimeVO(NumericValueWithUnitVO):
         unit_definition_uid: str,
         sdtm_domain_uid: str,
     ) -> "LagTimeVO":
-
         unit_definition = find_unit_definition_by_uid(unit_definition_uid)
         if unit_definition is None:
             raise ValueError(

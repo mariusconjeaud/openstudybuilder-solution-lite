@@ -3,67 +3,80 @@ from clinical_mdr_api.models.activities.activity import (
     ActivityCreateInput,
     ActivityEditInput,
 )
-
+from clinical_mdr_api.models.activities.activity_group import ActivityGroup
+from clinical_mdr_api.models.activities.activity_sub_group import ActivitySubGroup
 from clinical_mdr_api.models.clinical_programme import (
     ClinicalProgramme,
     ClinicalProgrammeInput,
 )
-from clinical_mdr_api.models.activity_instruction import (
+from clinical_mdr_api.models.syntax_instances.activity_instruction import (
     ActivityInstruction,
     ActivityInstructionVersion,
     ActivityInstructionCreateInput,
 )
-from clinical_mdr_api.models.activity_description_template import (
-    ActivityDescriptionTemplate,
-    ActivityDescriptionTemplateNameInput,
-    ActivityDescriptionTemplateCreateInput,
-    ActivityDescriptionTemplateEditInput,
-    ActivityDescriptionTemplateVersion,
-    ActivityDescriptionTemplateEditGroupingsInput,
+from clinical_mdr_api.models.syntax_templates.activity_instruction_template import (
+    ActivityInstructionTemplate,
+    ActivityInstructionTemplateNameInput,
+    ActivityInstructionTemplateCreateInput,
+    ActivityInstructionTemplateEditInput,
+    ActivityInstructionTemplateVersion,
+    ActivityInstructionTemplateEditIndexingsInput,
 )
-from clinical_mdr_api.models.criteria import (
+from clinical_mdr_api.models.syntax_instances.criteria import (
     Criteria,
     CriteriaWithType,
     CriteriaVersion,
     CriteriaCreateInput,
     CriteriaEditInput,
 )
-from clinical_mdr_api.models.criteria_template import (
+from clinical_mdr_api.models.syntax_templates.criteria_template import (
     CriteriaTemplate,
     CriteriaTemplateNameInput,
     CriteriaTemplateCreateInput,
     CriteriaTemplateEditInput,
     CriteriaTemplateVersion,
-    CriteriaTemplateEditGroupingsInput,
+    CriteriaTemplateEditIndexingsInput,
 )
-from clinical_mdr_api.models.endpoint import (
+from clinical_mdr_api.models.syntax_instances.endpoint import (
     Endpoint,
     EndpointCreateInput,
     EndpointEditInput,
     EndpointVersion,
 )
-from clinical_mdr_api.models.endpoint_template import (
+from clinical_mdr_api.models.syntax_templates.endpoint_template import (
     EndpointTemplate,
     EndpointTemplateCreateInput,
     EndpointTemplateEditInput,
     EndpointTemplateVersion,
-    EndpointTemplateEditGroupingsInput,
+    EndpointTemplateEditIndexingsInput,
 )
 from clinical_mdr_api.models.indication import Indication, IndicationCreateInput
 from clinical_mdr_api.models.library import Library
-from clinical_mdr_api.models.objective import (
+from clinical_mdr_api.models.syntax_instances.objective import (
     Objective,
     ObjectiveCreateInput,
     ObjectiveEditInput,
     ObjectiveVersion,
 )
-from clinical_mdr_api.models.objective_template import (
+from clinical_mdr_api.models.syntax_templates.objective_template import (
     ObjectiveTemplate,
     ObjectiveTemplateCreateInput,
     ObjectiveTemplateEditInput,
     ObjectiveTemplateNameInput,
     ObjectiveTemplateVersion,
-    ObjectiveTemplateEditGroupingsInput,
+    ObjectiveTemplateEditIndexingsInput,
+)
+from clinical_mdr_api.models.syntax_pre_instances.activity_instruction_pre_instance import (
+    ActivityInstructionPreInstance,
+)
+from clinical_mdr_api.models.syntax_pre_instances.criteria_pre_instance import (
+    CriteriaPreInstance,
+)
+from clinical_mdr_api.models.syntax_pre_instances.endpoint_pre_instance import (
+    EndpointPreInstance,
+)
+from clinical_mdr_api.models.syntax_pre_instances.objective_pre_instance import (
+    ObjectivePreInstance,
 )
 from clinical_mdr_api.models.project import Project, ProjectCreateInput
 from clinical_mdr_api.models.brand import Brand, BrandCreateInput
@@ -233,8 +246,8 @@ from clinical_mdr_api.models.listings import (
 )
 from clinical_mdr_api.models.system import SystemInformation
 from clinical_mdr_api.models.template_parameter import TemplateParameter
-from clinical_mdr_api.models.template_parameter_value import TemplateParameterValue
-from clinical_mdr_api.models.timeframe import (
+from clinical_mdr_api.models.template_parameter_term import TemplateParameterTerm
+from clinical_mdr_api.models.syntax_instances.timeframe import (
     Timeframe,
     TimeframeCreateInput,
     TimeframeEditInput,
@@ -372,18 +385,24 @@ __all__ = [
     "Activity",
     "ActivityCreateInput",
     "ActivityEditInput",
-    "ActivityDescriptionTemplate",
-    "ActivityDescriptionTemplateVersion",
-    "ActivityDescriptionTemplateCreateInput",
-    "ActivityDescriptionTemplateNameInput",
-    "ActivityDescriptionTemplateEditInput",
-    "ActivityDescriptionTemplateEditGroupingsInput",
+    "ActivityGroup",
+    "ActivitySubGroup",
+    "ActivityInstructionTemplate",
+    "ActivityInstructionTemplateVersion",
+    "ActivityInstructionTemplateCreateInput",
+    "ActivityInstructionTemplateNameInput",
+    "ActivityInstructionTemplateEditInput",
+    "ActivityInstructionTemplateEditIndexingsInput",
     "ObjectiveTemplate",
     "ObjectiveTemplateVersion",
     "ObjectiveTemplateCreateInput",
     "ObjectiveTemplateNameInput",
     "ObjectiveTemplateEditInput",
-    "ObjectiveTemplateEditGroupingsInput",
+    "ObjectiveTemplateEditIndexingsInput",
+    "ActivityInstructionPreInstance",
+    "CriteriaPreInstance",
+    "EndpointPreInstance",
+    "ObjectivePreInstance",
     "ActivityInstruction",
     "ActivityInstructionVersion",
     "ActivityInstructionCreateInput",
@@ -397,19 +416,19 @@ __all__ = [
     "CriteriaTemplateCreateInput",
     "CriteriaTemplateNameInput",
     "CriteriaTemplateEditInput",
-    "CriteriaTemplateEditGroupingsInput",
+    "CriteriaTemplateEditIndexingsInput",
     "Objective",
     "ObjectiveVersion",
     "ObjectiveCreateInput",
     "ObjectiveEditInput",
     "TemplateParameter",
-    "TemplateParameterValue",
+    "TemplateParameterTerm",
     "Indication",
     "IndicationCreateInput",
     "EndpointTemplate",
     "EndpointTemplateCreateInput",
     "EndpointTemplateEditInput",
-    "EndpointTemplateEditGroupingsInput",
+    "EndpointTemplateEditIndexingsInput",
     "EndpointTemplateVersion",
     "Endpoint",
     "EndpointVersion",

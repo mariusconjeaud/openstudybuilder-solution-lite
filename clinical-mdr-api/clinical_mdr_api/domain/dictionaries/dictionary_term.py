@@ -54,7 +54,6 @@ class DictionaryTermVO:
         abbreviation: Optional[str],
         definition: Optional[str],
     ) -> "DictionaryTermVO":
-
         dictionary_term_vo = cls(
             codelist_uid=codelist_uid,
             dictionary_id=dictionary_id,
@@ -71,7 +70,6 @@ class DictionaryTermVO:
         term_exists_by_name_callback: Callable[[str, str], bool],
         previous_name: Optional[str] = None,
     ) -> None:
-
         if (
             term_exists_by_name_callback(self.name, self.codelist_uid)
             and self.name != previous_name

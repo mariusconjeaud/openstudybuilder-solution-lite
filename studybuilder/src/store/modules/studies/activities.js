@@ -44,7 +44,7 @@ const mutations = {
 }
 
 const actions = {
-  fetchStudyActivities ({ commit }, params) {
+  async fetchStudyActivities ({ commit }, params) {
     const studyUid = params.studyUid
     delete params.studyUid
     if (!Object.prototype.hasOwnProperty.call(params, 'page_size')) {
@@ -53,10 +53,9 @@ const actions = {
     if (!Object.prototype.hasOwnProperty.call(params, 'page_number')) {
       params.page_number = 1
     }
-    return study.getStudyActivities(studyUid, params).then(resp => {
-      commit('SET_STUDY_ACTIVITIES', resp.data.items)
-      return resp
-    })
+    const resp = await study.getStudyActivities(studyUid, params)
+    commit('SET_STUDY_ACTIVITIES', resp.data.items)
+    return resp
   }
 }
 

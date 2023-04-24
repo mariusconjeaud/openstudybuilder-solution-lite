@@ -147,7 +147,7 @@ export default {
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: '#', value: 'order', width: '5%' },
-        { text: this.$t('StudyBranchArms.arm_name'), value: 'arm_root.name' },
+        { text: this.$t('StudyBranchArms.arm_name'), value: 'arm_root.name', historyHeader: 'arm_root_uid' },
         { text: this.$t('StudyBranchArms.name'), value: 'name' },
         { text: this.$t('StudyBranchArms.short_name'), value: 'short_name' },
         { text: this.$t('StudyBranchArms.randomisation_group'), value: 'randomization_group' },

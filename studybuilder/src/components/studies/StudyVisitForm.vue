@@ -110,6 +110,7 @@
                     clearable
                     :disabled="form.visit_class !== visitConstants.CLASS_SINGLE_VISIT && form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT"
                     class="required"
+                    @change="getVisitPreview"
                     />
                 </validation-provider>
               </v-col>
@@ -181,6 +182,7 @@
                     item-value="uid"
                     :error-messages="errors"
                     clearable
+                    @change="getVisitPreview"
                     />
                 </validation-provider>
               </v-col>
@@ -409,7 +411,7 @@
             :items="epochStudyVisits"
             :no-data-text="$t('StudyVisitForm.no_visit_available')"
             hide-default-footer
-            items-per-page="-1"
+            :items-per-page="-1"
             >
             <template v-slot:header>
               <div class="sub-title">
@@ -628,7 +630,7 @@ export default {
       if (this.studyVisit) {
         return
       }
-      const mandatoryFields = ['visit_type_uid', 'visit_contact_mode_uid']
+      const mandatoryFields = ['visit_type_uid', 'visit_contact_mode_uid', 'study_epoch_uid']
       if (this.form.visit_class === visitConstants.CLASS_SINGLE_VISIT) {
         mandatoryFields.push('time_reference_uid', 'time_value')
       }
@@ -641,6 +643,9 @@ export default {
       if (payload.visit_class !== visitConstants.CLASS_SINGLE_VISIT) {
         payload.time_reference_uid = this.timeReferences.find(item => item.sponsor_preferred_name === visitConstants.TIMEREF_GLOBAL_ANCHOR_VISIT).term_uid
         payload.time_value = 0
+      }
+      if (payload.visit_class === visitConstants.CLASS_SPECIAL_VISIT && !payload.visit_sublabel_reference) {
+        return
       }
       payload.is_global_anchor_visit = false
       this.previewLoading = true

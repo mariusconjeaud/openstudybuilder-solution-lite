@@ -5,7 +5,6 @@ from clinical_mdr_api.domain._utils import normalize_string
 
 @dataclass
 class CTCatalogueAR:
-
     _name: str
     _library_name: str
 

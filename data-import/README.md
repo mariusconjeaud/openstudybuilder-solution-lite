@@ -116,7 +116,48 @@ The current set of commands is:
 - crfs
 - mockdata
 - mockdatajson
+- mastermodels
 
+
+## Running with docker
+
+Actually running Dockerized is the recommended way.
+
+### Setup
+
+On Linux add the `UID` environment variable to the `.env` file in the root 
+of the repository folder. The value should correspond to your user's uid. 
+You can get that by running the `uid` command. Example `.env` file:
+
+```shell
+UID=1001
+```
+
+After changing the value of `UID` you need to rebuild the Docker image, 
+ignoring the cache:
+
+```shell
+docker compose build --no-cache
+```
+
+If you run into file permission problems, first check the above steps on any 
+architecture.
+
+Check if `API_BASE_URL` is correct in `.env.import` file.
+
+### Run import
+
+Import-all can be run via:
+
+```shell
+docker compose up import
+```
+
+Any other commands can be run via:
+
+```shell
+docker compose run --rm pipenv run whatever
+```
 
 # Import steps
 This lists the various steps that the import goes through,

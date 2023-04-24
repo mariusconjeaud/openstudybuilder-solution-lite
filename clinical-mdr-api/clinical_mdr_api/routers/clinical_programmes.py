@@ -3,8 +3,8 @@ from typing import Sequence
 from fastapi import APIRouter, Body, Depends
 
 from clinical_mdr_api import models
-from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services import clinical_programme as clinical_programme_service
 
 router = APIRouter()
@@ -16,7 +16,8 @@ router = APIRouter()
     response_model=Sequence[models.ClinicalProgramme],
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_projects() -> Sequence[models.ClinicalProgramme]:
@@ -32,13 +33,12 @@ def get_projects() -> Sequence[models.ClinicalProgramme]:
         201: {
             "description": "Created - The clinical programme was successfully created."
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 # pylint: disable=unused-argument
 def create(
     clinical_programme_create_input: models.ClinicalProgrammeInput = Body(
-        None,
         description="Related parameters of the clinical programme that shall be created.",
     ),
     current_user_id: str = Depends(get_current_user_id),

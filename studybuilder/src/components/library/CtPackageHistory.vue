@@ -1,19 +1,27 @@
 <template>
 <v-card elevation="0" outlined>
-  <v-card-title>
+  <v-card>
     <v-row no-gutters>
       <v-col cols="10">
-        <div class="d-flex">
-          <div v-for="(date, index) in dates" :key="index" class="mx-2">
-            <div class="text-caption">{{ shortDate(date) }}</div>
-            <div class="text-center">
-              <v-btn fab :color="getDateColor(date)" x-small @click="selectDate(date)"></v-btn>
-            </div>
-          </div>
+        <div>
+          <v-sheet
+            class="mx-auto">
+            <v-slide-group
+              multiple
+              show-arrows
+              class="slideHeight mt-2">
+              <div v-for="(date, index) in dates" :key="index" class="mx-2">
+                <div class="text-caption mt-3">{{ shortDate(date) }}</div>
+                <div class="text-center">
+                  <v-btn fab :color="getDateColor(date)" x-small @click="selectDate(date)"></v-btn>
+                </div>
+              </div>
+            </v-slide-group>
+          </v-sheet>
         </div>
       </v-col>
       <v-col cols="2" class="d-flex">
-        <label class="v-label mr-4">{{ $t('CtPackageHistory.show') }}</label>
+        <label class="v-label mr-4 mt-3">{{ $t('CtPackageHistory.show') }}</label>
         <v-radio-group v-model="display" dense>
           <v-radio
             :label="$t('CtPackageHistory.submission_value_choice')"
@@ -30,7 +38,7 @@
         </v-radio-group>
       </v-col>
     </v-row>
-  </v-card-title>
+  </v-card>
   <div class="d-flex align-center greyBackground py-4 px-16" v-if="fromDate && toDate">
     <v-btn fab color="secondary" x-small class="mr-2"></v-btn>
     <span>From {{ shortDate(fromDate) }}</span>
@@ -135,8 +143,13 @@ export default {
   mounted () {
     this.resetChanges()
     controlledTerminology.getPackagesDates(this.catalogue.name).then(resp => {
-      this.dates = resp.data.effective_dates
+      this.dates = resp.data.effective_dates.reverse()
     })
   }
 }
 </script>
+<style>
+.slideHeight {
+  height: 100px;
+}
+</style>

@@ -3,9 +3,7 @@ from datetime import datetime
 from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, Depends, Path, Query
-from fastapi_etag import Etag
 from pydantic.types import Json
-from starlette.requests import Request
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
@@ -20,17 +18,15 @@ router = APIRouter()
 CTCodelistUID = Path(None, description="The unique id of the CTCodelistName")
 
 
-def get_etag(request: Request) -> str:
-    ct_codelist_name_service = CTCodelistNameService()
-    return ct_codelist_name_service.get_codelist_etag(request)
-
-
 @router.get(
     "/codelists/names",
     summary="Returns all codelists names.",
     response_model=CustomPage[models.CTCodelistName],
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_codelists(
     catalogue_name: str = Query(
@@ -92,7 +88,7 @@ def get_codelists(
             "model": ErrorResponse,
             "description": "Not Found - Invalid field name specified",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_distinct_values_for_header(
@@ -136,11 +132,13 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/codelists/{codelist_uid}/names",
-    dependencies=[Depends(Etag(get_etag))],
     summary="Returns the latest/newest version of a specific codelist identified by 'uid'",
     response_model=models.CTCodelistName,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_codelist_names(
     codelist_uid: str = CTCodelistUID,
@@ -188,7 +186,7 @@ def get_codelist_names(
             "model": ErrorResponse,
             "description": "Not Found - The codelist with the specified 'codelist_uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_versions(
@@ -225,14 +223,13 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The codelist with the specified 'codelist_uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
     codelist_uid: str = CTCodelistUID,
     codelist_input: models.CTCodelistNameEditInput = Body(
-        None,
-        description="The new parameter values for the codelist including the change description.",
+        description="The new parameter terms for the codelist including the change description.",
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
@@ -269,7 +266,7 @@ If the request succeeds:
             "- The codelist is not in final status.\n"
             "- The codelist with the specified 'codelist_uid' could not be found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def create(
@@ -306,7 +303,7 @@ If the request succeeds:
             "model": ErrorResponse,
             "description": "Not Found - The codelist with the specified 'codelist_uid' wasn't found.",
         },
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(

@@ -203,7 +203,7 @@ Example error message:
     }
   ]
   "time": "2021-11-24T08:45:08.057908",
-  "path": "http://localhost:8000/activity-description-templates/123?return_instantiation_counts=false",
+  "path": "http://localhost:8000/activity-instruction-templates/123?return_instantiation_counts=false",
   "method": "POST"
 }
 ```
@@ -232,9 +232,9 @@ Example error message:
 
 ```
 {
-  "message": "ActivityDescriptionTemplateAR with uid 123 does not exist or there's no version with requested status or version number.",
+  "message": "ActivityInstructionTemplateAR with uid 123 does not exist or there's no version with requested status or version number.",
   "time": "2021-11-24T08:45:08.057908",
-  "path": "http://localhost:8000/activity-description-templates/123?return_instantiation_counts=false",
+  "path": "http://localhost:8000/activity-instruction-templates/123?return_instantiation_counts=false",
   "method": "GET"
 }
 ```

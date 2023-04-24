@@ -43,11 +43,11 @@
                 "guidance_text": null,
                 "uid": "CriteriaTemplate_000001"
             },
-            "parameter_values": [
+            "parameter_terms": [
                 {
                     "position": 1,
                     "conjunction": "",
-                    "values": [
+                    "terms": [
                         {
                             "uid": "Activity_000323",
                             "name": "Ammonia",

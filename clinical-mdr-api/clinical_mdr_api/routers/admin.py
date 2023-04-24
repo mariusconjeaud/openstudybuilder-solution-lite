@@ -2,8 +2,8 @@ from typing import Any, Optional, Sequence
 
 from fastapi import APIRouter, Depends, Query
 
-from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services._meta_repository import MetaRepository
 
 router = APIRouter()
@@ -21,7 +21,8 @@ CACHE_STORE_NAMES = [
     response_model=Sequence[Any],
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def get_caches(
@@ -38,7 +39,8 @@ def get_caches(
     response_model=Sequence[Any],
     status_code=200,
     responses={
-        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
     },
 )
 def clear_caches(

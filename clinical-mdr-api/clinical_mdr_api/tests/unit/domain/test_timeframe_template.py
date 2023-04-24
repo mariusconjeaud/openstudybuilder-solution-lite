@@ -1,11 +1,13 @@
 import unittest
 
-from clinical_mdr_api.domain.templates.timeframe_templates import TimeframeTemplateAR
+from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
+from clinical_mdr_api.domain.syntax_templates.timeframe_template import (
+    TimeframeTemplateAR,
+)
 from clinical_mdr_api.domain.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryItemStatus,
     LibraryVO,
-    TemplateVO,
 )
 
 
@@ -30,7 +32,6 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
             item_metadata=LibraryItemMetadataVO.get_initial_item_metadata(
                 author="who ever"
             ),
-            editable_instance=False,
         )
 
         # then
@@ -54,7 +55,6 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
             item_metadata=LibraryItemMetadataVO.get_initial_item_metadata(
                 author="who ever"
             ),
-            editable_instance=False,
         )
 
         # when
@@ -81,7 +81,6 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
             item_metadata=LibraryItemMetadataVO.get_initial_item_metadata(
                 author="who ever"
             ),
-            editable_instance=False,
         )
         ar.approve(author="TODO")
 
@@ -113,7 +112,6 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
             item_metadata=LibraryItemMetadataVO.get_initial_item_metadata(
                 author="who ever"
             ),
-            editable_instance=False,
         )
         ar.approve(author="Test")
         ntv = TemplateVO.from_repository_values(
@@ -154,7 +152,6 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
             item_metadata=LibraryItemMetadataVO.get_initial_item_metadata(
                 author="who ever"
             ),
-            editable_instance=False,
         )
         ar.approve(author="test")
 
@@ -184,7 +181,6 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
             item_metadata=LibraryItemMetadataVO.get_initial_item_metadata(
                 author="who ever"
             ),
-            editable_instance=False,
         )
         ar.approve(author="test")
         ar.inactivate(author="test")

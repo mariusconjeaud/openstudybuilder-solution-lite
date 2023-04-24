@@ -11,7 +11,6 @@ Entity = TypeVar("Entity")
 
 
 class JsonFileBasedStaticRepo(GenericLightDictionaryRepoBase[Key, Entity], ABC):
-
     _json_filepath: Optional[str] = None
 
     def _get_fresh_dictionary_content(self) -> Iterable[Entity]:

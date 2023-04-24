@@ -1,4 +1,4 @@
-from mdr_standards_import.cdisc_ct.load_ct_preprocessing import Term, Codelist
+from mdr_standards_import.scripts.load_ct_preprocessing import Term, Codelist
 from mdr_standards_import.tests.cdisc_ct.test_pipeline import Package, Import
 
 
@@ -23,7 +23,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C001; goes together with C002",
         extensible=True,
         synonyms=["Analysis Purpose"],
-
         terms=[term1],
     )
 
@@ -36,7 +35,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C002; goes together with C001",
         extensible=True,
         synonyms=["Analysis Purpose"],
-
         terms=[term1],
     )
 
@@ -60,7 +58,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C003; goes together with C004",
         extensible=True,
         synonyms=[],
-
         terms=[term3],
     )
 
@@ -73,7 +70,6 @@ def get_expected_imports(effective_date, user_initials):
         definition="Definition C004; goes together with C003",
         extensible=True,
         synonyms=[],
-
         terms=[term3],
     )
 
@@ -86,11 +82,16 @@ def get_expected_imports(effective_date, user_initials):
         description="Test-Case 2: There is a codelist with the name 'Codelist 001 Name' and another codelist with the name 'Codelist 001 Code'. -> standard case; no inconsistency",
         source="Test source",
         href="/mdr/ct/packages/cat2-2020-01-01",
-
         terms=[term1, term3],
         codelists=[codelist1, codelist2, codelist3, codelist4],
         discontinued_codelists=[],
     )
-    import1 = Import(effective_date, user_initials, packages=[package1], discontinued_codelists=[], log_entries=[])
+    import1 = Import(
+        effective_date,
+        user_initials,
+        packages=[package1],
+        discontinued_codelists=[],
+        log_entries=[],
+    )
 
     return [import1]

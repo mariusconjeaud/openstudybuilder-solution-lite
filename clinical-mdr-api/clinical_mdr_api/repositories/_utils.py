@@ -132,6 +132,8 @@ def get_field(prop, model):
         field = get_embedded_field(fields=prop.split("."), model=model)
     else:
         field = model.__fields__.get(prop)
+    if not field:
+        raise exceptions.ValidationException(f"Field '{prop}' is not supported")
     return field
 
 
@@ -171,23 +173,15 @@ def decrement_page_number(page_number: int) -> int:
     return page_number
 
 
-def unwind_versioning_properties(field_source: str):
-    parts = field_source.split("|")
-    prop = parts[-1]
-    field_names = [
-        f"latest_draft|{prop}",
-        f"latest_final|{prop}",
-        f"latest_retired|{prop}",
-    ]
-    return field_names
-
-
-# pylint:disable=unsupported-binary-operation
 def get_versioning_q_filter(filter_elem, field, q_filters: list):
+    neomodel_filter = comparison_operator_to_neomodel.get(filter_elem.op)
+    if neomodel_filter is None:
+        raise AttributeError(
+            f"The following operator {filter_elem.op} is not mapped "
+            f"to the neomodel operators"
+        )
     q_filters.append(
-        Q(**{f"latest_draft|{field.name}": f"{filter_elem.v[0]}"})
-        | Q(**{f"latest_final|{field.name}": f"{filter_elem.v[0]}"})
-        | Q(**{f"latest_retired|{field.name}": f"{filter_elem.v[0]}"})
+        Q(**{f"has_version|{field.name}{neomodel_filter}": f"{filter_elem.v[0]}"})
     )
 
 
@@ -305,7 +299,7 @@ class FilterOperator(Enum):
             return FilterOperator.OR
         if label in ("and", "AND"):
             return FilterOperator.AND
-        raise exceptions.NotFoundException(
+        raise exceptions.ValidationException(
             "Filter operator only accepts values of 'and' and 'or'."
         )
 
@@ -357,47 +351,49 @@ class CypherQueryBuilder:
 
     Mandatory inputs :
         match_clause : Basically everything a Cypher query needs to do before a
-        RETURN statement : MATCH a pattern, CALL a procedure/subquery, do a WITH processing...
+            RETURN statement : MATCH a pattern, CALL a procedure/subquery, do a WITH processing...
             Note, though, filtering, sorting and pagination will be added
             automatically by the class methods.
         alias_clause : Cypher aliases definition clause ; Similar to what you would
-        write in your RETURN statement, but without the RETURN keyword.
+            write in your RETURN statement, but without the RETURN keyword.
             This is processed to set variables on which to apply filtering and sorting.
 
     Optional inputs :
         sort_by: dictionary of Cypher aliases on which to apply sorting as keys, and
-        boolean to define sort direction (true=ascending) as values
+            boolean to define sort direction (true=ascending) as values.
+        implicit_sort_by: an alias on which to apply sorting, after the aliases given in
+            sort_by are applied. Used to ensure a stable order when just sort_by is not sufficient.
         page_number : int, number of the page to return. 1-based (will be converted
-        to 0-based for Cypher by class methods)
+            to 0-based for Cypher by class methods).
         page_size : int, number of results per page
         filter_by : dict, keys are field names for filter_variable and values are
-        objects describing the filtering to execute
+            objects describing the filtering to execute
             * v = list of values to filter against
             * op = filter operator. Expected values : eq, co (contains), ge, gt, le, lt
             Example : { "name" : { "v": ["Jimbo"], "op": "co" }}
-        return_model (class) / wildcard_properties_list (list of strings): when a
-        wildcard filtering is requested, we need to extract the list of
+        return_model : (class) / wildcard_properties_list (list of strings).
+            When a wildcard filtering is requested, we need to extract the list of
             known properties on which to apply filter. This can be done automatically
             from the return model definition ; in some more complex cases
             (e.g. aggregated object with many nested objects), the list cannot be
-            extracted directly from the model definition, and has to be provided to this method
+            extracted directly from the model definition, and has to be provided to this method.
         format_filter_sort_keys: Callable. In some cases, the returned model property
-        keys differ from the property keys defined in the database.
+            keys differ from the property keys defined in the database.
             To cover these cases, a conversion function can be provided.
 
     Output properties :
         full_query : Complete cypher query with all clauses. See build_full_query
-        method definition for more details.
-        count_query : Cypher query with match, filter clauses, and results count. Se
-        build_count_query method definition for more details.
-        parameters : Parameters object to pass along with the cypher query
+            method definition for more details.
+        count_query : Cypher query with match, filter clauses, and results count. See
+            build_count_query method definition for more details.
+        parameters : Parameters object to pass along with the cypher query.
 
     Internal properties :
         filter_clause : str - Generated on class init ; adds filtering on aliases as
-        defined in the filter_by dictionary
+            defined in the filter_by dictionary.
         sort_clause : str - Generated on class init ; adds sorting on aliases as
-        defined in the sort_by dictionary
-        pagination_clause : str - Generated on class init ; adds pagination
+            defined in the sort_by dictionary.
+        pagination_clause : str - Generated on class init ; adds pagination.
     """
 
     def __init__(
@@ -407,6 +403,7 @@ class CypherQueryBuilder:
         page_number: int = 1,
         page_size: int = 0,
         sort_by: Optional[dict] = None,
+        implicit_sort_by: Optional[str] = None,
         filter_by: Optional[FilterDict] = None,
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         total_count: bool = False,
@@ -420,6 +417,7 @@ class CypherQueryBuilder:
         self.match_clause = match_clause
         self.alias_clause = alias_clause
         self.sort_by = sort_by if sort_by is not None else {}
+        self.implicit_sort_by = implicit_sort_by
         self.page_number = page_number
         self.page_size = page_size
         self.filter_by = filter_by
@@ -670,9 +668,18 @@ class CypherQueryBuilder:
             + ("ASC" if self.sort_by[key] else "DESC"),
             self.sort_by.keys(),
         )
-
+        sort_by_statements = list(sort_by_statements)
+        if (
+            self.implicit_sort_by is not None
+            and self.implicit_sort_by not in self.sort_by
+        ):
+            sort_by_statements.append(
+                self.format_filter_sort_keys(self.implicit_sort_by)
+                if self.format_filter_sort_keys
+                else self.implicit_sort_by
+            )
         # Set clause
-        self.sort_clause = _sort_clause + ",".join(list(sort_by_statements))
+        self.sort_clause = _sort_clause + ",".join(sort_by_statements)
 
     def build_full_query(self) -> None:
         """

@@ -23,7 +23,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionValue,
 )
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
-    TemplateParameterValueRoot,
+    TemplateParameterTermRoot,
 )
 from clinical_mdr_api.repositories._utils import (
     ComparisonOperator,
@@ -35,7 +35,6 @@ from clinical_mdr_api.repositories._utils import (
 
 
 class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType], ABC):
-
     root_class = type
     value_class = type
     return_model = type
@@ -94,54 +93,40 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
     def generic_alias_clause(self):
         return """
             DISTINCT concept_root, concept_value,
-            head([(concept_root)-[ld:LATEST_DRAFT]->(concept_value) | ld]) AS ld,
-            head([(concept_root)-[lf:LATEST_FINAL]->(concept_value) | lf]) AS lf,
-            head([(concept_root)-[lr:LATEST_RETIRED]->(concept_value) | lr]) AS lr,
-            head([(concept_root)-[hv:HAS_VERSION]->(concept_value) | hv]) AS hv,
             head([(library)-[:CONTAINS_CONCEPT]->(concept_root) | library]) AS library
+            CALL {
+                WITH concept_root, concept_value
+                MATCH (concept_root)-[hv:HAS_VERSION]-(concept_value)
+                WITH hv
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.end_date ASC,
+                    hv.start_date ASC
+                WITH collect(hv) as hvs
+                RETURN last(hvs) AS version_rel
+            }
             WITH
+                concept_root,
                 concept_root.uid AS uid,
                 concept_value as concept_value,
                 library.name AS library_name,
                 library.is_editable AS is_library_editable,
-                ld, lf, lr, hv
-                CALL apoc.case(
-                 [
-                   ld IS NOT NULL AND ld.end_date IS NULL, 'RETURN ld as version_rel',
-                   lf IS NOT NULL AND lf.end_date IS NULL, 'RETURN lf as version_rel',
-                   lr IS NOT NULL AND lr.end_date IS NULL, 'RETURN lr as version_rel',
-                   ld IS NULL AND lf IS NULL AND lr IS NULL, 'RETURN hv as version_rel'
-                 ],
-                 '',
-                 {ld:ld, lf:lf, lr:lr, hv:hv})
-                 yield value
+                version_rel
             WITH
                 uid,
                 concept_value.name AS name,
-                case 
-                    when (concept_value:ReminderValue) then "reminders"
-                    when (concept_value:CompoundValue) then "compounds"
-                    when (concept_value:CompoundDosingValue) then "compound-dosings"
-                    when (concept_value:SpecialPurposeValue) then "special-purposes"
-                    when (concept_value:RatingScaleValue) then "rating-scales"
-                    when (concept_value:LaboratoryActivityValue) then "laboratory-activities"
-                    when (concept_value:CategoricFindingValue) then "categoric-findings"
-                    when (concept_value:NumericFindingValue) then "numeric-findings"
-                    when (concept_value:TextualFindingValue) then "textual-findings"
-                    when (concept_value:EventValue) then "events"
-                    else ""
-                end as type,
                 concept_value.name_sentence_case AS name_sentence_case,
                 concept_value.definition AS definition,
                 concept_value.abbreviation AS abbreviation,
-                CASE WHEN concept_value:TemplateParameterValue THEN true ELSE false END AS template_parameter,
+                CASE WHEN concept_value:TemplateParameterTermValue THEN true ELSE false END AS template_parameter,
                 library_name,
                 is_library_editable,
-                value.version_rel.start_date AS start_date,
-                value.version_rel.status AS status,
-                value.version_rel.version AS version,
-                value.version_rel.change_description AS change_description,
-                value.version_rel.user_initials AS user_initials,
+                version_rel.start_date AS start_date,
+                version_rel.status AS status,
+                version_rel.version AS version,
+                version_rel.change_description AS change_description,
+                version_rel.user_initials AS user_initials,
                 concept_value
         """
 
@@ -332,13 +317,15 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         label = self.root_class.__label__
         db.cypher_query(
             f"""
-            MATCH (otr:{label} {{uid: $uid}})-[latest:LATEST_DRAFT|LATEST_RETIRED]->(otv)
-            WHERE NOT (otr)-[:LATEST_FINAL|HAS_VERSION {{version:'Final'}}]->()
-            CREATE (otr)-[v:HAS_VERSION]->(otv)
-            SET v = latest,
-                v.end_date = datetime(apoc.date.toISO8601(datetime().epochSeconds, 's'))
+            MATCH (otr:{label} {{uid: $uid}})-[latest_draft:LATEST_DRAFT|LATEST_RETIRED]->(otv)
+            WHERE NOT (otr)-[:HAS_VERSION {{version:'Final'}}]->()
             SET otr:Deleted{label}
+            WITH otr
             REMOVE otr:{label}
+            WITH otr
+            MATCH (otr)-[v:HAS_VERSION]->()
+            WHERE v.end_date IS NULL
+            SET v.end_date = datetime(apoc.date.toISO8601(datetime().epochSeconds, 's'))
             """,
             {"uid": uid},
         )
@@ -388,7 +375,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
     def is_concept_node_a_tp(cls, concept_node: VersionValue) -> bool:
         labels = concept_node.labels()
         for label in labels:
-            if "TemplateParameterValue" in label:
+            if "TemplateParameterTermValue" in label:
                 return True
         return False
 
@@ -398,13 +385,12 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         root: VersionRoot,
         value: VersionValue,
     ) -> None:
-
         if versioned_object.concept_vo.is_template_parameter:
             # neomodel can't add custom label to already existing node, we have to manage that by executing cypher query
             template_parameter_name = self.root_class.__name__[
                 : len(self.root_class.__name__) - len("Root")
             ]
-            # we want to initiate a Comparator TemplateParameter type with the same template parameter values as we do
+            # we want to initiate a Comparator TemplateParameter type with the same template parameter terms as we do
             # for Compound TemplateParameter
             if template_parameter_name == "Compound":
                 template_parameter_names = [template_parameter_name, "Comparator"]
@@ -414,9 +400,9 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
                 query = """
                     MATCH (template_parameter:TemplateParameter {name:$template_parameter_name})
                     MATCH (concept_root:ConceptRoot {uid: $uid})-[:LATEST]->(concept_value)
-                    SET concept_root:TemplateParameterValueRoot
-                    SET concept_value:TemplateParameterValue
-                    MERGE (template_parameter)-[:HAS_VALUE]->(concept_root)
+                    SET concept_root:TemplateParameterTermRoot
+                    SET concept_value:TemplateParameterTermValue
+                    MERGE (template_parameter)-[:HAS_PARAMETER_TERM]->(concept_root)
                 """
                 db.cypher_query(
                     query,
@@ -425,4 +411,4 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
                         "template_parameter_name": template_param_name,
                     },
                 )
-                TemplateParameterValueRoot.generate_node_uids_if_not_present()
+                TemplateParameterTermRoot.generate_node_uids_if_not_present()

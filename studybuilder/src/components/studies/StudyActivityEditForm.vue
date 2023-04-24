@@ -43,6 +43,7 @@
           <v-autocomplete
             v-model="form.flowchart_group"
             :label="$t('StudyActivityForm.flowchart_group')"
+            data-cy="flowchart-group"
             :items="flowchartGroups"
             item-text="sponsor_preferred_name"
             return-object
@@ -54,6 +55,7 @@
       <v-textarea
         v-model="form.note"
         :label="$t('StudyActivity.footnote')"
+        data-cy="footnote"
         rows="1"
         clearable
         auto-grow

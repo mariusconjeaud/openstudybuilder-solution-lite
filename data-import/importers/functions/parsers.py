@@ -3,9 +3,10 @@ import logging
 
 logger = logging.getLogger("legacy_mdr_migrations")
 # ---------------------------------------------------------------
-# Utilites for parsing and converting data
+# Utilities for parsing and converting data
 # ---------------------------------------------------------------
 #
+
 
 def parse_to_int(s: str) -> int:
     try:
@@ -32,14 +33,16 @@ def parse_float(value: str) -> Optional[float]:
         new_value = float(value.replace("E", "e"))
     except ValueError:
         new_value = 0.0
-        logger.warning(f"Unable to parse string '{value}' as a number, defaulting to {new_value}")
+        logger.warning(
+            f"Unable to parse string '{value}' as a number, defaulting to {new_value}"
+        )
     return new_value
 
 
 def map_boolean(bool_str: str, raise_exception=False) -> bool:
-    if bool_str in ("Y", "y", "T", "True", "TRUE", "true"):
+    if bool_str in ("Y", "y", "T", "True", "TRUE", "true", "Yes", "yes"):
         return True
-    elif bool_str in ("N", "n", "F", "False", "FALSE", "false"):
+    elif bool_str in ("N", "n", "F", "False", "FALSE", "false", "No", "no"):
         return False
     else:
         if raise_exception:

@@ -42,9 +42,9 @@
       </v-row>
       <slot name="extraFields" :form="form"></slot>
     </template>
-    <template v-slot:step.template.actions.middle>
+    <template v-slot:step.template.afterActions>
       <v-btn
-        class="secondary-btn ml-2"
+        class="secondary-btn"
         color="white"
         @click="verifySyntax"
         >
@@ -165,6 +165,7 @@ export default {
       ],
       editModeSteps: [
         { name: 'template', title: this.$t('GenericTemplateForm.step1_edit_title') },
+        { name: 'testTemplate', title: this.$t('GenericTemplateForm.step2_title') },
         { name: 'properties', title: this.$t('GenericTemplateForm.step3_title') },
         { name: 'change', title: this.$t('GenericTemplateForm.step4_title') }
       ]
@@ -262,7 +263,7 @@ export default {
           template = resp.data
         }
         await this.preparePayload(data)
-        resp = await this.apiTemplateEndpoint.updateGroupings(this.template.uid, data)
+        resp = await this.apiTemplateEndpoint.updateIndexings(this.template.uid, data)
         if (!template) {
           template = resp.data
         }
@@ -298,6 +299,7 @@ export default {
     async submit () {
       if (_isEqual(this.form, this.originalForm)) {
         this.closeWithNoChange()
+        return
       }
       if (!this.template) {
         this.addTemplate()

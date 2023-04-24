@@ -27,7 +27,6 @@ from clinical_mdr_api.models.concept import TextValue as TextValueAPIModel
 
 
 class TextValueRepository(SimpleConceptGenericRepository[TextValueAR]):
-
     root_class = TextValueRoot
     value_class = TextValue
     aggregate_class = TextValueAR
@@ -71,7 +70,6 @@ class TextValueRepository(SimpleConceptGenericRepository[TextValueAR]):
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> TextValueAR:
-
         return self.aggregate_class.from_repository_values(
             uid=root.uid,
             simple_concept_vo=self.value_object_class.from_repository_values(

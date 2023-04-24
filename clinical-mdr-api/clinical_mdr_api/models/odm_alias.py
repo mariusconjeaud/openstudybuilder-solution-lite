@@ -40,7 +40,6 @@ class OdmAliasSimpleModel(BaseModel):
     def from_odm_alias_uid(
         cls, uid: str, find_odm_alias_by_uid: Callable[[str], Optional[ConceptARBase]]
     ) -> Optional["OdmAliasSimpleModel"]:
-
         if uid is not None:
             odm_alias = find_odm_alias_by_uid(uid)
 

@@ -1,4 +1,3 @@
-import Vue from 'vue'
 import { mount, createLocalVue } from '@vue/test-utils'
 import Vuetify from 'vuetify'
 
@@ -7,7 +6,6 @@ import DataTableExportButton from '@/components/tools/DataTableExportButton'
 
 describe('DataTableExportButton.vue', () => {
   const localVue = createLocalVue()
-  let vuetify
   let wrapper
 
   beforeEach(async () => {

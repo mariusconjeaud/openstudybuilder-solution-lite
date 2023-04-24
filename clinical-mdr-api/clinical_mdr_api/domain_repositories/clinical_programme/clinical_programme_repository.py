@@ -8,7 +8,7 @@ from clinical_mdr_api.domain.clinical_programme.clinical_programme import (
     ClinicalProgrammeAR,
 )
 from clinical_mdr_api.domain_repositories.generic_repository import (
-    RepositoryClosureData,  # type: ignore
+    RepositoryClosureData,
 )
 from clinical_mdr_api.domain_repositories.models.clinical_programme import (
     ClinicalProgramme,

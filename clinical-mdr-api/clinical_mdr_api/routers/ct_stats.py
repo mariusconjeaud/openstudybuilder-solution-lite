@@ -5,8 +5,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 
 from clinical_mdr_api import models
-from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.ct_codelist import CTCodelistService
 from clinical_mdr_api.services.ct_stats import CTStatsService
 
@@ -18,7 +18,10 @@ router = APIRouter()
     summary="Returns stats about Catalogues, Packages and Terms",
     response_model=models.CTStats,
     status_code=200,
-    responses={500: {"model": ErrorResponse, "description": "Internal Server Error"}},
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
 )
 def get_stats(
     latest_count: Optional[int] = Query(

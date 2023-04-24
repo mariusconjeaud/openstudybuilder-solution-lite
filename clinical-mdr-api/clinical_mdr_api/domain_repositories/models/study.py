@@ -1,15 +1,9 @@
-from neomodel import (  # pylint: disable=E0401 # type: ignore
-    RelationshipFrom,
-    RelationshipTo,
-    StringProperty,
-)
+from neomodel import RelationshipFrom, RelationshipTo, StringProperty
 
-from clinical_mdr_api.domain_repositories.models.generic import (
-    ClinicalMdrRel,  # type: ignore
-)
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
     ClinicalMdrNodeWithUID,
+    ClinicalMdrRel,
     ConjunctionRelation,
     VersionRelationship,
 )
