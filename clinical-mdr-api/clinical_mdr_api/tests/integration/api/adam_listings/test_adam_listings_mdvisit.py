@@ -16,7 +16,7 @@ from fastapi.testclient import TestClient
 from neomodel import db
 
 from clinical_mdr_api.main import app
-from clinical_mdr_api.models.listings_adam import StudyVisitAdamListing
+from clinical_mdr_api.models.listings.listings_adam import StudyVisitAdamListing
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_CATALOGUE_CYPHER,
@@ -52,7 +52,6 @@ def test_data():
 def test_adam_listing_mdvisit(api_client):
     response = api_client.get(
         "/listings/studies/study_root/adam/mdvisit/",
-        json={},
     )
     assert response.status_code == 200
     res = response.json()["items"]
@@ -61,19 +60,19 @@ def test_adam_listing_mdvisit(api_client):
 
     expected_output = StudyVisitAdamListing(
         STUDYID="SOME_ID-0",
-        VISIT_TYPE_NAME="BASELINE",
-        VISIT_NUM=100,
-        VISIT_NAME="VISIT 1",
-        DAY_VALUE=1,
-        VISIT_SHORT_LABEL="V1",
-        DAY_NAME="Day 1",
-        WEEK_NAME="Week 1",
-        WEEK_VALUE="1",
+        VISTPCD="BASELINE",
+        AVISITN=100,
+        AVISIT="VISIT 1",
+        AVISIT1N=1,
+        VISLABEL="V1",
+        AVISIT1="Day 1",
+        AVISIT2="Week 1",
+        AVISIT2N="1",
     )
     assert res[0] == expected_output
 
     # headers endpoint testing
-    field_name = "VISIT_NAME"
+    field_name = "AVISIT"
     expected_result = []  # building expected result
     for res_visit in res_visits:
         value = res_visit[field_name]

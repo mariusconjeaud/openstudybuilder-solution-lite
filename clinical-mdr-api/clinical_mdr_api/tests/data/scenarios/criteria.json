@@ -33,7 +33,7 @@
                "parameter_terms": []
             }
          },
-         "url":"/studies/Study_000001/study-criteria"
+         "url": "/studies/Study_000001/study-criteria?create_criteria=true"
       },
       "response": {
          "code": 201,
@@ -84,6 +84,7 @@
                   "name": "Test_Name_Template",
                   "name_plain": "Test_Name_Template",
                   "uid": "{ctuid}",
+                  "sequence_id": "CIT1",
                   "guidance_text": null
                },
                "parameter_terms": [],
@@ -133,6 +134,7 @@
                      "name": "Test_Name_Template",
                      "name_plain": "Test_Name_Template",
                      "uid": "{ctuid}",
+                     "sequence_id": "CIT1",
                      "guidance_text": null,
                      "type": {
                         "term_uid": "C25532",
@@ -207,7 +209,7 @@
                "parameter_terms": []
             }
          },
-         "url":"/studies/Study_000001/study-criteria"
+         "url": "/studies/Study_000001/study-criteria?create_criteria=true"
       },
       "response": {
          "code": 201,
@@ -258,6 +260,7 @@
                   "name": "Test_Name_Template",
                   "name_plain": "Test_Name_Template",
                   "uid": "{ctuid}",
+                  "sequence_id": "CIT1",
                   "guidance_text": null
                },
                "parameter_terms": [],
@@ -307,6 +310,7 @@
                      "name": "Test_Name_Template",
                      "name_plain": "Test_Name_Template",
                      "uid": "{ctuid}",
+                     "sequence_id": "CIT1",
                      "guidance_text": null,
                      "type": {
                         "term_uid": "C25532",
@@ -400,6 +404,7 @@
                "name": "Test_Name_Template",
                "name_plain": "Test_Name_Template",
                "uid": "{ctuid}",
+               "sequence_id": "CIT1",
                "guidance_text": null,
                "type": {
                   "term_uid": "C25532",
@@ -489,6 +494,7 @@
                   "name": "Test_Name_Template",
                   "name_plain": "Test_Name_Template",
                   "uid": "{ctuid}",
+                  "sequence_id": "CIT1",
                   "guidance_text": null,
                   "type": {
                      "term_uid": "C25532",
@@ -579,6 +585,7 @@
                   "name": "Test_Name_Template",
                   "name_plain": "Test_Name_Template",
                   "uid": "{ctuid}",
+                  "sequence_id": "CIT1",
                   "guidance_text": null,
                   "type": {
                      "term_uid": "C25532",
@@ -654,15 +661,19 @@
          },
          "result": [
             {
-               "uid":"Study_000001",
-               "possible_actions": ["delete", "lock", "release"],
-               "current_metadata":{
-                  "identification_metadata":null,
-                  "version_metadata":null,
-                  "high_level_study_design":null,
-                  "study_population":null,
-                  "study_intervention":null,
-                  "study_description":null
+               "uid": "Study_000001",
+               "possible_actions": [
+                  "delete",
+                  "lock",
+                  "release"
+               ],
+               "current_metadata": {
+                  "identification_metadata": null,
+                  "version_metadata": null,
+                  "high_level_study_design": null,
+                  "study_population": null,
+                  "study_intervention": null,
+                  "study_description": null
                }
             }
          ]

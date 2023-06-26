@@ -1,11 +1,11 @@
-from clinical_mdr_api.domain.concepts.simple_concepts.numeric_value_with_unit import (
-    NumericValueWithUnitAR,
-    NumericValueWithUnitVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.simple_concepts.numeric_value_with_unit_repository import (
     NumericValueWithUnitRepository,
 )
-from clinical_mdr_api.models.concept import (
+from clinical_mdr_api.domains.concepts.simple_concepts.numeric_value_with_unit import (
+    NumericValueWithUnitAR,
+    NumericValueWithUnitVO,
+)
+from clinical_mdr_api.models.concepts.concept import (
     NumericValueWithUnit,
     NumericValueWithUnitInput,
     SimpleConceptInput,

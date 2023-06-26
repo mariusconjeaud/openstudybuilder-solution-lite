@@ -1,17 +1,17 @@
-from importers.metrics import Metrics
+from importers.utils.metrics import Metrics
 
-from run_import_dictionaries import Dictionaries
-from run_import_config import Configuration
-from run_import_standardcodelistterms1 import StandardCodelistTerms1
-from run_import_standardcodelistterms2 import StandardCodelistTerms2
-from run_import_activities import Activities
-from run_import_unitdefinitions import Units
-from run_import_standardcodelistfinish import StandardCodelistFinish
-from run_import_compounds import Compounds
-from run_import_crfs import Crfs
-from run_import_mockdata import Mockdata
-from run_import_mockdatajson import MockdataJson
-from run_import_mastermodels import MasterModels
+from importers.run_import_dictionaries import Dictionaries
+from importers.run_import_config import Configuration
+from importers.run_import_standardcodelistterms1 import StandardCodelistTerms1
+from importers.run_import_standardcodelistterms2 import StandardCodelistTerms2
+from importers.run_import_activities import Activities
+from importers.run_import_unitdefinitions import Units
+from importers.run_import_standardcodelistfinish import StandardCodelistFinish
+from importers.run_import_compounds import Compounds
+from importers.run_import_crfs import Crfs
+from importers.run_import_mockdata import Mockdata
+from importers.run_import_mockdatajson import MockdataJson
+from importers.run_import_mastermodels import MasterModels
 
 
 def main():
@@ -42,8 +42,9 @@ def main():
     cache = activities.get_cache()
 
     # Import master models
-    master_models = MasterModels(metrics_inst=metr, cache=cache)
-    master_models.run()
+    # TODO : Uncomment again when master models are ready
+    # master_models = MasterModels(metrics_inst=metr, cache=cache)
+    # master_models.run()
 
     # Finish up sponsor library
     finishing = StandardCodelistFinish(metrics_inst=metr, cache=cache)

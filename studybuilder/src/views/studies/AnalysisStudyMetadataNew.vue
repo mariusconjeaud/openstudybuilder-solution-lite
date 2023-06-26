@@ -22,7 +22,21 @@
         type="mdendpnt"
         :headers="mdEndpntHeaders"
         >
-
+        <template v-slot:item.OBJTV="{ item }">
+          <div v-html="item.OBJTV"></div>
+        </template>
+        <template v-slot:item.RACT="{ item }">
+          {{ item.RACT|itemList }}
+        </template>
+        <template v-slot:item.RACTSGRP="{ item }">
+          {{ item.RACTSGRP|itemList }}
+        </template>
+        <template v-slot:item.RACTGRP="{ item }">
+          {{ item.RACTGRP|itemList }}
+        </template>
+        <template v-slot:item.RACTINST="{ item }">
+          {{ item.RACTINST|itemList }}
+        </template>
       </analysis-metadata-table>
     </v-tab-item>
   </v-tabs-items>
@@ -60,14 +74,14 @@ export default {
       ],
       mdVisitHeaders: [
         { text: this.$t('AnalysisMetadataTable.study_id'), value: 'STUDYID' },
-        { text: this.$t('AnalysisMetadataTable.visit_type_name'), value: 'VISIT_TYPE_NAME' },
-        { text: this.$t('AnalysisMetadataTable.visit_num'), value: 'VISIT_NUM' },
-        { text: this.$t('AnalysisMetadataTable.visit_name'), value: 'VISIT_NAME' },
-        { text: this.$t('AnalysisMetadataTable.visit_short_label'), value: 'VISIT_SHORT_LABEL' },
-        { text: this.$t('AnalysisMetadataTable.day_name'), value: 'DAY_NAME' },
-        { text: this.$t('AnalysisMetadataTable.day_value'), value: 'DAY_VALUE' },
-        { text: this.$t('AnalysisMetadataTable.week_name'), value: 'WEEK_NAME' },
-        { text: this.$t('AnalysisMetadataTable.week_value'), value: 'WEEK_VALUE' }
+        { text: this.$t('AnalysisMetadataTable.visit_type_name'), value: 'VISTPCD' },
+        { text: this.$t('AnalysisMetadataTable.visit_num'), value: 'AVISITN' },
+        { text: this.$t('AnalysisMetadataTable.visit_name'), value: 'AVISIT' },
+        { text: this.$t('AnalysisMetadataTable.visit_short_label'), value: 'VISLABEL' },
+        { text: this.$t('AnalysisMetadataTable.day_name'), value: 'AVISIT1' },
+        { text: this.$t('AnalysisMetadataTable.day_value'), value: 'AVISIT1N' },
+        { text: this.$t('AnalysisMetadataTable.week_name'), value: 'AVISIT2' },
+        { text: this.$t('AnalysisMetadataTable.week_value'), value: 'AVISIT2N' }
       ],
       tab: null
     }

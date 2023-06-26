@@ -1,10 +1,12 @@
-# Clinical MDR API Architecture
+# Overview
+This document describes Clinical MDR API architecture.
 
-## API Documentation
+# API Documentation
 
-See Open API Swagger documentation for the environment (e.g. /api/docs#).
+OpenAPI specification of the Clinical MDR API is accessible at `/api/docs` path for each target environment, 
+for example https://studybuilder.novonordisk.com/api/docs.
 
-## General Testing Approach
+# General Testing Approach
 
 We differentiate between those tests that need external components 
 (like an API or a database) and those that run without any additional setup.
@@ -13,7 +15,7 @@ This is reflected in the folder structure as follows:
 - `tests/unit`: no additional/external components are needed to run the tests.
 - `tests/integration`: there are external components that need to be set up before the tests can run.
 
-### Unit Tests
+## Unit Tests
 
 The foundation of the testing is made up by a lot of small and fast unit tests.
 
@@ -24,7 +26,7 @@ The unit tests typically call the function with potential parameters and
 ensures that the outcome/response is as expected.
 
 
-#### Code Structure
+### Code Structure
 
 There are three building blocks that every unit test should make use of:
 - Given
@@ -44,15 +46,15 @@ def test__approve__in_draft_status__set_to_final():
     # then
     assertThat(objective.getStatus() == 'Final')
 ```
-### Integration Tests
+## Integration Tests
 
-#### Current Approach to Testing
+### Current Approach to Testing
 
 This section describes what is our current approach of implementing automated testing by pytest.
 
-#### Integration Tests Guidelines
+### Integration Tests Guidelines
 
-##### Assertion
+#### Assertion
 
 To ensure the function is working correctly, we assert the actual output with the expected out.
 
@@ -67,7 +69,7 @@ class TestSum(unittest.TestCase):
         self.assertEqual(result, 6)
 ```
 
-##### Setup Test Data
+#### Setup Test Data
 
 Most of the time, it is needed to setup a test database in order to perform our test. Our current approach is to call exisitng service to create a test database instead of writing a full cypher query.
 
@@ -90,12 +92,12 @@ The method library can be found in:
                 └── method_library.py
 
 ```
-##### Maintain method_library.py
+#### Maintain method_library.py
 * For easier maintainance, serval fatory files is made next to the method_library, for grouping of methods. i.e. factory_epoch for containing methods related to creating epochs.
 * All methods from the factory files should be imported to method_library, so it act as a centralised place for all methods to create test database.
 * All methods should be called from method_library instead of directly from factory files.
 
-#### Previous Approach to Testing
+### Previous Approach to Testing
 
 The previous approach for integration tests was mainly using the router level (and a TestClient included in FastAPI package). This actually creates a HTTP Requests to proper URL and compares results with expectations. For that a helper class has been created:
 
@@ -154,7 +156,7 @@ General schema for json scenario configuration:
     * save - optional value allowing saving item from response for later use in scenario
     * length - optional value for response json length checking
 
-### Acceptance tests
+## Acceptance tests
 We use Pytest-BBB for writting acceptance tests based on Gherkin features.
 
 Pytest-BDD is based on pytest and allows almost everything that is possible with pytest.  
@@ -168,11 +170,10 @@ $ pytest
 
 ---
 
-## REST API Guidelines
+# REST API Guidelines
+In general, we are following [Zalando RESTful API Guidelines](https://opensource.zalando.com/restful-api-guidelines/).
 
-### HTTP Methods
-
-#### Requests
+## HTTP Methods
 
 This is the default usage of the HTTP Methods:
 
@@ -191,149 +192,133 @@ E.g.:
 | /studies | Returns a list of study objects.  | Creates a new study. | Bulk update of studies where each study will be completely overwritten. | Bulk update of studies where each study will only modified with the provided parameters. | Deletes all studies.|
 | /studies/xyz | Returns the specific study identified by 'xyz'.  | Method not allowed (405). | Overwrites the entire study identified by 'xyz'. | Updates only the specified parts of the study identified by 'xyz' | Deletes the study identified by 'xyz'.|
 
-### Error Codes
-When making API requests, errors may occur. 
-Errors in the API are formatted in a standardized JSON dictionary with the following keys:
+## API Conventions
 
-| Key       | Mandatory | Content                                                                                                          |
-| :-----    | :-----    | :-----                                                                                                           | 
-| "message" | Yes       | A message describing the error that occurred. Ideally this should contain a suggestion for how to fix the error. |
-| "detail"  | No        | An optional value with detailed information about the error.                                                     |
-| "time"    | Yes       | Timestamp of when the error occurred.                                                                            |
-| "path"    | Yes       | The complete request URL specified by the user.                                                                  |
-| "method"  | Yes       | HTTP method - one of GET, POST, PATCH, DELETE.                                                                   |
-
-For simplicity's sake, we limit the API to using only three error codes.
-
-#### 400 - Bad Request
-The request payload is invalid. 
-This also covers errors that were previously classified as 422.
-
-Example error message:
-
-```
-{
-  "message": "Invalid query payload",
-  "detail": [
-    {
-      "loc": [
-	"query",
-	"sortBy"
-      ],
-      "msg": "Invalid JSON",
-      "type": "value_error.json"
-    }
-  ]
-  "time": "2021-11-24T08:45:08.057908",
-  "path": "http://api.cmdr-dev.novonordisk.com/activity-description-templates/123?return_instantiation_counts=false",
-  "method": "POST"
-}
-```
-The template was not found. Make sure that there is the latest 'Final' version.
-
-#### 403 - Forbidden
-Some of the preconditions required to perform the operation were not met.
-Likely one of the objects specified in the payload doesn't exist, or the object is not in the right state.
-
-Example error message:
-
-```
-{
-  "message": "The objective template identified by uid 'ObjectiveTemplate_000001' does not exist.",
-  "time": "2021-11-24T08:46:16.728287",
-  "path": "http://api.cmdr-dev.novonordisk.com/objectives/",
-  "method": "POST"
-}
-```
-
-#### 404 - Not Found
-The resource identified by the path cannot be found.
-Either the path is invalid, or the resource you are trying to access hasn't been created. 
-
-Example error message:
-
-```
-{
-  "message": "ActivityDescriptionTemplateAR with uid 123 does not exist or there's no version with requested status or version number.",
-  "time": "2021-11-24T08:45:08.057908",
-  "path": "http://api.cmdr-dev.novonordisk.com/activity-description-templates/123?return_instantiation_counts=false",
-  "method": "GET"
-}
-```
-
-#### 500 - Internal Server Error
-Something unexpected went wrong inside the API. This is likely an error that needs investigating by the development team.
-
-Example error message:
-
-```
-{
-  "message": "Internal Server Error. Unable to connect to database.",
-  "time": "2021-11-24T08:46:16.728287",
-  "path": "http://api.cmdr-dev.novonordisk.com/objectives/",
-  "method": "POST"
-}
-```
-
-### Naming Conventions
-The following general principles apply to naming the API endpoints: 
+### Paths
+- We use only nouns in URLs (preferrably in plural form). The API describes resources, so the only place where actions should appear is in the HTTP methods.
+- Endpoints names should be specified in `kebab-case` (lowercase). 
 - We avoid deep nesting of the endpoints if possible.
 - We minimize the number of root endpoints.
 - Every endpoint must contain a description string describing its functionality.
-- Endpoint parameters should be explicitly typed in the API code.
+- Endpoint parameters (path/query/body fields) should be explicitly typed.
 - We avoid PUT requests if possible.
 - We have a unified method of pagination for query results. 
 
+E.g.
+- GET `/concepts/unit-definitions`
+- GET `/studies/{uid}/study-disease-milestones/{study_disease_milestone_uid}`
 
-#### Endpoint Paths
-Endpoints names should be specified in *kebab-case* (lowercase). 
-This means we use **hyphens** to separate multiple words. 
+
+### Query Parameters
+- Parameter names and variables should be specified in `snake_case`. 
+- Parameter abbreviations like `UID` should contain a prefix of the referenced entity type, e.g. `study_uid`.
+- Each parameter should explicitly state whether it is `required`, `optional` and/or `nullable`.
 
 E.g.
-- /**event-registrations**
-- /**disease-areas**
+- GET  /studies?**page_number**=1&**page_size**=10
 
-Endpoints can be either specified with or without a trailing ‘/’.
 
-Verbs in endpoint names refer to actions, and are written in present simple. (imperative form)
+### Body (JSON payloads)
+- Fields should be specified in `snake_case`. 
+- Each field should explicitly state whether it is `required`, `optional` and/or `nullable`.
 
-Nouns in endpoint names refer to resources, always written in plural form.
 
-E.g.
-- /stud**ies**
-- /event-registration**s**
+## Error Handling
+During processing of http requests, different types errors may be detected and reported to consumers. 
+Broadly speaking, they fall into the following categories:
 
-#### Query Parameters
-Parameter names and variables should be specified in **camelCase**. 
-In general, we stick to the convention that query parameters are single words.
+1. Validation errors detected and reported by the Pydantic library (an underlying component of FastAPI), resulting in HTTP response status `422`. Pydantic will perform validation of query/path/body fields based on the validation rules we specify for each of these fields, instead of us raising explicit exceptions in our code.
+   - Example guides on how to use Pydantic validation of query/path/body fields:
+     - https://fastapi.tiangolo.com/tutorial/query-params-str-validations/
+     - https://fastapi.tiangolo.com/tutorial/path-params-numeric-validations/
+     - https://fastapi.tiangolo.com/tutorial/body-fields/
+   - Example response when required fields in the POST payload are not supplied:
 
-E.g.
-- [GET] /studies?**pageNumber**=0&**pageSize**=100
+      ```
+      {
+        "detail": [
+          {
+            "loc": [
+              "body",
+              "name"
+            ],
+            "msg": "field required",
+            "type": "value_error.missing"
+          },
+          {
+            "loc": [
+              "body",
+              "activity_item_class_uid"
+            ],
+            "msg": "field required",
+            "type": "value_error.missing"
+          },
+          {
+            "loc": [
+              "body",
+              "library_name"
+            ],
+            "msg": "field required",
+            "type": "value_error.missing"
+          }
+        ]
+      }
+      ``` 
 
-Parameter abbreviations, like “ID” or “UID” are written in camelCase format, e.g.: “StudyUid”.
-Each parameter field must also have a short, one-sentence description.
+1. Validation errors raised by our code when our business rules or additional validation constraints (not handled by Pydantic) are unmet, resulting in HTTP response status `400`.
+   - Example response when API consumer tries to create an entity with the same name as the name of an already existing entiry of same type:
+      ```
+      {
+        "type": "ValidationException",
+        "message": "Library 'SNOMED' already exists",
+        "time": "2023-05-16T07:33:40.888526",
+        "path": "http://localhost:8000/libraries",
+        "method": "POST"
+      }
+      ``` 
 
-#### Query Body
-Query body parameters should be specified in  **camelCase**. 
+1. "Not found" errors raised by our code when a referenced entity does not exist, resulting in HTTP response status `404`. 
+   - Example response:
+      ```
+      {
+        "type": "NotFoundException",
+        "message": "CompoundAR with uid XYZ does not exist or there's no version with requested status or version number.",
+        "time": "2023-05-16T07:34:43.330141",
+        "path": "http://localhost:8000/concepts/compounds/XYZ",
+        "method": "GET"
+      }
+      ``` 
 
-### Future Unified Endpoint Names
-In a future iteration of the project, endpoints will be named uniformly by category. These categories are (for now), documented [here](https://docs.google.com/document/d/1DdFhcBRa-YtKy-SUjlEuvXU3m1zeVdrs1OlqmFs0Zwk/edit?usp=sharing).
+
+1. Authenthication/Authorization erros
+   - Example 1: `Bearer` token not suplied in the `Authorization` header, resulting in response status `401` 
+       ```
+      // Example to be added later
+      ```   
+   - Example 2: The supplied `Bearer` token does not contain the required permissions for the requested endpoint, resulting in response status `403`
+
+      ```
+      // Example to be added later
+      ```
+
+
+
+# Code Style
+
+- We should follow the rules mentioned here: https://pep8.org. 
+- All code must be formatted using [Black](https://black.readthedocs.io/en/stable/) and [isort](https://pycqa.github.io/isort/) tools (run `pipenv run format` to auto-format all code).
+- All code must pass [Pylint](https://pylint.pycqa.org/en/latest/) static code analysis. Pylint rules which we are globally ignoring are stored in the [pyproject.toml](pyproject.toml) file.
+
 
 ---
 
-## Code Style
-
-Please stick to the rules mentioned here: https://pep8.org
-
----
-
-## Introduction to neomodel extension
+# Introduction to neomodel extension
 [Neomodel](https://neomodel.readthedocs.io/en/latest/) is an object graph mapper (OGM) library for the Neo4j database.
 The object graph mapper is a tool that maps python objects into neo4j nodes and relationships.
 It allows to write a python code which is under the hood translated into cypher queries and later on executed in the neo4j graph database.
 It means that with neomodel we can implement more robust python code that doesn't require to include raw cypher queries in python implementation.
 
-### Neomodel drawbacks
+## Neomodel drawbacks
 When we started to use neomodel to implement database queries, we have noticed that we can easily get performance issues
 because neomodel doesn't support returning many nodes and relationships in one database query.
 Let's take for instance a StudyVisit nodes that contain many relationships to different nodes like controlled terminology terms,
@@ -346,7 +331,7 @@ From neomodel perspective it means that to retrieve these nodes from the databas
 database calls to construct a single study visit object as neomodel lacks a possibility to traverse many relationships in a one 
 database query.
 
-### Neomodel extension
+## Neomodel extension
 To solve this issue we have developed the neomodel extension module. Its main advantage is that we can still write a python neomodel code
 that retrieves data from the database but in the same time it can traverse many relationships in a single database call.
 We can return all of the data listed in the figure above in the single database call.
@@ -354,7 +339,7 @@ If we have to return for instance 50 study visits which is a case for some studi
 database calls like it's done in the pure neomodel library, but we can retrieve everything that is needed to construct 50 study visitis
 in a single database query but still using python code.
 
-### Exemplary neomodel query
+## Exemplary neomodel query
 The following piece of code is the neomodel extension implementation of the query that returns the data necessary for all the study visits from a given study.
 
     `def find_all_visits_by_study_uid(self, study_uid: str) -> Sequence[StudyVisitOGM]:
@@ -394,7 +379,7 @@ we can directly map the database output into the API model which is returned to 
 
 ---
 
-## Pylint
+# Pylint
 Pylint is a static code analyser for Python.
 
 Pylint analyses your code without actually running it. It checks for errors, enforces a coding standard, looks for code smells, and can make suggestions about how the code could be refactored.  
@@ -403,7 +388,7 @@ Pylint can infer actual values from your code using its internal code representa
 
 [Pylint Documentation](https://pylint.pycqa.org/en/latest/)
 
-### Run Pylint
+## Run Pylint
 To run Pylint you can execute the following command which will analyse the entire codebase and output results:  
 ```
 pipenv run lint
@@ -415,12 +400,12 @@ pipenv run lint > linting_report.txt
 ```
 [Build pipeline](https://novonordiskit.visualstudio.com/Clinical-MDR/_git/clinical-mdr-api?path=/azurebuild.yml&version=GBmain&_a=contents) is running this linting check as one of the first steps, and the whole build job will fail if Pylint reports any issues.
 
-### pyproject.toml
+## pyproject.toml
 [`pyproject.toml`](https://novonordiskit.visualstudio.com/Clinical-MDR/_git/clinical-mdr-api?path=/pyproject.toml&version=GBmain&_a=contents) is the file where we define custom settings for Pylint and other tools used in our project. 
 
 Sections related to Pylint are marked with `[tool.pylint.'<setting>']`, where `'<setting>'` refers to a Pylint setting that we wish to customize.
 
-### VS Code
+## VS Code
 To integrate Pylint with VS Code you will need to install the [Python Extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) which comes with Pylint out of the box.
 
 When installation is done, VS Code will automatically detect the `pyproject.toml` configuration file and start analysing our code as you write. 
@@ -441,38 +426,17 @@ Follow these steps to add the path:
 
 ---
 
-## Source Code Management
+# Source Code Management
 
 We are using the 'Git-flow-Workflow' approach described here:
 https://www.atlassian.com/de/git/tutorials/comparing-workflows/gitflow-workflow
 
----
-
-## Packaging the application for distribution
-In order to ready the application for distribution, a series of steps are needed. The Pipfile.lock must be converted into requirements.txt, then a platform-specific python wheel must be built for the clinical-mdr-api application must be built (generating a .whl file of the app).
-Finally, all the packages included in requirements.txt must be downloaded as .whl files.
-
-```bash
-pipenv lock -r > requirements.txt
-pipenv run dist
-pipenv run package
-```
-After these three commands have been run, the directory ./dist will contain all the .whl files necessary to install the application and these can be distributed for deployment.
-
-To install the wheel files in a clean virtual environment and run the app, copy the wheel files to a clean directory and then execute the following commands (make sure to have `NEO4J_DSN` as an environment variable):
-```bash
-pipenv --python 3.7
-pipenv shell
-python -m pip install *.whl
-python -m uvicorn --host=0.0.0.0 --port=8000 clinical_mdr_api.main:app --reload
-```
----
-## Authentication setup
+# Authentication setup
 
 (see [OAuth README file](OAUTH-README.md))
 
 ---
-## Data Objects Structure
+# Data Objects Structure
 
 Usual Data Objects Properties
 
@@ -495,9 +459,9 @@ Usual Data Objects Properties
 | SECURITY            | \-          |
 | SOURCE\_PROPERTIES  | X           |
 
-### Raw data structure 
+## Raw data structure 
 
-#### Routers
+### Routers
  - get_all
  - get_specific
  - get_deletion_dependencies
@@ -507,7 +471,7 @@ Usual Data Objects Properties
  - patch
  - change_order
  - delete
-#### Service
+### Service
 - _transform_all_to_response_model
 - _transform_single_to_response_model
 - get_all_selection
@@ -524,9 +488,9 @@ Usual Data Objects Properties
 - get_all_selections_for_all_studies
 
 
-#### Repository
-##### StudyHistoryObject
-##### StudySelectionObjectRepository
+### Repository
+#### StudyHistoryObject
+#### StudySelectionObjectRepository
 - _db_result_to_dict
 - _acquire_write_lock_study_value
 - _retrieves_all_data
@@ -545,15 +509,15 @@ Usual Data Objects Properties
 - generate_uid
 - _get_selection_with_history
 - find_selection_history
-#### Domain
+### Domain
 - object_schema
 - post_schema
 - edit_schema
 
 
-### NeoModel data structure 
-#### Routers
-#### Service
-##### Common Services
-#### Repository
-#### Domain
+## NeoModel data structure 
+### Routers
+### Service
+#### Common Services
+### Repository
+### Domain

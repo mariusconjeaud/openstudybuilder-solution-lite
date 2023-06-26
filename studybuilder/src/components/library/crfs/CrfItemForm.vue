@@ -327,12 +327,46 @@
         :headers="codelistHeaders"
         item-key="uid"
         :items="codelists"
+        :server-items-length="total"
+        :options.sync="options"
         has-api
         hide-export-button
         hide-default-switches
         column-data-resource="ct/codelists"
         @filter="fetchCodelists"
         additional-margin>
+        <template v-slot:afterFilter="">
+          <v-autocomplete
+            v-model="selectedFilteringTerms"
+            :label="$t('CodelistTable.search_with_terms')"
+            :items="filteringTerms"
+            item-text="name.sponsor_preferred_name"
+            item-value="term_uid"
+            dense
+            class="mt-5 max-width-300"
+            clearable
+            return-object
+            :search-input.sync="search"
+            multiple>
+            <template v-slot:selection="{index}">
+              <div v-if="index === 0">
+                <span class="items-font-size">{{ selectedFilteringTerms[0].name.sponsor_preferred_name.substring(0, 12) }}</span>
+              </div>
+              <span
+                v-if="index === 1"
+                class="grey--text text-caption mr-1"
+              >
+                (+{{ selectedFilteringTerms.length -1 }})
+              </span>
+            </template>
+          </v-autocomplete>
+          <v-select
+            :items="operators"
+            v-model="termsFilterOperator"
+            :label="$t('_global.operator')"
+            class="mt-5 max-width-100"
+            />
+        </template>
         <template v-slot:item.add="{ item }">
           <v-btn
             icon
@@ -577,18 +611,18 @@ export default {
       desc: [],
       selectedExtensions: [],
       selectedCodelistHeaders: [
-        { text: this.$t('CtCatalogueTable.concept_id'), value: 'codelistUid' },
+        { text: this.$t('CtCatalogueTable.concept_id'), value: 'codelist_uid' },
         { text: this.$t('CtCatalogueTable.cd_name'), value: 'attributes.name' },
-        { text: this.$t('CtCatalogueTable.submission_value'), value: 'attributes.submissionValue' },
-        { text: this.$t('CtCatalogueTable.nci_pref_name'), value: 'attributes.nciPreferredName' },
+        { text: this.$t('CtCatalogueTable.submission_value'), value: 'attributes.submission_value' },
+        { text: this.$t('CtCatalogueTable.nci_pref_name'), value: 'attributes.nci_preferred_name' },
         { text: this.$t('CRFItems.multiple_choice'), value: 'allowsMultiChoice' },
         { text: '', value: 'delete' }
       ],
       codelistHeaders: [
-        { text: this.$t('CtCatalogueTable.concept_id'), value: 'codelistUid' },
+        { text: this.$t('CtCatalogueTable.concept_id'), value: 'codelist_uid' },
         { text: this.$t('CtCatalogueTable.cd_name'), value: 'attributes.name' },
-        { text: this.$t('CtCatalogueTable.submission_value'), value: 'attributes.submissionValue' },
-        { text: this.$t('CtCatalogueTable.nci_pref_name'), value: 'attributes.nciPreferredName' },
+        { text: this.$t('CtCatalogueTable.submission_value'), value: 'attributes.submission_value' },
+        { text: this.$t('CtCatalogueTable.nci_pref_name'), value: 'attributes.nci_preferred_name' },
         { text: '', value: 'add' }
       ],
       unitHeaders: [
@@ -681,7 +715,12 @@ export default {
       ],
       lengthFieldCheck: false,
       digitsFieldCheck: false,
-      originFieldCheck: true
+      originFieldCheck: true,
+      filteringTerms: [],
+      selectedFilteringTerms: [],
+      search: '',
+      operators: ['or', 'and'],
+      termsFilterOperator: 'or'
     }
   },
   mounted () {
@@ -1074,9 +1113,27 @@ export default {
       if (this.filters !== undefined) {
         params.filters = this.filters
       }
+      if (this.selectedFilteringTerms.length > 0) {
+        params.term_filter = {
+          term_uids: this.selectedFilteringTerms.map(term => term.term_uid),
+          operator: this.termsFilterOperator
+        }
+      }
       controlledTerminology.getCodelists(params).then(resp => {
         this.codelists = resp.data.items.filter(ar => !this.selectedCodelists.find(rm => (rm.codelist_uid === ar.codelist_uid)))
         this.total = resp.data.total
+      })
+    },
+    fetchTerms  () {
+      const params = {
+        filters: {
+          'name.sponsor_preferred_name':
+          { v: [this.search ? this.search : ''], op: 'co' }
+        },
+        page_size: 20
+      }
+      controlledTerminology.getCodelistTerms(params).then(resp => {
+        this.filteringTerms = [...resp.data.items, ...this.selectedFilteringTerms]
       })
     },
     addCodelist (item) {
@@ -1140,7 +1197,24 @@ export default {
         this.fetchCodelists()
       },
       deep: true
+    },
+    search () {
+      this.fetchTerms()
+    },
+    selectedFilteringTerms () {
+      this.fetchCodelists()
+    },
+    termsFilterOperator () {
+      this.fetchCodelists()
     }
   }
 }
 </script>
+<style scoped>
+.max-width-100 {
+  max-width: 100px;
+}
+.max-width-300 {
+  max-width: 300px;
+}
+</style>

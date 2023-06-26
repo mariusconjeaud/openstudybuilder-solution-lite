@@ -166,7 +166,7 @@ export default {
   },
   methods: {
     clearCtGovId () {
-      this.$set(this.form, 'ct_gov_id', '')
+      this.$set(this.form, 'ct_gov_id', null)
       if (this.form.ct_gov_id_null_value_code) {
         this.$set(this.form, 'ct_gov_id_null_value_code', null)
       } else {
@@ -174,7 +174,7 @@ export default {
       }
     },
     clearEudractId () {
-      this.$set(this.form, 'eudract_id', '')
+      this.$set(this.form, 'eudract_id', null)
       if (this.form.eudract_id_null_value_code) {
         this.$set(this.form, 'eudract_id_null_value_code', null)
       } else {
@@ -182,7 +182,7 @@ export default {
       }
     },
     clearUniversalTrialNumberUTN () {
-      this.$set(this.form, 'universal_trial_number_utn', '')
+      this.$set(this.form, 'universal_trial_number_utn', null)
       if (this.form.universal_trial_number_utn_null_value_code) {
         this.$set(this.form, 'universal_trial_number_utn_null_value_code', null)
       } else {
@@ -190,7 +190,7 @@ export default {
       }
     },
     clearJapaneseTrialRegistryIdJAPIC () {
-      this.$set(this.form, 'japanese_trial_registry_id_japic', '')
+      this.$set(this.form, 'japanese_trial_registry_id_japic', null)
       if (this.form.japanese_trial_registry_id_japic_null_value_code) {
         this.$set(this.form, 'japanese_trial_registry_id_japic_null_value_code', null)
       } else {
@@ -198,7 +198,7 @@ export default {
       }
     },
     clearInvestigationalNewDrugApplicationNumberIND () {
-      this.$set(this.form, 'investigational_new_drug_application_number_ind', '')
+      this.$set(this.form, 'investigational_new_drug_application_number_ind', null)
       if (this.form.investigational_new_drug_application_number_ind_null_value_code) {
         this.$set(this.form, 'investigational_new_drug_application_number_ind_null_value_code', null)
       } else {

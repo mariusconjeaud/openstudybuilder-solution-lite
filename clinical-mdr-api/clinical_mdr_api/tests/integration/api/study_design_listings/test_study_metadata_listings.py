@@ -1,25 +1,16 @@
-import unittest
+# pylint: disable=unused-argument
+# pylint: disable=redefined-outer-name
+
+# pytest fixture functions have other fixture functions as arguments,
+# which pylint interprets as unused arguments
 
 import pytest
 from fastapi.testclient import TestClient
 
+from clinical_mdr_api.config import STUDY_ENDPOINT_TP_NAME
 from clinical_mdr_api.main import app
-from clinical_mdr_api.models.listings_study import (
-    RegistryIdentifiersListingModel,
-    StudyArmListingModel,
-    StudyAttributesListingModel,
-    StudyCohortListingModel,
-    StudyDesignMatrixListingModel,
-    StudyElementListingModel,
-    StudyEpochListingModel,
-    StudyMetadataListingModel,
-    StudyPopulationListingModel,
-    StudyTypeListingModel,
-    StudyVisitListingModel,
-)
-from clinical_mdr_api.services.listings_study import StudyMetadataListingService
-from clinical_mdr_api.services.study import StudyService
-from clinical_mdr_api.services.study_epoch import StudyEpochService
+from clinical_mdr_api.models import study_selections
+from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import inject_base_data
 from clinical_mdr_api.tests.integration.utils.method_library import (
@@ -32,15 +23,12 @@ from clinical_mdr_api.tests.integration.utils.method_library import (
     create_study_design_cell,
     create_study_element,
     create_study_epoch_codelists_ret_cat_and_lib,
-    generate_description_json_model,
     get_catalogue_name_library_name,
-    high_level_study_design_json_model_to_vo,
     input_metadata_in_study,
-    registry_identifiers_json_model_to_vo,
-    study_intervention_json_model_to_vo,
-    study_population_json_model_to_vo,
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
+
+study_number: str
 
 
 @pytest.fixture(scope="module")
@@ -223,12 +211,90 @@ def test_data():
         epoch1=study_epoch,
         epoch2=study_epoch2,
     )
+    # Create CT Terms
+    ct_term_inclusion_criteria = TestUtils.create_ct_term(
+        sponsor_preferred_name="INCLUSION CRITERIA"
+    )
+    ct_term_exclusion_criteria = TestUtils.create_ct_term(
+        sponsor_preferred_name="EXCLUSION CRITERIA"
+    )
+
+    # Create templates
+    incl_criteria_template_1 = TestUtils.create_criteria_template(
+        type_uid=ct_term_inclusion_criteria.term_uid
+    )
+    excl_criteria_template_1 = TestUtils.create_criteria_template(
+        type_uid=ct_term_exclusion_criteria.term_uid
+    )
+
+    # Create study criterias
+    TestUtils.create_study_criteria(
+        study_uid=study_uid,
+        criteria_template_uid=incl_criteria_template_1.uid,
+        library_name=incl_criteria_template_1.library.name,
+        parameter_terms=[],
+    )
+
+    TestUtils.create_study_criteria(
+        study_uid=study_uid,
+        criteria_template_uid=excl_criteria_template_1.uid,
+        library_name=excl_criteria_template_1.library.name,
+        parameter_terms=[],
+    )
+
+    # Create objective template
+    objective_template = TestUtils.create_objective_template()
+    TestUtils.create_study_objective(
+        study_uid=study_uid,
+        objective_template_uid=objective_template.uid,
+        parameter_terms=[],
+    )
+
+    # Create study objectives
+    study_objective = TestUtils.create_study_objective(
+        study_uid=study_uid,
+        objective_template_uid=objective_template.uid,
+        library_name=objective_template.library.name,
+        parameter_terms=[],
+    )
+
+    # Create endpoint templates
+    TestUtils.create_template_parameter(STUDY_ENDPOINT_TP_NAME)
+    endpoint_template = TestUtils.create_endpoint_template()
+
+    unit_definitions = [
+        TestUtils.create_unit_definition(name="unit1"),
+        TestUtils.create_unit_definition(name="unit2"),
+    ]
+    unit_separator = "and"
+    timeframe_template = TestUtils.create_timeframe_template()
+    timeframe = TestUtils.create_timeframe(
+        timeframe_template_uid=timeframe_template.uid
+    )
+
+    # Create study endpoints
+    TestUtils.create_study_endpoint(
+        study_uid=study_uid,
+        endpoint_template_uid=endpoint_template.uid,
+        endpoint_units=study_selections.study_selection.EndpointUnitsInput(
+            units=[u.uid for u in unit_definitions], separator=unit_separator
+        ),
+        timeframe_uid=timeframe.uid,
+        library_name=endpoint_template.library.name,
+    )
+
+    TestUtils.create_study_endpoint(
+        study_uid=study_uid,
+        endpoint_template_uid=endpoint_template.uid,
+        library_name=endpoint_template.library.name,
+        timeframe_uid=timeframe.uid,
+        study_objective_uid=study_objective.study_objective_uid,
+    )
 
 
 def test_study_metadata_listing_api(api_client):
     response = api_client.get(
         f"/listings/studies/{study_number}/study-metadata",
-        json={},
     )
     assert response.status_code == 200
     res = response.json()
@@ -266,7 +332,7 @@ def test_study_metadata_listing_api(api_client):
             "study_stop_rules_null_value_code": "",
             "confirmed_response_minimum_duration": "",
             "confirmed_response_minimum_duration_null_value_code": "",
-            "post_auth_indicator": True,
+            "post_auth_indicator": "True",
             "post_auth_indicator_null_value_code": "",
         },
         "study_attributes": {
@@ -321,6 +387,7 @@ def test_study_metadata_listing_api(api_client):
         },
         "study_arms": [
             {
+                "uid": "StudyArm_000001",
                 "name": "Arm_Name_1",
                 "short_name": "Arm_Short_Name_1",
                 "code": "Arm_code_1",
@@ -331,6 +398,7 @@ def test_study_metadata_listing_api(api_client):
                 "connected_branches": [],
             },
             {
+                "uid": "StudyArm_000003",
                 "name": "Arm_Name_2",
                 "short_name": "Arm_Short_Name_2",
                 "code": "Arm_code_2",
@@ -340,6 +408,7 @@ def test_study_metadata_listing_api(api_client):
                 "arm_type": "test",
                 "connected_branches": [
                     {
+                        "uid": "StudyBranchArm_000001",
                         "name": "Branch_Arm_Name_1",
                         "short_name": "Branch_Arm_Short_Name_1",
                         "code": "Branch_Arm_code_1",
@@ -350,6 +419,7 @@ def test_study_metadata_listing_api(api_client):
                 ],
             },
             {
+                "uid": "StudyArm_000005",
                 "name": "Arm_Name_3",
                 "short_name": "Arm_Short_Name_3",
                 "code": "Arm_code_3",
@@ -360,6 +430,7 @@ def test_study_metadata_listing_api(api_client):
                 "connected_branches": [],
             },
             {
+                "uid": "StudyArm_000007",
                 "name": "Arm_Name_9",
                 "short_name": "Arm_Short_Name_9",
                 "code": "Arm_code_9",
@@ -372,17 +443,19 @@ def test_study_metadata_listing_api(api_client):
         ],
         "study_cohorts": [
             {
+                "uid": "StudyCohort_000001",
                 "name": "Cohort_Name_1",
                 "short_name": "Cohort_Short_Name_1",
                 "code": "Cohort_code_1",
                 "number_of_subjects": 100,
                 "description": "desc...",
-                "arm_root_codes": ["Arm_code_1"],
-                "branch_arm_root_codes": [],
+                "arm_uid": ["StudyArm_000001"],
+                "branch_arm_uid": [],
             }
         ],
         "study_epochs": [
             {
+                "uid": "StudyEpoch_000001",
                 "name": "Epoch Subtype",
                 "type": "test",
                 "subtype": "test",
@@ -391,6 +464,7 @@ def test_study_metadata_listing_api(api_client):
                 "description": "",
             },
             {
+                "uid": "StudyEpoch_000002",
                 "name": "Epoch Subtype1",
                 "type": "test",
                 "subtype": "test",
@@ -401,6 +475,7 @@ def test_study_metadata_listing_api(api_client):
         ],
         "study_elements": [
             {
+                "uid": "StudyElement_000001",
                 "name": "Element_Name_1",
                 "short_name": "Element_Short_Name_1",
                 "type": "uid: Element_code_1 not found",
@@ -411,6 +486,7 @@ def test_study_metadata_listing_api(api_client):
                 "description": "desc...",
             },
             {
+                "uid": "StudyElement_000003",
                 "name": "Element_Name_1",
                 "short_name": "Element_Short_Name_1",
                 "type": "uid: Element_code_1 not found",
@@ -423,28 +499,28 @@ def test_study_metadata_listing_api(api_client):
         ],
         "study_design_matrix": [
             {
-                "arm_code": "",
-                "branch_arm_code": "Branch_Arm_code_1",
-                "epoch_name": "Epoch Subtype",
-                "element_name": "Element_Name_1",
+                "arm_uid": "",
+                "branch_arm_uid": "StudyBranchArm_000001",
+                "epoch_uid": "StudyEpoch_000001",
+                "element_uid": "StudyElement_000001",
             },
             {
-                "arm_code": "",
-                "branch_arm_code": "Branch_Arm_code_1",
-                "epoch_name": "Epoch Subtype1",
-                "element_name": "Element_Name_1",
+                "arm_uid": "",
+                "branch_arm_uid": "StudyBranchArm_000001",
+                "epoch_uid": "StudyEpoch_000002",
+                "element_uid": "StudyElement_000001",
             },
             {
-                "arm_code": "Arm_code_1",
-                "branch_arm_code": "",
-                "epoch_name": "Epoch Subtype1",
-                "element_name": "Element_Name_1",
+                "arm_uid": "StudyArm_000001",
+                "branch_arm_uid": "",
+                "epoch_uid": "StudyEpoch_000002",
+                "element_uid": "StudyElement_000003",
             },
             {
-                "arm_code": "Arm_code_3",
-                "branch_arm_code": "",
-                "epoch_name": "Epoch Subtype1",
-                "element_name": "Element_Name_1",
+                "arm_uid": "StudyArm_000005",
+                "branch_arm_uid": "",
+                "epoch_uid": "StudyEpoch_000002",
+                "element_uid": "StudyElement_000001",
             },
         ],
         "study_visits": [
@@ -551,5 +627,52 @@ def test_study_metadata_listing_api(api_client):
                 "end_rule": "end_rule",
             },
         ],
+        "study_criterias": [
+            {"type": "code_submission_value-4207139844", "text": "ct-7574858067"},
+            {"type": "code_submission_value-2326449895", "text": "ct-8900556670"},
+        ],
+        "study_objectives": [
+            {"uid": "StudyObjective_000001", "type": "", "text": "ot-1973472967"},
+            {"uid": "StudyObjective_000002", "type": "", "text": "ot-1973472967"},
+        ],
+        "study_endpoints": [
+            {
+                "uid": "StudyEndpoint_000003",
+                "type": "",
+                "sub_type": None,
+                "text": "et-9780196775",
+                "connected_objective": "StudyObjective_000002",
+                "timeframe": "tt-5719443953",
+                "endpoint_units": {"units": [], "separator": None},
+            },
+            {
+                "uid": "StudyEndpoint_000001",
+                "type": "",
+                "sub_type": None,
+                "text": "et-9780196775",
+                "connected_objective": "",
+                "timeframe": "tt-5719443953",
+                "endpoint_units": {
+                    "units": [
+                        {"uid": "UnitDefinition_000003", "name": "unit1"},
+                        {"uid": "UnitDefinition_000004", "name": "unit2"},
+                    ],
+                    "separator": "and",
+                },
+            },
+        ],
     }
-    assert res == expected_output
+    assert res["study_title"] == expected_output["study_title"]
+    assert res["registry_identifiers"] == expected_output["registry_identifiers"]
+    assert res["study_type"] == expected_output["study_type"]
+    assert res["study_attributes"] == expected_output["study_attributes"]
+    assert res["study_population"] == expected_output["study_population"]
+    assert res["study_arms"] == expected_output["study_arms"]
+    assert res["study_cohorts"] == expected_output["study_cohorts"]
+    assert res["study_epochs"] == expected_output["study_epochs"]
+    assert res["study_elements"] == expected_output["study_elements"]
+    assert res["study_design_matrix"] == expected_output["study_design_matrix"]
+    assert res["study_visits"] == expected_output["study_visits"]
+    assert len(res["study_criterias"]) == len(expected_output["study_criterias"])
+    assert len(res["study_objectives"]) == len(expected_output["study_objectives"])
+    assert len(res["study_endpoints"]) == len(expected_output["study_endpoints"])

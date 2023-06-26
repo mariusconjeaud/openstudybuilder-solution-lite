@@ -92,7 +92,8 @@
     v-model="showGroupHistory"
     @keydown.esc="closeGroupHistory"
     persistent
-    max-width="1200px"
+    :max-width="globalHistoryDialogMaxWidth"
+    :fullscreen="globalHistoryDialogFullscreen"
     >
     <history-table
       :title="groupHistoryTitle"

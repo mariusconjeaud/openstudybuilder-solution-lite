@@ -1,14 +1,5 @@
 from typing import Optional, Sequence, Tuple
 
-from clinical_mdr_api.domain.concepts.activities.activity_group import (
-    ActivityGroupAR,
-    ActivityGroupVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemMetadataVO,
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
 )
@@ -23,7 +14,16 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
-from clinical_mdr_api.models.activities.activity_group import ActivityGroup
+from clinical_mdr_api.domains.concepts.activities.activity_group import (
+    ActivityGroupAR,
+    ActivityGroupVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+    LibraryVO,
+)
+from clinical_mdr_api.models.concepts.activities.activity_group import ActivityGroup
 
 
 class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
@@ -123,10 +123,10 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
         # which is specified in the activity_generic_repository_impl
         return """
         WITH *,
-            head([(concept_value)<-[:IN_GROUP]-(activity_sub_group_value:ActivitySubGroupValue)<-[:LATEST]-
+            head([(concept_value)<-[:IN_GROUP]-(activity_sub_group_value:ActivitySubGroupValue)<-[:HAS_VERSION]-
             (activity_sub_group_root:ActivitySubGroupRoot) | {uid:activity_sub_group_root.uid, name:activity_sub_group_value.name}]) AS activity_subgroup,
             head([(concept_value)<-[:IN_GROUP]-(activity_sub_group_value:ActivitySubGroupValue)<-[:IN_SUBGROUP]
-            -(activity_value:ActivityValue)<-[:LATEST]-(activity_root:ActivityRoot) | {uid:activity_root.uid, name:activity_value.name}]) AS activity
+            -(activity_value:ActivityValue)<-[:HAS_VERSION]-(activity_root:ActivityRoot) | {uid:activity_root.uid, name:activity_value.name}]) AS activity
         """
 
     def specific_header_match_clause(self) -> Optional[str]:

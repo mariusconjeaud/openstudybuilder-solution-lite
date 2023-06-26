@@ -2,7 +2,7 @@ import abc
 from datetime import datetime
 from typing import Generic, Iterable, Optional, TypeVar
 
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 
 _AggregateRootType = TypeVar("_AggregateRootType")
 

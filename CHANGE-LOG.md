@@ -1,5 +1,25 @@
 # OpenStudyBuilder Commits changelog
 
+##  V 0.5
+
+### Fixes and Enhancements
+- Improvements to audit trail tracking changes in outbound relationships to related nodes as changes.
+- Documentation regarding packaging of python components (e.g. API) is outdated in several places. Corrected API issues reported by schemathesis. Auto-increment of version number enabled in the auto-generated openapi.json API specification.
+Upgrade to Python version 3.11.
+- Adding missing 'Number of Studies' column for Timeframe instance.
+- Some column displays for activity instances has been removed, they will for the moment only be part of detailed displays.
+- Improvements to license and SBOM display on About page.
+- Various UI, Audit trail and Stability improvements.
+- Syntax template functionalities in Library is refactored with improved data model and consistency.
+
+### New Features
+- System documentation and Online help on Locking and Versioning of Studies improved.
+- Initial implementation for display of Data Exchange Standards for SDTM in Library menu (Part of the foundational data model representation linked to the Activity Concepts model similar to the CDISC Bio-medical Concepts mode).
+- Import of core SDTM and SDTMIG data models from CDISC Library is supported going forward.
+- New pre-instantiations of syntax templates replacing previous default values.
+- Create and Maintain ClinSpark CRF Library using StudyBuilder
+- Two sample study Metadata (MD) listings implemented to support ADaM dataset generation.
+
 ## V 0.4
 
 ### Fixes and Enhancements

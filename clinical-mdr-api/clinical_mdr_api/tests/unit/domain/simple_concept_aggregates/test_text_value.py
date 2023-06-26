@@ -1,11 +1,11 @@
 import unittest
 from typing import Callable
 
-from clinical_mdr_api.domain.concepts.simple_concepts.text_value import (
+from clinical_mdr_api.domains.concepts.simple_concepts.text_value import (
     TextValueAR,
     TextValueVO,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import (
+from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
 )

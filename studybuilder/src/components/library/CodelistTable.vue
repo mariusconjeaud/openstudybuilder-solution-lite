@@ -35,6 +35,38 @@
         </v-icon>
       </v-btn>
     </template>
+    <template v-slot:afterFilter="">
+      <v-autocomplete
+        v-model="selectedTerms"
+        :label="$t('CodelistTable.search_with_terms')"
+        :items="terms"
+        item-text="name.sponsor_preferred_name"
+        item-value="term_uid"
+        dense
+        class="mt-5 max-width-300"
+        clearable
+        return-object
+        :search-input.sync="search"
+        multiple>
+        <template v-slot:selection="{index}">
+          <div v-if="index === 0">
+            <span class="items-font-size">{{ selectedTerms[0].name.sponsor_preferred_name.substring(0, 12) }}</span>
+          </div>
+          <span
+            v-if="index === 1"
+            class="grey--text text-caption mr-1"
+          >
+            (+{{ selectedTerms.length -1 }})
+          </span>
+        </template>
+      </v-autocomplete>
+      <v-select
+        :items="operators"
+        v-model="termsFilterOperator"
+        :label="$t('_global.operator')"
+        class="mt-5 max-width-100"
+        />
+    </template>
     <template v-slot:item.actions="{ item }">
       <actions-menu :actions="actions" :item="item" />
     </template>
@@ -72,7 +104,9 @@
   <v-dialog v-model="showSponsorValuesHistory"
             @keydown.esc="closeHistory"
             persistent
-            max-width="1200px">
+            :max-width="globalHistoryDialogMaxWidth"
+            :fullscreen="globalHistoryDialogFullscreen"
+  >
     <history-table
       :title="historyTitle"
       @close="closeHistory"
@@ -194,7 +228,12 @@ export default {
       showSponsorValuesHistory: false,
       selectedCodelist: null,
       total: 0,
-      filters: ''
+      filters: '',
+      terms: [],
+      selectedTerms: [],
+      search: '',
+      operators: ['or', 'and'],
+      termsFilterOperator: 'or'
     }
   },
   methods: {
@@ -202,17 +241,39 @@ export default {
       return { package: this.package }
     },
     fetchCodelists (filters, sort, filtersUpdated) {
+      if (!filters && this.filters) {
+        filters = this.filters
+      }
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
+      this.filters = filters
       params.library = this.library
       if (this.package) {
         params.package = this.package
       } else if (this.catalogue && this.catalogue !== 'All') {
         params.catalogue_name = this.catalogue
       }
+      if (this.selectedTerms.length > 0) {
+        params.term_filter = {
+          term_uids: this.selectedTerms.map(term => term.term_uid),
+          operator: this.termsFilterOperator
+        }
+      }
       controlledTerminology.getCodelists(params).then(resp => {
         this.codelists = resp.data.items
         this.total = resp.data.total
+      })
+    },
+    fetchTerms  () {
+      const params = {
+        filters: {
+          'name.sponsor_preferred_name':
+          { v: [this.search ? this.search : ''], op: 'co' }
+        },
+        page_size: 20
+      }
+      controlledTerminology.getCodelistTerms(params).then(resp => {
+        this.terms = [...resp.data.items, ...this.selectedTerms]
       })
     },
     goToCodelist (codelist) {
@@ -257,6 +318,15 @@ export default {
       },
       deep: true
     },
+    search () {
+      this.fetchTerms()
+    },
+    selectedTerms () {
+      this.fetchCodelists()
+    },
+    termsFilterOperator () {
+      this.fetchCodelists()
+    },
     package (newValue, oldValue) {
       if (newValue !== oldValue) {
         this.codelists = []
@@ -266,3 +336,11 @@ export default {
   }
 }
 </script>
+<style scoped>
+.max-width-100 {
+  max-width: 100px;
+}
+.max-width-300 {
+  max-width: 300px;
+}
+</style>

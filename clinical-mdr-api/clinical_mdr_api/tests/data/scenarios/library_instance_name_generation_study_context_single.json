@@ -68,7 +68,8 @@
           "objective_template": {
             "name": "To investigate [Indication]",
             "name_plain": "To investigate [Indication]",
-            "uid": "ObjectiveTemplate_000001"
+            "uid": "ObjectiveTemplate_000001",
+            "sequence_id": "OT1"
           },
           "parameter_terms": [
             {
@@ -167,7 +168,8 @@
           "objective_template": {
             "name": "To investigate [Indication]",
             "name_plain": "To investigate [Indication]",
-            "uid": "ObjectiveTemplate_000001"
+            "uid": "ObjectiveTemplate_000001",
+            "sequence_id": "OT1"
           },
           "parameter_terms": [
             {
@@ -279,7 +281,8 @@
           "objective_template": {
             "name": "To investigate [Indication]",
             "name_plain": "To investigate [Indication]",
-            "uid": "ObjectiveTemplate_000001"
+            "uid": "ObjectiveTemplate_000001",
+            "sequence_id": "OT1"
           },
           "parameter_terms": [
             {
@@ -403,7 +406,8 @@
           "objective_template": {
             "name": "To investigate [Indication]",
             "name_plain": "To investigate [Indication]",
-            "uid": "ObjectiveTemplate_000001"
+            "uid": "ObjectiveTemplate_000001",
+            "sequence_id": "OT1"
           },
           "parameter_terms": [
             {

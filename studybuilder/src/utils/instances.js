@@ -91,7 +91,7 @@ function getSeparator (conjunction) {
 /*
 ** Load parameter values received from the API
 */
-function loadParameterValues (parameterValues, parameters, fromDefaultParameterValues) {
+function loadParameterValues (parameterValues, parameters) {
   let index = 0
   parameterValues.forEach(item => {
     if (item.terms.length) {
@@ -114,11 +114,8 @@ function loadParameterValues (parameterValues, parameters, fromDefaultParameterV
             }])
           }
         }
-        if (fromDefaultParameterValues) {
-          Vue.set(parameters[index], 'saveAsDefault', true)
-        }
       })
-    } else if (!fromDefaultParameterValues) {
+    } else {
       Vue.set(parameters[index], 'skip', true)
       Vue.set(parameters[index], 'selectedValues', [])
     }

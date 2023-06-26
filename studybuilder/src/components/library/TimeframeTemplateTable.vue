@@ -4,6 +4,7 @@
   translation-type='TimeframeTemplateTable'
   object-type="timeframeTemplates"
   :with-indexing-properties="false"
+  :with-pre-instances="false"
   >
   <template v-slot:editform="{ closeForm, selectedObject, filter, updateTemplate }">
     <studybuilder-template-form

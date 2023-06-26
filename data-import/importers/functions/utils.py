@@ -2,7 +2,7 @@ import logging
 from os import environ
 from typing import Optional
 
-from importers.metrics import Metrics
+from ..utils.metrics import Metrics
 
 loglevel = environ.get("LOG_LEVEL", "INFO")
 numeric_level = getattr(logging, loglevel.upper(), None)

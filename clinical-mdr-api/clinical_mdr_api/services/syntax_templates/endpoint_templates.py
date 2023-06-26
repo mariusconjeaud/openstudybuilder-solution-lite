@@ -1,31 +1,24 @@
-from typing import Optional, Sequence, Tuple
+from typing import Optional
 
-from neomodel import db
-from pydantic.main import BaseModel
-
-from clinical_mdr_api.domain.controlled_terminology.ct_term_attributes import (
-    CTTermAttributesAR,
-)
-from clinical_mdr_api.domain.controlled_terminology.ct_term_name import CTTermNameAR
-from clinical_mdr_api.domain.dictionaries.dictionary_term import DictionaryTermAR
-from clinical_mdr_api.domain.syntax_templates.endpoint_template import (
-    EndpointTemplateAR,
-)
-from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
 from clinical_mdr_api.domain_repositories.models.syntax import EndpointTemplateRoot
 from clinical_mdr_api.domain_repositories.syntax_instances.endpoint_repository import (
     EndpointRepository,
 )
+from clinical_mdr_api.domain_repositories.syntax_pre_instances.endpoint_pre_instance_repository import (
+    EndpointPreInstanceRepository,
+)
 from clinical_mdr_api.domain_repositories.syntax_templates.endpoint_template_repository import (
     EndpointTemplateRepository,
 )
+from clinical_mdr_api.domains._utils import generate_seq_id
+from clinical_mdr_api.domains.syntax_templates.endpoint_template import (
+    EndpointTemplateAR,
+)
+from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
 from clinical_mdr_api.exceptions import ValidationException
-from clinical_mdr_api.models.ct_term import CTTermNameAndAttributes
-from clinical_mdr_api.models.dictionary_term import DictionaryTerm
 from clinical_mdr_api.models.syntax_templates.endpoint_template import (
     EndpointTemplate,
     EndpointTemplateCreateInput,
-    EndpointTemplateEditIndexingsInput,
     EndpointTemplateVersion,
     EndpointTemplateWithCount,
 )
@@ -41,7 +34,8 @@ class EndpointTemplateService(GenericSyntaxTemplateService[EndpointTemplateAR]):
     aggregate_class = EndpointTemplateAR
     version_class = EndpointTemplateVersion
     repository_interface = EndpointTemplateRepository
-    object_repository_interface = EndpointRepository
+    instance_repository_interface = EndpointRepository
+    pre_instance_repository_interface = EndpointPreInstanceRepository
     root_node_class = EndpointTemplateRoot
 
     def _transform_aggregate_root_to_pydantic_model(
@@ -49,11 +43,11 @@ class EndpointTemplateService(GenericSyntaxTemplateService[EndpointTemplateAR]):
     ) -> EndpointTemplate:
         item_ar = self._set_default_parameter_terms(item_ar)
         cls = (
-            EndpointTemplateWithCount
-            if item_ar.study_count is not None
-            else EndpointTemplate
+            EndpointTemplateWithCount if item_ar.study_count != 0 else EndpointTemplate
         )
-        return cls.from_endpoint_template_ar(item_ar)
+        item = cls.from_endpoint_template_ar(item_ar)
+        self._set_indexings(item)
+        return item
 
     def get_all(
         self,
@@ -106,6 +100,7 @@ class EndpointTemplateService(GenericSyntaxTemplateService[EndpointTemplateAR]):
                 template=template_vo,
                 library=library_vo,
                 generate_uid_callback=self.repository.generate_uid_callback,
+                generate_seq_id_callback=generate_seq_id,
                 indications=indications,
                 categories=categories,
                 sub_categories=sub_categories,
@@ -114,22 +109,6 @@ class EndpointTemplateService(GenericSyntaxTemplateService[EndpointTemplateAR]):
             raise ValidationException(e.args[0]) from e
 
         return item
-
-    @db.transaction
-    def patch_indexings(
-        self, uid: str, indexings: EndpointTemplateEditIndexingsInput
-    ) -> EndpointTemplate:
-        try:
-            if indexings.indication_uids is not None:
-                self.repository.patch_indications(uid, indexings.indication_uids)
-            if indexings.category_uids is not None:
-                self.repository.patch_categories(uid, indexings.category_uids)
-            if indexings.sub_category_uids is not None:
-                self.repository.patch_subcategories(uid, indexings.sub_category_uids)
-        finally:
-            self.repository.close()
-
-        return self.get_by_uid(uid)
 
     def _set_default_parameter_terms(
         self, item: EndpointTemplateAR
@@ -144,13 +123,14 @@ class EndpointTemplateService(GenericSyntaxTemplateService[EndpointTemplateAR]):
 
         return EndpointTemplateAR(
             _uid=item.uid,
+            _sequence_id=item.sequence_id,
             _library=item.library,
             _item_metadata=item.item_metadata,
             _counts=item.counts,
             _study_count=item.study_count,
-            _indications=item.indications,
-            _categories=item.categories,
-            _subcategories=item.sub_categories,
+            _indications=item.indications if item.indications else [],
+            _categories=item.categories if item.categories else [],
+            _subcategories=item.sub_categories if item.sub_categories else [],
             _template=TemplateVO(
                 name=item.template_value.name,
                 name_plain=item.template_value.name_plain,
@@ -158,101 +138,3 @@ class EndpointTemplateService(GenericSyntaxTemplateService[EndpointTemplateAR]):
                 guidance_text=item.template_value.guidance_text,
             ),
         )
-
-    def _set_indexings(self, item: EndpointTemplate) -> None:
-        """
-        This method fetches and sets the indexing properties to a template.
-        """
-        # Get indications
-        indications = (
-            self._repos.dictionary_term_generic_repository.get_syntax_indications(
-                self.root_node_class, item.uid
-            )
-        )
-        if indications:
-            item.indications = [
-                DictionaryTerm.from_dictionary_term_ar(indication)
-                for indication in indications
-            ]
-        # Get categories
-        category_names = self._repos.ct_term_name_repository.get_syntax_categories(
-            self.root_node_class, item.uid
-        )
-        category_attributes = (
-            self._repos.ct_term_attributes_repository.get_syntax_categories(
-                self.root_node_class, item.uid
-            )
-        )
-        if category_names and category_attributes:
-            item.categories = [
-                CTTermNameAndAttributes.from_ct_term_ars(
-                    ct_term_name_ar=category_name,
-                    ct_term_attributes_ar=category_attribute,
-                )
-                for category_name, category_attribute in zip(
-                    category_names, category_attributes
-                )
-            ]
-        # Get sub_categories
-        sub_category_names = (
-            self._repos.ct_term_name_repository.get_syntax_subcategories(
-                self.root_node_class, item.uid
-            )
-        )
-        sub_category_attributes = (
-            self._repos.ct_term_attributes_repository.get_syntax_subcategories(
-                self.root_node_class, item.uid
-            )
-        )
-        if sub_category_names and sub_category_attributes:
-            item.sub_categories = [
-                CTTermNameAndAttributes.from_ct_term_ars(
-                    ct_term_name_ar=category_name,
-                    ct_term_attributes_ar=category_attribute,
-                )
-                for category_name, category_attribute in zip(
-                    sub_category_names, sub_category_attributes
-                )
-            ]
-
-    def _get_indexings(
-        self, template: BaseModel
-    ) -> Tuple[
-        Sequence[DictionaryTermAR],
-        Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]],
-        Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]],
-    ]:
-        indications: Sequence[DictionaryTermAR] = []
-        categories: Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]] = []
-        sub_categories: Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]] = []
-
-        if template.indication_uids and len(template.indication_uids) > 0:
-            for uid in template.indication_uids:
-                indication = self._repos.dictionary_term_generic_repository.find_by_uid(
-                    term_uid=uid
-                )
-                indications.append(indication)
-
-        if template.category_uids and len(template.category_uids) > 0:
-            for uid in template.category_uids:
-                category_name = self._repos.ct_term_name_repository.find_by_uid(
-                    term_uid=uid
-                )
-                category_attributes = (
-                    self._repos.ct_term_attributes_repository.find_by_uid(term_uid=uid)
-                )
-                category = (category_name, category_attributes)
-                categories.append(category)
-
-        if template.sub_category_uids and len(template.sub_category_uids) > 0:
-            for uid in template.sub_category_uids:
-                category_name = self._repos.ct_term_name_repository.find_by_uid(
-                    term_uid=uid
-                )
-                category_attributes = (
-                    self._repos.ct_term_attributes_repository.find_by_uid(term_uid=uid)
-                )
-                category = (category_name, category_attributes)
-                sub_categories.append(category)
-
-        return indications, categories, sub_categories

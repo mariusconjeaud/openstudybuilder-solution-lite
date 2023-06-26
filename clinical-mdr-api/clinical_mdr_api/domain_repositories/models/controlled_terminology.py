@@ -56,10 +56,18 @@ class CTCodelistAttributesRoot(ControlledTerminology):
     has_version = RelationshipTo(
         CTCodelistAttributesValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(CTCodelistAttributesValue, "LATEST")
-    latest_final = RelationshipTo(CTCodelistAttributesValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(CTCodelistAttributesValue, "LATEST_RETIRED")
-    latest_draft = RelationshipTo(CTCodelistAttributesValue, "LATEST_DRAFT")
+    has_latest_value = RelationshipTo(
+        CTCodelistAttributesValue, "LATEST", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipTo(
+        CTCodelistAttributesValue, "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipTo(
+        CTCodelistAttributesValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
+    latest_draft = RelationshipTo(
+        CTCodelistAttributesValue, "LATEST_DRAFT", model=ClinicalMdrRel
+    )
     has_root = RelationshipFrom(
         "CTCodelistRoot", "HAS_ATTRIBUTES_ROOT", model=ClinicalMdrRel
     )
@@ -74,10 +82,18 @@ class CTCodelistNameRoot(ControlledTerminology):
     has_version = RelationshipTo(
         CTCodelistNameValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(CTCodelistNameValue, "LATEST")
-    latest_final = RelationshipTo(CTCodelistNameValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(CTCodelistNameValue, "LATEST_RETIRED")
-    latest_draft = RelationshipTo(CTCodelistNameValue, "LATEST_DRAFT")
+    has_latest_value = RelationshipTo(
+        CTCodelistNameValue, "LATEST", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipTo(
+        CTCodelistNameValue, "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipTo(
+        CTCodelistNameValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
+    latest_draft = RelationshipTo(
+        CTCodelistNameValue, "LATEST_DRAFT", model=ClinicalMdrRel
+    )
     has_root = RelationshipFrom("CTCodelistRoot", "HAS_NAME_ROOT", model=ClinicalMdrRel)
 
 
@@ -94,10 +110,18 @@ class CTTermAttributesRoot(ControlledTerminology):
     has_version = RelationshipTo(
         CTTermAttributesValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(CTTermAttributesValue, "LATEST")
-    latest_final = RelationshipTo(CTTermAttributesValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(CTTermAttributesValue, "LATEST_RETIRED")
-    latest_draft = RelationshipTo(CTTermAttributesValue, "LATEST_DRAFT")
+    has_latest_value = RelationshipTo(
+        CTTermAttributesValue, "LATEST", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipTo(
+        CTTermAttributesValue, "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipTo(
+        CTTermAttributesValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
+    latest_draft = RelationshipTo(
+        CTTermAttributesValue, "LATEST_DRAFT", model=ClinicalMdrRel
+    )
     has_root = RelationshipFrom(
         "CTTermRoot", "HAS_ATTRIBUTES_ROOT", model=ClinicalMdrRel
     )
@@ -114,10 +138,12 @@ class CTTermNameRoot(ControlledTerminology):
     has_version = RelationshipTo(
         CTTermNameValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(CTTermNameValue, "LATEST")
-    latest_final = RelationshipTo(CTTermNameValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(CTTermNameValue, "LATEST_RETIRED")
-    latest_draft = RelationshipTo(CTTermNameValue, "LATEST_DRAFT")
+    has_latest_value = RelationshipTo(CTTermNameValue, "LATEST", model=ClinicalMdrRel)
+    latest_final = RelationshipTo(CTTermNameValue, "LATEST_FINAL", model=ClinicalMdrRel)
+    latest_retired = RelationshipTo(
+        CTTermNameValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
+    latest_draft = RelationshipTo(CTTermNameValue, "LATEST_DRAFT", model=ClinicalMdrRel)
     has_root = RelationshipFrom("CTTermRoot", "HAS_NAME_ROOT", model=ClinicalMdrRel)
 
 
@@ -136,8 +162,12 @@ class CodelistTermRelationship(ClinicalMdrRel):
 
 class CTCodelistRoot(ControlledTerminologyWithUID):
     LIBRARY_REL_TYPE = "CONTAINS_CODELIST"
-    has_child_codelist = RelationshipFrom("CTCodelistRoot", "HAS_PARENT_CODELIST")
-    has_parent_codelist = RelationshipTo("CTCodelistRoot", "HAS_PARENT_CODELIST")
+    has_child_codelist = RelationshipFrom(
+        "CTCodelistRoot", "HAS_PARENT_CODELIST", model=ClinicalMdrRel
+    )
+    has_parent_codelist = RelationshipTo(
+        "CTCodelistRoot", "HAS_PARENT_CODELIST", model=ClinicalMdrRel
+    )
     has_name_root = RelationshipTo(
         CTCodelistNameRoot, "HAS_NAME_ROOT", model=ClinicalMdrRel
     )
@@ -145,7 +175,7 @@ class CTCodelistRoot(ControlledTerminologyWithUID):
         CTCodelistAttributesRoot, "HAS_ATTRIBUTES_ROOT", model=ClinicalMdrRel
     )
     has_codelist = RelationshipFrom("CTCatalogue", "HAS_CODELIST", model=ClinicalMdrRel)
-    has_library = RelationshipFrom(Library, LIBRARY_REL_TYPE)
+    has_library = RelationshipFrom(Library, LIBRARY_REL_TYPE, model=ClinicalMdrRel)
     has_term = RelationshipTo("CTTermRoot", "HAS_TERM", model=CodelistTermRelationship)
     had_term = RelationshipTo("CTTermRoot", "HAD_TERM", model=CodelistTermRelationship)
 

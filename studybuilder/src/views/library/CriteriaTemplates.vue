@@ -49,7 +49,7 @@ export default {
     terms.getByCodelist('criteriaTypes').then(resp => {
       this.criteriaTypes = resp.data.items
     })
-    this.tab = this.$route.params.tab
+    this.tab = this.$route.params.type
     setTimeout(() => {
       this.addBreadcrumbsLevel({
         text: this.tab,
@@ -65,15 +65,20 @@ export default {
   },
   watch: {
     tab (newValue) {
+      const params = { ...this.$route.params }
+      params.type = newValue
       this.$router.push({
         name: 'CriteriaTemplates',
-        params: { tab: newValue }
+        params
       })
       this.addBreadcrumbsLevel({
         text: newValue,
         index: 3,
         replace: true
       })
+    },
+    '$route.params.type' (newValue) {
+      this.tab = newValue
     }
   }
 }

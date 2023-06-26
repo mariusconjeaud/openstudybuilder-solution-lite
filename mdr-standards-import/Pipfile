@@ -13,7 +13,7 @@ pylint = "~=2.15"
 black = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.11"
 
 [scripts]
 import_cdisc_ct_into_cdisc_db = "python -m mdr_standards_import.scripts.pipelines.cdisc_ct.pipeline_step_import_into_cdisc_db"

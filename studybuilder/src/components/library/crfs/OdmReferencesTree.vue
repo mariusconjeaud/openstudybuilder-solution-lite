@@ -115,7 +115,7 @@ export default {
       this.loading = true
       this.crfTreeData = []
       const params = {}
-      await crfs.get('templates', { params }).then((resp) => {
+      await crfs.get('study-events', { params }).then((resp) => {
         this.templates = resp.data.items
         for (const template of this.templates) {
           this.$set(this.templates[this.templates.indexOf(template)], 'template', true)
@@ -178,7 +178,7 @@ export default {
             uid: { v: this.templates }
           }
         }
-        await crfs.get('templates', { params }).then((resp) => {
+        await crfs.get('study-events', { params }).then((resp) => {
           this.templates = resp.data.items
         })
       }

@@ -1,4 +1,6 @@
-# Documentation portal build pipeline
+########################################################################################
+####  Documentation portal build validation, required to pass before merging a PR  #####
+########################################################################################
 
 trigger:
 - main

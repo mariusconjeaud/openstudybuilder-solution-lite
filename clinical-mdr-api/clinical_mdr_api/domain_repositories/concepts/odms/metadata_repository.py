@@ -10,7 +10,7 @@ class MetadataRepository:
     RETURN data, rows;"""
 
     OPTIONAL_FORM_MATCH = """
-    OPTIONAL MATCH (OdmTemplateRoot)
+    OPTIONAL MATCH (OdmStudyEventRoot)
     -[:FORM_REF]->(OdmFormRoot:OdmFormRoot)
     -[:LATEST_FINAL|LATEST_RETIRED]->(OdmFormValue:OdmFormValue)
     CALL {
@@ -81,8 +81,8 @@ class MetadataRepository:
     -[:LATEST]->(CTTermAttributesValue:CTTermAttributesValue)
     """
 
-    TEMPLATE_NAME_RETURN = "OdmTemplateValue.name AS Template_Name"
-    TEMPLATE_VERSION_RETURN = "OdmTemplateLatest.version AS Template_Version"
+    STUDY_EVENT_NAME_RETURN = "OdmStudyEventValue.name AS StudyEvent_Name"
+    STUDY_EVENT_VERSION_RETURN = "OdmStudyEventLatest.version AS StudyEvent_Version"
     FORM_NAME_RETURN = "OdmFormValue.name AS Form_Name"
     FORM_REPEATING_RETURN = """
     (CASE WHEN OdmFormValue.repeating IS NULL THEN ''
@@ -100,15 +100,15 @@ class MetadataRepository:
     ITEM_CODELIST_RETURN = "CTCodelistAttributesValue.name AS Item_Codelist"
     ITEM_TERM_RETURN = "apoc.text.join(COLLECT(DISTINCT CTTermAttributesValue.code_submission_value), '|') as Item_Terms"
 
-    def get_odm_template(self, target_uid: str):
+    def get_odm_study_event(self, target_uid: str):
         query = (
             f"""
                 WITH "
-                    MATCH (OdmTemplateRoot:OdmTemplateRoot {{uid: $target_uid}})
-                    -[:LATEST_FINAL|LATEST_RETIRED]->(OdmTemplateValue:OdmTemplateValue)
+                    MATCH (OdmStudyEventRoot:OdmStudyEventRoot {{uid: $target_uid}})
+                    -[:LATEST_FINAL|LATEST_RETIRED]->(OdmStudyEventValue:OdmStudyEventValue)
                     CALL {{
-                        WITH OdmTemplateRoot, OdmTemplateValue
-                        MATCH (OdmTemplateRoot)-[hv:HAS_VERSION]-(OdmTemplateValue)
+                        WITH OdmStudyEventRoot, OdmStudyEventValue
+                        MATCH (OdmStudyEventRoot)-[hv:HAS_VERSION]-(OdmStudyEventValue)
                         WHERE hv.status in ['Final', 'Retired']
                         WITH hv
                         ORDER BY
@@ -117,7 +117,7 @@ class MetadataRepository:
                             hv.end_date ASC,
                             hv.start_date ASC
                         WITH collect(hv) as hvs
-                        RETURN last(hvs) as OdmTemplateLatest
+                        RETURN last(hvs) as OdmStudyEventLatest
                     }}
                     {self.OPTIONAL_FORM_MATCH}
                     {self.OPTIONAL_ITEM_GROUP_MATCH}
@@ -127,8 +127,8 @@ class MetadataRepository:
                     {self.OPTIONAL_CODELIST_TERM_MATCH}
 
                     RETURN
-                    {self.TEMPLATE_NAME_RETURN},
-                    {self.TEMPLATE_VERSION_RETURN},
+                    {self.STUDY_EVENT_NAME_RETURN},
+                    {self.STUDY_EVENT_VERSION_RETURN},
                     {self.FORM_NAME_RETURN},
                     {self.FORM_REPEATING_RETURN},
                     {self.FORM_VERSION_RETURN},
@@ -148,7 +148,7 @@ class MetadataRepository:
 
         if result[0][1] == 0:
             raise NotFoundException(
-                f"ODM Template with uid {target_uid} does not exist."
+                f"ODM Study Event with uid {target_uid} does not exist."
             )
 
         return result[0][0]

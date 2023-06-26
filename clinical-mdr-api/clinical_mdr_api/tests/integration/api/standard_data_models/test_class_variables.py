@@ -18,14 +18,14 @@ import pytest
 from fastapi.testclient import TestClient
 
 from clinical_mdr_api.main import app
-from clinical_mdr_api.models.standard_data_models.class_variable import ClassVariable
 from clinical_mdr_api.models.standard_data_models.data_model import DataModel
 from clinical_mdr_api.models.standard_data_models.dataset_class import DatasetClass
 from clinical_mdr_api.models.standard_data_models.dataset_variable import (
     DatasetVariable,
 )
-from clinical_mdr_api.services.standard_data_models.class_variable import (
-    ClassVariableService,
+from clinical_mdr_api.models.standard_data_models.variable_class import VariableClass
+from clinical_mdr_api.services.standard_data_models.variable_class import (
+    VariableClassService,
 )
 from clinical_mdr_api.tests.integration.utils.api import (
     drop_db,
@@ -41,7 +41,7 @@ data_model_catalogue_name: str
 data_models: List[DataModel]
 dataset_classes: List[DatasetClass]
 dataset_variable: DatasetVariable
-class_variables: List[ClassVariable]
+class_variables: List[VariableClass]
 
 
 @pytest.fixture(scope="module")
@@ -68,8 +68,8 @@ def test_data():
         name="DataModelCatalogue name"
     )
     data_models = [
-        TestUtils.create_data_model(name=name)
-        for name in ["DataModel A", "DataModel B", "DataModel C"]
+        TestUtils.create_data_model(name=name, version_number=str(idx))
+        for idx, name in enumerate(["DataModel A", "DataModel B", "DataModel C"])
     ]
     dataset_classes = [
         TestUtils.create_dataset_class(
@@ -91,6 +91,7 @@ def test_data():
         description="Dataset A desc",
         data_model_catalogue_name=data_model_catalogue_name,
         data_model_ig_uid=data_model_ig.uid,
+        data_model_ig_version_number=data_model_ig.version_number,
         implemented_dataset_class_name=dataset_classes[0].uid,
     )
 
@@ -98,11 +99,13 @@ def test_data():
     class_variables = []
     class_variables.append(
         TestUtils.create_class_variable(
-            label="ClassVariable A label",
-            title="ClassVariable A title",
-            description="ClassVariable A desc",
+            label="VariableClass A label",
+            title="VariableClass A title",
+            description="VariableClass A desc",
             data_model_catalogue_name=data_model_catalogue_name,
             dataset_class_uid=dataset_classes[0].uid,
+            data_model_name=data_models[0].uid,
+            data_model_version=data_models[0].version_number,
         )
     )
     dataset_variable = TestUtils.create_dataset_variable(
@@ -110,14 +113,22 @@ def test_data():
         dataset_uid=dataset.uid,
         data_model_catalogue_name=data_model_catalogue_name,
         class_variable_uid=class_variables[0].uid,
+        data_model_ig_name=data_model_ig.uid,
+        data_model_ig_version=data_model_ig.version_number,
     )
     # update class variable with dataset variable relationship
-    class_variables[0] = ClassVariableService().get_by_uid(uid=class_variables[0].uid)
+    class_variables[0] = VariableClassService().get_by_uid(
+        uid=class_variables[0].uid,
+        data_model_name=data_models[0].uid,
+        data_model_version=data_models[0].version_number,
+    )
     class_variables.append(
         TestUtils.create_class_variable(
             label="name-AAA",
             data_model_catalogue_name=data_model_catalogue_name,
             dataset_class_uid=dataset_classes[1].uid,
+            data_model_name=data_models[1].uid,
+            data_model_version=data_models[1].version_number,
         )
     )
     class_variables.append(
@@ -125,6 +136,8 @@ def test_data():
             label="name-BBB",
             data_model_catalogue_name=data_model_catalogue_name,
             dataset_class_uid=dataset_classes[1].uid,
+            data_model_name=data_models[1].uid,
+            data_model_version=data_models[1].version_number,
         )
     )
     class_variables.append(
@@ -132,6 +145,8 @@ def test_data():
             description="def-XXX",
             data_model_catalogue_name=data_model_catalogue_name,
             dataset_class_uid=dataset_classes[1].uid,
+            data_model_name=data_models[1].uid,
+            data_model_version=data_models[1].version_number,
         )
     )
     class_variables.append(
@@ -139,6 +154,8 @@ def test_data():
             description="def-YYY",
             data_model_catalogue_name=data_model_catalogue_name,
             dataset_class_uid=dataset_classes[1].uid,
+            data_model_name=data_models[1].uid,
+            data_model_version=data_models[1].version_number,
         )
     )
 
@@ -148,6 +165,8 @@ def test_data():
                 label=f"name-AAA-{index}",
                 data_model_catalogue_name=data_model_catalogue_name,
                 dataset_class_uid=dataset_classes[2].uid,
+                data_model_name=data_models[2].uid,
+                data_model_version=data_models[2].version_number,
             )
         )
         class_variables.append(
@@ -155,6 +174,8 @@ def test_data():
                 label=f"name-BBB-{index}",
                 data_model_catalogue_name=data_model_catalogue_name,
                 dataset_class_uid=dataset_classes[2].uid,
+                data_model_name=data_models[2].uid,
+                data_model_version=data_models[2].version_number,
             )
         )
         class_variables.append(
@@ -162,6 +183,8 @@ def test_data():
                 description=f"def-XXX-{index}",
                 data_model_catalogue_name=data_model_catalogue_name,
                 dataset_class_uid=dataset_classes[2].uid,
+                data_model_name=data_models[2].uid,
+                data_model_version=data_models[2].version_number,
             )
         )
         class_variables.append(
@@ -169,6 +192,8 @@ def test_data():
                 description=f"def-YYY-{index}",
                 data_model_catalogue_name=data_model_catalogue_name,
                 dataset_class_uid=dataset_classes[2].uid,
+                data_model_name=data_models[2].uid,
+                data_model_version=data_models[2].version_number,
             )
         )
 
@@ -191,27 +216,32 @@ CLASS_VARIABLE_FIELDS_ALL = [
     "simple_datatype",
     "role",
     "catalogue_name",
-    "dataset_class_name",
+    "dataset_class",
     "dataset_variable_name",
-    # "library_name",
-    "start_date",
-    "end_date",
-    "status",
-    "version",
-    "change_description",
-    "user_initials",
+    "referenced_codelist",
+    "has_mapping_target",
+    "core",
+    "completion_instructions",
+    "data_model_names",
 ]
 
 CLASS_VARIABLE_FIELDS_NOT_NULL = [
     "uid",
     "label",
     "catalogue_name",
-    "dataset_class_name",
+    "dataset_class",
+    "data_model_names",
 ]
 
 
 def test_get_class_variable(api_client):
-    response = api_client.get(f"/standards/class-variables/{class_variables[0].uid}")
+    response = api_client.get(
+        f"/standards/class-variables/{class_variables[0].uid}",
+        params={
+            "data_model_name": data_models[0].uid,
+            "data_model_version": data_models[0].version_number,
+        },
+    )
     res = response.json()
 
     assert response.status_code == 200
@@ -222,13 +252,12 @@ def test_get_class_variable(api_client):
         assert res[key] is not None
 
     assert res["uid"] == class_variables[0].uid
-    assert res["label"] == "ClassVariable A label"
-    assert res["description"] == "ClassVariable A desc"
-    assert res["version"] == "1.0"
-    assert res["status"] == "Final"
+    assert res["label"] == "VariableClass A label"
+    assert res["description"] == "VariableClass A desc"
     assert res["catalogue_name"] == data_model_catalogue_name
-    assert res["dataset_class_name"] == dataset_classes[0].label
+    assert res["dataset_class"]["dataset_class_name"] == dataset_classes[0].label
     assert res["dataset_variable_name"] == dataset_variable.label
+    assert res["data_model_names"] == [data_models[0].name]
 
 
 def test_get_class_variables_pagination(api_client):
@@ -236,7 +265,13 @@ def test_get_class_variables_pagination(api_client):
     sort_by = '{"uid": true}'
     for page_number in range(1, 4):
         url = f"/standards/class-variables?page_number={page_number}&page_size=10&sort_by={sort_by}"
-        response = api_client.get(url)
+        response = api_client.get(
+            url,
+            params={
+                "data_model_name": data_models[2].uid,
+                "data_model_version": data_models[2].version_number,
+            },
+        )
         res = response.json()
         res_uids = list(map(lambda x: x["uid"], res["items"]))
         results_paginated[page_number] = res_uids
@@ -250,12 +285,22 @@ def test_get_class_variables_pagination(api_client):
     log.info("All rows returned by pagination: %s", results_paginated_merged)
 
     res_all = api_client.get(
-        f"/standards/class-variables?page_number=1&page_size=100&sort_by={sort_by}"
+        f"/standards/class-variables?page_number=1&page_size=100&sort_by={sort_by}",
+        params={
+            "data_model_name": data_models[2].uid,
+            "data_model_version": data_models[2].version_number,
+        },
     ).json()
     results_all_in_one_page = list(map(lambda x: x["uid"], res_all["items"]))
     log.info("All rows in one page: %s", results_all_in_one_page)
     assert len(results_all_in_one_page) == len(results_paginated_merged)
-    assert len(class_variables) == len(results_paginated_merged)
+    assert len(
+        [
+            class_variable
+            for class_variable in class_variables
+            if data_models[2].name in class_variable.data_model_names
+        ]
+    ) == len(results_paginated_merged)
 
 
 @pytest.mark.parametrize(
@@ -265,7 +310,7 @@ def test_get_class_variables_pagination(api_client):
         pytest.param(3, 1, True, None, 3),
         pytest.param(3, 2, True, None, 3),
         pytest.param(10, 2, True, None, 10),
-        pytest.param(10, 3, True, None, 5),  # Total numer of data models is 25
+        pytest.param(10, 3, True, None, 0),  # Total numer of data models is 25
         pytest.param(10, 1, True, '{"label": false}', 10),
         pytest.param(10, 2, True, '{"label": true}', 10),
     ],
@@ -288,7 +333,13 @@ def test_get_class_variables(
         url = f"{url}?{'&'.join(query_params)}"
 
     log.info("GET %s", url)
-    response = api_client.get(url)
+    response = api_client.get(
+        url,
+        params={
+            "data_model_name": data_models[2].uid,
+            "data_model_version": data_models[2].version_number,
+        },
+    )
     res = response.json()
 
     assert response.status_code == 200
@@ -296,7 +347,17 @@ def test_get_class_variables(
     # Check fields included in the response
     assert list(res.keys()) == ["items", "total", "page", "size"]
     assert len(res["items"]) == expected_result_len
-    assert res["total"] == (len(class_variables) if total_count else 0)
+    assert res["total"] == (
+        len(
+            [
+                class_variable
+                for class_variable in class_variables
+                if data_models[2].name in class_variable.data_model_names
+            ]
+        )
+        if total_count
+        else 0
+    )
     assert res["page"] == (page_number if page_number else 1)
     assert res["size"] == (page_size if page_size else 10)
 
@@ -324,20 +385,7 @@ def test_get_class_variables(
     [
         pytest.param('{"*": {"v": ["aaa"]}}', "label", "name-AAA"),
         pytest.param('{"*": {"v": ["bBb"]}}', "label", "name-BBB"),
-        pytest.param(
-            '{"*": {"v": ["initials"], "op": "co"}}', "user_initials", "TODO initials"
-        ),
-        pytest.param('{"*": {"v": ["Final"]}}', "status", "Final"),
-        pytest.param('{"*": {"v": ["1.0"]}}', "version", "1.0"),
         pytest.param('{"*": {"v": ["ccc"]}}', None, None),
-        pytest.param(
-            '{"*": {"v": ["DatasetClass A"]}}', "dataset_class_name", "DatasetClass A"
-        ),
-        pytest.param(
-            '{"*": {"v": ["DatasetVariable A"]}}',
-            "dataset_variable_name",
-            "DatasetVariable A",
-        ),
         pytest.param(
             '{"*": {"v": ["DataModelCatalogue name"]}}',
             "catalogue_name",
@@ -349,15 +397,38 @@ def test_filtering_wildcard(
     api_client, filter_by, expected_matched_field, expected_result_prefix
 ):
     url = f"/standards/class-variables?filters={filter_by}"
-    response = api_client.get(url)
+    response = api_client.get(
+        url,
+        params={
+            "data_model_name": data_models[2].uid,
+            "data_model_version": data_models[2].version_number,
+        },
+    )
     res = response.json()
 
     assert response.status_code == 200
     if expected_result_prefix:
         assert len(res["items"]) > 0
+        nested_path = None
+
+        # if we expect a nested property to be equal to specified value
+        if isinstance(expected_matched_field, str) and "." in expected_matched_field:
+            nested_path = expected_matched_field.split(".")
+            expected_matched_field = nested_path[-1]
+            nested_path = nested_path[:-1]
+
         # Each returned row has a field that starts with the specified filter value
         for row in res["items"]:
-            assert row[expected_matched_field].startswith(expected_result_prefix)
+            if nested_path:
+                for prop in nested_path:
+                    row = row[prop]
+            if isinstance(row, list):
+                any(
+                    item[expected_matched_field].startswith(expected_result_prefix)
+                    for item in row
+                )
+            else:
+                assert row[expected_matched_field].startswith(expected_result_prefix)
     else:
         assert len(res["items"]) == 0
 
@@ -372,19 +443,19 @@ def test_filtering_wildcard(
         pytest.param('{"description": {"v": ["def-YYY"]}}', "description", "def-YYY"),
         pytest.param('{"description": {"v": ["cc"]}}', None, None),
         pytest.param(
-            '{"dataset_class_name": {"v": ["DatasetClass A"]}}',
-            "dataset_class_name",
-            "DatasetClass A",
-        ),
-        pytest.param(
-            '{"dataset_variable_name": {"v": ["DatasetVariable A"]}}',
-            "dataset_variable_name",
-            "DatasetVariable A",
+            '{"dataset_class.dataset_class_name": {"v": ["DatasetClass B"]}}',
+            "dataset_class.dataset_class_name",
+            "DatasetClass B",
         ),
         pytest.param(
             '{"catalogue_name": {"v": ["DataModelCatalogue name"]}}',
             "catalogue_name",
             "DataModelCatalogue name",
+        ),
+        pytest.param(
+            '{"data_model_names": {"v": ["DataModel B"]}}',
+            "data_model_names",
+            ["DataModel B"],
         ),
     ],
 )
@@ -392,20 +463,40 @@ def test_filtering_exact(
     api_client, filter_by, expected_matched_field, expected_result
 ):
     url = f"/standards/class-variables?filters={filter_by}"
-    response = api_client.get(url)
+    response = api_client.get(
+        url,
+        params={
+            "data_model_name": data_models[1].uid,
+            "data_model_version": data_models[1].version_number,
+        },
+    )
     res = response.json()
 
     assert response.status_code == 200
     if expected_result:
         assert len(res["items"]) > 0
+
+        # if we expect a nested property to be equal to specified value
+        nested_path = None
+        if isinstance(expected_matched_field, str) and "." in expected_matched_field:
+            nested_path = expected_matched_field.split(".")
+            expected_matched_field = nested_path[-1]
+            nested_path = nested_path[:-1]
+
         # Each returned row has a field whose value is equal to the specified filter value
         for row in res["items"]:
+            if nested_path:
+                for prop in nested_path:
+                    row = row[prop]
             if isinstance(expected_result, list):
                 assert all(
                     item in row[expected_matched_field] for item in expected_result
                 )
             else:
-                assert row[expected_matched_field] == expected_result
+                if isinstance(row, list):
+                    all(item[expected_matched_field] == expected_result for item in row)
+                else:
+                    assert row[expected_matched_field] == expected_result
     else:
         assert len(res["items"]) == 0
 
@@ -416,22 +507,51 @@ def test_filtering_exact(
         pytest.param("label"),
         pytest.param("description"),
         pytest.param("role"),
-        pytest.param("dataset_class_name"),
         pytest.param("dataset_variable_name"),
         pytest.param("catalogue_name"),
+        pytest.param("dataset_class.dataset_class_name"),
     ],
 )
 def test_headers(api_client, field_name):
     url = f"/standards/class-variables/headers?field_name={field_name}&result_count=100"
-    response = api_client.get(url)
+    response = api_client.get(
+        url,
+        params={
+            "data_model_name": data_models[2].uid,
+            "data_model_version": data_models[2].version_number,
+        },
+    )
     res = response.json()
 
     assert response.status_code == 200
     expected_result = []
-    for class_variable in class_variables:
-        value = getattr(class_variable, field_name)
-        if value:
+
+    nested_path = None
+    if isinstance(field_name, str) and "." in field_name:
+        nested_path = field_name.split(".")
+        expected_matched_field = nested_path[-1]
+        nested_path = nested_path[:-1]
+
+    for class_variable in [
+        class_var
+        for class_var in class_variables
+        if data_models[2].name in class_var.data_model_names
+    ]:
+        if nested_path:
+            for prop in nested_path:
+                class_variable = getattr(class_variable, prop)
+            if isinstance(class_variable, list):
+                for item in class_variable:
+                    value = getattr(item, expected_matched_field)
+                    expected_result.append(value)
+            else:
+                value = getattr(class_variable, expected_matched_field)
+                expected_result.append(value)
+
+        else:
+            value = getattr(class_variable, field_name)
             expected_result.append(value)
+    expected_result = [result for result in expected_result if result is not None]
     log.info("Expected result is %s", expected_result)
     log.info("Returned %s", res)
     if expected_result:
@@ -454,4 +574,12 @@ def test_headers(api_client, field_name):
 )
 def test_get_class_variables_csv_xml_excel(api_client, export_format):
     url = "/standards/class-variables"
-    TestUtils.verify_exported_data_format(api_client, export_format, url)
+    TestUtils.verify_exported_data_format(
+        api_client,
+        export_format,
+        url,
+        params={
+            "data_model_name": data_models[2].uid,
+            "data_model_version": data_models[2].version_number,
+        },
+    )

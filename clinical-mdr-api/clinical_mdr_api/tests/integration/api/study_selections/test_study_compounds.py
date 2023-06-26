@@ -13,26 +13,23 @@ import logging
 
 import pytest
 from fastapi.testclient import TestClient
-from neomodel import db
 
 from clinical_mdr_api.main import app
-from clinical_mdr_api.models.study import Study
+from clinical_mdr_api.models.concepts.compound import Compound
+from clinical_mdr_api.models.concepts.compound_alias import CompoundAlias
+from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.tests.integration.utils.api import (
     drop_db,
     inject_and_clear_db,
     inject_base_data,
-)
-from clinical_mdr_api.tests.integration.utils.data_library import (
-    STARTUP_ACTIVITY_INSTANCES_CT_INIT,
-    STARTUP_NUMERIC_VALUES_WITH_UNITS,
-    STARTUP_STUDY_COMPOUND_CYPHER,
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 log = logging.getLogger(__name__)
 
 study: Study
-
+compound: Compound
+compound_alias: CompoundAlias
 
 initialize_ct_data_map = {
     "TypeOfTreatment": [("CTTerm_000001", "CTTerm_000001")],
@@ -55,20 +52,22 @@ def api_client(test_data):
 @pytest.fixture(scope="module")
 def test_data():
     """Initialize test data"""
-    db_name = "studycompoundapi"
+    db_name = "studycompounds.api"
     inject_and_clear_db(db_name)
     inject_base_data()
+
     global study
+    global compound
+    global compound_alias
+
     study = TestUtils.create_study()
 
-    db.cypher_query(STARTUP_ACTIVITY_INSTANCES_CT_INIT)
-    db.cypher_query(STARTUP_NUMERIC_VALUES_WITH_UNITS)
-    TestUtils.create_library(name="UCUM", is_editable=True)
-    TestUtils.create_ct_catalogue()
-    TestUtils.create_study_ct_data_map(
-        codelist_uid="CTCodelist_000001", ct_data_map=initialize_ct_data_map
+    compound = TestUtils.create_compound(name="name-AAA", approve=True)
+
+    compound_alias = TestUtils.create_compound_alias(
+        name="compAlias-AAA", compound_uid=compound.uid, approve=True
     )
-    db.cypher_query(STARTUP_STUDY_COMPOUND_CYPHER)
+
     yield
     drop_db(db_name)
 
@@ -76,16 +75,13 @@ def test_data():
 def test_compound_modify_actions_on_locked_study(api_client):
     response = api_client.post(
         f"/studies/{study.uid}/study-compounds",
-        json={},
+        json={"compound_alias_uid": compound_alias.uid},
     )
     res = response.json()
     assert response.status_code == 201
 
     # get all compounds
-    response = api_client.get(
-        f"/studies/{study.uid}/study-compounds/audit-trail/",
-        json={},
-    )
+    response = api_client.get(f"/studies/{study.uid}/study-compounds/audit-trail/")
     res = response.json()
     assert response.status_code == 200
     old_res = res
@@ -107,7 +103,7 @@ def test_compound_modify_actions_on_locked_study(api_client):
 
     response = api_client.post(
         f"/studies/{study.uid}/study-compounds",
-        json={},
+        json={"compound_alias_uid": compound_alias.uid},
     )
     res = response.json()
     assert response.status_code == 400
@@ -122,10 +118,7 @@ def test_compound_modify_actions_on_locked_study(api_client):
     assert res["message"] == f"Study with specified uid '{study.uid}' is locked."
 
     # get all history when was locked
-    response = api_client.get(
-        f"/studies/{study.uid}/study-compounds/audit-trail/",
-        json={},
-    )
+    response = api_client.get(f"/studies/{study.uid}/study-compounds/audit-trail/")
     res = response.json()
     assert response.status_code == 200
     assert old_res == res

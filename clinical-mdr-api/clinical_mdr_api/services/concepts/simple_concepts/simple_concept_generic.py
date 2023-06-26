@@ -1,6 +1,6 @@
 from abc import ABC
 
-from clinical_mdr_api.models.concept import SimpleConceptInput
+from clinical_mdr_api.models.concepts.concept import SimpleConceptInput
 from clinical_mdr_api.services.concepts.concept_generic_service import (
     ConceptGenericService,
     _AggregateRootType,

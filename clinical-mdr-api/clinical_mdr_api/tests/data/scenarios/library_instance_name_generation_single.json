@@ -45,7 +45,8 @@
           "name": "To investigate [Indication]",
           "name_plain": "To investigate [Indication]",
           "guidance_text": null,
-          "uid": "{otuid}"
+          "uid": "{otuid}",
+          "sequence_id": "OT1"
         },
         "parameter_terms": [
           {
@@ -113,7 +114,8 @@
           "name": "To investigate [Indication]",
           "name_plain": "To investigate [Indication]",
           "guidance_text": null,
-          "uid": "{otuid}"
+          "uid": "{otuid}",
+          "sequence_id": "OT1"
         },
         "parameter_terms": [
           {
@@ -194,7 +196,8 @@
           "name": "To investigate [Indication]",
           "name_plain": "To investigate [Indication]",
           "guidance_text": null,
-          "uid": "{otuid}"
+          "uid": "{otuid}",
+          "sequence_id": "OT1"
         },
         "parameter_terms": [
           {
@@ -287,7 +290,8 @@
           "name": "To investigate [Indication]",
           "name_plain": "To investigate [Indication]",
           "guidance_text": null,
-          "uid": "{otuid}"
+          "uid": "{otuid}",
+          "sequence_id": "OT1"
         },
         "parameter_terms": [
           {

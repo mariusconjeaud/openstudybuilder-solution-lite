@@ -76,3 +76,45 @@ Additional relationships also exist as "shortcuts" for
 - LATEST_RETIRED (most recent when in Retired status)
 - LATEST (most recent independent of status)
 
+The implementation of versioning is made to also support the global audit trail functionality simply by querying the HAS_VERSION relationships.
+
+
+### Versioning of Library Elements
+
+In the library module all standard elements is versioned individually as root-value node pairs. Thereby all unique versioned value nodes only is represented one in the database. All objects maintained in the library part of the system is therefore supported by a find granular versioning of data standards elements.
+
+For data standard elements imported from CDISC Library a similar versioning approach is applied only representing the unique value pairs in the system applying the versioning information and dates from the source system (the CDISC Library).
+
+Version independent relationships can be made to the root node of a library standard element and versioned relationships can be made to the value nodes.
+
+[![Types of Relationships](~@source/images/documentation/relationship-types.png)](../../images/documentation/relationship-types.png)
+
+**Root to Root Relationship**
+ - Relationship independent of versioning.
+ - => All versions of the source object are connected to the latest version of the target object (virtually).
+ - Sample: Grouping of Criteria templates to Criteria Type CT Term.
+
+**Root to Value Relationship**
+ - Relationship from Root to other Value node than the root-value pair, so source node independent of versioning.
+ - Currently not relevant
+
+**Value to Root Relationship**
+ - Relationship from specific source node version to independent target node.
+ - => A specific version of the source object is connected to the latest version of the target object (virtually). Cascading of relationship must be handled when a new version of the source is created.
+ - Sample: Syntax Template and their instances to their TemplateParameters. This allows to keep track of the parameters used in the previous versions of the syntax template instance, but the version of the parameter will always be the latest one.
+
+**Value to Value Relationship**
+ - Relationship is version-aware on both sides.
+ - Cascading of relationship must be handled when changes happened on either the target or source nodes.
+ - Sample: Relationship between Objective Syntax Templates and Objective Instantiations .
+
+
+### Versioning of Studies
+
+In the study module the versioning is applied at the study level as study root-value node pairs. A specific version of a study will thereby have outbound relationship to all detaled study definitions as study fileds and study selections.
+
+All data definitions done for a study is related to a StudyAction node capturing the before and after state. This is to support the detailed audit trail capabilities for all create, update and deletes done for a study as well as the release (minor version), locking (major version), unlock (new version). 
+
+[![Study Versioning](~@source/images/documentation/study-versioning-model.svg)](../../images//documentation/study-versioning-model.svg)
+
+For more information on the study versioning see also the [Maintain Study Status and Versioning user guide](../userguide/studies/manage_studies.md#maintain-study-status-and-versioning).

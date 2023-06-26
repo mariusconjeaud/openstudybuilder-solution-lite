@@ -4,7 +4,8 @@ import pytest
 from hypothesis import given
 from hypothesis.strategies import composite, from_regex, lists
 
-from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
+from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
+from clinical_mdr_api.exceptions import ValidationException
 
 
 @composite
@@ -54,7 +55,7 @@ def test__template_vo_from_input_values__success(
 @given(template_string=template_string_with_invalid_syntax())
 def test__template_vo_from_input_values__invalid_syntax__failure(template_string: str):
     # then
-    with pytest.raises(ValueError):
+    with pytest.raises(ValidationException):
         # when
         TemplateVO.from_input_values_2(
             template_name=template_string,
@@ -68,7 +69,7 @@ def test__template_vo_from_input_values__invalid_parameters__failure(
 ):
     print(f"template_string=f{template_string}")
     # then
-    with pytest.raises(ValueError):
+    with pytest.raises(ValidationException):
         # when
         TemplateVO.from_input_values_2(
             template_name=template_string,

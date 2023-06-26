@@ -2,15 +2,6 @@ from typing import Tuple
 
 from neomodel import RelationshipDefinition
 
-from clinical_mdr_api.domain.standard_data_models.master_model import (
-    MasterModelAR,
-    MasterModelMetadataVO,
-    MasterModelVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
 )
@@ -30,6 +21,15 @@ from clinical_mdr_api.domain_repositories.models.standard_data_model import (
 from clinical_mdr_api.domain_repositories.neomodel_ext_item_repository import (
     NeomodelExtBaseRepository,
 )
+from clinical_mdr_api.domains.standard_data_models.master_model import (
+    MasterModelAR,
+    MasterModelMetadataVO,
+    MasterModelVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemStatus,
+    LibraryVO,
+)
 from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.standard_data_models.master_model import MasterModel
 
@@ -47,7 +47,7 @@ class MasterModelRepository(
             "has_latest_master_model_value__extends_version",
         ).fetch_optional_single_relation_of_type(
             {
-                "has_version": ("latest_version", LATEST_VERSION_ORDER_BY),
+                "has_master_model_version": ("latest_version", LATEST_VERSION_ORDER_BY),
             }
         )
 

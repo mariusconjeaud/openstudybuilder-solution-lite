@@ -9,7 +9,7 @@ from clinical_mdr_api.tests.data.odm_xml import (
     export_form,
     export_item,
     export_item_group,
-    export_template,
+    export_study_event,
     export_with_csv,
     export_with_namespace,
 )
@@ -22,7 +22,8 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_ODM_FORMS,
     STARTUP_ODM_ITEM_GROUPS,
     STARTUP_ODM_ITEMS,
-    STARTUP_ODM_TEMPLATES,
+    STARTUP_ODM_METHODS,
+    STARTUP_ODM_STUDY_EVENTS,
     STARTUP_ODM_VENDOR_ATTRIBUTES,
     STARTUP_ODM_VENDOR_ELEMENTS,
     STARTUP_ODM_VENDOR_NAMESPACES,
@@ -40,13 +41,14 @@ class OdmXmlExporterTest(TestCase):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_ODM_FORMAL_EXPRESSIONS)
         db.cypher_query(STARTUP_ODM_CONDITIONS)
+        db.cypher_query(STARTUP_ODM_METHODS)
         db.cypher_query(STARTUP_ODM_ALIASES)
         db.cypher_query(STARTUP_CT_TERM)
         db.cypher_query(STARTUP_UNIT_DEFINITIONS)
         db.cypher_query(STARTUP_ODM_ITEMS)
         db.cypher_query(STARTUP_ODM_ITEM_GROUPS)
         db.cypher_query(STARTUP_ODM_FORMS)
-        db.cypher_query(STARTUP_ODM_TEMPLATES)
+        db.cypher_query(STARTUP_ODM_STUDY_EVENTS)
         db.cypher_query(STARTUP_ODM_VENDOR_NAMESPACES)
         db.cypher_query(STARTUP_ODM_VENDOR_ELEMENTS)
         db.cypher_query(STARTUP_ODM_VENDOR_ATTRIBUTES)
@@ -56,12 +58,12 @@ class OdmXmlExporterTest(TestCase):
 
         self.test_client = TestClient(main.app)
 
-    def test_get_odm_xml_template(self):
+    def test_get_odm_xml_study_event(self):
         response = self.test_client.post(
-            "concepts/odms/metadata/xmls/export?target_uid=odm_template1&target_type=template&stylesheet=file.xsl",
+            "concepts/odms/metadata/xmls/export?target_uid=odm_study_event1&target_type=study_event&stylesheet=file.xsl",
         )
 
-        expected_xml = ET.fromstring(export_template)
+        expected_xml = ET.fromstring(export_study_event)
         actual_xml = ET.fromstring(response.content)
 
         expected_xml.set("FileOID", actual_xml.get("FileOID"))
@@ -126,7 +128,7 @@ class OdmXmlExporterTest(TestCase):
 
     def test_get_odm_xml_with_allowed_namespaces(self):
         response = self.test_client.post(
-            "concepts/odms/metadata/xmls/export?target_uid=odm_template1&target_type=template&allowed_namespaces=prefix",
+            "concepts/odms/metadata/xmls/export?target_uid=odm_study_event1&target_type=study_event&allowed_namespaces=prefix",
         )
 
         expected_xml = ET.fromstring(export_with_namespace)
@@ -141,7 +143,7 @@ class OdmXmlExporterTest(TestCase):
 
     def test_get_odm_xml_with_mapper_csv(self):
         response = self.test_client.post(
-            "concepts/odms/metadata/xmls/export?target_type=template&target_uid=odm_template1",
+            "concepts/odms/metadata/xmls/export?target_type=study_event&target_uid=odm_study_event1",
             files={
                 "mapper_file": (
                     "mapper.csv",
@@ -173,7 +175,7 @@ class OdmXmlExporterTest(TestCase):
 
     def test_get_odm_xml_pdf_version(self):
         response = self.test_client.post(
-            "concepts/odms/metadata/xmls/export?target_type=template&target_uid=odm_template1&pdf=true&stylesheet=blank"
+            "concepts/odms/metadata/xmls/export?target_type=study_event&target_uid=odm_study_event1&pdf=true&stylesheet=blank"
         )
 
         self.assertEqual(response.status_code, 200)
@@ -192,7 +194,7 @@ class OdmXmlExporterTest(TestCase):
 
     def test_throw_exception_if_mapper_is_non_csv(self):
         response = self.test_client.post(
-            "concepts/odms/metadata/xmls/export?target_uid=odm_template1&target_type=template",
+            "concepts/odms/metadata/xmls/export?target_uid=odm_study_event1&target_type=study_event",
             files={
                 "mapper_file": (
                     "mapper.json",
@@ -209,7 +211,7 @@ class OdmXmlExporterTest(TestCase):
 
     def test_throw_exception_if_csv_header_missing(self):
         response = self.test_client.post(
-            "concepts/odms/metadata/xmls/export?target_uid=odm_template1&target_type=template",
+            "concepts/odms/metadata/xmls/export?target_uid=odm_study_event1&target_type=study_event",
             files={
                 "mapper_file": (
                     "mapper.csv",

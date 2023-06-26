@@ -14,26 +14,14 @@ from neomodel import db
 from clinical_mdr_api import config, models
 from clinical_mdr_api.config import DEFAULT_STUDY_FIELD_CONFIG_FILE
 from clinical_mdr_api.domain_repositories.models.standard_data_model import (
-    ClassVariableRoot,
     DataModelIGRoot,
     DataModelRoot,
-    DatasetClassRoot,
-    DatasetRoot,
-    DatasetVariableRoot,
+    Dataset,
+    DatasetClass,
+    DatasetVariable,
+    VariableClass,
 )
 from clinical_mdr_api.models import Activity, ActivityCreateInput, CTCodelist
-from clinical_mdr_api.models.activities.activity_group import (
-    ActivityGroup,
-    ActivityGroupCreateInput,
-)
-from clinical_mdr_api.models.activities.activity_instance import (
-    ActivityInstance,
-    ActivityInstanceCreateInput,
-)
-from clinical_mdr_api.models.activities.activity_sub_group import (
-    ActivitySubGroup,
-    ActivitySubGroupCreateInput,
-)
 from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClass,
     ActivityInstanceClassInput,
@@ -46,28 +34,51 @@ from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
     ActivityItemClass,
     ActivityItemClassCreateInput,
 )
-from clinical_mdr_api.models.compound import Compound, CompoundCreateInput
-from clinical_mdr_api.models.compound_alias import (
+from clinical_mdr_api.models.concepts.activities.activity_group import (
+    ActivityGroup,
+    ActivityGroupCreateInput,
+)
+from clinical_mdr_api.models.concepts.activities.activity_instance import (
+    ActivityInstance,
+    ActivityInstanceCreateInput,
+)
+from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
+    ActivitySubGroup,
+    ActivitySubGroupCreateInput,
+)
+from clinical_mdr_api.models.concepts.compound import Compound, CompoundCreateInput
+from clinical_mdr_api.models.concepts.compound_alias import (
     CompoundAlias,
     CompoundAliasCreateInput,
 )
-from clinical_mdr_api.models.concept import TextValue, TextValueInput
-from clinical_mdr_api.models.configuration import CTConfigPostInput
-from clinical_mdr_api.models.standard_data_models.class_variable import ClassVariable
+from clinical_mdr_api.models.concepts.concept import TextValue, TextValueInput
+from clinical_mdr_api.models.controlled_terminologies.configuration import (
+    CTConfigPostInput,
+)
 from clinical_mdr_api.models.standard_data_models.data_model import DataModel
 from clinical_mdr_api.models.standard_data_models.data_model_ig import DataModelIG
-from clinical_mdr_api.models.standard_data_models.dataset import Dataset
-from clinical_mdr_api.models.standard_data_models.dataset_class import DatasetClass
-from clinical_mdr_api.models.standard_data_models.dataset_variable import (
-    DatasetVariable,
+from clinical_mdr_api.models.standard_data_models.dataset import (
+    Dataset as DatasetAPIModel,
 )
-from clinical_mdr_api.models.study import Study, StudyCreateInput
-from clinical_mdr_api.models.study_disease_milestone import (
+from clinical_mdr_api.models.standard_data_models.dataset_class import (
+    DatasetClass as DatasetClassAPIModel,
+)
+from clinical_mdr_api.models.standard_data_models.dataset_variable import (
+    DatasetVariable as DatasetVariableAPIModel,
+)
+from clinical_mdr_api.models.standard_data_models.variable_class import (
+    VariableClass as VariableClassAPIModel,
+)
+from clinical_mdr_api.models.study_selections.study import Study, StudyCreateInput
+from clinical_mdr_api.models.study_selections.study_disease_milestone import (
     StudyDiseaseMilestone,
     StudyDiseaseMilestoneCreateInput,
 )
-from clinical_mdr_api.models.study_epoch import StudyEpoch, StudyEpochCreateInput
-from clinical_mdr_api.models.study_selection import (
+from clinical_mdr_api.models.study_selections.study_epoch import (
+    StudyEpoch,
+    StudyEpochCreateInput,
+)
+from clinical_mdr_api.models.study_selections.study_selection import (
     EndpointUnitsInput,
     StudyActivitySchedule,
     StudyActivityScheduleCreateInput,
@@ -88,9 +99,22 @@ from clinical_mdr_api.models.study_selection import (
     StudySelectionObjective,
     StudySelectionObjectiveCreateInput,
 )
-from clinical_mdr_api.models.syntax_instances.criteria import CriteriaCreateInput
-from clinical_mdr_api.models.syntax_instances.endpoint import EndpointCreateInput
-from clinical_mdr_api.models.syntax_instances.objective import ObjectiveCreateInput
+from clinical_mdr_api.models.syntax_instances.activity_instruction import (
+    ActivityInstruction,
+    ActivityInstructionCreateInput,
+)
+from clinical_mdr_api.models.syntax_instances.criteria import (
+    Criteria,
+    CriteriaCreateInput,
+)
+from clinical_mdr_api.models.syntax_instances.endpoint import (
+    Endpoint,
+    EndpointCreateInput,
+)
+from clinical_mdr_api.models.syntax_instances.objective import (
+    Objective,
+    ObjectiveCreateInput,
+)
 from clinical_mdr_api.models.syntax_instances.timeframe import (
     Timeframe,
     TimeframeCreateInput,
@@ -127,16 +151,17 @@ from clinical_mdr_api.models.syntax_templates.objective_template import (
     ObjectiveTemplate,
     ObjectiveTemplateCreateInput,
 )
+from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
+    TemplateParameterMultiSelectInput,
+)
+from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
+    MultiTemplateParameterTerm,
+)
 from clinical_mdr_api.models.syntax_templates.timeframe_template import (
     TimeframeTemplate,
     TimeframeTemplateCreateInput,
 )
-from clinical_mdr_api.models.template_parameter_multi_select_input import (
-    TemplateParameterMultiSelectInput,
-)
-from clinical_mdr_api.models.template_parameter_term import MultiTemplateParameterTerm
 from clinical_mdr_api.models.utils import GenericFilteringReturn
-from clinical_mdr_api.services import libraries as library_service
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClassService,
@@ -147,8 +172,8 @@ from clinical_mdr_api.services.biomedical_concepts.activity_item import (
 from clinical_mdr_api.services.biomedical_concepts.activity_item_class import (
     ActivityItemClassService,
 )
-from clinical_mdr_api.services.brand import BrandService
-from clinical_mdr_api.services.clinical_programme import (
+from clinical_mdr_api.services.brands.brand import BrandService
+from clinical_mdr_api.services.clinical_programmes.clinical_programme import (
     create as create_clinical_programme,
 )
 from clinical_mdr_api.services.concepts.activities.activity_group_service import (
@@ -174,23 +199,36 @@ from clinical_mdr_api.services.concepts.simple_concepts.numeric_value_with_unit 
 from clinical_mdr_api.services.concepts.simple_concepts.text_value import (
     TextValueService,
 )
-from clinical_mdr_api.services.configuration import CTConfigService
-from clinical_mdr_api.services.ct_codelist import CTCodelistService
-from clinical_mdr_api.services.ct_codelist_attributes import CTCodelistAttributesService
-from clinical_mdr_api.services.ct_codelist_name import CTCodelistNameService
-from clinical_mdr_api.services.ct_term import CTTermService
-from clinical_mdr_api.services.ct_term_attributes import CTTermAttributesService
-from clinical_mdr_api.services.ct_term_name import CTTermNameService
-from clinical_mdr_api.services.dictionary_codelist_generic_service import (
+from clinical_mdr_api.services.concepts.unit_definitions.unit_definition import (
+    UnitDefinitionService,
+)
+from clinical_mdr_api.services.controlled_terminologies.configuration import (
+    CTConfigService,
+)
+from clinical_mdr_api.services.controlled_terminologies.ct_codelist import (
+    CTCodelistService,
+)
+from clinical_mdr_api.services.controlled_terminologies.ct_codelist_attributes import (
+    CTCodelistAttributesService,
+)
+from clinical_mdr_api.services.controlled_terminologies.ct_codelist_name import (
+    CTCodelistNameService,
+)
+from clinical_mdr_api.services.controlled_terminologies.ct_term import CTTermService
+from clinical_mdr_api.services.controlled_terminologies.ct_term_attributes import (
+    CTTermAttributesService,
+)
+from clinical_mdr_api.services.controlled_terminologies.ct_term_name import (
+    CTTermNameService,
+)
+from clinical_mdr_api.services.dictionaries.dictionary_codelist_generic_service import (
     DictionaryCodelistGenericService as DictionaryCodelistService,
 )
-from clinical_mdr_api.services.dictionary_term_generic_service import (
+from clinical_mdr_api.services.dictionaries.dictionary_term_generic_service import (
     DictionaryTermGenericService as DictionaryTermService,
 )
-from clinical_mdr_api.services.project import ProjectService
-from clinical_mdr_api.services.standard_data_models.class_variable import (
-    ClassVariableService,
-)
+from clinical_mdr_api.services.libraries import libraries as library_service
+from clinical_mdr_api.services.projects.project import ProjectService
 from clinical_mdr_api.services.standard_data_models.data_model import DataModelService
 from clinical_mdr_api.services.standard_data_models.data_model_ig import (
     DataModelIGService,
@@ -202,34 +240,45 @@ from clinical_mdr_api.services.standard_data_models.dataset_class import (
 from clinical_mdr_api.services.standard_data_models.dataset_variable import (
     DatasetVariableService,
 )
-from clinical_mdr_api.services.study import StudyService
-from clinical_mdr_api.services.study_activity_schedule import (
+from clinical_mdr_api.services.standard_data_models.variable_class import (
+    VariableClassService,
+)
+from clinical_mdr_api.services.studies.study import StudyService
+from clinical_mdr_api.services.studies.study_activity_schedule import (
     StudyActivityScheduleService,
 )
-from clinical_mdr_api.services.study_arm_selection import StudyArmSelectionService
-from clinical_mdr_api.services.study_compound_dosing_selection import (
+from clinical_mdr_api.services.studies.study_arm_selection import (
+    StudyArmSelectionService,
+)
+from clinical_mdr_api.services.studies.study_compound_dosing_selection import (
     StudyCompoundDosingSelectionService,
 )
-from clinical_mdr_api.services.study_compound_selection import (
+from clinical_mdr_api.services.studies.study_compound_selection import (
     StudyCompoundSelectionService,
 )
-from clinical_mdr_api.services.study_criteria_selection import (
+from clinical_mdr_api.services.studies.study_criteria_selection import (
     StudyCriteriaSelectionService,
 )
-from clinical_mdr_api.services.study_design_cell import StudyDesignCellService
-from clinical_mdr_api.services.study_disease_milestone import (
+from clinical_mdr_api.services.studies.study_design_cell import StudyDesignCellService
+from clinical_mdr_api.services.studies.study_disease_milestone import (
     StudyDiseaseMilestoneService,
 )
-from clinical_mdr_api.services.study_element_selection import (
+from clinical_mdr_api.services.studies.study_element_selection import (
     StudyElementSelectionService,
 )
-from clinical_mdr_api.services.study_endpoint_selection import (
+from clinical_mdr_api.services.studies.study_endpoint_selection import (
     StudyEndpointSelectionService,
 )
-from clinical_mdr_api.services.study_epoch import StudyEpochService
-from clinical_mdr_api.services.study_objective_selection import (
+from clinical_mdr_api.services.studies.study_epoch import StudyEpochService
+from clinical_mdr_api.services.studies.study_objective_selection import (
     StudyObjectiveSelectionService,
 )
+from clinical_mdr_api.services.syntax_instances.activity_instructions import (
+    ActivityInstructionService,
+)
+from clinical_mdr_api.services.syntax_instances.criteria import CriteriaService
+from clinical_mdr_api.services.syntax_instances.endpoints import EndpointService
+from clinical_mdr_api.services.syntax_instances.objectives import ObjectiveService
 from clinical_mdr_api.services.syntax_instances.timeframes import TimeframeService
 from clinical_mdr_api.services.syntax_pre_instances.activity_instruction_pre_instances import (
     ActivityInstructionPreInstanceService,
@@ -258,7 +307,6 @@ from clinical_mdr_api.services.syntax_templates.objective_templates import (
 from clinical_mdr_api.services.syntax_templates.timeframe_templates import (
     TimeframeTemplateService,
 )
-from clinical_mdr_api.services.unit_definition import UnitDefinitionService
 from clinical_mdr_api.tests.unit.domain.study_definition_aggregate.test_study_metadata import (
     initialize_ct_data_map,
 )
@@ -321,12 +369,16 @@ class TestUtils:
 
     @classmethod
     def verify_exported_data_format(
-        cls, api_client: TestClient, export_format: str, url: str
+        cls,
+        api_client: TestClient,
+        export_format: str,
+        url: str,
+        params: Optional[dict] = None,
     ):
         """Verifies that the specified endpoint returns valid csv/xml/Excel content"""
         headers = {"Accept": export_format}
         log.info("GET %s | %s", url, headers)
-        response = api_client.get(url, headers=headers)
+        response = api_client.get(url, headers=headers, params=params)
 
         assert response.status_code == 200
         assert export_format in response.headers["content-type"]
@@ -351,7 +403,7 @@ class TestUtils:
         Otherwise return random string with optional prefix."""
         return val if val else cls.random_str(max_length, prefix)
 
-    # region Syntax templates
+    # region Syntax Templates
     @classmethod
     def create_template_parameter(cls, name: str) -> None:
         db.cypher_query(f"CREATE (:TemplateParameter {{name:'{name}'}})")
@@ -418,7 +470,7 @@ class TestUtils:
 
         result: ObjectiveTemplate = service.create(payload)
         if approve:
-            service.approve(result.uid)
+            result = service.approve(result.uid)
         return result
 
     @classmethod
@@ -448,9 +500,9 @@ class TestUtils:
             sub_category_uids=sub_category_uids,
         )
 
-        result: ObjectiveTemplate = service.create(payload)
+        result: EndpointTemplate = service.create(payload)
         if approve:
-            service.approve(result.uid)
+            result = service.approve(result.uid)
         return result
 
     @classmethod
@@ -482,7 +534,7 @@ class TestUtils:
 
         result: ActivityInstructionTemplate = service.create(payload)
         if approve:
-            service.approve(result.uid)
+            result = service.approve(result.uid)
         return result
 
     @classmethod
@@ -514,7 +566,7 @@ class TestUtils:
 
         result: CriteriaTemplate = service.create(payload)
         if approve:
-            service.approve(result.uid)
+            result = service.approve(result.uid)
         return result
 
     @classmethod
@@ -534,10 +586,174 @@ class TestUtils:
 
         result: TimeframeTemplate = service.create(payload)
         if approve:
-            service.approve(result.uid)
+            result = service.approve(result.uid)
         return result
 
     # endregion
+
+    # region Syntax Instances
+    @classmethod
+    def create_activity_instruction(
+        cls,
+        activity_instruction_template_uid: Optional[str] = None,
+        library_name: Optional[str] = LIBRARY_NAME,
+        parameter_terms: Optional[List[MultiTemplateParameterTerm]] = None,
+        approve: bool = True,
+    ) -> ActivityInstruction:
+        if not activity_instruction_template_uid:
+            activity_instruction_template_uid = (
+                cls.create_activity_instruction_template(
+                    name="test name",
+                    guidance_text="guidance text",
+                    library_name="Sponsor",
+                    default_parameter_terms=[],
+                    indication_uids=[],
+                    activity_uids=[],
+                    activity_group_uids=[],
+                    activity_subgroup_uids=[],
+                ).uid
+            )
+
+        service = ActivityInstructionService()
+        payload: ActivityInstructionCreateInput = ActivityInstructionCreateInput(
+            activity_instruction_template_uid=activity_instruction_template_uid,
+            library_name=library_name,
+            parameter_terms=parameter_terms,
+        )
+
+        result = service.create(payload)
+        if approve:
+            result: ActivityInstruction = service.approve(result.uid)
+        return result
+
+    @classmethod
+    def create_criteria(
+        cls,
+        criteria_template_uid: Optional[str] = None,
+        library_name: Optional[str] = LIBRARY_NAME,
+        parameter_terms: Optional[List[MultiTemplateParameterTerm]] = None,
+        approve: bool = True,
+    ) -> Criteria:
+        if not criteria_template_uid:
+            criteria_template_uid = cls.create_criteria_template(
+                name="test name",
+                guidance_text="guidance text",
+                study_uid=None,
+                library_name="Sponsor",
+                default_parameter_terms=[],
+                indication_uids=[],
+                category_uids=[],
+                sub_category_uids=[],
+                type_uid=cls.create_ct_term(
+                    sponsor_preferred_name="INCLUSION CRITERIA"
+                ).term_uid,
+            ).uid
+
+        service = CriteriaService()
+        payload: CriteriaCreateInput = CriteriaCreateInput(
+            criteria_template_uid=criteria_template_uid,
+            library_name=library_name,
+            parameter_terms=parameter_terms,
+        )
+
+        result = service.create(payload)
+        if approve:
+            result: Criteria = service.approve(result.uid)
+        return result
+
+    @classmethod
+    def create_endpoint(
+        cls,
+        endpoint_template_uid: Optional[str] = None,
+        library_name: Optional[str] = LIBRARY_NAME,
+        parameter_terms: Optional[List[MultiTemplateParameterTerm]] = None,
+        approve: bool = True,
+    ) -> Endpoint:
+        if not endpoint_template_uid:
+            endpoint_template_uid = cls.create_endpoint_template(
+                name="test name",
+                guidance_text="guidance text",
+                study_uid=None,
+                library_name="Sponsor",
+                default_parameter_terms=[],
+                indication_uids=[],
+                category_uids=[],
+                sub_category_uids=[],
+            ).uid
+
+        service = EndpointService()
+        payload: EndpointCreateInput = EndpointCreateInput(
+            endpoint_template_uid=endpoint_template_uid,
+            library_name=library_name,
+            parameter_terms=parameter_terms,
+        )
+
+        result = service.create(payload)
+        if approve:
+            result: Endpoint = service.approve(result.uid)
+        return result
+
+    @classmethod
+    def create_objective(
+        cls,
+        objective_template_uid: Optional[str] = None,
+        library_name: Optional[str] = LIBRARY_NAME,
+        parameter_terms: Optional[List[MultiTemplateParameterTerm]] = None,
+        approve: bool = True,
+    ) -> Objective:
+        if not objective_template_uid:
+            objective_template_uid = cls.create_objective_template(
+                name="test name",
+                guidance_text="guidance text",
+                study_uid=None,
+                library_name="Sponsor",
+                default_parameter_terms=[],
+                indication_uids=[],
+                category_uids=[],
+            ).uid
+
+        service = ObjectiveService()
+        payload: ObjectiveCreateInput = ObjectiveCreateInput(
+            objective_template_uid=objective_template_uid,
+            library_name=library_name,
+            parameter_terms=parameter_terms,
+        )
+
+        result = service.create(payload)
+        if approve:
+            result: Objective = service.approve(result.uid)
+        return result
+
+    @classmethod
+    def create_timeframe(
+        cls,
+        timeframe_template_uid: Optional[str] = None,
+        library_name: Optional[str] = LIBRARY_NAME,
+        parameter_terms: Optional[List[MultiTemplateParameterTerm]] = None,
+        approve: bool = True,
+    ) -> Timeframe:
+        if not timeframe_template_uid:
+            timeframe_template_uid = cls.create_timeframe_template(
+                name="test name",
+                guidance_text="guidance text",
+                library_name="Sponsor",
+            ).uid
+
+        service = TimeframeService()
+        payload: TimeframeCreateInput = TimeframeCreateInput(
+            timeframe_template_uid=timeframe_template_uid,
+            library_name=library_name,
+            parameter_terms=parameter_terms,
+        )
+
+        result = service.create(payload)
+        if approve:
+            result: Timeframe = service.approve(result.uid)
+        return result
+
+    # endregion
+
+    # region Syntax Pre-Instances
 
     @classmethod
     def create_activity_instruction_pre_instance(
@@ -549,6 +765,7 @@ class TestUtils:
         activity_group_uids: Optional[List[str]] = None,
         activity_subgroup_uids: Optional[List[str]] = None,
         library_name: Optional[str] = LIBRARY_NAME,
+        approve: bool = True,
     ) -> ActivityInstructionPreInstance:
         if not template_uid:
             activity_group_uid = cls.create_activity_group(name="test").uid
@@ -583,6 +800,9 @@ class TestUtils:
         result: ActivityInstructionPreInstance = service.create(
             payload, template_uid=template_uid
         )
+
+        if approve:
+            result = service.approve(result.uid)
         return result
 
     @classmethod
@@ -594,6 +814,7 @@ class TestUtils:
         category_uids: Optional[List[str]] = None,
         sub_category_uids: Optional[List[str]] = None,
         library_name: Optional[str] = LIBRARY_NAME,
+        approve: bool = True,
     ) -> EndpointPreInstance:
         if not template_uid:
             template_uid = cls.create_endpoint_template(
@@ -617,6 +838,9 @@ class TestUtils:
         )
 
         result: EndpointPreInstance = service.create(payload, template_uid=template_uid)
+
+        if approve:
+            result = service.approve(result.uid)
         return result
 
     @classmethod
@@ -628,6 +852,7 @@ class TestUtils:
         indication_uids: Optional[List[str]] = None,
         category_uids: Optional[List[str]] = None,
         library_name: Optional[str] = LIBRARY_NAME,
+        approve: bool = True,
     ) -> ObjectivePreInstance:
         if not template_uid:
             template_uid = cls.create_objective_template(
@@ -652,6 +877,9 @@ class TestUtils:
         result: ObjectivePreInstance = service.create(
             payload, template_uid=template_uid
         )
+
+        if approve:
+            result = service.approve(result.uid)
         return result
 
     @classmethod
@@ -663,6 +891,7 @@ class TestUtils:
         category_uids: Optional[List[str]] = None,
         sub_category_uids: Optional[List[str]] = None,
         library_name: Optional[str] = LIBRARY_NAME,
+        approve: bool = True,
     ) -> CriteriaPreInstance:
         if not template_uid:
             template_uid = cls.create_criteria_template(
@@ -685,7 +914,12 @@ class TestUtils:
         )
 
         result: CriteriaPreInstance = service.create(payload, template_uid=template_uid)
+
+        if approve:
+            result = service.approve(result.uid)
         return result
+
+    # endregion
 
     @classmethod
     def create_compound(
@@ -712,6 +946,7 @@ class TestUtils:
         dosage_form_uids=None,
         route_of_administration_uids=None,
         half_life_uid=None,
+        approve: bool = False,
     ) -> Compound:
         service = CompoundService()
         payload: CompoundCreateInput = CompoundCreateInput(
@@ -750,6 +985,8 @@ class TestUtils:
         )
 
         result: Compound = service.create(payload)
+        if approve:
+            service.approve(result.uid)
         return result
 
     @classmethod
@@ -762,6 +999,7 @@ class TestUtils:
         library_name=LIBRARY_NAME,
         is_preferred_synonym=None,
         compound_uid=None,
+        approve: bool = False,
     ) -> CompoundAlias:
         service = CompoundAliasService()
         payload: CompoundAliasCreateInput = CompoundAliasCreateInput(
@@ -779,6 +1017,8 @@ class TestUtils:
         )
 
         result: CompoundAlias = service.create(payload)
+        if approve:
+            service.approve(result.uid)
         return result
 
     @classmethod
@@ -849,6 +1089,8 @@ class TestUtils:
         name: str,
         order: int,
         mandatory: bool,
+        role_uid: str,
+        data_type_uid: str,
         activity_instance_class_uids: List[str],
         library_name: Optional[str] = LIBRARY_NAME,
         approve: bool = True,
@@ -859,6 +1101,8 @@ class TestUtils:
                 name=name,
                 order=order,
                 mandatory=mandatory,
+                role_uid=role_uid,
+                data_type_uid=data_type_uid,
                 activity_instance_class_uids=activity_instance_class_uids,
                 library_name=library_name,
             )
@@ -1092,25 +1336,6 @@ class TestUtils:
         result: StudySelectionCriteria = service.make_selection_create_criteria(
             study_uid=study_uid, selection_create_input=criteria_create_input
         )
-        return result
-
-    @classmethod
-    def create_timeframe(
-        cls,
-        timeframe_template_uid: str,
-        library_name: Optional[str] = LIBRARY_NAME,
-        parameter_terms: Optional[List[TemplateParameterMultiSelectInput]] = None,
-    ) -> Timeframe:
-        service = TimeframeService(AUTHOR)
-        if parameter_terms is None:
-            parameter_terms = []
-        timeframe_create_input: TimeframeCreateInput = TimeframeCreateInput(
-            timeframe_template_uid=timeframe_template_uid,
-            library_name=library_name,
-            parameter_terms=cls._complete_parameter_terms(parameter_terms),
-        )
-
-        result: Timeframe = service.create(timeframe_create_input)
         return result
 
     @classmethod
@@ -1815,6 +2040,7 @@ class TestUtils:
         cls,
         name: str = "name",
         description: str = "description",
+        version_number: str = "1",
         implementation_guides=None,
         library_name: str = LIBRARY_NAME,
     ) -> DataModel:
@@ -1824,6 +2050,7 @@ class TestUtils:
         :param name
         :param description
         :param implementation_guides
+        :param version_number
         :param library_name
         """
 
@@ -1832,7 +2059,7 @@ class TestUtils:
         create_data_model = (
             """
             MERGE (data_model_root:DataModelRoot {uid: $data_model_uid})-[:LATEST]->(data_model_value:DataModelValue
-            {name: $name, description: $description})
+            {name: $name, description: $description, version_number: $version_number})
             MERGE (data_model_root)-[final:LATEST_FINAL]->(data_model_value)
             MERGE (data_model_root)-[hv:HAS_VERSION]->(data_model_value)
             WITH data_model_root, data_model_value, final, hv
@@ -1856,6 +2083,7 @@ class TestUtils:
                 "description": description,
                 "implementation_guides": implementation_guides,
                 "library_name": library_name,
+                "version_number": version_number,
             },
         )
         return DataModelService().get_by_uid(uid=data_model_uid)
@@ -1864,6 +2092,7 @@ class TestUtils:
     def create_data_model_ig(
         cls,
         name: str = "name",
+        version_number: str = "1",
         description: str = "description",
         implemented_data_model: Optional[str] = None,
         library_name: str = LIBRARY_NAME,
@@ -1874,12 +2103,13 @@ class TestUtils:
         :param name
         :param description
         :param implemented_data_model
+        :param version_number
         :param library_name
         """
         create_data_model_ig = (
             """
             MERGE (data_model_ig_root:DataModelIGRoot {uid: $data_model_ig_uid})-[:LATEST]->(data_model_ig_value:DataModelIGValue
-            {name: $name, description: $description})
+            {name: $name, description: $description, version_number: $version_number})
             MERGE (data_model_ig_root)-[final:LATEST_FINAL]->(data_model_ig_value)
             MERGE (data_model_ig_root)-[hv:HAS_VERSION]->(data_model_ig_value)
             WITH data_model_ig_root, data_model_ig_value, final, hv
@@ -1901,6 +2131,7 @@ class TestUtils:
                 "description": description,
                 "implemented_data_model": implemented_data_model,
                 "library_name": library_name,
+                "version_number": version_number,
             },
         )
         return DataModelIGService().get_by_uid(uid=data_model_ig_uid)
@@ -1914,7 +2145,7 @@ class TestUtils:
         description: str = "description",
         title: str = "title",
         library_name: str = LIBRARY_NAME,
-    ) -> DatasetClass:
+    ) -> DatasetClassAPIModel:
         """
         Method uses cypher query to create DatasetClass nodes because we don't have POST endpoints to instantiate these entities.
 
@@ -1926,25 +2157,16 @@ class TestUtils:
         :param library_name
         """
 
-        create_dataset_class = (
-            """
-            MERGE (dataset_class_root:DatasetClassRoot {uid: $implemented_dataset_class_name})-[:LATEST]->(dataset_class_value:DatasetClassValue
+        create_dataset_class = """
+            MERGE (dataset_class_root:DatasetClass {uid: $implemented_dataset_class_name})-[:HAS_INSTANCE]->(dataset_class_value:DatasetClassInstance
             {label: $label, description: $description, title: $title})
-            MERGE (dataset_class_root)-[final:LATEST_FINAL]->(dataset_class_value)
-            MERGE (dataset_class_root)-[hv:HAS_VERSION]->(dataset_class_value)
-            WITH dataset_class_root, dataset_class_value, final, hv
+            WITH dataset_class_root, dataset_class_value
             MATCH (data_model_catalogue:DataModelCatalogue {name: $data_model_catalogue_name})
             MERGE (data_model_catalogue)-[:HAS_DATASET_CLASS]->(dataset_class_root)
-            //MATCH (library:Library {name:$library_name})
-            //WITH library, dataset_class_root, dataset_class_value, final, hv
-            //MERGE (library)-[:CONTAINS_DATASET_CLASS]->(dataset_class_root)
-            """
-            + cls.set_final_props("hv")
-            + """ WITH dataset_class_root, dataset_class_value, final
+            WITH dataset_class_root, dataset_class_value
             MATCH (data_model_root:DataModelRoot {uid:$data_model_uid})-[:LATEST]->(data_model_value)
             MERGE (dataset_class_value)<-[:HAS_DATASET_CLASS]-(data_model_value)"""
-        )
-        dataset_class_uid = DatasetClassRoot.get_next_free_uid_and_increment_counter()
+        dataset_class_uid = DatasetClass.get_next_free_uid_and_increment_counter()
         db.cypher_query(
             create_dataset_class,
             {
@@ -1963,17 +2185,19 @@ class TestUtils:
     def create_dataset(
         cls,
         data_model_ig_uid: str,
+        data_model_ig_version_number: str,
         implemented_dataset_class_name: str,
         data_model_catalogue_name: str,
         label: str = "label",
         description: str = "description",
         title: str = "title",
         library_name: str = LIBRARY_NAME,
-    ) -> Dataset:
+    ) -> DatasetAPIModel:
         """
         Method uses cypher query to create Dataset nodes because we don't have POST endpoints to instantiate these entities.
 
         :param data_model_ig_uid
+        :param data_model_ig_version_number
         :param implemented_dataset_class_name
         :param data_model_catalogue_name
         :param label
@@ -1982,28 +2206,20 @@ class TestUtils:
         :param library_name
         """
 
-        create_dataset = (
-            """
-            MERGE (dataset_root:DatasetRoot {uid: $dataset_uid})-[:LATEST]->(dataset_value:DatasetValue
+        create_dataset = """
+            MERGE (dataset_root:Dataset {uid: $dataset_uid})-[:HAS_INSTANCE]->(dataset_value:DatasetInstance
             {label: $label, description: $description, title: $title})
-            MERGE (dataset_root)-[final:LATEST_FINAL]->(dataset_value)
-            MERGE (dataset_root)-[hv:HAS_VERSION]->(dataset_value)
-            WITH dataset_root, dataset_value, final, hv
+            WITH dataset_root, dataset_value
             MATCH (data_model_catalogue:DataModelCatalogue {name: $data_model_catalogue_name})
             MERGE (data_model_catalogue)-[:HAS_DATASET]->(dataset_root)
-            //MATCH (library:Library {name:$library_name})
-            //WITH library, dataset_root, dataset_value, final, hv
-            //MERGE (library)-[:CONTAINS_DATASET]->(dataset_root)
-            """
-            + cls.set_final_props("hv")
-            + """ WITH dataset_root, dataset_value, final
+            WITH dataset_root, dataset_value
             MATCH (data_model_ig_root:DataModelIGRoot {uid:$data_model_ig_uid})-[:LATEST]->(data_model_ig_value)
             MERGE (dataset_value)<-[:HAS_DATASET]-(data_model_ig_value)
-            WITH dataset_root, dataset_value
-            MATCH (dataset_class_root:DatasetClassRoot {uid: $implemented_dataset_class_name})-[:LATEST]->(dataset_class_value)
-            MERGE (dataset_value)-[:IMPLEMENTS_DATASET_CLASS]->(dataset_class_value)"""
-        )
-        dataset_uid = DatasetRoot.get_next_free_uid_and_increment_counter()
+            WITH dataset_root, dataset_value, data_model_ig_value
+            MATCH (dataset_class_root:DatasetClass {uid: $implemented_dataset_class_name})-[:HAS_INSTANCE]->(dataset_class_value)
+            MERGE (dataset_value)-[implements:IMPLEMENTS_DATASET_CLASS]->(dataset_class_value)
+            SET implements.version_number=data_model_ig_value.version_number"""
+        dataset_uid = Dataset.get_next_free_uid_and_increment_counter()
         db.cypher_query(
             create_dataset,
             {
@@ -2017,7 +2233,11 @@ class TestUtils:
                 "library_name": library_name,
             },
         )
-        return DatasetService().get_by_uid(uid=dataset_uid)
+        return DatasetService().get_by_uid(
+            uid=dataset_uid,
+            data_model_ig_name=data_model_ig_uid,
+            data_model_ig_version=data_model_ig_version_number,
+        )
 
     @classmethod
     def create_disease_milestone(
@@ -2043,6 +2263,8 @@ class TestUtils:
         cls,
         dataset_class_uid: str,
         data_model_catalogue_name: str,
+        data_model_name: str,
+        data_model_version: str,
         label: str = "label",
         description: str = "description",
         title: str = "title",
@@ -2053,12 +2275,14 @@ class TestUtils:
         simple_datatype: str = "simple_datatype",
         role: str = "role",
         library_name: str = LIBRARY_NAME,
-    ) -> ClassVariable:
+    ) -> VariableClassAPIModel:
         """
-        Method uses cypher query to create ClassVariable nodes because we don't have POST endpoints to instantiate these entities.
+        Method uses cypher query to create VariableClass nodes because we don't have POST endpoints to instantiate these entities.
 
         :param dataset_class_uid
         :param data_model_catalogue_name
+        :param data_model_name
+        :param data_model_version
         :param label
         :param description
         :param title
@@ -2071,27 +2295,21 @@ class TestUtils:
         :param library_name
         """
 
-        create_class_variable = (
-            """
-            MERGE (class_variable_root:ClassVariableRoot {uid: $class_variable_uid})-[:LATEST]->(class_variable_value:ClassVariableValue
+        create_class_variable = """
+            MERGE (class_variable_root:VariableClass {uid: $class_variable_uid})-[:HAS_INSTANCE]->(class_variable_value:VariableClassInstance
             {label: $label, description: $description, title: $title,
             implementation_notes: $implementation_notes, mapping_instructions: $mapping_instructions, prompt: $prompt,
             question_text: $question_text, simple_datatype: $simple_datatype, role: $role})
-            MERGE (class_variable_root)-[final:LATEST_FINAL]->(class_variable_value)
-            MERGE (class_variable_root)-[hv:HAS_VERSION]->(class_variable_value)
-            WITH class_variable_root, class_variable_value, final, hv
+            WITH class_variable_root, class_variable_value
             MATCH (data_model_catalogue:DataModelCatalogue {name: $data_model_catalogue_name})
-            MERGE (data_model_catalogue)-[:HAS_CLASS_VARIABLE]->(class_variable_root)
-            //MATCH (library:Library {name:$library_name})
-            //WITH library, class_variable_root, class_variable_value, final
-            //MERGE (library)-[:CONTAINS_CLASS_VARIABLE]->(class_variable_root)
-            """
-            + cls.set_final_props("hv")
-            + """ WITH class_variable_root, class_variable_value, final
-            MATCH (dataset_class_root:DatasetClassRoot {uid:$dataset_class_uid})-[:LATEST]->(dataset_class_value)
-            MERGE (class_variable_value)<-[:HAS_CLASS_VARIABLE]-(dataset_class_value)"""
-        )
-        class_variable_uid = ClassVariableRoot.get_next_free_uid_and_increment_counter()
+            MERGE (data_model_catalogue)-[:HAS_VARIABLE_CLASS]->(class_variable_root)
+            WITH class_variable_root, class_variable_value
+            MATCH (dataset_class_root:DatasetClass {uid:$dataset_class_uid})-[:HAS_INSTANCE]->(dataset_class_value)
+            MERGE (class_variable_value)<-[has_class_variable:HAS_VARIABLE_CLASS]-(dataset_class_value)
+            WITH dataset_class_value, has_class_variable
+            MATCH (data_model_value:DataModelValue)-[:HAS_DATASET_CLASS]->(dataset_class_value)
+            SET has_class_variable.version_number = data_model_value.version_number"""
+        class_variable_uid = VariableClass.get_next_free_uid_and_increment_counter()
         db.cypher_query(
             create_class_variable,
             {
@@ -2110,13 +2328,19 @@ class TestUtils:
                 "library_name": library_name,
             },
         )
-        return ClassVariableService().get_by_uid(uid=class_variable_uid)
+        return VariableClassService().get_by_uid(
+            uid=class_variable_uid,
+            data_model_name=data_model_name,
+            data_model_version=data_model_version,
+        )
 
     @classmethod
     def create_dataset_variable(
         cls,
         dataset_uid: str,
         data_model_catalogue_name: str,
+        data_model_ig_name: str,
+        data_model_ig_version: str,
         class_variable_uid: Optional[str] = None,
         label: str = "label",
         description: str = "description",
@@ -2125,12 +2349,14 @@ class TestUtils:
         role: str = "role",
         core: str = "core",
         library_name: str = LIBRARY_NAME,
-    ) -> DatasetVariable:
+    ) -> DatasetVariableAPIModel:
         """
         Method uses cypher query to create DatasetVariable nodes because we don't have POST endpoints to instantiate these entities.
 
         :param dataset_uid
         :param data_model_catalogue_name
+        :param data_model_ig_name
+        :param data_model_ig_version
         :param class_variable_uid
         :param label
         :param description
@@ -2141,31 +2367,23 @@ class TestUtils:
         :param library_name
         """
 
-        create_dataset_variable = (
-            """
-            MERGE (dataset_variable_root:DatasetVariableRoot {uid: $dataset_variable_uid})-[:LATEST]->(dataset_variable_value:DatasetVariableValue
+        create_dataset_variable = """
+            MERGE (dataset_variable_root:DatasetVariable {uid: $dataset_variable_uid})-[:HAS_INSTANCE]->(dataset_variable_value:DatasetVariableInstance
             {label: $label, description: $description, title: $title,
             simple_datatype: $simple_datatype, role: $role, core: $core})
-            MERGE (dataset_variable_root)-[final:LATEST_FINAL]->(dataset_variable_value)
-            MERGE (dataset_variable_root)-[hv:HAS_VERSION]->(dataset_variable_value)
-            WITH dataset_variable_root, dataset_variable_value, final, hv
+            WITH dataset_variable_root, dataset_variable_value
             MATCH (data_model_catalogue:DataModelCatalogue {name: $data_model_catalogue_name})
             MERGE (data_model_catalogue)-[:HAS_DATASET_VARIABLE]->(dataset_variable_root)
-            //MATCH (library:Library {name:$library_name})
-            //WITH library, dataset_variable_root, dataset_variable_value, final
-            //MERGE (library)-[:CONTAINS_DATASET_VARIABLE]->(dataset_variable_root)
-            """
-            + cls.set_final_props("hv")
-            + """ WITH dataset_variable_root, dataset_variable_value, final
-            MATCH (dataset_root:DatasetRoot {uid:$dataset_uid})-[:LATEST]->(dataset_value)
-            MERGE (dataset_variable_value)<-[:HAS_DATASET_VARIABLE]-(dataset_value)
             WITH dataset_variable_root, dataset_variable_value
-            MATCH (class_variable_root:ClassVariableRoot {uid: $class_variable_uid})-[:LATEST]->(class_variable_value)
-            MERGE (dataset_variable_value)-[:IMPLEMENTS_VARIABLE]->(class_variable_value)"""
-        )
-        dataset_variable_uid = (
-            DatasetVariableRoot.get_next_free_uid_and_increment_counter()
-        )
+            MATCH (dataset_root:Dataset {uid:$dataset_uid})-[:HAS_INSTANCE]->(dataset_value)
+            MERGE (dataset_variable_value)<-[has_dataset_variable:HAS_DATASET_VARIABLE]-(dataset_value)
+            WITH dataset_variable_root, dataset_variable_value, dataset_value, has_dataset_variable
+            MATCH (class_variable_root:VariableClass {uid: $class_variable_uid})-[:HAS_INSTANCE]->(class_variable_value)
+            MERGE (dataset_variable_value)-[:IMPLEMENTS_VARIABLE]->(class_variable_value)
+            WITH *
+            MATCH (dataset_value)<-[:HAS_DATASET]-(data_model_ig_value:DataModelIGValue)
+            SET has_dataset_variable.version_number = data_model_ig_value.version_number"""
+        dataset_variable_uid = DatasetVariable.get_next_free_uid_and_increment_counter()
         db.cypher_query(
             create_dataset_variable,
             {
@@ -2182,7 +2400,11 @@ class TestUtils:
                 "library_name": library_name,
             },
         )
-        return DatasetVariableService().get_by_uid(uid=dataset_variable_uid)
+        return DatasetVariableService().get_by_uid(
+            uid=dataset_variable_uid,
+            data_model_ig_name=data_model_ig_name,
+            data_model_ig_version=data_model_ig_version,
+        )
 
     @classmethod
     def create_study_epoch(

@@ -10,6 +10,7 @@
       </v-btn>
     </v-card-actions>
     <v-card-text>
+      <p>{{ $t('About.about_release_number') }} {{ $config.RELEASE_VERSION_NUMBER }}</p>
       <p>{{ $t('About.components_list') }} {{ $config.STUDYBUILDER_VERSION }}</p>
       <p>{{ $t('About.header') }}</p>
       <v-simple-table>
@@ -74,7 +75,7 @@ export default {
           name: this.$t('About.documentation-portal'),
           description: this.$t('About.documentation-portal_description'),
           build_number: this.$config.DOCUMENTATION_PORTAL_BUILD_NUMBER,
-          component: 'documentation_portal'
+          component: 'documentation-portal'
         },
         {
           name: this.$t('About.clinical-mdr-api'),
@@ -103,6 +104,12 @@ export default {
           description: this.$t('About.neo4j-mdr-db_description'),
           build_number: this.$config.NEO4J_MDR_BUILD_NUMBER,
           component: 'neo4j-mdr-db'
+        },
+        {
+          name: this.$t('About.studybuilder-export'),
+          description: this.$t('About.studybuilder-export_description'),
+          build_number: this.$config.STUDYBUILDER_EXPORT_BUILD_NUMBER,
+          component: 'studybuilder-export'
         }
       ]
     }
@@ -117,7 +124,7 @@ export default {
     async fetchFiles () {
       const components = [
         'studybuilder', 'documentation-portal', 'clinical-mdr-api', 'data-import', 'mdr-standards-import',
-        'neo4j-mdr-db'
+        'neo4j-mdr-db', 'studybuilder-export'
       ]
       const url = (process.env.NODE_ENV === 'development') ? '' : `https://${location.host}`
       for (const component of components) {

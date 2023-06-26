@@ -2,13 +2,13 @@ import unittest
 from typing import Collection, Optional, Sequence
 from unittest.mock import Mock, patch
 
-from clinical_mdr_api.domain.controlled_terminology.ct_catalogue import CTCatalogueAR
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_catalogue_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_catalogue_repository import (
     CTCatalogueRepository,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTCatalogue,
 )
+from clinical_mdr_api.domains.controlled_terminologies.ct_catalogue import CTCatalogueAR
 from clinical_mdr_api.tests.unit.domain.utils import random_str
 
 

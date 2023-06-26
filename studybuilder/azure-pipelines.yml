@@ -1,3 +1,7 @@
+#############################################################################
+####      Build validation, required to pass before merging a PR        #####
+#############################################################################
+
 # Node.js with Vue
 # Specify an automatic trigger for executing this pipeline
 trigger:

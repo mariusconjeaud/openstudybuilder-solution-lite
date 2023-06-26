@@ -46,17 +46,11 @@ export default (basePath) => {
     preValidate (data) {
       return repository.post(`${basePath}/pre-validate`, data)
     },
-    addDefaultParameterValuesSet (uid, data) {
-      return repository.patch(`${basePath}/${uid}/default-parameter-values`, { defaultParameterValues: data })
-    },
-    editDefaultParameterValuesSet (uid, setNumber, data) {
-      return repository.patch(`${basePath}/${uid}/default-parameter-values`, { setNumber, defaultParameterValues: data })
-    },
-    deleteDefaultParameterValuesSet (uid, setNumber) {
-      return repository.patch(`${basePath}/${uid}/default-parameter-values`, { setNumber: parseInt(setNumber), defaultParameterValues: [] })
-    },
     updateIndexings (uid, data) {
       return repository.patch(`${basePath}/${uid}/indexings`, data)
+    },
+    addPreInstance (uid, data) {
+      return repository.post(`${basePath}/${uid}/pre-instances`, data)
     }
   }
 }

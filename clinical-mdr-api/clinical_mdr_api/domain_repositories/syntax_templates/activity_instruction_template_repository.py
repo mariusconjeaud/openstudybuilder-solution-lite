@@ -1,10 +1,5 @@
 from typing import Optional
 
-from clinical_mdr_api.domain.syntax_templates.activity_instruction_template import (
-    ActivityInstructionTemplateAR,
-)
-from clinical_mdr_api.domain.syntax_templates.template import InstantiationCountsVO
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
@@ -16,6 +11,11 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
 from clinical_mdr_api.domain_repositories.syntax_templates.generic_syntax_template_repository import (
     GenericSyntaxTemplateRepository,
 )
+from clinical_mdr_api.domains.syntax_templates.activity_instruction_template import (
+    ActivityInstructionTemplateAR,
+)
+from clinical_mdr_api.domains.syntax_templates.template import InstantiationCountsVO
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 
 
 class ActivityInstructionTemplateRepository(
@@ -34,11 +34,12 @@ class ActivityInstructionTemplateRepository(
         library: Library,
         relationship: VersionRelationship,
         value: ActivityInstructionTemplateValue,
-        study_count: Optional[int] = None,
+        study_count: int = 0,
         counts: Optional[InstantiationCountsVO] = None,
     ) -> ActivityInstructionTemplateAR:
         return ActivityInstructionTemplateAR.from_repository_values(
             uid=root.uid,
+            sequence_id=root.sequence_id,
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
                 is_library_editable_callback=(lambda _: library.is_editable),
@@ -58,24 +59,25 @@ class ActivityInstructionTemplateRepository(
         * Attaching root node to indication nodes
         * Attaching root node to activity, activity group, activity sub group nodes
         """
-        item = super()._create(item)
-        root = self.root_class.nodes.get(uid=item.uid)
+        root, item = super()._create(item)
 
         if item.indications:
             for indication in item.indications:
-                indication = self._get_indication(indication.uid)
-                root.has_indication.connect(indication)
+                if indication:
+                    root.has_indication.connect(self._get_indication(indication.uid))
         if item.activities:
             for activity in item.activities:
-                activity = self._get_activity(activity.uid)
-                root.has_activity.connect(activity)
+                if activity:
+                    root.has_activity.connect(self._get_activity(activity.uid))
         if item.activity_groups:
             for group in item.activity_groups:
-                group = self._get_activity_group(group.uid)
-                root.has_activity_group.connect(group)
+                if group:
+                    root.has_activity_group.connect(self._get_activity_group(group.uid))
         if item.activity_subgroups:
             for group in item.activity_subgroups:
-                group = self._get_activity_subgroup(group.uid)
-                root.has_activity_subgroup.connect(group)
+                if group:
+                    root.has_activity_subgroup.connect(
+                        self._get_activity_subgroup(group.uid)
+                    )
 
         return item

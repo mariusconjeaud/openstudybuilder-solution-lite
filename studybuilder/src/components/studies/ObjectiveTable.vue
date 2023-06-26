@@ -114,18 +114,11 @@
       class="fullscreen-dialog"
       />
   </v-dialog>
-  <v-dialog v-model="showHistory"
-            @keydown.esc="closeHistory"
-            persistent
-            max-width="1200px">
-    <history-table
-      :title="studyObjectiveHistoryTitle"
-      @close="closeHistory"
-      :headers="headers"
-      :items="objectiveHistoryItems"
-      :html-fields="historyHtmlFields"
-      />
-  </v-dialog>
+  <objective-edit-form
+    :open="showEditForm"
+    @close="closeEditForm"
+    :study-objective="selectedObjective"
+    />
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
   <v-snackbar
     v-model="snackbar"
@@ -146,8 +139,8 @@ import study from '@/api/study'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
 import NNTable from '@/components/tools/NNTable'
+import ObjectiveEditForm from '@/components/studies/ObjectiveEditForm'
 import ObjectiveForm from '@/components/studies/ObjectiveForm'
-import HistoryTable from '@/components/tools/HistoryTable'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import statuses from '@/constants/statuses'
 import filteringParameters from '@/utils/filteringParameters'
@@ -157,8 +150,8 @@ export default {
     ActionsMenu,
     draggable,
     NNParameterHighlighter,
+    ObjectiveEditForm,
     ObjectiveForm,
-    HistoryTable,
     NNTable,
     ConfirmDialog
   },
@@ -202,12 +195,6 @@ export default {
           click: this.editObjective
         },
         {
-          label: this.$t('StudyObjectivesTable.edit_template_text'),
-          icon: 'mdi-pencil',
-          iconColor: 'primary',
-          click: this.cloneObjective
-        },
-        {
           label: this.$t('_global.delete'),
           icon: 'mdi-delete',
           iconColor: 'error',
@@ -236,6 +223,7 @@ export default {
       objectiveHistoryItems: [],
       selectedObjective: null,
       selectedStudyObjective: null,
+      showEditForm: false,
       showForm: false,
       showModForm: false,
       snackbar: false,
@@ -324,6 +312,10 @@ export default {
       this.cloneMode = false
       this.selectedObjective = null
     },
+    closeEditForm () {
+      this.showEditForm = false
+      this.selectedObjective = null
+    },
     async deleteStudyObjective (studyObjective) {
       const options = { type: 'warning' }
       const objective = studyObjective.objective ? studyObjective.objective.name_plain : '(unnamed)'
@@ -339,12 +331,7 @@ export default {
     },
     editObjective (objective) {
       this.selectedObjective = objective
-      this.showForm = true
-    },
-    cloneObjective (objective) {
-      this.selectedObjective = objective
-      this.cloneMode = true
-      this.showForm = true
+      this.showEditForm = true
     },
     closeHistory () {
       this.selectedStudyObjective = null

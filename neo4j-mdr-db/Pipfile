@@ -12,7 +12,9 @@ pylint = "*"
 black = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.11"
 
 [scripts]
 init_neo4j = "python init_neo4j.py"
+export_to_cypher = "python export_to_cypher.py"
+import_from_cypher = "python import_from_cypher.py"

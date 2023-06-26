@@ -2,15 +2,6 @@ from typing import Optional
 
 from neomodel import db
 
-from clinical_mdr_api.domain.concepts.simple_concepts.lag_time import (
-    LagTimeAR,
-    LagTimeVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemMetadataVO,
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.simple_concepts.numeric_value_with_unit_repository import (
     NumericValueWithUnitRepository,
 )
@@ -26,7 +17,16 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
-from clinical_mdr_api.models.concept import LagTime as LagTimeAPIModel
+from clinical_mdr_api.domains.concepts.simple_concepts.lag_time import (
+    LagTimeAR,
+    LagTimeVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+    LibraryVO,
+)
+from clinical_mdr_api.models.concepts.concept import LagTime as LagTimeAPIModel
 
 
 class LagTimeRepository(NumericValueWithUnitRepository):

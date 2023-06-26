@@ -1,11 +1,11 @@
-from clinical_mdr_api.domain.concepts.activities.activity_sub_group import (
-    ActivitySubGroupAR,
-    ActivitySubGroupVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.activities.activity_sub_group_repository import (
     ActivitySubGroupRepository,
 )
-from clinical_mdr_api.models.activities.activity_sub_group import (
+from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
+    ActivitySubGroupAR,
+    ActivitySubGroupVO,
+)
+from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
     ActivitySubGroup,
     ActivitySubGroupEditInput,
     ActivitySubGroupInput,

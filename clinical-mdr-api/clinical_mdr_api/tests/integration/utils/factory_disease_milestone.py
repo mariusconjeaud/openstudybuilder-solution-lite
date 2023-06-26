@@ -1,7 +1,7 @@
-from clinical_mdr_api.models.study_disease_milestone import (
+from clinical_mdr_api.models.study_selections.study_disease_milestone import (
     StudyDiseaseMilestoneCreateInput,
 )
-from clinical_mdr_api.services.study_disease_milestone import (
+from clinical_mdr_api.services.studies.study_disease_milestone import (
     StudyDiseaseMilestoneService,
 )
 from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology import (

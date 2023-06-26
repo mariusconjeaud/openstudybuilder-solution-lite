@@ -3,16 +3,16 @@ from typing import Optional
 from neomodel import db
 
 from clinical_mdr_api import exceptions
-from clinical_mdr_api.domain.concepts.activities.activity import ActivityAR, ActivityVO
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.activities.activity_repository import (
     ActivityRepository,
 )
+from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR, ActivityVO
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemStatus,
+    LibraryVO,
+)
 from clinical_mdr_api.exceptions import NotFoundException
-from clinical_mdr_api.models.activities.activity import (
+from clinical_mdr_api.models.concepts.activities.activity import (
     Activity,
     ActivityEditInput,
     ActivityFromRequestInput,
@@ -168,9 +168,9 @@ class ActivityService(ConceptGenericService[ActivityAR]):
             raise exceptions.ValidationException(value_error.args[0])
 
     def get_activity_overview(self, activity_uid: str) -> ActivityOverview:
-        if not self.repository.final_concept_exists(uid=activity_uid):
+        if not self.repository.exists_by("uid", activity_uid, True):
             raise NotFoundException(
-                f"Cannot find Activity with the following uid ({activity_uid}) in status (Final)"
+                f"Cannot find Activity with the following uid ({activity_uid})"
             )
         overview = self._repos.activity_repository.get_activity_overview(
             uid=activity_uid

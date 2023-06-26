@@ -8,6 +8,8 @@ parameters:
 steps:
 
   - script: |
+      set -ex
+      
       # Ensure none of the current composed services are running
       docker compose down --volumes
   
@@ -21,13 +23,21 @@ steps:
       azureSubscription: ${{parameters.SERVICE_CONN}}
       scriptType: bash
       scriptLocation: inlineScript
-      inlineScript: |
+      inlineScript: >-
         az acr login -n '$(azmd.acrname)'
 
   - script: |
-      docker compose build api --build-arg BUILD_TARGET=prod --build-arg PYTHON_IMAGE=$(azmd.acrname).azurecr.io/novo-python-3-7-12-slim:latest --progress=plain
+      set -ex
+      docker compose build --progress=plain api \
+        --build-arg BUILD_TARGET=prod \
+        --build-arg PYTHON_IMAGE='$(azmd.acrname).azurecr.io/novo-python-3-11-3-slim:latest' \
+        --build-arg BUILD_NUMBER='$(Build.BuildNumber)' \
+        --build-arg BUILD_BRANCH='$(Build.SourceBranchName)' \
+        --build-arg BUILD_COMMIT='$(Build.SourceVersion)'
     displayName: "Build api docker image"
 
-  - script: |    
-      docker compose up --detach --renew-anon-volumes
+  - script: |
+      set -ex
+      docker compose up --detach --renew-anon-volumes --wait database
+      docker compose up --detach --wait api
     displayName: "Start docker services"

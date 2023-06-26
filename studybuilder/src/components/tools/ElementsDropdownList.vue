@@ -108,6 +108,7 @@ export default {
     saveObject (value) {
       if (value) {
         this.$emit('addToObject', this.data)
+        this.data = {}
       }
     }
   }

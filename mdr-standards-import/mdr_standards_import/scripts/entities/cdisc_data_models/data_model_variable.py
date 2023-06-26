@@ -10,6 +10,13 @@ class DataModelVariable:
         description: str,
         ordinal: str,
         role: str,
+        notes: str,
+        variable_c_code: str,
+        usage_restrictions: str,
+        examples: "list[str]",
+        value_list: str,
+        described_value_domain: str,
+        qualifies_variables: "list[str]",
         role_description: str,
         simple_datatype: str,
         definition: str,
@@ -34,6 +41,15 @@ class DataModelVariable:
         self.simple_datatype: str = simple_datatype
         self.codelists: list[str] = codelists
         self.prior_version: str = prior_version
+
+        # SDTM & SDTMIG specific
+        self.notes: str = notes
+        self.variable_c_code: str = variable_c_code
+        self.usage_restrictions: str = usage_restrictions
+        self.examples: list[str] = examples
+        self.value_list: str = value_list
+        self.described_value_domain: str = described_value_domain
+        self.qualifies_variables: list[str] = qualifies_variables
 
         # CDASH & CDASHIG specific
         self.implementation_notes: str = implementation_notes

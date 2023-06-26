@@ -151,21 +151,10 @@
             >
     <endpoint-form
       :study-endpoint="selectedStudyEndpoint"
+      :current-study-endpoints="studyEndpoints"
       @close="closeForm"
       class="fullscreen-dialog"
       :clone-mode="cloneMode"
-      />
-  </v-dialog>
-  <v-dialog v-model="showHistory"
-            @keydown.esc="closeHistory"
-            persistent
-            max-width="1200px">
-    <history-table
-      :title="studyEndpointHistoryTitle"
-      @close="closeHistory"
-      :headers="headers"
-      :items="endpointHistoryItems"
-      :html-fields="historyHtmlFields"
       />
   </v-dialog>
   <confirm-dialog ref="confirm" width="600"/>
@@ -187,7 +176,6 @@ import study from '@/api/study'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
 import EndpointForm from '@/components/studies/EndpointForm'
-import HistoryTable from '@/components/tools/HistoryTable'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import statuses from '@/constants/statuses'
 import NNTable from '@/components/tools/NNTable'
@@ -199,7 +187,6 @@ export default {
     ActionsMenu,
     NNParameterHighlighter,
     EndpointForm,
-    HistoryTable,
     ConfirmDialog,
     NNTable,
     draggable
@@ -365,7 +352,7 @@ export default {
 
       if (await this.$refs.confirm.open(message, options)) {
         const args = {
-          study_uid: item.study_uid,
+          studyUid: item.study_uid,
           studyEndpointUid: item.study_endpoint_uid
         }
         this.$store.dispatch('studyEndpoints/updateStudyEndpointTimeframeLatestVersion', args).then(resp => {

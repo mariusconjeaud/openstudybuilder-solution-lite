@@ -91,7 +91,8 @@
     v-model="showFormHistory"
     @keydown.esc="closeFormHistory"
     persistent
-    max-width="1200px"
+    :max-width="globalHistoryDialogMaxWidth"
+    :fullscreen="globalHistoryDialogFullscreen"
     >
     <history-table
       :title="formHistoryTitle"

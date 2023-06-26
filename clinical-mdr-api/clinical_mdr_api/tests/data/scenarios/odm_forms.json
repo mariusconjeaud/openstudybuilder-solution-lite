@@ -2331,7 +2331,7 @@
         }
     },
     {
-        "name": "Create a new ODM Template with relation to ODM Form",
+        "name": "Create a new ODM Study Event with relation to ODM Form",
         "request": {
             "headers": {},
             "method": "POST",
@@ -2343,7 +2343,7 @@
                 "retired_date": "2022-04-21",
                 "description": "description1"
             },
-            "url": "concepts/odms/templates"
+            "url": "concepts/odms/study-events"
         },
         "response": {
             "code": 201,
@@ -2352,13 +2352,14 @@
                 "content-type": "application/json"
             },
             "result": {
-                "uid": "OdmTemplate_000001",
+                "uid": "OdmStudyEvent_000001",
                 "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "effective_date": "2022-04-21",
                 "retired_date": "2022-04-21",
                 "description": "description1",
+                "display_in_tree": true,
                 "start_date": "2022-03-03T11:17:56.799074",
                 "end_date": null,
                 "status": "Draft",
@@ -2375,12 +2376,12 @@
         }
     },
     {
-        "name": "Approve the ODM Template",
+        "name": "Approve the ODM Study Event",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "concepts/odms/templates/OdmTemplate_000001/approvals"
+            "url": "concepts/odms/study-events/OdmStudyEvent_000001/approvals"
         },
         "response": {
             "code": 201,
@@ -2389,13 +2390,14 @@
                 "content-type": "application/json"
             },
             "result": {
-                "uid": "OdmTemplate_000001",
+                "uid": "OdmStudyEvent_000001",
                 "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "effective_date": "2022-04-21",
                 "retired_date": "2022-04-21",
                 "description": "description1",
+                "display_in_tree": true,
                 "start_date": "2022-03-03T11:17:56.799074",
                 "end_date": null,
                 "status": "Final",
@@ -2411,7 +2413,7 @@
         }
     },
     {
-        "name": "Add the ODM Form to the ODM Template",
+        "name": "Add the ODM Form to the ODM Study Event",
         "request": {
             "headers": {},
             "method": "POST",
@@ -2424,7 +2426,7 @@
                     "collection_exception_condition_oid": "None"
                 }
             ],
-            "url": "concepts/odms/templates/OdmTemplate_000001/forms"
+            "url": "concepts/odms/study-events/OdmStudyEvent_000001/forms"
         },
         "response": {
             "code": 201,
@@ -2433,13 +2435,14 @@
                 "content-type": "application/json"
             },
             "result": {
-                "uid": "OdmTemplate_000001",
+                "uid": "OdmStudyEvent_000001",
                 "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
                 "effective_date": "2022-04-21",
                 "retired_date": "2022-04-21",
                 "description": "description1",
+                "display_in_tree": true,
                 "start_date": "2022-03-03T11:17:56.799074",
                 "end_date": null,
                 "status": "Final",
@@ -2478,19 +2481,19 @@
                 "content-type": "application/json"
             },
             "result": {
-                "OdmTemplate": [
-                    "OdmTemplate_000001"
+                "OdmStudyEvent": [
+                    "OdmStudyEvent_000001"
                 ]
             }
         }
     },
     {
-        "name": "Test getting all ODM Forms that belongs to an ODM Template",
+        "name": "Test getting all ODM Forms that belongs to an ODM Study Event",
         "request": {
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "concepts/odms/forms/templates"
+            "url": "concepts/odms/forms/study-events"
         },
         "response": {
             "code": 200,
@@ -2503,7 +2506,7 @@
                     "uid": "OdmForm_000001",
                     "name": "name1",
                     "parent_uids": [
-                        "OdmTemplate_000001"
+                        "OdmStudyEvent_000001"
                     ]
                 }
             ]

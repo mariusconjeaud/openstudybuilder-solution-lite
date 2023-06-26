@@ -58,6 +58,7 @@
 </template>
 
 <script>
+import _isEqual from 'lodash/isEqual'
 import { mapGetters } from 'vuex'
 
 export default {
@@ -107,7 +108,7 @@ export default {
     },
     save () {
       const orderedColumns = this.availableColumns.filter(el => {
-        return this.displayedColumns.includes(el)
+        return this.displayedColumns.some(del => el.value === del.value)
       })
       this.displayedColumns = orderedColumns
       const actionsIndex = this.displayedColumns.findIndex(i => i.text === '')
@@ -133,6 +134,13 @@ export default {
     },
     isFiltering () {
       return this.filtering
+    }
+  },
+  watch: {
+    columns (value) {
+      if (!_isEqual(value[this.tableName], this.initialData)) {
+        this.initialData = this.displayedColumns = value[this.tableName]
+      }
     }
   }
 }

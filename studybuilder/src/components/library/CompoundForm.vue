@@ -443,7 +443,7 @@
               <tr v-for="alias in compoundAliases" :key="alias.uid">
                 <td>{{ alias.name }}</td>
                 <td>{{ alias.definition }}</td>
-                <td>{{ alias.isPreferredSynonym|yesno }}</td>
+                <td>{{ alias.is_preferred_synonym|yesno }}</td>
               </tr>
             </tbody>
           </template>
@@ -699,22 +699,22 @@ export default {
     this.$store.dispatch('compounds/fetchSubstances').then(() => {
       this.transformSubstances()
     })
-    terms.getByCodelist('frequency').then(resp => {
+    terms.getByCodelist('frequency', true).then(resp => {
       this.frequencies = resp.data.items
     })
-    terms.getByCodelist('routeOfAdministration').then(resp => {
+    terms.getByCodelist('routeOfAdministration', true).then(resp => {
       this.routesOfAdmin = resp.data.items
     })
-    terms.getByCodelist('dosageForm').then(resp => {
+    terms.getByCodelist('dosageForm', true).then(resp => {
       this.dosageForms = resp.data.items
     })
-    terms.getByCodelist('dispensedIn').then(resp => {
+    terms.getByCodelist('dispensedIn', true).then(resp => {
       this.dispensers = resp.data.items
     })
-    terms.getByCodelist('deliveryDevice').then(resp => {
+    terms.getByCodelist('deliveryDevice', true).then(resp => {
       this.devices = resp.data.items
     })
-    terms.getByCodelist('adverseEvents').then(resp => {
+    terms.getByCodelist('adverseEvents', true).then(resp => {
       this.adverseEvents = resp.data.items
     })
     brands.getAll().then(resp => {

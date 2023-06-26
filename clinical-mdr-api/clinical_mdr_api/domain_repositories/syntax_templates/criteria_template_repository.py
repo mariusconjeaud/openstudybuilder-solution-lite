@@ -1,13 +1,6 @@
-from typing import Optional
-
 from neomodel import db
 
 from clinical_mdr_api import exceptions
-from clinical_mdr_api.domain.syntax_templates.criteria_template import (
-    CriteriaTemplateAR,
-)
-from clinical_mdr_api.domain.syntax_templates.template import InstantiationCountsVO
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
@@ -19,6 +12,11 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
 from clinical_mdr_api.domain_repositories.syntax_templates.generic_syntax_template_repository import (
     GenericSyntaxTemplateRepository,
 )
+from clinical_mdr_api.domains.syntax_templates.criteria_template import (
+    CriteriaTemplateAR,
+)
+from clinical_mdr_api.domains.syntax_templates.template import InstantiationCountsVO
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 
 
 class CriteriaTemplateRepository(GenericSyntaxTemplateRepository[CriteriaTemplateAR]):
@@ -42,11 +40,12 @@ class CriteriaTemplateRepository(GenericSyntaxTemplateRepository[CriteriaTemplat
         library: Library,
         relationship: VersionRelationship,
         value: CriteriaTemplateValue,
-        study_count: Optional[int] = None,
+        study_count: int = 0,
         counts: InstantiationCountsVO = None,
     ) -> CriteriaTemplateAR:
         return CriteriaTemplateAR.from_repository_values(
             uid=root.uid,
+            sequence_id=root.sequence_id,
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
                 is_library_editable_callback=(lambda _: library.is_editable),
@@ -66,24 +65,23 @@ class CriteriaTemplateRepository(GenericSyntaxTemplateRepository[CriteriaTemplat
         * Attaching root node to category nodes
         * Attaching root node to sub_category nodes
         """
-        item = super()._create(item)
-        root = self.root_class.nodes.get(uid=item.uid)
+        root, item = super()._create(item)
 
-        if item.type is not None:
+        if item.type is not None and item.type[0] is not None:
             criteria_type = self._get_criteria_type(item.type[0].uid)
             root.has_type.connect(criteria_type)
         if item.indications:
             for indication in item.indications:
-                indication = self._get_indication(indication.uid)
-                root.has_indication.connect(indication)
+                if indication:
+                    root.has_indication.connect(self._get_indication(indication.uid))
         if item.categories:
             for category in item.categories:
-                category = self._get_category(category[0].uid)
-                root.has_category.connect(category)
+                if category and category[0]:
+                    root.has_category.connect(self._get_category(category[0].uid))
         if item.sub_categories:
             for category in item.sub_categories:
-                category = self._get_category(category[0].uid)
-                root.has_subcategory.connect(category)
+                if category and category[0]:
+                    root.has_subcategory.connect(self._get_category(category[0].uid))
 
         return item
 

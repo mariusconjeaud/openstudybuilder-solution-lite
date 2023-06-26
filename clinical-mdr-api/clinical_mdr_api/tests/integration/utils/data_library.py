@@ -14,7 +14,7 @@ from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTCatalogue,
     Library,
 )
-from clinical_mdr_api.models.study import Study
+from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 library_data = {"name": "Test library", "is_editable": True}
@@ -63,6 +63,42 @@ SET hv2 = final_properties
 
 MERGE (odm_condition_root1)-[:HAS_DESCRIPTION]->(odm_description_root1)
 MERGE (odm_condition_root2)-[:HAS_DESCRIPTION]->(odm_description_root1)
+
+"""
+
+STARTUP_ODM_METHODS = """
+WITH  {
+change_description: "Approved version",
+start_date: datetime(),
+status: "Final",
+user_initials: "TODO initials",
+version: "1.0"
+} AS final_properties
+MERGE (library:Library {name:"Sponsor", is_editable:true})
+
+MERGE (library)-[:CONTAINS_CONCEPT]->(odm_description_root1:ConceptRoot:OdmDescriptionRoot {uid: "odm_description1"})
+MERGE (odm_description_value1:ConceptValue:OdmDescriptionValue {name: "name1", language: "ENG", description: "description1", instruction: "instruction1", sponsor_instruction: "sponsor_instruction1"})
+MERGE (odm_description_root1)-[ld:LATEST_FINAL]->(odm_description_value1)
+MERGE (odm_description_root1)-[l:LATEST]->(odm_description_value1)
+CREATE (odm_description_root1)-[hv:HAS_VERSION]->(odm_description_value1)
+SET hv = final_properties
+
+MERGE (library)-[:CONTAINS_CONCEPT]->(odm_method_root1:ConceptRoot:OdmMethodRoot {uid: "odm_method1"})
+MERGE (odm_method_value1:ConceptValue:OdmMethodValue {oid: "oid1", name: "name1", method_type: "type1"})
+MERGE (odm_method_root1)-[ld1:LATEST_FINAL]->(odm_method_value1)
+MERGE (odm_method_root1)-[l1:LATEST]->(odm_method_value1)
+MERGE (odm_method_root1)-[hv1:HAS_VERSION]->(odm_method_value1)
+SET hv1 = final_properties
+
+MERGE (library)-[:CONTAINS_CONCEPT]->(odm_method_root2:ConceptRoot:OdmMethodRoot {uid: "odm_method2"})
+MERGE (odm_method_value2:ConceptValue:OdmMethodValue {oid: "oid2", name: "name2", method_type: "type2"})
+MERGE (odm_method_root2)-[ld2:LATEST_FINAL]->(odm_method_value2)
+MERGE (odm_method_root2)-[l2:LATEST]->(odm_method_value2)
+MERGE (odm_method_root2)-[hv2:HAS_VERSION]->(odm_method_value2)
+SET hv2 = final_properties
+
+MERGE (odm_method_root1)-[:HAS_DESCRIPTION]->(odm_description_root1)
+MERGE (odm_method_root2)-[:HAS_DESCRIPTION]->(odm_description_root1)
 
 """
 
@@ -391,7 +427,7 @@ MERGE (odm_form_root2)-[:HAS_DESCRIPTION]->(odm_description_root1)
 SET hv3 = final_properties
 """
 
-STARTUP_ODM_TEMPLATES = """
+STARTUP_ODM_STUDY_EVENTS = """
 WITH  {
 change_description: "Approved version",
 start_date: datetime(),
@@ -402,12 +438,12 @@ version: "1.0"
 
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (TemplateRoot:ConceptRoot:OdmTemplateRoot {uid: "odm_template1"})
-MERGE (TemplateValue:ConceptValue:OdmTemplateValue {oid: "oid1", name: "name1", effective_date: date(), retired_date: date(), description: "description"})
-MERGE (library)-[:CONTAINS_CONCEPT]->(TemplateRoot)
-MERGE (TemplateRoot)-[r1:LATEST_FINAL]->(TemplateValue)
-MERGE (TemplateRoot)-[r2:LATEST]->(TemplateValue)
-MERGE (TemplateRoot)-[hv:HAS_VERSION]->(TemplateValue)
+MERGE (StudyEventRoot:ConceptRoot:OdmStudyEventRoot {uid: "odm_study_event1"})
+MERGE (StudyEventValue:ConceptValue:OdmStudyEventValue {oid: "oid1", name: "name1", effective_date: date(), retired_date: date(), description: "description", display_in_tree: true})
+MERGE (library)-[:CONTAINS_CONCEPT]->(StudyEventRoot)
+MERGE (StudyEventRoot)-[r1:LATEST_FINAL]->(StudyEventValue)
+MERGE (StudyEventRoot)-[r2:LATEST]->(StudyEventValue)
+MERGE (StudyEventRoot)-[hv:HAS_VERSION]->(StudyEventValue)
 SET hv = final_properties
 """
 
@@ -477,6 +513,13 @@ MERGE (ConditionRoot1)-[:HAS_FORMAL_EXPRESSION]->(FormalExpression)
 MERGE (ConditionRoot2)-[:HAS_FORMAL_EXPRESSION]->(FormalExpression)
 
 WITH *
+MATCH (MethodRoot1:OdmMethodRoot {uid: "odm_method1"})
+MATCH (MethodRoot2:OdmMethodRoot {uid: "odm_method2"})
+MATCH (FormalExpression:OdmFormalExpressionRoot {uid: "odm_formal_expression1"})
+MERGE (MethodRoot1)-[:HAS_FORMAL_EXPRESSION]->(FormalExpression)
+MERGE (MethodRoot2)-[:HAS_FORMAL_EXPRESSION]->(FormalExpression)
+
+WITH *
 MATCH (ItemGroupRoot:OdmItemGroupRoot {uid: "odm_item_group1"})
 MATCH (ItemRoot:OdmItemRoot {uid: "odm_item1"})
 MERGE (ItemGroupRoot)-[:ITEM_REF {order_number: "1", mandatory: true, collection_exception_condition_oid: "oid1", method_oid: "oid1", vendor: '{"attributes": [{"uid": "odm_vendor_attribute3", "value": "No"}]}'}]->(ItemRoot)
@@ -485,13 +528,13 @@ WITH *
 MATCH (FormRoot:OdmFormRoot {uid: "odm_form1"})
 MATCH (ItemGroupRoot:OdmItemGroupRoot {uid: "odm_item_group1"})
 MATCH (VendorElementRoot:OdmVendorElementRoot {uid: "odm_vendor_element1"})
-MERGE (FormRoot)-[:ITEM_GROUP_REF {order_number: "1", mandatory: true, collection_exception_condition_oid: "oid2", method_oid: "oid2", vendor: '{"attributes": [{"uid": "odm_vendor_attribute3", "value": "No"}]}'}]->(ItemGroupRoot)
+MERGE (FormRoot)-[:ITEM_GROUP_REF {order_number: "1", mandatory: true, collection_exception_condition_oid: "oid2", vendor: '{"attributes": [{"uid": "odm_vendor_attribute3", "value": "No"}]}'}]->(ItemGroupRoot)
 MERGE (FormRoot)-[:HAS_VENDOR_ELEMENT {value: "test value"}]->(VendorElementRoot)
 
 WITH *
-MATCH (TemplateRoot:OdmTemplateRoot {uid: "odm_template1"})
+MATCH (StudyEventRoot:OdmStudyEventRoot {uid: "odm_study_event1"})
 MATCH (FormRoot:OdmFormRoot {uid: "odm_form1"})
-MERGE (TemplateRoot)-[:FORM_REF {order_number: "1", mandatory: true, locked: false, collection_exception_condition_oid: "oid1"}]->(FormRoot)
+MERGE (StudyEventRoot)-[:FORM_REF {order_number: "1", mandatory: true, locked: false, collection_exception_condition_oid: "oid1"}]->(FormRoot)
 """
 
 STARTUP_ODM_VENDOR_NAMESPACES = """
@@ -1304,7 +1347,7 @@ SET has_version1 = final_properties
 MERGE (activity_group_root1:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root1"})
 -[:LATEST]->(activity_group_value1:ConceptValue:ActivityGroupValue)
 MERGE (activity_subgroup_value1)-[:IN_GROUP]->(activity_group_value1)
-
+MERGE (activity_group_root1)-[:HAS_VERSION]->(activity_group_value1)
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_subgroup_root2:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root2"})
 -[:LATEST]->(activity_subgroup_value2:ConceptValue:ActivitySubGroupValue {
@@ -1319,6 +1362,7 @@ SET has_version2 = draft_properties
 
 MERGE (activity_group_root2:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root2"})
 -[:LATEST]->(activity_group_value2:ConceptValue:ActivityGroupValue)
+MERGE (activity_group_root2)-[:HAS_VERSION]->(activity_group_value2)
 MERGE (activity_subgroup_value2)-[:IN_GROUP]->(activity_group_value2)
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_subgroup_root3:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root3"})
@@ -1334,6 +1378,7 @@ SET has_version3 = final_properties
 
 MERGE (activity_group_root3:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root3"})
 -[:LATEST]->(activity_group_value3:ConceptValue:ActivityGroupValue)
+MERGE (activity_group_root3)-[:HAS_VERSION]->(activity_group_value3)
 MERGE (activity_subgroup_value3)-[:IN_GROUP]->(activity_group_value3)
 """
 
@@ -1367,6 +1412,7 @@ MERGE (activity_root1)-[has_version1:HAS_VERSION]->(activity_value1)
 SET has_version1 = final_properties
 MERGE (activity_subgroup_root1:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root1"})
 -[:LATEST]->(activity_subgroup_value1:ConceptValue:ActivitySubGroupValue)
+MERGE (activity_subgroup_root1)-[:HAS_VERSION]->(activity_subgroup_value1)
 MERGE (activity_value1)-[:IN_SUB_GROUP]->(activity_subgroup_value1)
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_root2:ConceptRoot:ActivityRoot {uid:"activity_root2"})
@@ -1381,6 +1427,7 @@ MERGE (activity_root2)-[has_version2:HAS_VERSION]->(activity_value2)
 SET has_version2 = draft_properties
 MERGE (activity_subgroup_root2:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root2"})
 -[:LATEST]->(activity_subgroup_value2:ConceptValue:ActivitySubGroupValue)
+MERGE (activity_subgroup_root2)-[:HAS_VERSION]->(activity_subgroup_value2)
 MERGE (activity_value2)-[:IN_SUB_GROUP]->(activity_subgroup_value2)
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_root3:ConceptRoot:ActivityRoot {uid:"activity_root3"})
@@ -1395,6 +1442,7 @@ MERGE (activity_root3)-[has_version3:HAS_VERSION]->(activity_value3)
 SET has_version3 = final_properties
 MERGE (activity_subgroup_root3:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root3"})
 -[:LATEST]->(activity_subgroup_value3:ConceptValue:ActivitySubGroupValue)
+MERGE (activity_subgroup_root3)-[:HAS_VERSION]->(activity_subgroup_value3)
 MERGE (activity_value3)-[:IN_SUB_GROUP]->(activity_subgroup_value3)
 """
 

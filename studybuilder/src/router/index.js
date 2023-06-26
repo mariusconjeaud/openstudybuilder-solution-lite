@@ -226,7 +226,7 @@ const routes = [
     }
   },
   {
-    path: '/library/objective_templates',
+    path: '/library/objective_templates/:tab?',
     name: 'ObjectiveTemplates',
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
@@ -238,7 +238,7 @@ const routes = [
     }
   },
   {
-    path: '/library/endpoint_templates',
+    path: '/library/endpoint_templates/:tab?',
     name: 'EndpointTemplates',
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
@@ -250,7 +250,7 @@ const routes = [
     }
   },
   {
-    path: '/library/timeframe_templates',
+    path: '/library/timeframe_templates/:tab?',
     name: 'TimeframeTemplates',
     component: () => import('../views/library/TimeframeTemplates.vue'),
     meta: {
@@ -258,7 +258,7 @@ const routes = [
     }
   },
   {
-    path: '/library/activity_templates',
+    path: '/library/activity_templates/:tab?',
     name: 'ActivityTemplates',
     component: () => import('../views/library/ActivityTemplates.vue'),
     meta: {
@@ -266,7 +266,7 @@ const routes = [
     }
   },
   {
-    path: '/library/criteria_templates/:tab?',
+    path: '/library/criteria_templates/:type?/:tab?',
     name: 'CriteriaTemplates',
     component: () => import('../views/library/CriteriaTemplates.vue'),
     meta: {

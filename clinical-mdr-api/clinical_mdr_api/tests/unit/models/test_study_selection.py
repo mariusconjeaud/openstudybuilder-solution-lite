@@ -10,12 +10,12 @@ from hypothesis.strategies import (
     text,
 )
 
-from clinical_mdr_api.domain.project.project import ProjectAR
-from clinical_mdr_api.domain.study_selection.study_selection_endpoint import (
+from clinical_mdr_api.domains.projects.project import ProjectAR
+from clinical_mdr_api.domains.study_selections.study_selection_endpoint import (
     StudySelectionEndpointsAR,
     StudySelectionEndpointVO,
 )
-from clinical_mdr_api.domain.study_selection.study_selection_objective import (
+from clinical_mdr_api.domains.study_selections.study_selection_objective import (
     StudySelectionObjectivesAR,
     StudySelectionObjectiveVO,
 )

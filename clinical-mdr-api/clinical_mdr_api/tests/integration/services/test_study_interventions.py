@@ -2,9 +2,9 @@
 
 import logging
 
-from clinical_mdr_api.models.compound import Compound
-from clinical_mdr_api.models.compound_alias import CompoundAlias
-from clinical_mdr_api.models.study_selection import (
+from clinical_mdr_api.models.concepts.compound import Compound
+from clinical_mdr_api.models.concepts.compound_alias import CompoundAlias
+from clinical_mdr_api.models.study_selections.study_selection import (
     StudyCompoundDosingInput,
     StudySelectionCompound,
     StudySelectionCompoundInput,
@@ -13,13 +13,15 @@ from clinical_mdr_api.services.concepts.compound_alias_service import (
     CompoundAliasService,
 )
 from clinical_mdr_api.services.concepts.compound_service import CompoundService
-from clinical_mdr_api.services.study_compound_dosing_selection import (
+from clinical_mdr_api.services.studies.study_compound_dosing_selection import (
     StudyCompoundDosingSelectionService,
 )
-from clinical_mdr_api.services.study_compound_selection import (
+from clinical_mdr_api.services.studies.study_compound_selection import (
     StudyCompoundSelectionService,
 )
-from clinical_mdr_api.services.study_interventions import StudyInterventionsService
+from clinical_mdr_api.services.studies.study_interventions import (
+    StudyInterventionsService,
+)
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 log = logging.getLogger(__name__)

@@ -1,11 +1,11 @@
 import unittest
 from typing import Callable
 
-from clinical_mdr_api.domain.dictionaries.dictionary_term import (
+from clinical_mdr_api.domains.dictionaries.dictionary_term import (
     DictionaryTermAR,
     DictionaryTermVO,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import (
+from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
 )

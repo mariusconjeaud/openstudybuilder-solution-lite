@@ -3,7 +3,7 @@ import random
 import unittest
 from copy import copy
 
-from clinical_mdr_api.domain.study_selection.study_selection_endpoint import (
+from clinical_mdr_api.domains.study_selections.study_selection_endpoint import (
     StudySelectionEndpointsAR,
     StudySelectionEndpointVO,
 )

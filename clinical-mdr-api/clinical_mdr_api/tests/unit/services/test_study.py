@@ -6,17 +6,17 @@ from typing import Iterable, Optional
 from unittest.mock import PropertyMock, patch
 
 from clinical_mdr_api.config import DEFAULT_STUDY_FIELD_CONFIG_FILE
-from clinical_mdr_api.domain.study_definition_aggregate import study_configuration
-from clinical_mdr_api.domain.study_definition_aggregate.registry_identifiers import (
+from clinical_mdr_api.domains.study_definition_aggregates import study_configuration
+from clinical_mdr_api.domains.study_definition_aggregates.registry_identifiers import (
     RegistryIdentifiersVO,
 )
-from clinical_mdr_api.domain.study_definition_aggregate.root import StudyDefinitionAR
-from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
+from clinical_mdr_api.domains.study_definition_aggregates.root import StudyDefinitionAR
+from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     HighLevelStudyDesignVO,
     StudyIdentificationMetadataVO,
     StudyStatus,
 )
-from clinical_mdr_api.models.study import (
+from clinical_mdr_api.models.study_selections.study import (
     DurationJsonModel,
     HighLevelStudyDesignJsonModel,
     RegistryIdentifiersJsonModel,
@@ -31,7 +31,7 @@ from clinical_mdr_api.models.study import (
 )
 from clinical_mdr_api.models.utils import from_duration_object_to_value_and_unit
 from clinical_mdr_api.services._utils import create_duration_object_from_api_input
-from clinical_mdr_api.services.study import StudyService
+from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.tests.unit.domain.clinical_programme_aggregate.test_clinical_programme import (
     create_random_clinical_programme,
 )

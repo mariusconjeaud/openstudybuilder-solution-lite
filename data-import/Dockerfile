@@ -1,4 +1,4 @@
-ARG PYTHON_IMAGE=python:3.7.12-slim
+ARG PYTHON_IMAGE=python:3.11.3-slim
 
 ## In shared stage we create the environment and settings that are shared between prod and dev
 FROM $PYTHON_IMAGE

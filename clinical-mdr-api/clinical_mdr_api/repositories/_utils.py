@@ -11,9 +11,10 @@ from neomodel import Q, db
 from pydantic import BaseModel, Field, validator
 from pydantic.types import T, conlist
 
-from clinical_mdr_api import exceptions
-from clinical_mdr_api.models.concept import VersionProperties
-from clinical_mdr_api.models.ct_term import SimpleTermModel
+from clinical_mdr_api import config, exceptions
+from clinical_mdr_api.models.concepts.concept import VersionProperties
+from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
+from clinical_mdr_api.models.standard_data_models.master_model import MasterModelBase
 
 # Re-used regex
 nested_regex = re.compile(r"\.")
@@ -98,10 +99,11 @@ def get_wildcard_filter(filter_elem, model: BaseModel):
     for name, field in model.__fields__.items():
         field_source = get_field_path(prop=name, field=field)
         model_sources = get_version_properties_sources()
-        if field_source in model_sources and field.type_ is str:
-            get_versioning_q_filter(
-                filter_elem=filter_elem, field=field, q_filters=wildcard_filter
-            )
+        if (
+            field_source in model_sources
+            and field.type_ is str
+            and not issubclass(model, MasterModelBase)
+        ):
             continue
         if issubclass(field.type_, BaseModel):
             q_obj = get_wildcard_filter(filter_elem=filter_elem, model=field.type_)
@@ -122,7 +124,19 @@ def get_embedded_field(fields: list, model: BaseModel):
     """
     if len(fields) == 1:
         return model.__fields__.get(fields[0])
-    return get_embedded_field(fields[1:], model=model.__fields__.get(fields[0]).type_)
+    for x in fields:
+        if len(x.strip()) == 0:
+            raise exceptions.ValidationException(
+                "Supplied value for 'field_name' is not valid. Example valid value is: 'field.sub_field'."
+            )
+
+    try:
+        field_model = model.__fields__.get(fields[0]).type_
+        return get_embedded_field(fields[1:], model=field_model)
+    except AttributeError as _ex:
+        raise exceptions.ValidationException(
+            f"{fields[0]}.{fields[1]} is not a valid field"
+        )
 
 
 def get_field(prop, model):
@@ -168,8 +182,21 @@ def merge_q_query_filters(*args, filter_operator: "FilterOperator"):
     return args
 
 
-def decrement_page_number(page_number: int) -> int:
+def validate_max_skip_clause(page_number: int, page_size: int) -> None:
+    # neo4j supports `SKIP {val}` values which fall within unsigned 64-bit integer range
+    if page_size == 0:
+        amount_of_skip = page_number
+    else:
+        amount_of_skip = page_number * page_size
+    if amount_of_skip > config.MAX_INT_NEO4J:
+        raise exceptions.ValidationException(
+            f"(page_number * page_size) value cannot be bigger than {config.MAX_INT_NEO4J}"
+        )
+
+
+def validate_page_number_and_page_size(page_number: int, page_size: int) -> int:
     page_number -= 1
+    validate_max_skip_clause(page_number=page_number, page_size=page_size)
     return page_number
 
 
@@ -445,6 +472,49 @@ class CypherQueryBuilder:
         self.build_full_query()
         self.build_count_query()
 
+    def _handle_nested_base_model_filtering(
+        self, _predicates, _alias, _parsed_operator, _query_param_name, el
+    ):
+        if "." in _alias:
+            nested_path = _alias.split(".")
+            attr_desc = self.return_model.__fields__.get(nested_path[0])
+            path = nested_path[0]
+            _alias = nested_path[-1]
+            nested_path = nested_path[1:-1]
+            # Each returned row has a field that starts with the specified filter value
+            for traversal in nested_path:
+                attr_desc = attr_desc.type_.__fields__.get(traversal)
+                path = traversal
+                # for prop in nested_path:
+                #     attr_desc = row[prop]
+            if attr_desc.sub_fields is None:
+                # if field is just SimpleTermModel compare wildcard filter
+                # with name property of SimpleTermModel
+                _predicates.append(
+                    f"toLower({path}.{_alias}){_parsed_operator}${_query_param_name}"
+                )
+            else:
+                # if field is an array of SimpleTermModels
+                _predicates.append(
+                    f"any(attr in {path} WHERE toLower(attr.{_alias}) CONTAINS ${_query_param_name})"
+                )
+            self.parameters[f"{_query_param_name}"] = el.lower()
+        else:
+            attr_desc = self.return_model.__fields__.get(_alias)
+            # name=$name_0 with name_0 defined in parameter objects
+            if attr_desc.sub_fields is None:
+                # if field is just SimpleTermModel compare wildcard filter
+                # with name property of SimpleTermModel
+                _predicates.append(
+                    f"toLower({_alias}.name){_parsed_operator}${_query_param_name}"
+                )
+            else:
+                # if field is an array of SimpleTermModels
+                _predicates.append(
+                    f"any(attr in {_alias} WHERE toLower(attr.name) CONTAINS ${_query_param_name})"
+                )
+            self.parameters[f"{_query_param_name}"] = el.lower()
+
     def build_filter_clause(self) -> None:
         _filter_clause = "WHERE "
         filter_predicates = []
@@ -548,7 +618,8 @@ class CypherQueryBuilder:
                                         # Wildcard filtering only searches in properties of type string
                                         if (
                                             attr_desc.type_ is str
-                                            and attribute not in ["possible_actions"]
+                                            # and field is not a List[str]
+                                            and attr_desc.sub_fields is None
                                         ):
                                             # name=$name_0 with name_0 defined in parameter objects
                                             if self.format_filter_sort_keys:
@@ -559,6 +630,15 @@ class CypherQueryBuilder:
                                                 )
                                             _predicates.append(
                                                 f"toLower({attribute}){_parsed_operator}$wildcard_{index}"
+                                            )
+                                        # if field is List[str]
+                                        elif (
+                                            attr_desc.sub_fields is not None
+                                            and attr_desc.type_ is str
+                                            and attribute not in ["possible_actions"]
+                                        ):
+                                            _predicates.append(
+                                                f"$wildcard_{index} IN {attribute}"
                                             )
                                         # Wildcard filtering for SimpleTermModel
                                         elif attr_desc.type_ is SimpleTermModel:
@@ -594,27 +674,37 @@ class CypherQueryBuilder:
                             # name=$name_0 with name_0 defined in parameter objects
                             # . for nested properties will be replaced by _
                             _query_param_name = f"{self.escape_alias(_alias)}_{index}"
+                            if "." in _alias:
+                                real_alias = _alias.split(".")[0]
+                            else:
+                                real_alias = _alias
                             if (
                                 self.return_model
                                 and issubclass(self.return_model, BaseModel)
-                                and self.return_model.__fields__.get(_alias)
-                                and self.return_model.__fields__.get(_alias).type_
-                                is SimpleTermModel
+                                and self.return_model.__fields__.get(real_alias)
+                                and issubclass(
+                                    self.return_model.__fields__.get(real_alias).type_,
+                                    BaseModel,
+                                )
                             ):
-                                attr_desc = self.return_model.__fields__.get(_alias)
-                                # name=$name_0 with name_0 defined in parameter objects
-                                if attr_desc.sub_fields is None:
-                                    # if field is just SimpleTermModel compare wildcard filter
-                                    # with name property of SimpleTermModel
-                                    _predicates.append(
-                                        f"toLower({_alias}.name){_parsed_operator}${_query_param_name}"
-                                    )
-                                else:
-                                    # if field is an array of SimpleTermModels
-                                    _predicates.append(
-                                        f"any(attr in {_alias} WHERE toLower(attr.name) CONTAINS ${_query_param_name})"
-                                    )
-                                self.parameters[f"{_query_param_name}"] = el.lower()
+                                self._handle_nested_base_model_filtering(
+                                    _predicates=_predicates,
+                                    _alias=_alias,
+                                    _parsed_operator=_parsed_operator,
+                                    _query_param_name=_query_param_name,
+                                    el=el,
+                                )
+                            elif (
+                                self.return_model
+                                and issubclass(self.return_model, BaseModel)
+                                and self.return_model.__fields__.get(_alias)
+                                and self.return_model.__fields__.get(_alias).sub_fields
+                                is not None
+                                and self.return_model.__fields__.get(_alias).type_
+                                is str
+                            ):
+                                _predicates.append(f"${_query_param_name} IN {_alias}")
+                                self.parameters[_query_param_name] = el
                             elif (
                                 isinstance(el, str)
                                 and ComparisonOperator(_operator)
@@ -652,6 +742,8 @@ class CypherQueryBuilder:
         )
 
     def build_pagination_clause(self) -> None:
+        validate_max_skip_clause(page_number=self.page_number, page_size=self.page_size)
+
         # Set clause
         self.pagination_clause = "SKIP $page_number * $page_size LIMIT $page_size"
 
@@ -739,10 +831,31 @@ class CypherQueryBuilder:
             > RETURN list of possible headers for given alias, ordered, with a limit
         """
         _with_alias_clause = f"WITH {self.alias_clause}"
-        # Escape header_alias to plan for nested properties as a . character would make Cypher fail
+
+        # support header clause for nested properties
         _escaped_header_alias = self.escape_alias(header_alias)
-        _return_header_clause = f"""WITH DISTINCT {header_alias} AS
-        {_escaped_header_alias} ORDER BY {_escaped_header_alias} LIMIT {result_count} RETURN collect(DISTINCT {_escaped_header_alias}) AS values"""
+        alias_clause = None
+        if "." in header_alias:
+            split = header_alias.split(".")
+            first_property = split[0]
+            last_property = split[-1]
+            paths = split[1:-1]
+            if self.return_model:
+                attr_desc = self.return_model.__fields__.get(first_property)
+                for path in paths:
+                    attr_desc = attr_desc.type_.__fields__.get(path)
+                if not attr_desc:
+                    raise exceptions.ValidationException(
+                        f"Invalid field name: {header_alias}"
+                    )
+                if attr_desc.sub_fields is not None:
+                    alias_clause = f"[attr in {attr_desc.name} | attr.{last_property}]"
+
+        if not alias_clause:
+            alias_clause = header_alias
+        _return_header_clause = f"""WITH DISTINCT {alias_clause} AS
+        {_escaped_header_alias} ORDER BY {_escaped_header_alias} LIMIT {result_count} 
+        RETURN apoc.coll.toSet(apoc.coll.flatten(collect(DISTINCT {_escaped_header_alias}))) AS values"""
 
         return " ".join(
             [

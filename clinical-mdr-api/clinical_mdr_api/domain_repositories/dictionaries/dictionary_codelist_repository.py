@@ -3,16 +3,6 @@ from typing import Optional, Sequence, Tuple
 
 from neomodel import db
 
-from clinical_mdr_api.domain.dictionaries.dictionary_codelist import (
-    DictionaryCodelistAR,
-    DictionaryCodelistVO,
-    DictionaryType,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemMetadataVO,
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -39,6 +29,16 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 )
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameterTermRoot,
+)
+from clinical_mdr_api.domains.dictionaries.dictionary_codelist import (
+    DictionaryCodelistAR,
+    DictionaryCodelistVO,
+    DictionaryType,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+    LibraryVO,
 )
 from clinical_mdr_api.models import DictionaryCodelist
 from clinical_mdr_api.repositories._utils import (

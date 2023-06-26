@@ -13,7 +13,7 @@ from openpyxl import Workbook
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.models import utils
 from clinical_mdr_api.models.utils import BaseModel
-from clinical_mdr_api.services.study import StudyService
+from clinical_mdr_api.services.studies.study import StudyService
 
 REGISTERED_EXPORT_FORMATS = {}
 
@@ -54,20 +54,27 @@ def _extract_values_from_data(data: dict, headers: dict):
         for header, target in headers.items():
             if "." in target:
                 value = item
-                for path in target.split("."):
+                parts = target.split(".")
+                for index, path in enumerate(parts):
                     if isinstance(value, list):
-                        # When we reach the final key (deepest nesting level)
-                        # Convert list to string or conversion to Excel will fail
-                        if path == target.split(".")[-1]:
-                            value = str([el.get(path, "") for el in value])
-                        else:
-                            value = [el.get(path, "") for el in value]
+                        items = []
+                        for el in value:
+                            subvalue = el.get(path, "")
+                            if isinstance(subvalue, str):
+                                # collection[].key
+                                items.append(subvalue)
+                            elif isinstance(subvalue, dict):
+                                # collection[].key1.key2
+                                items.append(subvalue[parts[index + 1]])
+                        value = ",".join(items)
                     elif isinstance(value, dict):
                         value = value.get(path, "")
                     if not value:
                         break
             else:
                 value = item.get(target, "")
+            if value == []:
+                value = ""
             result[header] = value
         yield result
 

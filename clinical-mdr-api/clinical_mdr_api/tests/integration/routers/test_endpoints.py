@@ -20,14 +20,14 @@ BASE_SCENARIO_PATH = "clinical_mdr_api/tests/data/scenarios/"
 
 
 class EndpointTest(api.APITest):
-    TEST_DB_NAME = "unittestsobjs"
+    TEST_DB_NAME = "endpoints"
 
     def setUp(self):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_PARAMETERS_CYPHER)
 
         import clinical_mdr_api.models.syntax_templates.endpoint_template as ep_models
-        import clinical_mdr_api.services.libraries as library_service
+        import clinical_mdr_api.services.libraries.libraries as library_service
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)
@@ -49,14 +49,14 @@ class EndpointTest(api.APITest):
 
 # @pytest.mark.skip
 class EndpointNegativeTest(EndpointTest):
-    TEST_DB_NAME = "unittestsobjs"
+    TEST_DB_NAME = "endpoints"
 
     def setUp(self):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_PARAMETERS_CYPHER)
 
         import clinical_mdr_api.models.syntax_templates.endpoint_template as ep_models
-        import clinical_mdr_api.services.libraries as library_service
+        import clinical_mdr_api.services.libraries.libraries as library_service
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)
@@ -90,14 +90,14 @@ class EndpointNegativeTest(EndpointTest):
 
 # @pytest.mark.skip
 class EndpointVersioningTest(EndpointTest):
-    TEST_DB_NAME = "unittestsobjs"
+    TEST_DB_NAME = "endpoints"
 
     def setUp(self):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_PARAMETERS_CYPHER)
 
         import clinical_mdr_api.models.syntax_templates.endpoint_template as ep_models
-        import clinical_mdr_api.services.libraries as library_service
+        import clinical_mdr_api.services.libraries.libraries as library_service
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)

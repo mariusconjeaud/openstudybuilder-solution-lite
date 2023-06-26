@@ -134,17 +134,6 @@
   </v-dialog>
 
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-  <v-dialog v-model="showHistory"
-            @keydown.esc="closeHistory"
-            persistent
-            max-width="1200px">
-    <history-table
-      :title="activityHistoryTitle"
-      @close="closeHistory"
-      :headers="headers"
-      :items="activityHistoryItems"
-      />
-  </v-dialog>
   <study-activity-batch-edit-form
     :open="showBatchEditForm"
     :selection="currentSelection"
@@ -163,7 +152,6 @@ import study from '@/api/study'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import filteringParameters from '@/utils/filteringParameters'
-import HistoryTable from '@/components/tools/HistoryTable'
 import NNTable from '@/components/tools/NNTable'
 import StudyActivityBatchEditForm from './StudyActivityBatchEditForm'
 import StudyActivityEditForm from './StudyActivityEditForm'
@@ -175,7 +163,6 @@ export default {
     ActionsMenu,
     ConfirmDialog,
     draggable,
-    HistoryTable,
     NNTable,
     StudyActivityBatchEditForm,
     StudyActivityEditForm,

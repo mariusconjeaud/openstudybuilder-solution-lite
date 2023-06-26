@@ -5,7 +5,9 @@ import logging
 import pytest
 from _pytest.fixtures import FixtureRequest
 
-from clinical_mdr_api.services.ct_term_attributes import CTTermAttributesService
+from clinical_mdr_api.services.controlled_terminologies.ct_term_attributes import (
+    CTTermAttributesService,
+)
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,

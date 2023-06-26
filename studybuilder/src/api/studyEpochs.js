@@ -20,7 +20,7 @@ export default {
     return repository.get(`${resource}/${studyUid}/get-amount-of-visits-in-epoch/${studyEpochUid}`)
   },
   getGlobalAnchorVisit (studyUid) {
-    return repository.get(`${resource}/${studyUid}/global-anchor-visit`)
+    return repository.get(`${resource}/${studyUid}/global-anchor-visit`, { ignoreErrors: true })
   },
   getAnchorVisitsInGroupOfSubvisits (studyUid) {
     return repository.get(`${resource}/${studyUid}/anchor-visits-in-group-of-subvisits`)

@@ -2,15 +2,15 @@
   "title": "Exploring CDISC Data Models",
   "version": "2.2",
   "settings": {
-    "pagenumber": 3,
+    "pagenumber": 1,
     "editable": true,
     "fullscreenEnabled": false,
     "parameters": {
       "neodash_model_uid": "SDTM",
-      "neodash_model_version": "SDTM v1.8",
+      "neodash_model_version": "SDTM v2.0",
       "neodash_class_uid": "Special-Purpose-DM",
       "neodash_ig_uid": "SDTMIG",
-      "neodash_ig_version": "SDTMIG v3.3",
+      "neodash_ig_version": "SDTMIG v3.2",
       "neodash_dataset_uid": "CO",
       "neodash_cdash_ig_uid": "CDASHIG",
       "neodash_cdash_ig_version": "CDASHIG v2.2",
@@ -24,25 +24,25 @@
       "reports": [
         {
           "title": "Physical Data Model - Excluding Catalogue for clarity",
-          "query": "CALL apoc.meta.subGraph({labels: [\"DataModelRoot\", \"DataModelIGRoot\", \"DataModelIGValue\", \"DataModelPackage\", \"DataModelRoot\", \"DataModelValue\", \"DatasetClassRoot\", \"DatasetRoot\", \"DatasetRoot\", \"DatasetClassValue\", \"DatasetValue\", \"ClassVariableRoot\", \"DatasetVariableRoot\", \"ClassVariableValue\", \"DatasetVariableValue\"]})\nYIELD nodes, relationships\nRETURN *\n\n\n",
+          "query": "CALL apoc.meta.subGraph({labels: [\"DataModelRoot\", \"DataModelIGRoot\", \"DataModelIGValue\", \"DataModelPackage\", \"DataModelRoot\", \"DataModelValue\", \"DatasetClass\", \"Dataset\", \"Dataset\", \"DatasetClassInstance\", \"DatasetInstance\", \"VariableClass\", \"DatasetVariable\", \"VariableClassInstance\", \"DatasetVariableInstance\"]})\nYIELD nodes, relationships\nRETURN *\n\n\n",
           "width": 8,
           "height": 3,
           "x": 0,
           "y": 0,
           "type": "graph",
           "selection": {
-            "ClassVariableRoot": "name",
-            "ClassVariableValue": "name",
             "DataModelIGRoot": "name",
             "DataModelIGValue": "name",
             "DataModelRoot": "name",
             "DataModelValue": "name",
-            "DatasetClassRoot": "name",
-            "DatasetClassValue": "name",
-            "DatasetRoot": "name",
-            "DatasetValue": "name",
-            "DatasetVariableRoot": "name",
-            "DatasetVariableValue": "name"
+            "Dataset": "name",
+            "DatasetClass": "name",
+            "DatasetClassInstance": "name",
+            "DatasetInstance": "name",
+            "DatasetVariable": "name",
+            "DatasetVariableInstance": "name",
+            "VariableClass": "name",
+            "VariableClassInstance": "name"
           },
           "settings": {
             "nodePositions": {}
@@ -117,7 +117,7 @@
         },
         {
           "title": "Classes - $neodash_class_uid",
-          "query": "MATCH (:DataModelValue {name: $neodash_model_version})\n-[rel:HAS_DATASET_CLASS]->(:DatasetClassValue)<--(class:DatasetClassRoot)\nWITH class.uid AS class, apoc.text.split(rel.ordinal, \"\\.\") AS split_ordinal ORDER BY toInteger(split_ordinal[0]), toInteger(split_ordinal[1])\nRETURN DISTINCT \"Select\" AS select, class",
+          "query": "MATCH (:DataModelValue {name: $neodash_model_version})\n-[rel:HAS_DATASET_CLASS]->(:DatasetClassInstance)<--(class:DatasetClass)\nWITH class.uid AS class, apoc.text.split(rel.ordinal, \"\\.\") AS split_ordinal ORDER BY toInteger(split_ordinal[0]), toInteger(split_ordinal[1])\nRETURN DISTINCT \"Select\" AS select, class",
           "width": 3,
           "height": 2,
           "x": 6,
@@ -139,8 +139,8 @@
         },
         {
           "title": "Variables",
-          "query": "MATCH (model_value:DataModelValue {name: $neodash_model_version})\n-[:HAS_DATASET_CLASS]->(class_value:DatasetClassValue)<--(:DatasetClassRoot {uid: $neodash_class_uid})\nMATCH (class_value)-[rel:HAS_CLASS_VARIABLE]->(variable_value:ClassVariableValue)<--(variable_root:ClassVariableRoot)\nWHERE rel.version_number=model_value.version_number\nWITH variable_root, variable_value, rel.ordinal AS ordinal ORDER BY toInteger(ordinal)\nRETURN DISTINCT variable_root.uid AS variable, variable_value.label AS label, variable_value.role AS role, $neodash_class_uid AS origin\n\nUNION\n\nMATCH (model_root:DataModelRoot)-->(model_value:DataModelValue {name: $neodash_model_version})\n-[:HAS_DATASET_CLASS]->(class_value:DatasetClassValue)<--(:DatasetClassRoot {uid: $neodash_class_uid})\nMATCH p=(class_value)-[parent_rel:HAS_PARENT_CLASS*..2]->(parent_class_value:DatasetClassValue)\nWHERE all(parent_rel in relationships(p) where parent_rel.catalogue=model_root.uid AND parent_rel.version_number=model_value.version_number)\nMATCH ()-[parent_has_class_rel:HAS_DATASET_CLASS]->(parent_class_value)<--(parent_class_root:DatasetClassRoot)\nMATCH (parent_class_value)-[rel:HAS_CLASS_VARIABLE]->(variable_value:ClassVariableValue)<--(variable_root:ClassVariableRoot)\nWHERE rel.version_number=model_value.version_number\nWITH parent_class_root.uid AS parent_class, parent_has_class_rel.ordinal AS parent_ordinal, variable_root, variable_value, rel.ordinal AS ordinal ORDER BY parent_ordinal, toInteger(ordinal)\nRETURN DISTINCT variable_root.uid AS variable, variable_value.label AS label, variable_value.role AS role, parent_class AS origin",
-          "width": 9,
+          "query": "MATCH (model_value:DataModelValue {name: $neodash_model_version})\n-[:HAS_DATASET_CLASS]->(class_value:DatasetClassInstance)<--(:DatasetClass {uid: $neodash_class_uid})\nMATCH (class_value)-[rel:HAS_VARIABLE_CLASS]->(variable_value:VariableClassInstance)<--(variable_root:VariableClass)\nWHERE rel.version_number=model_value.version_number\nOPTIONAL MATCH (variable_value)-[qualified_rel:QUALIFIES_VARIABLE]->(qualified_value:VariableClassInstance)<--(qualified_root:VariableClass)\nWHERE qualified_rel.version_number=model_value.version_number\nWITH variable_root, variable_value, collect(DISTINCT qualified_root.uid) AS qualifies, rel.ordinal AS ordinal ORDER BY toInteger(ordinal)\nRETURN DISTINCT variable_root.uid AS variable, variable_value.label AS label, variable_value.role AS role, qualifies, $neodash_class_uid AS origin\n\nUNION\n\nMATCH (model_root:DataModelRoot)-->(model_value:DataModelValue {name: $neodash_model_version})\n-[:HAS_DATASET_CLASS]->(class_value:DatasetClassInstance)<--(:DatasetClass {uid: $neodash_class_uid})\nMATCH p=(class_value)-[parent_rel:HAS_PARENT_CLASS*..2]->(parent_class_value:DatasetClassInstance)\nWHERE all(parent_rel in relationships(p) where parent_rel.catalogue=model_root.uid AND parent_rel.version_number=model_value.version_number)\nMATCH ()-[parent_has_class_rel:HAS_DATASET_CLASS]->(parent_class_value)<--(parent_class_root:DatasetClass)\nMATCH (parent_class_value)-[rel:HAS_VARIABLE_CLASS]->(variable_value:VariableClassInstance)<--(variable_root:VariableClass)\nWHERE rel.version_number=model_value.version_number\nOPTIONAL MATCH (variable_value)-[qualified_rel:QUALIFIES_VARIABLE]->(qualified_value:VariableClassInstance)<--(qualified_root:VariableClass)\nWHERE qualified_rel.version_number=model_value.version_number\nWITH parent_class_root.uid AS parent_class, parent_has_class_rel.ordinal AS parent_ordinal, variable_root, variable_value, collect(DISTINCT qualified_root.uid) AS qualifies, rel.ordinal AS ordinal ORDER BY parent_ordinal, toInteger(ordinal)\nRETURN DISTINCT variable_root.uid AS variable, variable_value.label AS label, variable_value.role AS role, qualifies, parent_class AS origin",
+          "width": 12,
           "height": 2,
           "x": 0,
           "y": 2,
@@ -151,10 +151,10 @@
           }
         },
         {
-          "title": "",
-          "query": "MATCH (:DataModelValue {name: $neodash_model_version})<-[:IMPLEMENTS]-(ig:DataModelIGValue)\nWITH collect(ig.name) AS names\nRETURN \"Implemented by \" + apoc.text.join(names, ', ')\n",
+          "title": "Implemented by",
+          "query": "MATCH (:DataModelValue {name: $neodash_model_version})<-[:IMPLEMENTS]-(ig:DataModelIGValue)\nWITH collect(ig.name) AS names\nRETURN apoc.text.join(names, ', ')\n",
           "width": 3,
-          "height": 1,
+          "height": 2,
           "x": 9,
           "y": 0,
           "type": "value",
@@ -216,7 +216,7 @@
         },
         {
           "title": "Datasets - $neodash_dataset_uid",
-          "query": "MATCH (catalogue:DataModelCatalogue)-->(model_root:DataModelIGRoot)-->(model_value:DataModelIGValue {name: $neodash_ig_version})\n-[rel:HAS_DATASET]->(value:DatasetValue)<--(dataset:DatasetRoot)\nOPTIONAL MATCH (value)-[implements:IMPLEMENTS_DATASET_CLASS]->(class_value)<-[:HAS_VERSION]-(class_root)\nWHERE implements.catalogue = catalogue.name AND implements.version_number = model_value.version_number\nWITH dataset.uid AS dataset, class_root.uid AS implements, apoc.text.split(rel.ordinal, \"\\.\") AS split_ordinal ORDER BY toInteger(split_ordinal[0]), toInteger(split_ordinal[1])\nRETURN DISTINCT \"Select\" AS select, dataset, implements\n",
+          "query": "MATCH (catalogue:DataModelCatalogue)-->(model_root:DataModelIGRoot)-->(model_value:DataModelIGValue {name: $neodash_ig_version})\n-[rel:HAS_DATASET]->(value:DatasetInstance)<--(dataset:Dataset)\nOPTIONAL MATCH (value)-[implements:IMPLEMENTS_DATASET_CLASS]->(class_value)<-[:HAS_INSTANCE]-(class_root)\nWHERE implements.catalogue = catalogue.name AND implements.version_number = model_value.version_number\nWITH dataset.uid AS dataset, class_root.uid AS implements, apoc.text.split(rel.ordinal, \"\\.\") AS split_ordinal ORDER BY toInteger(split_ordinal[0]), toInteger(split_ordinal[1])\nRETURN DISTINCT \"Select\" AS select, dataset, implements\n",
           "width": 3,
           "height": 2,
           "x": 6,
@@ -239,11 +239,11 @@
         },
         {
           "title": "Variables",
-          "query": "MATCH (model_root:DataModelIGRoot)-->(model_value:DataModelIGValue {name: $neodash_ig_version})\n-[:HAS_DATASET]->(dataset_value:DatasetValue)<--(:DatasetRoot {uid: $neodash_dataset_uid})\nMATCH (dataset_value)-[rel:HAS_DATASET_VARIABLE]->(variable_value:DatasetVariableValue)<--(variable_root:DatasetVariableRoot)\nWHERE rel.version_number=model_value.version_number\nOPTIONAL MATCH (variable_value)-[:REFERENCES_CODELIST]->(codelist:CTCodelistRoot)\nOPTIONAL MATCH (codelist)-[:HAS_ATTRIBUTES_ROOT]->(codelistattributeroot:CTCodelistAttributesRoot)-[:LATEST]->(codelistattributevalue:CTCodelistAttributesValue)\nOPTIONAL MATCH (variable_value)-[implements:IMPLEMENTS_VARIABLE]->()<-[:HAS_VERSION|LATEST]-(implemented)\nWHERE implements.catalogue = model_root.uid AND implements.version_number = model_value.version_number\nWITH variable_root, variable_value, codelist, codelistattributevalue, implemented, apoc.text.split(rel.ordinal, \"\\.\") AS split_ordinal ORDER BY toInteger(split_ordinal[0]), toInteger(split_ordinal[1])\nRETURN DISTINCT variable_root.uid AS variable, variable_value.label AS label, variable_value.description AS description, variable_value.simple_datatype AS dataType, variable_value.role AS role, collect(DISTINCT (codelist.uid + ' ' + codelistattributevalue.submission_value)) AS codelist, implemented.uid AS implements",
+          "query": "MATCH (model_root:DataModelIGRoot)-->(model_value:DataModelIGValue {name: $neodash_ig_version})\n-[:HAS_DATASET]->(dataset_value:DatasetInstance)<--(:Dataset {uid: $neodash_dataset_uid})\nMATCH (dataset_value)-[rel:HAS_DATASET_VARIABLE]->(variable_value:DatasetVariableInstance)<--(variable_root:DatasetVariable)\nWHERE rel.version_number=model_value.version_number\nOPTIONAL MATCH (variable_value)-[:REFERENCES_CODELIST]->(codelist:CTCodelistRoot)\nOPTIONAL MATCH (codelist)-[:HAS_ATTRIBUTES_ROOT]->(codelistattributeroot:CTCodelistAttributesRoot)-[:LATEST]->(codelistattributevalue:CTCodelistAttributesValue)\nOPTIONAL MATCH (variable_value)-[implements:IMPLEMENTS_VARIABLE]->()<-[:HAS_INSTANCE]-(implemented)\nWHERE implements.catalogue = model_root.uid AND implements.version_number = model_value.version_number\nWITH variable_root, variable_value, codelist, codelistattributevalue, implemented, apoc.text.split(rel.ordinal, \"\\.\") AS split_ordinal ORDER BY toInteger(split_ordinal[0]), toInteger(split_ordinal[1])\nRETURN DISTINCT variable_root.uid AS variable, variable_value.label AS label, variable_value.description AS description, variable_value.simple_datatype AS dataType, variable_value.role AS role, collect(DISTINCT (codelist.uid + ' ' + codelistattributevalue.submission_value)) AS codelist, implemented.uid AS implements",
           "width": 12,
           "height": 2,
           "x": 0,
-          "y": 2,
+          "y": 4,
           "type": "table",
           "selection": {},
           "settings": {
@@ -300,7 +300,7 @@
         },
         {
           "title": "Datasets - $neodash_cdash_dataset_uid",
-          "query": "MATCH (catalogue:DataModelCatalogue)-->(model_root:DataModelIGRoot)-->(model_value:DataModelIGValue {name: $neodash_cdash_ig_version})\n-[rel:HAS_DATASET]->(value:DatasetValue)<--(dataset:DatasetRoot)\nOPTIONAL MATCH (value)-[implements:IMPLEMENTS_DATASET_CLASS]->(class_value)<-[:HAS_VERSION]-(class_root)\nWHERE implements.catalogue = catalogue.name AND implements.version_number = model_value.version_number\nWITH dataset.uid AS dataset, class_root.uid AS implements, apoc.text.split(rel.ordinal, \"\\.\") AS split_ordinal ORDER BY toInteger(split_ordinal[0]), toInteger(split_ordinal[1])\nRETURN DISTINCT \"Select\" AS select, dataset, implements\n",
+          "query": "MATCH (catalogue:DataModelCatalogue)-->(model_root:DataModelIGRoot)-->(model_value:DataModelIGValue {name: $neodash_cdash_ig_version})\n-[rel:HAS_DATASET]->(value:DatasetInstance)<--(dataset:Dataset)\nOPTIONAL MATCH (value)-[implements:IMPLEMENTS_DATASET_CLASS]->(class_value)<-[:HAS_INSTANCE]-(class_root)\nWHERE implements.catalogue = catalogue.name AND implements.version_number = model_value.version_number\nWITH dataset.uid AS dataset, class_root.uid AS implements, apoc.text.split(rel.ordinal, \"\\.\") AS split_ordinal ORDER BY toInteger(split_ordinal[0]), toInteger(split_ordinal[1])\nRETURN DISTINCT \"Select\" AS select, dataset, implements\n",
           "width": 3,
           "height": 2,
           "x": 6,
@@ -321,7 +321,7 @@
         },
         {
           "title": "",
-          "query": "MATCH (model_root:DataModelIGRoot)-->(model_value:DataModelIGValue {name: $neodash_cdash_ig_version})\n-[:HAS_DATASET]->(dataset_value:DatasetValue)<--(:DatasetRoot {uid: $neodash_cdash_dataset_uid})\nMATCH (dataset_value)-[rel:HAS_DATASET_VARIABLE]->(variable_value:DatasetVariableValue)<--(variable_root:DatasetVariableRoot)\nWHERE rel.version_number=model_value.version_number\nOPTIONAL MATCH (variable_value)-[:REFERENCES_CODELIST]->(codelist:CTCodelistRoot)\nOPTIONAL MATCH (codelist)-[:HAS_ATTRIBUTES_ROOT]->(codelistattributeroot:CTCodelistAttributesRoot)-[:LATEST]->(codelistattributevalue:CTCodelistAttributesValue)\nOPTIONAL MATCH (variable_value)-[implements:IMPLEMENTS_VARIABLE]->()<-[:HAS_VERSION|LATEST]-(implemented)\nWHERE implements.catalogue = model_root.uid AND implements.version_number = model_value.version_number\nOPTIONAL MATCH (variable_value)-[has_mapping_target:HAS_MAPPING_TARGET]->()<-[:HAS_VERSION|LATEST]-(mapping_target)\nWHERE has_mapping_target.version_number = model_value.version_number\nWITH variable_root, variable_value, codelist, codelistattributevalue, implemented, mapping_target, apoc.text.split(rel.ordinal, \"\\.\") AS split_ordinal ORDER BY toInteger(split_ordinal[0]), toInteger(split_ordinal[1])\nRETURN DISTINCT variable_root.uid AS variable, variable_value.label AS label, variable_value.description AS description, variable_value.simple_datatype AS dataType, variable_value.core AS core, variable_value.completion_instructions AS `completion instructions`, variable_value.implementation_notes AS `implementation notes`, variable_value.mapping_instructions AS `mapping instructions`, collect(DISTINCT(codelist.uid + ' ' + codelistattributevalue.submission_value)) AS codelist, implemented.uid AS implements, collect(DISTINCT mapping_target.uid) AS `mapping targets`\n\nUNION\nMATCH (model_root:DataModelIGRoot)-->(model_value:DataModelIGValue {name: $neodash_cdash_ig_version})\n-[:HAS_DATASET]->(dataset_value:DatasetValue)<--(:DatasetRoot {uid: $neodash_cdash_dataset_uid})\nMATCH (scenario_value:DatasetScenarioValue)<--(scenario_root:DatasetScenarioRoot)\nWHERE scenario_root.uid=$neodash_cdash_scenario_uid\nMATCH (dataset_value)-[:HAS_DATASET_SCENARIO]->(scenario_value:DatasetScenarioValue)-[rel:HAS_DATASET_VARIABLE]->(variable_value:DatasetVariableValue)<--(variable_root:DatasetVariableRoot)\nWHERE rel.version_number=model_value.version_number\nMATCH (variable_value)-[rel_imp:HAS_SCENARIO_IMPLEMENTATION]->(implementation)\nWHERE rel_imp.version_number=model_value.version_number\nOPTIONAL MATCH (implementation)-[:REFERENCES_CODELIST]->(codelist:CTCodelistRoot)\nOPTIONAL MATCH (codelist)-[:HAS_ATTRIBUTES_ROOT]->(codelistattributeroot:CTCodelistAttributesRoot)-[:LATEST]->(codelistattributevalue:CTCodelistAttributesValue)\nOPTIONAL MATCH (implementation)-[implements:IMPLEMENTS_VARIABLE]->()<-[:HAS_VERSION|LATEST]-(implemented)\nWHERE implements.catalogue = model_root.uid AND implements.version_number = model_value.version_number\nOPTIONAL MATCH (variable_value)-[has_mapping_target:HAS_MAPPING_TARGET]->()<-[:HAS_VERSION|LATEST]-(mapping_target)\nWHERE has_mapping_target.version_number = model_value.version_number\nWITH variable_root, variable_value, implementation, codelist, codelistattributevalue, implemented, mapping_target, apoc.text.split(rel.ordinal, \"\\.\") AS split_ordinal ORDER BY toInteger(split_ordinal[0]), toInteger(split_ordinal[1])\nRETURN DISTINCT variable_root.uid AS variable, variable_value.label AS label, implementation.description AS description, variable_value.simple_datatype AS dataType, implementation.core AS core, implementation.completion_instructions AS `completion instructions`, implementation.implementation_notes AS `implementation notes`, implementation.mapping_instructions AS `mapping instructions`, collect(DISTINCT(codelist.uid + ' ' + codelistattributevalue.submission_value)) AS codelist, implemented.uid AS implements, collect(DISTINCT mapping_target.uid) AS `mapping targets`",
+          "query": "MATCH (model_root:DataModelIGRoot)-->(model_value:DataModelIGValue {name: $neodash_cdash_ig_version})\n-[:HAS_DATASET]->(dataset_value:DatasetInstance)<--(:Dataset {uid: $neodash_cdash_dataset_uid})\nMATCH (dataset_value)-[rel:HAS_DATASET_VARIABLE]->(variable_value:DatasetVariableInstance)<--(variable_root:DatasetVariable)\nWHERE rel.version_number=model_value.version_number\nOPTIONAL MATCH (variable_value)-[:REFERENCES_CODELIST]->(codelist:CTCodelistRoot)\nOPTIONAL MATCH (codelist)-[:HAS_ATTRIBUTES_ROOT]->(codelistattributeroot:CTCodelistAttributesRoot)-[:LATEST]->(codelistattributevalue:CTCodelistAttributesValue)\nOPTIONAL MATCH (variable_value)-[implements:IMPLEMENTS_VARIABLE]->()<-[:HAS_INSTANCE]-(implemented)\nWHERE implements.catalogue = model_root.uid AND implements.version_number = model_value.version_number\nOPTIONAL MATCH (variable_value)-[has_mapping_target:HAS_MAPPING_TARGET]->()<-[:HAS_INSTANCE]-(mapping_target)\nWHERE has_mapping_target.version_number = model_value.version_number\nWITH variable_root, variable_value, codelist, codelistattributevalue, implemented, mapping_target, apoc.text.split(rel.ordinal, \"\\.\") AS split_ordinal ORDER BY toInteger(split_ordinal[0]), toInteger(split_ordinal[1])\nRETURN DISTINCT variable_root.uid AS variable, variable_value.label AS label, variable_value.description AS description, variable_value.simple_datatype AS dataType, variable_value.core AS core, variable_value.completion_instructions AS `completion instructions`, variable_value.implementation_notes AS `implementation notes`, variable_value.mapping_instructions AS `mapping instructions`, collect(DISTINCT(codelist.uid + ' ' + codelistattributevalue.submission_value)) AS codelist, implemented.uid AS implements, collect(DISTINCT mapping_target.uid) AS `mapping targets`\n\nUNION\nMATCH (model_root:DataModelIGRoot)-->(model_value:DataModelIGValue {name: $neodash_cdash_ig_version})\n-[:HAS_DATASET]->(dataset_value:DatasetInstance)<--(:Dataset {uid: $neodash_cdash_dataset_uid})\nMATCH (scenario_value:DatasetScenarioInstance)<--(scenario_root:DatasetScenario)\nWHERE scenario_root.uid=$neodash_cdash_scenario_uid\nMATCH (dataset_value)-[:HAS_DATASET_SCENARIO]->(scenario_value:DatasetScenarioInstance)-[rel:HAS_DATASET_VARIABLE]->(variable_value:DatasetVariableInstance)<--(variable_root:DatasetVariable)\nWHERE rel.version_number=model_value.version_number\nMATCH (variable_value)-[rel_imp:HAS_SCENARIO_IMPLEMENTATION]->(implementation)\nWHERE rel_imp.version_number=model_value.version_number\nOPTIONAL MATCH (implementation)-[:REFERENCES_CODELIST]->(codelist:CTCodelistRoot)\nOPTIONAL MATCH (codelist)-[:HAS_ATTRIBUTES_ROOT]->(codelistattributeroot:CTCodelistAttributesRoot)-[:LATEST]->(codelistattributevalue:CTCodelistAttributesValue)\nOPTIONAL MATCH (implementation)-[implements:IMPLEMENTS_VARIABLE]->()<-[:HAS_INSTANCE]-(implemented)\nWHERE implements.catalogue = model_root.uid AND implements.version_number = model_value.version_number\nOPTIONAL MATCH (variable_value)-[has_mapping_target:HAS_MAPPING_TARGET]->()<-[:HAS_INSTANCE]-(mapping_target)\nWHERE has_mapping_target.version_number = model_value.version_number\nWITH variable_root, variable_value, implementation, codelist, codelistattributevalue, implemented, mapping_target, apoc.text.split(rel.ordinal, \"\\.\") AS split_ordinal ORDER BY toInteger(split_ordinal[0]), toInteger(split_ordinal[1])\nRETURN DISTINCT variable_root.uid AS variable, variable_value.label AS label, implementation.description AS description, variable_value.simple_datatype AS dataType, implementation.core AS core, implementation.completion_instructions AS `completion instructions`, implementation.implementation_notes AS `implementation notes`, implementation.mapping_instructions AS `mapping instructions`, collect(DISTINCT(codelist.uid + ' ' + codelistattributevalue.submission_value)) AS codelist, implemented.uid AS implements, collect(DISTINCT mapping_target.uid) AS `mapping targets`",
           "width": 12,
           "height": 2,
           "x": 0,
@@ -334,7 +334,7 @@
         },
         {
           "title": "Scenarii - $neodash_cdash_scenario_uid",
-          "query": "MATCH (model_root:DataModelIGRoot)-->(model_value:DataModelIGValue {name: $neodash_cdash_ig_version})\n-[:HAS_DATASET]->(dataset_value:DatasetValue)<--(:DatasetRoot {uid: $neodash_cdash_dataset_uid})\nMATCH (dataset_value)-[rel:HAS_DATASET_SCENARIO]->(scenario_value:DatasetScenarioValue)<--(scenario_root:DatasetScenarioRoot)\nWHERE rel.version_number=model_value.version_number\nWITH scenario_root.uid AS scenario, apoc.text.split(rel.ordinal, \"\\.\") AS split_ordinal ORDER BY toInteger(split_ordinal[0]), toInteger(split_ordinal[1])\nRETURN DISTINCT \"Select\" AS select, scenario\n",
+          "query": "MATCH (model_root:DataModelIGRoot)-->(model_value:DataModelIGValue {name: $neodash_cdash_ig_version})\n-[:HAS_DATASET]->(dataset_value:DatasetInstance)<--(:Dataset {uid: $neodash_cdash_dataset_uid})\nMATCH (dataset_value)-[rel:HAS_DATASET_SCENARIO]->(scenario_value:DatasetScenarioInstance)<--(scenario_root:DatasetScenario)\nWHERE rel.version_number=model_value.version_number\nWITH scenario_root.uid AS scenario, apoc.text.split(rel.ordinal, \"\\.\") AS split_ordinal ORDER BY toInteger(split_ordinal[0]), toInteger(split_ordinal[1])\nRETURN DISTINCT \"Select\" AS select, scenario\n",
           "width": 3,
           "height": 2,
           "x": 9,

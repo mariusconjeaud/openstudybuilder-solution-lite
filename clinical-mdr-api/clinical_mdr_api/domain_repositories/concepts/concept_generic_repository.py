@@ -3,7 +3,6 @@ from typing import Optional, Sequence, Tuple
 
 from neomodel import db
 
-from clinical_mdr_api.domain.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -25,6 +24,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameterTermRoot,
 )
+from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.repositories._utils import (
     ComparisonOperator,
     CypherQueryBuilder,

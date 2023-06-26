@@ -14,31 +14,34 @@ from hypothesis.strategies import (
     sampled_from,
 )
 
+from clinical_mdr_api.domain_repositories.concepts.unit_definitions.unit_definition_repository import (
+    UnitDefinitionRepository,
+)
+from clinical_mdr_api.domain_repositories.libraries.library_repository import (
+    LibraryRepository,
+)
+
 # noinspection PyProtectedMember
-from clinical_mdr_api.domain._utils import normalize_string
-from clinical_mdr_api.domain.library.library_ar import LibraryAR
-from clinical_mdr_api.domain.unit_definition.unit_definition import (
+from clinical_mdr_api.domains._utils import normalize_string
+from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     CONCENTRATION_UNIT_DIMENSION_VALUE,
     UnitDefinitionAR,
     UnitDefinitionValueVO,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
-from clinical_mdr_api.domain_repositories.concepts.unit_definition.unit_definition_repository import (
-    UnitDefinitionRepository,
-)
-from clinical_mdr_api.domain_repositories.library.library_repository import (
-    LibraryRepository,
-)
+from clinical_mdr_api.domains.libraries.library_ar import LibraryAR
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.exceptions import NotFoundException, ValidationException
-from clinical_mdr_api.models.ct_term import SimpleTermModel
-from clinical_mdr_api.models.unit_definition import (
+from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
     UnitDefinitionModel,
     UnitDefinitionPatchInput,
     UnitDefinitionPostInput,
 )
+from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
-from clinical_mdr_api.services.unit_definition import UnitDefinitionService
+from clinical_mdr_api.services.concepts.unit_definitions.unit_definition import (
+    UnitDefinitionService,
+)
 from clinical_mdr_api.tests.unit.domain.unit_definition.test_unit_definition import (
     draft_unit_definitions,
     final_unit_definitions,

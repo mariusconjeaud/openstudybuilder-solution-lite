@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Any, List, Optional
 
 from fastapi import APIRouter, Depends, Path, Query, Request, Response
@@ -8,8 +7,9 @@ from pydantic.types import Json
 
 from clinical_mdr_api import config, models
 from clinical_mdr_api.domain_repositories.models.syntax import CriteriaValue
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.error import ErrorResponse
-from clinical_mdr_api.models.study import Study
+from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -98,7 +98,10 @@ def get_all(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
     page_size: Optional[int] = Query(
-        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
     ),
     filters: Optional[Json] = Query(
         None,
@@ -145,7 +148,7 @@ def get_all(
 )
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
-    status: Optional[str] = Query(
+    status: Optional[LibraryItemStatus] = Query(
         None,
         description="If specified, only those objective templates will be returned that are currently in the specified status. "
         "This may be particularly useful if the objective template has "
@@ -179,6 +182,41 @@ def get_distinct_values_for_header(
 
 
 @router.get(
+    "/audit-trail",
+    summary="",
+    description="",
+    response_model=CustomPage[models.Criteria],
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def retrieve_audit_trail(
+    page_number: Optional[int] = Query(
+        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
+    ),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
+    ),
+    total_count: Optional[bool] = Query(
+        False, description=_generic_descriptions.TOTAL_COUNT
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    results = Service(current_user_id).retrieve_audit_trail(
+        page_number=page_number, page_size=page_size, total_count=total_count
+    )
+
+    return CustomPage.create(
+        items=results.items, total=results.total_count, page=page_number, size=page_size
+    )
+
+
+@router.get(
     "/{uid}",
     summary="Returns the latest/newest version of a specific criteria identified by 'uid'.",
     description="""If multiple request query parameters are used, then they need to
@@ -195,35 +233,8 @@ def get_distinct_values_for_header(
 )
 def get(
     uid: str = CriteriaUID,
-    at_specified_date_time: Optional[datetime] = Query(
-        None,
-        description="If specified, the latest/newest representation of the criteria at this point in time is returned.\n"
-        "The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: "
-        "'2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. "
-        "If the timezone is ommitted, UTC±0 is assumed.",
-    ),
-    status: Optional[str] = Query(
-        None,
-        description="If specified, the representation of the criteria in that status is returned (if existent). "
-        "This may be particularly useful if the criteria has "
-        "a) a 'Draft' and a 'Final' status or "
-        "b) a 'Draft' and a 'Retired' status at the same time "
-        "and you are interested in the 'Final' or 'Retired' status.\n"
-        "Valid values are: 'Final', 'Draft' or 'Retired'.",
-    ),
-    version: Optional[str] = Query(
-        None,
-        description=r"If specified, the latest/newest representation of the criteria in that version is returned. "
-        r"Only exact matches are considered. "
-        r"The version is specified in the following format: \<major\>.\<minor\> where \<major\> and \<minor\> are digits. "
-        r"E.g. '0.1', '0.2', '1.0', ...",
-    ),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    if at_specified_date_time is not None or status is not None or version is not None:
-        raise NotImplementedError(
-            "TODO: support for at_specified_date, status and version parameters not implemented."
-        )
     return CriteriaService(current_user_id).get_by_uid(uid=uid)
 
 
@@ -248,6 +259,90 @@ def get_versions(
     return Service(current_user_id).get_version_history(uid=uid)
 
 
+@router.post(
+    "",
+    summary="Creates a new criteria in 'Draft' status.",
+    description="""This request is only valid if
+* the specified criteria template is in 'Final' status and
+* the specified objective is in 'Final' status and
+* the specified library allows creating criteria (the 'is_editable' property of the library needs to be true) and
+* the criteria does not yet exist (no criteria with the same content in 'Final' or 'Draft' status).
+
+If the request succeeds:
+* The status will be automatically set to 'Draft'.
+* The 'change_description' property will be set automatically.
+* The 'version' property will be set to '0.1'.
+""",
+    response_model=models.Criteria,
+    status_code=201,
+    responses={
+        201: {"description": "Created - The criteria was successfully created."},
+        400: {
+            "model": ErrorResponse,
+            "description": "Forbidden - Reasons include e.g.: \n"
+            "- The provided list of parameters is invalid.\n"
+            "- The objective wasn't found or it is not in 'Final' status.\n"
+            "- The library does not allow to create criteria.\n"
+            "- The criteria does already exist.",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - Reasons include e.g.: \n"
+            "- The library with the specified 'library_name' could not be found.\n"
+            "- The criteria template with the specified 'criteria_template_uid' could not be found.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def create(
+    criteria: models.CriteriaCreateInput = Body(
+        description="Related parameters of the criteria that shall be created."
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    return CriteriaService(current_user_id).create(criteria)
+
+
+@router.post(
+    "/preview",
+    summary="Previews the creation of a new criteria.",
+    description="""This request is only valid if
+* the specified criteria template is in 'Final' status and
+* the specified library allows creating criteria (the 'is_editable' property of the library needs to be true) and
+* the criteria does not yet exist (no criteria with the same content in 'Final' or 'Draft' status).
+
+If the request succeeds:
+* No criteria will be created, but the result of the request will show what the criteria will look like.
+""",
+    response_model=models.Criteria,
+    status_code=200,
+    responses={
+        200: {"description": "Success - The criteria is able to be created."},
+        400: {
+            "model": ErrorResponse,
+            "description": "Forbidden - Reasons include e.g.: \n"
+            "- The provided list of parameters is invalid.\n"
+            "- The library does not allow to create criteria.\n"
+            "- The criteria does already exist.",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - Reasons include e.g.: \n"
+            "- The library with the specified 'library_name' could not be found.\n"
+            "- The criteria template with the specified 'criteria_template_uid' could not be found.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def preview(
+    criteria: models.CriteriaCreateInput = Body(
+        description="Related parameters of the criteria that shall be previewed."
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    return CriteriaService(current_user_id).create(criteria, preview=True)
+
+
 @router.patch(
     "/{uid}",
     summary="Updates the criteria identified by 'uid'.",
@@ -263,7 +358,7 @@ If the request succeeds:
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The criteria is not in draft status.\n"
@@ -305,7 +400,7 @@ If the request succeeds:
     status_code=201,
     responses={
         201: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The criteria is not in draft status.\n"
@@ -339,7 +434,7 @@ If the request succeeds:
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The criteria is not in final status.",
@@ -372,7 +467,7 @@ If the request succeeds:
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The criteria is not in retired status.",
@@ -401,7 +496,7 @@ def reactivate(
     status_code=204,
     responses={
         204: {"description": "No Content - The criteria was successfully deleted."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The criteria is not in draft status.\n"

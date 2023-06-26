@@ -128,6 +128,7 @@ export default {
     closeForm () {
       this.showForm = false
       this.activeStudy = null
+      this.$emit('refreshStudies')
     },
     selectStudy (study) {
       this.$store.dispatch('studiesGeneral/selectStudy', study)

@@ -11,8 +11,10 @@ from fastapi.testclient import TestClient
 
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models import Activity
-from clinical_mdr_api.models.activities.activity_group import ActivityGroup
-from clinical_mdr_api.models.activities.activity_sub_group import ActivitySubGroup
+from clinical_mdr_api.models.concepts.activities.activity_group import ActivityGroup
+from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
+    ActivitySubGroup,
+)
 from clinical_mdr_api.tests.integration.utils.api import (
     drop_db,
     inject_and_clear_db,
@@ -121,7 +123,7 @@ def test_data():
             TestUtils.create_activity(
                 name=f"name-YYY-{index}",
                 definition=f"def-YYY-{index}",
-                approve=False,
+                approve=True,
                 library_name=requested_library_name,
             )
         )
@@ -290,13 +292,6 @@ def test_get_activity_requests_csv_xml_excel(api_client, export_format):
     [
         pytest.param('{"*": {"v": ["aaa"]}}', "name", "name-AAA"),
         pytest.param('{"*": {"v": ["bBb"]}}', "name", "name-BBB"),
-        pytest.param(
-            '{"*": {"v": ["initials"], "op": "co"}}',
-            "user_initials",
-            "TODO user initials",
-        ),
-        pytest.param('{"*": {"v": ["Draft"]}}', "status", "Draft"),
-        pytest.param('{"*": {"v": ["0.1"]}}', "version", "0.1"),
         pytest.param('{"*": {"v": ["ccc"]}}', None, None),
     ],
 )
@@ -326,6 +321,8 @@ def test_filtering_wildcard(
         pytest.param('{"definition": {"v": ["def-XXX"]}}', "definition", "def-XXX"),
         pytest.param('{"definition": {"v": ["def-YYY"]}}', "definition", "def-YYY"),
         pytest.param('{"definition": {"v": ["cc"]}}', None, None),
+        pytest.param('{"status": {"v": ["Draft"]}}', "status", "Draft"),
+        pytest.param('{"status": {"v": ["Final"]}}', "status", "Final"),
         pytest.param(
             '{"library_name": {"v": ["Requested"]}}',
             "library_name",

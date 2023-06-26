@@ -392,7 +392,7 @@ export default {
       selectedActivities: [],
       studyActivityHeaders: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('StudyActivityForm.study_id'), value: 'study_id' },
+        { text: this.$t('StudyActivityForm.study_id'), value: 'study_id', noFilter: true },
         { text: this.$t('_global.library'), value: 'activity.library_name' },
         { text: this.$t('StudyActivityForm.flowchart_group'), value: 'flowchart_group.sponsor_preferred_name' },
         { text: this.$t('StudyActivity.activity_group'), value: 'activity.activity_group.name' },
@@ -637,7 +637,7 @@ export default {
     terms.getByCodelist('flowchartGroups').then(resp => {
       this.flowchartGroups = resp.data.items
     })
-    study.get({ hasStudyActivity: true }).then(resp => {
+    study.get({ has_study_activity: true }).then(resp => {
       this.studies = resp.data.items.filter(study => study.uid !== this.selectedStudy.uid)
     })
     this.getGroups()

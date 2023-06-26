@@ -1,12 +1,5 @@
-from typing import Optional
-
 from neomodel import db
 
-from clinical_mdr_api.domain.syntax_templates.objective_template import (
-    ObjectiveTemplateAR,
-)
-from clinical_mdr_api.domain.syntax_templates.template import InstantiationCountsVO
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
@@ -18,6 +11,11 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
 from clinical_mdr_api.domain_repositories.syntax_templates.generic_syntax_template_repository import (
     GenericSyntaxTemplateRepository,
 )
+from clinical_mdr_api.domains.syntax_templates.objective_template import (
+    ObjectiveTemplateAR,
+)
+from clinical_mdr_api.domains.syntax_templates.template import InstantiationCountsVO
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 
 
 class ObjectiveTemplateRepository(GenericSyntaxTemplateRepository[ObjectiveTemplateAR]):
@@ -41,11 +39,12 @@ class ObjectiveTemplateRepository(GenericSyntaxTemplateRepository[ObjectiveTempl
         library: Library,
         relationship: VersionRelationship,
         value: ObjectiveTemplateValue,
-        study_count: Optional[int] = None,
+        study_count: int = 0,
         counts: InstantiationCountsVO = None,
     ) -> ObjectiveTemplateAR:
         return ObjectiveTemplateAR.from_repository_values(
             uid=root.uid,
+            sequence_id=root.sequence_id,
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
                 is_library_editable_callback=(lambda _: library.is_editable),
@@ -65,30 +64,18 @@ class ObjectiveTemplateRepository(GenericSyntaxTemplateRepository[ObjectiveTempl
         * Attaching root node to indication nodes
         * Attaching root node to category nodes
         """
-        item = super()._create(item)
-        root = self.root_class.nodes.get(uid=item.uid)
+        root, item = super()._create(item)
 
         root.is_confirmatory_testing = item.is_confirmatory_testing
         self._db_save_node(root)
 
         if item.indications:
             for indication in item.indications:
-                indication = self._get_indication(indication.uid)
-                root.has_indication.connect(indication)
+                if indication:
+                    root.has_indication.connect(self._get_indication(indication.uid))
         if item.categories:
             for category in item.categories:
-                category = self._get_category(category[0].uid)
-                root.has_category.connect(category)
+                if category and category[0]:
+                    root.has_category.connect(self._get_category(category[0].uid))
 
         return item
-
-    def patch_is_confirmatory_testing(
-        self, uid: str, is_confirmatory_testing: Optional[bool] = None
-    ) -> None:
-        root = self.root_class.nodes.get(uid=uid)
-        if is_confirmatory_testing is None and root.is_confirmatory_testing is not None:
-            root.is_confirmatory_testing = None
-        elif is_confirmatory_testing is not None:
-            root.is_confirmatory_testing = is_confirmatory_testing
-
-        self._db_save_node(root)

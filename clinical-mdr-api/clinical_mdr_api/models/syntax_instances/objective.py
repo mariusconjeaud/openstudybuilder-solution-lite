@@ -3,15 +3,15 @@ from typing import Dict, List, Optional
 
 from pydantic import Field
 
-from clinical_mdr_api.domain.syntax_instances.objective import ObjectiveAR
-from clinical_mdr_api.models.library import Library
+from clinical_mdr_api.domains.syntax_instances.objective import ObjectiveAR
+from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.syntax_templates.objective_template import (
     ObjectiveTemplateNameUid,
 )
-from clinical_mdr_api.models.template_parameter_multi_select_input import (
+from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
-from clinical_mdr_api.models.template_parameter_term import (
+from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
@@ -19,19 +19,19 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class Objective(BaseModel):
-    uid: Optional[str] = None
-    name: Optional[str] = None
-    name_plain: Optional[str] = None
+    uid: str
+    name: Optional[str] = Field(None, nullable=True)
+    name_plain: Optional[str] = Field(None, nullable=True)
 
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    status: Optional[str] = None
-    version: Optional[str] = None
-    change_description: Optional[str] = None
-    user_initials: Optional[str] = None
+    start_date: Optional[datetime] = Field(None, nullable=True)
+    end_date: Optional[datetime] = Field(None, nullable=True)
+    status: Optional[str] = Field(None, nullable=True)
+    version: Optional[str] = Field(None, nullable=True)
+    change_description: Optional[str] = Field(None, nullable=True)
+    user_initials: Optional[str] = Field(None, nullable=True)
 
-    possible_actions: Optional[List[str]] = Field(
-        None,
+    possible_actions: List[str] = Field(
+        [],
         description=(
             "Holds those actions that can be performed on the objective. "
             "Actions are: 'approve', 'edit', 'inactivate', 'reactivate' and 'delete'."
@@ -39,15 +39,13 @@ class Objective(BaseModel):
     )
 
     objective_template: Optional[ObjectiveTemplateNameUid]
-    parameter_terms: Optional[List[MultiTemplateParameterTerm]] = Field(
-        None,
+    parameter_terms: List[MultiTemplateParameterTerm] = Field(
+        [],
         description="Holds the parameter terms that are used within the objective. The terms are ordered as they occur in the objective name.",
     )
-    library: Optional[Library] = None
+    library: Optional[Library] = Field(None, nullable=True)
 
-    study_count: Optional[int] = Field(
-        None, description="Count of studies referencing objective"
-    )
+    study_count: int = Field(0, description="Count of studies referencing objective")
 
     @classmethod
     def from_objective_ar(cls, objective_ar: ObjectiveAR) -> "Objective":
@@ -86,6 +84,7 @@ class Objective(BaseModel):
                 name=objective_ar.template_name,
                 name_plain=objective_ar.template_name_plain,
                 uid=objective_ar.template_uid,
+                sequence_id=objective_ar.template_sequence_id,
             ),
             library=Library.from_library_vo(objective_ar.library),
             study_count=objective_ar.study_count,
@@ -98,12 +97,13 @@ class ObjectiveVersion(Objective):
     Class for storing Objectives and calculation of differences
     """
 
-    changes: Dict[str, bool] = Field(
+    changes: Optional[Dict[str, bool]] = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
             "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
+        nullable=True,
     )
 
 

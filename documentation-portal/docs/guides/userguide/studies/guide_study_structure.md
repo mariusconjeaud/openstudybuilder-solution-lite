@@ -1,4 +1,4 @@
-# Guide for Study Structure (Structural Study Design) {: class="guideH1"}
+# Study Structure (Structural Study Design)
 
 ## Introduction
 

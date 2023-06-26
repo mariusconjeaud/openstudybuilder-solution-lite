@@ -1,19 +1,6 @@
-import ast
+import json
 from typing import List, Optional
 
-from clinical_mdr_api.domain.concepts.concept_base import ConceptARBase
-from clinical_mdr_api.domain.concepts.odms.vendor_attribute import (
-    OdmVendorAttributeAR,
-    OdmVendorAttributeRelationVO,
-    OdmVendorAttributeVO,
-    OdmVendorElementAttributeRelationVO,
-)
-from clinical_mdr_api.domain.concepts.utils import RelationType
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemMetadataVO,
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -35,6 +22,19 @@ from clinical_mdr_api.domain_repositories.models.odm import (
     OdmVendorAttributeValue,
     OdmVendorElementRoot,
     OdmVendorNamespaceRoot,
+)
+from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
+from clinical_mdr_api.domains.concepts.odms.vendor_attribute import (
+    OdmVendorAttributeAR,
+    OdmVendorAttributeRelationVO,
+    OdmVendorAttributeVO,
+    OdmVendorElementAttributeRelationVO,
+)
+from clinical_mdr_api.domains.concepts.utils import RelationType
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+    LibraryVO,
 )
 from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models import OdmVendorAttribute
@@ -81,9 +81,7 @@ class VendorAttributeRepository(OdmGenericRepository[OdmVendorAttributeAR]):
             uid=input_dict.get("uid"),
             concept_vo=OdmVendorAttributeVO.from_repository_values(
                 name=input_dict.get("name"),
-                compatible_types=ast.literal_eval(
-                    input_dict.get("compatible_types") or "[]"
-                ),
+                compatible_types=json.loads(input_dict.get("compatible_types") or "[]"),
                 data_type=input_dict.get("data_type"),
                 value_regex=input_dict.get("value_regex"),
                 vendor_namespace_uid=input_dict.get("vendor_namespace_uid"),

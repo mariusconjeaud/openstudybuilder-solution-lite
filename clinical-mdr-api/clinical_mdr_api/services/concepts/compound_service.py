@@ -1,12 +1,12 @@
 from neomodel import db
 
 from clinical_mdr_api import exceptions
-from clinical_mdr_api.domain.concepts.compound import CompoundAR, CompoundVO
-from clinical_mdr_api.domain.versioned_object_aggregate import VersioningException
 from clinical_mdr_api.domain_repositories.concepts.compound_repository import (
     CompoundRepository,
 )
-from clinical_mdr_api.models.compound import (
+from clinical_mdr_api.domains.concepts.compound import CompoundAR, CompoundVO
+from clinical_mdr_api.domains.versioned_object_aggregate import VersioningException
+from clinical_mdr_api.models.concepts.compound import (
     Compound,
     CompoundCreateInput,
     CompoundEditInput,

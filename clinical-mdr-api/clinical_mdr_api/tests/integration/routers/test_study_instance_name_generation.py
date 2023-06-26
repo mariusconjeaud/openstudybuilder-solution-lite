@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from starlette.testclient import TestClient
 
 import clinical_mdr_api.models.syntax_templates.objective_template as ot_models
-import clinical_mdr_api.services.libraries as library_service
+import clinical_mdr_api.services.libraries.libraries as library_service
 from clinical_mdr_api import main
 from clinical_mdr_api.services.syntax_templates.objective_templates import (
     ObjectiveTemplateService,

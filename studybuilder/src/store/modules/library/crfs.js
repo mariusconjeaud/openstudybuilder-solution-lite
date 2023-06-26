@@ -51,7 +51,7 @@ const mutations = {
 
 const actions = {
   fetchTemplates ({ commit }, params) {
-    return crfs.get('templates', { params }).then(resp => {
+    return crfs.get('study-events', { params }).then(resp => {
       commit('SET_TEMPLATES', resp.data.items)
       commit('SET_TOTAL_TEMPLATES', resp.data.total)
     })

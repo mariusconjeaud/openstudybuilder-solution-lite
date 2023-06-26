@@ -1,7 +1,7 @@
 import unittest
 
 from clinical_mdr_api.config import DEFAULT_STUDY_FIELD_CONFIG_FILE
-from clinical_mdr_api.domain.study_definition_aggregate.study_configuration import (
+from clinical_mdr_api.domains.study_definition_aggregates.study_configuration import (
     from_database,
     from_file,
 )

@@ -36,7 +36,7 @@ class CriteriaTest(api.APITest):
         db.cypher_query(STARTUP_CRITERIA)
 
         import clinical_mdr_api.models.syntax_templates.criteria_template as ct_models
-        import clinical_mdr_api.services.libraries as library_service
+        import clinical_mdr_api.services.libraries.libraries as library_service
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)

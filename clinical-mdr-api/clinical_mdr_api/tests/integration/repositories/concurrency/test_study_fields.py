@@ -3,35 +3,35 @@ from typing import Optional
 
 from neomodel import db
 
-from clinical_mdr_api.domain.controlled_terminology.ct_term_attributes import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_attributes_repository import (
+    CTTermAttributesRepository,
+)
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_name_repository import (
+    CTTermNameRepository,
+)
+from clinical_mdr_api.domain_repositories.study_definitions.study_definition_repository import (
+    StudyDefinitionRepository,
+)
+from clinical_mdr_api.domain_repositories.study_definitions.study_title.study_title_repository import (
+    StudyTitleRepository,
+)
+from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
     CTTermAttributesAR,
     CTTermAttributesVO,
 )
-from clinical_mdr_api.domain.controlled_terminology.ct_term_name import (
+from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
     CTTermNameAR,
     CTTermNameVO,
 )
-from clinical_mdr_api.domain.study_definition_aggregate.registry_identifiers import (
+from clinical_mdr_api.domains.study_definition_aggregates.registry_identifiers import (
     RegistryIdentifiersVO,
 )
-from clinical_mdr_api.domain.study_definition_aggregate.root import StudyDefinitionAR
-from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
+from clinical_mdr_api.domains.study_definition_aggregates.root import StudyDefinitionAR
+from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyDescriptionVO,
     StudyIdentificationMetadataVO,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_term_attributes_repository import (
-    CTTermAttributesRepository,
-)
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_term_name_repository import (
-    CTTermNameRepository,
-)
-from clinical_mdr_api.domain_repositories.study_definition.study_definition_repository import (
-    StudyDefinitionRepository,
-)
-from clinical_mdr_api.domain_repositories.study_definition.study_title.study_title_repository import (
-    StudyTitleRepository,
-)
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.tests.integration.repositories.concurrency.tools.optimistic_locking_validator import (
     OptimisticLockingValidator,

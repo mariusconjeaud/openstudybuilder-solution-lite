@@ -1,0 +1,21 @@
+services:
+
+  # Clinical-MDR API service for running tests in pipeline
+  api:
+    extends:
+      file: compose.yaml
+      service: api
+    environment:
+      NEO4J_DSN: "bolt://${NEO4J_MDR_AUTH_USER:-neo4j}:${NEO4J_MDR_AUTH_PASSWORD:-changeme1234}@database:7687"
+      NEO4J_DATABASE: "${NEO4J_DATABASE:-mdrdb}"
+      OAUTH_ENABLED: "False"
+      ALLOW_ORIGIN_REGEX: ".*"
+    volumes:
+      - type: bind
+        source: ./
+        target: /app
+
+networks:
+  default:
+    driver: external
+    name: studybuilder_dev-env

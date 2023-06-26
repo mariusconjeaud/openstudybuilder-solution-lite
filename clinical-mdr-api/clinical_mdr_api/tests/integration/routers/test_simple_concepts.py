@@ -3,7 +3,7 @@ import os
 from neomodel import db
 from starlette.testclient import TestClient
 
-import clinical_mdr_api.services.libraries as library_service
+import clinical_mdr_api.services.libraries.libraries as library_service
 from clinical_mdr_api.tests.integration.utils import api
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (

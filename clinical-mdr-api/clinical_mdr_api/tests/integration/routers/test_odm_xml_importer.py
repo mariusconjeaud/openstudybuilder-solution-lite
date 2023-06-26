@@ -11,6 +11,7 @@ from clinical_mdr_api.tests.data.odm_xml import (
     import_input3,
     import_input4,
     import_input5,
+    import_input6,
     import_output1,
     import_output2,
 )
@@ -143,4 +144,20 @@ class OdmXmlImporterTest(api.APITest):
         self.assertEqual(
             rs["message"],
             "MeasurementUnits identified by following OIDs {'wrong name'} don't match any Unit Definition.",
+        )
+
+    def test_throw_exception_if_measurementunitref_refers_to_non_present_measurementunit(
+        self,
+    ):
+        response = self.test_client.post(
+            "concepts/odms/metadata/xmls/import",
+            files={"xml_file": ("odm.xml", import_input6, self.CONTENT_TYPE)},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        rs = loads(response.content)
+        self.assertEqual(rs["type"], "BusinessLogicException")
+        self.assertEqual(
+            rs["message"],
+            "MeasurementUnit with OID ('name1') was not provided.",
         )

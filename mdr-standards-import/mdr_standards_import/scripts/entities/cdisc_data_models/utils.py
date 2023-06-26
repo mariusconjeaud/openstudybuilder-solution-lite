@@ -22,7 +22,6 @@ def extract_variables_from_json_data(
     data_model_type,
     is_class_dataset: bool = False,
 ) -> "list[DataModelVariable]":
-
     variables_output = []
     variables_key = _get_variables_json_key(catalogue, is_class_dataset)
     # The extract list method is recursive and can handle list property inside a list of objects
@@ -73,6 +72,16 @@ def extract_variables_from_json_data(
             definition=variable.get("definition", None),
             ordinal=variable.get("ordinal", None),
             role=variable.get("role", None),
+            notes=variable.get("notes", None),
+            variable_c_code=variable.get("variableCcode", None),
+            usage_restrictions=variable.get("usageRestrictions", None),
+            examples=variable.get("examples", None),
+            value_list=variable.get("valueList", None),
+            described_value_domain=variable.get("describedValueDomain", None),
+            qualifies_variables=[
+                v.get("href", None)
+                for v in variable.get("_links", {}).get("qualifiesVariables", [])
+            ],
             role_description=variable.get("roleDescription", None),
             simple_datatype=variable.get("simpleDatatype", None),
             implementation_notes=variable.get("implementationNotes", None),

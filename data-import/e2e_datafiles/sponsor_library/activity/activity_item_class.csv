@@ -1,5 +1,5 @@
 ACTIVITY_INSTANCE_CLASS,ACTIVITY_ITEM_CLASS,LEGACY_CDW_COLUMN,MANDATORY,ORDER,DATA_COLLECTION,SEMANTIC_ROLE,SEMANTIC_DATA_TYPE,CODELIST
-AdverseEvent,ae_number,,Yes,1,Yes,IDENTIFYER,TEXT,
+AdverseEvent,ae_number,,Yes,1,Yes,IDENTIFIER,TEXT,
 AdverseEvent,congenital,,No,2,Yes,RECOQUAL,TEXT,NY
 AdverseEvent,disability,,No,3,Yes,RECOQUAL,TEXT,NY
 AdverseEvent,death,,No,4,Yes,RECOQUAL,TEXT,NY
@@ -259,13 +259,14 @@ Observation,laterality,,No,9,Yes,RECOQUAL,TEXT,LAT
 Observation,directionality,,No,10,Yes,VARIQUAL,TEXT,DIR
 Observation,portion,,No,11,Yes,VARIQUAL,TEXT,PORTOT
 Observation,associated_persons_id,,Yes,12,Yes,IDENTIFIER,TEXT,
+Observation,bc_identifier,,No,13,No,IDENTIFIER,TEXT,
 OtherQualifiers,other_qualifier_label,,Yes,1,Yes,RECOQUAL,TEXT,
 OtherQualifiers,other_integer_qualifier,,No,2,Yes,RECOQUAL,INTEGER,
 OtherQualifiers,other_float_qualifier,,No,3,Yes,RECOQUAL,FLOAT,
 OtherQualifiers,other_text_qualifier,,No,4,Yes,RECOQUAL,TEXT,
-SubjectObservation,domain,,Yes,0,No,IDENTIFYER,CTTERM,
+SubjectObservation,domain,,Yes,0,No,IDENTIFIER,CTTERM,
 SubjectObservation,cdisc_concept_id,,No,1,No,IDENTIFIER,TEXT,
-SubjectObservation,study_id,,Yes,1,No,IDENTIFYER,TEXT,
-SubjectObservation,subject_id,,Yes,2,Yes,IDENTIFYER,TEXT,
-SubjectObservation,unique_subject_id,,Yes,3,No,IDENTIFYER,TEXT,
+SubjectObservation,study_id,,Yes,1,No,IDENTIFIER,TEXT,
+SubjectObservation,subject_id,,Yes,2,Yes,IDENTIFIER,TEXT,
+SubjectObservation,unique_subject_id,,Yes,3,No,IDENTIFIER,TEXT,
 TextualFinding,original_result,,Yes,1,Yes,RESUQUAL,TEXT,

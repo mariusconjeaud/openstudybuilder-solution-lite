@@ -2,13 +2,13 @@ from typing import List
 
 from pydantic import Field
 
-from clinical_mdr_api.models.template_parameter_multi_select_input import (
+from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
 from clinical_mdr_api.models.utils import BaseModel
 
 
-class PreInstanceCreateInput(BaseModel):
+class PreInstanceInput(BaseModel):
     parameter_terms: List[TemplateParameterMultiSelectInput] = Field(
         None,
         title="parameter_terms",

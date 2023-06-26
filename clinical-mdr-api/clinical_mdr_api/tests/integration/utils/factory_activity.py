@@ -1,5 +1,5 @@
 from clinical_mdr_api.models import StudySelectionActivityCreateInput
-from clinical_mdr_api.services.study_activity_selection import (
+from clinical_mdr_api.services.studies.study_activity_selection import (
     StudyActivitySelectionService,
 )
 

@@ -8,12 +8,12 @@ from clinical_mdr_api.domain_repositories.models._utils import (
 from clinical_mdr_api.repositories._utils import (
     ComparisonOperator,
     FilterOperator,
-    decrement_page_number,
     get_field,
     get_field_path,
     get_order_by_clause,
     merge_q_query_filters,
     transform_filters_into_neomodel,
+    validate_page_number_and_page_size,
 )
 
 _StandardsReturnType = TypeVar("_StandardsReturnType")
@@ -49,7 +49,9 @@ class NeomodelExtBaseRepository:
         )
         q_filters = merge_q_query_filters(q_filters, filter_operator=filter_operator)
         sort_paths = get_order_by_clause(sort_by=sort_by, model=self.return_model)
-        page_number = decrement_page_number(page_number)
+        page_number = validate_page_number_and_page_size(
+            page_number=page_number, page_size=page_size
+        )
         start: int = page_number * page_size
         end: int = start + page_size
         nodes = to_relation_trees(

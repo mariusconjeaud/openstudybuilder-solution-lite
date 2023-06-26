@@ -3,17 +3,17 @@ from typing import Dict, List, Optional
 
 from pydantic import Field
 
-from clinical_mdr_api.domain.syntax_instances.activity_instruction import (
+from clinical_mdr_api.domains.syntax_instances.activity_instruction import (
     ActivityInstructionAR,
 )
-from clinical_mdr_api.models.library import Library
+from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.syntax_templates.activity_instruction_template import (
     ActivityInstructionTemplateNameUid,
 )
-from clinical_mdr_api.models.template_parameter_multi_select_input import (
+from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
-from clinical_mdr_api.models.template_parameter_term import (
+from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
@@ -21,28 +21,28 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class ActivityInstructionNameUid(BaseModel):
-    uid: Optional[str] = None
-    name: Optional[str] = None
-    name_plain: Optional[str] = None
+    uid: str
+    name: Optional[str] = Field(None, nullable=True)
+    name_plain: Optional[str] = Field(None, nullable=True)
 
 
 class ActivityInstruction(ActivityInstructionNameUid):
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    status: Optional[str] = None
-    version: Optional[str] = None
-    change_description: Optional[str] = None
-    user_initials: Optional[str] = None
+    start_date: Optional[datetime] = Field(None, nullable=True)
+    end_date: Optional[datetime] = Field(None, nullable=True)
+    status: Optional[str] = Field(None, nullable=True)
+    version: Optional[str] = Field(None, nullable=True)
+    change_description: Optional[str] = Field(None, nullable=True)
+    user_initials: Optional[str] = Field(None, nullable=True)
     activity_instruction_template: Optional[ActivityInstructionTemplateNameUid]
-    parameter_terms: Optional[List[MultiTemplateParameterTerm]] = Field(
-        None,
+    parameter_terms: List[MultiTemplateParameterTerm] = Field(
+        [],
         description="""Holds the parameter terms that are used within the activity
         instruction. The terms are ordered as they occur in the activity instruction name.""",
     )
-    library: Optional[Library] = None
+    library: Optional[Library] = Field(None, nullable=True)
 
-    study_count: Optional[int] = Field(
-        None, description="Count of studies referencing activity instruction"
+    study_count: int = Field(
+        0, description="Count of studies referencing activity instruction"
     )
 
     @classmethod
@@ -81,6 +81,7 @@ class ActivityInstruction(ActivityInstructionNameUid):
                 name=activity_instruction_ar.template_name,
                 name_plain=activity_instruction_ar.template_name_plain,
                 uid=activity_instruction_ar.template_uid,
+                sequence_id=activity_instruction_ar.template_sequence_id,
             ),
             library=Library.from_library_vo(activity_instruction_ar.library),
             study_count=activity_instruction_ar.study_count,
@@ -93,12 +94,13 @@ class ActivityInstructionVersion(ActivityInstruction):
     Class for storing Activity Instructions and calculation of differences
     """
 
-    changes: Dict[str, bool] = Field(
+    changes: Optional[Dict[str, bool]] = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
             "The field names in this object here refer to the field names of the activity instruction (e.g. name, start_date, ..)."
         ),
+        nullable=True,
     )
 
 
@@ -120,4 +122,5 @@ class ActivityInstructionCreateInput(BaseModel):
         "* The library needs to be present, it will not be created with this request. The *[GET] /libraries* criteria can help. And \n"
         "* The library needs to allow the creation: The 'is_editable' property of the library needs to be true. \n\n"
         "If not specified: The library of the criteria template will be used.",
+        nullable=True,
     )

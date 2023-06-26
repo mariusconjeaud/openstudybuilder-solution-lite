@@ -1,7 +1,7 @@
 import datetime
 import unittest
 
-from clinical_mdr_api.domain.versioned_object_aggregate import (
+from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryItemStatus,
 )

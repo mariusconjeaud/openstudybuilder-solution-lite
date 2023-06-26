@@ -14,12 +14,6 @@ from clinical_mdr_api.config import (
     STUDY_VISIT_TYPE_NAME,
     STUDY_WEEK_NAME,
 )
-from clinical_mdr_api.domain._utils import strip_html
-from clinical_mdr_api.domain.library.parameter_term import (
-    ComplexParameterTerm,
-    ParameterTermEntryVO,
-)
-from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
 from clinical_mdr_api.domain_repositories.generic_repository import EntityNotFoundError
 from clinical_mdr_api.domain_repositories.generic_syntax_repository import (
     GenericSyntaxRepository,
@@ -29,6 +23,12 @@ from clinical_mdr_api.domain_repositories.models.syntax import SyntaxTemplateVal
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameter,
 )
+from clinical_mdr_api.domains._utils import strip_html
+from clinical_mdr_api.domains.libraries.parameter_term import (
+    ComplexParameterTerm,
+    ParameterTermEntryVO,
+)
+from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
 
 _AggregateRootType = TypeVar("_AggregateRootType")
 
@@ -359,7 +359,7 @@ class GenericSyntaxTemplateRepository(
     def simple_concept_template(self, rel_type: str):
         query_to_subset = f"""
             MATCH (:StudyRoot {{uid:$uid}})-[:LATEST]->(:StudyValue)
-            -[:HAS_STUDY_VISIT]->(:StudyVisit {{is_deleted:false}})-[:{rel_type}]->(:SimpleConceptRoot)
+            -[:HAS_STUDY_VISIT]->(:StudyVisit)-[:{rel_type}]->(:SimpleConceptRoot)
             -[:LATEST_FINAL]->(simple_concept_value:SimpleConceptValue)
             return simple_concept_value.name
             """
@@ -368,7 +368,7 @@ class GenericSyntaxTemplateRepository(
     def ct_term_template(self, rel_type: str):
         query_to_subset = f"""
         MATCH (:StudyRoot {{uid:$uid}})-[:LATEST]->(:StudyValue)
-        -[:HAS_STUDY_VISIT]->(:StudyVisit {{is_deleted:false}})-[:{rel_type}]->(:CTTermRoot)
+        -[:HAS_STUDY_VISIT]->(:StudyVisit)-[:{rel_type}]->(:CTTermRoot)
         -[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST_FINAL]->(term_name_value:CTTermNameValue)
         return term_name_value.name
         """
@@ -377,7 +377,7 @@ class GenericSyntaxTemplateRepository(
     def subset_time_point_reference(self):
         query_to_subset = """
             MATCH (:StudyRoot {uid:$uid})-[:LATEST]->(:StudyValue)
-            -[:HAS_STUDY_VISIT]->(:StudyVisit {is_deleted:false})-[:HAS_TIMEPOINT]->(:SimpleConceptRoot)
+            -[:HAS_STUDY_VISIT]->(:StudyVisit)-[:HAS_TIMEPOINT]->(:SimpleConceptRoot)
             -[:LATEST_FINAL]->(simple_concept_value:SimpleConceptValue)-[:HAS_TIME_REFERENCE]->(:CTTermRoot)
             -[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST_FINAL]->(term_name_value:CTTermNameValue)
             return term_name_value.name

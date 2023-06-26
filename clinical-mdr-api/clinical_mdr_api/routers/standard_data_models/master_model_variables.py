@@ -63,7 +63,10 @@ def get_master_model_variables(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
     page_size: Optional[int] = Query(
-        config.DEFAULT_PAGE_SIZE, description=_generic_descriptions.PAGE_SIZE
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
     ),
     filters: Optional[Json] = Query(
         None,
@@ -168,7 +171,7 @@ def get_distinct_values_for_header(
 # pylint: disable=unused-argument
 def create(
     master_model: MasterModelVariableInput = Body(
-        None,
+        ...,
         description="Parameters of the Master Model Variable that shall be created.",
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -201,7 +204,7 @@ Possible errors:
     status_code=201,
     responses={
         201: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The variable is not in draft status.\n",
@@ -242,7 +245,7 @@ Possible errors:
     status_code=201,
     responses={
         201: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The variable is not in final status.\n",

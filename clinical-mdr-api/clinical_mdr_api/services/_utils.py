@@ -18,15 +18,19 @@ from typing import (
 from pydantic import BaseModel
 
 from clinical_mdr_api import exceptions
-from clinical_mdr_api.domain._utils import extract_parameters
+from clinical_mdr_api.domains._utils import extract_parameters
+from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
+    UnitDefinitionAR,
+)
 
 # noinspection PyProtectedMember
-from clinical_mdr_api.domain.simple_dictionaries._simple_dictionary_item_base import (
+from clinical_mdr_api.domains.simple_dictionaries._simple_dictionary_item_base import (
     SimpleDictionaryItemBase,
 )
-from clinical_mdr_api.domain.unit_definition.unit_definition import UnitDefinitionAR
-from clinical_mdr_api.models.simple_dictionary_item import SimpleDictionaryItem
-from clinical_mdr_api.models.template_parameter import (
+from clinical_mdr_api.models.simple_dictionaries.simple_dictionary_item import (
+    SimpleDictionaryItem,
+)
+from clinical_mdr_api.models.syntax_templates.template_parameter import (
     ComplexTemplateParameter,
     TemplateParameter,
     TemplateParameterTerm,
@@ -401,6 +405,8 @@ def service_level_generic_filtering(
         sort_by = {}
     if filter_by is None:
         filter_by = {}
+    validate_is_dict("sort_by", sort_by)
+    validate_is_dict("filter_by", filter_by)
 
     filters = FilterDict(elements=filter_by)
     if filter_operator == FilterOperator.AND:
@@ -464,6 +470,7 @@ def service_level_generic_header_filtering(
 ) -> list:
     if filter_by is None:
         filter_by = {}
+    validate_is_dict("filter_by", filter_by)
 
     # Add header field name to filter_by, to filter with a CONTAINS pattern
     if search_string != "":
@@ -720,3 +727,16 @@ def calculate_diffs_history(
         else:
             data.extend(calculate_diffs(versions, version_object_class))
     return data
+
+
+def raise_404_if_none(val: any, message: str):
+    """Raises NotFoundException if the supplied object is None"""
+    if val is None:
+        raise exceptions.NotFoundException(message)
+
+
+def validate_is_dict(object_label, value):
+    if not isinstance(value, dict):
+        raise exceptions.ValidationException(
+            f"`{object_label}: {value}` is not a valid dictionary"
+        )

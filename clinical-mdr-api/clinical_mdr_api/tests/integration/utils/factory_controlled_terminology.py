@@ -1,36 +1,44 @@
-from clinical_mdr_api.domain.controlled_terminology.ct_codelist_attributes import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
+    CTCodelistAttributesRepository,
+)
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_name_repository import (
+    CTCodelistNameRepository,
+)
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_attributes_repository import (
+    CTTermAttributesRepository,
+)
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_name_repository import (
+    CTTermNameRepository,
+)
+from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_attributes import (
     CTCodelistAttributesAR,
 )
-from clinical_mdr_api.domain.controlled_terminology.ct_codelist_name import (
+from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_name import (
     CTCodelistNameAR,
     CTCodelistNameVO,
 )
-from clinical_mdr_api.domain.controlled_terminology.ct_term_attributes import (
+from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
     CTTermAttributesAR,
     CTTermAttributesVO,
 )
-from clinical_mdr_api.domain.controlled_terminology.ct_term_name import (
+from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
     CTTermNameAR,
     CTTermNameVO,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_codelist_attributes_repository import (
-    CTCodelistAttributesRepository,
-)
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_codelist_name_repository import (
-    CTCodelistNameRepository,
-)
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_term_attributes_repository import (
-    CTTermAttributesRepository,
-)
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_term_name_repository import (
-    CTTermNameRepository,
-)
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.services._meta_repository import MetaRepository
-from clinical_mdr_api.services.ct_codelist_attributes import CTCodelistAttributesService
-from clinical_mdr_api.services.ct_codelist_name import CTCodelistNameService
-from clinical_mdr_api.services.ct_term_attributes import CTTermAttributesService
-from clinical_mdr_api.services.ct_term_name import CTTermNameService
+from clinical_mdr_api.services.controlled_terminologies.ct_codelist_attributes import (
+    CTCodelistAttributesService,
+)
+from clinical_mdr_api.services.controlled_terminologies.ct_codelist_name import (
+    CTCodelistNameService,
+)
+from clinical_mdr_api.services.controlled_terminologies.ct_term_attributes import (
+    CTTermAttributesService,
+)
+from clinical_mdr_api.services.controlled_terminologies.ct_term_name import (
+    CTTermNameService,
+)
 from clinical_mdr_api.tests.integration.utils.utils import (
     CT_CATALOGUE_NAME,
     LIBRARY_NAME,

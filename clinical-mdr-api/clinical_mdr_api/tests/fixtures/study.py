@@ -8,9 +8,9 @@ from typing import List
 import pytest
 
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot
-from clinical_mdr_api.models.study import Study
-from clinical_mdr_api.models.study_epoch import StudyEpoch
-from clinical_mdr_api.models.study_selection import (
+from clinical_mdr_api.models.study_selections.study import Study
+from clinical_mdr_api.models.study_selections.study_epoch import StudyEpoch
+from clinical_mdr_api.models.study_selections.study_selection import (
     StudyDesignCell,
     StudySelectionArm,
     StudySelectionElement,

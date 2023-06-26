@@ -61,7 +61,10 @@ def get_master_models(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
     page_size: Optional[int] = Query(
-        config.DEFAULT_PAGE_SIZE, description=_generic_descriptions.PAGE_SIZE
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
     ),
     filters: Optional[Json] = Query(
         None,
@@ -167,7 +170,7 @@ Possible errors:
 # pylint: disable=unused-argument
 def create(
     master_model: MasterModelInput = Body(
-        None, description="Parameters of the Master Model that shall be created."
+        ..., description="Parameters of the Master Model that shall be created."
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> MasterModel:
@@ -199,7 +202,7 @@ Possible errors:
     status_code=201,
     responses={
         201: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The master model is not in draft status.\n",
@@ -240,7 +243,7 @@ Possible errors:
     status_code=201,
     responses={
         201: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The master model is not in final status.\n",

@@ -5,3 +5,4 @@ __pycache__
 loaded_packages.txt
 json_data/**
 cdisc_data/**
+**/.DS_Store

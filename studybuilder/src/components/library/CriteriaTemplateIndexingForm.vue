@@ -18,6 +18,7 @@
           <multiple-select
             v-model="form.categories"
             :label="$t('CriteriaTemplateForm.criterion_cat')"
+            data-cy="template-criterion-category"
             :items="categories"
             item-text="sponsor_preferred_name"
             item-value="term_uid"
@@ -41,6 +42,7 @@
           <multiple-select
             v-model="form.sub_categories"
             :label="$t('CriteriaTemplateForm.criterion_sub_cat')"
+            data-cy="template-criterion-sub-category"
             :items="subCategories"
             item-text="sponsor_preferred_name"
             item-value="term_uid"

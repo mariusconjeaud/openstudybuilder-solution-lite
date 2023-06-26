@@ -42,8 +42,8 @@ export default {
     }
     return repository.get(`${resource}/headers`, { params })
   },
-  getGroups () {
-    return repository.get(`${resource}/activity-groups`)
+  getGroups (params) {
+    return repository.get(`${resource}/activity-groups`, { params })
   },
   getSubGroups (group) {
     const params = {

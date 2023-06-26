@@ -82,6 +82,7 @@
           :extra-data-fetcher-filters="extraStudyActivityInstructionFilters"
           @item-selected="selectStudyActivityInstruction"
           :studies="selectedStudies"
+          :show-filter-bar-by-default="false"
           >
           <template v-slot:item.activity_instruction_name="{ item }">
             <n-n-parameter-highlighter
@@ -113,7 +114,15 @@
         </v-card>
     </template>
     <template v-slot:step.selectTemplate.after>
-      <p class="grey--text text-subtitle-1 font-weight-bold mb-0 ml-3">{{ $t('StudyActivityInstructionBatchForm.copy_instructions') }}</p>
+      <div class="d-flex align-center">
+        <p class="grey--text text-subtitle-1 font-weight-bold mb-0 ml-3">{{ $t('StudyObjectiveForm.copy_instructions') }}</p>
+        <v-switch
+          v-model="preInstanceMode"
+          :label="$t('StudyObjectiveForm.show_pre_instances')"
+          hide-details
+          class="ml-4"
+          />
+      </div>
       <v-col cols="12" class="pt-0">
         <n-n-table
           ref="templateTable"
@@ -235,6 +244,7 @@ import study from '@/api/study'
 import StudyActivitySelectionTable from './StudyActivitySelectionTable'
 import StudySelectionTable from './StudySelectionTable'
 import templateParameterTypes from '@/api/templateParameterTypes'
+import templatePreInstances from '@/api/templatePreInstances'
 
 export default {
   components: {
@@ -253,6 +263,8 @@ export default {
   },
   created () {
     this.steps = this.selectFromStudiesSteps
+    this.preInstanceApi = templatePreInstances('activity-instruction')
+    this.apiEndpoint = this.preInstanceApi
   },
   computed: {
     ...mapGetters({
@@ -302,6 +314,7 @@ export default {
       noTemplateAvailableAtAll: false,
       parameters: [],
       parameterTypes: [],
+      preInstanceMode: true,
       selectedInstructions: [],
       selectedInstructionsHeaders: [
         { text: this.$t('Study.study_id'), value: 'study_uid' },
@@ -334,6 +347,7 @@ export default {
       templatesOptions: {},
       tplHeaders: [
         { text: '', value: 'actions', width: '5%' },
+        { text: this.$t('_global.sequence_number'), value: 'sequence_id' },
         { text: this.$t('_global.indications'), value: 'indications.name' },
         { text: this.$t('StudyActivity.activity_group'), value: 'activity_groups.name' },
         { text: this.$t('StudyActivity.activity_sub_group'), value: 'activity_subgroups.name' },
@@ -349,6 +363,8 @@ export default {
       this.$emit('close')
       this.templateForm = {}
       this.form = {}
+      this.apiEndpoint = this.preInstanceApi
+      this.preInstanceApi = true
     },
     getObserver (step) {
       return this.$refs[`observer_${step}`]
@@ -356,7 +372,8 @@ export default {
     async loadParameters (template) {
       if (template) {
         this.loadingParameters = true
-        const resp = await activityInstructionTemplates.getObjectTemplateParameters(template.uid)
+        const templateUid = this.preInstanceMode ? template.template_uid : template.uid
+        const resp = await activityInstructionTemplates.getObjectTemplateParameters(templateUid)
         this.parameters = resp.data
         /* Filter received parameters based on current study activity selection */
         for (const parameterValues of this.parameters) {
@@ -382,7 +399,7 @@ export default {
       newFilters['activity_subgroups.uid'] = { v: this.selectedActivitySubGroups.map(item => item.uid) }
       params.filters = JSON.stringify(newFilters)
       params.operator = 'or'
-      return activityInstructionTemplates.get(params).then(resp => {
+      return this.apiEndpoint.get(params).then(resp => {
         // Apply filtering on library here because we cannot mix operators in API queries...
         this.templates = resp.data.items.filter(item => item.library.name === libraryConstants.LIBRARY_SPONSOR)
         this.templatesTotal = resp.data.total
@@ -398,6 +415,9 @@ export default {
     },
     async selectTemplate (template) {
       await this.loadParameters(template)
+      if (this.preInstanceMode) {
+        instances.loadParameterValues(template.parameter_terms, this.parameters)
+      }
       this.$set(this.form, 'activity_instruction_template', {})
       this.$set(this.form, 'activity_instruction_template', template)
     },
@@ -456,11 +476,14 @@ export default {
       const operations = []
       if (this.creationMode === 'template' || this.creationMode === 'scratch') {
         for (const studyActivity of this.studyActivities) {
+          const templateUid = this.creationMode !== 'scratch' && this.preInstanceMode
+            ? this.form.activity_instruction_template.template_uid
+            : this.form.activity_instruction_template.uid
           operations.push({
             method: 'POST',
             content: {
               activity_instruction_data: {
-                activity_instruction_template_uid: this.form.activity_instruction_template.uid,
+                activity_instruction_template_uid: templateUid,
                 parameter_terms: await instances.formatParameterValues(this.parameters),
                 library_name: this.form.activity_instruction_template.library.name
               },
@@ -513,6 +536,10 @@ export default {
       } else {
         this.steps = this.scratchModeSteps
       }
+    },
+    preInstanceMode (value) {
+      this.apiEndpoint = value ? this.preInstanceApi : activityInstructionTemplates
+      this.getTemplates()
     }
   }
 }

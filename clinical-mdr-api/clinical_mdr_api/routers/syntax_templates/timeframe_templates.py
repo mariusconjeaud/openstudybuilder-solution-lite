@@ -1,6 +1,5 @@
 """Timeframe templates router."""
 
-from datetime import datetime
 from typing import Any, List, Optional, Sequence
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
@@ -8,7 +7,11 @@ from fastapi import status as fast_api_status
 from pydantic.types import Json
 
 from clinical_mdr_api import config
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.error import ErrorResponse
+from clinical_mdr_api.models.syntax_templates.template_parameter import (
+    ComplexTemplateParameter,
+)
 from clinical_mdr_api.models.syntax_templates.timeframe_template import (
     TimeframeTemplate,
     TimeframeTemplateCreateInput,
@@ -17,7 +20,6 @@ from clinical_mdr_api.models.syntax_templates.timeframe_template import (
     TimeframeTemplateVersion,
     TimeframeTemplateWithCount,
 )
-from clinical_mdr_api.models.template_parameter import ComplexTemplateParameter
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -85,6 +87,7 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
         "defaults": [
             "library=library.name",
             "uid",
+            "name_plain",
             "name",
             "start_date",
             "end_date",
@@ -104,7 +107,7 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
 # pylint: disable=unused-argument
 def get_timeframe_templates(
     request: Request,  # request is actually required by the allow_exports decorator
-    status: Optional[str] = Query(
+    status: Optional[LibraryItemStatus] = Query(
         None,
         description="If specified, only those timeframe templates will be returned that are currently in the specified status. "
         "This may be particularly useful if the timeframe template has "
@@ -118,7 +121,10 @@ def get_timeframe_templates(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
     page_size: Optional[int] = Query(
-        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
     ),
     filters: Optional[Json] = Query(
         None,
@@ -163,7 +169,7 @@ def get_timeframe_templates(
 )
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
-    status: Optional[str] = Query(
+    status: Optional[LibraryItemStatus] = Query(
         None,
         description="If specified, only those timeframe templates will be returned that are currently in the specified status. "
         "This may be particularly useful if the timeframe template has "
@@ -197,6 +203,41 @@ def get_distinct_values_for_header(
 
 
 @router.get(
+    "/audit-trail",
+    summary="",
+    description="",
+    response_model=CustomPage[TimeframeTemplate],
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def retrieve_audit_trail(
+    page_number: Optional[int] = Query(
+        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
+    ),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
+    ),
+    total_count: Optional[bool] = Query(
+        False, description=_generic_descriptions.TOTAL_COUNT
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    results = Service(current_user_id).retrieve_audit_trail(
+        page_number=page_number, page_size=page_size, total_count=total_count
+    )
+
+    return CustomPage.create(
+        items=results.items, total=results.total_count, page=page_number, size=page_size
+    )
+
+
+@router.get(
     "/{uid}",
     summary="Returns the latest/newest version of a specific timeframe template identified by 'uid'.",
     description="""If multiple request query parameters are used, then they need to
@@ -211,43 +252,13 @@ def get_distinct_values_for_header(
         500: _generic_descriptions.ERROR_500,
     },
 )
-# pylint: disable=unused-argument
-# TODO: Should `at_specified_date_time` query param be supported?
 def get_timeframe_template(
     uid: str = TimeframeTemplateUID,
-    at_specified_date_time: Optional[datetime] = Query(
-        None,
-        description="If specified, the latest/newest representation of the timeframe template at this point in time is returned.\n"
-        "The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: "
-        "'2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. "
-        "If the timezone is ommitted, UTC±0 is assumed.",
-    ),
-    status: Optional[str] = Query(
-        None,
-        description="If specified, the representation of the timeframe template in that status is returned (if existent). "
-        "This may be particularly useful if the timeframe template has "
-        "a) a 'Draft' and a 'Final' status or "
-        "b) a 'Draft' and a 'Retired' status at the same time "
-        "and you are interested in the 'Final' or 'Retired' status.\n"
-        "Valid values are: 'Final', 'Draft' or 'Retired'.",
-    ),
-    version: Optional[str] = Query(
-        None,
-        description=r"If specified, the latest/newest representation of the timeframe template in that version is returned. "
-        r"Only exact matches are considered. "
-        r"The version is specified in the following format: \<major\>.\<minor\> where \<major\> and \<minor\> are digits. "
-        r"E.g. '0.1', '0.2', '1.0', ...",
-    ),
     return_instantiation_counts: Optional[bool] = Query(
         None, description="if specified counts data will be returned along object"
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> TimeframeTemplate:
-    if status is not None or version is not None:
-        # TODO: retrieval by status and/or version not implemented
-        raise NotImplementedError(
-            "TODO: retrieval by status and/or version not implemented"
-        )
     return Service(current_user_id).get_by_uid(
         uid, return_instantiation_counts=bool(return_instantiation_counts)
     )
@@ -367,7 +378,7 @@ If the request succeeds:
         201: {
             "description": "Created - The timeframe template was successfully created."
         },
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The timeframe template name is not valid.\n"
@@ -409,7 +420,7 @@ Once the timeframe template has been approved, only the surrounding text (exclud
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The timeframe template is not in draft status.\n"
@@ -453,7 +464,7 @@ Only the surrounding text (excluding the parameters) can be changed.
     status_code=201,
     responses={
         201: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The timeframe template is not in final or retired status or has a draft status.\n"
@@ -494,7 +505,7 @@ If the request succeeds:
     status_code=201,
     responses={
         201: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The timeframe template is not in draft status.\n"
@@ -540,7 +551,7 @@ If the request succeeds:
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The timeframe template is not in final status.",
@@ -574,7 +585,7 @@ If the request succeeds:
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The timeframe template is not in retired status.",
@@ -607,7 +618,7 @@ def reactivate(
         204: {
             "description": "No Content - The timeframe template was successfully deleted."
         },
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The timeframe template is not in draft status.\n"
@@ -674,7 +685,7 @@ with the same content will succeed.
         202: {
             "description": "Accepted. The content is valid and may be submitted in another request."
         },
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden. The content is invalid - Reasons include e.g.: \n"
             "- The syntax of the 'name' is not valid.\n"

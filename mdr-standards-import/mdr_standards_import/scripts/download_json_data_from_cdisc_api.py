@@ -195,24 +195,26 @@ def get_available_model_versions_meta_data_from_api() -> json:
         del data_tabulation["_links"]["self"]
 
     # Get data collection (CDASH)
-    response = requests.get(BASE_URL + "/mdr/products/DataCollection", headers=HEADERS)
-    response.raise_for_status()
-    data_collection = response.json()
-    if "self" in data_collection["_links"]:
-        del data_collection["_links"]["self"]
+    # response = requests.get(BASE_URL + "/mdr/products/DataCollection", headers=HEADERS)
+    # response.raise_for_status()
+    # data_collection = response.json()
+    # if "self" in data_collection["_links"]:
+    #     del data_collection["_links"]["self"]
 
     # Get data analysis (ADaM)
-    response = requests.get(BASE_URL + "/mdr/products/DataAnalysis", headers=HEADERS)
-    response.raise_for_status()
-    data_analysis = response.json()
-    if "self" in data_analysis["_links"]:
-        del data_analysis["_links"]["self"]
+    # response = requests.get(BASE_URL + "/mdr/products/DataAnalysis", headers=HEADERS)
+    # response.raise_for_status()
+    # data_analysis = response.json()
+    # if "self" in data_analysis["_links"]:
+    #     del data_analysis["_links"]["self"]
 
-    return {
-        **data_tabulation["_links"],
-        **data_collection["_links"],
-        **data_analysis["_links"],
-    }
+    # return {
+    #     **data_tabulation["_links"],
+    #     **data_collection["_links"],
+    #     **data_analysis["_links"],
+    # }
+
+    return {**data_tabulation["_links"]}
 
 
 def download_newer_data_model_versions_than(

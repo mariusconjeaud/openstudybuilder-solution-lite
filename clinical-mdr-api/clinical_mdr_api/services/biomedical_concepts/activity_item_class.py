@@ -1,11 +1,11 @@
-from clinical_mdr_api.domain.biomedical_concepts.activity_item_class import (
-    ActivityItemClassAR,
-    ActivityItemClassVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.domain_repositories.biomedical_concepts.activity_item_class_repository import (
     ActivityItemClassRepository,
 )
+from clinical_mdr_api.domains.biomedical_concepts.activity_item_class import (
+    ActivityItemClassAR,
+    ActivityItemClassVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
     ActivityItemClass,
     ActivityItemClassCreateInput,
@@ -41,11 +41,14 @@ class ActivityItemClassService(NeomodelExtGenericService):
                 order=item_input.order,
                 mandatory=item_input.mandatory,
                 activity_instance_class_uids=item_input.activity_instance_class_uids,
+                role_uid=item_input.role_uid,
+                data_type_uid=item_input.data_type_uid,
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
             activity_instance_class_exists=self._repos.activity_instance_class_repository.check_exists_final_version,
             activity_item_class_exists_by_name_callback=self._repos.activity_item_class_repository.check_exists_by_name,
+            ct_term_exists=self._repos.ct_term_name_repository.term_exists,
         )
 
     def _edit_aggregate(
@@ -59,8 +62,15 @@ class ActivityItemClassService(NeomodelExtGenericService):
                 order=item_edit_input.order,
                 mandatory=item_edit_input.mandatory,
                 activity_instance_class_uids=item_edit_input.activity_instance_class_uids,
+                role_uid=item_edit_input.role_uid
+                if item_edit_input.role_uid
+                else item.activity_item_class_vo.role_uid,
+                data_type_uid=item_edit_input.data_type_uid
+                if item_edit_input.data_type_uid
+                else item.activity_item_class_vo.data_type_uid,
             ),
             activity_instance_class_exists=self._repos.activity_instance_class_repository.check_exists_final_version,
             activity_item_class_exists_by_name_callback=self._repos.activity_item_class_repository.check_exists_by_name,
+            ct_term_exists=self._repos.ct_term_name_repository.term_exists,
         )
         return item

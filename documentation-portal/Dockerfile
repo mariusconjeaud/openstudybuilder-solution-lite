@@ -10,14 +10,24 @@ WORKDIR /app
 COPY ./package*.json ./
 RUN yarn install
 
+## Version information
+ARG BUILD_NUMBER
+ARG BUILD_BRANCH
+ARG BUILD_COMMIT
+ENV BUILD_NUMBER="$BUILD_NUMBER" \
+    BUILD_BRANCH="$BUILD_BRANCH" \
+    BUILD_COMMIT="$BUILD_COMMIT"
+
 # Build the app
 COPY ./ .
+RUN yarn run update-config /app/build.json
 RUN yarn docs:build
 
 ## Production stage
 FROM $NGINX_IMAGE as production-stage
 
 COPY --from=build-stage /app/docs/.vuepress/dist /usr/share/nginx/html
+COPY --from=build-stage /app/build.json /usr/share/nginx/html
 COPY ./nginx/default.conf /etc/nginx/conf.d/
 
 ARG PORT=5006

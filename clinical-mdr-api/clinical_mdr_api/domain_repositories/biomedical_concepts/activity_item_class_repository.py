@@ -1,8 +1,3 @@
-from clinical_mdr_api.domain.biomedical_concepts.activity_item_class import (
-    ActivityItemClassAR,
-    ActivityItemClassVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
     _AggregateRootType,
@@ -16,6 +11,9 @@ from clinical_mdr_api.domain_repositories.models.biomedical_concepts import (
     ActivityItemClassRoot,
     ActivityItemClassValue,
 )
+from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
+    CTTermRoot,
+)
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
@@ -23,6 +21,11 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 from clinical_mdr_api.domain_repositories.neomodel_ext_item_repository import (
     NeomodelExtBaseRepository,
 )
+from clinical_mdr_api.domains.biomedical_concepts.activity_item_class import (
+    ActivityItemClassAR,
+    ActivityItemClassVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
     ActivityItemClass,
 )
@@ -40,6 +43,8 @@ class ActivityItemClassRepository(
             ActivityItemClassRoot.nodes.fetch_relations(
                 "has_latest_value",
                 "has_library",
+                "has_latest_value__has_role__has_name_root__has_latest_value",
+                "has_latest_value__has_data_type__has_name_root__has_latest_value",
             )
             .fetch_optional_relations_and_collect(
                 "has_activity_instance_class__has_latest_value",
@@ -64,6 +69,8 @@ class ActivityItemClassRepository(
             or ar.activity_item_class_vo.mandatory != value.mandatory
             or sorted(ar.activity_item_class_vo.activity_instance_class_uids)
             != sorted(activity_instance_class_uids)
+            or ar.activity_item_class_vo.role_uid != value.has_role.get().uid
+            or ar.activity_item_class_vo.data_type_uid != value.has_data_type.get().uid
         )
 
     def _get_or_create_value(
@@ -94,6 +101,12 @@ class ActivityItemClassRepository(
                 uid=activity_instance_class_uid
             )
             root.has_activity_instance_class.connect(activity_instance_class)
+        new_value.has_data_type.connect(
+            CTTermRoot.nodes.get(uid=ar.activity_item_class_vo.data_type_uid)
+        )
+        new_value.has_role.connect(
+            CTTermRoot.nodes.get(uid=ar.activity_item_class_vo.role_uid)
+        )
         return new_value
 
     def generate_uid(self) -> str:
@@ -110,6 +123,8 @@ class ActivityItemClassRepository(
         activity_instance_class_uids = [
             node.uid for node in root.has_activity_instance_class.all()
         ]
+        role_term = value.has_role.get()
+        data_type_term = value.has_data_type.get()
         return ActivityItemClassAR.from_repository_values(
             uid=root.uid,
             activity_item_class_vo=ActivityItemClassVO.from_repository_values(
@@ -117,6 +132,12 @@ class ActivityItemClassRepository(
                 order=value.order,
                 mandatory=value.mandatory,
                 activity_instance_class_uids=activity_instance_class_uids,
+                role_uid=role_term.uid,
+                role_name=role_term.has_name_root.get().has_latest_value.get().name,
+                data_type_uid=data_type_term.uid,
+                data_type_name=data_type_term.has_name_root.get()
+                .has_latest_value.get()
+                .name,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,

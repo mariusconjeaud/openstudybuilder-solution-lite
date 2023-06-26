@@ -126,7 +126,8 @@
                     "name": "Test [Indication]",
                     "name_plain": "Test [Indication]",
                     "guidance_text": null,
-                    "uid": "{otuid}"
+                    "uid": "{otuid}",
+                    "sequence_id": "OT1"
                 },
                 "parameter_terms": [
                     {
@@ -213,7 +214,8 @@
                     "name": "Test [Indication]",
                     "name_plain": "Test [Indication]",
                     "guidance_text": null,
-                    "uid": "{otuid}"
+                    "uid": "{otuid}",
+                    "sequence_id": "OT1"
                 },
                 "parameter_terms": [
                     {

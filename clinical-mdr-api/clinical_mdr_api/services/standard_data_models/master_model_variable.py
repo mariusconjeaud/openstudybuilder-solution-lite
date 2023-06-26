@@ -1,11 +1,11 @@
-from clinical_mdr_api.domain.standard_data_models.master_model_variable import (
-    MasterModelVariableAR,
-    MasterModelVariableVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.domain_repositories.standard_data_models.master_model_variable_repository import (
     MasterModelVariableRepository,
 )
+from clinical_mdr_api.domains.standard_data_models.master_model_variable import (
+    MasterModelVariableAR,
+    MasterModelVariableVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.models.standard_data_models.master_model_variable import (
     MasterModelVariable,
     MasterModelVariableInput,
@@ -30,7 +30,7 @@ class MasterModelVariableService(NeomodelExtGenericService):
         return MasterModelVariableAR.from_input_values(
             author=self.user_initials,
             master_model_variable_vo=MasterModelVariableVO.from_repository_values(
-                class_uid=item_input.class_uid,
+                dataset_uid=item_input.dataset_uid,
                 variable_uid=item_input.variable_uid,
                 master_model_version_number=item_input.master_model_version_number,
                 description=item_input.description,
@@ -71,7 +71,7 @@ class MasterModelVariableService(NeomodelExtGenericService):
             author=self.user_initials,
             change_description=item_edit_input.change_description,
             master_model_vo=MasterModelVariableVO.from_repository_values(
-                class_uid=item_edit_input.class_uid,
+                dataset_uid=item_edit_input.dataset_uid,
                 variable_uid=item_edit_input.variable_uid,
                 master_model_version_number=item_edit_input.master_model_version_number,
                 description=item_edit_input.description,

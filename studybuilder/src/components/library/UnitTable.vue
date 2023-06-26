@@ -107,7 +107,7 @@ export default {
         { text: this.$t('UnitTable.display_unit'), value: 'display_unit' },
         { text: this.$t('UnitTable.unit_subsets'), value: 'unit_subsets' },
         { text: this.$t('UnitTable.ucum_unit'), value: 'ucum.name' },
-        { text: this.$t('UnitTable.ct_units'), value: 'ct_units', width: '10%' },
+        { text: this.$t('UnitTable.ct_units'), value: 'ct_units', filteringName: 'ct_units.name', width: '10%' },
         { text: this.$t('UnitTable.convertible_unit'), value: 'convertible_unit' },
         { text: this.$t('UnitTable.si_unit'), value: 'si_unit' },
         { text: this.$t('UnitTable.us_conventional_unit'), value: 'us_conventional_unit' },
@@ -176,7 +176,9 @@ export default {
       return items.map(item => item.name).join(', ')
     },
     getUnits (filters, sort, filtersUpdated) {
-      this.filters = filters
+      if (filters) {
+        this.filters = filters
+      }
       let data
       const params = {
         page_number: (this.options.page),
@@ -188,7 +190,7 @@ export default {
         this.options.page = 1
       }
       if (this.filters && this.filters !== undefined && filters !== '{}') {
-        const filtersObj = JSON.parse(filters)
+        const filtersObj = JSON.parse(this.filters)
         if (Object.keys(filtersObj).length !== 0 && filtersObj.constructor === Object) {
           params.filters = JSON.stringify(filtersObj)
         }
@@ -235,6 +237,7 @@ export default {
     },
     close () {
       this.showForm = false
+      this.activeUnit = {}
       this.getUnits()
     }
   },

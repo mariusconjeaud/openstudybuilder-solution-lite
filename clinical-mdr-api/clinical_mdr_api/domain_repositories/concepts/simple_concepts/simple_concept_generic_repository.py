@@ -1,8 +1,6 @@
 from abc import ABC
 from typing import TypeVar
 
-from clinical_mdr_api.domain.concepts.concept_base import ConceptARBase
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemMetadataVO
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
 )
@@ -10,6 +8,8 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
+from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemMetadataVO
 
 _AggregateRootType = TypeVar("_AggregateRootType")
 

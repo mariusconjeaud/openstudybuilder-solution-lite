@@ -17,6 +17,7 @@
           <multiple-select
             v-model="form.categories"
             :label="$t('ObjectiveTemplateForm.objective_category')"
+            data-cy="template-objective-category"
             :items="objectiveCategories"
             item-text="sponsor_preferred_name"
             item-value="term_uid"
@@ -39,6 +40,7 @@
           <yes-no-field
             v-model="form.is_confirmatory_testing"
             :label="$t('ObjectiveTemplateForm.confirmatory_testing')"
+            data-cy="template-confirmatory-testing"
             :disabled="notApplicable"
             :error-messages="errors"
             />

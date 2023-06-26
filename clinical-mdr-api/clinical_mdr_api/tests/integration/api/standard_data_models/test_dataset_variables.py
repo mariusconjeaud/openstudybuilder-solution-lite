@@ -18,10 +18,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 from clinical_mdr_api.main import app
-from clinical_mdr_api.models.standard_data_models.class_variable import ClassVariable
 from clinical_mdr_api.models.standard_data_models.data_model import DataModel
+from clinical_mdr_api.models.standard_data_models.data_model_ig import DataModelIG
 from clinical_mdr_api.models.standard_data_models.dataset import Dataset
 from clinical_mdr_api.models.standard_data_models.dataset_class import DatasetClass
+from clinical_mdr_api.models.standard_data_models.variable_class import VariableClass
 from clinical_mdr_api.tests.integration.utils.api import (
     drop_db,
     inject_and_clear_db,
@@ -35,9 +36,10 @@ log = logging.getLogger(__name__)
 data_model_catalogue_name: str
 data_models: List[DataModel]
 dataset_classes: List[DatasetClass]
-class_variable: ClassVariable
+class_variable: VariableClass
 dataset: Dataset
-dataset_variables: List[ClassVariable]
+dataset_variables: List[VariableClass]
+data_model_ig: DataModelIG
 
 
 @pytest.fixture(scope="module")
@@ -60,6 +62,7 @@ def test_data():
     global class_variable
     global dataset
     global dataset_variables
+    global data_model_ig
 
     data_model_catalogue_name = TestUtils.create_data_model_catalogue(
         name="DataModelCatalogue name"
@@ -81,13 +84,17 @@ def test_data():
         ]
     ]
     class_variable = TestUtils.create_class_variable(
-        label="ClassVariable A label",
-        title="ClassVariable A title",
-        description="ClassVariable A desc",
+        label="VariableClass A label",
+        title="VariableClass A title",
+        description="VariableClass A desc",
         data_model_catalogue_name=data_model_catalogue_name,
         dataset_class_uid=dataset_classes[0].uid,
+        data_model_name=data_models[0].uid,
+        data_model_version=data_models[0].version_number,
     )
-    data_model_ig = TestUtils.create_data_model_ig(name="DataModelIG A")
+    data_model_ig = TestUtils.create_data_model_ig(
+        name="DataModelIG A", version_number="1"
+    )
     # Create some datasets
     dataset = TestUtils.create_dataset(
         label="Dataset A label",
@@ -95,6 +102,7 @@ def test_data():
         description="Dataset A desc",
         data_model_catalogue_name=data_model_catalogue_name,
         data_model_ig_uid=data_model_ig.uid,
+        data_model_ig_version_number=data_model_ig.version_number,
         implemented_dataset_class_name=dataset_classes[0].uid,
     )
 
@@ -108,6 +116,8 @@ def test_data():
             data_model_catalogue_name=data_model_catalogue_name,
             dataset_uid=dataset.uid,
             class_variable_uid=class_variable.uid,
+            data_model_ig_name=data_model_ig.uid,
+            data_model_ig_version=data_model_ig.version_number,
         )
     )
     dataset_variables.append(
@@ -116,6 +126,8 @@ def test_data():
             data_model_catalogue_name=data_model_catalogue_name,
             dataset_uid=dataset.uid,
             class_variable_uid=class_variable.uid,
+            data_model_ig_name=data_model_ig.uid,
+            data_model_ig_version=data_model_ig.version_number,
         )
     )
     dataset_variables.append(
@@ -124,6 +136,8 @@ def test_data():
             data_model_catalogue_name=data_model_catalogue_name,
             dataset_uid=dataset.uid,
             class_variable_uid=class_variable.uid,
+            data_model_ig_name=data_model_ig.uid,
+            data_model_ig_version=data_model_ig.version_number,
         )
     )
     dataset_variables.append(
@@ -132,6 +146,8 @@ def test_data():
             data_model_catalogue_name=data_model_catalogue_name,
             dataset_uid=dataset.uid,
             class_variable_uid=class_variable.uid,
+            data_model_ig_name=data_model_ig.uid,
+            data_model_ig_version=data_model_ig.version_number,
         )
     )
     dataset_variables.append(
@@ -140,6 +156,8 @@ def test_data():
             data_model_catalogue_name=data_model_catalogue_name,
             dataset_uid=dataset.uid,
             class_variable_uid=class_variable.uid,
+            data_model_ig_name=data_model_ig.uid,
+            data_model_ig_version=data_model_ig.version_number,
         )
     )
 
@@ -150,6 +168,8 @@ def test_data():
                 data_model_catalogue_name=data_model_catalogue_name,
                 dataset_uid=dataset.uid,
                 class_variable_uid=class_variable.uid,
+                data_model_ig_name=data_model_ig.uid,
+                data_model_ig_version=data_model_ig.version_number,
             )
         )
         dataset_variables.append(
@@ -158,6 +178,8 @@ def test_data():
                 data_model_catalogue_name=data_model_catalogue_name,
                 dataset_uid=dataset.uid,
                 class_variable_uid=class_variable.uid,
+                data_model_ig_name=data_model_ig.uid,
+                data_model_ig_version=data_model_ig.version_number,
             )
         )
         dataset_variables.append(
@@ -166,6 +188,8 @@ def test_data():
                 data_model_catalogue_name=data_model_catalogue_name,
                 dataset_uid=dataset.uid,
                 class_variable_uid=class_variable.uid,
+                data_model_ig_name=data_model_ig.uid,
+                data_model_ig_version=data_model_ig.version_number,
             )
         )
         dataset_variables.append(
@@ -174,6 +198,8 @@ def test_data():
                 data_model_catalogue_name=data_model_catalogue_name,
                 dataset_uid=dataset.uid,
                 class_variable_uid=class_variable.uid,
+                data_model_ig_name=data_model_ig.uid,
+                data_model_ig_version=data_model_ig.version_number,
             )
         )
 
@@ -190,30 +216,36 @@ CLASS_VARIABLE_FIELDS_ALL = [
     "simple_datatype",
     "role",
     "core",
+    "question_text",
+    "prompt",
+    "completion_instructions",
+    "implementation_notes",
+    "mapping_instructions",
     "catalogue_name",
-    "dataset_name",
+    "data_model_ig_names",
+    "dataset",
     "implements_variable",
     "has_mapping_target",
-    "start_date",
-    "end_date",
-    "status",
-    "version",
-    "change_description",
-    "user_initials",
+    "referenced_codelist",
 ]
 
 CLASS_VARIABLE_FIELDS_NOT_NULL = [
     "uid",
     "label",
     "catalogue_name",
-    "dataset_name",
+    "dataset",
     "implements_variable",
+    "data_model_ig_names",
 ]
 
 
 def test_get_class_variable(api_client):
     response = api_client.get(
-        f"/standards/dataset-variables/{dataset_variables[0].uid}"
+        f"/standards/dataset-variables/{dataset_variables[0].uid}",
+        params={
+            "data_model_ig_name": data_model_ig.uid,
+            "data_model_ig_version": data_model_ig.version_number,
+        },
     )
     res = response.json()
 
@@ -227,11 +259,10 @@ def test_get_class_variable(api_client):
     assert res["uid"] == dataset_variables[0].uid
     assert res["label"] == "DatasetVariable A label"
     assert res["description"] == "DatasetVariable A desc"
-    assert res["version"] == "1.0"
-    assert res["status"] == "Final"
     assert res["catalogue_name"] == data_model_catalogue_name
-    assert res["dataset_name"] == dataset.label
-    assert res["implements_variable"] == class_variable.label
+    assert res["dataset"]["name"] == dataset.label
+    assert res["implements_variable"]["name"] == class_variable.label
+    assert res["data_model_ig_names"] == [data_model_ig.name]
 
 
 def test_get_dataset_variables_pagination(api_client):
@@ -239,7 +270,13 @@ def test_get_dataset_variables_pagination(api_client):
     sort_by = '{"uid": true}'
     for page_number in range(1, 4):
         url = f"/standards/dataset-variables?page_number={page_number}&page_size=10&sort_by={sort_by}"
-        response = api_client.get(url)
+        response = api_client.get(
+            url,
+            params={
+                "data_model_ig_name": data_model_ig.uid,
+                "data_model_ig_version": data_model_ig.version_number,
+            },
+        )
         res = response.json()
         res_uids = list(map(lambda x: x["uid"], res["items"]))
         results_paginated[page_number] = res_uids
@@ -253,7 +290,11 @@ def test_get_dataset_variables_pagination(api_client):
     log.info("All rows returned by pagination: %s", results_paginated_merged)
 
     res_all = api_client.get(
-        f"/standards/dataset-variables?page_number=1&page_size=100&sort_by={sort_by}"
+        f"/standards/dataset-variables?page_number=1&page_size=100&sort_by={sort_by}",
+        params={
+            "data_model_ig_name": data_model_ig.uid,
+            "data_model_ig_version": data_model_ig.version_number,
+        },
     ).json()
     results_all_in_one_page = list(map(lambda x: x["uid"], res_all["items"]))
     log.info("All rows in one page: %s", results_all_in_one_page)
@@ -291,7 +332,13 @@ def test_get_dataset_variables(
         url = f"{url}?{'&'.join(query_params)}"
 
     log.info("GET %s", url)
-    response = api_client.get(url)
+    response = api_client.get(
+        url,
+        params={
+            "data_model_ig_name": data_model_ig.uid,
+            "data_model_ig_version": data_model_ig.version_number,
+        },
+    )
     res = response.json()
 
     assert response.status_code == 200
@@ -327,20 +374,7 @@ def test_get_dataset_variables(
     [
         pytest.param('{"*": {"v": ["aaa"]}}', "label", "name-AAA"),
         pytest.param('{"*": {"v": ["bBb"]}}', "label", "name-BBB"),
-        pytest.param(
-            '{"*": {"v": ["initials"], "op": "co"}}', "user_initials", "TODO initials"
-        ),
-        pytest.param('{"*": {"v": ["Final"]}}', "status", "Final"),
-        pytest.param('{"*": {"v": ["1.0"]}}', "version", "1.0"),
         pytest.param('{"*": {"v": ["ccc"]}}', None, None),
-        pytest.param(
-            '{"*": {"v": ["Dataset A label"]}}', "dataset_name", "Dataset A label"
-        ),
-        pytest.param(
-            '{"*": {"v": ["ClassVariable A label"]}}',
-            "implements_variable",
-            "ClassVariable A label",
-        ),
         pytest.param(
             '{"*": {"v": ["DataModelCatalogue name"]}}',
             "catalogue_name",
@@ -352,15 +386,38 @@ def test_filtering_wildcard(
     api_client, filter_by, expected_matched_field, expected_result_prefix
 ):
     url = f"/standards/dataset-variables?filters={filter_by}"
-    response = api_client.get(url)
+    response = api_client.get(
+        url,
+        params={
+            "data_model_ig_name": data_model_ig.uid,
+            "data_model_ig_version": data_model_ig.version_number,
+        },
+    )
     res = response.json()
 
     assert response.status_code == 200
     if expected_result_prefix:
         assert len(res["items"]) > 0
+        nested_path = None
+
+        # if we expect a nested property to be equal to specified value
+        if isinstance(expected_matched_field, str) and "." in expected_matched_field:
+            nested_path = expected_matched_field.split(".")
+            expected_matched_field = nested_path[-1]
+            nested_path = nested_path[:-1]
+
         # Each returned row has a field that starts with the specified filter value
         for row in res["items"]:
-            assert row[expected_matched_field].startswith(expected_result_prefix)
+            if nested_path:
+                for prop in nested_path:
+                    row = row[prop]
+            if isinstance(row, list):
+                any(
+                    item[expected_matched_field].startswith(expected_result_prefix)
+                    for item in row
+                )
+            else:
+                assert row[expected_matched_field].startswith(expected_result_prefix)
     else:
         assert len(res["items"]) == 0
 
@@ -375,19 +432,24 @@ def test_filtering_wildcard(
         pytest.param('{"description": {"v": ["def-YYY"]}}', "description", "def-YYY"),
         pytest.param('{"description": {"v": ["cc"]}}', None, None),
         pytest.param(
-            '{"dataset_name": {"v": ["Dataset A label"]}}',
-            "dataset_name",
+            '{"dataset.name": {"v": ["Dataset A label"]}}',
+            "dataset.name",
             "Dataset A label",
         ),
         pytest.param(
-            '{"implements_variable": {"v": ["ClassVariable A label"]}}',
-            "implements_variable",
-            "ClassVariable A label",
+            '{"implements_variable.name": {"v": ["VariableClass A label"]}}',
+            "implements_variable.name",
+            "VariableClass A label",
         ),
         pytest.param(
             '{"catalogue_name": {"v": ["DataModelCatalogue name"]}}',
             "catalogue_name",
             "DataModelCatalogue name",
+        ),
+        pytest.param(
+            '{"data_model_ig_names": {"v": ["DataModelIG A"]}}',
+            "data_model_ig_names",
+            ["DataModelIG A"],
         ),
     ],
 )
@@ -395,20 +457,40 @@ def test_filtering_exact(
     api_client, filter_by, expected_matched_field, expected_result
 ):
     url = f"/standards/dataset-variables?filters={filter_by}"
-    response = api_client.get(url)
+    response = api_client.get(
+        url,
+        params={
+            "data_model_ig_name": data_model_ig.uid,
+            "data_model_ig_version": data_model_ig.version_number,
+        },
+    )
     res = response.json()
 
     assert response.status_code == 200
     if expected_result:
         assert len(res["items"]) > 0
+
+        # if we expect a nested property to be equal to specified value
+        nested_path = None
+        if isinstance(expected_matched_field, str) and "." in expected_matched_field:
+            nested_path = expected_matched_field.split(".")
+            expected_matched_field = nested_path[-1]
+            nested_path = nested_path[:-1]
+
         # Each returned row has a field whose value is equal to the specified filter value
         for row in res["items"]:
+            if nested_path:
+                for prop in nested_path:
+                    row = row[prop]
             if isinstance(expected_result, list):
                 assert all(
                     item in row[expected_matched_field] for item in expected_result
                 )
             else:
-                assert row[expected_matched_field] == expected_result
+                if isinstance(row, list):
+                    all(item[expected_matched_field] == expected_result for item in row)
+                else:
+                    assert row[expected_matched_field] == expected_result
     else:
         assert len(res["items"]) == 0
 
@@ -419,8 +501,8 @@ def test_filtering_exact(
         pytest.param("label"),
         pytest.param("description"),
         pytest.param("role"),
-        pytest.param("dataset_name"),
-        pytest.param("implements_variable"),
+        pytest.param("dataset.name"),
+        pytest.param("implements_variable.name"),
         pytest.param("catalogue_name"),
     ],
 )
@@ -428,14 +510,38 @@ def test_headers(api_client, field_name):
     url = (
         f"/standards/dataset-variables/headers?field_name={field_name}&result_count=100"
     )
-    response = api_client.get(url)
+    response = api_client.get(
+        url,
+        params={
+            "data_model_ig_name": data_model_ig.uid,
+            "data_model_ig_version": data_model_ig.version_number,
+        },
+    )
     res = response.json()
 
     assert response.status_code == 200
     expected_result = []
+
+    nested_path = None
+    if isinstance(field_name, str) and "." in field_name:
+        nested_path = field_name.split(".")
+        expected_matched_field = nested_path[-1]
+        nested_path = nested_path[:-1]
+
     for dataset_variable in dataset_variables:
-        value = getattr(dataset_variable, field_name)
-        if value:
+        if nested_path:
+            for prop in nested_path:
+                dataset_variable = getattr(dataset_variable, prop)
+            if isinstance(dataset_variable, list):
+                for item in dataset_variable:
+                    value = getattr(item, expected_matched_field)
+                    expected_result.append(value)
+            else:
+                value = getattr(dataset_variable, expected_matched_field)
+                expected_result.append(value)
+
+        else:
+            value = getattr(dataset_variable, field_name)
             expected_result.append(value)
     log.info("Expected result is %s", expected_result)
     log.info("Returned %s", res)
@@ -459,4 +565,12 @@ def test_headers(api_client, field_name):
 )
 def test_get_dataset_variables_csv_xml_excel(api_client, export_format):
     url = "/standards/dataset-variables"
-    TestUtils.verify_exported_data_format(api_client, export_format, url)
+    TestUtils.verify_exported_data_format(
+        api_client,
+        export_format,
+        url,
+        params={
+            "data_model_ig_name": data_model_ig.uid,
+            "data_model_ig_version": data_model_ig.version_number,
+        },
+    )

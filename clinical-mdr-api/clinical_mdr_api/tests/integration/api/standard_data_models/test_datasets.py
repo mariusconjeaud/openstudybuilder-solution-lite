@@ -59,11 +59,13 @@ def test_data():
     data_model_catalogue_name = TestUtils.create_data_model_catalogue(
         name="DataModelCatalogue name"
     )
-    data_model_igs = [
-        TestUtils.create_data_model_ig(name=name)
-        for name in ["DataModelIG A", "DataModelIG B", "DataModelIG C"]
-    ]
     data_model = TestUtils.create_data_model(name="DataModel A")
+    data_model_igs = [
+        TestUtils.create_data_model_ig(
+            name=name, version_number=str(idx), implemented_data_model=data_model.uid
+        )
+        for idx, name in enumerate(["DataModelIG A", "DataModelIG B", "DataModelIG C"])
+    ]
     dataset_classes = []
     for index in range(5):
         dataset_classes.append(
@@ -83,6 +85,7 @@ def test_data():
             description="Dataset A desc",
             data_model_catalogue_name=data_model_catalogue_name,
             data_model_ig_uid=data_model_igs[0].uid,
+            data_model_ig_version_number=data_model_igs[0].version_number,
             implemented_dataset_class_name=dataset_classes[0].uid,
         )
     )
@@ -91,7 +94,8 @@ def test_data():
         TestUtils.create_dataset(
             label="name-AAA",
             data_model_catalogue_name=data_model_catalogue_name,
-            data_model_ig_uid=data_model_igs[1].uid,
+            data_model_ig_uid=data_model_igs[0].uid,
+            data_model_ig_version_number=data_model_igs[0].version_number,
             implemented_dataset_class_name=dataset_classes[1].uid,
         )
     )
@@ -99,7 +103,8 @@ def test_data():
         TestUtils.create_dataset(
             label="name-BBB",
             data_model_catalogue_name=data_model_catalogue_name,
-            data_model_ig_uid=data_model_igs[1].uid,
+            data_model_ig_uid=data_model_igs[0].uid,
+            data_model_ig_version_number=data_model_igs[0].version_number,
             implemented_dataset_class_name=dataset_classes[1].uid,
         )
     )
@@ -107,7 +112,8 @@ def test_data():
         TestUtils.create_dataset(
             description="def-XXX",
             data_model_catalogue_name=data_model_catalogue_name,
-            data_model_ig_uid=data_model_igs[1].uid,
+            data_model_ig_uid=data_model_igs[0].uid,
+            data_model_ig_version_number=data_model_igs[0].version_number,
             implemented_dataset_class_name=dataset_classes[1].uid,
         )
     )
@@ -115,7 +121,8 @@ def test_data():
         TestUtils.create_dataset(
             description="def-YYY",
             data_model_catalogue_name=data_model_catalogue_name,
-            data_model_ig_uid=data_model_igs[1].uid,
+            data_model_ig_uid=data_model_igs[0].uid,
+            data_model_ig_version_number=data_model_igs[0].version_number,
             implemented_dataset_class_name=dataset_classes[1].uid,
         )
     )
@@ -125,7 +132,8 @@ def test_data():
             TestUtils.create_dataset(
                 label=f"name-AAA-{index}",
                 data_model_catalogue_name=data_model_catalogue_name,
-                data_model_ig_uid=data_model_igs[2].uid,
+                data_model_ig_uid=data_model_igs[0].uid,
+                data_model_ig_version_number=data_model_igs[0].version_number,
                 implemented_dataset_class_name=dataset_classes[2].uid,
             )
         )
@@ -133,7 +141,8 @@ def test_data():
             TestUtils.create_dataset(
                 label=f"name-BBB-{index}",
                 data_model_catalogue_name=data_model_catalogue_name,
-                data_model_ig_uid=data_model_igs[2].uid,
+                data_model_ig_uid=data_model_igs[0].uid,
+                data_model_ig_version_number=data_model_igs[0].version_number,
                 implemented_dataset_class_name=dataset_classes[2].uid,
             )
         )
@@ -141,7 +150,8 @@ def test_data():
             TestUtils.create_dataset(
                 description=f"def-XXX-{index}",
                 data_model_catalogue_name=data_model_catalogue_name,
-                data_model_ig_uid=data_model_igs[2].uid,
+                data_model_ig_uid=data_model_igs[1].uid,
+                data_model_ig_version_number=data_model_igs[1].version_number,
                 implemented_dataset_class_name=dataset_classes[2].uid,
             )
         )
@@ -150,6 +160,7 @@ def test_data():
                 description=f"def-YYY-{index}",
                 data_model_catalogue_name=data_model_catalogue_name,
                 data_model_ig_uid=data_model_igs[2].uid,
+                data_model_ig_version_number=data_model_igs[2].version_number,
                 implemented_dataset_class_name=dataset_classes[2].uid,
             )
         )
@@ -165,28 +176,27 @@ DATASET_FIELDS_ALL = [
     "title",
     "description",
     "catalogue_name",
-    "implemented_dataset_class_label",
-    "data_model_ig_name",
-    # "library_name",
-    "start_date",
-    "end_date",
-    "status",
-    "version",
-    "change_description",
-    "user_initials",
+    "implemented_dataset_class",
+    "data_model_ig",
 ]
 
 DATASET_FIELDS_NOT_NULL = [
     "uid",
     "label",
     "catalogue_name",
-    "implemented_dataset_class_label",
-    "data_model_ig_name",
+    "implemented_dataset_class",
+    "data_model_ig",
 ]
 
 
 def test_get_dataset(api_client):
-    response = api_client.get(f"/standards/datasets/{datasets[0].uid}")
+    response = api_client.get(
+        f"/standards/datasets/{datasets[0].uid}",
+        params={
+            "data_model_ig_name": data_model_igs[0].uid,
+            "data_model_ig_version": data_model_igs[0].version_number,
+        },
+    )
     res = response.json()
 
     assert response.status_code == 200
@@ -199,11 +209,12 @@ def test_get_dataset(api_client):
     assert res["uid"] == datasets[0].uid
     assert res["label"] == "Dataset A label"
     assert res["description"] == "Dataset A desc"
-    assert res["version"] == "1.0"
-    assert res["status"] == "Final"
     assert res["catalogue_name"] == data_model_catalogue_name
-    assert res["implemented_dataset_class_label"] == dataset_classes[0].label
-    assert res["data_model_ig_name"] == data_model_igs[0].name
+    assert (
+        res["implemented_dataset_class"]["dataset_class_name"]
+        == dataset_classes[0].label
+    )
+    assert res["data_model_ig"]["data_model_ig_name"] == data_model_igs[0].name
 
 
 def test_get_datasets_pagination(api_client):
@@ -211,7 +222,13 @@ def test_get_datasets_pagination(api_client):
     sort_by = '{"uid": true}'
     for page_number in range(1, 4):
         url = f"/standards/datasets?page_number={page_number}&page_size=10&sort_by={sort_by}"
-        response = api_client.get(url)
+        response = api_client.get(
+            url,
+            params={
+                "data_model_ig_name": data_model_igs[0].uid,
+                "data_model_ig_version": data_model_igs[0].version_number,
+            },
+        )
         res = response.json()
         res_uids = list(map(lambda x: x["uid"], res["items"]))
         results_paginated[page_number] = res_uids
@@ -225,12 +242,22 @@ def test_get_datasets_pagination(api_client):
     log.info("All rows returned by pagination: %s", results_paginated_merged)
 
     res_all = api_client.get(
-        f"/standards/datasets?page_number=1&page_size=100&sort_by={sort_by}"
+        f"/standards/datasets?page_number=1&page_size=100&sort_by={sort_by}",
+        params={
+            "data_model_ig_name": data_model_igs[0].uid,
+            "data_model_ig_version": data_model_igs[0].version_number,
+        },
     ).json()
     results_all_in_one_page = list(map(lambda x: x["uid"], res_all["items"]))
     log.info("All rows in one page: %s", results_all_in_one_page)
     assert len(results_all_in_one_page) == len(results_paginated_merged)
-    assert len(datasets) == len(results_paginated_merged)
+    assert len(
+        [
+            dataset
+            for dataset in datasets
+            if dataset.data_model_ig.data_model_ig_name == data_model_igs[0].name
+        ]
+    ) == len(results_paginated_merged)
 
 
 @pytest.mark.parametrize(
@@ -239,10 +266,12 @@ def test_get_datasets_pagination(api_client):
         pytest.param(None, None, None, None, 10),
         pytest.param(3, 1, True, None, 3),
         pytest.param(3, 2, True, None, 3),
-        pytest.param(10, 2, True, None, 10),
-        pytest.param(10, 3, True, None, 5),  # Total numer of data models is 25
+        pytest.param(10, 2, True, None, 5),
+        pytest.param(
+            10, 3, True, None, 0
+        ),  # Total number after required ig filtering is 15
         pytest.param(10, 1, True, '{"label": false}', 10),
-        pytest.param(10, 2, True, '{"label": true}', 10),
+        pytest.param(10, 2, True, '{"label": true}', 5),
     ],
 )
 def test_get_datasets(
@@ -263,7 +292,13 @@ def test_get_datasets(
         url = f"{url}?{'&'.join(query_params)}"
 
     log.info("GET %s", url)
-    response = api_client.get(url)
+    response = api_client.get(
+        url,
+        params={
+            "data_model_ig_name": data_model_igs[0].uid,
+            "data_model_ig_version": data_model_igs[0].version_number,
+        },
+    )
     res = response.json()
 
     assert response.status_code == 200
@@ -271,7 +306,17 @@ def test_get_datasets(
     # Check fields included in the response
     assert list(res.keys()) == ["items", "total", "page", "size"]
     assert len(res["items"]) == expected_result_len
-    assert res["total"] == (len(datasets) if total_count else 0)
+    assert res["total"] == (
+        len(
+            [
+                dataset
+                for dataset in datasets
+                if dataset.data_model_ig.data_model_ig_name == data_model_igs[0].name
+            ]
+        )
+        if total_count
+        else 0
+    )
     assert res["page"] == (page_number if page_number else 1)
     assert res["size"] == (page_size if page_size else 10)
 
@@ -299,35 +344,45 @@ def test_get_datasets(
     [
         pytest.param('{"*": {"v": ["aaa"]}}', "label", "name-AAA"),
         pytest.param('{"*": {"v": ["bBb"]}}', "label", "name-BBB"),
-        pytest.param(
-            '{"*": {"v": ["initials"], "op": "co"}}', "user_initials", "TODO initials"
-        ),
-        pytest.param('{"*": {"v": ["Final"]}}', "status", "Final"),
-        pytest.param('{"*": {"v": ["1.0"]}}', "version", "1.0"),
         pytest.param('{"*": {"v": ["ccc"]}}', None, None),
-        pytest.param(
-            '{"*": {"v": ["label-1"]}}',
-            "implemented_dataset_class_label",
-            "DatasetClass label-1",
-        ),
-        pytest.param(
-            '{"*": {"v": ["DataModelIG A"]}}', "data_model_ig_name", "DataModelIG A"
-        ),
     ],
 )
 def test_filtering_wildcard(
     api_client, filter_by, expected_matched_field, expected_result_prefix
 ):
     url = f"/standards/datasets?filters={filter_by}"
-    response = api_client.get(url)
+    response = api_client.get(
+        url,
+        params={
+            "data_model_ig_name": data_model_igs[0].uid,
+            "data_model_ig_version": data_model_igs[0].version_number,
+        },
+    )
     res = response.json()
 
     assert response.status_code == 200
     if expected_result_prefix:
         assert len(res["items"]) > 0
+        nested_path = None
+
+        # if we expect a nested property to be equal to specified value
+        if isinstance(expected_matched_field, str) and "." in expected_matched_field:
+            nested_path = expected_matched_field.split(".")
+            expected_matched_field = nested_path[-1]
+            nested_path = nested_path[:-1]
+
         # Each returned row has a field that starts with the specified filter value
         for row in res["items"]:
-            assert row[expected_matched_field].startswith(expected_result_prefix)
+            if nested_path:
+                for prop in nested_path:
+                    row = row[prop]
+            if isinstance(row, list):
+                any(
+                    item[expected_matched_field].startswith(expected_result_prefix)
+                    for item in row
+                )
+            else:
+                assert row[expected_matched_field].startswith(expected_result_prefix)
     else:
         assert len(res["items"]) == 0
 
@@ -342,13 +397,8 @@ def test_filtering_wildcard(
         pytest.param('{"description": {"v": ["def-YYY"]}}', "description", "def-YYY"),
         pytest.param('{"description": {"v": ["cc"]}}', None, None),
         pytest.param(
-            '{"data_model_ig_name": {"v": ["DataModelIG A"]}}',
-            "data_model_ig_name",
-            "DataModelIG A",
-        ),
-        pytest.param(
-            '{"implemented_dataset_class_label": {"v": ["DatasetClass label-1"]}}',
-            "implemented_dataset_class_label",
+            '{"implemented_dataset_class.dataset_class_name": {"v": ["DatasetClass label-1"]}}',
+            "implemented_dataset_class.dataset_class_name",
             "DatasetClass label-1",
         ),
         pytest.param(
@@ -362,20 +412,42 @@ def test_filtering_exact(
     api_client, filter_by, expected_matched_field, expected_result
 ):
     url = f"/standards/datasets?filters={filter_by}"
-    response = api_client.get(url)
+    response = api_client.get(
+        url,
+        params={
+            "data_model_ig_name": data_model_igs[0].uid,
+            "data_model_ig_version": data_model_igs[0].version_number,
+        },
+    )
     res = response.json()
 
     assert response.status_code == 200
     if expected_result:
         assert len(res["items"]) > 0
+        # if we expect a nested property to be equal to specified value
+        nested_path = None
+        if isinstance(expected_matched_field, str) and "." in expected_matched_field:
+            nested_path = expected_matched_field.split(".")
+            expected_matched_field = nested_path[-1]
+            nested_path = nested_path[:-1]
+
         # Each returned row has a field whose value is equal to the specified filter value
         for row in res["items"]:
+            if nested_path:
+                for prop in nested_path:
+                    row = row[prop]
             if isinstance(expected_result, list):
-                assert all(
-                    item in row[expected_matched_field] for item in expected_result
-                )
+                if isinstance(row, list):
+                    all(item[expected_matched_field] == expected_result for item in row)
+                else:
+                    assert all(
+                        item in row[expected_matched_field] for item in expected_result
+                    )
             else:
-                assert row[expected_matched_field] == expected_result
+                if isinstance(row, list):
+                    all(item[expected_matched_field] == expected_result for item in row)
+                else:
+                    assert row[expected_matched_field] == expected_result
     else:
         assert len(res["items"]) == 0
 
@@ -385,22 +457,53 @@ def test_filtering_exact(
     [
         pytest.param("label"),
         pytest.param("description"),
-        pytest.param("data_model_ig_name"),
+        pytest.param("data_model_ig.data_model_ig_name"),
         pytest.param("catalogue_name"),
-        pytest.param("implemented_dataset_class_label"),
+        pytest.param("implemented_dataset_class.dataset_class_name"),
     ],
 )
 def test_headers(api_client, field_name):
     url = f"/standards/datasets/headers?field_name={field_name}&result_count=100"
-    response = api_client.get(url)
+    response = api_client.get(
+        url,
+        params={
+            "data_model_ig_name": data_model_igs[0].uid,
+            "data_model_ig_version": data_model_igs[0].version_number,
+        },
+    )
     res = response.json()
 
     assert response.status_code == 200
     expected_result = []
-    for dataset in datasets:
-        value = getattr(dataset, field_name)
-        if value:
+
+    nested_path = None
+    if isinstance(field_name, str) and "." in field_name:
+        nested_path = field_name.split(".")
+        expected_matched_field = nested_path[-1]
+        nested_path = nested_path[:-1]
+
+    for dataset in [
+        dataset
+        for dataset in datasets
+        if dataset.data_model_ig.data_model_ig_name == data_model_igs[0].name
+    ]:
+        if nested_path:
+            for prop in nested_path:
+                dataset = getattr(dataset, prop)
+            if not dataset:
+                continue
+            if isinstance(dataset, list):
+                for item in dataset:
+                    value = getattr(item, expected_matched_field)
+                    expected_result.append(value)
+            else:
+                value = getattr(dataset, expected_matched_field)
+                expected_result.append(value)
+
+        else:
+            value = getattr(dataset, field_name)
             expected_result.append(value)
+    expected_result = [result for result in expected_result if result is not None]
     log.info("Expected result is %s", expected_result)
     log.info("Returned %s", res)
     if expected_result:
@@ -423,4 +526,12 @@ def test_headers(api_client, field_name):
 )
 def test_get_datasets_csv_xml_excel(api_client, export_format):
     url = "/standards/datasets"
-    TestUtils.verify_exported_data_format(api_client, export_format, url)
+    TestUtils.verify_exported_data_format(
+        api_client,
+        export_format,
+        url,
+        params={
+            "data_model_ig_name": data_model_igs[0].uid,
+            "data_model_ig_version": data_model_igs[0].version_number,
+        },
+    )

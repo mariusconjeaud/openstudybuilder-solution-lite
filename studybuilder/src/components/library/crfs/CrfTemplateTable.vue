@@ -10,8 +10,8 @@
     :options.sync="options"
     :server-items-length="total"
     @filter="getTemplates"
-    column-data-resource="concepts/odms/templates"
-    export-data-url="concepts/odms/templates"
+    column-data-resource="concepts/odms/study-events"
+    export-data-url="concepts/odms/study-events"
     export-object-label="CRFTemplates"
     >
     <template v-slot:actions="">
@@ -61,7 +61,8 @@
     v-model="showTemplateHistory"
     @keydown.esc="closeTemplateHistory"
     persistent
-    max-width="1200px"
+    :max-width="globalHistoryDialogMaxWidth"
+    :fullscreen="globalHistoryDialogFullscreen"
     >
     <history-table
       :title="templateHistoryTitle"
@@ -212,27 +213,27 @@ export default {
       this.showRelations = false
     },
     approveTemplate (item) {
-      crfs.approve('templates', item.uid).then((resp) => {
+      crfs.approve('study-events', item.uid).then((resp) => {
         this.getTemplates()
       })
     },
     inactivateTemplate (item) {
-      crfs.inactivate('templates', item.uid).then((resp) => {
+      crfs.inactivate('study-events', item.uid).then((resp) => {
         this.getTemplates()
       })
     },
     reactivateTemplate (item) {
-      crfs.reactivate('templates', item.uid).then((resp) => {
+      crfs.reactivate('study-events', item.uid).then((resp) => {
         this.getTemplates()
       })
     },
     newTemplateVersion (item) {
-      crfs.newVersion('templates', item.uid).then((resp) => {
+      crfs.newVersion('study-events', item.uid).then((resp) => {
         this.getTemplates()
       })
     },
     deleteTemplate (item) {
-      crfs.delete('templates', item.uid).then((resp) => {
+      crfs.delete('study-events', item.uid).then((resp) => {
         this.getTemplates()
       })
     },

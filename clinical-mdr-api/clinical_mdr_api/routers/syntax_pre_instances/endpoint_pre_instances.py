@@ -1,15 +1,22 @@
-from typing import Optional
+from typing import Any, List, Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
+from fastapi import status as fast_api_status
 from pydantic.types import Json
 
 from clinical_mdr_api import config, models
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
+from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.repositories._utils import FilterOperator
-from clinical_mdr_api.routers import _generic_descriptions
+from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.syntax_pre_instances.endpoint_pre_instances import (
     EndpointPreInstanceService,
+)
+
+EndpointPreInstanceUID = Path(
+    None, description="The unique id of the Endpoint Pre-Instance."
 )
 
 router = APIRouter()
@@ -19,7 +26,7 @@ Service = EndpointPreInstanceService
 
 @router.get(
     "",
-    summary="Returns all syntax pre instances in their latest/newest version.",
+    summary="Returns all Syntax Pre-Instances in their latest/newest version.",
     description="Allowed parameters include : filter on fields, sort by field name with sort direction, pagination",
     response_model=CustomPage[models.EndpointPreInstance],
     status_code=200,
@@ -28,21 +35,22 @@ Service = EndpointPreInstanceService
     },
 )
 def get_endpoint_pre_instances(
-    status: Optional[str] = Query(
+    status: Optional[LibraryItemStatus] = Query(
         None,
-        description="If specified, only those syntax pre instances will be returned that are currently in the specified status. "
-        "This may be particularly useful if the endpoint pre instance has "
-        "a) a 'Draft' and a 'Final' status or "
-        "b) a 'Draft' and a 'Retired' status at the same time "
-        "and you are interested in the 'Final' or 'Retired' status.\n"
-        "Valid values are: 'Final', 'Draft' or 'Retired'.",
+        description="If specified, only those Syntax Pre-Instances will be returned that are currently in the specified status. "
+        "This may be particularly useful if the Endpoint Pre-Instance has "
+        "a 'Draft' and a 'Final' status or and you are interested in the 'Final' status.\n"
+        "Valid values are: 'Final' or 'Draft'.",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
     page_size: Optional[int] = Query(
-        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
     ),
     filters: Optional[Json] = Query(
         None,
@@ -68,3 +76,433 @@ def get_endpoint_pre_instances(
     return CustomPage.create(
         items=results.items, total=results.total_count, page=page_number, size=page_size
     )
+
+
+@router.get(
+    "/headers",
+    summary="Returns possible values from the database for a given header",
+    description="""Allowed parameters include : field name for which to get possible
+    values, search string to provide filtering for the field name, additional filters to apply on other fields""",
+    response_model=List[Any],
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - Invalid field name specified",
+        },
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def get_distinct_values_for_header(
+    current_user_id: str = Depends(get_current_user_id),
+    status: Optional[LibraryItemStatus] = Query(
+        None,
+        description="If specified, only those Syntax Pre-Instances will be returned that are currently in the specified status. "
+        "This may be particularly useful if the Endpoint Pre-Instance has "
+        "a 'Draft' and a 'Final' status or and you are interested in the 'Final' status.\n"
+        "Valid values are: 'Final' or 'Draft'.",
+    ),
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: Optional[str] = Query(
+        "", description=_generic_descriptions.HEADER_SEARCH_STRING
+    ),
+    filters: Optional[Json] = Query(
+        None,
+        description=_generic_descriptions.FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: Optional[int] = Query(
+        10, description=_generic_descriptions.HEADER_RESULT_COUNT
+    ),
+):
+    return Service(current_user_id).get_distinct_values_for_header(
+        status=status,
+        field_name=field_name,
+        search_string=search_string,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        result_count=result_count,
+    )
+
+
+@router.get(
+    "/audit-trail",
+    summary="",
+    description="",
+    response_model=CustomPage[models.EndpointPreInstance],
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def retrieve_audit_trail(
+    page_number: Optional[int] = Query(
+        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
+    ),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
+    ),
+    total_count: Optional[bool] = Query(
+        False, description=_generic_descriptions.TOTAL_COUNT
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    results = Service(current_user_id).retrieve_audit_trail(
+        page_number=page_number, page_size=page_size, total_count=total_count
+    )
+
+    return CustomPage.create(
+        items=results.items, total=results.total_count, page=page_number, size=page_size
+    )
+
+
+@router.get(
+    "/{uid}",
+    summary="Returns the latest/newest version of a specific endpoint pre-instance identified by 'uid'.",
+    description="""If multiple request query parameters are used, then they need to
+    match all at the same time (they are combined with the AND operation).""",
+    response_model=Optional[models.EndpointPreInstance],
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The endpoint pre-instance with the specified 'uid' (and the specified date/time and/or status) wasn't found.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get(
+    uid: str = EndpointPreInstanceUID,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    return EndpointPreInstanceService(current_user_id).get_by_uid(uid=uid)
+
+
+@router.patch(
+    "/{uid}",
+    summary="Updates the Endpoint Pre-Instance identified by 'uid'.",
+    description="""This request is only valid if the Endpoint Pre-Instance
+* is in 'Draft' status and
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
+
+If the request succeeds:
+* The 'version' property will be increased automatically by +0.1.
+* The status will remain in 'Draft'.
+* The link to the objective will remain as is.
+""",
+    response_model=models.EndpointPreInstance,
+    status_code=200,
+    responses={
+        200: {"description": "OK."},
+        400: {
+            "model": ErrorResponse,
+            "description": "Forbidden - Reasons include e.g.: \n"
+            "- The Endpoint Pre-Instance is not in draft status.\n"
+            "- The Endpoint Pre-Instance had been in 'Final' status before.\n"
+            "- The provided list of parameters is invalid.\n"
+            "- The library does not allow to edit draft versions.\n"
+            "- The Endpoint Pre-Instance does already exist.",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The Endpoint Pre-Instance with the specified 'uid' wasn't found.",
+        },
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def edit(
+    uid: str = EndpointPreInstanceUID,
+    endpoint_pre_instance: models.EndpointPreInstanceEditInput = Body(
+        None,
+        description="The new parameter terms for the Endpoint Pre-Instance, its indexings and the change description.",
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    return Service(current_user_id).edit_draft(uid=uid, template=endpoint_pre_instance)
+
+
+@router.patch(
+    "/{uid}/indexings",
+    summary="Updates the indexings of the Endpoint Pre-Instance identified by 'uid'.",
+    description="""This request is only valid if the pre-instance
+    * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
+    
+    This is version independent : it won't trigger a status or a version change.
+    """,
+    response_model=models.EndpointPreInstance,
+    status_code=200,
+    responses={
+        200: {
+            "description": "No content - The indexings for this pre-instance were successfully updated."
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The pre-instance with the specified 'uid' could not be found.",
+        },
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def patch_indexings(
+    uid: str = EndpointPreInstanceUID,
+    indexings: models.EndpointPreInstanceIndexingsInput = Body(
+        None,
+        description="The lists of UIDs for the new indexings to be set, grouped by indexings to be updated.",
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+) -> models.EndpointPreInstance:
+    return Service(current_user_id).patch_indexings(uid=uid, indexings=indexings)
+
+
+@router.get(
+    "/{uid}/versions",
+    summary="Returns the version history of a specific Endpoint Pre-Instance identified by 'uid'.",
+    description=f"""
+The returned versions are ordered by `start_date` descending (newest entries first).
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+""",
+    response_model=List[models.EndpointPreInstanceVersion],
+    status_code=200,
+    responses={
+        200: {"description": "OK."},
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The Endpoint Pre-Instance with the specified 'uid' wasn't found.",
+        },
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+@decorators.allow_exports(
+    {
+        "text/csv": [
+            "library=library.name",
+            "endpoint_template=endpoint_template.uid",
+            "uid",
+            "name_plain",
+            "name",
+            "start_date",
+            "end_date",
+            "status",
+            "version",
+            "change_description",
+            "user_initials",
+        ],
+        "text/xml": [
+            "library=library.name",
+            "endpoint_template=endpoint_template.name",
+            "objective=objective.name",
+            "uid",
+            "name_plain",
+            "name",
+            "start_date",
+            "end_date",
+            "status",
+            "version",
+            "change_description",
+            "user_initials",
+        ],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+            "library=library.name",
+            "endpoint_template=endpoint_template.uid",
+            "uid",
+            "name_plain",
+            "name",
+            "start_date",
+            "end_date",
+            "status",
+            "version",
+            "change_description",
+            "user_initials",
+        ],
+    }
+)
+# pylint: disable=unused-argument
+def get_versions(
+    request: Request,  # request is actually required by the allow_exports decorator
+    uid: str = EndpointPreInstanceUID,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    return Service(current_user_id).get_version_history(uid)
+
+
+@router.post(
+    "/{uid}/versions",
+    summary="Creates a new version of the Endpoint Pre-Instance identified by 'uid'.",
+    description="""This request is only valid if the Endpoint Pre-Instance
+* is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
+
+If the request succeeds:
+* The latest 'Final' or 'Retired' version will remain the same as before.
+* The status of the new version will be automatically set to 'Draft'.
+* The 'version' property of the new version will be automatically set to the version of the latest 'Final' or 'Retired' version increased by +0.1.
+
+Parameters in the 'name' property cannot be changed with this request.
+Only the surrounding text (excluding the parameters) can be changed.
+""",
+    response_model=models.EndpointPreInstance,
+    status_code=201,
+    responses={
+        201: {"description": "OK."},
+        400: {
+            "model": ErrorResponse,
+            "description": "Forbidden - Reasons include e.g.: \n"
+            "- The Endpoint Pre-Instance is not in final or retired status or has a draft status.\n"
+            "- The Endpoint Pre-Instance name is not valid.\n"
+            "- The library does not allow to create a new version.",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The Endpoint Pre-Instance with the specified 'uid' could not be found.",
+        },
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def create_new_version(
+    uid: str = EndpointPreInstanceUID,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    return Service(current_user_id).create_new_version(uid=uid)
+
+
+@router.delete(
+    "/{uid}/activations",
+    summary="Inactivates/deactivates the endpoint pre-instance identified by 'uid'.",
+    description="""This request is only valid if the endpoint pre-instance
+* is in 'Final' status only (so no latest 'Draft' status exists).
+
+If the request succeeds:
+* The status will be automatically set to 'Retired'.
+* The 'change_description' property will be set automatically. 
+* The 'version' property will remain the same as before.
+    """,
+    response_model=models.EndpointPreInstance,
+    status_code=200,
+    responses={
+        200: {"description": "OK."},
+        400: {
+            "model": ErrorResponse,
+            "description": "Forbidden - Reasons include e.g.: \n"
+            "- The endpoint pre-instance is not in final status.",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The endpoint pre-instance with the specified 'uid' wasn't found.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def inactivate(
+    uid: str = EndpointPreInstanceUID,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    return EndpointPreInstanceService(current_user_id).inactivate_final(uid)
+
+
+@router.post(
+    "/{uid}/activations",
+    summary="Reactivates the endpoint pre-instance identified by 'uid'.",
+    description="""This request is only valid if the endpoint pre-instance
+* is in 'Retired' status only (so no latest 'Draft' status exists).
+
+If the request succeeds:
+* The status will be automatically set to 'Final'.
+* The 'change_description' property will be set automatically. 
+* The 'version' property will remain the same as before.
+    """,
+    response_model=models.EndpointPreInstance,
+    status_code=200,
+    responses={
+        200: {"description": "OK."},
+        400: {
+            "model": ErrorResponse,
+            "description": "Forbidden - Reasons include e.g.: \n"
+            "- The endpoint pre-instance is not in retired status.",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The endpoint pre-instance with the specified 'uid' wasn't found.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def reactivate(
+    uid: str = EndpointPreInstanceUID,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    return EndpointPreInstanceService(current_user_id).reactivate_retired(uid)
+
+
+@router.delete(
+    "/{uid}",
+    summary="Deletes the Endpoint Pre-Instance identified by 'uid'.",
+    description="""This request is only valid if \n
+* the Endpoint Pre-Instance is in 'Draft' status and
+* the Endpoint Pre-Instance has never been in 'Final' status and
+* the Endpoint Pre-Instance belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
+    response_model=None,
+    status_code=204,
+    responses={
+        204: {
+            "description": "No Content - The Endpoint Pre-Instance was successfully deleted."
+        },
+        400: {
+            "model": ErrorResponse,
+            "description": "Forbidden - Reasons include e.g.: \n"
+            "- The Endpoint Pre-Instance is not in draft status.\n"
+            "- The Endpoint Pre-Instance was already in final state or is in use.",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - An Endpoint Pre-Instance with the specified uid could not be found.",
+        },
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def delete(
+    uid: str = EndpointPreInstanceUID,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    Service(current_user_id).soft_delete(uid)
+    return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    "/{uid}/approvals",
+    summary="Approves the Endpoint Pre-Instance identified by 'uid'.",
+    description="""This request is only valid if the Endpoint Pre-Instance
+* is in 'Draft' status and
+* belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
+
+If the request succeeds:
+* The status will be automatically set to 'Final'.
+* The 'change_description' property will be set automatically.
+* The 'version' property will be increased automatically to the next major version.
+    """,
+    response_model=models.EndpointPreInstance,
+    status_code=201,
+    responses={
+        201: {"description": "OK."},
+        400: {
+            "model": ErrorResponse,
+            "description": "Forbidden - Reasons include e.g.: \n"
+            "- The Endpoint Pre-Instance is not in draft status.\n"
+            "- The library does not allow to approve Endpoint Pre-Instances.\n",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The Endpoint Pre-Instance with the specified 'uid' wasn't found.",
+        },
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
+)
+def approve(
+    uid: str = EndpointPreInstanceUID,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    return Service(current_user_id).approve(uid)

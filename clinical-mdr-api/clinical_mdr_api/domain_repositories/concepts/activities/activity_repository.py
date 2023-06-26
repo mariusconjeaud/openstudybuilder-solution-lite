@@ -2,12 +2,6 @@ from typing import Optional, Sequence, Tuple
 
 from neomodel import Q, db
 
-from clinical_mdr_api.domain.concepts.activities.activity import ActivityAR, ActivityVO
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemMetadataVO,
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
 )
@@ -27,13 +21,19 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
-from clinical_mdr_api.models.activities.activity import Activity, ActivityORM
+from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR, ActivityVO
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+    LibraryVO,
+)
+from clinical_mdr_api.models.concepts.activities.activity import Activity, ActivityORM
 from clinical_mdr_api.repositories._utils import (
     FilterOperator,
-    decrement_page_number,
     get_order_by_clause,
     merge_q_query_filters,
     transform_filters_into_neomodel,
+    validate_page_number_and_page_size,
 )
 
 
@@ -55,7 +55,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 abbreviation=input_dict.get("abbreviation"),
                 activity_subgroup=input_dict.get("activity_subgroup").get("uid"),
                 request_rationale=input_dict.get("request_rationale"),
-                replaced_by_activity=input_dict.get("replacing_activity_uid"),
+                replaced_by_activity=input_dict.get("replaced_by_activity"),
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=input_dict.get("library_name"),
@@ -83,7 +83,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
     ) -> ActivityAR:
         sub_group_value = value.in_subgroup.get_or_none()
         if sub_group_value is not None:
-            sub_group = sub_group_value.has_latest_value.get_or_none().uid
+            sub_group = sub_group_value.has_version.single().uid
         else:
             sub_group = None
         replaced_activity = value.replaced_by_activity.get_or_none()
@@ -123,7 +123,9 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         )
         q_filters = merge_q_query_filters(q_filters, filter_operator=filter_operator)
         sort_paths = get_order_by_clause(sort_by=sort_by, model=ActivityORM)
-        page_number = decrement_page_number(page_number)
+        page_number = validate_page_number_and_page_size(
+            page_number=page_number, page_size=page_size
+        )
         nodes = (
             ActivityRoot.nodes.fetch_relations("has_library", "has_latest_value")
             .fetch_optional_relations(
@@ -203,7 +205,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         are_rels_changed = False
         sub_group = value.in_subgroup.get_or_none()
         if sub_group is not None:
-            sub_group_uid = sub_group.has_latest_value.get_or_none().uid
+            sub_group_uid = sub_group.has_version.single().uid
             are_rels_changed = ar.concept_vo.activity_subgroup != sub_group_uid
         return are_concept_properties_changed or are_rels_changed or are_props_changed
 
@@ -232,11 +234,12 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         # which is specified in the activity_generic_repository_impl
         return """
         WITH *,
-            head([(concept_value)-[:IN_SUB_GROUP]->(activity_sub_group_value:ActivitySubGroupValue)<-[:LATEST]-
+            concept_value.request_rationale AS request_rationale,
+            head([(concept_value)-[:IN_SUB_GROUP]->(activity_sub_group_value:ActivitySubGroupValue)<-[:HAS_VERSION]-
             (activity_sub_group_root:ActivitySubGroupRoot) | {uid:activity_sub_group_root.uid, name:activity_sub_group_value.name}]) AS activity_subgroup,
-            head([(concept_value)-[:IN_SUB_GROUP]->(:ActivitySubGroupValue)-[:IN_GROUP]->(activity_group_value:ActivityGroupValue)<-[:LATEST]-
+            head([(concept_value)-[:IN_SUB_GROUP]->(:ActivitySubGroupValue)-[:IN_GROUP]->(activity_group_value:ActivityGroupValue)<-[:HAS_VERSION]-
             (activity_group_root:ActivityGroupRoot) | {uid:activity_group_root.uid, name:activity_group_value.name}]) AS activity_group,
-            head([(concept_value)-[:REPLACED_BY_ACTIVITY]->(replacing_activity_root:ActivityRoot) | replacing_activity_root.uid]) AS replacing_activity_uid
+            head([(concept_value)-[:REPLACED_BY_ACTIVITY]->(replacing_activity_root:ActivityRoot) | replacing_activity_root.uid]) AS replaced_by_activity
         """
 
     def replace_request_with_sponsor_activity(

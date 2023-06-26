@@ -2,15 +2,6 @@ from typing import Sequence, Tuple
 
 from neomodel import RelationshipDefinition
 
-from clinical_mdr_api.domain.standard_data_models.master_model_dataset import (
-    MasterModelDatasetAR,
-    MasterModelDatasetMetadataVO,
-    MasterModelDatasetVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
 )
@@ -27,13 +18,22 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 )
 from clinical_mdr_api.domain_repositories.models.standard_data_model import (
     DataModelIGRoot,
-    DatasetRoot,
-    DatasetVariableRoot,
+    Dataset,
+    DatasetVariable,
     MasterModelDatasetValue,
     MasterModelValue,
 )
 from clinical_mdr_api.domain_repositories.neomodel_ext_item_repository import (
     NeomodelExtBaseRepository,
+)
+from clinical_mdr_api.domains.standard_data_models.master_model_dataset import (
+    MasterModelDatasetAR,
+    MasterModelDatasetMetadataVO,
+    MasterModelDatasetVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemStatus,
+    LibraryVO,
 )
 from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.standard_data_models.master_model_dataset import (
@@ -44,13 +44,13 @@ from clinical_mdr_api.models.standard_data_models.master_model_dataset import (
 class MasterModelDatasetRepository(
     NeomodelExtBaseRepository, LibraryItemRepositoryImplBase[MasterModelDatasetAR]
 ):
-    root_class = DatasetRoot
+    root_class = Dataset
     value_class = MasterModelDatasetValue
     return_model = MasterModelDataset
 
     def get_neomodel_extension_query(self) -> CustomNodeSet:
         return (
-            DatasetRoot.nodes.fetch_relations(
+            Dataset.nodes.fetch_relations(
                 "has_latest_master_model_value__has_dataset", "has_dataset__has_library"
             )
             .fetch_optional_relations(
@@ -90,10 +90,10 @@ class MasterModelDatasetRepository(
         Overrides generic LibraryItemRepository method
         """
         relation_data: MasterModelDatasetMetadataVO = item.item_metadata
-        root = DatasetRoot.nodes.get_or_none(uid=item.uid)
+        root = Dataset.nodes.get_or_none(uid=item.uid)
 
         if root is None:
-            root = DatasetRoot(uid=item.uid).save()
+            root = Dataset(uid=item.uid).save()
 
         value = self._get_or_create_value(root=root, ar=item)
 
@@ -113,7 +113,7 @@ class MasterModelDatasetRepository(
         return item
 
     def _get_version_relation_keys(
-        self, root_node: DatasetRoot
+        self, root_node: Dataset
     ) -> Tuple[
         RelationshipDefinition,
         RelationshipDefinition,
@@ -145,7 +145,7 @@ class MasterModelDatasetRepository(
         )
 
     def _get_or_create_value(
-        self, root: DatasetRoot, ar: MasterModelDatasetAR
+        self, root: Dataset, ar: MasterModelDatasetAR
     ) -> MasterModelValue:
         for itm in root.has_master_model_version.all():
             if not self._has_data_changed(ar, itm):
@@ -171,16 +171,14 @@ class MasterModelDatasetRepository(
         # Create relations
         # Find key & sort-key variable nodes
         if ar.master_model_dataset_vo.keys is not None:
-            keys = DatasetVariableRoot.nodes.filter(
-                uid__in=ar.master_model_dataset_vo.keys
-            )
+            keys = DatasetVariable.nodes.filter(uid__in=ar.master_model_dataset_vo.keys)
             keys_dict = {key.uid: key for key in keys}
             for index, key in enumerate(ar.master_model_dataset_vo.keys):
                 if key in keys_dict:
                     new_value.has_key.connect(keys_dict[key], {"order": index})
 
         if ar.master_model_dataset_vo.sort_keys is not None:
-            sort_keys = DatasetVariableRoot.nodes.filter(
+            sort_keys = DatasetVariable.nodes.filter(
                 uid__in=ar.master_model_dataset_vo.sort_keys
             )
             sort_keys_dict = {key.uid: key for key in sort_keys}
@@ -210,7 +208,7 @@ class MasterModelDatasetRepository(
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         *,
-        root: DatasetRoot,
+        root: Dataset,
         library: Library,
         relationship: VersionRelationship,
         value: MasterModelDatasetValue,
@@ -261,7 +259,7 @@ class MasterModelDatasetRepository(
     def _maintain_parameters(
         self,
         versioned_object: MasterModelDatasetAR,
-        root: DatasetRoot,
+        root: Dataset,
         value: MasterModelDatasetValue,
     ) -> None:
         pass

@@ -1,8 +1,8 @@
-from clinical_mdr_api.domain.concepts.compound import CompoundAR
 from clinical_mdr_api.domain_repositories.concepts.compound_repository import (
     CompoundRepository,
 )
-from clinical_mdr_api.models.compound import (
+from clinical_mdr_api.domains.concepts.compound import CompoundAR
+from clinical_mdr_api.models.concepts.compound import (
     CompoundCreateInput,
     CompoundEditInput,
     CompoundVersion,

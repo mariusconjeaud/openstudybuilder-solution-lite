@@ -28,6 +28,7 @@
   <div
     ref="types"
     class="types"
+    data-cy="types-dropdown"
     :style="`width: ${width}px;`"
     v-if="showDropDown && filteredItems.length > 0"
     >

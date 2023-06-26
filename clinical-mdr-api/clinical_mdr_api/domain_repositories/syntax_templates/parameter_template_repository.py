@@ -1,8 +1,3 @@
-from clinical_mdr_api.domain.template_parameters import ParameterTemplateAR, TemplateVO
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemMetadataVO,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
@@ -17,6 +12,11 @@ from clinical_mdr_api.domain_repositories.models.template_parameter import (
 from clinical_mdr_api.domain_repositories.syntax_templates.generic_syntax_template_repository import (
     GenericSyntaxTemplateRepository,
     _AggregateRootType,
+)
+from clinical_mdr_api.domains.template_parameters import ParameterTemplateAR, TemplateVO
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryVO,
 )
 
 

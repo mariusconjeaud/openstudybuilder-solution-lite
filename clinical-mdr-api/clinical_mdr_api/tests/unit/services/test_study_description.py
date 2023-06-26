@@ -1,7 +1,7 @@
 from abc import ABC
 from dataclasses import dataclass
 
-from clinical_mdr_api.domain_repositories.study_definition.study_title.study_title_repository import (
+from clinical_mdr_api.domain_repositories.study_definitions.study_title.study_title_repository import (
     StudyTitleRepository,
 )
 

@@ -41,6 +41,7 @@
           class="secondary-btn"
           color="white"
           @click="cancel"
+          :disabled="actionDisabled"
           >
           {{ $t('_global.cancel') }}
         </v-btn>
@@ -49,6 +50,7 @@
           color="secondary"
           @click="submit"
           :loading="working"
+          :disabled="actionDisabled"
           v-if="!noSaving"
           >
           {{ $t('_global.save') }}
@@ -89,6 +91,7 @@ export default {
   },
   data () {
     return {
+      actionDisabled: false,
       working: false
     }
   },
@@ -98,6 +101,12 @@ export default {
     },
     cancel () {
       this.$emit('close')
+    },
+    disableActions () {
+      this.actionDisabled = true
+    },
+    enableActions () {
+      this.actionDisabled = false
     },
     async confirm (message, options) {
       return await this.$refs.confirm.open(message, options)

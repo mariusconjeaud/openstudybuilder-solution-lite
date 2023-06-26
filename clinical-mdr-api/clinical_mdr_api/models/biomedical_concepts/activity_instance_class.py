@@ -2,15 +2,15 @@ from typing import Callable, Dict, List, Optional
 
 from pydantic import Field, validator
 
-from clinical_mdr_api.domain.biomedical_concepts.activity_instance_class import (
+from clinical_mdr_api.domains.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClassAR,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import (
+from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     ObjectAction,
 )
 from clinical_mdr_api.models import Library
-from clinical_mdr_api.models.concept import VersionProperties
+from clinical_mdr_api.models.concepts.concept import VersionProperties
 from clinical_mdr_api.models.utils import BaseModel
 
 
@@ -146,10 +146,11 @@ class ActivityInstanceClassVersion(ActivityInstanceClass):
     Class for storing ActivityInstanceClass and calculation of differences
     """
 
-    changes: Dict[str, bool] = Field(
+    changes: Optional[Dict[str, bool]] = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
             "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
+        nullable=True,
     )

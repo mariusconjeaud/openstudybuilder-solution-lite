@@ -4,7 +4,7 @@ from neomodel import db
 
 from clinical_mdr_api import exceptions, models
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot
-from clinical_mdr_api.services.study_design_cell import StudyDesignCellService
+from clinical_mdr_api.services.studies.study_design_cell import StudyDesignCellService
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_CATALOGUE_CYPHER,
@@ -37,6 +37,7 @@ class StudyDesignCellTestCase(unittest.TestCase):
         catalogue_name, library_name = get_catalogue_name_library_name()
         create_study_epoch_codelists_ret_cat_and_lib()
         self.study_epoch = create_study_epoch("EpochSubType_0001")
+        self.study_epoch2 = create_study_epoch("EpochSubType_0001")
 
         # Create a study arm
         arm_type_codelist = create_codelist(
@@ -95,6 +96,17 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 number_of_subjects=3,
                 arm_type_uid=arm_type_term.uid,
             ),
+            create_study_arm(
+                study_uid=self.study.uid,
+                name="Arm_Name_5",
+                short_name="Arm_Short_Name_5",
+                code="Arm_code_5",
+                description="desc...",
+                colour_code="colour...",
+                randomization_group="Randomization_Group_5",
+                number_of_subjects=3,
+                arm_type_uid=arm_type_term.uid,
+            ),
         ]
 
         # Create a study element
@@ -143,6 +155,39 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 description="desc...",
                 colour_code="desc...",
                 randomization_group="BranchArm_Randomization_Group_2",
+                number_of_subjects=1,
+                arm_uid=self.study_arms[1].arm_uid,
+            ),
+            create_study_branch_arm(
+                self.study.uid,
+                name="BranchArm_Name_3",
+                short_name="BranchArm_Short_Name_3",
+                code="BranchArm_code_3",
+                description="desc...",
+                colour_code="desc...",
+                randomization_group="Randomization_Group_3",
+                number_of_subjects=1,
+                arm_uid=self.study_arms[0].arm_uid,
+            ),
+            create_study_branch_arm(
+                self.study.uid,
+                name="BranchArm_Name_4",
+                short_name="BranchArm_Short_Name_4",
+                code="BranchArm_code_4",
+                description="desc...",
+                colour_code="desc...",
+                randomization_group="BranchArm_Randomization_Group_4",
+                number_of_subjects=1,
+                arm_uid=self.study_arms[1].arm_uid,
+            ),
+            create_study_branch_arm(
+                self.study.uid,
+                name="BranchArm_Name_5",
+                short_name="BranchArm_Short_Name_5",
+                code="BranchArm_code_5",
+                description="desc...",
+                colour_code="desc...",
+                randomization_group="BranchArm_Randomization_Group_5",
                 number_of_subjects=1,
                 arm_uid=self.study_arms[1].arm_uid,
             ),
@@ -368,21 +413,21 @@ class StudyDesignCellTestCase(unittest.TestCase):
                     content=models.StudyDesignCellEditInput(
                         study_design_cell_uid=design_cells[1].design_cell_uid,
                         study_element_uid=self.study_elements[0].element_uid,
-                        study_branch_arm_uid=self.study_branch_arms[0].branch_arm_uid,
+                        study_branch_arm_uid=self.study_branch_arms[2].branch_arm_uid,
                     ),
                 ),
                 models.StudyDesignCellBatchInput(
                     method="PATCH",
                     content=models.StudyDesignCellEditInput(
                         study_design_cell_uid=design_cells[2].design_cell_uid,
-                        study_branch_arm_uid=self.study_branch_arms[1].branch_arm_uid,
+                        study_branch_arm_uid=self.study_branch_arms[3].branch_arm_uid,
                     ),
                 ),
                 models.StudyDesignCellBatchInput(
                     method="PATCH",
                     content=models.StudyDesignCellEditInput(
                         study_design_cell_uid=design_cells[3].design_cell_uid,
-                        study_arm_uid=self.study_arms[2].arm_uid,
+                        study_branch_arm_uid=self.study_branch_arms[4].branch_arm_uid,
                     ),
                 ),
             ],
@@ -399,20 +444,22 @@ class StudyDesignCellTestCase(unittest.TestCase):
         assert design_cell.study_element_uid == self.study_elements[0].element_uid
         assert design_cell.study_arm_uid is None
         assert (
-            design_cell.study_branch_arm_uid == self.study_branch_arms[0].branch_arm_uid
+            design_cell.study_branch_arm_uid == self.study_branch_arms[2].branch_arm_uid
         )
         design_cell = service.get_specific_design_cell(
             self.study.uid, design_cells[2].design_cell_uid
         )
         assert design_cell.study_arm_uid is None
         assert (
-            design_cell.study_branch_arm_uid == self.study_branch_arms[1].branch_arm_uid
+            design_cell.study_branch_arm_uid == self.study_branch_arms[3].branch_arm_uid
         )
         design_cell = service.get_specific_design_cell(
             self.study.uid, design_cells[3].design_cell_uid
         )
-        assert design_cell.study_arm_uid == self.study_arms[2].arm_uid
-        assert design_cell.study_branch_arm_uid is None
+        assert design_cell.study_arm_uid is None
+        assert (
+            design_cell.study_branch_arm_uid == self.study_branch_arms[4].branch_arm_uid
+        )
 
         # delete
         design_cells = service.get_all_design_cells(self.study.uid)

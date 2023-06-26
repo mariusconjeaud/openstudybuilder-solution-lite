@@ -1,10 +1,10 @@
 """Objective templates router."""
 
-from datetime import datetime
 from typing import Optional, Sequence
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request
 
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.complex_parameter_template import (
     ComplexParameterTemplate,
     ComplexParameterTemplateCreateInput,
@@ -14,10 +14,12 @@ from clinical_mdr_api.models.complex_parameter_template import (
     ComplexParameterTemplateWithCount,
 )
 from clinical_mdr_api.models.error import ErrorResponse
-from clinical_mdr_api.models.template_parameter import ComplexTemplateParameter
+from clinical_mdr_api.models.syntax_templates.template_parameter import (
+    ComplexTemplateParameter,
+)
 from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.routers import _generic_descriptions, decorators
-from clinical_mdr_api.services.parameter_templates import (
+from clinical_mdr_api.services.syntax_templates.parameter_templates import (
     ComplexParameterTemplateService,
 )
 
@@ -99,7 +101,7 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
 # pylint: disable=unused-argument
 def get_parameter_templates(
     request: Request,  # request is actually required by the allow_exports decorator
-    status: Optional[str] = Query(
+    status: Optional[LibraryItemStatus] = Query(
         None,
         description="If specified, only those parameter templates will be returned that are currently in the specified status. "
         "This may be particularly useful if the parameter template has "
@@ -129,43 +131,13 @@ def get_parameter_templates(
         500: _generic_descriptions.ERROR_500,
     },
 )
-# pylint: disable=unused-argument
-# TODO: Should `at_specified_date_time` query param be supported?
 def get_parameter_template(
     uid: str = ComplexParameterTemplateUID,
-    at_specified_date_time: Optional[datetime] = Query(
-        None,
-        description="If specified, the latest/newest representation of the parameter template at this point in time is returned.\n"
-        "The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: "
-        "'2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. "
-        "If the timezone is ommitted, UTC±0 is assumed.",
-    ),
-    status: Optional[str] = Query(
-        None,
-        description="If specified, the representation of the parameter template in that status is returned (if existent). "
-        "This may be particularly useful if the parameter template has "
-        "a) a 'Draft' and a 'Final' status or "
-        "b) a 'Draft' and a 'Retired' status at the same time "
-        "and you are interested in the 'Final' or 'Retired' status.\n"
-        "Valid values are: 'Final', 'Draft' or 'Retired'.",
-    ),
-    version: Optional[str] = Query(
-        None,
-        description=r"If specified, the latest/newest representation of the parameter template in that version is returned. "
-        r"Only exact matches are considered. "
-        r"The version is specified in the following format: \<major\>.\<minor\> where \<major\> and \<minor\> are digits. "
-        r"E.g. '0.1', '0.2', '1.0', ...",
-    ),
     return_instantiation_counts: Optional[bool] = Query(
         None, description="if specified counts data will be returned along object"
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> ComplexParameterTemplate:
-    if status is not None or version is not None:
-        # TODO: retrieval by status and/or version not implemented
-        raise NotImplementedError(
-            "TODO: retrieval by status and/or version not implemented"
-        )
     return Service(current_user_id).get_by_uid(
         uid, return_instantiation_counts=bool(return_instantiation_counts)
     )
@@ -285,7 +257,7 @@ If the request succeeds:
         201: {
             "description": "Created - The parameter template was successfully created."
         },
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The parameter template name is not valid.\n"
@@ -328,7 +300,7 @@ Once the parameter template has been approved, only the surrounding text (exclud
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The parameter template is not in draft status.\n"
@@ -372,7 +344,7 @@ Only the surrounding text (excluding the parameters) can be changed.
     status_code=201,
     responses={
         201: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The parameter template is not in final or retired status or has a draft status.\n"
@@ -413,7 +385,7 @@ If the request succeeds:
     status_code=201,
     responses={
         201: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The parameter template is not in draft status.\n"
@@ -432,16 +404,13 @@ If the request succeeds:
 )
 def approve(
     uid: str = ComplexParameterTemplateUID,
-    cascade: bool = False,
     current_user_id: str = Depends(get_current_user_id),
 ) -> ComplexParameterTemplate:
     """
     Approves parameter template. Fails with 409 if there is some complex-parameters created
     from this template and cascade is false
     """
-    if not cascade:
-        return Service(current_user_id).approve(uid=uid)
-    return Service(current_user_id).approve_cascade(uid=uid)
+    return Service(current_user_id).approve(uid=uid)
 
 
 @router.delete(
@@ -459,7 +428,7 @@ If the request succeeds:
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The parameter template is not in final status.",
@@ -494,7 +463,7 @@ If the request succeeds:
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The parameter template is not in retired status.",
@@ -528,7 +497,7 @@ def reactivate(
         204: {
             "description": "No Content - The parameter template was successfully deleted."
         },
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The parameter template is not in draft status.\n"
@@ -591,7 +560,7 @@ with the same content will succeed.
         202: {
             "description": "Accepted. The content is valid and may be submitted in another request."
         },
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden. The content is invalid - Reasons include e.g.: \n"
             "- The syntax of the 'name' is not valid.\n"

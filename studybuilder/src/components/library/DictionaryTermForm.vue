@@ -180,7 +180,7 @@ export default {
         this.form.defComplete = 'N'
       }
       const data = JSON.parse(JSON.stringify(this.form))
-      dictionaries.edit(this.editedTerm.termUid, data).then(resp => {
+      dictionaries.edit(this.editedTerm.term_uid, data).then(resp => {
         bus.$emit('notification', { msg: this.$t('DictionaryTermForm.update_success') })
         this.$emit('save')
         this.close()

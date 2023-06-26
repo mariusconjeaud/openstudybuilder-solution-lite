@@ -2,16 +2,6 @@ from typing import List, Optional, Sequence
 
 from neomodel import db
 
-from clinical_mdr_api.domain.concepts.compound_alias import (
-    CompoundAliasAR,
-    CompoundAliasVO,
-)
-from clinical_mdr_api.domain.concepts.concept_base import _AggregateRootType
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemMetadataVO,
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
 )
@@ -27,7 +17,17 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
-from clinical_mdr_api.models.compound_alias import CompoundAlias
+from clinical_mdr_api.domains.concepts.compound_alias import (
+    CompoundAliasAR,
+    CompoundAliasVO,
+)
+from clinical_mdr_api.domains.concepts.concept_base import _AggregateRootType
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+    LibraryVO,
+)
+from clinical_mdr_api.models.concepts.compound_alias import CompoundAlias
 
 
 class CompoundAliasRepository(ConceptGenericRepository):

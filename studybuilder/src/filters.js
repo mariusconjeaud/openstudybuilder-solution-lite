@@ -45,3 +45,10 @@ Vue.filter('substances', dataFormating.substances)
 ** Display a list of pharmacological classes
 */
 Vue.filter('pharmacologicalClasses', dataFormating.pharmacologicalClasses)
+
+/*
+** Display a list of items separated by a comma
+*/
+Vue.filter('itemList', function (value) {
+  return value.join(', ')
+})

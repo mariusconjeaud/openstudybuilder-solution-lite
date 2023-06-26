@@ -3,37 +3,37 @@ from typing import Dict, List, Optional
 
 from pydantic import Field
 
-from clinical_mdr_api.domain._utils import extract_parameters
-from clinical_mdr_api.domain.syntax_instances.timeframe import TimeframeAR
-from clinical_mdr_api.models.library import Library
-from clinical_mdr_api.models.syntax_templates.timeframe_template import (
-    TimeframeTemplateNameUid,
-)
-from clinical_mdr_api.models.template_parameter_multi_select_input import (
+from clinical_mdr_api.domains._utils import extract_parameters
+from clinical_mdr_api.domains.syntax_instances.timeframe import TimeframeAR
+from clinical_mdr_api.models.libraries.library import Library
+from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
-from clinical_mdr_api.models.template_parameter_term import (
+from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
     TemplateParameterComplexValue,
+)
+from clinical_mdr_api.models.syntax_templates.timeframe_template import (
+    TimeframeTemplateNameUid,
 )
 from clinical_mdr_api.models.utils import BaseModel
 
 
 class Timeframe(BaseModel):
-    uid: Optional[str] = None
-    name: Optional[str] = None
-    name_plain: Optional[str] = None
+    uid: str
+    name: Optional[str] = Field(None, nullable=True)
+    name_plain: Optional[str] = Field(None, nullable=True)
 
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    status: Optional[str] = None
-    version: Optional[str] = None
-    change_description: Optional[str] = None
-    user_initials: Optional[str] = None
+    start_date: Optional[datetime] = Field(None, nullable=True)
+    end_date: Optional[datetime] = Field(None, nullable=True)
+    status: Optional[str] = Field(None, nullable=True)
+    version: Optional[str] = Field(None, nullable=True)
+    change_description: Optional[str] = Field(None, nullable=True)
+    user_initials: Optional[str] = Field(None, nullable=True)
 
-    possible_actions: Optional[List[str]] = Field(
-        None,
+    possible_actions: List[str] = Field(
+        [],
         description=(
             "Holds those actions that can be performed on the timeframe. "
             "Actions are: 'approve', 'edit', 'inactivate', 'reactivate' and 'delete'."
@@ -41,14 +41,12 @@ class Timeframe(BaseModel):
     )
 
     timeframe_template: Optional[TimeframeTemplateNameUid]
-    parameter_terms: Optional[List[MultiTemplateParameterTerm]] = Field(
-        None,
+    parameter_terms: List[MultiTemplateParameterTerm] = Field(
+        [],
         description="Holds the parameter terms that are used within the timeframe. The terms are ordered as they occur in the timeframe name.",
     )
-    library: Optional[Library] = None
-    study_count: Optional[int] = Field(
-        None, description="Count of studies referencing endpoint"
-    )
+    library: Optional[Library] = Field(None, nullable=True)
+    study_count: int = Field(0, description="Count of studies referencing endpoint")
 
     @classmethod
     def from_timeframe_ar(cls, timeframe_ar: TimeframeAR) -> "Timeframe":
@@ -114,6 +112,7 @@ class Timeframe(BaseModel):
                 name=timeframe_ar.template_name,
                 name_plain=timeframe_ar.template_name_plain,
                 uid=timeframe_ar.template_uid,
+                sequence_id=timeframe_ar.template_sequence_id,
             ),
             library=Library.from_library_vo(timeframe_ar.library),
             parameter_terms=parameter_terms,
@@ -126,12 +125,13 @@ class TimeframeVersion(Timeframe):
     Class for storing Timeframes and calculation of differences
     """
 
-    changes: Dict[str, bool] = Field(
+    changes: Optional[Dict[str, bool]] = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
             "The field names in this object here refer to the field names of the timeframe (e.g. name, start_date, ..)."
         ),
+        nullable=True,
     )
 
 

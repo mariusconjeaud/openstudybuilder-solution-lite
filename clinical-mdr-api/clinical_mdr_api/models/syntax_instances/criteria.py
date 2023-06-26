@@ -4,17 +4,17 @@ from typing import Any, Callable, Dict, List, Optional, Sequence
 from pydantic.fields import Field
 from pydantic.main import BaseModel
 
-from clinical_mdr_api.domain.syntax_instances.criteria import CriteriaAR
 from clinical_mdr_api.domain_repositories.models.syntax import CriteriaTemplateRoot
-from clinical_mdr_api.models.library import Library
+from clinical_mdr_api.domains.syntax_instances.criteria import CriteriaAR
+from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.syntax_templates.criteria_template import (
     CriteriaTemplateNameUid,
     CTTermNameAndAttributes,
 )
-from clinical_mdr_api.models.template_parameter_multi_select_input import (
+from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
-from clinical_mdr_api.models.template_parameter_term import (
+from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
@@ -26,15 +26,15 @@ class CriteriaTemplateWithType(CriteriaTemplateNameUid):
 
 class Criteria(BaseModel):
     uid: str
-    name: Optional[str] = None
-    name_plain: Optional[str] = None
+    name: Optional[str] = Field(None, nullable=True)
+    name_plain: Optional[str] = Field(None, nullable=True)
 
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    status: Optional[str] = None
-    version: Optional[str] = None
-    change_description: Optional[str] = None
-    user_initials: Optional[str] = None
+    start_date: Optional[datetime] = Field(None, nullable=True)
+    end_date: Optional[datetime] = Field(None, nullable=True)
+    status: Optional[str] = Field(None, nullable=True)
+    version: Optional[str] = Field(None, nullable=True)
+    change_description: Optional[str] = Field(None, nullable=True)
+    user_initials: Optional[str] = Field(None, nullable=True)
 
     possible_actions: Optional[Sequence[str]] = Field(
         None,
@@ -51,9 +51,7 @@ class Criteria(BaseModel):
     )
     library: Optional[Library] = None
 
-    study_count: Optional[int] = Field(
-        None, description="Count of studies referencing criteria"
-    )
+    study_count: int = Field(0, description="Count of studies referencing criteria")
 
     @classmethod
     def from_criteria_ar(
@@ -95,6 +93,7 @@ class Criteria(BaseModel):
                 name=criteria_ar.template_name,
                 name_plain=criteria_ar.name_plain,
                 uid=criteria_ar.template_uid,
+                sequence_id=criteria_ar.template_sequence_id,
                 guidance_text=criteria_ar.template_guidance_text,
             ),
             library=Library.from_library_vo(criteria_ar.library),
@@ -148,6 +147,7 @@ class CriteriaWithType(Criteria):
                 name=criteria_ar.template_name,
                 name_plain=criteria_ar.name_plain,
                 uid=criteria_ar.template_uid,
+                sequence_id=criteria_ar.template_sequence_id,
                 guidance_text=criteria_ar.template_guidance_text,
                 type=CTTermNameAndAttributes.from_ct_term_ars(
                     ct_term_name_ar=get_criteria_type_name(
@@ -169,12 +169,13 @@ class CriteriaVersion(CriteriaWithType):
     Class for storing Criteria and calculation of differences
     """
 
-    changes: Dict[str, bool] = Field(
+    changes: Optional[Dict[str, bool]] = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
             "The field names in this object here refer to the field names of the criteria (e.g. name, start_date, ..)."
         ),
+        nullable=True,
     )
 
 

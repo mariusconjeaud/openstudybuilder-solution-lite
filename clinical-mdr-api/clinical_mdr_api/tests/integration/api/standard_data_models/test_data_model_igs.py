@@ -91,19 +91,12 @@ DATA_MODEL_IG_FIELDS_ALL = [
     "name",
     "description",
     "implemented_data_model",
-    "library_name",
-    "start_date",
-    "end_date",
+    "version_number",
     "status",
-    "version",
-    "change_description",
-    "user_initials",
+    "start_date",
 ]
 
-DATA_MODEL_IG_FIELDS_NOT_NULL = [
-    "uid",
-    "name",
-]
+DATA_MODEL_IG_FIELDS_NOT_NULL = ["uid", "name", "version_number"]
 
 
 def test_get_data_model_ig(api_client):
@@ -120,9 +113,7 @@ def test_get_data_model_ig(api_client):
     assert res["uid"] == data_model_igs_all[0].uid
     assert res["name"] == "DataModelIG A"
     assert res["description"] == "DataModelIG A desc"
-    assert res["version"] == "1.0"
-    assert res["status"] == "Final"
-    assert res["implemented_data_model"] == implemented_data_model.name
+    assert res["implemented_data_model"]["name"] == implemented_data_model.name
 
 
 def test_get_data_model_igs_pagination(api_client):
@@ -218,11 +209,6 @@ def test_get_data_model_igs(
     [
         pytest.param('{"*": {"v": ["aaa"]}}', "name", "name-AAA"),
         pytest.param('{"*": {"v": ["bBb"]}}', "name", "name-BBB"),
-        pytest.param(
-            '{"*": {"v": ["initials"], "op": "co"}}', "user_initials", "TODO initials"
-        ),
-        pytest.param('{"*": {"v": ["Final"]}}', "status", "Final"),
-        pytest.param('{"*": {"v": ["1.0"]}}', "version", "1.0"),
         pytest.param('{"*": {"v": ["ccc"]}}', None, None),
     ],
 )
@@ -253,11 +239,11 @@ def test_filtering_wildcard(
         pytest.param('{"description": {"v": ["def-YYY"]}}', "description", "def-YYY"),
         pytest.param('{"description": {"v": ["cc"]}}', None, None),
         pytest.param(
-            '{"implemented_data_model": {"v": []}}', "implemented_data_model", None
+            '{"implemented_data_model.name": {"v": []}}', "implemented_data_model", []
         ),
         pytest.param(
-            '{"implemented_data_model": {"v": ["DataModel A"]}}',
-            "implemented_data_model",
+            '{"implemented_data_model.name": {"v": ["DataModel A"]}}',
+            "implemented_data_model.name",
             "DataModel A",
         ),
     ],
@@ -270,16 +256,32 @@ def test_filtering_exact(
     res = response.json()
 
     assert response.status_code == 200
-    if expected_result:
+    if expected_result or expected_result == []:
         assert len(res["items"]) > 0
+        # if we expect a nested property to be equal to specified value
+        nested_path = None
+        if isinstance(expected_matched_field, str) and "." in expected_matched_field:
+            nested_path = expected_matched_field.split(".")
+            expected_matched_field = nested_path[-1]
+            nested_path = nested_path[:-1]
+
         # Each returned row has a field whose value is equal to the specified filter value
         for row in res["items"]:
+            if nested_path:
+                for prop in nested_path:
+                    row = row[prop]
             if isinstance(expected_result, list):
-                assert all(
-                    item in row[expected_matched_field] for item in expected_result
-                )
+                if isinstance(row, list):
+                    all(item[expected_matched_field] == expected_result for item in row)
+                else:
+                    assert all(
+                        item in row[expected_matched_field] for item in expected_result
+                    )
             else:
-                assert row[expected_matched_field] == expected_result
+                if isinstance(row, list):
+                    all(item[expected_matched_field] == expected_result for item in row)
+                else:
+                    assert row[expected_matched_field] == expected_result
     else:
         assert len(res["items"]) == 0
 
@@ -297,3 +299,53 @@ def test_filtering_exact(
 def test_get_data_models_csv_xml_excel(api_client, export_format):
     url = "/standards/data-model-igs"
     TestUtils.verify_exported_data_format(api_client, export_format, url)
+
+
+@pytest.mark.parametrize(
+    "field_name",
+    [
+        pytest.param("name"),
+        pytest.param("description"),
+        pytest.param("implemented_data_model.name"),
+    ],
+)
+def test_headers(api_client, field_name):
+    url = f"/standards/data-model-igs/headers?field_name={field_name}&result_count=100"
+    response = api_client.get(url)
+    res = response.json()
+
+    assert response.status_code == 200
+    expected_result = []
+
+    nested_path = None
+    if isinstance(field_name, str) and "." in field_name:
+        nested_path = field_name.split(".")
+        expected_matched_field = nested_path[-1]
+        nested_path = nested_path[:-1]
+
+    for data_model_ig in data_model_igs_all:
+        if nested_path:
+            for prop in nested_path:
+                data_model_ig = getattr(data_model_ig, prop)
+            if not data_model_ig:
+                continue
+            if isinstance(data_model_ig, list):
+                for item in data_model_ig:
+                    value = getattr(item, expected_matched_field)
+                    expected_result.append(value)
+            else:
+                value = getattr(data_model_ig, expected_matched_field)
+                expected_result.append(value)
+
+        else:
+            value = getattr(data_model_ig, field_name)
+            expected_result.append(value)
+    expected_result = [result for result in expected_result if result is not None]
+    log.info("Expected result is %s", expected_result)
+    log.info("Returned %s", res)
+    if expected_result:
+        assert len(res) > 0
+        assert len(set(expected_result)) == len(res)
+        assert all(item in res for item in expected_result)
+    else:
+        assert len(res) == 0

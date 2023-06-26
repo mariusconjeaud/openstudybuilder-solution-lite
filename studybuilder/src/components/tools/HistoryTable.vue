@@ -29,7 +29,7 @@
       </template>
     </v-data-table>
   </v-card-text>
-  <v-card-actions>
+  <v-card-actions v-if="!simpleStyling">
     <v-row>
       <v-col>
         <div>{{ $t('HistoryTable.legend') }}</div>
@@ -39,9 +39,12 @@
         <div class="ml-2 blue lighten-4 difference">{{ $t('HistoryTable.changed_value') }}</div>
       </v-col>
     </v-row>
+  </v-card-actions>
+  <v-card-actions>
     <v-spacer></v-spacer>
     <v-btn
       color="secondary"
+      data-cy="close-button"
       @click="$emit('close')"
       >
       {{ $t('_global.close') }}
@@ -89,6 +92,10 @@ export default {
     changeTypeHeader: {
       type: String,
       default: 'change_type'
+    },
+    simpleStyling: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
@@ -152,12 +159,18 @@ export default {
       }
     },
     getCellClasses (header, item) {
+      if (this.simpleStyling) {
+        return 'ml-3'
+      }
       if (this.getHighlight(header, item)) {
         return 'blue lighten-4 difference ml-3'
       }
       return 'ml-3'
     },
     getTextClass (item) {
+      if (this.simpleStyling) {
+        return ''
+      }
       if (item.change_type === 'Delete') {
         return 'red--text'
       } else if (!item.end_date) {

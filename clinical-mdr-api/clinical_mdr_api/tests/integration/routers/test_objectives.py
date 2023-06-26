@@ -21,7 +21,7 @@ BASE_SCENARIO_PATH = "clinical_mdr_api/tests/data/scenarios/"
 
 
 class ObjectiveTest(api.APITest):
-    TEST_DB_NAME = "unittestsobjs"
+    TEST_DB_NAME = "objectives"
 
     def setUp(self):
         inject_and_clear_db(self.TEST_DB_NAME)
@@ -29,7 +29,7 @@ class ObjectiveTest(api.APITest):
         db.cypher_query(CREATE_BASE_TEMPLATE_PARAMETER_TREE)
 
         import clinical_mdr_api.models.syntax_templates.objective_template as ct_models
-        import clinical_mdr_api.services.libraries as library_service
+        import clinical_mdr_api.services.libraries.libraries as library_service
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)
@@ -51,13 +51,13 @@ class ObjectiveTest(api.APITest):
 
 # @pytest.mark.skip
 class ObjectiveNegativeTest(api.APITest):
-    TEST_DB_NAME = "unittestsobjs"
+    TEST_DB_NAME = "objectives"
 
     def setUp(self):
         inject_and_clear_db(self.TEST_DB_NAME)
 
         import clinical_mdr_api.models.syntax_templates.objective_template as ct_models
-        import clinical_mdr_api.services.libraries as library_service
+        import clinical_mdr_api.services.libraries.libraries as library_service
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)
@@ -93,13 +93,13 @@ class ObjectiveNegativeTest(api.APITest):
 
 # @pytest.mark.skip
 class ObjectiveVersioningTest(api.APITest):
-    TEST_DB_NAME = "unittestsobjs"
+    TEST_DB_NAME = "objectives"
 
     def setUp(self):
         inject_and_clear_db(self.TEST_DB_NAME)
 
         import clinical_mdr_api.models.syntax_templates.objective_template as ct_models
-        import clinical_mdr_api.services.libraries as library_service
+        import clinical_mdr_api.services.libraries.libraries as library_service
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)

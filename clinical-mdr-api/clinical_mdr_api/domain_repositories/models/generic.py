@@ -15,13 +15,14 @@ from neomodel import (
 )
 from neomodel.properties import validator
 
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.domain_repositories.models._utils import (
     CustomNodeSet,
     classproperty,
     convert_to_datetime,
     convert_to_tz_aware_datetime,
 )
+from clinical_mdr_api.domains._utils import generate_seq_id
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.exceptions import NotFoundException
 
 
@@ -160,6 +161,36 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
                 LABEL=object_name, NODE_LABEL=node_label
             )
         )
+
+    @classmethod
+    def generate_sequence_ids_if_not_present(cls, match_query=None) -> None:
+        """
+        Generates Sequence IDs for all nodes of this class that do not yet have an ID.
+        """
+        node_label = cls.__name__
+
+        query = (
+            match_query
+            or f"""
+            MATCH (n:{node_label})
+            RETURN n.uid as uid, null as parent_sequence_id
+            """
+        )
+
+        rs = db.cypher_query(query)
+
+        for uid, parent_sequence_id in rs[0]:
+            sequence_id = generate_seq_id(
+                uid,
+                parent_sequence_id,
+            )
+
+            db.cypher_query(
+                f"""
+                MATCH (n:{node_label} {{uid: "{uid}"}})
+                SET n.sequence_id="{sequence_id}"
+                """
+            )
 
     def save(self):
         """
@@ -300,15 +331,17 @@ class VersionRoot(ClinicalMdrNodeWithUID):
     LIBRARY_REL_LABEL = "CONTAINS"
     PARAMETERS_LABEL = "HAS_PARAMETERS"
 
-    has_template = RelationshipTo("VersionRoot", "HAS_TEMPLATE")
+    has_template = RelationshipTo("VersionRoot", "HAS_TEMPLATE", model=ClinicalMdrRel)
 
     has_version = RelationshipTo(VersionValue, "HAS_VERSION", model=VersionRelationship)
-    has_latest_value = RelationshipTo(VersionValue, "LATEST")
-    latest_draft = RelationshipTo(VersionValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(VersionValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(VersionValue, "LATEST_RETIRED")
+    has_latest_value = RelationshipTo(VersionValue, "LATEST", model=ClinicalMdrRel)
+    latest_draft = RelationshipTo(VersionValue, "LATEST_DRAFT", model=ClinicalMdrRel)
+    latest_final = RelationshipTo(VersionValue, "LATEST_FINAL", model=ClinicalMdrRel)
+    latest_retired = RelationshipTo(
+        VersionValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
 
-    has_library = RelationshipFrom(Library, LIBRARY_REL_LABEL)
+    has_library = RelationshipFrom(Library, LIBRARY_REL_LABEL, model=ClinicalMdrRel)
     has_parameters = RelationshipTo(
         ".template_parameter.TemplateParameter",
         PARAMETERS_LABEL,

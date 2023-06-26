@@ -87,19 +87,6 @@
     @close="closeForm"
     />
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
-  <v-dialog
-    v-model="showHistory"
-    @keydown.esc="closeHistory"
-    persistent
-    max-width="1200px"
-    >
-    <history-table
-      :title="diseaseMilestoneHistoryTitle"
-      @close="closeHistory"
-      :headers="headers"
-      :items="historyItems"
-      />
-  </v-dialog>
 </div>
 </template>
 
@@ -111,7 +98,6 @@ import dataFormating from '@/utils/dataFormating'
 import DiseaseMilestoneForm from './DiseaseMilestoneForm'
 import draggable from 'vuedraggable'
 import filteringParameters from '@/utils/filteringParameters'
-import HistoryTable from '@/components/tools/HistoryTable'
 import { mapGetters } from 'vuex'
 import NNTable from '@/components/tools/NNTable'
 import study from '@/api/study'
@@ -122,7 +108,6 @@ export default {
     ConfirmDialog,
     DiseaseMilestoneForm,
     draggable,
-    HistoryTable,
     NNTable
   },
   computed: {

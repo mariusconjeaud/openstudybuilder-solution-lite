@@ -12,12 +12,14 @@ from _pytest.fixtures import FixtureRequest
 
 from clinical_mdr_api import models
 from clinical_mdr_api.config import STUDY_ENDPOINT_TP_NAME
-from clinical_mdr_api.models import study_selection
-from clinical_mdr_api.models.template_parameter_multi_select_input import (
+from clinical_mdr_api.models import study_selections
+from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
-from clinical_mdr_api.models.template_parameter_term import IndexedTemplateParameterTerm
-from clinical_mdr_api.services.study_objective_selection import (
+from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
+    IndexedTemplateParameterTerm,
+)
+from clinical_mdr_api.services.studies.study_objective_selection import (
     StudyObjectiveSelectionService,
 )
 from clinical_mdr_api.services.syntax_templates.objective_templates import (
@@ -87,7 +89,7 @@ def test_data(request: FixtureRequest):
     study_endpoint = TestUtils.create_study_endpoint(
         study_uid=study_uid,
         endpoint_template_uid=endpoint_template.uid,
-        endpoint_units=study_selection.EndpointUnitsInput(
+        endpoint_units=study_selections.study_selection.EndpointUnitsInput(
             units=[u.uid for u in unit_definitions], separator=unit_separator
         ),
         timeframe_uid=timeframe.uid,

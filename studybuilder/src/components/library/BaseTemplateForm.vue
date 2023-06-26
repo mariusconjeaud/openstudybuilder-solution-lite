@@ -22,6 +22,7 @@
               rules="required"
               >
               <n-n-template-input-field
+                data-cy="template-text-field"
                 v-model="form.name"
                 :items="parameterTypes"
                 :error-messages="errors"
@@ -45,6 +46,7 @@
     <template v-slot:step.template.afterActions>
       <v-btn
         class="secondary-btn"
+        data-cy="verify-syntax-button"
         color="white"
         @click="verifySyntax"
         >
@@ -75,6 +77,7 @@
           <v-textarea
             v-model="form.change_description"
             :label="$t('HistoryTable.change_description')"
+            data-cy="template-change-description"
             :error-messages="errors"
             :rows="1"
             dense
@@ -95,16 +98,13 @@ import _isEqual from 'lodash/isEqual'
 import { bus } from '@/main'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm'
-import instances from '@/utils/instances'
 import NNTemplateInputField from '@/components/tools/NNTemplateInputField'
-import { objectManagerMixin } from '@/mixins/objectManager'
 import ParameterValueSelector from '@/components/tools/ParameterValueSelector'
 import statuses from '@/constants/statuses'
 import templateParameterTypes from '@/api/templateParameterTypes'
 import templatesApi from '@/api/templates'
 
 export default {
-  mixins: [objectManagerMixin], // FIXME: We include this mixin because of default parameter values. Should we split it?
   components: {
     ConfirmDialog,
     HorizontalStepperForm,
@@ -152,9 +152,9 @@ export default {
   },
   data () {
     return {
-      apiTemplateEndpoint: null,
       form: {},
       originalForm: {},
+      originalParameters: [],
       parameters: [],
       parameterTypes: [],
       steps: [],
@@ -172,7 +172,7 @@ export default {
     }
   },
   created () {
-    this.apiTemplateEndpoint = templatesApi(`/${this.objectType}-templates`)
+    this.api = templatesApi(`/${this.objectType}-templates`)
     this.steps = this.createModeSteps
     templateParameterTypes.getTypes().then(resp => {
       this.parameterTypes = resp.data
@@ -231,19 +231,13 @@ export default {
       if (this.preparePayloadFunction) {
         this.preparePayloadFunction(data)
       }
-      const defaultParameterValues = await instances.formatParameterValues(this.parameters, true)
-      if (defaultParameterValues.length) {
-        data.defaultParameterValues = defaultParameterValues
-      } else {
-        data.defaultParameterValues = []
-      }
     },
     async addTemplate () {
       const data = { ...this.form }
 
       await this.preparePayload(data)
       try {
-        return this.apiTemplateEndpoint.create(data).then(() => {
+        return this.api.create(data).then(() => {
           this.$emit('templateAdded')
           bus.$emit('notification', { msg: this.$t(`${this.translationKey}TemplateForm.add_success`) })
           this.close()
@@ -258,17 +252,18 @@ export default {
       try {
         let template
         let resp
-        if (this.template.name !== data.name) {
-          resp = await this.apiTemplateEndpoint.update(this.template.uid, data)
+        if (this.template.name !== data.name || this.template.guidance_text !== data.guidance_text) {
+          resp = await this.api.update(this.template.uid, data)
           template = resp.data
         }
         await this.preparePayload(data)
-        resp = await this.apiTemplateEndpoint.updateIndexings(this.template.uid, data)
+        resp = await this.api.updateIndexings(this.template.uid, data)
         if (!template) {
           template = resp.data
         }
         this.$emit('templateUpdated', template)
-        bus.$emit('notification', { msg: this.$t(`${this.translationKey}TemplateForm.update_success`) })
+        const key = `${this.translationKey}TemplateForm.update_success`
+        bus.$emit('notification', { msg: this.$t(key) })
         this.close()
       } finally {
         this.$refs.stepper.loading = false
@@ -279,7 +274,7 @@ export default {
         return
       }
       const data = { name: this.form.name }
-      this.apiTemplateEndpoint.preValidate(data).then(() => {
+      this.api.preValidate(data).then(() => {
         bus.$emit(
           'notification',
           { msg: this.$t('_global.valid_syntax') })
@@ -290,7 +285,7 @@ export default {
         return true
       }
       try {
-        await this.apiTemplateEndpoint.preValidate({ name: this.form.name })
+        await this.api.preValidate({ name: this.form.name })
       } catch {
         return false
       }

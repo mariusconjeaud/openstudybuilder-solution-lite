@@ -1,8 +1,8 @@
 # pylint:disable=too-many-lines, line-too-long
-export_template = """<?xml version="1.0" encoding="utf-8"?>
+export_study_event = """<?xml version="1.0" encoding="utf-8"?>
                 <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3"
                 xmlns:osb="url2" xmlns:prefix="url1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
-                    <Study OID="name1-odm_template1">
+                    <Study OID="name1-odm_study_event1">
                         <GlobalVariables>
                             <ProtocolName>name1</ProtocolName>
                             <StudyName>name1</StudyName>
@@ -56,6 +56,12 @@ export_template = """<?xml version="1.0" encoding="utf-8"?>
                                 </Description>
                                 <FormalExpression Context="context1" osb:version="0.1">expression1</FormalExpression>
                             </ConditionDef>
+                            <MethodDef OID="oid1" Name="name1" Type="type1" osb:version="1.0">
+                                <Description>
+                                    <TranslatedText xml:lang="en" osb:version="1.0">description1</TranslatedText>
+                                </Description>
+                                <FormalExpression Context="context1" osb:version="0.1">expression1</FormalExpression>
+                            </MethodDef>
                             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
                                 <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
                                     <Decode>
@@ -122,6 +128,12 @@ export_form = """<?xml version="1.0" encoding="utf-8"?>
                 </Description>
                 <FormalExpression Context="context1" osb:version="0.1">expression1</FormalExpression>
             </ConditionDef>
+            <MethodDef OID="oid1" Name="name1" Type="type1" osb:version="1.0">
+                <Description>
+                    <TranslatedText xml:lang="en" osb:version="1.0">description1</TranslatedText>
+                </Description>
+                <FormalExpression Context="context1" osb:version="0.1">expression1</FormalExpression>
+            </MethodDef>            
             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
                 <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
                     <Decode>
@@ -174,6 +186,12 @@ export_item_group = """<?xml version="1.0" encoding="utf-8"?>
                 </Description>
                 <FormalExpression Context="context1" osb:version="0.1">expression1</FormalExpression>
             </ConditionDef>
+            <MethodDef OID="oid1" Name="name1" Type="type1" osb:version="1.0">
+                <Description>
+                    <TranslatedText xml:lang="en" osb:version="1.0">description1</TranslatedText>
+                </Description>
+                <FormalExpression Context="context1" osb:version="0.1">expression1</FormalExpression>
+            </MethodDef>
             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
                 <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
                     <Decode>
@@ -225,7 +243,7 @@ export_item = """<?xml version="1.0" encoding="utf-8"?>
                 </ODM>"""
 export_with_csv = """<?xml version="1.0" encoding="utf-8"?>
 <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="url2" xmlns:prefix="url1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
-    <Study OID="name1-odm_template1">
+    <Study OID="name1-odm_study_event1">
         <GlobalVariables>
             <ProtocolName>name1</ProtocolName>
             <StudyName>name1</StudyName>
@@ -285,6 +303,12 @@ export_with_csv = """<?xml version="1.0" encoding="utf-8"?>
                 </Description>
                 <FormalExpression Context="context1" osb:version="0.1">expression1</FormalExpression>
             </ConditionDef>
+            <MethodDef OID="oid1" Name="name1" Type="type1" osb:version="1.0">
+                <Description>
+                    <TranslatedText xml:lang="en" osb:version="1.0">description1</TranslatedText>
+                </Description>
+                <FormalExpression Context="context1" osb:version="0.1">expression1</FormalExpression>
+            </MethodDef>
             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
                 <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
                     <Decode>
@@ -297,7 +321,7 @@ export_with_csv = """<?xml version="1.0" encoding="utf-8"?>
 </ODM>"""
 export_with_namespace = """<?xml version="1.0" encoding="utf-8"?>
 <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:prefix="url1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
-    <Study OID="name1-odm_template1">
+    <Study OID="name1-odm_study_event1">
         <GlobalVariables>
             <ProtocolName>name1</ProtocolName>
             <StudyName>name1</StudyName>
@@ -349,6 +373,12 @@ export_with_namespace = """<?xml version="1.0" encoding="utf-8"?>
                 </Description>
                 <FormalExpression Context="context1">expression1</FormalExpression>
             </ConditionDef>
+            <MethodDef OID="oid1" Name="name1" Type="type1">
+                <Description>
+                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                </Description>
+                <FormalExpression Context="context1">expression1</FormalExpression>
+            </MethodDef>
             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1">
                 <CodeListItem CodedValue="code_submission_value1" OrderNumber="1" Mandatory="False">
                     <Decode>
@@ -362,7 +392,7 @@ export_with_namespace = """<?xml version="1.0" encoding="utf-8"?>
 
 
 import_input1 = """<?xml version="1.0" encoding="utf-8"?>
-        <?xml-stylesheet type="text/xsl" href="odm_template_sdtmcrf.xsl"?>
+        <?xml-stylesheet type="text/xsl" href="odm_study_event_sdtmcrf.xsl"?>
         <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1666353293513" CreationDateTime="2022-10-21 13:54:53.513447" Granularity="All" xmlns:osb="url2" xmlns:clinspark="https://www.clinspark.com">
             <Study OID="ODM version 1.3.2 with DoB-T.ODM-1-3-2-V1">
                 <GlobalVariables>
@@ -1047,7 +1077,7 @@ import_output1 = {
             "possible_actions": ["inactivate", "new_version"],
         },
     ],
-    "templates": [
+    "study_events": [
         {
             "start_date": "2022-12-01T13:06:52.938606+00:00",
             "end_date": None,
@@ -1055,13 +1085,14 @@ import_output1 = {
             "version": "1.0",
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
-            "uid": "OdmTemplate_000001",
+            "uid": "OdmStudyEvent_000001",
             "name": "ODM version 1.3.2 with DoB",
             "library_name": "Sponsor",
             "oid": "ODM version 1.3.2 with DoB",
             "effective_date": None,
             "retired_date": None,
             "description": None,
+            "display_in_tree": True,
             "forms": [
                 {
                     "uid": "OdmForm_000001",
@@ -3499,7 +3530,7 @@ import_output2 = {
             "possible_actions": ["inactivate", "new_version"],
         },
     ],
-    "templates": [
+    "study_events": [
         {
             "start_date": "2022-11-28T13:16:19.962283",
             "end_date": None,
@@ -3507,13 +3538,14 @@ import_output2 = {
             "version": "1.0",
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
-            "uid": "OdmTemplate_000001",
+            "uid": "OdmStudyEvent_000001",
             "name": "ODM version 1.3.2 with DoB",
             "library_name": "Sponsor",
             "oid": "ODM version 1.3.2 with DoB",
             "effective_date": None,
             "retired_date": None,
             "description": None,
+            "display_in_tree": True,
             "forms": [
                 {
                     "uid": "OdmForm_000001",
@@ -3628,6 +3660,42 @@ import_input5 = """<?xml version="1.0" encoding="utf-8"?>
                         <ItemGroupRef prefix:nameThree="1234" ItemGroupOID="G.1" Mandatory="Yes" OrderNumber="6"/>
                     </FormDef>
                     <ItemGroupDef OID="G.1" Name="Blood pressure and pulse" Repeating="No" Purpose="Tabulation" SASDatasetName="VITALSIGNSBPP" Domain="VS:Vital Signs Domain"/>
+                </MetaDataVersion>
+            </Study>
+        </ODM>"""
+import_input6 = """<?xml version="1.0" encoding="utf-8"?>
+        <?xml-stylesheet type="text/xsl" href="odm_study_event_sdtmcrf.xsl"?>
+        <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1666353293513" CreationDateTime="2022-10-21 13:54:53.513447" Granularity="All" xmlns:osb="url2" xmlns:clinspark="https://www.clinspark.com">
+            <Study OID="ODM version 1.3.2 with DoB-T.ODM-1-3-2-V1">
+                <GlobalVariables>
+                    <ProtocolName>ODM version 1.3.2 with DoB</ProtocolName>
+                    <StudyName>ODM version 1.3.2 with DoB</StudyName>
+                    <StudyDescription>ODM version 1.3.2 with DoB</StudyDescription>
+                </GlobalVariables>
+                <BasicDefinitions/>
+                <MetaDataVersion OID="MDV.0.1" Name="MDV.0.1" Description="Draft version">
+                    <FormDef OID="F.DM" Name="Informed Consent and Demography" Repeating="No" osb:version="1.0" osb:instruction="form instruction" osb:sponsorInstruction="form sponsor instruction" osb:allows="uds">
+                        <Description>
+                            <TranslatedText xml:lang="en" osb:version="0.1">Informed Consent and Demography form</TranslatedText>
+                        </Description>
+                        <ItemGroupRef ItemGroupOID="G.DM.IC" Mandatory="Yes" OrderNumber="1" osb:locked="Yes" clinspark:connectivity="Yes" />
+                        <ItemGroupRef ItemGroupOID="G.DM.DM" Mandatory="Yes" OrderNumber="2" osb:locked="No" clinspark:connectivity="Yes" />
+                    </FormDef>
+                    <ItemGroupDef OID="G.VS.BPP" Name="Blood pressure and pulse" Repeating="No" Purpose="Tabulation" SASDatasetName="VITALSIGNSBPP" Domain="VS:Vital Signs Domain">
+                        <Description>
+                            <TranslatedText xml:lang="en" osb:version="0.1">Blood pressure and pulse</TranslatedText>
+                        </Description>
+                        <ItemRef ItemOID="I.SYSBP" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="C.OID1" osb:sdv="Yes" />
+                    </ItemGroupDef>
+                    <ItemDef OID="I.SYSBP" Name="Systolic blood pressure" Origin="Collected Value" DataType="integer" Length="3" SASFieldName="BP_SYSTOLIC" SDSVarName="VSORRES where VSTESTCD=SYSBP, VSORRESU where VSTESTCD=SYSBP" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                        <Question>
+                            <TranslatedText xml:lang="en" osb:version="0.1">Systolic blood pressure</TranslatedText>
+                        </Question>
+                        <Description>
+                            <TranslatedText xml:lang="en" osb:version="0.1">Systolic blood pressure</TranslatedText>
+                        </Description>
+                        <MeasurementUnitRef MeasurementUnitOID="name1" />
+                    </ItemDef>
                 </MetaDataVersion>
             </Study>
         </ODM>"""
@@ -4780,7 +4848,7 @@ clinspark_output = {
             "possible_actions": ["inactivate", "new_version"],
         },
     ],
-    "templates": [
+    "study_events": [
         {
             "start_date": "2022-12-21T11:36:41.661594+00:00",
             "end_date": None,
@@ -4788,17 +4856,18 @@ clinspark_output = {
             "version": "1.0",
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
-            "uid": "OdmTemplate_000001",
+            "uid": "OdmStudyEvent_000001",
             "name": "Global Standards CRF Library",
             "library_name": "Sponsor",
             "oid": "Global Standards CRF Library",
             "effective_date": None,
             "retired_date": None,
             "description": None,
+            "display_in_tree": True,
             "forms": [
                 {
                     "uid": "OdmForm_000005",
-                    "name": "Administration of <Investigational medicinal product>@F.38",
+                    "name": "Administration of <Investigational medicinal product> 1",
                     "order_number": 999999,
                     "mandatory": "Yes",
                     "locked": "No",
@@ -4806,7 +4875,7 @@ clinspark_output = {
                 },
                 {
                     "uid": "OdmForm_000003",
-                    "name": "Body Measurements (with BMI)@F.52",
+                    "name": "Body Measurements (with BMI) 1",
                     "order_number": 999999,
                     "mandatory": "Yes",
                     "locked": "No",
@@ -4814,7 +4883,7 @@ clinspark_output = {
                 },
                 {
                     "uid": "OdmForm_000002",
-                    "name": "Demography@F.98",
+                    "name": "Demography 1",
                     "order_number": 999999,
                     "mandatory": "Yes",
                     "locked": "No",
@@ -4822,7 +4891,7 @@ clinspark_output = {
                 },
                 {
                     "uid": "OdmForm_000001",
-                    "name": "Informed Consent@F.47",
+                    "name": "Informed Consent 1",
                     "order_number": 999999,
                     "mandatory": "Yes",
                     "locked": "No",
@@ -4830,7 +4899,7 @@ clinspark_output = {
                 },
                 {
                     "uid": "OdmForm_000004",
-                    "name": "Vital Signs (Single Measurement)@F.37",
+                    "name": "Vital Signs (Single Measurement) 1",
                     "order_number": 999999,
                     "mandatory": "Yes",
                     "locked": "No",
@@ -4849,7 +4918,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmForm_000005",
-            "name": "Administration of <Investigational medicinal product>@F.38",
+            "name": "Administration of <Investigational medicinal product> 1",
             "library_name": "Sponsor",
             "oid": "F.38",
             "repeating": "Yes",
@@ -4862,7 +4931,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItemGroup_000005",
                     "oid": "IG.97",
-                    "name": "Prescribed dose of <Investigational medicinal product>@IG.97",
+                    "name": "Prescribed dose of <Investigational medicinal product> 1",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "collection_exception_condition_oid": "",
@@ -4871,7 +4940,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItemGroup_000006",
                     "oid": "IG.98",
-                    "name": "Preparation for dosing@IG.98",
+                    "name": "Preparation for dosing 1",
                     "order_number": 2,
                     "mandatory": "Yes",
                     "collection_exception_condition_oid": "",
@@ -4880,7 +4949,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItemGroup_000007",
                     "oid": "IG.99",
-                    "name": "Administration of <Investigational medicinal product>@IG.99",
+                    "name": "Administration of <Investigational medicinal product> 1",
                     "order_number": 3,
                     "mandatory": "Yes",
                     "collection_exception_condition_oid": "",
@@ -4889,7 +4958,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItemGroup_000008",
                     "oid": "IG.267",
-                    "name": "Post dose@IG.267",
+                    "name": "Post dose 1",
                     "order_number": 4,
                     "mandatory": "Yes",
                     "collection_exception_condition_oid": "",
@@ -4909,7 +4978,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmForm_000003",
-            "name": "Body Measurements (with BMI)@F.52",
+            "name": "Body Measurements (with BMI) 1",
             "library_name": "Sponsor",
             "oid": "F.52",
             "repeating": "Yes",
@@ -4932,7 +5001,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItemGroup_000003",
                     "oid": "IG.153",
-                    "name": "Body Measurements@IG.153",
+                    "name": "Body Measurements 1",
                     "order_number": 2,
                     "mandatory": "Yes",
                     "collection_exception_condition_oid": "",
@@ -4952,7 +5021,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmForm_000002",
-            "name": "Demography@F.98",
+            "name": "Demography 1",
             "library_name": "Sponsor",
             "oid": "F.98",
             "repeating": "Yes",
@@ -4965,7 +5034,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItemGroup_000002",
                     "oid": "IG.262",
-                    "name": "Demography@IG.262",
+                    "name": "Demography 1",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "collection_exception_condition_oid": "",
@@ -4985,7 +5054,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmForm_000001",
-            "name": "Informed Consent@F.47",
+            "name": "Informed Consent 1",
             "library_name": "Sponsor",
             "oid": "F.47",
             "repeating": "No",
@@ -4998,7 +5067,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItemGroup_000001",
                     "oid": "IG.124",
-                    "name": "Informed Consent@IG.124",
+                    "name": "Informed Consent 1",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "collection_exception_condition_oid": "",
@@ -5053,7 +5122,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmForm_000004",
-            "name": "Vital Signs (Single Measurement)@F.37",
+            "name": "Vital Signs (Single Measurement) 1",
             "library_name": "Sponsor",
             "oid": "F.37",
             "repeating": "Yes",
@@ -5066,7 +5135,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItemGroup_000004",
                     "oid": "IG.72",
-                    "name": "Vital Signs@IG.72",
+                    "name": "Vital Signs 1",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "collection_exception_condition_oid": "",
@@ -5088,7 +5157,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItemGroup_000007",
-            "name": "Administration of <Investigational medicinal product>@IG.99",
+            "name": "Administration of <Investigational medicinal product> 1",
             "library_name": "Sponsor",
             "oid": "IG.99",
             "repeating": "No",
@@ -5115,7 +5184,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000026",
                     "oid": "I.754",
-                    "name": "EC_seq_no_ECREFID@I.754",
+                    "name": "EC_seq_no_ECREFID 1",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5129,7 +5198,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000027",
                     "oid": "I.471",
-                    "name": "EC_ECCAT@I.471",
+                    "name": "EC_ECCAT 1",
                     "order_number": 2,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5143,7 +5212,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000028",
                     "oid": "I.473",
-                    "name": "EC_ECMOOD@I.473",
+                    "name": "EC_ECMOOD 1",
                     "order_number": 3,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5157,7 +5226,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000029",
                     "oid": "I.475",
-                    "name": "EC_ECPRESP@I.475",
+                    "name": "EC_ECPRESP 1",
                     "order_number": 4,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5171,7 +5240,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000030",
                     "oid": "I.474",
-                    "name": "EC_<IMP>_ECTRT@I.474",
+                    "name": "EC_<IMP>_ECTRT 1",
                     "order_number": 5,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5185,7 +5254,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000039",
                     "oid": "I.565",
-                    "name": "EC_adm_imp_ECOCCUR@I.565",
+                    "name": "EC_adm_imp_ECOCCUR 1",
                     "order_number": 6,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5199,7 +5268,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000040",
                     "oid": "I.578",
-                    "name": "EC_specify_reason_ECREASOC@I.578",
+                    "name": "EC_specify_reason_ECREASOC 1",
                     "order_number": 7,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5213,7 +5282,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000041",
                     "oid": "I.576",
-                    "name": "EC_type_of_treatment_ECSCAT@I.576",
+                    "name": "EC_type_of_treatment_ECSCAT 1",
                     "order_number": 8,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5227,7 +5296,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000042",
                     "oid": "I.580",
-                    "name": "EC_bleed_no_ECXB@I.580",
+                    "name": "EC_bleed_no_ECXB 1",
                     "order_number": 9,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5241,7 +5310,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000043",
                     "oid": "I.581",
-                    "name": "EC_surgery_no_ECPR@I.581",
+                    "name": "EC_surgery_no_ECPR 1",
                     "order_number": 10,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5255,7 +5324,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000044",
                     "oid": "I.582",
-                    "name": "EC_start_datetime_ECSTDTC@I.582",
+                    "name": "EC_start_datetime_ECSTDTC 1",
                     "order_number": 11,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5269,7 +5338,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000045",
                     "oid": "I.583",
-                    "name": "EC_end_datetime_ECENDTC@I.583",
+                    "name": "EC_end_datetime_ECENDTC 1",
                     "order_number": 12,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5283,7 +5352,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000046",
                     "oid": "I.560",
-                    "name": "EC_dose_ECDOSE@I.560",
+                    "name": "EC_dose_ECDOSE 1",
                     "order_number": 13,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5297,7 +5366,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000033",
                     "oid": "I.561",
-                    "name": "EC_dose_form_ECDOSFRM@I.561",
+                    "name": "EC_dose_form_ECDOSFRM 1",
                     "order_number": 14,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5311,7 +5380,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000047",
                     "oid": "I.562",
-                    "name": "EC_route_ECROUTE@I.562",
+                    "name": "EC_route_ECROUTE 1",
                     "order_number": 15,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5325,7 +5394,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000048",
                     "oid": "I.563",
-                    "name": "EC_laterality_ECLAT@I.563",
+                    "name": "EC_laterality_ECLAT 1",
                     "order_number": 16,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5339,7 +5408,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000049",
                     "oid": "I.564",
-                    "name": "EC_inj_site_ECLOC@I.564",
+                    "name": "EC_inj_site_ECLOC 1",
                     "order_number": 17,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5364,7 +5433,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItemGroup_000003",
-            "name": "Body Measurements@IG.153",
+            "name": "Body Measurements 1",
             "library_name": "Sponsor",
             "oid": "IG.153",
             "repeating": "No",
@@ -5391,7 +5460,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000006",
                     "oid": "I.596",
-                    "name": "VS_fasting_FASTING@I.596",
+                    "name": "VS_fasting_FASTING 1",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5405,7 +5474,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000007",
                     "oid": "I.597",
-                    "name": "VS_VSCAT@I.597",
+                    "name": "VS_VSCAT 1",
                     "order_number": 2,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5419,7 +5488,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000008",
                     "oid": "I.637",
-                    "name": "VS_date and time of exam_VSDTC@I.637",
+                    "name": "VS_date and time of exam_VSDTC 1",
                     "order_number": 3,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5433,7 +5502,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000009",
                     "oid": "I.600",
-                    "name": "VS_height_VSTESTCD-VSORRES@I.600",
+                    "name": "VS_height_VSTESTCD-VSORRES 1",
                     "order_number": 4,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5447,7 +5516,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000010",
                     "oid": "I.601",
-                    "name": "VS_weight_VSTESTCD-VSORRES@I.601",
+                    "name": "VS_weight_VSTESTCD-VSORRES 1",
                     "order_number": 5,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5461,7 +5530,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000011",
                     "oid": "I.621",
-                    "name": "VS_BMI_VSORRES-VSTESTCD@I.621",
+                    "name": "VS_BMI_VSORRES-VSTESTCD 1",
                     "order_number": 6,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5486,7 +5555,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItemGroup_000002",
-            "name": "Demography@IG.262",
+            "name": "Demography 1",
             "library_name": "Sponsor",
             "oid": "IG.262",
             "repeating": "No",
@@ -5513,7 +5582,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000012",
                     "oid": "I.1056",
-                    "name": "DM_age_AGECOLL@I.1056",
+                    "name": "DM_age_AGECOLL 1",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5527,7 +5596,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000013",
                     "oid": "I.1057",
-                    "name": "DM Sex@I.1057",
+                    "name": "DM Sex 1",
                     "order_number": 2,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5541,7 +5610,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000014",
                     "oid": "I.1058",
-                    "name": "DM Race - American Indian Or Alaska Native@I.1058",
+                    "name": "DM Race - American Indian Or Alaska Native 1",
                     "order_number": 3,
                     "mandatory": "No",
                     "key_sequence": "None",
@@ -5555,7 +5624,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000015",
                     "oid": "I.1059",
-                    "name": "DM Race - Asian@I.1059",
+                    "name": "DM Race - Asian 1",
                     "order_number": 4,
                     "mandatory": "No",
                     "key_sequence": "None",
@@ -5569,7 +5638,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000016",
                     "oid": "I.1060",
-                    "name": "DM Race - Black Or African American@I.1060",
+                    "name": "DM Race - Black Or African American 1",
                     "order_number": 5,
                     "mandatory": "No",
                     "key_sequence": "None",
@@ -5583,7 +5652,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000017",
                     "oid": "I.1061",
-                    "name": "DM Race - Native Hawaiian Or Other Pacific Islander@I.1061",
+                    "name": "DM Race - Native Hawaiian Or Other Pacific Islander 1",
                     "order_number": 6,
                     "mandatory": "No",
                     "key_sequence": "None",
@@ -5597,7 +5666,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000018",
                     "oid": "I.1062",
-                    "name": "DM Race - White@I.1062",
+                    "name": "DM Race - White 1",
                     "order_number": 7,
                     "mandatory": "No",
                     "key_sequence": "None",
@@ -5611,7 +5680,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000019",
                     "oid": "I.1063",
-                    "name": "DM Ethnicity@I.1063",
+                    "name": "DM Ethnicity 1",
                     "order_number": 8,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5625,7 +5694,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000020",
                     "oid": "I.1260",
-                    "name": "DM_previous _subject_number_PREVSUBJ@I.1260",
+                    "name": "DM_previous _subject_number_PREVSUBJ 1",
                     "order_number": 9,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5650,7 +5719,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItemGroup_000001",
-            "name": "Informed Consent@IG.124",
+            "name": "Informed Consent 1",
             "library_name": "Sponsor",
             "oid": "IG.124",
             "repeating": "No",
@@ -5667,7 +5736,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000001",
                     "oid": "I.579",
-                    "name": "DS_DSCAT@I.579",
+                    "name": "DS_DSCAT 1",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5681,7 +5750,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000002",
                     "oid": "I.661",
-                    "name": "DS_DSDECOD@I.661",
+                    "name": "DS_DSDECOD 1",
                     "order_number": 2,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5695,7 +5764,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000003",
                     "oid": "I.566",
-                    "name": "ICFVER_eS@I.566",
+                    "name": "ICFVER_eS 1",
                     "order_number": 3,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5709,7 +5778,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000004",
                     "oid": "I.567",
-                    "name": "DS_inf_consent_DSSTDTC@I.567",
+                    "name": "DS_inf_consent_DSSTDTC 1",
                     "order_number": 4,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5723,7 +5792,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000005",
                     "oid": "I.568",
-                    "name": "ICFNOTES_eS@I.568",
+                    "name": "ICFNOTES_eS 1",
                     "order_number": 5,
                     "mandatory": "No",
                     "key_sequence": "None",
@@ -5757,7 +5826,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItemGroup_000008",
-            "name": "Post dose@IG.267",
+            "name": "Post dose 1",
             "library_name": "Sponsor",
             "oid": "IG.267",
             "repeating": "No",
@@ -5774,7 +5843,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000050",
                     "oid": "I.589",
-                    "name": "EC_admin_by_eS@I.589",
+                    "name": "EC_admin_by_eS 1",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5788,7 +5857,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000051",
                     "oid": "I.590",
-                    "name": "EC_check_by_eS@I.590",
+                    "name": "EC_check_by_eS 1",
                     "order_number": 2,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5802,7 +5871,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000052",
                     "oid": "I.594",
-                    "name": "EC_comment_eS@I.594",
+                    "name": "EC_comment_eS 1",
                     "order_number": 3,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5827,7 +5896,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItemGroup_000006",
-            "name": "Preparation for dosing@IG.98",
+            "name": "Preparation for dosing 1",
             "library_name": "Sponsor",
             "oid": "IG.98",
             "repeating": "No",
@@ -5844,7 +5913,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000034",
                     "oid": "I.585",
-                    "name": "EC_req_met_eS@I.585",
+                    "name": "EC_req_met_eS 1",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5858,7 +5927,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000035",
                     "oid": "I.586",
-                    "name": "EC_morph_inj_site_eS@I.586",
+                    "name": "EC_morph_inj_site_eS 1",
                     "order_number": 2,
                     "mandatory": "No",
                     "key_sequence": "None",
@@ -5872,7 +5941,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000036",
                     "oid": "I.588",
-                    "name": "EC_dun_eS@I.588",
+                    "name": "EC_dun_eS 1",
                     "order_number": 3,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5886,7 +5955,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000037",
                     "oid": "I.592",
-                    "name": "EC_no_inj_eS@I.592",
+                    "name": "EC_no_inj_eS 1",
                     "order_number": 4,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5900,7 +5969,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000038",
                     "oid": "I.593",
-                    "name": "EC_volume_eS@I.593",
+                    "name": "EC_volume_eS 1",
                     "order_number": 5,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5925,7 +5994,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItemGroup_000005",
-            "name": "Prescribed dose of <Investigational medicinal product>@IG.97",
+            "name": "Prescribed dose of <Investigational medicinal product> 1",
             "library_name": "Sponsor",
             "oid": "IG.97",
             "repeating": "No",
@@ -5952,7 +6021,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000026",
                     "oid": "I.754",
-                    "name": "EC_seq_no_ECREFID@I.754",
+                    "name": "EC_seq_no_ECREFID 1",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5966,7 +6035,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000027",
                     "oid": "I.471",
-                    "name": "EC_ECCAT@I.471",
+                    "name": "EC_ECCAT 1",
                     "order_number": 2,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5980,7 +6049,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000028",
                     "oid": "I.473",
-                    "name": "EC_ECMOOD@I.473",
+                    "name": "EC_ECMOOD 1",
                     "order_number": 3,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5994,7 +6063,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000029",
                     "oid": "I.475",
-                    "name": "EC_ECPRESP@I.475",
+                    "name": "EC_ECPRESP 1",
                     "order_number": 4,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6008,7 +6077,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000030",
                     "oid": "I.474",
-                    "name": "EC_<IMP>_ECTRT@I.474",
+                    "name": "EC_<IMP>_ECTRT 1",
                     "order_number": 5,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6022,7 +6091,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000031",
                     "oid": "I.595",
-                    "name": "EC_datetime_prescription_ECSTDTC@I.595",
+                    "name": "EC_datetime_prescription_ECSTDTC 1",
                     "order_number": 6,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6036,7 +6105,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000032",
                     "oid": "I.559",
-                    "name": "EC_prescribed_dose_ECDOSE@I.559",
+                    "name": "EC_prescribed_dose_ECDOSE 1",
                     "order_number": 7,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6050,7 +6119,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000033",
                     "oid": "I.561",
-                    "name": "EC_dose_form_ECDOSFRM@I.561",
+                    "name": "EC_dose_form_ECDOSFRM 1",
                     "order_number": 8,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6075,7 +6144,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItemGroup_000004",
-            "name": "Vital Signs@IG.72",
+            "name": "Vital Signs 1",
             "library_name": "Sponsor",
             "oid": "IG.72",
             "repeating": "No",
@@ -6102,7 +6171,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000021",
                     "oid": "I.406",
-                    "name": "VS_VSCAT@I.406",
+                    "name": "VS_VSCAT 2",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6116,7 +6185,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000022",
                     "oid": "I.354",
-                    "name": "VS_date of exam_VSDTC@I.354",
+                    "name": "VS_date of exam_VSDTC 1",
                     "order_number": 2,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6130,7 +6199,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000023",
                     "oid": "I.355",
-                    "name": "VS_syst_blood_pres_ORRES_SYSBP@I.355",
+                    "name": "VS_syst_blood_pres_ORRES_SYSBP 1",
                     "order_number": 4,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6144,7 +6213,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000024",
                     "oid": "I.356",
-                    "name": "VS_diast_blood_pres_ORRES_DIABP@I.356",
+                    "name": "VS_diast_blood_pres_ORRES_DIABP 1",
                     "order_number": 5,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6158,7 +6227,7 @@ clinspark_output = {
                 {
                     "uid": "OdmItem_000025",
                     "oid": "I.347",
-                    "name": "VS_pulse_ORRES_PULSE@I.347",
+                    "name": "VS_pulse_ORRES_PULSE 1",
                     "order_number": 6,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6185,7 +6254,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000019",
-            "name": "DM Ethnicity@I.1063",
+            "name": "DM Ethnicity 1",
             "library_name": "Sponsor",
             "oid": "I.1063",
             "prompt": "",
@@ -6225,7 +6294,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000014",
-            "name": "DM Race - American Indian Or Alaska Native@I.1058",
+            "name": "DM Race - American Indian Or Alaska Native 1",
             "library_name": "Sponsor",
             "oid": "I.1058",
             "prompt": "",
@@ -6265,7 +6334,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000015",
-            "name": "DM Race - Asian@I.1059",
+            "name": "DM Race - Asian 1",
             "library_name": "Sponsor",
             "oid": "I.1059",
             "prompt": "",
@@ -6305,7 +6374,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000016",
-            "name": "DM Race - Black Or African American@I.1060",
+            "name": "DM Race - Black Or African American 1",
             "library_name": "Sponsor",
             "oid": "I.1060",
             "prompt": "",
@@ -6345,7 +6414,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000017",
-            "name": "DM Race - Native Hawaiian Or Other Pacific Islander@I.1061",
+            "name": "DM Race - Native Hawaiian Or Other Pacific Islander 1",
             "library_name": "Sponsor",
             "oid": "I.1061",
             "prompt": "",
@@ -6385,7 +6454,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000018",
-            "name": "DM Race - White@I.1062",
+            "name": "DM Race - White 1",
             "library_name": "Sponsor",
             "oid": "I.1062",
             "prompt": "",
@@ -6425,7 +6494,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000013",
-            "name": "DM Sex@I.1057",
+            "name": "DM Sex 1",
             "library_name": "Sponsor",
             "oid": "I.1057",
             "prompt": "",
@@ -6487,7 +6556,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000012",
-            "name": "DM_age_AGECOLL@I.1056",
+            "name": "DM_age_AGECOLL 1",
             "library_name": "Sponsor",
             "oid": "I.1056",
             "prompt": "",
@@ -6540,7 +6609,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000020",
-            "name": "DM_previous _subject_number_PREVSUBJ@I.1260",
+            "name": "DM_previous _subject_number_PREVSUBJ 1",
             "library_name": "Sponsor",
             "oid": "I.1260",
             "prompt": "",
@@ -6580,7 +6649,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000001",
-            "name": "DS_DSCAT@I.579",
+            "name": "DS_DSCAT 1",
             "library_name": "Sponsor",
             "oid": "I.579",
             "prompt": "",
@@ -6650,7 +6719,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000002",
-            "name": "DS_DSDECOD@I.661",
+            "name": "DS_DSDECOD 1",
             "library_name": "Sponsor",
             "oid": "I.661",
             "prompt": "",
@@ -6768,7 +6837,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000004",
-            "name": "DS_inf_consent_DSSTDTC@I.567",
+            "name": "DS_inf_consent_DSSTDTC 1",
             "library_name": "Sponsor",
             "oid": "I.567",
             "prompt": "",
@@ -6808,7 +6877,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000030",
-            "name": "EC_<IMP>_ECTRT@I.474",
+            "name": "EC_<IMP>_ECTRT 1",
             "library_name": "Sponsor",
             "oid": "I.474",
             "prompt": "",
@@ -6878,7 +6947,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000027",
-            "name": "EC_ECCAT@I.471",
+            "name": "EC_ECCAT 1",
             "library_name": "Sponsor",
             "oid": "I.471",
             "prompt": "",
@@ -6932,7 +7001,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000028",
-            "name": "EC_ECMOOD@I.473",
+            "name": "EC_ECMOOD 1",
             "library_name": "Sponsor",
             "oid": "I.473",
             "prompt": "",
@@ -6994,7 +7063,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000029",
-            "name": "EC_ECPRESP@I.475",
+            "name": "EC_ECPRESP 1",
             "library_name": "Sponsor",
             "oid": "I.475",
             "prompt": "",
@@ -7048,7 +7117,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000039",
-            "name": "EC_adm_imp_ECOCCUR@I.565",
+            "name": "EC_adm_imp_ECOCCUR 1",
             "library_name": "Sponsor",
             "oid": "I.565",
             "prompt": "",
@@ -7110,7 +7179,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000050",
-            "name": "EC_admin_by_eS@I.589",
+            "name": "EC_admin_by_eS 1",
             "library_name": "Sponsor",
             "oid": "I.589",
             "prompt": "",
@@ -7150,7 +7219,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000042",
-            "name": "EC_bleed_no_ECXB@I.580",
+            "name": "EC_bleed_no_ECXB 1",
             "library_name": "Sponsor",
             "oid": "I.580",
             "prompt": "",
@@ -7190,7 +7259,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000051",
-            "name": "EC_check_by_eS@I.590",
+            "name": "EC_check_by_eS 1",
             "library_name": "Sponsor",
             "oid": "I.590",
             "prompt": "",
@@ -7230,7 +7299,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000052",
-            "name": "EC_comment_eS@I.594",
+            "name": "EC_comment_eS 1",
             "library_name": "Sponsor",
             "oid": "I.594",
             "prompt": "",
@@ -7270,7 +7339,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000031",
-            "name": "EC_datetime_prescription_ECSTDTC@I.595",
+            "name": "EC_datetime_prescription_ECSTDTC 1",
             "library_name": "Sponsor",
             "oid": "I.595",
             "prompt": "",
@@ -7310,7 +7379,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000046",
-            "name": "EC_dose_ECDOSE@I.560",
+            "name": "EC_dose_ECDOSE 1",
             "library_name": "Sponsor",
             "oid": "I.560",
             "prompt": "",
@@ -7350,7 +7419,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000033",
-            "name": "EC_dose_form_ECDOSFRM@I.561",
+            "name": "EC_dose_form_ECDOSFRM 1",
             "library_name": "Sponsor",
             "oid": "I.561",
             "prompt": "",
@@ -7412,7 +7481,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000036",
-            "name": "EC_dun_eS@I.588",
+            "name": "EC_dun_eS 1",
             "library_name": "Sponsor",
             "oid": "I.588",
             "prompt": "",
@@ -7452,7 +7521,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000045",
-            "name": "EC_end_datetime_ECENDTC@I.583",
+            "name": "EC_end_datetime_ECENDTC 1",
             "library_name": "Sponsor",
             "oid": "I.583",
             "prompt": "",
@@ -7492,7 +7561,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000049",
-            "name": "EC_inj_site_ECLOC@I.564",
+            "name": "EC_inj_site_ECLOC 1",
             "library_name": "Sponsor",
             "oid": "I.564",
             "prompt": "",
@@ -7562,7 +7631,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000048",
-            "name": "EC_laterality_ECLAT@I.563",
+            "name": "EC_laterality_ECLAT 1",
             "library_name": "Sponsor",
             "oid": "I.563",
             "prompt": "",
@@ -7624,7 +7693,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000035",
-            "name": "EC_morph_inj_site_eS@I.586",
+            "name": "EC_morph_inj_site_eS 1",
             "library_name": "Sponsor",
             "oid": "I.586",
             "prompt": "",
@@ -7664,7 +7733,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000037",
-            "name": "EC_no_inj_eS@I.592",
+            "name": "EC_no_inj_eS 1",
             "library_name": "Sponsor",
             "oid": "I.592",
             "prompt": "",
@@ -7704,7 +7773,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000032",
-            "name": "EC_prescribed_dose_ECDOSE@I.559",
+            "name": "EC_prescribed_dose_ECDOSE 1",
             "library_name": "Sponsor",
             "oid": "I.559",
             "prompt": "",
@@ -7744,7 +7813,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000034",
-            "name": "EC_req_met_eS@I.585",
+            "name": "EC_req_met_eS 1",
             "library_name": "Sponsor",
             "oid": "I.585",
             "prompt": "",
@@ -7806,7 +7875,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000047",
-            "name": "EC_route_ECROUTE@I.562",
+            "name": "EC_route_ECROUTE 1",
             "library_name": "Sponsor",
             "oid": "I.562",
             "prompt": "",
@@ -7868,7 +7937,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000026",
-            "name": "EC_seq_no_ECREFID@I.754",
+            "name": "EC_seq_no_ECREFID 1",
             "library_name": "Sponsor",
             "oid": "I.754",
             "prompt": "",
@@ -7908,7 +7977,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000040",
-            "name": "EC_specify_reason_ECREASOC@I.578",
+            "name": "EC_specify_reason_ECREASOC 1",
             "library_name": "Sponsor",
             "oid": "I.578",
             "prompt": "",
@@ -7948,7 +8017,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000044",
-            "name": "EC_start_datetime_ECSTDTC@I.582",
+            "name": "EC_start_datetime_ECSTDTC 1",
             "library_name": "Sponsor",
             "oid": "I.582",
             "prompt": "",
@@ -7988,7 +8057,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000043",
-            "name": "EC_surgery_no_ECPR@I.581",
+            "name": "EC_surgery_no_ECPR 1",
             "library_name": "Sponsor",
             "oid": "I.581",
             "prompt": "",
@@ -8028,7 +8097,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000041",
-            "name": "EC_type_of_treatment_ECSCAT@I.576",
+            "name": "EC_type_of_treatment_ECSCAT 1",
             "library_name": "Sponsor",
             "oid": "I.576",
             "prompt": "",
@@ -8122,7 +8191,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000038",
-            "name": "EC_volume_eS@I.593",
+            "name": "EC_volume_eS 1",
             "library_name": "Sponsor",
             "oid": "I.593",
             "prompt": "",
@@ -8175,7 +8244,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000005",
-            "name": "ICFNOTES_eS@I.568",
+            "name": "ICFNOTES_eS 1",
             "library_name": "Sponsor",
             "oid": "I.568",
             "prompt": "",
@@ -8215,7 +8284,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000003",
-            "name": "ICFVER_eS@I.566",
+            "name": "ICFVER_eS 1",
             "library_name": "Sponsor",
             "oid": "I.566",
             "prompt": "",
@@ -8255,7 +8324,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000011",
-            "name": "VS_BMI_VSORRES-VSTESTCD@I.621",
+            "name": "VS_BMI_VSORRES-VSTESTCD 1",
             "library_name": "Sponsor",
             "oid": "I.621",
             "prompt": "",
@@ -8301,68 +8370,6 @@ clinspark_output = {
             "possible_actions": ["inactivate", "new_version"],
         },
         {
-            "start_date": "2022-12-21T11:36:16.852810+00:00",
-            "end_date": None,
-            "status": "Final",
-            "version": "1.0",
-            "user_initials": "TODO user initials",
-            "change_description": "Approved version",
-            "uid": "OdmItem_000021",
-            "name": "VS_VSCAT@I.406",
-            "library_name": "Sponsor",
-            "oid": "I.406",
-            "prompt": "",
-            "datatype": "text",
-            "length": 16,
-            "significant_digits": None,
-            "sas_field_name": "VSCAT",
-            "sds_var_name": "",
-            "origin": "CRF",
-            "comment": None,
-            "descriptions": [
-                {
-                    "uid": "OdmDescription_000022",
-                    "name": "VSCAT",
-                    "language": "ENG",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": None,
-                    "version": "1.0",
-                }
-            ],
-            "aliases": [],
-            "unit_definitions": [],
-            "codelist": {
-                "uid": "CTCodelist_000004",
-                "name": "VS_VSCAT",
-                "submission_value": "VSCAT",
-                "preferred_term": "VS_VSCAT",
-            },
-            "terms": [
-                {
-                    "term_uid": "CTTerm_000015",
-                    "name": "Vital Signs",
-                    "mandatory": True,
-                    "order": 1,
-                    "display_text": None,
-                    "version": "1.0",
-                },
-                {
-                    "term_uid": "CTTerm_000016",
-                    "name": "Body measurement",
-                    "mandatory": True,
-                    "order": 2,
-                    "display_text": None,
-                    "version": "1.0",
-                },
-            ],
-            "activity": None,
-            "vendor_elements": [],
-            "vendor_attributes": [],
-            "vendor_element_attributes": [],
-            "possible_actions": ["inactivate", "new_version"],
-        },
-        {
             "start_date": "2022-12-21T11:36:10.711772+00:00",
             "end_date": None,
             "status": "Final",
@@ -8370,7 +8377,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000007",
-            "name": "VS_VSCAT@I.597",
+            "name": "VS_VSCAT 1",
             "library_name": "Sponsor",
             "oid": "I.597",
             "prompt": "",
@@ -8425,6 +8432,68 @@ clinspark_output = {
             "possible_actions": ["inactivate", "new_version"],
         },
         {
+            "start_date": "2022-12-21T11:36:16.852810+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "user_initials": "TODO user initials",
+            "change_description": "Approved version",
+            "uid": "OdmItem_000021",
+            "name": "VS_VSCAT 2",
+            "library_name": "Sponsor",
+            "oid": "I.406",
+            "prompt": "",
+            "datatype": "text",
+            "length": 16,
+            "significant_digits": None,
+            "sas_field_name": "VSCAT",
+            "sds_var_name": "",
+            "origin": "CRF",
+            "comment": None,
+            "descriptions": [
+                {
+                    "uid": "OdmDescription_000022",
+                    "name": "VSCAT",
+                    "language": "ENG",
+                    "description": "Please update this description",
+                    "instruction": "Please update this instruction",
+                    "sponsor_instruction": None,
+                    "version": "1.0",
+                }
+            ],
+            "aliases": [],
+            "unit_definitions": [],
+            "codelist": {
+                "uid": "CTCodelist_000004",
+                "name": "VS_VSCAT",
+                "submission_value": "VSCAT",
+                "preferred_term": "VS_VSCAT",
+            },
+            "terms": [
+                {
+                    "term_uid": "CTTerm_000015",
+                    "name": "Vital Signs",
+                    "mandatory": True,
+                    "order": 1,
+                    "display_text": None,
+                    "version": "1.0",
+                },
+                {
+                    "term_uid": "CTTerm_000016",
+                    "name": "Body measurement",
+                    "mandatory": True,
+                    "order": 2,
+                    "display_text": None,
+                    "version": "1.0",
+                },
+            ],
+            "activity": None,
+            "vendor_elements": [],
+            "vendor_attributes": [],
+            "vendor_element_attributes": [],
+            "possible_actions": ["inactivate", "new_version"],
+        },
+        {
             "start_date": "2022-12-21T11:36:11.049901+00:00",
             "end_date": None,
             "status": "Final",
@@ -8432,7 +8501,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000008",
-            "name": "VS_date and time of exam_VSDTC@I.637",
+            "name": "VS_date and time of exam_VSDTC 1",
             "library_name": "Sponsor",
             "oid": "I.637",
             "prompt": "",
@@ -8472,7 +8541,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000022",
-            "name": "VS_date of exam_VSDTC@I.354",
+            "name": "VS_date of exam_VSDTC 1",
             "library_name": "Sponsor",
             "oid": "I.354",
             "prompt": "",
@@ -8512,7 +8581,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000024",
-            "name": "VS_diast_blood_pres_ORRES_DIABP@I.356",
+            "name": "VS_diast_blood_pres_ORRES_DIABP 1",
             "library_name": "Sponsor",
             "oid": "I.356",
             "prompt": "",
@@ -8565,7 +8634,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000006",
-            "name": "VS_fasting_FASTING@I.596",
+            "name": "VS_fasting_FASTING 1",
             "library_name": "Sponsor",
             "oid": "I.596",
             "prompt": "",
@@ -8627,7 +8696,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000009",
-            "name": "VS_height_VSTESTCD-VSORRES@I.600",
+            "name": "VS_height_VSTESTCD-VSORRES 1",
             "library_name": "Sponsor",
             "oid": "I.600",
             "prompt": "",
@@ -8680,7 +8749,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000025",
-            "name": "VS_pulse_ORRES_PULSE@I.347",
+            "name": "VS_pulse_ORRES_PULSE 1",
             "library_name": "Sponsor",
             "oid": "I.347",
             "prompt": "",
@@ -8720,7 +8789,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000023",
-            "name": "VS_syst_blood_pres_ORRES_SYSBP@I.355",
+            "name": "VS_syst_blood_pres_ORRES_SYSBP 1",
             "library_name": "Sponsor",
             "oid": "I.355",
             "prompt": "",
@@ -8773,7 +8842,7 @@ clinspark_output = {
             "user_initials": "TODO user initials",
             "change_description": "Approved version",
             "uid": "OdmItem_000010",
-            "name": "VS_weight_VSTESTCD-VSORRES@I.601",
+            "name": "VS_weight_VSTESTCD-VSORRES 1",
             "library_name": "Sponsor",
             "oid": "I.601",
             "prompt": "",

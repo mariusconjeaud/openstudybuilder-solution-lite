@@ -1,21 +1,28 @@
 import unittest
 
-from clinical_mdr_api.models.listings_study import (
+from clinical_mdr_api.config import STUDY_ENDPOINT_TP_NAME
+from clinical_mdr_api.models import study_selections
+from clinical_mdr_api.models.listings.listings_study import (
     RegistryIdentifiersListingModel,
     StudyArmListingModel,
     StudyAttributesListingModel,
     StudyCohortListingModel,
+    StudyCriteriaListingModel,
     StudyDesignMatrixListingModel,
     StudyElementListingModel,
+    StudyEndpointListingModel,
     StudyEpochListingModel,
     StudyMetadataListingModel,
+    StudyObjectiveListingModel,
     StudyPopulationListingModel,
     StudyTypeListingModel,
     StudyVisitListingModel,
 )
-from clinical_mdr_api.services.listings_study import StudyMetadataListingService
-from clinical_mdr_api.services.study import StudyService
-from clinical_mdr_api.services.study_epoch import StudyEpochService
+from clinical_mdr_api.services.listings.listings_study import (
+    StudyMetadataListingService,
+)
+from clinical_mdr_api.services.studies.study import StudyService
+from clinical_mdr_api.services.studies.study_epoch import StudyEpochService
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import inject_base_data
 from clinical_mdr_api.tests.integration.utils.method_library import (
@@ -215,6 +222,86 @@ class TestStudyListing(unittest.TestCase):
             epoch2=study_epoch2,
         )
 
+        # Create CT Terms
+        ct_term_inclusion_criteria = TestUtils.create_ct_term(
+            sponsor_preferred_name="INCLUSION CRITERIA"
+        )
+        ct_term_exclusion_criteria = TestUtils.create_ct_term(
+            sponsor_preferred_name="EXCLUSION CRITERIA"
+        )
+
+        # Create criteria templates
+        incl_criteria_template_1 = TestUtils.create_criteria_template(
+            type_uid=ct_term_inclusion_criteria.term_uid
+        )
+        excl_criteria_template_1 = TestUtils.create_criteria_template(
+            type_uid=ct_term_exclusion_criteria.term_uid
+        )
+
+        # Create study criterias
+        TestUtils.create_study_criteria(
+            study_uid=cls.study_uid,
+            criteria_template_uid=incl_criteria_template_1.uid,
+            library_name=incl_criteria_template_1.library.name,
+            parameter_terms=[],
+        )
+
+        TestUtils.create_study_criteria(
+            study_uid=cls.study_uid,
+            criteria_template_uid=excl_criteria_template_1.uid,
+            library_name=excl_criteria_template_1.library.name,
+            parameter_terms=[],
+        )
+
+        # Create objective template
+        objective_template = TestUtils.create_objective_template()
+        TestUtils.create_study_objective(
+            study_uid=cls.study_uid,
+            objective_template_uid=objective_template.uid,
+            parameter_terms=[],
+        )
+
+        # Create study objectives
+        study_objective = TestUtils.create_study_objective(
+            study_uid=cls.study_uid,
+            objective_template_uid=objective_template.uid,
+            library_name=objective_template.library.name,
+            parameter_terms=[],
+        )
+
+        # Create endpoint templates
+        TestUtils.create_template_parameter(STUDY_ENDPOINT_TP_NAME)
+        endpoint_template = TestUtils.create_endpoint_template()
+
+        unit_definitions = [
+            TestUtils.create_unit_definition(name="unit1"),
+            TestUtils.create_unit_definition(name="unit2"),
+        ]
+        unit_separator = "and"
+        timeframe_template = TestUtils.create_timeframe_template()
+        timeframe = TestUtils.create_timeframe(
+            timeframe_template_uid=timeframe_template.uid
+        )
+
+        # Create study endpoints
+        TestUtils.create_study_endpoint(
+            study_uid=cls.study_uid,
+            endpoint_template_uid=endpoint_template.uid,
+            endpoint_units=study_selections.study_selection.EndpointUnitsInput(
+                units=[u.uid for u in unit_definitions], separator=unit_separator
+            ),
+            timeframe_uid=timeframe.uid,
+            library_name=endpoint_template.library.name,
+        )
+
+        TestUtils.create_study_endpoint(
+            study_uid=cls.study_uid,
+            endpoint_template_uid=endpoint_template.uid,
+            library_name=endpoint_template.library.name,
+            timeframe_uid=timeframe.uid,
+            study_objective_uid=study_objective.study_objective_uid,
+        )
+
     def test_study_metadata_listing(self):
         self.maxDiff = None
         study_listing_service = StudyMetadataListingService()
@@ -241,51 +328,61 @@ class TestStudyListing(unittest.TestCase):
             study_arms=StudyArmListingModel.from_study_selection_arm_ar(
                 study_uid=self.study_uid,
                 study_selection_arm_ar=study_listing_service.arm_repo.find_by_study(
-                    self.study_uid
+                    study_uid=self.study_uid
                 ),
                 find_simple_term_arm_type_by_term_uid=study_listing_service.ct_attr_repo.find_by_uid,
                 find_multiple_connected_branch_arm=study_listing_service.branch_arm_repo.find_by_arm,
             ),
             study_cohorts=StudyCohortListingModel.from_study_selection_cohort_ar(
                 study_selection_cohort_ar=study_listing_service.cohort_repo.find_by_study(
-                    self.study_uid,
+                    study_uid=self.study_uid,
                 ),
-                find_arm_by_uid=study_listing_service.arm_repo.find_by_study(
-                    self.study_uid,
-                ).get_specific_arm_selection,
-                find_branch_arm_by_uid=study_listing_service.branch_arm_repo.find_by_study(
-                    self.study_uid,
-                ).get_specific_branch_arm_selection,
             ),
             study_epochs=StudyEpochListingModel.from_all_study_epochs(
                 all_study_epochs=StudyEpochService()
                 .get_all_epochs(
-                    self.study_uid,
+                    study_uid=self.study_uid,
                 )
                 .items,
                 find_term_by_uid=study_listing_service.ct_attr_repo.find_by_uid,
             ),
             study_elements=StudyElementListingModel.from_study_element_ar(
                 study_element_ar=study_listing_service.element_repo.find_by_study(
-                    self.study_uid,
+                    study_uid=self.study_uid,
                 ),
                 find_term_by_uid=study_listing_service.ct_attr_repo.find_by_uid,
             ),
             study_design_matrix=StudyDesignMatrixListingModel.from_all_study_design_cells(
                 all_design_cells=study_listing_service.design_cell_repo.find_all_design_cells_by_study(
-                    self.study_uid,
+                    study_uid=self.study_uid,
                 ),
-                find_arm_by_uid=study_listing_service.arm_repo.find_by_study(
-                    self.study_uid,
-                ).get_specific_arm_selection,
-                find_branch_arm_by_uid=study_listing_service.branch_arm_repo.find_by_study(
-                    self.study_uid,
-                ).get_specific_branch_arm_selection,
             ),
             study_visits=StudyVisitListingModel.from_all_study_visits(
                 all_study_visits=study_listing_service.get_all_visits(
-                    self.study_uid,
+                    study_uid=self.study_uid,
                 )
+            ),
+            study_criterias=StudyCriteriaListingModel.from_study_criteria_ar(
+                study_criteria_ar=study_listing_service.study_criteria_repo.find_by_study(
+                    study_uid=self.study_uid,
+                ),
+                find_term_by_uid=study_listing_service.ct_attr_repo.find_by_uid,
+                find_criteria_by_uid=study_listing_service.criteria_repo.find_by_uid_2,
+            ),
+            study_objectives=StudyObjectiveListingModel.from_study_objective_ar(
+                study_objective_ar=study_listing_service.study_objective_repo.find_by_study(
+                    study_uid=self.study_uid,
+                ),
+                find_term_by_uid=study_listing_service.ct_attr_repo.find_by_uid,
+                find_objective_by_uid=study_listing_service.objective_repo.find_by_uid_2,
+            ),
+            study_endpoints=StudyEndpointListingModel.from_study_endpoint_ar(
+                study_endpoint_ar=study_listing_service.study_endpoint_repo.find_by_study(
+                    study_uid=self.study_uid,
+                ),
+                find_term_by_uid=study_listing_service.ct_attr_repo.find_by_uid,
+                find_endpoint_by_uid=study_listing_service.endpoint_repo.find_by_uid_2,
+                find_timeframe_by_uid=study_listing_service.timeframe_repo.find_by_uid_2,
             ),
         )
 
@@ -341,3 +438,15 @@ class TestStudyListing(unittest.TestCase):
         # Check study visits
         self.assertCountEqual(output.study_visits, expected_output.study_visits)
         self.assertEqual(output.study_visits, expected_output.study_visits)
+
+        # Check study criterias
+        self.assertCountEqual(output.study_criterias, expected_output.study_criterias)
+        self.assertEqual(output.study_criterias, expected_output.study_criterias)
+
+        # Check study criterias
+        self.assertCountEqual(output.study_objectives, expected_output.study_objectives)
+        self.assertEqual(output.study_objectives, expected_output.study_objectives)
+
+        # Check study criterias
+        self.assertCountEqual(output.study_endpoints, expected_output.study_endpoints)
+        self.assertEqual(output.study_endpoints, expected_output.study_endpoints)

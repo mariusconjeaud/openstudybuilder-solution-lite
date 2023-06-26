@@ -23,7 +23,6 @@ class Settings(BaseSettings):
     app_name: str = "Clinical MDR API"
     neo4j_dsn: Optional[str]
     neo4j_database: str = environ.get("NEO4J_DATABASE", "neo4j")
-    api_running_version: str = "develop"
 
 
 settings = Settings()
@@ -31,6 +30,7 @@ settings = Settings()
 CACHE_MAX_SIZE = 1000
 CACHE_TTL = 3600
 
+MAX_INT_NEO4J = 9223372036854775807
 DEFAULT_PAGE_SIZE = 10
 MAX_PAGE_SIZE = 1000
 NON_VISIT_NUMBER = 29500
@@ -82,9 +82,11 @@ DEFAULT_STUDY_FIELD_CONFIG_FILE = (
 
 LIBRARY_SUBSTANCES_CODELIST_NAME = "UNII"
 
-APPINSIGHTS_CONNECTION = os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING", "")
-
-BUILD_ID = os.environ.get("BUILD_ID") or "unknown-build"
-COMMIT_ID = os.environ.get("COMMIT_ID") or "unknown-commit"
+APPINSIGHTS_CONNECTION = environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING", "")
 
 OPENAPI_SCHEMA_API_ROOT_PATH = environ.get("UVICORN_ROOT_PATH", "/")
+
+TRACING_DISABLED = environ.get("TRACING_DISABLED", "false").lower() == "true"
+
+# Absolute path of application root directory
+APP_ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))

@@ -9,10 +9,15 @@ from clinical_mdr_api.models import (
     StudySelectionActivity,
     StudyVisit,
 )
-from clinical_mdr_api.models.activities.activity import ActivityHierarchySimpleModel
-from clinical_mdr_api.models.table_with_headers import TableHeader, TableWithHeaders
+from clinical_mdr_api.models.concepts.activities.activity import (
+    ActivityHierarchySimpleModel,
+)
+from clinical_mdr_api.models.study_selections.table_with_headers import (
+    TableHeader,
+    TableWithHeaders,
+)
 from clinical_mdr_api.models.utils import GenericFilteringReturn
-from clinical_mdr_api.services.study_flowchart import StudyFlowchartService
+from clinical_mdr_api.services.studies.study_flowchart import StudyFlowchartService
 
 USER_INITIALS = "unknown-user"
 

@@ -7,6 +7,7 @@ from fastapi import status as fast_api_status
 from pydantic.types import Json
 
 from clinical_mdr_api import config, models
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.syntax_pre_instances.criteria_pre_instance import (
     CriteriaPreInstanceCreateInput,
@@ -14,7 +15,9 @@ from clinical_mdr_api.models.syntax_pre_instances.criteria_pre_instance import (
 from clinical_mdr_api.models.syntax_templates.criteria_template import (
     CriteriaTemplateWithCount,
 )
-from clinical_mdr_api.models.template_parameter_term import MultiTemplateParameterTerm
+from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
+    MultiTemplateParameterTerm,
+)
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -101,6 +104,7 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
             "library=library.name",
             "uid",
             "name_plain",
+            "name",
             "indications=indications.name",
             "categories=categories.name.sponsor_preferred_name",
             "sub_categories=sub_categories.name.sponsor_preferred_name",
@@ -123,7 +127,7 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
 # pylint: disable=unused-argument
 def get_criteria_templates(
     request: Request,  # request is actually required by the allow_exports decorator
-    status: Optional[str] = Query(
+    status: Optional[LibraryItemStatus] = Query(
         None,
         description="If specified, only those criteria templates will be returned that are currently in the specified status. "
         "This may be particularly useful if the criteria template has "
@@ -137,7 +141,10 @@ def get_criteria_templates(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
     page_size: Optional[int] = Query(
-        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
     ),
     filters: Optional[Json] = Query(
         None,
@@ -183,7 +190,7 @@ def get_criteria_templates(
 )
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
-    status: Optional[str] = Query(
+    status: Optional[LibraryItemStatus] = Query(
         None,
         description="If specified, only those criteria templates will be returned that are currently in the specified status. "
         "This may be particularly useful if the criteria template has "
@@ -213,6 +220,41 @@ def get_distinct_values_for_header(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         result_count=result_count,
+    )
+
+
+@router.get(
+    "/audit-trail",
+    summary="",
+    description="",
+    response_model=CustomPage[models.CriteriaTemplate],
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def retrieve_audit_trail(
+    page_number: Optional[int] = Query(
+        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
+    ),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
+    ),
+    total_count: Optional[bool] = Query(
+        False, description=_generic_descriptions.TOTAL_COUNT
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    results = Service(current_user_id).retrieve_audit_trail(
+        page_number=page_number, page_size=page_size, total_count=total_count
+    )
+
+    return CustomPage.create(
+        items=results.items, total=results.total_count, page=page_number, size=page_size
     )
 
 
@@ -399,7 +441,7 @@ If the request succeeds:
         201: {
             "description": "Created - The criteria template was successfully created."
         },
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The criteria template name is not valid.\n"
@@ -441,7 +483,7 @@ Once the criteria template has been approved, only the surrounding text (excludi
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The criteria template is not in draft status.\n"
@@ -517,7 +559,7 @@ This endpoint can be used to either :
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The criteria template is not in draft status.\n"
@@ -568,7 +610,7 @@ Only the surrounding text (excluding the parameters) can be changed.
     status_code=201,
     responses={
         201: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The criteria template is not in final or retired status or has a draft status.\n"
@@ -610,7 +652,7 @@ If the request succeeds:
     status_code=201,
     responses={
         201: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The criteria template is not in draft status.\n"
@@ -643,7 +685,7 @@ def approve(
 
 @router.delete(
     "/{uid}/activations",
-    summary="Inactivates/deactivates the criteria template identified by 'uid'.",
+    summary="Inactivates/deactivates the criteria template identified by 'uid' and its Pre-Instances.",
     description="""This request is only valid if the criteria template
 * is in 'Final' status only (so no latest 'Draft' status exists).
 
@@ -656,7 +698,7 @@ If the request succeeds:
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The criteria template is not in final status.",
@@ -676,7 +718,7 @@ def inactivate(
 
 @router.post(
     "/{uid}/activations",
-    summary="Reactivates the criteria template identified by 'uid'.",
+    summary="Reactivates the criteria template identified by 'uid' and its Pre-Instances.",
     description="""This request is only valid if the criteria template
 * is in 'Retired' status only (so no latest 'Draft' status exists).
 
@@ -689,7 +731,7 @@ If the request succeeds:
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The criteria template is not in retired status.",
@@ -721,7 +763,7 @@ def reactivate(
         204: {
             "description": "No Content - The criteria template was successfully deleted."
         },
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The criteria template is not in draft status.\n"
@@ -784,7 +826,7 @@ with the same content will succeed.
         202: {
             "description": "Accepted. The content is valid and may be submitted in another request."
         },
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden. The content is invalid - Reasons include e.g.: \n"
             "- The syntax of the 'name' is not valid.\n"
@@ -810,9 +852,9 @@ def pre_validate(
     status_code=201,
     responses={
         201: {
-            "description": "Created - The criteria pre instance was successfully created."
+            "description": "Created - The criteria pre-instance was successfully created."
         },
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The criteria template is not in draft status.\n"

@@ -269,7 +269,7 @@ export default {
     return repository.post(`studies/${studyUid}/study-criteria/preview`, data)
   },
   createStudyCriteria (studyUid, data) {
-    return repository.post(`studies/${studyUid}/study-criteria`, data)
+    return repository.post(`studies/${studyUid}/study-criteria?create_criteria=true`, data)
   },
   batchCreateStudyCriteria (studyUid, data) {
     return repository.post(`studies/${studyUid}/study-criteria/batch-select`, data)

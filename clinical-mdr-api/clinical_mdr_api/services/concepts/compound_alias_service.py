@@ -1,11 +1,11 @@
-from clinical_mdr_api.domain.concepts.compound_alias import (
-    CompoundAliasAR,
-    CompoundAliasVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.compound_alias_repository import (
     CompoundAliasRepository,
 )
-from clinical_mdr_api.models.compound_alias import (
+from clinical_mdr_api.domains.concepts.compound_alias import (
+    CompoundAliasAR,
+    CompoundAliasVO,
+)
+from clinical_mdr_api.models.concepts.compound_alias import (
     CompoundAlias,
     CompoundAliasCreateInput,
     CompoundAliasEditInput,

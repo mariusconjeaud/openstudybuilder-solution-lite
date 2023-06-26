@@ -2,20 +2,6 @@ import unittest
 
 from neomodel import db
 
-from clinical_mdr_api.domain.syntax_templates.endpoint_template import (
-    EndpointTemplateAR,
-)
-from clinical_mdr_api.domain.syntax_templates.objective_template import (
-    ObjectiveTemplateAR,
-)
-from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
-from clinical_mdr_api.domain.syntax_templates.timeframe_template import (
-    TimeframeTemplateAR,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemMetadataVO,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories.models.generic import Library
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot
 from clinical_mdr_api.domain_repositories.models.syntax import (
@@ -38,7 +24,21 @@ from clinical_mdr_api.domain_repositories.syntax_templates.objective_template_re
 from clinical_mdr_api.domain_repositories.syntax_templates.timeframe_template_repository import (
     TimeframeTemplateRepository,
 )
-from clinical_mdr_api.models.study_selection import (
+from clinical_mdr_api.domains.syntax_templates.endpoint_template import (
+    EndpointTemplateAR,
+)
+from clinical_mdr_api.domains.syntax_templates.objective_template import (
+    ObjectiveTemplateAR,
+)
+from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
+from clinical_mdr_api.domains.syntax_templates.timeframe_template import (
+    TimeframeTemplateAR,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryVO,
+)
+from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionEndpoint,
     StudySelectionEndpointInput,
     StudySelectionObjective,
@@ -47,13 +47,13 @@ from clinical_mdr_api.models.study_selection import (
 from clinical_mdr_api.models.syntax_instances.endpoint import EndpointCreateInput
 from clinical_mdr_api.models.syntax_instances.objective import ObjectiveCreateInput
 from clinical_mdr_api.models.syntax_instances.timeframe import TimeframeCreateInput
-from clinical_mdr_api.models.template_parameter_multi_select_input import (
+from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
-from clinical_mdr_api.services.study_endpoint_selection import (
+from clinical_mdr_api.services.studies.study_endpoint_selection import (
     StudyEndpointSelectionService,
 )
-from clinical_mdr_api.services.study_objective_selection import (
+from clinical_mdr_api.services.studies.study_objective_selection import (
     StudyObjectiveSelectionService,
 )
 from clinical_mdr_api.services.syntax_instances.endpoints import EndpointService
@@ -116,6 +116,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
         self.im = LibraryItemMetadataVO.get_initial_item_metadata(author="Test")
         self.ot_ar = ObjectiveTemplateAR(
             _uid=self.otr.root_class.get_next_free_uid_and_increment_counter(),
+            _sequence_id="some sequence id",
             _template=self.tv,
             _library=self.library,
             _item_metadata=self.im,
@@ -151,6 +152,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
 
         self.et_ar = EndpointTemplateAR(
             _uid=self.etr.root_class.get_next_free_uid_and_increment_counter(),
+            _sequence_id="some sequence id",
             _template=self.tv,
             _library=self.library,
             _item_metadata=self.im,
@@ -174,6 +176,7 @@ class TestStudyEndpointUpversion(unittest.TestCase):
 
         self.tt_ar = TimeframeTemplateAR(
             _uid=self.ttr.root_class.get_next_free_uid_and_increment_counter(),
+            _sequence_id="some sequence id",
             _template=self.tv,
             _library=self.library,
             _item_metadata=self.im,

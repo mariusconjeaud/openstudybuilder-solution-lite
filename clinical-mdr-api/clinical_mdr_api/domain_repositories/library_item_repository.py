@@ -19,14 +19,6 @@ from neomodel import OUTGOING, NodeClassNotDefined, RelationshipManager, Travers
 from neomodel.exceptions import DoesNotExist
 
 from clinical_mdr_api import config, exceptions
-from clinical_mdr_api.domain._utils import convert_to_plain
-from clinical_mdr_api.domain.syntax_templates.template import InstantiationCountsVO
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemAggregateRootBase,
-    LibraryItemMetadataVO,
-    LibraryItemStatus,
-    VersioningException,
-)
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     GenericRepository,
 )
@@ -40,8 +32,19 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
+from clinical_mdr_api.domains._utils import convert_to_plain
+from clinical_mdr_api.domains.syntax_templates.template import InstantiationCountsVO
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemAggregateRootBase,
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+    VersioningException,
+)
 from clinical_mdr_api.exceptions import BusinessLogicException, NotFoundException
-from clinical_mdr_api.repositories._utils import sb_clear_cache
+from clinical_mdr_api.repositories._utils import (
+    sb_clear_cache,
+    validate_max_skip_clause,
+)
 
 _AggregateRootType = TypeVar("_AggregateRootType", bound=LibraryItemAggregateRootBase)
 RETRIEVED_READ_ONLY_MARK = object()
@@ -63,7 +66,7 @@ class LibraryItemRepositoryImplBase(
         library: Library,
         relationship: VersionRelationship,
         value: VersionValue,
-        study_count: Optional[int] = None,
+        study_count: int = 0,
         counts: Optional[InstantiationCountsVO] = None,
     ) -> _AggregateRootType:
         raise NotImplementedError
@@ -197,7 +200,6 @@ class LibraryItemRepositoryImplBase(
             library,
             previous_versioned_object,
         ) = versioned_object.repository_closure_data
-        # versioning_data = versioned_object.item_metadata.as_datadict()
         versioning_data = self._library_item_metadata_vo_to_datadict(
             versioned_object.item_metadata
         )
@@ -336,6 +338,63 @@ class LibraryItemRepositoryImplBase(
     def _get_library(self, library_name: str) -> Library:
         # Finds library in database based on library name
         return Library.nodes.get(name=library_name)
+
+    def retrieve_audit_trail(
+        self, page_number: int = 1, page_size: int = 0, total_count: bool = False
+    ) -> Iterable[_AggregateRootType]:
+        """
+        Retrieves an audit trail of the given node type from the database.
+
+        This method queries the database for the given node type, ordered by their start date in descending order.
+        It retrieves a subset of the entries based on the provided page number and page size parameters.
+        Optionally, it can also return the total count of audit trail entries.
+
+        Args:
+            page_number (int, optional): The page number of the results to retrieve. Each page contains a subset of the audit trail.
+                Defaults to 1.
+            page_size (int, optional): The number of results per page. If set to 0, all results will be retrieved.
+                Defaults to 0.
+            total_count (bool, optional): Flag indicating whether to include the total count of audit trail entries.
+                Defaults to False.
+
+        Returns:
+            Tuple[List[_AggregateRootType], int]: A tuple containing a list of retrieved audit trail entries and the total count of entries.
+                The audit trail entries are instances of the _AggregateRootType class.
+        """
+        validate_max_skip_clause(page_number=page_number, page_size=page_size)
+        result = db.cypher_query(
+            query=f"""MATCH (root:{self.root_class.__name__})-[rel:HAS_VERSION]->(value:{self.value_class.__name__})
+            RETURN root, rel, value
+            ORDER BY rel.start_date DESC
+            SKIP $page_number * $page_size
+            LIMIT $page_size""",
+            params={
+                "page_number": page_number - 1,
+                "page_size": page_size,
+            },
+            resolve_objects=True,
+        )
+
+        aggregates = []
+
+        for root, relationship, value in result[0]:
+            ar = self._create_aggregate_root_instance_from_version_root_relationship_and_value(
+                root=root,
+                library=root.has_library.get_or_none(),
+                relationship=relationship,
+                value=value,
+            )
+            ar.repository_closure_data = RETRIEVED_READ_ONLY_MARK
+            aggregates.append(ar)
+
+        if total_count:
+            count = db.cypher_query(
+                f"MATCH (:{self.root_class.__name__})-[rel:HAS_VERSION]->(:{self.value_class.__name__}) RETURN COUNT(rel) as total_count"
+            )[0][0][0]
+        else:
+            count = 0
+
+        return aggregates, count
 
     def find_all(
         self,
@@ -944,7 +1003,6 @@ class LibraryItemRepositoryImplBase(
     ) -> Mapping[str, Any]:
         # if the repository knows who is logged in, domain information will be ignored
         user_initials = item_metadata.user_initials
-        # assert user_initials == item_metadata.user_initials  # however we assume it should not differ
         return {
             "user_initials": user_initials,
             "change_description": item_metadata.change_description,

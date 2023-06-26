@@ -18,6 +18,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 from clinical_mdr_api.main import app
+from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
+    IndexedTemplateParameterTerm,
+    MultiTemplateParameterTerm,
+)
 from clinical_mdr_api.models.syntax_templates.timeframe_template import (
     TimeframeTemplate,
 )
@@ -135,6 +139,7 @@ TIMEFRAME_TEMPLATE_FIELDS_ALL = [
     "name_plain",
     "guidance_text",
     "uid",
+    "sequence_id",
     "status",
     "version",
     "change_description",
@@ -148,6 +153,7 @@ TIMEFRAME_TEMPLATE_FIELDS_ALL = [
 
 TIMEFRAME_TEMPLATE_FIELDS_NOT_NULL = [
     "uid",
+    "sequence_id",
     "name",
 ]
 
@@ -166,10 +172,11 @@ def test_get_timeframe_template(api_client):
         assert res[key] is not None
 
     assert res["uid"] == timeframe_templates[1].uid
+    assert res["sequence_id"] == "TT2"
     assert res["name"] == "Default-AAA name with [TextValue]"
     assert res["guidance_text"] == "Default-AAA guidance text"
     assert res["parameters"][0]["name"] == "TextValue"
-    assert res["parameters"][0]["terms"] is None
+    assert res["parameters"][0]["terms"] == []
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
 
@@ -281,9 +288,11 @@ def test_get_versions_of_timeframe_template(api_client):
 
     assert len(res) == 2
     assert res[0]["uid"] == timeframe_templates[1].uid
+    assert res[0]["sequence_id"] == "TT2"
     assert res[0]["version"] == "1.0"
     assert res[0]["status"] == "Final"
     assert res[1]["uid"] == timeframe_templates[1].uid
+    assert res[1]["sequence_id"] == "TT2"
     assert res[1]["version"] == "0.1"
     assert res[1]["status"] == "Draft"
 
@@ -414,10 +423,11 @@ def test_create_timeframe_template(api_client):
 
     assert response.status_code == 201
     assert res["uid"]
+    assert res["sequence_id"]
     assert res["name"] == "default_name [TextValue]"
     assert res["guidance_text"] == "default_guidance_text"
     assert res["parameters"][0]["name"] == "TextValue"
-    assert res["parameters"][0]["terms"] is None
+    assert res["parameters"][0]["terms"] == []
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
     assert set(list(res.keys())) == set(TIMEFRAME_TEMPLATE_FIELDS_ALL)
@@ -439,6 +449,7 @@ def test_create_new_version_of_timeframe_template(api_client):
 
     assert response.status_code == 201
     assert res["uid"]
+    assert res["sequence_id"]
     assert res["name"] == "new test name"
     assert res["guidance_text"] == "new test guidance text"
     assert res["version"] == "1.1"
@@ -455,6 +466,7 @@ def test_get_specific_version_of_timeframe_template(api_client):
     assert response.status_code == 200
 
     assert res["uid"] == timeframe_templates[4].uid
+    assert res["sequence_id"] == "TT5"
     assert res["version"] == "1.1"
     assert res["status"] == "Draft"
 
@@ -471,10 +483,11 @@ def test_create_timeframe_template_with_default_parameters(api_client):
 
     assert response.status_code == 201
     assert res["uid"]
+    assert res["sequence_id"]
     assert res["name"] == "test_name [TextValue]"
     assert res["guidance_text"] == "test_guidance_text"
     assert res["parameters"][0]["name"] == "TextValue"
-    assert res["parameters"][0]["terms"] is None
+    assert res["parameters"][0]["terms"] == []
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
     assert set(list(res.keys())) == set(TIMEFRAME_TEMPLATE_FIELDS_ALL)
@@ -495,10 +508,67 @@ def test_delete_timeframe_template(api_client):
 def test_approve_timeframe_template(api_client):
     response = api_client.post(f"{URL}/{timeframe_templates[3].uid}/approvals")
     res = response.json()
+    log.info("Approved Timeframe Template: %s", timeframe_templates[3].uid)
 
     assert response.status_code == 201
     assert res["uid"] == timeframe_templates[3].uid
+    assert res["sequence_id"] == "TT4"
+    assert res["name"] == "Default-XXX name with [TextValue]"
+    assert res["guidance_text"] == "Default-XXX guidance text"
     assert res["version"] == "1.0"
+    assert res["status"] == "Final"
+
+
+def test_cascade_approve_timeframe_template(api_client):
+    text_value_1 = TestUtils.create_text_value()
+    parameter_terms = [
+        MultiTemplateParameterTerm(
+            position=1,
+            conjunction="",
+            terms=[
+                IndexedTemplateParameterTerm(
+                    index=1,
+                    name=text_value_1.name,
+                    uid=text_value_1.uid,
+                    type="TextValue",
+                )
+            ],
+        )
+    ]
+    timeframe = TestUtils.create_timeframe(
+        timeframe_template_uid=timeframe_templates[5].uid,
+        library_name="Sponsor",
+        parameter_terms=parameter_terms,
+    )
+
+    api_client.post(
+        f"{URL}/{timeframe_templates[5].uid}/versions",
+        json={
+            "name": "cascade check [TextValue]",
+            "change_description": "cascade check for instance",
+        },
+    )
+
+    response = api_client.post(
+        f"{URL}/{timeframe_templates[5].uid}/approvals?cascade=true"
+    )
+    res = response.json()
+    log.info("Approved Timeframe Template: %s", timeframe_templates[5].uid)
+
+    assert response.status_code == 201
+    assert res["uid"] == timeframe_templates[5].uid
+    assert res["sequence_id"] == "TT6"
+    assert res["name"] == "cascade check [TextValue]"
+    assert res["guidance_text"] == "Default-AAA-0 guidance text"
+    assert res["version"] == "2.0"
+    assert res["status"] == "Final"
+
+    # Assertions for Timeframe
+    response = api_client.get(f"timeframes/{timeframe.uid}")
+    res = response.json()
+
+    assert res["name"] == f"cascade check [{text_value_1.name_sentence_case}]"
+    assert res["version"] == "2.0"
     assert res["status"] == "Final"
 
 
@@ -508,6 +578,7 @@ def test_inactivate_timeframe_template(api_client):
 
     assert response.status_code == 200
     assert res["uid"] == timeframe_templates[3].uid
+    assert res["sequence_id"] == "TT4"
     assert res["version"] == "1.0"
     assert res["status"] == "Retired"
 
@@ -518,8 +589,77 @@ def test_reactivate_timeframe_template(api_client):
 
     assert response.status_code == 200
     assert res["uid"] == timeframe_templates[3].uid
+    assert res["sequence_id"] == "TT4"
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
+
+
+def test_timeframe_template_audit_trail(api_client):
+    response = api_client.get(f"{URL}/audit-trail?page_size=100&total_count=true")
+    res = response.json()
+    log.info("TimeframeTemplate Audit Trail: %s", res)
+
+    assert response.status_code == 200
+    assert res["total"] == 55
+    expected_uids = [
+        "TimeframeTemplate_000004",
+        "TimeframeTemplate_000004",
+        "TimeframeTemplate_000006",
+        "TimeframeTemplate_000006",
+        "TimeframeTemplate_000004",
+        "TimeframeTemplate_000027",
+        "TimeframeTemplate_000005",
+        "TimeframeTemplate_000026",
+        "TimeframeTemplate_000025",
+        "TimeframeTemplate_000025",
+        "TimeframeTemplate_000024",
+        "TimeframeTemplate_000024",
+        "TimeframeTemplate_000023",
+        "TimeframeTemplate_000023",
+        "TimeframeTemplate_000022",
+        "TimeframeTemplate_000022",
+        "TimeframeTemplate_000021",
+        "TimeframeTemplate_000021",
+        "TimeframeTemplate_000020",
+        "TimeframeTemplate_000020",
+        "TimeframeTemplate_000019",
+        "TimeframeTemplate_000019",
+        "TimeframeTemplate_000018",
+        "TimeframeTemplate_000018",
+        "TimeframeTemplate_000017",
+        "TimeframeTemplate_000017",
+        "TimeframeTemplate_000016",
+        "TimeframeTemplate_000016",
+        "TimeframeTemplate_000015",
+        "TimeframeTemplate_000015",
+        "TimeframeTemplate_000014",
+        "TimeframeTemplate_000014",
+        "TimeframeTemplate_000013",
+        "TimeframeTemplate_000013",
+        "TimeframeTemplate_000012",
+        "TimeframeTemplate_000012",
+        "TimeframeTemplate_000011",
+        "TimeframeTemplate_000011",
+        "TimeframeTemplate_000010",
+        "TimeframeTemplate_000010",
+        "TimeframeTemplate_000009",
+        "TimeframeTemplate_000009",
+        "TimeframeTemplate_000008",
+        "TimeframeTemplate_000008",
+        "TimeframeTemplate_000007",
+        "TimeframeTemplate_000007",
+        "TimeframeTemplate_000006",
+        "TimeframeTemplate_000006",
+        "TimeframeTemplate_000005",
+        "TimeframeTemplate_000005",
+        "TimeframeTemplate_000004",
+        "TimeframeTemplate_000002",
+        "TimeframeTemplate_000002",
+        "TimeframeTemplate_000001",
+        "TimeframeTemplate_000001",
+    ]
+    actual_uids = [item["uid"] for item in res["items"]]
+    assert actual_uids == expected_uids
 
 
 def test_cannot_create_timeframe_template_with_existing_name(api_client):

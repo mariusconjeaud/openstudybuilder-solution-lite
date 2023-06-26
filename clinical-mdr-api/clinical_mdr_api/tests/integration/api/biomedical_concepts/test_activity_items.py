@@ -43,6 +43,8 @@ ct_term_ai: CTTerm
 ct_term_ai2: CTTerm
 unit_definition_ai: UnitDefinitionModel
 unit_definition_ai2: UnitDefinitionModel
+data_type_term: CTTerm
+role_term: CTTerm
 
 
 @pytest.fixture(scope="module")
@@ -69,17 +71,25 @@ def test_data():
     activity_instance_class = TestUtils.create_activity_instance_class(
         name="activity instance class"
     )
+    global data_type_term
+    global role_term
+    data_type_term = TestUtils.create_ct_term(sponsor_preferred_name="Data type")
+    role_term = TestUtils.create_ct_term(sponsor_preferred_name="Role")
     activity_item_class = TestUtils.create_activity_item_class(
         name="Activity Item Class name1",
         order=1,
         mandatory=True,
         activity_instance_class_uids=[activity_instance_class.uid],
+        role_uid=role_term.term_uid,
+        data_type_uid=data_type_term.term_uid,
     )
     activity_item_class2 = TestUtils.create_activity_item_class(
         name="Activity Item Class name2",
         order=2,
         mandatory=True,
         activity_instance_class_uids=[activity_instance_class.uid],
+        role_uid=role_term.term_uid,
+        data_type_uid=data_type_term.term_uid,
     )
     codelist = TestUtils.create_ct_codelist(extensible=True, approve=True)
     ct_term_ai = TestUtils.create_ct_term(
@@ -387,9 +397,9 @@ def test_filtering_wildcard(
             "Activity Item Class name1",
         ),
         pytest.param(
-            '{"ct_term.uid": {"v": ["CTTerm_000001"]}}',
+            '{"ct_term.uid": {"v": ["CTTerm_000003"]}}',
             "ct_term.uid",
-            "CTTerm_000001",
+            "CTTerm_000003",
         ),
         pytest.param(
             '{"ct_term.name": {"v": ["Activity item term"]}}',

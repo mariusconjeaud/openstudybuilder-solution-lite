@@ -1,11 +1,11 @@
-from clinical_mdr_api.domain.concepts.activities.activity_group import (
-    ActivityGroupAR,
-    ActivityGroupVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.activities.activity_group_repository import (
     ActivityGroupRepository,
 )
-from clinical_mdr_api.models.activities.activity_group import (
+from clinical_mdr_api.domains.concepts.activities.activity_group import (
+    ActivityGroupAR,
+    ActivityGroupVO,
+)
+from clinical_mdr_api.models.concepts.activities.activity_group import (
     ActivityGroup,
     ActivityGroupEditInput,
     ActivityGroupInput,

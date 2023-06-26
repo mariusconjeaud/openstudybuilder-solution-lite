@@ -57,6 +57,8 @@ const actions = {
     data.endpoint_data = endpointData
     delete data.endpoint_template
 
+    data.endpoint_units.units = data.endpoint_units.units.map(unit => unit.uid)
+
     if (data.timeframe_template) {
       // Create timeframe if a timeframe with specified name does not exist
       const timeframe = {
@@ -104,20 +106,22 @@ const actions = {
       dispatch('fetchStudyEndpoints', { studyUid })
     })
   },
-  selectFromStudyEndpoint ({ commit }, { studyUid, form, studyEndpoint }) {
+  selectFromStudyEndpoint ({ commit }, { studyUid, studyEndpoint }) {
     const data = {
-      study_objective_uid: form.study_objective.study_objective_uid,
       endpoint_uid: studyEndpoint.endpoint.uid,
-      endpoint_units: studyEndpoint.endpoint_units
+      endpoint_units: {
+        units: studyEndpoint.endpoint_units.units.map(unit => unit.uid),
+        separator: studyEndpoint.endpoint_units.separator
+      }
     }
     if (studyEndpoint.timeframe) {
       data.timeframe_uid = studyEndpoint.timeframe.uid
     }
-    if (form.endpoint_level) {
-      data.endpoint_level_uid = form.endpoint_level.term_uid
+    if (studyEndpoint.endpoint_level) {
+      data.endpoint_level_uid = studyEndpoint.endpoint_level.term_uid
     }
-    if (form.endpoint_sublevel) {
-      data.endpoint_sublevel_uid = form.endpoint_sublevel.term_uid
+    if (studyEndpoint.endpoint_sublevel) {
+      data.endpoint_sublevel_uid = studyEndpoint.endpoint_sublevel.term_uid
     }
     return study.selectStudyEndpoint(studyUid, data).then(resp => {
       commit('ADD_STUDY_ENDPOINT', resp.data)
@@ -127,6 +131,7 @@ const actions = {
     const data = {
       endpoint_units: form.endpoint_units
     }
+    data.endpoint_units.units = data.endpoint_units.units.map(unit => unit.uid)
     if (form.study_objective) {
       data.study_objective_uid = form.study_objective.study_objective_uid
     } else {

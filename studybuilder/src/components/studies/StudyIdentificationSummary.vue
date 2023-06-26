@@ -107,7 +107,6 @@ export default {
       }
     },
     close (closeHandler) {
-      this.study = null
       closeHandler()
     },
     onIdentificationUpdated (data) {

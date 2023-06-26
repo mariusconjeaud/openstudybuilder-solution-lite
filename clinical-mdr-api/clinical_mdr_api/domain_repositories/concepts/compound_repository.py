@@ -1,12 +1,5 @@
 from typing import Optional
 
-from clinical_mdr_api.domain.concepts.compound import CompoundAR, CompoundVO
-from clinical_mdr_api.domain.concepts.concept_base import _AggregateRootType
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemMetadataVO,
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
 )
@@ -31,7 +24,14 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionValue,
 )
 from clinical_mdr_api.domain_repositories.models.project import Project
-from clinical_mdr_api.models.compound import Compound
+from clinical_mdr_api.domains.concepts.compound import CompoundAR, CompoundVO
+from clinical_mdr_api.domains.concepts.concept_base import _AggregateRootType
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+    LibraryVO,
+)
+from clinical_mdr_api.models.concepts.compound import Compound
 
 
 class CompoundRepository(ConceptGenericRepository):

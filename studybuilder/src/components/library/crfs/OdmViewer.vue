@@ -1,131 +1,62 @@
 <template>
   <div>
-    <v-app-bar
-      flat
-      color="#e5e5e5"
-      class="mt-2"
-      style="height: 60px"
-      >
+    <v-app-bar flat color="#e5e5e5" class="mt-2" style="height: 60px">
       <v-row class="mt-2" v-if="doc === ''">
         <v-col cols="3">
-          <v-select
-            v-model="params.target_type"
-            :items="types"
-            @change="setElements()"
-            :label="$t('OdmViewer.odm_element_type')"
-            dense
-            clearable
-            item-text="name"
-            item-value="value"
-            class="mt-2">
+          <v-select v-model="params.target_type" :items="types" @change="setElements()"
+            :label="$t('OdmViewer.odm_element_type')" dense clearable item-text="name" item-value="value" class="mt-2">
           </v-select>
         </v-col>
         <v-col cols="3">
-          <v-select
-            :items="elements"
-            :label="$t('OdmViewer.odm_element_name')"
-            v-model="params.target_uid"
-            dense
-            clearable
-            class="mt-2"
-            item-text="name"
-            item-value="uid">
+          <v-select :items="elements" :label="$t('OdmViewer.odm_element_name')" v-model="params.target_uid" dense
+            clearable class="mt-2" item-text="name" item-value="uid">
           </v-select>
         </v-col>
         <v-col cols="1">
-          <v-checkbox
-            v-model="draft"
-            :label="$t('OdmViewer.include_draft')">
+          <v-checkbox v-model="draft" :label="$t('OdmViewer.include_draft')">
           </v-checkbox>
         </v-col>
         <v-col cols="5">
           <v-row>
-            <v-radio-group
-              v-model="params.stylesheet"
-              :label="$t('OdmViewer.stylesheet')"
-              row
-              class="mt-7">
+            <v-radio-group v-model="params.stylesheet" :label="$t('OdmViewer.stylesheet')" row class="mt-7">
               <v-radio :label="$t('OdmViewer.blank')" value="blank" />
               <v-radio :label="$t('OdmViewer.sdtm')" value="sdtm" />
             </v-radio-group>
-              <v-btn
-                class="mt-7"
-                dark
-                small
-                color="primary"
-                :label="$t('_global.load')"
-                @click="loadXml"
-                v-show="params.target_uid && params.stylesheet">
-                {{ $t('OdmViewer.load')}}
-              </v-btn>
-            </v-row>
+            <v-btn class="mt-7" dark small color="primary" :label="$t('_global.load')" @click="loadXml"
+              v-show="params.target_uid && params.stylesheet">
+              {{ $t('OdmViewer.load') }}
+            </v-btn>
+          </v-row>
         </v-col>
       </v-row>
       <v-row class="mt-0" v-else>
-        <v-btn
-          class="ml-2 mt-1"
-          dark
-          small
-          color="primary"
-          :label="$t('_global.load')"
-          @click="clearXml"
+        <v-btn class="ml-2 mt-1" dark small color="primary" :label="$t('_global.load')" @click="clearXml"
           v-show="params.target_uid && params.stylesheet">
-          {{ $t('OdmViewer.load_another')}}
+          {{ $t('OdmViewer.load_another') }}
         </v-btn>
-        <v-btn
-          fab
-          small
-          v-show="doc !== ''"
-          color="nnGreen1"
-          class="ml-4 white--text"
-          :title="$t('DataTableExportButton.export_xml')"
-          @click="downloadXml"
-          :loading="xmlDownloadLoading"
-          >
+        <v-btn fab small v-show="doc !== ''" color="nnGreen1" class="ml-4 white--text"
+          :title="$t('DataTableExportButton.export_xml')" @click="downloadXml" :loading="xmlDownloadLoading">
           <v-icon>mdi-file-xml-box</v-icon>
         </v-btn>
-        <v-btn
-          fab
-          small
-          v-show="doc !== ''"
-          color="nnGreen1"
-          class="ml-4 white--text"
-          :title="$t('DataTableExportButton.export_pdf')"
-          @click="downloadPdf"
-          :loading="pdfDownloadLoading"
-          >
+        <v-btn fab small v-show="doc !== ''" color="nnGreen1" class="ml-4 white--text"
+          :title="$t('DataTableExportButton.export_pdf')" @click="downloadPdf" :loading="pdfDownloadLoading">
           <v-icon>mdi-file-pdf-box</v-icon>
         </v-btn>
-        <v-btn
-          fab
-          small
-          v-show="doc !== ''"
-          color="nnGreen1"
-          class="ml-4 white--text"
-          :title="$t('DataTableExportButton.export_html')"
-          @click="downloadHtml"
-          :loading="htmlDownloadLoading"
-          >
+        <v-btn fab small v-show="doc !== ''" color="nnGreen1" class="ml-4 white--text"
+          :title="$t('DataTableExportButton.export_html')" @click="downloadHtml" :loading="htmlDownloadLoading">
           <v-icon>mdi-file-document</v-icon>
         </v-btn>
       </v-row>
     </v-app-bar>
     <div v-show="loading">
-      <v-row align="center"
-        justify="center"
-        style="text-align: -webkit-center">
+      <v-row align="center" justify="center" style="text-align: -webkit-center">
         <v-col cols="12" sm="4">
-          <div class="text-h5">{{$t('OdmViewer.loading_message')}}</div>
-          <v-progress-circular
-            color="primary"
-            indeterminate
-            size="128"
-            class="ml-4"
-            />
+          <div class="text-h5">{{ $t('OdmViewer.loading_message') }}</div>
+          <v-progress-circular color="primary" indeterminate size="128" class="ml-4" />
         </v-col>
       </v-row>
     </div>
-    <div v-html="doc"/>
+    <div v-html="doc" />
   </div>
 </template>
 
@@ -148,7 +79,7 @@ export default {
       xml: '',
       doc: '',
       params: {
-        target_type: 'template',
+        target_type: 'study_event',
         stylesheet: 'sdtm',
         export_to: 'v1'
       },
@@ -158,7 +89,7 @@ export default {
       htmlDownloadLoading: false,
       type: '',
       types: [
-        { name: this.$t('OdmViewer.template'), value: 'template' },
+        { name: this.$t('OdmViewer.template'), value: 'study_event' },
         { name: this.$t('OdmViewer.form'), value: 'form' },
         { name: this.$t('OdmViewer.item_group'), value: 'item_group' },
         { name: this.$t('OdmViewer.item'), value: 'item' }
@@ -181,8 +112,8 @@ export default {
     },
     setElements () {
       switch (this.params.target_type) {
-        case 'template':
-          crfs.get('templates').then((resp) => {
+        case 'study_event':
+          crfs.get('study-events').then((resp) => {
             this.elements = resp.data.items.filter(this.checkIfDraft)
           })
           return

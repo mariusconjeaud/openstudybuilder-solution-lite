@@ -1,7 +1,7 @@
 from typing import Collection, Optional
 
 # noinspection PyProtectedMember
-from clinical_mdr_api.domain.simple_dictionaries.simple_terminology_item import (
+from clinical_mdr_api.domains.simple_dictionaries.simple_terminology_item import (
     SimpleTerminologyItem,
 )
 

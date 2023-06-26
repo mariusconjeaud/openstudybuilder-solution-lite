@@ -33,9 +33,8 @@ def test_database():
 # pylint: disable=unused-argument,redefined-outer-name
 def test_xml_response(app_client, test_database):
     study = generate_study_root()
-    response = app_client.get(f"/studies/{study.uid}/ctr/odm.xml", stream=True)
+    response = app_client.get(f"/studies/{study.uid}/ctr/odm.xml")
     assert_response_status_code(response, 200)
     assert_response_content_type(response, "text/xml")
-    tree = ET.parse(response.raw)
-    root = tree.getroot()
+    root = ET.fromstring(response.text)
     assert root.tag == ODM_TAG, f"Document root tag is not '{ODM_TAG}'"

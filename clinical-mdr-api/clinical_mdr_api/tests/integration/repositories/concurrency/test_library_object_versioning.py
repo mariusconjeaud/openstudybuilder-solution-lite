@@ -3,17 +3,17 @@ from typing import Sequence
 
 from neomodel import db
 
-from clinical_mdr_api.domain._utils import strip_html
-from clinical_mdr_api.domain.library.object import (
+from clinical_mdr_api.domains._utils import strip_html
+from clinical_mdr_api.domains.libraries.object import (
     ParameterTermEntryVO,
     ParametrizedTemplateVO,
 )
-from clinical_mdr_api.domain.syntax_instances.objective import ObjectiveAR
-from clinical_mdr_api.domain.syntax_templates.objective_template import (
+from clinical_mdr_api.domains.syntax_instances.objective import ObjectiveAR
+from clinical_mdr_api.domains.syntax_templates.objective_template import (
     ObjectiveTemplateAR,
 )
-from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
-from clinical_mdr_api.domain.versioned_object_aggregate import (
+from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
+from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
     VersioningException,
 )

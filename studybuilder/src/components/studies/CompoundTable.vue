@@ -44,19 +44,6 @@
       :study-compound="selectedStudyCompound"
       />
   </v-dialog>
-  <v-dialog
-    v-model="showCompoundHistory"
-    @keydown.esc="closeStudyCompoundHistory"
-    persistent
-    max-width="1200px"
-    >
-    <history-table
-      :title="studyCompoundHistoryTitle"
-      @close="closeStudyCompoundHistory"
-      :headers="headers"
-      :items="compoundHistoryItems"
-      />
-  </v-dialog>
 </div>
 </template>
 
@@ -68,7 +55,6 @@ import CompoundForm from './CompoundForm'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import dataFormating from '@/utils/dataFormating'
 import filteringParameters from '@/utils/filteringParameters'
-import HistoryTable from '@/components/tools/HistoryTable'
 import NNTable from '@/components/tools/NNTable'
 import study from '@/api/study'
 
@@ -77,7 +63,6 @@ export default {
     ActionsMenu,
     CompoundForm,
     ConfirmDialog,
-    HistoryTable,
     NNTable
   },
   computed: {
@@ -140,7 +125,7 @@ export default {
         { text: this.$t('StudyCompoundTable.route_of_admin'), value: 'route_of_administration.name' },
         { text: this.$t('StudyCompoundTable.dispensed_in'), value: 'dispensed_in.name' },
         { text: this.$t('StudyCompoundTable.device'), value: 'device.name' },
-        { text: this.$t('StudyCompoundTable.half_life'), value: 'half_life' },
+        { text: this.$t('StudyCompoundTable.half_life'), value: 'compound.half_life' },
         { text: this.$t('StudyCompoundTable.lag_time'), value: 'lag_times' },
         { text: this.$t('StudyCompoundTable.nnc_number_long'), value: 'nnc_long_number' },
         { text: this.$t('StudyCompoundTable.nnc_number_short'), value: 'nnc_short_number' },

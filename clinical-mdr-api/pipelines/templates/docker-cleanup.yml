@@ -2,7 +2,7 @@ steps:
 
   # Shut down Docker services and clean up local images
   - script: |
-      set +e
+      set +e -x
       
       # Shut down all composed services 
       docker compose down --volumes

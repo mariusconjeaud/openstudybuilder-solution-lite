@@ -1,15 +1,17 @@
-from typing import Optional, cast
+from typing import Optional
 
-from clinical_mdr_api.domain.library.library_ar import LibraryAR
-from clinical_mdr_api.domain.syntax_pre_instances.criteria_pre_instance import (
-    CriteriaPreInstanceAR,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
+from neomodel import db
+
 from clinical_mdr_api.domain_repositories.models.syntax import CriteriaPreInstanceRoot
 from clinical_mdr_api.domain_repositories.syntax_pre_instances.criteria_pre_instance_repository import (
     CriteriaPreInstanceRepository,
 )
-from clinical_mdr_api.exceptions import NotFoundException
+from clinical_mdr_api.domains._utils import generate_seq_id
+from clinical_mdr_api.domains.syntax_pre_instances.criteria_pre_instance import (
+    CriteriaPreInstanceAR,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import VersioningException
+from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.syntax_pre_instances.criteria_pre_instance import (
     CriteriaPreInstance,
     CriteriaPreInstanceVersion,
@@ -31,7 +33,14 @@ class CriteriaPreInstanceService(CriteriaService[CriteriaPreInstanceAR]):
     def _transform_aggregate_root_to_pydantic_model(
         self, item_ar: CriteriaPreInstanceAR
     ) -> CriteriaPreInstance:
-        return CriteriaPreInstance.from_criteria_pre_instance_ar(item_ar)
+        item = CriteriaPreInstance.from_criteria_pre_instance_ar(item_ar)
+        self._set_indexings(item)
+        item.template_type_uid = (
+            self._repos.criteria_template_repository.get_criteria_type_uid(
+                item.template_uid
+            )
+        )
+        return item
 
     def create_ar_from_input_values(
         self,
@@ -41,51 +50,22 @@ class CriteriaPreInstanceService(CriteriaService[CriteriaPreInstanceAR]):
         template_uid: Optional[str] = None,
         include_study_endpoints: Optional[bool] = False,
     ) -> CriteriaPreInstanceAR:
-        parameter_terms = self._create_parameter_entries(
-            template,
-            template_uid=template_uid,
+        item_ar = super().create_ar_from_input_values(
+            template=template,
+            generate_uid_callback=generate_uid_callback,
+            generate_seq_id_callback=generate_seq_id,
             study_uid=study_uid,
+            template_uid=template_uid,
             include_study_endpoints=include_study_endpoints,
         )
 
-        template_uid = template_uid or getattr(template, self.template_uid_property)
-
-        template_vo = self.parametrized_template_vo_class.from_input_values_2(
-            template_uid=template_uid,
-            parameter_terms=parameter_terms,
-            get_final_template_vo_by_template_uid_callback=self._get_template_vo_by_template_uid,
-        )
-
-        try:
-            library_vo = LibraryVO.from_input_values_2(
-                library_name=template.library_name,
-                is_library_editable_callback=(
-                    lambda name: (
-                        cast(
-                            LibraryAR, self._repos.library_repository.find_by_name(name)
-                        ).is_editable
-                        if self._repos.library_repository.find_by_name(name) is not None
-                        else None
-                    )
-                ),
-            )
-        except ValueError as exc:
-            raise NotFoundException(
-                f"The library with the name='{template.library_name}' could not be found."
-            ) from exc
-
         indications, categories, sub_categories = self._get_indexings(template)
 
-        item = CriteriaPreInstanceAR.from_input_values(
-            author=self.user_initials,
-            template=template_vo,
-            library=library_vo,
-            generate_uid_callback=self.repository.generate_uid_callback,
-            indications=indications,
-            categories=categories,
-            sub_categories=sub_categories,
-        )
-        return item
+        item_ar._indications = indications
+        item_ar._categories = categories
+        item_ar._subcategories = sub_categories
+
+        return item_ar
 
     def get_all(
         self,
@@ -102,7 +82,6 @@ class CriteriaPreInstanceService(CriteriaService[CriteriaPreInstanceAR]):
         all_items = []
         for pre_instance in pre_instances:
             item = self._transform_aggregate_root_to_pydantic_model(pre_instance)
-            self._set_indexings(item)
             all_items.append(item)
 
         # The get_all method is only using neomodel, without Cypher query
@@ -118,3 +97,13 @@ class CriteriaPreInstanceService(CriteriaService[CriteriaPreInstanceAR]):
         )
 
         return filtered_items
+
+    @db.transaction
+    def create_new_version(self, uid: str) -> CriteriaPreInstance:
+        try:
+            item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
+            item._create_new_version(author=self.user_initials)
+            self.repository.save(item)
+            return self._transform_aggregate_root_to_pydantic_model(item)
+        except VersioningException as e:
+            raise BusinessLogicException(e.msg) from e

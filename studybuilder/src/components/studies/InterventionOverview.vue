@@ -26,7 +26,7 @@
         <tr>
           <td>{{ $t('InterventionOverview.type_of_treatment') }}</td>
           <td v-for="(studyCompound, index) in studyCompounds" :key="`tot-${index}`">
-            {{ studyCompound.type_of_treatment.name }}
+            {{ studyCompound.type_of_treatment ? studyCompound.type_of_treatment.name : '' }}
           </td>
         </tr>
         <tr>
@@ -87,7 +87,7 @@
                   :key="`sub-${index}-${subIndex}`"
                   :class="{ 'border-top': subIndex > 0 }"
                   >
-                  <td class="no-border half-size">{{ substance.substance_ame }} ({{ substance.substance_unii }})</td>
+                  <td class="no-border half-size">{{ substance.substance_name }} ({{ substance.substance_unii }})</td>
                   <td class="border-left half-size">{{ substance.pclass_name }} ({{ substance.pclass_id }})</td>
                 </tr>
               </tbody>
@@ -178,7 +178,12 @@
           <td>{{ $t('InterventionOverview.half_life') }}</td>
           <td v-for="(studyCompound, index) in studyCompounds" :key="`hl-${index}`">
             <template v-if="studyCompound.compound && studyCompound.compound.half_life">
-              {{ studyCompound.compound.half_life.value }} ({{ studyCompound.compound.half_life.unit_label }})
+              <div v-if="studyCompound.compound.half_life.value">
+                {{ studyCompound.compound.half_life.value }} ({{ studyCompound.compound.half_life.unit_label }})
+              </div>
+              <div v-else>
+                {{ studyCompound.compound.half_life }}
+              </div>
             </template>
           </td>
         </tr>

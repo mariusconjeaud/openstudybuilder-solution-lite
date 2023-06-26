@@ -1,14 +1,14 @@
 from typing import Union
 
 from clinical_mdr_api import models
-from clinical_mdr_api.domain.syntax_instances.activity_instruction import (
-    ActivityInstructionAR,
-)
 from clinical_mdr_api.domain_repositories.syntax_instances.activity_instruction_repository import (
     ActivityInstructionRepository,
 )
 from clinical_mdr_api.domain_repositories.syntax_templates.activity_instruction_template_repository import (
     ActivityInstructionTemplateRepository,
+)
+from clinical_mdr_api.domains.syntax_instances.activity_instruction import (
+    ActivityInstructionAR,
 )
 from clinical_mdr_api.services.syntax_instances.generic_syntax_instance_service import (
     GenericSyntaxInstanceService,

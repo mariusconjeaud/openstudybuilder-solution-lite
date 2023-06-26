@@ -1,5 +1,6 @@
 import unittest
 
+import pytest
 from parameterized import parameterized
 from pydantic import BaseModel
 
@@ -106,3 +107,53 @@ class TestModelUtils(unittest.TestCase):
 
         assert utils.is_attribute_in_model("x", model)
         assert not utils.is_attribute_in_model("y", model)
+
+
+@pytest.mark.parametrize(
+    "value, result",
+    [
+        ("0", 0),
+        ("1", 1),
+        ("yes", 1),
+        ("No", 0),
+        ("YES", 1),
+        ("yEs", 1),
+        ("no", 0),
+        ("tRue", 1),
+        ("False", 0),
+        ("false", 0),
+        ("Off", 0),
+        ("on", 1),
+        ("OFF", 0),
+        ("oN", 1),
+    ],
+)
+def test_strtobool(value, result):
+    assert utils.strtobool(value) == result
+
+
+@pytest.mark.parametrize(
+    "value, exception_type",
+    [
+        ("", ValueError),
+        (True, AttributeError),
+        (False, AttributeError),
+        (None, AttributeError),
+        (0, AttributeError),
+        (1, AttributeError),
+        (-1, AttributeError),
+        (0.1, AttributeError),
+        (dict(), AttributeError),
+        ([1, 2], AttributeError),
+        ("foo", ValueError),
+        ("BAR", ValueError),
+        ("Nein", ValueError),
+        ("ni", ValueError),
+        ("null", ValueError),
+        ("NULL", ValueError),
+        (" ", ValueError),
+    ],
+)
+def test_strtobool_raises_exception(value, exception_type):
+    with pytest.raises(exception_type):
+        utils.strtobool(value)

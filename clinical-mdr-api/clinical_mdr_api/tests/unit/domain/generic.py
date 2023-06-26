@@ -15,13 +15,13 @@ from neomodel import (
 )
 from neomodel.properties import validator
 
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.domain_repositories.models._utils import (
     CustomNodeSet,
     classproperty,
     convert_to_datetime,
     convert_to_tz_aware_datetime,
 )
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.exceptions import NotFoundException
 
 

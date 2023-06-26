@@ -4,11 +4,6 @@ from typing import Iterable, TypeVar
 
 from neomodel import db
 
-from clinical_mdr_api.domain.library.object import ParametrizedTemplateVO
-from clinical_mdr_api.domain.library.parameter_term import (
-    ComplexParameterTerm,
-    SimpleParameterTermVO,
-)
 from clinical_mdr_api.domain_repositories.generic_syntax_repository import (
     GenericSyntaxRepository,
 )
@@ -16,6 +11,11 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     Conjunction,
     VersionRoot,
     VersionValue,
+)
+from clinical_mdr_api.domains.libraries.object import ParametrizedTemplateVO
+from clinical_mdr_api.domains.libraries.parameter_term import (
+    ComplexParameterTerm,
+    SimpleParameterTermVO,
 )
 from clinical_mdr_api.exceptions import NotFoundException
 
@@ -32,7 +32,16 @@ class GenericSyntaxInstanceRepository(
             uid=template_uid
         )
         items = template_root.has_template.all()
-        return [it.uid for it in items]
+        return [item.uid for item in items]
+
+    def find_pre_instance_uids_by_template_uid(
+        self, template_uid: str
+    ) -> Iterable[str]:
+        template_root: VersionRoot = self.template_class.nodes.get_or_none(
+            uid=template_uid
+        )
+        items = template_root.has_pre_instance.all()
+        return [item.uid for item in items]
 
     def _maintain_parameters(
         self,
@@ -273,6 +282,7 @@ class GenericSyntaxInstanceRepository(
         template = ParametrizedTemplateVO(
             template_name=template_value_object.name,
             template_uid=template_object.uid,
+            template_sequence_id=template_object.sequence_id,
             parameter_terms=parameter_terms,
         )
         return template

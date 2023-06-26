@@ -19,7 +19,7 @@ export const objectManagerMixin = {
       this.$refs.observer.reset()
       this.$emit('close')
     },
-    showParametersFromTemplate (template, useDefaultValues) {
+    showParametersFromTemplate (template) {
       this.apiTemplateEndpoint.getObjectTemplateParameters(template.uid).then(resp => {
         this.parameterResponse = resp.data
         const parameters = []
@@ -30,9 +30,6 @@ export const objectManagerMixin = {
             parameters.push(value)
           }
         })
-        if (useDefaultValues && template.default_parameter_terms) {
-          instances.loadParameterValues(template.default_parameter_terms, parameters, true)
-        }
         this.parameters = parameters
       })
     },

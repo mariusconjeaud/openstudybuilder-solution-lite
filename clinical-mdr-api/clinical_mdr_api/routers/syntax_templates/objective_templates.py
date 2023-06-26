@@ -7,6 +7,7 @@ from fastapi import status as fast_api_status
 from pydantic.types import Json
 
 from clinical_mdr_api import config, models
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.syntax_pre_instances.objective_pre_instance import (
     ObjectivePreInstanceCreateInput,
@@ -15,7 +16,9 @@ from clinical_mdr_api.models.syntax_templates.objective_template import (
     ObjectiveTemplateNameInput,
     ObjectiveTemplateWithCount,
 )
-from clinical_mdr_api.models.template_parameter_term import MultiTemplateParameterTerm
+from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
+    MultiTemplateParameterTerm,
+)
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -90,6 +93,7 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
         "defaults": [
             "library=library.name",
             "uid",
+            "name_plain",
             "name",
             "indications=indications.name",
             "category=categories.name.sponsor_preferred_name",
@@ -112,7 +116,7 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
 # pylint: disable=unused-argument
 def get_objective_templates(
     request: Request,  # request is actually required by the allow_exports decorator
-    status: Optional[str] = Query(
+    status: Optional[LibraryItemStatus] = Query(
         None,
         description="If specified, only those objective templates will be returned that are currently in the specified status. "
         "This may be particularly useful if the objective template has "
@@ -126,7 +130,10 @@ def get_objective_templates(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
     page_size: Optional[int] = Query(
-        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
     ),
     filters: Optional[Json] = Query(
         None,
@@ -172,7 +179,7 @@ def get_objective_templates(
 )
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
-    status: Optional[str] = Query(
+    status: Optional[LibraryItemStatus] = Query(
         None,
         description="If specified, only those objective templates will be returned that are currently in the specified status. "
         "This may be particularly useful if the objective template has "
@@ -206,6 +213,41 @@ def get_distinct_values_for_header(
 
 
 @router.get(
+    "/audit-trail",
+    summary="",
+    description="",
+    response_model=CustomPage[models.ObjectiveTemplate],
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def retrieve_audit_trail(
+    page_number: Optional[int] = Query(
+        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
+    ),
+    page_size: Optional[int] = Query(
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
+    ),
+    total_count: Optional[bool] = Query(
+        False, description=_generic_descriptions.TOTAL_COUNT
+    ),
+    current_user_id: str = Depends(get_current_user_id),
+):
+    results = Service(current_user_id).retrieve_audit_trail(
+        page_number=page_number, page_size=page_size, total_count=total_count
+    )
+
+    return CustomPage.create(
+        items=results.items, total=results.total_count, page=page_number, size=page_size
+    )
+
+
+@router.get(
     "/{uid}",
     summary="Returns the latest/newest version of a specific objective template identified by 'uid'.",
     description="""If multiple request query parameters are used, then they need to
@@ -222,32 +264,11 @@ def get_distinct_values_for_header(
 )
 def get_objective_template(
     uid: str = ObjectiveTemplateUID,
-    status: Optional[str] = Query(
-        None,
-        description="If specified, the representation of the objective template in that status is returned (if existent). "
-        "This may be particularly useful if the objective template has "
-        "a) a 'Draft' and a 'Final' status or "
-        "b) a 'Draft' and a 'Retired' status at the same time "
-        "and you are interested in the 'Final' or 'Retired' status.\n"
-        "Valid values are: 'Final', 'Draft' or 'Retired'.",
-    ),
-    version: Optional[str] = Query(
-        None,
-        description=r"If specified, the latest/newest representation of the objective template in that version is returned. "
-        r"Only exact matches are considered. "
-        r"The version is specified in the following format: \<major\>.\<minor\> where \<major\> and \<minor\> are digits. "
-        r"E.g. '0.1', '0.2', '1.0', ...",
-    ),
     return_instantiation_counts: bool = Query(
         False, description="if specified counts data will be returned along object"
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> models.ObjectiveTemplate:
-    if status is not None or version is not None:
-        # TODO: retrieval by status and/or version not implemented
-        raise NotImplementedError(
-            "TODO: retrieval by status and/or version not implemented"
-        )
     return Service(current_user_id).get_by_uid(
         uid=uid, return_instantiation_counts=bool(return_instantiation_counts)
     )
@@ -344,7 +365,6 @@ def get_objective_template_version(
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    # return service.get_specific_version(uid, version)
     return Service(current_user_id).get_specific_version(uid=uid, version=version)
 
 
@@ -388,7 +408,7 @@ If the request succeeds:
         201: {
             "description": "Created - The objective template was successfully created."
         },
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The objective template name is not valid.\n"
@@ -430,7 +450,7 @@ Once the objective template has been approved, only the surrounding text (exclud
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The objective template is not in draft status.\n"
@@ -506,7 +526,7 @@ This endpoint can be used to either :
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The objective template is not in draft status.\n"
@@ -557,7 +577,7 @@ Only the surrounding text (excluding the parameters) can be changed.
     status_code=201,
     responses={
         201: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The objective template is not in final or retired status or has a draft status.\n"
@@ -601,7 +621,7 @@ If the request succeeds:
     status_code=201,
     responses={
         201: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The objective template is not in draft status.\n"
@@ -634,7 +654,7 @@ def approve(
 
 @router.delete(
     "/{uid}/activations",
-    summary="Inactivates/deactivates the objective template identified by 'uid'.",
+    summary="Inactivates/deactivates the objective template identified by 'uid' and its Pre-Instances.",
     description="""This request is only valid if the objective template
 * is in 'Final' status only (so no latest 'Draft' status exists).
 
@@ -647,7 +667,7 @@ If the request succeeds:
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The objective template is not in final status.",
@@ -669,7 +689,7 @@ def inactivate(
 
 @router.post(
     "/{uid}/activations",
-    summary="Reactivates the objective template identified by 'uid'.",
+    summary="Reactivates the objective template identified by 'uid' and its Pre-Instances.",
     description="""This request is only valid if the objective template
 * is in 'Retired' status only (so no latest 'Draft' status exists).
 
@@ -682,7 +702,7 @@ If the request succeeds:
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The objective template is not in retired status.",
@@ -716,7 +736,7 @@ def reactivate(
         204: {
             "description": "No Content - The objective template was successfully deleted."
         },
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The objective template is not in draft status.\n"
@@ -786,7 +806,7 @@ with the same content will succeed.
         202: {
             "description": "Accepted. The content is valid and may be submitted in another request."
         },
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden. The content is invalid - Reasons include e.g.: \n"
             "- The syntax of the 'name' is not valid.\n"
@@ -813,9 +833,9 @@ def pre_validate(
     status_code=201,
     responses={
         201: {
-            "description": "Created - The objective pre instance was successfully created."
+            "description": "Created - The objective pre-instance was successfully created."
         },
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The objective template is not in draft status.\n"

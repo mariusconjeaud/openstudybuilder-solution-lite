@@ -5,7 +5,14 @@ from collections import defaultdict
 from typing import Sequence
 
 import neo4j
-from neomodel import AliasProperty, match, match_q, properties, relationship_manager
+from neomodel import (
+    AliasProperty,
+    StructuredRel,
+    match,
+    match_q,
+    properties,
+    relationship_manager,
+)
 from neomodel.core import db
 from opencensus.trace import execution_context
 
@@ -194,10 +201,22 @@ class CustomQueryBuilder(match.QueryBuilder):
         # fetch, it is not part of the original method.
         self._ast["relation_tree_map"] = {}
         for rel_name in self.node_set._relations_to_fetch:
-            self.build_traversal_from_path(rel_name, self.node_set.source)
+            self.build_traversal_from_path(
+                rel_name, self.node_set.source, include_rel_in_return=True
+            )
+        for rel_name in self.node_set._relations_to_fetch_and_collect:
+            self.build_traversal_from_path(
+                rel_name,
+                self.node_set.source,
+                include_nodes_in_return=False,
+                collect_variables=True,
+            )
         for rel_name in self.node_set._optional_relations_to_fetch:
             self.build_traversal_from_path(
-                rel_name, self.node_set.source, optional_traversal=True
+                rel_name,
+                self.node_set.source,
+                optional_traversal=True,
+                include_rel_in_return=True,
             )
         for rel_name in self.node_set._optional_relations_to_fetch_and_collect:
             self.build_traversal_from_path(
@@ -276,6 +295,7 @@ class CustomQueryBuilder(match.QueryBuilder):
             "target_label": target_label,
             "type": rel_type,
             "direction": direction,
+            "filter_clause": [],
         }
         self._add_to_return_set(variable_name)
         self._ast["relation_selectors"][variable_name] = data
@@ -363,6 +383,8 @@ class CustomQueryBuilder(match.QueryBuilder):
             # self._ast['result_class'] = relationship.definition['node_class']
 
             # add relationship variable to the return set
+            if collect_variables:
+                self._add_to_collect_set(rel_ident)
             if include_rel_in_return:
                 self._add_to_return_set(rel_ident)
             stmt = _rel_helper(
@@ -418,6 +440,7 @@ class CustomQueryBuilder(match.QueryBuilder):
             target_label = data["target_label"]
             order_by = data["sort_clause"].format(rel="r")
             direction = data["direction"]
+            filter_clause = data["filter_clause"]
             reltypes = ":".join(data["type"])
             if direction == match.OUTGOING:
                 rel_stmt = f"-[r:{reltypes}]->"
@@ -425,6 +448,11 @@ class CustomQueryBuilder(match.QueryBuilder):
                 rel_stmt = f"<-[r:{reltypes}]-"
             else:
                 rel_stmt = f"-[r:{reltypes}]-"
+            filter_clause = [f"{varname}.{filter}" for filter in filter_clause]
+            where_stmt = ""
+            if len(filter_clause) > 0:
+                where_stmt += "WHERE "
+                where_stmt += " AND ".join(filter_clause)
             proc = """
             CALL {{
                 WITH {0}
@@ -432,10 +460,14 @@ class CustomQueryBuilder(match.QueryBuilder):
                 WITH r
                 ORDER BY {3}
                 WITH collect(r) as rs
-                RETURN last(rs) as {4}
+                WITH last(rs) as {4}
+                {5}
+                RETURN {4}
             }}
             """
-            query += proc.format(root_alias, rel_stmt, target_label, order_by, varname)
+            query += proc.format(
+                root_alias, rel_stmt, target_label, order_by, varname, where_stmt
+            )
 
         query += " RETURN DISTINCT "
         # FIXME: replace all by return_set
@@ -479,6 +511,7 @@ class CustomQueryBuilder(match.QueryBuilder):
 
     def _build_filter_statements(self, ident, filters, target, source_class):
         for prop, op_and_val in filters.items():
+            path = None
             if "__" in prop or "|" in prop:
                 is_rel_filter = "|" in prop
                 ident = self.lookup_query_variable(prop)
@@ -498,6 +531,13 @@ class CustomQueryBuilder(match.QueryBuilder):
                         is_rel_filtering=is_rel_filter,
                     )
             op, val = op_and_val
+            for key, data in self.node_set._optional_relation_to_fetch_single.items():
+                new_name, _ = data
+                if path:
+                    if key in path:
+                        self._ast["relation_selectors"][new_name][
+                            "filter_clause"
+                        ].append(f"{prop}='{val}'")
             if op in match._UNARY_OPERATORS:
                 # unary operators do not have a parameter
                 statement = f"{ident}.{prop} {op}"
@@ -558,11 +598,13 @@ class CustomQueryBuilder(match.QueryBuilder):
         return results
 
     def _count(self):
+        # we need to count the variable of the node_set.source type
+        main_variable = self.node_set.source.__label__.lower()
         if "return" in self._ast:
-            self._ast["return"] = f"count({self._ast['return']})"
+            self._ast["return"] = f"count(DISTINCT {main_variable})"
         else:
             # We have a set of items to return, we count only the first one.
-            self._ast["return"] = f"count({self._ast['return_set'][0]})"
+            self._ast["return"] = f"count(DISTINCT {main_variable})"
             self._ast.pop("return_set", None)
         # drop order_by, results in an invalid query
         self._ast.pop("order_by", None)
@@ -625,6 +667,7 @@ class CustomNodeSet(match.NodeSet):
         super().__init__(*args, **kwargs)
 
         self._relations_to_fetch = []
+        self._relations_to_fetch_and_collect = []
         self._optional_relations_to_fetch = []
         self._optional_relations_to_fetch_and_collect = []
         self._values_to_collect = []
@@ -644,6 +687,11 @@ class CustomNodeSet(match.NodeSet):
     def fetch_relations(self, *relation_names):
         """Custom method to specify a set of extra relations to return."""
         self._relations_to_fetch = relation_names
+        return self
+
+    def fetch_relations_and_collect(self, *relation_names):
+        """Custom method to specify a set of extra optional relations to return in collection."""
+        self._relations_to_fetch_and_collect = relation_names
         return self
 
     def fetch_optional_relations(self, *relation_names):
@@ -729,7 +777,12 @@ def _to_relation_tree(nodeset, root_node, other_nodes, relation_tree_map):
                 ]
                 and node is not None
             ):
+                if isinstance(node, StructuredRel):
+                    name += "_relationship"
                 if isinstance(node, list):
+                    if len(node) > 0:
+                        if isinstance(node[0], StructuredRel):
+                            name += "_relationship"
                     root_node._relations[name] = []
                     for n in node:
                         root_node._relations[name].append(
@@ -759,7 +812,7 @@ def to_relation_trees(nodeset):
     way to identify which node corresponds to which relation...
 
     """
-    results = []
+    results = ListDistinct([])
     qbuilder = nodeset.query_cls(nodeset).build_ast()
     all_nodes = qbuilder._execute(dict_output=True)
     other_nodes = {}
@@ -789,3 +842,12 @@ def classproperty(f) -> CustomNodeSet:
             return self.getter(class_type)
 
     return cpf(f)
+
+
+class ListDistinct(list):
+    def distinct(self):
+        uniques = []
+        for ith in self:
+            if ith not in uniques:
+                uniques.extend([ith])
+        return uniques

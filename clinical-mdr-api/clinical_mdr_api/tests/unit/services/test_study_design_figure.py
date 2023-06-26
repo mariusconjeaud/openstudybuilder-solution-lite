@@ -7,8 +7,10 @@ from clinical_mdr_api.models import (
     StudySelectionArmWithConnectedBranchArms,
     StudySelectionElement,
 )
-from clinical_mdr_api.models.study_epoch import StudyEpoch
-from clinical_mdr_api.services.study_design_figure import StudyDesignFigureService
+from clinical_mdr_api.models.study_selections.study_epoch import StudyEpoch
+from clinical_mdr_api.services.studies.study_design_figure import (
+    StudyDesignFigureService,
+)
 from clinical_mdr_api.tests.unit.services.test_study_flowchart import (
     STUDY_VISITS as _STUDY_VISITS,
 )

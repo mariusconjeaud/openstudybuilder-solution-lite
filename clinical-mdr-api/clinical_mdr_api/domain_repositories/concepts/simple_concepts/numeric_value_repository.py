@@ -1,14 +1,5 @@
 from typing import Optional
 
-from clinical_mdr_api.domain.concepts.simple_concepts.numeric_value import (
-    NumericValueAR,
-    NumericValueVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemMetadataVO,
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.simple_concepts.simple_concept_generic_repository import (
     SimpleConceptGenericRepository,
 )
@@ -23,7 +14,18 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
-from clinical_mdr_api.models.concept import NumericValue as NumericValueAPIModel
+from clinical_mdr_api.domains.concepts.simple_concepts.numeric_value import (
+    NumericValueAR,
+    NumericValueVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+    LibraryVO,
+)
+from clinical_mdr_api.models.concepts.concept import (
+    NumericValue as NumericValueAPIModel,
+)
 
 
 class NumericValueRepository(SimpleConceptGenericRepository[NumericValueAR]):

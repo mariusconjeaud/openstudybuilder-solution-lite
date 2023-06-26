@@ -1,16 +1,5 @@
 from typing import List, Optional
 
-from clinical_mdr_api.domain.concepts.concept_base import ConceptARBase
-from clinical_mdr_api.domain.concepts.odms.form import (
-    OdmFormAR,
-    OdmFormRefVO,
-    OdmFormVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemMetadataVO,
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -32,7 +21,18 @@ from clinical_mdr_api.domain_repositories.models.odm import (
     OdmDescriptionRoot,
     OdmFormRoot,
     OdmFormValue,
-    OdmTemplateRoot,
+    OdmStudyEventRoot,
+)
+from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
+from clinical_mdr_api.domains.concepts.odms.form import (
+    OdmFormAR,
+    OdmFormRefVO,
+    OdmFormVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+    LibraryVO,
 )
 from clinical_mdr_api.models import OdmForm
 
@@ -224,18 +224,18 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
             or ar.concept_vo.repeating != value.repeating
         )
 
-    def find_by_uid_with_template_relation(self, uid: str, template_uid: str):
+    def find_by_uid_with_study_event_relation(self, uid: str, study_event_uid: str):
         form_root = self.root_class.nodes.get_or_none(uid=uid)
         form_value = form_root.has_latest_value.get_or_none()
 
-        template_root = OdmTemplateRoot.nodes.get_or_none(uid=template_uid)
+        study_event_root = OdmStudyEventRoot.nodes.get_or_none(uid=study_event_uid)
 
-        rel = form_root.form_ref.relationship(template_root)
+        rel = form_root.form_ref.relationship(study_event_root)
 
         return OdmFormRefVO.from_repository_values(
             uid=uid,
             name=form_value.name,
-            template_uid=template_uid,
+            study_event_uid=study_event_uid,
             order_number=rel.order_number,
             mandatory=rel.mandatory,
             locked=rel.locked,

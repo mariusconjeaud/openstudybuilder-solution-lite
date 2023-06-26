@@ -3,22 +3,24 @@ from typing import Callable, Dict, List, Optional
 
 from pydantic import Field
 
-from clinical_mdr_api.domain.concepts.activities.activity_group import ActivityGroupAR
-from clinical_mdr_api.domain.concepts.activities.activity_sub_group import (
+from clinical_mdr_api.domains.concepts.activities.activity_group import ActivityGroupAR
+from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
     ActivitySubGroupAR,
 )
-from clinical_mdr_api.domain.syntax_pre_instances.activity_instruction_pre_instance import (
+from clinical_mdr_api.domains.syntax_pre_instances.activity_instruction_pre_instance import (
     ActivityInstructionPreInstanceAR,
 )
-from clinical_mdr_api.models.activities.activity import Activity
-from clinical_mdr_api.models.activities.activity_group import ActivityGroup
-from clinical_mdr_api.models.activities.activity_sub_group import ActivitySubGroup
-from clinical_mdr_api.models.dictionary_term import DictionaryTerm
-from clinical_mdr_api.models.library import Library
-from clinical_mdr_api.models.syntax_pre_instances.generic_pre_instance import (
-    PreInstanceCreateInput,
+from clinical_mdr_api.models.concepts.activities.activity import Activity
+from clinical_mdr_api.models.concepts.activities.activity_group import ActivityGroup
+from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
+    ActivitySubGroup,
 )
-from clinical_mdr_api.models.template_parameter_term import (
+from clinical_mdr_api.models.dictionaries.dictionary_term import DictionaryTerm
+from clinical_mdr_api.models.libraries.library import Library
+from clinical_mdr_api.models.syntax_pre_instances.generic_pre_instance import (
+    PreInstanceInput,
+)
+from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
@@ -26,38 +28,40 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class ActivityInstructionPreInstance(BaseModel):
-    uid: Optional[str] = None
+    uid: str
+    sequence_id: Optional[str] = Field(None, nullable=True)
     template_uid: str
-    name: Optional[str] = None
-    name_plain: Optional[str] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    status: Optional[str] = None
-    version: Optional[str] = None
-    change_description: Optional[str] = None
-    user_initials: Optional[str] = None
-    parameter_terms: Optional[List[MultiTemplateParameterTerm]] = Field(
-        None,
+    template_name: str
+    name: Optional[str] = Field(None, nullable=True)
+    name_plain: Optional[str] = Field(None, nullable=True)
+    start_date: Optional[datetime] = Field(None, nullable=True)
+    end_date: Optional[datetime] = Field(None, nullable=True)
+    status: Optional[str] = Field(None, nullable=True)
+    version: Optional[str] = Field(None, nullable=True)
+    change_description: Optional[str] = Field(None, nullable=True)
+    user_initials: Optional[str] = Field(None, nullable=True)
+    parameter_terms: List[MultiTemplateParameterTerm] = Field(
+        [],
         description=(
             """Holds the parameter terms that are used within the activity instruction.
             The terms are ordered as they occur in the activity instruction name."""
         ),
     )
-    indications: Optional[List[DictionaryTerm]] = Field(
-        None,
-        description="The study indications, conditions, diseases or disorders in scope for the pre instance.",
+    indications: List[DictionaryTerm] = Field(
+        [],
+        description="The study indications, conditions, diseases or disorders in scope for the pre-instance.",
     )
-    activities: Optional[List[Activity]] = Field(
-        None, description="The activities in scope for the pre instance"
+    activities: List[Activity] = Field(
+        [], description="The activities in scope for the pre-instance"
     )
-    activity_groups: Optional[List[ActivityGroup]] = Field(
-        None, description="The activity groups in scope for the pre instance"
+    activity_groups: List[ActivityGroup] = Field(
+        [], description="The activity groups in scope for the pre-instance"
     )
-    activity_subgroups: Optional[List[ActivitySubGroup]] = Field(
-        None, description="The activity sub groups in scope for the pre instance"
+    activity_subgroups: List[ActivitySubGroup] = Field(
+        [], description="The activity sub groups in scope for the pre-instance"
     )
     library: Optional[Library] = None
-    possible_actions: Optional[List[str]] = None
+    possible_actions: List[str] = Field([])
 
     @classmethod
     def from_activity_instruction_pre_instance_ar(
@@ -88,7 +92,9 @@ class ActivityInstructionPreInstance(BaseModel):
             )
         return cls(
             uid=activity_instruction_pre_instance_ar.uid,
+            sequence_id=activity_instruction_pre_instance_ar.sequence_id,
             template_uid=activity_instruction_pre_instance_ar.template_uid,
+            template_name=activity_instruction_pre_instance_ar.template_name,
             name=activity_instruction_pre_instance_ar.name,
             name_plain=activity_instruction_pre_instance_ar.name_plain,
             start_date=activity_instruction_pre_instance_ar.item_metadata.start_date,
@@ -101,34 +107,46 @@ class ActivityInstructionPreInstance(BaseModel):
                 activity_instruction_pre_instance_ar.library
             ),
             parameter_terms=parameter_terms,
-            indications=[
-                DictionaryTerm.from_dictionary_term_ar(indication)
-                for indication in activity_instruction_pre_instance_ar.indications
-            ]
+            indications=sorted(
+                [
+                    DictionaryTerm.from_dictionary_term_ar(indication)
+                    for indication in activity_instruction_pre_instance_ar.indications
+                ],
+                key=lambda item: item.term_uid,
+            )
             if activity_instruction_pre_instance_ar.indications
-            else None,
-            activities=[
-                Activity.from_activity_ar(
-                    activity,
-                    find_activity_subgroup_by_uid,
-                    find_activity_group_by_uid,
-                )
-                for activity in activity_instruction_pre_instance_ar.activities
-            ]
+            else [],
+            activities=sorted(
+                [
+                    Activity.from_activity_ar(
+                        activity,
+                        find_activity_subgroup_by_uid,
+                        find_activity_group_by_uid,
+                    )
+                    for activity in activity_instruction_pre_instance_ar.activities
+                ],
+                key=lambda item: item.uid,
+            )
             if activity_instruction_pre_instance_ar.activities
-            else None,
-            activity_groups=[
-                ActivityGroup.from_activity_ar(group)
-                for group in activity_instruction_pre_instance_ar.activity_groups
-            ]
+            else [],
+            activity_groups=sorted(
+                [
+                    ActivityGroup.from_activity_ar(group)
+                    for group in activity_instruction_pre_instance_ar.activity_groups
+                ],
+                key=lambda item: item.uid,
+            )
             if activity_instruction_pre_instance_ar.activity_groups
-            else None,
-            activity_subgroups=[
-                ActivitySubGroup.from_activity_ar(group, find_activity_group_by_uid)
-                for group in activity_instruction_pre_instance_ar.activity_subgroups
-            ]
+            else [],
+            activity_subgroups=sorted(
+                [
+                    ActivitySubGroup.from_activity_ar(group, find_activity_group_by_uid)
+                    for group in activity_instruction_pre_instance_ar.activity_subgroups
+                ],
+                key=lambda item: item.uid,
+            )
             if activity_instruction_pre_instance_ar.activity_subgroups
-            else None,
+            else [],
             possible_actions=sorted(
                 {
                     _.value
@@ -138,22 +156,49 @@ class ActivityInstructionPreInstance(BaseModel):
         )
 
 
+class ActivityInstructionPreInstanceCreateInput(PreInstanceInput):
+    indication_uids: List[str]
+    activity_uids: List[str]
+    activity_group_uids: List[str]
+    activity_subgroup_uids: List[str]
+
+
+class ActivityInstructionPreInstanceEditInput(PreInstanceInput):
+    change_description: str = Field(
+        ...,
+        description="A short description about what has changed compared to the previous version.",
+    )
+
+
+class ActivityInstructionPreInstanceIndexingsInput(BaseModel):
+    indication_uids: Optional[List[str]] = Field(
+        None,
+        description="A list of UID of the study indications, conditions, diseases or disorders to attach the pre-instance to.",
+    )
+    activity_uids: Optional[List[str]] = Field(
+        None,
+        description="A list of UID of the activities to attach the pre-instance to.",
+    )
+    activity_group_uids: Optional[List[str]] = Field(
+        None,
+        description="A list of UID of the activity groups to attach the pre-instance to.",
+    )
+    activity_subgroup_uids: Optional[List[str]] = Field(
+        None,
+        description="A list of UID of the activity subgroups to attach the pre-instance to.",
+    )
+
+
 class ActivityInstructionPreInstanceVersion(ActivityInstructionPreInstance):
     """
-    Class for storing ActivityInstruction Pre Instances and calculation of differences
+    Class for storing ActivityInstruction Pre-Instances and calculation of differences
     """
 
-    changes: Dict[str, bool] = Field(
+    changes: Optional[Dict[str, bool]] = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
             "The field names in this object here refer to the field names of the activity instruction (e.g. name, start_date, ..)."
         ),
+        nullable=True,
     )
-
-
-class ActivityInstructionPreInstanceCreateInput(PreInstanceCreateInput):
-    indication_uids: List[str]
-    activity_uids: List[str]
-    activity_group_uids: List[str]
-    activity_subgroup_uids: List[str]

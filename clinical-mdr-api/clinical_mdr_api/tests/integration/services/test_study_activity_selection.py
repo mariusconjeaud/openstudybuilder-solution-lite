@@ -4,7 +4,7 @@ from neomodel import db
 
 from clinical_mdr_api import models
 from clinical_mdr_api.exceptions import ValidationException
-from clinical_mdr_api.services.study_activity_selection import (
+from clinical_mdr_api.services.studies.study_activity_selection import (
     StudyActivitySelectionService,
 )
 from clinical_mdr_api.tests.integration.utils import data_library
