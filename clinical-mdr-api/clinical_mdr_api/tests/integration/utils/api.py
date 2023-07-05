@@ -310,9 +310,7 @@ class APITest(TestCase):
                             url, json=request, headers=request_headers
                         )
                     elif method == "DELETE":
-                        response = self.test_client.delete(
-                            url, json=request, headers=request_headers
-                        )
+                        response = self.test_client.delete(url, headers=request_headers)
                     print("URL", url)
                     print("HEADERS", request_headers)
                     print("METHOD", method)

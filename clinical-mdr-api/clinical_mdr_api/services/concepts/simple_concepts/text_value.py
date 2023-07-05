@@ -1,11 +1,11 @@
-from clinical_mdr_api.domain.concepts.simple_concepts.text_value import (
-    TextValueAR,
-    TextValueVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.simple_concepts.text_value_repository import (
     TextValueRepository,
 )
-from clinical_mdr_api.models.concept import TextValue, TextValueInput
+from clinical_mdr_api.domains.concepts.simple_concepts.text_value import (
+    TextValueAR,
+    TextValueVO,
+)
+from clinical_mdr_api.models.concepts.concept import TextValue, TextValueInput
 from clinical_mdr_api.services.concepts.simple_concepts.simple_concept_generic import (
     SimpleConceptGenericService,
 )

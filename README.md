@@ -24,7 +24,7 @@ StudyBuilder consists of a few main components, that are all included as subdire
 Each directory contains a more detailed ReadMe for that component.
 
 
-# Software dependencies
+# System Requirements
 
 A Docker environment with at least 6GB of memory allocated is required.
 
@@ -92,14 +92,14 @@ As a long-term solution, we are investigating the possibility of extending the c
 Your folder structure should look like this:
 ```
 ─ OpenStudyBuilder-Solution
-  ├─ clinical-mdr-api (Submodule Azure DevOps repo)
-  ├─ data-import (Submodule Azure DevOps repo)
+  ├─ clinical-mdr-api
+  ├─ data-import
   ├─ documentationfiles
-  ├─ documentation-portal (Submodule Azure DevOps repo)
+  ├─ documentation-portal
   ├─ frontendfiles
-  ├─ mdr-standards-import (Submodule Azure DevOps repo)
-  ├─ neo4j-mdr-db (Submodule Azure DevOps repo)
-  └─ studybuilder (Submodule Azure DevOps repo)
+  ├─ mdr-standards-import
+  ├─ neo4j-mdr-db
+  └─ studybuilder
 ```
 
 The Docker Compose configuration is `compose.yaml` for the preview 

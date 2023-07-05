@@ -1,17 +1,5 @@
 from typing import List, Optional
 
-from clinical_mdr_api.domain.concepts.concept_base import ConceptARBase
-from clinical_mdr_api.domain.concepts.odms.vendor_element import (
-    OdmVendorElementAR,
-    OdmVendorElementRelationVO,
-    OdmVendorElementVO,
-)
-from clinical_mdr_api.domain.concepts.utils import RelationType
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemMetadataVO,
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -32,6 +20,18 @@ from clinical_mdr_api.domain_repositories.models.odm import (
     OdmVendorElementRoot,
     OdmVendorElementValue,
     OdmVendorNamespaceRoot,
+)
+from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
+from clinical_mdr_api.domains.concepts.odms.vendor_element import (
+    OdmVendorElementAR,
+    OdmVendorElementRelationVO,
+    OdmVendorElementVO,
+)
+from clinical_mdr_api.domains.concepts.utils import RelationType
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+    LibraryVO,
 )
 from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models import OdmVendorElement

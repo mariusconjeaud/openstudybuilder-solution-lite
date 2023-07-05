@@ -34,6 +34,8 @@ def find_all(is_editable: Optional[bool]):
     for library in result:
         library_dict = {}
         for attribute, value in zip(attributes, library):
+            if attribute == "is_editable":
+                value = False if value is None else value
             library_dict[attribute] = value
         result_array.append(library_dict)
     return result_array

@@ -1,14 +1,5 @@
 from typing import Optional, Sequence, Tuple
 
-from clinical_mdr_api.domain.concepts.activities.activity_sub_group import (
-    ActivitySubGroupAR,
-    ActivitySubGroupVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemMetadataVO,
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
 )
@@ -24,7 +15,18 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
-from clinical_mdr_api.models.activities.activity_sub_group import ActivitySubGroup
+from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
+    ActivitySubGroupAR,
+    ActivitySubGroupVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+    LibraryVO,
+)
+from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
+    ActivitySubGroup,
+)
 
 
 class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
@@ -76,9 +78,7 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
                 name_sentence_case=value.name_sentence_case,
                 definition=value.definition,
                 abbreviation=value.abbreviation,
-                activity_group=value.in_group.get_or_none()
-                .has_latest_value.get_or_none()
-                .uid,
+                activity_group=value.in_group.get_or_none().has_version.single().uid,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -95,7 +95,7 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
         # which is specified in the activity_generic_repository_impl
         return """
         WITH *,
-            head([(concept_value)-[:IN_GROUP]->(activity_group_value:ActivityGroupValue)<-[:LATEST]-(activity_group_root:ActivityGroupRoot) | 
+            head([(concept_value)-[:IN_GROUP]->(activity_group_value:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | 
                 {uid:activity_group_root.uid, name:activity_group_value.name}]) AS activity_group
         """
 

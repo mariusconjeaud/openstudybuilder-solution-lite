@@ -1,12 +1,8 @@
-from typing import Optional, cast
+from typing import cast
 
-from clinical_mdr_api.domain.syntax_instances.objective import ObjectiveAR
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
-    VersionRoot,
-    VersionValue,
 )
 from clinical_mdr_api.domain_repositories.models.syntax import (
     ObjectiveRoot,
@@ -16,6 +12,8 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
 from clinical_mdr_api.domain_repositories.syntax_instances.generic_syntax_instance_repository import (
     GenericSyntaxInstanceRepository,
 )
+from clinical_mdr_api.domains.syntax_instances.objective import ObjectiveAR
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 
 
 class ObjectiveRepository(GenericSyntaxInstanceRepository[ObjectiveAR]):
@@ -26,11 +24,11 @@ class ObjectiveRepository(GenericSyntaxInstanceRepository[ObjectiveAR]):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         *,
-        root: VersionRoot,
+        root: ObjectiveRoot,
         library: Library,
         relationship: VersionRelationship,
-        value: VersionValue,
-        study_count: Optional[int] = None,
+        value: ObjectiveValue,
+        study_count: int = 0,
     ) -> ObjectiveAR:
         return cast(
             ObjectiveAR,

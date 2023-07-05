@@ -8,6 +8,7 @@ from neomodel import (
 
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
+    ClinicalMdrRel,
     TemplateUsesParameterRelation,
     VersionRelationship,
     VersionRoot,
@@ -17,7 +18,9 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 
 class TemplateParameter(ClinicalMdrNode):
     RELATION_LABEL = "HAS_PARAMETER_TERM"
-    has_parameter_term = RelationshipTo("TemplateParameterTermRoot", RELATION_LABEL)
+    has_parameter_term = RelationshipTo(
+        "TemplateParameterTermRoot", RELATION_LABEL, model=ClinicalMdrRel
+    )
 
     name = StringProperty()
 
@@ -38,10 +41,18 @@ class TemplateParameterTermRoot(VersionRoot):
     has_version = RelationshipTo(
         TemplateParameterTermValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(TemplateParameterTermValue, "LATEST")
-    latest_draft = RelationshipTo(TemplateParameterTermValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(TemplateParameterTermValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(TemplateParameterTermValue, "LATEST_RETIRED")
+    has_latest_value = RelationshipTo(
+        TemplateParameterTermValue, "LATEST", model=ClinicalMdrRel
+    )
+    latest_draft = RelationshipTo(
+        TemplateParameterTermValue, "LATEST_DRAFT", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipTo(
+        TemplateParameterTermValue, "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipTo(
+        TemplateParameterTermValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
 
     @classmethod
     def check_parameter_term_exists(
@@ -79,13 +90,25 @@ class ParameterTemplateRoot(TemplateParameterTermRoot):
     has_version = RelationshipTo(
         ParameterTemplateValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(ParameterTemplateValue, "LATEST")
-    latest_draft = RelationshipTo(ParameterTemplateValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(ParameterTemplateValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(ParameterTemplateValue, "LATEST_RETIRED")
+    has_latest_value = RelationshipTo(
+        ParameterTemplateValue, "LATEST", model=ClinicalMdrRel
+    )
+    latest_draft = RelationshipTo(
+        ParameterTemplateValue, "LATEST_DRAFT", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipTo(
+        ParameterTemplateValue, "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipTo(
+        ParameterTemplateValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
 
-    has_parameter_term = RelationshipFrom(TemplateParameter, "HAS_PARAMETER_TERM")
-    has_definition = RelationshipFrom(TemplateParameter, "HAS_DEFINITION")
+    has_parameter_term = RelationshipFrom(
+        TemplateParameter, "HAS_PARAMETER_TERM", model=ClinicalMdrRel
+    )
+    has_definition = RelationshipFrom(
+        TemplateParameter, "HAS_DEFINITION", model=ClinicalMdrRel
+    )
 
 
 class TemplateParameterComplexValue(TemplateParameterTermValue):
@@ -109,9 +132,19 @@ class TemplateParameterComplexRoot(TemplateParameterTermRoot):
     has_version = RelationshipTo(
         TemplateParameterComplexValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(TemplateParameterComplexValue, "LATEST")
-    latest_draft = RelationshipTo(TemplateParameterComplexValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(TemplateParameterComplexValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(TemplateParameterComplexValue, "LATEST_RETIRED")
+    has_latest_value = RelationshipTo(
+        TemplateParameterComplexValue, "LATEST", model=ClinicalMdrRel
+    )
+    latest_draft = RelationshipTo(
+        TemplateParameterComplexValue, "LATEST_DRAFT", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipTo(
+        TemplateParameterComplexValue, "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipTo(
+        TemplateParameterComplexValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
 
-    has_complex_value = RelationshipFrom(ParameterTemplateRoot, "HAS_COMPLEX_VALUE")
+    has_complex_value = RelationshipFrom(
+        ParameterTemplateRoot, "HAS_COMPLEX_VALUE", model=ClinicalMdrRel
+    )

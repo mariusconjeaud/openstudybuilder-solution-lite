@@ -22,7 +22,7 @@ from clinical_mdr_api.main import app
 from clinical_mdr_api.models.syntax_templates.objective_template import (
     ObjectiveTemplate,
 )
-from clinical_mdr_api.models.template_parameter_term import (
+from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
@@ -228,6 +228,7 @@ ENDPOINT_TEMPLATE_FIELDS_ALL = [
     "name_plain",
     "guidance_text",
     "uid",
+    "sequence_id",
     "status",
     "version",
     "change_description",
@@ -246,6 +247,7 @@ ENDPOINT_TEMPLATE_FIELDS_ALL = [
 
 ENDPOINT_TEMPLATE_FIELDS_NOT_NULL = [
     "uid",
+    "sequence_id",
     "name",
 ]
 
@@ -264,11 +266,12 @@ def test_get_objective_template(api_client):
         assert res[key] is not None
 
     assert res["uid"] == objective_templates[1].uid
+    assert res["sequence_id"] == "OT2"
     assert res["name"] == "Default-AAA name with [TextValue]"
     assert res["guidance_text"] == "Default-AAA guidance text"
     assert res["is_confirmatory_testing"] is False
     assert res["parameters"][0]["name"] == "TextValue"
-    assert res["parameters"][0]["terms"] is None
+    assert res["parameters"][0]["terms"] == []
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res["indications"][0]["dictionary_id"]
@@ -389,9 +392,32 @@ def test_get_versions_of_objective_template(api_client):
 
     assert len(res) == 2
     assert res[0]["uid"] == objective_templates[1].uid
+    assert res[0]["sequence_id"] == "OT2"
+    assert res[0]["version"] == "1.0"
+    assert res[0]["status"] == "Final"
+    assert res[0]["is_confirmatory_testing"] is False
+    assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert (
+        res[0]["indications"][0]["dictionary_id"]
+        == dictionary_term_indication.dictionary_id
+    )
+    assert res[0]["indications"][0]["name"] == dictionary_term_indication.name
+    assert res[0]["categories"][0]["term_uid"] == ct_term_category.term_uid
+    assert res[0]["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
+    assert res[0]["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
     assert res[0]["version"] == "1.0"
     assert res[0]["status"] == "Final"
     assert res[1]["uid"] == objective_templates[1].uid
+    assert res[1]["sequence_id"] == "OT2"
+    assert res[1]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert (
+        res[1]["indications"][0]["dictionary_id"]
+        == dictionary_term_indication.dictionary_id
+    )
+    assert res[1]["indications"][0]["name"] == dictionary_term_indication.name
+    assert res[1]["categories"][0]["term_uid"] == ct_term_category.term_uid
+    assert res[1]["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
+    assert res[1]["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
     assert res[1]["version"] == "0.1"
     assert res[1]["status"] == "Draft"
 
@@ -404,6 +430,17 @@ def test_get_all_final_versions_of_objective_template(api_client):
 
     assert len(res) == 1
     assert res[0]["uid"] == objective_templates[1].uid
+    assert res[0]["sequence_id"] == "OT2"
+    assert res[0]["is_confirmatory_testing"] is False
+    assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert (
+        res[0]["indications"][0]["dictionary_id"]
+        == dictionary_term_indication.dictionary_id
+    )
+    assert res[0]["indications"][0]["name"] == dictionary_term_indication.name
+    assert res[0]["categories"][0]["term_uid"] == ct_term_category.term_uid
+    assert res[0]["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
+    assert res[0]["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
     assert res[0]["version"] == "1.0"
     assert res[0]["status"] == "Final"
 
@@ -528,6 +565,7 @@ def test_create_objective_template(api_client):
         "guidance_text": "default_guidance_text",
         "library_name": "Sponsor",
         "default_parameter_terms": [],
+        "is_confirmatory_testing": True,
         "indication_uids": [dictionary_term_indication.term_uid],
         "category_uids": [ct_term_category.term_uid],
     }
@@ -537,11 +575,12 @@ def test_create_objective_template(api_client):
 
     assert response.status_code == 201
     assert res["uid"]
+    assert res["sequence_id"]
     assert res["name"] == "default_name [TextValue]"
     assert res["guidance_text"] == "default_guidance_text"
-    assert res["is_confirmatory_testing"] is None
+    assert res["is_confirmatory_testing"] is True
     assert res["parameters"][0]["name"] == "TextValue"
-    assert res["parameters"][0]["terms"] is None
+    assert res["parameters"][0]["terms"] == []
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res["indications"][0]["dictionary_id"]
@@ -572,6 +611,7 @@ def test_create_new_version_of_objective_template(api_client):
 
     assert response.status_code == 201
     assert res["uid"]
+    assert res["sequence_id"]
     assert res["name"] == "new test name"
     assert res["guidance_text"] == "new test guidance text"
     assert res["is_confirmatory_testing"] is False
@@ -598,6 +638,17 @@ def test_get_specific_version_of_objective_template(api_client):
     assert response.status_code == 200
 
     assert res["uid"] == objective_templates[4].uid
+    assert res["sequence_id"] == "OT5"
+    assert res["is_confirmatory_testing"] is False
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert (
+        res["indications"][0]["dictionary_id"]
+        == dictionary_term_indication.dictionary_id
+    )
+    assert res["indications"][0]["name"] == dictionary_term_indication.name
+    assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
+    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
+    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
     assert res["version"] == "1.1"
     assert res["status"] == "Draft"
 
@@ -630,11 +681,12 @@ def test_create_objective_template_with_default_parameters(api_client):
 
     assert response.status_code == 201
     assert res["uid"]
+    assert res["sequence_id"]
     assert res["name"] == "test_name [TextValue]"
     assert res["guidance_text"] == "test_guidance_text"
-    assert res["is_confirmatory_testing"] is None
+    assert res["is_confirmatory_testing"] is False
     assert res["parameters"][0]["name"] == "TextValue"
-    assert res["parameters"][0]["terms"] is None
+    assert res["parameters"][0]["terms"] == []
     assert (
         res["default_parameter_terms"]["0"][0]["terms"][0]["name"] == text_value_1.name
     )
@@ -688,11 +740,12 @@ def test_change_objective_template_parameters(api_client):
 
     assert response.status_code == 200
     assert res["uid"]
+    assert res["sequence_id"]
     assert res["name"] == "Default name with [TextValue]"
     assert res["guidance_text"] == "Default guidance text"
     assert res["is_confirmatory_testing"] is False
     assert res["parameters"][0]["name"] == "TextValue"
-    assert res["parameters"][0]["terms"] is None
+    assert res["parameters"][0]["terms"] == []
     assert (
         res["default_parameter_terms"]["0"][0]["terms"][0]["name"] == text_value_1.name
     )
@@ -725,12 +778,12 @@ def test_change_objective_template_indexings(api_client):
     category = TestUtils.create_ct_term()
 
     data = {
-        "indication_uids": [indication.term_uid],
+        "is_confirmatory_testing": True,
+        "indication_uids": [dictionary_term_indication.term_uid, indication.term_uid],
         "category_uids": [
             ct_term_category.term_uid,
             category.term_uid,
         ],
-        "is_confirmatory_testing": True,
     }
     response = api_client.patch(
         f"{URL}/{objective_templates[1].uid}/indexings",
@@ -741,12 +794,19 @@ def test_change_objective_template_indexings(api_client):
 
     assert response.status_code == 200
     assert res["uid"]
+    assert res["sequence_id"]
     assert res["name"] == "Default-AAA name with [TextValue]"
     assert res["guidance_text"] == "Default-AAA guidance text"
     assert res["is_confirmatory_testing"] is True
-    assert res["indications"][0]["term_uid"] == indication.term_uid
-    assert res["indications"][0]["dictionary_id"] == indication.dictionary_id
-    assert res["indications"][0]["name"] == indication.name
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert (
+        res["indications"][0]["dictionary_id"]
+        == dictionary_term_indication.dictionary_id
+    )
+    assert res["indications"][0]["name"] == dictionary_term_indication.name
+    assert res["indications"][1]["term_uid"] == indication.term_uid
+    assert res["indications"][1]["dictionary_id"] == indication.dictionary_id
+    assert res["indications"][1]["name"] == indication.name
     assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
     assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
     assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
@@ -770,31 +830,228 @@ def test_delete_objective_template(api_client):
 def test_approve_objective_template(api_client):
     response = api_client.post(f"{URL}/{objective_templates[3].uid}/approvals")
     res = response.json()
+    log.info("Approved Objective Template: %s", objective_templates[3].uid)
 
     assert response.status_code == 201
     assert res["uid"] == objective_templates[3].uid
+    assert res["sequence_id"] == "OT4"
+    assert res["is_confirmatory_testing"] is False
+    assert res["name"] == "Default-XXX name with [TextValue]"
+    assert res["guidance_text"] == "Default-XXX guidance text"
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert (
+        res["indications"][0]["dictionary_id"]
+        == dictionary_term_indication.dictionary_id
+    )
+    assert res["indications"][0]["name"] == dictionary_term_indication.name
+    assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
+    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
+    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
     assert res["version"] == "1.0"
+    assert res["status"] == "Final"
+
+
+def test_cascade_approve_objective_template(api_client):
+    parameter_terms = [
+        MultiTemplateParameterTerm(
+            position=1,
+            conjunction="",
+            terms=[
+                IndexedTemplateParameterTerm(
+                    index=1,
+                    name=text_value_1.name,
+                    uid=text_value_1.uid,
+                    type="TextValue",
+                )
+            ],
+        )
+    ]
+    objective = TestUtils.create_objective(
+        objective_template_uid=objective_templates[5].uid,
+        library_name="Sponsor",
+        parameter_terms=parameter_terms,
+        approve=False,
+    )
+    objective_pre_instance = TestUtils.create_objective_pre_instance(
+        template_uid=objective_templates[5].uid,
+        library_name="Sponsor",
+        parameter_terms=parameter_terms,
+        indication_uids=[dictionary_term_indication.term_uid],
+        category_uids=[ct_term_category.term_uid],
+    )
+
+    api_client.post(
+        f"{URL}/{objective_templates[5].uid}/versions",
+        json={
+            "name": "cascade check [TextValue]",
+            "change_description": "cascade check for instance and pre instances",
+        },
+    )
+
+    response = api_client.post(
+        f"{URL}/{objective_templates[5].uid}/approvals?cascade=true"
+    )
+    res = response.json()
+    log.info("Approved Objective Template: %s", objective_templates[5].uid)
+
+    assert response.status_code == 201
+    assert res["uid"] == objective_templates[5].uid
+    assert res["sequence_id"] == "OT6"
+    assert res["name"] == "cascade check [TextValue]"
+    assert res["guidance_text"] == "Default-AAA-0 guidance text"
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert (
+        res["indications"][0]["dictionary_id"]
+        == dictionary_term_indication.dictionary_id
+    )
+    assert res["indications"][0]["name"] == dictionary_term_indication.name
+    assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
+    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
+    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert res["version"] == "2.0"
+    assert res["status"] == "Final"
+
+    # Assertions for Objective
+    response = api_client.get(f"objectives/{objective.uid}")
+    res = response.json()
+
+    assert res["name"] == f"cascade check [{text_value_1.name_sentence_case}]"
+    assert res["version"] == "0.2"
+    assert res["status"] == "Draft"
+
+    # Assertions for Objective Pre-Instance
+    response = api_client.get(f"objective-pre-instances/{objective_pre_instance.uid}")
+    res = response.json()
+
+    assert res["name"] == f"cascade check [{text_value_1.name_sentence_case}]"
+    assert res["version"] == "2.0"
     assert res["status"] == "Final"
 
 
 def test_inactivate_objective_template(api_client):
-    response = api_client.delete(f"{URL}/{objective_templates[3].uid}/activations")
+    response = api_client.delete(f"{URL}/{objective_templates[5].uid}/activations")
     res = response.json()
 
     assert response.status_code == 200
-    assert res["uid"] == objective_templates[3].uid
-    assert res["version"] == "1.0"
+    assert res["uid"] == objective_templates[5].uid
+    assert res["sequence_id"] == "OT6"
+    assert res["is_confirmatory_testing"] is False
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert (
+        res["indications"][0]["dictionary_id"]
+        == dictionary_term_indication.dictionary_id
+    )
+    assert res["indications"][0]["name"] == dictionary_term_indication.name
+    assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
+    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
+    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert res["version"] == "2.0"
+    assert res["status"] == "Retired"
+
+    # Assertions for Objective Pre-Instance
+    response = api_client.get("objective-pre-instances/ObjectivePreInstance_000001")
+    res = response.json()
+
+    assert res["name"] == f"cascade check [{text_value_1.name_sentence_case}]"
+    assert res["version"] == "2.0"
     assert res["status"] == "Retired"
 
 
 def test_reactivate_objective_template(api_client):
-    response = api_client.post(f"{URL}/{objective_templates[3].uid}/activations")
+    response = api_client.post(f"{URL}/{objective_templates[5].uid}/activations")
     res = response.json()
 
     assert response.status_code == 200
-    assert res["uid"] == objective_templates[3].uid
-    assert res["version"] == "1.0"
+    assert res["uid"] == objective_templates[5].uid
+    assert res["sequence_id"] == "OT6"
+    assert res["is_confirmatory_testing"] is False
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert (
+        res["indications"][0]["dictionary_id"]
+        == dictionary_term_indication.dictionary_id
+    )
+    assert res["indications"][0]["name"] == dictionary_term_indication.name
+    assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
+    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
+    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert res["version"] == "2.0"
     assert res["status"] == "Final"
+
+    # Assertions for Objective Pre-Instance
+    response = api_client.get("objective-pre-instances/ObjectivePreInstance_000001")
+    res = response.json()
+
+    assert res["name"] == f"cascade check [{text_value_1.name_sentence_case}]"
+    assert res["version"] == "2.0"
+    assert res["status"] == "Final"
+
+
+def test_objective_template_audit_trail(api_client):
+    response = api_client.get(f"{URL}/audit-trail?page_size=100&total_count=true")
+    res = response.json()
+    log.info("ObjectiveTemplate Audit Trail: %s", res)
+
+    assert response.status_code == 200
+    assert res["total"] == 55
+    expected_uids = [
+        "ObjectiveTemplate_000006",
+        "ObjectiveTemplate_000006",
+        "ObjectiveTemplate_000006",
+        "ObjectiveTemplate_000006",
+        "ObjectiveTemplate_000004",
+        "ObjectiveTemplate_000027",
+        "ObjectiveTemplate_000005",
+        "ObjectiveTemplate_000026",
+        "ObjectiveTemplate_000025",
+        "ObjectiveTemplate_000025",
+        "ObjectiveTemplate_000024",
+        "ObjectiveTemplate_000024",
+        "ObjectiveTemplate_000023",
+        "ObjectiveTemplate_000023",
+        "ObjectiveTemplate_000022",
+        "ObjectiveTemplate_000022",
+        "ObjectiveTemplate_000021",
+        "ObjectiveTemplate_000021",
+        "ObjectiveTemplate_000020",
+        "ObjectiveTemplate_000020",
+        "ObjectiveTemplate_000019",
+        "ObjectiveTemplate_000019",
+        "ObjectiveTemplate_000018",
+        "ObjectiveTemplate_000018",
+        "ObjectiveTemplate_000017",
+        "ObjectiveTemplate_000017",
+        "ObjectiveTemplate_000016",
+        "ObjectiveTemplate_000016",
+        "ObjectiveTemplate_000015",
+        "ObjectiveTemplate_000015",
+        "ObjectiveTemplate_000014",
+        "ObjectiveTemplate_000014",
+        "ObjectiveTemplate_000013",
+        "ObjectiveTemplate_000013",
+        "ObjectiveTemplate_000012",
+        "ObjectiveTemplate_000012",
+        "ObjectiveTemplate_000011",
+        "ObjectiveTemplate_000011",
+        "ObjectiveTemplate_000010",
+        "ObjectiveTemplate_000010",
+        "ObjectiveTemplate_000009",
+        "ObjectiveTemplate_000009",
+        "ObjectiveTemplate_000008",
+        "ObjectiveTemplate_000008",
+        "ObjectiveTemplate_000007",
+        "ObjectiveTemplate_000007",
+        "ObjectiveTemplate_000006",
+        "ObjectiveTemplate_000006",
+        "ObjectiveTemplate_000005",
+        "ObjectiveTemplate_000005",
+        "ObjectiveTemplate_000004",
+        "ObjectiveTemplate_000002",
+        "ObjectiveTemplate_000002",
+        "ObjectiveTemplate_000001",
+        "ObjectiveTemplate_000001",
+    ]
+    actual_uids = [item["uid"] for item in res["items"]]
+    assert actual_uids == expected_uids
 
 
 def test_create_pre_instance_objective_template(api_client):
@@ -814,6 +1071,7 @@ def test_create_pre_instance_objective_template(api_client):
                 ],
             }
         ],
+        "is_confirmatory_testing": True,
         "indication_uids": [dictionary_term_indication.term_uid],
         "category_uids": [ct_term_category.term_uid],
     }
@@ -821,11 +1079,13 @@ def test_create_pre_instance_objective_template(api_client):
         f"{URL}/{objective_templates[0].uid}/pre-instances", json=data
     )
     res = response.json()
-    log.info("Created Objective Pre Instance: %s", res)
+    log.info("Created Objective Pre-Instance: %s", res)
 
     assert response.status_code == 201
     assert "PreInstance" in res["uid"]
+    assert res["sequence_id"]
     assert res["template_uid"] == objective_templates[0].uid
+    assert res["is_confirmatory_testing"] is True
     assert res["name"] == f"Default name with [{text_value_1.name_sentence_case}]"
     assert (
         res["parameter_terms"][0]["position"] == data["parameter_terms"][0]["position"]

@@ -3,24 +3,24 @@ from typing import Sequence
 
 from neomodel import db
 
-from clinical_mdr_api.domain.library.object import (
+from clinical_mdr_api.domains.libraries.object import (
     ParameterTermEntryVO,
     ParametrizedTemplateVO,
 )
-from clinical_mdr_api.domain.syntax_instances.endpoint import EndpointAR
-from clinical_mdr_api.domain.syntax_instances.objective import ObjectiveAR
-from clinical_mdr_api.domain.syntax_instances.timeframe import TimeframeAR
-from clinical_mdr_api.domain.syntax_templates.endpoint_template import (
+from clinical_mdr_api.domains.syntax_instances.endpoint import EndpointAR
+from clinical_mdr_api.domains.syntax_instances.objective import ObjectiveAR
+from clinical_mdr_api.domains.syntax_instances.timeframe import TimeframeAR
+from clinical_mdr_api.domains.syntax_templates.endpoint_template import (
     EndpointTemplateAR,
 )
-from clinical_mdr_api.domain.syntax_templates.objective_template import (
+from clinical_mdr_api.domains.syntax_templates.objective_template import (
     ObjectiveTemplateAR,
 )
-from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
-from clinical_mdr_api.domain.syntax_templates.timeframe_template import (
+from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
+from clinical_mdr_api.domains.syntax_templates.timeframe_template import (
     TimeframeTemplateAR,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.tests.integration.repositories.concurrency.tools.optimistic_locking_validator import (
     OptimisticLockingValidator,

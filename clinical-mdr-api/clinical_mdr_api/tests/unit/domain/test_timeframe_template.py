@@ -1,10 +1,10 @@
 import unittest
 
-from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
-from clinical_mdr_api.domain.syntax_templates.timeframe_template import (
+from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
+from clinical_mdr_api.domains.syntax_templates.timeframe_template import (
     TimeframeTemplateAR,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import (
+from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryItemStatus,
     LibraryVO,
@@ -28,6 +28,7 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
         ar = TimeframeTemplateAR.from_repository_values(
             template=tv,
             uid="some-uid",
+            sequence_id="some-sequence_id",
             library=lib,
             item_metadata=LibraryItemMetadataVO.get_initial_item_metadata(
                 author="who ever"
@@ -51,6 +52,7 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
         ar = TimeframeTemplateAR.from_repository_values(
             template=tv,
             uid="some-uid",
+            sequence_id="some-sequence_id",
             library=lib,
             item_metadata=LibraryItemMetadataVO.get_initial_item_metadata(
                 author="who ever"
@@ -77,6 +79,7 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
         ar = TimeframeTemplateAR.from_repository_values(
             template=tv,
             uid="some-uid",
+            sequence_id="some-sequence_id",
             library=lib,
             item_metadata=LibraryItemMetadataVO.get_initial_item_metadata(
                 author="who ever"
@@ -108,6 +111,7 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
         ar = TimeframeTemplateAR.from_repository_values(
             template=tv,
             uid="some-uid",
+            sequence_id="some-sequence_id",
             library=lib,
             item_metadata=LibraryItemMetadataVO.get_initial_item_metadata(
                 author="who ever"
@@ -148,6 +152,7 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
         ar = TimeframeTemplateAR.from_repository_values(
             template=tv,
             uid="some-uid",
+            sequence_id="some-sequence_id",
             library=lib,
             item_metadata=LibraryItemMetadataVO.get_initial_item_metadata(
                 author="who ever"
@@ -177,6 +182,7 @@ class TestTimeframeTemplateDomain(unittest.TestCase):
         ar = TimeframeTemplateAR.from_repository_values(
             template=tv,
             uid="some-uid",
+            sequence_id="some-sequence_id",
             library=lib,
             item_metadata=LibraryItemMetadataVO.get_initial_item_metadata(
                 author="who ever"

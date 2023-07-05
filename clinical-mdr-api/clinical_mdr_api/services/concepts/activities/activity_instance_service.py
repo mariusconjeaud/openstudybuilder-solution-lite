@@ -1,14 +1,14 @@
-from clinical_mdr_api.domain.concepts.activities.activity_instance import (
+from clinical_mdr_api.domain_repositories.concepts.activities.activity_instance_repository import (
+    ActivityInstanceRepository,
+)
+from clinical_mdr_api.domains.concepts.activities.activity_instance import (
     ActivityInstanceAR,
     ActivityInstanceVO,
     SimpleActivityItemVO,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
-from clinical_mdr_api.domain_repositories.concepts.activities.activity_instance_repository import (
-    ActivityInstanceRepository,
-)
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.exceptions import NotFoundException
-from clinical_mdr_api.models.activities.activity_instance import (
+from clinical_mdr_api.models.concepts.activities.activity_instance import (
     ActivityInstance,
     ActivityInstanceCreateInput,
     ActivityInstanceEditInput,
@@ -111,9 +111,9 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
     def get_activity_instance_overview(
         self, activity_instance_uid: str
     ) -> ActivityInstanceOverview:
-        if not self.repository.final_concept_exists(uid=activity_instance_uid):
+        if not self.repository.exists_by("uid", activity_instance_uid, True):
             raise NotFoundException(
-                f"Cannot find ActivityInstance with the following uid ({activity_instance_uid}) in status (Final)"
+                f"Cannot find ActivityInstance with the following uid ({activity_instance_uid})"
             )
         overview = (
             self._repos.activity_instance_repository.get_activity_instance_overview(

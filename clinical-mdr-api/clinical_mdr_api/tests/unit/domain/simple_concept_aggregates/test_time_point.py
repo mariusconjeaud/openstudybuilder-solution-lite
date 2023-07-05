@@ -2,22 +2,22 @@ import unittest
 from typing import Callable
 from unittest.mock import patch
 
-from clinical_mdr_api.domain.concepts.simple_concepts.time_point import (
-    TimePointAR,
-    TimePointVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.simple_concepts.numeric_value_repository import (
     NumericValueRepository,
 )
-from clinical_mdr_api.domain_repositories.concepts.unit_definition.unit_definition_repository import (
+from clinical_mdr_api.domain_repositories.concepts.unit_definitions.unit_definition_repository import (
     UnitDefinitionRepository,
 )
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_term_name_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_name_repository import (
     CTTermNameRepository,
+)
+from clinical_mdr_api.domains.concepts.simple_concepts.time_point import (
+    TimePointAR,
+    TimePointVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemStatus,
+    LibraryVO,
 )
 from clinical_mdr_api.tests.unit.domain.simple_concept_aggregates.test_numeric_value import (
     create_random_numeric_value_ar,

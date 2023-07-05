@@ -158,3 +158,15 @@ def test_get_ct_terms_csv_xml_excel(api_client, export_format):
 def test_get_ct_codelists_csv_xml_excel(api_client, export_format):
     url = "/ct/codelists"
     TestUtils.verify_exported_data_format(api_client, export_format, url)
+
+
+def test_codelist_filtering_on_terms(api_client):
+    response = api_client.get(
+        """ct/codelists?term_filter={"operator": "and", "term_uids": ["CTTerm_000001", "CTTerm_000002"]}"""
+    )
+    res = response.json()
+
+    assert response.status_code == 200
+
+    assert len(res["items"]) == 1
+    assert res["items"][0]["codelist_uid"] == "C66737"

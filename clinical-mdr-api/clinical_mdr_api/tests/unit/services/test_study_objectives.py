@@ -2,7 +2,7 @@ import datetime
 
 import pytest
 
-from clinical_mdr_api.domain.study_selection.study_selection_endpoint import (
+from clinical_mdr_api.domains.study_selections.study_selection_endpoint import (
     EndpointUnitItem,
     EndpointUnits,
 )
@@ -14,9 +14,11 @@ from clinical_mdr_api.models import (
     StudySelectionObjective,
     Timeframe,
 )
-from clinical_mdr_api.models.ct_term import SimpleTermModel
-from clinical_mdr_api.models.unit_definition import UnitDefinitionModel
-from clinical_mdr_api.services.study_objectives import StudyObjectivesService
+from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
+    UnitDefinitionModel,
+)
+from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
+from clinical_mdr_api.services.studies.study_objectives import StudyObjectivesService
 
 USER_INITIALS = "unknown-user"
 STUDY_UID = "Study_000001"

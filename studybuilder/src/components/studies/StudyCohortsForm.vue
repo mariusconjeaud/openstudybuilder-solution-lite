@@ -83,7 +83,7 @@
       </validation-provider>
       <validation-provider
         v-slot="{ errors }"
-        rules="required|max:20"
+        rules="required|numeric|max_value:99|min_value:1"
         >
         <v-row>
           <v-col cols="12">
@@ -91,7 +91,8 @@
               v-model="form.code"
               :label="$t('StudyCohorts.cohort_code')"
               data-cy="study-cohort-code"
-              :error-messages="errors"
+              :error-messages="errors[0] ? $t('StudyCohorts.cohort_code_error') : ''"
+              type="number"
               clearable
               class="required"
               />

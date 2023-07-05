@@ -54,12 +54,23 @@ State after:
 # pylint: disable=unused-argument
 def get_datasets(
     request: Request,  # request is actually required by the allow_exports decorator
+    data_model_ig_name: str = Query(
+        ...,
+        description="The name of the selected Data model implementation guide, for instance 'CDASHIG'",
+    ),
+    data_model_ig_version: str = Query(
+        ...,
+        description="The version of the selected Data model implementation guide, for instance '2.2'",
+    ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
     page_size: Optional[int] = Query(
-        config.DEFAULT_PAGE_SIZE, description=_generic_descriptions.PAGE_SIZE
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
     ),
     filters: Optional[Json] = Query(
         None,
@@ -74,6 +85,8 @@ def get_datasets(
 ):
     dataset_service = DatasetService(user=current_user_id)
     results = dataset_service.get_all_items(
+        data_model_ig_name=data_model_ig_name,
+        data_model_ig_version=data_model_ig_version,
         sort_by=sort_by,
         page_number=page_number,
         page_size=page_size,
@@ -102,6 +115,14 @@ def get_datasets(
     },
 )
 def get_distinct_values_for_header(
+    data_model_ig_name: str = Query(
+        ...,
+        description="The name of the selected Data model implementation guide, for instance 'CDASHIG'",
+    ),
+    data_model_ig_version: str = Query(
+        ...,
+        description="The version of the selected Data model implementation guide, for instance '2.2'",
+    ),
     current_user_id: str = Depends(get_current_user_id),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: Optional[str] = Query(
@@ -124,6 +145,8 @@ def get_distinct_values_for_header(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         result_count=result_count,
+        data_model_ig_name=data_model_ig_name,
+        data_model_ig_version=data_model_ig_version,
     )
 
 
@@ -150,7 +173,20 @@ Possible errors:
     },
 )
 def get_dataset(
-    uid: str = DatasetUID, current_user_id: str = Depends(get_current_user_id)
+    data_model_ig_name: str = Query(
+        ...,
+        description="The name of the selected Data model implementation guide, for instance 'CDASHIG'",
+    ),
+    data_model_ig_version: str = Query(
+        ...,
+        description="The version of the selected Data model implementation guide, for instance '2.2'",
+    ),
+    uid: str = DatasetUID,
+    current_user_id: str = Depends(get_current_user_id),
 ):
     dataset_service = DatasetService(user=current_user_id)
-    return dataset_service.get_by_uid(uid=uid)
+    return dataset_service.get_by_uid(
+        uid=uid,
+        data_model_ig_version=data_model_ig_version,
+        data_model_ig_name=data_model_ig_name,
+    )

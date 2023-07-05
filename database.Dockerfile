@@ -1,5 +1,5 @@
 ARG NEO4J_IMAGE=neo4j:4.4.12-enterprise
-ARG PYTHON_IMAGE=python:3.7.12-slim
+ARG PYTHON_IMAGE=python:3.11.3-slim
 
 # --- Build stage ----
 FROM $PYTHON_IMAGE as build-stage
@@ -142,17 +142,18 @@ RUN [ "x$UID" = "x1000" ] || { \
         && groupmod --gid "$UID" "neo4j" \
     ;}
 
-# Install APOC library
-RUN cd plugins && ln -s ../labs/apoc-*-core.jar ./
+# Install APOC plugin
+RUN wget --quiet --timeout 60 --tries 2 --output-document /var/lib/neo4j/plugins/apoc.jar \
+    https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/4.4.0.11/apoc-4.4.0.11-all.jar
+
+# Copy database files from build stage
+COPY --from=build-stage --chown=$USER:$GROUP /neo4j/data /data
 
 # Set up default environment variables
 ENV NEO4J_ACCEPT_LICENSE_AGREEMENT="$NEO4J_ACCEPT_LICENSE_AGREEMENT" \
     NEO4J_apoc_trigger_enabled="true" \
     NEO4J_apoc_import_file_enabled="true" \
     NEO4J_apoc_export_file_enabled="true"
-
-# Copy database files from build stage
-COPY --from=build-stage --chown=$USER:$GROUP /neo4j/data /data
 
 # Volume attachment point: if an empty volume is mounted, it gets populated with the pre-built database from the image
 VOLUME /data

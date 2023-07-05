@@ -1,10 +1,10 @@
 import unittest
 
-from clinical_mdr_api.domain.controlled_terminology.ct_codelist_attributes import (
+from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_attributes import (
     CTCodelistAttributesAR,
     CTCodelistAttributesVO,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import (
+from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
 )

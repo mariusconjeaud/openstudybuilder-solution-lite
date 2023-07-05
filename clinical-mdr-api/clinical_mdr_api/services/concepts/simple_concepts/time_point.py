@@ -1,11 +1,11 @@
-from clinical_mdr_api.domain.concepts.simple_concepts.time_point import (
-    TimePointAR,
-    TimePointVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.simple_concepts.time_point_repository import (
     TimePointRepository,
 )
-from clinical_mdr_api.models.concept import (
+from clinical_mdr_api.domains.concepts.simple_concepts.time_point import (
+    TimePointAR,
+    TimePointVO,
+)
+from clinical_mdr_api.models.concepts.concept import (
     SimpleConceptInput,
     TimePoint,
     TimePointInput,

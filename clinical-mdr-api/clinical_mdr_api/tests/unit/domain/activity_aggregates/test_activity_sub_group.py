@@ -1,11 +1,11 @@
 import unittest
 from typing import Callable
 
-from clinical_mdr_api.domain.concepts.activities.activity_sub_group import (
+from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
     ActivitySubGroupAR,
     ActivitySubGroupVO,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import (
+from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
 )

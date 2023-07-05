@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 from hypothesis import given
 from hypothesis.strategies import booleans, composite, text
 
-from clinical_mdr_api.domain_repositories.library.library_repository import (
+from clinical_mdr_api.domain_repositories.libraries.library_repository import (
     LibraryRepository,
 )
 from clinical_mdr_api.domain_repositories.models.generic import Library

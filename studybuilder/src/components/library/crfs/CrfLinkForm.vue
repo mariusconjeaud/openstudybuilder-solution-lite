@@ -9,22 +9,6 @@
   maxWidth="1200px"
   >
   <template v-slot:body>
-    <v-data-table
-      :headers="choosenItemsheaders"
-      :items="choosenItems"
-      >
-      <template v-slot:item.delete="{ item }">
-        <v-btn
-          icon
-          class="mt-1 rightButtons"
-          @click="removeItem(item)"
-          data-cy="remove-item-link">
-          <v-icon dark>
-              mdi-trash-can
-          </v-icon>
-        </v-btn>
-      </template>
-    </v-data-table>
     <v-col class="pt-0 mt-0">
       <n-n-table
         :headers="availableItemsHeaders"
@@ -50,10 +34,20 @@
               class="mt-1 rightButtons"
               data-cy="add-item-link"
               @click="addItem(item)"
-              :disabled="checkIfLinked(item)"
+              v-if="!checkIfLinked(item)"
               >
               <v-icon dark>
                   mdi-plus
+              </v-icon>
+            </v-btn>
+            <v-btn
+              icon
+              class="mt-1 rightButtons"
+              @click="removeItem(item)"
+              data-cy="remove-item-link"
+              v-else>
+              <v-icon dark>
+                  mdi-trash-can
               </v-icon>
             </v-btn>
           </template>
@@ -90,10 +84,6 @@ export default {
       helpItems: [],
       items: [],
       choosenItems: [],
-      choosenItemsheaders: [
-        { text: this.$t('_global.name'), value: 'name' },
-        { text: '', value: 'delete' }
-      ],
       availableItemsHeaders: [
         { text: this.$t('_global.name'), value: 'name', width: '25%' },
         { text: this.$t('_global.description'), value: 'desc', width: '35%' },

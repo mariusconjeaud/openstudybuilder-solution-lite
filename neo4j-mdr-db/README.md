@@ -218,3 +218,58 @@ $ export $(grep -v '^#' .env | xargs)
 $ ./import_db_backup.sh neo4j_local neo4j my_backup.tar.gz
 ```
 This replaces any existing content in the database `neo4j` with the backup in the file `./my_backup.tar.gz`.
+
+---
+
+# Exporting a database as Cypher statements
+
+The script `export_to_cypher.py` can be used to back up the contents of a database.
+Compared to the `export_db_backup.sh` script, this method can export from any database
+that can be accessed via bolt.
+The downside is that it takes considerably longer to run.
+
+A read-only account is sufficient.
+
+It connects to the database specified by the same environment variables as the init script:
+```
+NEO4J_MDR_DATABASE
+NEO4J_MDR_HOST
+NEO4J_MDR_BOLT_PORT
+NEO4J_MDR_AUTH_USER
+NEO4J_MDR_AUTH_PASSWORD
+```
+
+Run it with pipenv:
+```
+$ pipenv run export_to_cypher
+```
+
+This dumps all the data in the database as Cyper statements.
+The filename is set to `dump_{NEO4J_MDR_DATABASE}.cypher`.
+
+# Importing a database from Cypher statements
+
+The script `import_from_cypher.py` can be used to import a file with Cypher statements.
+Compared to the `import_db_backup.sh` script, this method can import into any database
+that can be accessed via bolt.
+The downside is that it takes considerably longer to run.
+
+An account with write access and database management privileges is required.
+
+It connects to the database specified by the same environment variables as the init script:
+```
+NEO4J_MDR_DATABASE
+NEO4J_MDR_HOST
+NEO4J_MDR_BOLT_PORT
+NEO4J_MDR_AUTH_USER
+NEO4J_MDR_AUTH_PASSWORD
+```
+
+
+Run it with pipenv, specifying the filename to read from:
+```
+$ pipenv run import_from_cypher dump_example.cypher
+```
+
+The database is created if it doesn't already exist.
+If it does exist, it should be empty to avoid any errors due to conflicts.

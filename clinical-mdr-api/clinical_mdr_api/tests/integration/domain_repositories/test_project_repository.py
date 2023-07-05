@@ -1,13 +1,13 @@
 import unittest
 from typing import Dict
 
-from clinical_mdr_api.domain.project.project import ProjectAR
-from clinical_mdr_api.domain_repositories.clinical_programme.clinical_programme_repository import (
+from clinical_mdr_api.domain_repositories.clinical_programmes.clinical_programme_repository import (
     ClinicalProgrammeRepository,
 )
-from clinical_mdr_api.domain_repositories.project.project_repository import (
+from clinical_mdr_api.domain_repositories.projects.project_repository import (
     ProjectRepository,
 )
+from clinical_mdr_api.domains.projects.project import ProjectAR
 from clinical_mdr_api.tests.integration.domain_repositories._utils import (
     wipe_clinical_programme_repository,
     wipe_project_repository,

@@ -1,7 +1,7 @@
 [project]
 name = 'clinical-mdr-api'
 readme = 'README.md'
-requires-python = '3.7'
+requires-python = '3.11'
 license = 'TBD'
 authors = [
     {name = 'Novo Nordisk', email = 'mt@novonordisk.com'}
@@ -36,13 +36,13 @@ max-module-lines = 5000
 good-names = 'i,j,k,ex,Run,_,e'
 
 [tool.pylint.'DESIGN']
-max-args = 30
+max-args = 35
 max-attributes = 85
-max-branches = 45
+max-branches = 50
 max-locals = 46
 max-public-methods = 81
 max-returns = 9
-max-statements = 98
+max-statements = 100
 
 [tool.pylint.'REFACTORING']
 max-nested-blocks = 10

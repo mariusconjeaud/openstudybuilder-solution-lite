@@ -1,14 +1,14 @@
 from typing import Optional, Union
 
-from clinical_mdr_api.domain.syntax_instances.criteria import (
-    CriteriaAR,
-    CriteriaTemplateVO,
-)
 from clinical_mdr_api.domain_repositories.syntax_instances.criteria_repository import (
     CriteriaRepository,
 )
 from clinical_mdr_api.domain_repositories.syntax_templates.criteria_template_repository import (
     CriteriaTemplateRepository,
+)
+from clinical_mdr_api.domains.syntax_instances.criteria import (
+    CriteriaAR,
+    CriteriaTemplateVO,
 )
 from clinical_mdr_api.models.syntax_instances.criteria import (
     Criteria,

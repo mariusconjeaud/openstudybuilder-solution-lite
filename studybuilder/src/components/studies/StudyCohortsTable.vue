@@ -93,19 +93,6 @@
     :editedCohort="cohortToEdit"
     :arms="arms"
     :branches="branches"/>
-  <v-dialog
-    v-model="showCohortHistory"
-    @keydown.esc="closeCohortHistory"
-    persistent
-    max-width="1200px"
-    >
-    <history-table
-      :title="studyCohortHistoryTitle"
-      @close="closeCohortHistory"
-      :headers="headers"
-      :items="cohortHistoryItems"
-      />
-  </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
 </div>
 </template>
@@ -120,7 +107,6 @@ import ActionsMenu from '@/components/tools/ActionsMenu'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import { bus } from '@/main'
 import draggable from 'vuedraggable'
-import HistoryTable from '@/components/tools/HistoryTable'
 
 export default {
   components: {
@@ -128,8 +114,7 @@ export default {
     StudyCohortsForm,
     ActionsMenu,
     ConfirmDialog,
-    draggable,
-    HistoryTable
+    draggable
   },
   computed: {
     ...mapGetters({

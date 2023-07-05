@@ -3,11 +3,11 @@ import unittest
 from typing import Collection, List
 from unittest.mock import Mock, patch
 
-from clinical_mdr_api.domain.controlled_terminology.ct_package import CTPackageAR
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_package_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_package_repository import (
     CTPackageRepository,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import CTPackage
+from clinical_mdr_api.domains.controlled_terminologies.ct_package import CTPackageAR
 from clinical_mdr_api.tests.unit.domain.utils import random_str
 
 

@@ -7,17 +7,17 @@ from unittest.mock import patch
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.config import DEFAULT_STUDY_FIELD_CONFIG_FILE
-from clinical_mdr_api.domain.study_definition_aggregate import study_configuration
-from clinical_mdr_api.domain.study_definition_aggregate.registry_identifiers import (
+from clinical_mdr_api.domains.study_definition_aggregates import study_configuration
+from clinical_mdr_api.domains.study_definition_aggregates.registry_identifiers import (
     RegistryIdentifiersVO,
 )
-from clinical_mdr_api.domain.study_definition_aggregate.root import (
+from clinical_mdr_api.domains.study_definition_aggregates.root import (
     _DEF_INITIAL_HIGH_LEVEL_STUDY_DESIGN,
     _DEF_INITIAL_STUDY_INTERVENTION,
     _DEF_INITIAL_STUDY_POPULATION,
     StudyDefinitionAR,
 )
-from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
+from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     HighLevelStudyDesignVO,
     StudyDescriptionVO,
     StudyIdentificationMetadataVO,

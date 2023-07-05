@@ -1,30 +1,23 @@
-from clinical_mdr_api.domain_repositories.models._utils import (
-    LATEST_VERSION_ORDER_BY,
-    CustomNodeSet,
-)
 from clinical_mdr_api.domain_repositories.models.standard_data_model import (
     DataModelRoot,
+    DataModelValue,
 )
-from clinical_mdr_api.domain_repositories.neomodel_ext_item_repository import (
-    NeomodelExtBaseRepository,
+from clinical_mdr_api.domain_repositories.standard_data_models.standard_data_model_repository import (
+    StandardDataModelRepository,
 )
 from clinical_mdr_api.models.standard_data_models.data_model import DataModel
 
 
-class DataModelRepository(NeomodelExtBaseRepository):
+class DataModelRepository(StandardDataModelRepository):
     root_class = DataModelRoot
+    value_class = DataModelValue
     return_model = DataModel
 
-    def get_neomodel_extension_query(self) -> CustomNodeSet:
-        return (
-            DataModelRoot.nodes.fetch_relations(
-                "has_library",
-                "has_latest_value",
-            )
-            .fetch_optional_relations_and_collect("has_latest_value__implements")
-            .fetch_optional_single_relation_of_type(
-                {
-                    "has_version": ("latest_version", LATEST_VERSION_ORDER_BY),
-                }
-            )
-        )
+    def specific_alias_clause(self) -> str:
+        return """
+        WITH *,
+            standard_value.version_number AS version_number,
+            [(standard_value)<-[:IMPLEMENTS]-(implementation_guide_value:DataModelIGValue)<-[:HAS_VERSION]-
+            (implementation_guide_root:DataModelIGRoot) | 
+                {uid:implementation_guide_root.uid, name:implementation_guide_value.name}] AS implementation_guides
+        """

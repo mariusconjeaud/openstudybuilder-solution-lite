@@ -6,16 +6,18 @@ from neomodel import db
 from pydantic import BaseModel
 
 from clinical_mdr_api import exceptions
-from clinical_mdr_api.domain.versioned_object_aggregate import (
+from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
+    ConceptGenericRepository,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
     VersioningException,
 )
-from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
-    ConceptGenericRepository,
+from clinical_mdr_api.models.concepts.activities.activity import (
+    ActivityHierarchySimpleModel,
 )
-from clinical_mdr_api.models.activities.activity import ActivityHierarchySimpleModel
-from clinical_mdr_api.models.ct_term import SimpleTermModel
+from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
@@ -152,6 +154,30 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         only_specific_status: Optional[Sequence[str]] = None,
         **kwargs,
     ) -> GenericFilteringReturn[BaseModel]:
+        return self.non_transactional_get_all_concepts(
+            library,
+            sort_by,
+            page_number,
+            page_size,
+            filter_by,
+            filter_operator,
+            total_count,
+            only_specific_status,
+            **kwargs,
+        )
+
+    def non_transactional_get_all_concepts(
+        self,
+        library: Optional[str] = None,
+        sort_by: Optional[dict] = None,
+        page_number: int = 1,
+        page_size: int = 0,
+        filter_by: Optional[dict] = None,
+        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        total_count: bool = False,
+        only_specific_status: Optional[Sequence[str]] = None,
+        **kwargs,
+    ) -> GenericFilteringReturn[BaseModel]:
         self.enforce_library(library)
 
         try:
@@ -219,24 +245,15 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         uid: str,
         version: Optional[str] = None,
         at_specific_date: Optional[datetime] = None,
-        status: Optional[str] = None,
+        status: Optional[LibraryItemStatus] = None,
         for_update: Optional[bool] = False,
     ) -> _AggregateRootType:
-        concept_status = None
-        if status is not None:
-            status = status.lower()
-            if status == "final":
-                concept_status = LibraryItemStatus.FINAL
-            elif status == "draft":
-                concept_status = LibraryItemStatus.DRAFT
-            elif status == "retired":
-                concept_status = LibraryItemStatus.RETIRED
         try:
             item = self.repository.find_by_uid_2(
                 uid=uid,
                 at_specific_date=at_specific_date,
                 version=version,
-                status=concept_status,
+                status=status,
                 for_update=for_update,
             )
         except ValueError as e:

@@ -1,4 +1,4 @@
-from clinical_mdr_api.domain.controlled_terminology.ct_catalogue import CTCatalogueAR
+from clinical_mdr_api.domains.controlled_terminologies.ct_catalogue import CTCatalogueAR
 from clinical_mdr_api.tests.unit.domain.utils import random_str
 
 

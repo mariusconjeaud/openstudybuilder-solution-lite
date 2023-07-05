@@ -36,18 +36,32 @@ class OdmDescriptionValue(ConceptValue):
 
 
 class OdmDescriptionRoot(ConceptRoot):
-    has_form = RelationshipFrom("OdmFormRoot", "HAS_DESCRIPTION")
-    has_item_group = RelationshipFrom("OdmItemGroupRoot", "HAS_DESCRIPTION")
-    has_item = RelationshipFrom("OdmItemRoot", "HAS_DESCRIPTION")
-    has_condition = RelationshipFrom("OdmConditionRoot", "HAS_DESCRIPTION")
-    has_method = RelationshipFrom("OdmMethodRoot", "HAS_DESCRIPTION")
+    has_form = RelationshipFrom("OdmFormRoot", "HAS_DESCRIPTION", model=ClinicalMdrRel)
+    has_item_group = RelationshipFrom(
+        "OdmItemGroupRoot", "HAS_DESCRIPTION", model=ClinicalMdrRel
+    )
+    has_item = RelationshipFrom("OdmItemRoot", "HAS_DESCRIPTION", model=ClinicalMdrRel)
+    has_condition = RelationshipFrom(
+        "OdmConditionRoot", "HAS_DESCRIPTION", model=ClinicalMdrRel
+    )
+    has_method = RelationshipFrom(
+        "OdmMethodRoot", "HAS_DESCRIPTION", model=ClinicalMdrRel
+    )
     has_version = RelationshipTo(
         OdmDescriptionValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(OdmDescriptionValue, "LATEST")
-    latest_draft = RelationshipTo(OdmDescriptionValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(OdmDescriptionValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(OdmDescriptionValue, "LATEST_RETIRED")
+    has_latest_value = RelationshipTo(
+        OdmDescriptionValue, "LATEST", model=ClinicalMdrRel
+    )
+    latest_draft = RelationshipTo(
+        OdmDescriptionValue, "LATEST_DRAFT", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipTo(
+        OdmDescriptionValue, "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipTo(
+        OdmDescriptionValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
 
 
 class OdmAliasValue(ConceptValue):
@@ -55,18 +69,24 @@ class OdmAliasValue(ConceptValue):
 
 
 class OdmAliasRoot(ConceptRoot):
-    has_condition = RelationshipFrom("OdmConditionRoot", "HAS_ALIAS")
-    has_method = RelationshipFrom("OdmMethodRoot", "HAS_ALIAS")
-    has_form = RelationshipFrom("OdmFormRoot", "HAS_ALIAS")
-    has_item_group = RelationshipFrom("OdmItemGroupRoot", "HAS_ALIAS")
-    has_item = RelationshipFrom("OdmItemRoot", "HAS_ALIAS")
+    has_condition = RelationshipFrom(
+        "OdmConditionRoot", "HAS_ALIAS", model=ClinicalMdrRel
+    )
+    has_method = RelationshipFrom("OdmMethodRoot", "HAS_ALIAS", model=ClinicalMdrRel)
+    has_form = RelationshipFrom("OdmFormRoot", "HAS_ALIAS", model=ClinicalMdrRel)
+    has_item_group = RelationshipFrom(
+        "OdmItemGroupRoot", "HAS_ALIAS", model=ClinicalMdrRel
+    )
+    has_item = RelationshipFrom("OdmItemRoot", "HAS_ALIAS", model=ClinicalMdrRel)
     has_version = RelationshipTo(
         OdmAliasValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(OdmAliasValue, "LATEST")
-    latest_draft = RelationshipTo(OdmAliasValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(OdmAliasValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(OdmAliasValue, "LATEST_RETIRED")
+    has_latest_value = RelationshipTo(OdmAliasValue, "LATEST", model=ClinicalMdrRel)
+    latest_draft = RelationshipTo(OdmAliasValue, "LATEST_DRAFT", model=ClinicalMdrRel)
+    latest_final = RelationshipTo(OdmAliasValue, "LATEST_FINAL", model=ClinicalMdrRel)
+    latest_retired = RelationshipTo(
+        OdmAliasValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
 
 
 class OdmConditionValue(ConceptValue):
@@ -75,17 +95,25 @@ class OdmConditionValue(ConceptValue):
 
 class OdmConditionRoot(ConceptRoot):
     has_formal_expression = RelationshipTo(
-        "OdmFormalExpressionRoot", "HAS_FORMAL_EXPRESSION"
+        "OdmFormalExpressionRoot", "HAS_FORMAL_EXPRESSION", model=ClinicalMdrRel
     )
-    has_description = RelationshipTo(OdmDescriptionRoot, "HAS_DESCRIPTION")
-    has_alias = RelationshipTo(OdmAliasRoot, "HAS_ALIAS")
+    has_description = RelationshipTo(
+        OdmDescriptionRoot, "HAS_DESCRIPTION", model=ClinicalMdrRel
+    )
+    has_alias = RelationshipTo(OdmAliasRoot, "HAS_ALIAS", model=ClinicalMdrRel)
     has_version = RelationshipTo(
         OdmConditionValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(OdmConditionValue, "LATEST")
-    latest_draft = RelationshipTo(OdmConditionValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(OdmConditionValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(OdmConditionValue, "LATEST_RETIRED")
+    has_latest_value = RelationshipTo(OdmConditionValue, "LATEST", model=ClinicalMdrRel)
+    latest_draft = RelationshipTo(
+        OdmConditionValue, "LATEST_DRAFT", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipTo(
+        OdmConditionValue, "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipTo(
+        OdmConditionValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
 
 
 class OdmMethodValue(ConceptValue):
@@ -95,17 +123,21 @@ class OdmMethodValue(ConceptValue):
 
 class OdmMethodRoot(ConceptRoot):
     has_formal_expression = RelationshipTo(
-        "OdmFormalExpressionRoot", "HAS_FORMAL_EXPRESSION"
+        "OdmFormalExpressionRoot", "HAS_FORMAL_EXPRESSION", model=ClinicalMdrRel
     )
-    has_description = RelationshipTo(OdmDescriptionRoot, "HAS_DESCRIPTION")
-    has_alias = RelationshipTo(OdmAliasRoot, "HAS_ALIAS")
+    has_description = RelationshipTo(
+        OdmDescriptionRoot, "HAS_DESCRIPTION", model=ClinicalMdrRel
+    )
+    has_alias = RelationshipTo(OdmAliasRoot, "HAS_ALIAS", model=ClinicalMdrRel)
     has_version = RelationshipTo(
         OdmMethodValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(OdmMethodValue, "LATEST")
-    latest_draft = RelationshipTo(OdmMethodValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(OdmMethodValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(OdmMethodValue, "LATEST_RETIRED")
+    has_latest_value = RelationshipTo(OdmMethodValue, "LATEST", model=ClinicalMdrRel)
+    latest_draft = RelationshipTo(OdmMethodValue, "LATEST_DRAFT", model=ClinicalMdrRel)
+    latest_final = RelationshipTo(OdmMethodValue, "LATEST_FINAL", model=ClinicalMdrRel)
+    latest_retired = RelationshipTo(
+        OdmMethodValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
 
 
 class OdmFormalExpressionValue(ConceptValue):
@@ -114,15 +146,27 @@ class OdmFormalExpressionValue(ConceptValue):
 
 
 class OdmFormalExpressionRoot(ConceptRoot):
-    has_condition = RelationshipFrom(OdmConditionRoot, "HAS_FORMAL_EXPRESSION")
-    has_method = RelationshipFrom(OdmMethodRoot, "HAS_FORMAL_EXPRESSION")
+    has_condition = RelationshipFrom(
+        OdmConditionRoot, "HAS_FORMAL_EXPRESSION", model=ClinicalMdrRel
+    )
+    has_method = RelationshipFrom(
+        OdmMethodRoot, "HAS_FORMAL_EXPRESSION", model=ClinicalMdrRel
+    )
     has_version = RelationshipTo(
         OdmFormalExpressionValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(OdmFormalExpressionValue, "LATEST")
-    latest_draft = RelationshipTo(OdmFormalExpressionValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(OdmFormalExpressionValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(OdmFormalExpressionValue, "LATEST_RETIRED")
+    has_latest_value = RelationshipTo(
+        OdmFormalExpressionValue, "LATEST", model=ClinicalMdrRel
+    )
+    latest_draft = RelationshipTo(
+        OdmFormalExpressionValue, "LATEST_DRAFT", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipTo(
+        OdmFormalExpressionValue, "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipTo(
+        OdmFormalExpressionValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
 
 
 # pylint: disable=abstract-method
@@ -151,11 +195,17 @@ class OdmFormRefRelation(ClinicalMdrRel):
 
 
 class OdmFormRoot(ConceptRoot):
-    form_ref = RelationshipFrom("OdmTemplateRoot", "FORM_REF", model=OdmFormRefRelation)
+    form_ref = RelationshipFrom(
+        "OdmStudyEventRoot", "FORM_REF", model=OdmFormRefRelation
+    )
     has_scope = RelationshipTo(CTTermRoot, "HAS_SCOPE")
-    has_description = RelationshipTo(OdmDescriptionRoot, "HAS_DESCRIPTION")
-    has_alias = RelationshipTo(OdmAliasRoot, "HAS_ALIAS")
-    has_activity_group = RelationshipTo(ActivityGroupRoot, "HAS_ACTIVITY_GROUP")
+    has_description = RelationshipTo(
+        OdmDescriptionRoot, "HAS_DESCRIPTION", model=ClinicalMdrRel
+    )
+    has_alias = RelationshipTo(OdmAliasRoot, "HAS_ALIAS", model=ClinicalMdrRel)
+    has_activity_group = RelationshipTo(
+        ActivityGroupRoot, "HAS_ACTIVITY_GROUP", model=ClinicalMdrRel
+    )
     item_group_ref = RelationshipTo(
         "OdmItemGroupRoot", "ITEM_GROUP_REF", model=OdmItemGroupRefRelation
     )
@@ -175,10 +225,12 @@ class OdmFormRoot(ConceptRoot):
     # TODO targets_data_model = RelationshipTo(DataModelRoot, "TARGETS_DATA_MODEL")
 
     has_version = RelationshipTo(OdmFormValue, "HAS_VERSION", model=VersionRelationship)
-    has_latest_value = RelationshipTo(OdmFormValue, "LATEST")
-    latest_draft = RelationshipTo(OdmFormValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(OdmFormValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(OdmFormValue, "LATEST_RETIRED")
+    has_latest_value = RelationshipTo(OdmFormValue, "LATEST", model=ClinicalMdrRel)
+    latest_draft = RelationshipTo(OdmFormValue, "LATEST_DRAFT", model=ClinicalMdrRel)
+    latest_final = RelationshipTo(OdmFormValue, "LATEST_FINAL", model=ClinicalMdrRel)
+    latest_retired = RelationshipTo(
+        OdmFormValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
 
 
 class OdmItemRefRelation(ClinicalMdrRel):
@@ -204,11 +256,15 @@ class OdmItemGroupValue(ConceptValue):
 
 
 class OdmItemGroupRoot(ConceptRoot):
-    has_description = RelationshipTo(OdmDescriptionRoot, "HAS_DESCRIPTION")
-    has_alias = RelationshipTo(OdmAliasRoot, "HAS_ALIAS")
-    has_sdtm_domain = RelationshipTo(CTTermRoot, "HAS_SDTM_DOMAIN")
+    has_description = RelationshipTo(
+        OdmDescriptionRoot, "HAS_DESCRIPTION", model=ClinicalMdrRel
+    )
+    has_alias = RelationshipTo(OdmAliasRoot, "HAS_ALIAS", model=ClinicalMdrRel)
+    has_sdtm_domain = RelationshipTo(
+        CTTermRoot, "HAS_SDTM_DOMAIN", model=ClinicalMdrRel
+    )
     has_activity_subgroup = RelationshipTo(
-        ActivitySubGroupRoot, "HAS_ACTIVITY_SUB_GROUP"
+        ActivitySubGroupRoot, "HAS_ACTIVITY_SUB_GROUP", model=ClinicalMdrRel
     )
     item_group_ref = RelationshipFrom(
         OdmFormRoot, "ITEM_GROUP_REF", model=OdmItemGroupRefRelation
@@ -232,10 +288,16 @@ class OdmItemGroupRoot(ConceptRoot):
     has_version = RelationshipTo(
         OdmItemGroupValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(OdmItemGroupValue, "LATEST")
-    latest_draft = RelationshipTo(OdmItemGroupValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(OdmItemGroupValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(OdmItemGroupValue, "LATEST_RETIRED")
+    has_latest_value = RelationshipTo(OdmItemGroupValue, "LATEST", model=ClinicalMdrRel)
+    latest_draft = RelationshipTo(
+        OdmItemGroupValue, "LATEST_DRAFT", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipTo(
+        OdmItemGroupValue, "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipTo(
+        OdmItemGroupValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
 
 
 class OdmItemTermRelationship(ClinicalMdrRel):
@@ -262,15 +324,17 @@ class OdmItemValue(ConceptValue):
 
 
 class OdmItemRoot(ConceptRoot):
-    has_description = RelationshipTo(OdmDescriptionRoot, "HAS_DESCRIPTION")
-    has_alias = RelationshipTo(OdmAliasRoot, "HAS_ALIAS")
-    has_activity = RelationshipTo(ActivityRoot, "HAS_ACTIVITY")
+    has_description = RelationshipTo(
+        OdmDescriptionRoot, "HAS_DESCRIPTION", model=ClinicalMdrRel
+    )
+    has_alias = RelationshipTo(OdmAliasRoot, "HAS_ALIAS", model=ClinicalMdrRel)
+    has_activity = RelationshipTo(ActivityRoot, "HAS_ACTIVITY", model=ClinicalMdrRel)
     has_unit_definition = RelationshipTo(
         UnitDefinitionRoot,
         "HAS_UNIT_DEFINITION",
         model=OdmItemUnitDefinitionRelationship,
     )
-    has_codelist = RelationshipTo(CTCodelistRoot, "HAS_CODELIST")
+    has_codelist = RelationshipTo(CTCodelistRoot, "HAS_CODELIST", model=ClinicalMdrRel)
     has_codelist_term = RelationshipTo(
         CTTermRoot, "HAS_CODELIST_TERM", model=OdmItemTermRelationship
     )
@@ -290,29 +354,40 @@ class OdmItemRoot(ConceptRoot):
     )
 
     has_version = RelationshipTo(OdmItemValue, "HAS_VERSION", model=VersionRelationship)
-    has_latest_value = RelationshipTo(OdmItemValue, "LATEST")
-    latest_draft = RelationshipTo(OdmItemValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(OdmItemValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(OdmItemValue, "LATEST_RETIRED")
+    has_latest_value = RelationshipTo(OdmItemValue, "LATEST", model=ClinicalMdrRel)
+    latest_draft = RelationshipTo(OdmItemValue, "LATEST_DRAFT", model=ClinicalMdrRel)
+    latest_final = RelationshipTo(OdmItemValue, "LATEST_FINAL", model=ClinicalMdrRel)
+    latest_retired = RelationshipTo(
+        OdmItemValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
 
 
-class OdmTemplateValue(ConceptValue):
+class OdmStudyEventValue(ConceptValue):
     oid = StringProperty()
     effective_date = DateProperty()
     retired_date = DateProperty()
     description = StringProperty()
+    display_in_tree = BooleanProperty()
 
 
-class OdmTemplateRoot(ConceptRoot):
+class OdmStudyEventRoot(ConceptRoot):
     form_ref = RelationshipTo(OdmFormRoot, "FORM_REF", model=OdmFormRefRelation)
     has_version = RelationshipTo(
-        OdmTemplateValue, "HAS_VERSION", model=VersionRelationship
+        OdmStudyEventValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(OdmTemplateValue, "LATEST")
+    has_latest_value = RelationshipTo(
+        OdmStudyEventValue, "LATEST", model=ClinicalMdrRel
+    )
 
-    latest_draft = RelationshipTo(OdmTemplateValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(OdmTemplateValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(OdmTemplateValue, "LATEST_RETIRED")
+    latest_draft = RelationshipTo(
+        OdmStudyEventValue, "LATEST_DRAFT", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipTo(
+        OdmStudyEventValue, "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipTo(
+        OdmStudyEventValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
 
 
 class OdmVendorNamespaceValue(ConceptValue):
@@ -321,18 +396,28 @@ class OdmVendorNamespaceValue(ConceptValue):
 
 
 class OdmVendorNamespaceRoot(ConceptRoot):
-    has_vendor_element = RelationshipTo("OdmVendorElementRoot", "HAS_VENDOR_ELEMENT")
+    has_vendor_element = RelationshipTo(
+        "OdmVendorElementRoot", "HAS_VENDOR_ELEMENT", model=ClinicalMdrRel
+    )
     has_vendor_attribute = RelationshipTo(
-        "OdmVendorAttributeRoot", "HAS_VENDOR_ATTRIBUTE"
+        "OdmVendorAttributeRoot", "HAS_VENDOR_ATTRIBUTE", model=ClinicalMdrRel
     )
 
     has_version = RelationshipTo(
         OdmVendorNamespaceValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(OdmVendorNamespaceValue, "LATEST")
-    latest_draft = RelationshipTo(OdmVendorNamespaceValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(OdmVendorNamespaceValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(OdmVendorNamespaceValue, "LATEST_RETIRED")
+    has_latest_value = RelationshipTo(
+        OdmVendorNamespaceValue, "LATEST", model=ClinicalMdrRel
+    )
+    latest_draft = RelationshipTo(
+        OdmVendorNamespaceValue, "LATEST_DRAFT", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipTo(
+        OdmVendorNamespaceValue, "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipTo(
+        OdmVendorNamespaceValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
 
 
 class OdmVendorAttributeValue(ConceptValue):
@@ -343,10 +428,10 @@ class OdmVendorAttributeValue(ConceptValue):
 
 class OdmVendorAttributeRoot(ConceptRoot):
     belongs_to_vendor_namespace = RelationshipFrom(
-        "OdmVendorNamespaceRoot", "HAS_VENDOR_ATTRIBUTE"
+        "OdmVendorNamespaceRoot", "HAS_VENDOR_ATTRIBUTE", model=ClinicalMdrRel
     )
     belongs_to_vendor_element = RelationshipFrom(
-        "OdmVendorElementRoot", "HAS_VENDOR_ATTRIBUTE"
+        "OdmVendorElementRoot", "HAS_VENDOR_ATTRIBUTE", model=ClinicalMdrRel
     )
     belongs_to_form = RelationshipFrom(
         "OdmFormRoot", "HAS_VENDOR_ATTRIBUTE", model=OdmVendorNamespaceRelation
@@ -372,10 +457,18 @@ class OdmVendorAttributeRoot(ConceptRoot):
     has_version = RelationshipTo(
         OdmVendorAttributeValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(OdmVendorAttributeValue, "LATEST")
-    latest_draft = RelationshipTo(OdmVendorAttributeValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(OdmVendorAttributeValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(OdmVendorAttributeValue, "LATEST_RETIRED")
+    has_latest_value = RelationshipTo(
+        OdmVendorAttributeValue, "LATEST", model=ClinicalMdrRel
+    )
+    latest_draft = RelationshipTo(
+        OdmVendorAttributeValue, "LATEST_DRAFT", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipTo(
+        OdmVendorAttributeValue, "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipTo(
+        OdmVendorAttributeValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
 
 
 class OdmVendorElementValue(ConceptValue):
@@ -384,7 +477,7 @@ class OdmVendorElementValue(ConceptValue):
 
 class OdmVendorElementRoot(ConceptRoot):
     belongs_to_vendor_namespace = RelationshipFrom(
-        "OdmVendorNamespaceRoot", "HAS_VENDOR_ELEMENT"
+        "OdmVendorNamespaceRoot", "HAS_VENDOR_ELEMENT", model=ClinicalMdrRel
     )
     belongs_to_form = RelationshipFrom(
         "OdmFormRoot", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
@@ -396,13 +489,21 @@ class OdmVendorElementRoot(ConceptRoot):
         "OdmItemRoot", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
     )
     has_vendor_attribute = RelationshipTo(
-        "OdmVendorAttributeRoot", "HAS_VENDOR_ATTRIBUTE"
+        "OdmVendorAttributeRoot", "HAS_VENDOR_ATTRIBUTE", model=ClinicalMdrRel
     )
 
     has_version = RelationshipTo(
         OdmVendorElementValue, "HAS_VERSION", model=VersionRelationship
     )
-    has_latest_value = RelationshipTo(OdmVendorElementValue, "LATEST")
-    latest_draft = RelationshipTo(OdmVendorElementValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(OdmVendorElementValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(OdmVendorElementValue, "LATEST_RETIRED")
+    has_latest_value = RelationshipTo(
+        OdmVendorElementValue, "LATEST", model=ClinicalMdrRel
+    )
+    latest_draft = RelationshipTo(
+        OdmVendorElementValue, "LATEST_DRAFT", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipTo(
+        OdmVendorElementValue, "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipTo(
+        OdmVendorElementValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )

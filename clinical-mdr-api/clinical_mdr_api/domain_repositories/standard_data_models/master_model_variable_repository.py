@@ -2,22 +2,12 @@ from typing import Tuple
 
 from neomodel import RelationshipDefinition
 
-from clinical_mdr_api.domain.standard_data_models.master_model_variable import (
-    MasterModelVariableAR,
-    MasterModelVariableMetadataVO,
-    MasterModelVariableVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
 )
 from clinical_mdr_api.domain_repositories.models._utils import (
     LATEST_VERSION_ORDER_BY,
     CustomNodeSet,
-    to_relation_trees,
 )
 from clinical_mdr_api.domain_repositories.models.biomedical_concepts import (
     ActivityItemClassRoot,
@@ -27,15 +17,23 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRelationship,
 )
 from clinical_mdr_api.domain_repositories.models.standard_data_model import (
-    ClassVariableRoot,
-    DatasetClassRoot,
-    DatasetClassValue,
-    DatasetVariableRoot,
+    Dataset,
+    DatasetVariable,
+    MasterModelDatasetValue,
     MasterModelValue,
     MasterModelVariableValue,
 )
 from clinical_mdr_api.domain_repositories.neomodel_ext_item_repository import (
     NeomodelExtBaseRepository,
+)
+from clinical_mdr_api.domains.standard_data_models.master_model_variable import (
+    MasterModelVariableAR,
+    MasterModelVariableMetadataVO,
+    MasterModelVariableVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemStatus,
+    LibraryVO,
 )
 from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.standard_data_models.master_model_variable import (
@@ -46,15 +44,15 @@ from clinical_mdr_api.models.standard_data_models.master_model_variable import (
 class MasterModelVariableRepository(
     NeomodelExtBaseRepository, LibraryItemRepositoryImplBase[MasterModelVariableAR]
 ):
-    root_class = DatasetVariableRoot
+    root_class = DatasetVariable
     value_class = MasterModelVariableValue
     return_model = MasterModelVariable
 
     def get_neomodel_extension_query(self) -> CustomNodeSet:
         return (
-            ClassVariableRoot.nodes.fetch_relations(
+            DatasetVariable.nodes.fetch_relations(
                 "has_latest_master_model_value__has_variable",
-                "has_class_variable__has_library",
+                "has_dataset_variable__has_library",
             )
             .fetch_optional_relations(
                 "has_latest_master_model_value__has_activity_item_class"
@@ -113,10 +111,10 @@ class MasterModelVariableRepository(
         Overrides generic LibraryItemRepository method
         """
         relation_data: MasterModelVariableMetadataVO = item.item_metadata
-        root = ClassVariableRoot.nodes.get_or_none(uid=item.uid)
+        root = DatasetVariable.nodes.get_or_none(uid=item.uid)
 
         if root is None:
-            root = ClassVariableRoot(uid=item.uid).save()
+            root = DatasetVariable(uid=item.uid).save()
 
         value = self._get_or_create_value(root=root, ar=item)
 
@@ -136,7 +134,7 @@ class MasterModelVariableRepository(
         return item
 
     def _get_version_relation_keys(
-        self, root_node: ClassVariableRoot
+        self, root_node: DatasetVariable
     ) -> Tuple[
         RelationshipDefinition,
         RelationshipDefinition,
@@ -168,7 +166,7 @@ class MasterModelVariableRepository(
         )
 
     def _get_or_create_value(
-        self, root: DatasetVariableRoot, ar: MasterModelVariableAR
+        self, root: DatasetVariable, ar: MasterModelVariableAR
     ) -> MasterModelValue:
         for itm in root.has_master_model_version.all():
             if not self._has_data_changed(ar, itm):
@@ -205,33 +203,23 @@ class MasterModelVariableRepository(
         self._db_save_node(new_value)
 
         # Connect with MasterModelDatasetValue node
-        # dataset_root: DatasetRoot = DatasetRoot.nodes.get_or_none(
-        #     uid=ar.master_model_variable_vo.class_uid
-        # )
-
-        class_value = to_relation_trees(
-            DatasetClassValue.nodes.fetch_relations(
-                "version_of", "has_dataset_class__implements"
-            ).filter(
-                version_of__uid=ar.master_model_variable_vo.class_uid,
-                has_dataset_class__implements__version_number="3.2",
+        dataset_root: Dataset = Dataset.nodes.get_or_none(
+            uid=ar.master_model_variable_vo.dataset_uid
+        )
+        if dataset_root is None:
+            raise BusinessLogicException(
+                f"The given Dataset {ar.master_model_variable_vo.dataset_uid} does not exist in the database."
             )
+        latest_dataset_value: MasterModelDatasetValue = (
+            dataset_root.has_latest_master_model_value.single()
         )
 
-        if not class_value:
+        if latest_dataset_value is None:
             raise BusinessLogicException(
-                f"The given Dataset {ar.master_model_variable_vo.class_uid} does not exist in the database."
+                f"The given Dataset {ar.master_model_variable_vo.dataset_uid} does not have a valid latest master model version in the database."
             )
-        # latest_dataset_value: MasterModelDatasetValue = (
-        #     class_root.has_latest_master_model_value.single()
-        # )
 
-        # if latest_dataset_value is None:
-        #     raise BusinessLogicException(
-        #         f"The given Dataset {ar.master_model_variable_vo.class_uid} does not have a valid latest master model version in the database."
-        #     )
-
-        new_value.has_variable.connect(class_value[0])
+        new_value.has_variable.connect(latest_dataset_value)
 
         # Find Instance class
         if ar.master_model_variable_vo.activity_item_class_uid is not None:
@@ -245,22 +233,22 @@ class MasterModelVariableRepository(
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         *,
-        root: DatasetVariableRoot,
+        root: DatasetVariable,
         library: Library,
         relationship: VersionRelationship,
         value: MasterModelVariableValue,
     ) -> MasterModelVariableAR:
-        # TODO : Get the class uid
-        class_value: DatasetClassValue = value.has_variable.get_or_none()
-        class_uid = None
-        if class_value is not None:
-            class_root: DatasetClassRoot = class_value.version_of.single()
-            if class_root is not None:
-                class_uid = class_root.uid
+        # TODO : Get the dataset uid
+        dataset_value: MasterModelDatasetValue = value.has_variable.get_or_none()
+        dataset_uid = None
+        if dataset_value is not None:
+            dataset: Dataset = dataset_value.has_master_model_version.single()
+            if dataset is not None:
+                dataset_uid = dataset.uid
         return MasterModelVariableAR.from_repository_values(
             variable_uid=root.uid,
             master_model_variable_vo=MasterModelVariableVO.from_repository_values(
-                class_uid=class_uid,
+                dataset_uid=dataset_uid,
                 variable_uid=root.uid,
                 master_model_version_number=None,
                 description=value.description,
@@ -301,7 +289,7 @@ class MasterModelVariableRepository(
     def _maintain_parameters(
         self,
         versioned_object: MasterModelVariableAR,
-        root: DatasetVariableRoot,
+        root: DatasetVariable,
         value: MasterModelVariableValue,
     ) -> None:
         pass

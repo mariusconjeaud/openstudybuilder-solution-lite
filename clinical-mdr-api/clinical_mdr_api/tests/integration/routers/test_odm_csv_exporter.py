@@ -13,7 +13,8 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_ODM_FORMS,
     STARTUP_ODM_ITEM_GROUPS,
     STARTUP_ODM_ITEMS,
-    STARTUP_ODM_TEMPLATES,
+    STARTUP_ODM_METHODS,
+    STARTUP_ODM_STUDY_EVENTS,
     STARTUP_ODM_VENDOR_ELEMENTS,
     STARTUP_ODM_VENDOR_NAMESPACES,
     STARTUP_ODM_XML_EXPORTER,
@@ -22,20 +23,21 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
 
 
 class OdmCsvExporterTest(TestCase):
-    TEST_DB_NAME = "odmxmlexporter"
+    TEST_DB_NAME = "odmcsvexporter"
     HEADERS = {"content-type": "text/csv"}
 
     def setUp(self):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_ODM_FORMAL_EXPRESSIONS)
         db.cypher_query(STARTUP_ODM_CONDITIONS)
+        db.cypher_query(STARTUP_ODM_METHODS)
         db.cypher_query(STARTUP_ODM_ALIASES)
         db.cypher_query(STARTUP_CT_TERM)
         db.cypher_query(STARTUP_UNIT_DEFINITIONS)
         db.cypher_query(STARTUP_ODM_ITEMS)
         db.cypher_query(STARTUP_ODM_ITEM_GROUPS)
         db.cypher_query(STARTUP_ODM_FORMS)
-        db.cypher_query(STARTUP_ODM_TEMPLATES)
+        db.cypher_query(STARTUP_ODM_STUDY_EVENTS)
         db.cypher_query(STARTUP_ODM_VENDOR_NAMESPACES)
         db.cypher_query(STARTUP_ODM_VENDOR_ELEMENTS)
         db.cypher_query(STARTUP_ODM_XML_EXPORTER)
@@ -44,17 +46,18 @@ class OdmCsvExporterTest(TestCase):
 
         self.test_client = TestClient(main.app)
 
-    def test_get_odm_template(self):
+    def test_get_odm_study_event(self):
         response = self.test_client.post(
-            "concepts/odms/metadata/csvs/export?target_uid=odm_template1&target_type=template",
+            "concepts/odms/metadata/csvs/export?target_uid=odm_study_event1&target_type=study_event",
             headers=self.HEADERS,
         )
 
+        print(response.text)
         assert response.status_code == 200
         assert (
             response.text
             # pylint:disable=line-too-long
-            == '"Template_Name","Template_Version","Form_Name","Form_Repeating","Form_Version","ItemGroup_Name","ItemGroup_Version","Item_Name","Item_Datatype","Item_Version","Item_Units","Item_Codelist","Item_Terms"\n"name1","1.0","name1","yes","1.0","name1","1.0","name1","datatype1","1.0","name1","name1","code_submission_value1"\n'
+            == '"StudyEvent_Name","StudyEvent_Version","Form_Name","Form_Repeating","Form_Version","ItemGroup_Name","ItemGroup_Version","Item_Name","Item_Datatype","Item_Version","Item_Units","Item_Codelist","Item_Terms"\n"name1","1.0","name1","yes","1.0","name1","1.0","name1","datatype1","1.0","name1","name1","code_submission_value1"\n'
         )
 
     def test_get_odm_form(self):
@@ -107,9 +110,9 @@ class OdmCsvExporterTest(TestCase):
         assert rs["type"] == "BusinessLogicException"
         assert rs["message"] == "Requested target type not supported."
 
-    def test_odm_template_not_found(self):
+    def test_odm_study_event_not_found(self):
         response = self.test_client.post(
-            "concepts/odms/metadata/csvs/export?target_uid=wrong&target_type=template",
+            "concepts/odms/metadata/csvs/export?target_uid=wrong&target_type=study_event",
             headers=self.HEADERS,
         )
 

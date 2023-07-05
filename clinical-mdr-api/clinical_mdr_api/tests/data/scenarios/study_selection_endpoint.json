@@ -75,7 +75,8 @@
                     "endpoint_template": {
                         "name": "endpoint_1",
                         "name_plain": "endpoint_1",
-                        "uid": null
+                        "uid": null,
+                        "sequence_id": "ET1"
                     },
                     "library": {
                         "is_editable": true,
@@ -167,7 +168,8 @@
                         "objective_template": {
                             "name": "objective_1",
                             "name_plain": "objective_1",
-                            "uid": null
+                            "uid": null,
+                            "sequence_id": "OT1"
                         },
                         "parameter_terms": [],
                         "possible_actions": [
@@ -210,7 +212,8 @@
                     "timeframe_template": {
                         "name": "timeframe_1",
                         "name_plain": "timeframe_1",
-                        "uid": null
+                        "uid": null,
+                        "sequence_id": "TT1"
                     },
                     "uid": "Timeframe_000001",
                     "user_initials": "TODO Initials",
@@ -247,7 +250,8 @@
                             "endpoint_template": {
                                 "name": "endpoint_1",
                                 "name_plain": "endpoint_1",
-                                "uid": null
+                                "uid": null,
+                                "sequence_id": "ET1"
                             },
                             "library": {
                                 "is_editable": true,
@@ -342,7 +346,8 @@
                                 "objective_template": {
                                     "name": "objective_1",
                                     "name_plain": "objective_1",
-                                    "uid": null
+                                    "uid": null,
+                                    "sequence_id": "OT1"
                                 },
                                 "parameter_terms": [],
                                 "possible_actions": [
@@ -382,7 +387,8 @@
                             "timeframe_template": {
                                 "name": "timeframe_1",
                                 "name_plain": "timeframe_1",
-                                "uid": null
+                                "uid": null,
+                                "sequence_id": "TT1"
                             },
                             "uid": "Timeframe_000001",
                             "user_initials": "TODO Initials",
@@ -442,7 +448,8 @@
                                 "objective_template": {
                                     "name": "objective_1",
                                     "name_plain": "objective_1",
-                                    "uid": "ObjectiveTemplate_000001"
+                                    "uid": "ObjectiveTemplate_000001",
+                                    "sequence_id": "OT1"
                                 },
                                 "parameter_terms": [],
                                 "library": {
@@ -524,7 +531,8 @@
                             "endpoint_template": {
                                 "name": "endpoint_1",
                                 "name_plain": "endpoint_1",
-                                "uid": "EndpointTemplate_000001"
+                                "uid": "EndpointTemplate_000001",
+                                "sequence_id": "ET1"
                             },
                             "parameter_terms": [],
                             "library": {
@@ -550,7 +558,8 @@
                             "timeframe_template": {
                                 "name": "timeframe_1",
                                 "name_plain": "timeframe_1",
-                                "uid": "TimeframeTemplate_000001"
+                                "uid": "TimeframeTemplate_000001",
+                                "sequence_id": "TT1"
                             },
                             "parameter_terms": [],
                             "library": {
@@ -590,7 +599,8 @@
                         "endpoint_template": {
                             "name": "endpoint_1",
                             "name_plain": "endpoint_1",
-                            "uid": null
+                            "uid": null,
+                            "sequence_id": "ET1"
                         },
                         "library": {
                             "is_editable": true,
@@ -685,7 +695,8 @@
                             "objective_template": {
                                 "name": "objective_1",
                                 "name_plain": "objective_1",
-                                "uid": null
+                                "uid": null,
+                                "sequence_id": "OT1"
                             },
                             "parameter_terms": [],
                             "possible_actions": [
@@ -725,7 +736,8 @@
                         "timeframe_template": {
                             "name": "timeframe_1",
                             "name_plain": "timeframe_1",
-                            "uid": null
+                            "uid": null,
+                            "sequence_id": "TT1"
                         },
                         "uid": "Timeframe_000001",
                         "user_initials": "TODO Initials",
@@ -783,7 +795,8 @@
                         "objective_template": {
                             "name": "objective_1",
                             "name_plain": "objective_1",
-                            "uid": null
+                            "uid": null,
+                            "sequence_id": "OT1"
                         },
                         "parameter_terms": [],
                         "possible_actions": [
@@ -824,7 +837,8 @@
                     "timeframe_template": {
                         "name": "timeframe_1",
                         "name_plain": "timeframe_1",
-                        "uid": null
+                        "uid": null,
+                        "sequence_id": "TT1"
                     },
                     "uid": "Timeframe_000001",
                     "user_initials": "TODO Initials",
@@ -862,7 +876,8 @@
                     "endpoint_template": {
                         "name": "endpoint_1",
                         "name_plain": "endpoint_1",
-                        "uid": null
+                        "uid": null,
+                        "sequence_id": "ET1"
                     },
                     "library": {
                         "is_editable": true,
@@ -908,7 +923,8 @@
                         "objective_template": {
                             "name": "objective_1",
                             "name_plain": "objective_1",
-                            "uid": null
+                            "uid": null,
+                            "sequence_id": "OT1"
                         },
                         "parameter_terms": [],
                         "possible_actions": [
@@ -1000,7 +1016,8 @@
                             "endpoint_template": {
                                 "name": "endpoint_1",
                                 "name_plain": "endpoint_1",
-                                "uid": null
+                                "uid": null,
+                                "sequence_id": "ET1"
                             },
                             "library": {
                                 "is_editable": true,
@@ -1093,7 +1110,8 @@
                                 "objective_template": {
                                     "name": "objective_1",
                                     "name_plain": "objective_1",
-                                    "uid": null
+                                    "uid": null,
+                                    "sequence_id": "OT1"
                                 },
                                 "parameter_terms": [],
                                 "possible_actions": [
@@ -1134,7 +1152,8 @@
                             "timeframe_template": {
                                 "name": "timeframe_1",
                                 "name_plain": "timeframe_1",
-                                "uid": null
+                                "uid": null,
+                                "sequence_id": "TT1"
                             },
                             "uid": "Timeframe_000001",
                             "user_initials": "TODO Initials",
@@ -1172,7 +1191,8 @@
                                 "objective_template": {
                                     "name": "objective_1",
                                     "name_plain": "objective_1",
-                                    "uid": null
+                                    "uid": null,
+                                    "sequence_id": "OT1"
                                 },
                                 "parameter_terms": [],
                                 "possible_actions": [
@@ -1213,7 +1233,8 @@
                             "timeframe_template": {
                                 "name": "timeframe_1",
                                 "name_plain": "timeframe_1",
-                                "uid": null
+                                "uid": null,
+                                "sequence_id": "TT1"
                             },
                             "uid": "Timeframe_000001",
                             "user_initials": "TODO Initials",
@@ -1229,7 +1250,8 @@
                             "endpoint_template": {
                                 "name": "endpoint_1",
                                 "name_plain": "endpoint_1",
-                                "uid": null
+                                "uid": null,
+                                "sequence_id": "ET1"
                             },
                             "library": {
                                 "is_editable": true,
@@ -1275,7 +1297,8 @@
                                 "objective_template": {
                                     "name": "objective_1",
                                     "name_plain": "objective_1",
-                                    "uid": null
+                                    "uid": null,
+                                    "sequence_id": "OT1"
                                 },
                                 "parameter_terms": [],
                                 "possible_actions": [
@@ -1512,7 +1535,8 @@
                         "objective_template": {
                             "name": "objective_1",
                             "name_plain": "objective_1",
-                            "uid": null
+                            "uid": null,
+                            "sequence_id": "OT1"
                         },
                         "parameter_terms": [],
                         "possible_actions": [
@@ -1624,7 +1648,8 @@
                             "name": "endpoint_1",
                             "name_plain": "endpoint_1",
                             "guidance_text": null,
-                            "uid": "EndpointTemplate_000001"
+                            "uid": "EndpointTemplate_000001",
+                            "sequence_id": "ET1"
                         },
                         "parameter_terms": [],
                         "library": {
@@ -1686,7 +1711,8 @@
                     "endpoint_template": {
                         "name": "endpoint_template_2",
                         "name_plain": "endpoint_template_2",
-                        "uid": "EndpointTemplate_000002"
+                        "uid": "EndpointTemplate_000002",
+                        "sequence_id": "ET2"
                     },
                     "library": {
                         "is_editable": true,
@@ -1724,7 +1750,8 @@
                     "timeframe_template": {
                         "name": "timeframe_1",
                         "name_plain": "timeframe_1",
-                        "uid": null
+                        "uid": null,
+                        "sequence_id": "TT1"
                     },
                     "uid": "Timeframe_000001",
                     "user_initials": "TODO Initials",
@@ -1794,7 +1821,8 @@
                         "objective_template": {
                             "name": "objective_1",
                             "name_plain": "objective_1",
-                            "uid": "ObjectiveTemplate_000001"
+                            "uid": "ObjectiveTemplate_000001",
+                            "sequence_id": "OT1"
                         },
                         "parameter_terms": [],
                         "possible_actions": [
@@ -1852,7 +1880,8 @@
                     "endpoint_template": {
                         "name": "endpoint_template_2",
                         "name_plain": "endpoint_template_2",
-                        "uid": "EndpointTemplate_000002"
+                        "uid": "EndpointTemplate_000002",
+                        "sequence_id": "ET2"
                     },
                     "library": {
                         "is_editable": true,
@@ -1890,7 +1919,8 @@
                     "timeframe_template": {
                         "name": "timeframe_1",
                         "name_plain": "timeframe_1",
-                        "uid": null
+                        "uid": null,
+                        "sequence_id": "TT1"
                     },
                     "uid": "Timeframe_000001",
                     "user_initials": "TODO Initials",

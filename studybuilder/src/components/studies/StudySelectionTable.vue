@@ -11,6 +11,8 @@
   :server-items-length="total"
   has-api
   @filter="getStudySelection"
+  :show-filter-bar-by-default="showFilterBarByDefault"
+  :filters-modify-function="updateHeaderFilters"
   v-bind="$attrs"
   v-on="$listeners"
   >
@@ -50,6 +52,10 @@ export default {
     extraDataFetcherFilters: {
       type: Object,
       required: false
+    },
+    showFilterBarByDefault: {
+      type: Boolean,
+      default: true
     }
   },
   computed: {
@@ -94,6 +100,12 @@ export default {
     },
     selectItem (item) {
       this.$emit('item-selected', item)
+    },
+    updateHeaderFilters (jsonFilter, params) {
+      jsonFilter.study_uid = { v: this.studies.map(study => study.uid) }
+      return {
+        jsonFilter, params
+      }
     }
   },
   watch: {

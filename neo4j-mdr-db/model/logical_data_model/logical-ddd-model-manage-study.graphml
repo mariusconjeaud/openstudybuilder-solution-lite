@@ -124,7 +124,7 @@ order: Integer<y:LabelModel><y:ErdAttributesNodeLabelModel/></y:LabelModel><y:Mo
           <y:Fill color="#E8EEF7" color2="#B7C9E3" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" backgroundColor="#B7C9E3" configuration="com.yworks.entityRelationship.label.name" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasLineColor="false" height="18.701171875" horizontalTextPosition="center" iconTextGap="4" modelName="internal" modelPosition="t" textColor="#000000" verticalTextPosition="bottom" visible="true" width="34.685546875" x="88.59967260566543" xml:space="preserve" y="4.0">Study</y:NodeLabel>
-          <y:NodeLabel alignment="left" autoSizePolicy="content" configuration="com.yworks.entityRelationship.label.attributes" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="253.919921875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="top" visible="true" width="192.771484375" x="2.0" xml:space="preserve" y="30.701171875">uid: String
+          <y:NodeLabel alignment="left" autoSizePolicy="content" configuration="com.yworks.entityRelationship.label.attributes" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="268.62109375" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="top" visible="true" width="192.771484375" x="2.0" xml:space="preserve" y="30.701171875">uid: String
 study_number: String
 study_sub_part_id: Derived String
 study_sub_part_id_acronym: String
@@ -132,6 +132,7 @@ study_id: Derived String
 is_parrent_study: Derived Boolean
 is_sub_study: Derived Boolean
 study_acronym: String
+description: String
 ----------------------------------
 list
 new
@@ -366,7 +367,7 @@ Not currently linked to a CTTerm!<y:LabelModel><y:SmartNodeLabelModel distance="
           <y:Geometry height="195.74741440031187" width="298.4935188145513" x="-387.39692008275506" y="-462.7970477133887"/>
           <y:Fill color="#FF9900" transparent="false"/>
           <y:BorderStyle color="#000000" raised="false" type="line" width="1.0"/>
-          <y:NodeLabel alignment="left" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="151.01171875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="288.197265625" x="4.0" xml:space="preserve" y="4.0">A Study definitions can be:
+          <y:NodeLabel alignment="left" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="180.4140625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="288.197265625" x="4.0" xml:space="preserve" y="4.0">A Study definitions can be:
 - a Simple study without sub study relationships
 - a parent study holding multiple sub  study parts
 - a sub study part for a parent study
@@ -375,7 +376,9 @@ Only one level in the study hierarchy is possible.
 The attribute 'study_sub_part-name' can only be
 defined for sub studies.
 For sub studies the study number and related
-project must be the same as the parrent study.<y:LabelModel><y:SmartNodeLabelModel distance="4.0"/></y:LabelModel><y:ModelParameter><y:SmartNodeLabelModelParameter labelRatioX="-0.5" labelRatioY="-0.5" nodeRatioX="-0.5" nodeRatioY="-0.5" offsetX="4.0" offsetY="4.0" upX="0.0" upY="-1.0"/></y:ModelParameter></y:NodeLabel>
+project must be the same as the parrent study.
+Consider if the StudyParent-StudySub-part is
+Root-Root or Value-Value relationship.<y:LabelModel><y:SmartNodeLabelModel distance="4.0"/></y:LabelModel><y:ModelParameter><y:SmartNodeLabelModelParameter labelRatioX="-0.5" labelRatioY="-0.5" nodeRatioX="-0.5" nodeRatioY="-0.5" offsetX="4.0" offsetY="4.0" upX="0.0" upY="-1.0"/></y:ModelParameter></y:NodeLabel>
           <y:Shape type="rectangle"/>
         </y:ShapeNode>
       </data>
@@ -527,7 +530,6 @@ project must be the same as the parrent study.<y:LabelModel><y:SmartNodeLabelMod
       </data>
     </edge>
     <edge id="e14" source="n20" target="n7">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="-79.94244604316543" ty="128.55902590192363"/>

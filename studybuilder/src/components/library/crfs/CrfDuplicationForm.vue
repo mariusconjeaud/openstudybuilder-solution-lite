@@ -122,7 +122,7 @@ export default {
   methods: {
     getElementsToLinkTo () {
       if (this.type === crfTypes.FORM) {
-        crfs.get('templates', {}).then((resp) => {
+        crfs.get('study-events', {}).then((resp) => {
           this.itemsToLinkTo = resp.data.items
         })
       } else if (this.type === crfTypes.GROUP) {

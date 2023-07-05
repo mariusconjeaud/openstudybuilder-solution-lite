@@ -1,5 +1,5 @@
 ACTIVITY_INSTANCE_CLASS,ACTIVITY_ITEM_CLASS,LEGACY_CDW_COLUMN,MANDATORY,ORDER,DATA_COLLECTION,SEMANTIC_ROLE,SEMANTIC_DATA_TYPE,CODELIST
-AdverseEvent,ae_number,,Yes,1,Yes,IDENTIFYER,TEXT,
+AdverseEvent,ae_number,,Yes,1,Yes,IDENTIFIER,TEXT,
 AdverseEvent,congenital,,No,2,Yes,RECOQUAL,TEXT,NY
 AdverseEvent,disability,,No,3,Yes,RECOQUAL,TEXT,NY
 AdverseEvent,death,,No,4,Yes,RECOQUAL,TEXT,NY
@@ -52,6 +52,7 @@ AssociatedPersonsEvent,reason_not_done,,No,10,Yes,RECOQUAL,TEXT,NY
 AssociatedPersonsEvent,severity,,No,11,Yes,RECOQUAL,TEXT,AESEV
 AssociatedPersonsEvent,serious,,No,12,Yes,RECOQUAL,TEXT,NY
 AssociatedPersonsEvent,outcome,,No,13,Yes,RECOQUAL,TEXT,OUT
+AssociatedPersonsEvent,evaluation_interval,,No,14,Yes,TIMING,TEXT,
 AssociatedPersonsFinding,reference_id,,No,1,Yes,IDENTIFIER,TEXT,
 AssociatedPersonsFinding,test_name_code,,Yes,2,Yes,TOPIC,TEXT,SSTEST; SSTESTCD; VSTEST; VSTESTCD; FATEST; FATESTCD; MOTEST; MOTESTCD; PCTEST; PCTESTCD
 AssociatedPersonsFinding,repitition_number,,No,3,No,RECOQUAL,FLOAT,
@@ -81,6 +82,8 @@ AssociatedPersonsFinding,collection_datetime,,Yes,26,Yes,TIMING,DATETIME,
 AssociatedPersonsFinding,end_datetime,,No,27,Yes,TIMING,DATETIME,
 AssociatedPersonsFinding,time_point,,No,28,Yes,TIMING,TEXT,
 AssociatedPersonsFinding,elapsed_time,,No,29,Yes,RECOQUAL,TEXT,
+AssociatedPersonsFinding,evaluation_interval,,No,30,Yes,TIMING,TEXT,
+AssociatedPersonsFinding,evaluation_interval_text,,No,31,Yes,TIMING,TEXT,
 AssociatedPersonsIntervention,reference_id,,No,1,Yes,IDENTIFIER,TEXT,
 AssociatedPersonsIntervention,treatment,,Yes,2,Yes,TOPIC,TEXT,
 AssociatedPersonsIntervention,mood,,No,3,Yes,RECOQUAL,TEXT,
@@ -102,6 +105,7 @@ AssociatedPersonsIntervention,lot_number,,No,18,Yes,RECOQUAL,TEXT,
 AssociatedPersonsIntervention,fasting_status,,No,19,Yes,RECOQUAL,TEXT,NY
 AssociatedPersonsIntervention,start_datetime,,Yes,20,Yes,TIMING,DATETIME,
 AssociatedPersonsIntervention,end_datetime,,No,21,Yes,TIMING,DATETIME,
+AssociatedPersonsIntervention,evaluation_interval,,No,22,Yes,TIMING,TEXT,
 AssociatedPersonsMedicalHistory,continuing,,No,1,Yes,RECOQUAL,TEXT,NY
 AssociatedPersonsNumericFinding,unit_dimension,,Yes,1,Yes,VARIQUAL,TEXT,UNIT_DIMENSION
 AssociatedPersonsNumericFinding,standard_unit,,Yes,2,Yes,VARIQUAL,TEXT,UNIT
@@ -146,6 +150,7 @@ Event,reason_not_done,,No,10,Yes,RECOQUAL,TEXT,NY
 Event,severity,,No,11,Yes,RECOQUAL,TEXT,AESEV
 Event,serious,,No,12,Yes,RECOQUAL,TEXT,NY
 Event,outcome,,No,13,Yes,RECOQUAL,TEXT,OUT
+Event,evaluation_interval,,No,14,Yes,TIMING,TEXT,
 Finding,reference_id,,No,1,Yes,IDENTIFIER,TEXT,
 Finding,test_name_code,,Yes,2,Yes,TOPIC,TEXT,SSTEST; SSTESTCD; VSTEST; VSTESTCD; FATEST; FATESTCD; MOTEST; MOTESTCD; PCTEST; PCTESTCD
 Finding,repitition_number,,No,3,No,RECOQUAL,FLOAT,
@@ -177,6 +182,8 @@ Finding,collection_datetime,,Yes,28,Yes,TIMING,DATETIME,
 Finding,end_datetime,,No,29,Yes,TIMING,DATETIME,
 Finding,time_point,,No,30,Yes,TIMING,TEXT,
 Finding,elapsed_time,,No,31,Yes,RECOQUAL,TEXT,
+Finding,evaluation_interval,,No,32,Yes,TIMING,TEXT,
+Finding,evaluation_interval_text,,No,33,Yes,TIMING,TEXT,
 HypoglycaemicEpisode,glucose_level,,No,1,Yes,RECOQUAL,FLOAT,
 HypoglycaemicEpisode,glucose_unit,,No,2,Yes,RECOQUAL,TEXT,UNIT
 HypoglycaemicEpisode,relation_to_physical_activity,,No,3,Yes,RECOQUAL,TEXT,NY
@@ -241,6 +248,7 @@ Intervention,lot_number,,No,18,Yes,RECOQUAL,TEXT,
 Intervention,fasting_status,,No,19,Yes,RECOQUAL,TEXT,NY
 Intervention,start_datetime,,Yes,20,Yes,TIMING,DATETIME,
 Intervention,end_datetime,,No,21,Yes,TIMING,DATETIME,
+Intervention,evaluation_interval,,No,22,Yes,TIMING,TEXT,
 MedicalHistory,continuing,,No,1,Yes,RECOQUAL,TEXT,NY
 NumericFinding,original_result,,Yes,1,Yes,RESUQUAL,FLOAT,
 NumericFinding,original_unit,,Yes,2,Yes,VARIQUAL,TEXT,UNIT
@@ -259,13 +267,14 @@ Observation,laterality,,No,9,Yes,RECOQUAL,TEXT,LAT
 Observation,directionality,,No,10,Yes,VARIQUAL,TEXT,DIR
 Observation,portion,,No,11,Yes,VARIQUAL,TEXT,PORTOT
 Observation,associated_persons_id,,Yes,12,Yes,IDENTIFIER,TEXT,
+Observation,bc_identifier,,No,13,No,IDENTIFIER,TEXT,
 OtherQualifiers,other_qualifier_label,,Yes,1,Yes,RECOQUAL,TEXT,
 OtherQualifiers,other_integer_qualifier,,No,2,Yes,RECOQUAL,INTEGER,
 OtherQualifiers,other_float_qualifier,,No,3,Yes,RECOQUAL,FLOAT,
 OtherQualifiers,other_text_qualifier,,No,4,Yes,RECOQUAL,TEXT,
-SubjectObservation,domain,,Yes,0,No,IDENTIFYER,CTTERM,
+SubjectObservation,domain,,Yes,0,No,IDENTIFIER,CTTERM,
 SubjectObservation,cdisc_concept_id,,No,1,No,IDENTIFIER,TEXT,
-SubjectObservation,study_id,,Yes,1,No,IDENTIFYER,TEXT,
-SubjectObservation,subject_id,,Yes,2,Yes,IDENTIFYER,TEXT,
-SubjectObservation,unique_subject_id,,Yes,3,No,IDENTIFYER,TEXT,
+SubjectObservation,study_id,,Yes,1,No,IDENTIFIER,TEXT,
+SubjectObservation,subject_id,,Yes,2,Yes,IDENTIFIER,TEXT,
+SubjectObservation,unique_subject_id,,Yes,3,No,IDENTIFIER,TEXT,
 TextualFinding,original_result,,Yes,1,Yes,RESUQUAL,TEXT,

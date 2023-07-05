@@ -4,18 +4,18 @@ from typing import Dict
 
 from neomodel import db  # type: ignore
 
-from clinical_mdr_api.domain.study_definition_aggregate.root import StudyDefinitionAR
-from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
-    StudyDescriptionVO,
-)
-from clinical_mdr_api.domain_repositories.clinical_programme.clinical_programme_repository import (
+from clinical_mdr_api.domain_repositories.clinical_programmes.clinical_programme_repository import (
     ClinicalProgrammeRepository,
 )
-from clinical_mdr_api.domain_repositories.project.project_repository import (
+from clinical_mdr_api.domain_repositories.projects.project_repository import (
     ProjectRepository,
 )
-from clinical_mdr_api.domain_repositories.study_definition.study_definition_repository_impl import (
+from clinical_mdr_api.domain_repositories.study_definitions.study_definition_repository_impl import (
     StudyDefinitionRepositoryImpl,
+)
+from clinical_mdr_api.domains.study_definition_aggregates.root import StudyDefinitionAR
+from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
+    StudyDescriptionVO,
 )
 from clinical_mdr_api.tests.integration.domain_repositories._utils import (
     wipe_study_definition_repository,  # type: ignore

@@ -232,3 +232,10 @@ label.required::after {
 .ql-editor{
     min-height: 100px !important;
 }
+
+// Indication of changed values in version history overview
+.difference {
+    width: fit-content;
+    padding-left: 3px;
+    padding-right: 3px;
+}

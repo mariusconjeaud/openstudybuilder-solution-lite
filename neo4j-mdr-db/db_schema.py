@@ -45,11 +45,6 @@ INDEXES = [
     ("ActivitySubGroupValue", "name"),
     ("ActivityValue", "name"),
     ("ActivityInstanceValue", "name"),
-    ("CategoricFindingValue", "name"),
-    ("FindingValue", "name"),
-    ("NumericFindingValue", "name"),
-    ("EventValue", "name"),
-    ("TextualFindingValue", "name"),
     ("LagTimeValue", "name"),
     ("NumericValue", "name"),
     ("SimpleConceptValue", "name"),
@@ -82,7 +77,7 @@ INDEXES = [
     ("CTTermAttributesValue", "code_submission_value"),
     ("CTTermAttributesValue", "name_submission_value"),
     ("StudyField", "field_name"),
-    ("DataModelVersion", "uid")
+    ("DataModelVersion", "uid"),
 ]
 
 # array of text indexes to create [label, property]
@@ -100,10 +95,10 @@ TEXT_INDEXES = [
 REL_INDEXES = [
     ("CONTAINS_DATASET", "href"),
     ("CONTAINS_DATASET_CLASS", "href"),
-    ("CONTAINS_CLASS_VARIABLE", "href"),
+    ("CONTAINS_VARIABLE_CLASS", "href"),
     ("CONTAINS_DATASET_VARIABLE", "href"),
     ("CONTAINS_DATASET_SCENARIO", "href"),
-    ("HAS_CLASS_VARIABLE", "version_number"),
+    ("HAS_VARIABLE_CLASS", "version_number"),
     ("HAS_DATASET_VARIABLE", "version_number"),
 ]
 
@@ -125,11 +120,6 @@ CONSTRAINTS = [
     ("ActivitySubGroupRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("ActivityRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("ActivityInstanceRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
-    ("CategoricFindingRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
-    ("FindingRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
-    ("NumericFindingRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
-    ("EventRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
-    ("TextualFindingRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("NumericValueRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("LagTimeRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("SimpleConceptRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
@@ -174,10 +164,12 @@ CONSTRAINTS = [
     ("DataModelVersion", "href", CONSTRAINT_TYPE_NODE_KEY),
     ("DataModelRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("DataModelIGRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
-    ("DatasetClassRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
-    ("DatasetRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
-    ("ClassVariableRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
-    ("DatasetVariableRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("DataModelValue", "name", CONSTRAINT_TYPE_NODE_KEY),
+    ("DataModelIGValue", "name", CONSTRAINT_TYPE_NODE_KEY),
+    ("DatasetClass", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("Dataset", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("VariableClass", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("DatasetVariable", "uid", CONSTRAINT_TYPE_NODE_KEY),
 ]
 
 

@@ -2,10 +2,26 @@ from typing import Optional
 
 from pydantic import Field
 
-from clinical_mdr_api.models.concept import VersionProperties
+from clinical_mdr_api.models.standard_data_models.variable_class import (
+    SimpleDatasetClass,
+)
+from clinical_mdr_api.models.utils import BaseModel
 
 
-class Dataset(VersionProperties):
+class SimpleDataModelIG(BaseModel):
+    ordinal: Optional[str] = Field(
+        None,
+        title="ordinal",
+        description="ordinal",
+    )
+    data_model_ig_name: str = Field(
+        ...,
+        title="data_model_ig_name",
+        description="The name of the data model ig",
+    )
+
+
+class Dataset(BaseModel):
     class Config:
         orm_mode = True
 
@@ -13,41 +29,58 @@ class Dataset(VersionProperties):
         ...,
         title="uid",
         description="The uid of the dataset",
-        source="uid",
     )
     label: str = Field(
         ...,
         title="label",
         description="The label of the dataset",
-        source="has_latest_value.label",
     )
     title: str = Field(
         ...,
         title="title",
         description="The title of the dataset",
-        source="has_latest_value.title",
     )
     description: Optional[str] = Field(
-        None,
-        title="description",
-        description="description",
-        source="has_latest_value.description",
+        None, title="description", description="description", nullable=True
     )
     catalogue_name: str = Field(
         ...,
         title="catalogue",
         description="catalogue",
-        source="has_dataset.name",
     )
-    implemented_dataset_class_label: str = Field(
-        ...,
+    implemented_dataset_class: Optional[SimpleDatasetClass] = Field(
+        None,
         title="implements_dataset_class",
         description="implements_dataset_class",
-        source="has_latest_value.implements_dataset_class.label",
+        nullable=True,
     )
-    data_model_ig_name: str = Field(
+    data_model_ig: SimpleDataModelIG = Field(
         ...,
-        title="data_model_ig_name",
-        description="data_model_ig_name",
-        source="has_latest_value.has_dataset.name",
+        title="data_model_ig",
+        description="data_model_ig",
     )
+
+    @classmethod
+    def from_repository_output(cls, input_dict: dict):
+        return cls(
+            uid=input_dict.get("uid"),
+            label=input_dict.get("standard_value").get("label"),
+            title=input_dict.get("standard_value").get("title"),
+            description=input_dict.get("standard_value").get("description"),
+            catalogue_name=input_dict.get("catalogue_name"),
+            parent_class=input_dict.get("parent_class_name"),
+            implemented_dataset_class=SimpleDatasetClass(
+                ordinal=input_dict.get("implemented_dataset_class").get("ordinal"),
+                dataset_class_name=input_dict.get("implemented_dataset_class").get(
+                    "dataset_class_name"
+                ),
+            )
+            if input_dict.get("implemented_dataset_class")
+            else None,
+            data_model_ig=SimpleDataModelIG(
+                ordinal=input_dict.get("data_model_ig").get("ordinal"),
+                data_model_ig_name=input_dict.get("data_model_ig").get(
+                    "data_model_ig_name"
+                ),
+            ),
+        )

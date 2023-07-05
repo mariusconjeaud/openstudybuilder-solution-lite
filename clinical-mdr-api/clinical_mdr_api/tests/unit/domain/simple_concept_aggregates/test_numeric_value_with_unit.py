@@ -2,16 +2,16 @@ import unittest
 from typing import Callable
 from unittest.mock import patch
 
-from clinical_mdr_api.domain.concepts.simple_concepts.numeric_value_with_unit import (
+from clinical_mdr_api.domain_repositories.concepts.unit_definitions.unit_definition_repository import (
+    UnitDefinitionRepository,
+)
+from clinical_mdr_api.domains.concepts.simple_concepts.numeric_value_with_unit import (
     NumericValueWithUnitAR,
     NumericValueWithUnitVO,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import (
+from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
-)
-from clinical_mdr_api.domain_repositories.concepts.unit_definition.unit_definition_repository import (
-    UnitDefinitionRepository,
 )
 from clinical_mdr_api.tests.unit.domain.utils import random_str
 

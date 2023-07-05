@@ -1,53 +1,79 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import Field
 
-from clinical_mdr_api.models.concept import VersionProperties
+from clinical_mdr_api.models.utils import BaseModel
 
 
-class DatasetClass(VersionProperties):
-    class Config:
-        orm_mode = True
+class SimpleDataModel(BaseModel):
+    data_model_name: str = Field(
+        ...,
+        title="data_model_name",
+        description="data_model_name",
+    )
+    ordinal: Optional[str] = Field(
+        None,
+        title="ordinal",
+        description="ordinal",
+    )
 
+
+class SimpleDataset(BaseModel):
+    uid: str = Field(
+        ...,
+        title="uid",
+        description="uid",
+    )
+    dataset_name: str = Field(
+        ...,
+        title="dataset_name",
+        description="dataset_name",
+    )
+
+
+class DatasetClass(BaseModel):
     uid: str = Field(
         ...,
         title="uid",
         description="The uid of the dataset",
-        source="uid",
     )
     label: str = Field(
         ...,
         title="label",
         description="The label of the dataset",
-        source="has_latest_value.label",
     )
     title: str = Field(
         ...,
         title="title",
         description="The title of the dataset",
-        source="has_latest_value.title",
     )
     description: Optional[str] = Field(
-        None,
-        title="description",
-        description="description",
-        source="has_latest_value.description",
+        None, title="description", description="description", nullable=True
     )
     catalogue_name: str = Field(
         ...,
         title="catalogue_name",
         description="catalogue_name",
-        source="has_dataset_class.name",
-    )
-    data_model_name: str = Field(
-        ...,
-        title="data_model_name",
-        description="data_model_name",
-        source="has_latest_value.has_dataset_class.name",
     )
     parent_class: Optional[str] = Field(
-        None,
-        title="parent_class_name",
-        description="parent_class_name",
-        source="has_latest_value.has_parent_class.label",
+        None, title="parent_class_name", description="parent_class_name", nullable=True
     )
+    data_models: List[SimpleDataModel] = Field(...)
+
+    @classmethod
+    def from_repository_output(cls, input_dict: dict):
+        return cls(
+            uid=input_dict.get("uid"),
+            label=input_dict.get("standard_value").get("label"),
+            title=input_dict.get("standard_value").get("title"),
+            description=input_dict.get("standard_value").get("description"),
+            catalogue_name=input_dict.get("catalogue_name"),
+            parent_class=input_dict.get("parent_class_name"),
+            data_models=[
+                SimpleDataModel(
+                    data_model_name=data_model.get("data_model_name"),
+                    ordinal=data_model.get("ordinal"),
+                )
+                for data_model in input_dict.get("data_models")
+            ],
+        )

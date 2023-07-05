@@ -1,11 +1,13 @@
-from clinical_mdr_api.models.activities.activity import (
+from clinical_mdr_api.models.concepts.activities.activity import (
     Activity,
     ActivityCreateInput,
     ActivityEditInput,
 )
-from clinical_mdr_api.models.activities.activity_group import ActivityGroup
-from clinical_mdr_api.models.activities.activity_sub_group import ActivitySubGroup
-from clinical_mdr_api.models.clinical_programme import (
+from clinical_mdr_api.models.concepts.activities.activity_group import ActivityGroup
+from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
+    ActivitySubGroup,
+)
+from clinical_mdr_api.models.clinical_programmes.clinical_programme import (
     ClinicalProgramme,
     ClinicalProgrammeInput,
 )
@@ -51,7 +53,7 @@ from clinical_mdr_api.models.syntax_templates.endpoint_template import (
     EndpointTemplateEditIndexingsInput,
 )
 from clinical_mdr_api.models.indication import Indication, IndicationCreateInput
-from clinical_mdr_api.models.library import Library
+from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.syntax_instances.objective import (
     Objective,
     ObjectiveCreateInput,
@@ -68,39 +70,51 @@ from clinical_mdr_api.models.syntax_templates.objective_template import (
 )
 from clinical_mdr_api.models.syntax_pre_instances.activity_instruction_pre_instance import (
     ActivityInstructionPreInstance,
+    ActivityInstructionPreInstanceEditInput,
+    ActivityInstructionPreInstanceIndexingsInput,
+    ActivityInstructionPreInstanceVersion,
 )
 from clinical_mdr_api.models.syntax_pre_instances.criteria_pre_instance import (
     CriteriaPreInstance,
+    CriteriaPreInstanceEditInput,
+    CriteriaPreInstanceIndexingsInput,
+    CriteriaPreInstanceVersion,
 )
 from clinical_mdr_api.models.syntax_pre_instances.endpoint_pre_instance import (
     EndpointPreInstance,
+    EndpointPreInstanceEditInput,
+    EndpointPreInstanceIndexingsInput,
+    EndpointPreInstanceVersion,
 )
 from clinical_mdr_api.models.syntax_pre_instances.objective_pre_instance import (
     ObjectivePreInstance,
+    ObjectivePreInstanceEditInput,
+    ObjectivePreInstanceIndexingsInput,
+    ObjectivePreInstanceVersion,
 )
-from clinical_mdr_api.models.project import Project, ProjectCreateInput
-from clinical_mdr_api.models.brand import Brand, BrandCreateInput
-from clinical_mdr_api.models.odm_form import (
+from clinical_mdr_api.models.projects.project import Project, ProjectCreateInput
+from clinical_mdr_api.models.brands.brand import Brand, BrandCreateInput
+from clinical_mdr_api.models.concepts.odms.odm_form import (
     OdmForm,
     OdmFormPostInput,
     OdmFormPatchInput,
     OdmFormItemGroupPostInput,
     OdmFormActivityGroupPostInput,
 )
-from clinical_mdr_api.models.odm_item_group import (
+from clinical_mdr_api.models.concepts.odms.odm_item_group import (
     OdmItemGroup,
     OdmItemGroupPostInput,
     OdmItemGroupPatchInput,
     OdmItemGroupItemPostInput,
     OdmItemGroupActivitySubGroupPostInput,
 )
-from clinical_mdr_api.models.odm_template import (
-    OdmTemplate,
-    OdmTemplatePostInput,
-    OdmTemplatePatchInput,
-    OdmTemplateFormPostInput,
+from clinical_mdr_api.models.concepts.odms.odm_study_event import (
+    OdmStudyEvent,
+    OdmStudyEventPostInput,
+    OdmStudyEventPatchInput,
+    OdmStudyEventFormPostInput,
 )
-from clinical_mdr_api.models.odm_item import (
+from clinical_mdr_api.models.concepts.odms.odm_item import (
     OdmItem,
     OdmItemPostInput,
     OdmItemPatchInput,
@@ -108,53 +122,55 @@ from clinical_mdr_api.models.odm_item import (
     OdmItemTermRelationshipInput,
     OdmItemUnitDefinitionRelationshipInput,
 )
-from clinical_mdr_api.models.odm_condition import (
+from clinical_mdr_api.models.concepts.odms.odm_condition import (
     OdmCondition,
     OdmConditionPostInput,
     OdmConditionPatchInput,
 )
-from clinical_mdr_api.models.odm_method import (
+from clinical_mdr_api.models.concepts.odms.odm_method import (
     OdmMethod,
     OdmMethodPostInput,
     OdmMethodPatchInput,
 )
-from clinical_mdr_api.models.odm_formal_expression import (
+from clinical_mdr_api.models.concepts.odms.odm_formal_expression import (
     OdmFormalExpression,
     OdmFormalExpressionPostInput,
     OdmFormalExpressionPatchInput,
     OdmFormalExpressionBatchPatchInput,
 )
-from clinical_mdr_api.models.odm_alias import (
+from clinical_mdr_api.models.concepts.odms.odm_alias import (
     OdmAlias,
     OdmAliasPostInput,
     OdmAliasPatchInput,
     OdmAliasBatchInput,
     OdmAliasBatchOutput,
 )
-from clinical_mdr_api.models.odm_vendor_namespace import (
+from clinical_mdr_api.models.concepts.odms.odm_vendor_namespace import (
     OdmVendorNamespace,
     OdmVendorNamespacePostInput,
     OdmVendorNamespacePatchInput,
 )
-from clinical_mdr_api.models.odm_vendor_attribute import (
+from clinical_mdr_api.models.concepts.odms.odm_vendor_attribute import (
     OdmVendorAttribute,
     OdmVendorAttributePostInput,
     OdmVendorAttributePatchInput,
 )
-from clinical_mdr_api.models.odm_vendor_element import (
+from clinical_mdr_api.models.concepts.odms.odm_vendor_element import (
     OdmVendorElement,
     OdmVendorElementPostInput,
     OdmVendorElementPatchInput,
 )
-from clinical_mdr_api.models.odm_description import (
+from clinical_mdr_api.models.concepts.odms.odm_description import (
     OdmDescription,
     OdmDescriptionPostInput,
     OdmDescriptionPatchInput,
     OdmDescriptionBatchInput,
     OdmDescriptionBatchOutput,
 )
-from clinical_mdr_api.models.simple_dictionary_item import SimpleDictionaryItem
-from clinical_mdr_api.models.study_selection import (
+from clinical_mdr_api.models.simple_dictionaries.simple_dictionary_item import (
+    SimpleDictionaryItem,
+)
+from clinical_mdr_api.models.study_selections.study_selection import (
     StudyCompoundDosing,
     StudyCompoundDosingInput,
     StudySelection,
@@ -228,15 +244,15 @@ from clinical_mdr_api.models.study_selection import (
     StudySelectionCohortNewOrder,
     StudySelectionCohortVersion,
 )
-from clinical_mdr_api.models.study_visit import StudyVisit
-from clinical_mdr_api.models.listings_sdtm import (
+from clinical_mdr_api.models.study_selections.study_visit import StudyVisit
+from clinical_mdr_api.models.listings.listings_sdtm import (
     StudyVisitListing,
     StudyElementListing,
     StudyDiseaseMilestoneListing,
     StudyArmListing,
 )
-from clinical_mdr_api.models.listings_study import StudyMetadataListingModel
-from clinical_mdr_api.models.listings import (
+from clinical_mdr_api.models.listings.listings_study import StudyMetadataListingModel
+from clinical_mdr_api.models.listings.listings import (
     TopicCdDef,
     MetaData,
     CDISCCTVer,
@@ -245,62 +261,69 @@ from clinical_mdr_api.models.listings import (
     CDISCCTPkg,
 )
 from clinical_mdr_api.models.system import SystemInformation
-from clinical_mdr_api.models.template_parameter import TemplateParameter
-from clinical_mdr_api.models.template_parameter_term import TemplateParameterTerm
+from clinical_mdr_api.models.syntax_templates.template_parameter import (
+    TemplateParameter,
+)
+from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
+    TemplateParameterTerm,
+)
 from clinical_mdr_api.models.syntax_instances.timeframe import (
     Timeframe,
     TimeframeCreateInput,
     TimeframeEditInput,
     TimeframeVersion,
 )
-from clinical_mdr_api.models.ct_catalogue import CTCatalogue, CTCatalogueChanges
-from clinical_mdr_api.models.ct_package import (
+from clinical_mdr_api.models.controlled_terminologies.ct_catalogue import (
+    CTCatalogue,
+    CTCatalogueChanges,
+)
+from clinical_mdr_api.models.controlled_terminologies.ct_package import (
     CTPackage,
     CTPackageChanges,
     CTPackageChangesSpecificCodelist,
     CTPackageDates,
 )
-from clinical_mdr_api.models.ct_codelist import (
+from clinical_mdr_api.models.controlled_terminologies.ct_codelist import (
     CTCodelist,
     CTCodelistCreateInput,
     CTCodelistTermInput,
     CTCodelistNameAndAttributes,
 )
-from clinical_mdr_api.models.ct_codelist_attributes import (
+from clinical_mdr_api.models.controlled_terminologies.ct_codelist_attributes import (
     CTCodelistAttributes,
     CTCodelistAttributesVersion,
     CTCodelistAttributesEditInput,
 )
-from clinical_mdr_api.models.ct_codelist_name import (
+from clinical_mdr_api.models.controlled_terminologies.ct_codelist_name import (
     CTCodelistName,
     CTCodelistNameVersion,
     CTCodelistNameEditInput,
 )
-from clinical_mdr_api.models.ct_term import (
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     CTTerm,
     CTTermCreateInput,
     CTTermNameAndAttributes,
     CTTermNewOrder,
 )
-from clinical_mdr_api.models.ct_term_attributes import (
+from clinical_mdr_api.models.controlled_terminologies.ct_term_attributes import (
     CTTermAttributes,
     CTTermAttributesVersion,
     CTTermAttributesEditInput,
 )
-from clinical_mdr_api.models.ct_term_name import (
+from clinical_mdr_api.models.controlled_terminologies.ct_term_name import (
     CTTermName,
     CTTermNameVersion,
     CTTermNameEditInput,
 )
-from clinical_mdr_api.models.ct_stats import CTStats
-from clinical_mdr_api.models.dictionary_codelist import (
+from clinical_mdr_api.models.controlled_terminologies.ct_stats import CTStats
+from clinical_mdr_api.models.dictionaries.dictionary_codelist import (
     DictionaryCodelist,
     DictionaryCodelistEditInput,
     DictionaryCodelistCreateInput,
     DictionaryCodelistVersion,
     DictionaryCodelistTermInput,
 )
-from clinical_mdr_api.models.dictionary_term import (
+from clinical_mdr_api.models.dictionaries.dictionary_term import (
     DictionaryTerm,
     DictionaryTermEditInput,
     DictionaryTermCreateInput,
@@ -310,9 +333,9 @@ from clinical_mdr_api.models.dictionary_term import (
     DictionaryTermSubstanceCreateInput,
 )
 
-from clinical_mdr_api.models.compound import Compound
-from clinical_mdr_api.models.compound_alias import CompoundAlias
-from clinical_mdr_api.models.concept import (
+from clinical_mdr_api.models.concepts.compound import Compound
+from clinical_mdr_api.models.concepts.compound_alias import CompoundAlias
+from clinical_mdr_api.models.concepts.concept import (
     TextValue,
     TextValueInput,
     TimePoint,
@@ -324,7 +347,7 @@ from clinical_mdr_api.models.concept import (
     LagTime,
     LagTimeInput,
 )
-from clinical_mdr_api.models.unit_definition import (
+from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
     UnitDefinitionModel,
     UnitDefinitionPatchInput,
     UnitDefinitionPostInput,
@@ -400,9 +423,21 @@ __all__ = [
     "ObjectiveTemplateEditInput",
     "ObjectiveTemplateEditIndexingsInput",
     "ActivityInstructionPreInstance",
+    "ActivityInstructionPreInstanceEditInput",
+    "ActivityInstructionPreInstanceIndexingsInput",
+    "ActivityInstructionPreInstanceVersion",
     "CriteriaPreInstance",
+    "CriteriaPreInstanceEditInput",
+    "CriteriaPreInstanceIndexingsInput",
+    "CriteriaPreInstanceVersion",
     "EndpointPreInstance",
+    "EndpointPreInstanceEditInput",
+    "EndpointPreInstanceIndexingsInput",
+    "EndpointPreInstanceVersion",
     "ObjectivePreInstance",
+    "ObjectivePreInstanceEditInput",
+    "ObjectivePreInstanceIndexingsInput",
+    "ObjectivePreInstanceVersion",
     "ActivityInstruction",
     "ActivityInstructionVersion",
     "ActivityInstructionCreateInput",
@@ -507,10 +542,10 @@ __all__ = [
     "OdmItemActivityPostInput",
     "OdmItemTermRelationshipInput",
     "OdmItemUnitDefinitionRelationshipInput",
-    "OdmTemplate",
-    "OdmTemplatePostInput",
-    "OdmTemplatePatchInput",
-    "OdmTemplateFormPostInput",
+    "OdmStudyEvent",
+    "OdmStudyEventPostInput",
+    "OdmStudyEventPatchInput",
+    "OdmStudyEventFormPostInput",
     "OdmAlias",
     "OdmAliasPostInput",
     "OdmAliasPatchInput",

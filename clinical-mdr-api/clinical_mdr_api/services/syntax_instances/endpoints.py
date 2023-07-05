@@ -1,12 +1,12 @@
 from typing import Optional, Union
 
-from clinical_mdr_api.domain.syntax_instances.endpoint import EndpointAR
 from clinical_mdr_api.domain_repositories.syntax_instances.endpoint_repository import (
     EndpointRepository,
 )
 from clinical_mdr_api.domain_repositories.syntax_templates.endpoint_template_repository import (
     EndpointTemplateRepository,
 )
+from clinical_mdr_api.domains.syntax_instances.endpoint import EndpointAR
 from clinical_mdr_api.models.syntax_instances.endpoint import Endpoint, EndpointVersion
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator

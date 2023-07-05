@@ -45,7 +45,7 @@
       <codelist-term-creation-form :catalogueName="codelistNames.catalogue_name"
         :codelistUid="codelistNames.codelist_uid" @close="closeForm" @created="goToTerm" />
     </v-dialog>
-    <v-dialog v-model="showHistory" @keydown.esc="closeHistory" persistent max-width="1200px">
+    <v-dialog v-model="showHistory" @keydown.esc="closeHistory" persistent :max-width="globalHistoryDialogMaxWidth" :fullscreen="globalHistoryDialogFullscreen">
       <history-table :title="historyTitleLabel" @close="closeHistory" :headers="historyHeaders" :items="historyItems" />
     </v-dialog>
   </div>

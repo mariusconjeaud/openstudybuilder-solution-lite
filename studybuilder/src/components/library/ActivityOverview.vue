@@ -113,8 +113,8 @@
                       <td>{{ item.name }}</td>
                       <td>{{ item.definition }}</td>
                       <td>{{ item.activity_instance_class.name }}</td>
-                      <td>{{ item.adam_param_code }}</td>
                       <td>{{ item.topic_code }}</td>
+                      <td>{{ item.adam_param_code }}</td>
                     </tr>
                   </tbody>
                 </template>

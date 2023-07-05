@@ -2,10 +2,10 @@
 <div>
   <n-n-table
     v-model="selected"
-    :headers="headers"
-    :items="expandedTemplates"
+    :headers="updatedHeaders"
+    :items="templates"
     item-key="uid"
-    :export-object-label="objectType"
+    :export-object-label="exportFileLabel"
     :export-data-url="urlPrefix"
     :export-data-url-params="exportDataUrlParams"
     :server-items-length="total"
@@ -19,10 +19,12 @@
     >
     <template v-slot:actions="">
       <v-btn
+        v-if="!preInstanceMode"
         fab
         dark
         small
         color="primary"
+        data-cy="add-template"
         @click="createTemplate()"
         :title="$t(`${translationType}.add`)"
         >
@@ -35,47 +37,34 @@
       <slot :name="slot" v-bind="scope" />
     </template>
     <template v-slot:item.indications.name="{ item }">
-      <template v-if="item.defaultParameterValuesSet === undefined">
-        <template v-if="item.indications">
-          {{ item.indications|names }}
-        </template>
-        <template v-else>
-          {{ $t('_global.not_applicable_long') }}
-        </template>
+      <template v-if="item.indications && item.indications.length">
+        {{ item.indications|names }}
       </template>
+      <template v-else>
+        {{ $t('_global.not_applicable_long') }}
+      </template>
+    </template>
+    <template v-slot:item.template_name="{ item }">
+      <n-n-parameter-highlighter
+        :name="item.template_name"
+        default-color="orange"
+        />
     </template>
     <template v-slot:item.name="{ item }">
       <n-n-parameter-highlighter
-        v-if="item.defaultParameterValuesSet === undefined"
         :name="item.name"
         default-color="orange"
-        />
-      <n-n-parameter-highlighter
-        v-else
-        :name="item.name"
-        default-color="orange"
-        :default-parameter-values="item.defaultParameterValues"
         />
     </template>
     <template v-slot:item.start_date="{ item }">
-      <template v-if="item.defaultParameterValuesSet === undefined">
-        {{ item.start_date | date }}
-      </template>
+      {{ item.start_date | date }}
     </template>
     <template v-slot:item.status="{ item }">
-      <template v-if="item.defaultParameterValuesSet === undefined">
-        <status-chip :status="item.status" />
-      </template>
+      <status-chip :status="item.status" />
     </template>
     <template v-slot:item.actions="{ item }">
       <actions-menu
-        v-if="item.defaultParameterValuesSet === undefined"
         :actions="actions"
-        :item="item"
-        />
-      <actions-menu
-        v-else
-        :actions="fakeTemplateActions"
         :item="item"
         />
     </template>
@@ -94,6 +83,7 @@
       v-bind:selectedObject="selectedObject"
       v-bind:filter="filter"
       v-bind:updateTemplate="updateTemplate"
+      v-bind:preInstanceMode="preInstanceMode"
       >
     </slot>
   </v-dialog>
@@ -101,7 +91,8 @@
     v-model="showHistory"
     @keydown.esc="closeHistory"
     persistent
-    max-width="1200px"
+    :max-width="globalHistoryDialogMaxWidth"
+    :fullscreen="globalHistoryDialogFullscreen"
     >
     <history-table
       :title="historyTitle"
@@ -111,14 +102,6 @@
       :html-fields="historyHtmlFields"
       />
   </v-dialog>
-  <default-parameter-values-set-form
-    :open="showParameterValuesSetForm"
-    :set-number="currentParameterValuesSetNumber"
-    :values-set="currentParameterValuesSet"
-    :template="currentParameterValuesSetTemplate"
-    :object-type="getBaseObjectType()"
-    @close="closeDefaultParameterValuesSetForm"
-    />
   <confirm-dialog ref="confirm" :action-cols="5" :text-cols="6" />
   <v-dialog v-model="showIndexingForm"
             persistent
@@ -128,6 +111,19 @@
           v-bind:closeDialog="() => showIndexingForm = false"
           v-bind:template="selectedObject"
           v-bind:show="showIndexingForm"
+          v-bind:preInstanceMode="preInstanceMode"
+          />
+  </v-dialog>
+  <v-dialog
+    v-model="showPreInstanceForm"
+    @keydown.esc="closeForm"
+    persistent
+    fullscreen
+    content-class="fullscreen-dialog"
+    >
+    <slot name="preInstanceForm"
+          v-bind:closeDialog="closePreInstanceForm"
+          v-bind:template="selectedObject"
           />
   </v-dialog>
 </div>
@@ -136,11 +132,10 @@
 <script>
 import Vue from 'vue'
 import { bus } from '@/main'
+import templatePreInstances from '@/api/templatePreInstances'
 import templates from '@/api/templates'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import dataFormating from '@/utils/dataFormating'
-import defaultParameterValues from '@/utils/defaultParameterValues'
-import DefaultParameterValuesSetForm from '@/components/library/DefaultParameterValuesSetForm'
 import HistoryTable from '@/components/tools/HistoryTable'
 import libraryConstants from '@/constants/libraries'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
@@ -212,14 +207,25 @@ export default Vue.extend({
       type: Function,
       required: false
     },
+    exportObjectLabel: {
+      type: String,
+      required: false
+    },
     exportDataUrlParams: {
       type: Object,
+      required: false
+    },
+    preInstanceMode: {
+      type: Boolean,
+      default: false
+    },
+    prepareDuplicatePayloadFunc: {
+      type: Function,
       required: false
     }
   },
   components: {
     ActionsMenu,
-    DefaultParameterValuesSetForm,
     HistoryTable,
     NNParameterHighlighter,
     ConfirmDialog,
@@ -229,10 +235,11 @@ export default Vue.extend({
   data () {
     const actions = [
       {
-        label: this.$t('_global.add_defaults'),
-        icon: 'mdi-plus-circle',
+        label: this.$t('_global.add_pre_instance'),
+        icon: 'mdi-plus-circle-outline',
         iconColor: 'primary',
-        click: this.addDefaultParameterValuesSet
+        condition: (item) => this.objectType !== 'timeframeTemplates' && !this.preInstanceMode && item.status === statuses.FINAL,
+        click: this.openPreInstanceForm
       },
       {
         label: this.$t('_global.edit'),
@@ -254,6 +261,13 @@ export default Vue.extend({
         iconColor: 'primary',
         condition: (item) => item.possible_actions.find(action => action === 'new_version'),
         click: this.createNewVersion
+      },
+      {
+        label: this.$t('_global.duplicate'),
+        icon: 'mdi-content-copy',
+        iconColor: 'primary',
+        condition: (item) => this.preInstanceMode && item.status === statuses.FINAL,
+        click: this.duplicatePreInstance
       },
       {
         label: this.$t('_global.inactivate'),
@@ -293,30 +307,13 @@ export default Vue.extend({
     }
     return {
       actions,
-      currentParameterValuesSet: null,
-      currentParameterValuesSetNumber: null,
-      currentParameterValuesSetTemplate: null,
-      fakeTemplateActions: [
-        {
-          label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
-          iconColor: 'primary',
-          click: this.editDefaultParameterValuesSet
-        },
-        {
-          label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
-          iconColor: 'error',
-          click: this.deleteDefaultParameterValuesSet
-        }
-      ],
       api: null,
       historyHtmlFields: ['name', 'guidance_text'],
       historyItems: [],
       showForm: false,
       showIndexingForm: false,
       showHistory: false,
-      showParameterValuesSetForm: false,
+      showPreInstanceForm: false,
       selectedObject: null,
       appLabel: this.$t(this.translationType + '.singular_title'),
       selected: [],
@@ -327,20 +324,15 @@ export default Vue.extend({
     }
   },
   computed: {
-    expandedTemplates () {
-      const result = []
-      for (const template of this.templates) {
-        result.push(template)
-        if (defaultParameterValues.hasDefaultParameterValues(template)) {
-          for (const setNumber in template.defaultParameterValues) {
-            const fakeTemplate = {
-              baseTemplate: template,
-              name: template.name,
-              defaultParameterValuesSet: setNumber
-            }
-            fakeTemplate.defaultParameterValues = template.defaultParameterValues[setNumber]
-            result.push(fakeTemplate)
-          }
+    updatedHeaders () {
+      const result = JSON.parse(JSON.stringify(this.headers))
+      if (this.preInstanceMode) {
+        const index = result.findIndex(header => header.value === 'name')
+        if (index !== -1) {
+          result[index].text = this.$t('_global.pre_instance_template')
+          result.splice(index, 0, {
+            text: this.$t('_global.parent_template'), value: 'template_name'
+          })
         }
       }
       return result
@@ -357,10 +349,17 @@ export default Vue.extend({
       const result = this.columnDataParameters ? { ...this.columnDataParameters } : { filters: {} }
       result.filters['library.name'] = { v: [libraryConstants.LIBRARY_SPONSOR] }
       return result
+    },
+    exportFileLabel () {
+      return this.exportObjectLabel ? this.exportObjectLabel : this.objectType
     }
   },
   created () {
-    this.api = templates(this.urlPrefix)
+    if (!this.preInstanceMode) {
+      this.api = templates(this.urlPrefix)
+    } else {
+      this.api = templatePreInstances(this.getBaseObjectType())
+    }
   },
   methods: {
     createTemplate () {
@@ -380,33 +379,41 @@ export default Vue.extend({
     },
     async approveTemplate (template) {
       if (template.uid.includes('ActivityInstructionTemplate')) { // Temporary workaround for Activity Templates, will be deleted after backend instantiations activities implement
-        this.api.approveCascade(template.uid, false).then(resp => {
-          this.updateTemplate(resp.data, template.status)
-          bus.$emit('notification', { msg: this.$t(this.translationType + '.approve_success') })
-        })
+        const resp = await this.api.approveCascade(template.uid, false)
+        this.updateTemplate(resp.data, template.status)
+        bus.$emit('notification', { msg: this.$t(this.translationType + '.approve_success') })
       } else {
-        this.api.approveCascade(template.uid, true).then(resp => {
-          this.updateTemplate(resp.data, template.status)
-          bus.$emit('notification', { msg: this.$t(this.translationType + '.approve_success') })
-        })
+        const resp = await this.api.approveCascade(template.uid, true)
+        this.updateTemplate(resp.data, template.status)
+        const msg = this.$t(
+          this.translationType +
+            ((this.preInstanceMode) ? '.approve_pre_instance_success' : '.approve_success')
+        )
+        bus.$emit('notification', { msg })
       }
+      this.$emit('refresh')
     },
     inactivateTemplate (template) {
       this.api.inactivate(template.uid).then(resp => {
         this.updateTemplate(resp.data, template.status)
-        bus.$emit('notification', { msg: this.$t(this.translationType + '.inactivate_success') })
+        bus.$emit('notification', { msg: this.$t(this.translationType + ((this.preInstanceMode) ? '.inactivate_pre_instance_success' : '.inactivate_success')) })
+        this.$emit('refresh')
       })
     },
     reactivateTemplate (template) {
       this.api.reactivate(template.uid).then(resp => {
         this.updateTemplate(resp.data, template.status)
-        bus.$emit('notification', { msg: this.$t(this.translationType + '.reactivate_success') })
+        bus.$emit('notification', { msg: this.$t(this.translationType + ((this.preInstanceMode) ? '.reactivate_pre_instance_success' : '.approve_success')) })
+        this.$emit('refresh')
       })
     },
     deleteTemplate (template) {
-      this.api.delete(template.uid).then(resp => {
+      this.api.delete(template.uid).then(() => {
         this.filter()
-        bus.$emit('notification', { msg: this.$t(this.translationType + '.delete_success') })
+        const key = this.preInstanceMode
+          ? `${this.translationType}.delete_pre_instance_success`
+          : `${this.translationType}.delete_success`
+        bus.$emit('notification', { msg: this.$t(key) })
       })
     },
     editTemplateIndexing (template) {
@@ -422,6 +429,14 @@ export default Vue.extend({
     closeHistory () {
       this.selectedObject = null
       this.showHistory = false
+    },
+    openPreInstanceForm (template) {
+      this.selectedObject = template
+      this.showPreInstanceForm = true
+    },
+    closePreInstanceForm () {
+      this.selectedObject = null
+      this.showPreInstanceForm = false
     },
     async createNewVersion (template) {
       if (template.studyCount > 0) {
@@ -444,6 +459,23 @@ export default Vue.extend({
         bus.$emit('notification', { msg: this.$t(this.translationType + '.new_version_success') })
       })
     },
+    duplicatePreInstance (item) {
+      const data = {
+        library_name: item.library.name,
+        parameter_terms: item.parameter_terms,
+        indication_uids: []
+      }
+      if (item.indications) {
+        data.indication_uids = item.indications.map(ind => ind.term_uid)
+      }
+      if (this.prepareDuplicatePayloadFunc) {
+        this.prepareDuplicatePayloadFunc(data, item)
+      }
+      this.api.create(item.template_uid, data).then(() => {
+        bus.$emit('notification', { msg: this.$t(this.translationType + '.duplicate_success') })
+        this.filter()
+      })
+    },
     closeForm () {
       this.selectedObject = null
       this.showForm = false
@@ -451,9 +483,9 @@ export default Vue.extend({
     },
     filter (filters, sort, filtersUpdated) {
       filters = (filters) ? JSON.parse(filters) : {}
-      filters['library.name'] = { v: ['Sponsor'] }
+      filters['library.name'] = { v: [libraryConstants.LIBRARY_SPONSOR] }
       if (this.extraFiltersFunc) {
-        this.extraFiltersFunc(filters)
+        this.extraFiltersFunc(filters, this.preInstanceMode)
       }
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
@@ -466,33 +498,6 @@ export default Vue.extend({
           this.total = this.templates.length
         }
       })
-    },
-    addDefaultParameterValuesSet (template) {
-      this.currentParameterValuesSetTemplate = template
-      this.currentParameterValuesSet = []
-      this.showParameterValuesSetForm = true
-    },
-    editDefaultParameterValuesSet (item) {
-      this.currentParameterValuesSetNumber = item.defaultParameterValuesSet
-      this.currentParameterValuesSet = item.defaultParameterValues
-      this.currentParameterValuesSetTemplate = item.baseTemplate
-      this.showParameterValuesSetForm = true
-    },
-    async deleteDefaultParameterValuesSet (item) {
-      const options = {
-        type: 'warning'
-      }
-      if (!await this.$refs.confirm.open(this.$t('GenericTemplateTable.confirm_parameter_values_delete'), options)) {
-        return
-      }
-      await this.api.deleteDefaultParameterValuesSet(item.baseTemplate.uid, item.defaultParameterValuesSet)
-      this.filter()
-    },
-    closeDefaultParameterValuesSetForm () {
-      this.showParameterValuesSetForm = false
-      this.currentParameterValuesSetNumber = null
-      this.currentParameterValuesSet = null
-      this.filter()
     },
     getBaseObjectType () {
       let result = this.objectType.replace('Templates', '')

@@ -1,8 +1,10 @@
 <template>
 <div>
   <div class="mt-2 mb-8">
-    <div v-if="previewText" class="mb-2 grey--text text-subtitle-1 font-weight-bold">{{ previewText }}</div>
-    <div v-else class="text-subtitle-1 mb-2 secondary--text">{{ $t('ParameterValueSelector.preview') }}</div>
+    <div class="mb-2 secondary--text text-subtitle-1 font-weight-bold">
+      <template v-if="previewText">{{ previewText }}</template>
+      <template v-else>{{ $t('ParameterValueSelector.preview') }}</template>
+    </div>
     <v-card flat class="parameterBackground">
       <v-card-text>
         <n-n-parameter-highlighter
@@ -34,7 +36,7 @@
               v-model="parameter.selectedValues"
               :label="parameter.name"
               :error-messages="errors"
-              :disabled="parameter.skip"
+              :disabled="disabled || parameter.skip"
               type="number"
               @input="update"
               />
@@ -43,7 +45,7 @@
               v-model="parameter.selectedValues"
               :label="parameter.name"
               :error-messages="errors"
-              :disabled="parameter.skip"
+              :disabled="disabled || parameter.skip"
               rows="1"
               @input="update"
               auto-grow
@@ -55,7 +57,7 @@
               :items="parameter.terms"
               :errors="errors"
               return-object
-              :disabled="parameter.skip"
+              :disabled="disabled || parameter.skip"
               shorter-preview
               @input="update"
               />
@@ -73,18 +75,12 @@
               class="ml-4"
               @click="clearSelection(parameter)"
               :error-messages="errors"
+              :disabled="disabled"
             >
               <v-icon v-if="!parameter.skip">mdi-eye-outline</v-icon>
               <v-icon v-else>mdi-eye-off-outline</v-icon>
             </v-btn>
           </validation-provider>
-          <v-checkbox
-            v-else-if="withPinButton && parameter.selectedValues && parameter.selectedValues.length"
-            v-model="parameter.saveAsDefault"
-            off-icon="mdi-pin"
-            on-icon="mdi-pin-off"
-            :title="parameter.saveAsDefault ? $t('ObjectiveTemplateForm.default_values_help_off') : $t('ObjectiveTemplateForm.default_values_help')"
-            />
         </v-col>
       </v-row>
       <v-row v-if="parameter.selectedValues && parameter.selectedValues.length > 1 && parameter.name !== 'NumericValue' && parameter.name !== 'TextValue'">
@@ -207,7 +203,7 @@
     </v-row>
   </div>
 
-  <p class="grey--text text-subtitle-1 font-weight-bold">{{ $t('_global.plain_text_version') }}</p>
+  <p class="secondary--text text-subtitle-1 font-weight-bold">{{ $t('_global.plain_text_version') }}</p>
   <div class="pa-4 parameterBackground">
     {{ namePlainPreview }}
   </div>
@@ -216,6 +212,7 @@
 
 <script>
 import constants from '@/constants/parameters'
+import templateParameters from '@/utils/templateParameters'
 import MultipleSelect from '@/components/tools/MultipleSelect'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
 import { parameterValuesMixin } from '@/mixins/parameterValues'
@@ -247,17 +244,18 @@ export default {
       type: Boolean,
       default: false
     },
-    editMode: {
+    disabled: {
       type: Boolean,
       default: false
     }
   },
   computed: {
     namePreview () {
-      return this.getNamePreview(true)
+      return this.cleanName(this.getNamePreview())
     },
     namePlainPreview () {
-      const namePreview = this.cleanName(this.getNamePreview())
+      let namePreview = this.cleanName(this.getNamePreview())
+      namePreview = namePreview.replaceAll('</li>', '; ').replaceAll('<li>', ' ')
       if (namePreview !== undefined) {
         const tag = new DOMParser().parseFromString(namePreview, 'text/html')
         if (tag.documentElement.textContent) {
@@ -313,24 +311,6 @@ export default {
       }
       return value.trim()
     },
-    getTemplateParametersFromTemplate (template) {
-      const result = []
-      let currentParam = null
-
-      for (const c of template) {
-        if (c === '[') {
-          currentParam = ''
-        } else if (c === ']') {
-          if (currentParam) {
-            result.push(currentParam)
-          }
-          currentParam = null
-        } else if (currentParam !== null) {
-          currentParam += c
-        }
-      }
-      return result
-    },
     getNamePreview (hideEmptyParams) {
       if (!this.template) {
         return ''
@@ -371,13 +351,6 @@ export default {
       return result
     },
     update () {
-      if (!this.withPinButton) {
-        for (const param of this.parameters) {
-          if (param.selectedValues) {
-            this.$set(param, 'saveAsDefault', true)
-          }
-        }
-      }
       this.$emit('input', this.parameters)
     }
   },
@@ -397,7 +370,7 @@ export default {
         this.updatingParameters = true
         if (this.loadParameterValuesFromTemplate && value) {
           this.parameters = []
-          const extractedParams = this.getTemplateParametersFromTemplate(value)
+          const extractedParams = templateParameters.getTemplateParametersFromTemplate(value)
           if (extractedParams.length !== this.value.length) {
             this.$emit('input', [])
           }
@@ -416,16 +389,13 @@ export default {
               if (param.selectedSeparator) {
                 this.$set(this.parameters[index], 'selectedSeparator', param.selectedSeparator)
               }
-              if (param.saveAsDefault) {
-                this.$set(this.parameters[index], 'saveAsDefault', param.saveAsDefault)
-              }
             })
           }
         }
         this.updatingParameters = false
       }, 100)
     },
-    value (newVal, oldVal) {
+    value (newVal) {
       if (newVal) {
         this.parameters = [...newVal]
       }

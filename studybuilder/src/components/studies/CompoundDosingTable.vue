@@ -40,19 +40,6 @@
       :study-compound-dosing="selectedStudyCompoundDosing"
       />
   </v-dialog>
-  <v-dialog
-    v-model="showHistory"
-    @keydown.esc="closeHistory"
-    persistent
-    max-width="1200px"
-    >
-    <history-table
-      @close="closeHistory"
-      :title="studyCompoundDosingHistoryTitle"
-      :headers="headers"
-      :items="compoundDosingHistoryItems"
-      />
-  </v-dialog>
 </div>
 </template>
 
@@ -63,7 +50,6 @@ import ActionsMenu from '@/components/tools/ActionsMenu'
 import CompoundDosingForm from './CompoundDosingForm'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import dataFormating from '@/utils/dataFormating'
-import HistoryTable from '@/components/tools/HistoryTable'
 import NNTable from '@/components/tools/NNTable'
 import study from '@/api/study'
 
@@ -72,7 +58,6 @@ export default {
     ActionsMenu,
     CompoundDosingForm,
     ConfirmDialog,
-    HistoryTable,
     NNTable
   },
   computed: {

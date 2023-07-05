@@ -116,14 +116,17 @@
             "url": "/libraries"
         },
         "response": {
-            "code": 201,
+            "code": 400,
             "headers": {
                 "content-length": "43",
                 "content-type": "application/json"
             },
             "result": {
-                "is_editable": false,
-                "name": "Test library1"
+                "type": "ValidationException",
+                "message": "Library 'Test library1' already exists",
+                "time": "2023-05-08T12:52:03.036727",
+                "path": "http://testserver/libraries",
+                "method": "POST"
             }
         }
     }

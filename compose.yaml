@@ -7,7 +7,7 @@ services:
     build:
       args:
         NEO4J_IMAGE: ${NEO4J_IMAGE:-neo4j:4.4.12-enterprise}
-        PYTHON_IMAGE: ${PYTHON_IMAGE:-python:3.7.12-slim}
+        PYTHON_IMAGE: ${PYTHON_IMAGE:-python:3.11.3-slim}
         NEO4J_dbms_memory_heap_initial__size: "2G"
         NEO4J_dbms_memory_heap_max__size: "2G"
         NEO4J_dbms_memory_pagecache_size: "1G"
@@ -43,7 +43,7 @@ services:
       args:
         UVICORN_PORT: 5003
         UVICORN_ROOT_PATH: "/api"
-        PYTHON_IMAGE: ${PYTHON_IMAGE:-python:3.7.12-slim}
+        PYTHON_IMAGE: ${PYTHON_IMAGE:-python:3.11.3-slim}
         TARGET: ${BUILD_TARGET:-dev}
     image: ${API_IMAGE:-}
     depends_on:

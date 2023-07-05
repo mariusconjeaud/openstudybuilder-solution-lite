@@ -206,7 +206,7 @@ export default {
       let params = {
         field_name: (this.item.externalFilterSource ? this.item.externalFilterSource.substring(this.item.externalFilterSource.indexOf('$') + 1) : (this.item.filteringName ? this.item.filteringName : value)),
         search_string: this.searchString,
-        result_count: 10
+        result_count: 20
       }
       if (this.parameters) {
         params = Object.assign(params, this.parameters)

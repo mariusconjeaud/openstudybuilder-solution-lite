@@ -1,15 +1,6 @@
 import abc
-from typing import Dict, Sequence, TypeVar
+from typing import Dict, Optional, Sequence, TypeVar
 
-from clinical_mdr_api.domain.library.parameter_term import (
-    ComplexParameterTerm,
-    NumericParameterTermVO,
-    ParameterTermEntryVO,
-    SimpleParameterTermVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemAggregateRootBase,
-)
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
 )
@@ -31,6 +22,15 @@ from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameterComplexRoot,
     TemplateParameterComplexValue,
     TemplateParameterTermRoot,
+)
+from clinical_mdr_api.domains.libraries.parameter_term import (
+    ComplexParameterTerm,
+    NumericParameterTermVO,
+    ParameterTermEntryVO,
+    SimpleParameterTermVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemAggregateRootBase,
 )
 
 _AggregateRootType = TypeVar("_AggregateRootType", bound=LibraryItemAggregateRootBase)
@@ -296,3 +296,24 @@ class GenericSyntaxRepository(
         for group in activity_subgroup_uids:
             sub_group = self._get_activity_subgroup(group)
             root.has_activity_subgroup.connect(sub_group)
+
+    def patch_is_confirmatory_testing(
+        self, uid: str, is_confirmatory_testing: Optional[bool] = None
+    ) -> None:
+        root = self.root_class.nodes.get(uid=uid)
+        if is_confirmatory_testing is None and root.is_confirmatory_testing is not None:
+            root.is_confirmatory_testing = None
+        elif is_confirmatory_testing is not None:
+            root.is_confirmatory_testing = is_confirmatory_testing
+
+        self._db_save_node(root)
+
+    def _create(self, item: _AggregateRootType):
+        item = super()._create(item)
+        root = None
+        if item.uid:
+            root = self.root_class.nodes.get(uid=item.uid)
+            root.sequence_id = item.sequence_id
+            self._db_save_node(root)
+
+        return root, item

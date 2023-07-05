@@ -164,20 +164,6 @@
       class="fullscreen-dialog"
       />
   </v-dialog>
-  <v-dialog
-    v-model="showHistory"
-    @keydown.esc="closeHistory"
-    persistent
-    max-width="1200px"
-    >
-    <history-table
-      :title="studyCriteriaHistoryTitle"
-      @close="closeHistory"
-      :headers="headers"
-      :items="criteriaHistoryItems"
-      :html-fields="historyHtmlFields"
-      />
-  </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
 </div>
 </template>
@@ -189,7 +175,6 @@ import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import draggable from 'vuedraggable'
 import EligibilityCriteriaEditForm from './EligibilityCriteriaEditForm'
 import EligibilityCriteriaForm from './EligibilityCriteriaForm'
-import HistoryTable from '@/components/tools/HistoryTable'
 import { mapGetters } from 'vuex'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
 import NNTable from '@/components/tools/NNTable'
@@ -205,7 +190,6 @@ export default {
     draggable,
     EligibilityCriteriaEditForm,
     EligibilityCriteriaForm,
-    HistoryTable,
     NNParameterHighlighter,
     NNTable
   },

@@ -1,6 +1,6 @@
 import pytest
 
-from clinical_mdr_api.models.table import Table, TableDimension
+from clinical_mdr_api.models.study_selections.table import Table, TableDimension
 
 
 class Undefined:

@@ -93,19 +93,6 @@
     @close="closeForm"
     :editedArm="armToEdit"
     />
-  <v-dialog
-    v-model="showArmHistory"
-    @keydown.esc="closeArmHistory"
-    persistent
-    max-width="1440px"
-    >
-    <history-table
-      :title="studyArmHistoryTitle"
-      @close="closeArmHistory"
-      :headers="headers"
-      :items="armHistoryItems"
-      />
-  </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
 </div>
 </template>
@@ -122,7 +109,6 @@ import draggable from 'vuedraggable'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import filteringParameters from '@/utils/filteringParameters'
 import studyEpochs from '@/api/studyEpochs'
-import HistoryTable from '@/components/tools/HistoryTable'
 
 export default {
   components: {
@@ -130,8 +116,7 @@ export default {
     StudyArmsForm,
     ActionsMenu,
     draggable,
-    ConfirmDialog,
-    HistoryTable
+    ConfirmDialog
   },
   computed: {
     ...mapGetters({

@@ -15,6 +15,9 @@ from clinical_mdr_api.domain_repositories.models.biomedical_concepts import (
     ActivityInstanceClassRoot,
     ActivityItemClassRoot,
 )
+from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
+    CTCodelistRoot,
+)
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
     ClinicalMdrRel,
@@ -26,7 +29,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 
 
 class DataModelCatalogue(ClinicalMdrNode):
-    has_library = RelationshipFrom(Library, "CONTAINS_CATALOGUE")
+    has_library = RelationshipFrom(Library, "CONTAINS_CATALOGUE", model=ClinicalMdrRel)
     name = StringProperty()
     data_model_type = StringProperty()
 
@@ -51,14 +54,22 @@ class MasterModelValue(VersionValue):
 
 
 class DataModelIGRoot(VersionRoot):
-    has_library = RelationshipFrom(Library, "CONTAINS_DATA_MODEL_IG")
+    has_library = RelationshipFrom(
+        Library, "CONTAINS_DATA_MODEL_IG", model=ClinicalMdrRel
+    )
     has_version = RelationshipTo(
         DataModelIGValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(DataModelIGValue, "LATEST", model=ClinicalMdrRel)
-    latest_draft = RelationshipTo(DataModelIGValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(DataModelIGValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(DataModelIGValue, "LATEST_RETIRED")
+    latest_draft = RelationshipTo(
+        DataModelIGValue, "LATEST_DRAFT", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipTo(
+        DataModelIGValue, "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipTo(
+        DataModelIGValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
 
     has_master_model_version = RelationshipTo(
         MasterModelValue, "HAS_VERSION", model=VersionRelationship
@@ -86,14 +97,16 @@ class DataModelValue(VersionValue):
 
 
 class DataModelRoot(VersionRoot):
-    has_library = RelationshipFrom(Library, "CONTAINS_DATA_MODEL")
+    has_library = RelationshipFrom(Library, "CONTAINS_DATA_MODEL", model=ClinicalMdrRel)
     has_version = RelationshipTo(
         DataModelValue, "HAS_VERSION", model=VersionRelationship
     )
     has_latest_value = RelationshipTo(DataModelValue, "LATEST", model=ClinicalMdrRel)
-    latest_draft = RelationshipTo(DataModelValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(DataModelValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(DataModelValue, "LATEST_RETIRED")
+    latest_draft = RelationshipTo(DataModelValue, "LATEST_DRAFT", model=ClinicalMdrRel)
+    latest_final = RelationshipTo(DataModelValue, "LATEST_FINAL", model=ClinicalMdrRel)
+    latest_retired = RelationshipTo(
+        DataModelValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    )
     has_data_model = RelationshipFrom(
         DataModelCatalogue, "HAS_DATA_MODEL", model=ClinicalMdrRel
     )
@@ -105,38 +118,35 @@ class CatalogueVerRel(ClinicalMdrRel):
     catalogue = StringProperty()
 
 
-class DatasetClassValue(VersionValue):
+class HasDatasetClassRel(ClinicalMdrRel):
+    ordinal = StringProperty()
+
+
+class DatasetClassInstance(VersionValue):
     description = StringProperty()
     label = StringProperty()
     title = StringProperty()
-    version_of = RelationshipFrom(
-        "DatasetClassRoot", "HAS_VERSION", model=VersionRelationship
-    )
     has_dataset_class = RelationshipFrom(
-        DataModelValue, "HAS_DATASET_CLASS", model=ClinicalMdrRel, cardinality=One
+        DataModelValue, "HAS_DATASET_CLASS", model=HasDatasetClassRel, cardinality=One
     )
-    has_parent_class = RelationshipFrom(
-        "DatasetClassValue",
+    has_parent_class = RelationshipTo(
+        "DatasetClassInstance",
         "HAS_PARENT_CLASS",
         model=CatalogueVerRel,
         cardinality=ZeroOrOne,
     )
 
 
-class DatasetClassRoot(VersionRoot):
-    has_latest_value = RelationshipTo(DatasetClassValue, "LATEST", model=ClinicalMdrRel)
-    latest_draft = RelationshipTo(DatasetClassValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(DatasetClassValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(DatasetClassValue, "LATEST_RETIRED")
+class DatasetClass(VersionRoot):
+    has_instance = RelationshipTo(
+        DatasetClassInstance, "HAS_INSTANCE", model=ClinicalMdrRel
+    )
     has_dataset_class = RelationshipFrom(
         DataModelCatalogue, "HAS_DATASET_CLASS", model=ClinicalMdrRel, cardinality=One
     )
-    has_version = RelationshipTo(
-        DatasetClassValue, "HAS_VERSION", model=VersionRelationship
-    )
 
 
-class DatasetValue(VersionValue):
+class DatasetInstance(VersionValue):
     description = StringProperty()
     label = StringProperty()
     title = StringProperty()
@@ -144,7 +154,7 @@ class DatasetValue(VersionValue):
         DataModelIGValue, "HAS_DATASET", model=ClinicalMdrRel, cardinality=One
     )
     implements_dataset_class = RelationshipTo(
-        DatasetClassValue,
+        DatasetClassInstance,
         "IMPLEMENTS_DATASET_CLASS",
         model=ClinicalMdrRel,
         cardinality=One,
@@ -174,13 +184,13 @@ class MasterModelDatasetValue(VersionValue):
         MasterModelValue, "HAS_DATASET", model=ClinicalMdrRel, cardinality=One
     )
     has_key = RelationshipTo(
-        "DatasetVariableRoot",
+        "DatasetVariable",
         "HAS_KEY",
         model=HasKeyRel,
         cardinality=OneOrMore,
     )
     has_sort_key = RelationshipTo(
-        "DatasetVariableRoot",
+        "DatasetVariable",
         "HAS_SORT_KEY",
         model=HasKeyRel,
         cardinality=OneOrMore,
@@ -192,19 +202,15 @@ class MasterModelDatasetValue(VersionValue):
     )
 
     has_master_model_version = RelationshipFrom(
-        "DatasetRoot", "HAS_VERSION", model=VersionRelationship
+        "Dataset", "HAS_VERSION", model=VersionRelationship
     )
 
 
-class DatasetRoot(VersionRoot):
-    has_latest_value = RelationshipTo(DatasetValue, "LATEST", model=ClinicalMdrRel)
-    latest_draft = RelationshipTo(DatasetValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(DatasetValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(DatasetValue, "LATEST_RETIRED")
+class Dataset(VersionRoot):
+    has_instance = RelationshipTo(DatasetInstance, "HAS_INSTANCE", model=ClinicalMdrRel)
     has_dataset = RelationshipFrom(
         DataModelCatalogue, "HAS_DATASET", model=ClinicalMdrRel, cardinality=One
     )
-    has_version = RelationshipTo(DatasetValue, "HAS_VERSION", model=VersionRelationship)
 
     has_master_model_version = RelationshipTo(
         MasterModelDatasetValue, "HAS_VERSION", model=VersionRelationship
@@ -225,65 +231,62 @@ class DatasetRoot(VersionRoot):
 
 # pylint: disable=abstract-method
 class HasClassVariableRel(ClinicalMdrRel):
-    ordinal = IntegerProperty()
+    ordinal = StringProperty()
     version_number = StringProperty()
 
 
-class ClassVariableValue(VersionValue):
+# pylint: disable=abstract-method
+class HasMappingTargetRel(ClinicalMdrRel):
+    version_number = StringProperty()
+
+
+class VariableClassInstance(VersionValue):
     description = StringProperty()
     implementation_notes = StringProperty()
     title = StringProperty()
     label = StringProperty()
+    core = StringProperty()
+    completion_instructions = StringProperty()
     mapping_instructions = StringProperty()
     prompt = StringProperty()
     question_text = StringProperty()
     simple_datatype = StringProperty()
     role = StringProperty()
     has_class_variable = RelationshipFrom(
-        DatasetClassValue,
-        "HAS_CLASS_VARIABLE",
+        DatasetClassInstance,
+        "HAS_VARIABLE_CLASS",
         model=HasClassVariableRel,
         cardinality=One,
     )
     implements_variable = RelationshipFrom(
-        "DatasetVariableValue",
+        "DatasetVariableInstance",
         "IMPLEMENTS_VARIABLE",
         model=ClinicalMdrRel,
         cardinality=One,
     )
-
-
-class ClassVariableRoot(VersionRoot):
-    has_latest_value = RelationshipTo(
-        ClassVariableValue, "LATEST", model=ClinicalMdrRel
+    has_version = RelationshipFrom(
+        "VariableClass", "HAS_VERSION", model=VersionRelationship
     )
-    latest_draft = RelationshipTo(ClassVariableValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(ClassVariableValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(ClassVariableValue, "LATEST_RETIRED")
+    references_codelist = RelationshipTo(
+        CTCodelistRoot, "REFERENCES_CODELIST", model=ClinicalMdrRel
+    )
+    has_mapping_target = RelationshipTo(
+        "VariableClassInstance",
+        "HAS_MAPPING_TARGET",
+        model=HasMappingTargetRel,
+        cardinality=ZeroOrOne,
+    )
+
+
+class VariableClass(VersionRoot):
+    has_instance = RelationshipTo(
+        VariableClassInstance, "HAS_INSTANCE", model=ClinicalMdrRel
+    )
     has_class_variable = RelationshipFrom(
         DataModelCatalogue,
-        "HAS_CLASS_VARIABLE",
+        "HAS_VARIABLE_CLASS",
         model=HasClassVariableRel,
         cardinality=One,
-    )
-    has_version = RelationshipTo(
-        ClassVariableValue, "HAS_VERSION", model=VersionRelationship
-    )
-
-    has_master_model_version = RelationshipTo(
-        "MasterModelVariableValue", "HAS_VERSION", model=VersionRelationship
-    )
-    has_latest_master_model_value = RelationshipTo(
-        "MasterModelVariableValue", "LATEST", model=ClinicalMdrRel
-    )
-    latest_master_model_draft = RelationshipTo(
-        "MasterModelVariableValue", "LATEST_DRAFT", model=VersionRelationship
-    )
-    latest_master_model_final = RelationshipTo(
-        "MasterModelVariableValue", "LATEST_FINAL", model=VersionRelationship
-    )
-    latest_master_model_retired = RelationshipTo(
-        "MasterModelVariableValue", "LATEST_RETIRED", model=VersionRelationship
     )
 
 
@@ -292,35 +295,41 @@ class HasDatasetVariableRel(HasClassVariableRel):
     pass
 
 
-# pylint: disable=abstract-method
-class HasMappingTargetRel(ClinicalMdrRel):
-    version_number = StringProperty()
-
-
-class DatasetVariableValue(VersionValue):
+class DatasetVariableInstance(VersionValue):
     description = StringProperty()
     title = StringProperty()
     label = StringProperty()
     simple_datatype = StringProperty()
     role = StringProperty()
     core = StringProperty()
+    question_text = StringProperty()
+    prompt = StringProperty()
+    completion_instructions = StringProperty()
+    implementation_notes = StringProperty()
+    mapping_instructions = StringProperty()
     has_dataset_variable = RelationshipFrom(
-        DatasetValue,
+        DatasetInstance,
         "HAS_DATASET_VARIABLE",
         model=HasDatasetVariableRel,
         cardinality=One,
     )
     implements_variable = RelationshipTo(
-        ClassVariableValue,
+        VariableClassInstance,
         "IMPLEMENTS_VARIABLE",
         model=CatalogueVerRel,
         cardinality=One,
     )
     has_mapping_target = RelationshipTo(
-        "DatasetVariableValue",
+        "DatasetVariableInstance",
         "HAS_MAPPING_TARGET",
         model=HasMappingTargetRel,
         cardinality=ZeroOrOne,
+    )
+    has_version = RelationshipFrom(
+        "DatasetVariable", "HAS_VERSION", model=VersionRelationship
+    )
+    references_codelist = RelationshipTo(
+        CTCodelistRoot, "REFERENCES_CODELIST", model=ClinicalMdrRel
     )
 
 
@@ -355,19 +364,11 @@ class MasterModelVariableValue(VersionValue):
     xml_codelist_values = ArrayProperty()
 
     has_variable = RelationshipFrom(
-        DatasetClassValue,
-        "HAS_MASTER_MODEL_VARIABLE",
+        MasterModelDatasetValue,
+        "HAS_DATASET_VARIABLE",
         model=ClinicalMdrRel,
         cardinality=One,
     )
-
-    # has_variable = RelationshipFrom(
-    #     MasterModelDatasetValue,
-    #     "HAS_DATASET_VARIABLE",
-    #     model=ClinicalMdrRel,
-    #     cardinality=One,
-    # )
-
     has_activity_item_class = RelationshipFrom(
         ActivityItemClassRoot,
         "AS_VARIABLE",
@@ -375,13 +376,10 @@ class MasterModelVariableValue(VersionValue):
     )
 
 
-class DatasetVariableRoot(VersionRoot):
-    has_latest_value = RelationshipTo(
-        DatasetVariableValue, "LATEST", model=ClinicalMdrRel
+class DatasetVariable(VersionRoot):
+    has_instance = RelationshipTo(
+        DatasetVariableInstance, "HAS_INSTANCE", model=ClinicalMdrRel
     )
-    latest_draft = RelationshipTo(DatasetVariableValue, "LATEST_DRAFT")
-    latest_final = RelationshipTo(DatasetVariableValue, "LATEST_FINAL")
-    latest_retired = RelationshipTo(DatasetVariableValue, "LATEST_RETIRED")
     has_dataset_variable = RelationshipFrom(
         DataModelCatalogue,
         "HAS_DATASET_VARIABLE",
@@ -403,7 +401,4 @@ class DatasetVariableRoot(VersionRoot):
     )
     latest_master_model_retired = RelationshipTo(
         MasterModelVariableValue, "LATEST_RETIRED", model=VersionRelationship
-    )
-    has_version = RelationshipTo(
-        DatasetVariableValue, "HAS_VERSION", model=VersionRelationship
     )

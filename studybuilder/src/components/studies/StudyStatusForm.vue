@@ -90,17 +90,20 @@ export default {
         return
       }
       this.$refs.form.working = true
-      if (this.action === 'release') {
-        await api.releaseStudy(this.selectedStudy.uid, this.form)
-        bus.$emit('notification', { msg: this.$t('StudyStatusForm.release_success'), type: 'success' })
-      } else {
-        const resp = await api.lockStudy(this.selectedStudy.uid, this.form)
-        this.$store.commit('studiesGeneral/SELECT_STUDY', resp.data)
-        bus.$emit('notification', { msg: this.$t('StudyStatusForm.lock_success'), type: 'success' })
+      try {
+        if (this.action === 'release') {
+          await api.releaseStudy(this.selectedStudy.uid, this.form)
+          bus.$emit('notification', { msg: this.$t('StudyStatusForm.release_success'), type: 'success' })
+        } else {
+          const resp = await api.lockStudy(this.selectedStudy.uid, this.form)
+          this.$store.commit('studiesGeneral/SELECT_STUDY', resp.data)
+          bus.$emit('notification', { msg: this.$t('StudyStatusForm.lock_success'), type: 'success' })
+        }
+        this.$emit('statusChanged')
+        this.close()
+      } finally {
+        this.$refs.form.working = false
       }
-      this.$refs.form.working = false
-      this.$emit('statusChanged')
-      this.close()
     }
   }
 }

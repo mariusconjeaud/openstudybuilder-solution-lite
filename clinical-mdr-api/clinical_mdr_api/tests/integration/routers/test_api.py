@@ -80,6 +80,15 @@ class TestApi(TestCase):
                     elif path == "/listings/studies/{study_uid}/adam/{adam_report}":
                         # This test fails because of mandatory query parameter
                         self.assertIn(response.status_code, [422])
+                    elif path == "/standards/datasets":
+                        # This test fails because of mandatory query parameter
+                        self.assertIn(response.status_code, [422])
+                    elif path == "/standards/dataset-variables":
+                        # This test fails because of mandatory query parameter
+                        self.assertIn(response.status_code, [422])
+                    elif path == "/standards/class-variables":
+                        # This test fails because of mandatory query parameter
+                        self.assertIn(response.status_code, [422])
                     elif path == "/system/check/secured":
                         self.assertIn(response.status_code, [401, 501])
                     elif (

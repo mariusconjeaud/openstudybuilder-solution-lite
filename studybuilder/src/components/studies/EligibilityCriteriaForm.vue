@@ -25,7 +25,7 @@
           v-slot="{ errors }"
           rules="required"
           >
-          <v-select
+          <v-autocomplete
             :data-cy="$t('StudySelectionTable.select_studies')"
             v-model="selectedStudies"
             :label="$t('StudySelectionTable.studies')"
@@ -87,6 +87,7 @@
           @item-selected="selectTemplate"
           :studies="selectedStudies"
           :extra-data-fetcher-filters="extraDataFetcherFilters"
+          column-data-resource="study-criteria"
           >
           <template v-slot:item.name="{ item }">
             <template v-if="item.criteria_template">
@@ -139,7 +140,15 @@
       </v-data-table>
     </template>
     <template v-slot:step.createFromTemplate.after>
-      <p class="grey--text text-subtitle-1 font-weight-bold mb-0 ml-3">{{ $t('StudyObjectiveForm.copy_instructions') }}</p>
+      <div class="d-flex align-center">
+        <p class="grey--text text-subtitle-1 font-weight-bold mb-0 ml-3">{{ $t('StudyObjectiveForm.copy_instructions') }}</p>
+        <v-switch
+          v-model="preInstanceMode"
+          :label="$t('StudyObjectiveForm.show_pre_instances')"
+          hide-details
+          class="ml-4"
+          />
+      </div>
       <v-col cols="12">
         <n-n-table
           key="criteriaTemplateTable"
@@ -259,6 +268,7 @@ import NNTemplateInputField from '@/components/tools/NNTemplateInputField'
 import ParameterValueSelector from '@/components/tools/ParameterValueSelector'
 import study from '@/api/study'
 import StudySelectionTable from './StudySelectionTable'
+import templatePreInstances from '@/api/templatePreInstances'
 import filteringParameters from '@/utils/filteringParameters'
 import statuses from '@/constants/statuses'
 import { VueEditor } from 'vue2-editor'
@@ -305,6 +315,7 @@ export default {
       },
       tplHeaders: [
         { text: '', value: 'actions', width: '5%' },
+        { text: this.$t('_global.sequence_number'), value: 'sequence_id' },
         { text: this.$t('_global.indications'), value: 'indications', filteringName: 'indications.name' },
         { text: this.$t('EligibilityCriteriaForm.criterion_cat'), value: 'categories', filteringName: 'categories.name.sponsor_preferred_name' },
         { text: this.$t('EligibilityCriteriaForm.criterion_sub_cat'), value: 'subCategories', filteringName: 'subCategories.name.sponsor_preferred_name' },
@@ -316,6 +327,7 @@ export default {
       loadingParameters: false,
       parameters: [],
       parameterTypes: [],
+      preInstanceMode: true,
       selectedCriteria: [],
       selectedStudies: [],
       steps: this.getInitialSteps(),
@@ -344,11 +356,17 @@ export default {
       total: 0
     }
   },
+  created () {
+    this.preInstanceApi = templatePreInstances('criteria')
+    if (!this.studyCriteria) {
+      this.apiEndpoint = this.preInstanceApi
+    }
+  },
   mounted () {
     templateParameterTypes.getTypes().then(resp => {
       this.parameterTypes = resp.data
     })
-    study.get({ hasStudyCriteria: true, page_size: 0 }).then(resp => {
+    study.get({ has_study_criteria: true, page_size: 0 }).then(resp => {
       this.studies = resp.data.items.filter(study => study.uid !== this.selectedStudy.uid)
     })
   },
@@ -361,6 +379,8 @@ export default {
       this.form = {}
       this.selectedStudies = []
       this.selectedCriteria = []
+      this.preInstanceMode = true
+      this.apiEndpoint = this.preInstanceApi
     },
     getInitialSteps () {
       return [
@@ -381,8 +401,16 @@ export default {
       } else {
         params.filters = {}
       }
-      Object.assign(params.filters, { 'type.name.sponsor_preferred_name_sentence_case': { v: [this.criteriaType.sponsor_preferred_name_sentence_case] } })
-      criteriaTemplates.get(params).then(resp => {
+      if (!this.preInstanceMode) {
+        Object.assign(params.filters, { 'type.name.sponsor_preferred_name_sentence_case': { v: [this.criteriaType.sponsor_preferred_name_sentence_case] } })
+      } else {
+        Object.assign(params.filters, {
+          template_type_uid: {
+            v: [this.criteriaType.term_uid]
+          }
+        })
+      }
+      this.apiEndpoint.get(params).then(resp => {
         this.criteriaTemplates = resp.data.items
         this.total = resp.data.total
       })
@@ -437,7 +465,8 @@ export default {
           const data = []
           for (const criteria of this.selectedCriteria) {
             data.push({
-              criteria_template_uid: criteria.uid,
+              criteria_template_uid: this.preInstanceMode ? criteria.template_uid : criteria.uid,
+              parameter_terms: this.preInstanceMode ? criteria.parameter_terms : undefined,
               library_name: criteria.library.name
             })
           }
@@ -493,6 +522,10 @@ export default {
       } else {
         this.steps = this.createFromScratchSteps
       }
+    },
+    preInstanceMode (value) {
+      this.apiEndpoint = value ? this.preInstanceApi : criteriaTemplates
+      this.getCriteriaTemplates()
     }
   }
 }

@@ -1,16 +1,16 @@
 from typing import Optional
 
-from clinical_mdr_api.domain.study_definition_aggregate.registry_identifiers import (
+from clinical_mdr_api.domains.study_definition_aggregates.registry_identifiers import (
     RegistryIdentifiersVO,
 )
-from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
+from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     HighLevelStudyDesignVO,
     StudyInterventionVO,
     StudyPopulationVO,
     StudyStatus,
     StudyVersionMetadataVO,
 )
-from clinical_mdr_api.models.study import (
+from clinical_mdr_api.models.study_selections.study import (
     HighLevelStudyDesignJsonModel,
     RegistryIdentifiersJsonModel,
     StudyDescriptionJsonModel,
@@ -21,7 +21,7 @@ from clinical_mdr_api.models.study import (
     StudyPopulationJsonModel,
     StudyVersionMetadataJsonModel,
 )
-from clinical_mdr_api.services.study import StudyService
+from clinical_mdr_api.services.studies.study import StudyService
 
 
 def input_metadata_in_study(study_uid):

@@ -72,6 +72,8 @@ const actions = {
     const data = {}
     if (form.objective_level) {
       data.objective_level_uid = form.objective_level.term_uid
+    } else {
+      data.objective_level_uid = null
     }
     if (form.parameters !== undefined) {
       let objectiveUid = null

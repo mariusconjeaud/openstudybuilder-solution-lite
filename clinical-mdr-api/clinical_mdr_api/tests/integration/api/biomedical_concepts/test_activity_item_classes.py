@@ -10,6 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from clinical_mdr_api.main import app
+from clinical_mdr_api.models import CTTerm
 from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClass,
 )
@@ -36,6 +37,8 @@ log = logging.getLogger(__name__)
 activity_item_classes_all: List[ActivityItemClass]
 activity_instance_class: ActivityInstanceClass
 activity_instance_class2: ActivityInstanceClass
+role_term: CTTerm
+data_type_term: CTTerm
 
 
 @pytest.fixture(scope="module")
@@ -54,6 +57,8 @@ def test_data():
     global activity_item_classes_all
     global activity_instance_class
     global activity_instance_class2
+    global data_type_term
+    global role_term
 
     activity_instance_class = TestUtils.create_activity_instance_class(
         name="Activity Instance Class name1"
@@ -61,7 +66,8 @@ def test_data():
     activity_instance_class2 = TestUtils.create_activity_instance_class(
         name="Activity Instance Class name2"
     )
-
+    data_type_term = TestUtils.create_ct_term(sponsor_preferred_name="Data type")
+    role_term = TestUtils.create_ct_term(sponsor_preferred_name="Role")
     # Create some activity item classes
     activity_item_classes_all = [
         TestUtils.create_activity_item_class(
@@ -72,30 +78,40 @@ def test_data():
                 activity_instance_class.uid,
                 activity_instance_class2.uid,
             ],
+            role_uid=role_term.term_uid,
+            data_type_uid=data_type_term.term_uid,
         ),
         TestUtils.create_activity_item_class(
             name="name-AAA",
             order=2,
             mandatory=True,
             activity_instance_class_uids=[activity_instance_class.uid],
+            role_uid=role_term.term_uid,
+            data_type_uid=data_type_term.term_uid,
         ),
         TestUtils.create_activity_item_class(
             name="name-BBB",
             order=3,
             mandatory=True,
             activity_instance_class_uids=[activity_instance_class.uid],
+            role_uid=role_term.term_uid,
+            data_type_uid=data_type_term.term_uid,
         ),
         TestUtils.create_activity_item_class(
             name="name XXX",
             order=4,
             mandatory=True,
             activity_instance_class_uids=[activity_instance_class.uid],
+            role_uid=role_term.term_uid,
+            data_type_uid=data_type_term.term_uid,
         ),
         TestUtils.create_activity_item_class(
             name="name YYY",
             order=5,
             mandatory=True,
             activity_instance_class_uids=[activity_instance_class.uid],
+            role_uid=role_term.term_uid,
+            data_type_uid=data_type_term.term_uid,
         ),
     ]
 
@@ -106,6 +122,8 @@ def test_data():
                 order=(index * 4) + 1,
                 mandatory=False,
                 activity_instance_class_uids=[activity_instance_class2.uid],
+                role_uid=role_term.term_uid,
+                data_type_uid=data_type_term.term_uid,
             )
         )
         activity_item_classes_all.append(
@@ -114,6 +132,8 @@ def test_data():
                 order=(index * 4) + 2,
                 mandatory=False,
                 activity_instance_class_uids=[activity_instance_class2.uid],
+                role_uid=role_term.term_uid,
+                data_type_uid=data_type_term.term_uid,
             )
         )
         activity_item_classes_all.append(
@@ -122,6 +142,8 @@ def test_data():
                 order=(index * 4) + 3,
                 mandatory=False,
                 activity_instance_class_uids=[activity_instance_class2.uid],
+                role_uid=role_term.term_uid,
+                data_type_uid=data_type_term.term_uid,
             )
         )
         activity_item_classes_all.append(
@@ -130,6 +152,8 @@ def test_data():
                 order=(index * 4) + 4,
                 mandatory=False,
                 activity_instance_class_uids=[activity_instance_class2.uid],
+                role_uid=role_term.term_uid,
+                data_type_uid=data_type_term.term_uid,
             )
         )
 
@@ -140,6 +164,8 @@ ACTIVITY_IC_FIELDS_ALL = [
     "order",
     "mandatory",
     "activity_instance_classes",
+    "data_type",
+    "role",
     "library_name",
     "start_date",
     "end_date",
@@ -156,6 +182,8 @@ ACTIVITY_IC_FIELDS_NOT_NULL = [
     "order",
     "mandatory",
     "activity_instance_classes",
+    "data_type",
+    "role",
 ]
 
 
@@ -176,10 +204,14 @@ def test_get_activity_item_class(api_client):
     assert res["name"] == "name A"
     assert res["mandatory"] is True
     assert res["order"] == 1
-    assert res["activity_instance_classes"][0]["uid"] == activity_instance_class.uid
-    assert res["activity_instance_classes"][0]["name"] == activity_instance_class.name
-    assert res["activity_instance_classes"][1]["uid"] == activity_instance_class2.uid
-    assert res["activity_instance_classes"][1]["name"] == activity_instance_class2.name
+    assert sorted(
+        instance_class["uid"] for instance_class in res["activity_instance_classes"]
+    ) == [activity_instance_class.uid, activity_instance_class2.uid]
+    assert sorted(
+        instance_class["name"] for instance_class in res["activity_instance_classes"]
+    ) == [activity_instance_class.name, activity_instance_class2.name]
+    assert res["role"]["uid"] == role_term.term_uid
+    assert res["data_type"]["uid"] == data_type_term.term_uid
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
     assert res["library_name"] == "Sponsor"
@@ -354,6 +386,16 @@ def test_filtering_wildcard(
             "activity_instance_classes.name",
             "Activity Instance Class name1",
         ),
+        pytest.param(
+            '{"data_type.name": {"v": ["Data type"]}}',
+            "data_type.name",
+            "Data type",
+        ),
+        pytest.param(
+            '{"role.name": {"v": ["Role"]}}',
+            "role.name",
+            "Role",
+        ),
     ],
 )
 def test_filtering_exact(
@@ -402,6 +444,8 @@ def test_edit_activity_item_class(api_client):
         order=30,
         activity_instance_class_uids=[activity_instance_class.uid],
         approve=False,
+        data_type_uid=data_type_term.term_uid,
+        role_uid=role_term.term_uid,
     )
     response = api_client.patch(
         f"/activity-item-classes/{activity_item_class.uid}",
@@ -433,6 +477,8 @@ def test_post_activity_item_class(api_client):
             "order": 36,
             "library_name": "Sponsor",
             "activity_instance_class_uids": [activity_instance_class.uid],
+            "role_uid": role_term.term_uid,
+            "data_type_uid": data_type_term.term_uid,
         },
     )
     assert response.status_code == 201
@@ -455,6 +501,8 @@ def test_activity_item_class_versioning(api_client):
         mandatory=False,
         activity_instance_class_uids=[activity_instance_class.uid],
         approve=False,
+        data_type_uid=data_type_term.term_uid,
+        role_uid=role_term.term_uid,
     )
 
     # not successful create new version
@@ -511,6 +559,8 @@ def test_activity_item_class_versioning(api_client):
         mandatory=False,
         activity_instance_class_uids=[activity_instance_class.uid],
         approve=False,
+        data_type_uid=data_type_term.term_uid,
+        role_uid=role_term.term_uid,
     )
     # successful delete
     response = api_client.delete(f"/activity-item-classes/{activity_ic_to_delete.uid}")

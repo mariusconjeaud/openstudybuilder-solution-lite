@@ -224,7 +224,7 @@ export default {
   },
   computed: {
     title () {
-      return (this.objective)
+      return (this.unit.uid)
         ? this.$t('UnitForm.edit_title')
         : this.$t('UnitForm.add_title')
     }
@@ -288,6 +288,9 @@ export default {
       if (this.form.ucum && this.form.ucum.term_uid) {
         this.$set(this.form, 'ucum', this.form.ucum.term_uid)
       }
+      if (this.form.unit_dimension && this.form.unit_dimension.term_uid) {
+        this.$set(this.form, 'unit_dimension', this.form.unit_dimension.term_uid)
+      }
       if (Object.keys(this.unit).length !== 0) {
         try {
           const args = {
@@ -328,7 +331,7 @@ export default {
       this.form = JSON.parse(JSON.stringify(this.unit))
       this.$set(this.form, 'ct_units', this.unit.ct_units.map(el => el.term_uid))
       this.$set(this.form, 'unit_subsets', this.unit.unit_subsets.map(el => el.term_uid))
-      this.$set(this.form, 'ucum', this.unit.ucum.term_uid)
+      this.unit.ucum ? this.$set(this.form, 'ucum', this.unit.ucum.term_uid) : this.$set(this.form, 'ucum', '')
       this.$set(this.form, 'unit_dimension', this.unit.unit_dimension.term_uid)
     }
   },
@@ -338,7 +341,7 @@ export default {
         this.form = JSON.parse(JSON.stringify(value))
         this.$set(this.form, 'ct_units', this.unit.ct_units.map(el => el.term_uid))
         this.$set(this.form, 'unit_subsets', this.unit.unit_subsets.map(el => el.term_uid))
-        this.$set(this.form, 'ucum', this.unit.ucum.term_uid)
+        this.unit.ucum ? this.$set(this.form, 'ucum', this.unit.ucum.term_uid) : this.$set(this.form, 'ucum', '')
         this.$set(this.form, 'unit_dimension', this.unit.unit_dimension.term_uid)
       }
     }

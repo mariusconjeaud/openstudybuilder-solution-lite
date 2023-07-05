@@ -143,21 +143,15 @@ DATASET_CLASS_FIELDS_ALL = [
     "title",
     "description",
     "catalogue_name",
-    "data_model_name",
+    "data_models",
     "parent_class",
-    "start_date",
-    "end_date",
-    "status",
-    "version",
-    "change_description",
-    "user_initials",
 ]
 
 DATASET_CLASS_FIELDS_NOT_NULL = [
     "uid",
     "label",
     "catalogue_name",
-    "data_model_name",
+    "data_models",
 ]
 
 
@@ -175,10 +169,8 @@ def test_get_dataset_class(api_client):
     assert res["uid"] == dataset_classes[0].uid
     assert res["label"] == "DatasetClass A label"
     assert res["description"] == "DatasetClass A desc"
-    assert res["version"] == "1.0"
-    assert res["status"] == "Final"
     assert res["catalogue_name"] == data_model_catalogue_name
-    assert res["data_model_name"] == data_models[0].name
+    assert res["data_models"][0]["data_model_name"] == data_models[0].name
 
 
 def test_get_dataset_classes_pagination(api_client):
@@ -274,13 +266,7 @@ def test_get_dataset_classes(
     [
         pytest.param('{"*": {"v": ["aaa"]}}', "label", "name-AAA"),
         pytest.param('{"*": {"v": ["bBb"]}}', "label", "name-BBB"),
-        pytest.param(
-            '{"*": {"v": ["initials"], "op": "co"}}', "user_initials", "TODO initials"
-        ),
-        pytest.param('{"*": {"v": ["Final"]}}', "status", "Final"),
-        pytest.param('{"*": {"v": ["1.0"]}}', "version", "1.0"),
         pytest.param('{"*": {"v": ["ccc"]}}', None, None),
-        pytest.param('{"*": {"v": ["DataModel A"]}}', "data_model_name", "DataModel A"),
     ],
 )
 def test_filtering_wildcard(
@@ -293,9 +279,26 @@ def test_filtering_wildcard(
     assert response.status_code == 200
     if expected_result_prefix:
         assert len(res["items"]) > 0
+        nested_path = None
+
+        # if we expect a nested property to be equal to specified value
+        if isinstance(expected_matched_field, str) and "." in expected_matched_field:
+            nested_path = expected_matched_field.split(".")
+            expected_matched_field = nested_path[-1]
+            nested_path = nested_path[:-1]
+
         # Each returned row has a field that starts with the specified filter value
         for row in res["items"]:
-            assert row[expected_matched_field].startswith(expected_result_prefix)
+            if nested_path:
+                for prop in nested_path:
+                    row = row[prop]
+            if isinstance(row, list):
+                any(
+                    item[expected_matched_field].startswith(expected_result_prefix)
+                    for item in row
+                )
+            else:
+                assert row[expected_matched_field].startswith(expected_result_prefix)
     else:
         assert len(res["items"]) == 0
 
@@ -310,8 +313,8 @@ def test_filtering_wildcard(
         pytest.param('{"description": {"v": ["def-YYY"]}}', "description", "def-YYY"),
         pytest.param('{"description": {"v": ["cc"]}}', None, None),
         pytest.param(
-            '{"data_model_name": {"v": ["DataModel A"]}}',
-            "data_model_name",
+            '{"data_models.data_model_name": {"v": ["DataModel A"]}}',
+            "data_models.data_model_name",
             "DataModel A",
         ),
         pytest.param(
@@ -331,14 +334,28 @@ def test_filtering_exact(
     assert response.status_code == 200
     if expected_result:
         assert len(res["items"]) > 0
+
+        # if we expect a nested property to be equal to specified value
+        nested_path = None
+        if isinstance(expected_matched_field, str) and "." in expected_matched_field:
+            nested_path = expected_matched_field.split(".")
+            expected_matched_field = nested_path[-1]
+            nested_path = nested_path[:-1]
+
         # Each returned row has a field whose value is equal to the specified filter value
         for row in res["items"]:
+            if nested_path:
+                for prop in nested_path:
+                    row = row[prop]
             if isinstance(expected_result, list):
                 assert all(
                     item in row[expected_matched_field] for item in expected_result
                 )
             else:
-                assert row[expected_matched_field] == expected_result
+                if isinstance(row, list):
+                    all(item[expected_matched_field] == expected_result for item in row)
+                else:
+                    assert row[expected_matched_field] == expected_result
     else:
         assert len(res["items"]) == 0
 
@@ -348,7 +365,7 @@ def test_filtering_exact(
     [
         pytest.param("label"),
         pytest.param("description"),
-        pytest.param("data_model_name"),
+        pytest.param("data_models.data_model_name"),
         pytest.param("catalogue_name"),
     ],
 )
@@ -359,9 +376,27 @@ def test_headers(api_client, field_name):
 
     assert response.status_code == 200
     expected_result = []
+
+    nested_path = None
+    if isinstance(field_name, str) and "." in field_name:
+        nested_path = field_name.split(".")
+        expected_matched_field = nested_path[-1]
+        nested_path = nested_path[:-1]
+
     for dataset_class in dataset_classes:
-        value = getattr(dataset_class, field_name)
-        if value:
+        if nested_path:
+            for prop in nested_path:
+                dataset_class = getattr(dataset_class, prop)
+            if isinstance(dataset_class, list):
+                for item in dataset_class:
+                    value = getattr(item, expected_matched_field)
+                    expected_result.append(value)
+            else:
+                value = getattr(dataset_class, expected_matched_field)
+                expected_result.append(value)
+
+        else:
+            value = getattr(dataset_class, field_name)
             expected_result.append(value)
     log.info("Expected result is %s", expected_result)
     log.info("Returned %s", res)

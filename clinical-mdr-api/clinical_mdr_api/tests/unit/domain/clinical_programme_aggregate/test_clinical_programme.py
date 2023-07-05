@@ -1,6 +1,6 @@
 from typing import Callable
 
-from clinical_mdr_api.domain.clinical_programme.clinical_programme import (
+from clinical_mdr_api.domains.clinical_programmes.clinical_programme import (
     ClinicalProgrammeAR,
 )
 from clinical_mdr_api.tests.unit.domain.utils import random_str

@@ -102,7 +102,8 @@
                     "objective_template": {
                         "name": null,
                         "name_plain": null,
-                        "uid": null
+                        "uid": null,
+                        "sequence_id": "OT1"
                     },
                     "parameter_terms": [],
                     "library": {
@@ -180,7 +181,8 @@
                             "objective_template": {
                                 "name": null,
                                 "name_plain": null,
-                                "uid": null
+                                "uid": null,
+                                "sequence_id": "OT1"
                             },
                             "parameter_terms": [],
                             "library": {
@@ -260,7 +262,8 @@
                             "objective_template": {
                                 "name": null,
                                 "name_plain": null,
-                                "uid": null
+                                "uid": null,
+                                "sequence_id": "OT1"
                             },
                             "parameter_terms": [],
                             "library": {
@@ -317,7 +320,8 @@
                     "objective_template": {
                         "name": null,
                         "name_plain": null,
-                        "uid": null
+                        "uid": null,
+                        "sequence_id": "OT2"
                     },
                     "parameter_terms": [],
                     "library": {
@@ -393,7 +397,8 @@
                             "objective_template": {
                                 "name": null,
                                 "name_plain": null,
-                                "uid": null
+                                "uid": null,
+                                "sequence_id": "OT1"
                             },
                             "parameter_terms": [],
                             "library": {
@@ -432,7 +437,8 @@
                             "objective_template": {
                                 "uid": null,
                                 "name_plain": null,
-                                "name": null
+                                "name": null,
+                                "sequence_id": "OT2"
                             },
                             "parameter_terms": [],
                             "library": {
@@ -489,7 +495,8 @@
                     "objective_template": {
                         "name": null,
                         "name_plain": null,
-                        "uid": null
+                        "uid": null,
+                        "sequence_id": "OT2"
                     },
                     "parameter_terms": [],
                     "library": {
@@ -544,7 +551,8 @@
                     "objective_template": {
                         "name": null,
                         "name_plain": null,
-                        "uid": null
+                        "uid": null,
+                        "sequence_id": "OT2"
                     },
                     "parameter_terms": [],
                     "library": {
@@ -601,7 +609,8 @@
                     "objective_template": {
                         "name": null,
                         "name_plain": null,
-                        "uid": null
+                        "uid": null,
+                        "sequence_id": "OT2"
                     },
                     "parameter_terms": [],
                     "library": {
@@ -670,7 +679,8 @@
                         "objective_template": {
                             "name": "objective_1",
                             "name_plain": "objective_1",
-                            "uid": "ObjectiveTemplate_000001"
+                            "uid": "ObjectiveTemplate_000001",
+                            "sequence_id": "OT1"
                         },
                         "parameter_terms": [],
                         "library": {
@@ -724,7 +734,8 @@
                         "objective_template": {
                             "name": "objective_1",
                             "name_plain": "objective_1",
-                            "uid": "ObjectiveTemplate_000001"
+                            "uid": "ObjectiveTemplate_000001",
+                            "sequence_id": "OT1"
                         },
                         "parameter_terms": [],
                         "library": {
@@ -760,7 +771,8 @@
                         "objective_template": {
                             "name": "objective_2",
                             "name_plain": "objective_2",
-                            "uid": "ObjectiveTemplate_000002"
+                            "uid": "ObjectiveTemplate_000002",
+                            "sequence_id": "OT2"
                         },
                         "parameter_terms": [],
                         "library": {
@@ -796,7 +808,8 @@
                         "objective_template": {
                             "name": "objective_2",
                             "name_plain": "objective_2",
-                            "uid": "ObjectiveTemplate_000002"
+                            "uid": "ObjectiveTemplate_000002",
+                            "sequence_id": "OT2"
                         },
                         "parameter_terms": [],
                         "library": {
@@ -832,7 +845,8 @@
                         "objective_template": {
                             "name": "objective_2",
                             "name_plain": "objective_2",
-                            "uid": "ObjectiveTemplate_000002"
+                            "uid": "ObjectiveTemplate_000002",
+                            "sequence_id": "OT2"
                         },
                         "parameter_terms": [],
                         "library": {
@@ -886,7 +900,8 @@
                         "objective_template": {
                             "name": "objective_2",
                             "name_plain": "objective_2",
-                            "uid": "ObjectiveTemplate_000002"
+                            "uid": "ObjectiveTemplate_000002",
+                            "sequence_id": "OT2"
                         },
                         "parameter_terms": [],
                         "library": {
@@ -922,7 +937,8 @@
                         "objective_template": {
                             "name": "objective_2",
                             "name_plain": "objective_2",
-                            "uid": "ObjectiveTemplate_000002"
+                            "uid": "ObjectiveTemplate_000002",
+                            "sequence_id": "OT2"
                         },
                         "parameter_terms": [],
                         "library": {
@@ -958,7 +974,8 @@
                         "objective_template": {
                             "name": "objective_2",
                             "name_plain": "objective_2",
-                            "uid": "ObjectiveTemplate_000002"
+                            "uid": "ObjectiveTemplate_000002",
+                            "sequence_id": "OT2"
                         },
                         "parameter_terms": [],
                         "library": {
@@ -1019,7 +1036,8 @@
                     "objective_template": {
                         "name": null,
                         "name_plain": null,
-                        "uid": null
+                        "uid": null,
+                        "sequence_id": "OT3"
                     },
                     "parameter_terms": [],
                     "library": {
@@ -1081,7 +1099,8 @@
                     "objective_template": {
                         "name": null,
                         "name_plain": null,
-                        "uid": null
+                        "uid": null,
+                        "sequence_id": "OT4"
                     },
                     "parameter_terms": [],
                     "library": {
@@ -1164,7 +1183,8 @@
                     "objective_template": {
                         "name": null,
                         "name_plain": null,
-                        "uid": null
+                        "uid": null,
+                        "sequence_id": "OT4"
                     },
                     "parameter_terms": [],
                     "library": {
@@ -1212,7 +1232,8 @@
                             "name": "objective_4",
                             "name_plain": "objective_4",
                             "guidance_text": null,
-                            "uid": "ObjectiveTemplate_000004"
+                            "uid": "ObjectiveTemplate_000004",
+                            "sequence_id": "OT4"
                         },
                         "parameter_terms": [],
                         "library": {
@@ -1238,7 +1259,8 @@
                             "name": "objective_3",
                             "name_plain": "objective_3",
                             "guidance_text": null,
-                            "uid": "ObjectiveTemplate_000003"
+                            "uid": "ObjectiveTemplate_000003",
+                            "sequence_id": "OT3"
                         },
                         "parameter_terms": [],
                         "library": {
@@ -1264,7 +1286,8 @@
                             "name": "objective_1",
                             "name_plain": "objective_1",
                             "guidance_text": null,
-                            "uid": "ObjectiveTemplate_000001"
+                            "uid": "ObjectiveTemplate_000001",
+                            "sequence_id": "OT1"
                         },
                         "parameter_terms": [],
                         "library": {

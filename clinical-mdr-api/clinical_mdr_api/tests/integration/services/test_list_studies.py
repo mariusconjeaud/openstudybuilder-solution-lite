@@ -10,14 +10,14 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
     ObjectiveRoot,
     ObjectiveValue,
 )
-from clinical_mdr_api.services.study import StudyService
-from clinical_mdr_api.services.study_activity_instruction import (
+from clinical_mdr_api.services.studies.study import StudyService
+from clinical_mdr_api.services.studies.study_activity_instruction import (
     StudyActivityInstructionService,
 )
-from clinical_mdr_api.services.study_activity_selection import (
+from clinical_mdr_api.services.studies.study_activity_selection import (
     StudyActivitySelectionService,
 )
-from clinical_mdr_api.services.study_criteria_selection import (
+from clinical_mdr_api.services.studies.study_criteria_selection import (
     StudyCriteriaSelectionService,
 )
 from clinical_mdr_api.services.syntax_instances.endpoints import EndpointService
@@ -105,7 +105,7 @@ class TestListStudies(unittest.TestCase):
         # Create a study criteria
         StudyCriteriaSelectionService("AZNG").make_selection_create_criteria(
             "study_root",
-            models.study_selection.StudySelectionCriteriaCreateInput(
+            models.study_selections.study_selection.StudySelectionCriteriaCreateInput(
                 criteria_data=models.syntax_instances.criteria.CriteriaCreateInput(
                     criteria_template_uid="incl_criteria_1",
                     library_name="Sponsor",

@@ -2,18 +2,18 @@ from typing import Callable, Dict, List, Optional
 
 from pydantic import Field, validator
 
-from clinical_mdr_api.domain.biomedical_concepts.activity_instance_class import (
+from clinical_mdr_api.domains.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClassAR,
 )
-from clinical_mdr_api.domain.biomedical_concepts.activity_item_class import (
+from clinical_mdr_api.domains.biomedical_concepts.activity_item_class import (
     ActivityItemClassAR,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import (
+from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     ObjectAction,
 )
 from clinical_mdr_api.models import Library
-from clinical_mdr_api.models.concept import VersionProperties
+from clinical_mdr_api.models.concepts.concept import VersionProperties
 from clinical_mdr_api.models.utils import BaseModel
 
 
@@ -32,6 +32,42 @@ class CompactActivityInstanceClass(BaseModel):
         title="parent_class",
         description="",
         source="has_activity_instance_class.has_latest_value.name",
+    )
+
+
+class SimpleDataTypeTerm(BaseModel):
+    class Config:
+        orm_mode = True
+
+    uid: str = Field(
+        ...,
+        title="parent_class",
+        description="",
+        source="has_latest_value.has_data_type.uid",
+    )
+    name: Optional[str] = Field(
+        None,
+        title="parent_class",
+        description="",
+        source="has_latest_value.has_data_type.has_name_root.has_latest_value.name",
+    )
+
+
+class SimpleRoleTerm(BaseModel):
+    class Config:
+        orm_mode = True
+
+    uid: str = Field(
+        ...,
+        title="parent_class",
+        description="",
+        source="has_latest_value.has_role.uid",
+    )
+    name: Optional[str] = Field(
+        None,
+        title="parent_class",
+        description="",
+        source="has_latest_value.has_role.has_name_root.has_latest_value.name",
     )
 
 
@@ -57,6 +93,8 @@ class ActivityItemClass(VersionProperties):
         description="",
         source="has_latest_value.mandatory",
     )
+    data_type: SimpleDataTypeTerm = Field(...)
+    role: SimpleRoleTerm = Field(...)
     activity_instance_classes: List[CompactActivityInstanceClass] = Field(...)
     library_name: str = Field(
         ...,
@@ -117,6 +155,14 @@ class ActivityItemClass(VersionProperties):
                 )
                 for activity_instance_class in activity_instance_classes
             ],
+            data_type=SimpleDataTypeTerm(
+                uid=activity_item_class_ar.activity_item_class_vo.data_type_uid,
+                name=activity_item_class_ar.activity_item_class_vo.data_type_name,
+            ),
+            role=SimpleRoleTerm(
+                uid=activity_item_class_ar.activity_item_class_vo.role_uid,
+                name=activity_item_class_ar.activity_item_class_vo.role_name,
+            ),
             library_name=Library.from_library_vo(activity_item_class_ar.library).name,
             start_date=activity_item_class_ar.item_metadata.start_date,
             end_date=activity_item_class_ar.item_metadata.end_date,
@@ -135,6 +181,8 @@ class ActivityItemClassCreateInput(BaseModel):
     order: int
     mandatory: bool
     activity_instance_class_uids: List[str]
+    role_uid: str
+    data_type_uid: str
     library_name: str
 
 
@@ -145,6 +193,8 @@ class ActivityItemClassEditInput(ActivityItemClassCreateInput):
     activity_instance_class_uids: List[str] = []
     library_name: Optional[str] = None
     change_description: Optional[str] = None
+    role_uid: Optional[str] = None
+    data_type_uid: Optional[str] = None
 
 
 class ActivityItemClassVersion(ActivityItemClass):
@@ -152,10 +202,11 @@ class ActivityItemClassVersion(ActivityItemClass):
     Class for storing ActivityItemClass and calculation of differences
     """
 
-    changes: Dict[str, bool] = Field(
+    changes: Optional[Dict[str, bool]] = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
             "The field names in this object here refer to the field names of the objective (e.g. name, start_date, ..)."
         ),
+        nullable=True,
     )

@@ -1,5 +1,5 @@
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot
-from clinical_mdr_api.services import libraries as library_service
+from clinical_mdr_api.services.libraries import libraries as library_service
 from clinical_mdr_api.tests.integration.utils.data_library import library_data
 
 # pylint:disable=unused-wildcard-import,wildcard-import

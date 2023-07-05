@@ -11,10 +11,10 @@ from hypothesis import HealthCheck, assume, given, settings
 from hypothesis.strategies import sampled_from
 
 from clinical_mdr_api import exceptions
-from clinical_mdr_api.domain.study_definition_aggregate.registry_identifiers import (
+from clinical_mdr_api.domains.study_definition_aggregates.registry_identifiers import (
     RegistryIdentifiersVO,
 )
-from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
+from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     HighLevelStudyDesignVO,
     StudyDescriptionVO,
     StudyIdentificationMetadataVO,

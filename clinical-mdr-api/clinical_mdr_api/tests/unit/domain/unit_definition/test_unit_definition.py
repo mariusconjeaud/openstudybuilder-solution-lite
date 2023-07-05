@@ -20,14 +20,14 @@ from hypothesis.strategies import (
 )
 
 # noinspection PyProtectedMember
-from clinical_mdr_api.domain._utils import normalize_string
-from clinical_mdr_api.domain.unit_definition.unit_definition import (
+from clinical_mdr_api.domains._utils import normalize_string
+from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     CONCENTRATION_UNIT_DIMENSION_VALUE,
     CTTerm,
     UnitDefinitionAR,
     UnitDefinitionValueVO,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import (
+from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryItemStatus,
     LibraryVO,

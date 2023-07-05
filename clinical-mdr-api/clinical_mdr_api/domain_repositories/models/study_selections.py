@@ -1,7 +1,6 @@
 from neomodel import (
     BooleanProperty,
     IntegerProperty,
-    One,
     OneOrMore,
     RelationshipFrom,
     RelationshipTo,
@@ -39,8 +38,12 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
 class AuditTrailMixin:
     """Mixin class to provide audit trail required relations."""
 
-    has_before = RelationshipFrom(StudyAction, "BEFORE", model=ConjunctionRelation)
-    has_after = RelationshipFrom(StudyAction, "AFTER", model=ConjunctionRelation)
+    has_before = RelationshipFrom(
+        StudyAction, "BEFORE", model=ConjunctionRelation, cardinality=ZeroOrOne
+    )
+    has_after = RelationshipFrom(
+        StudyAction, "AFTER", model=ConjunctionRelation, cardinality=ZeroOrOne
+    )
 
 
 class StudySelection(ClinicalMdrNodeWithUID, AuditTrailMixin):
@@ -152,7 +155,9 @@ class StudyActivity(StudySelection):
 
 
 class StudyActivitySchedule(ClinicalMdrNodeWithUID, AuditTrailMixin):
-    study_value = RelationshipFrom(".study.StudyValue", "HAS_STUDY_ACTIVITY_SCHEDULE")
+    study_value = RelationshipFrom(
+        ".study.StudyValue", "HAS_STUDY_ACTIVITY_SCHEDULE", model=ClinicalMdrRel
+    )
     study_activity = RelationshipFrom(
         StudyActivity, "STUDY_ACTIVITY_HAS_SCHEDULE", model=ClinicalMdrRel
     )
@@ -164,30 +169,32 @@ class StudyActivitySchedule(ClinicalMdrNodeWithUID, AuditTrailMixin):
 
 
 class StudyDesignCell(ClinicalMdrNodeWithUID, AuditTrailMixin):
-    study_value = RelationshipFrom(".study.StudyValue", "HAS_STUDY_DESIGN_CELL")
+    study_value = RelationshipFrom(
+        ".study.StudyValue", "HAS_STUDY_DESIGN_CELL", model=ClinicalMdrRel
+    )
     study_arm = RelationshipFrom(
         ".study_selections.StudyArm",
         "STUDY_ARM_HAS_DESIGN_CELL",
         model=ClinicalMdrRel,
-        cardinality=ZeroOrOne,
+        cardinality=ZeroOrMore,
     )
     study_branch_arm = RelationshipFrom(
         ".study_selections.StudyBranchArm",
         "STUDY_BRANCH_ARM_HAS_DESIGN_CELL",
         model=ClinicalMdrRel,
-        cardinality=ZeroOrOne,
+        cardinality=ZeroOrMore,
     )
     study_epoch = RelationshipFrom(
         ".study_epoch.StudyEpoch",
         "STUDY_EPOCH_HAS_DESIGN_CELL",
         model=ClinicalMdrRel,
-        cardinality=One,
+        cardinality=ZeroOrMore,
     )
     study_element = RelationshipFrom(
         ".study_selections.StudyElement",
         "STUDY_ELEMENT_HAS_DESIGN_CELL",
         model=ClinicalMdrRel,
-        cardinality=One,
+        cardinality=ZeroOrMore,
     )
 
     transition_rule = StringProperty()
@@ -203,11 +210,16 @@ class StudyArm(StudySelection):
     randomization_group = StringProperty()
     number_of_subjects = IntegerProperty()
 
-    study_value = RelationshipFrom(".study.StudyValue", "HAS_STUDY_ARM")
+    study_value = RelationshipFrom(
+        ".study.StudyValue", "HAS_STUDY_ARM", model=ClinicalMdrRel
+    )
 
     arm_type = RelationshipTo(CTTermRoot, "HAS_ARM_TYPE", model=ClinicalMdrRel)
     has_design_cell = RelationshipTo(
-        StudyDesignCell, "STUDY_ARM_HAS_DESIGN_CELL", model=ClinicalMdrRel
+        StudyDesignCell,
+        "STUDY_ARM_HAS_DESIGN_CELL",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
     )
     has_branch_arm = RelationshipTo(
         ".study_selections.StudyBranchArm",
@@ -228,12 +240,17 @@ class StudyElement(StudySelection):
     start_rule = StringProperty()
     end_rule = StringProperty()
     element_colour = StringProperty()
-    study_value = RelationshipFrom(".study.StudyValue", "HAS_STUDY_ELEMENT")
+    study_value = RelationshipFrom(
+        ".study.StudyValue", "HAS_STUDY_ELEMENT", model=ClinicalMdrRel
+    )
     element_subtype = RelationshipTo(
         CTTermRoot, "HAS_ELEMENT_SUBTYPE", model=ClinicalMdrRel
     )
     has_design_cell = RelationshipTo(
-        StudyDesignCell, "STUDY_ELEMENT_HAS_DESIGN_CELL", model=ClinicalMdrRel
+        StudyDesignCell,
+        "STUDY_ELEMENT_HAS_DESIGN_CELL",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
     )
     has_compound_dosing = RelationshipTo(
         "StudyCompoundDosing",
@@ -245,7 +262,7 @@ class StudyElement(StudySelection):
 
 class StudyActivityInstruction(AuditTrailMixin, ClinicalMdrNodeWithUID):
     study_value = RelationshipFrom(
-        ".study.StudyValue", "HAS_STUDY_ACTIVITY_INSTRUCTION"
+        ".study.StudyValue", "HAS_STUDY_ACTIVITY_INSTRUCTION", model=ClinicalMdrRel
     )
     study_activity = RelationshipFrom(
         StudyActivity, "STUDY_ACTIVITY_HAS_INSTRUCTION", model=ClinicalMdrRel
@@ -271,7 +288,10 @@ class StudyBranchArm(StudySelection):
         ".study.StudyValue", "HAS_STUDY_BRANCH_ARM", model=ClinicalMdrRel
     )
     has_design_cell = RelationshipTo(
-        StudyDesignCell, "STUDY_BRANCH_ARM_HAS_DESIGN_CELL", model=ClinicalMdrRel
+        StudyDesignCell,
+        "STUDY_BRANCH_ARM_HAS_DESIGN_CELL",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
     )
     has_cohort = RelationshipTo(
         ".study_selections.StudyCohort",
@@ -301,7 +321,9 @@ class StudyCohort(StudySelection):
 
 
 class StudyCompoundDosing(StudySelection):
-    study_value = RelationshipFrom(".study.StudyValue", "HAS_STUDY_COMPOUND_DOSING")
+    study_value = RelationshipFrom(
+        ".study.StudyValue", "HAS_STUDY_COMPOUND_DOSING", model=ClinicalMdrRel
+    )
 
     has_dose_frequency = RelationshipTo(
         CTTermRoot, "HAS_DOSE_FREQUENCY", cardinality=ZeroOrOne

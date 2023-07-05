@@ -2,20 +2,23 @@ import unittest
 
 from neomodel import db
 
-from clinical_mdr_api.domain.study_selection.study_epoch import StudyEpochVO, TimelineAR
-from clinical_mdr_api.domain.study_selection.study_visit import StudyVisitVO
+from clinical_mdr_api.domains.study_selections.study_epoch import (
+    StudyEpochVO,
+    TimelineAR,
+)
+from clinical_mdr_api.domains.study_selections.study_visit import StudyVisitVO
 from clinical_mdr_api.exceptions import NotFoundException, ValidationException
 from clinical_mdr_api.models import StudyVisit
-from clinical_mdr_api.models.study_epoch import StudyEpochEditInput
-from clinical_mdr_api.models.study_visit import (
+from clinical_mdr_api.models.study_selections.study_epoch import StudyEpochEditInput
+from clinical_mdr_api.models.study_selections.study_visit import (
     StudyVisitCreateInput,
     StudyVisitEditInput,
 )
-from clinical_mdr_api.services.study_activity_schedule import (
+from clinical_mdr_api.services.studies.study_activity_schedule import (
     StudyActivityScheduleService,
 )
-from clinical_mdr_api.services.study_epoch import StudyEpochService
-from clinical_mdr_api.services.study_visit import StudyVisitService
+from clinical_mdr_api.services.studies.study_epoch import StudyEpochService
+from clinical_mdr_api.services.studies.study_visit import StudyVisitService
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_CATALOGUE_CYPHER,
@@ -208,7 +211,7 @@ class TestStudyVisitManagement(unittest.TestCase):
         epoch2 = epochs[1]
         study_epochs = epoch_service.repo.find_all_epochs_by_study(self.study.uid)
 
-        epoch = epoch_service.find_by_uid(epoch1.uid)
+        epoch = epoch_service.find_by_uid(epoch1.uid, study_uid=self.study.uid)
         start_rule = "New start rule"
         end_rule = "New end rule"
         edit_input = StudyEpochEditInput(
@@ -224,6 +227,7 @@ class TestStudyVisitManagement(unittest.TestCase):
 
         visit_repo = epoch_service._repos.study_visit_repository
         study_visits = visit_repo.find_all_visits_by_study_uid(self.study.uid)
+        self.assertEqual(len(study_visits), 6)
         timeline = TimelineAR(self.study.uid, _visits=study_visits)
         epochs = timeline.collect_visits_to_epochs(study_epochs)
         visit_vo: StudyVisitVO
@@ -331,6 +335,24 @@ class TestStudyVisitManagement(unittest.TestCase):
             visit_subclass="SINGLE_VISIT",
             epoch_allocation_uid="EpochAllocation_0001",
         )
+        epoch_service: StudyEpochService = StudyEpochService()
+        epochs = epoch_service.get_all_epochs(self.study.uid).items
+        self.assertEqual(len(epochs), 3)
+        epoch1 = epochs[0]
+
+        epoch = epoch_service.find_by_uid(epoch1.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
+        )
 
         edit_input = dict(
             uid=visit.uid,
@@ -392,6 +414,24 @@ class TestStudyVisitManagement(unittest.TestCase):
             visit_class="SINGLE_VISIT",
             visit_subclass="SINGLE_VISIT",
             epoch_allocation_uid="EpochAllocation_0001",
+        )
+        epoch_service: StudyEpochService = StudyEpochService()
+        epochs = epoch_service.get_all_epochs(self.study.uid).items
+        self.assertEqual(len(epochs), 3)
+        epoch1 = epochs[0]
+
+        epoch = epoch_service.find_by_uid(epoch1.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
         )
 
         edit_input = dict(
@@ -490,6 +530,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertGreater(current_visit.start_date, previous_visit.start_date)
         self.assertEqual(previous_visit.changes, {})
         self.assertEqual(current_visit_2.changes, {})
+        self.assertEqual(current_visit.change_type, "Edit")
+        self.assertEqual(previous_visit.change_type, "Create")
 
     def test__create_subvisits_uvn__reordered_successfully(self):
         visit_service = StudyVisitService()
@@ -595,8 +637,27 @@ class TestStudyVisitManagement(unittest.TestCase):
             visit_class="SINGLE_VISIT",
             visit_subclass="ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV",
         )
+        epoch_service: StudyEpochService = StudyEpochService()
+        epochs = epoch_service.get_all_epochs(self.study.uid).items
+        self.assertEqual(len(epochs), 3)
+        epoch2 = epochs[1]
+
+        epoch = epoch_service.find_by_uid(epoch2.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
+        )
 
         all_visits = visit_service.get_all_visits(study_uid=self.study.uid).items
+        self.assertEqual(len(all_visits), 23)
 
         all_visits = [visit for visit in all_visits if visit.visit_number == 2]
 
@@ -620,6 +681,24 @@ class TestStudyVisitManagement(unittest.TestCase):
             is_global_anchor_visit=True,
             visit_class="SINGLE_VISIT",
             visit_subclass="SINGLE_VISIT",
+        )
+        epoch_service: StudyEpochService = StudyEpochService()
+        epochs = epoch_service.get_all_epochs(self.study.uid).items
+        self.assertEqual(len(epochs), 3)
+        epoch1 = epochs[0]
+
+        epoch = epoch_service.find_by_uid(epoch1.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
         )
         global_anchor_visit = visit_service.get_global_anchor_visit(
             study_uid=self.study.uid
@@ -657,6 +736,24 @@ class TestStudyVisitManagement(unittest.TestCase):
             is_global_anchor_visit=False,
             visit_class="SINGLE_VISIT",
             visit_subclass="ANCHOR_VISIT_IN_GROUP_OF_SUBV",
+        )
+        epoch_service: StudyEpochService = StudyEpochService()
+        epochs = epoch_service.get_all_epochs(self.study.uid).items
+        self.assertEqual(len(epochs), 3)
+        epoch2 = epochs[1]
+
+        epoch = epoch_service.find_by_uid(epoch2.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
         )
         anchor_visits = visit_service.get_anchor_visits_in_a_group_of_subvisits(
             study_uid=self.study.uid
@@ -698,6 +795,23 @@ class TestStudyVisitManagement(unittest.TestCase):
             is_global_anchor_visit=False,
             visit_class="SINGLE_VISIT",
             visit_subclass="SINGLE_VISIT",
+        )
+        epochs = epoch_service.get_all_epochs(self.study.uid).items
+        self.assertEqual(len(epochs), 3)
+        epoch3 = epochs[2]
+
+        epoch = epoch_service.find_by_uid(epoch3.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
         )
 
         study_epochs = epoch_service.get_all_epochs(self.study.uid).items
@@ -767,6 +881,50 @@ class TestStudyVisitManagement(unittest.TestCase):
             visit_class="SINGLE_VISIT",
             visit_subclass="SINGLE_VISIT",
         )
+        epochs = epoch_service.get_all_epochs(self.study.uid).items
+        self.assertEqual(len(epochs), 3)
+        epoch1 = epochs[0]
+        epoch2 = epochs[1]
+        epoch3 = epochs[2]
+        epoch = epoch_service.find_by_uid(epoch1.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
+        )
+        epoch = epoch_service.find_by_uid(epoch2.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
+        )
+        epoch = epoch_service.find_by_uid(epoch3.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
+        )
         study_epochs = epoch_service.get_all_epochs(self.study.uid).items
         self.assertEqual(len(study_epochs), 3)
         self.assertEqual(study_epochs[0].start_day, 1)
@@ -789,6 +947,24 @@ class TestStudyVisitManagement(unittest.TestCase):
             is_global_anchor_visit=True,
             visit_class="SINGLE_VISIT",
             visit_subclass="SINGLE_VISIT",
+        )
+        epoch_service: StudyEpochService = StudyEpochService()
+        epochs = epoch_service.get_all_epochs(self.study.uid).items
+        self.assertEqual(len(epochs), 3)
+        epoch1 = epochs[0]
+
+        epoch = epoch_service.find_by_uid(epoch1.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
         )
         with self.assertRaises(ValidationException):
             create_visit_with_update(
@@ -839,6 +1015,24 @@ class TestStudyVisitManagement(unittest.TestCase):
         }
         visit_input = StudyVisitCreateInput(**non_visit_input)
         visit_service.create(study_uid=self.study.uid, study_visit_input=visit_input)
+        epoch_service: StudyEpochService = StudyEpochService()
+        epochs = epoch_service.get_all_epochs(self.study.uid).items
+        self.assertEqual(len(epochs), 3)
+        epoch1 = epochs[0]
+
+        epoch = epoch_service.find_by_uid(epoch1.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
+        )
 
         all_visits = visit_service.get_all_visits(study_uid=self.study.uid).items
 
@@ -884,6 +1078,24 @@ class TestStudyVisitManagement(unittest.TestCase):
             visit_class="SINGLE_VISIT",
             visit_subclass="SINGLE_VISIT",
         )
+        epoch_service: StudyEpochService = StudyEpochService()
+        epochs = epoch_service.get_all_epochs(self.study.uid).items
+        self.assertEqual(len(epochs), 3)
+        epoch1 = epochs[0]
+
+        epoch = epoch_service.find_by_uid(epoch1.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
+        )
         special_visit_input = {
             "study_epoch_uid": self.epoch1.uid,
             "consecutive_visit_group": "",
@@ -900,6 +1112,24 @@ class TestStudyVisitManagement(unittest.TestCase):
         }
         visit_input = StudyVisitCreateInput(**special_visit_input)
         visit_service.create(study_uid=self.study.uid, study_visit_input=visit_input)
+        epoch_service: StudyEpochService = StudyEpochService()
+        epochs = epoch_service.get_all_epochs(self.study.uid).items
+        self.assertEqual(len(epochs), 3)
+        epoch1 = epochs[0]
+
+        epoch = epoch_service.find_by_uid(epoch1.uid, study_uid=self.study.uid)
+        start_rule = "New start rule2"
+        end_rule = "New end rule2"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
+        )
 
         all_visits = visit_service.get_all_visits(study_uid=self.study.uid).items
 
@@ -962,6 +1192,24 @@ class TestStudyVisitManagement(unittest.TestCase):
             visit_class="SINGLE_VISIT",
             visit_subclass="SINGLE_VISIT",
         )
+        epoch_service: StudyEpochService = StudyEpochService()
+        epochs = epoch_service.get_all_epochs(self.study.uid).items
+        self.assertEqual(len(epochs), 3)
+        epoch1 = epochs[0]
+
+        epoch = epoch_service.find_by_uid(epoch1.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
+        )
         consecutive_visit_group = (
             f"{second_vis.visit_short_name}-{third_visit.visit_short_name}"
         )
@@ -1010,6 +1258,24 @@ class TestStudyVisitManagement(unittest.TestCase):
             visit_class="SINGLE_VISIT",
             visit_subclass="SINGLE_VISIT",
         )
+        epoch_service: StudyEpochService = StudyEpochService()
+        epochs = epoch_service.get_all_epochs(self.study.uid).items
+        self.assertEqual(len(epochs), 3)
+        epoch1 = epochs[0]
+
+        epoch = epoch_service.find_by_uid(epoch1.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
+        )
         # assign some study activity schedule
         ar1 = TestUtils.create_activity(name="ar1", library_name="Sponsor")
         sa1 = create_study_activity(
@@ -1046,6 +1312,24 @@ class TestStudyVisitManagement(unittest.TestCase):
             max_visit_window_value=10,
             min_visit_window_value=-10,
         )
+        epoch_service: StudyEpochService = StudyEpochService()
+        epochs = epoch_service.get_all_epochs(self.study.uid).items
+        self.assertEqual(len(epochs), 3)
+        epoch1 = epochs[0]
+
+        epoch = epoch_service.find_by_uid(epoch1.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
+        )
         sa2 = create_study_activity(
             study_uid=self.study.uid,
             activity_uid=ar1.uid,
@@ -1066,6 +1350,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             study_activity_uid=sa3.study_activity_uid,
             study_visit_uid=third_visit.uid,
         )
+
         # get all study activity schedules for third visit
         third_vis_all_schedules = schedule_service.get_all_schedules_for_specific_visit(
             study_uid=self.study.uid, study_visit_uid=third_visit.uid
@@ -1174,6 +1459,24 @@ class TestStudyVisitManagement(unittest.TestCase):
             visit_class="SINGLE_VISIT",
             visit_subclass="SINGLE_VISIT",
         )
+        epoch_service: StudyEpochService = StudyEpochService()
+        epochs = epoch_service.get_all_epochs(self.study.uid).items
+        self.assertEqual(len(epochs), 3)
+        epoch1 = epochs[0]
+
+        epoch = epoch_service.find_by_uid(epoch1.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
+        )
         cons_visit_group = (
             f"{second_visit.visit_short_name}-{third_visit.visit_short_name}"
         )
@@ -1264,6 +1567,24 @@ class TestStudyVisitManagement(unittest.TestCase):
             is_global_anchor_visit=False,
             visit_class="SINGLE_VISIT",
             visit_subclass="SINGLE_VISIT",
+        )
+        epoch_service: StudyEpochService = StudyEpochService()
+        epochs = epoch_service.get_all_epochs(self.study.uid).items
+        self.assertEqual(len(epochs), 3)
+        epoch1 = epochs[0]
+
+        epoch = epoch_service.find_by_uid(epoch1.uid, study_uid=self.study.uid)
+        start_rule = "New start rule"
+        end_rule = "New end rule"
+        edit_input = StudyEpochEditInput(
+            study_uid=epoch.study_uid,
+            start_rule=start_rule,
+            end_rule=end_rule,
+            change_description="rules change",
+        )
+        epoch_service.edit(
+            study_epoch_uid=epoch.uid,
+            study_epoch_input=edit_input,
         )
         consecutive_visit_group = (
             f"{second_visit.visit_short_name}-{third_visit.visit_short_name}"

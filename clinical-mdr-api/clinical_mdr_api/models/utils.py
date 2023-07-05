@@ -1,7 +1,6 @@
 import json
 import re
 from copy import copy
-from distutils.util import strtobool
 from typing import Any, Callable, Dict, Generic, Iterable, Sequence, Type, TypeVar
 
 from pydantic import BaseModel as PydanticBaseModel
@@ -10,7 +9,9 @@ from pydantic.generics import GenericModel
 from starlette.responses import Response
 
 from clinical_mdr_api.config import STUDY_TIME_UNIT_SUBSET
-from clinical_mdr_api.domain.unit_definition.unit_definition import UnitDefinitionAR
+from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
+    UnitDefinitionAR,
+)
 
 EXCLUDE_PROPERTY_ATTRIBUTES_FROM_SCHEMA = {"remove_from_wildcard", "source"}
 
@@ -60,11 +61,13 @@ class BaseModel(PydanticBaseModel):
         field's value from.
         """
 
-        def _extract_part_from_node(node_to_extract, path):
+        def _extract_part_from_node(node_to_extract, path, extract_from_relationship):
             """
             Traverse specified path in the node_to_extract.
             The possible paths for the traversal are stored in the node _relations dictionary.
             """
+            if extract_from_relationship:
+                path += "_relationship"
             if not hasattr(node_to_extract, "_relations"):
                 return None
             if path not in node_to_extract._relations.keys():
@@ -106,24 +109,35 @@ class BaseModel(PydanticBaseModel):
                     setattr(obj, name, None)
                 continue
             if "." in source or "|" in source:
+                orig_source = source
                 # split by . that implicates property on node or | that indicates property on the relationship
                 parts = re.split(r"[.|]", source)
                 source = parts[-1]
+                last_traversal = parts[-2]
                 node = obj
                 parts = parts[:-1]
                 for _, part in enumerate(parts):
+                    extract_from_relationship = False
+                    if part == last_traversal and "|" in orig_source:
+                        extract_from_relationship = True
                     # if node is a list of nodes we want to extract property/relationship
                     # from all nodes in list of nodes
                     if isinstance(node, list):
                         return_node = []
                         for n in node:
                             extracted = _extract_part_from_node(
-                                node_to_extract=n, path=part
+                                node_to_extract=n,
+                                path=part,
+                                extract_from_relationship=extract_from_relationship,
                             )
                             return_node.extend(extracted)
                         node = return_node
                     else:
-                        node = _extract_part_from_node(node_to_extract=node, path=part)
+                        node = _extract_part_from_node(
+                            node_to_extract=node,
+                            path=part,
+                            extract_from_relationship=extract_from_relationship,
+                        )
                     if node is None:
                         break
             else:
@@ -173,6 +187,24 @@ class BaseModel(PydanticBaseModel):
             for prop in schema.get("properties", {}).values():
                 for attr in EXCLUDE_PROPERTY_ATTRIBUTES_FROM_SCHEMA:
                     prop.pop(attr, None)
+
+
+def strtobool(value: str) -> int:
+    """Convert a string representation of truth to integer 1 (true) or 0 (false).
+
+    Returns 1 for True values: 'y', 'yes', 't', 'true', 'on', '1'.
+    Returns 0 for False values: 'n', 'no', 'f', 'false', 'off', '0'.
+    Otherwise raises ValueError.
+
+    Reimplemented because of deprecation https://peps.python.org/pep-0632/#migration-advice
+    Returns int to remain compatible with Python 3.7 distutils.util.strtobool()
+    """
+    val = value.lower()
+    if val in ("y", "yes", "t", "true", "on", "1"):
+        return 1
+    if val in ("n", "no", "f", "false", "off", "0"):
+        return 0
+    raise ValueError(f"invalid truth value {value:r}")
 
 
 def booltostr(b: bool, true_format: str = "Yes"):

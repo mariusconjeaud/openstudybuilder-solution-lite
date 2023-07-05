@@ -13,21 +13,30 @@
   :history-formating-func="formatHistoryItem"
   :export-data-url-params="columnDataParameters"
   double-breadcrumb
+  :prepare-duplicate-payload-func="prepareDuplicatePayload"
   >
-  <template v-slot:editform="{ closeForm, selectedObject, filter, updateTemplate }">
+  <template v-slot:editform="{ closeForm, selectedObject, preInstanceMode }">
+    <criteria-template-pre-instance-form
+      v-if="preInstanceMode"
+      :pre-instance="selectedObject"
+      :criteria-type="criteriaType"
+      @close="closeForm"
+      @success="refreshTable"
+      />
     <criteria-template-form
+      v-else
       :criteria-type="criteriaType"
       @close="closeForm"
       :template="selectedObject"
-      @templateAdded="filter()"
-      @templateUpdated="updateTemplate(arguments[0], 'Draft')"
+      @templateAdded="refreshTable"
+      @templateUpdated="refreshTable"
       />
   </template>
   <template v-slot:item.guidance_text="{ item }">
     <div v-html="item.guidance_text" />
   </template>
   <template v-slot:item.categories.name.sponsor_preferred_name="{ item }">
-    <template v-if="item.categories">
+    <template v-if="item.categories && item.categories.length">
       {{ item.categories|terms }}
     </template>
     <template v-else>
@@ -35,14 +44,14 @@
     </template>
   </template>
   <template v-slot:item.sub_categories.name.sponsor_preferred_name="{ item }">
-    <template v-if="item.sub_categories">
+    <template v-if="item.sub_categories && item.sub_categories.length">
       {{ item.sub_categories|terms }}
     </template>
     <template v-else>
       {{ $t('_global.not_applicable_long') }}
     </template>
   </template>
-  <template v-slot:indexingDialog="{ closeDialog, template, show }">
+  <template v-slot:indexingDialog="{ closeDialog, template, show, preInstanceMode }">
     <template-indexing-dialog
       @close="closeDialog"
       @updated="refreshTable"
@@ -50,6 +59,7 @@
       :template="template"
       :prepare-payload-func="prepareIndexingPayload"
       :url-prefix="urlPrefix"
+      :pre-instance-mode="preInstanceMode"
       >
       <template v-slot:form="{ form }">
         <criteria-template-indexing-form
@@ -60,12 +70,21 @@
       </template>
     </template-indexing-dialog>
   </template>
+  <template v-slot:preInstanceForm="{ closeDialog, template }">
+    <criteria-template-pre-instance-form
+      :template="template"
+      :criteria-type="criteriaType"
+      @close="closeDialog"
+      @success="refreshTable"
+      />
+  </template>
 </studybuilder-template-table>
 </template>
 
 <script>
 import CriteriaTemplateForm from './CriteriaTemplateForm'
 import CriteriaTemplateIndexingForm from './CriteriaTemplateIndexingForm'
+import CriteriaTemplatePreInstanceForm from './CriteriaTemplatePreInstanceForm'
 import dataFormating from '@/utils/dataFormating'
 import StudybuilderTemplateTable from '@/components/library/StudybuilderTemplateTable'
 import TemplateIndexingDialog from './TemplateIndexingDialog'
@@ -77,6 +96,7 @@ export default {
   components: {
     CriteriaTemplateForm,
     CriteriaTemplateIndexingForm,
+    CriteriaTemplatePreInstanceForm,
     StudybuilderTemplateTable,
     TemplateIndexingDialog
   },
@@ -92,10 +112,11 @@ export default {
           sortable: false,
           width: '5%'
         },
+        { text: this.$t('_global.sequence_number'), value: 'sequence_id' },
         { text: this.$t('CriteriaTemplateTable.indications'), value: 'indications.name' },
         { text: this.$t('CriteriaTemplateTable.criterion_cat'), value: 'categories.name.sponsor_preferred_name' },
         { text: this.$t('CriteriaTemplateTable.criterion_sub_cat'), value: 'sub_categories.name.sponsor_preferred_name' },
-        { text: this.$t('CriteriaTemplateTable.criterion_tpl'), value: 'name', width: '30%', filteringName: 'name_plain' },
+        { text: this.$t('_global.parent_template'), value: 'name', width: '30%', filteringName: 'name_plain' },
         { text: this.$t('CriteriaTemplateTable.guidance_text'), value: 'guidance_text', width: '30%' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
@@ -106,14 +127,33 @@ export default {
     }
   },
   methods: {
-    getExtraFilters (filters) {
-      filters['type.term_uid'] = { v: [this.criteriaType.term_uid] }
+    getExtraFilters (filters, preInstanceMode) {
+      if (!preInstanceMode) {
+        filters['type.term_uid'] = { v: [this.criteriaType.term_uid] }
+      } else {
+        filters.template_type_uid = { v: [this.criteriaType.term_uid] }
+      }
     },
     prepareIndexingPayload (form) {
       return this.$refs.indexingForm.preparePayload(form)
     },
+    prepareDuplicatePayload (payload, preInstance) {
+      if (preInstance.categories && preInstance.categories.length) {
+        payload.category_uids = preInstance.categories.map(item => item.term_uid)
+      } else {
+        payload.category_uids = []
+      }
+      if (preInstance.sub_categories && preInstance.sub_categories.length) {
+        payload.sub_category_uids = preInstance.sub_categories.map(item => item.term_uid)
+      } else {
+        payload.sub_category_uids = []
+      }
+    },
     refreshTable () {
       this.$refs.table.$refs.sponsorTable.filter()
+      if (this.$refs.table.$refs.preInstanceTable) {
+        this.$refs.table.$refs.preInstanceTable.filter()
+      }
     },
     formatHistoryItem (item) {
       if (item.categories) {

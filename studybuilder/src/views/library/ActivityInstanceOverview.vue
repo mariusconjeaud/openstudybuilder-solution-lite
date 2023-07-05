@@ -2,6 +2,7 @@
 <div v-if="activityInstance" class="px-4">
   <div class="d-flex page-title">
     {{ activityInstance.activity_instance.name }}
+    <help-button :help-text="$t('_help.ActivityInstanceOverview.general')" />
   </div>
   <activity-instance-overview
     v-if="activityInstance"
@@ -14,11 +15,13 @@
 <script>
 import ActivityInstanceOverview from '@/components/library/ActivityInstanceOverview'
 import activities from '@/api/activities'
+import HelpButton from '@/components/tools/HelpButton'
 import { mapActions } from 'vuex'
 
 export default {
   components: {
-    ActivityInstanceOverview
+    ActivityInstanceOverview,
+    HelpButton
   },
   data () {
     return {

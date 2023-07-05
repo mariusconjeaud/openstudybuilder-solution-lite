@@ -11,9 +11,8 @@ def test_svg_response(
     app_client,
 ):
     study = generate_study_root()
-    response = app_client.get(f"/studies/{study.uid}/design.svg", stream=True)
+    response = app_client.get(f"/studies/{study.uid}/design.svg")
     assert_response_status_code(response, 200)
     assert_response_content_type(response, "image/svg+xml")
-    tree = ET.parse(response.raw)
-    root = tree.getroot()
+    root = ET.fromstring(response.text)
     assert root.tag.split("}", 1)[-1] == "svg", "Document root tag is not SVG"

@@ -109,7 +109,8 @@
                     "name": "Test [Indication]",
                     "name_plain": "Test [Indication]",
                     "guidance_text": null,
-                    "uid": "{otuid}"
+                    "uid": "{otuid}",
+                    "sequence_id": "ET1"
                 },
                 "library": {
                     "is_editable": true,
@@ -185,7 +186,8 @@
                     "name": "Test [Indication]",
                     "name_plain": "Test [Indication]",
                     "guidance_text": null,
-                    "uid": "{otuid}"
+                    "uid": "{otuid}",
+                    "sequence_id": "ET1"
                 },
                 "library": {
                     "is_editable": true,

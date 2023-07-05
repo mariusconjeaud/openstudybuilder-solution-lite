@@ -1,4 +1,3 @@
-
 [
     {
         "request": {
@@ -88,28 +87,6 @@
                     "name": "Test library1"
                 }
             ]
-        }
-    },
-    {
-        "request": {
-            "headers": {},
-            "method": "POST",
-            "request": {
-                "is_editable": false,
-                "name": "Test library1"
-            },
-            "url": "/libraries"
-        },
-        "response": {
-            "code": 201,
-            "headers": {
-                "content-length": "43",
-                "content-type": "application/json"
-            },
-            "result": {
-                "is_editable": false,
-                "name": "Test library1"
-            }
         }
     }
 ]

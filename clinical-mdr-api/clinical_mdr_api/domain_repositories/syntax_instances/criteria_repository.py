@@ -1,13 +1,8 @@
 from datetime import datetime
-from typing import Optional, cast
+from typing import cast
 
 from neomodel import db
 
-from clinical_mdr_api.domain.syntax_instances.criteria import (
-    CriteriaAR,
-    CriteriaTemplateVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
@@ -22,6 +17,11 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
 from clinical_mdr_api.domain_repositories.syntax_instances.generic_syntax_instance_repository import (
     GenericSyntaxInstanceRepository,
 )
+from clinical_mdr_api.domains.syntax_instances.criteria import (
+    CriteriaAR,
+    CriteriaTemplateVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 
 
 class CriteriaRepository(GenericSyntaxInstanceRepository[CriteriaAR]):
@@ -48,6 +48,7 @@ class CriteriaRepository(GenericSyntaxInstanceRepository[CriteriaAR]):
         template = CriteriaTemplateVO(
             template_name=template_value_object.name,
             template_uid=template_object.uid,
+            template_sequence_id=template_object.sequence_id,
             guidance_text=template_value_object.guidance_text,
             parameter_terms=parameter_terms,
         )
@@ -56,11 +57,11 @@ class CriteriaRepository(GenericSyntaxInstanceRepository[CriteriaAR]):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         *,
-        root: VersionRoot,
+        root: CriteriaRoot,
         library: Library,
         relationship: VersionRelationship,
-        value: VersionValue,
-        study_count: Optional[int] = None,
+        value: CriteriaValue,
+        study_count: int = 0,
     ) -> CriteriaAR:
         return cast(
             CriteriaAR,

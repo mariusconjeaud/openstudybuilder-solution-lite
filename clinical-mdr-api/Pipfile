@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-fastapi = "~=0.79.0"
+fastapi = "~=0.92.0"
 uvicorn = "~=0.17.6"
 pydantic = "~=1.10.0"
 requests = "~=2.28.1"
@@ -15,12 +15,12 @@ Deprecated = "~=1.2.13"
 hypothesis = "~=6.54.4"
 python-jose = "~=3.3.0"
 python-dateutil="~=2.8.2"
-neomodel = {editable = false, git = "https://github.com/neo4j-field/neomodel-novonordisk"}
+neomodel = {editable = false, git = "https://github.com/neo4j-field/neomodel-novonordisk", ref = "d77f1d41c20ead69d79414e1d37be9a5617faf01"}
 Jinja2="~=3.1.2"
 yattag = "~=1.14.0"
 python-docx = "~=0.8.11"
 colour = "~=0.1.5"
-authlib = "~=1.0.1"
+authlib = "~=1.1.0"
 httpx = "~=0.23.0"
 starlette-context = "==0.3.4"
 python-multipart = "~=0.0.5"
@@ -30,11 +30,11 @@ opencensus = "~=0.11.0"
 opencensus-ext-azure = "~=1.1.7"
 pyyaml = "~=6.0"
 aenum = "~=3.1.11"
-Pillow = "~=9.2.0"
 xsdata = "==22.9"
 cached-property = "~=1.5.2"
 weasyprint = "~=57.1"
 deepdiff = "~=6.2.1"
+pillow = "~=9.3.0"
 
 [dev-packages]
 pytest = "~=7.1.2"
@@ -49,7 +49,6 @@ pbr = "~=5.10.0"
 rope = "~=1.3.0"
 isort = "~=5.11.5"
 black = "~=23.3.0"
-typed-ast = "~=1.5.4"
 pytest-asyncio = "~=0.19.0"
 pytest-forked = "~=1.4.0"
 pytest-xdist = "~=2.5.0"
@@ -57,7 +56,7 @@ parameterized = "~=0.8.1"
 schemathesis = "~=3.17.5"
 
 [requires]
-python_version = "3.7"
+python_version = "3.11"
 
 [scripts]
 dev = "uvicorn --host=0.0.0.0 --port=8000 clinical_mdr_api.main:app --reload"
@@ -66,7 +65,7 @@ test = "pytest -s"
 dist = "python setup.py bdist_wheel"
 package = "pip wheel -r requirements.txt -w dist"
 testunit = "pytest -s --cov-report html:coverage_unit_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api  --junitxml=unit_report.xml clinical_mdr_api/tests/unit/"
-testint = "pytest -s -n 2 --dist loadfile --cov-report html:coverage_integration_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=int_report.xml clinical_mdr_api/tests/integration"
+testint = "pytest -s -n 4 --dist loadfile --cov-report html:coverage_integration_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=int_report.xml clinical_mdr_api/tests/integration"
 testauth = "pytest -s --cov-report html:coverage_auth_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=auth_report.xml clinical_mdr_api/tests/oauth/"
 test-telemetry = "pytest -s --cov-report html:coverage_telemetry_tests --cov-report xml:coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=telemetry_report.xml clinical_mdr_api/tests/telemetry/"
 lint = "pylint clinical_mdr_api"
@@ -82,11 +81,16 @@ schemathesis = """sh -c "
     st --pre-run=clinical_mdr_api.hooks.schemathesis_hooks run \
         --checks=all \
         --base-url=http://localhost:8000 \
-        --hypothesis-max-examples=3 \
+        --request-timeout=30000 \
+        --hypothesis-max-examples=10 \
         --hypothesis-verbosity=normal \
+        --hypothesis-deadline=None \
+        --hypothesis-suppress-health-check=too_slow,filter_too_much,data_too_large \
         --junit-xml=schemathesis_report.xml \
         --report=schemathesis_report.tgz \
         --show-errors-tracebacks \
         openapi.json
 "
 """
+build-sbom = "pipelines/scripts/build-sbom.sh"
+schemathesis-help = "st run --help"

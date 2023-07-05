@@ -37,10 +37,6 @@ export default {
     defaultColor: {
       type: String,
       default: 'green'
-    },
-    defaultParameterValues: {
-      type: Array,
-      required: false
     }
   },
   data: () => ({
@@ -67,25 +63,13 @@ export default {
             chars = ''
           }
         } else if (char === this.computedPostfix) {
-          let fromDefaultValue = false
           if (this.showPrefixAndPostfix) {
             chars += char
-          }
-          if (this.defaultParameterValues && this.defaultParameterValues.length) {
-            for (const parameter of this.defaultParameterValues) {
-              if (parameterIndex + 1 === parameter.position && parameter.values.length) {
-                const values = parameter.values.map(value => value.name)
-                chars = `${this.prefix}${values.join(parameter.conjunction)}${this.computedPostfix}`
-                fromDefaultValue = true
-                break
-              }
-            }
           }
           nameArray.push({
             isParameter: true,
             index: parameterIndex,
-            value: chars,
-            fromDefaultValue
+            value: chars
           })
           parameterIndex++
           chars = ''
@@ -110,9 +94,6 @@ export default {
           return 'preview-parameter'
         }
         return 'preview-parameter--selected'
-      }
-      if (!namePart.fromDefaultValue) {
-        return `parameter--${this.defaultColor}`
       }
       return 'preview-parameter--selected'
     },

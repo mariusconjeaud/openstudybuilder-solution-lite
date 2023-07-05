@@ -4,42 +4,43 @@ from typing import Optional, Sequence, TypeVar, cast
 from neomodel import core, db
 from pydantic import BaseModel
 
-from clinical_mdr_api.domain._utils import extract_parameters
-from clinical_mdr_api.domain.library.library_ar import LibraryAR
-from clinical_mdr_api.domain.library.object import (
+from clinical_mdr_api.domain_repositories._generic_repository_interface import (
+    GenericRepository,
+)
+from clinical_mdr_api.domain_repositories.models.syntax import SyntaxTemplateRoot
+from clinical_mdr_api.domain_repositories.syntax_instances.template_parameters_repository import (
+    TemplateParameterRepository,
+)
+from clinical_mdr_api.domains._utils import extract_parameters, generate_seq_id
+from clinical_mdr_api.domains.libraries.library_ar import LibraryAR
+from clinical_mdr_api.domains.libraries.object import (
     ParametrizedTemplateARBase,
     ParametrizedTemplateVO,
 )
-from clinical_mdr_api.domain.library.parameter_term import (
+from clinical_mdr_api.domains.libraries.parameter_term import (
     ComplexParameterTerm,
     NumericParameterTermVO,
     ParameterTermEntryVO,
     SimpleParameterTermVO,
 )
-from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
-from clinical_mdr_api.domain.versioned_object_aggregate import (
+from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
+from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
     VersioningException,
-)
-from clinical_mdr_api.domain_repositories._generic_repository_interface import (
-    GenericRepository,
-)
-from clinical_mdr_api.domain_repositories.syntax_instances.template_parameters_repository import (
-    TemplateParameterRepository,
 )
 from clinical_mdr_api.exceptions import (
     BusinessLogicException,
     NotFoundException,
     ValidationException,
 )
-from clinical_mdr_api.models.study import Study
-from clinical_mdr_api.models.template_parameter_multi_select_input import (
+from clinical_mdr_api.models.study_selections.study import Study
+from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
 from clinical_mdr_api.services._utils import process_complex_parameters
 from clinical_mdr_api.services.generic_syntax_service import GenericSyntaxService
-from clinical_mdr_api.services.study import StudyService
+from clinical_mdr_api.services.studies.study import StudyService
 
 _AggregateRootType = TypeVar("_AggregateRootType")
 
@@ -87,6 +88,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
         self,
         template,
         generate_uid_callback=None,
+        generate_seq_id_callback=None,
         study_uid: Optional[str] = None,
         template_uid: Optional[str] = None,
         include_study_endpoints: Optional[bool] = False,
@@ -99,9 +101,11 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
         )
 
         template_uid = template_uid or getattr(template, self.template_uid_property)
+        template_root = SyntaxTemplateRoot.nodes.get_or_none(uid=template_uid)
 
         template_vo = self.parametrized_template_vo_class.from_input_values_2(
             template_uid=template_uid,
+            template_sequence_id=getattr(template_root, "sequence_id", None),
             parameter_terms=parameter_terms,
             get_final_template_vo_by_template_uid_callback=self._get_template_vo_by_template_uid,
         )
@@ -131,6 +135,9 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
             generate_uid_callback=self.repository.generate_uid_callback
             if generate_uid_callback is None
             else generate_uid_callback,
+            generate_seq_id_callback=generate_seq_id
+            if generate_seq_id_callback is None
+            else generate_seq_id_callback,
         )
         return item
 
@@ -150,11 +157,9 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                 )
                 rep = self.repository
 
-                if (
-                    "PreInstance" not in item.__class__.__name__
-                    and rep.check_exists_by_name(item.name)
-                ):
+                if rep.check_exists_by_name(item.name):
                     raise BusinessLogicException("The specified object already exists.")
+
                 if not preview:
                     self.repository.save(item)
 
@@ -198,6 +203,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
             try:
                 template_vo = self.parametrized_template_vo_class.from_input_values_2(
                     template_uid=item.template_uid,
+                    template_sequence_id=item.template_sequence_id,
                     parameter_terms=parameter_terms,
                     get_final_template_vo_by_template_uid_callback=self._get_template_vo_by_template_uid,
                 )
@@ -209,7 +215,9 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                 template=template_vo,
             )
             self.repository.save(item)
+
             return self._transform_aggregate_root_to_pydantic_model(item)
+
         except VersioningException as e:
             raise BusinessLogicException(e.msg) from e
 

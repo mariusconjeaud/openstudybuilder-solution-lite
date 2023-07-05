@@ -17,7 +17,7 @@ from fastapi.testclient import TestClient
 
 from clinical_mdr_api import models
 from clinical_mdr_api.main import app
-from clinical_mdr_api.models.study import Study
+from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
@@ -147,24 +147,28 @@ def test_data():
         "name": incl_criteria_template_1.name,
         "name_plain": incl_criteria_template_1.name_plain,
         "uid": incl_criteria_template_1.uid,
+        "sequence_id": incl_criteria_template_1.sequence_id,
         "guidance_text": incl_criteria_template_1.guidance_text,
     }
     incl_criteria_template_2_output = {
         "name": incl_criteria_template_2.name,
         "name_plain": incl_criteria_template_2.name_plain,
         "uid": incl_criteria_template_2.uid,
+        "sequence_id": incl_criteria_template_2.sequence_id,
         "guidance_text": incl_criteria_template_2.guidance_text,
     }
     excl_criteria_template_1_output = {
         "name": excl_criteria_template_1.name,
         "name_plain": excl_criteria_template_1.name_plain,
         "uid": excl_criteria_template_1.uid,
+        "sequence_id": excl_criteria_template_1.sequence_id,
         "guidance_text": excl_criteria_template_1.guidance_text,
     }
     excl_criteria_template_2_output = {
         "name": excl_criteria_template_2.name,
         "name_plain": excl_criteria_template_2.name_plain,
         "uid": excl_criteria_template_2.uid,
+        "sequence_id": excl_criteria_template_2.sequence_id,
         "guidance_text": excl_criteria_template_2.guidance_text,
     }
     excl_criteria_template_with_param_output = {
@@ -268,7 +272,7 @@ def test_crud_study_criteria(api_client):
             "name": incl_criteria_template_1.library.name,
             "is_editable": incl_criteria_template_1.library.is_editable,
         },
-        "study_count": None,
+        "study_count": 0,
     }
     full_exclude_paths = {
         *ROOT_IGNORED_FIELDS,
@@ -279,7 +283,7 @@ def test_crud_study_criteria(api_client):
 
     # Create selection
     response = api_client.post(
-        url=f"{url_prefix}",
+        url=f"{url_prefix}?create_criteria=true",
         json=default_study_criteria_input,
     )
     res = response.json()
@@ -583,6 +587,35 @@ def test_crud_study_criteria(api_client):
     assert response.status_code == 200
     assert res == [expected_criteria_with_param_name]
 
+    # Test batch select for template with parameter and provide parameter values
+    # This study criteria will be created directly
+    response = api_client.post(
+        url=f"{url_prefix}/batch-select",
+        json=[
+            {
+                "criteria_template_uid": excl_criteria_template_with_param.uid,
+                "library_name": excl_criteria_template_with_param.library.name,
+                "parameter_terms": [
+                    {
+                        "conjunction": "",
+                        "position": 1,
+                        "value": None,
+                        "terms": [target_parameter_term],
+                    }
+                ],
+            },
+        ],
+    )
+    res = response.json()
+
+    assert response.status_code == 201
+    assert len(res) == 1
+    assert res[0]["study_criteria_uid"] == "StudyCriteria_000006"
+    assert res[0]["order"] == 4
+    assert res[0]["criteria"]["uid"] == "Criteria_000005"
+    assert res[0]["criteria"]["name"] == expected_criteria_with_param_name
+    assert res[0]["criteria"]["name_plain"] == expected_criteria_with_param_name_plain
+
 
 def test_errors(api_client):
     """Test that we get the expected errors when doing something wrong
@@ -616,7 +649,7 @@ def test_errors(api_client):
 
     # Creation
     response = api_client.post(
-        url=f"{url_prefix}",
+        url=f"{url_prefix}?create_criteria=true",
         json=dummy_study_criteria_input,
     )
     res = response.json()
@@ -645,7 +678,7 @@ def test_study_locking_study_criteria(api_client):
     url_prefix = f"/studies/{study.uid}/study-criteria"
     # Create selection
     response = api_client.post(
-        url=f"{url_prefix}",
+        url=f"{url_prefix}?create_criteria=true",
         json=default_study_criteria_input,
     )
     res = response.json()
@@ -653,7 +686,6 @@ def test_study_locking_study_criteria(api_client):
     # get all criteria
     response = api_client.get(
         f"{url_prefix}/audit-trail/",
-        json={},
     )
     res = response.json()
     assert response.status_code == 200
@@ -693,7 +725,6 @@ def test_study_locking_study_criteria(api_client):
     # get all history when was locked
     response = api_client.get(
         f"{url_prefix}/audit-trail/",
-        json={},
     )
     res = response.json()
     assert response.status_code == 200

@@ -1,3 +1,6 @@
+#############################################################################
+####      Build validation, required to pass before merging a PR        #####
+#############################################################################
 trigger:
   batch: true # Whether to batch changes per branch.  (false,n,no,off,on,true,y,yes)
   branches:  
@@ -30,7 +33,7 @@ pool:
 
 variables:
  - name: python_version
-   value: 3.7
+   value: 3.11
 
 jobs:
 #############################################################################
@@ -53,25 +56,22 @@ jobs:
       parameters:
         PYTHON_VERSION: $(python_version)
 
-    - script: |    
+    - script: |
+        set -ex
         docker compose down --volumes
-        docker compose up --detach --renew-anon-volumes database
+        docker compose up --detach --renew-anon-volumes --wait database
       displayName: "Start database docker service"
 
-    - task: PowerShell@2
+    - script: >-  # a single-line script, newlines replaced with spaces, no tailing newline
+        wget --output-document - --progress=dot --retry-connrefused --timeout 3 --tries 20 \
+          "http://localhost:5074/"
+      # wget keeps retrying with 3 secs timeout and linear backoff up to <10sec delays
+      # until 20 retries ~= 2:30 minutes or first fatal HTTP error response status code, except connection-refused
       displayName: 'Wait for Neo4j database'
-      inputs:
-        failOnStderr: true
-        targetType: 'filePath'
-        filePath: $(Build.SourcesDirectory)/pipelines/scripts/InvokeRequestWithRetry.ps1
-        arguments: > # Use this to avoid newline characters in multi-line string
-          -URI "http://localhost:5074/"
-          -Method "GET"
-          -Retries 20
-          -SecondsDelay 10
-          -TimeoutSec 200
 
     - script: |
+        set -ex
+        
         # Plain environment, no authorization #
         export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
         export ALLOW_ORIGIN_REGEX='.*'
@@ -81,6 +81,8 @@ jobs:
       displayName: "Unit test"
     
     - script: |
+        set -ex
+        
         # Plain environment, no authorization #
         export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
         export ALLOW_ORIGIN_REGEX='.*'
@@ -90,6 +92,8 @@ jobs:
       displayName: "Integration test"
 
     - script: |
+        set -ex
+        
         export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
         export ALLOW_ORIGIN_REGEX='.*'
         export OAUTH_ENABLED='False'
@@ -103,6 +107,8 @@ jobs:
       displayName: "Telemetry test"
 
     - script: |
+        set -ex
+        
         export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
         export ALLOW_ORIGIN_REGEX='.*'
 
@@ -129,6 +135,7 @@ jobs:
         testResultsFiles: '$(Build.SourcesDirectory)/unit_report.xml' 
         failTaskOnFailedTests: true
         testRunTitle: "API - $(Build.BuildNumber) - Unit"
+      condition: always()
       displayName: "Publish unit test report"
 
     - task: PublishTestResults@2
@@ -137,6 +144,7 @@ jobs:
         testResultsFiles: '$(Build.SourcesDirectory)/telemetry_report.xml'
         failTaskOnFailedTests: true
         testRunTitle: "API - $(Build.BuildNumber) - Telemetry"
+      condition: always()
       displayName: "Publish telemetry tests report"
 
     - task: PublishTestResults@2
@@ -145,6 +153,7 @@ jobs:
         testResultsFiles: '$(Build.SourcesDirectory)/auth_report.xml'
         failTaskOnFailedTests: true
         testRunTitle: "API - $(Build.BuildNumber) - Auth"
+      condition: always()
       displayName: "Publish auth test report" 
     
     - task: PublishTestResults@2
@@ -153,6 +162,7 @@ jobs:
         testResultsFiles: '$(Build.SourcesDirectory)/int_report.xml' 
         failTaskOnFailedTests: true
         testRunTitle: "API - $(Build.BuildNumber) - Integration"
+      condition: always()
       displayName: "Publish integration test report"    
 
     # Publish combined code coverage by unit/integration/auth tests
@@ -163,7 +173,7 @@ jobs:
       displayName: "Publish code coverage"
 
     # Save logs from Neo4j container
-    - script: |
+    - script: >-  # a single-line script, newlines replaced with spaces, no tailing newline
         docker compose logs --no-color --no-log-prefix database > neo4j.log
       condition: always() # this step will always run, even if the pipeline is canceled
       displayName: Save database logs
@@ -230,6 +240,8 @@ jobs:
 
     # Checkout git branch
     - script: |
+        set -ex
+        
         git fetch -a
 
         if [[ "$(Build.Reason)" == "PullRequest" ]]; then
@@ -245,9 +257,11 @@ jobs:
       displayName: 'Checkout git branch'
       name: gitref        
 
-    # Generate SBOM
+    # Build SBOM
     - script: |
-        pipenv run pipelines/scripts/generate-sbom.sh > sbom.md
+        set -ex
+        
+        pipenv run build-sbom > sbom.md
 
         if [[ "$(Build.SourceBranchName)" != "main" && "$(Build.Reason)" == "PullRequest" && `git diff --exit-code sbom.md` ]]; then
           git config --global user.email pipeline@studybuilder.com
@@ -259,12 +273,14 @@ jobs:
           gitbranch=`echo $(System.PullRequest.SourceBranch) | sed 's/^refs\/heads\///'`
           git push https://$SYSTEM_ACCESSTOKEN@dev.azure.com/novonordiskit/Clinical-MDR/_git/clinical-mdr-api $gitbranch          
         fi
-      displayName: Generate full SBOM for clinical-mdr-api
+      displayName: Build SBOM
       env:
         SYSTEM_ACCESSTOKEN: $(System.AccessToken)
 
     # Generate openapi.json
     - script: |
+        set -ex
+        
         export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
         export ALLOW_ORIGIN_REGEX='.*'
         export OAUTH_ENABLED='False'
@@ -289,45 +305,47 @@ jobs:
           git config --global user.email pipeline@studybuilder.com
           git config --global user.name "Pipeline $(Build.BuildNumber)"
 
-          api_version=$(jq -r '.info.version' openapi.json)
+          api_version="$(jq -r '.info.version' openapi.json)"
           api_version_tag="api-v${api_version}"
    
-          git tag $api_version_tag
-          echo "Add git tag $api_version_tag" 
-          git push https://$SYSTEM_ACCESSTOKEN@dev.azure.com/novonordiskit/Clinical-MDR/_git/clinical-mdr-api --tags
-          echo "Added git tag $api_version_tag" 
+          # Recreating the same tag is OK to fail #
+          if git tag "$api_version_tag" ; then
+            echo "Add git tag $api_version_tag" 
+            git push "https://$SYSTEM_ACCESSTOKEN@dev.azure.com/novonordiskit/Clinical-MDR/_git/clinical-mdr-api" --tags
+            echo "Added git tag $api_version_tag"
+          fi
         fi
       displayName: Generate openapi.json
       env:
         SYSTEM_ACCESSTOKEN: $(System.AccessToken)
 
     # Verify that Pipfile.lock is up-to-date
-    - script: |
+    - script: >-  # a single-line script, newlines replaced with spaces, no tailing newline
         pipenv verify
       displayName: "Verify Pipfile.lock is up-to-date"
 
     # Check packages for vulnerabilities with pipenv
-    - script: |
+    - script: >-
         pipenv check | tee pipenv_report.txt
       displayName: "Check packages for security vulnerabilities"
 
     # black check
-    - script: |
+    - script: >-
         pipenv run black --check .
       displayName: "Black checks code formatting"
 
     # Isort check
-    - script: |
+    - script: >-
         pipenv run isort ./clinical_mdr_api/ --check
       displayName: "Isort checks on imports"
 
     # Check for absolute paths
-    - script: |
+    - script: >-
         ./.git-hooks/absolute-import-paths.sh ./clinical_mdr_api
       displayName: "Absolute Import Paths Check"
 
     # Linting
-    - script: |
+    - script: >-
         pipenv run lint
       displayName: "Pylint"
 
@@ -349,12 +367,6 @@ jobs:
         packageType: sdk
         version: 6.0.100
         installationPath: $(Agent.ToolsDirectory)/dotnet
-
-    # Publish specflow
-    - task: SpecFlowPlus@0
-      inputs:
-        generatorSource: 'FeatureFolder'
-        projectFilePath: '$(Build.SourcesDirectory)/clinical_mdr_api/tests/acceptance/features/'
 
     # Ensure shutdown of the full pipeline, if one of the jobs fail
     - template: pipelines/templates/shutdown.yml
@@ -381,33 +393,27 @@ jobs:
 
     - template: pipelines/templates/docker-up.yml
 
-    - task: PowerShell@2
-      displayName: 'Wait for API'
-      inputs:
-        failOnStderr: true
-        targetType: 'filePath'
-        filePath: $(Build.SourcesDirectory)/pipelines/scripts/InvokeRequestWithRetry.ps1
-        arguments: > # Use this to avoid newline characters in multi-line string
-          -URI "http://localhost:8000/configurations"
-          -Method "GET"
-          -Retries 20
-          -SecondsDelay 10
-          -TimeoutSec 200
+    - script: >-  # a single-line script, newlines replaced with spaces, no tailing newline
+        wget --output-document - --progress=dot --retry-connrefused --timeout 3 --tries 20 \
+          http://localhost:8000/system/information
+      # wget keeps retrying with 3 secs timeout and linear backoff up to <10sec delays
+      # until 20 retries ~= 2:30 minutes or first fatal HTTP error response status code, except connection-refused
+      displayName: "Wait for API connectivity"
+
+    - script: >-
+        docker compose logs --no-color
+      condition: always()
+      displayName: "Docker container logs"
 
     - script: |
+        set -ex
+        
         # Plain environment, no authorization #
         export NEO4J_DSN='bolt://neo4j:changeme1234@localhost:5087'
         export ALLOW_ORIGIN_REGEX='.*'
         export OAUTH_ENABLED='False'
 
         pipenv run schemathesis
-        
-        EXITCODE=$?
-        if [ "$EXITCODE" -ne "0" ]; then
-            # Catch any issues found by schemathesis
-            echo "##[warning]Schemathesis found some issues. We are ignoring them temporarily."
-            exit 0
-        fi
       displayName: "Run Schemathesis tests"
   
     # Publish test results to Azure Pipelines
@@ -430,3 +436,6 @@ jobs:
 
     # Ensure cleanup, including docker shutdown
     - template: pipelines/templates/docker-cleanup.yml
+
+    # Ensure shutdown of the full pipeline, if one of the jobs fail
+    - template: pipelines/templates/shutdown.yml

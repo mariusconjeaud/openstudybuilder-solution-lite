@@ -1,6 +1,9 @@
-from clinical_mdr_api.models.study_epoch import StudyEpochCreateInput
-from clinical_mdr_api.services.ct_term import CTTermService
-from clinical_mdr_api.services.study_epoch import StudyEpochService
+from clinical_mdr_api.models.study_selections.study_epoch import (
+    StudyEpochCreateInput,
+    StudyEpochEditInput,
+)
+from clinical_mdr_api.services.controlled_terminologies.ct_term import CTTermService
+from clinical_mdr_api.services.studies.study_epoch import StudyEpochService
 from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology import (
     create_codelist,
     create_ct_term,
@@ -226,5 +229,17 @@ def create_study_epoch(epoch_subtype_uid, study_uid="study_root"):
     )
     item = StudyEpochService().create(
         study_uid, study_epoch_input=study_epoch_create_input
+    )
+    return item
+
+
+def edit_study_epoch(epoch_uid, study_uid="study_root"):
+    study_epoch_edit_input = StudyEpochEditInput(
+        study_uid=study_uid,
+        change_description="edit to test",
+        start_rule="second_new_start_rule",
+    )
+    item = StudyEpochService().edit(
+        study_epoch_uid=epoch_uid, study_epoch_input=study_epoch_edit_input
     )
     return item

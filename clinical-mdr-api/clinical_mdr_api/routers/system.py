@@ -25,7 +25,7 @@ def get_system_information():
     response_class=PlainTextResponse,
     status_code=200,
 )
-def version_plain() -> str:
+def get_build_id() -> str:
     return service.get_build_id()
 
 

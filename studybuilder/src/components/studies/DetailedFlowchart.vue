@@ -211,6 +211,7 @@
                     <div class="d-flex align-center">
                       <v-checkbox
                         v-if="!readOnly"
+                        :key="`cb-subgroup-${flowchartGroup}-${group}-${subgroup}-${update}`"
                         @change="value => toggleSubgroupActivitiesSelection(flowchartGroup, group, subgroup, value)"
                         on-icon="mdi-checkbox-multiple-marked"
                         off-icon="mdi-checkbox-multiple-blank-outline"
@@ -743,6 +744,7 @@ export default {
       }
     },
     async loadActivities () {
+      this.studyActivitySelection = []
       await this.$store.dispatch('studyActivities/fetchStudyActivities', { studyUid: this.selectedStudy.uid })
       for (const studyActivity of this.studyActivities) {
         this.$set(this.currentSelectionMatrix, studyActivity.study_activity_uid, {})

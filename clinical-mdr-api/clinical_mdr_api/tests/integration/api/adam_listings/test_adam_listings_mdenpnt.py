@@ -24,8 +24,8 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
     TimeframeTemplateRoot,
 )
 from clinical_mdr_api.main import app
-from clinical_mdr_api.models.listings_adam import StudyEndpntAdamListing
-from clinical_mdr_api.models.study import Study
+from clinical_mdr_api.models.listings.listings_adam import StudyEndpntAdamListing
+from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.tests.integration.utils.api import (
     drop_db,
     inject_and_clear_db,
@@ -112,14 +112,12 @@ def test_adam_listing_mdendpnt(api_client):
     # get all endpoints
     response = api_client.get(
         f"/studies/{study.uid}/study-endpoints/audit-trail/",
-        json={},
     )
     res = response.json()
     assert response.status_code == 200
 
     response = api_client.get(
         "/listings/studies/Study_000002/adam/mdendpnt/",
-        json={},
     )
     assert response.status_code == 200
     res = response.json()["items"]

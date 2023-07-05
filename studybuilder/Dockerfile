@@ -10,9 +10,17 @@ WORKDIR /app
 COPY ./package*.json ./ ./
 RUN yarn install
 
+## Version information
+ARG BUILD_NUMBER
+ARG BUILD_BRANCH
+ARG BUILD_COMMIT
+ENV BUILD_NUMBER="$BUILD_NUMBER" \
+    BUILD_BRANCH="$BUILD_BRANCH" \
+    BUILD_COMMIT="$BUILD_COMMIT"
+
 ## Build the app
 COPY ./ .
-COPY ./config/config.json ./public/config.json
+RUN yarn run update-config config/config.json public/config.json
 RUN yarn build
 
 ## Production stage

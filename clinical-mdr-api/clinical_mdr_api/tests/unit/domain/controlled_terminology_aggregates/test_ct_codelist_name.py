@@ -1,11 +1,11 @@
 import unittest
 from typing import Callable
 
-from clinical_mdr_api.domain.controlled_terminology.ct_codelist_name import (
+from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_name import (
     CTCodelistNameAR,
     CTCodelistNameVO,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import (
+from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
 )

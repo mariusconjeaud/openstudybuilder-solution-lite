@@ -9,10 +9,32 @@
     <v-tab-item id="sponsor">
       <generic-sponsor-template-table
         ref="sponsorTable"
+        key="sponsorTable"
         :headers="headers"
         v-bind="$attrs"
         v-on="$listeners"
         has-api
+        @refresh="$emit('refresh')"
+        :url-prefix="urlPrefix"
+        :object-type="objectType"
+        >
+        <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
+          <slot :name="slot" v-bind="scope" />
+        </template>
+      </generic-sponsor-template-table>
+    </v-tab-item>
+    <v-tab-item id="pre-instances">
+      <generic-sponsor-template-table
+        ref="preInstanceTable"
+        key="preInstanceTable"
+        :headers="headers"
+        v-bind="$attrs"
+        v-on="$listeners"
+        has-api
+        pre-instance-mode
+        :url-prefix="preInstanceUrlPrefix"
+        :export-object-label="preInstanceExportLabel"
+        :object-type="objectType"
         >
         <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
           <slot :name="slot" v-bind="scope" />
@@ -48,6 +70,7 @@ export default Vue.extend({
             sortable: false,
             width: '5%'
           },
+          { text: this.$t('_global.sequence_number'), value: 'sequence_id' },
           { text: this.$t('_global.template'), value: 'name', width: '30%', filteringName: 'name_plain' },
           { text: this.$t('_global.modified'), value: 'start_date' },
           { text: this.$t('_global.status'), value: 'status' },
@@ -55,9 +78,33 @@ export default Vue.extend({
         ]
       }
     },
+    withPreInstances: {
+      type: Boolean,
+      default: true
+    },
     doubleBreadcrumb: {
       type: Boolean,
       default: false
+    },
+    urlPrefix: {
+      type: String,
+      default: ''
+    },
+    objectType: {
+      type: String,
+      default: ''
+    }
+  },
+  computed: {
+    preInstanceUrlPrefix () {
+      return this.urlPrefix.replace('-templates', '-pre-instances')
+    },
+    preInstanceExportLabel () {
+      let result = this.objectType.replace('Templates', '')
+      if (result === 'activity') {
+        result = 'activity-instruction'
+      }
+      return result + 'PreInstances'
     }
   },
   components: {
@@ -92,12 +139,16 @@ export default Vue.extend({
     }
   },
   data () {
+    const tabs = [
+      { tab: '#sponsor', name: this.$t('GenericTemplateTable.sponsor_tab') },
+      { tab: '#user', name: this.$t('GenericTemplateTable.user_tab') }
+    ]
+    if (this.withPreInstances) {
+      tabs.splice(1, 0, { tab: '#pre-instances', name: this.$t('GenericTemplateTable.pre_instances_tab') })
+    }
     return {
       tab: null,
-      tabs: [
-        { tab: '#sponsor', name: this.$t('GenericTemplateTable.sponsor_tab') },
-        { tab: '#user', name: this.$t('GenericTemplateTable.user_tab') }
-      ]
+      tabs
     }
   },
   methods: {
@@ -107,6 +158,12 @@ export default Vue.extend({
   },
   watch: {
     tab (newValue) {
+      const params = { ...this.$route.params }
+      params.tab = newValue
+      this.$router.push({
+        name: this.$route.name,
+        params
+      })
       if (!this.doubleBreadcrumb) {
         const tabName = newValue ? this.tabs.find(el => el.tab.substring(1) === newValue).name : this.tabs[0].name
         this.addBreadcrumbsLevel({
@@ -127,6 +184,9 @@ export default Vue.extend({
           replace: true
         })
       }
+    },
+    '$route.params.tab' (newValue) {
+      this.tab = newValue
     }
   }
 })

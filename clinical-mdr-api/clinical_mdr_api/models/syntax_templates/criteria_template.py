@@ -3,14 +3,18 @@ from typing import Dict, List, Optional
 
 from pydantic import Field
 
-from clinical_mdr_api.domain.syntax_templates.criteria_template import (
+from clinical_mdr_api.domains.syntax_templates.criteria_template import (
     CriteriaTemplateAR,
 )
-from clinical_mdr_api.models.ct_term import CTTermNameAndAttributes
-from clinical_mdr_api.models.dictionary_term import DictionaryTerm
-from clinical_mdr_api.models.library import ItemCounts, Library
-from clinical_mdr_api.models.template_parameter import TemplateParameter
-from clinical_mdr_api.models.template_parameter_term import (
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    CTTermNameAndAttributes,
+)
+from clinical_mdr_api.models.dictionaries.dictionary_term import DictionaryTerm
+from clinical_mdr_api.models.libraries.library import ItemCounts, Library
+from clinical_mdr_api.models.syntax_templates.template_parameter import (
+    TemplateParameter,
+)
+from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
@@ -18,21 +22,24 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class CriteriaTemplateName(BaseModel):
-    name: Optional[str] = Field(
-        None,
+    name: str = Field(
+        ...,
         description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
     )
-    name_plain: Optional[str] = Field(
-        None,
+    name_plain: str = Field(
+        ...,
         description="The plain text version of the name property, stripped of HTML tags",
     )
     guidance_text: Optional[str] = Field(
-        None, description="Optional guidance text for using the template."
+        None,
+        description="Optional guidance text for using the template.",
+        nullable=True,
     )
 
 
 class CriteriaTemplateNameUid(CriteriaTemplateName):
     uid: str = Field(..., description="The unique id of the criteria template.")
+    sequence_id: Optional[str] = Field(None, nullable=True)
 
 
 class CriteriaTemplate(CriteriaTemplateNameUid):
@@ -45,36 +52,41 @@ class CriteriaTemplate(CriteriaTemplateNameUid):
         default_factory=datetime.utcnow,
         description="Part of the metadata: The point in time when the version of the criteria template was closed (and a new one was created). "
         "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
+        nullable=True,
     )
     status: Optional[str] = Field(
         None,
         description="The status in which the (version of the) criteria template is in. "
         "Possible values are: 'Final', 'Draft' or 'Retired'.",
+        nullable=True,
     )
     version: Optional[str] = Field(
         None,
         description="The version number of the (version of the) criteria template. "
         "The format is: <major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0', ...",
+        nullable=True,
     )
     change_description: Optional[str] = Field(
         None,
         description="A short description about what has changed compared to the previous version.",
+        nullable=True,
     )
     user_initials: Optional[str] = Field(
         None,
         description="The initials of the user that triggered the change of the criteria template.",
+        nullable=True,
     )
 
     # TODO use the standard _link/name approach
-    possible_actions: Optional[List[str]] = Field(
-        None,
+    possible_actions: List[str] = Field(
+        [],
         description=(
             "Holds those actions that can be performed on the criteria template. "
             "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
         ),
     )
-    parameters: Optional[List[TemplateParameter]] = Field(
-        None, description="Those parameters that are used by the criteria template."
+    parameters: List[TemplateParameter] = Field(
+        [], description="Those parameters that are used by the criteria template."
     )
     default_parameter_terms: Optional[
         Dict[int, List[MultiTemplateParameterTerm]]
@@ -84,27 +96,27 @@ class CriteriaTemplate(CriteriaTemplateNameUid):
         within the template. The terms are ordered as they occur in the template's name.""",
     )
     library: Optional[Library] = Field(
-        None, description=("The library to which the criteria template belongs.")
+        None,
+        description="The library to which the criteria template belongs.",
+        nullable=True,
     )
 
     # Template indexings
     type: Optional[CTTermNameAndAttributes] = Field(
-        None, description="The criteria type."
+        None, description="The criteria type.", nullable=True
     )
-    indications: Optional[List[DictionaryTerm]] = Field(
-        None,
+    indications: List[DictionaryTerm] = Field(
+        [],
         description="The study indications, conditions, diseases or disorders in scope for the template.",
     )
-    categories: Optional[List[CTTermNameAndAttributes]] = Field(
-        None, description="A list of categories the template belongs to."
+    categories: List[CTTermNameAndAttributes] = Field(
+        [], description="A list of categories the template belongs to."
     )
-    sub_categories: Optional[List[CTTermNameAndAttributes]] = Field(
-        None, description="A list of sub-categories the template belongs to."
+    sub_categories: List[CTTermNameAndAttributes] = Field(
+        [], description="A list of sub-categories the template belongs to."
     )
 
-    study_count: Optional[int] = Field(
-        None, description="Count of studies referencing template"
-    )
+    study_count: int = Field(0, description="Count of studies referencing template")
 
     @classmethod
     def from_criteria_template_ar(
@@ -140,6 +152,7 @@ class CriteriaTemplate(CriteriaTemplateNameUid):
 
         return cls(
             uid=criteria_template_ar.uid,
+            sequence_id=criteria_template_ar.sequence_id,
             name=criteria_template_ar.name,
             name_plain=criteria_template_ar.name_plain,
             guidance_text=criteria_template_ar.guidance_text,
@@ -161,19 +174,19 @@ class CriteriaTemplate(CriteriaTemplateNameUid):
                 for indication in criteria_template_ar.indications
             ]
             if criteria_template_ar.indications
-            else None,
+            else [],
             categories=[
                 CTTermNameAndAttributes.from_ct_term_ars(*category)
                 for category in criteria_template_ar.categories
             ]
             if criteria_template_ar.categories
-            else None,
+            else [],
             sub_categories=[
                 CTTermNameAndAttributes.from_ct_term_ars(*category)
                 for category in criteria_template_ar.sub_categories
             ]
             if criteria_template_ar.sub_categories
-            else None,
+            else [],
             study_count=criteria_template_ar.study_count,
             parameters=[
                 TemplateParameter(name=_)
@@ -185,7 +198,7 @@ class CriteriaTemplate(CriteriaTemplateNameUid):
 
 class CriteriaTemplateWithCount(CriteriaTemplate):
     counts: Optional[ItemCounts] = Field(
-        None, description="Optional counts of criteria instatiations"
+        None, description="Optional counts of criteria instantiations"
     )
 
     @classmethod
@@ -208,12 +221,13 @@ class CriteriaTemplateVersion(CriteriaTemplate):
     Class for storing Criteria Templates and calculation of differences
     """
 
-    changes: Dict[str, bool] = Field(
+    changes: Optional[Dict[str, bool]] = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
             "The field names in this object here refer to the field names of the criteria template (e.g. name, start_date, ..)."
         ),
+        nullable=True,
     )
 
 
@@ -221,6 +235,7 @@ class CriteriaTemplateNameInput(BaseModel):
     name: str = Field(
         ...,
         description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
+        min_length=1,
     )
     guidance_text: Optional[str] = Field(
         None, description="Optional guidance text for using the template."
@@ -245,7 +260,9 @@ class CriteriaTemplateCreateInput(CriteriaTemplateNameInput):
         "These default parameter terms will be created as set#0.",
     )
     type_uid: str = Field(
-        ..., description="The UID of the criteria type to attach the template to."
+        ...,
+        description="The UID of the criteria type to attach the template to.",
+        min_length=1,
     )
     indication_uids: Optional[List[str]] = Field(
         None,

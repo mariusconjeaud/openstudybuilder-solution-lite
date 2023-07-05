@@ -87,25 +87,11 @@
     @close="closeForm"
     :editedBranchArm="branchArmToEdit"
     :arms="arms"/>
-  <v-dialog
-    v-model="showBranchHistory"
-    @keydown.esc="closeBranchHistory"
-    persistent
-    max-width="1200px"
-    >
-    <history-table
-      :title="studyBranchHistoryTitle"
-      @close="closeBranchHistory"
-      :headers="headers"
-      :items="branchHistoryItems"
-      />
-  </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
 </div>
 </template>
 
 <script>
-
 import NNTable from '@/components/tools/NNTable'
 import arms from '@/api/arms'
 import StudyBranchesForm from '@/components/studies/StudyBranchesForm'
@@ -114,7 +100,6 @@ import ActionsMenu from '@/components/tools/ActionsMenu'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import { bus } from '@/main'
 import draggable from 'vuedraggable'
-import HistoryTable from '@/components/tools/HistoryTable'
 import studyEpochs from '@/api/studyEpochs'
 
 export default {
@@ -123,8 +108,7 @@ export default {
     StudyBranchesForm,
     ActionsMenu,
     ConfirmDialog,
-    draggable,
-    HistoryTable
+    draggable
   },
   computed: {
     ...mapGetters({

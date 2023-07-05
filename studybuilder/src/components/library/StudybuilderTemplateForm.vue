@@ -67,6 +67,7 @@
                   <multiple-select
                     v-model="form.indications"
                     :label="$t('GenericTemplateForm.study_indication')"
+                    data-cy="template-indication-dropdown"
                     :items="indications"
                     return-object
                     item-text="name"
@@ -88,6 +89,7 @@
     <v-btn
       class="secondary-btn"
       color="white"
+      data-cy="cancel-button"
       @click="cancel"
       >
       {{ $t('_global.cancel') }}
@@ -95,12 +97,14 @@
     <v-btn
       class="secondary-btn"
       color="white"
+      data-cy="verify-syntax-button"
       @click="verifySyntax"
       >
       {{ $t('_global.verify_syntax') }}
     </v-btn>
     <v-btn
       color="secondary"
+      data-cy="save-button"
       @click="submit"
       :loading="loading"
       >

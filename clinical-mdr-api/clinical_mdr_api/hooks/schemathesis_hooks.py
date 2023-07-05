@@ -1,10 +1,15 @@
+import os
+
 import schemathesis
+
+STUDY_UID = os.getenv("SCHEMATHESIS_STUDY_UID", "0")
+STUDY_NUMBER = os.getenv("SCHEMATHESIS_STUDY_NUMBER", "0")
 
 
 def is_in_range(val):
-    """Temporarily filter out all characters outside of 0x30...0xFFFF range"""
+    """Temporarily filter out all characters outside of 0x20...0xFFFF range"""
     val = str(val)
-    return all(0x30 <= ord(char) <= 0xFFFF for char in val)
+    return all(0x20 <= ord(char) <= 0xFFFF for char in val)
 
 
 def is_desired_header(headers):
@@ -15,19 +20,38 @@ def is_desired_header(headers):
     return True
 
 
-def is_desired_query_param(query_params):
-    if query_params:
-        for key, value in query_params.items():
-            if not is_in_range(key) or not is_in_range(value):
-                return False
-    return True
-
-
 @schemathesis.hooks.register
-def before_generate_headers(_context, strategy):
+def before_generate_headers(
+    _context: schemathesis.hooks.HookContext,
+    strategy: schemathesis.hooks.st.SearchStrategy,
+):
     return strategy.filter(is_desired_header)
 
 
 @schemathesis.hooks.register
-def before_generate_query(_context, strategy):
-    return strategy.filter(is_desired_query_param)
+def before_generate_case(
+    context: schemathesis.hooks.HookContext,
+    strategy: schemathesis.hooks.st.SearchStrategy,
+):
+    op = context.operation
+
+    def tune_case(case: schemathesis.models.Case):
+        # Replace study uid path param with value supplied inside STUDY_UID env variable
+        if (
+            str(op.method).upper() == "GET"
+            and str(op.path).startswith("/studies/{uid}/")
+            and case.path_parameters["uid"] == "0"
+        ):
+            case.path_parameters["uid"] = STUDY_UID
+
+        # If any character inside a query parameter needs more than 2 bytes to be UTF-8 encoded,
+        # replace it with dummy string
+        if case.query:
+            for key, value in case.query.items():
+                if not is_in_range(value):
+                    print(f"\nQuery param: {key}: {value} is not a 2-byte utf-8!")
+                    case.query[key] = "blabla"
+
+        return case
+
+    return strategy.map(tune_case)

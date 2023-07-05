@@ -24,7 +24,7 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
     TimeframeTemplateRoot,
 )
 from clinical_mdr_api.main import app
-from clinical_mdr_api.models.study import Study
+from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.tests.integration.utils.api import (
     drop_db,
     inject_and_clear_db,
@@ -95,7 +95,6 @@ def test_endpoint_modify_actions_on_locked_study(api_client):
     # get all endpoints
     response = api_client.get(
         f"/studies/{study.uid}/study-endpoints/audit-trail/",
-        json={},
     )
     res = response.json()
     assert response.status_code == 200
@@ -138,7 +137,6 @@ def test_endpoint_modify_actions_on_locked_study(api_client):
     # get all history when was locked
     response = api_client.get(
         f"/studies/{study.uid}/study-endpoints/audit-trail/",
-        json={},
     )
     res = response.json()
     assert response.status_code == 200

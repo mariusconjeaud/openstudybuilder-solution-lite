@@ -1,11 +1,11 @@
-from clinical_mdr_api.domain.standard_data_models.master_model import (
-    MasterModelAR,
-    MasterModelVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.domain_repositories.standard_data_models.master_model_repository import (
     MasterModelRepository,
 )
+from clinical_mdr_api.domains.standard_data_models.master_model import (
+    MasterModelAR,
+    MasterModelVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.models.standard_data_models.master_model import (
     MasterModel,
     MasterModelInput,

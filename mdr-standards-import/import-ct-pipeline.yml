@@ -24,7 +24,7 @@ parameters:
   default: "*.json"
 - name: REPO_REFERENCE
   type: string
-  default: self 
+  default: self
 - name: 'POOL'
   type: string
   default: clinical-mdr-agent
@@ -34,7 +34,7 @@ parameters:
   default: true
 - name: ID_NUMBER
   displayName: ID number of parallel deployments running in the same environment.
-  type: string 
+  type: string
   default: '1'
   values:
   - '1'
@@ -43,7 +43,7 @@ parameters:
   - '4'
   - '5'
 - name: ENV_REFERENCE
-  type: string 
+  type: string
   default: POC
   values:
   - DEV
@@ -56,18 +56,18 @@ parameters:
 stages:
 - stage: import_cdisc_ct_into_mdr
   displayName: Import CT packages into the MDR DB
-  variables: 
+  variables:
     KEYVAULT_NAME: 'vault-cmdr-dev'
   jobs:
   - job:
     pool: ${{parameters.POOL}}
     timeoutInMinutes: 720
-    steps:  
+    steps:
       - checkout: ${{parameters.REPO_REFERENCE}}
       # Specify python version. The version must be manually installed beforehand so the agent has it available.
       - task: UsePythonVersion@0
         inputs:
-          versionSpec: '3.x'
+          versionSpec: '3.11'
           addToPath: true
           architecture: 'x64'
 
@@ -76,7 +76,7 @@ stages:
         inputs:
           azureSubscription: 'clinicalmdr-iac-poc'
           KeyVaultName: '${{variables.KEYVAULT_NAME}}'
-          SecretsFilter: 
+          SecretsFilter:
             CLINICAL-MDR-NEO4J-${{parameters.ENV_REFERENCE}}${{parameters.ID_NUMBER}}-DBUSER,
             CLINICAL-MDR-NEO4J-${{parameters.ENV_REFERENCE}}${{parameters.ID_NUMBER}}-DBPASS,
             CLINICAL-MDR-NEO4J-${{parameters.ENV_REFERENCE}}${{parameters.ID_NUMBER}}-BOLTPORT,
@@ -91,7 +91,7 @@ stages:
           python -m pipenv install
         displayName: Install packages and prepare
 
-      
+
       # Load CT and adjust
       - script: |
           source $(Build.SourcesDirectory)/venv/bin/activate

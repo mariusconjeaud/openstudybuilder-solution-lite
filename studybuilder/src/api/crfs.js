@@ -52,7 +52,7 @@ export default {
     return repository.get(`${resource}/item-groups/${uid}`)
   },
   getTemplateAuditTrail (uid) {
-    return repository.get(`${resource}/templates/${uid}/versions`)
+    return repository.get(`${resource}/study-events/${uid}/versions`)
   },
   getFormAuditTrail (uid) {
     return repository.get(`${resource}/forms/${uid}/versions`)
@@ -73,16 +73,16 @@ export default {
     return repository.get(`${resource}/items/${uid}/versions`)
   },
   getTemplate (uid) {
-    return repository.get(`${resource}/templates/${uid}`)
+    return repository.get(`${resource}/study-events/${uid}`)
   },
   createTemplate (data) {
-    return repository.post(`${resource}/templates`, data)
+    return repository.post(`${resource}/study-events`, data)
   },
   updateTemplate (data, uid) {
-    return repository.patch(`${resource}/templates/${uid}`, data)
+    return repository.patch(`${resource}/study-events/${uid}`, data)
   },
   addFormsToTemplate (data, uid, sync) {
-    return repository.post(`${resource}/templates/${uid}/forms?override=${sync}`, data)
+    return repository.post(`${resource}/study-events/${uid}/forms?override=${sync}`, data)
   },
   addItemGroupsToForm (data, uid, sync) {
     return repository.post(`${resource}/forms/${uid}/item-groups?override=${sync}`, data)
@@ -91,7 +91,7 @@ export default {
     return repository.post(`${resource}/item-groups/${uid}/items?override=${sync}`, data)
   },
   overwriteFormsInTemplate (data, uid) {
-    return repository.post(`${resource}/templates/${uid}/forms`, data)
+    return repository.post(`${resource}/study-events/${uid}/forms`, data)
   },
   overwriteItemGroupsInForm (data, uid) {
     return repository.post(`${resource}/forms/${uid}/item-groups`, data)
@@ -169,7 +169,7 @@ export default {
     return repository.get(`${resource}/${type}/${uid}/relationships`)
   },
   getCrfForms () {
-    return repository.get(`${resource}/forms/templates`)
+    return repository.get(`${resource}/forms/study-events`)
   },
   getCrfGroups () {
     return repository.get(`${resource}/item-groups/forms`)

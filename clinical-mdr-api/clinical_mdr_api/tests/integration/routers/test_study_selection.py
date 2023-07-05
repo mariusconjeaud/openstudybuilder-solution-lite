@@ -12,10 +12,10 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
     TimeframeRoot,
     TimeframeTemplateRoot,
 )
-from clinical_mdr_api.models.study_epoch import StudyEpochEditInput
-from clinical_mdr_api.services.ct_term import CTTermService
-from clinical_mdr_api.services.libraries import create as create_library
-from clinical_mdr_api.services.study_epoch import StudyEpochService
+from clinical_mdr_api.models.study_selections.study_epoch import StudyEpochEditInput
+from clinical_mdr_api.services.controlled_terminologies.ct_term import CTTermService
+from clinical_mdr_api.services.libraries.libraries import create as create_library
+from clinical_mdr_api.services.studies.study_epoch import StudyEpochService
 from clinical_mdr_api.tests.integration.utils import api
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
@@ -46,7 +46,11 @@ from clinical_mdr_api.tests.integration.utils.method_library import (
     create_study_element,
     create_study_epoch,
     create_study_epoch_codelists_ret_cat_and_lib,
+    edit_study_arm,
+    edit_study_element,
+    edit_study_epoch,
     get_catalogue_name_library_name,
+    patch_order_study_design_cell,
     patch_study_branch_arm,
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
@@ -71,6 +75,7 @@ class StudyObjectivesTest(api.APITest):
         db.cypher_query(STARTUP_CT_TERM_NAME_CYPHER)
         db.cypher_query(STARTUP_STUDY_OBJECTIVE_CYPHER)
         ObjectiveTemplateRoot.generate_node_uids_if_not_present()
+        ObjectiveTemplateRoot.generate_sequence_ids_if_not_present()
         ObjectiveRoot.generate_node_uids_if_not_present()
         from clinical_mdr_api import main
 
@@ -139,10 +144,13 @@ class StudyEndpointsTest(api.APITest):
         db.cypher_query(STARTUP_CT_TERM_NAME_CYPHER)
         db.cypher_query(STARTUP_STUDY_ENDPOINT_CYPHER)
         ObjectiveTemplateRoot.generate_node_uids_if_not_present()
+        ObjectiveTemplateRoot.generate_sequence_ids_if_not_present()
         ObjectiveRoot.generate_node_uids_if_not_present()
         EndpointTemplateRoot.generate_node_uids_if_not_present()
+        EndpointTemplateRoot.generate_sequence_ids_if_not_present()
         EndpointRoot.generate_node_uids_if_not_present()
         TimeframeTemplateRoot.generate_node_uids_if_not_present()
+        TimeframeTemplateRoot.generate_sequence_ids_if_not_present()
         TimeframeRoot.generate_node_uids_if_not_present()
         from clinical_mdr_api import main
 
@@ -420,6 +428,12 @@ class StudyBranchArmsTest(api.APITest):
         catalogue_name, library_name = get_catalogue_name_library_name()
         self.study_epoch = create_study_epoch("EpochSubType_0001")
         self.study_epoch2 = create_study_epoch("EpochSubType_0001")
+        self.study_epoch = edit_study_epoch(
+            epoch_uid=self.study_epoch.uid, study_uid=self.study_epoch.study_uid
+        )
+        self.study_epoch2 = edit_study_epoch(
+            epoch_uid=self.study_epoch2.uid, study_uid=self.study_epoch2.study_uid
+        )
         # Create a study element
         element_type_codelist = create_codelist(
             "Element Type", "CTCodelist_ElementType", catalogue_name, library_name
@@ -444,6 +458,18 @@ class StudyBranchArmsTest(api.APITest):
             create_study_element(element_type_term.uid, self.study.uid),
             create_study_element(element_type_term_2.uid, self.study.uid),
         ]
+        self.study_elements = [
+            edit_study_element(
+                element_uid=self.study_elements[0].element_uid,
+                study_uid=self.study.uid,
+                new_short_name="short_element 1",
+            ),
+            edit_study_element(
+                element_uid=self.study_elements[1].element_uid,
+                study_uid=self.study.uid,
+                new_short_name="short_element_2",
+            ),
+        ]
         db.cypher_query(STARTUP_CT_TERM_NAME_CYPHER)
         db.cypher_query(STARTUP_STUDY_ARM_CYPHER)
         db.cypher_query(STARTUP_STUDY_BRANCH_ARM_CYPHER)
@@ -457,6 +483,11 @@ class StudyBranchArmsTest(api.APITest):
             study_element_uid=self.study_elements[0].element_uid,
             study_epoch_uid=self.study_epoch2.uid,
             study_arm_uid="StudyArm_000003",
+            study_uid=self.study.uid,
+        )
+        # all the tests should work with a study design cell that has been edited
+        self.design_cell = patch_order_study_design_cell(
+            study_design_cell_uid=self.design_cell.design_cell_uid,
             study_uid=self.study.uid,
         )
         from clinical_mdr_api import main
@@ -667,6 +698,7 @@ class StudyDesignCellsTest(api.APITest):
         db.cypher_query(STARTUP_CT_TERM_NAME_CYPHER)
         db.cypher_query(STARTUP_STUDY_ARM_CYPHER)
         db.cypher_query(STARTUP_STUDY_BRANCH_ARM_CYPHER)
+
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)
@@ -702,6 +734,7 @@ class StudyDesignJointTest(api.APITest):
         catalogue_name, library_name = get_catalogue_name_library_name()
         self.study_epoch = create_study_epoch("EpochSubType_0001")
         self.study_epoch2 = create_study_epoch("EpochSubType_0001")
+
         # Create a study element
         element_type_codelist = create_codelist(
             "Element Type", "CTCodelist_ElementType", catalogue_name, library_name
@@ -742,7 +775,7 @@ class StudyDesignJointTest(api.APITest):
             library_name=library_name,
         )
 
-        self.arm = create_study_arm(
+        self.arm1 = create_study_arm(
             study_uid=self.study.uid,
             name="Arm_Name_1",
             short_name="Arm_Short_Name_1",
@@ -840,9 +873,35 @@ class StudyDesignJointTest(api.APITest):
             number_of_subjects=100,
             arm_uids=["StudyArm_000001"],
         )
-        # edit an epoch to track if the relationships have been updated
+        # edit arm, epoch, elements to track if the relationships keep maintained and the ZeroOrMore cardinality is managed
+        self.arm1 = edit_study_arm(
+            study_uid=self.study.uid,
+            arm_uid=self.arm1.arm_uid,
+            name="last_edit_arm_name",  # previous "Arm_Name_1"
+            short_name="last_edit_short_name",  # previous "Arm_Short_Name_1"
+        )
+        self.study_epoch = edit_study_epoch(
+            epoch_uid=self.study_epoch.uid, study_uid=self.study_epoch.study_uid
+        )
+        self.study_epoch2 = edit_study_epoch(
+            epoch_uid=self.study_epoch2.uid, study_uid=self.study_epoch2.study_uid
+        )
+        self.study_elements = [
+            edit_study_element(
+                element_uid=self.study_elements[0].element_uid,
+                study_uid=self.study.uid,
+                new_short_name="short_element 1",
+            ),
+            edit_study_element(
+                element_uid=self.study_elements[1].element_uid,
+                study_uid=self.study.uid,
+                new_short_name="short_element_2",
+            ),
+        ]
         epoch_service = StudyEpochService()
-        epoch = epoch_service.find_by_uid(self.study_epoch2.uid)
+        epoch = epoch_service.find_by_uid(
+            self.study_epoch2.uid, study_uid=self.study_epoch2.study_uid
+        )
         start_rule = "New start rule"
         end_rule = "New end rule"
         edit_input = StudyEpochEditInput(

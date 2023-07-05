@@ -9,38 +9,42 @@ DATA_MODEL_ROOT_LABEL = "DataModelRoot"
 DATA_MODEL_VALUE_LABEL = "DataModelValue"
 DATA_MODEL_IG_ROOT_LABEL = "DataModelIGRoot"
 DATA_MODEL_IG_VALUE_LABEL = "DataModelIGValue"
-CLASS_ROOT_LABEL = "DatasetClassRoot"
-CLASS_VALUE_LABEL = "DatasetClassValue"
-SCENARIO_ROOT_LABEL = "DatasetScenarioRoot"
-SCENARIO_VALUE_LABEL = "DatasetScenarioValue"
-DATASET_ROOT_LABEL = "DatasetRoot"
-DATASET_VALUE_LABEL = "DatasetValue"
-CLASS_VARIABLE_ROOT_LABEL = "ClassVariableRoot"
-CLASS_VARIABLE_VALUE_LABEL = "ClassVariableValue"
-DATASET_VARIABLE_ROOT_LABEL = "DatasetVariableRoot"
-DATASET_VARIABLE_VALUE_LABEL = "DatasetVariableValue"
+DATASET_CLASS_ROOT_LABEL = "DatasetClass"
+DATASET_CLASS_VALUE_LABEL = "DatasetClassInstance"
+SCENARIO_ROOT_LABEL = "DatasetScenario"
+SCENARIO_VALUE_LABEL = "DatasetScenarioInstance"
+DATASET_ROOT_LABEL = "Dataset"
+DATASET_VALUE_LABEL = "DatasetInstance"
+VARIABLE_CLASS_ROOT_LABEL = "VariableClass"
+VARIABLE_CLASS_VALUE_LABEL = "VariableClassInstance"
+DATASET_VARIABLE_ROOT_LABEL = "DatasetVariable"
+DATASET_VARIABLE_VALUE_LABEL = "DatasetVariableInstance"
 SCENARIO_VARIABLE_VALUE_LABEL = "ScenarioVariableImplementation"
 VERSION_TO_DATA_MODEL_REL_TYPE = "CONTAINS_DATA_MODEL"
 VERSION_TO_DATA_MODEL_IG_REL_TYPE = "CONTAINS_DATA_MODEL_IG"
 VERSION_TO_CLASS_REL_TYPE = "CONTAINS_DATASET_CLASS"
 VERSION_TO_DATASET_REL_TYPE = "CONTAINS_DATASET"
 VERSION_TO_SCENARIO_REL_TYPE = "CONTAINS_DATASET_SCENARIO"
-VERSION_TO_CLASS_VARIABLE_REL_TYPE = "CONTAINS_CLASS_VARIABLE"
+VERSION_TO_VARIABLE_CLASS_REL_TYPE = "CONTAINS_VARIABLE_CLASS"
 VERSION_TO_DATASET_VARIABLE_REL_TYPE = "CONTAINS_DATASET_VARIABLE"
 CATALOGUE_TO_DATA_MODEL_REL_TYPE = "HAS_DATA_MODEL"
 CATALOGUE_TO_DATA_MODEL_IG_REL_TYPE = "HAS_DATA_MODEL_IG"
 CATALOGUE_TO_CLASS_ROOT_REL_TYPE = "HAS_DATASET_CLASS"
 CATALOGUE_TO_DATASET_ROOT_REL_TYPE = "HAS_DATASET"
 CATALOGUE_TO_SCENARIO_REL_TYPE = "HAS_DATASET_SCENARIO"
-CATALOGUE_TO_CLASS_VARIABLE_ROOT_REL_TYPE = "HAS_CLASS_VARIABLE"
+CATALOGUE_TO_VARIABLE_CLASS_ROOT_REL_TYPE = "HAS_VARIABLE_CLASS"
 CATALOGUE_TO_DATASET_VARIABLE_ROOT_REL_TYPE = "HAS_DATASET_VARIABLE"
-CLASS_TO_CLASS_VARIABLE_ROOT_REL_TYPE = "HAS_CLASS_VARIABLE"
+CLASS_TO_VARIABLE_CLASS_ROOT_REL_TYPE = "HAS_VARIABLE_CLASS"
 CLASS_TO_DATASET_VARIABLE_ROOT_REL_TYPE = "HAS_DATASET_VARIABLE"
 CLASS_TO_SCENARIO_REL_TYPE = "HAS_DATASET_SCENARIO"
 SCENARIO_TO_VARIABLE_REL_TYPE = "HAS_DATASET_VARIABLE"
 VARIABLE_TO_SCENARIO_VARIABLE_REL_TYPE = "HAS_SCENARIO_IMPLEMENTATION"
 VERSION_TO_SCENARIO_VARIABLE_REL_TYPE = "CONTAINS_SCENARIO_VARIABLE"
 SCENARIO_VARIABLE_TO_SCENARIO_REL_TYPE = "IMPLEMENTS_SCENARIO"
+MODEL_VERSION_REL_TYPE = "HAS_VERSION"
+CLASS_VERSION_REL_TYPE = "HAS_INSTANCE"
+VARIABLE_VERSION_REL_TYPE = "HAS_INSTANCE"
+SCENARIO_VERSION_REL_TYPE = "HAS_INSTANCE"
 
 
 def import_from_cdisc_db_into_mdr(
@@ -52,7 +56,6 @@ def import_from_cdisc_db_into_mdr(
     mdr_db_name: str,
     user_initials: str,
 ):
-
     global USER_INITIALS
     USER_INITIALS = user_initials
 
@@ -84,7 +87,6 @@ def import_from_cdisc_db_into_mdr(
 
         if len(version_data) > 0 and "version" in version_data[0]:
             with mdr_neo4j_driver.session(database=mdr_db_name) as session:
-
                 # write to the clinical MDR db
                 print("==  * Merging structure nodes and relationships.")
                 session.write_transaction(
@@ -98,9 +100,12 @@ def import_from_cdisc_db_into_mdr(
                 print("==  * Merging Data Model / Implementation Guide.")
                 session.write_transaction(merge_data_model, version_data[0]["version"])
 
-
                 print("==  * Merging Classes.")
-                added_classes, updated_classes, unchanged_classes = session.write_transaction(
+                (
+                    added_classes,
+                    updated_classes,
+                    unchanged_classes,
+                ) = session.write_transaction(
                     merge_classes, version_data[0]["version"], classes_data
                 )
                 print(f"==      Added classes:       {added_classes:6}")
@@ -108,7 +113,11 @@ def import_from_cdisc_db_into_mdr(
                 print(f"==      Unchanged classes:   {unchanged_classes:6}")
 
                 print("==  * Merging Scenarii.")
-                added_scenarii, updated_scenarii, unchanged_scenarii = session.write_transaction(
+                (
+                    added_scenarii,
+                    updated_scenarii,
+                    unchanged_scenarii,
+                ) = session.write_transaction(
                     merge_scenarios, version_data[0]["version"], scenarios_data
                 )
                 print(f"==      Added scenarii:      {added_scenarii:6}")
@@ -116,7 +125,11 @@ def import_from_cdisc_db_into_mdr(
                 print(f"==      Unchanged scenarii:  {unchanged_scenarii:6}")
 
                 print("==  * Merging Variables.")
-                added_variables, updated_variables, unchanged_variables = session.write_transaction(
+                (
+                    added_variables,
+                    updated_variables,
+                    unchanged_variables,
+                ) = session.write_transaction(
                     merge_variables, version_data[0]["version"], variables_data
                 )
                 print(f"==      Added variables:     {added_variables:6}")
@@ -186,6 +199,8 @@ def get_scenarios(tx, catalogue: str, prefixed_version_number: str):
 
 
 def get_variables(tx, catalogue: str, prefixed_version_number: str):
+    # Get variables from cdisc database
+    # Some of them are beneath an extra Scenario level
     variables_data = tx.run(
         """
         MATCH (import:DataModelImport{catalogue: $catalogue, version_number: $prefixed_version_number})
@@ -270,12 +285,12 @@ def merge_version_independent_data(
 
     if version_data["data_model_type"] == DataModelType.FOUNDATIONAL.value:
         data_model_root_label = DATA_MODEL_ROOT_LABEL
-        class_root_label = CLASS_ROOT_LABEL
-        variable_root_label = CLASS_VARIABLE_ROOT_LABEL
+        class_root_label = DATASET_CLASS_ROOT_LABEL
+        variable_root_label = VARIABLE_CLASS_ROOT_LABEL
         contains_model_rel_type = VERSION_TO_DATA_MODEL_REL_TYPE
         catalogue_to_model_rel_type = CATALOGUE_TO_DATA_MODEL_REL_TYPE
         catalogue_to_dataset_rel_type = CATALOGUE_TO_CLASS_ROOT_REL_TYPE
-        catalogue_to_variable_rel_type = CLASS_TO_CLASS_VARIABLE_ROOT_REL_TYPE
+        catalogue_to_variable_rel_type = CLASS_TO_VARIABLE_CLASS_ROOT_REL_TYPE
         data_model_uid = sanitize_string(version_data["catalogue"])
 
     elif version_data["data_model_type"] == DataModelType.IMPLEMENTATION.value:
@@ -286,9 +301,11 @@ def merge_version_independent_data(
         catalogue_to_model_rel_type = CATALOGUE_TO_DATA_MODEL_IG_REL_TYPE
         catalogue_to_dataset_rel_type = CATALOGUE_TO_DATASET_ROOT_REL_TYPE
         catalogue_to_variable_rel_type = CLASS_TO_DATASET_VARIABLE_ROOT_REL_TYPE
-        data_model_uid = sanitize_string(parse_ig_name(
-            catalogue=version_data["catalogue"], href=version_data["href"]
-        ))
+        data_model_uid = sanitize_string(
+            parse_ig_name(
+                catalogue=version_data["catalogue"], href=version_data["href"]
+            )
+        )
 
     query = f"""
         WITH $version_data as version_data
@@ -343,7 +360,7 @@ def merge_data_model(tx, version_data):
     )
     result = tx.run(
         f"""
-        MATCH (dm_root:{root_label}{{uid: $data_model_uid}})-[:HAS_VERSION]->(dm_value:{value_label})
+        MATCH (dm_root:{root_label}{{uid: $data_model_uid}})-[:{MODEL_VERSION_REL_TYPE}]->(dm_value:{value_label})
         RETURN DISTINCT dm_value.version_number AS version_number
     """,
         data_model_uid=data_model_uid,
@@ -351,20 +368,19 @@ def merge_data_model(tx, version_data):
     existing_versions = list(result.value())
 
     prefixed_version_number = _prettify_version_number(version_data["version_number"])
-    version_number = _prettify_version_number(version_data["version_number"], number_only=True)
+    version_number = _prettify_version_number(
+        version_data["version_number"], number_only=True
+    )
     if prefixed_version_number not in existing_versions:
-        # TODO : Check if other status is possible, like Draft
-        # First, add end_date to previous LATEST rel
-        # And remove all relationships Root->Value not of type HAS_VERSION
         tx.run(
             f"""
             WITH $version_data as version_data
             MATCH (dm_root:{root_label}{{uid: $data_model_uid}})
-            MATCH (dm_root)-[r1:HAS_VERSION]->(:{value_label})<-[:LATEST]-(dm_root)
+            MATCH (dm_root)-[r1:{MODEL_VERSION_REL_TYPE}]->(:{value_label})<-[:LATEST]-(dm_root)
             SET r1.end_date=datetime(version_data.effective_date), r1.change_description="New version imported from CDISC"
             WITH dm_root
             MATCH (dm_root)-[r2]->(:{value_label})
-            WHERE NOT type(r2)='HAS_VERSION'
+            WHERE NOT type(r2)='{MODEL_VERSION_REL_TYPE}'
             DELETE r2
         """,
             version_data=version_data,
@@ -381,7 +397,7 @@ def merge_data_model(tx, version_data):
                 dm_value.description = version_data.description,
                 dm_value.version_number = $prefixed_version_number,
                 dm_value.effective_date = date(version_data.effective_date)
-            CREATE (dm_root)-[:HAS_VERSION {{
+            CREATE (dm_root)-[:{MODEL_VERSION_REL_TYPE} {{
                 change_description: "Initial import from CDISC",
                 start_date: datetime(version_data.effective_date),
                 status: version_data.registration_status,
@@ -405,76 +421,54 @@ def merge_data_model(tx, version_data):
         link_ig_with_data_model(tx, version_data)
 
 
-def _get_latest_class_version(tx, catalogue, data_model_type, uid):
-    model_root_label = ""
-    model_value_label = ""
+def _get_class_instances(tx, catalogue, data_model_type, uid):
     class_root_label = ""
-    catalogue_to_class_rel_type = ""
+    version_to_class_rel_type = ""
     if data_model_type == DataModelType.FOUNDATIONAL.value:
-        model_root_label = DATA_MODEL_ROOT_LABEL
-        model_value_label = DATA_MODEL_VALUE_LABEL
-        class_root_label = CLASS_ROOT_LABEL
-        catalogue_to_class_rel_type = CATALOGUE_TO_CLASS_ROOT_REL_TYPE
+        class_root_label = DATASET_CLASS_ROOT_LABEL
+        version_to_class_rel_type = VERSION_TO_CLASS_REL_TYPE
     elif data_model_type == DataModelType.IMPLEMENTATION.value:
-        model_root_label = DATA_MODEL_IG_ROOT_LABEL
-        model_value_label = DATA_MODEL_IG_VALUE_LABEL
         class_root_label = DATASET_ROOT_LABEL
-        catalogue_to_class_rel_type = CATALOGUE_TO_DATASET_ROOT_REL_TYPE
+        version_to_class_rel_type = VERSION_TO_DATASET_REL_TYPE
     result = tx.run(
         f"""
-                MATCH (catalogue:DataModelCatalogue {{name: $catalogue}})
-                    -[:{catalogue_to_class_rel_type}]->(:{class_root_label}{{uid: $uid}})
-                    -[:LATEST]->(value)<--(:{model_value_label})<--(:{model_root_label})<--(catalogue)
+                MATCH (:{class_root_label}{{uid: $uid}})-[:{CLASS_VERSION_REL_TYPE}]->(value)
+                    <-[:{version_to_class_rel_type}]-(:DataModelVersion)<-[:CONTAINS_VERSION]-(catalogue:DataModelCatalogue {{name: $catalogue}})
                 RETURN DISTINCT value
                 """,
         uid=uid,
         catalogue=catalogue,
     )
-    record = result.single()
+    records = [record for record in result]
 
-    return record
+    return records
 
 
-def _get_latest_scenario_version(tx, catalogue, data_model_type, uid):
-    model_root_label = ""
-    model_value_label = ""
-    class_value_label = ""
+def _get_scenario_instances(tx, catalogue, uid):
     scenario_root_label = SCENARIO_ROOT_LABEL
-    catalogue_to_scenario_rel_type = CATALOGUE_TO_SCENARIO_REL_TYPE
-    if data_model_type == DataModelType.FOUNDATIONAL.value:
-        model_root_label = DATA_MODEL_ROOT_LABEL
-        model_value_label = DATA_MODEL_VALUE_LABEL
-        class_value_label = CLASS_VALUE_LABEL
-    elif data_model_type == DataModelType.IMPLEMENTATION.value:
-        model_root_label = DATA_MODEL_IG_ROOT_LABEL
-        model_value_label = DATA_MODEL_IG_VALUE_LABEL
-        class_value_label = DATASET_VALUE_LABEL
+    version_to_scenario_rel_type = VERSION_TO_SCENARIO_REL_TYPE
     result = tx.run(
         f"""
-                MATCH (catalogue:DataModelCatalogue {{name: $catalogue}})
-                    -[:{catalogue_to_scenario_rel_type}]->(:{scenario_root_label}{{uid: $uid}})
-                    -[:LATEST]->(value)
-                    <--(:{class_value_label})
-                    <--(:{model_value_label})<--(:{model_root_label})<--(catalogue)
-                RETURN DISTINCT value
+                MATCH (:{scenario_root_label}{{uid: $uid}})-[:HAS_INSTANCE]->(instance)
+                    <-[:{version_to_scenario_rel_type}]-(:DataModelVersion)<-[:CONTAINS_VERSION]-(catalogue:DataModelCatalogue {{name: $catalogue}})
+                RETURN DISTINCT instance
                 """,
         uid=uid,
         catalogue=catalogue,
     )
-    record = result.single()
+    records = [record for record in result]
 
-    return record
+    return records
 
 
-def _get_latest_variable_version(tx, catalogue, data_model_type, parent_type, uid):
+def _get_variable_instances(tx, catalogue, data_model_type, parent_type, uid):
     model_root_label = ""
     model_value_label = ""
     class_value_label = ""
     scenario_value_label = SCENARIO_VALUE_LABEL
     variable_root_label = ""
     scenario_variable_value_label = SCENARIO_VARIABLE_VALUE_LABEL
-    catalogue_to_variable_rel_type = ""
-    class_to_variable_rel_type = ""
+    version_to_variable_rel_type = ""
     class_to_scenario_rel_type = CLASS_TO_SCENARIO_REL_TYPE
     scenario_to_variable_rel_type = SCENARIO_TO_VARIABLE_REL_TYPE
     variable_to_scenario_variable_rel_type = VARIABLE_TO_SCENARIO_VARIABLE_REL_TYPE
@@ -482,48 +476,59 @@ def _get_latest_variable_version(tx, catalogue, data_model_type, parent_type, ui
     if data_model_type == DataModelType.FOUNDATIONAL.value:
         model_root_label = DATA_MODEL_ROOT_LABEL
         model_value_label = DATA_MODEL_VALUE_LABEL
-        class_value_label = CLASS_VALUE_LABEL
-        variable_root_label = CLASS_VARIABLE_ROOT_LABEL
-        catalogue_to_variable_rel_type = CATALOGUE_TO_CLASS_VARIABLE_ROOT_REL_TYPE
-        class_to_variable_rel_type = CLASS_TO_CLASS_VARIABLE_ROOT_REL_TYPE
+        class_value_label = DATASET_CLASS_VALUE_LABEL
+        variable_root_label = VARIABLE_CLASS_ROOT_LABEL
+        version_to_variable_rel_type = VERSION_TO_VARIABLE_CLASS_REL_TYPE
     elif data_model_type == DataModelType.IMPLEMENTATION.value:
         model_root_label = DATA_MODEL_IG_ROOT_LABEL
         model_value_label = DATA_MODEL_IG_VALUE_LABEL
         class_value_label = DATASET_VALUE_LABEL
         variable_root_label = DATASET_VARIABLE_ROOT_LABEL
-        catalogue_to_variable_rel_type = CATALOGUE_TO_DATASET_VARIABLE_ROOT_REL_TYPE
-        class_to_variable_rel_type = CLASS_TO_DATASET_VARIABLE_ROOT_REL_TYPE
+        version_to_variable_rel_type = VERSION_TO_DATASET_VARIABLE_REL_TYPE
 
     query = ""
 
     if parent_type == "class":
         query = f"""
-            MATCH (catalogue:DataModelCatalogue {{name: $catalogue}})
-                -[:{catalogue_to_variable_rel_type}]->(:{variable_root_label}{{uid: $uid}})
-                -[:LATEST]->(value)
-                <-[:{class_to_variable_rel_type}]-(:{class_value_label})
-                <--(:{model_value_label})<--(:{model_root_label})<--(catalogue)
-            RETURN DISTINCT value
+            MATCH (:{variable_root_label}{{uid: $uid}})-[:HAS_INSTANCE]->(instance)
+                <-[:{version_to_variable_rel_type}]-(:DataModelVersion)<-[:CONTAINS_VERSION]-(catalogue:DataModelCatalogue {{name: $catalogue}})
+            RETURN DISTINCT instance
         """
     elif parent_type == "scenario":
         query = f"""
-            MATCH (catalogue:DataModelCatalogue {{name: $catalogue}})
-                -[:{catalogue_to_variable_rel_type}]->(:{variable_root_label}{{uid: $uid}})
-                -[:LATEST]->(value)
+            MATCH (:{variable_root_label}{{uid: $uid}})-[:HAS_INSTANCE]->(instance)
                 <-[:{scenario_to_variable_rel_type}]-(scenario:{scenario_value_label})<-[:{class_to_scenario_rel_type}]-(:{class_value_label})
-                <--(:{model_value_label})<--(:{model_root_label})<--(catalogue)
+                <--(:{model_value_label})<--(:{model_root_label})<--(catalogue:DataModelCatalogue {{name: $catalogue}})
             MATCH (scenario)<-[:{scenario_variable_to_scenario_rel_type}]-(impl:{scenario_variable_value_label})
-                <-[:{variable_to_scenario_variable_rel_type}]-(value)
-            RETURN DISTINCT apoc.map.mergeList([{{id: id(value)}}, value{{.*}}, impl{{.*}}]) AS value
+                <-[:{variable_to_scenario_variable_rel_type}]-(instance)
+            RETURN DISTINCT apoc.map.mergeList([{{id: id(instance)}}, instance{{.*}}, impl{{.*}}]) AS instance
         """
     result = tx.run(
         query,
         uid=uid,
         catalogue=catalogue,
     )
-    record = result.single()
+    records = [record for record in result]
 
-    return record
+    return records
+
+
+def _get_reusable_class(existing_classes, target_class):
+    for _class in existing_classes:
+        value = _class["value"]
+        reusable_version_id = (
+            value.id if hasattr(value, "id") else value.get("id", None)
+        )
+
+        if (
+            value.get("title", None) != target_class.get("title", None)
+            or value.get("label", None) != target_class.get("label", None)
+            or value.get("description", None) != target_class.get("description", None)
+        ):
+            continue
+        else:
+            return reusable_version_id
+    return None
 
 
 def merge_classes(tx, version_data, classes_data):
@@ -533,29 +538,31 @@ def merge_classes(tx, version_data, classes_data):
     for class_data in classes_data:
         _class = class_data.get("class", None)
 
-        record = _get_latest_class_version(
+        records = _get_class_instances(
             tx,
             catalogue=version_data["catalogue"],
             data_model_type=version_data["data_model_type"],
             uid=_class["uid"],
         )
-        if record is None:
-            create_initial_class_value(tx, version_data, _class)
-            nbr_new += 1
-        else:
-            value = record["value"]
+        if records:
+            reusable_version_id = _get_reusable_class(records, _class)
 
-            if (
-                value.get("title", None) != _class.get("title", None)
-                or value.get("label", None) != _class.get("label", None)
-                or value.get("description", None) != _class.get("description", None)
-            ):
-                create_new_version_class(tx, version_data, _class, value.id)
+            if reusable_version_id is None:
+                create_new_class_instance(tx, version_data=version_data, _class=_class)
                 nbr_updated += 1
 
             else:
-                use_existing_version_class(tx, version_data, _class, value.id)
+                use_existing_class_instance(
+                    tx,
+                    version_data=version_data,
+                    _class=_class,
+                    reusable_instance_id=reusable_version_id,
+                )
                 nbr_unchanged += 1
+        else:
+            create_initial_class_instance(tx, version_data=version_data, _class=_class)
+            nbr_new += 1
+
     for class_data in [
         c["class"]
         for c in classes_data
@@ -565,9 +572,23 @@ def merge_classes(tx, version_data, classes_data):
             tx,
             _class=class_data,
             subclasses=class_data.get("subclasses", []),
-            prefixed_version_number=_prettify_version_number(version_data["version_number"]),
+            prefixed_version_number=_prettify_version_number(
+                version_data["version_number"]
+            ),
         )
     return nbr_new, nbr_updated, nbr_unchanged
+
+
+def _get_reusable_scenario(existing_scenarios, target_scenario):
+    for scenario in existing_scenarios:
+        instance = scenario["instance"]
+        reusable_version_id = (
+            instance.id if hasattr(instance, "id") else instance.get("id", None)
+        )
+        if instance.get("label", None) != target_scenario.get("label", None):
+            continue
+        else:
+            return reusable_version_id
 
 
 def merge_scenarios(tx, version_data, scenarios_data):
@@ -578,29 +599,77 @@ def merge_scenarios(tx, version_data, scenarios_data):
         scenario = scenario_data.get("scenario", None)
         dataset_href = scenario_data.get("dataset_href", None)
 
-        record = _get_latest_scenario_version(
+        records = _get_scenario_instances(
             tx,
             catalogue=version_data["catalogue"],
-            data_model_type=version_data["data_model_type"],
             uid=scenario["uid"],
         )
-        if record is None:
-            create_initial_scenario_value(tx, version_data, scenario, dataset_href)
-            nbr_new += 1
-        else:
-            value = record["value"]
-
-            if value.get("label", None) != scenario.get("label", None):
-                create_new_version_scenario(
-                    tx, version_data, scenario, dataset_href, value.id
+        if records:
+            reusable_instance_id = _get_reusable_scenario(records, scenario)
+            if reusable_instance_id is None:
+                create_new_scenario_instance(
+                    tx,
+                    version_data=version_data,
+                    scenario=scenario,
+                    dataset_href=dataset_href,
                 )
                 nbr_updated += 1
             else:
-                use_existing_version_scenario(
-                    tx, version_data, scenario, dataset_href, value.id
+                use_existing_scenario_instance(
+                    tx,
+                    version_data=version_data,
+                    scenario=scenario,
+                    dataset_href=dataset_href,
+                    reusable_instance_id=reusable_instance_id,
                 )
                 nbr_unchanged += 1
+        else:
+            create_initial_scenario_instance(tx, version_data, scenario, dataset_href)
+            nbr_new += 1
+
     return nbr_new, nbr_updated, nbr_unchanged
+
+
+def _get_reusable_variable(existing_variables, target_variable):
+    for _variable in existing_variables:
+        value = _variable["instance"]
+        reusable_version_id = (
+            value.id if hasattr(value, "id") else value.get("id", None)
+        )
+        if (
+            value.get("title", None) != target_variable.get("title", None)
+            or value.get("label", None) != target_variable.get("label", None)
+            or value.get("description", None)
+            != target_variable.get("description", None)
+            or value.get("role", None) != target_variable.get("role", None)
+            or value.get("notes", None) != target_variable.get("notes", None)
+            or value.get("variable_c_code", None)
+            != target_variable.get("variable_c_code", None)
+            or value.get("usage_restrictions", None)
+            != target_variable.get("usage_restrictions", None)
+            or value.get("examples", None) != target_variable.get("examples", None)
+            or value.get("value_list", None) != target_variable.get("value_list", None)
+            or value.get("described_value_domain", None)
+            != target_variable.get("described_value_domain", None)
+            or value.get("role_description", None)
+            != target_variable.get("role_description", None)
+            or value.get("simple_datatype", None)
+            != target_variable.get("simple_datatype", None)
+            or value.get("implementation_notes", None)
+            != target_variable.get("implementation_notes", None)
+            or value.get("mapping_instructions", None)
+            != target_variable.get("mapping_instructions", None)
+            or value.get("prompt", None) != target_variable.get("prompt", None)
+            or value.get("question_text", None)
+            != target_variable.get("question_text", None)
+            or value.get("completion_instructions", None)
+            != target_variable.get("completion_instructions", None)
+            or value.get("core", None) != target_variable.get("core", None)
+        ):
+            continue
+        else:
+            return reusable_version_id
+    return None
 
 
 def merge_variables(tx, version_data, variables_data):
@@ -608,23 +677,45 @@ def merge_variables(tx, version_data, variables_data):
     nbr_updated = 0
     nbr_new = 0
     for variable_data in variables_data:
+        # First, iterate over all variables
+        # If this uid already has at least one instance
+        # Then either create a new one if some properties changed
+        # Or reuse the instance with same properties
+        # If there are no instances at all, create one for the first time
         variable = variable_data.get("variable", None)
         parent_href = variable_data.get("parent_href", None)
         parent_type = variable_data.get("parent_type", None)
 
-        # TODO : First check if VariableValue has a changed property - property set is different for class and scenario
-        # But then, how to detect if implementation changed ? Probably need to check if latest and new have an implementation linked to same Scenario
-        # If so, re-use or create new one depending on changes
-        # If not, then crearte new implementation
-        record = _get_latest_variable_version(
+        records = _get_variable_instances(
             tx,
             catalogue=version_data["catalogue"],
             data_model_type=version_data["data_model_type"],
             parent_type=parent_type,
             uid=variable["uid"],
         )
-        if record is None:
-            create_initial_variable_value(
+        if records:
+            reusable_instance_id = _get_reusable_variable(records, variable)
+            if reusable_instance_id is None:
+                create_new_variable_instance(
+                    tx,
+                    version_data=version_data,
+                    variable=variable,
+                    parent_href=parent_href,
+                    parent_type=parent_type,
+                )
+                nbr_updated += 1
+            else:
+                use_existing_variable_instance(
+                    tx,
+                    version_data=version_data,
+                    variable=variable,
+                    parent_href=parent_href,
+                    instance_node_id=reusable_instance_id,
+                    parent_type=parent_type,
+                )
+                nbr_unchanged += 1
+        else:
+            create_initial_variable_instance(
                 tx,
                 version_data=version_data,
                 variable=variable,
@@ -632,55 +723,28 @@ def merge_variables(tx, version_data, variables_data):
                 parent_type=parent_type,
             )
             nbr_new += 1
-        else:
-            value = record["value"]
-            latest_version_id = (
-                value.id if hasattr(value, "id") else value.get("id", None)
-            )
-            if (
-                value.get("title", None) != variable.get("title", None)
-                or value.get("label", None) != variable.get("label", None)
-                or value.get("description", None) != variable.get("description", None)
-                or value.get("role", None) != variable.get("role", None)
-                or value.get("role_description", None)
-                != variable.get("role_description", None)
-                or value.get("simple_datatype", None)
-                != variable.get("simple_datatype", None)
-                or value.get("implementation_notes", None)
-                != variable.get("implementation_notes", None)
-                or value.get("mapping_instructions", None)
-                != variable.get("mapping_instructions", None)
-                or value.get("prompt", None) != variable.get("prompt", None)
-                or value.get("question_text", None)
-                != variable.get("question_text", None)
-                or value.get("completion_instructions", None)
-                != variable.get("completion_instructions", None)
-                or value.get("core", None) != variable.get("core", None)
-            ):
-                create_new_version_variable(
-                    tx,
-                    version_data=version_data,
-                    variable=variable,
-                    parent_href=parent_href,
-                    latest_version_id=latest_version_id,
-                    parent_type=parent_type,
-                )
-                nbr_updated += 1
 
-            else:
-                use_existing_version_variable(
-                    tx,
-                    version_data=version_data,
-                    variable=variable,
-                    parent_href=parent_href,
-                    latest_version_id=latest_version_id,
-                    parent_type=parent_type,
-                )
-                nbr_unchanged += 1
+    for variable_data in variables_data:
+        # Iterate again over all variables to create the QUALIFIES_VARIABLES relationships
+        # Those exist between two variables of the same version
+        # So we need to ensure everything has been created first or we will miss relationships
+        variable = variable_data.get("variable", None)
+        if (
+            "qualifies_variables" in variable
+            and len(variable["qualifies_variables"]) > 0
+        ):
+            create_qualify_variable_relationships(
+                tx,
+                source_variable=variable,
+                prefixed_version_number=_prettify_version_number(
+                    version_data["version_number"]
+                ),
+            )
+
     return nbr_new, nbr_updated, nbr_unchanged
 
 
-def create_initial_class_value(tx, version_data, _class):
+def create_initial_class_instance(tx, version_data, _class):
     model_value_label = ""
     class_root_label = ""
     class_value_label = ""
@@ -690,8 +754,8 @@ def create_initial_class_value(tx, version_data, _class):
     prefixed_version_number = _prettify_version_number(version_data["version_number"])
     if version_data["data_model_type"] == DataModelType.FOUNDATIONAL.value:
         model_value_label = DATA_MODEL_VALUE_LABEL
-        class_root_label = CLASS_ROOT_LABEL
-        class_value_label = CLASS_VALUE_LABEL
+        class_root_label = DATASET_CLASS_ROOT_LABEL
+        class_value_label = DATASET_CLASS_VALUE_LABEL
         model_to_class_rel_type = CATALOGUE_TO_CLASS_ROOT_REL_TYPE
         version_to_model_rel_type = VERSION_TO_DATA_MODEL_REL_TYPE
         version_to_class_rel_type = VERSION_TO_CLASS_REL_TYPE
@@ -703,37 +767,29 @@ def create_initial_class_value(tx, version_data, _class):
         version_to_model_rel_type = VERSION_TO_DATA_MODEL_IG_REL_TYPE
         version_to_class_rel_type = VERSION_TO_DATASET_REL_TYPE
 
-    # TODO use a new relationship type instead of HAS_VERSION, and remove LATEST&LATEST_FINAL?
     tx.run(
         f"""
             MATCH (root:{class_root_label}{{uid: $uid}})
-            CREATE (value: {class_value_label})
+            CREATE (instance: {class_value_label})
             SET
-               value.title = $class_data.title,
-               value.label = $class_data.label,
-               value.description = $class_data.description
-            CREATE (root)-[:LATEST]->(value)
-            CREATE (root)-[:LATEST_FINAL]->(value)
-            CREATE (root)-[:HAS_VERSION{{
-                start_date: datetime($effective_date),
-                status: 'Final',
-                change_description: 'Imported from CDISC',
-                user_initials: $user_initials
-            }}]->(value)
+               instance.title = $class_data.title,
+               instance.label = $class_data.label,
+               instance.description = $class_data.description
+            CREATE (root)-[:{CLASS_VERSION_REL_TYPE}]->(instance)
 
-            WITH value
+            WITH instance
             MATCH (dmv:DataModelVersion {{href: $version_href}})-[{version_to_model_rel_type}]->(model_value:{model_value_label})
-            MERGE (dmv)-[contains_class:{version_to_class_rel_type}]->(value)
-            MERGE (model_value)-[has_class:{model_to_class_rel_type}]->(value)
+            MERGE (dmv)-[contains_class:{version_to_class_rel_type}]->(instance)
+            MERGE (model_value)-[has_class:{model_to_class_rel_type}]->(instance)
             SET contains_class.href=$class_data.href, has_class.ordinal = $class_data.ordinal
 
-            WITH value
-            MATCH ()-[rel]->(prior_value_node)<-[:HAS_VERSION]-(prior_root_node)
+            WITH instance
+            MATCH ()-[rel]->(prior_instance_node)<-[:{CLASS_VERSION_REL_TYPE}]-(prior_root_node)
             WHERE rel.href=$class_data.prior_version AND (rel:{VERSION_TO_CLASS_REL_TYPE} OR rel:{VERSION_TO_DATASET_REL_TYPE})
             CALL apoc.do.when($uid<>prior_root_node.uid,
-                'WITH $value AS value, $prior_value_node AS prior_value_node CREATE (value)<-[rep:REPLACED_BY]-(prior_value_node) SET rep.catalogue=$catalogue, rep.version_number=$prefixed_version_number RETURN rep',
+                'WITH $instance AS instance, $prior_instance_node AS prior_instance_node CREATE (instance)<-[rep:REPLACED_BY]-(prior_instance_node) SET rep.catalogue=$catalogue, rep.version_number=$prefixed_version_number RETURN rep',
                 '',
-                {{prior_value_node: prior_value_node, value: value, catalogue: $class_data.catalogue, prefixed_version_number: $prefixed_version_number}}
+                {{prior_instance_node: prior_instance_node, instance: instance, catalogue: $class_data.catalogue, prefixed_version_number: $prefixed_version_number}}
             )
             YIELD value AS result
             RETURN result
@@ -750,7 +806,7 @@ def create_initial_class_value(tx, version_data, _class):
         link_dataset_with_class(tx, _class, prefixed_version_number)
 
 
-def create_new_version_class(tx, version_data, _class, latest_version_id):
+def create_new_class_instance(tx, version_data, _class):
     model_value_label = ""
     class_value_label = ""
     model_to_class_rel_type = ""
@@ -759,7 +815,7 @@ def create_new_version_class(tx, version_data, _class, latest_version_id):
     prefixed_version_number = _prettify_version_number(version_data["version_number"])
     if version_data["data_model_type"] == DataModelType.FOUNDATIONAL.value:
         model_value_label = DATA_MODEL_VALUE_LABEL
-        class_value_label = CLASS_VALUE_LABEL
+        class_value_label = DATASET_CLASS_VALUE_LABEL
         model_to_class_rel_type = CATALOGUE_TO_CLASS_ROOT_REL_TYPE
         version_to_model_rel_type = VERSION_TO_DATA_MODEL_REL_TYPE
         version_to_class_rel_type = VERSION_TO_CLASS_REL_TYPE
@@ -769,50 +825,35 @@ def create_new_version_class(tx, version_data, _class, latest_version_id):
         model_to_class_rel_type = CATALOGUE_TO_DATASET_ROOT_REL_TYPE
         version_to_model_rel_type = VERSION_TO_DATA_MODEL_IG_REL_TYPE
         version_to_class_rel_type = VERSION_TO_DATASET_REL_TYPE
-    # TODO use a new relationship type instead of HAS_VERSION, and remove LATEST&LATEST_FINAL?
+
     tx.run(
         f"""
-            MATCH (root{{uid: $uid}})-[latest:LATEST]->(value)
-                <-[latest_final:LATEST_FINAL]-(root)
-            WHERE id(value)=$latest_version_id
-            MATCH (root)-[has_version:HAS_VERSION]->(value)
-            SET has_version.end_date = datetime($effective_date)
-            DELETE latest, latest_final
-
-            WITH root, has_version.version AS version
-            CREATE (new_value: {class_value_label})
+            MATCH (root{{uid: $uid}})
+            CREATE (new_instance: {class_value_label})
             SET
-               new_value.title = $class_data.title,
-               new_value.label = $class_data.label,
-               new_value.description = $class_data.description
-            CREATE (root)-[:LATEST]->(new_value)
-            CREATE (root)-[:LATEST_FINAL]->(new_value)
-            CREATE (root)-[:HAS_VERSION{{
-                start_date: datetime($effective_date),
-                status: 'Final',
-                change_description: 'Imported from CDISC',
-                user_initials: $user_initials
-            }}]->(new_value)
+               new_instance.title = $class_data.title,
+               new_instance.label = $class_data.label,
+               new_instance.description = $class_data.description
+            CREATE (root)-[:{CLASS_VERSION_REL_TYPE}]->(new_instance)
 
-            WITH new_value
+            WITH new_instance
             MATCH (dmv:DataModelVersion {{href: $version_href}})-[{version_to_model_rel_type}]->(model_value:{model_value_label})
-            MERGE (dmv)-[contains_class:{version_to_class_rel_type}]->(new_value)
-            CREATE (model_value)-[has_class:{model_to_class_rel_type}]->(new_value)
+            MERGE (dmv)-[contains_class:{version_to_class_rel_type}]->(new_instance)
+            CREATE (model_value)-[has_class:{model_to_class_rel_type}]->(new_instance)
             SET contains_class.href=$class_data.href, has_class.ordinal = $class_data.ordinal
 
-            WITH new_value
-            MATCH ()-[rel]->(prior_value_node)<-[:HAS_VERSION]-(prior_root_node)
+            WITH new_instance
+            MATCH ()-[rel]->(prior_instance_node)<-[:{CLASS_VERSION_REL_TYPE}]-(prior_root_node)
             WHERE rel.href=$class_data.prior_version AND (rel:{VERSION_TO_CLASS_REL_TYPE} OR rel:{VERSION_TO_DATASET_REL_TYPE})
             CALL apoc.do.when($uid<>prior_root_node.uid,
-                'WITH $new_value AS new_value, $prior_value_node AS prior_value_node CREATE (new_value)<-[rep:REPLACED_BY]-(prior_value_node) SET rep.catalogue=$catalogue, rep.version_number=$prefixed_version_number RETURN rep',
+                'WITH $new_instance AS new_instance, $prior_instance_node AS prior_instance_node CREATE (new_instance)<-[rep:REPLACED_BY]-(prior_instance_node) SET rep.catalogue=$catalogue, rep.version_number=$prefixed_version_number RETURN rep',
                 '',
-                {{prior_value_node: prior_value_node, new_value: new_value, catalogue: $class_data.catalogue, prefixed_version_number: $prefixed_version_number}}
+                {{prior_instance_node: prior_instance_node, new_instance: new_instance, catalogue: $class_data.catalogue, prefixed_version_number: $prefixed_version_number}}
             )
             YIELD value AS result
             RETURN result
         """,
         uid=_class["uid"],
-        latest_version_id=latest_version_id,
         effective_date=version_data["effective_date"],
         class_data=_class,
         version_href=version_data["href"],
@@ -824,7 +865,7 @@ def create_new_version_class(tx, version_data, _class, latest_version_id):
         link_dataset_with_class(tx, _class, prefixed_version_number)
 
 
-def use_existing_version_class(tx, version_data, _class, latest_version_id):
+def use_existing_class_instance(tx, version_data, _class, reusable_instance_id):
     model_value_label = ""
     model_to_class_rel_type = ""
     version_to_model_rel_type = ""
@@ -842,26 +883,26 @@ def use_existing_version_class(tx, version_data, _class, latest_version_id):
         version_to_class_rel_type = VERSION_TO_DATASET_REL_TYPE
     tx.run(
         f"""
-            MATCH (value)
-            WHERE id(value)=$latest_version_id
+            MATCH (instance)
+            WHERE id(instance)=$reusable_instance_id
             MATCH (dmv:DataModelVersion {{href: $version_href}})-[{version_to_model_rel_type}]->(model_value:{model_value_label})
-            MERGE (dmv)-[contains_class:{version_to_class_rel_type}]->(value)
-            CREATE (model_value)-[has_class:{model_to_class_rel_type}]->(value)
+            MERGE (dmv)-[contains_class:{version_to_class_rel_type}]->(instance)
+            CREATE (model_value)-[has_class:{model_to_class_rel_type}]->(instance)
             SET contains_class.href=$class_data.href, has_class.ordinal = $class_data.ordinal
 
-            WITH value
-            MATCH ()-[rel]->(prior_value_node)<-[:HAS_VERSION]-(prior_root_node)
+            WITH instance
+            MATCH ()-[rel]->(prior_instance_node)<-[:{CLASS_VERSION_REL_TYPE}]-(prior_root_node)
             WHERE rel.href=$class_data.prior_version AND (rel:{VERSION_TO_CLASS_REL_TYPE} OR rel:{VERSION_TO_DATASET_REL_TYPE})
             CALL apoc.do.when($uid<>prior_root_node.uid,
-                'WITH $value AS value, $prior_value_node AS prior_value_node CREATE (value)<-[rep:REPLACED_BY]-(prior_value_node) SET rep.catalogue=$catalogue, rep.version_number=$prefixed_version_number RETURN rep',
+                'WITH $instance AS instance, $prior_instance_node AS prior_instance_node CREATE (instance)<-[rep:REPLACED_BY]-(prior_instance_node) SET rep.catalogue=$catalogue, rep.version_number=$prefixed_version_number RETURN rep',
                 '',
-                {{prior_value_node: prior_value_node, value: value, catalogue: $class_data.catalogue, prefixed_version_number: $prefixed_version_number}}
+                {{prior_instance_node: prior_instance_node, instance: instance, catalogue: $class_data.catalogue, prefixed_version_number: $prefixed_version_number}}
             )
             YIELD value AS result
             RETURN result
         """,
         uid=_class["uid"],
-        latest_version_id=latest_version_id,
+        reusable_instance_id=reusable_instance_id,
         class_data=_class,
         version_href=version_data["href"],
         prefixed_version_number=prefixed_version_number,
@@ -871,7 +912,7 @@ def use_existing_version_class(tx, version_data, _class, latest_version_id):
         link_dataset_with_class(tx, _class, prefixed_version_number)
 
 
-def create_initial_scenario_value(tx, version_data, scenario, dataset_href):
+def create_initial_scenario_instance(tx, version_data, scenario, dataset_href):
     prefixed_version_number = _prettify_version_number(version_data["version_number"])
     class_value_label = ""
     scenario_root_label = SCENARIO_ROOT_LABEL
@@ -880,33 +921,25 @@ def create_initial_scenario_value(tx, version_data, scenario, dataset_href):
     version_to_class_rel_type = ""
     version_to_scenario_rel_type = VERSION_TO_SCENARIO_REL_TYPE
     if version_data["data_model_type"] == DataModelType.FOUNDATIONAL.value:
-        class_value_label = CLASS_VALUE_LABEL
+        class_value_label = DATASET_CLASS_VALUE_LABEL
         version_to_class_rel_type = VERSION_TO_CLASS_REL_TYPE
     elif version_data["data_model_type"] == DataModelType.IMPLEMENTATION.value:
         class_value_label = DATASET_VALUE_LABEL
         version_to_class_rel_type = VERSION_TO_DATASET_REL_TYPE
 
-    # TODO use a new relationship type instead of HAS_VERSION, and remove LATEST&LATEST_FINAL?
     tx.run(
         f"""
             MATCH (root:{scenario_root_label}{{uid: $uid}})
-            CREATE (value:{scenario_value_label})
+            CREATE (instance:{scenario_value_label})
             SET
-               value.label = $scenario_data.label
-            CREATE (root)-[:LATEST]->(value)
-            CREATE (root)-[:LATEST_FINAL]->(value)
-            CREATE (root)-[:HAS_VERSION{{
-                start_date: datetime($effective_date),
-                status: 'Final',
-                change_description: 'Imported from CDISC',
-                user_initials: $user_initials
-            }}]->(value)
+               instance.label = $scenario_data.label
+            CREATE (root)-[:{SCENARIO_VERSION_REL_TYPE}]->(instance)
 
-            WITH value
+            WITH instance
             MATCH (dmv:DataModelVersion {{href: $version_href}})-[rel:{version_to_class_rel_type}]->(class_value:{class_value_label})
                 WHERE rel.href=$dataset_href
-            MERGE (dmv)-[contains_scenario:{version_to_scenario_rel_type} {{href: $scenario_data.href}}]->(value)
-            MERGE (class_value)-[has_scenario:{class_to_scenario_rel_type}]->(value)
+            MERGE (dmv)-[contains_scenario:{version_to_scenario_rel_type} {{href: $scenario_data.href}}]->(instance)
+            MERGE (class_value)-[has_scenario:{class_to_scenario_rel_type}]->(instance)
             SET contains_scenario.href=$scenario_data.href, has_scenario.ordinal = $scenario_data.ordinal, has_scenario.version_number = $prefixed_version_number
         """,
         uid=scenario["uid"],
@@ -919,9 +952,7 @@ def create_initial_scenario_value(tx, version_data, scenario, dataset_href):
     )
 
 
-def create_new_version_scenario(
-    tx, version_data, scenario, dataset_href, latest_version_id
-):
+def create_new_scenario_instance(tx, version_data, scenario, dataset_href):
     prefixed_version_number = _prettify_version_number(version_data["version_number"])
     class_value_label = ""
     scenario_value_label = SCENARIO_VALUE_LABEL
@@ -929,44 +960,28 @@ def create_new_version_scenario(
     version_to_class_rel_type = ""
     version_to_scenario_rel_type = VERSION_TO_SCENARIO_REL_TYPE
     if version_data["data_model_type"] == DataModelType.FOUNDATIONAL.value:
-        class_value_label = CLASS_VALUE_LABEL
+        class_value_label = DATASET_CLASS_VALUE_LABEL
         version_to_class_rel_type = VERSION_TO_CLASS_REL_TYPE
     elif version_data["data_model_type"] == DataModelType.IMPLEMENTATION.value:
         class_value_label = DATASET_VALUE_LABEL
         version_to_class_rel_type = VERSION_TO_DATASET_REL_TYPE
 
-    # TODO use a new relationship type instead of HAS_VERSION, and remove LATEST&LATEST_FINAL?
     tx.run(
         f"""
-        MATCH (root{{uid: $uid}})-[latest:LATEST]->(value)
-            <-[latest_final:LATEST_FINAL]-(root)
-        WHERE id(value)=$latest_version_id
-        MATCH (root)-[has_version:HAS_VERSION]->(value)
-        SET has_version.end_date = datetime($effective_date)
-        DELETE latest, latest_final
-
-        WITH root, has_version.version AS version
-        CREATE (new_value: {scenario_value_label})
+        MATCH (root{{uid: $uid}})
+        CREATE (new_instance: {scenario_value_label})
         SET
-            new_value.label = $scenario_data.label
-        CREATE (root)-[:LATEST]->(new_value)
-        CREATE (root)-[:LATEST_FINAL]->(new_value)
-        CREATE (root)-[:HAS_VERSION{{
-            start_date: datetime($effective_date),
-            status: 'Final',
-            change_description: 'Imported from CDISC',
-            user_initials: $user_initials
-        }}]->(new_value)
+            new_instance.label = $scenario_data.label
+        CREATE (root)-[:{SCENARIO_VERSION_REL_TYPE}]->(new_instance)
 
-        WITH new_value
+        WITH new_instance
         MATCH (dmv:DataModelVersion {{href: $version_href}})-[rel:{version_to_class_rel_type}]->(class_value:{class_value_label})
             WHERE rel.href=$dataset_href
-        MERGE (dmv)-[contains_scenario:{version_to_scenario_rel_type} {{href: $scenario_data.href}}]->(new_value)
-        CREATE (class_value)-[has_scenario:{class_to_scenario_rel_type}]->(new_value)
+        MERGE (dmv)-[contains_scenario:{version_to_scenario_rel_type} {{href: $scenario_data.href}}]->(new_instance)
+        CREATE (class_value)-[has_scenario:{class_to_scenario_rel_type}]->(new_instance)
         SET contains_scenario.href=$scenario_data.href, has_scenario.ordinal = $scenario_data.ordinal, has_scenario.version_number = $prefixed_version_number
         """,
         uid=scenario["uid"],
-        latest_version_id=latest_version_id,
         effective_date=version_data["effective_date"],
         prefixed_version_number=prefixed_version_number,
         scenario_data=scenario,
@@ -976,8 +991,8 @@ def create_new_version_scenario(
     )
 
 
-def use_existing_version_scenario(
-    tx, version_data, scenario, dataset_href, latest_version_id
+def use_existing_scenario_instance(
+    tx, version_data, scenario, dataset_href, reusable_instance_id
 ):
     prefixed_version_number = _prettify_version_number(version_data["version_number"])
     class_value_label = ""
@@ -985,7 +1000,7 @@ def use_existing_version_scenario(
     version_to_class_rel_type = ""
     version_to_scenario_rel_type = VERSION_TO_SCENARIO_REL_TYPE
     if version_data["data_model_type"] == DataModelType.FOUNDATIONAL.value:
-        class_value_label = CLASS_VALUE_LABEL
+        class_value_label = DATASET_CLASS_VALUE_LABEL
         version_to_class_rel_type = VERSION_TO_CLASS_REL_TYPE
     elif version_data["data_model_type"] == DataModelType.IMPLEMENTATION.value:
         class_value_label = DATASET_VALUE_LABEL
@@ -993,16 +1008,16 @@ def use_existing_version_scenario(
 
     tx.run(
         f"""
-        MATCH (value)
-        WHERE id(value)=$latest_version_id
+        MATCH (instance)
+        WHERE id(instance)=$reusable_instance_id
         MATCH (dmv:DataModelVersion {{href: $version_href}})-[rel:{version_to_class_rel_type}]->(class_value:{class_value_label})
             WHERE rel.href=$dataset_href
-        MERGE (dmv)-[:{version_to_scenario_rel_type} {{href: $scenario_data.href}}]->(value)
-        CREATE (class_value)-[has_scenario:{class_to_scenario_rel_type}]->(value)
+        MERGE (dmv)-[:{version_to_scenario_rel_type} {{href: $scenario_data.href}}]->(instance)
+        CREATE (class_value)-[has_scenario:{class_to_scenario_rel_type}]->(instance)
         SET has_scenario.ordinal = $scenario_data.ordinal, has_scenario.version_number = $prefixed_version_number
         """,
         uid=scenario["uid"],
-        latest_version_id=latest_version_id,
+        reusable_instance_id=reusable_instance_id,
         effective_date=version_data["effective_date"],
         prefixed_version_number=prefixed_version_number,
         scenario_data=scenario,
@@ -1011,8 +1026,8 @@ def use_existing_version_scenario(
     )
 
 
-def build_version_query(
-    value_node_variable_name: str,
+def build_variable_instance_query(
+    instance_node_variable_name: str,
     parent_type: str,
     version_data: dict,
     create_version: bool = True,
@@ -1032,11 +1047,11 @@ def build_version_query(
     version_to_scenario_variable_rel_type = VERSION_TO_SCENARIO_VARIABLE_REL_TYPE
     scenario_variable_to_scenario_rel_type = SCENARIO_VARIABLE_TO_SCENARIO_REL_TYPE
     if version_data["data_model_type"] == DataModelType.FOUNDATIONAL.value:
-        class_value_label = CLASS_VALUE_LABEL
-        variable_value_label = CLASS_VARIABLE_VALUE_LABEL
-        class_to_variable_rel_type = CLASS_TO_CLASS_VARIABLE_ROOT_REL_TYPE
+        class_value_label = DATASET_CLASS_VALUE_LABEL
+        variable_value_label = VARIABLE_CLASS_VALUE_LABEL
+        class_to_variable_rel_type = CLASS_TO_VARIABLE_CLASS_ROOT_REL_TYPE
         version_to_class_rel_type = VERSION_TO_CLASS_REL_TYPE
-        version_to_variable_rel_type = VERSION_TO_CLASS_VARIABLE_REL_TYPE
+        version_to_variable_rel_type = VERSION_TO_VARIABLE_CLASS_REL_TYPE
     elif version_data["data_model_type"] == DataModelType.IMPLEMENTATION.value:
         class_value_label = DATASET_VALUE_LABEL
         variable_value_label = DATASET_VARIABLE_VALUE_LABEL
@@ -1045,25 +1060,17 @@ def build_version_query(
         version_to_variable_rel_type = VERSION_TO_DATASET_VARIABLE_REL_TYPE
 
     create = f"""
-            CREATE ({value_node_variable_name}:{variable_value_label})
+            CREATE ({instance_node_variable_name}:{variable_value_label})
             SET
-               {value_node_variable_name}.title = $variable_data.title,
-               {value_node_variable_name}.label = $variable_data.label,
-               {value_node_variable_name}.simple_datatype = $variable_data.simple_datatype
+               {instance_node_variable_name}.title = $variable_data.title,
+               {instance_node_variable_name}.label = $variable_data.label,
+               {instance_node_variable_name}.simple_datatype = $variable_data.simple_datatype
     """
-    with_clause = f" WITH {value_node_variable_name} "
+    with_clause = f" WITH {instance_node_variable_name} "
 
-    # TODO use a new relationship type instead of HAS_VERSION, and remove LATEST&LATEST_FINAL?
     versioning = f"""
         , root
-        CREATE (root)-[:LATEST]->({value_node_variable_name})
-        CREATE (root)-[:LATEST_FINAL]->({value_node_variable_name})
-        CREATE (root)-[:HAS_VERSION{{
-            start_date: datetime($effective_date),
-            status: 'Final',
-            change_description: 'Imported from CDISC',
-            user_initials: $user_initials
-        }}]->({value_node_variable_name})
+        CREATE (root)-[:{VARIABLE_VERSION_REL_TYPE}]->({instance_node_variable_name})
     """
 
     variable_parents = ""
@@ -1074,12 +1081,12 @@ def build_version_query(
     """
 
     prior_version = f"""
-        MATCH ()-[rel]->(prior_value_node)<-[:HAS_VERSION]-(prior_root_node)
-        WHERE rel.href=$variable_data.prior_version AND (rel:{VERSION_TO_CLASS_VARIABLE_REL_TYPE} OR rel:{VERSION_TO_DATASET_VARIABLE_REL_TYPE})
+        MATCH ()-[rel]->(prior_instance_node)<-[:{VARIABLE_VERSION_REL_TYPE}]-(prior_root_node)
+        WHERE rel.href=$variable_data.prior_version AND (rel:{VERSION_TO_VARIABLE_CLASS_REL_TYPE} OR rel:{VERSION_TO_DATASET_VARIABLE_REL_TYPE})
         CALL apoc.do.when($uid<>prior_root_node.uid,
-            'WITH ${value_node_variable_name} AS {value_node_variable_name}, $prior_value_node AS prior_value_node CREATE ({value_node_variable_name})<-[rep:REPLACED_BY]-(prior_value_node) SET rep.catalogue=$catalogue, rep.version_number=$prefixed_version_number RETURN rep',
+            'WITH ${instance_node_variable_name} AS {instance_node_variable_name}, $prior_instance_node AS prior_instance_node CREATE ({instance_node_variable_name})<-[rep:REPLACED_BY]-(prior_instance_node) SET rep.catalogue=$catalogue, rep.version_number=$prefixed_version_number RETURN rep',
             '',
-            {{prior_value_node: prior_value_node, {value_node_variable_name}: {value_node_variable_name}, catalogue: $variable_data.catalogue, prefixed_version_number: $prefixed_version_number}}
+            {{prior_instance_node: prior_instance_node, {instance_node_variable_name}: {instance_node_variable_name}, catalogue: $variable_data.catalogue, prefixed_version_number: $prefixed_version_number}}
         )
         YIELD value AS result
         RETURN result
@@ -1087,29 +1094,35 @@ def build_version_query(
 
     if parent_type == "class":
         create += f""",
-               {value_node_variable_name}.description = $variable_data.description,
-               {value_node_variable_name}.role = $variable_data.role,
-               {value_node_variable_name}.role_description = $variable_data.role_description,
-               {value_node_variable_name}.implementation_notes = $variable_data.implementation_notes,
-               {value_node_variable_name}.mapping_instructions = $variable_data.mapping_instructions,
-               {value_node_variable_name}.prompt = $variable_data.prompt,
-               {value_node_variable_name}.question_text = $variable_data.question_text,
-               {value_node_variable_name}.completion_instructions = $variable_data.completion_instructions,
-               {value_node_variable_name}.core = $variable_data.core
+                {instance_node_variable_name}.description = $variable_data.description,
+                {instance_node_variable_name}.role = $variable_data.role,
+                {instance_node_variable_name}.notes = $variable_data.notes,
+                {instance_node_variable_name}.variable_c_code = $variable_data.variable_c_code,
+                {instance_node_variable_name}.usage_restrictions = $variable_data.usage_restrictions,
+                {instance_node_variable_name}.examples = $variable_data.examples,
+                {instance_node_variable_name}.value_list = $variable_data.value_list,
+                {instance_node_variable_name}.described_value_domain = $variable_data.described_value_domain,
+                {instance_node_variable_name}.role_description = $variable_data.role_description,
+                {instance_node_variable_name}.implementation_notes = $variable_data.implementation_notes,
+                {instance_node_variable_name}.mapping_instructions = $variable_data.mapping_instructions,
+                {instance_node_variable_name}.prompt = $variable_data.prompt,
+                {instance_node_variable_name}.question_text = $variable_data.question_text,
+                {instance_node_variable_name}.completion_instructions = $variable_data.completion_instructions,
+                {instance_node_variable_name}.core = $variable_data.core
         """
 
         variable_parents = f"""
             MATCH (dmv:DataModelVersion {{href: $version_href}})-[rel:{version_to_class_rel_type}]->(class_value:{class_value_label})
                 WHERE rel.href=$parent_href
-            MERGE (dmv)-[:{version_to_variable_rel_type} {{href: $variable_data.href}}]->({value_node_variable_name})
+            MERGE (dmv)-[:{version_to_variable_rel_type} {{href: $variable_data.href}}]->({instance_node_variable_name})
             MERGE (class_value)-[has_variable:{class_to_variable_rel_type} {{
                 ordinal: $variable_data.ordinal,
                 version_number: $prefixed_version_number
-            }}]->({value_node_variable_name})
+            }}]->({instance_node_variable_name})
         """
 
         codelists += f"""
-            MERGE ({value_node_variable_name})-[:REFERENCES_CODELIST]->(c)
+            MERGE ({instance_node_variable_name})-[:REFERENCES_CODELIST]->(c)
         """
 
     elif parent_type == "scenario":
@@ -1117,27 +1130,33 @@ def build_version_query(
         create += f"""
             CREATE ({scenario_value_variable_name}:{scenario_variable_value_label})
             SET
-               {scenario_value_variable_name}.description = $variable_data.description,
-               {scenario_value_variable_name}.role = $variable_data.role,
-               {scenario_value_variable_name}.role_description = $variable_data.role_description,
-               {scenario_value_variable_name}.implementation_notes = $variable_data.implementation_notes,
-               {scenario_value_variable_name}.mapping_instructions = $variable_data.mapping_instructions,
-               {scenario_value_variable_name}.prompt = $variable_data.prompt,
-               {scenario_value_variable_name}.question_text = $variable_data.question_text,
-               {scenario_value_variable_name}.completion_instructions = $variable_data.completion_instructions,
-               {scenario_value_variable_name}.core = $variable_data.core
-            CREATE ({value_node_variable_name})-[var_sc_rel:{variable_value_to_scenario_variable_value_rel_type}]->({scenario_value_variable_name})
+                {scenario_value_variable_name}.description = $variable_data.description,
+                {scenario_value_variable_name}.role = $variable_data.role,
+                {scenario_value_variable_name}.notes = $variable_data.notes,
+                {scenario_value_variable_name}.variable_c_code = $variable_data.variable_c_code,
+                {scenario_value_variable_name}.usage_restrictions = $variable_data.usage_restrictions,
+                {scenario_value_variable_name}.examples = $variable_data.examples,
+                {scenario_value_variable_name}.value_list = $variable_data.value_list,
+                {scenario_value_variable_name}.described_value_domain = $variable_data.described_value_domain,
+                {scenario_value_variable_name}.role_description = $variable_data.role_description,
+                {scenario_value_variable_name}.implementation_notes = $variable_data.implementation_notes,
+                {scenario_value_variable_name}.mapping_instructions = $variable_data.mapping_instructions,
+                {scenario_value_variable_name}.prompt = $variable_data.prompt,
+                {scenario_value_variable_name}.question_text = $variable_data.question_text,
+                {scenario_value_variable_name}.completion_instructions = $variable_data.completion_instructions,
+                {scenario_value_variable_name}.core = $variable_data.core
+            CREATE ({instance_node_variable_name})-[var_sc_rel:{variable_value_to_scenario_variable_value_rel_type}]->({scenario_value_variable_name})
             SET var_sc_rel.version_number = $prefixed_version_number
         """
 
         variable_parents = f"""
             MATCH (dmv:DataModelVersion {{href: $version_href}})-[rel:{version_to_scenario_rel_type}]->(scenario_value:{scenario_value_label})
                 WHERE rel.href=$parent_href
-            MERGE (dmv)-[:{version_to_variable_rel_type} {{href: $variable_data.href}}]->({value_node_variable_name})
+            MERGE (dmv)-[:{version_to_variable_rel_type} {{href: $variable_data.href}}]->({instance_node_variable_name})
             MERGE (scenario_value)-[has_variable:{scenario_to_variable_rel_type} {{
                 ordinal: $variable_data.ordinal,
                 version_number: $prefixed_version_number
-            }}]->({value_node_variable_name})
+            }}]->({instance_node_variable_name})
             MERGE (dmv)-[contains_scenario_variable:{version_to_scenario_variable_rel_type}]->({scenario_value_variable_name})
             MERGE ({scenario_value_variable_name})-[:{scenario_variable_to_scenario_rel_type}]->(scenario_value)
         """
@@ -1158,11 +1177,13 @@ def build_version_query(
     return full_query
 
 
-def create_initial_variable_value(tx, version_data, variable, parent_href, parent_type):
+def create_initial_variable_instance(
+    tx, version_data, variable, parent_href, parent_type
+):
     prefixed_version_number = _prettify_version_number(version_data["version_number"])
     variable_root_label = ""
     if version_data["data_model_type"] == DataModelType.FOUNDATIONAL.value:
-        variable_root_label = CLASS_VARIABLE_ROOT_LABEL
+        variable_root_label = VARIABLE_CLASS_ROOT_LABEL
     elif version_data["data_model_type"] == DataModelType.IMPLEMENTATION.value:
         variable_root_label = DATASET_VARIABLE_ROOT_LABEL
 
@@ -1171,8 +1192,8 @@ def create_initial_variable_value(tx, version_data, variable, parent_href, paren
         WITH root
     """
 
-    full_query = initial_part + build_version_query(
-        value_node_variable_name="value",
+    full_query = initial_part + build_variable_instance_query(
+        instance_node_variable_name="value",
         parent_type=parent_type,
         version_data=version_data,
     )
@@ -1192,31 +1213,22 @@ def create_initial_variable_value(tx, version_data, variable, parent_href, paren
         link_variable_with_variable(tx, version_data, variable, prefixed_version_number)
 
 
-def create_new_version_variable(
-    tx, version_data, variable, parent_href, latest_version_id, parent_type
-):
+def create_new_variable_instance(tx, version_data, variable, parent_href, parent_type):
     prefixed_version_number = _prettify_version_number(version_data["version_number"])
 
     initial_part = """
-        MATCH (root{uid: $uid})-[latest:LATEST]->(value)
-            <-[latest_final:LATEST_FINAL]-(root)
-        WHERE id(value)=$latest_version_id
-        MATCH (root)-[has_version:HAS_VERSION]->(value)
-        SET has_version.end_date = datetime($effective_date)
-        DELETE latest, latest_final
-
+        MATCH (root{uid: $uid})
         WITH root
     """
 
-    full_query = initial_part + build_version_query(
-        value_node_variable_name="new_value",
+    full_query = initial_part + build_variable_instance_query(
+        instance_node_variable_name="new_value",
         parent_type=parent_type,
         version_data=version_data,
     )
     tx.run(
         full_query,
         uid=variable["uid"],
-        latest_version_id=latest_version_id,
         effective_date=version_data["effective_date"],
         prefixed_version_number=prefixed_version_number,
         variable_data=variable,
@@ -1229,18 +1241,18 @@ def create_new_version_variable(
         link_variable_with_variable(tx, version_data, variable, prefixed_version_number)
 
 
-def use_existing_version_variable(
-    tx, version_data, variable, parent_href, latest_version_id, parent_type
+def use_existing_variable_instance(
+    tx, version_data, variable, parent_href, instance_node_id, parent_type
 ):
     prefixed_version_number = _prettify_version_number(version_data["version_number"])
 
     initial_part = """
-        MATCH (value)
-        WHERE id(value)=$latest_version_id
+        MATCH (instance)
+        WHERE id(instance)=$instance_node_id
     """
 
-    full_query = initial_part + build_version_query(
-        value_node_variable_name="value",
+    full_query = initial_part + build_variable_instance_query(
+        instance_node_variable_name="instance",
         parent_type=parent_type,
         create_version=False,
         version_data=version_data,
@@ -1249,7 +1261,7 @@ def use_existing_version_variable(
     tx.run(
         full_query,
         uid=variable["uid"],
-        latest_version_id=latest_version_id,
+        instance_node_id=instance_node_id,
         effective_date=version_data["effective_date"],
         prefixed_version_number=prefixed_version_number,
         variable_data=variable,
@@ -1277,16 +1289,17 @@ def link_dataset_with_class(tx, _class, prefixed_version_number):
     if "implements_class" in _class:
         tx.run(
             f"""
-                MATCH (:DataModelVersion)-[rel:{VERSION_TO_CLASS_REL_TYPE}]->(class_value:DatasetClassValue)
+                MATCH (:DataModelVersion)-[rel:{VERSION_TO_DATASET_REL_TYPE}]->(dataset_instance:DatasetInstance)
                 WHERE rel.href=$class_href
-                MATCH (:DatasetRoot {{uid: $uid}})-[:LATEST]->(dataset_value)
-                MERGE (dataset_value)-[:IMPLEMENTS_DATASET_CLASS {{
+                MATCH (:DataModelVersion)-[implemented_rel:{VERSION_TO_CLASS_REL_TYPE}]->(class_instance:DatasetClassInstance)
+                WHERE implemented_rel.href=$implements_class_href
+                MERGE (dataset_instance)-[:IMPLEMENTS_DATASET_CLASS {{
                     catalogue: $catalogue,
                     version_number: $prefixed_version_number
-                }}]->(class_value)
+                }}]->(class_instance)
             """,
-            uid=_class["uid"],
-            class_href=_class["implements_class"],
+            class_href=_class["href"],
+            implements_class_href=_class["implements_class"],
             catalogue=_class["catalogue"],
             prefixed_version_number=prefixed_version_number,
         )
@@ -1316,9 +1329,9 @@ def link_variable_with_variable(tx, version_data, variable, prefixed_version_num
     match = f"""
         UNWIND $classes_href AS class_href
         MATCH ()-[rel]->(target_variable_value)
-        WHERE rel.href=class_href AND (rel:{VERSION_TO_CLASS_VARIABLE_REL_TYPE} OR rel:{VERSION_TO_DATASET_VARIABLE_REL_TYPE})
+        WHERE rel.href=class_href AND (rel:{VERSION_TO_VARIABLE_CLASS_REL_TYPE} OR rel:{VERSION_TO_DATASET_VARIABLE_REL_TYPE})
         MATCH (n {{uid: $uid}})-->(source_variable_value)<--(source_dmv:DataModelVersion {{name: $source_version}})
-        WHERE n:DatasetVariableRoot OR n:ClassVariableRoot
+        WHERE n:DatasetVariable OR n:VariableClass
     """
 
     common_params = {
@@ -1354,12 +1367,32 @@ def link_variable_with_variable(tx, version_data, variable, prefixed_version_num
         )
 
 
+def create_qualify_variable_relationships(tx, source_variable, prefixed_version_number):
+    tx.run(
+        f"""
+            UNWIND $targets_href AS target_href
+            MATCH ()-[source_rel:{VERSION_TO_VARIABLE_CLASS_REL_TYPE}]->(source_variable_value)
+            WHERE source_rel.href=$source_href
+            MATCH ()-[target_rel:{VERSION_TO_VARIABLE_CLASS_REL_TYPE}]->(target_variable_value)
+            WHERE target_rel.href=target_href
+                MERGE (source_variable_value)-[:QUALIFIES_VARIABLE{{
+                    catalogue: $catalogue,
+                    version_number: $prefixed_version_number
+                }}]->(target_variable_value)
+        """,
+        source_href=source_variable["href"],
+        targets_href=source_variable["qualifies_variables"],
+        catalogue=source_variable["catalogue"],
+        prefixed_version_number=prefixed_version_number,
+    )
+
+
 def _prettify_version_number(version_number: str, number_only=False):
     version = version_number.replace("-", ".")
     if number_only:
         parts = version.split(".")
         nbr_parts = 2
-        if len(parts)>2 and parts[-3].isnumeric():
+        if len(parts) > 2 and parts[-3].isnumeric():
             # the version is major.minor.patch
             nbr_parts = 3
         version = ".".join(parts[-nbr_parts:])

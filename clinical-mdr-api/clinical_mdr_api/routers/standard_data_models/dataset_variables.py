@@ -58,12 +58,23 @@ State after:
 # pylint: disable=unused-argument
 def get_dataset_variables(
     request: Request,  # request is actually required by the allow_exports decorator
+    data_model_ig_name: str = Query(
+        ...,
+        description="The name of the selected Data model IG, for instance 'SDTMIG'",
+    ),
+    data_model_ig_version: str = Query(
+        ...,
+        description="The version of the selected Data model IG, for instance '1.4'",
+    ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: Optional[int] = Query(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
     page_size: Optional[int] = Query(
-        config.DEFAULT_PAGE_SIZE, description=_generic_descriptions.PAGE_SIZE
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
     ),
     filters: Optional[Json] = Query(
         None,
@@ -84,6 +95,8 @@ def get_dataset_variables(
         total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
+        data_model_ig_name=data_model_ig_name,
+        data_model_ig_version=data_model_ig_version,
     )
     return CustomPage.create(
         items=results.items, total=results.total_count, page=page_number, size=page_size
@@ -106,6 +119,14 @@ def get_dataset_variables(
     },
 )
 def get_distinct_values_for_header(
+    data_model_ig_name: str = Query(
+        ...,
+        description="The name of the selected Data model IG, for instance 'SDTMIG'",
+    ),
+    data_model_ig_version: str = Query(
+        ...,
+        description="The version of the selected Data model IG, for instance '1.4'",
+    ),
     current_user_id: str = Depends(get_current_user_id),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: Optional[str] = Query(
@@ -123,6 +144,8 @@ def get_distinct_values_for_header(
 ):
     dataset_variable_service = DatasetVariableService(user=current_user_id)
     return dataset_variable_service.get_distinct_values_for_header(
+        data_model_ig_name=data_model_ig_name,
+        data_model_ig_version=data_model_ig_version,
         field_name=field_name,
         search_string=search_string,
         filter_by=filters,
@@ -154,7 +177,20 @@ Possible errors:
     },
 )
 def get_dataset_variable(
-    uid: str = DatasetVariableUID, current_user_id: str = Depends(get_current_user_id)
+    uid: str = DatasetVariableUID,
+    current_user_id: str = Depends(get_current_user_id),
+    data_model_ig_name: str = Query(
+        ...,
+        description="The name of the selected Data model IG, for instance 'SDTMIG'",
+    ),
+    data_model_ig_version: str = Query(
+        ...,
+        description="The version of the selected Data model IG, for instance '1.4'",
+    ),
 ):
     dataset_variable_service = DatasetVariableService(user=current_user_id)
-    return dataset_variable_service.get_by_uid(uid=uid)
+    return dataset_variable_service.get_by_uid(
+        uid=uid,
+        data_model_ig_name=data_model_ig_name,
+        data_model_ig_version=data_model_ig_version,
+    )

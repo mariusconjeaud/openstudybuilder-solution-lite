@@ -4,57 +4,57 @@ from typing import Optional, Sequence
 from neomodel import db
 
 from clinical_mdr_api import exceptions
-from clinical_mdr_api.domain._utils import strip_html
-from clinical_mdr_api.domain.controlled_terminology.ct_term_attributes import (
-    CTTermAttributesAR,
-    CTTermAttributesVO,
-)
-from clinical_mdr_api.domain.controlled_terminology.ct_term_name import (
-    CTTermNameAR,
-    CTTermNameVO,
-)
-from clinical_mdr_api.domain.library.object import (
-    ParameterTermEntryVO,
-    ParametrizedTemplateVO,
-)
-from clinical_mdr_api.domain.study_definition_aggregate.registry_identifiers import (
-    RegistryIdentifiersVO,
-)
-from clinical_mdr_api.domain.study_definition_aggregate.root import StudyDefinitionAR
-from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
-    StudyDescriptionVO,
-    StudyIdentificationMetadataVO,
-)
-from clinical_mdr_api.domain.study_selection.study_selection_objective import (
-    StudySelectionObjectiveVO,
-)
-from clinical_mdr_api.domain.syntax_instances.objective import ObjectiveAR
-from clinical_mdr_api.domain.syntax_templates.objective_template import (
-    ObjectiveTemplateAR,
-)
-from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemStatus,
-    LibraryVO,
-    VersioningException,
-)
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_term_attributes_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_attributes_repository import (
     CTTermAttributesRepository,
 )
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_term_name_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_name_repository import (
     CTTermNameRepository,
 )
-from clinical_mdr_api.domain_repositories.study_definition.study_definition_repository import (
+from clinical_mdr_api.domain_repositories.study_definitions.study_definition_repository import (
     StudyDefinitionRepository,
 )
-from clinical_mdr_api.domain_repositories.study_definition.study_title.study_title_repository import (
+from clinical_mdr_api.domain_repositories.study_definitions.study_title.study_title_repository import (
     StudyTitleRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_objective_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_objective_repository import (
     StudySelectionObjectiveRepository,
 )
 from clinical_mdr_api.domain_repositories.syntax_instances.objective_repository import (
     ObjectiveRepository,
+)
+from clinical_mdr_api.domains._utils import strip_html
+from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
+    CTTermAttributesAR,
+    CTTermAttributesVO,
+)
+from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
+    CTTermNameAR,
+    CTTermNameVO,
+)
+from clinical_mdr_api.domains.libraries.object import (
+    ParameterTermEntryVO,
+    ParametrizedTemplateVO,
+)
+from clinical_mdr_api.domains.study_definition_aggregates.registry_identifiers import (
+    RegistryIdentifiersVO,
+)
+from clinical_mdr_api.domains.study_definition_aggregates.root import StudyDefinitionAR
+from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
+    StudyDescriptionVO,
+    StudyIdentificationMetadataVO,
+)
+from clinical_mdr_api.domains.study_selections.study_selection_objective import (
+    StudySelectionObjectiveVO,
+)
+from clinical_mdr_api.domains.syntax_instances.objective import ObjectiveAR
+from clinical_mdr_api.domains.syntax_templates.objective_template import (
+    ObjectiveTemplateAR,
+)
+from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemStatus,
+    LibraryVO,
+    VersioningException,
 )
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.tests.integration.repositories.concurrency.tools.optimistic_locking_validator import (

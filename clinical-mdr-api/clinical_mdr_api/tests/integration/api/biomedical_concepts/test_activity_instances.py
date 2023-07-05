@@ -12,15 +12,19 @@ from fastapi.testclient import TestClient
 
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models import Activity, CTTerm
-from clinical_mdr_api.models.activities.activity_group import ActivityGroup
-from clinical_mdr_api.models.activities.activity_instance import ActivityInstance
-from clinical_mdr_api.models.activities.activity_sub_group import ActivitySubGroup
 from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClass,
 )
 from clinical_mdr_api.models.biomedical_concepts.activity_item import ActivityItem
 from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
     ActivityItemClass,
+)
+from clinical_mdr_api.models.concepts.activities.activity_group import ActivityGroup
+from clinical_mdr_api.models.concepts.activities.activity_instance import (
+    ActivityInstance,
+)
+from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
+    ActivitySubGroup,
 )
 from clinical_mdr_api.tests.integration.utils.api import (
     drop_db,
@@ -48,6 +52,8 @@ activity_instance_classes: List[ActivityInstanceClass]
 activity_items: List[ActivityItem]
 activity_item_classes: List[ActivityItemClass]
 ct_terms: List[CTTerm]
+role_term: CTTerm
+data_type_term: CTTerm
 
 
 @pytest.fixture(scope="module")
@@ -87,18 +93,26 @@ def test_data():
         TestUtils.create_activity_instance_class(name="Activity instance class 2"),
     ]
     global activity_item_classes
+    global data_type_term
+    global role_term
+    data_type_term = TestUtils.create_ct_term(sponsor_preferred_name="Data type")
+    role_term = TestUtils.create_ct_term(sponsor_preferred_name="Role")
     activity_item_classes = [
         TestUtils.create_activity_item_class(
             name="Activity Item Class name1",
             order=1,
             mandatory=True,
             activity_instance_class_uids=[activity_instance_classes[0].uid],
+            role_uid=role_term.term_uid,
+            data_type_uid=data_type_term.term_uid,
         ),
         TestUtils.create_activity_item_class(
             name="Activity Item Class name2",
             order=2,
             mandatory=True,
             activity_instance_class_uids=[activity_instance_classes[1].uid],
+            role_uid=role_term.term_uid,
+            data_type_uid=data_type_term.term_uid,
         ),
     ]
     global ct_terms
@@ -703,6 +717,10 @@ def verify_instance_overview_content(res: dict):
         res["activity_items"][0]["activity_item_class"]["name"]
         == "Activity Item Class name1"
     )
+    assert res["activity_items"][0]["activity_item_class"]["role_name"] == "Role"
+    assert (
+        res["activity_items"][0]["activity_item_class"]["data_type_name"] == "Data type"
+    )
     assert res["activity_items"][0]["activity_item_class"]["order"] == 1
     assert res["activity_items"][0]["activity_item_class"]["mandatory"] is True
     assert res["activity_items"][1]["name"] == "Activity Item name B"
@@ -711,6 +729,10 @@ def verify_instance_overview_content(res: dict):
     assert (
         res["activity_items"][1]["activity_item_class"]["name"]
         == "Activity Item Class name2"
+    )
+    assert res["activity_items"][1]["activity_item_class"]["role_name"] == "Role"
+    assert (
+        res["activity_items"][1]["activity_item_class"]["data_type_name"] == "Data type"
     )
     assert res["activity_items"][1]["activity_item_class"]["order"] == 2
     assert res["activity_items"][1]["activity_item_class"]["mandatory"] is True

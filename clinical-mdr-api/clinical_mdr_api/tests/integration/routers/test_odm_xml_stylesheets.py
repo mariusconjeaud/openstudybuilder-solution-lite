@@ -18,7 +18,7 @@ class OdmXmlStylesheetTest(TestCase):
         response = self.test_client.get("concepts/odms/metadata/xmls/stylesheets")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), ["sdtm", "blank"])
+        self.assertEqual(response.json(), ["blank", "sdtm"])
 
     def test_get_specific_stylesheet(self):
         response = self.test_client.get("concepts/odms/metadata/xmls/stylesheets/blank")

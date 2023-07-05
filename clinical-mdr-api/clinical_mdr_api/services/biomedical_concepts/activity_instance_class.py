@@ -1,11 +1,11 @@
-from clinical_mdr_api.domain.biomedical_concepts.activity_instance_class import (
-    ActivityInstanceClassAR,
-    ActivityInstanceClassVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.domain_repositories.biomedical_concepts.activity_instance_class_repository import (
     ActivityInstanceClassRepository,
 )
+from clinical_mdr_api.domains.biomedical_concepts.activity_instance_class import (
+    ActivityInstanceClassAR,
+    ActivityInstanceClassVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClass,
     ActivityInstanceClassInput,

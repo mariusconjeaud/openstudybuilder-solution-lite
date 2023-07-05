@@ -2,13 +2,17 @@ from typing import Optional
 
 from pydantic import Field
 
-from clinical_mdr_api.domain.standard_data_models.master_model import MasterModelAR
+from clinical_mdr_api.domains.standard_data_models.master_model import MasterModelAR
 from clinical_mdr_api.models import Library
-from clinical_mdr_api.models.concept import VersionProperties
+from clinical_mdr_api.models.concepts.concept import VersionProperties
 from clinical_mdr_api.models.utils import BaseModel
 
 
-class MasterModel(VersionProperties):
+class MasterModelBase(VersionProperties):
+    pass
+
+
+class MasterModel(MasterModelBase):
     class Config:
         orm_mode = True
 

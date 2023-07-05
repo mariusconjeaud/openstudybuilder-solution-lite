@@ -9,8 +9,8 @@ from clinical_mdr_api.domain_repositories.biomedical_concepts.activity_item_clas
 from clinical_mdr_api.domain_repositories.biomedical_concepts.activity_item_repository import (
     ActivityItemRepository,
 )
-from clinical_mdr_api.domain_repositories.brand.brand_repository import BrandRepository
-from clinical_mdr_api.domain_repositories.clinical_programme.clinical_programme_repository import (
+from clinical_mdr_api.domain_repositories.brands.brand_repository import BrandRepository
+from clinical_mdr_api.domain_repositories.clinical_programmes.clinical_programme_repository import (
     ClinicalProgrammeRepository,
 )
 from clinical_mdr_api.domain_repositories.concepts.activities.activity_group_repository import (
@@ -55,8 +55,8 @@ from clinical_mdr_api.domain_repositories.concepts.odms.item_repository import (
 from clinical_mdr_api.domain_repositories.concepts.odms.method_repository import (
     MethodRepository,
 )
-from clinical_mdr_api.domain_repositories.concepts.odms.template_repository import (
-    TemplateRepository,
+from clinical_mdr_api.domain_repositories.concepts.odms.study_event_repository import (
+    StudyEventRepository,
 )
 from clinical_mdr_api.domain_repositories.concepts.odms.vendor_attribute_repository import (
     VendorAttributeRepository,
@@ -97,34 +97,34 @@ from clinical_mdr_api.domain_repositories.concepts.simple_concepts.time_point_re
 from clinical_mdr_api.domain_repositories.concepts.simple_concepts.visit_name_repository import (
     VisitNameRepository,
 )
-from clinical_mdr_api.domain_repositories.concepts.unit_definition.unit_definition_repository import (
+from clinical_mdr_api.domain_repositories.concepts.unit_definitions.unit_definition_repository import (
     UnitDefinitionRepository,
 )
-from clinical_mdr_api.domain_repositories.configuration.configuration_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.configuration_repository import (
     CTConfigRepository,
 )
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_catalogue_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_catalogue_repository import (
     CTCatalogueRepository,
 )
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_codelist_aggregated_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_aggregated_repository import (
     CTCodelistAggregatedRepository,
 )
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_codelist_attributes_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
     CTCodelistAttributesRepository,
 )
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_codelist_name_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_name_repository import (
     CTCodelistNameRepository,
 )
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_package_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_package_repository import (
     CTPackageRepository,
 )
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_term_aggregated_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_aggregated_repository import (
     CTTermAggregatedRepository,
 )
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_term_attributes_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_attributes_repository import (
     CTTermAttributesRepository,
 )
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_term_name_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_name_repository import (
     CTTermNameRepository,
 )
 from clinical_mdr_api.domain_repositories.dictionaries.dictionary_codelist_repository import (
@@ -136,10 +136,10 @@ from clinical_mdr_api.domain_repositories.dictionaries.dictionary_term_repositor
 from clinical_mdr_api.domain_repositories.dictionaries.dictionary_term_substance_repository import (
     DictionaryTermSubstanceRepository,
 )
-from clinical_mdr_api.domain_repositories.library.library_repository import (
+from clinical_mdr_api.domain_repositories.libraries.library_repository import (
     LibraryRepository,
 )
-from clinical_mdr_api.domain_repositories.project.project_repository import (
+from clinical_mdr_api.domain_repositories.projects.project_repository import (
     ProjectRepository,
 )
 
@@ -156,63 +156,63 @@ from clinical_mdr_api.domain_repositories.standard_data_models.dataset_repositor
 from clinical_mdr_api.domain_repositories.standard_data_models.dataset_variable_repository import (
     DatasetVariableRepository,
 )
-from clinical_mdr_api.domain_repositories.study_definition.study_definition_repository import (
+from clinical_mdr_api.domain_repositories.study_definitions.study_definition_repository import (
     StudyDefinitionRepository,
 )
-from clinical_mdr_api.domain_repositories.study_definition.study_definition_repository_impl import (
+from clinical_mdr_api.domain_repositories.study_definitions.study_definition_repository_impl import (
     StudyDefinitionRepositoryImpl,
 )
 
 # noinspection PyProtectedMember
-from clinical_mdr_api.domain_repositories.study_definition.study_title.study_title_repository import (
+from clinical_mdr_api.domain_repositories.study_definitions.study_title.study_title_repository import (
     StudyTitleRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_activity_instruction_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_activity_instruction_repository import (
     StudyActivityInstructionRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_activity_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_activity_repository import (
     StudySelectionActivityRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_activity_schedule_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_activity_schedule_repository import (
     StudyActivityScheduleRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_arm_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_arm_repository import (
     StudySelectionArmRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_branch_arm_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_branch_arm_repository import (
     StudySelectionBranchArmRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_cohort_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_cohort_repository import (
     StudySelectionCohortRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_compound_dosing_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_compound_dosing_repository import (
     StudyCompoundDosingRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_compound_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_compound_repository import (
     StudySelectionCompoundRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_criteria_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_criteria_repository import (
     StudySelectionCriteriaRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_design_cell_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_design_cell_repository import (
     StudyDesignCellRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_disease_milestone_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_disease_milestone_repository import (
     StudyDiseaseMilestoneRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_element_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_element_repository import (
     StudySelectionElementRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_endpoint_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_endpoint_repository import (
     StudySelectionEndpointRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_epoch_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_epoch_repository import (
     StudyEpochRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_objective_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_objective_repository import (
     StudySelectionObjectiveRepository,
 )
-from clinical_mdr_api.domain_repositories.study_selection.study_visit_repository import (
+from clinical_mdr_api.domain_repositories.study_selections.study_visit_repository import (
     StudyVisitRepository,
 )
 from clinical_mdr_api.domain_repositories.syntax_instances.criteria_repository import (
@@ -432,8 +432,8 @@ class MetaRepository:
         return ItemRepository()
 
     @property
-    def odm_template_repository(self) -> TemplateRepository:
-        return TemplateRepository()
+    def odm_study_event_repository(self) -> StudyEventRepository:
+        return StudyEventRepository()
 
     @property
     def odm_description_repository(self) -> DescriptionRepository:

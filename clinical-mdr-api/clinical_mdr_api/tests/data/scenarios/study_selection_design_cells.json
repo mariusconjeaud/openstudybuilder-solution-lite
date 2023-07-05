@@ -166,6 +166,172 @@
     }
   },
   {
+    "name": "Test adding selection 3rd",
+    "request": {
+      "headers": {},
+      "method": "POST",
+      "request": {
+        "name": "BranchArm_Name_3",
+        "short_name": "BranchArm_Short_Name_3",
+        "code": "BranchArm_code_3",
+        "description": "desc...",
+        "colour_code": "desc...",
+        "randomization_group": "Randomization_Group_3",
+        "number_of_subjects": 2,
+        "arm_uid": "StudyArm_000001"
+      },
+      "url": "/studies/study_root/study-branch-arms"
+    },
+    "response": {
+      "code": 201,
+      "headers": {
+        "content-length": "336",
+        "content-type": "application/json"
+      },
+      "result": {
+        "study_uid": "study_root",
+        "branch_arm_uid": "StudyBranchArm_000005",
+        "order": 3,
+        "name": "BranchArm_Name_3",
+        "short_name": "BranchArm_Short_Name_3",
+        "code": "BranchArm_code_3",
+        "start_date": "2020-06-26T00:00:00",
+        "end_date": null,
+        "status": null,
+        "change_type": null,
+        "accepted_version": null,
+        "arm_root": {
+          "study_uid": "study_root",
+          "arm_uid": "StudyArm_000001",
+          "order": 1,
+          "name": null,
+          "short_name": null,
+          "code": null,
+          "start_date": null,
+          "end_date": null,
+          "status": null,
+          "change_type": null,
+          "accepted_version": null,
+          "arm_type": {
+            "term_uid": "term_root_final",
+            "catalogue_name": "SDTM CT",
+            "codelist_uid": "ct_codelist_root1",
+            "sponsor_preferred_name": "term_value_name1",
+            "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
+            "library_name": "Sponsor",
+            "start_date": "2020-06-26T00:00:00",
+            "order": null,
+            "end_date": null,
+            "status": "Final",
+            "version": "1.0",
+            "change_description": "Approved version",
+            "user_initials": "TODO initials",
+            "possible_actions": [
+              "inactivate",
+              "new_version"
+            ]
+          },
+          "description": null,
+          "arm_colour": null,
+          "number_of_subjects": null,
+          "randomization_group": null,
+          "user_initials": null
+        },
+        "description": "desc...",
+        "colour_code": "desc...",
+        "number_of_subjects": 2,
+        "randomization_group": "Randomization_Group_3",
+        "user_initials": "TODO initials"
+      },
+      "save": {
+        "branch_arm_uid": "branch_arm_uid"
+      }
+    }
+  },
+  {
+    "name": "Test adding selection 4th",
+    "request": {
+      "headers": {},
+      "method": "POST",
+      "request": {
+        "name": "BranchArm_Name_4",
+        "short_name": "BranchArm_Short_Name_4",
+        "code": "BranchArm_code_4",
+        "description": "desc...",
+        "colour_code": "desc...",
+        "randomization_group": "Randomization_Group_4",
+        "number_of_subjects": 2,
+        "arm_uid": "StudyArm_000001"
+      },
+      "url": "/studies/study_root/study-branch-arms"
+    },
+    "response": {
+      "code": 201,
+      "headers": {
+        "content-length": "336",
+        "content-type": "application/json"
+      },
+      "result": {
+        "study_uid": "study_root",
+        "branch_arm_uid": "StudyBranchArm_000007",
+        "order": 4,
+        "name": "BranchArm_Name_4",
+        "short_name": "BranchArm_Short_Name_4",
+        "code": "BranchArm_code_4",
+        "start_date": "2020-06-26T00:00:00",
+        "end_date": null,
+        "status": null,
+        "change_type": null,
+        "accepted_version": null,
+        "arm_root": {
+          "study_uid": "study_root",
+          "arm_uid": "StudyArm_000001",
+          "order": 1,
+          "name": null,
+          "short_name": null,
+          "code": null,
+          "start_date": null,
+          "end_date": null,
+          "status": null,
+          "change_type": null,
+          "accepted_version": null,
+          "arm_type": {
+            "term_uid": "term_root_final",
+            "catalogue_name": "SDTM CT",
+            "codelist_uid": "ct_codelist_root1",
+            "sponsor_preferred_name": "term_value_name1",
+            "sponsor_preferred_name_sentence_case": "term_value_name_sentence_case",
+            "library_name": "Sponsor",
+            "start_date": "2020-06-26T00:00:00",
+            "order": null,
+            "end_date": null,
+            "status": "Final",
+            "version": "1.0",
+            "change_description": "Approved version",
+            "user_initials": "TODO initials",
+            "possible_actions": [
+              "inactivate",
+              "new_version"
+            ]
+          },
+          "description": null,
+          "arm_colour": null,
+          "number_of_subjects": null,
+          "randomization_group": null,
+          "user_initials": null
+        },
+        "description": "desc...",
+        "colour_code": "desc...",
+        "number_of_subjects": 2,
+        "randomization_group": "Randomization_Group_4",
+        "user_initials": "TODO initials"
+      },
+      "save": {
+        "branch_arm_uid": "branch_arm_uid"
+      }
+    }
+  },
+  {
     "name": "Test adding selection 1st StudyDesignCell",
     "request": {
       "headers": {},
@@ -256,18 +422,18 @@
         {
           "method": "PATCH",
           "content": {
-            "study_design_cell_uid": "StudyDesignCell_000001",
-            "study_arm_uid": "StudyArm_000002",
-            "study_element_uid": "StudyElement_000003",
-            "study_branch_arm_uid": null
+            "study_design_cell_uid": "StudyDesignCell_000002",
+            "study_branch_arm_uid": "StudyBranchArm_000007",
+            "study_element_uid": "StudyElement_000001"
           }
         },
         {
           "method": "PATCH",
           "content": {
-            "study_design_cell_uid": "StudyDesignCell_000002",
-            "study_branch_arm_uid": "StudyBranchArm_000003",
-            "study_element_uid": "StudyElement_000001"
+            "study_design_cell_uid": "StudyDesignCell_000001",
+            "study_arm_uid": "StudyArm_000002",
+            "study_element_uid": "StudyElement_000003",
+            "study_branch_arm_uid": null
           }
         }
       ],
@@ -280,6 +446,26 @@
         "content-type": "application/json"
       },
       "results": [
+        {
+          "response_code": 200,
+          "content": {
+            "study_uid": "study_root",
+            "design_cell_uid": "StudyDesignCell_000002",
+            "study_arm_uid": null,
+            "study_arm_name": null,
+            "study_branch_arm_uid": "StudyBranchArm_000007",
+            "study_branch_arm_name": "BranchArm_Name_4",
+            "study_epoch_uid": "StudyEpoch_000001",
+            "study_epoch_name": "Epoch Subtype",
+            "study_element_uid": "StudyElement_000001",
+            "study_element_name": "Element_Name_1",
+            "transition_rule": null,
+            "start_date": "2022-07-12T23:00:11.312421",
+            "user_initials": "TEST_USER",
+            "end_date": null,
+            "order": 2
+          }
+        },
         {
           "response_code": 200,
           "content": {
@@ -299,27 +485,8 @@
             "end_date": null,
             "order": 1
           }
-        },
-        {
-          "response_code": 200,
-          "content": {
-            "study_uid": "study_root",
-            "design_cell_uid": "StudyDesignCell_000002",
-            "study_arm_uid": null,
-            "study_arm_name": null,
-            "study_branch_arm_uid": "StudyBranchArm_000003",
-            "study_branch_arm_name": "BranchArm_Name_2",
-            "study_epoch_uid": "StudyEpoch_000001",
-            "study_epoch_name": "Epoch Subtype",
-            "study_element_uid": "StudyElement_000001",
-            "study_element_name": "Element_Name_1",
-            "transition_rule": null,
-            "start_date": "2022-07-12T23:00:11.312421",
-            "user_initials": "TEST_USER",
-            "end_date": null,
-            "order": 2
-          }
         }
+        
       ]
     }
   },
@@ -367,7 +534,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/studies/study_root/study-design-cells/branch-arm/StudyBranchArm_000003"
+      "url": "/studies/study_root/study-design-cells/branch-arm/StudyBranchArm_000007"
     },
     "headers": {
       "content-length": "336",
@@ -381,21 +548,21 @@
       },
       "results": [
         {
-          "study_uid": "study_root",
           "design_cell_uid": "StudyDesignCell_000002",
-          "study_arm_uid": null,
+          "order": 2,
+          "start_date": "2023-04-19T13:50:39.821007+00:00",
           "study_arm_name": null,
-          "study_branch_arm_uid": "StudyBranchArm_000003",
-          "study_branch_arm_name": "BranchArm_Name_2",
-          "study_epoch_uid": "StudyEpoch_000001",
-          "study_epoch_name": "Epoch Subtype",
-          "study_element_uid": "StudyElement_000001",
+          "study_arm_uid": null,
+          "study_branch_arm_name": "BranchArm_Name_4",
+          "study_branch_arm_uid": "StudyBranchArm_000007",
           "study_element_name": "Element_Name_1",
-          "transition_rule": null,
-          "start_date": "2022-07-12T23:00:11.312421",
-          "user_initials": "TEST_USER",
-          "order": 2
-        }
+          "study_element_uid": "StudyElement_000001",
+          "study_epoch_name": "Epoch Subtype",
+          "study_epoch_uid": "StudyEpoch_000001",
+          "study_uid": "study_root",
+          "transition_rule": "Transition_Rule_2",
+          "user_initials": "TEST_USER"
+      }
       ]
     }
   },
@@ -439,8 +606,8 @@
           "design_cell_uid": "StudyDesignCell_000002",
           "study_arm_uid": null,
           "study_arm_name": null,
-          "study_branch_arm_uid": "StudyBranchArm_000003",
-          "study_branch_arm_name": "BranchArm_Name_2",
+          "study_branch_arm_uid": "StudyBranchArm_000007",
+          "study_branch_arm_name": "BranchArm_Name_4",
           "study_epoch_uid": "StudyEpoch_000001",
           "study_epoch_name": "Epoch Subtype",
           "study_element_uid": "StudyElement_000001",
@@ -476,7 +643,7 @@
           "study_uid": "study_root",
           "study_design_cell_uid": "StudyDesignCell_000002",
           "study_arm_uid": null,
-          "study_branch_arm_uid": "StudyBranchArm_000003",
+          "study_branch_arm_uid": "StudyBranchArm_000007",
           "study_epoch_uid": "StudyEpoch_000001",
           "study_element_uid": "StudyElement_000001",
           "transition_rule": null,
@@ -533,77 +700,80 @@
       "results": [
         {
           "study_uid": "study_root",
-          "study_design_cell_uid": "StudyDesignCell_000001",
-          "study_arm_uid": "StudyArm_000002",
-          "study_branch_arm_uid": null,
-          "study_epoch_uid": "StudyEpoch_000001",
-          "study_element_uid": "StudyElement_000003",
-          "transition_rule": null,
-          "change_type": "Edit",
-          "modified": "2022-08-04T08:03:15.715202",
-          "order": 1,
-          "changes": {
-            "study_uid": false,
-            "study_design_cell_uid": false,
-            "study_arm_uid": true,
-            "study_branch_arm_uid": true,
-            "study_epoch_uid": false,
-            "study_element_uid": true,
-            "transition_rule": false,
-            "change_type": true,
-            "modified": true,
-            "order": false
+           "study_design_cell_uid": "StudyDesignCell_000001",
+           "study_arm_uid": "StudyArm_000002",
+           "study_branch_arm_uid": null,
+           "study_epoch_uid": "StudyEpoch_000001",
+           "study_element_uid": "StudyElement_000003",
+           "transition_rule": "Transition_Rule_1",
+           "change_type": "Edit",
+           "modified": "2023-04-19T14:01:25.868555+00:00",
+           "order": 1,
+           "changes": {
+          "study_uid": false,
+           "study_design_cell_uid": false,
+           "study_arm_uid": true,
+           "study_branch_arm_uid": true,
+           "study_epoch_uid": false,
+           "study_element_uid": true,
+           "transition_rule": false,
+           "change_type": true,
+           "modified": true,
+           "order": false}
+        }
+        ,
+        {
+          "study_uid": "study_root",
+           "study_design_cell_uid": "StudyDesignCell_000001",
+           "study_arm_uid": null,
+           "study_branch_arm_uid": "StudyBranchArm_000003",
+           "study_epoch_uid": "StudyEpoch_000001",
+           "study_element_uid": "StudyElement_000001",
+           "transition_rule": "Transition_Rule_1",
+           "change_type": "Create",
+           "modified": "2023-04-19T14:01:23.640197+00:00",
+           "order": 1,
+           "changes": {
           }
-        },
+        }
+        ,
         {
           "study_uid": "study_root",
-          "study_design_cell_uid": "StudyDesignCell_000001",
-          "study_arm_uid": null,
-          "study_branch_arm_uid": "StudyBranchArm_000003",
-          "study_epoch_uid": "StudyEpoch_000001",
-          "study_element_uid": "StudyElement_000001",
-          "transition_rule": null,
-          "change_type": "Create",
-          "modified": "2022-08-04T08:03:14.806343",
-          "order": 1,
-          "changes": {}
-        },
+           "study_design_cell_uid": "StudyDesignCell_000002",
+           "study_arm_uid": null,
+           "study_branch_arm_uid": "StudyBranchArm_000007",
+           "study_epoch_uid": "StudyEpoch_000001",
+           "study_element_uid": "StudyElement_000001",
+           "transition_rule": "Transition_Rule_2",
+           "change_type": "Edit",
+           "modified": "2023-04-19T14:01:25.715716+00:00",
+           "order": 2,
+           "changes": {
+          "study_uid": false,
+           "study_design_cell_uid": false,
+           "study_arm_uid": true,
+           "study_branch_arm_uid": true,
+           "study_epoch_uid": false,
+           "study_element_uid": true,
+           "transition_rule": false,
+           "change_type": true,
+           "modified": true,
+           "order": false}
+        }
+        ,
         {
           "study_uid": "study_root",
-          "study_design_cell_uid": "StudyDesignCell_000002",
-          "study_arm_uid": null,
-          "study_branch_arm_uid": "StudyBranchArm_000003",
-          "study_epoch_uid": "StudyEpoch_000001",
-          "study_element_uid": "StudyElement_000001",
-          "transition_rule": null,
-          "change_type": "Edit",
-          "modified": "2022-08-04T08:03:15.856970",
-          "order": 2,
-          "changes": {
-            "study_uid": false,
-            "study_design_cell_uid": false,
-            "study_arm_uid": true,
-            "study_branch_arm_uid": true,
-            "study_epoch_uid": false,
-            "study_element_uid": true,
-            "transition_rule": false,
-            "change_type": true,
-            "modified": true,
-            "order": false
+           "study_design_cell_uid": "StudyDesignCell_000002",
+           "study_arm_uid": "StudyArm_000002",
+           "study_branch_arm_uid": null,
+           "study_epoch_uid": "StudyEpoch_000001",
+           "study_element_uid": "StudyElement_000003",
+           "transition_rule": "Transition_Rule_2",
+           "change_type": "Create",
+           "modified": "2023-04-19T14:01:24.860769+00:00",
+           "order": 2,
+           "changes": {
           }
-        },
-        {
-          "study_uid": "study_root",
-          "study_design_cell_uid": "StudyDesignCell_000002",
-          "study_arm_uid": "StudyArm_000002",
-          "study_branch_arm_uid": null,
-          "study_epoch_uid": "StudyEpoch_000001",
-          "study_element_uid": "StudyElement_000003",
-          "transition_rule": null,
-          "change_type": "Create",
-          "modified": "2022-08-04T08:03:15.327958",
-          "order": 2,
-          "changes": {}
         }
       ]
     }

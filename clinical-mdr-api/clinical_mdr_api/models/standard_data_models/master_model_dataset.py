@@ -2,15 +2,15 @@ from typing import Optional, Sequence
 
 from pydantic import Field
 
-from clinical_mdr_api.domain.standard_data_models.master_model_dataset import (
+from clinical_mdr_api.domains.standard_data_models.master_model_dataset import (
     MasterModelDatasetAR,
 )
 from clinical_mdr_api.models import Library
-from clinical_mdr_api.models.concept import VersionProperties
+from clinical_mdr_api.models.standard_data_models.master_model import MasterModelBase
 from clinical_mdr_api.models.utils import BaseModel
 
 
-class MasterModelDataset(VersionProperties):
+class MasterModelDataset(MasterModelBase):
     class Config:
         orm_mode = True
 

@@ -33,7 +33,9 @@ from clinical_mdr_api.domain_repositories.models.template_parameter import (
 )
 
 
-# Common Syntax
+#########################
+##### Common Syntax #####
+#########################
 # pylint: disable=abstract-method
 class UsesParameterRelation(ClinicalMdrRel):
     position = IntegerProperty()
@@ -55,7 +57,9 @@ class UsesValueRelation(ClinicalMdrRel):
     set_number = IntegerProperty()
 
 
-# Syntax Template
+###########################
+##### Syntax Template #####
+###########################
 class SyntaxTemplateValue(VersionValue):
     PARAMETERS_LABEL = "USES_DEFAULT_VALUE"
 
@@ -91,6 +95,8 @@ class SyntaxTemplateValue(VersionValue):
 class SyntaxTemplateRoot(VersionRoot):
     LIBRARY_REL_LABEL = "CONTAINS_SYNTAX_TEMPLATE"
     PARAMETERS_LABEL = "USES_PARAMETER"
+
+    sequence_id = StringProperty()
 
     has_pre_instance = RelationshipFrom("SyntaxPreInstanceRoot", "CREATED_FROM")
     has_indication = RelationshipTo(DictionaryTermRoot, "HAS_INDICATION")
@@ -211,7 +217,9 @@ class TimeframeTemplateRoot(SyntaxTemplateRoot):
     has_template = RelationshipTo("TimeframeRoot", TEMPLATE_REL_LABEL)
 
 
-# Syntax Pre Instance
+###############################
+##### Syntax Pre-Instance #####
+###############################
 class SyntaxPreInstanceValue(VersionValue):
     PARAMETERS_LABEL = "USES_VALUE"
 
@@ -235,6 +243,8 @@ class SyntaxPreInstanceValue(VersionValue):
 
 class SyntaxPreInstanceRoot(VersionRoot):
     LIBRARY_REL_LABEL = "CONTAINS_SYNTAX_PRE_INSTANCE"
+
+    sequence_id = StringProperty()
 
     has_study_phase = RelationshipTo(
         CTTermRoot, "HAS_STUDY_PHASE", cardinality=ZeroOrMore
@@ -261,9 +271,20 @@ class SyntaxPreInstanceRoot(VersionRoot):
         SyntaxPreInstanceValue, "LATEST_RETIRED", model=VersionRelationship
     )
 
+    @classmethod
+    def generate_sequence_ids_if_not_present(cls) -> None:
+        super().generate_sequence_ids_if_not_present(
+            f"""
+            MATCH (n:{cls.__name__})
+            MATCH (n)-[:CREATED_FROM]->(p)
+            RETURN n.uid as uid, p.sequence_id as parent_sequence_id
+            """
+        )
+
 
 class CriteriaPreInstanceValue(SyntaxPreInstanceValue):
-    ...
+    def get_study_count(self):
+        ...
 
 
 class CriteriaPreInstanceRoot(SyntaxPreInstanceRoot):
@@ -271,7 +292,8 @@ class CriteriaPreInstanceRoot(SyntaxPreInstanceRoot):
 
 
 class EndpointPreInstanceValue(SyntaxPreInstanceValue):
-    ...
+    def get_study_count(self):
+        ...
 
 
 class EndpointPreInstanceRoot(SyntaxPreInstanceRoot):
@@ -279,7 +301,8 @@ class EndpointPreInstanceRoot(SyntaxPreInstanceRoot):
 
 
 class ObjectivePreInstanceValue(SyntaxPreInstanceValue):
-    ...
+    def get_study_count(self):
+        ...
 
 
 class ObjectivePreInstanceRoot(SyntaxPreInstanceRoot):
@@ -287,7 +310,8 @@ class ObjectivePreInstanceRoot(SyntaxPreInstanceRoot):
 
 
 class ActivityInstructionPreInstanceValue(SyntaxPreInstanceValue):
-    ...
+    def get_study_count(self):
+        ...
 
 
 class ActivityInstructionPreInstanceRoot(SyntaxPreInstanceRoot):
@@ -298,7 +322,9 @@ class ActivityInstructionPreInstanceRoot(SyntaxPreInstanceRoot):
     )
 
 
-# Syntax Instance
+###########################
+##### Syntax Instance #####
+###########################
 class SyntaxInstanceValue(VersionValue):
     PARAMETERS_LABEL = "USES_VALUE"
 

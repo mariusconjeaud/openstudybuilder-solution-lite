@@ -1,4 +1,4 @@
-from importers.path_join import path_join
+from ..utils.path_join import path_join
 
 def test_joining():
     assert path_join("a", "b", "c") == "a/b/c"

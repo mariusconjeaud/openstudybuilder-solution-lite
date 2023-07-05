@@ -92,7 +92,8 @@
     v-model="showItemHistory"
     @keydown.esc="closeItemHistory"
     persistent
-    max-width="1200px"
+    :max-width="globalHistoryDialogMaxWidth"
+    :fullscreen="globalHistoryDialogFullscreen"
     >
     <history-table
       :title="itemHistoryTitle"

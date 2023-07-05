@@ -95,19 +95,6 @@
     :studyEpoch="selectedStudyEpoch"
     @close="closeForm"
     />
-  <v-dialog
-    v-model="showEpochHistory"
-    @keydown.esc="closeEpochHistory"
-    persistent
-    max-width="1200px"
-    >
-    <history-table
-      :title="studyEpochHistoryTitle"
-      @close="closeEpochHistory"
-      :headers="headers"
-      :items="epochHistoryItems"
-      />
-  </v-dialog>
 </div>
 </template>
 
@@ -119,7 +106,6 @@ import StudyEpochForm from './StudyEpochForm'
 import terms from '@/api/controlledTerminology/terms'
 import { bus } from '@/main'
 import epochs from '@/api/studyEpochs'
-import HistoryTable from '@/components/tools/HistoryTable'
 import draggable from 'vuedraggable'
 import filteringParameters from '@/utils/filteringParameters'
 
@@ -128,7 +114,6 @@ export default {
     ActionsMenu,
     NNTable,
     StudyEpochForm,
-    HistoryTable,
     draggable
   },
   computed: {

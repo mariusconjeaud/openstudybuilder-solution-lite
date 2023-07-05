@@ -15,8 +15,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from clinical_mdr_api.main import app
-from clinical_mdr_api.models.study import Study
-from clinical_mdr_api.models.study_selection import StudySelectionArm
+from clinical_mdr_api.models.study_selections.study import Study
+from clinical_mdr_api.models.study_selections.study_selection import StudySelectionArm
 from clinical_mdr_api.tests.integration.utils.api import (
     drop_db,
     inject_and_clear_db,
@@ -78,7 +78,6 @@ def test_branch_arm_modify_actions_on_locked_study(api_client):
     # get all arms
     response = api_client.get(
         f"/studies/{study.uid}/study-branch-arm/audit-trail/",
-        json={},
     )
     res = response.json()
     assert response.status_code == 200
@@ -130,7 +129,6 @@ def test_branch_arm_modify_actions_on_locked_study(api_client):
     # get all history when was locked
     response = api_client.get(
         f"/studies/{study.uid}/study-branch-arm/audit-trail/",
-        json={},
     )
     res = response.json()
     assert response.status_code == 200

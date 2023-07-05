@@ -13,6 +13,7 @@
           <v-autocomplete
             v-model="form.activity_group"
             :label="$t('ActivityInstructionTemplateForm.group')"
+            data-cy="template-activity-group"
             :items="groups"
             item-text="name"
             item-value="uid"
@@ -33,6 +34,7 @@
           <v-autocomplete
             v-model="form.activity_subgroups"
             :label="$t('ActivityInstructionTemplateForm.sub_group')"
+            data-cy="template-activity-sub-group"
             :items="subGroups"
             item-text="name"
             item-value="uid"
@@ -46,7 +48,7 @@
       </v-row>
     </validation-provider>
     <not-applicable-field
-      :checked="template && !template.activities"
+      :checked="template && (!template.activities || !template.activities.length)"
       :clean-function="value => $set(form, 'activities', null)"
       >
       <template v-slot:mainField="{ notApplicable }">
@@ -60,6 +62,7 @@
               <v-autocomplete
                 v-model="form.activities"
                 :label="$t('ActivityInstructionTemplateForm.activity')"
+                data-cy="template-activity-activity"
                 :items="activities"
                 item-text="name"
                 return-object
@@ -110,6 +113,8 @@ export default {
       }
       if (form.activities) {
         result.activity_uids = form.activities.map(item => item.uid)
+      } else {
+        result.activity_uids = []
       }
       return result
     },
@@ -120,6 +125,7 @@ export default {
       }
       if (!noSubgroupReset) {
         this.$set(this.form, 'activity_subgroups', [])
+        this.$set(this.form, 'activities', [])
       }
     },
     setActivities (subgroupUids) {
@@ -132,14 +138,20 @@ export default {
     }
   },
   created () {
-    activities.getGroups().then(resp => {
-      this.groups = resp.data.items
-    })
+    if (!this.groups.length) {
+      activities.getGroups({ page_size: 0 }).then(resp => {
+        this.groups = resp.data.items
+      })
+    }
   },
   watch: {
     template: {
       handler: async function (value) {
         if (value && value.activity_groups && value.activity_groups.length) {
+          if (!this.groups.length) {
+            const resp = await activities.getGroups()
+            this.groups = resp.data.items
+          }
           const activityGroupUid = (typeof this.template.activity_groups[0] !== 'string')
             ? this.template.activity_groups[0].uid
             : this.template.activity_groups[0]

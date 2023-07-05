@@ -2,11 +2,11 @@ import unittest
 from typing import Collection, Optional, Sequence
 from unittest.mock import Mock, patch
 
-from clinical_mdr_api.domain.project.project import ProjectAR
 from clinical_mdr_api.domain_repositories.models.project import Project
-from clinical_mdr_api.domain_repositories.project.project_repository import (
+from clinical_mdr_api.domain_repositories.projects.project_repository import (
     ProjectRepository,
 )
+from clinical_mdr_api.domains.projects.project import ProjectAR
 from clinical_mdr_api.tests.unit.domain.utils import random_opt_str, random_str
 
 

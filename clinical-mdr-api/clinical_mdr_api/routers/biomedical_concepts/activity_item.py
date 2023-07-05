@@ -71,7 +71,10 @@ def get_activity_items(
         1, ge=1, description=_generic_descriptions.PAGE_NUMBER
     ),
     page_size: Optional[int] = Query(
-        config.DEFAULT_PAGE_SIZE, ge=0, description=_generic_descriptions.PAGE_SIZE
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
     ),
     filters: Optional[Json] = Query(
         None,
@@ -232,7 +235,7 @@ Possible errors:
     status_code=201,
     responses={
         201: {"description": "Created - The activity item was successfully created."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The library does not exist.\n"
@@ -275,7 +278,7 @@ Possible errors:
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The activity item is not in draft status.\n"
@@ -322,7 +325,7 @@ Possible errors:
     status_code=201,
     responses={
         201: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The library does not allow to create activity item classes.\n",
@@ -369,7 +372,7 @@ Possible errors:
     status_code=201,
     responses={
         201: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The activity item is not in draft status.\n"
@@ -460,7 +463,7 @@ Possible errors:
     status_code=200,
     responses={
         200: {"description": "OK."},
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The activity item is not in retired status.",
@@ -504,7 +507,7 @@ Possible errors:
         204: {
             "description": "No Content - The activity item was successfully deleted."
         },
-        403: {
+        400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The activity item is not in draft status.\n"

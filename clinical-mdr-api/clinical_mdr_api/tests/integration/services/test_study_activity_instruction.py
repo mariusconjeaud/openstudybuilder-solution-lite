@@ -3,12 +3,12 @@ import unittest
 import pydantic
 from neomodel import db
 
-import clinical_mdr_api.services.libraries as library_service
+import clinical_mdr_api.services.libraries.libraries as library_service
 from clinical_mdr_api import models
-from clinical_mdr_api.services.study_activity_instruction import (
+from clinical_mdr_api.services.studies.study_activity_instruction import (
     StudyActivityInstructionService,
 )
-from clinical_mdr_api.services.study_activity_selection import (
+from clinical_mdr_api.services.studies.study_activity_selection import (
     StudyActivitySelectionService,
 )
 from clinical_mdr_api.services.syntax_templates.activity_instruction_templates import (

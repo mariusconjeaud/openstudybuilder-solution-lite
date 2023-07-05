@@ -35,7 +35,9 @@
   <v-dialog v-model="showHistory"
             persistent
             @keydown.esc="closeHistory"
-            max-width="1200px">
+            :max-width="globalHistoryDialogMaxWidth"
+            :fullscreen="globalHistoryDialogFullscreen"
+            >
     <history-table
       :title="historyTitle"
       @close="closeHistory"

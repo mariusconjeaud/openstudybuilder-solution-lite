@@ -5,10 +5,10 @@ from neomodel import db
 from pydantic import BaseModel
 
 from clinical_mdr_api import exceptions
-from clinical_mdr_api.domain.biomedical_concepts.activity_instance_class import (
+from clinical_mdr_api.domains.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClassAR,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import (
+from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
     VersioningException,
 )
@@ -98,6 +98,7 @@ class NeomodelExtGenericService(ABC):
         filter_by: Optional[dict] = None,
         filter_operator: Optional[FilterOperator] = FilterOperator.AND,
         result_count: int = 10,
+        **kwargs,
     ) -> Sequence:
         header_values = self.repository.get_distinct_headers(
             field_name=field_name,
@@ -105,6 +106,7 @@ class NeomodelExtGenericService(ABC):
             filter_by=filter_by,
             filter_operator=filter_operator,
             result_count=result_count,
+            **kwargs,
         )
 
         return header_values

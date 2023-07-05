@@ -280,7 +280,7 @@
               <v-data-table
                 class="elevation-0"
                 :headers="headers"
-                :items="getItemGroups(item)"
+                :items="item.item_groups ? (expandedGroups.find(group => group.formUid === item.uid ) ? expandedGroups.find(group => group.formUid === item.uid ).groups : []) : []"
                 item-key="uid"
                 light
                 hide-default-footer
@@ -487,7 +487,7 @@
                     <v-data-table
                       class="elevation-0"
                       :headers="headers"
-                      :items="getItems(item)"
+                      :items="item.items ? (expandedItems.find(it => it.groupUid === item.uid ) ? expandedItems.find(it => it.groupUid === item.uid ).items : []) : []"
                       item-key="uid"
                       sort-by="order_number"
                       light
@@ -912,7 +912,9 @@ export default {
       attributesReadOnlyForm: false,
       doc: '',
       showExportForm: false,
-      exportElement: {}
+      exportElement: {},
+      expandedGroups: [],
+      expandedItems: []
     }
   },
   methods: {
@@ -991,7 +993,7 @@ export default {
       })
       return form
     },
-    getItemGroups (item) {
+    async getItemGroups (item) {
       if (item.item_groups && item.item_groups.length > 0) {
         const groupsToGet = []
         item.item_groups.forEach(group => {
@@ -1005,7 +1007,7 @@ export default {
             filters: { uid: { v: groupsToGet } },
             page_size: 0
           }
-          crfs.get('item-groups', { params }).then((resp) => {
+          await crfs.get('item-groups', { params }).then((resp) => {
             resp.data.items.forEach(group => {
               resp.data.items[resp.data.items.indexOf(group)].parentFormUid = item.uid
             })
@@ -1021,8 +1023,7 @@ export default {
         groups.forEach(group => {
           group.parentFormUid = item.uid
         })
-        this.groups = groups
-        return groups
+        this.expandedGroups.push({ formUid: item.uid, groups: groups })
       }
     },
     async getItemGroup (uid) {
@@ -1033,7 +1034,7 @@ export default {
       })
       return group
     },
-    getItems (item) {
+    async getItems (item) {
       if (item.items && item.items.length > 0) {
         const itemsToGet = []
         item.items.forEach(item => {
@@ -1047,7 +1048,7 @@ export default {
             filters: { uid: { v: itemsToGet } },
             page_size: 0
           }
-          crfs.get('items', { params }).then((resp) => {
+          await crfs.get('items', { params }).then((resp) => {
             resp.data.items.forEach(group => {
               resp.data.items[resp.data.items.indexOf(group)].parentGroupUid = item.uid
             })
@@ -1063,7 +1064,7 @@ export default {
         items.forEach(it => {
           it.parentGroupUid = item.uid
         })
-        return items
+        this.expandedItems.push({ groupUid: item.uid, items: items })
       }
     },
     getItem (uid) {
@@ -1120,17 +1121,15 @@ export default {
       this.templatesExpand = this.templatesExpand.filter(el => el.uid !== item.uid)
     },
     expandForm (item) {
-      if (item.item_groups.length > 0) {
-        this.formsExpand.push(item)
-      }
+      this.formsExpand.push(item)
+      this.getItemGroups(item)
     },
     collapseForm (item) {
       this.formsExpand = this.formsExpand.filter(el => el.uid !== item.uid)
     },
     expandGroup (item) {
-      if (item.items.length > 0) {
-        this.groupsExpand.push(item)
-      }
+      this.groupsExpand.push(item)
+      this.getItems(item)
     },
     collapseGroup (item) {
       this.groupsExpand = this.groupsExpand.filter(el => el.uid !== item.uid)
@@ -1139,13 +1138,25 @@ export default {
       this.templatesExpand = [item]
       for (const form of item.forms) {
         const formToGet = await this.getForm(form.uid)
-        this.formsExpand = this.formsExpand.concat(formToGet)
-        this.groupsExpand = this.groupsExpand.concat(formToGet.item_groups)
+        if (formToGet.item_groups.length > 0) {
+          this.expandForm(formToGet)
+          for (const group of formToGet.item_groups) {
+            const groupToGet = await this.getItemGroup(group.uid)
+            if (groupToGet.items.length > 0) {
+              this.expandGroup(groupToGet)
+            }
+          }
+        }
       }
     },
     async expandWholeForm (item) {
-      this.formsExpand = this.formsExpand.concat([item])
-      this.groupsExpand = this.groupsExpand.concat(item.item_groups)
+      this.expandForm(item)
+      for (const group of item.item_groups) {
+        const groupToGet = await this.getItemGroup(group.uid)
+        if (groupToGet.items.length > 0) {
+          this.expandGroup(groupToGet)
+        }
+      }
     },
     // Methods for approving/creating new version of CRF Tree elements
     approve (item) {

@@ -3,19 +3,19 @@ import unittest
 
 from neomodel import db
 
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_codelist_attributes_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
     CTCodelistAttributesRepository,
 )
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_codelist_name_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_name_repository import (
     CTCodelistNameRepository,
 )
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_term_aggregated_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_aggregated_repository import (
     CTTermAggregatedRepository,
 )
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_term_attributes_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_attributes_repository import (
     CTTermAttributesRepository,
 )
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_term_name_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_name_repository import (
     CTTermNameRepository,
 )
 from clinical_mdr_api.tests.integration.domain_repositories._utils import (
@@ -37,7 +37,7 @@ from clinical_mdr_api.tests.unit.domain.controlled_terminology_aggregates.test_c
 
 
 class TestCTTermRepository(unittest.TestCase):
-    TEST_DB_NAME = "cttests.terms"
+    TEST_DB_NAME = "cttests.terms.repo"
 
     @classmethod
     def setUpClass(cls) -> None:

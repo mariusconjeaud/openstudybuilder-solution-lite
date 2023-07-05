@@ -310,6 +310,9 @@
         {{ item.end_rule }}
       </div>
     </template>
+    <template v-slot:item.start_date="{ item }">
+      {{ item.start_date|date }}
+    </template>
     <template v-slot:item.actions="{ item }">
       <actions-menu
         v-if="!itemsDisabled || item.disabled"
@@ -355,19 +358,6 @@
       />
   </v-dialog>
   <v-dialog
-    v-model="showVisitHistory"
-    @keydown.esc="closeVisitHistory"
-    persistent
-    max-width="1200px"
-    >
-    <history-table
-      :title="studyVisitHistoryTitle"
-      @close="closeVisitHistory"
-      :headers="headers"
-      :items="visitHistoryItems"
-      />
-  </v-dialog>
-  <v-dialog
     v-model="showCollapsibleGroupForm"
     persistent
     max-width="1000px"
@@ -393,7 +383,6 @@ import NNTable from '@/components/tools/NNTable'
 import StudyVisitForm from './StudyVisitForm'
 import HorizontalBarChart from '@/components/tools/HorizontalBarChart'
 import BubbleChart from '@/components/tools/BubbleChart'
-import HistoryTable from '@/components/tools/HistoryTable'
 import CollapsibleVisitGroupForm from './CollapsibleVisitGroupForm'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import visitConstants from '@/constants/visits'
@@ -413,7 +402,6 @@ export default {
     StudyVisitForm,
     HorizontalBarChart,
     BubbleChart,
-    HistoryTable,
     StudyVisitsDuplicateForm
   },
   computed: {

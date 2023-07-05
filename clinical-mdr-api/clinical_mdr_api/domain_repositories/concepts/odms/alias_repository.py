@@ -1,11 +1,5 @@
 from typing import Optional
 
-from clinical_mdr_api.domain.concepts.odms.alias import OdmAliasAR, OdmAliasVO
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemMetadataVO,
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -20,6 +14,12 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionValue,
 )
 from clinical_mdr_api.domain_repositories.models.odm import OdmAliasRoot, OdmAliasValue
+from clinical_mdr_api.domains.concepts.odms.alias import OdmAliasAR, OdmAliasVO
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+    LibraryVO,
+)
 from clinical_mdr_api.models import OdmAlias
 
 

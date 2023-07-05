@@ -16,6 +16,7 @@
         :server-items-length="totalActiveStudies"
         @filter="fetchActiveStudies"
         :options.sync="activeOptions"
+        @refreshStudies="fetchActiveStudies"
         />
     </v-tab-item>
     <v-tab-item id="deleted">

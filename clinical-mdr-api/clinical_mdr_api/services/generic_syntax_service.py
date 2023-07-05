@@ -5,33 +5,37 @@ from typing import Generic, Optional, Sequence, Tuple, TypeVar
 from neomodel import db
 from pydantic import BaseModel
 
-from clinical_mdr_api.domain.controlled_terminology.ct_term_attributes import (
-    CTTermAttributesAR,
-)
-from clinical_mdr_api.domain.controlled_terminology.ct_term_name import CTTermNameAR
-from clinical_mdr_api.domain.dictionaries.dictionary_term import DictionaryTermAR
-from clinical_mdr_api.domain.syntax_templates.template import TemplateVO
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemStatus,
-    VersioningException,
-)
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     GenericRepository,
 )
-from clinical_mdr_api.domain_repositories.study_definition.study_definition_repository import (
+from clinical_mdr_api.domain_repositories.study_definitions.study_definition_repository import (
     StudyDefinitionRepository,
+)
+from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
+    CTTermAttributesAR,
+)
+from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
+from clinical_mdr_api.domains.dictionaries.dictionary_term import DictionaryTermAR
+from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemStatus,
+    VersioningException,
 )
 from clinical_mdr_api.exceptions import (
     BusinessLogicException,
     ConflictErrorException,
     NotFoundException,
 )
-from clinical_mdr_api.models.ct_term import CTTermNameAndAttributes
-from clinical_mdr_api.models.dictionary_term import DictionaryTerm
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    CTTermNameAndAttributes,
+)
+from clinical_mdr_api.models.dictionaries.dictionary_term import DictionaryTerm
+from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
     calculate_diffs,
+    raise_404_if_none,
     service_level_generic_header_filtering,
 )
 
@@ -125,6 +129,23 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
         return item
 
     @db.transaction
+    def retrieve_audit_trail(
+        self,
+        page_number: int = 1,
+        page_size: int = 0,
+        total_count: bool = False,
+    ) -> GenericFilteringReturn[BaseModel]:
+        ars, count = self.repository.retrieve_audit_trail(
+            page_number=page_number,
+            page_size=page_size,
+            total_count=total_count,
+        )
+
+        all_items = [self._transform_aggregate_root_to_pydantic_model(ar) for ar in ars]
+
+        return GenericFilteringReturn.create(items=all_items, total_count=count)
+
+    @db.transaction
     def get_all(
         self, status: Optional[str] = None, return_study_count: Optional[bool] = True
     ) -> Sequence[BaseModel]:
@@ -177,6 +198,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
                 )
             item.approve(author=self.user_initials)
             self.repository.save(item)
+
             return self._transform_aggregate_root_to_pydantic_model(item)
         except VersioningException as e:
             raise BusinessLogicException(e.msg) from e
@@ -236,6 +258,7 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
                 self._transform_aggregate_root_to_pydantic_model(_).dict()
                 for _ in all_versions
             ]
+
             return calculate_diffs(versions, self.version_class)
 
         return []
@@ -273,17 +296,23 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
         """
         This method fetches and sets the indexing properties to a template.
         """
+        if not hasattr(item, "uid"):
+            return
+
         # Get indications
         indications = (
             self._repos.dictionary_term_generic_repository.get_syntax_indications(
                 self.root_node_class, item.uid
             )
         )
-        if indications:
-            item.indications = [
-                DictionaryTerm.from_dictionary_term_ar(indication)
-                for indication in indications
-            ]
+        if indications and hasattr(item, "indications"):
+            item.indications = sorted(
+                [
+                    DictionaryTerm.from_dictionary_term_ar(indication)
+                    for indication in indications
+                ],
+                key=lambda x: x.term_uid,
+            )
         # Get categories
         category_names = self._repos.ct_term_name_repository.get_syntax_categories(
             self.root_node_class, item.uid
@@ -293,16 +322,19 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
                 self.root_node_class, item.uid
             )
         )
-        if category_names and category_attributes:
-            item.categories = [
-                CTTermNameAndAttributes.from_ct_term_ars(
-                    ct_term_name_ar=category_name,
-                    ct_term_attributes_ar=category_attribute,
-                )
-                for category_name, category_attribute in zip(
-                    category_names, category_attributes
-                )
-            ]
+        if category_names and category_attributes and hasattr(item, "categories"):
+            item.categories = sorted(
+                [
+                    CTTermNameAndAttributes.from_ct_term_ars(
+                        ct_term_name_ar=category_name,
+                        ct_term_attributes_ar=category_attribute,
+                    )
+                    for category_name, category_attribute in zip(
+                        category_names, category_attributes
+                    )
+                ],
+                key=lambda x: x.term_uid,
+            )
         # Get sub_categories
         sub_category_names = (
             self._repos.ct_term_name_repository.get_syntax_subcategories(
@@ -314,16 +346,23 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
                 self.root_node_class, item.uid
             )
         )
-        if sub_category_names and sub_category_attributes:
-            item.sub_categories = [
-                CTTermNameAndAttributes.from_ct_term_ars(
-                    ct_term_name_ar=category_name,
-                    ct_term_attributes_ar=category_attribute,
-                )
-                for category_name, category_attribute in zip(
-                    sub_category_names, sub_category_attributes
-                )
-            ]
+        if (
+            sub_category_names
+            and sub_category_attributes
+            and hasattr(item, "sub_categories")
+        ):
+            item.sub_categories = sorted(
+                [
+                    CTTermNameAndAttributes.from_ct_term_ars(
+                        ct_term_name_ar=category_name,
+                        ct_term_attributes_ar=category_attribute,
+                    )
+                    for category_name, category_attribute in zip(
+                        sub_category_names, sub_category_attributes
+                    )
+                ],
+                key=lambda x: x.term_uid,
+            )
 
     def _get_indexings(
         self, template: BaseModel
@@ -344,6 +383,10 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
                 indication = self._repos.dictionary_term_generic_repository.find_by_uid(
                     term_uid=uid
                 )
+                raise_404_if_none(
+                    indication,
+                    f"Indication with uid '{uid}' does not exist.",
+                )
                 indications.append(indication)
 
         if getattr(template, "category_uids", None) and len(template.category_uids) > 0:
@@ -353,6 +396,10 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
                 )
                 category_attributes = (
                     self._repos.ct_term_attributes_repository.find_by_uid(term_uid=uid)
+                )
+                raise_404_if_none(
+                    category_name,
+                    f"Category with uid '{uid}' does not exist.",
                 )
                 category = (category_name, category_attributes)
                 categories.append(category)
@@ -368,7 +415,34 @@ class GenericSyntaxService(Generic[_AggregateRootType], abc.ABC):
                 category_attributes = (
                     self._repos.ct_term_attributes_repository.find_by_uid(term_uid=uid)
                 )
+                raise_404_if_none(
+                    category_name,
+                    f"Subcategory with uid '{uid}' does not exist.",
+                )
                 category = (category_name, category_attributes)
                 sub_categories.append(category)
 
         return indications, categories, sub_categories
+
+    @db.transaction
+    def patch_indexings(self, uid: str, indexings: BaseModel) -> BaseModel:
+        template_object = self.repository.find_by_uid_2(uid)
+        raise_404_if_none(
+            template_object,
+            f"Template with uid '{uid}' does not exist.",
+        )
+        try:
+            if getattr(indexings, "indication_uids", None):
+                self.repository.patch_indications(uid, indexings.indication_uids)
+            if getattr(indexings, "category_uids", None):
+                self.repository.patch_categories(uid, indexings.category_uids)
+            if getattr(indexings, "sub_category_uids", None):
+                self.repository.patch_subcategories(uid, indexings.sub_category_uids)
+            if hasattr(indexings, "is_confirmatory_testing"):
+                self.repository.patch_is_confirmatory_testing(
+                    uid, indexings.is_confirmatory_testing
+                )
+        finally:
+            self.repository.close()
+
+        return self.get_by_uid(uid)

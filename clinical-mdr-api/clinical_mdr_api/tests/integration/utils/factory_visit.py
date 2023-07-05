@@ -3,14 +3,18 @@ from clinical_mdr_api.config import (
     WEEK_UNIT_CONVERSION_FACTOR_TO_MASTER,
 )
 from clinical_mdr_api.models import StudyVisit
-from clinical_mdr_api.models.study_visit import (
+from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
+    UnitDefinitionPostInput,
+)
+from clinical_mdr_api.models.study_selections.study_visit import (
     StudyVisitCreateInput,
     StudyVisitEditInput,
 )
-from clinical_mdr_api.models.unit_definition import UnitDefinitionPostInput
 from clinical_mdr_api.services._meta_repository import MetaRepository
-from clinical_mdr_api.services.study_visit import StudyVisitService
-from clinical_mdr_api.services.unit_definition import UnitDefinitionService
+from clinical_mdr_api.services.concepts.unit_definitions.unit_definition import (
+    UnitDefinitionService,
+)
+from clinical_mdr_api.services.studies.study_visit import StudyVisitService
 from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology import (
     create_codelist,
     create_ct_term,

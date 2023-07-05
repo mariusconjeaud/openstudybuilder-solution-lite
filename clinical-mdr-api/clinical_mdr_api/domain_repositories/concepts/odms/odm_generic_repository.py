@@ -3,7 +3,6 @@ from typing import Dict, List, Optional, Tuple
 
 from neomodel import db
 
-from clinical_mdr_api.domain.concepts.utils import RelationType
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -26,8 +25,11 @@ from clinical_mdr_api.domain_repositories.models.odm import (
     OdmVendorAttributeRoot,
     OdmVendorElementRoot,
 )
+from clinical_mdr_api.domains.concepts.utils import RelationType
 from clinical_mdr_api.exceptions import BusinessLogicException
-from clinical_mdr_api.models.odm_common_models import OdmElementWithParentUid
+from clinical_mdr_api.models.concepts.odms.odm_common_models import (
+    OdmElementWithParentUid,
+)
 from clinical_mdr_api.repositories._utils import (
     CypherQueryBuilder,
     FilterDict,

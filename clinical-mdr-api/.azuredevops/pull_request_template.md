@@ -6,7 +6,7 @@ Before submitting this PR, please make sure to address the following checklist:
 - [ ] Links to related PRs are included
 - [ ] Are you including new dependencies? 
 - [ ] Are they in a stable state and widely used?
-- [ ] Are their licences appropriate?
+- [ ] Are their licenses appropriate?
 
 ## Quality  
 - [ ] Code builds clean without any errors or warnings

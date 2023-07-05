@@ -2,7 +2,7 @@ from typing import Optional
 
 import yattag
 
-from clinical_mdr_api.models.table import Table
+from clinical_mdr_api.models.study_selections.table import Table
 from clinical_mdr_api.services.utils.docx_builder import DocxBuilder
 
 

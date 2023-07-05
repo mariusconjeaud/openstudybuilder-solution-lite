@@ -1,10 +1,10 @@
 import itertools
 import unittest
 
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_codelist_attributes_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
     CTCodelistAttributesRepository,
 )
-from clinical_mdr_api.domain_repositories.controlled_terminology.ct_codelist_name_repository import (
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_name_repository import (
     CTCodelistNameRepository,
 )
 from clinical_mdr_api.tests.integration.domain_repositories._utils import (

@@ -1,6 +1,6 @@
 from docx.enum.style import WD_STYLE_TYPE
 
-from clinical_mdr_api.models.table import Table, TableDimension
+from clinical_mdr_api.models.study_selections.table import Table, TableDimension
 from clinical_mdr_api.services.utils.table import table_to_docx, table_to_html
 
 TABLE = Table(

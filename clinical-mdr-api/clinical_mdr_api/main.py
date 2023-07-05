@@ -49,14 +49,15 @@ else:
     _EXPORTER = None
 
 # Tracing middleware
-middlewares.append(
-    Middleware(
-        TracingMiddleware,
-        sampler=AlwaysOnSampler(),
-        exporter=_EXPORTER,
-        exclude_paths=["/system/healthcheck"],
+if not config.TRACING_DISABLED:
+    middlewares.append(
+        Middleware(
+            TracingMiddleware,
+            sampler=AlwaysOnSampler(),
+            exporter=_EXPORTER,
+            exclude_paths=["/system/healthcheck"],
+        )
     )
-)
 
 
 # CORS setup
@@ -153,9 +154,9 @@ def pydantic_validation_error_handler(request: Request, exception: ValidationErr
 
 # Include routers here
 app.include_router(
-    routers.odm_templates_router,
-    prefix="/concepts/odms/templates",
-    tags=["ODM Templates"],
+    routers.odm_study_events_router,
+    prefix="/concepts/odms/study-events",
+    tags=["ODM Study Events"],
 )
 app.include_router(
     routers.odm_forms_router, prefix="/concepts/odms/forms", tags=["ODM Forms"]
@@ -219,7 +220,7 @@ app.include_router(
 app.include_router(
     routers.activity_instruction_pre_instances_router,
     prefix="/activity-instruction-pre-instances",
-    tags=["Activity Instruction Pre Instances"],
+    tags=["Activity Instruction Pre-Instances"],
 )
 app.include_router(
     routers.criteria_templates_router,
@@ -229,7 +230,7 @@ app.include_router(
 app.include_router(
     routers.criteria_pre_instances_router,
     prefix="/criteria-pre-instances",
-    tags=["Criteria Pre Instances"],
+    tags=["Criteria Pre-Instances"],
 )
 app.include_router(routers.criteria_router, prefix="/criteria", tags=["Criteria"])
 app.include_router(
@@ -240,7 +241,7 @@ app.include_router(
 app.include_router(
     routers.objective_pre_instances_router,
     prefix="/objective-pre-instances",
-    tags=["Objective Pre Instances"],
+    tags=["Objective Pre-Instances"],
 )
 app.include_router(routers.objectives_router, prefix="/objectives", tags=["Objectives"])
 app.include_router(
@@ -251,7 +252,7 @@ app.include_router(
 app.include_router(
     routers.endpoint_pre_instances_router,
     prefix="/endpoint-pre-instances",
-    tags=["Endpoint Pre Instances"],
+    tags=["Endpoint Pre-Instances"],
 )
 app.include_router(routers.endpoints_router, prefix="/endpoints", tags=["Endpoints"])
 app.include_router(

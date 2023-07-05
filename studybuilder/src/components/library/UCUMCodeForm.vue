@@ -11,16 +11,6 @@
     <validation-observer ref="observer">
       <v-row>
         <v-col cols="12">
-          <ucum-unit-field
-            v-model="ucumUnit"
-            :label="$t('UCUM.code')"
-            return-object
-            @input="setValues"
-            />
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
           <validation-provider
             v-slot="{ errors }"
             rules="required"
@@ -61,12 +51,10 @@
 import { bus } from '@/main'
 import dictionaries from '@/api/dictionaries'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog'
-import UcumUnitField from '@/components/tools/UCUMUnitField'
 
 export default {
   components: {
-    SimpleFormDialog,
-    UcumUnitField
+    SimpleFormDialog
   },
   props: {
     codelistUid: String,
@@ -78,8 +66,7 @@ export default {
         'UCUM.code',
         'UCUM.description'
       ],
-      form: {},
-      ucumUnit: {}
+      form: {}
     }
   },
   methods: {
@@ -88,12 +75,8 @@ export default {
       this.form = {}
       this.$emit('close')
     },
-    setValues (code) {
-      this.$set(this.form, 'definition', code.guidance)
-      this.$set(this.form, 'name', code.code)
-    },
-    submit () {
-      const valid = this.$refs.observer.validate()
+    async submit () {
+      const valid = await this.$refs.observer.validate()
       if (!valid) {
         return
       }

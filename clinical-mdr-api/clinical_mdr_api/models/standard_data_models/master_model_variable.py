@@ -2,15 +2,15 @@ from typing import Optional, Sequence
 
 from pydantic import Field
 
-from clinical_mdr_api.domain.standard_data_models.master_model_variable import (
+from clinical_mdr_api.domains.standard_data_models.master_model_variable import (
     MasterModelVariableAR,
 )
 from clinical_mdr_api.models import Library
-from clinical_mdr_api.models.concept import VersionProperties
+from clinical_mdr_api.models.standard_data_models.master_model import MasterModelBase
 from clinical_mdr_api.models.utils import BaseModel
 
 
-class MasterModelVariable(VersionProperties):
+class MasterModelVariable(MasterModelBase):
     class Config:
         orm_mode = True
 
@@ -20,117 +20,171 @@ class MasterModelVariable(VersionProperties):
         description="",
         source="uid",
     )
-    library_name: str = Field(
+    library_name: Optional[str] = Field(
         None,
         title="library_name",
         description="",
         source="has_library.name",
+        nullable=True,
     )
-    description: str = Field(
-        None, title="description", source="has_latest_master_model_value.description"
+    description: Optional[str] = Field(
+        None,
+        title="description",
+        source="has_latest_master_model_value.description",
+        nullable=True,
     )
-    is_basic_std: bool = Field(
-        None, title="is_basic_std", source="has_latest_master_model_value.is_basic_std"
+    is_basic_std: Optional[bool] = Field(
+        None,
+        title="is_basic_std",
+        source="has_latest_master_model_value.is_basic_std",
+        nullable=True,
     )
-    activity_item_class: str = Field(
+    activity_item_class: Optional[str] = Field(
         None,
         title="activity_item_class",
         description="Optionally, the uid of the activity item class to connect this Variable to.",
+        nullable=True,
     )
-    variable_type: str = Field(
-        None, title="type", source="has_latest_master_model_value.variable_type"
+    variable_type: Optional[str] = Field(
+        None,
+        title="type",
+        source="has_latest_master_model_value.variable_type",
+        nullable=True,
     )
-    length: int = Field(
-        None, title="length", source="has_latest_master_model_value.length"
+    length: Optional[int] = Field(
+        None,
+        title="length",
+        source="has_latest_master_model_value.length",
+        nullable=True,
     )
-    display_format: str = Field(
+    display_format: Optional[str] = Field(
         None,
         title="display_format",
         source="has_latest_master_model_value.display_format",
+        nullable=True,
     )
-    xml_datatype: str = Field(
-        None, title="xml_datatype", source="has_latest_master_model_value.xml_datatype"
+    xml_datatype: Optional[str] = Field(
+        None,
+        title="xml_datatype",
+        source="has_latest_master_model_value.xml_datatype",
+        nullable=True,
     )
-    xml_codelist: str = Field(
-        None, title="xml_codelist", source="has_latest_master_model_value.xml_codelist"
+    xml_codelist: Optional[str] = Field(
+        None,
+        title="xml_codelist",
+        source="has_latest_master_model_value.xml_codelist",
+        nullable=True,
     )
-    xml_codelist_multi: str = Field(
+    xml_codelist_multi: Optional[str] = Field(
         None,
         title="xml_codelist_multi",
         source="has_latest_master_model_value.xml_codelist_multi",
+        nullable=True,
     )
-    core: str = Field(None, title="core", source="has_latest_master_model_value.core")
-    role: str = Field(None, title="role", source="has_latest_master_model_value.role")
-    term: str = Field(None, title="term", source="has_latest_master_model_value.term")
-    algorithm: str = Field(
-        None, title="algorithm", source="has_latest_master_model_value.algorithm"
+    core: Optional[str] = Field(
+        None, title="core", source="has_latest_master_model_value.core", nullable=True
     )
-    qualifiers: Sequence[str] = Field(
-        None, title="qualifiers", source="has_latest_master_model_value.qualifiers"
+    role: Optional[str] = Field(
+        None, title="role", source="has_latest_master_model_value.role", nullable=True
     )
-    comment: str = Field(
-        None, title="comment", source="has_latest_master_model_value.comment"
+    term: Optional[str] = Field(
+        None, title="term", source="has_latest_master_model_value.term", nullable=True
     )
-    ig_comment: str = Field(
-        None, title="ig_comment", source="has_latest_master_model_value.ig_comment"
+    algorithm: Optional[str] = Field(
+        None,
+        title="algorithm",
+        source="has_latest_master_model_value.algorithm",
+        nullable=True,
     )
-    map_var_flag: bool = Field(
+    qualifiers: Optional[Sequence[str]] = Field(
+        None,
+        title="qualifiers",
+        source="has_latest_master_model_value.qualifiers",
+        nullable=True,
+    )
+    comment: Optional[str] = Field(
+        None,
+        title="comment",
+        source="has_latest_master_model_value.comment",
+        nullable=True,
+    )
+    ig_comment: Optional[str] = Field(
+        None,
+        title="ig_comment",
+        source="has_latest_master_model_value.ig_comment",
+        nullable=True,
+    )
+    map_var_flag: Optional[bool] = Field(
         None,
         title="map_var_flag",
         source="has_latest_master_model_value.map_var_flag",
+        nullable=True,
     )
-    fixed_mapping: str = Field(
+    fixed_mapping: Optional[str] = Field(
         None,
         title="fixed_mapping",
         source="has_latest_master_model_value.fixed_mapping",
+        nullable=True,
     )
-    include_in_raw: bool = Field(
+    include_in_raw: Optional[bool] = Field(
         None,
         title="include_in_raw",
         source="has_latest_master_model_value.include_in_raw",
+        nullable=True,
     )
-    nn_internal: bool = Field(
-        None, title="nn_internal", source="has_latest_master_model_value.nn_internal"
+    nn_internal: Optional[bool] = Field(
+        None,
+        title="nn_internal",
+        source="has_latest_master_model_value.nn_internal",
+        nullable=True,
     )
-    value_lvl_where_cols: str = Field(
+    value_lvl_where_cols: Optional[str] = Field(
         None,
         title="value_lvl_where_cols",
         source="has_latest_master_model_value.value_lvl_where_cols",
+        nullable=True,
     )
-    value_lvl_label_col: str = Field(
+    value_lvl_label_col: Optional[str] = Field(
         None,
         title="value_lvl_label_col",
         source="has_latest_master_model_value.value_lvl_label_col",
+        nullable=True,
     )
-    value_lvl_collect_ct_val: str = Field(
+    value_lvl_collect_ct_val: Optional[str] = Field(
         None,
         title="value_lvl_collect_ct_val",
         source="has_latest_master_model_value.value_lvl_collect_ct_val",
+        nullable=True,
     )
-    value_lvl_ct_codelist_id_col: str = Field(
+    value_lvl_ct_codelist_id_col: Optional[str] = Field(
         None,
         title="value_lvl_ct_codelist_id_col",
         source="has_latest_master_model_value.value_lvl_ct_codelist_id_col",
+        nullable=True,
     )
-    enrich_build_order: str = Field(
+    enrich_build_order: Optional[str] = Field(
         None,
         title="enrich_build_order",
         source="has_latest_master_model_value.enrich_build_order",
+        nullable=True,
     )
-    enrich_build_order: int = Field(
+    enrich_build_order: Optional[int] = Field(
         None,
         title="enrich_build_order",
         source="has_latest_master_model_value.enrich_build_order",
+        nullable=True,
     )
-    xml_codelist_values: Sequence[str] = Field(
+    xml_codelist_values: Optional[Sequence[str]] = Field(
         None,
         title="fixed_mapping",
         source="has_latest_master_model_value.xml_codelist_values",
+        nullable=True,
     )
-    activity_item_class_uid: str = Field(
+    activity_item_class_uid: Optional[str] = Field(
         None,
         title="activity_item_class_uid",
         source="has_latest_master_model_value.has_activity_item_class.uid",
+        nullable=True,
     )
 
     @classmethod
@@ -181,10 +235,10 @@ class MasterModelVariable(VersionProperties):
 
 
 class MasterModelVariableInput(BaseModel):
-    class_uid: str = Field(
+    dataset_uid: str = Field(
         ...,
-        title="class_uid",
-        description="Uid of the class in which to create the variable. E.g Events",
+        title="dataset_uid",
+        description="Uid of the dataset in which to create the variable. E.g AE",
     )
     variable_uid: str = Field(
         ..., title="uid", description="Unique identifier of the variable"

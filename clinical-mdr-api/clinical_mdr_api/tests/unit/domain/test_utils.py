@@ -4,7 +4,7 @@ from typing import Union
 import pytest
 from parameterized import parameterized
 
-from clinical_mdr_api.domain import _utils
+from clinical_mdr_api.domains import _utils
 
 
 class TestServiceUtils(unittest.TestCase):

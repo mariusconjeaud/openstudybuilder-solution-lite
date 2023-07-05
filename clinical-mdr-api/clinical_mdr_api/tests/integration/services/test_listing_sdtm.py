@@ -2,17 +2,17 @@ import unittest
 
 from neomodel import db
 
-from clinical_mdr_api.models.listings_sdtm import (
+from clinical_mdr_api.models.listings.listings_sdtm import (
     StudyArmListing,
     StudyElementListing,
     StudySummaryListing,
     StudyVisitListing,
 )
-from clinical_mdr_api.models.study_epoch import StudyEpochEditInput
-from clinical_mdr_api.services.listings_sdtm import (
+from clinical_mdr_api.models.study_selections.study_epoch import StudyEpochEditInput
+from clinical_mdr_api.services.listings.listings_sdtm import (
     SDTMListingsService as ListingsService,
 )
-from clinical_mdr_api.services.study_epoch import StudyEpochService
+from clinical_mdr_api.services.studies.study_epoch import StudyEpochService
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_CATALOGUE_CYPHER,
@@ -275,7 +275,9 @@ class TestTAListing(unittest.TestCase):
         )
         # edit an epoch to track if the relationships have been updated
         epoch_service = StudyEpochService()
-        epoch = epoch_service.find_by_uid(self.study_epoch2.uid)
+        epoch = epoch_service.find_by_uid(
+            self.study_epoch2.uid, study_uid=self.study_epoch2.study_uid
+        )
         start_rule = "New start rule"
         end_rule = "New end rule"
         edit_input = StudyEpochEditInput(
@@ -621,7 +623,9 @@ class TestTSListing(unittest.TestCase):
         )
         # edit an epoch to track if the relationships have been updated
         epoch_service = StudyEpochService()
-        epoch = epoch_service.find_by_uid(self.study_epoch2.uid)
+        epoch = epoch_service.find_by_uid(
+            self.study_epoch2.uid, study_uid=self.study_epoch2.study_uid
+        )
         start_rule = "New start rule"
         end_rule = "New end rule"
         edit_input = StudyEpochEditInput(

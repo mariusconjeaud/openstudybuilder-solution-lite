@@ -17,6 +17,7 @@
           <multiple-select
             v-model="form.categories"
             :label="$t('EndpointTemplateForm.endpoint_category')"
+            data-cy="template-endpoint-category"
             :items="endpointCategories"
             item-text="sponsor_preferred_name"
             item-value="term_uid"
@@ -39,6 +40,7 @@
           <multiple-select
             v-model="form.sub_categories"
             :label="$t('EndpointTemplateForm.endpoint_sub_category')"
+            data-cy="template-endpoint-sub-category"
             :items="endpointSubCategories"
             item-text="sponsor_preferred_name"
             item-value="term_uid"

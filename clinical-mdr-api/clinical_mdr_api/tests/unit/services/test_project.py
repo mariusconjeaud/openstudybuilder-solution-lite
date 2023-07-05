@@ -1,10 +1,10 @@
 import unittest
 from unittest.mock import PropertyMock, patch
 
-from clinical_mdr_api.domain_repositories.project.project_repository import (
+from clinical_mdr_api.domain_repositories.projects.project_repository import (
     ProjectRepository,
 )
-from clinical_mdr_api.services.project import ProjectService
+from clinical_mdr_api.services.projects.project import ProjectService
 
 
 class TestProjectService(unittest.TestCase):

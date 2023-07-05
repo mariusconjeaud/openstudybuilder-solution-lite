@@ -1,12 +1,12 @@
 from typing import Optional, Union
 
-from clinical_mdr_api.domain.syntax_instances.timeframe import TimeframeAR
 from clinical_mdr_api.domain_repositories.syntax_instances.timeframe_repository import (
     TimeframeRepository,
 )
 from clinical_mdr_api.domain_repositories.syntax_templates.timeframe_template_repository import (
     TimeframeTemplateRepository,
 )
+from clinical_mdr_api.domains.syntax_instances.timeframe import TimeframeAR
 from clinical_mdr_api.models.syntax_instances.timeframe import (
     Timeframe,
     TimeframeVersion,

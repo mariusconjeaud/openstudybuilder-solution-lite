@@ -23,7 +23,7 @@ class UnitDefinitionTest(api.APITest):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_PARAMETERS_CYPHER)
         db.cypher_query(STARTUP_CT_CATALOGUE_CYPHER)
-        import clinical_mdr_api.services.libraries as library_service
+        import clinical_mdr_api.services.libraries.libraries as library_service
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)

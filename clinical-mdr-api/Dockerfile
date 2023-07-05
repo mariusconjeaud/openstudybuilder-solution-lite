@@ -1,4 +1,4 @@
-ARG PYTHON_IMAGE=python:3.7.12-slim
+ARG PYTHON_IMAGE=python:3.11.3-slim
 ARG TARGET=dev
 
 ## In shared stage we create the environment and settings that are shared between prod and dev
@@ -41,14 +41,18 @@ RUN echo "Building prod-stage" 1>&2 ; \
     && rm -rf ~/.cache
 
 ## Copy the rest of the application owned by root
-COPY --from=build-stage /wd $wORKDIR
+COPY --from=build-stage /wd ./
+
+# build SBOM
+RUN HOME=/home/$USER pipenv run build-sbom > sbom.md
 
 
 ## In dev stage we install dev packages too, and copy all Python code (non-compiled), including tests
 FROM common-stage as dev-stage
 
 ## Install required system packages
-RUN apt-get update \
+RUN echo "Building dev-stage" 1>&2 ; \
+    apt-get update \
     && apt-get -y install \
         git \
         curl \
@@ -61,9 +65,11 @@ RUN apt-get update \
     # clean-up
     && apt-get clean && rm -rf /var/lib/apt/lists && rm -rf ~/.cache
 
-## Create virtual environment according to Pipfile.lock into user's home as root
-RUN echo "Building dev-stage" 1>&2 ; \
-    HOME=/home/$USER pipenv sync --dev \
+## Run as non-root user
+USER $USER
+
+## Create virtual environment according to Pipfile.lock as user
+RUN pipenv sync --dev \
     # clean-up
     && rm -rf ~/.cache
 
@@ -79,6 +85,14 @@ ARG UVICORN_ROOT_PATH="/"
 ENV UVICORN_PORT="$UVICORN_PORT" \
     UVICORN_HOST="$UVICORN_HOST" \
     UVICORN_ROOT_PATH="$UVICORN_ROOT_PATH"
+
+## Version information
+ARG BUILD_NUMBER
+ARG BUILD_BRANCH
+ARG BUILD_COMMIT
+ENV BUILD_NUMBER="$BUILD_NUMBER" \
+    BUILD_BRANCH="$BUILD_BRANCH" \
+    BUILD_COMMIT="$BUILD_COMMIT"
 
 ## Open up a port to listen on
 EXPOSE $UVICORN_PORT

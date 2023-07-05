@@ -89,19 +89,6 @@
     @close="closeForm"
     :metadata="activeElement"
     />
-  <v-dialog
-    v-model="showElementHistory"
-    @keydown.esc="closeElementHistory"
-    persistent
-    max-width="1200px"
-    >
-    <history-table
-      :title="studyElementHistoryTitle"
-      @close="closeElementHistory"
-      :headers="headers"
-      :items="elementHistoryItems"
-      />
-  </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
 </div>
 </template>
@@ -117,7 +104,6 @@ import arms from '@/api/arms'
 import terms from '@/api/controlledTerminology/terms'
 import draggable from 'vuedraggable'
 import filteringParameters from '@/utils/filteringParameters'
-import HistoryTable from '@/components/tools/HistoryTable'
 
 export default {
   components: {
@@ -125,8 +111,7 @@ export default {
     NNTable,
     StudyElementsForm,
     ActionsMenu,
-    draggable,
-    HistoryTable
+    draggable
   },
   computed: {
     ...mapGetters({

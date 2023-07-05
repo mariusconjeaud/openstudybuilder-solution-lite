@@ -2,15 +2,6 @@ from typing import Optional, Sequence, Tuple
 
 from neomodel import db
 
-from clinical_mdr_api.domain.dictionaries.dictionary_term_substance import (
-    DictionaryTermSubstanceAR,
-    DictionaryTermSubstanceVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemMetadataVO,
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -24,6 +15,15 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRelationship,
     VersionRoot,
     VersionValue,
+)
+from clinical_mdr_api.domains.dictionaries.dictionary_term_substance import (
+    DictionaryTermSubstanceAR,
+    DictionaryTermSubstanceVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+    LibraryVO,
 )
 from clinical_mdr_api.models import DictionaryCodelist
 from clinical_mdr_api.repositories._utils import (

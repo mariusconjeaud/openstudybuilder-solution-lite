@@ -3,20 +3,24 @@ from typing import Callable, Dict, List, Optional
 
 from pydantic import Field, conlist
 
-from clinical_mdr_api.domain.concepts.activities.activity_group import ActivityGroupAR
-from clinical_mdr_api.domain.concepts.activities.activity_sub_group import (
+from clinical_mdr_api.domains.concepts.activities.activity_group import ActivityGroupAR
+from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
     ActivitySubGroupAR,
 )
-from clinical_mdr_api.domain.syntax_templates.activity_instruction_template import (
+from clinical_mdr_api.domains.syntax_templates.activity_instruction_template import (
     ActivityInstructionTemplateAR,
 )
-from clinical_mdr_api.models.activities.activity import Activity
-from clinical_mdr_api.models.activities.activity_group import ActivityGroup
-from clinical_mdr_api.models.activities.activity_sub_group import ActivitySubGroup
-from clinical_mdr_api.models.dictionary_term import DictionaryTerm
-from clinical_mdr_api.models.library import ItemCounts, Library
-from clinical_mdr_api.models.template_parameter import TemplateParameter
-from clinical_mdr_api.models.template_parameter_term import (
+from clinical_mdr_api.models.concepts.activities.activity import Activity
+from clinical_mdr_api.models.concepts.activities.activity_group import ActivityGroup
+from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
+    ActivitySubGroup,
+)
+from clinical_mdr_api.models.dictionaries.dictionary_term import DictionaryTerm
+from clinical_mdr_api.models.libraries.library import ItemCounts, Library
+from clinical_mdr_api.models.syntax_templates.template_parameter import (
+    TemplateParameter,
+)
+from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
 )
@@ -24,16 +28,18 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class ActivityInstructionTemplateName(BaseModel):
-    name: Optional[str] = Field(
-        None,
+    name: str = Field(
+        ...,
         description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
     )
-    name_plain: Optional[str] = Field(
-        None,
+    name_plain: str = Field(
+        ...,
         description="The plain text version of the name property, stripped of HTML tags",
     )
     guidance_text: Optional[str] = Field(
-        None, description="Optional guidance text for using the template."
+        None,
+        description="Optional guidance text for using the template.",
+        nullable=True,
     )
 
 
@@ -41,6 +47,7 @@ class ActivityInstructionTemplateNameUid(ActivityInstructionTemplateName):
     uid: str = Field(
         ..., description="The unique id of the activity instruction template."
     )
+    sequence_id: Optional[str] = Field(None, nullable=True)
 
 
 class ActivityInstructionTemplate(ActivityInstructionTemplateNameUid):
@@ -54,36 +61,41 @@ class ActivityInstructionTemplate(ActivityInstructionTemplateNameUid):
         description="""Part of the metadata: The point in time when the version of
         the activity instruction template was closed (and a new one was created). """
         "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
+        nullable=True,
     )
     status: Optional[str] = Field(
         None,
         description="The status in which the (version of the) activity instruction template is in. "
         "Possible values are: 'Final', 'Draft' or 'Retired'.",
+        nullable=True,
     )
     version: Optional[str] = Field(
         None,
         description="The version number of the (version of the) activity instruction template. "
         "The format is: <major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0', ...",
+        nullable=True,
     )
     change_description: Optional[str] = Field(
         None,
         description="A short description about what has changed compared to the previous version.",
+        nullable=True,
     )
     user_initials: Optional[str] = Field(
         None,
         description="The initials of the user that triggered the change of the activity instruction template.",
+        nullable=True,
     )
 
     # TODO use the standard _link/name approach
-    possible_actions: Optional[List[str]] = Field(
-        None,
+    possible_actions: List[str] = Field(
+        [],
         description=(
             "Holds those actions that can be performed on the activity instruction template. "
             "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
         ),
     )
-    parameters: Optional[List[TemplateParameter]] = Field(
-        None,
+    parameters: List[TemplateParameter] = Field(
+        [],
         description="Those parameters that are used by the activity instruction template.",
     )
     default_parameter_terms: Optional[
@@ -92,30 +104,30 @@ class ActivityInstructionTemplate(ActivityInstructionTemplateNameUid):
         None,
         description="""Holds the default terms for the parameters that are used
         within the template. The terms are ordered as they occur in the template's name.""",
+        nullable=True,
     )
     library: Optional[Library] = Field(
         None,
-        description=("The library to which the activity instruction template belongs."),
+        description="The library to which the activity instruction template belongs.",
+        nullable=True,
     )
 
     # Template indexings
-    indications: Optional[List[DictionaryTerm]] = Field(
-        None,
+    indications: List[DictionaryTerm] = Field(
+        [],
         description="The study indications, conditions, diseases or disorders in scope for the template.",
     )
-    activities: Optional[List[Activity]] = Field(
-        None, description="The activities in scope for the template"
+    activities: List[Activity] = Field(
+        [], description="The activities in scope for the template"
     )
-    activity_groups: Optional[List[ActivityGroup]] = Field(
-        None, description="The activity groups in scope for the template"
+    activity_groups: List[ActivityGroup] = Field(
+        [], description="The activity groups in scope for the template"
     )
-    activity_subgroups: Optional[List[ActivitySubGroup]] = Field(
-        None, description="The activity sub groups in scope for the template"
+    activity_subgroups: List[ActivitySubGroup] = Field(
+        [], description="The activity sub groups in scope for the template"
     )
 
-    study_count: Optional[int] = Field(
-        None, description="Count of studies referencing template"
-    )
+    study_count: int = Field(0, description="Count of studies referencing template")
 
     @classmethod
     def from_activity_instruction_template_ar(
@@ -158,6 +170,7 @@ class ActivityInstructionTemplate(ActivityInstructionTemplateNameUid):
 
         return cls(
             uid=activity_instruction_template_ar.uid,
+            sequence_id=activity_instruction_template_ar.sequence_id,
             name=activity_instruction_template_ar.name,
             name_plain=activity_instruction_template_ar.name_plain,
             guidance_text=activity_instruction_template_ar.guidance_text,
@@ -179,7 +192,7 @@ class ActivityInstructionTemplate(ActivityInstructionTemplateNameUid):
                 for indication in activity_instruction_template_ar.indications
             ]
             if activity_instruction_template_ar.indications
-            else None,
+            else [],
             activities=[
                 Activity.from_activity_ar(
                     activity,
@@ -189,19 +202,19 @@ class ActivityInstructionTemplate(ActivityInstructionTemplateNameUid):
                 for activity in activity_instruction_template_ar.activities
             ]
             if activity_instruction_template_ar.activities
-            else None,
+            else [],
             activity_groups=[
                 ActivityGroup.from_activity_ar(group)
                 for group in activity_instruction_template_ar.activity_groups
             ]
             if activity_instruction_template_ar.activity_groups
-            else None,
+            else [],
             activity_subgroups=[
                 ActivitySubGroup.from_activity_ar(group, find_activity_group_by_uid)
                 for group in activity_instruction_template_ar.activity_subgroups
             ]
             if activity_instruction_template_ar.activity_subgroups
-            else None,
+            else [],
             study_count=activity_instruction_template_ar.study_count,
             parameters=[
                 TemplateParameter(name=_)
@@ -213,7 +226,7 @@ class ActivityInstructionTemplate(ActivityInstructionTemplateNameUid):
 
 class ActivityInstructionTemplateWithCount(ActivityInstructionTemplate):
     counts: Optional[ItemCounts] = Field(
-        None, description="Optional counts of activity instruction instatiations"
+        None, description="Optional counts of activity instruction instantiations"
     )
 
     @classmethod
@@ -238,12 +251,13 @@ class ActivityInstructionTemplateVersion(ActivityInstructionTemplate):
     Class for storing Activity Instruction Templates and calculation of differences
     """
 
-    changes: Dict[str, bool] = Field(
+    changes: Optional[Dict[str, bool]] = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
             "The field names in this object here refer to the field names of the activity instruction template (e.g. name, start_date, ..)."
         ),
+        nullable=True,
     )
 
 
@@ -251,6 +265,7 @@ class ActivityInstructionTemplateNameInput(BaseModel):
     name: str = Field(
         ...,
         description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
+        min_length=1,
     )
     guidance_text: Optional[str] = Field(
         None, description="Optional guidance text for using the template."

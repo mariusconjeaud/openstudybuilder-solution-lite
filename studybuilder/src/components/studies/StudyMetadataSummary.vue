@@ -65,7 +65,8 @@
     v-model="showHistory"
     @keydown.esc="closeHistory"
     persistent
-    max-width="1200px"
+    :max-width="globalHistoryDialogMaxWidth"
+    :fullscreen="globalHistoryDialogFullscreen"
     >
     <history-table
       :headers="historyHeaders"
@@ -75,6 +76,7 @@
       @close="closeHistory"
       start-date-header="date"
       change-type-header="action"
+      simple-styling
       />
   </v-dialog>
 </div>

@@ -38,6 +38,7 @@
           @filter="scheduleFilterTerms"
           column-data-resource="ct/terms"
           :loading="loading"
+          show-select
           >
           </n-n-table>
       </v-col>

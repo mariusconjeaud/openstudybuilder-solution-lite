@@ -1,11 +1,11 @@
 import unittest
 from typing import Callable
 
-from clinical_mdr_api.domain.concepts.simple_concepts.study_duration_weeks import (
+from clinical_mdr_api.domains.concepts.simple_concepts.study_duration_weeks import (
     StudyDurationWeeksAR,
     StudyDurationWeeksVO,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import (
+from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
 )

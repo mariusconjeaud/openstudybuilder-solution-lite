@@ -17,14 +17,17 @@ Ubuntu 20.04 ships and old version, so use `pip` instead of `apt` to install pip
 ```
 $ python3 --version
 $ pip --version
-$ pip install pipenv
+$ pip install --upgrade pip pipenv
 ```
-**Note:** In case your system has a newer version of python than 3.7 (e.g. 3.8 as of Ubuntu 20.04),
-you can install version 3.7 (leaving system default intact) with:
+
+**Note:** In case the required Python version is not available on your system,
+it is most likely available from the _deadsnakes_ PPA.
+To enable the PPA and install the needed Python version with:
+
 ```
 $ sudo add-apt-repository ppa:deadsnakes/ppa
 $ sudo apt-get update
-$ sudo apt-get install python 3.7
+$ sudo apt-get install python 3.11-dev
 ```
 
 

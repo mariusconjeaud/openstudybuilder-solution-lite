@@ -2,17 +2,6 @@ from typing import Optional, Tuple
 
 from neomodel import db
 
-from clinical_mdr_api.domain.concepts.activities.activity_instance import (
-    ActivityInstanceAR,
-    ActivityInstanceVO,
-    SimpleActivityItemVO,
-)
-from clinical_mdr_api.domain.concepts.concept_base import _AggregateRootType
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryItemMetadataVO,
-    LibraryItemStatus,
-    LibraryVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
 )
@@ -23,16 +12,27 @@ from clinical_mdr_api.domain_repositories.models.activities import (
     ActivityRoot,
 )
 from clinical_mdr_api.domain_repositories.models.biomedical_concepts import (
-    ActivityDefinition,
     ActivityInstanceClassRoot,
     ActivityItemRoot,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
-    VersionValue,
 )
-from clinical_mdr_api.models.activities.activity_instance import ActivityInstance
+from clinical_mdr_api.domains.concepts.activities.activity_instance import (
+    ActivityInstanceAR,
+    ActivityInstanceVO,
+    SimpleActivityItemVO,
+)
+from clinical_mdr_api.domains.concepts.concept_base import _AggregateRootType
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+    LibraryVO,
+)
+from clinical_mdr_api.models.concepts.activities.activity_instance import (
+    ActivityInstance,
+)
 
 
 class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
@@ -55,14 +55,6 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         if name_value is None:
             return None
         return name_value.name
-
-    def _create_activity_definition(
-        self, value_node: VersionValue
-    ) -> ActivityDefinition:
-        activity_definition = ActivityDefinition()
-        activity_definition.save()
-        value_node.defined_by.connect(activity_definition)
-        return activity_definition
 
     def _create_new_value_node(self, ar: _AggregateRootType) -> ActivityInstanceValue:
         value_node = super()._create_new_value_node(ar=ar)
@@ -101,9 +93,8 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
             or ar.concept_vo.adam_param_code != value.adam_param_code
             or ar.concept_vo.legacy_description != value.legacy_description
         )
-
         activity_uids = [
-            activity.has_latest_value.get().uid for activity in value.in_hierarchy.all()
+            activity.has_version.single().uid for activity in value.in_hierarchy.all()
         ]
         activity_item_uids = [
             node.has_version.single().uid for node in value.contains_activity_item.all()
@@ -217,7 +208,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                 adam_param_code=value.adam_param_code,
                 legacy_description=value.legacy_description,
                 activity_uids=[
-                    activity.has_latest_value.get().uid
+                    activity.has_version.single().uid
                     for activity in value.in_hierarchy.all()
                 ],
                 activity_items=activity_item_vos,
@@ -249,8 +240,8 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                     activity_item_class_uid:activity_item_class_root.uid,
                     activity_item_class_name:activity_item_class_value.name
                 }] AS activity_items,
-            [(concept_value)-[:IN_HIERARCHY]->(activity_hierarchy_value)<-[:LATEST]-(activity_hierarchy_root) 
-                | activity_hierarchy_root.uid] AS activities
+            apoc.coll.toSet([(concept_value)-[:IN_HIERARCHY]->(activity_hierarchy_value)<-[:HAS_VERSION]-(activity_hierarchy_root) 
+                | activity_hierarchy_root.uid]) AS activities
         """
 
     def create_query_filter_statement(
@@ -312,16 +303,18 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                 (activity_group_value:ActivityGroupValue) | 
                 {activity_subgroup_value:activity_subgroup_value, activity_group_value:activity_group_value}
             ] AS hierarchy,
-            [(activity_instance_value)-[:CONTAINS_ACTIVITY_ITEM]->(activity_item_value)<-[:HAS_VERSION]-(activity_item_root)
+            apoc.coll.toSet([(activity_instance_value)-[:CONTAINS_ACTIVITY_ITEM]->(activity_item_value)<-[:HAS_VERSION]-(activity_item_root)
             <-[HAS_ACTIVITY_ITEM]-(activity_item_class_root)-[:LATEST]->(activity_item_class_value) | 
             {
                 name: activity_item_value.name,
                 activity_item_class: activity_item_class_value,
+                activity_item_class_role: head([(activity_item_class_value)-[:HAS_ROLE]->()-[:HAS_NAME_ROOT]->()-[:LATEST]->(role_value) | role_value.name]),
+                activity_item_class_data_type: head([(activity_item_class_value)-[:HAS_DATA_TYPE]->()-[:HAS_NAME_ROOT]->()-[:LATEST]->(data_type_value) | data_type_value.name]),
                 activity_item: activity_item_value,
                 ct_term: head([(activity_item_value)-[:HAS_CT_TERM]->(term_root)-[:HAS_NAME_ROOT]->(term_name_root)-[:LATEST]->(term_name_value) | term_name_value]),
                 unit_definition: head([(activity_item_value)-[:HAS_UNIT_DEFINITION]->(unit_definition_root)-[:LATEST]->(unit_definition_value) | unit_definition_value])
             }
-            ] AS activity_items
+            ]) AS activity_items
         WITH DISTINCT 
             activity_instance_value,
             instance_library_name,

@@ -4,15 +4,22 @@ from neomodel import db
 from parameterized import parameterized
 
 from clinical_mdr_api import exceptions
-from clinical_mdr_api.models.compound import Compound, CompoundEditInput
-from clinical_mdr_api.models.compound_alias import CompoundAlias, CompoundAliasEditInput
-from clinical_mdr_api.models.ct_term_name import CTTermNameEditInput
+from clinical_mdr_api.models.concepts.compound import Compound, CompoundEditInput
+from clinical_mdr_api.models.concepts.compound_alias import (
+    CompoundAlias,
+    CompoundAliasEditInput,
+)
+from clinical_mdr_api.models.controlled_terminologies.ct_term_name import (
+    CTTermNameEditInput,
+)
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.services.concepts.compound_alias_service import (
     CompoundAliasService,
 )
 from clinical_mdr_api.services.concepts.compound_service import CompoundService
-from clinical_mdr_api.services.ct_term_name import CTTermNameService
+from clinical_mdr_api.services.controlled_terminologies.ct_term_name import (
+    CTTermNameService,
+)
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     CREATE_BASE_TEMPLATE_PARAMETER_TREE,

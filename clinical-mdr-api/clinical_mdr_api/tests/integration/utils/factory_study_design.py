@@ -1,21 +1,30 @@
-from clinical_mdr_api.models.study_selection import (
+from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
+    UnitDefinitionSimpleModel,
+)
+from clinical_mdr_api.models.study_selections.study_selection import (
     DurationJsonModel,
     StudyDesignCellCreateInput,
+    StudyDesignCellEditInput,
     StudySelectionArmCreateInput,
+    StudySelectionArmInput,
     StudySelectionBranchArmCreateInput,
     StudySelectionBranchArmEditInput,
     StudySelectionCohortCreateInput,
     StudySelectionElementCreateInput,
+    StudySelectionElementInput,
 )
-from clinical_mdr_api.models.unit_definition import UnitDefinitionSimpleModel
-from clinical_mdr_api.services.ct_term import CTTermService
-from clinical_mdr_api.services.study_arm_selection import StudyArmSelectionService
-from clinical_mdr_api.services.study_branch_arm_selection import (
+from clinical_mdr_api.services.controlled_terminologies.ct_term import CTTermService
+from clinical_mdr_api.services.studies.study_arm_selection import (
+    StudyArmSelectionService,
+)
+from clinical_mdr_api.services.studies.study_branch_arm_selection import (
     StudyBranchArmSelectionService,
 )
-from clinical_mdr_api.services.study_cohort_selection import StudyCohortSelectionService
-from clinical_mdr_api.services.study_design_cell import StudyDesignCellService
-from clinical_mdr_api.services.study_element_selection import (
+from clinical_mdr_api.services.studies.study_cohort_selection import (
+    StudyCohortSelectionService,
+)
+from clinical_mdr_api.services.studies.study_design_cell import StudyDesignCellService
+from clinical_mdr_api.services.studies.study_element_selection import (
     StudyElementSelectionService,
 )
 
@@ -30,6 +39,22 @@ def create_study_element(element_subtype_uid: str, study_uid: str):
     )
     item = StudyElementSelectionService(author="test").make_selection(
         study_uid, selection_create_input=study_selection_element_create_input
+    )
+    return item
+
+
+def edit_study_element(
+    element_uid: str, study_uid: str, new_short_name="new_short_name"
+):
+    study_selection_element_edit_input = StudySelectionElementInput(
+        element_uid=element_uid,
+        study_uid=study_uid,
+        short_name=new_short_name,
+    )
+    item = StudyElementSelectionService(author="test").patch_selection(
+        study_uid,
+        study_selection_uid=element_uid,
+        selection_update_input=study_selection_element_edit_input,
     )
     return item
 
@@ -87,6 +112,25 @@ def create_study_arm(
     )
     item = StudyArmSelectionService(author="test").make_selection(
         study_uid, selection_create_input=study_selection_arm_create_input
+    )
+    return item
+
+
+def edit_study_arm(
+    study_uid: str,
+    arm_uid: str,
+    name: str,
+    short_name: str,
+):
+    study_selection_arm_edit_input = StudySelectionArmInput(
+        arm_uid=arm_uid,
+        name=name,
+        short_name=short_name,
+    )
+    item = StudyArmSelectionService(author="test").patch_selection(
+        study_uid,
+        study_selection_uid=arm_uid,
+        selection_update_input=study_selection_arm_edit_input,
     )
     return item
 
@@ -170,5 +214,20 @@ def create_study_design_cell(
     # Create a design cell -- Arm Specified
     item = StudyDesignCellService(author="test").create(
         study_uid=study_uid, design_cell_input=study_design_cell_create_input
+    )
+    return item
+
+
+def patch_order_study_design_cell(
+    study_design_cell_uid: str,
+    study_uid: str,
+    order=1,
+):
+    study_design_cell_update_input = StudyDesignCellEditInput(
+        study_design_cell_uid=study_design_cell_uid, order=order
+    )
+    # Create a design cell -- Arm Specified
+    item = StudyDesignCellService(author="test").patch(
+        study_uid=study_uid, design_cell_update_input=study_design_cell_update_input
     )
     return item

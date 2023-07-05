@@ -1,11 +1,15 @@
-from clinical_mdr_api.domain.concepts.simple_concepts.lag_time import (
-    LagTimeAR,
-    LagTimeVO,
-)
 from clinical_mdr_api.domain_repositories.concepts.simple_concepts.lag_time_repository import (
     LagTimeRepository,
 )
-from clinical_mdr_api.models.concept import LagTime, LagTimeInput, SimpleConceptInput
+from clinical_mdr_api.domains.concepts.simple_concepts.lag_time import (
+    LagTimeAR,
+    LagTimeVO,
+)
+from clinical_mdr_api.models.concepts.concept import (
+    LagTime,
+    LagTimeInput,
+    SimpleConceptInput,
+)
 from clinical_mdr_api.services.concepts.simple_concepts.simple_concept_generic import (
     SimpleConceptGenericService,
 )

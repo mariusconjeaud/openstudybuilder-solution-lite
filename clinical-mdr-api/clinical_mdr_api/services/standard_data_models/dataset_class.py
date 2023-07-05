@@ -1,32 +1,13 @@
-from pydantic import BaseModel
-
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.domain_repositories.standard_data_models.dataset_class_repository import (
     DatasetClassRepository,
 )
 from clinical_mdr_api.models.standard_data_models.dataset_class import DatasetClass
-from clinical_mdr_api.services.neomodel_ext_generic import (
-    NeomodelExtGenericService,
-    _AggregateRootType,
+from clinical_mdr_api.services.standard_data_models.standard_data_model_service import (
+    StandardDataModelService,
 )
 
 
-class DatasetClassService(NeomodelExtGenericService):
+class DatasetClassService(StandardDataModelService):
     repository_interface = DatasetClassRepository
     api_model_class = DatasetClass
     version_class = None
-
-    def _create_aggregate_root(
-        self, item_input: BaseModel, library: LibraryVO
-    ) -> _AggregateRootType:
-        pass
-
-    def _edit_aggregate(
-        self, item: _AggregateRootType, item_edit_input: BaseModel
-    ) -> _AggregateRootType:
-        pass
-
-    def _transform_aggregate_root_to_pydantic_model(
-        self, item_ar: _AggregateRootType
-    ) -> BaseModel:
-        pass

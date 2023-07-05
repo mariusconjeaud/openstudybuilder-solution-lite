@@ -1,12 +1,12 @@
 from typing import Optional, Union
 
-from clinical_mdr_api.domain.syntax_instances.objective import ObjectiveAR
 from clinical_mdr_api.domain_repositories.syntax_instances.objective_repository import (
     ObjectiveRepository,
 )
 from clinical_mdr_api.domain_repositories.syntax_templates.objective_template_repository import (
     ObjectiveTemplateRepository,
 )
+from clinical_mdr_api.domains.syntax_instances.objective import ObjectiveAR
 from clinical_mdr_api.models.syntax_instances.objective import (
     Objective,
     ObjectiveVersion,

@@ -18,24 +18,24 @@ from typing import (
 from unittest.mock import patch
 
 from clinical_mdr_api.config import DEFAULT_STUDY_FIELD_CONFIG_FILE
-from clinical_mdr_api.domain.study_definition_aggregate import study_configuration
-from clinical_mdr_api.domain.study_definition_aggregate.registry_identifiers import (
+from clinical_mdr_api.domain_repositories.study_definitions.study_definition_repository import (
+    StudyDefinitionRepository,
+)
+from clinical_mdr_api.domains.study_definition_aggregates import study_configuration
+from clinical_mdr_api.domains.study_definition_aggregates.registry_identifiers import (
     RegistryIdentifiersVO,
 )
-from clinical_mdr_api.domain.study_definition_aggregate.root import (
+from clinical_mdr_api.domains.study_definition_aggregates.root import (
     StudyDefinitionAR,
     StudyDefinitionSnapshot,
 )
-from clinical_mdr_api.domain.study_definition_aggregate.study_metadata import (
+from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyDescriptionVO,
     StudyFieldAuditTrailEntryAR,
     StudyIdentificationMetadataVO,
     StudyStatus,
 )
-from clinical_mdr_api.domain_repositories.study_definition.study_definition_repository import (
-    StudyDefinitionRepository,
-)
-from clinical_mdr_api.models.study import StudyPreferredTimeUnit
+from clinical_mdr_api.models.study_selections.study import StudyPreferredTimeUnit
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._utils import service_level_generic_filtering

@@ -25,7 +25,7 @@ class TimeframeTest(api.APITest):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_PARAMETERS_CYPHER)
 
-        import clinical_mdr_api.services.libraries as library_service
+        import clinical_mdr_api.services.libraries.libraries as library_service
         import clinical_mdr_api.services.syntax_templates.timeframe_templates as tt_service
 
         _service = tt_service.TimeframeTemplateService()
@@ -64,7 +64,7 @@ class TimeframeNegativeTest(api.APITest):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_PARAMETERS_CYPHER)
 
-        import clinical_mdr_api.services.libraries as library_service
+        import clinical_mdr_api.services.libraries.libraries as library_service
         import clinical_mdr_api.services.syntax_templates.timeframe_templates as tt_service
 
         _service = tt_service.TimeframeTemplateService()
@@ -118,7 +118,7 @@ class TimeframeVersioningTest(api.APITest):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_PARAMETERS_CYPHER)
 
-        import clinical_mdr_api.services.libraries as library_service
+        import clinical_mdr_api.services.libraries.libraries as library_service
         import clinical_mdr_api.services.syntax_templates.timeframe_templates as tt_service
 
         _service = tt_service.TimeframeTemplateService()

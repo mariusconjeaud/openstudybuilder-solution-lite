@@ -4,35 +4,38 @@ from typing import Optional, Sequence, Tuple, TypeVar, cast
 from neomodel import core, db
 from pydantic import BaseModel
 
-from clinical_mdr_api.domain._utils import extract_parameters
-from clinical_mdr_api.domain.library.library_ar import LibraryAR
-from clinical_mdr_api.domain.library.parameter_term import (
-    ParameterTermEntryVO,
-    SimpleParameterTermVO,
-)
-from clinical_mdr_api.domain.syntax_templates.template import (
-    TemplateAggregateRootBase,
-    TemplateVO,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import (
-    LibraryVO,
-    VersioningException,
-)
 from clinical_mdr_api.domain_repositories.syntax_instances.generic_syntax_instance_repository import (
     GenericSyntaxInstanceRepository,
 )
 from clinical_mdr_api.domain_repositories.template_parameters.complex_parameter import (
     ComplexTemplateParameterRepository,
 )
+from clinical_mdr_api.domains._utils import extract_parameters, generate_seq_id
+from clinical_mdr_api.domains.libraries.library_ar import LibraryAR
+from clinical_mdr_api.domains.libraries.parameter_term import (
+    ParameterTermEntryVO,
+    SimpleParameterTermVO,
+)
+from clinical_mdr_api.domains.syntax_templates.template import (
+    TemplateAggregateRootBase,
+    TemplateVO,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemStatus,
+    LibraryVO,
+    VersioningException,
+)
 from clinical_mdr_api.exceptions import (
     BusinessLogicException,
     NotFoundException,
     ValidationException,
 )
-from clinical_mdr_api.models.template_parameter_multi_select_input import (
+from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
-from clinical_mdr_api.models.template_parameter_term import MultiTemplateParameterTerm
+from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
+    MultiTemplateParameterTerm,
+)
 from clinical_mdr_api.services._utils import (
     fill_missing_values_in_base_model_from_reference_base_model,
     process_complex_parameters,
@@ -43,11 +46,18 @@ _AggregateRootType = TypeVar("_AggregateRootType")
 
 
 class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc.ABC):
-    object_repository_interface: type
+    instance_repository_interface: type
+    pre_instance_repository_interface: Optional[type]
 
     @property
-    def object_repository(self) -> GenericSyntaxInstanceRepository:
-        return self.object_repository_interface()
+    def instance_repository(self) -> GenericSyntaxInstanceRepository:
+        return self.instance_repository_interface()
+
+    @property
+    def pre_instance_repository(self) -> Optional[GenericSyntaxInstanceRepository]:
+        if self.pre_instance_repository_interface:
+            return self.pre_instance_repository_interface()
+        return None
 
     def get_check_exists_callback(self, template: BaseModel):
         study_uid = getattr(template, "study_uid", None)
@@ -75,6 +85,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
                 template=template_vo,
                 library=library_vo,
                 generate_uid_callback=self.repository.generate_uid_callback,
+                generate_seq_id_callback=generate_seq_id,
             )
         except ValueError as e:
             raise ValidationException(e.args[0]) from e
@@ -242,9 +253,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
                 template=template_vo,
             )
             self.repository.save(item)
-            item = self._transform_aggregate_root_to_pydantic_model(item)
-            self._set_indexings(item)
-            return item
+            return self._transform_aggregate_root_to_pydantic_model(item)
         except VersioningException as e:
             raise BusinessLogicException(e.msg) from e
 
@@ -253,36 +262,115 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
         try:
             item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
             item.approve(author=self.user_initials)
-            related_items_uids = (
-                self.object_repository.find_instance_uids_by_template_uid(uid)
-            )
-            related_items = []
-            for r_uid in related_items_uids:
-                related_item = self.object_repository.find_by_uid_2(
-                    r_uid, for_update=True
-                )
-                assert related_item is not None
-                related_items.append(related_item)
             self.repository.save(item)
-            related_items = []
-            for r_uid in related_items_uids:
-                related_item = self.object_repository.find_by_uid_2(
-                    r_uid, for_update=True
-                )
-                assert related_item is not None
-                related_item.cascade_update(
-                    author=self.user_initials,
-                    date=item.item_metadata.start_date,
-                    new_template_name=item.name,
-                )
-                self.object_repository.save(related_item)
 
-            item = self._transform_aggregate_root_to_pydantic_model(item)
-            self._set_indexings(item)
-            return item
+            related_instance_uids = (
+                self.instance_repository.find_instance_uids_by_template_uid(uid)
+            )
+            for related_instance_uid in related_instance_uids:
+                related_instance = self.instance_repository.find_by_uid_2(
+                    related_instance_uid, for_update=True
+                )
+                if related_instance:
+                    related_instance.cascade_update(
+                        author=self.user_initials,
+                        date=item.item_metadata.start_date,
+                        new_template_name=item.name,
+                    )
+                    self.instance_repository.save(related_instance)
+
+            if self.pre_instance_repository:
+                related_pre_instance_uids = (
+                    self.pre_instance_repository.find_pre_instance_uids_by_template_uid(
+                        uid
+                    )
+                )
+                for related_pre_instance_uid in related_pre_instance_uids:
+                    related_pre_instance = self.pre_instance_repository.find_by_uid_2(
+                        related_pre_instance_uid, for_update=True
+                    )
+                    if related_pre_instance:
+                        related_pre_instance.cascade_update(
+                            author=self.user_initials,
+                            date=item.item_metadata.start_date,
+                            new_template_name=item.name,
+                        )
+                        self.pre_instance_repository.save(related_pre_instance)
+
+            return self._transform_aggregate_root_to_pydantic_model(item)
+        except VersioningException as e:
+            raise BusinessLogicException(e.msg) from e
+
+    @db.transaction
+    def inactivate_final(self, uid: str) -> BaseModel:
+        item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
+
+        try:
+            item.inactivate(author=self.user_initials)
+
+            if self.pre_instance_repository:
+                related_pre_instance_uids = (
+                    self.pre_instance_repository.find_pre_instance_uids_by_template_uid(
+                        uid
+                    )
+                )
+                for related_pre_instance_uid in related_pre_instance_uids:
+                    related_pre_instance = self.pre_instance_repository.find_by_uid_2(
+                        related_pre_instance_uid, for_update=True
+                    )
+                    if (
+                        related_pre_instance
+                        and related_pre_instance._item_metadata.status
+                        == LibraryItemStatus.DRAFT
+                    ):
+                        related_pre_instance.approve(author=self.user_initials)
+                        self.pre_instance_repository.save(related_pre_instance)
+
+                    if (
+                        related_pre_instance
+                        and related_pre_instance._item_metadata.status
+                        == LibraryItemStatus.FINAL
+                    ):
+                        related_pre_instance.inactivate(author=self.user_initials)
+                        self.pre_instance_repository.save(related_pre_instance)
+
+            self.repository.save(item)
 
         except VersioningException as e:
             raise BusinessLogicException(e.msg) from e
+
+        return self._transform_aggregate_root_to_pydantic_model(item)
+
+    @db.transaction
+    def reactivate_retired(self, uid: str) -> BaseModel:
+        item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
+
+        try:
+            item.reactivate(author=self.user_initials)
+            self.repository.save(item)
+
+            if self.pre_instance_repository:
+                related_pre_instance_uids = (
+                    self.pre_instance_repository.find_pre_instance_uids_by_template_uid(
+                        uid
+                    )
+                )
+                for related_pre_instance_uid in related_pre_instance_uids:
+                    related_pre_instance = self.pre_instance_repository.find_by_uid_2(
+                        related_pre_instance_uid, for_update=True
+                    )
+                    if (
+                        related_pre_instance
+                        and related_pre_instance._item_metadata.status
+                        == LibraryItemStatus.RETIRED
+                    ):
+                        related_pre_instance.reactivate(author=self.user_initials)
+                        self.pre_instance_repository.save(related_pre_instance)
+
+        except VersioningException as e:
+            raise BusinessLogicException(e.msg) from e
+
+        return self._transform_aggregate_root_to_pydantic_model(item)
 
     @db.transaction
     def edit_draft(self, uid: str, template: BaseModel) -> BaseModel:
@@ -343,62 +431,3 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
             )
         except ValueError as exc:
             raise ValidationException(exc.args[0]) from exc
-
-    def get_by_uid(
-        self,
-        uid: str,
-        return_instantiation_counts: bool = False,
-        return_study_count: Optional[bool] = True,
-    ) -> BaseModel:
-        item = super().get_by_uid(uid, return_instantiation_counts, return_study_count)
-        self._set_indexings(item)
-        return item
-
-    def get_specific_version(
-        self, uid: str, version: str, return_study_count: Optional[bool] = True
-    ) -> BaseModel:
-        item = super().get_specific_version(uid, version, return_study_count)
-        self._set_indexings(item)
-        return item
-
-    def get_all(
-        self, status: Optional[str] = None, return_study_count: Optional[bool] = True
-    ) -> Sequence[BaseModel]:
-        items = super().get_all(status, return_study_count)
-
-        for item in items:
-            self._set_indexings(item)
-        return items
-
-    def approve(self, uid: str) -> BaseModel:
-        item = super().approve(uid)
-        self._set_indexings(item)
-        return item
-
-    def inactivate_final(self, uid: str) -> BaseModel:
-        item = super().inactivate_final(uid)
-        self._set_indexings(item)
-        return item
-
-    def reactivate_retired(self, uid: str) -> BaseModel:
-        item = super().reactivate_retired(uid)
-        self._set_indexings(item)
-        return item
-
-    def get_version_history(
-        self, uid: str, return_study_count: Optional[bool] = True
-    ) -> Sequence[BaseModel]:
-        items = super().get_version_history(uid, return_study_count)
-
-        for item in items:
-            self._set_indexings(item)
-        return items
-
-    def get_releases(
-        self, uid: str, return_study_count: Optional[bool] = True
-    ) -> Sequence[BaseModel]:
-        items = super().get_releases(uid, return_study_count)
-
-        for item in items:
-            self._set_indexings(item)
-        return items

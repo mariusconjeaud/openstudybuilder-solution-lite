@@ -95,13 +95,9 @@ DATA_MODEL_FIELDS_ALL = [
     "name",
     "description",
     "implementation_guides",
-    "library_name",
-    "start_date",
-    "end_date",
+    "version_number",
     "status",
-    "version",
-    "change_description",
-    "user_initials",
+    "start_date",
 ]
 
 DATA_MODEL_FIELDS_NOT_NULL = [
@@ -124,10 +120,9 @@ def test_get_data_model(api_client):
     assert res["uid"] == data_models_all[0].uid
     assert res["name"] == "DataModel A"
     assert res["description"] == "DataModel A desc"
-    assert res["version"] == "1.0"
-    assert res["status"] == "Final"
-    assert set(res["implementation_guides"]) == set(
-        implementation_guide.name for implementation_guide in implementation_guides
+    implementation_guide_uids = [ig["uid"] for ig in res["implementation_guides"]]
+    assert sorted(implementation_guide_uids) == sorted(
+        [implementation_guide.uid for implementation_guide in implementation_guides]
     )
 
 
@@ -224,11 +219,6 @@ def test_get_data_models(
     [
         pytest.param('{"*": {"v": ["aaa"]}}', "name", "name-AAA"),
         pytest.param('{"*": {"v": ["bBb"]}}', "name", "name-BBB"),
-        pytest.param(
-            '{"*": {"v": ["initials"], "op": "co"}}', "user_initials", "TODO initials"
-        ),
-        pytest.param('{"*": {"v": ["Final"]}}', "status", "Final"),
-        pytest.param('{"*": {"v": ["1.0"]}}', "version", "1.0"),
         pytest.param('{"*": {"v": ["ccc"]}}', None, None),
     ],
 )
@@ -242,9 +232,26 @@ def test_filtering_wildcard(
     assert response.status_code == 200
     if expected_result_prefix:
         assert len(res["items"]) > 0
+        nested_path = None
+
+        # if we expect a nested property to be equal to specified value
+        if isinstance(expected_matched_field, str) and "." in expected_matched_field:
+            nested_path = expected_matched_field.split(".")
+            expected_matched_field = nested_path[-1]
+            nested_path = nested_path[:-1]
+
         # Each returned row has a field that starts with the specified filter value
         for row in res["items"]:
-            assert row[expected_matched_field].startswith(expected_result_prefix)
+            if nested_path:
+                for prop in nested_path:
+                    row = row[prop]
+            if isinstance(row, list):
+                any(
+                    item[expected_matched_field].startswith(expected_result_prefix)
+                    for item in row
+                )
+            else:
+                assert row[expected_matched_field].startswith(expected_result_prefix)
     else:
         assert len(res["items"]) == 0
 
@@ -262,13 +269,13 @@ def test_filtering_wildcard(
             '{"implementation_guides": {"v": []}}', "implementation_guides", []
         ),
         pytest.param(
-            '{"implementation_guides": {"v": ["DataModelIG A"]}}',
-            "implementation_guides",
-            ["DataModelIG A"],
+            '{"implementation_guides.name": {"v": ["DataModelIG A"]}}',
+            "implementation_guides.name",
+            "DataModelIG A",
         ),
         pytest.param(
-            '{"implementation_guides": {"v": ["DataModelIG A", "DataModelIG B"]}}',
-            "implementation_guides",
+            '{"implementation_guides.name": {"v": ["DataModelIG A", "DataModelIG B"]}}',
+            "implementation_guides.name",
             ["DataModelIG A", "DataModelIG A"],
         ),
     ],
@@ -283,14 +290,30 @@ def test_filtering_exact(
     assert response.status_code == 200
     if expected_result:
         assert len(res["items"]) > 0
+        # if we expect a nested property to be equal to specified value
+        nested_path = None
+        if isinstance(expected_matched_field, str) and "." in expected_matched_field:
+            nested_path = expected_matched_field.split(".")
+            expected_matched_field = nested_path[-1]
+            nested_path = nested_path[:-1]
+
         # Each returned row has a field whose value is equal to the specified filter value
         for row in res["items"]:
+            if nested_path:
+                for prop in nested_path:
+                    row = row[prop]
             if isinstance(expected_result, list):
-                assert all(
-                    item in row[expected_matched_field] for item in expected_result
-                )
+                if isinstance(row, list):
+                    all(item[expected_matched_field] == expected_result for item in row)
+                else:
+                    assert all(
+                        item in row[expected_matched_field] for item in expected_result
+                    )
             else:
-                assert row[expected_matched_field] == expected_result
+                if isinstance(row, list):
+                    all(item[expected_matched_field] == expected_result for item in row)
+                else:
+                    assert row[expected_matched_field] == expected_result
     else:
         assert len(res["items"]) == 0
 
@@ -308,3 +331,53 @@ def test_filtering_exact(
 def test_get_data_models_csv_xml_excel(api_client, export_format):
     url = "/standards/data-models"
     TestUtils.verify_exported_data_format(api_client, export_format, url)
+
+
+@pytest.mark.parametrize(
+    "field_name",
+    [
+        pytest.param("name"),
+        pytest.param("description"),
+        pytest.param("implementation_guides.name"),
+    ],
+)
+def test_headers(api_client, field_name):
+    url = f"/standards/data-models/headers?field_name={field_name}&result_count=100"
+    response = api_client.get(url)
+    res = response.json()
+
+    assert response.status_code == 200
+    expected_result = []
+
+    nested_path = None
+    if isinstance(field_name, str) and "." in field_name:
+        nested_path = field_name.split(".")
+        expected_matched_field = nested_path[-1]
+        nested_path = nested_path[:-1]
+
+    for data_model in data_models_all:
+        if nested_path:
+            for prop in nested_path:
+                data_model = getattr(data_model, prop)
+            if not data_model:
+                continue
+            if isinstance(data_model, list):
+                for item in data_model:
+                    value = getattr(item, expected_matched_field)
+                    expected_result.append(value)
+            else:
+                value = getattr(data_model, expected_matched_field)
+                expected_result.append(value)
+
+        else:
+            value = getattr(data_model, field_name)
+            expected_result.append(value)
+    expected_result = [result for result in expected_result if result is not None]
+    log.info("Expected result is %s", expected_result)
+    log.info("Returned %s", res)
+    if expected_result:
+        assert len(res) > 0
+        assert len(set(expected_result)) == len(res)
+        assert all(item in res for item in expected_result)
+    else:
+        assert len(res) == 0

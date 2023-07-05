@@ -5,13 +5,13 @@ if [ $# -lt 3 ]; then
 		Error: not enough arguments
 		Example usage, connects to the container 'database' and exports the database 'mdrdb' to the file ./my_mackup.tar.gz.
 		$ ./backup_db.sh database mdrdb my_backup.tar.gz
-		This script assumes that the directory 'db_export' exists in the same directory as itself,
-		and that this directory is mounted at /db_export in the container.
+		This script assumes that it is located in the same directory as the directory 'db_export',
+		and that the 'db_export' directory is mounted at '/db_export' in the neo4j container.
 	EOF
 	exit 2
 fi
 if [ -z "$NEO4J_MDR_AUTH_USER" ] || [ -z "$NEO4J_MDR_AUTH_PASSWORD" ] || [ -z "$NEO4J_MDR_BOLT_PORT" ]; then
-	echo "Missing environment variable(s) for db connection, needed: NEO4J_MDR_AUTH_USER, NEO4J_MDR_AUTH_PASSWORD, NEO4J_MDR_BOLT_PORT"
+	echo "Missing one or several environment variables for db connection, needed: NEO4J_MDR_AUTH_USER, NEO4J_MDR_AUTH_PASSWORD, NEO4J_MDR_BOLT_PORT"
 	exit 2
 fi
 

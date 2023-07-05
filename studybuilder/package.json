@@ -9,6 +9,7 @@
     "lint": "vue-cli-service lint",
     "build:dev": "vue-cli-service build --mode dev",
     "build:staging": "vue-cli-service build --mode staging",
+    "update-config": "node scripts/update-config.js",
     "i18n:report": "vue-cli-service i18n:report --src './src/**/*.?(js|vue)' --locales './src/locales/**/*.json'"
   },
   "dependencies": {

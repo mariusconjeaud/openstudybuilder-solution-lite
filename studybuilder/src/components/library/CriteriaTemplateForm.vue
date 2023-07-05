@@ -1,4 +1,4 @@
-<template>
+<template data-cy="template-text-part">
 <base-template-form
   object-type="criteria"
   :template="template"
@@ -6,6 +6,7 @@
   :prepare-payload-function="preparePayload"
   :help-items="helpItems"
   :title-context="{ type: criteriaType.sponsor_preferred_name }"
+  data-cy="template-text"
   v-bind="$attrs"
   v-on="$listeners"
   >
@@ -16,7 +17,8 @@
           <vue-editor
             ref="editor"
             id="editor"
-            v-model="form.guidanceText"
+            data-cy="template-guidance-text"
+            v-model="form.guidance_text"
             :editor-toolbar="customToolbar"
             :placeholder="$t('CriteriaTemplateForm.guidance_text')"
             class="pt-4"

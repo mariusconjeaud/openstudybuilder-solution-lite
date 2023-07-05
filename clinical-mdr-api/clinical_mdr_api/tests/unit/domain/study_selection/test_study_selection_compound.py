@@ -3,12 +3,12 @@ import random
 import unittest
 from copy import copy
 
-from clinical_mdr_api.domain.concepts.compound import CompoundAR, CompoundVO
-from clinical_mdr_api.domain.study_selection.study_selection_compound import (
+from clinical_mdr_api.domains.concepts.compound import CompoundAR, CompoundVO
+from clinical_mdr_api.domains.study_selections.study_selection_compound import (
     StudySelectionCompoundsAR,
     StudySelectionCompoundVO,
 )
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.tests.unit.domain.utils import random_str
 
 uid_list = ["uid_compound", "null_value"]

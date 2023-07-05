@@ -1,3 +1,7 @@
+#############################################################################
+####         Generate SBOM and license files, commit to repo             ####
+#############################################################################
+
 # Specify an automatic trigger for executing this pipeline
 trigger:
   batch: true # Whether to batch changes per branch.  (false,n,no,off,on,true,y,yes)
@@ -12,7 +16,7 @@ pool:
 
 variables:
  - name: python_version
-   value: 3.9
+   value: 3.11
 
 jobs:
 - job: 

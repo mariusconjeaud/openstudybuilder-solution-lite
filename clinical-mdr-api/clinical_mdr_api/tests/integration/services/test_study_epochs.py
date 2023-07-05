@@ -3,12 +3,12 @@ import unittest
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot
-from clinical_mdr_api.models.study_epoch import (
+from clinical_mdr_api.models.study_selections.study_epoch import (
     StudyEpoch,
     StudyEpochCreateInput,
     StudyEpochEditInput,
 )
-from clinical_mdr_api.services.study_epoch import StudyEpochService
+from clinical_mdr_api.services.studies.study_epoch import StudyEpochService
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_CATALOGUE_CYPHER,
@@ -132,9 +132,9 @@ class TestStudyEpochManagement(unittest.TestCase):
         ep2 = create_study_epoch(ep_epoch_subtype_uid)
         ep3 = create_study_epoch(ep_epoch_subtype_uid)
 
-        ep1 = epoch_service.find_by_uid(ep1.uid)
-        ep2 = epoch_service.find_by_uid(ep2.uid)
-        ep3 = epoch_service.find_by_uid(ep3.uid)
+        ep1 = epoch_service.find_by_uid(ep1.uid, study_uid=ep1.study_uid)
+        ep2 = epoch_service.find_by_uid(ep2.uid, study_uid=ep2.study_uid)
+        ep3 = epoch_service.find_by_uid(ep3.uid, study_uid=ep3.study_uid)
 
         self.assertEqual(ep1.order, 1)
         self.assertEqual(ep1.epoch_name, ep_epoch_subtype_name + " 1")
@@ -143,11 +143,11 @@ class TestStudyEpochManagement(unittest.TestCase):
         self.assertEqual(ep3.order, 3)
         self.assertEqual(ep3.epoch_name, ep_epoch_subtype_name + " 3")
 
-        epoch_service.reorder(ep3.uid, 0)
+        epoch_service.reorder(ep3.uid, study_uid=ep3.study_uid, new_order=0)
 
-        ep_after1 = epoch_service.find_by_uid(ep1.uid)
-        ep_after2 = epoch_service.find_by_uid(ep2.uid)
-        ep_after3 = epoch_service.find_by_uid(ep3.uid)
+        ep_after1 = epoch_service.find_by_uid(ep1.uid, study_uid=ep1.study_uid)
+        ep_after2 = epoch_service.find_by_uid(ep2.uid, study_uid=ep2.study_uid)
+        ep_after3 = epoch_service.find_by_uid(ep3.uid, study_uid=ep3.study_uid)
 
         self.assertEqual(ep_after1.order, 2)
         self.assertEqual(ep_after1.epoch_name, ep_epoch_subtype_name + " 2")
@@ -156,11 +156,11 @@ class TestStudyEpochManagement(unittest.TestCase):
         self.assertEqual(ep_after3.order, 1)
         self.assertEqual(ep_after3.epoch_name, ep_epoch_subtype_name + " 1")
 
-        epoch_service.reorder(ep1.uid, 2)
+        epoch_service.reorder(ep1.uid, study_uid=ep1.study_uid, new_order=2)
 
-        ep_after1 = epoch_service.find_by_uid(ep1.uid)
-        ep_after2 = epoch_service.find_by_uid(ep2.uid)
-        ep_after3 = epoch_service.find_by_uid(ep3.uid)
+        ep_after1 = epoch_service.find_by_uid(ep1.uid, study_uid=ep1.study_uid)
+        ep_after2 = epoch_service.find_by_uid(ep2.uid, study_uid=ep2.study_uid)
+        ep_after3 = epoch_service.find_by_uid(ep3.uid, study_uid=ep3.study_uid)
 
         self.assertEqual(ep_after1.order, 3)
         self.assertEqual(ep_after1.epoch_name, ep_epoch_subtype_name + " 3")
@@ -175,17 +175,25 @@ class TestStudyEpochManagement(unittest.TestCase):
         epoch_subtype_name3 = "Epoch Subtype2"
         epoch_subtype_2 = create_study_epoch(epoch_subtype_uid2)
         epoch_subtype_3 = create_study_epoch(epoch_subtype_uid3)
-        ep2 = epoch_service.find_by_uid(epoch_subtype_2.uid)
+        ep2 = epoch_service.find_by_uid(
+            epoch_subtype_2.uid, study_uid=epoch_subtype_2.study_uid
+        )
         self.assertEqual(ep2.order, 4)
         self.assertEqual(ep2.epoch_name, epoch_subtype_name2)
-        ep3 = epoch_service.find_by_uid(epoch_subtype_3.uid)
+        ep3 = epoch_service.find_by_uid(
+            epoch_subtype_3.uid, study_uid=epoch_subtype_3.study_uid
+        )
         self.assertEqual(ep3.order, 5)
         self.assertEqual(ep3.epoch_name, epoch_subtype_name3)
-        epoch_service.reorder(ep3.uid, 3)
-        ep2 = epoch_service.find_by_uid(epoch_subtype_2.uid)
+        epoch_service.reorder(ep3.uid, study_uid=ep3.study_uid, new_order=3)
+        ep2 = epoch_service.find_by_uid(
+            epoch_subtype_2.uid, study_uid=epoch_subtype_2.study_uid
+        )
         self.assertEqual(ep2.order, 5)
         self.assertEqual(ep2.epoch_name, epoch_subtype_name2)
-        ep3 = epoch_service.find_by_uid(epoch_subtype_3.uid)
+        ep3 = epoch_service.find_by_uid(
+            epoch_subtype_3.uid, study_uid=epoch_subtype_3.study_uid
+        )
         self.assertEqual(ep3.order, 4)
         self.assertEqual(ep3.epoch_name, epoch_subtype_name3)
 
@@ -243,7 +251,7 @@ class TestStudyEpochManagement(unittest.TestCase):
 
         epoch_service = StudyEpochService()
 
-        epoch = epoch_service.find_by_uid(epoch.uid)
+        epoch = epoch_service.find_by_uid(epoch.uid, study_uid=epoch.study_uid)
         start_rule = "New start rule"
         end_rule = "New end rule"
         edit_input = StudyEpochEditInput(
@@ -256,7 +264,9 @@ class TestStudyEpochManagement(unittest.TestCase):
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
-        edited_epoch = epoch_service.find_by_uid(edited_epoch.uid)
+        edited_epoch = epoch_service.find_by_uid(
+            edited_epoch.uid, study_uid=edited_epoch.study_uid
+        )
         self.assertEqual(edited_epoch.start_rule, start_rule)
         self.assertEqual(edited_epoch.end_rule, end_rule)
         # verify that properties not sent in the payload were not overridden
@@ -276,13 +286,15 @@ class TestStudyEpochManagement(unittest.TestCase):
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
-        epoch = epoch_service.find_by_uid(edited_epoch.uid)
+        epoch = epoch_service.find_by_uid(
+            edited_epoch.uid, study_uid=edited_epoch.study_uid
+        )
         self.assertEqual(epoch.color_hash, "#FFFFFF")
 
     def test__get_versions(self):
         epoch: StudyEpoch = create_study_epoch(epoch_subtype_uid="EpochSubType_0001")
         epoch_service = StudyEpochService()
-        epoch = epoch_service.find_by_uid(epoch.uid)
+        epoch = epoch_service.find_by_uid(epoch.uid, study_uid=epoch.study_uid)
         start_rule = "New start rule"
         end_rule = "New end rule"
         edit_input = StudyEpochEditInput(
@@ -306,11 +318,14 @@ class TestStudyEpochManagement(unittest.TestCase):
         self.assertEqual(current_epoch.changes["end_rule"], True)
         self.assertEqual(current_epoch.end_rule, end_rule)
         self.assertEqual(previous_epoch.changes, {})
-
+        self.assertEqual(previous_epoch.change_type, "Create")
+        self.assertEqual(current_epoch.change_type, "Edit")
+        self.assertIsNotNone(previous_epoch.end_date)
+        self.assertGreater(current_epoch.start_date, previous_epoch.start_date)
         # test all versions
         epoch: StudyEpoch = create_study_epoch(epoch_subtype_uid="EpochSubType_0002")
         epoch_service = StudyEpochService()
-        epoch = epoch_service.find_by_uid(epoch.uid)
+        epoch = epoch_service.find_by_uid(uid=epoch.uid, study_uid=epoch.study_uid)
         start_rule = "New start rule"
         end_rule = "New end rule"
         edit_input = StudyEpochEditInput(
@@ -361,9 +376,9 @@ class TestStudyEpochManagement(unittest.TestCase):
         epoch2 = create_study_epoch(epoch_subtype_uid=epoch_subtype_uid)
         epoch3 = create_study_epoch(epoch_subtype_uid=epoch_subtype_uid)
 
-        ep1 = epoch_service.find_by_uid(epoch1.uid)
-        ep2 = epoch_service.find_by_uid(epoch2.uid)
-        ep3 = epoch_service.find_by_uid(epoch3.uid)
+        ep1 = epoch_service.find_by_uid(epoch1.uid, study_uid=epoch1.study_uid)
+        ep2 = epoch_service.find_by_uid(epoch2.uid, study_uid=epoch2.study_uid)
+        ep3 = epoch_service.find_by_uid(epoch3.uid, study_uid=epoch3.study_uid)
 
         self.assertEqual(ep1.epoch_name, epoch_subtype_name + " 1")
         self.assertEqual(ep1.order, 2)
@@ -374,8 +389,8 @@ class TestStudyEpochManagement(unittest.TestCase):
 
         epoch_service.delete(study_uid=ep1.study_uid, study_epoch_uid=ep1.uid)
 
-        ep1 = epoch_service.find_by_uid(epoch2.uid)
-        ep2 = epoch_service.find_by_uid(epoch3.uid)
+        ep1 = epoch_service.find_by_uid(epoch2.uid, study_uid=epoch2.study_uid)
+        ep2 = epoch_service.find_by_uid(epoch3.uid, study_uid=epoch3.study_uid)
 
         self.assertEqual(ep1.epoch_name, epoch_subtype_name + " 1")
         self.assertEqual(ep1.order, 2)
@@ -383,7 +398,7 @@ class TestStudyEpochManagement(unittest.TestCase):
         self.assertEqual(ep2.order, 3)
 
         epoch_service.delete(study_uid=ep1.study_uid, study_epoch_uid=ep1.uid)
-        ep1 = epoch_service.find_by_uid(ep2.uid)
+        ep1 = epoch_service.find_by_uid(ep2.uid, study_uid=ep2.study_uid)
         self.assertEqual(ep1.epoch_name, epoch_subtype_name)
         self.assertEqual(ep1.order, 2)
 

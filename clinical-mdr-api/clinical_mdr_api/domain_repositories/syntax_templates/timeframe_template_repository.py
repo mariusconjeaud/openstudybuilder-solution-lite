@@ -1,15 +1,6 @@
-from typing import Optional
-
-from clinical_mdr_api.domain.syntax_templates.template import InstantiationCountsVO
-from clinical_mdr_api.domain.syntax_templates.timeframe_template import (
-    TimeframeTemplateAR,
-)
-from clinical_mdr_api.domain.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
-    VersionRoot,
-    VersionValue,
 )
 from clinical_mdr_api.domain_repositories.models.syntax import (
     TimeframeTemplateRoot,
@@ -18,6 +9,11 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
 from clinical_mdr_api.domain_repositories.syntax_templates.generic_syntax_template_repository import (
     GenericSyntaxTemplateRepository,
 )
+from clinical_mdr_api.domains.syntax_templates.template import InstantiationCountsVO
+from clinical_mdr_api.domains.syntax_templates.timeframe_template import (
+    TimeframeTemplateAR,
+)
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 
 
 class TimeframeTemplateRepository(GenericSyntaxTemplateRepository[TimeframeTemplateAR]):
@@ -30,15 +26,16 @@ class TimeframeTemplateRepository(GenericSyntaxTemplateRepository[TimeframeTempl
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         *,
-        root: VersionRoot,
+        root: TimeframeTemplateRoot,
         library: Library,
         relationship: VersionRelationship,
-        value: VersionValue,
-        study_count: Optional[int] = None,
+        value: TimeframeTemplateValue,
+        study_count: int = 0,
         counts: InstantiationCountsVO = None,
     ) -> TimeframeTemplateAR:
         return TimeframeTemplateAR.from_repository_values(
             uid=root.uid,
+            sequence_id=root.sequence_id,
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
                 is_library_editable_callback=(lambda _: library.is_editable),

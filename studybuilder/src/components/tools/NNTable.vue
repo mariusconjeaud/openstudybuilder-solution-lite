@@ -114,6 +114,7 @@
         data-cy="search-field"
         v-if="(!hideSearchField && returnHasApi()) || onlyTextSearch"
         />
+      <slot name="afterFilter"></slot>
       <v-spacer></v-spacer>
       <div class="mb-4" v-if="!returnHasApi() && !onlyTextSearch">
         {{ $t('_global.filtering_to_add') }}
@@ -277,7 +278,8 @@
   <v-dialog
     v-model="showHistory"
     @keydown.esc="closeHistory"
-    max-width="1200px"
+    :max-width="globalHistoryDialogMaxWidth"
+    :fullscreen="globalHistoryDialogFullscreen"
     persistent
     >
     <history-table
@@ -286,6 +288,7 @@
       @close="closeHistory"
       :title="historyTitle"
       :html-fields="historyHtmlFields"
+      :simple-styling="historySimpleStyling"
       />
   </v-dialog>
 </div>
@@ -388,6 +391,10 @@ export default {
       type: Array,
       required: false
     },
+    historySimpleStyling: {
+      type: Boolean,
+      default: false
+    },
     disableFiltering: {
       type: Boolean,
       default: false
@@ -470,6 +477,7 @@ export default {
     }
   },
   mounted () {
+    this.showSelectBoxes = this.showSelect
     this.$store.commit('tablesLayout/INITIATE_COLUMNS')
     if (!this.columns[this.$route.fullPath] || this.columns[this.$route.fullPath].length === 0) {
       if (this.defaultHeaders && this.defaultHeaders.length !== 0) {
@@ -483,7 +491,7 @@ export default {
       this.shownColumns = this.shownColumns.filter(obj => !check.has(obj.value) && check.add(obj.value))
     }
     if (this.showFilterBarByDefault) {
-      this.itemsToFilter = this.headers.filter(header => header.value !== 'actions')
+      this.itemsToFilter = this.headers.filter(header => header.value !== 'actions' && !header.noFilter)
     }
     if (this.items && this.items.length) {
       this.loading = false
@@ -705,6 +713,7 @@ export default {
     items (val) {
       if (val) {
         this.loading = false
+        this.refreshFiltersTrigger += 1
       }
     },
     showSelectBoxes (val) {
