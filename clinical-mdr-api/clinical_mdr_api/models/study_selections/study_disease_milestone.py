@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Dict, Optional
 
 from pydantic import Field, validator
 
@@ -13,13 +12,13 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class StudyDiseaseMilestoneEditInput(BaseModel):
-    disease_milestone_type: Optional[str] = Field(
+    disease_milestone_type: str | None = Field(
         None,
         title="Disease Milestone Type uid",
         description="Study Disease Milestone Type uid",
     )
 
-    repetition_indicator: Optional[bool] = Field(
+    repetition_indicator: bool | None = Field(
         None,
         title="repetition_indicator",
         description="DiseaseMilestone repetition_indicator",
@@ -38,7 +37,7 @@ class StudyDiseaseMilestoneCreateInput(StudyDiseaseMilestoneEditInput):
         title="repetition_indicator",
         description="DiseaseMilestone repetition_indicator",
     )
-    order: Optional[int] = Field(
+    order: int | None = Field(
         None,
         title="order",
         description="The ordering of the selection",
@@ -64,7 +63,7 @@ class StudyDiseaseMilestoneOGM(BaseModel, StudyDiseaseMilestoneVO):
         source="has_after.audit_trail.uid",
     )
 
-    order: Optional[int] = Field(
+    order: int | None = Field(
         None, title="order", description="The ordering of the selection", source="order"
     )
     status: StudyStatus = Field(
@@ -79,7 +78,7 @@ class StudyDiseaseMilestoneOGM(BaseModel, StudyDiseaseMilestoneVO):
     def instantiate_study_status(cls, value, values):
         return StudyStatus[value]
 
-    start_date: Optional[datetime] = Field(
+    start_date: datetime | None = Field(
         ...,
         title="start_date",
         description="The most recent point in time when the study disease_milestone was edited."
@@ -135,7 +134,7 @@ class StudyDiseaseMilestoneOGMVer(StudyDiseaseMilestoneOGM):
         description="type of action",
         source="has_after.__label__",
     )
-    end_date: Optional[datetime] = Field(
+    end_date: datetime | None = Field(
         None,
         title="end_date",
         description="The last point in time when the study disease milestone was modified."
@@ -163,7 +162,7 @@ class StudyDiseaseMilestone(StudyDiseaseMilestoneCreateInput):
         title="Modification date",
         description="Study DiseaseMilestone last modification date",
     )
-    end_date: Optional[datetime] = Field(
+    end_date: datetime | None = Field(
         None,
         title="Modification date",
         description="Study DiseaseMilestone last modification date",
@@ -176,11 +175,11 @@ class StudyDiseaseMilestone(StudyDiseaseMilestoneCreateInput):
         title="User Initials",
         description="Initials of user that created last modification",
     )
-    change_type: Optional[str] = Field(None, description="Type of Action")
+    change_type: str | None = Field(None, description="Type of Action")
 
 
 class StudyDiseaseMilestoneVersion(StudyDiseaseMilestone):
-    changes: Dict
+    changes: dict
 
 
 class StudyDiseaseMilestoneTypes(BaseModel):

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Self
 
 from pydantic import Field
 
@@ -10,7 +10,7 @@ from clinical_mdr_api.models.utils import BaseModel
 
 class CTTermName(BaseModel):
     @classmethod
-    def from_ct_term_ar(cls, ct_term_name_ar: CTTermNameAR) -> "CTTermName":
+    def from_ct_term_ar(cls, ct_term_name_ar: CTTermNameAR) -> Self:
         return cls(
             term_uid=ct_term_name_ar.uid,
             catalogue_name=ct_term_name_ar.ct_term_vo.catalogue_name,
@@ -33,7 +33,7 @@ class CTTermName(BaseModel):
     @classmethod
     def from_ct_term_ar_without_common_term_fields(
         cls, ct_term_name_ar: CTTermNameAR
-    ) -> "CTTermName":
+    ) -> Self:
         return cls(
             sponsor_preferred_name=ct_term_name_ar.ct_term_vo.name,
             sponsor_preferred_name_sentence_case=ct_term_name_ar.ct_term_vo.name_sentence_case,
@@ -49,21 +49,21 @@ class CTTermName(BaseModel):
             user_initials=ct_term_name_ar.item_metadata.user_initials,
         )
 
-    term_uid: Optional[str] = Field(
+    term_uid: str | None = Field(
         None,
         title="term_uid",
         description="",
         nullable=True,
     )
 
-    catalogue_name: Optional[str] = Field(
+    catalogue_name: str | None = Field(
         None,
         title="catalogue_name",
         description="",
         nullable=True,
     )
 
-    codelist_uid: Optional[str] = Field(
+    codelist_uid: str | None = Field(
         None,
         title="codelist_uid",
         description="",
@@ -82,21 +82,21 @@ class CTTermName(BaseModel):
         description="",
     )
 
-    order: Optional[int] = Field(
+    order: int | None = Field(
         999999,
         title="order",
         description="",
         nullable=True,
     )
 
-    library_name: Optional[str] = Field(None, nullable=True)
-    start_date: Optional[datetime] = Field(None, nullable=True)
-    end_date: Optional[datetime] = Field(None, nullable=True)
-    status: Optional[str] = Field(None, nullable=True)
-    version: Optional[str] = Field(None, nullable=True)
-    change_description: Optional[str] = Field(None, nullable=True)
-    user_initials: Optional[str] = Field(None, nullable=True)
-    possible_actions: List[str] = Field(
+    library_name: str | None = Field(None, nullable=True)
+    start_date: datetime | None = Field(None, nullable=True)
+    end_date: datetime | None = Field(None, nullable=True)
+    status: str | None = Field(None, nullable=True)
+    version: str | None = Field(None, nullable=True)
+    change_description: str | None = Field(None, nullable=True)
+    user_initials: str | None = Field(None, nullable=True)
+    possible_actions: list[str] = Field(
         [],
         description=(
             "Holds those actions that can be performed on the CTTermName. "
@@ -105,12 +105,26 @@ class CTTermName(BaseModel):
     )
 
 
+class CTTermNameSimple(BaseModel):
+    term_uid: str = Field(
+        ...,
+        title="term_uid",
+        description="",
+    )
+
+    sponsor_preferred_name: str = Field(
+        ...,
+        title="sponsor_preferred_name",
+        description="",
+    )
+
+
 class CTTermNameVersion(CTTermName):
     """
     Class for storing CTTermName and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
@@ -121,13 +135,13 @@ class CTTermNameVersion(CTTermName):
 
 
 class CTTermNameInput(BaseModel):
-    sponsor_preferred_name: Optional[str] = Field(
+    sponsor_preferred_name: str | None = Field(
         None,
         title="sponsor_preferred_name",
         description="",
     )
 
-    sponsor_preferred_name_sentence_case: Optional[str] = Field(
+    sponsor_preferred_name_sentence_case: str | None = Field(
         None,
         title="sponsor_preferred_name_sentence_case",
         description="",

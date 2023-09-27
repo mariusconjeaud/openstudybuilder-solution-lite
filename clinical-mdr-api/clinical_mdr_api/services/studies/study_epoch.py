@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional, Sequence
+from typing import Sequence
 
 from aenum import extend_enum
 from neomodel import db
@@ -112,7 +112,7 @@ class StudyEpochService:
         self._allowed_configs = self._get_allowed_configs()
 
     def _transform_all_to_response_model(
-        self, epoch: StudyEpochVO, study_visit_count: Optional[int] = None
+        self, epoch: StudyEpochVO, study_visit_count: int
     ) -> StudyEpoch:
         return StudyEpoch(
             uid=epoch.uid,
@@ -130,6 +130,7 @@ class StudyEpochService:
             epoch_subtype=epoch.subtype.name,
             epoch_subtype_name=epoch.subtype.value,
             epoch_type=epoch.epoch_type.name,
+            epoch_type_name=epoch.epoch_type.value,
             status=epoch.status.value,
             start_day=epoch.get_start_day()
             if epoch.subtype.value != settings.BASIC_EPOCH_NAME
@@ -152,7 +153,7 @@ class StudyEpochService:
         )
 
     def _transform_all_to_response_history_model(
-        self, epoch: StudyEpochHistoryVO, study_visit_count: Optional[int] = None
+        self, epoch: StudyEpochHistoryVO, study_visit_count: int
     ) -> StudyEpoch:
         study_epoch: StudyEpoch = self._transform_all_to_response_model(
             epoch, study_visit_count
@@ -207,11 +208,11 @@ class StudyEpochService:
     def get_all_epochs(
         self,
         study_uid: str,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[StudyEpoch]:
         repos = self._repos
@@ -248,26 +249,37 @@ class StudyEpochService:
         repos = self._repos
         try:
             study_epoch = self.repo.find_by_uid(uid=uid, study_uid=study_uid)
+            study_visits = self.visit_repo.find_all_visits_by_study_uid(study_uid)
+            timeline = TimelineAR(study_uid, _visits=study_visits)
+            visits = timeline.collect_visits_to_epochs(
+                self.repo.find_all_epochs_by_study(study_uid)
+            )
 
-            return self._transform_all_to_response_model(study_epoch)
-        except ValueError as e:
-            raise exceptions.ValidationException(e.args[0])
+            return self._transform_all_to_response_model(
+                study_epoch, study_visit_count=len(visits[study_epoch.uid])
+            )
         finally:
             repos.close()
 
     def _validate_creation(self, epoch_input: StudyEpochCreateInput):
         if epoch_input.epoch_subtype not in [i.name for i in StudyEpochSubType]:
-            raise ValueError("Invalid value for study epoch sub type")
+            raise exceptions.ValidationException(
+                "Invalid value for study epoch sub type"
+            )
         epoch_subtype_name = StudyEpochSubType[epoch_input.epoch_subtype].value
         if epoch_subtype_name == settings.BASIC_EPOCH_NAME:
             if self.repo.get_basic_epoch(study_uid=epoch_input.study_uid):
-                raise ValueError("There can exist only one Supplemental Study Epoch.")
+                raise exceptions.ValidationException(
+                    "There can exist only one Supplemental Study Epoch."
+                )
 
     def _validate_update(self, epoch_input: StudyEpochCreateInput):
         if epoch_input.epoch_subtype is not None and epoch_input.epoch_subtype not in [
             i.name for i in StudyEpochSubType
         ]:
-            raise ValueError("Invalid value for study epoch sub type")
+            raise exceptions.ValidationException(
+                "Invalid value for study epoch sub type"
+            )
 
     def _get_or_create_epoch_in_specific_subtype(
         self,
@@ -316,7 +328,7 @@ class StudyEpochService:
                 if epoch.name not in StudyEpochEpoch._member_map_:
                     extend_enum(StudyEpochEpoch, epoch.name, epoch.value)
 
-            except ValueError:
+            except exceptions.ValidationException:
                 pass
         # we are trying to find the ct term with given epoch name
         else:
@@ -462,9 +474,9 @@ class StudyEpochService:
         study_epoch_to_edit: StudyEpochVO,
         study_epoch_edit_input: StudyEpochEditInput,
     ):
-        epoch: Optional[StudyEpochEpoch] = None
-        subtype: Optional[StudyEpochSubType] = None
-        epoch_type: Optional[StudyEpochType] = None
+        epoch: StudyEpochEpoch | None = None
+        subtype: StudyEpochSubType | None = None
+        epoch_type: StudyEpochType | None = None
 
         # if the epoch subtype wasn't changed in the PATCH payload then we don't have to derive all epoch objects
         # and we can take the epoch, epoch subtype and epoch type from the value object that is being patched
@@ -599,14 +611,14 @@ class StudyEpochService:
 
         if study_epoch_input.order:
             if len(all_epochs) + 1 < created_study_epoch.order:
-                raise ValueError("Order is too big.")
+                raise exceptions.ValidationException("Order is too big.")
             for epoch in all_epochs[created_study_epoch.order :]:
                 epoch.order += 1
                 self.repo.save(epoch)
         else:
             created_study_epoch.order = len(all_epochs) + 1
         updated_item = self.repo.save(created_study_epoch)
-        return self._transform_all_to_response_model(updated_item)
+        return self._transform_all_to_response_model(updated_item, study_visit_count=0)
 
     @db.transaction
     def preview(self, study_uid: str, study_epoch_input: StudyEpochCreateInput):
@@ -618,17 +630,20 @@ class StudyEpochService:
 
         if study_epoch_input.order:
             if len(all_epochs) + 1 < created_study_epoch.order:
-                raise ValueError("Order is too big.")
+                raise exceptions.ValidationException("Order is too big.")
             for epoch in all_epochs[created_study_epoch.order :]:
                 epoch.order += 1
         else:
             created_study_epoch.order = len(all_epochs) + 1
         created_study_epoch.uid = "preview"
-        return self._transform_all_to_response_model(created_study_epoch)
+        return self._transform_all_to_response_model(
+            created_study_epoch, study_visit_count=0
+        )
 
     @db.transaction
     def edit(
         self,
+        study_uid: str,
         study_epoch_uid: str,
         study_epoch_input: StudyEpochEditInput,
     ):
@@ -637,9 +652,17 @@ class StudyEpochService:
         study_epoch = self.repo.find_by_uid(
             uid=study_epoch_uid, study_uid=study_epoch_input.study_uid
         )
+        study_visits = self.visit_repo.find_all_visits_by_study_uid(study_uid)
+        timeline = TimelineAR(study_uid, _visits=study_visits)
+        visits = timeline.collect_visits_to_epochs(
+            self.repo.find_all_epochs_by_study(study_uid)
+        )
+
         fill_missing_values_in_base_model_from_reference_base_model(
             base_model_with_missing_values=study_epoch_input,
-            reference_base_model=self._transform_all_to_response_model(study_epoch),
+            reference_base_model=self._transform_all_to_response_model(
+                study_epoch, study_visit_count=len(visits[study_epoch.uid])
+            ),
         )
         self._edit_study_epoch_vo(
             study_epoch_to_edit=study_epoch, study_epoch_edit_input=study_epoch_input
@@ -647,7 +670,9 @@ class StudyEpochService:
 
         updated_item = self.repo.save(study_epoch)
 
-        return self._transform_all_to_response_model(updated_item)
+        return self._transform_all_to_response_model(
+            updated_item, study_visit_count=len(visits[study_epoch.uid])
+        )
 
     @db.transaction
     def reorder(self, study_epoch_uid: str, study_uid: str, new_order: int):
@@ -666,9 +691,11 @@ class StudyEpochService:
                 epoch = epoch_checked
 
         if new_order < 0:
-            raise ValueError("New order cannot be lesser than 0")
+            raise exceptions.ValidationException("New order cannot be lesser than 0")
         if new_order > len(study_epochs):
-            raise ValueError(f"New order cannot be greater than {len(study_epochs)}")
+            raise exceptions.ValidationException(
+                f"New order cannot be greater than {len(study_epochs)}"
+            )
         if new_order > old_order:
             start_order = old_order + 1
             end_order = new_order + 1
@@ -680,7 +707,9 @@ class StudyEpochService:
         for i in range(start_order, end_order):
             replaced_epoch = study_epochs[i]
             if len(replaced_epoch.visits()) > 0 and len(epoch.visits()) > 0:
-                raise ValueError("Cannot reorder epochs that already have visits")
+                raise exceptions.ValidationException(
+                    "Cannot reorder epochs that already have visits"
+                )
             replaced_epoch.set_order(i + order_modifier)
             self.repo.save(replaced_epoch)
         epoch.set_order(new_order + 1)
@@ -689,13 +718,22 @@ class StudyEpochService:
         epochs_in_subtype = self._get_list_of_epochs_in_subtype(
             all_epochs=study_epochs, epoch_subtype=epoch.subtype.name
         )
+        study_visits = self.visit_repo.find_all_visits_by_study_uid(study_uid)
+        timeline = TimelineAR(study_uid, _visits=study_visits)
+        visits = timeline.collect_visits_to_epochs(study_epochs)
+
         if len(epochs_in_subtype) > 1:
             # After reordering we need to synchronize the epochs in a given epoch subtype
             # if we had more than one epoch in a given epoch subtype
             self._synchronize_epoch_orders(
                 epochs_to_synchronize=epochs_in_subtype, all_epochs=study_epochs
             )
-        return self._transform_all_to_response_model(epoch)
+        return self._transform_all_to_response_model(
+            epoch,
+            study_visit_count=next(
+                (len(visits[sp.uid]) for sp in study_epochs if sp.uid == epoch.uid), 0
+            ),
+        )
 
     @db.transaction
     def delete(self, study_uid: str, study_epoch_uid: str):
@@ -783,8 +821,14 @@ class StudyEpochService:
         study_uid: str,
     ) -> Sequence[StudyEpochVersion]:
         all_versions = self.repo.get_all_versions(uid=epoch_uid, study_uid=study_uid)
+        study_visits = self.visit_repo.find_all_visits_by_study_uid(study_uid)
+        timeline = TimelineAR(study_uid, _visits=study_visits)
+        visits = timeline.collect_visits_to_epochs(all_versions)
+
         versions = [
-            self._transform_all_to_response_history_model(_).dict()
+            self._transform_all_to_response_history_model(
+                _, study_visit_count=len(visits[_.uid])
+            ).dict()
             for _ in all_versions
         ]
         data = calculate_diffs(versions, StudyEpochVersion)
@@ -795,11 +839,18 @@ class StudyEpochService:
         self,
         study_uid: str,
     ) -> Sequence[StudyEpochVersion]:
+        study_epochs = self.repo.find_all_epochs_by_study(study_uid=study_uid)
+
+        study_visits = self.visit_repo.find_all_visits_by_study_uid(study_uid)
+        timeline = TimelineAR(study_uid, _visits=study_visits)
+        visits = timeline.collect_visits_to_epochs(study_epochs)
+
         data = calculate_diffs_history(
             get_all_object_versions=self.repo.get_all_epoch_versions,
             transform_all_to_history_model=self._transform_all_to_response_history_model,
             study_uid=study_uid,
             version_object_class=StudyEpochVersion,
+            study_visits=visits,
         )
         return data
 
@@ -807,9 +858,9 @@ class StudyEpochService:
         self,
         study_uid: str,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ):
         all_items = self.get_all_epochs(study_uid=study_uid)

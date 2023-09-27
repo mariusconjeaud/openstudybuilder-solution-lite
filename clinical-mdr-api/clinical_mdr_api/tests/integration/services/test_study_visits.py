@@ -57,6 +57,19 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.epoch2 = create_study_epoch("EpochSubType_0002")
         self.epoch3 = create_study_epoch("EpochSubType_0003")
         self.DAYUID = get_unit_uid_by_name("day")
+        self.flowchart_group_codelist = TestUtils.create_ct_codelist(
+            sponsor_preferred_name="Flowchart Group",
+            extensible=True,
+            approve=True,
+            catalogue_name="catalogue",
+            library_name="Sponsor",
+        )
+        self.flowchart_group = TestUtils.create_ct_term(
+            sponsor_preferred_name="Subject Information",
+            codelist_uid=self.flowchart_group_codelist.codelist_uid,
+            catalogue_name="catalogue",
+            library_name="Sponsor",
+        )
 
     def test__list__visits_studies(self):
         inputs = dict(
@@ -221,6 +234,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -350,6 +364,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -430,6 +445,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -652,6 +668,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -697,6 +714,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -752,6 +770,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -810,6 +829,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -896,6 +916,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -909,6 +930,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -922,6 +944,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -963,6 +986,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -1007,7 +1031,6 @@ class TestStudyVisitManagement(unittest.TestCase):
             "description": "description",
             "start_rule": "start_rule",
             "end_rule": "end_rule",
-            "note": "note",
             "visit_contact_mode_uid": "VisitContactMode_0001",
             "visit_type_uid": "VisitType_0003",
             "is_global_anchor_visit": False,
@@ -1030,6 +1053,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -1093,6 +1117,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -1103,7 +1128,6 @@ class TestStudyVisitManagement(unittest.TestCase):
             "description": "description",
             "start_rule": "start_rule",
             "end_rule": "end_rule",
-            "note": "note",
             "visit_contact_mode_uid": "VisitContactMode_0001",
             "visit_type_uid": "VisitType_0003",
             "is_global_anchor_visit": False,
@@ -1127,6 +1151,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -1207,6 +1232,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -1273,15 +1299,39 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
         # assign some study activity schedule
-        ar1 = TestUtils.create_activity(name="ar1", library_name="Sponsor")
+        activity_group = TestUtils.create_activity_group(name="activity_group")
+        activity_subgroup = TestUtils.create_activity_subgroup(
+            name="activity_subgroup", activity_groups=[activity_group.uid]
+        )
+        ar1 = TestUtils.create_activity(
+            name="ar1",
+            library_name="Sponsor",
+            activity_groups=[activity_group.uid],
+            activity_subgroups=[activity_subgroup.uid],
+        )
+        ar2 = TestUtils.create_activity(
+            name="ar2",
+            library_name="Sponsor",
+            activity_groups=[activity_group.uid],
+            activity_subgroups=[activity_subgroup.uid],
+        )
+        ar3 = TestUtils.create_activity(
+            name="ar3",
+            library_name="Sponsor",
+            activity_groups=[activity_group.uid],
+            activity_subgroups=[activity_subgroup.uid],
+        )
         sa1 = create_study_activity(
             study_uid=self.study.uid,
             activity_uid=ar1.uid,
-            flowchart_group_uid="VisitContactMode_0001",
+            activity_subgroup_uid=activity_subgroup.uid,
+            activity_group_uid=activity_group.uid,
+            flowchart_group_uid=self.flowchart_group.term_uid,
         )
         sas1 = TestUtils.create_study_activity_schedule(
             study_uid=self.study.uid,
@@ -1327,13 +1377,16 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
         sa2 = create_study_activity(
             study_uid=self.study.uid,
-            activity_uid=ar1.uid,
-            flowchart_group_uid="VisitContactMode_0001",
+            activity_uid=ar2.uid,
+            activity_subgroup_uid=activity_subgroup.uid,
+            activity_group_uid=activity_group.uid,
+            flowchart_group_uid=self.flowchart_group.term_uid,
         )
         sas2 = TestUtils.create_study_activity_schedule(
             study_uid=self.study.uid,
@@ -1342,8 +1395,10 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         sa3 = create_study_activity(
             study_uid=self.study.uid,
-            activity_uid=ar1.uid,
-            flowchart_group_uid="VisitContactMode_0001",
+            activity_uid=ar3.uid,
+            activity_subgroup_uid=activity_subgroup.uid,
+            activity_group_uid=activity_group.uid,
+            flowchart_group_uid=self.flowchart_group.term_uid,
         )
         sas3 = TestUtils.create_study_activity_schedule(
             study_uid=self.study.uid,
@@ -1393,7 +1448,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             sas3.study_activity_uid,
             sec_vis_all_schedules[1].study_activity_uid,
         )
-        # the third visit activities should be overwriten from the second study
+        # the third visit activities should be overwritten from the second study
         third_vis_all_schedules = schedule_service.get_all_schedules_for_specific_visit(
             study_uid=self.study.uid, study_visit_uid=third_visit.uid
         )
@@ -1474,6 +1529,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -1583,6 +1639,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )

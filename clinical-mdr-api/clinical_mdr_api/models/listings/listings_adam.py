@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import Self, Sequence
 
 from pydantic import Field
 
@@ -9,7 +9,7 @@ class StudyEndpntAdamListing(BaseModel):
     STUDYID: str = Field(
         ..., title="Study Identifier", description="Unique identifier for a study."
     )
-    OBJTVLVL: Optional[str] = Field(
+    OBJTVLVL: str | None = Field(
         None,
         title="Objective Level",
         description="Objective Level",
@@ -24,69 +24,69 @@ class StudyEndpntAdamListing(BaseModel):
         title="Objective Plain Text",
         description="""Objective Plain Text""",
     )
-    ENDPNTLVL: Optional[str] = Field(
+    ENDPNTLVL: str | None = Field(
         None,
         title="Endpoint Level",
         description="Endpoint Level",
     )
-    ENDPNTSL: Optional[str] = Field(
+    ENDPNTSL: str | None = Field(
         None,
         title="Endpoint Sub-level",
         description="Endpoint Sub-level",
     )
-    ENDPNT: Optional[str] = Field(
+    ENDPNT: str | None = Field(
         None,
         title="Endpoint Plain",
         description="Endpoint Plain",
     )
-    ENDPNTPT: Optional[str] = Field(
+    ENDPNTPT: str | None = Field(
         None,
         title="Endpoint Plain Text",
         description="Endpoint Plain Text",
     )
-    UNITDEF: Optional[str] = Field(
+    UNITDEF: str | None = Field(
         None,
         title="Unit Definition",
         description="Unit Definition",
     )
-    UNIT: Optional[str] = Field(
+    UNIT: str | None = Field(
         None,
         title="Unit",
         description="Unit",
     )
-    TMFRM: Optional[str] = Field(
+    TMFRM: str | None = Field(
         None,
         title="Time Frame",
         description="Time Frame",
     )
-    TMFRMPT: Optional[str] = Field(
+    TMFRMPT: str | None = Field(
         None,
         title="Time Frame Plain Text",
         description="Time Frame Plain Text",
     )
-    RACT: Optional[Sequence[str]] = Field(
+    RACT: Sequence[str] | None = Field(
         None,
         title="Related Activities",
         description="Array list for all related Activity Group as Template Parameter in either Objective or Endpoint",
     )
-    RACTSGRP: Optional[Sequence[str]] = Field(
+    RACTSGRP: Sequence[str] | None = Field(
         None,
         title="Related Activity Subroups",
         description="Array list for all related Activity Subgroup as Template Parameter in either Objective or Endpoint",
     )
-    RACTGRP: Optional[Sequence[str]] = Field(
+    RACTGRP: Sequence[str] | None = Field(
         None,
         title="Related Activity Groups",
         description="Array list for all related Activity Group as Template Parameter in either Objective or Endpoint",
     )
-    RACTINST: Optional[Sequence[str]] = Field(
+    RACTINST: Sequence[str] | None = Field(
         None,
         title="Related Activity Instances",
         description="Array list for all related Activity Instamces as Template Parameter in either Objective or Endpoint",
     )
 
     @classmethod
-    def from_query(cls, query_result: dict) -> "StudyVisitAdamListing":
+    def from_query(cls, query_result: dict) -> Self:
         return cls(
             STUDYID=query_result["STUDYID"],
             OBJTVLVL=query_result["OBJTVLVL"],
@@ -152,7 +152,7 @@ class StudyVisitAdamListing(BaseModel):
     )
 
     @classmethod
-    def from_query(cls, query_result: dict) -> "StudyVisitAdamListing":
+    def from_query(cls, query_result: dict) -> Self:
         return cls(
             STUDYID=query_result["STUDYID"],
             VISTPCD=query_result["VISIT_TYPE_NAME"],

@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from pydantic import Field
 
 from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
@@ -9,17 +7,17 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class TemplateParameterMultiSelectInput(BaseModel):
-    terms: Optional[List[IndexedTemplateParameterTerm]] = Field(
+    terms: list[IndexedTemplateParameterTerm] | None = Field(
         ...,
         title="terms",
         description="A list of indexed template parameter terms that are used at this position in the template.",
     )
-    value: Optional[float] = Field(
+    value: float | None = Field(
         None,
         title="value",
         description="A numeric value used at this position in the template.",
     )
-    conjunction: Optional[str] = Field(
+    conjunction: str | None = Field(
         None,
         title="conjunction",
         description="If the selected template parameter term has multiple values, "

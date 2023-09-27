@@ -32,7 +32,7 @@ parameters:
   - 'EDU'
 
 - name: IMPORT_BRANCH
-  displayName: Branch of data-import
+  displayName: Branch of studybuilder-import
   default: main
 - name: EXPORT_PIPELINE_BUILD_ID
   displayName: Build ID of the pipeline run to fetch data from.
@@ -105,7 +105,7 @@ stages:
       clean: true
 
     - script: |
-        cd data-import
+        cd studybuilder-import
         git fetch origin
         git checkout ${{parameters.IMPORT_BRANCH}}
         git pull
@@ -168,7 +168,7 @@ stages:
     # Use CA Certs export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
     # Direct API export API_BASE_URL="https://app-api-$(azmd.namesuffix).azurewebsites.net"
     - script: |
-        cd $(Build.SourcesDirectory)/data-import
+        cd $(Build.SourcesDirectory)/studybuilder-import
         python3 -m venv venv --clear
         pip install pipenv
         python -m pipenv install
@@ -194,7 +194,7 @@ stages:
         echo "# Import log for environment ${{parameters.ENV_REFERENCE}}" > import_log.md
         echo "" >> import_log.md
         echo "## Pipeline options" >> import_log.md
-        echo "- Branch of data-import: ${{parameters.IMPORT_BRANCH}}" >> import_log.md
+        echo "- Branch of studybuilder-import: ${{parameters.IMPORT_BRANCH}}" >> import_log.md
         echo "- Source build ID: ${{parameters.EXPORT_PIPELINE_BUILD_ID}}" >> import_log.md
         echo "- Parallel deployments: ${{parameters.DEPLOY_ID_NUMBER}}" >> import_log.md
         echo "" >> import_log.md
@@ -205,7 +205,7 @@ stages:
         python -m pipenv run mockdatajson 2>&1 | tee -a import_log.md
         echo "\`\`\`" >> import_log.md
         echo "Upload summary"
-        echo "##vso[task.uploadsummary]$(Build.SourcesDirectory)/data-import/import_log.md"
+        echo "##vso[task.uploadsummary]$(Build.SourcesDirectory)/studybuilder-import/import_log.md"
       displayName: "Run import"
 
 

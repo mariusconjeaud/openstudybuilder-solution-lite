@@ -1,5 +1,7 @@
 import { bus } from '@/main'
 import { UserManager } from 'oidc-client-ts'
+import roles from '@/constants/roles'
+import { Buffer } from 'buffer'
 
 let manager = null
 
@@ -40,11 +42,7 @@ const authInterface = {
         if (!user || user.expired) {
           return null
         }
-        const parts = user.id_token.split('.')
-        const payload = decodeURIComponent(
-          escape(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
-        )
-        return JSON.parse(payload)
+        return JSON.parse(Buffer.from(user.access_token.split('.')[1], 'base64').toString())
       })
   },
   oauthLogout: async function () {
@@ -64,5 +62,6 @@ export default {
       scope: `openid profile email offline_access api://${Vue.prototype.$config.AUTH_APP_ID}/API.call`
     })
     Vue.prototype.$auth = authInterface
+    Vue.prototype.$roles = roles
   }
 }

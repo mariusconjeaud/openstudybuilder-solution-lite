@@ -1,5 +1,5 @@
 import re
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Self
 
 from pydantic import Field, validator
 
@@ -18,21 +18,19 @@ from clinical_mdr_api.models.concepts.odms.odm_common_models import (
 
 
 class OdmVendorNamespace(ConceptModel):
-    prefix: Optional[str]
-    url: Optional[str]
-    vendor_elements: List[OdmVendorElementSimpleModel]
-    vendor_attributes: List[OdmVendorAttributeSimpleModel]
-    possible_actions: List[str]
+    prefix: str | None
+    url: str | None
+    vendor_elements: list[OdmVendorElementSimpleModel]
+    vendor_attributes: list[OdmVendorAttributeSimpleModel]
+    possible_actions: list[str]
 
     @classmethod
     def from_odm_vendor_namespace_ar(
         cls,
         odm_vendor_namespace_ar: OdmVendorNamespaceAR,
-        find_odm_vendor_element_by_uid: Callable[[str], Optional[OdmVendorElementAR]],
-        find_odm_vendor_attribute_by_uid: Callable[
-            [str], Optional[OdmVendorAttributeAR]
-        ],
-    ) -> "OdmVendorNamespace":
+        find_odm_vendor_element_by_uid: Callable[[str], OdmVendorElementAR | None],
+        find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
+    ) -> Self:
         return cls(
             uid=odm_vendor_namespace_ar._uid,
             name=odm_vendor_namespace_ar.concept_vo.name,
@@ -93,7 +91,7 @@ class OdmVendorNamespaceVersion(OdmVendorNamespace):
     Class for storing OdmVendorNamespace and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

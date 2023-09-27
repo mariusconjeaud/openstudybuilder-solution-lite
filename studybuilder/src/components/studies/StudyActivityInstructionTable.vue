@@ -25,7 +25,7 @@
       :title="$t('StudyActivityInstructionTable.open_batch_form')"
       >
       <v-icon>
-        mdi-plus-box-multiple
+        mdi-plus-box-multiple-outline
       </v-icon>
     </v-btn>
   </div>
@@ -80,7 +80,7 @@
                     <div class="d-flex align-center">
                       <v-checkbox
                         @change="value => toggleSubgroupActivitiesSelection(flowchartGroup, group, subgroup, value)"
-                        on-icon="mdi-checkbox-multiple-marked"
+                        on-icon="mdi-checkbox-multiple-marked-outline"
                         off-icon="mdi-checkbox-multiple-blank-outline"
                         hide-details
                         />
@@ -187,14 +187,16 @@ export default {
       actions: [
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.editActivityInstruction
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.deleteActivityInstruction
         }
       ],

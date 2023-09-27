@@ -3,17 +3,19 @@ from typing import Sequence
 from fastapi import APIRouter, Body, Depends
 
 from clinical_mdr_api import models
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.clinical_programmes import (
     clinical_programme as clinical_programme_service,
 )
 
+# Prefixed with "/clinical-programmes"
 router = APIRouter()
 
 
 @router.get(
     "",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all clinical programmes.",
     response_model=Sequence[models.ClinicalProgramme],
     status_code=200,
@@ -28,6 +30,7 @@ def get_projects() -> Sequence[models.ClinicalProgramme]:
 
 @router.post(
     "",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new clinical programme.",
     response_model=models.ClinicalProgramme,
     status_code=201,

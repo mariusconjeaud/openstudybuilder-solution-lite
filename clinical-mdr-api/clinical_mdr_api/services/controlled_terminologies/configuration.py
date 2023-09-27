@@ -1,8 +1,7 @@
 from datetime import datetime
-from typing import Callable, Optional, Sequence, cast
+from typing import Callable, Sequence, cast
 
 from neomodel import db
-from pydantic.main import BaseModel
 
 from clinical_mdr_api.domains.controlled_terminologies.configurations import (
     CTConfigAR,
@@ -15,17 +14,14 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     VersioningException,
 )
-from clinical_mdr_api.exceptions import (
-    BusinessLogicException,
-    NotFoundException,
-    ValidationException,
-)
+from clinical_mdr_api.exceptions import BusinessLogicException, NotFoundException
 from clinical_mdr_api.models.controlled_terminologies.configuration import (
     CTConfigModel,
     CTConfigOGM,
     CTConfigPatchInput,
     CTConfigPostInput,
 )
+from clinical_mdr_api.models.utils import BaseModel
 from clinical_mdr_api.services._meta_repository import MetaRepository
 
 
@@ -42,11 +38,7 @@ class CTConfigService:
         self._user_id = user_id
 
     @db.transaction
-    def get_all(self) -> Sequence[CTConfigOGM]:
-        # configs = [
-        #     CTConfigModel.from_ct_config_ar(_)
-        #     for _ in self._repos.ct_config_repository.find_all()
-        # ]
+    def get_all(self) -> list[CTConfigOGM]:
         return self._repos.ct_config_repository.find_all()
 
     @db.transaction
@@ -54,9 +46,9 @@ class CTConfigService:
         self,
         uid: str,
         *,
-        at_specified_datetime: Optional[datetime],
-        status: Optional[str],
-        version: Optional[str],
+        at_specified_datetime: datetime | None,
+        status: str | None,
+        version: str | None,
     ) -> CTConfigModel:
         status_as_enum = LibraryItemStatus(status) if status is not None else None
 
@@ -82,17 +74,12 @@ class CTConfigService:
 
     @db.transaction
     def post(self, post_input: CTConfigPostInput) -> CTConfigModel:
-        try:
-            ct_config_ar = CTConfigAR.from_input_values(
-                author=self._user_id,
-                generate_uid_callback=self._repos.ct_config_repository.generate_uid_callback,
-                ct_config_value=self._post_input_to_codelist_config_value_vo(
-                    post_input
-                ),
-                ct_configuration_exists_by_name_callback=self._repos.ct_config_repository.check_exists_by_name,
-            )
-        except ValueError as value_error:
-            raise ValidationException(value_error.args[0]) from value_error
+        ct_config_ar = CTConfigAR.from_input_values(
+            author=self._user_id,
+            generate_uid_callback=self._repos.ct_config_repository.generate_uid_callback,
+            ct_config_value=self._post_input_to_codelist_config_value_vo(post_input),
+            ct_configuration_exists_by_name_callback=self._repos.ct_config_repository.check_exists_by_name,
+        )
         self._repos.ct_config_repository.save(ct_config_ar)
         return CTConfigModel.from_ct_config_ar(ct_config_ar)
 
@@ -115,8 +102,6 @@ class CTConfigService:
                 new_ct_config_value=new_value,
                 ct_configuration_exists_by_name_callback=self._repos.ct_config_repository.check_exists_by_name,
             )
-        except ValueError as err:
-            raise ValidationException(err.args[0]) from err
         except VersioningException as err:
             raise BusinessLogicException(err.msg) from err
         self._repos.ct_config_repository.save(ct_config_ar)
@@ -131,8 +116,6 @@ class CTConfigService:
             raise NotFoundException("Resource not found.")
         try:
             ct_config_ar.soft_delete()
-        except ValueError as err:
-            raise ValidationException(err.args[0]) from err
         except VersioningException as err:
             raise BusinessLogicException(err.msg) from err
         self._repos.ct_config_repository.save(ct_config_ar)
@@ -171,16 +154,10 @@ class CTConfigService:
             raise NotFoundException("Resource not found.")
         try:
             workflow_ar_method(ct_config_ar)
-        except ValueError as err:
-            raise ValidationException(err.args[0]) from err
         except VersioningException as err:
             raise BusinessLogicException(err.msg) from err
         self._repos.ct_config_repository.save(ct_config_ar)
         return CTConfigModel.from_ct_config_ar(ct_config_ar)
-
-    def _is_library_editable(self, library_name: str) -> Optional[bool]:
-        library_ar = self._repos.library_repository.find_by_name(library_name)
-        return library_ar.is_editable if library_ar is not None else None
 
     def _post_input_to_codelist_config_value_vo(
         self, post_input: CTConfigPostInput

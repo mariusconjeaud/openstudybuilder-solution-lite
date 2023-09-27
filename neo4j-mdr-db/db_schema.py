@@ -4,7 +4,6 @@ Contains all statements definining the db schema, such as:
  - CREATE CONSTRAINT ...
 """
 
-
 SCHEMA_CLEAR_QUERY = "CALL apoc.schema.assert({}, {})"
 CONSTRAINT_TYPE_NODE_KEY = "NODE KEY"
 CONSTRAINT_TYPE_UNIQUE = "UNIQUE"
@@ -28,6 +27,7 @@ INDEXES = [
     ("StudyActivitySchedule", "uid"),
     ("StudyBranchArm", "uid"),
     ("StudyDiseaseMilestone", "uid"),
+    ("StudySoAFootnote", "uid"),
     ("OrderedStudySelectionDiseaseMilestone", "uid"),
     ("TemplateParameterTermValue", "name"),
     ("CTCodelistAttributesValue", "name"),
@@ -45,6 +45,8 @@ INDEXES = [
     ("ActivitySubGroupValue", "name"),
     ("ActivityValue", "name"),
     ("ActivityInstanceValue", "name"),
+    ("ActivityInstanceClassValue", "name"),
+    ("ActivityItemClassValue", "name"),
     ("LagTimeValue", "name"),
     ("NumericValue", "name"),
     ("SimpleConceptValue", "name"),
@@ -120,6 +122,9 @@ CONSTRAINTS = [
     ("ActivitySubGroupRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("ActivityRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("ActivityInstanceRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("ActivityItem", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("ActivityInstanceClassRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("ActivityItemClassRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("NumericValueRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("LagTimeRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("SimpleConceptRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
@@ -150,8 +155,6 @@ CONSTRAINTS = [
     ("CTPackage", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("CTPackageCodelist", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("CTPackageTerm", "uid", CONSTRAINT_TYPE_NODE_KEY),
-    ("ActivityDefinition", "uid", CONSTRAINT_TYPE_NODE_KEY),
-    ("ActivityItem", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("ClinicalProgramme", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("Project", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("CTTermNameRoot", "uid", CONSTRAINT_TYPE_UNIQUE),
@@ -170,6 +173,10 @@ CONSTRAINTS = [
     ("Dataset", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("VariableClass", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("DatasetVariable", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("CommentTopic", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("CommentTopic", "topic_path", CONSTRAINT_TYPE_NODE_KEY),
+    ("CommentThread", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("CommentReply", "uid", CONSTRAINT_TYPE_NODE_KEY),
 ]
 
 
@@ -240,3 +247,16 @@ def build_schema_queries():
         queries.append(query)
 
     return queries
+
+
+def drop_indexes_and_constraints(session):
+    """Drops all indexes and constraints"""
+    for constraint in session.run("SHOW ALL CONSTRAINTS YIELD name"):
+        drop_statement = "DROP CONSTRAINT " + constraint[0]
+        print(drop_statement)
+        session.run(drop_statement)
+
+    for index in session.run("SHOW ALL INDEXES YIELD name"):
+        drop_statement = "DROP INDEX " + index[0]
+        print(drop_statement)
+        session.run(drop_statement)

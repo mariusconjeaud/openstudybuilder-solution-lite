@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from neomodel import db
 
 from clinical_mdr_api import exceptions
@@ -235,80 +233,74 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
     def _manage_terms(
         self,
         item_uid: str,
-        input_terms: List[OdmItemTermRelationshipInput],
+        input_terms: list[OdmItemTermRelationshipInput],
         for_update: bool = False,
     ):
-        try:
-            if for_update:
-                self._repos.odm_item_repository.remove_relation(
-                    uid=item_uid,
-                    relation_uid=None,
-                    relationship_type=RelationType.TERM,
-                    disconnect_all=True,
-                )
-
-            (
-                items,
-                prop_names,
-            ) = self._repos.ct_term_attributes_repository.get_term_attributes_by_term_uids(
-                [term.uid for term in input_terms]
+        if for_update:
+            self._repos.odm_item_repository.remove_relation(
+                uid=item_uid,
+                relation_uid=None,
+                relationship_type=RelationType.TERM,
+                disconnect_all=True,
             )
 
-            terms = [dict(zip(prop_names, item)) for item in items]
+        (
+            items,
+            prop_names,
+        ) = self._repos.ct_term_attributes_repository.get_term_attributes_by_term_uids(
+            [term.uid for term in input_terms]
+        )
 
-            for input_term in input_terms:
-                self._repos.odm_item_repository.add_relation(
-                    uid=item_uid,
-                    relation_uid=input_term.uid,
-                    relationship_type=RelationType.TERM,
-                    parameters={
-                        "mandatory": input_term.mandatory,
-                        "order": input_term.order,
-                        "display_text": input_term.display_text
-                        if not any(
-                            input_term.uid == term["term_uid"]
-                            and input_term.display_text == term["nci_preferred_name"]
-                            for term in terms
-                        )
-                        else None,
-                    },
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        terms = [dict(zip(prop_names, item)) for item in items]
+
+        for input_term in input_terms:
+            self._repos.odm_item_repository.add_relation(
+                uid=item_uid,
+                relation_uid=input_term.uid,
+                relationship_type=RelationType.TERM,
+                parameters={
+                    "mandatory": input_term.mandatory,
+                    "order": input_term.order,
+                    "display_text": input_term.display_text
+                    if not any(
+                        input_term.uid == term["term_uid"]
+                        and input_term.display_text == term["nci_preferred_name"]
+                        for term in terms
+                    )
+                    else None,
+                },
+            )
 
     def _manage_unit_definitions(
         self,
         item_uid: str,
-        unit_definitions: List[OdmItemUnitDefinitionRelationshipInput],
+        unit_definitions: list[OdmItemUnitDefinitionRelationshipInput],
         for_update: bool = False,
     ):
-        try:
-            if for_update:
-                self._repos.odm_item_repository.remove_relation(
-                    uid=item_uid,
-                    relation_uid=None,
-                    relationship_type=RelationType.UNIT_DEFINITION,
-                    disconnect_all=True,
-                )
+        if for_update:
+            self._repos.odm_item_repository.remove_relation(
+                uid=item_uid,
+                relation_uid=None,
+                relationship_type=RelationType.UNIT_DEFINITION,
+                disconnect_all=True,
+            )
 
-            for unit_definition in unit_definitions:
-                self._repos.odm_item_repository.add_relation(
-                    uid=item_uid,
-                    relation_uid=unit_definition.uid,
-                    relationship_type=RelationType.UNIT_DEFINITION,
-                    parameters={
-                        "mandatory": unit_definition.mandatory,
-                        "order": unit_definition.order,
-                    },
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        for unit_definition in unit_definitions:
+            self._repos.odm_item_repository.add_relation(
+                uid=item_uid,
+                relation_uid=unit_definition.uid,
+                relationship_type=RelationType.UNIT_DEFINITION,
+                parameters={
+                    "mandatory": unit_definition.mandatory,
+                    "order": unit_definition.order,
+                },
+            )
 
     def calculate_item_length_value(
         self,
-        length: Optional[int],
-        codelist_uid: Optional[str],
-        input_terms: List[OdmItemTermRelationshipInput],
+        length: int | None,
+        codelist_uid: str | None,
+        input_terms: list[OdmItemTermRelationshipInput],
     ):
         if length:
             return length
@@ -365,14 +357,11 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                 disconnect_all=True,
             )
 
-        try:
-            self._repos.odm_item_repository.add_relation(
-                uid=uid,
-                relation_uid=odm_item_activity_post_input.uid,
-                relationship_type=RelationType.ACTIVITY,
-            )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        self._repos.odm_item_repository.add_relation(
+            uid=uid,
+            relation_uid=odm_item_activity_post_input.uid,
+            relationship_type=RelationType.ACTIVITY,
+        )
 
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
@@ -382,7 +371,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
     def add_vendor_elements(
         self,
         uid: str,
-        odm_vendor_relation_post_input: List[OdmVendorRelationPostInput],
+        odm_vendor_relation_post_input: list[OdmVendorRelationPostInput],
         override: bool = False,
     ) -> OdmItem:
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
@@ -403,18 +392,15 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                 disconnect_all=True,
             )
 
-        try:
-            for vendor_element in odm_vendor_relation_post_input:
-                self._repos.odm_item_repository.add_relation(
-                    uid=uid,
-                    relation_uid=vendor_element.uid,
-                    relationship_type=RelationType.VENDOR_ELEMENT,
-                    parameters={
-                        "value": vendor_element.value,
-                    },
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        for vendor_element in odm_vendor_relation_post_input:
+            self._repos.odm_item_repository.add_relation(
+                uid=uid,
+                relation_uid=vendor_element.uid,
+                relationship_type=RelationType.VENDOR_ELEMENT,
+                parameters={
+                    "value": vendor_element.value,
+                },
+            )
 
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
@@ -424,7 +410,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
     def add_vendor_attributes(
         self,
         uid: str,
-        odm_vendor_relation_post_input: List[OdmVendorRelationPostInput],
+        odm_vendor_relation_post_input: list[OdmVendorRelationPostInput],
         override: bool = False,
     ) -> OdmItem:
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
@@ -445,18 +431,15 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                 disconnect_all=True,
             )
 
-        try:
-            for vendor_attribute in odm_vendor_relation_post_input:
-                self._repos.odm_item_repository.add_relation(
-                    uid=uid,
-                    relation_uid=vendor_attribute.uid,
-                    relationship_type=RelationType.VENDOR_ATTRIBUTE,
-                    parameters={
-                        "value": vendor_attribute.value,
-                    },
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        for vendor_attribute in odm_vendor_relation_post_input:
+            self._repos.odm_item_repository.add_relation(
+                uid=uid,
+                relation_uid=vendor_attribute.uid,
+                relationship_type=RelationType.VENDOR_ATTRIBUTE,
+                parameters={
+                    "value": vendor_attribute.value,
+                },
+            )
 
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
@@ -466,7 +449,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
     def add_vendor_element_attributes(
         self,
         uid: str,
-        odm_vendor_relation_post_input: List[OdmVendorRelationPostInput],
+        odm_vendor_relation_post_input: list[OdmVendorRelationPostInput],
         override: bool = False,
     ) -> OdmItem:
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
@@ -487,18 +470,15 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                 disconnect_all=True,
             )
 
-        try:
-            for vendor_element_attribute in odm_vendor_relation_post_input:
-                self._repos.odm_item_repository.add_relation(
-                    uid=uid,
-                    relation_uid=vendor_element_attribute.uid,
-                    relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
-                    parameters={
-                        "value": vendor_element_attribute.value,
-                    },
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        for vendor_element_attribute in odm_vendor_relation_post_input:
+            self._repos.odm_item_repository.add_relation(
+                uid=uid,
+                relation_uid=vendor_element_attribute.uid,
+                relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
+                parameters={
+                    "value": vendor_element_attribute.value,
+                },
+            )
 
         odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 

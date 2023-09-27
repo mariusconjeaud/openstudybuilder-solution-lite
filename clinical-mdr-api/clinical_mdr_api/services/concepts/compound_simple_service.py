@@ -33,5 +33,5 @@ class CompoundSimpleService(ConceptGenericService[CompoundAR]):
 
     def _edit_aggregate(
         self, item: CompoundAR, concept_edit_input: CompoundEditInput
-    ) -> CompoundAR:
+    ) -> None:
         return None

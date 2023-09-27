@@ -1,6 +1,5 @@
 from neomodel import db
 
-from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
@@ -68,50 +67,16 @@ class CriteriaTemplateRepository(GenericSyntaxTemplateRepository[CriteriaTemplat
         root, item = super()._create(item)
 
         if item.type is not None and item.type[0] is not None:
-            criteria_type = self._get_criteria_type(item.type[0].uid)
+            criteria_type = self._get_template_type(item.type[0].uid)
             root.has_type.connect(criteria_type)
-        if item.indications:
-            for indication in item.indications:
-                if indication:
-                    root.has_indication.connect(self._get_indication(indication.uid))
-        if item.categories:
-            for category in item.categories:
-                if category and category[0]:
-                    root.has_category.connect(self._get_category(category[0].uid))
-        if item.sub_categories:
-            for category in item.sub_categories:
-                if category and category[0]:
-                    root.has_subcategory.connect(self._get_category(category[0].uid))
+        for indication in item.indications or []:
+            if indication:
+                root.has_indication.connect(self._get_indication(indication.uid))
+        for category in item.categories or []:
+            if category and category[0]:
+                root.has_category.connect(self._get_category(category[0].uid))
+        for category in item.sub_categories or []:
+            if category and category[0]:
+                root.has_subcategory.connect(self._get_category(category[0].uid))
 
         return item
-
-    def get_criteria_type_uid(self, template_uid: str) -> str:
-        """
-        :param: template_uid
-        :return: uid of the criteria type or None if not found
-
-        Returns the uid of the Criteria type node for the template identified by uid
-        Returns a NotFoundError is a template with provided uid doesn't exist
-        """
-        root = CriteriaTemplateRoot.nodes.get_or_none(uid=template_uid)
-        if root is None:
-            raise exceptions.NotFoundException(
-                f"Criteria template with uid {template_uid} does not exist"
-            )
-
-        ct_term = root.has_type.get()
-        return ct_term.uid
-
-    def check_exists_by_name_and_type_in_library(
-        self, name: str, library: str, type_uid: str
-    ) -> bool:
-        query = f"""
-            MATCH (:Library {{name: $library}})-[:{self.root_class.LIBRARY_REL_LABEL}]->(root:{self.root_class.__label__})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED|LATEST]->(:{self.value_class.__label__} {{name: $name}})
-            WITH DISTINCT root
-            MATCH (type {{uid: $typeUid}})<-[:HAS_TYPE]-(root)
-            RETURN root
-            """
-        result, _ = db.cypher_query(
-            query, {"name": name, "library": library, "typeUid": type_uid}
-        )
-        return len(result) > 0 and len(result[0]) > 0

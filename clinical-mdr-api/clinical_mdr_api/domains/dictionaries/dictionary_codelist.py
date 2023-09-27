@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import AbstractSet, Any, Callable, List, Optional, Tuple
+from typing import AbstractSet, Any, Callable, Self
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
     LibraryItemMetadataVO,
@@ -31,17 +32,17 @@ class DictionaryCodelistVO:
     name: str
     is_template_parameter: bool
 
-    current_terms: List[Tuple[str, str]]
-    previous_terms: List[Tuple[str, str]]
+    current_terms: list[tuple[str, str]]
+    previous_terms: list[tuple[str, str]]
 
     @classmethod
     def from_repository_values(
         cls,
         name: str,
         is_template_parameter: bool,
-        current_terms: List[Tuple[str, str]],
-        previous_terms: List[Tuple[str, str]],
-    ) -> "DictionaryCodelistVO":
+        current_terms: list[tuple[str, str]],
+        previous_terms: list[tuple[str, str]],
+    ) -> Self:
         dictionary_codelist_vo = cls(
             name=name,
             is_template_parameter=is_template_parameter,
@@ -56,12 +57,14 @@ class DictionaryCodelistVO:
         cls,
         name: str,
         is_template_parameter: bool,
-        current_terms: List[Tuple[str, str]],
-        previous_terms: List[Tuple[str, str]],
+        current_terms: list[tuple[str, str]],
+        previous_terms: list[tuple[str, str]],
         codelist_exists_by_name_callback: Callable[[str], bool] = lambda _: False,
-    ) -> "DictionaryCodelistVO":
+    ) -> Self:
         if codelist_exists_by_name_callback(name):
-            raise ValueError(f"DictionaryCodelist with name ({name}) already exists")
+            raise exceptions.ValidationException(
+                f"DictionaryCodelist with name ({name}) already exists"
+            )
 
         dictionary_codelist_vo = cls(
             name=name,
@@ -97,9 +100,9 @@ class DictionaryCodelistAR(LibraryItemAggregateRootBase):
         cls,
         uid: str,
         dictionary_codelist_vo: DictionaryCodelistVO,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> "DictionaryCodelistAR":
+    ) -> Self:
         dictionary_codelist_ar = cls(
             _uid=uid,
             _dictionary_codelist_vo=dictionary_codelist_vo,
@@ -115,11 +118,11 @@ class DictionaryCodelistAR(LibraryItemAggregateRootBase):
         author: str,
         dictionary_codelist_vo: DictionaryCodelistVO,
         library: LibraryVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-    ) -> "DictionaryCodelistAR":
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
         if not library.is_editable:
-            raise ValueError(
+            raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
         ar = cls(
@@ -133,7 +136,7 @@ class DictionaryCodelistAR(LibraryItemAggregateRootBase):
     def edit_draft(
         self,
         author: str,
-        change_description: Optional[str],
+        change_description: str | None,
         dictionary_codelist_vo: DictionaryCodelistVO,
         codelist_exists_by_name_callback: Callable[[str], bool],
     ) -> None:
@@ -144,7 +147,7 @@ class DictionaryCodelistAR(LibraryItemAggregateRootBase):
             codelist_exists_by_name_callback(dictionary_codelist_vo.name)
             and self.name != dictionary_codelist_vo.name
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"DictionaryCodelist with name ({dictionary_codelist_vo.name}) already exists."
             )
         if self._dictionary_codelist_vo != dictionary_codelist_vo:
@@ -184,7 +187,7 @@ class DictionaryCodelistAR(LibraryItemAggregateRootBase):
 
     def add_term(self, codelist_uid: str, term_uid: str, author: str) -> None:
         if term_uid in [term[0] for term in self.dictionary_codelist_vo.current_terms]:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"The codelist identified by {codelist_uid} "
                 f"already has a term identified by {term_uid}"
             )
@@ -201,7 +204,7 @@ class DictionaryCodelistAR(LibraryItemAggregateRootBase):
         if term_uid not in [
             term[0] for term in self.dictionary_codelist_vo.current_terms
         ]:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"The codelist identified by {codelist_uid} doesn't have a term identified by {term_uid}"
             )
         previous_terms = self.dictionary_codelist_vo.previous_terms

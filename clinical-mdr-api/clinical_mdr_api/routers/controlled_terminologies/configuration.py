@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Sequence
+from typing import Sequence
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
@@ -12,12 +12,13 @@ from clinical_mdr_api.models.controlled_terminologies.configuration import (
     CTConfigPostInput,
 )
 from clinical_mdr_api.models.error import ErrorResponse
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.controlled_terminologies.configuration import (
     CTConfigService,
 )
 
+# Prefixed with "/configurations"
 router = APIRouter()
 
 Service = CTConfigService
@@ -29,6 +30,7 @@ CodelistConfigUID = Path(None, description="The unique id of configuration.")
 
 @router.get(
     "",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all configurations in their latest/newest version.",
     response_model=Sequence[CTConfigOGM],
     status_code=200,
@@ -82,6 +84,7 @@ def get_all(
 
 @router.get(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the latest/newest version of a specific configuration identified by 'uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
@@ -98,14 +101,16 @@ def get_all(
 )
 def get_by_uid(
     uid: str = CodelistConfigUID,
-    at_specified_date_time: Optional[datetime] = Query(
+    at_specified_date_time: datetime
+    | None = Query(
         None,
         description="If specified, the latest/newest representation of the configuration at this point in time is returned.\n"
         "The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: "
         "'2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. "
         "If the timezone is ommitted, UTC±0 is assumed.",
     ),
-    status: Optional[LibraryItemStatus] = Query(
+    status: LibraryItemStatus
+    | None = Query(
         None,
         description="If specified, the representation of the configuration in that status is returned (if existent). "
         "This may be particularly useful if the configuration has "
@@ -114,7 +119,8 @@ def get_by_uid(
         "and you are interested in the 'Final' or 'Retired' status.\n"
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
-    version: Optional[str] = Query(
+    version: str
+    | None = Query(
         None,
         description=r"If specified, the latest/newest representation of the configuration is returned. "
         r"Only exact matches are considered. "
@@ -133,6 +139,7 @@ def get_by_uid(
 
 @router.get(
     "/{uid}/versions",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the version history of a specific configuration identified by 'uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
@@ -193,6 +200,7 @@ def get_versions(
 
 @router.post(
     "",
+    dependencies=[rbac.LIBRARY_WRITE],
     response_model=CTConfigModel,
     summary="Creates a new configuration in 'Draft' status.",
     description="""
@@ -225,6 +233,7 @@ def post(
 
 @router.patch(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Updates the configuration identified by 'uid'.",
     description="""This request is only valid if the configuration
 * is in 'Draft' status and
@@ -262,6 +271,7 @@ def patch(
 
 @router.post(
     "/{uid}/versions",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new version of the configuration identified by 'uid'.",
     description="""This request is only valid if the configuration
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) 
@@ -296,6 +306,7 @@ def new_version(
 
 @router.post(
     "/{uid}/approvals",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Approves the configuration identified by 'uid'.",
     description="""This request is only valid if the configuration
 * is in 'Draft' status
@@ -329,6 +340,7 @@ def approve(
 
 @router.delete(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Inactivates/deactivates the configuration identified by 'uid'.",
     description="""This request is only valid if the configuration
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -362,6 +374,7 @@ def inactivate(
 
 @router.post(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivates the configuration identified by 'uid'.",
     description="""This request is only valid if the configuration
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -386,7 +399,6 @@ If the request succeeds:
         },
         500: _generic_descriptions.ERROR_500,
     },
-    dependencies=[Depends(get_current_user_id)],
 )
 def reactivate(
     uid: str = CodelistConfigUID, service: Service = Depends()
@@ -396,6 +408,7 @@ def reactivate(
 
 @router.delete(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Deletes the configuration identified by 'uid'.",
     description="""This request is only valid if \n
 * the configuration is in 'Draft' status and
@@ -419,7 +432,6 @@ def reactivate(
         },
         500: _generic_descriptions.ERROR_500,
     },
-    dependencies=[Depends(get_current_user_id)],
 )
 def delete(uid: str = CodelistConfigUID, service: Service = Depends()) -> None:
     service.delete(uid)

@@ -1,11 +1,12 @@
-from typing import Any, Optional, Sequence
+from typing import Any, Sequence
 
 from fastapi import APIRouter, Depends, Query
 
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services._meta_repository import MetaRepository
 
+# Prefixed with "/admin"
 router = APIRouter()
 
 CACHE_STORE_NAMES = [
@@ -17,6 +18,7 @@ CACHE_STORE_NAMES = [
 
 @router.get(
     "/caches",
+    dependencies=[rbac.ADMIN_READ],
     summary="Returns all cache stores",
     response_model=Sequence[Any],
     status_code=200,
@@ -27,7 +29,7 @@ CACHE_STORE_NAMES = [
 )
 def get_caches(
     _current_user_id: str = Depends(get_current_user_id),
-    show_items: Optional[bool] = Query(False),
+    show_items: bool | None = Query(False),
 ) -> Sequence[Any]:
     all_repos = _get_all_repos()
     return [_get_cache_info(x, show_items) for x in all_repos]
@@ -35,6 +37,7 @@ def get_caches(
 
 @router.delete(
     "/caches",
+    dependencies=[rbac.ADMIN_WRITE],
     summary="Clears all cache stores",
     response_model=Sequence[Any],
     status_code=200,

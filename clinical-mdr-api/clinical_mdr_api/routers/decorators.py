@@ -32,7 +32,16 @@ def register_export_format(name: str):
 
 
 def _convert_headers_to_dict(headers: list) -> dict:
-    """Create a dict representation of headers."""
+    """
+    Converts a list of headers to a dictionary.
+
+    Args:
+        headers (list): The headers to convert.
+
+    Returns:
+        dict: The converted headers as a dictionary.
+    """
+
     dict_headers = collections.OrderedDict()
     for item in headers:
         if "=" in item:
@@ -44,9 +53,19 @@ def _convert_headers_to_dict(headers: list) -> dict:
 
 
 def _extract_values_from_data(data: dict, headers: dict):
-    """Extract required values from data."""
+    """
+    Extracts required values from data and yields them.
+
+    Args:
+        data (dict): The data to extract values from.
+        headers (dict): The headers containing the keys to extract.
+
+    Yields:
+        dict: The extracted values as a dictionary.
+    """
     if isinstance(data, (utils.CustomPage, utils.GenericFilteringReturn)):
         data = data.items
+
     for item in data:
         result = {}
         if not isinstance(item, dict):
@@ -87,7 +106,7 @@ def _convert_data_to_rows(data: dict, headers: list):
     for value in _extract_values_from_data(data, dict_headers):
         yield [
             # openpyxl library only supports these data types: int, float, str, bool
-            x if isinstance(x, (bool, float, int, str)) else str(x)
+            x if isinstance(x, bool | float | int | str) else str(x)
             for x in value.values()
         ]
 

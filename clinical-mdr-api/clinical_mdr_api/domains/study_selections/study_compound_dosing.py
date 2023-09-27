@@ -1,7 +1,8 @@
 import datetime
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple
+from typing import Any, Callable, Iterable, Self, Sequence
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
 from clinical_mdr_api.domains.concepts.compound import CompoundAR
 from clinical_mdr_api.exceptions import BusinessLogicException
@@ -15,38 +16,38 @@ def _raise(exc: Exception) -> Any:
 class StudyCompoundDosingVO:
     study_uid: str
     study_selection_uid: str
-    study_compound_uid: Optional[str]
-    study_element_uid: Optional[str]
+    study_compound_uid: str | None
+    study_element_uid: str | None
 
     # Study selection Versioning
     start_date: datetime.datetime
-    user_initials: Optional[str]
+    user_initials: str | None
 
     # Optional information
-    compound_uid: Optional[str] = None
-    compound_alias_uid: Optional[str] = None
-    dose_frequency_uid: Optional[str] = None
-    dose_value_uid: Optional[str] = None
+    compound_uid: str | None = None
+    compound_alias_uid: str | None = None
+    dose_frequency_uid: str | None = None
+    dose_value_uid: str | None = None
 
     @classmethod
     def from_input_values(
         cls,
-        study_compound_uid: Optional[str],
-        study_element_uid: Optional[str],
-        dose_value_uid: Optional[str],
-        dose_frequency_uid: Optional[str],
+        study_compound_uid: str | None,
+        study_element_uid: str | None,
+        dose_value_uid: str | None,
+        dose_frequency_uid: str | None,
         user_initials: str,
-        study_uid: Optional[str] = None,
-        compound_uid: Optional[str] = None,
-        compound_alias_uid: Optional[str] = None,
-        study_selection_uid: Optional[str] = None,
-        start_date: Optional[datetime.datetime] = None,
+        study_uid: str | None = None,
+        compound_uid: str | None = None,
+        compound_alias_uid: str | None = None,
+        study_selection_uid: str | None = None,
+        start_date: datetime.datetime | None = None,
         generate_uid_callback: Callable[[], str] = (
             lambda: _raise(
                 ValueError("generate_uid_callback necessary when uid not provided")
             )
         ),
-    ) -> "StudyCompoundDosingVO":
+    ) -> Self:
         if study_selection_uid is None:
             study_selection_uid = generate_uid_callback()
 
@@ -68,9 +69,7 @@ class StudyCompoundDosingVO:
 
     def validate(
         self,
-        selection_uid_by_compound_dose_and_frequency_callback: Callable[
-            ["StudyCompoundDosingVO"], str
-        ],
+        selection_uid_by_compound_dose_and_frequency_callback: Callable[[Self], str],
         compound_callback: Callable[[str], CompoundAR] = (lambda _: None),
     ) -> None:
         """
@@ -124,7 +123,7 @@ class StudySelectionCompoundDosingsAR:
 
     def get_specific_compound_dosing_selection(
         self, study_selection_uid: str
-    ) -> Tuple[StudyCompoundDosingVO, int]:
+    ) -> tuple[StudyCompoundDosingVO, int]:
         """
         Used to receive a specific VO from the AR
         :param study_selection_uid:
@@ -135,8 +134,8 @@ class StudySelectionCompoundDosingsAR:
         ):
             if selection.study_selection_uid == study_selection_uid:
                 return selection, order
-        raise ValueError(
-            f"There is no selection between the compound dosing ({study_selection_uid} and the study)"
+        raise exceptions.NotFoundException(
+            f"There is no selection between the compound dosing '{study_selection_uid}' and the study"
         )
 
     def add_compound_dosing_selection(
@@ -164,7 +163,7 @@ class StudySelectionCompoundDosingsAR:
         cls,
         study_uid: str,
         selection: Iterable[StudyCompoundDosingVO],
-    ) -> "StudySelectionCompoundDosingsAR":
+    ) -> Self:
         """
         Factory method to create a AR
         """

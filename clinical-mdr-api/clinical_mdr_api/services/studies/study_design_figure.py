@@ -1,7 +1,7 @@
 import logging
 import os
 from collections import OrderedDict
-from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence, Tuple
+from typing import Mapping, MutableMapping, Sequence
 
 import yattag
 from colour import Color
@@ -187,7 +187,11 @@ class StudyDesignFigureService:
         study_epochs = StudyEpochService(self._current_user_id).get_all_epochs(
             study_uid=study_uid, sort_by={"order": True}
         )
-        study_epochs = OrderedDict((epoch.uid, epoch) for epoch in study_epochs.items)
+        study_epochs = OrderedDict(
+            (epoch.uid, epoch)
+            for epoch in study_epochs.items
+            if epoch.epoch_subtype_name != "Basic"
+        )
         return study_epochs
 
     def _get_study_elements(
@@ -434,7 +438,7 @@ class StudyDesignFigureService:
             )
         return fig_width
 
-    def _calculate_cells(self, table, fig_width: int) -> Tuple[int, int]:
+    def _calculate_cells(self, table, fig_width: int) -> tuple[int, int]:
         """Flows the text of cells and calculates cell and row heights, returning figure width and height int px
 
         Knowing the width of each column, we can flow the text into each cell, and get the required height of each cell.
@@ -536,9 +540,7 @@ class StudyDesignFigureService:
             )
         return total_width, total_height
 
-    def _flow_cell(
-        self, cell, paddings: Tuple[int, int], center: Optional[bool] = False
-    ):
+    def _flow_cell(self, cell, paddings: tuple[int, int], center: bool | None = False):
         """Flows text into a given width, and adjusts cell height accordingly"""
         x = 0
 
@@ -563,9 +565,9 @@ class StudyDesignFigureService:
         self,
         text: str,
         cell_width: int,
-        paddings: Tuple[int, int],
-        center: Optional[bool] = False,
-    ) -> Tuple[int, int, Sequence[Tuple[int, int, str]]]:
+        paddings: tuple[int, int],
+        center: bool | None = False,
+    ) -> tuple[int, int, Sequence[tuple[int, int, str]]]:
         """Calculates text flow for a given width, wrapping text if necessary, optional centering
 
         Returns width and height of the cell (px int),
@@ -579,7 +581,7 @@ class StudyDesignFigureService:
         # Split text into a list of whitespace-stripped words, removing empty words (because of doubled whitespace)
         words = list(filter(None, (t.strip() for t in text.split(" "))))
 
-        lines: List[Tuple[int, int, str]] = []
+        lines: list[tuple[int, int, str]] = []
         total_width, total_height = 0, 0
         line, line_width, line_height = [], 0, 0
 
@@ -629,7 +631,7 @@ class StudyDesignFigureService:
         """Merges cells with identical Study Element horizontally"""
         # pylint:disable=unsubscriptable-object,unsupported-assignment-operation
         for row in table[1:]:
-            prev_cell: Optional[Mapping] = None
+            prev_cell: Mapping | None = None
             for cell in row[1:]:
                 if not cell.get("id"):
                     prev_cell = None
@@ -652,7 +654,7 @@ class StudyDesignFigureService:
         # pylint:disable=unsubscriptable-object,unsupported-assignment-operation
         n_cols = len(table[0])
         for i in range(1, n_cols):
-            prev_cell: Optional[Mapping] = None
+            prev_cell: Mapping | None = None
             for row in table[1:]:
                 cell = row[i]
                 if not cell.get("id"):
@@ -671,7 +673,7 @@ class StudyDesignFigureService:
                     prev_cell = cell
 
     @staticmethod
-    def _calculate_colors(color: str) -> Tuple[str, str, str]:
+    def _calculate_colors(color: str) -> tuple[str, str, str]:
         """Returns background, text and border colors based on the cell background color"""
 
         if color.startswith("#"):
@@ -693,7 +695,7 @@ class StudyDesignFigureService:
 
         return background_color.hex, border_color.hex, text_color.hex
 
-    def _calculate_text_dimensions(self, text) -> Tuple[int, int]:
+    def _calculate_text_dimensions(self, text) -> tuple[int, int]:
         """Calculate optimal and minimum width of a text
 
         Optimal width is the width of the text without wrapping, and minimal width is the longest word.
@@ -703,11 +705,11 @@ class StudyDesignFigureService:
         min_width = max(w[1] for w in word_sizes)
         return optimal_width, min_width
 
-    def _get_text_size_px(self, text: str) -> Tuple[int, int]:
+    def _get_text_size_px(self, text: str) -> tuple[int, int]:
         """Returns width and height (in pixels) of given text if rendered with font and size"""
         return self.font.getbbox(text)[2:4]
 
-    def _get_words_size_px(self, text: str) -> Tuple[Tuple[str, int, int]]:
+    def _get_words_size_px(self, text: str) -> tuple[tuple[str, int, int]]:
         """Returns a tuple of (word, width, height) in pixels of each word of a text if rendered with font and size"""
         return tuple((t,) + self._get_text_size_px(t) for t in text.split(" "))
 
@@ -941,7 +943,7 @@ class StudyDesignFigureService:
                     )
 
     @staticmethod
-    def _box_style(colors: Tuple[str, str, str]) -> Dict[str, str]:
+    def _box_style(colors: tuple[str, str, str]) -> dict[str, str]:
         """Returns CSS styling for rectangle based on color tuple"""
         background_color, border_color, _ = colors
         return {
@@ -950,7 +952,7 @@ class StudyDesignFigureService:
         }
 
     @staticmethod
-    def _text_style(colors: Tuple[str, str, str]) -> Dict[str, str]:
+    def _text_style(colors: tuple[str, str, str]) -> dict[str, str]:
         """Returns CSS stying for text based on color tuple"""
         _, _, text_color = colors
         return {"fill": text_color}

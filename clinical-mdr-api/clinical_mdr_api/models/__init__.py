@@ -15,6 +15,15 @@ from clinical_mdr_api.models.syntax_instances.activity_instruction import (
     ActivityInstruction,
     ActivityInstructionVersion,
     ActivityInstructionCreateInput,
+    ActivityInstructionEditInput,
+)
+from clinical_mdr_api.models.syntax_templates.footnote_template import (
+    FootnoteTemplate,
+    FootnoteTemplateNameInput,
+    FootnoteTemplateCreateInput,
+    FootnoteTemplateEditInput,
+    FootnoteTemplateVersion,
+    FootnoteTemplateEditIndexingsInput,
 )
 from clinical_mdr_api.models.syntax_templates.activity_instruction_template import (
     ActivityInstructionTemplate,
@@ -24,12 +33,20 @@ from clinical_mdr_api.models.syntax_templates.activity_instruction_template impo
     ActivityInstructionTemplateVersion,
     ActivityInstructionTemplateEditIndexingsInput,
 )
+from clinical_mdr_api.models.syntax_instances.footnote import (
+    Footnote,
+    FootnoteWithType,
+    FootnoteVersion,
+    FootnoteCreateInput,
+    FootnoteEditInput,
+)
 from clinical_mdr_api.models.syntax_instances.criteria import (
     Criteria,
     CriteriaWithType,
     CriteriaVersion,
     CriteriaCreateInput,
     CriteriaEditInput,
+    CriteriaUpdateWithCriteriaKeyInput,
 )
 from clinical_mdr_api.models.syntax_templates.criteria_template import (
     CriteriaTemplate,
@@ -52,7 +69,6 @@ from clinical_mdr_api.models.syntax_templates.endpoint_template import (
     EndpointTemplateVersion,
     EndpointTemplateEditIndexingsInput,
 )
-from clinical_mdr_api.models.indication import Indication, IndicationCreateInput
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.syntax_instances.objective import (
     Objective,
@@ -74,6 +90,12 @@ from clinical_mdr_api.models.syntax_pre_instances.activity_instruction_pre_insta
     ActivityInstructionPreInstanceIndexingsInput,
     ActivityInstructionPreInstanceVersion,
 )
+from clinical_mdr_api.models.syntax_pre_instances.footnote_pre_instance import (
+    FootnotePreInstance,
+    FootnotePreInstanceEditInput,
+    FootnotePreInstanceIndexingsInput,
+    FootnotePreInstanceVersion,
+)
 from clinical_mdr_api.models.syntax_pre_instances.criteria_pre_instance import (
     CriteriaPreInstance,
     CriteriaPreInstanceEditInput,
@@ -94,6 +116,15 @@ from clinical_mdr_api.models.syntax_pre_instances.objective_pre_instance import 
 )
 from clinical_mdr_api.models.projects.project import Project, ProjectCreateInput
 from clinical_mdr_api.models.brands.brand import Brand, BrandCreateInput
+from clinical_mdr_api.models.comments.comments import (
+    CommentThread,
+    CommentThreadCreateInput,
+    CommentThreadEditInput,
+    CommentReplyCreateInput,
+    CommentReplyEditInput,
+    CommentReply,
+    CommentTopic,
+)
 from clinical_mdr_api.models.concepts.odms.odm_form import (
     OdmForm,
     OdmFormPostInput,
@@ -312,6 +343,7 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term_attributes import 
 )
 from clinical_mdr_api.models.controlled_terminologies.ct_term_name import (
     CTTermName,
+    CTTermNameSimple,
     CTTermNameVersion,
     CTTermNameEditInput,
 )
@@ -426,6 +458,10 @@ __all__ = [
     "ActivityInstructionPreInstanceEditInput",
     "ActivityInstructionPreInstanceIndexingsInput",
     "ActivityInstructionPreInstanceVersion",
+    "FootnotePreInstance",
+    "FootnotePreInstanceEditInput",
+    "FootnotePreInstanceIndexingsInput",
+    "FootnotePreInstanceVersion",
     "CriteriaPreInstance",
     "CriteriaPreInstanceEditInput",
     "CriteriaPreInstanceIndexingsInput",
@@ -441,11 +477,24 @@ __all__ = [
     "ActivityInstruction",
     "ActivityInstructionVersion",
     "ActivityInstructionCreateInput",
+    "ActivityInstructionEditInput",
+    "Footnote",
+    "FootnoteWithType",
+    "FootnoteVersion",
+    "FootnoteCreateInput",
+    "FootnoteEditInput",
     "Criteria",
     "CriteriaWithType",
     "CriteriaVersion",
     "CriteriaCreateInput",
+    "CriteriaUpdateWithCriteriaKeyInput",
     "CriteriaEditInput",
+    "FootnoteTemplate",
+    "FootnoteTemplateNameInput",
+    "FootnoteTemplateCreateInput",
+    "FootnoteTemplateEditInput",
+    "FootnoteTemplateVersion",
+    "FootnoteTemplateEditIndexingsInput",
     "CriteriaTemplate",
     "CriteriaTemplateVersion",
     "CriteriaTemplateCreateInput",
@@ -458,8 +507,6 @@ __all__ = [
     "ObjectiveEditInput",
     "TemplateParameter",
     "TemplateParameterTerm",
-    "Indication",
-    "IndicationCreateInput",
     "EndpointTemplate",
     "EndpointTemplateCreateInput",
     "EndpointTemplateEditInput",

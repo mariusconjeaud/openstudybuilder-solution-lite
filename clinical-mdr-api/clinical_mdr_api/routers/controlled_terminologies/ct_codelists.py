@@ -1,5 +1,5 @@
 """CTCodelist router."""
-from typing import Any, List, Optional, Sequence
+from typing import Any, Sequence
 
 from fastapi import APIRouter, Body, Depends, Path, Query
 from pydantic.types import Json
@@ -8,20 +8,23 @@ from starlette.requests import Request
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.controlled_terminologies.ct_codelist import (
     CTCodelistService,
 )
 
+# Prefixed with "/ct"
 router = APIRouter()
+
 CTCodelistUID = Path(None, description="The unique id of the CTCodelistRoot")
 TermUID = Path(None, description="The unique id of the Codelist Term")
 
 
 @router.post(
     "/codelists",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates new codelist.",
     description="""The following nodes are created
 * CTCodelistRoot
@@ -56,6 +59,7 @@ def create(
 
 @router.get(
     "/codelists",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all codelists names and attributes.",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=CustomPage[models.CTCodelistNameAndAttributes],
@@ -93,38 +97,42 @@ def create(
 # pylint: disable=unused-argument
 def get_codelists(
     request: Request,  # request is actually required by the allow_exports decorator
-    catalogue_name: Optional[str] = Query(
+    catalogue_name: str
+    | None = Query(
         None,
         description="If specified, only codelists from given catalogue are returned.",
     ),
-    library: Optional[str] = Query(
+    library: str
+    | None = Query(
         None,
         description="If specified, only codelists from given library are returned.",
     ),
-    package: Optional[str] = Query(
+    package: str
+    | None = Query(
         None,
         description="If specified, only codelists from given package are returned.",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
-    term_filter: Optional[Json] = Query(
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    term_filter: Json
+    | None = Query(
         None,
         description="""JSON dictionary consisting of `term_uids` key and `operator` key. Default: `{}` (no term filtering).
 
@@ -149,12 +157,13 @@ def get_codelists(
         term_filter=term_filter,
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/codelists/{codelist_uid}/sub-codelists",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all sub codelists names and attributes that only have the provided terms.",
     response_model=CustomPage[models.CTCodelistNameAndAttributes],
     response_model_exclude_unset=True,
@@ -170,23 +179,23 @@ def get_sub_codelists_that_have_given_terms(
         ...,
         description="A list of term uids",
     ),
-    library: Optional[str] = Query(
+    library: str
+    | None = Query(
         None,
         description="If specified, only codelists from given library are returned.",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
     ct_codelist_service = CTCodelistService(user=current_user_id)
@@ -200,16 +209,17 @@ def get_sub_codelists_that_have_given_terms(
         total_count=total_count,
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/codelists/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possibles values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=List[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -221,29 +231,31 @@ def get_sub_codelists_that_have_given_terms(
 )
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
-    catalogue_name: Optional[str] = Query(
+    catalogue_name: str
+    | None = Query(
         None,
         description="If specified, only codelists from given catalogue are returned.",
     ),
-    library: Optional[str] = Query(
+    library: str
+    | None = Query(
         None, description="If specified, only terms from given library are returned."
     ),
-    package: Optional[str] = Query(
+    package: str
+    | None = Query(
         None, description="If specified, only terms from given package are returned."
     ),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     ct_codelist_service = CTCodelistService(user=current_user_id)
     return ct_codelist_service.get_distinct_values_for_header(
@@ -260,6 +272,7 @@ def get_distinct_values_for_header(
 
 @router.post(
     "/codelists/{codelist_uid}/terms",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds new CTTerm to CTCodelist.",
     response_model=models.CTCodelist,
     status_code=201,
@@ -295,6 +308,7 @@ def add_term(
 
 @router.delete(
     "/codelists/{codelist_uid}/terms/{term_uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Removes given CTTerm from CTCodelist.",
     response_model=models.CTCodelist,
     status_code=201,

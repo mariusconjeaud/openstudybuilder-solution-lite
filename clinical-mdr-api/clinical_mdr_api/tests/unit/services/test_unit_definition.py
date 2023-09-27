@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Iterable, MutableSet, Optional, Sequence, Tuple
+from typing import Iterable, MutableSet, Sequence
 from unittest.mock import Mock, PropertyMock, patch
 
 import pytest
@@ -30,7 +30,7 @@ from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
 )
 from clinical_mdr_api.domains.libraries.library_ar import LibraryAR
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
-from clinical_mdr_api.exceptions import NotFoundException, ValidationException
+from clinical_mdr_api.exceptions import BusinessLogicException, NotFoundException
 from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
     UnitDefinitionModel,
     UnitDefinitionPatchInput,
@@ -62,7 +62,7 @@ class UnitDefinitionRepositoryFakeBase(UnitDefinitionRepository):
     verified_dimensions: MutableSet[str]
     verified_legacy_codes: MutableSet[str]
     verified_unit_ct_uids: MutableSet[str]
-    saved_item: Optional[UnitDefinitionAR]
+    saved_item: UnitDefinitionAR | None
 
     def __init__(self):
         self.verified_names = set()
@@ -79,8 +79,8 @@ class UnitDefinitionRepositoryFakeBase(UnitDefinitionRepository):
         self.verified_legacy_codes.add(legacy_code)
         return False
 
-    def check_exists_by_name(self, name: str) -> bool:
-        self.verified_names.add(name)
+    def exists_by(self, property_name: str, value: str, on_root: bool = False) -> bool:
+        self.verified_names.add(value)
         return False
 
     def check_exists_final_version(self, uid: str) -> bool:
@@ -93,19 +93,19 @@ class UnitDefinitionRepositoryFakeBase(UnitDefinitionRepository):
     #  pylint: disable=unused-argument
     def find_all(
         self,
-        library: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        library: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
         **kwargs,
-    ) -> Tuple[Sequence, int]:
+    ) -> tuple[Sequence, int]:
         raise AssertionError("Call not expected")
 
     def find_releases(
-        self, uid: str, return_study_count: Optional[bool] = True
+        self, uid: str, return_study_count: bool | None = True
     ) -> Iterable[UnitDefinitionAR]:
         raise AssertionError("Call not expected")
 
@@ -113,11 +113,11 @@ class UnitDefinitionRepositoryFakeBase(UnitDefinitionRepository):
         self,
         uid: str,
         *,
-        version: Optional[str] = None,
-        status: Optional[LibraryItemStatus] = None,
-        at_specific_date: Optional[datetime] = None,
+        version: str | None = None,
+        status: LibraryItemStatus | None = None,
+        at_specific_date: datetime | None = None,
         for_update: bool = False,
-    ) -> Optional[UnitDefinitionAR]:
+    ) -> UnitDefinitionAR | None:
         raise AssertionError("Call not expected")
 
     def save(self, item: UnitDefinitionAR) -> None:
@@ -128,10 +128,10 @@ class UnitDefinitionRepositoryFakeBase(UnitDefinitionRepository):
         self.saved_item = item
 
     @property
-    def user_initials(self) -> Optional[str]:
+    def user_initials(self) -> str | None:
         raise AssertionError("Call not expected")
 
-    def generate_uid_callback(self) -> Optional[str]:
+    def generate_uid_callback(self) -> str | None:
         raise AssertionError("Call not expected")
 
     def get_all_versions_2(self, uid: str) -> Iterable[UnitDefinitionAR]:
@@ -142,7 +142,7 @@ class UnitDefinitionRepositoryFakeBase(UnitDefinitionRepository):
 
 
 class LibraryRepositoryFakeBase(LibraryRepository):
-    def find_by_name(self, name: str) -> Optional[LibraryAR]:
+    def find_by_name(self, name: str) -> LibraryAR | None:
         raise AssertionError("Call not expected")
 
     def library_exists(self, library_name: str) -> bool:
@@ -161,22 +161,22 @@ class LibraryRepositoryFakeBase(LibraryRepository):
 def test__unit_definition__get_all__library_name__result(
     unit_definition_repository_property_mock: PropertyMock,
     find_all_result: Sequence[UnitDefinitionAR],
-    a_library_name: Optional[str],
+    a_library_name: str | None,
 ):
     # given
     class UnitDefinitionRepositoryFake(UnitDefinitionRepositoryFakeBase):
         def find_all(
             self,
             *,
-            library: Optional[str] = None,
-            sort_by: Optional[dict] = None,
+            library: str | None = None,
+            sort_by: dict | None = None,
             page_number: int = 1,
             page_size: int = 0,
-            filter_by: Optional[dict] = None,
-            filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+            filter_by: dict | None = None,
+            filter_operator: FilterOperator | None = FilterOperator.AND,
             total_count: bool = False,
             **kwargs,
-        ) -> Tuple[Sequence, int]:
+        ) -> tuple[Sequence, int]:
             # pylint: disable=unused-argument
             assert library == a_library_name
             return find_all_result, 0
@@ -227,9 +227,9 @@ def test__unit_definition__get_by_uid__existing__result(
     dictionary_term_repository_property_mock: PropertyMock,
     ct_term_name_repository_property_mock: PropertyMock,
     find_by_uid_result: UnitDefinitionAR,
-    a_version: Optional[str],
-    a_status: Optional[str],
-    a_at_specified_date: Optional[datetime],
+    a_version: str | None,
+    a_status: str | None,
+    a_at_specified_date: datetime | None,
 ):
     # given
     class UnitDefinitionRepositoryFake(UnitDefinitionRepositoryFakeBase):
@@ -237,11 +237,11 @@ def test__unit_definition__get_by_uid__existing__result(
             self,
             uid: str,
             *,
-            version: Optional[str] = None,
-            status: Optional[LibraryItemStatus] = None,
-            at_specific_date: Optional[datetime] = None,
+            version: str | None = None,
+            status: LibraryItemStatus | None = None,
+            at_specific_date: datetime | None = None,
             for_update: bool = False,
-        ) -> Optional[UnitDefinitionAR]:
+        ) -> UnitDefinitionAR | None:
             assert uid == find_by_uid_result.uid
             assert version == a_version
             assert (
@@ -293,9 +293,9 @@ def test__unit_definition__get_by_uid__existing__result(
 def test__unit_definition__get_by_uid__non_existing__result(
     unit_definition_repository_property_mock: PropertyMock,
     a_uid: str,
-    a_version: Optional[str],
-    a_status: Optional[str],
-    a_at_specified_date: Optional[datetime],
+    a_version: str | None,
+    a_status: str | None,
+    a_at_specified_date: datetime | None,
 ):
     # given
     class UnitDefinitionRepositoryFake(UnitDefinitionRepositoryFakeBase):
@@ -303,11 +303,11 @@ def test__unit_definition__get_by_uid__non_existing__result(
             self,
             uid: str,
             *,
-            version: Optional[str] = None,
-            status: Optional[LibraryItemStatus] = None,
-            at_specific_date: Optional[datetime] = None,
+            version: str | None = None,
+            status: LibraryItemStatus | None = None,
+            at_specific_date: datetime | None = None,
             for_update: bool = False,
-        ) -> Optional[UnitDefinitionAR]:
+        ) -> UnitDefinitionAR | None:
             assert uid == a_uid
             assert version == a_version
             assert (
@@ -449,7 +449,12 @@ def unit_definition_post_inputs(draw):
     UnitDefinitionService.__module__ + ".MetaRepository.library_repository",
     new_callable=PropertyMock,
 )
+@patch(
+    UnitDefinitionService.__module__ + ".UnitDefinitionService._is_library_editable",
+    new_callable=PropertyMock,
+)
 def test__unit_definition_service__post__result(
+    is_library_editable_property_mock: PropertyMock,
     library_repository_property_mock: PropertyMock,
     unit_definition_repository_property_mock: PropertyMock,
     dictionary_term_repository_property_mock: PropertyMock,
@@ -462,7 +467,7 @@ def test__unit_definition_service__post__result(
         pass
 
     class LibraryRepositoryFake(LibraryRepositoryFakeBase):
-        def find_by_name(self, name: str) -> Optional[LibraryAR]:
+        def find_by_name(self, name: str) -> LibraryAR | None:
             assert name == unit_definition_post_input.library_name
             return LibraryAR.from_repository_values(
                 library_name=unit_definition_post_input.library_name, is_editable=True
@@ -473,6 +478,7 @@ def test__unit_definition_service__post__result(
             return True
 
     repo_fake = UnitDefinitionRepositoryFake()
+    is_library_editable_property_mock.return_value = lambda _: True
     unit_definition_repository_property_mock.return_value = repo_fake
     library_repository_property_mock.return_value = LibraryRepositoryFake()
     dictionary_term_repository_property_mock.find_by_uid.return_value = None
@@ -554,7 +560,12 @@ def test__unit_definition_service__post__result(
     UnitDefinitionService.__module__ + ".MetaRepository.library_repository",
     new_callable=PropertyMock,
 )
+@patch(
+    UnitDefinitionService.__module__ + ".UnitDefinitionService._is_library_editable",
+    new_callable=PropertyMock,
+)
 def test__unit_definition_service__post_with_non_unique_name__result(
+    is_library_editable_property_mock: PropertyMock,
     library_repository_property_mock: PropertyMock,
     unit_definition_repository_property_mock: PropertyMock,
     dictionary_term_repository_property_mock: PropertyMock,
@@ -564,11 +575,13 @@ def test__unit_definition_service__post_with_non_unique_name__result(
     # given
 
     class UnitDefinitionRepositoryFake(UnitDefinitionRepositoryFakeBase):
-        def check_exists_by_name(self, name: str) -> bool:
-            return super().check_exists_by_name(name) or True
+        def exists_by(
+            self, property_name: str, value: str, on_root: bool = False
+        ) -> bool:
+            return super().exists_by("name", value, on_root) or True
 
     class LibraryRepositoryFake(LibraryRepositoryFakeBase):
-        def find_by_name(self, name: str) -> Optional[LibraryAR]:
+        def find_by_name(self, name: str) -> LibraryAR | None:
             assert name == unit_definition_post_input.library_name
             return LibraryAR.from_repository_values(
                 library_name=unit_definition_post_input.library_name, is_editable=True
@@ -579,6 +592,7 @@ def test__unit_definition_service__post_with_non_unique_name__result(
             return True
 
     repo_fake = UnitDefinitionRepositoryFake()
+    is_library_editable_property_mock.return_value = lambda _: True
     unit_definition_repository_property_mock.return_value = repo_fake
     library_repository_property_mock.return_value = LibraryRepositoryFake()
     dictionary_term_repository_property_mock.term_exists.return_value = True
@@ -595,7 +609,7 @@ def test__unit_definition_service__post_with_non_unique_name__result(
     )
 
     # when
-    with pytest.raises(ValidationException):
+    with pytest.raises(BusinessLogicException):
         service.post(unit_definition_post_input)
 
     # then
@@ -625,7 +639,12 @@ def test__unit_definition_service__post_with_non_unique_name__result(
     UnitDefinitionService.__module__ + ".MetaRepository.library_repository",
     new_callable=PropertyMock,
 )
+@patch(
+    UnitDefinitionService.__module__ + ".UnitDefinitionService._is_library_editable",
+    new_callable=PropertyMock,
+)
 def test__unit_definition_service__post_with_non_unique_legacy_code__result(
+    is_library_editable_property_mock: PropertyMock,
     library_repository_property_mock: PropertyMock,
     unit_definition_repository_property_mock: PropertyMock,
     dictionary_term_repository_property_mock: PropertyMock,
@@ -639,7 +658,7 @@ def test__unit_definition_service__post_with_non_unique_legacy_code__result(
             return super().exists_by_legacy_code(legacy_code) or True
 
     class LibraryRepositoryFake(LibraryRepositoryFakeBase):
-        def find_by_name(self, name: str) -> Optional[LibraryAR]:
+        def find_by_name(self, name: str) -> LibraryAR | None:
             assert name == unit_definition_post_input.library_name
             return LibraryAR.from_repository_values(
                 library_name=unit_definition_post_input.library_name, is_editable=True
@@ -650,6 +669,7 @@ def test__unit_definition_service__post_with_non_unique_legacy_code__result(
             return True
 
     repo_fake = UnitDefinitionRepositoryFake()
+    is_library_editable_property_mock.return_value = lambda _: True
     unit_definition_repository_property_mock.return_value = repo_fake
     library_repository_property_mock.return_value = LibraryRepositoryFake()
     dictionary_term_repository_property_mock.term_exists.return_value = True
@@ -659,7 +679,7 @@ def test__unit_definition_service__post_with_non_unique_legacy_code__result(
     )
 
     # when
-    with pytest.raises(ValidationException):
+    with pytest.raises(BusinessLogicException):
         service.post(unit_definition_post_input)
 
     # then
@@ -689,7 +709,12 @@ def test__unit_definition_service__post_with_non_unique_legacy_code__result(
     UnitDefinitionService.__module__ + ".MetaRepository.library_repository",
     new_callable=PropertyMock,
 )
+@patch(
+    UnitDefinitionService.__module__ + ".UnitDefinitionService._is_library_editable",
+    new_callable=PropertyMock,
+)
 def test__unit_definition_service__post_another_master_unit__result(
+    is_library_editable_property_mock: PropertyMock,
     library_repository_property_mock: PropertyMock,
     unit_definition_repository_property_mock: PropertyMock,
     dictionary_term_repository_property_mock: PropertyMock,
@@ -708,7 +733,7 @@ def test__unit_definition_service__post_another_master_unit__result(
             return super().master_unit_exists_by_unit_dimension(unit_dimension) or True
 
     class LibraryRepositoryFake(LibraryRepositoryFakeBase):
-        def find_by_name(self, name: str) -> Optional[LibraryAR]:
+        def find_by_name(self, name: str) -> LibraryAR | None:
             assert name == unit_definition_post_input.library_name
             return LibraryAR.from_repository_values(
                 library_name=unit_definition_post_input.library_name, is_editable=True
@@ -719,6 +744,7 @@ def test__unit_definition_service__post_another_master_unit__result(
             return True
 
     repo_fake = UnitDefinitionRepositoryFake()
+    is_library_editable_property_mock.return_value = lambda _: True
     unit_definition_repository_property_mock.return_value = repo_fake
     library_repository_property_mock.return_value = LibraryRepositoryFake()
     dictionary_term_repository_property_mock.term_exists.return_value = True
@@ -728,7 +754,7 @@ def test__unit_definition_service__post_another_master_unit__result(
     )
 
     # when
-    with pytest.raises(ValidationException):
+    with pytest.raises(BusinessLogicException):
         service.post(unit_definition_post_input)
 
     # then
@@ -749,7 +775,7 @@ def test__unit_definition_service__delete__result(
     assume(unit_definition_ar.item_metadata.major_version == 0)
 
     class UnitDefinitionRepositoryFake(UnitDefinitionRepositoryFakeBase):
-        saved_item: Optional[UnitDefinitionAR] = None
+        saved_item: UnitDefinitionAR | None = None
 
         def save(self, item: UnitDefinitionAR) -> None:
             assert self.saved_item is None
@@ -759,11 +785,11 @@ def test__unit_definition_service__delete__result(
             self,
             uid: str,
             *,
-            version: Optional[str] = None,
-            status: Optional[LibraryItemStatus] = None,
-            at_specific_date: Optional[datetime] = None,
+            version: str | None = None,
+            status: LibraryItemStatus | None = None,
+            at_specific_date: datetime | None = None,
             for_update: bool = False,
-        ) -> Optional[UnitDefinitionAR]:
+        ) -> UnitDefinitionAR | None:
             assert for_update
             assert uid == unit_definition_ar.uid
             assert version is None
@@ -797,7 +823,7 @@ def test__unit_definition_service__approve__result(
     unit_definition_ar: UnitDefinitionAR,
 ):
     class UnitDefinitionRepositoryFake(UnitDefinitionRepositoryFakeBase):
-        saved_item: Optional[UnitDefinitionAR] = None
+        saved_item: UnitDefinitionAR | None = None
 
         def save(self, item: UnitDefinitionAR) -> None:
             assert self.saved_item is None
@@ -807,11 +833,11 @@ def test__unit_definition_service__approve__result(
             self,
             uid: str,
             *,
-            version: Optional[str] = None,
-            status: Optional[LibraryItemStatus] = None,
-            at_specific_date: Optional[datetime] = None,
+            version: str | None = None,
+            status: LibraryItemStatus | None = None,
+            at_specific_date: datetime | None = None,
             for_update: bool = False,
-        ) -> Optional[UnitDefinitionAR]:
+        ) -> UnitDefinitionAR | None:
             assert for_update
             assert uid == unit_definition_ar.uid
             assert version is None
@@ -852,7 +878,7 @@ def test__unit_definition_service__inactivate__result(
     unit_definition_ar: UnitDefinitionAR,
 ):
     class UnitDefinitionRepositoryFake(UnitDefinitionRepositoryFakeBase):
-        saved_item: Optional[UnitDefinitionAR] = None
+        saved_item: UnitDefinitionAR | None = None
 
         def save(self, item: UnitDefinitionAR) -> None:
             assert self.saved_item is None
@@ -862,11 +888,11 @@ def test__unit_definition_service__inactivate__result(
             self,
             uid: str,
             *,
-            version: Optional[str] = None,
-            status: Optional[LibraryItemStatus] = None,
-            at_specific_date: Optional[datetime] = None,
+            version: str | None = None,
+            status: LibraryItemStatus | None = None,
+            at_specific_date: datetime | None = None,
             for_update: bool = False,
-        ) -> Optional[UnitDefinitionAR]:
+        ) -> UnitDefinitionAR | None:
             assert for_update
             assert uid == unit_definition_ar.uid
             assert version is None
@@ -907,7 +933,7 @@ def test__unit_definition_service__reactivate__result(
     unit_definition_ar: UnitDefinitionAR,
 ):
     class UnitDefinitionRepositoryFake(UnitDefinitionRepositoryFakeBase):
-        saved_item: Optional[UnitDefinitionAR] = None
+        saved_item: UnitDefinitionAR | None = None
 
         def save(self, item: UnitDefinitionAR) -> None:
             assert self.saved_item is None
@@ -917,11 +943,11 @@ def test__unit_definition_service__reactivate__result(
             self,
             uid: str,
             *,
-            version: Optional[str] = None,
-            status: Optional[LibraryItemStatus] = None,
-            at_specific_date: Optional[datetime] = None,
+            version: str | None = None,
+            status: LibraryItemStatus | None = None,
+            at_specific_date: datetime | None = None,
             for_update: bool = False,
-        ) -> Optional[UnitDefinitionAR]:
+        ) -> UnitDefinitionAR | None:
             assert for_update
             assert uid == unit_definition_ar.uid
             assert version is None
@@ -962,7 +988,7 @@ def test__unit_definition_service__new_version__result(
     unit_definition_ar: UnitDefinitionAR,
 ):
     class UnitDefinitionRepositoryFake(UnitDefinitionRepositoryFakeBase):
-        saved_item: Optional[UnitDefinitionAR] = None
+        saved_item: UnitDefinitionAR | None = None
 
         def save(self, item: UnitDefinitionAR) -> None:
             assert self.saved_item is None
@@ -972,11 +998,11 @@ def test__unit_definition_service__new_version__result(
             self,
             uid: str,
             *,
-            version: Optional[str] = None,
-            status: Optional[LibraryItemStatus] = None,
-            at_specific_date: Optional[datetime] = None,
+            version: str | None = None,
+            status: LibraryItemStatus | None = None,
+            at_specific_date: datetime | None = None,
             for_update: bool = False,
-        ) -> Optional[UnitDefinitionAR]:
+        ) -> UnitDefinitionAR | None:
             assert for_update
             assert uid == unit_definition_ar.uid
             assert version is None
@@ -1034,14 +1060,14 @@ def unit_definition_patch_inputs(draw):
     master_unit: bool = unit_definition_value.master_unit
     si_unit: bool = unit_definition_value.si_unit
     us_conventional_unit: bool = unit_definition_value.us_conventional_unit
-    unit_dimension: Optional[str] = unit_definition_value.unit_dimension_uid
-    legacy_code: Optional[str] = unit_definition_value.legacy_code
-    molecular_weight_conv_expon: Optional[
-        int
-    ] = unit_definition_value.molecular_weight_conv_expon
-    conversion_factor_to_master: Optional[
-        float
-    ] = unit_definition_value.conversion_factor_to_master
+    unit_dimension: str | None = unit_definition_value.unit_dimension_uid
+    legacy_code: str | None = unit_definition_value.legacy_code
+    molecular_weight_conv_expon: int | None = (
+        unit_definition_value.molecular_weight_conv_expon
+    )
+    conversion_factor_to_master: float | None = (
+        unit_definition_value.conversion_factor_to_master
+    )
     name: str = unit_definition_value.name
 
     result = {"change_description": change_description}
@@ -1113,11 +1139,11 @@ def test__unit_definition_service__patch__result(
             self,
             uid: str,
             *,
-            version: Optional[str] = None,
-            status: Optional[LibraryItemStatus] = None,
-            at_specific_date: Optional[datetime] = None,
+            version: str | None = None,
+            status: LibraryItemStatus | None = None,
+            at_specific_date: datetime | None = None,
             for_update: bool = False,
-        ) -> Optional[UnitDefinitionAR]:
+        ) -> UnitDefinitionAR | None:
             assert for_update
             assert uid == unit_definition_ar.uid
             assert version is None
@@ -1223,11 +1249,11 @@ def test__unit_definition_service__patch_to_non_unique_name__result(
             self,
             uid: str,
             *,
-            version: Optional[str] = None,
-            status: Optional[LibraryItemStatus] = None,
-            at_specific_date: Optional[datetime] = None,
+            version: str | None = None,
+            status: LibraryItemStatus | None = None,
+            at_specific_date: datetime | None = None,
             for_update: bool = False,
-        ) -> Optional[UnitDefinitionAR]:
+        ) -> UnitDefinitionAR | None:
             assert for_update
             assert uid == unit_definition_ar.uid
             assert version is None
@@ -1235,8 +1261,10 @@ def test__unit_definition_service__patch_to_non_unique_name__result(
             assert at_specific_date is None
             return unit_definition_ar
 
-        def check_exists_by_name(self, name: str) -> bool:
-            return super().check_exists_by_name(name) or True
+        def exists_by(
+            self, property_name: str, value: str, on_root: bool = False
+        ) -> bool:
+            return super().exists_by("name", value, on_root) or True
 
     repo_fake = UnitDefinitionRepositoryFake()
     unit_definition_repository_property_mock.return_value = repo_fake
@@ -1249,7 +1277,7 @@ def test__unit_definition_service__patch_to_non_unique_name__result(
     )
 
     # then
-    with pytest.raises(ValidationException):
+    with pytest.raises(BusinessLogicException):
         # when
         service.patch(
             uid=unit_definition_ar.uid, patch_input=unit_definition_patch_input
@@ -1303,11 +1331,11 @@ def test__unit_definition_service__patch_to_non_unique_legacy_code__result(
             self,
             uid: str,
             *,
-            version: Optional[str] = None,
-            status: Optional[LibraryItemStatus] = None,
-            at_specific_date: Optional[datetime] = None,
+            version: str | None = None,
+            status: LibraryItemStatus | None = None,
+            at_specific_date: datetime | None = None,
             for_update: bool = False,
-        ) -> Optional[UnitDefinitionAR]:
+        ) -> UnitDefinitionAR | None:
             assert for_update
             assert uid == unit_definition_ar.uid
             assert version is None
@@ -1329,7 +1357,7 @@ def test__unit_definition_service__patch_to_non_unique_legacy_code__result(
     )
 
     # then
-    with pytest.raises(ValidationException):
+    with pytest.raises(BusinessLogicException):
         # when
         service.patch(
             uid=unit_definition_ar.uid, patch_input=unit_definition_patch_input
@@ -1392,11 +1420,11 @@ def test__unit_definition_service__patch_to_another_master_unit__result(
             self,
             uid: str,
             *,
-            version: Optional[str] = None,
-            status: Optional[LibraryItemStatus] = None,
-            at_specific_date: Optional[datetime] = None,
+            version: str | None = None,
+            status: LibraryItemStatus | None = None,
+            at_specific_date: datetime | None = None,
             for_update: bool = False,
-        ) -> Optional[UnitDefinitionAR]:
+        ) -> UnitDefinitionAR | None:
             assert for_update
             assert uid == unit_definition_ar.uid
             assert version is None
@@ -1418,7 +1446,7 @@ def test__unit_definition_service__patch_to_another_master_unit__result(
     )
 
     # then
-    with pytest.raises(ValidationException):
+    with pytest.raises(BusinessLogicException):
         # when
         service.patch(
             uid=unit_definition_ar.uid, patch_input=unit_definition_patch_input

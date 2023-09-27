@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Self
 
 from pydantic import Field
 
@@ -12,7 +12,7 @@ from clinical_mdr_api.models.libraries.library import Library
 
 class ActivityGroup(ActivityBase):
     @classmethod
-    def from_activity_ar(cls, activity_group_ar: ActivityGroupAR) -> "ActivityGroup":
+    def from_activity_ar(cls, activity_group_ar: ActivityGroupAR) -> Self:
         return cls(
             uid=activity_group_ar.uid,
             name=activity_group_ar.name,
@@ -49,7 +49,7 @@ class ActivityGroupVersion(ActivityGroupInput):
     Class for storing ActivityGroup and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

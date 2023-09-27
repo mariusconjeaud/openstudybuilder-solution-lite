@@ -11,7 +11,6 @@ Tests for /concepts/compounds endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -28,8 +27,8 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-compounds_all: List[models.Compound]
-compound_aliases_all: List[models.CompoundAlias]
+compounds_all: list[models.Compound]
+compound_aliases_all: list[models.CompoundAlias]
 ct_term_dosage: models.CTTerm
 ct_term_delivery_device: models.CTTerm
 ct_term_dose_frequency: models.CTTerm
@@ -37,7 +36,7 @@ ct_term_dispenser: models.CTTerm
 ct_term_roa: models.CTTerm
 strength_value: models.NumericValueWithUnit
 dose_value: models.NumericValueWithUnit
-brands: List[models.Brand]
+brands: list[models.Brand]
 lag_time: models.LagTime
 half_life: models.NumericValueWithUnit
 

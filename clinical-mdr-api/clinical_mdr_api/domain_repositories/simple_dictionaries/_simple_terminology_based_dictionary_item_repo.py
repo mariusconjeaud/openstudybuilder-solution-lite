@@ -1,4 +1,4 @@
-from typing import Generic, Iterable, Optional, TypeVar
+from typing import Generic, Iterable, TypeVar
 
 from clinical_mdr_api.domain_repositories.simple_dictionaries._simple_terminology_item_repository import (
     SimpleTerminologyItemRepository,  # type: ignore
@@ -10,8 +10,8 @@ DictionaryItemType = TypeVar("DictionaryItemType")
 class SimpleTerminologyBasedDictionaryItemRepository(Generic[DictionaryItemType]):
     _simple_terminology_item_repository: SimpleTerminologyItemRepository
 
-    _dictionary_item_type: Optional[type] = None
-    _codelist_code: Optional[str] = None
+    _dictionary_item_type: type | None = None
+    _codelist_code: str | None = None
 
     def __init__(
         self, simple_terminology_item_repository: SimpleTerminologyItemRepository
@@ -36,7 +36,7 @@ class SimpleTerminologyBasedDictionaryItemRepository(Generic[DictionaryItemType]
             )
         }
 
-    def find_by_code(self, code: str) -> Optional[DictionaryItemType]:
+    def find_by_code(self, code: str) -> DictionaryItemType | None:
         assert (
             self._dictionary_item_type is not None
         ), "-dictionary_item_type class var mus be assigned by subclass"

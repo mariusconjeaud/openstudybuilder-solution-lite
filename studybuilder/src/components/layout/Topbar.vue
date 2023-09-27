@@ -36,6 +36,7 @@
       class="text-capitalize"
       data-cy="topbar-add-study"
       @click="addStudyForm = true"
+      :disabled="!checkPermission($roles.STUDY_WRITE)"
       text>
       {{ $t('Topbar.add_study') }}
     </v-btn>
@@ -69,18 +70,18 @@
     </v-chip>
   </div>
   <v-btn data-cy="topbar-admin-icon" icon :title="$t('Topbar.admin')" @click="openSettingsBox">
-    <v-icon>mdi-cog</v-icon>
+    <v-icon>mdi-cog-outline</v-icon>
   </v-btn>
   <v-menu offset-y v-if="isAuthenticated">
     <template v-slot:activator="{ on, attrs }">
       <v-btn data-cy="topbar-help" icon :title="$t('Topbar.help')" v-bind="attrs" v-on="on">
-        <v-icon>mdi-help-circle</v-icon>
+        <v-icon>mdi-help-circle-outline</v-icon>
       </v-btn>
     </template>
     <v-list dense>
       <v-list-item data-cy="topbar-documentation-portal" :href="documentationPortalUrl" target="_blank">
         <v-list-item-icon>
-          <v-icon>mdi-book-open</v-icon>
+          <v-icon>mdi-book-open-outline</v-icon>
         </v-list-item-icon>
         <v-list-item-content>
           <v-list-item-title>{{ $t('Topbar.documentation_portal') }}</v-list-item-title>
@@ -88,7 +89,7 @@
       </v-list-item>
       <v-list-item data-cy="topbar-user-guide" :href="helpUrl" target="_blank">
         <v-list-item-icon>
-          <v-icon>mdi-book-open</v-icon>
+          <v-icon>mdi-book-open-outline</v-icon>
         </v-list-item-icon>
         <v-list-item-content>
           <v-list-item-title>{{ $t('Topbar.user_guide') }}</v-list-item-title>
@@ -96,7 +97,7 @@
       </v-list-item>
       <v-list-item data-cy="topbar-about" @click="openAboutBox">
         <v-list-item-icon>
-          <v-icon>mdi-information</v-icon>
+          <v-icon>mdi-information-outline</v-icon>
         </v-list-item-icon>
         <v-list-item-content>
           <v-list-item-title>{{ $t('Topbar.about') }}</v-list-item-title>
@@ -118,12 +119,21 @@
           right
           class="mx-2"
           >
-          mdi-account
+          mdi-account-outline
         </v-icon>
         {{ username }}
       </v-btn>
     </template>
-    <v-list dense>
+    <v-list dense max-width="200px">
+      <v-list-item v-if="userInfo">
+        <v-list-item-icon>
+          <v-icon>mdi-security</v-icon>
+        </v-list-item-icon>
+        <v-list-item-content>
+          <v-list-item-title>{{ $t('_global.access_groups') }}</v-list-item-title>
+          <v-list-item-subtitle v-for="(role, index) of userInfo.roles" v-bind:key="index">{{role}}</v-list-item-subtitle>
+        </v-list-item-content>
+      </v-list-item>
       <v-list-item :to="{ name: 'Logout' }" data-cy="topbar-logout">
         <v-list-item-icon>
           <v-icon>mdi-export</v-icon>
@@ -202,8 +212,10 @@ import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import Settings from './Settings.vue'
 import StudyQuickSelectForm from '@/components/studies/StudyQuickSelectForm'
 import StudyForm from '@/components/studies/StudyForm'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     About,
     ConfirmDialog,
@@ -240,13 +252,13 @@ export default {
       return this.$config.DOC_BASE_URL
     },
     username () {
-      return (this.userInfo) ? this.userInfo.name : 'John Doe'
+      return (this.userInfo) ? this.userInfo.name : 'Anonymous'
     },
     availableApps () {
       return this.apps.filter(app => !app.needsAuthentication || this.isAuthenticated)
     },
     isAuthenticated () {
-      return this.$config.AUTH_ENABLED === '0' || this.userInfo
+      return this.$config.AUTH_ENABLED === '0' || !!this.userInfo
     },
     currentStudyStatus () {
       if (!this.selectedStudy) {
@@ -293,7 +305,9 @@ export default {
       this.$router.push({ name: 'SelectOrAddStudy' })
     },
     reloadPage () {
-      document.location.reload()
+      const regex = /\/studies\/Study_[\d]+/
+      const newUrl = document.location.href.replace(regex, '/studies/' + this.selectedStudy.uid)
+      document.location.href = newUrl
     }
   }
 }

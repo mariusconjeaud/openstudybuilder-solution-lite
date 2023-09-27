@@ -1,7 +1,7 @@
 """Study Protocol Interventions service"""
 
 import logging
-from typing import Dict, List, Mapping, Sequence
+from typing import Mapping, Sequence
 
 import yattag
 from docx.enum.style import WD_STYLE_TYPE
@@ -222,7 +222,7 @@ class StudyInterventionsService:
 
     def _get_arms_for_compounds(
         self, study_uid
-    ) -> Mapping[str, List[models.StudySelectionArm]]:
+    ) -> Mapping[str, list[models.StudySelectionArm]]:
         arms = {
             arm.arm_uid: arm
             for arm in StudyArmSelectionService(author=self.current_user_id)
@@ -243,7 +243,7 @@ class StudyInterventionsService:
 
     def _get_compound_dosings(
         self, study_uid: str
-    ) -> Dict[str, List[models.StudyCompoundDosing]]:
+    ) -> dict[str, list[models.StudyCompoundDosing]]:
         results = (
             StudyCompoundDosingSelectionService(author=self.current_user_id)
             .get_all_compound_dosings(study_uid)

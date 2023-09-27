@@ -188,8 +188,9 @@ export default {
       data.project_number = this.project.project_number
       return this.$store.dispatch('manageStudies/addStudy', data).then(resp => {
         bus.$emit('notification', { msg: this.$t('StudyForm.add_success') })
-        this.$store.dispatch('studiesGeneral/selectStudy', resp.data)
+        this.$store.dispatch('studiesGeneral/selectStudy', { studyObj: resp.data })
         this.$router.push({ name: 'SelectOrAddStudy' })
+        this.$router.go()
       })
     },
     hasChanged () {
@@ -208,7 +209,7 @@ export default {
       data.project_number = this.project.project_number
       return this.$store.dispatch('manageStudies/editStudyIdentification', [this.editedStudy.uid, data]).then(resp => {
         if (this.selectedStudy && (this.editedStudy.uid === this.selectedStudy.uid)) {
-          this.$store.dispatch('studiesGeneral/selectStudy', resp.data)
+          this.$store.dispatch('studiesGeneral/selectStudy', { studyObj: resp.data })
         }
         this.$emit('updated', resp.data)
         bus.$emit('notification', { msg: this.$t('StudyForm.update_success') })

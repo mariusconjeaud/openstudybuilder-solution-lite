@@ -16,11 +16,11 @@
     <template v-slot:actions="">
       <v-btn
         fab
-        dark
         small
         color="primary"
         @click.stop="showCompoundForm = true"
         :title="$t('CompoundForm.add_title')"
+        :disabled="!checkPermission($roles.LIBRARY_WRITE)"
         >
         <v-icon dark>
           mdi-plus
@@ -87,8 +87,10 @@ import dataFormating from '@/utils/dataFormating'
 import HistoryTable from '@/components/tools/HistoryTable'
 import NNTable from '@/components/tools/NNTable'
 import StatusChip from '@/components/tools/StatusChip'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     ActionsMenu,
     CompoundForm,
@@ -116,9 +118,10 @@ export default {
       actions: [
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'edit'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.editCompound
         },
         {
@@ -126,6 +129,7 @@ export default {
           icon: 'mdi-check-decagram',
           iconColor: 'success',
           condition: (item) => item.possible_actions.find(action => action === 'approve'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.approveCompound
         },
         {
@@ -133,6 +137,7 @@ export default {
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'new_version'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.createNewVersion
         },
         {
@@ -140,6 +145,7 @@ export default {
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.inactivateCompound
         },
         {
@@ -147,13 +153,15 @@ export default {
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.reactivateCompound
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
           condition: (item) => item.possible_actions.find(action => action === 'delete'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.deleteCompound
         },
         {

@@ -1,4 +1,4 @@
-from typing import Any, Optional, Sequence, TypeVar
+from typing import Any, Sequence, TypeVar
 
 from neomodel import db
 from pydantic import BaseModel
@@ -16,7 +16,6 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
     VersioningException,
 )
-from clinical_mdr_api.exceptions import ValidationException
 from clinical_mdr_api.models import (
     DictionaryCodelist,
     DictionaryCodelistCreateInput,
@@ -26,7 +25,11 @@ from clinical_mdr_api.models import (
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository  # type: ignore
-from clinical_mdr_api.services._utils import calculate_diffs, normalize_string
+from clinical_mdr_api.services._utils import (
+    calculate_diffs,
+    is_library_editable,
+    normalize_string,
+)
 
 _AggregateRootType = TypeVar("_AggregateRootType")
 
@@ -42,9 +45,9 @@ class DictionaryCodelistGenericService:
     version_class = DictionaryCodelistVersion
     repository_interface = DictionaryCodelistGenericRepository
     _repos: MetaRepository
-    user_initials: Optional[str]
+    user_initials: str | None
 
-    def __init__(self, user: Optional[str] = None):
+    def __init__(self, user: str | None = None):
         self.user_initials = user if user is not None else "TODO user initials"
         self._repos = MetaRepository(self.user_initials)
 
@@ -77,18 +80,18 @@ class DictionaryCodelistGenericService:
     def get_all_dictionary_codelists(
         self,
         library: str,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[BaseModel]:
         self.enforce_library(library)
 
         dictionary_type = self.get_dictionary_type(library=library)
 
-        items, total_count = self.repository.find_all(
+        items, total = self.repository.find_all(
             library=dictionary_type,
             sort_by=sort_by,
             filter_by=filter_by,
@@ -98,7 +101,7 @@ class DictionaryCodelistGenericService:
             total_count=total_count,
         )
 
-        all_dictionary_codelists = GenericFilteringReturn.create(items, total_count)
+        all_dictionary_codelists = GenericFilteringReturn.create(items, total)
         all_dictionary_codelists.items = [
             DictionaryCodelist.from_dictionary_codelist_ar(dictionary_codelist_ar)
             for dictionary_codelist_ar in all_dictionary_codelists.items
@@ -110,9 +113,9 @@ class DictionaryCodelistGenericService:
         self,
         library: str,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence[str]:
         self.enforce_library(library)
@@ -139,7 +142,7 @@ class DictionaryCodelistGenericService:
         return header_values
 
     @db.transaction
-    def get_by_uid(self, codelist_uid: str, version: Optional[str] = None) -> BaseModel:
+    def get_by_uid(self, codelist_uid: str, version: str | None = None) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(
             codelist_uid=codelist_uid, version=version
         )
@@ -148,8 +151,8 @@ class DictionaryCodelistGenericService:
     def _find_by_uid_or_raise_not_found(
         self,
         codelist_uid: str,
-        version: Optional[str] = None,
-        for_update: Optional[bool] = False,
+        version: str | None = None,
+        for_update: bool | None = False,
     ) -> _AggregateRootType:
         item = self.repository.find_by_uid_2(
             uid=codelist_uid, version=version, for_update=for_update
@@ -191,32 +194,22 @@ class DictionaryCodelistGenericService:
 
         library_vo = LibraryVO.from_input_values_2(
             library_name=codelist_input.library_name,
-            is_library_editable_callback=(
-                lambda name: self._repos.library_repository.find_by_name(
-                    name
-                ).is_editable
-                if self._repos.library_repository.find_by_name(name) is not None
-                else None
-            ),
+            is_library_editable_callback=is_library_editable,
         )
-        try:
-            dictionary_codelist_ar = DictionaryCodelistAR.from_input_values(
-                author=self.user_initials,
-                dictionary_codelist_vo=DictionaryCodelistVO.from_input_values(
-                    name=codelist_input.name,
-                    is_template_parameter=codelist_input.template_parameter,
-                    current_terms=[],
-                    previous_terms=[],
-                    codelist_exists_by_name_callback=self.repository.codelist_exists_by_name,
-                ),
-                library=library_vo,
-                generate_uid_callback=self.repository.generate_uid,
-            )
+        dictionary_codelist_ar = DictionaryCodelistAR.from_input_values(
+            author=self.user_initials,
+            dictionary_codelist_vo=DictionaryCodelistVO.from_input_values(
+                name=codelist_input.name,
+                is_template_parameter=codelist_input.template_parameter,
+                current_terms=[],
+                previous_terms=[],
+                codelist_exists_by_name_callback=self.repository.codelist_exists_by_name,
+            ),
+            library=library_vo,
+            generate_uid_callback=self.repository.generate_uid,
+        )
 
-            self.repository.save(dictionary_codelist_ar)
-
-        except ValueError as value_error:
-            raise exceptions.ValidationException(value_error.args[0])
+        self.repository.save(dictionary_codelist_ar)
 
         return DictionaryCodelist.from_dictionary_codelist_ar(dictionary_codelist_ar)
 
@@ -256,8 +249,6 @@ class DictionaryCodelistGenericService:
             return DictionaryCodelist.from_dictionary_codelist_ar(item)
         except VersioningException as e:
             raise exceptions.BusinessLogicException(e.msg)
-        except ValueError as e:
-            raise exceptions.ValidationException(e)
 
     @db.transaction
     def approve(self, codelist_uid: str) -> BaseModel:
@@ -271,7 +262,7 @@ class DictionaryCodelistGenericService:
         except VersioningException as e:
             raise exceptions.BusinessLogicException(e.msg)
 
-    def enforce_library(self, library: Optional[str]):
+    def enforce_library(self, library: str | None):
         if library is not None and not self._repos.library_repository.library_exists(
             normalize_string(library)
         ):
@@ -296,12 +287,9 @@ class DictionaryCodelistGenericService:
             codelist_uid=codelist_uid, for_update=True
         )
 
-        try:
-            dictionary_codelist_ar.add_term(
-                codelist_uid=codelist_uid, term_uid=term_uid, author=self.user_initials
-            )
-        except ValueError as exception:
-            raise ValidationException(exception.args[0]) from exception
+        dictionary_codelist_ar.add_term(
+            codelist_uid=codelist_uid, term_uid=term_uid, author=self.user_initials
+        )
 
         self.repository.save(dictionary_codelist_ar)
         return DictionaryCodelist.from_dictionary_codelist_ar(
@@ -324,12 +312,10 @@ class DictionaryCodelistGenericService:
         dictionary_codelist_ar = self._find_by_uid_or_raise_not_found(
             codelist_uid=codelist_uid, for_update=True
         )
-        try:
-            dictionary_codelist_ar.remove_term(
-                codelist_uid=codelist_uid, term_uid=term_uid, author=self.user_initials
-            )
-        except ValueError as exception:
-            raise ValidationException(exception.args[0]) from exception
+
+        dictionary_codelist_ar.remove_term(
+            codelist_uid=codelist_uid, term_uid=term_uid, author=self.user_initials
+        )
 
         self.repository.save(dictionary_codelist_ar)
         return DictionaryCodelist.from_dictionary_codelist_ar(

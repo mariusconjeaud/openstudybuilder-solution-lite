@@ -4,7 +4,7 @@ function getInternalApiName (template, values) {
    * Shall return Template [value1 , value2] or Template [value1  value2], or Template [value1 or value2]
    *
    */
-  if (!values.length) {
+  if (!values || !values.length) {
     return template
   }
   let result = ''

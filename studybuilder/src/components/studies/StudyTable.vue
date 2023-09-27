@@ -15,11 +15,11 @@
         data-cy="add-study"
         v-if="!readOnly"
         fab
-        dark
         small
         color="primary"
         @click.stop="showForm = true"
         :title="$t('StudyForm.add_title')"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon dark>
           mdi-plus
@@ -55,8 +55,10 @@ import { mapGetters } from 'vuex'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import NNTable from '@/components/tools/NNTable'
 import StudyForm from '@/components/studies/StudyForm'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     ActionsMenu,
     NNTable,
@@ -100,10 +102,11 @@ export default {
         },
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
           condition: (item) => item.current_metadata.version_metadata.study_status === 'DRAFT',
-          click: this.editStudy
+          click: this.editStudy,
+          accessRole: this.$roles.STUDY_WRITE
         }
       ],
       headers: [
@@ -131,10 +134,11 @@ export default {
       this.$emit('refreshStudies')
     },
     selectStudy (study) {
-      this.$store.dispatch('studiesGeneral/selectStudy', study)
+      this.$store.dispatch('studiesGeneral/selectStudy', { studyObj: study, forceReload: true })
     },
     unSelectStudy (study) {
       this.$store.commit('studiesGeneral/UNSELECT_STUDY', study)
+      window.location.reload()
     },
     editStudy (study) {
       this.activeStudy = study

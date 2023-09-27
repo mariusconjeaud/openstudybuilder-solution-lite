@@ -1,4 +1,4 @@
-from typing import List, Optional, Sequence
+from typing import Self, Sequence
 
 from pydantic import Field
 
@@ -24,7 +24,7 @@ class CTCodelist(BaseModel):
         cls,
         ct_codelist_name_ar: CTCodelistNameAR,
         ct_codelist_attributes_ar: CTCodelistAttributesAR,
-    ) -> "CTCodelist":
+    ) -> Self:
         return cls(
             catalogue_name=ct_codelist_attributes_ar.ct_codelist_vo.catalogue_name,
             codelist_uid=ct_codelist_attributes_ar.uid,
@@ -59,7 +59,7 @@ class CTCodelist(BaseModel):
         description="",
     )
 
-    parent_codelist_uid: Optional[str] = Field(
+    parent_codelist_uid: str | None = Field(
         None, title="parent_codelist_uid", description="", nullable=True
     )
 
@@ -112,7 +112,7 @@ class CTCodelist(BaseModel):
     )
 
     library_name: str
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         [],
         description=(
             "Holds those actions that can be performed on the CTCodelistAttributes. "
@@ -127,7 +127,7 @@ class CTCodelistTermInput(BaseModel):
         title="term_uid",
         description="",
     )
-    order: Optional[int] = Field(
+    order: int | None = Field(
         999999,
         title="order",
         description="",
@@ -183,7 +183,7 @@ class CTCodelistCreateInput(BaseModel):
         description="",
     )
 
-    parent_codelist_uid: Optional[str] = Field(
+    parent_codelist_uid: str | None = Field(
         None,
         title="parent_codelist_uid",
         description="",
@@ -200,7 +200,7 @@ class CTCodelistNameAndAttributes(BaseModel):
         cls,
         ct_codelist_name_ar: CTCodelistNameAR,
         ct_codelist_attributes_ar: CTCodelistAttributesAR,
-    ) -> "CTCodelistNameAndAttributes":
+    ) -> Self:
         codelist_name_and_attributes = cls(
             catalogue_name=ct_codelist_attributes_ar.ct_codelist_vo.catalogue_name,
             codelist_uid=ct_codelist_attributes_ar.uid,
@@ -241,7 +241,7 @@ class CTCodelistNameAndAttributes(BaseModel):
         description="",
     )
 
-    library_name: Optional[str] = Field(None, nullable=True)
+    library_name: str | None = Field(None, nullable=True)
 
     name: CTCodelistName = Field(
         ...,

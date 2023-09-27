@@ -40,11 +40,11 @@
         </v-btn>
         <v-btn fab small v-show="doc !== ''" color="nnGreen1" class="ml-4 white--text"
           :title="$t('DataTableExportButton.export_pdf')" @click="downloadPdf" :loading="pdfDownloadLoading">
-          <v-icon>mdi-file-pdf-box</v-icon>
+          <v-icon>mdi-file-pdf-box-outline</v-icon>
         </v-btn>
         <v-btn fab small v-show="doc !== ''" color="nnGreen1" class="ml-4 white--text"
           :title="$t('DataTableExportButton.export_html')" @click="downloadHtml" :loading="htmlDownloadLoading">
-          <v-icon>mdi-file-document</v-icon>
+          <v-icon>mdi-file-document-outline</v-icon>
         </v-btn>
       </v-row>
     </v-app-bar>

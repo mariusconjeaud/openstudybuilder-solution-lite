@@ -64,17 +64,14 @@ class EndpointTemplateRepository(GenericSyntaxTemplateRepository[EndpointTemplat
         """
         root, item = super()._create(item)
 
-        if item.indications:
-            for indication in item.indications:
-                if indication:
-                    root.has_indication.connect(self._get_indication(indication.uid))
-        if item.categories:
-            for category in item.categories:
-                if category and category[0]:
-                    root.has_category.connect(self._get_category(category[0].uid))
-        if item.sub_categories:
-            for category in item.sub_categories:
-                if category and category[0]:
-                    root.has_subcategory.connect(self._get_category(category[0].uid))
+        for indication in item.indications or []:
+            if indication:
+                root.has_indication.connect(self._get_indication(indication.uid))
+        for category in item.categories or []:
+            if category and category[0]:
+                root.has_category.connect(self._get_category(category[0].uid))
+        for category in item.sub_categories or []:
+            if category and category[0]:
+                root.has_subcategory.connect(self._get_category(category[0].uid))
 
         return item

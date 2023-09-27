@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Callable, Optional
+from typing import Callable, Self
 
-from clinical_mdr_api.domains.concepts.concept_base import _AggregateRootType
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.concepts.simple_concepts.numeric_value_with_unit import (
     NumericValueWithUnitAR,
     NumericValueWithUnitVO,
@@ -33,12 +33,12 @@ class LagTimeVO(NumericValueWithUnitVO):
     def from_repository_values(
         cls,
         value: float,
-        definition: Optional[str],
-        abbreviation: Optional[str],
+        definition: str | None,
+        abbreviation: str | None,
         is_template_parameter: bool,
         unit_definition_uid: str,
         sdtm_domain_uid: str,
-    ) -> "LagTimeVO":
+    ) -> Self:
         value = cls.derive_value_property(value=value)
         simple_concept_vo = cls(
             name=str(value),
@@ -57,23 +57,23 @@ class LagTimeVO(NumericValueWithUnitVO):
     def from_input_values(
         cls,
         value: float,
-        definition: Optional[str],
-        abbreviation: Optional[str],
+        definition: str | None,
+        abbreviation: str | None,
         is_template_parameter: bool,
         find_unit_definition_by_uid: Callable[[str], UnitDefinitionAR],
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
         unit_definition_uid: str,
         sdtm_domain_uid: str,
-    ) -> "LagTimeVO":
+    ) -> Self:
         unit_definition = find_unit_definition_by_uid(unit_definition_uid)
         if unit_definition is None:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"{cls.__name__} tried to connect to non existing unit definition identified by uid ({unit_definition_uid})"
             )
 
         sdtm_domain = find_term_by_uid(sdtm_domain_uid)
         if sdtm_domain is None:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"{cls.__name__} tried to connect to non existing sdtm domain identified by uid ({sdtm_domain_uid})"
             )
         value = cls.derive_value_property(value=value)
@@ -105,11 +105,11 @@ class LagTimeAR(NumericValueWithUnitAR):
         author: str,
         simple_concept_vo: SimpleConceptVO,
         library: LibraryVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
         find_uid_by_value_unit_and_domain_callback: Callable[
-            [str, str, str], Optional[str]
+            [str, str, str], str | None
         ] = None,
-    ) -> _AggregateRootType:
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO(
             _change_description="Initial version",
             _status=LibraryItemStatus.FINAL,
@@ -121,7 +121,7 @@ class LagTimeAR(NumericValueWithUnitAR):
         )
 
         if not library.is_editable:
-            raise ValueError(
+            raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
 

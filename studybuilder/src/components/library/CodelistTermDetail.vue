@@ -66,7 +66,7 @@
                 :title="$t('CodelistTermDetail.edit_names')"
                 @click="showNamesForm = true"
                 >
-                <v-icon>mdi-pencil</v-icon>
+                <v-icon>mdi-pencil-outline</v-icon>
               </v-btn>
               <v-btn
                 data-cy="approve-term-sponsor-values"
@@ -113,7 +113,7 @@
                 @click="deleteTermNames()"
                 :title="$t('CodelistTermDetail.delete_names')"
                 >
-                <v-icon>mdi-delete</v-icon>
+                <v-icon>mdi-delete-outline</v-icon>
               </v-btn>
               <v-btn
                 data-cy="term-sponsor-version-history"
@@ -167,7 +167,7 @@
                 :title="$t('CodelistTermDetail.edit_attributes')"
                 @click="showAttributesForm = true"
                 >
-                <v-icon>mdi-pencil</v-icon>
+                <v-icon>mdi-pencil-outline</v-icon>
               </v-btn>
               <v-btn
                 data-cy="approve-term-attributes-values"
@@ -213,7 +213,7 @@
                 @click="deleteTermAttributes()"
                 :title="$t('CodelistTermDetail.delete_attributes')"
                 >
-                <v-icon>mdi-delete</v-icon>
+                <v-icon>mdi-delete-outline</v-icon>
               </v-btn>
               <v-btn
                 icon

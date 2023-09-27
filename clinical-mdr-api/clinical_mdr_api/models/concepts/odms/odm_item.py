@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Self
 
 from pydantic import BaseModel, Field
 
@@ -66,10 +66,8 @@ class OdmItemTermRelationshipModel(BaseModel):
         cls,
         uid: str,
         term_uid: str,
-        find_term_with_item_relation_by_item_uid: Callable[
-            [str], Optional[OdmItemTermVO]
-        ],
-    ) -> Optional["OdmItemTermRelationshipModel"]:
+        find_term_with_item_relation_by_item_uid: Callable[[str], OdmItemTermVO | None],
+    ) -> Self | None:
         simple_term_model = None
         if term_uid is not None:
             term = find_term_with_item_relation_by_item_uid(uid=uid, term_uid=term_uid)
@@ -97,11 +95,11 @@ class OdmItemTermRelationshipModel(BaseModel):
         return simple_term_model
 
     term_uid: str = Field(..., title="term_uid", description="")
-    name: Optional[str] = Field(None, title="name", description="")
-    mandatory: Optional[bool] = Field(None, title="mandatory", description="")
-    order: Optional[int] = Field(None, title="order", description="")
-    display_text: Optional[str] = Field(None, title="display_text", description="")
-    version: Optional[str] = Field(None, title="version", description="")
+    name: str | None = Field(None, title="name", description="")
+    mandatory: bool | None = Field(None, title="mandatory", description="")
+    order: int | None = Field(None, title="order", description="")
+    display_text: str | None = Field(None, title="display_text", description="")
+    version: str | None = Field(None, title="version", description="")
 
 
 class OdmItemUnitDefinitionWithRelationship(BaseModel):
@@ -110,13 +108,13 @@ class OdmItemUnitDefinitionWithRelationship(BaseModel):
         cls,
         uid: str,
         unit_definition_uid: str,
-        find_unit_definition_by_uid: Callable[[str], Optional[ConceptARBase]],
+        find_unit_definition_by_uid: Callable[[str], ConceptARBase | None],
         find_unit_definition_with_item_relation_by_item_uid: Callable[
-            [str, str], Optional[OdmItemUnitDefinitionVO]
+            [str, str], OdmItemUnitDefinitionVO | None
         ],
-        find_dictionary_term_by_uid: Callable[[str], Optional[DictionaryTermAR]],
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
-    ) -> Optional["OdmItemUnitDefinitionWithRelationship"]:
+        find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
+    ) -> Self | None:
         if uid is not None:
             unit_definition_rel = find_unit_definition_with_item_relation_by_item_uid(
                 uid, unit_definition_uid
@@ -169,65 +167,61 @@ class OdmItemUnitDefinitionWithRelationship(BaseModel):
         return simple_unit_definition_model
 
     uid: str = Field(..., title="uid", description="")
-    name: Optional[str] = Field(None, title="name", description="")
-    mandatory: Optional[bool] = Field(None, title="mandatory", description="")
-    order: Optional[int] = Field(None, title="order", description="")
-    ucum: Optional[SimpleTermModel] = Field(None, title="ucum", description="")
-    ct_units: List[SimpleTermModel] = Field([], title="ucum_name", description="")
+    name: str | None = Field(None, title="name", description="")
+    mandatory: bool | None = Field(None, title="mandatory", description="")
+    order: int | None = Field(None, title="order", description="")
+    ucum: SimpleTermModel | None = Field(None, title="ucum", description="")
+    ct_units: list[SimpleTermModel] = Field([], title="ucum_name", description="")
 
 
 class OdmItem(ConceptModel):
-    oid: Optional[str]
-    prompt: Optional[str] = Field(None, nullable=True)
-    datatype: Optional[str] = Field(None, nullable=True)
-    length: Optional[int] = Field(None, nullable=True)
-    significant_digits: Optional[int] = Field(None, nullable=True)
-    sas_field_name: Optional[str] = Field(None, nullable=True)
-    sds_var_name: Optional[str] = Field(None, nullable=True)
-    origin: Optional[str] = Field(None, nullable=True)
-    comment: Optional[str] = Field(None, nullable=True)
-    descriptions: List[OdmDescriptionSimpleModel]
-    aliases: List[OdmAliasSimpleModel]
-    unit_definitions: List[OdmItemUnitDefinitionWithRelationship]
-    codelist: Optional[CTCodelistAttributesSimpleModel] = Field(None, nullable=True)
-    terms: List[OdmItemTermRelationshipModel]
-    activity: Optional[ActivityHierarchySimpleModel] = Field(None, nullable=True)
-    vendor_elements: List[OdmVendorElementRelationModel]
-    vendor_attributes: List[OdmVendorAttributeRelationModel]
-    vendor_element_attributes: List[OdmVendorElementAttributeRelationModel]
-    possible_actions: List[str]
+    oid: str | None
+    prompt: str | None = Field(None, nullable=True)
+    datatype: str | None = Field(None, nullable=True)
+    length: int | None = Field(None, nullable=True)
+    significant_digits: int | None = Field(None, nullable=True)
+    sas_field_name: str | None = Field(None, nullable=True)
+    sds_var_name: str | None = Field(None, nullable=True)
+    origin: str | None = Field(None, nullable=True)
+    comment: str | None = Field(None, nullable=True)
+    descriptions: list[OdmDescriptionSimpleModel]
+    aliases: list[OdmAliasSimpleModel]
+    unit_definitions: list[OdmItemUnitDefinitionWithRelationship]
+    codelist: CTCodelistAttributesSimpleModel | None = Field(None, nullable=True)
+    terms: list[OdmItemTermRelationshipModel]
+    activity: ActivityHierarchySimpleModel | None = Field(None, nullable=True)
+    vendor_elements: list[OdmVendorElementRelationModel]
+    vendor_attributes: list[OdmVendorAttributeRelationModel]
+    vendor_element_attributes: list[OdmVendorElementAttributeRelationModel]
+    possible_actions: list[str]
 
     @classmethod
     def from_odm_item_ar(
         cls,
         odm_item_ar: OdmItemAR,
-        find_odm_description_by_uid: Callable[[str], Optional[OdmDescriptionAR]],
-        find_odm_alias_by_uid: Callable[[str], Optional[OdmAliasAR]],
-        find_unit_definition_by_uid: Callable[[str], Optional[UnitDefinitionAR]],
+        find_odm_description_by_uid: Callable[[str], OdmDescriptionAR | None],
+        find_odm_alias_by_uid: Callable[[str], OdmAliasAR | None],
+        find_unit_definition_by_uid: Callable[[str], UnitDefinitionAR | None],
         find_unit_definition_with_item_relation_by_item_uid: Callable[
-            [str, str], Optional[OdmItemUnitDefinitionVO]
+            [str, str], OdmItemUnitDefinitionVO | None
         ],
-        find_dictionary_term_by_uid: Callable[[str], Optional[DictionaryTermAR]],
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
+        find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
         find_codelist_attribute_by_codelist_uid: Callable[
-            [str], Optional[CTCodelistAttributesAR]
+            [str], CTCodelistAttributesAR | None
         ],
         find_term_with_item_relation_by_item_uid: Callable[
-            [str, str], Optional[OdmItemTermVO]
+            [str, str], OdmItemTermVO | None
         ],
-        find_activity_by_uid: Callable[[str], Optional[ActivityAR]],
+        find_activity_by_uid: Callable[[str], ActivityAR | None],
         find_odm_vendor_element_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType], Optional[OdmVendorElementRelationVO]
+            [str, str, RelationType], OdmVendorElementRelationVO | None
         ],
         find_odm_vendor_attribute_by_uid_with_odm_element_relation: Callable[
             [str, str, RelationType, bool],
-            Union[
-                OdmVendorAttributeRelationVO,
-                OdmVendorElementAttributeRelationVO,
-                None,
-            ],
+            OdmVendorAttributeRelationVO | OdmVendorElementAttributeRelationVO | None,
         ],
-    ) -> "OdmItem":
+    ) -> Self:
         return cls(
             uid=odm_item_ar._uid,
             oid=odm_item_ar.concept_vo.oid,
@@ -350,12 +344,10 @@ class OdmItemRefModel(BaseModel):
         uid: str,
         item_group_uid: str,
         find_odm_item_by_uid_with_item_group_relation: Callable[
-            [str, str], Optional[OdmItemRefVO]
+            [str, str], OdmItemRefVO | None
         ],
-        find_odm_vendor_attribute_by_uid: Callable[
-            [str], Optional[OdmVendorAttributeAR]
-        ],
-    ) -> Optional["OdmItemRefModel"]:
+        find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
+    ) -> Self | None:
         if uid is not None:
             odm_item_ref_vo = find_odm_item_by_uid_with_item_group_relation(
                 uid, item_group_uid
@@ -407,20 +399,20 @@ class OdmItemRefModel(BaseModel):
         return odm_item_ref_model
 
     uid: str = Field(..., title="uid", description="")
-    oid: Optional[str] = Field(None, title="oid", description="")
-    name: Optional[str] = Field(None, title="name", description="")
-    order_number: Optional[int] = Field(None, title="order_number", description="")
-    mandatory: Optional[str] = Field(None, title="mandatory", description="")
-    key_sequence: Optional[str] = Field(None, title="key_sequence", description="")
-    method_oid: Optional[str] = Field(None, title="method_oid", description="")
-    imputation_method_oid: Optional[str] = Field(
+    oid: str | None = Field(None, title="oid", description="")
+    name: str | None = Field(None, title="name", description="")
+    order_number: int | None = Field(None, title="order_number", description="")
+    mandatory: str | None = Field(None, title="mandatory", description="")
+    key_sequence: str | None = Field(None, title="key_sequence", description="")
+    method_oid: str | None = Field(None, title="method_oid", description="")
+    imputation_method_oid: str | None = Field(
         None, title="imputation_method_oid", description=""
     )
-    role: Optional[str] = Field(None, title="role", description="")
-    role_codelist_oid: Optional[str] = Field(
+    role: str | None = Field(None, title="role", description="")
+    role_codelist_oid: str | None = Field(
         None, title="role_codelist_oid", description=""
     )
-    collection_exception_condition_oid: Optional[str] = Field(
+    collection_exception_condition_oid: str | None = Field(
         None, title="collection_exception_condition_oid", description=""
     )
     vendor: OdmRefVendor = Field(title="vendor", description="")
@@ -429,50 +421,48 @@ class OdmItemRefModel(BaseModel):
 class OdmItemTermRelationshipInput(BaseModel):
     uid: str
     mandatory: bool = True
-    order: Optional[int] = 999999
-    display_text: Optional[str] = None
+    order: int | None = 999999
+    display_text: str | None = None
 
 
 class OdmItemUnitDefinitionRelationshipInput(BaseModel):
     uid: str
     mandatory: bool = True
-    order: Optional[int] = 999999
+    order: int | None = 999999
 
 
 class OdmItemPostInput(ConceptPostInput):
-    oid: Optional[str]
+    oid: str | None
     datatype: str
-    prompt: Optional[str]
-    length: Optional[int]
-    significant_digits: Optional[int] = None
-    sas_field_name: Optional[str]
-    sds_var_name: Optional[str]
-    origin: Optional[str]
-    comment: Optional[str] = None
-    descriptions: List[Union[OdmDescriptionPostInput, str]]
-    alias_uids: List[str]
-    codelist_uid: Optional[str]
-    unit_definitions: List[OdmItemUnitDefinitionRelationshipInput] = []
-    terms: List[OdmItemTermRelationshipInput] = []
+    prompt: str | None
+    length: int | None
+    significant_digits: int | None = None
+    sas_field_name: str | None
+    sds_var_name: str | None
+    origin: str | None
+    comment: str | None = None
+    descriptions: list[OdmDescriptionPostInput | str]
+    alias_uids: list[str]
+    codelist_uid: str | None
+    unit_definitions: list[OdmItemUnitDefinitionRelationshipInput] = []
+    terms: list[OdmItemTermRelationshipInput] = []
 
 
 class OdmItemPatchInput(ConceptPatchInput):
-    oid: Optional[str]
-    datatype: Optional[str]
-    prompt: Optional[str]
-    length: Optional[int]
-    significant_digits: Optional[int]
-    sas_field_name: Optional[str]
-    sds_var_name: Optional[str]
-    origin: Optional[str]
-    comment: Optional[str]
-    descriptions: List[
-        Union[OdmDescriptionBatchPatchInput, OdmDescriptionPostInput, str]
-    ]
-    alias_uids: List[str]
-    unit_definitions: List[OdmItemUnitDefinitionRelationshipInput]
-    codelist_uid: Optional[str]
-    terms: List[OdmItemTermRelationshipInput]
+    oid: str | None
+    datatype: str | None
+    prompt: str | None
+    length: int | None
+    significant_digits: int | None
+    sas_field_name: str | None
+    sds_var_name: str | None
+    origin: str | None
+    comment: str | None
+    descriptions: list[OdmDescriptionBatchPatchInput | OdmDescriptionPostInput | str]
+    alias_uids: list[str]
+    unit_definitions: list[OdmItemUnitDefinitionRelationshipInput]
+    codelist_uid: str | None
+    terms: list[OdmItemTermRelationshipInput]
 
 
 class OdmItemActivityPostInput(BaseModel):
@@ -484,7 +474,7 @@ class OdmItemVersion(OdmItem):
     Class for storing OdmItem and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

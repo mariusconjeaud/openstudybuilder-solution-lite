@@ -149,6 +149,7 @@ def test_data():
         "uid": incl_criteria_template_1.uid,
         "sequence_id": incl_criteria_template_1.sequence_id,
         "guidance_text": incl_criteria_template_1.guidance_text,
+        "library_name": incl_criteria_template_1.library.name,
     }
     incl_criteria_template_2_output = {
         "name": incl_criteria_template_2.name,
@@ -156,6 +157,7 @@ def test_data():
         "uid": incl_criteria_template_2.uid,
         "sequence_id": incl_criteria_template_2.sequence_id,
         "guidance_text": incl_criteria_template_2.guidance_text,
+        "library_name": incl_criteria_template_2.library.name,
     }
     excl_criteria_template_1_output = {
         "name": excl_criteria_template_1.name,
@@ -163,6 +165,7 @@ def test_data():
         "uid": excl_criteria_template_1.uid,
         "sequence_id": excl_criteria_template_1.sequence_id,
         "guidance_text": excl_criteria_template_1.guidance_text,
+        "library_name": excl_criteria_template_1.library.name,
     }
     excl_criteria_template_2_output = {
         "name": excl_criteria_template_2.name,
@@ -170,12 +173,14 @@ def test_data():
         "uid": excl_criteria_template_2.uid,
         "sequence_id": excl_criteria_template_2.sequence_id,
         "guidance_text": excl_criteria_template_2.guidance_text,
+        "library_name": excl_criteria_template_2.library.name,
     }
     excl_criteria_template_with_param_output = {
         "name": excl_criteria_template_with_param.name,
         "name_plain": excl_criteria_template_with_param.name_plain,
         "uid": excl_criteria_template_with_param.uid,
         "guidance_text": excl_criteria_template_with_param.guidance_text,
+        "library_name": excl_criteria_template_with_param.library.name,
     }
     default_study_criteria_input = {
         "criteria_data": {
@@ -501,7 +506,6 @@ def test_crud_study_criteria(api_client):
     expected_excl_criteria_with_param["order"] = 3
     del expected_excl_criteria_with_param["criteria"]
     del expected_excl_criteria_with_param["latest_criteria"]
-    expected_excl_criteria_with_param["latest_template"] = None
     # Load the object with values directly from the Template object
     # It needs to be flattened into a dict beforehand though
     expected_excl_criteria_with_param["criteria_template"] = vars(
@@ -525,7 +529,7 @@ def test_crud_study_criteria(api_client):
         "uid": text_value.uid,
     }
     response = api_client.patch(
-        url=f"{url_prefix}/StudyCriteria_000005/finalize",
+        url=f"{url_prefix}/StudyCriteria_000005",
         json={
             "criteria_template_uid": excl_criteria_template_with_param.uid,
             "library_name": excl_criteria_template_with_param.library.name,
@@ -537,6 +541,7 @@ def test_crud_study_criteria(api_client):
                     "terms": [target_parameter_term],
                 }
             ],
+            "key_criteria": True,
         },
     )
     res = response.json()
@@ -556,6 +561,7 @@ def test_crud_study_criteria(api_client):
     assert res["criteria"]["uid"] == "Criteria_000005"
     assert res["criteria"]["name"] == expected_criteria_with_param_name
     assert res["criteria"]["name_plain"] == expected_criteria_with_param_name_plain
+    assert res["key_criteria"] is True
 
     # Test get with project name and number filter
     project_name = res["project_name"]
@@ -630,7 +636,7 @@ def test_errors(api_client):
     dummy_template_uid = "dummy_template_uid"
     expected_response_code = 404
     expected_response_text = (
-        f"Criteria template with uid {dummy_template_uid} does not exist"
+        f"Syntax Template with uid {dummy_template_uid} does not exist"
     )
 
     # Preview
@@ -677,11 +683,10 @@ def test_study_locking_study_criteria(api_client):
     study = TestUtils.create_study()
     url_prefix = f"/studies/{study.uid}/study-criteria"
     # Create selection
-    response = api_client.post(
+    api_client.post(
         url=f"{url_prefix}?create_criteria=true",
         json=default_study_criteria_input,
     )
-    res = response.json()
 
     # get all criteria
     response = api_client.get(

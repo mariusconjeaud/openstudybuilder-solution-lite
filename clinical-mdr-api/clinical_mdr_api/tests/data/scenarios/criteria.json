@@ -84,8 +84,9 @@
                   "name": "Test_Name_Template",
                   "name_plain": "Test_Name_Template",
                   "uid": "{ctuid}",
-                  "sequence_id": "CIT1",
-                  "guidance_text": null
+                  "sequence_id": "CI1",
+                  "guidance_text": null,
+                  "library_name": "Test library"
                },
                "parameter_terms": [],
                "library": {
@@ -134,8 +135,9 @@
                      "name": "Test_Name_Template",
                      "name_plain": "Test_Name_Template",
                      "uid": "{ctuid}",
-                     "sequence_id": "CIT1",
+                     "sequence_id": "CI1",
                      "guidance_text": null,
+                     "library_name": "Test library",
                      "type": {
                         "term_uid": "C25532",
                         "catalogue_name": "SDTM CT",
@@ -260,8 +262,9 @@
                   "name": "Test_Name_Template",
                   "name_plain": "Test_Name_Template",
                   "uid": "{ctuid}",
-                  "sequence_id": "CIT1",
-                  "guidance_text": null
+                  "sequence_id": "CI1",
+                  "guidance_text": null,
+                  "library_name": "Test library"
                },
                "parameter_terms": [],
                "library": {
@@ -310,8 +313,9 @@
                      "name": "Test_Name_Template",
                      "name_plain": "Test_Name_Template",
                      "uid": "{ctuid}",
-                     "sequence_id": "CIT1",
+                     "sequence_id": "CI1",
                      "guidance_text": null,
+                     "library_name": "Test library",
                      "type": {
                         "term_uid": "C25532",
                         "catalogue_name": "SDTM CT",
@@ -404,8 +408,9 @@
                "name": "Test_Name_Template",
                "name_plain": "Test_Name_Template",
                "uid": "{ctuid}",
-               "sequence_id": "CIT1",
+               "sequence_id": "CI1",
                "guidance_text": null,
+               "library_name": "Test library",
                "type": {
                   "term_uid": "C25532",
                   "catalogue_name": "SDTM CT",
@@ -494,8 +499,9 @@
                   "name": "Test_Name_Template",
                   "name_plain": "Test_Name_Template",
                   "uid": "{ctuid}",
-                  "sequence_id": "CIT1",
+                  "sequence_id": "CI1",
                   "guidance_text": null,
+                  "library_name": "Test library",
                   "type": {
                      "term_uid": "C25532",
                      "catalogue_name": "SDTM CT",
@@ -585,8 +591,9 @@
                   "name": "Test_Name_Template",
                   "name_plain": "Test_Name_Template",
                   "uid": "{ctuid}",
-                  "sequence_id": "CIT1",
+                  "sequence_id": "CI1",
                   "guidance_text": null,
+                  "library_name": "Test library",
                   "type": {
                      "term_uid": "C25532",
                      "catalogue_name": "SDTM CT",

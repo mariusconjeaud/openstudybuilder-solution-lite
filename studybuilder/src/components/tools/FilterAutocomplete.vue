@@ -7,7 +7,7 @@
     <template v-slot:activator="{ on, attrs }">
       <v-text-field
         :label="data.length === 0 ? item.text : (data.length === 1 ? data[0] : `${data[0]} - ${data[1]}`)"
-        append-icon="mdi-calendar"
+        append-icon="mdi-calendar-outline"
         readonly
         rounded
         class="mt-1 calendar filterAutocompleteLabel"

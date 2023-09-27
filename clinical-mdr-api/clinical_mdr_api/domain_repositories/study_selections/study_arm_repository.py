@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from typing import List, Optional, Sequence
+from typing import Sequence
 
 from neomodel import db
 
@@ -41,23 +41,23 @@ class SelectionHistoryArm:
     """Class for selection history items"""
 
     study_selection_uid: str
-    study_uid: Optional[str]
+    study_uid: str | None
     arm_name: str
     arm_short_name: str
-    arm_code: Optional[str]
-    arm_description: Optional[str]
-    arm_colour: Optional[str]
-    arm_randomization_group: Optional[str]
-    arm_number_of_subjects: Optional[int]
-    arm_type: Optional[str]
+    arm_code: str | None
+    arm_description: str | None
+    arm_colour: str | None
+    arm_randomization_group: str | None
+    arm_number_of_subjects: int | None
+    arm_type: str | None
     # Study selection Versioning
     start_date: datetime.datetime
-    user_initials: Optional[str]
+    user_initials: str | None
     change_type: str
-    end_date: Optional[datetime.datetime]
+    end_date: datetime.datetime | None
     order: int
-    status: Optional[str]
-    accepted_version: Optional[bool]
+    status: str | None
+    accepted_version: bool | None
 
 
 class StudySelectionArmRepository:
@@ -117,9 +117,9 @@ class StudySelectionArmRepository:
 
     def _retrieves_all_data(
         self,
-        study_uid: Optional[str] = None,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
+        study_uid: str | None = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
     ) -> Sequence[StudySelectionArmVO]:
         query = ""
         query_parameters = {}
@@ -198,9 +198,9 @@ class StudySelectionArmRepository:
 
     def find_all(
         self,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-    ) -> Optional[Sequence[StudySelectionEndpointsAR]]:
+        project_name: str | None = None,
+        project_number: str | None = None,
+    ) -> Sequence[StudySelectionEndpointsAR] | None:
         """
         Finds all the selected study endpoints for all studies, and create the aggregate
         :return: List of StudySelectionEndpointsAR, potentially empty
@@ -228,7 +228,7 @@ class StudySelectionArmRepository:
 
     def find_by_study(
         self, study_uid: str, for_update: bool = False
-    ) -> Optional[StudySelectionArmAR]:
+    ) -> StudySelectionArmAR | None:
         """
         Finds all the selected study arms for a given study
         :param study_uid:
@@ -422,7 +422,7 @@ class StudySelectionArmRepository:
         audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
-        study_selection_node.has_before.connect(audit_node)
+        audit_node.has_before.connect(study_selection_node)
         study_root_node.audit_trail.connect(audit_node)
         return audit_node
 
@@ -468,7 +468,7 @@ class StudySelectionArmRepository:
             # Connect new node with study value
             latest_study_value_node.has_study_arm.connect(study_arm_selection_node)
         # Connect new node with audit trail
-        study_arm_selection_node.has_after.connect(audit_node)
+        audit_node.has_after.connect(study_arm_selection_node)
 
         if before_node is not None:
             design_cells: Sequence[StudyDesignCell] = before_node.has_design_cell.all()
@@ -594,7 +594,7 @@ class StudySelectionArmRepository:
 
     def find_selection_history(
         self, study_uid: str, study_selection_uid: str = None
-    ) -> List[SelectionHistoryArm]:
+    ) -> list[SelectionHistoryArm]:
         """
         Simple method to return all versions of a study objectives for a study.
         Optionally a specific selection uid is given to see only the response for a specific selection.

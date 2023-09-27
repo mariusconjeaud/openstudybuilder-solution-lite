@@ -35,7 +35,7 @@ def create_random_activity_group_ar(
             library_name=library, is_editable=is_editable
         ),
         author="TODO Initials",
-        activity_group_exists_by_name_callback=lambda _: False,
+        concept_exists_by_callback=lambda x, y, z: False,
     )
 
     return random_activity_group_ar
@@ -69,7 +69,7 @@ class TestActivityGroup(unittest.TestCase):
             author="TODO",
             change_description="Test",
             concept_vo=activity_vo,
-            concept_exists_by_name_callback=lambda _: False,
+            concept_exists_by_callback=lambda x, y, z: False,
         )
 
         # then

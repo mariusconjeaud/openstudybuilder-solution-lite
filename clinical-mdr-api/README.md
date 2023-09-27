@@ -21,7 +21,7 @@ This repository contains an API providing read/write access to Clinical MDR (Cli
 Create `.env` file (in the root of the repository) with the following content:
 ```shell
 UID=1000
-NEO4J_DSN=bolt://neo4j:test1234@localhost:7687
+NEO4J_DSN=bolt://neo4j:test1234@localhost:7687/neo4j
 OAUTH_ENABLED=false
 ALLOW_ORIGIN_REGEX='.*'
 ```
@@ -40,11 +40,18 @@ Update them according to your auth configuration (the values below are random-ge
   ```shell
   OAUTH_ENABLED=True
   OIDC_METADATA_DOCUMENT='https://login.microsoftonline.com/bd70d9d2-5ba8-4bb8-8ca5-55fdaf0c76d1/v2.0/.well-known/openid-configuration'
+  OAUTH_APP_ID='0b4bb293-433f-44d3-b992-8c95ad1665b9'
+  
+  # required for MS Graph API integration only, which will be used by a future feature #
+  OAUTH_APP_SECRET='21u9UAnFKXUCYt6yxqRA7xAQ'
+  MS_GRAPH_INTEGRATION_ENABLED=true
+  # optional, for MS Graph API integration: filter expression for group discovery  #
+  MS_GRAPH_GROUPS_QUERY="$filter=startsWith(displayName, 'StudyBuilder')"
+  
+  # required for the FastAPI-built-in Swagger UI only #
+  OAUTH_CLIENT_ID='db8a95f6-a638-4535-bb1d-4a131748165a'
   OAUTH_AUTHORIZATION_URL='https://login.microsoftonline.com/bd70d9d2-5ba8-4bb8-8ca5-55fdaf0c76d1/oauth2/v2.0/authorize'
   OAUTH_TOKEN_URL='https://login.microsoftonline.com/bd70d9d2-5ba8-4bb8-8ca5-55fdaf0c76d1/oauth2/v2.0/token'
-  OAUTH_APP_ID='0b4bb293-433f-44d3-b992-8c95ad1665b9'
-  OAUTH_APP_ID_URI='api://0b4bb293-433f-44d3-b992-8c95ad1665b9'
-  OAUTH_CLIENT_ID='db8a95f6-a638-4535-bb1d-4a131748165a'
   ```
 
 - For integration with Azure Monitoring / Application Insights (logs, tracing, correlation)
@@ -144,7 +151,7 @@ you can specify parameters for the desired http methods (`-M`) and endpoint name
 
 ## Authentication setup
 
-See [OAuth README file](OAUTH-README.md)
+See [doc/Auth.md](doc/Auth.md)
 
 
 
@@ -155,20 +162,20 @@ In general, we are following [Zalando RESTful API Guidelines](https://opensource
 
 This is the default usage of the HTTP Methods:
 
-| Method | Usage  | Success Response Code |
-| :----- | :----- | :----- | 
-| **GET** | **Get existing** - Returns a single entity or a list of entities. This is read only. |  200 - OK |
-| **POST** | **Create new** - Creates a new entity or multiple new entities. This is non-idempotent. Responses can be cached. |  201 - Created |
-| **PUT** | **Overwrite entirely** - Overwrites an existing or multiple existing entities entirely. Does not create a new entity (use POST in this case). This is idempotent. Responses cannot be cached. |  200 - OK |
-| **PATCH** | **Update partially** - Updates some part of an existing entity or multiple existing entities. |  200 - OK |
-| **DELETE** | **Delete existing** - Deletes an existing or multiple existing entities. |  204 - No Content |
+| Method     | Usage                                                                                                                                                                                         | Success Response Code |
+|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------| 
+| **GET**    | **Get existing** - Returns a single entity or a list of entities. This is read only.                                                                                                          | 200 - OK              |
+| **POST**   | **Create new** - Creates a new entity or multiple new entities. This is non-idempotent. Responses can be cached.                                                                              | 201 - Created         |
+| **PUT**    | **Overwrite entirely** - Overwrites an existing or multiple existing entities entirely. Does not create a new entity (use POST in this case). This is idempotent. Responses cannot be cached. | 200 - OK              |
+| **PATCH**  | **Update partially** - Updates some part of an existing entity or multiple existing entities.                                                                                                 | 200 - OK              |
+| **DELETE** | **Delete existing** - Deletes an existing or multiple existing entities.                                                                                                                      | 204 - No Content      |
 
 E.g.:
 
-| Resource       | GET - read    | POST - create  | PUT - overwrite | PATCH - Update partially | DELETE - delete |
-| :------------- | :------------ | :------------- | :----------- | :-------------- |:-------------- |
-| /studies | Returns a list of study objects.  | Creates a new study. | Bulk update of studies where each study will be completely overwritten. | Bulk update of studies where each study will only modified with the provided parameters. | Deletes all studies.|
-| /studies/xyz | Returns the specific study identified by 'xyz'.  | Method not allowed (405). | Overwrites the entire study identified by 'xyz'. | Updates only the specified parts of the study identified by 'xyz' | Deletes the study identified by 'xyz'.|
+| Resource     | GET - read                                      | POST - create             | PUT - overwrite                                                         | PATCH - Update partially                                                                 | DELETE - delete                        |
+|--------------|-------------------------------------------------|---------------------------|-------------------------------------------------------------------------|------------------------------------------------------------------------------------------|----------------------------------------|
+| /studies     | Returns a list of study objects.                | Creates a new study.      | Bulk update of studies where each study will be completely overwritten. | Bulk update of studies where each study will only modified with the provided parameters. | Deletes all studies.                   |
+| /studies/xyz | Returns the specific study identified by 'xyz'. | Method not allowed (405). | Overwrites the entire study identified by 'xyz'.                        | Updates only the specified parts of the study identified by 'xyz'                        | Deletes the study identified by 'xyz'. |
 
 ## API Conventions
 

@@ -1,5 +1,5 @@
 """Numeric values router."""
-from typing import Any, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Body, Depends, Path, Query
 from pydantic.types import Json
@@ -8,13 +8,14 @@ from clinical_mdr_api import config
 from clinical_mdr_api.models.concepts.concept import NumericValue, NumericValueInput
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.concepts.simple_concepts.numeric_value import (
     NumericValueService,
 )
 
+# Prefixed with "/concepts/numeric-values"
 router = APIRouter()
 
 NumericValueUID = Path(None, description="The unique id of the numeric value")
@@ -22,6 +23,7 @@ NumericValueUID = Path(None, description="The unique id of the numeric value")
 
 @router.get(
     "",
+    dependencies=[rbac.LIBRARY_READ],
     summary="List all numeric values (for a given library)",
     description="""
 State before:
@@ -43,26 +45,26 @@ Possible errors:
     },
 )
 def get_numeric_values(
-    library: Optional[str] = Query(None, description="The library name"),
+    library: str | None = Query(None, description="The library name"),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
     numeric_value_service = NumericValueService(user=current_user_id)
@@ -76,16 +78,17 @@ def get_numeric_values(
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=List[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -97,20 +100,19 @@ def get_numeric_values(
 )
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
-    library: Optional[str] = Query(None, description="The library name"),
+    library: str | None = Query(None, description="The library name"),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     numeric_value_service = NumericValueService(user=current_user_id)
     return numeric_value_service.get_distinct_values_for_header(
@@ -125,6 +127,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific numeric value",
     description="""
 State before:
@@ -152,6 +155,7 @@ def get_numeric_value(
 
 @router.post(
     "",
+    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Creates new numeric value or returns already existing numeric value.",
     description="""
 State before:

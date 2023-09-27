@@ -10,7 +10,7 @@
             "definition": "definition",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
-            "activity_group": "activity_group_root1"
+            "activity_groups": ["activity_group_root1"]
          },
          "url": "/concepts/activities/activity-sub-groups"
       },
@@ -24,10 +24,10 @@
             "definition": "definition",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
-            "activity_group": {
+            "activity_groups":[ {
                "uid": "activity_group_root1",
                "name": "name1"
-            },
+            }],
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
             "status": "Draft",
@@ -62,10 +62,10 @@
                   "definition": "definition1",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
-                  "activity_group": {
+                  "activity_groups":[ {
                      "uid": "activity_group_root1",
                      "name": "name1"
-                  },
+                  }],
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Final",
@@ -84,10 +84,10 @@
                   "definition": "definition2",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
-                  "activity_group": {
+                  "activity_groups":[ {
                      "uid": "activity_group_root2",
                      "name": "name2"
-                  },
+                  }],
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Draft",
@@ -107,10 +107,10 @@
                   "definition": "definition3",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
-                  "activity_group": {
+                  "activity_groups":[ {
                      "uid": "activity_group_root3",
                      "name": "name3"
-                  },
+                  }],
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Final",
@@ -129,10 +129,10 @@
                   "definition": "definition",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
-                  "activity_group": {
+                  "activity_groups":[ {
                      "uid": "activity_group_root1",
                      "name": "name1"
-                  },
+                  }],
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Draft",
@@ -172,10 +172,10 @@
                   "definition": "definition2",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
-                  "activity_group": {
+                  "activity_groups":[ {
                      "uid": "activity_group_root2",
                      "name": "name2"
-                  },
+                  }],
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Draft",
@@ -215,10 +215,10 @@
                   "definition": "definition2",
                   "abbreviation": "abbv",
                   "library_name": "Sponsor",
-                  "activity_group": {
+                  "activity_groups":[ {
                      "uid": "activity_group_root2",
                      "name": "name2"
-                  },
+                  }],
                   "start_date": "2021-03-18T11:54:20.898Z",
                   "end_date": null,
                   "status": "Draft",
@@ -256,10 +256,10 @@
             "definition": "definition",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
-            "activity_group": {
+            "activity_groups":[ {
                "uid": "activity_group_root1",
                "name": "name1"
-            },
+            }],
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
             "status": "Final",
@@ -291,10 +291,10 @@
             "definition": "definition",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
-            "activity_group": {
+            "activity_groups":[ {
                "uid": "activity_group_root1",
                "name": "name1"
-            },
+            }],
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
             "status": "Draft",
@@ -326,10 +326,10 @@
             "definition": "definition1",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
-            "activity_group": {
+            "activity_groups":[ {
                "uid": "activity_group_root1",
                "name": "name1"
-            },
+            }],
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
             "status": "Retired",
@@ -360,10 +360,10 @@
             "definition": "definition1",
             "abbreviation": "abbv",
             "library_name": "Sponsor",
-            "activity_group": {
+            "activity_groups":[ {
                "uid": "activity_group_root1",
                "name": "name1"
-            },
+            }],
             "start_date": "2021-03-18T11:54:20.898Z",
             "end_date": null,
             "status": "Final",

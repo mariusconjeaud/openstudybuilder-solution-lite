@@ -40,6 +40,7 @@
       <disease-milestone-table />
     </v-tab-item>
   </v-tabs-items>
+  <comment-thread-list :topicPath="topicPath" :isTransparent="true"></comment-thread-list>
 </div>
 </template>
 
@@ -56,6 +57,7 @@ import StudyElementsTable from '@/components/studies/StudyElementsTable'
 import StudyCohortsTable from '@/components/studies/StudyCohortsTable'
 import StudyStructureOverview from '@/components/studies/StudyStructureOverview'
 import { mapActions } from 'vuex'
+import CommentThreadList from '@/components/tools/CommentThreadList'
 
 export default {
   mixins: [studySelectedNavigationGuard],
@@ -69,6 +71,7 @@ export default {
     StudyElementsTable,
     StudyBranchesTable,
     StudyCohortsTable,
+    CommentThreadList,
     StudyStructureOverview
   },
   data () {
@@ -85,6 +88,7 @@ export default {
       ],
       key: 0,
       overviewKey: 0,
+      topicPath: '',
       tab: null,
       tabs: [
         { tab: '#overview', name: this.$t('_global.overview') },
@@ -124,6 +128,9 @@ export default {
   },
   watch: {
     tab (newValue) {
+      if (newValue !== undefined) {
+        this.topicPath = '/studies/' + this.selectedStudy.uid + '/study_structure/' + newValue
+      }
       if (newValue === 'overview') this.refreshOverview()
       if (newValue === 'design_matrix') this.refreshMatrix()
       const tabName = newValue ? this.tabs.find(el => el.tab.substring(1) === newValue).name : this.tabs[0].name

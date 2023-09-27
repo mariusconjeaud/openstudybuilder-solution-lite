@@ -1,6 +1,7 @@
 from neomodel import (
     BooleanProperty,
     IntegerProperty,
+    One,
     OneOrMore,
     RelationshipFrom,
     RelationshipTo,
@@ -9,7 +10,11 @@ from neomodel import (
     ZeroOrOne,
 )
 
-from clinical_mdr_api.domain_repositories.models.activities import ActivityValue
+from clinical_mdr_api.domain_repositories.models.activities import (
+    ActivityGroupValue,
+    ActivitySubGroupValue,
+    ActivityValue,
+)
 from clinical_mdr_api.domain_repositories.models.compounds import CompoundAliasValue
 from clinical_mdr_api.domain_repositories.models.concepts import (
     NumericValueWithUnitRoot,
@@ -24,12 +29,19 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     Conjunction,
     ConjunctionRelation,
 )
-from clinical_mdr_api.domain_repositories.models.study_audit_trail import StudyAction
+from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
+    Delete,
+    StudyAction,
+)
 from clinical_mdr_api.domain_repositories.models.syntax import (
     ActivityInstructionValue,
     CriteriaTemplateValue,
     CriteriaValue,
+    EndpointTemplateValue,
     EndpointValue,
+    FootnoteTemplateValue,
+    FootnoteValue,
+    ObjectiveTemplateValue,
     ObjectiveValue,
     TimeframeValue,
 )
@@ -42,7 +54,7 @@ class AuditTrailMixin:
         StudyAction, "BEFORE", model=ConjunctionRelation, cardinality=ZeroOrOne
     )
     has_after = RelationshipFrom(
-        StudyAction, "AFTER", model=ConjunctionRelation, cardinality=ZeroOrOne
+        StudyAction, "AFTER", model=ConjunctionRelation, cardinality=One
     )
 
 
@@ -55,11 +67,20 @@ class StudyObjective(StudySelection):
     has_selected_objective = RelationshipTo(
         ObjectiveValue, "HAS_SELECTED_OBJECTIVE", model=ClinicalMdrRel
     )
+    has_selected_objective_template = RelationshipTo(
+        ObjectiveTemplateValue, "HAS_SELECTED_OBJECTIVE_TEMPLATE", model=ClinicalMdrRel
+    )
     has_objective_level = RelationshipTo(
         CTTermRoot, "HAS_OBJECTIVE_LEVEL", model=ClinicalMdrRel
     )
     study_endpoint_has_study_objective = RelationshipFrom(
         "StudyEndpoint", "STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE", model=ClinicalMdrRel
+    )
+    study_value = RelationshipFrom(
+        ".study.StudyValue",
+        "HAS_STUDY_OBJECTIVE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
     )
 
 
@@ -77,6 +98,9 @@ class StudyEndpoint(StudySelection):
     has_selected_endpoint = RelationshipTo(
         EndpointValue, "HAS_SELECTED_ENDPOINT", model=ClinicalMdrRel
     )
+    has_selected_endpoint_template = RelationshipTo(
+        EndpointTemplateValue, "HAS_SELECTED_ENDPOINT_TEMPLATE", model=ClinicalMdrRel
+    )
     has_selected_timeframe = RelationshipTo(
         TimeframeValue, "HAS_SELECTED_TIMEFRAME", model=ClinicalMdrRel
     )
@@ -91,6 +115,12 @@ class StudyEndpoint(StudySelection):
     )
     has_conjunction = RelationshipTo(
         Conjunction, "HAS_CONJUNCTION", model=ConjunctionRelation
+    )
+    study_value = RelationshipFrom(
+        ".study.StudyValue",
+        "HAS_STUDY_ENDPOINT",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
     )
 
 
@@ -147,28 +177,73 @@ class StudyActivity(StudySelection):
     has_flowchart_group = RelationshipTo(
         CTTermRoot, "HAS_FLOWCHART_GROUP", model=ClinicalMdrRel
     )
-
     show_activity_group_in_protocol_flowchart = BooleanProperty(default=True)
     show_activity_subgroup_in_protocol_flowchart = BooleanProperty(default=True)
     show_activity_in_protocol_flowchart = BooleanProperty(default=False)
-    note = StringProperty()
+    study_activity_has_study_activity_subgroup = RelationshipTo(
+        "StudyActivitySubGroup",
+        "STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP",
+        model=ClinicalMdrRel,
+    )
+    study_activity_schedule = RelationshipTo(
+        "StudyActivitySchedule",
+        "STUDY_ACTIVITY_HAS_SCHEDULE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
+    )
+    has_study_activity_instruction = RelationshipTo(
+        "StudyActivityInstruction",
+        "STUDY_ACTIVITY_HAS_INSTRUCTION",
+        model=ClinicalMdrRel,
+    )
 
 
-class StudyActivitySchedule(ClinicalMdrNodeWithUID, AuditTrailMixin):
+class StudyActivitySubGroup(StudySelection):
+    has_study_activity_subgroup = RelationshipFrom(
+        ".study.StudyValue", "HAS_STUDY_ACTIVITY_SUBGROUP"
+    )
+    study_activity_has_study_activity_subgroup = RelationshipFrom(
+        StudyActivity, "STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP"
+    )
+    study_activity_subgroup_has_study_activity_group = RelationshipTo(
+        "StudyActivityGroup", "STUDY_ACTIVITY_SUBGROUP_HAS_STUDY_ACTIVITY_GROUP"
+    )
+    has_selected_activity_subgroup = RelationshipTo(
+        ActivitySubGroupValue, "HAS_SELECTED_ACTIVITY_SUBGROUP", model=ClinicalMdrRel
+    )
+    show_activity_subgroup_in_protocol_flowchart = BooleanProperty(default=True)
+
+
+class StudyActivityGroup(StudySelection):
+    study_activity_subgroup_has_study_activity_group = RelationshipFrom(
+        StudyActivitySubGroup, "STUDY_ACTIVITY_SUBGROUP_HAS_STUDY_ACTIVITY_GROUP"
+    )
+    has_study_activity_group = RelationshipFrom(
+        ".study.StudyValue", "HAS_STUDY_ACTIVITY_GROUP"
+    )
+    has_selected_activity_group = RelationshipTo(
+        ActivityGroupValue, "HAS_SELECTED_ACTIVITY_GROUP", model=ClinicalMdrRel
+    )
+    show_activity_group_in_protocol_flowchart = BooleanProperty(default=True)
+
+
+class StudyActivitySchedule(StudySelection):
     study_value = RelationshipFrom(
         ".study.StudyValue", "HAS_STUDY_ACTIVITY_SCHEDULE", model=ClinicalMdrRel
     )
     study_activity = RelationshipFrom(
-        StudyActivity, "STUDY_ACTIVITY_HAS_SCHEDULE", model=ClinicalMdrRel
+        StudyActivity,
+        "STUDY_ACTIVITY_HAS_SCHEDULE",
+        model=ClinicalMdrRel,
     )
     study_visit = RelationshipFrom(
-        ".study_visit.StudyVisit", "STUDY_VISIT_HAS_SCHEDULE", model=ClinicalMdrRel
+        ".study_visit.StudyVisit",
+        "STUDY_VISIT_HAS_SCHEDULE",
+        model=ClinicalMdrRel,
     )
 
-    note = StringProperty()
 
-
-class StudyDesignCell(ClinicalMdrNodeWithUID, AuditTrailMixin):
+class StudyDesignCell(StudySelection):
     study_value = RelationshipFrom(
         ".study.StudyValue", "HAS_STUDY_DESIGN_CELL", model=ClinicalMdrRel
     )
@@ -198,7 +273,6 @@ class StudyDesignCell(ClinicalMdrNodeWithUID, AuditTrailMixin):
     )
 
     transition_rule = StringProperty()
-    order = IntegerProperty()
 
 
 class StudyArm(StudySelection):
@@ -260,14 +334,17 @@ class StudyElement(StudySelection):
     )
 
 
-class StudyActivityInstruction(AuditTrailMixin, ClinicalMdrNodeWithUID):
+class StudyActivityInstruction(StudySelection):
     study_value = RelationshipFrom(
         ".study.StudyValue", "HAS_STUDY_ACTIVITY_INSTRUCTION", model=ClinicalMdrRel
     )
     study_activity = RelationshipFrom(
-        StudyActivity, "STUDY_ACTIVITY_HAS_INSTRUCTION", model=ClinicalMdrRel
+        StudyActivity,
+        "STUDY_ACTIVITY_HAS_INSTRUCTION",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
     )
-    activity_instruction_value = RelationshipFrom(
+    activity_instruction_value = RelationshipTo(
         ActivityInstructionValue,
         "HAS_SELECTED_ACTIVITY_INSTRUCTION",
         model=ClinicalMdrRel,
@@ -342,4 +419,65 @@ class StudyCompoundDosing(StudySelection):
         "STUDY_ELEMENT_HAS_COMPOUND_DOSING",
         cardinality=ZeroOrOne,
         model=ClinicalMdrRel,
+    )
+
+
+class StudySoAFootnote(StudySelection):
+    footnote_number = IntegerProperty()
+    references_study_activity = RelationshipTo(
+        StudyActivity,
+        "REFERENCES_STUDY_ACTIVITY",
+        cardinality=ZeroOrMore,
+        model=ClinicalMdrRel,
+    )
+    references_study_activity_subgroup = RelationshipTo(
+        StudyActivitySubGroup,
+        "REFERENCES_STUDY_ACTIVITY_SUBGROUP",
+        cardinality=ZeroOrMore,
+        model=ClinicalMdrRel,
+    )
+    references_study_activity_group = RelationshipTo(
+        StudyActivityGroup,
+        "REFERENCES_STUDY_ACTIVITY_GROUP",
+        cardinality=ZeroOrMore,
+        model=ClinicalMdrRel,
+    )
+    references_study_activity_schedule = RelationshipTo(
+        StudyActivitySchedule,
+        "REFERENCES_STUDY_ACTIVITY_SCHEDULE",
+        cardinality=ZeroOrMore,
+        model=ClinicalMdrRel,
+    )
+    references_study_visit = RelationshipTo(
+        ".study_visit.StudyVisit",
+        "REFERENCES_STUDY_VISIT",
+        cardinality=ZeroOrMore,
+        model=ClinicalMdrRel,
+    )
+    references_study_epoch = RelationshipTo(
+        ".study_epoch.StudyEpoch",
+        "REFERENCES_STUDY_EPOCH",
+        cardinality=ZeroOrMore,
+        model=ClinicalMdrRel,
+    )
+    has_footnote = RelationshipTo(
+        FootnoteValue,
+        "HAS_SELECTED_FOOTNOTE",
+        cardinality=ZeroOrOne,
+        model=ClinicalMdrRel,
+    )
+    has_footnote_template = RelationshipTo(
+        FootnoteTemplateValue,
+        "HAS_SELECTED_FOOTNOTE_TEMPLATE",
+        cardinality=ZeroOrOne,
+        model=ClinicalMdrRel,
+    )
+    study_value = RelationshipFrom(
+        ".study.StudyValue",
+        "HAS_STUDY_FOOTNOTE",
+        cardinality=ZeroOrOne,
+        model=ClinicalMdrRel,
+    )
+    has_deleted = RelationshipFrom(
+        Delete, "AFTER", model=ConjunctionRelation, cardinality=ZeroOrOne
     )

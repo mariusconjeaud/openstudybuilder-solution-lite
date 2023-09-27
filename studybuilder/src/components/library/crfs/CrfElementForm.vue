@@ -86,7 +86,7 @@
             @click="removeAttribute(attr)"
             icon
             >
-            <v-icon>mdi-trash-can</v-icon>
+            <v-icon>mdi-delete-outline</v-icon>
           </v-btn>
         </v-col>
       </v-row>

@@ -20,9 +20,10 @@
         color="primary"
         @click.stop="edit"
         :title="$t('_global.edit')"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon dark>
-          mdi-pencil
+          mdi-pencil-outline
         </v-icon>
       </v-btn>
       <v-btn
@@ -83,8 +84,10 @@ import ElementsDropdownList from '@/components/tools/ElementsDropdownList'
 import { mapGetters } from 'vuex'
 import NNTable from '@/components/tools/NNTable'
 import visitConstants from '@/constants/visits'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     NNTable,
     ElementsDropdownList

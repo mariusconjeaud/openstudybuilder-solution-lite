@@ -68,7 +68,7 @@
             color="red"
             @click="unselectStudyActivityInstruction(item)"
             >
-            <v-icon>mdi-delete</v-icon>
+            <v-icon>mdi-delete-outline</v-icon>
           </v-btn>
         </template>
       </v-data-table>
@@ -395,16 +395,22 @@ export default {
         this.templatesOptions, filters, sort, filtersUpdated)
       params.status = statuses.FINAL
       const newFilters = (filters) ? JSON.parse(filters) : {}
-      newFilters['activity_groups.uid'] = { v: this.selectedActivityGroups.map(item => item.uid) }
-      newFilters['activity_subgroups.uid'] = { v: this.selectedActivitySubGroups.map(item => item.uid) }
+      if (this.selectedActivityGroups.length) {
+        newFilters['activity_groups.uid'] = { v: this.selectedActivityGroups.map(item => item.uid) }
+      }
+      if (this.selectedActivitySubGroups.length) {
+        newFilters['activity_subgroups.uid'] = { v: this.selectedActivitySubGroups.map(item => item.uid) }
+      }
       params.filters = JSON.stringify(newFilters)
-      params.operator = 'or'
+      if (params.filters !== '{}') {
+        params.operator = 'or'
+      }
       return this.apiEndpoint.get(params).then(resp => {
         // Apply filtering on library here because we cannot mix operators in API queries...
         this.templates = resp.data.items.filter(item => item.library.name === libraryConstants.LIBRARY_SPONSOR)
         this.templatesTotal = resp.data.total
         if (!this.templatesFetched) {
-          // It was the first time we fetched templates, if there is
+          // It was the first time we fetched templates, ifO there is
           // no result we empty pre-defined filters to avoid confusion
           if (this.templates.length === 0) {
             this.noTemplateAvailableAtAll = true
@@ -464,7 +470,7 @@ export default {
       }
       try {
         const resp = await activityInstructionTemplates.create(data)
-        await activityInstructionTemplates.approve(resp.data.uid)
+        if (resp.data.status === statuses.DRAFT) await activityInstructionTemplates.approve(resp.data.uid)
         this.$set(this.form, 'activity_instruction_template', resp.data)
       } catch (error) {
         return false

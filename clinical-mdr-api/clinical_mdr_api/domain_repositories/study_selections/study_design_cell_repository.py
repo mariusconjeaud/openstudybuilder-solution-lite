@@ -1,11 +1,14 @@
 import datetime
 from dataclasses import dataclass
-from typing import List, Optional, Sequence
+from typing import Sequence
 
 from neomodel import db
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories._utils import helpers
+from clinical_mdr_api.domain_repositories.generic_repository import (
+    manage_previous_connected_study_selection_relationships,
+)
 from clinical_mdr_api.domain_repositories.models._utils import (
     convert_to_datetime,
     to_relation_trees,
@@ -43,7 +46,7 @@ class StudyDesignCellHistory:
     user_initials: str
     change_type: str
     start_date: datetime.datetime
-    end_date: Optional[datetime.datetime]
+    end_date: datetime.datetime | None
     transition_rule: str
     order: int
 
@@ -80,11 +83,11 @@ class StudyDesignCellRepository:
             .order_by("order")
         ).distinct()
         if len(unique_design_cells) > 1:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"Found more than one StudyDesignCell node with uid='{uid}' in the study='{study_uid}'."
             )
         if len(unique_design_cells) == 0:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"The StudyDesignCell with uid='{uid}' could not be found in the study='{study_uid}'."
             )
         return self._from_repository_values(
@@ -145,7 +148,7 @@ class StudyDesignCellRepository:
             raise exceptions.BusinessLogicException(
                 "Returned multiple branch arms with study_value rel "
             )
-        # study_epoch = design_cell.study_epoch.single()
+
         study_epoch_name = (
             study_epoch.has_epoch.single()
             .has_name_root.single()
@@ -364,9 +367,17 @@ class StudyDesignCellRepository:
                 previous_item=previous_item,
                 new_item=design_cell,
             )
-            self.manage_previous_outbound_relationships(
+            exclude_study_selection_relationships = [
+                StudyArm,
+                StudyBranchArm,
+                StudyEpoch,
+                StudyElement,
+            ]
+            manage_previous_connected_study_selection_relationships(
                 previous_item=previous_item,
-                latest_study_value_node=latest_study_value_node,
+                study_value_node=latest_study_value_node,
+                new_item=design_cell,
+                exclude_study_selection_relationships=exclude_study_selection_relationships,
             )
 
         # check if the new cell already exists
@@ -390,12 +401,6 @@ class StudyDesignCellRepository:
         # return the json response model
         return self._from_repository_values(design_cell_vo.study_uid, design_cell)
 
-    def manage_previous_outbound_relationships(
-        self, previous_item: StudyDesignCell, latest_study_value_node: StudyValue
-    ):
-        # DROP StudyValue relationship
-        previous_item.study_value.disconnect(latest_study_value_node)
-
     def manage_versioning_update(
         self,
         study_root: StudyRoot,
@@ -409,8 +414,8 @@ class StudyDesignCellRepository:
             user_initials=study_design_cell.user_initials,
         )
         action.save()
-        previous_item.has_before.connect(action)
-        new_item.has_after.connect(action)
+        action.has_before.connect(previous_item)
+        action.has_after.connect(new_item)
         study_root.audit_trail.connect(action)
 
     def manage_versioning_create(
@@ -426,21 +431,9 @@ class StudyDesignCellRepository:
         )
         action.save()
         # connect the new item to the newly StudyAction
-        new_item.has_after.connect(action)
+        action.has_after.connect(new_item)
         # connect the audit trail to the study_root node
         study_root.audit_trail.connect(action)
-
-    def _remove_old_selection_if_exists(self, design_cell: StudyDesignCell):
-        return db.cypher_query(
-            """
-            MATCH (:StudyRoot {uid: $study_uid})-[:LATEST]->(:StudyValue)-[rel:HAS_STUDY_DESIGN_CELL]->(:StudyDesignCell {uid: $design_cell_uid})
-            DELETE rel
-            """,
-            {
-                "study_uid": design_cell.study_uid,
-                "design_cell_uid": design_cell.uid,
-            },
-        )
 
     def patch_study_arm(
         self,
@@ -595,10 +588,19 @@ class StudyDesignCellRepository:
         )
         audit_node.save()
         study_root_node.audit_trail.connect(audit_node)
-        design_cell.has_before.connect(audit_node)
-        new_design_cell.has_after.connect(audit_node)
-        self.manage_previous_outbound_relationships(
-            previous_item=design_cell, latest_study_value_node=latest_study_value_node
+        audit_node.has_before.connect(design_cell)
+        audit_node.has_after.connect(new_design_cell)
+        exclude_study_selection_relationships = [
+            StudyArm,
+            StudyBranchArm,
+            StudyEpoch,
+            StudyElement,
+        ]
+        manage_previous_connected_study_selection_relationships(
+            previous_item=design_cell,
+            study_value_node=latest_study_value_node,
+            new_item=new_design_cell,
+            exclude_study_selection_relationships=exclude_study_selection_relationships,
         )
 
     def generate_uid(self) -> str:
@@ -679,7 +681,7 @@ class StudyDesignCellRepository:
 
     def find_selection_history(
         self, study_uid: str, design_cell_uid: str = None
-    ) -> List[Optional[dict]]:
+    ) -> list[dict | None]:
         if design_cell_uid:
             return self._get_selection_with_history(
                 study_uid=study_uid, design_cell_uid=design_cell_uid

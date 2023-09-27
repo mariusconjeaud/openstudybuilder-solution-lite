@@ -7,6 +7,7 @@
     base-url="/endpoints"
     export-object-label="Endpoints"
     column-data-resource="endpoints"
+    :server-items-length="total"
     />
 </div>
 </template>
@@ -21,7 +22,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      endpoints: 'endpoints/endpoints'
+      endpoints: 'endpoints/endpoints',
+      total: 'endpoints/total'
     })
   }
 }

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -37,7 +35,7 @@ class DescriptionRepository(OdmGenericRepository[OdmDescriptionAR]):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> OdmDescriptionAR:

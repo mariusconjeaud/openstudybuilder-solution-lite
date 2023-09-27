@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Self
 
 from pydantic import Field
 
@@ -22,15 +22,15 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class ObjectiveTemplateName(BaseModel):
-    name: Optional[str] = Field(
+    name: str | None = Field(
         ...,
         description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
     )
-    name_plain: Optional[str] = Field(
+    name_plain: str | None = Field(
         ...,
         description="The plain text version of the name property, stripped of HTML tags",
     )
-    guidance_text: Optional[str] = Field(
+    guidance_text: str | None = Field(
         None,
         description="Optional guidance text for using the template.",
         nullable=True,
@@ -39,80 +39,80 @@ class ObjectiveTemplateName(BaseModel):
 
 class ObjectiveTemplateNameUid(ObjectiveTemplateName):
     uid: str = Field(..., description="The unique id of the objective template.")
-    sequence_id: Optional[str] = Field(None, nullable=True)
+    sequence_id: str | None = Field(None, nullable=True)
+
+
+class ObjectiveTemplateNameUidLibrary(ObjectiveTemplateNameUid):
+    library_name: str = Field(...)
 
 
 class ObjectiveTemplate(ObjectiveTemplateNameUid):
-    start_date: Optional[datetime] = Field(
+    start_date: datetime | None = Field(
         default_factory=datetime.utcnow,
         description="Part of the metadata: The point in time when the (version of the) objective template was created. "
         "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
     )
-    end_date: Optional[datetime] = Field(
+    end_date: datetime | None = Field(
         default_factory=datetime.utcnow,
         description="Part of the metadata: The point in time when the version of the objective template was closed (and a new one was created). "
         "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
         nullable=True,
     )
-    status: Optional[str] = Field(
+    status: str | None = Field(
         None,
         description="The status in which the (version of the) objective template is in. "
         "Possible values are: 'Final', 'Draft' or 'Retired'.",
         nullable=True,
     )
-    version: Optional[str] = Field(
+    version: str | None = Field(
         None,
         description="The version number of the (version of the) objective template. "
         "The format is: <major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0', ...",
         nullable=True,
     )
-    change_description: Optional[str] = Field(
+    change_description: str | None = Field(
         None,
         description="A short description about what has changed compared to the previous version.",
         nullable=True,
     )
-    user_initials: Optional[str] = Field(
+    user_initials: str | None = Field(
         None,
         description="The initials of the user that triggered the change of the objective template.",
         nullable=True,
     )
-
-    # TODO use the standard _link/name approach
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         [],
         description=(
             "Holds those actions that can be performed on the objective template. "
             "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
         ),
     )
-    parameters: Optional[List[TemplateParameter]] = Field(
+    parameters: list[TemplateParameter] | None = Field(
         None,
         description="Those parameters that are used by the objective template.",
         nullable=True,
     )
-    default_parameter_terms: Optional[
-        Dict[int, List[MultiTemplateParameterTerm]]
-    ] = Field(
+    default_parameter_terms: dict[int, list[MultiTemplateParameterTerm]] | None = Field(
         None,
         description="""Holds the default terms for the parameters that are used
         within the template. The terms are ordered as they occur in the template's name.""",
         nullable=True,
     )
-    library: Optional[Library] = Field(
+    library: Library | None = Field(
         None,
         description="The library to which the objective template belongs.",
         nullable=True,
     )
 
     # Template indexings
-    indications: List[DictionaryTerm] = Field(
+    indications: list[DictionaryTerm] = Field(
         [],
         description="The study indications, conditions, diseases or disorders in scope for the template.",
     )
     is_confirmatory_testing: bool = Field(
         False, description="Indicates if template is related to confirmatory testing."
     )
-    categories: List[CTTermNameAndAttributes] = Field(
+    categories: list[CTTermNameAndAttributes] = Field(
         [], description="A list of categories the template belongs to."
     )
 
@@ -121,8 +121,8 @@ class ObjectiveTemplate(ObjectiveTemplateNameUid):
     @classmethod
     def from_objective_template_ar(
         cls, objective_template_ar: ObjectiveTemplateAR
-    ) -> "ObjectiveTemplate":
-        default_parameter_terms: Dict[int, List[MultiTemplateParameterTerm]] = {}
+    ) -> Self:
+        default_parameter_terms: dict[int, list[MultiTemplateParameterTerm]] = {}
         if objective_template_ar.template_value.default_parameter_terms is not None:
             for (
                 set_number,
@@ -130,7 +130,7 @@ class ObjectiveTemplate(ObjectiveTemplateNameUid):
             ) in objective_template_ar.template_value.default_parameter_terms.items():
                 term_list = []
                 for position, parameter in enumerate(term_set):
-                    terms: List[IndexedTemplateParameterTerm] = [
+                    terms: list[IndexedTemplateParameterTerm] = [
                         IndexedTemplateParameterTerm(
                             index=index + 1,
                             uid=parameter_term.uid,
@@ -190,14 +190,14 @@ class ObjectiveTemplate(ObjectiveTemplateNameUid):
 
 
 class ObjectiveTemplateWithCount(ObjectiveTemplate):
-    counts: Optional[ItemCounts] = Field(
+    counts: ItemCounts | None = Field(
         None, description="Optional counts of objective instantiations"
     )
 
     @classmethod
     def from_objective_template_ar(
         cls, objective_template_ar: ObjectiveTemplateAR
-    ) -> "ObjectiveTemplate":
+    ) -> Self:
         ot = super().from_objective_template_ar(objective_template_ar)
         if objective_template_ar.counts is not None:
             ot.counts = ItemCounts(
@@ -214,7 +214,7 @@ class ObjectiveTemplateVersion(ObjectiveTemplate):
     Class for storing Objective Templates and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
@@ -230,36 +230,36 @@ class ObjectiveTemplateNameInput(BaseModel):
         description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
         min_length=1,
     )
-    guidance_text: Optional[str] = Field(
+    guidance_text: str | None = Field(
         None, description="Optional guidance text for using the template."
     )
 
 
 class ObjectiveTemplateCreateInput(ObjectiveTemplateNameInput):
-    study_uid: Optional[str] = Field(
+    study_uid: str | None = Field(
         None,
         description="The UID of the Study in scope of which given template is being created.",
     )
-    library_name: Optional[str] = Field(
+    library_name: str | None = Field(
         "Sponsor",
         description="If specified: The name of the library to which the objective template will be linked. The following rules apply: \n"
         "* The library needs to be present, it will not be created with this request. The *[GET] /libraries* endpoint can help. And \n"
         "* The library needs to allow the creation: The 'is_editable' property of the library needs to be true.",
     )
-    default_parameter_terms: Optional[List[MultiTemplateParameterTerm]] = Field(
+    default_parameter_terms: list[MultiTemplateParameterTerm] | None = Field(
         None,
         description="""Holds the parameter terms to be used as default for this
         template. The terms are ordered as they occur in the template name. \n"""
         "These default parameter terms will be created as set#0.",
     )
-    indication_uids: Optional[List[str]] = Field(
+    indication_uids: list[str] | None = Field(
         None,
         description="A list of UID of the study indications, conditions, diseases or disorders to attach the template to.",
     )
-    is_confirmatory_testing: Optional[bool] = Field(
+    is_confirmatory_testing: bool | None = Field(
         None, description="Indicates if template is related to confirmatory testing."
     )
-    category_uids: Optional[List[str]] = Field(
+    category_uids: list[str] | None = Field(
         None, description="A list of UID of the categories to attach the template to."
     )
 
@@ -272,13 +272,13 @@ class ObjectiveTemplateEditInput(ObjectiveTemplateNameInput):
 
 
 class ObjectiveTemplateEditIndexingsInput(BaseModel):
-    indication_uids: Optional[List[str]] = Field(
+    indication_uids: list[str] | None = Field(
         None,
         description="A list of UID of the study indications, conditions, diseases or disorders to attach the template to.",
     )
-    category_uids: Optional[List[str]] = Field(
+    category_uids: list[str] | None = Field(
         None, description="A list of UID of the categories to attach the template to."
     )
-    is_confirmatory_testing: Optional[bool] = Field(
+    is_confirmatory_testing: bool | None = Field(
         None, description="Indicates if template is related to confirmatory testing."
     )

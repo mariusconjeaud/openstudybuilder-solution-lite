@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Optional, Sequence, Tuple
+from typing import Callable, Self, Sequence
 
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
     CTTermAttributesAR,
@@ -24,11 +24,11 @@ class ObjectiveTemplateAR(TemplateAggregateRootBase):
     behavior. Inherits generic template versioning behaviors
     """
 
-    _is_confirmatory_testing: Optional[bool] = None
+    _is_confirmatory_testing: bool | None = None
 
-    _indications: Optional[Sequence[DictionaryTermAR]] = None
+    _indications: Sequence[DictionaryTermAR] | None = None
 
-    _categories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None
+    _categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
 
     @property
     def is_confirmatory_testing(self) -> bool:
@@ -39,7 +39,7 @@ class ObjectiveTemplateAR(TemplateAggregateRootBase):
         return self._indications
 
     @property
-    def categories(self) -> Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def categories(self) -> Sequence[tuple[CTTermNameAR, CTTermAttributesAR]]:
         return self._categories
 
     @classmethod
@@ -51,11 +51,11 @@ class ObjectiveTemplateAR(TemplateAggregateRootBase):
         library: LibraryVO,
         item_metadata: LibraryItemMetadataVO,
         study_count: int = 0,
-        counts: Optional[InstantiationCountsVO] = None,
-        is_confirmatory_testing: Optional[bool] = None,
-        indications: Optional[Sequence[DictionaryTermAR]] = None,
-        categories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None,
-    ) -> "TemplateAggregateRootBase":
+        counts: InstantiationCountsVO | None = None,
+        is_confirmatory_testing: bool | None = None,
+        indications: Sequence[DictionaryTermAR] | None = None,
+        categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+    ) -> Self:
         ar = cls(
             _uid=uid,
             _sequence_id=sequence_id,
@@ -77,20 +77,20 @@ class ObjectiveTemplateAR(TemplateAggregateRootBase):
         author: str,
         template: TemplateVO,
         library: LibraryVO,
-        template_value_exists_callback: Callable[[TemplateVO], bool],
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        generate_seq_id_callback: Callable[[str], Optional[str]] = (lambda _: None),
-        is_confirmatory_testing: Optional[bool] = None,
-        indications: Optional[Sequence[DictionaryTermAR]] = None,
-        categories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None,
-    ) -> "ObjectiveTemplateAR":
-        ar: ObjectiveTemplateAR = super().from_input_values(
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        next_available_sequence_id_callback: Callable[[str], str | None] = (
+            lambda _: None
+        ),
+        is_confirmatory_testing: bool | None = None,
+        indications: Sequence[DictionaryTermAR] | None = None,
+        categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+    ) -> Self:
+        ar: Self = super().from_input_values(
             author=author,
             template=template,
             library=library,
-            template_value_exists_callback=template_value_exists_callback,
             generate_uid_callback=generate_uid_callback,
-            generate_seq_id_callback=generate_seq_id_callback,
+            next_available_sequence_id_callback=next_available_sequence_id_callback,
         )
         ar._is_confirmatory_testing = is_confirmatory_testing
         ar._indications = indications

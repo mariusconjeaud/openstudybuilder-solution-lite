@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Self
 
 from pydantic import Field
 
@@ -20,47 +20,50 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
 )
 from clinical_mdr_api.models.utils import BaseModel
 
+IS_CONFIRMATORY_TESTING_DESC = (
+    "Indicates if pre-instance is related to confirmatory testing."
+)
+
 
 class ObjectivePreInstance(BaseModel):
     uid: str
-    sequence_id: Optional[str] = Field(None, nullable=True)
+    sequence_id: str | None = Field(None, nullable=True)
     template_uid: str
     template_name: str
-    name: Optional[str] = Field(None, nullable=True)
-    name_plain: Optional[str] = Field(None, nullable=True)
-    start_date: Optional[datetime] = Field(None, nullable=True)
-    end_date: Optional[datetime] = Field(None, nullable=True)
-    status: Optional[str] = Field(None, nullable=True)
-    version: Optional[str] = Field(None, nullable=True)
-    change_description: Optional[str] = Field(None, nullable=True)
-    user_initials: Optional[str] = Field(None, nullable=True)
+    name: str | None = Field(None, nullable=True)
+    name_plain: str | None = Field(None, nullable=True)
+    start_date: datetime | None = Field(None, nullable=True)
+    end_date: datetime | None = Field(None, nullable=True)
+    status: str | None = Field(None, nullable=True)
+    version: str | None = Field(None, nullable=True)
+    change_description: str | None = Field(None, nullable=True)
+    user_initials: str | None = Field(None, nullable=True)
     is_confirmatory_testing: bool = Field(
-        False,
-        description="Indicates if pre-instance is related to confirmatory testing.",
+        False, description=IS_CONFIRMATORY_TESTING_DESC
     )
-    parameter_terms: List[MultiTemplateParameterTerm] = Field(
+    parameter_terms: list[MultiTemplateParameterTerm] = Field(
         [],
         description="Holds the parameter terms that are used within the objective. The terms are ordered as they occur in the objective name.",
     )
-    indications: List[DictionaryTerm] = Field(
+    indications: list[DictionaryTerm] = Field(
         [],
         description="The study indications, conditions, diseases or disorders in scope for the pre-instance.",
     )
-    categories: List[CTTermNameAndAttributes] = Field(
+    categories: list[CTTermNameAndAttributes] = Field(
         [], description="A list of categories the pre-instance belongs to."
     )
-    library: Optional[Library] = Field(None, nullable=True)
-    possible_actions: List[str] = []
+    library: Library | None = Field(None, nullable=True)
+    possible_actions: list[str] = []
 
     @classmethod
     def from_objective_pre_instance_ar(
         cls, objective_pre_instance_ar: ObjectivePreInstanceAR
-    ) -> "ObjectivePreInstance":
-        parameter_terms: List[MultiTemplateParameterTerm] = []
+    ) -> Self:
+        parameter_terms: list[MultiTemplateParameterTerm] = []
         for position, parameter in enumerate(
             objective_pre_instance_ar.get_parameters()
         ):
-            terms: List[IndexedTemplateParameterTerm] = []
+            terms: list[IndexedTemplateParameterTerm] = []
             for index, parameter_term in enumerate(parameter.parameters):
                 pv = IndexedTemplateParameterTerm(
                     index=index + 1,
@@ -119,12 +122,11 @@ class ObjectivePreInstance(BaseModel):
 
 
 class ObjectivePreInstanceCreateInput(PreInstanceInput):
-    is_confirmatory_testing: Optional[bool] = Field(
-        None,
-        description="Indicates if pre-instance is related to confirmatory testing.",
+    is_confirmatory_testing: bool | None = Field(
+        None, description=IS_CONFIRMATORY_TESTING_DESC
     )
-    indication_uids: List[str]
-    category_uids: List[str]
+    indication_uids: list[str]
+    category_uids: list[str]
 
 
 class ObjectivePreInstanceEditInput(PreInstanceInput):
@@ -135,15 +137,14 @@ class ObjectivePreInstanceEditInput(PreInstanceInput):
 
 
 class ObjectivePreInstanceIndexingsInput(BaseModel):
-    is_confirmatory_testing: Optional[bool] = Field(
-        None,
-        description="Indicates if pre-instance is related to confirmatory testing.",
+    is_confirmatory_testing: bool | None = Field(
+        None, description=IS_CONFIRMATORY_TESTING_DESC
     )
-    indication_uids: Optional[List[str]] = Field(
+    indication_uids: list[str] | None = Field(
         None,
         description="A list of UID of the study indications, conditions, diseases or disorders to attach the pre-instance to.",
     )
-    category_uids: Optional[List[str]] = Field(
+    category_uids: list[str] | None = Field(
         None,
         description="A list of UID of the categories to attach the pre-instance to.",
     )
@@ -154,7 +155,7 @@ class ObjectivePreInstanceVersion(ObjectivePreInstance):
     Class for storing Objective Pre-Instances and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

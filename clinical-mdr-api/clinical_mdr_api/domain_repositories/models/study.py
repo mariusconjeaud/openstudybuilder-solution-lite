@@ -1,10 +1,9 @@
-from neomodel import RelationshipFrom, RelationshipTo, StringProperty
+from neomodel import RelationshipFrom, RelationshipTo, StringProperty, ZeroOrMore
 
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
     ClinicalMdrNodeWithUID,
     ClinicalMdrRel,
-    ConjunctionRelation,
     VersionRelationship,
 )
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import StudyAction
@@ -17,9 +16,12 @@ from clinical_mdr_api.domain_repositories.models.study_field import (
     StudyTimeField,
 )
 from clinical_mdr_api.domain_repositories.models.study_selections import (
+    AuditTrailMixin,
     StudyActivity,
+    StudyActivityGroup,
     StudyActivityInstruction,
     StudyActivitySchedule,
+    StudyActivitySubGroup,
     StudyArm,
     StudyBranchArm,
     StudyCohort,
@@ -30,10 +32,11 @@ from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyElement,
     StudyEndpoint,
     StudyObjective,
+    StudySoAFootnote,
 )
 
 
-class StudyValue(ClinicalMdrNode):
+class StudyValue(ClinicalMdrNode, AuditTrailMixin):
     """
     Represents the data for a given version of the compound in the graph.
     Version information is stored on the relationship between the
@@ -62,10 +65,16 @@ class StudyValue(ClinicalMdrNode):
     )
 
     has_study_objective = RelationshipTo(
-        StudyObjective, "HAS_STUDY_OBJECTIVE", model=ClinicalMdrRel
+        StudyObjective,
+        "HAS_STUDY_OBJECTIVE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
     )
     has_study_endpoint = RelationshipTo(
-        StudyEndpoint, "HAS_STUDY_ENDPOINT", model=ClinicalMdrRel
+        StudyEndpoint,
+        "HAS_STUDY_ENDPOINT",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
     )
     has_study_compound = RelationshipTo(
         StudyCompound, "HAS_STUDY_COMPOUND", model=ClinicalMdrRel
@@ -84,6 +93,12 @@ class StudyValue(ClinicalMdrNode):
     )
     has_study_activity = RelationshipTo(
         StudyActivity, "HAS_STUDY_ACTIVITY", model=ClinicalMdrRel
+    )
+    has_study_activity_subgroup = RelationshipTo(
+        StudyActivitySubGroup, "HAS_STUDY_ACTIVITY_SUBGROUP", model=ClinicalMdrRel
+    )
+    has_study_activity_group = RelationshipTo(
+        StudyActivityGroup, "HAS_STUDY_ACTIVITY_GROUP", model=ClinicalMdrRel
     )
     has_study_activity_schedule = RelationshipTo(
         StudyActivitySchedule, "HAS_STUDY_ACTIVITY_SCHEDULE", model=ClinicalMdrRel
@@ -116,9 +131,11 @@ class StudyValue(ClinicalMdrNode):
         "HAS_STUDY_DISEASE_MILESTONE",
         model=ClinicalMdrRel,
     )
-
-    has_before = RelationshipFrom(StudyAction, "BEFORE", model=ConjunctionRelation)
-    has_after = RelationshipFrom(StudyAction, "AFTER", model=ConjunctionRelation)
+    has_study_footnote = RelationshipTo(
+        StudySoAFootnote,
+        "HAS_STUDY_FOOTNOTE",
+        model=ClinicalMdrRel,
+    )
     latest_value = RelationshipFrom("StudyRoot", "LATEST", model=ClinicalMdrRel)
 
 

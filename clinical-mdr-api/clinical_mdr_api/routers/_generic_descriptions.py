@@ -101,8 +101,5 @@ by sending the `Accept` http request header with one of the following values:
   - `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`\n
 """
 
-ERROR_404 = {
-    "model": ErrorResponse,
-    "description": "Entity not found",
-}
+ERROR_404 = {"model": ErrorResponse, "description": "Entity not found"}
 ERROR_500 = {"model": ErrorResponse, "description": "Internal Server Error"}

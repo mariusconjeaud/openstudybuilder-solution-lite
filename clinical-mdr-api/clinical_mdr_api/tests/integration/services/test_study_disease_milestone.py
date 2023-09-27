@@ -2,6 +2,7 @@ import unittest
 
 from neomodel import db
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot
 from clinical_mdr_api.models.study_selections.study_disease_milestone import (
     StudyDiseaseMilestone,
@@ -83,10 +84,10 @@ class TestStudyDiseaseMilestoneManagement(unittest.TestCase):
         self.assertEqual(dm2.order, 2)
         self.assertEqual(dm3.order, 3)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(exceptions.ValidationException):
             disease_milestone_service.reorder(dm3.uid, 0)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(exceptions.ValidationException):
             disease_milestone_service.reorder(dm3.uid, 4)
 
         disease_milestone_service.reorder(dm3.uid, 1)
@@ -310,7 +311,7 @@ class TestStudyDiseaseMilestoneManagement(unittest.TestCase):
             disease_milestone_type="Disease_Milestone_Type_0001"
         )
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(exceptions.ValidationException):
             create_study_disease_milestone(
                 disease_milestone_type="Disease_Milestone_Type_0001"
             )

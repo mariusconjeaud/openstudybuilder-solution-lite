@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -45,7 +43,7 @@ class ItemGroupRepository(OdmGenericRepository[OdmItemGroupAR]):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> OdmItemGroupAR:
@@ -138,7 +136,7 @@ class ItemGroupRepository(OdmGenericRepository[OdmItemGroupAR]):
         return odm_item_group_ar
 
     def specific_alias_clause(
-        self, only_specific_status: Optional[List[str]] = None
+        self, only_specific_status: list[str] | None = None
     ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]

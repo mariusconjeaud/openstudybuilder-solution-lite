@@ -51,7 +51,7 @@
             {{ step.title }}
           </v-btn>
           <v-icon large v-if="index !== protocol.length - 1 && !step.separatorText" class="mx-4" color="secondary">
-            mdi-arrow-right-bold
+            mdi-arrow-right-bold-outline
           </v-icon>
           <span v-if="index !== protocol.length - 1 && step.separatorText" class="mx-6 secondary--text"><strong>{{ step.separatorText }}</strong></span>
         </div>
@@ -62,7 +62,6 @@
     <template v-slot:actions>
       <v-btn
         color="white"
-        :data-cy=step.title
         @click.native="openSelectStudyDialog"
         outlined
         class="mr-2"
@@ -72,7 +71,6 @@
       </v-btn>
       <v-btn
         color="white"
-        :data-cy=step.title
         @click.native="redirectToStudyTable"
         outlined
         elevation="2"
@@ -96,6 +94,7 @@
 import { mapGetters, mapActions } from 'vuex'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import StudyQuickSelectForm from '@/components/studies/StudyQuickSelectForm'
+import generalUtils from '@/utils/generalUtils'
 
 export default {
   components: {
@@ -109,6 +108,7 @@ export default {
     })
   },
   data () {
+    const studyUid = generalUtils.extractStudyUidFromLocalStorage()
     return {
       protocol: [
         {
@@ -125,23 +125,23 @@ export default {
           items: [
             {
               title: this.$t('ProtocolProcessView.study_arms'),
-              to: { name: 'StudyStructure', params: { tab: 'arms' } }
+              to: { name: 'StudyStructure', params: { tab: 'arms', study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.study_epochs'),
-              to: { name: 'StudyStructure', params: { tab: 'epochs' } }
+              to: { name: 'StudyStructure', params: { tab: 'epochs', study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.study_elements'),
-              to: { name: 'StudyStructure', params: { tab: 'elements' } }
+              to: { name: 'StudyStructure', params: { tab: 'elements', study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.study_visits'),
-              to: { name: 'StudyStructure', params: { tab: 'visits' } }
+              to: { name: 'StudyStructure', params: { tab: 'visits', study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.design_matrix'),
-              to: { name: 'StudyStructure', params: { tab: 'design_matrix' } }
+              to: { name: 'StudyStructure', params: { tab: 'design_matrix', study_id: studyUid } }
             }
           ]
         },
@@ -150,15 +150,15 @@ export default {
           items: [
             {
               title: this.$t('ProtocolProcessView.study_title'),
-              to: { name: 'StudyTitle' }
+              to: { name: 'StudyTitle', params: { study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.objectives'),
-              to: { name: 'StudyPurpose', params: { tab: 'objectives' } }
+              to: { name: 'StudyPurpose', params: { tab: 'objectives', study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.endpoints'),
-              to: { name: 'StudyPurpose', params: { tab: 'endpoints' } }
+              to: { name: 'StudyPurpose', params: { tab: 'endpoints', study_id: studyUid } }
             }
           ]
         },
@@ -167,31 +167,31 @@ export default {
           items: [
             {
               title: this.$t('ProtocolProcessView.study_population'),
-              to: { name: 'StudyPopulation' }
+              to: { name: 'StudyPopulation', params: { study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.inclusion_criteria'),
-              to: { name: 'StudySelectionCriteria', params: { tab: 'Inclusion Criteria' } }
+              to: { name: 'StudySelectionCriteria', params: { tab: 'Inclusion Criteria', study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.exclusion_criteria'),
-              to: { name: 'StudySelectionCriteria', params: { tab: 'Exclusion Criteria' } }
+              to: { name: 'StudySelectionCriteria', params: { tab: 'Exclusion Criteria', study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.runin_criteria'),
-              to: { name: 'StudySelectionCriteria', params: { tab: 'Run-in Criteria' } }
+              to: { name: 'StudySelectionCriteria', params: { tab: 'Run-in Criteria', study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.randomisation_criteria'),
-              to: { name: 'StudySelectionCriteria', params: { tab: 'Randomisation Criteria' } }
+              to: { name: 'StudySelectionCriteria', params: { tab: 'Randomisation Criteria', study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.dosing_criteria'),
-              to: { name: 'StudySelectionCriteria', params: { tab: 'Dosing Criteria' } }
+              to: { name: 'StudySelectionCriteria', params: { tab: 'Dosing Criteria', study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.withdrawal_criteria'),
-              to: { name: 'StudySelectionCriteria', params: { tab: 'Withdrawal Criteria' } }
+              to: { name: 'StudySelectionCriteria', params: { tab: 'Withdrawal Criteria', study_id: studyUid } }
             }
           ]
         },
@@ -200,19 +200,19 @@ export default {
           items: [
             {
               title: this.$t('ProtocolProcessView.overview'),
-              to: { name: 'StudyInterventions', params: { tab: 'overview' } }
+              to: { name: 'StudyInterventions', params: { tab: 'overview', study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.study_compounds'),
-              to: { name: 'StudyInterventions', params: { tab: 'study_compounds' } }
+              to: { name: 'StudyInterventions', params: { tab: 'study_compounds', study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.study_compound_dosings'),
-              to: { name: 'StudyInterventions', params: { tab: 'study_compound_dosings' } }
+              to: { name: 'StudyInterventions', params: { tab: 'study_compound_dosings', study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.other_interventions'),
-              to: { name: 'StudyInterventions', params: { tab: 'other_interventions' } }
+              to: { name: 'StudyInterventions', params: { tab: 'other_interventions', study_id: studyUid } }
             }
           ]
         },
@@ -221,19 +221,19 @@ export default {
           items: [
             {
               title: this.$t('ProtocolProcessView.activity_list'),
-              to: { name: 'StudyActivities', params: { tab: 'list' } }
+              to: { name: 'StudyActivities', params: { tab: 'list', study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.detailed_flowchart'),
-              to: { name: 'StudyActivities', params: { tab: 'detailed' } }
+              to: { name: 'StudyActivities', params: { tab: 'detailed', study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.protocol_flowchart'),
-              to: { name: 'StudyActivities', params: { tab: 'protocol' } }
+              to: { name: 'StudyActivities', params: { tab: 'protocol', study_id: studyUid } }
             },
             {
               title: this.$t('ProtocolProcessView.activity_instructions'),
-              to: { name: 'StudyActivities', params: { tab: 'instructions' } }
+              to: { name: 'StudyActivities', params: { tab: 'instructions', study_id: studyUid } }
             }
           ]
         }
@@ -260,9 +260,13 @@ export default {
       this.showSelectForm = true
     },
     goToNextUrl () {
+      if (!this.nextUrl) {
+        this.nextUrl = { name: this.$route.name }
+      }
+      this.nextUrl.params = { study_id: generalUtils.extractStudyUidFromLocalStorage() }
+      const resolved = this.$router.resolve(this.nextUrl)
       const [menuItem, menuSubItem] = this.findMenuItemPath('Studies', this.nextUrl.name)
       this.$store.commit('app/SET_SECTION', 'Studies')
-      this.$router.push(this.nextUrl)
       this.nextUrl = null
       if (menuItem) {
         this.addBreadcrumbsLevel({ text: menuItem.title, to: menuItem.url, index: 1 })
@@ -270,6 +274,7 @@ export default {
           this.addBreadcrumbsLevel({ text: menuSubItem.title, to: menuSubItem.url })
         }
       }
+      document.location.href = resolved.href
     },
     openSelectStudyDialog () {
       this.$refs.confirm.cancel()

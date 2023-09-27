@@ -11,7 +11,7 @@
       :title="$t('DataTableExportButton.export')"
       data-cy="table-export-button"
       >
-      <v-icon >mdi-download</v-icon>
+      <v-icon>mdi-download-outline</v-icon>
     </v-btn>
   </template>
   <v-list>

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from clinical_mdr_api.domain_repositories.models.syntax import EndpointTemplateRoot
 from clinical_mdr_api.domain_repositories.syntax_instances.endpoint_repository import (
     EndpointRepository,
@@ -10,12 +8,10 @@ from clinical_mdr_api.domain_repositories.syntax_pre_instances.endpoint_pre_inst
 from clinical_mdr_api.domain_repositories.syntax_templates.endpoint_template_repository import (
     EndpointTemplateRepository,
 )
-from clinical_mdr_api.domains._utils import generate_seq_id
 from clinical_mdr_api.domains.syntax_templates.endpoint_template import (
     EndpointTemplateAR,
 )
 from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
-from clinical_mdr_api.exceptions import ValidationException
 from clinical_mdr_api.models.syntax_templates.endpoint_template import (
     EndpointTemplate,
     EndpointTemplateCreateInput,
@@ -51,13 +47,13 @@ class EndpointTemplateService(GenericSyntaxTemplateService[EndpointTemplateAR]):
 
     def get_all(
         self,
-        status: Optional[str] = None,
+        status: str | None = None,
         return_study_count: bool = True,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[EndpointTemplate]:
         all_items = super().get_all(status, return_study_count)
@@ -91,22 +87,16 @@ class EndpointTemplateService(GenericSyntaxTemplateService[EndpointTemplateAR]):
         indications, categories, sub_categories = self._get_indexings(template)
 
         # Process item to save
-        try:
-            item = EndpointTemplateAR.from_input_values(
-                template_value_exists_callback=self.get_check_exists_callback(
-                    template=template
-                ),
-                author=self.user_initials,
-                template=template_vo,
-                library=library_vo,
-                generate_uid_callback=self.repository.generate_uid_callback,
-                generate_seq_id_callback=generate_seq_id,
-                indications=indications,
-                categories=categories,
-                sub_categories=sub_categories,
-            )
-        except ValueError as e:
-            raise ValidationException(e.args[0]) from e
+        item = EndpointTemplateAR.from_input_values(
+            author=self.user_initials,
+            template=template_vo,
+            library=library_vo,
+            generate_uid_callback=self.repository.generate_uid_callback,
+            next_available_sequence_id_callback=self.repository.next_available_sequence_id,
+            indications=indications,
+            categories=categories,
+            sub_categories=sub_categories,
+        )
 
         return item
 

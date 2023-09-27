@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Sequence, Tuple
+from typing import Sequence
 
 from neomodel import db
 
@@ -27,10 +27,10 @@ class StandardDataModelRepository(ABC):
     def _create_base_model_from_cypher_result(self, input_dict: dict):
         return self.return_model.from_repository_output(input_dict)
 
-    def specific_header_match_clause(self) -> Optional[str]:
+    def specific_header_match_clause(self) -> str | None:
         return None
 
-    def sort_by(self) -> Optional[dict]:
+    def sort_by(self) -> dict | None:
         return None
 
     @abstractmethod
@@ -40,6 +40,10 @@ class StandardDataModelRepository(ABC):
         and it contains matches and traversals specific for domain object represented by subclass repository.
         :return str:
         """
+
+    # pylint: disable=unused-argument
+    def union_match_clause(self, _: dict) -> str | None:
+        return None
 
     def find_by_uid(
         self,
@@ -79,7 +83,7 @@ class StandardDataModelRepository(ABC):
         return extracted_items[0]
 
     def generic_match_clause(
-        self, versioning_relationship: str, uid: Optional[str] = None
+        self, versioning_relationship: str, uid: str | None = None
     ):
         standard_data_model_label = self.root_class.__label__
         standard_data_model_value_label = self.value_class.__label__
@@ -135,7 +139,7 @@ class StandardDataModelRepository(ABC):
         # pylint: disable=unused-argument
         self,
         **kwargs,
-    ) -> Tuple[str, dict]:
+    ) -> tuple[str, dict]:
         filter_parameters = []
         filter_query_parameters = {}
         filter_statements = " AND ".join(filter_parameters)
@@ -146,14 +150,14 @@ class StandardDataModelRepository(ABC):
 
     def find_all(
         self,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
         **kwargs,
-    ) -> Tuple[Sequence[BaseModel], int]:
+    ) -> tuple[Sequence[BaseModel], int]:
         """
         Method runs a cypher query to fetch all needed data to create objects of type AggregateRootType.
         In the case of the following repository it will be some Concept aggregates.
@@ -180,6 +184,10 @@ class StandardDataModelRepository(ABC):
         query = CypherQueryBuilder(
             match_clause=match_clause,
             alias_clause=alias_clause,
+            union_match_clause=self.union_match_clause(filter_query_parameters)
+            + filter_statements
+            if self.union_match_clause(filter_query_parameters)
+            else None,
             sort_by=self.sort_by() if self.sort_by() else sort_by,
             page_number=page_number,
             page_size=page_size,
@@ -198,18 +206,22 @@ class StandardDataModelRepository(ABC):
         count_result, _ = db.cypher_query(
             query=query.count_query, params=query.parameters
         )
-        total_amount = (
-            count_result[0][0] if len(count_result) > 0 and total_count else 0
-        )
+        if len(count_result) > 0 and total_count:
+            if query.union_match_clause:
+                total_amount = count_result[0][0] + count_result[1][0]
+            else:
+                total_amount = count_result[0][0]
+        else:
+            total_amount = 0
 
         return extracted_items, total_amount
 
     def get_distinct_headers(
         self,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
         **kwargs,
     ) -> Sequence:

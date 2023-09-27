@@ -1,5 +1,4 @@
 """Library cypher queries."""
-from typing import Optional
 
 from neomodel import db
 
@@ -14,7 +13,7 @@ def does_library_exist(name: str):
     return result
 
 
-def find_all(is_editable: Optional[bool]):
+def find_all(is_editable: bool | None):
     find_all_query = """
         MATCH (l:Library)
         """

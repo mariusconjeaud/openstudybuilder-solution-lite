@@ -1,19 +1,13 @@
 from datetime import datetime, timezone
+from functools import cached_property
 from types import MappingProxyType
-from typing import List, Sequence
+from typing import Sequence
 
+# pylint:disable=wrong-import-order # disagreement between isort and pylint
+import ctrxml
 from xsdata.formats.dataclass.serializers import XmlSerializer
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
 from xsdata.models.datatype import XmlDateTime
-
-try:
-    # New in Python version 3.8.
-    from functools import cached_property
-except ImportError:
-    # Remove if upgraded to Python 3.8 also remove dependency from Pipfile
-    from cached_property import cached_property
-
-import ctrxml
 
 from clinical_mdr_api.domains._utils import get_iso_lang_data
 from clinical_mdr_api.exceptions import BusinessLogicException
@@ -224,7 +218,7 @@ class ODMBuilder:
             code_list=self.get_odm_codelists(),
         )
 
-    def get_odm_study_event_defs(self) -> List[ctrxml.StudyEventDef]:
+    def get_odm_study_event_defs(self) -> list[ctrxml.StudyEventDef]:
         return [
             ctrxml.StudyEventDef(
                 oid=visit.uid,
@@ -243,7 +237,7 @@ class ODMBuilder:
         # noinspection PyTypeChecker
         return result.items
 
-    def get_odm_form_defs(self) -> List[ctrxml.FormDef]:
+    def get_odm_form_defs(self) -> list[ctrxml.FormDef]:
         return [
             ctrxml.FormDef(
                 oid=form.oid,
@@ -289,7 +283,7 @@ class ODMBuilder:
         # noinspection PyTypeChecker
         return result.items
 
-    def get_odm_item_group_defs(self) -> List[ctrxml.ItemGroupDef]:
+    def get_odm_item_group_defs(self) -> list[ctrxml.ItemGroupDef]:
         return [
             ctrxml.ItemGroupDef(
                 oid=item_group.oid,
@@ -340,7 +334,7 @@ class ODMBuilder:
         # noinspection PyTypeChecker
         return result.items
 
-    def get_odm_item_defs(self) -> List[ctrxml.ItemDef]:
+    def get_odm_item_defs(self) -> list[ctrxml.ItemDef]:
         return [
             ctrxml.ItemDef(
                 oid=item.oid,
@@ -381,7 +375,7 @@ class ODMBuilder:
         # noinspection PyTypeChecker
         return result.items
 
-    def get_odm_codelists(self) -> List[ctrxml.CodeList]:
+    def get_odm_codelists(self) -> list[ctrxml.CodeList]:
         return [
             ctrxml.CodeList(
                 oid=codelist.codelist_uid,

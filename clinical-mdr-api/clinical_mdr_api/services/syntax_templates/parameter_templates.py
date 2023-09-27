@@ -1,28 +1,22 @@
-from typing import cast
-
 from neomodel import db
 from pydantic import BaseModel
 
 from clinical_mdr_api.domain_repositories.syntax_templates.parameter_template_repository import (
     ParameterTemplateRepository,
 )
-from clinical_mdr_api.domains.libraries.library_ar import LibraryAR
 from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
 from clinical_mdr_api.domains.template_parameters import ParameterTemplateAR
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
     VersioningException,
 )
-from clinical_mdr_api.exceptions import (
-    BusinessLogicException,
-    NotFoundException,
-    ValidationException,
-)
+from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.complex_parameter_template import (
     ComplexParameterTemplate,
     ComplexParameterTemplateCreateInput,
     ComplexParameterTemplateVersion,
 )
+from clinical_mdr_api.services._utils import is_library_editable
 from clinical_mdr_api.services.syntax_templates.generic_syntax_template_service import (
     GenericSyntaxTemplateService,
 )
@@ -52,34 +46,17 @@ class ComplexParameterTemplateService(
                     parameter_name_exists_callback=lambda x: True,
                 )
 
-                try:
-                    library_vo = LibraryVO.from_input_values_2(
-                        library_name=template.library_name,
-                        is_library_editable_callback=(
-                            lambda name: (
-                                cast(
-                                    LibraryAR,
-                                    self._repos.library_repository.find_by_name(name),
-                                ).is_editable
-                                if self._repos.library_repository.find_by_name(name)
-                                is not None
-                                else None
-                            )
-                        ),
-                    )
-                except ValueError as exc:
-                    raise NotFoundException(
-                        f"The library with the name='{template.library_name}' could not be found."
-                    ) from exc
-                try:
-                    item = ParameterTemplateAR.from_input_values(
-                        author=self.user_initials,
-                        parameter_name=template.parameter_name,
-                        library=library_vo,
-                        template=template_vo,
-                    )
-                except ValueError as e:
-                    raise ValidationException(e.args[0]) from e
+                library_vo = LibraryVO.from_input_values_2(
+                    library_name=template.library_name,
+                    is_library_editable_callback=is_library_editable,
+                )
+
+                item = ParameterTemplateAR.from_input_values(
+                    author=self.user_initials,
+                    parameter_name=template.parameter_name,
+                    library=library_vo,
+                    template=template_vo,
+                )
 
                 self.repository.save(item)
 

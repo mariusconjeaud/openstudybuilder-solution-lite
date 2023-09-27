@@ -95,7 +95,7 @@ export default {
         }
         return 'preview-parameter--selected'
       }
-      return 'preview-parameter--selected'
+      return `parameter--${this.defaultColor}`
     },
     getFormatedParts () {
       let result = ''

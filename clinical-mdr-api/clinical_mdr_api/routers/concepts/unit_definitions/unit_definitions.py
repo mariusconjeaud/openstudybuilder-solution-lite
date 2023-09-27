@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, List, Optional, Sequence
+from typing import Any, Sequence
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
@@ -14,13 +14,14 @@ from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
 )
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.concepts.unit_definitions.unit_definition import (
     UnitDefinitionService,
 )
 
+# Prefixed with "/concepts/unit-definitions"
 router = APIRouter()
 
 Service = UnitDefinitionService
@@ -32,6 +33,7 @@ UnitDefinitionUID = Path(None, description="The unique id of unit definition.")
 
 @router.get(
     "",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all unit definitions in their latest/newest version.",
     description=f"""
 Allowed parameters include : filter on fields, sort by field name with sort direction, pagination.
@@ -93,35 +95,37 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
 # pylint: disable=unused-argument
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
-    library_name: Optional[str] = Query(None),
-    dimension: Optional[str] = Query(
+    library_name: str | None = Query(None),
+    dimension: str
+    | None = Query(
         None,
         description="The code submission value of the unit dimension to filter, for instance 'Dose Unit'.",
     ),
-    subset: Optional[str] = Query(
+    subset: str
+    | None = Query(
         None,
         description="The name of the unit subset to filter, for instance 'Age Unit'.",
     ),
     service: Service = Depends(),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
 ) -> CustomPage[UnitDefinitionModel]:
     results = service.get_all(
         library_name=library_name,
@@ -136,16 +140,17 @@ def get_all(
     )
 
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=List[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -156,29 +161,30 @@ def get_all(
     },
 )
 def get_distinct_values_for_header(
-    library_name: Optional[str] = Query(None),
-    dimension: Optional[str] = Query(
+    library_name: str | None = Query(None),
+    dimension: str
+    | None = Query(
         None,
         description="The code submission value of the unit dimension to filter, for instance 'Dose Unit'.",
     ),
-    subset: Optional[str] = Query(
+    subset: str
+    | None = Query(
         None,
         description="The name of the unit subset to filter, for instance 'Age Unit'.",
     ),
     service: Service = Depends(),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     return service.get_distinct_values_for_header(
         library_name=library_name,
@@ -194,6 +200,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the latest/newest version of a specific Unit definition identified by 'uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
@@ -210,14 +217,16 @@ def get_distinct_values_for_header(
 )
 def get_by_uid(
     uid: str = UnitDefinitionUID,
-    at_specified_date_time: Optional[datetime] = Query(
+    at_specified_date_time: datetime
+    | None = Query(
         None,
         description="If specified, the latest/newest representation of the unit definition at this point in time is returned.\n"
         "The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: "
         "'2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. "
         "If the timezone is ommitted, UTC±0 is assumed.",
     ),
-    status: Optional[LibraryItemStatus] = Query(
+    status: LibraryItemStatus
+    | None = Query(
         None,
         description="If specified, the representation of the unit definition in that status is returned (if existent). "
         "This may be particularly useful if the unit definition has "
@@ -226,7 +235,8 @@ def get_by_uid(
         "and you are interested in the 'Final' or 'Retired' status.\n"
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
-    version: Optional[str] = Query(
+    version: str
+    | None = Query(
         None,
         description=r"If specified, the latest/newest representation of the concept is returned. "
         r"Only exact matches are considered. "
@@ -245,6 +255,7 @@ def get_by_uid(
 
 @router.get(
     "/{uid}/versions",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the version history of a specific concept identified by 'uid'.",
     description=f"""
 The returned versions are ordered by `start_date` descending (newest entries first)
@@ -318,6 +329,7 @@ def get_versions(
 
 @router.post(
     "",
+    dependencies=[rbac.LIBRARY_WRITE],
     response_model=UnitDefinitionModel,
     summary="Creates a new unit definition in 'Draft' status.",
     description="""This request is only valid if the unit definition
@@ -357,6 +369,7 @@ def post(
 
 @router.patch(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Updates the unit definition identified by 'uid'.",
     description="""This request is only valid if the unit definition
 * is in 'Draft' status and
@@ -396,6 +409,7 @@ def patch(
 
 @router.post(
     "/{uid}/versions",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new version of the unit definition identified by 'uid'.",
     description="""This request is only valid if the unit definition
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
@@ -432,6 +446,7 @@ def new_version(
 
 @router.post(
     "/{uid}/approvals",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Approves the unit definition identified by 'uid'.",
     description="""This request is only valid if the unit definition
 * is in 'Draft' status and
@@ -467,6 +482,7 @@ def approve(
 
 @router.delete(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Inactivates/deactivates the unit definition identified by 'uid'.",
     description="""This request is only valid if the unit definition
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -500,6 +516,7 @@ def inactivate(
 
 @router.post(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivates the unit definition identified by 'uid'.",
     description="""This request is only valid if the unit definition
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -533,6 +550,7 @@ def reactivate(
 
 @router.delete(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Deletes the unit definition identified by 'uid'.",
     description="""This request is only valid if \n
 * the unit definition is in 'Draft' status and
@@ -555,7 +573,6 @@ def reactivate(
         },
         500: _generic_descriptions.ERROR_500,
     },
-    dependencies=[Depends(get_current_user_id)],
 )
 def delete(uid: str = UnitDefinitionUID, service: Service = Depends()) -> None:
     service.delete(uid)

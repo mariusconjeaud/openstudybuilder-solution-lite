@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import Callable, Optional, Sequence
+from typing import Callable, Self, Sequence
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.libraries.object import (
     ParametrizedTemplateARBase,
     ParametrizedTemplateVO,
@@ -11,8 +12,6 @@ from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
 
 @dataclass(frozen=True)
 class CriteriaTemplateVO(ParametrizedTemplateVO):
-    guidance_text: str
-
     @classmethod
     def from_repository_values(
         cls,
@@ -22,7 +21,8 @@ class CriteriaTemplateVO(ParametrizedTemplateVO):
         template_sequence_id: str,
         guidance_text: str,
         parameter_terms: Sequence[ParameterTermEntryVO],
-    ) -> "CriteriaTemplateVO":
+        library_name: str,
+    ) -> Self:
         """
         Create object based on repository values.
 
@@ -32,8 +32,9 @@ class CriteriaTemplateVO(ParametrizedTemplateVO):
             template_uid=template_uid,
             template_sequence_id=template_sequence_id,
             template_name=template_name,
-            guidance_text=guidance_text,
             parameter_terms=tuple(parameter_terms),
+            guidance_text=guidance_text,
+            library_name=library_name,
         )
 
     @classmethod
@@ -43,10 +44,11 @@ class CriteriaTemplateVO(ParametrizedTemplateVO):
         template_uid: str,
         template_sequence_id: str,
         parameter_terms: Sequence[ParameterTermEntryVO],
+        library_name: str,
         get_final_template_vo_by_template_uid_callback: Callable[
-            [str], Optional[TemplateVO]
+            [str], TemplateVO | None
         ],
-    ) -> "CriteriaTemplateVO":
+    ) -> Self:
         """
         Creates object based on external input.
 
@@ -55,7 +57,7 @@ class CriteriaTemplateVO(ParametrizedTemplateVO):
         template = get_final_template_vo_by_template_uid_callback(template_uid)
 
         if template is None:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 "The template with uid '{template_uid}' was not found. Make sure that there is a latest 'Final' version."
             )
 
@@ -65,6 +67,7 @@ class CriteriaTemplateVO(ParametrizedTemplateVO):
             template_sequence_id=template_sequence_id,
             parameter_terms=tuple(parameter_terms),
             guidance_text=template.guidance_text,
+            library_name=library_name,
         )
 
 
@@ -79,6 +82,6 @@ class CriteriaAR(ParametrizedTemplateARBase):
     _template: CriteriaTemplateVO
 
     @property
-    def template_guidance_text(self) -> str:
+    def guidance_text(self) -> str:
         """Shortcut to access template's guidance text."""
         return self._template.guidance_text

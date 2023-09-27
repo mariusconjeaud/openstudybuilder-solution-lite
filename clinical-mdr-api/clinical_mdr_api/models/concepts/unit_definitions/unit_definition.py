@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Sequence
+from typing import Callable, Self, Sequence
 
 from pydantic import Field
 
@@ -24,23 +24,23 @@ class UnitDefinitionModel(ConceptModel):
     us_conventional_unit: bool
     ct_units: Sequence[SimpleTermModel]
     unit_subsets: Sequence[SimpleTermModel]
-    ucum: Optional[SimpleTermModel] = Field(None, nullable=True)
-    unit_dimension: Optional[SimpleTermModel] = Field(None, nullable=True)
-    legacy_code: Optional[str] = Field(None, nullable=True)
-    molecular_weight_conv_expon: Optional[int] = Field(None, nullable=True)
-    conversion_factor_to_master: Optional[float] = Field(None, nullable=True)
-    comment: Optional[str] = Field(None, nullable=True)
-    order: Optional[int] = Field(None, nullable=True)
-    definition: Optional[str] = Field(None, nullable=True)
+    ucum: SimpleTermModel | None = Field(None, nullable=True)
+    unit_dimension: SimpleTermModel | None = Field(None, nullable=True)
+    legacy_code: str | None = Field(None, nullable=True)
+    molecular_weight_conv_expon: int | None = Field(None, nullable=True)
+    conversion_factor_to_master: float | None = Field(None, nullable=True)
+    comment: str | None = Field(None, nullable=True)
+    order: int | None = Field(None, nullable=True)
+    definition: str | None = Field(None, nullable=True)
     template_parameter: bool
 
     @classmethod
     def from_unit_definition_ar(
         cls,
         unit_definition_ar: UnitDefinitionAR,
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
-        find_dictionary_term_by_uid: Callable[[str], Optional[DictionaryTermAR]],
-    ) -> "UnitDefinitionModel":
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
+        find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
+    ) -> Self:
         ct_units = []
         for ct_unit in unit_definition_ar.concept_vo.ct_units:
             if ct_unit.name is None:
@@ -127,37 +127,37 @@ class UnitDefinitionPostInput(ConceptPostInput):
     si_unit: bool
     us_conventional_unit: bool
     ct_units: Sequence[str]
-    unit_subsets: Optional[Sequence[str]] = []
-    ucum: Optional[str]
-    unit_dimension: Optional[str]
-    legacy_code: Optional[str]
-    molecular_weight_conv_expon: Optional[int]
-    conversion_factor_to_master: Optional[float]
-    comment: Optional[str]
-    order: Optional[int]
-    definition: Optional[str]
+    unit_subsets: Sequence[str] | None = []
+    ucum: str | None
+    unit_dimension: str | None
+    legacy_code: str | None
+    molecular_weight_conv_expon: int | None
+    conversion_factor_to_master: float | None
+    comment: str | None
+    order: int | None
+    definition: str | None
     template_parameter: bool = False
 
 
 class UnitDefinitionPatchInput(ConceptPatchInput):
-    convertible_unit: Optional[bool] = None
-    display_unit: Optional[bool] = None
-    master_unit: Optional[bool] = None
-    si_unit: Optional[bool] = None
-    us_conventional_unit: Optional[bool] = None
-    ct_units: Optional[Sequence[str]] = []
-    unit_subsets: Optional[Sequence[str]] = []
-    ucum: Optional[str] = None
-    unit_dimension: Optional[str] = None
-    legacy_code: Optional[str] = None
-    molecular_weight_conv_expon: Optional[int] = None
-    conversion_factor_to_master: Optional[float] = None
-    comment: Optional[str] = None
-    order: Optional[int] = None
-    definition: Optional[str] = None
-    template_parameter: Optional[bool] = None
+    convertible_unit: bool | None = None
+    display_unit: bool | None = None
+    master_unit: bool | None = None
+    si_unit: bool | None = None
+    us_conventional_unit: bool | None = None
+    ct_units: Sequence[str] | None = []
+    unit_subsets: Sequence[str] | None = []
+    ucum: str | None = None
+    unit_dimension: str | None = None
+    legacy_code: str | None = None
+    molecular_weight_conv_expon: int | None = None
+    conversion_factor_to_master: float | None = None
+    comment: str | None = None
+    order: int | None = None
+    definition: str | None = None
+    template_parameter: bool | None = None
 
 
 class UnitDefinitionSimpleModel(BaseModel):
     uid: str = Field(..., title="uid", description="")
-    name: Optional[str] = Field(None, title="name", description="")
+    name: str | None = Field(None, title="name", description="")

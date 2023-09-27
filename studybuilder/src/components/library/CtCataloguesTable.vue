@@ -19,6 +19,8 @@
         :catalogue="catalogue.name"
         @openCodelistTerms="openCodelistTerms"
         column-data-resource="ct/codelists"
+        :terms="terms"
+        :loading="loading"
         />
     </v-tab-item>
   </v-tabs-items>
@@ -28,6 +30,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import CodelistTable from './CodelistTable'
+import controlledTerminology from '@/api/controlledTerminology'
 
 export default {
   components: {
@@ -46,7 +49,9 @@ export default {
   data () {
     return {
       tab: null,
-      originalCatalogue: null
+      originalCatalogue: null,
+      terms: [],
+      loading: false
     }
   },
   methods: {
@@ -55,11 +60,23 @@ export default {
         name: 'CodelistTerms',
         params: { codelist_id: codelist.codelist_uid, catalogue_name: catalogueName }
       })
+    },
+    fetchTerms  () {
+      this.loading = true
+      const params = {
+        page_size: 0,
+        compact_response: true
+      }
+      controlledTerminology.getCodelistTermsNames(params).then(resp => {
+        this.terms = resp.data.items
+        this.loading = false
+      })
     }
   },
   mounted () {
     this.originalCatalogue = this.catalogue_name
     this.$store.dispatch('ctCatalogues/fetchCatalogues')
+    this.fetchTerms()
   },
   watch: {
     tab (newValue, oldValue) {

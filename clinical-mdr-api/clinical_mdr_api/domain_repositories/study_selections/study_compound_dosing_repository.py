@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from typing import List, Optional, Sequence
+from typing import Sequence
 
 from neomodel import db
 
@@ -40,14 +40,14 @@ class SelectionHistory:
     user_initials: str
     change_type: str
     start_date: datetime.datetime
-    end_date: Optional[datetime.datetime]
+    end_date: datetime.datetime | None
 
     study_compound_uid: str
     study_element_uid: str
     compound_uid: str
     compound_alias_uid: str
-    dose_value_uid: Optional[str]
-    dose_frequency_uid: Optional[str]
+    dose_value_uid: str | None
+    dose_frequency_uid: str | None
 
 
 class StudyCompoundDosingRepository:
@@ -103,7 +103,7 @@ class StudyCompoundDosingRepository:
         audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
-        study_selection_node.has_before.connect(audit_node)
+        audit_node.has_before.connect(study_selection_node)
         study_root_node.audit_trail.connect(audit_node)
         return audit_node
 
@@ -139,7 +139,7 @@ class StudyCompoundDosingRepository:
             # Connect new node with study value
             latest_study_value_node.has_study_compound_dosing.connect(selection_node)
         # Connect new node with audit trail
-        selection_node.has_after.connect(audit_node)
+        audit_node.has_after.connect(selection_node)
 
         # Create relations
         selection_node.study_compound.connect(study_compound_node)
@@ -353,14 +353,14 @@ class StudyCompoundDosingRepository:
 
     def find_selection_history(
         self, study_uid: str, selection_uid: str = None
-    ) -> List[Optional[dict]]:
+    ) -> list[dict | None]:
         kwargs = {}
         if selection_uid:
             kwargs["selection_uid"] = selection_uid
         return self._get_selection_with_history(study_uid=study_uid, **kwargs)
 
     def _retrieves_all_data(
-        self, study_uid: Optional[str] = None
+        self, study_uid: str | None = None
     ) -> Sequence[StudyCompoundDosingVO]:
         query = ""
         query_parameters = {}
@@ -419,7 +419,7 @@ class StudyCompoundDosingRepository:
 
     def find_by_study(
         self, study_uid: str, for_update: bool = False, **filters
-    ) -> Optional[StudySelectionCompoundDosingsAR]:
+    ) -> StudySelectionCompoundDosingsAR | None:
         """
         Finds all the selected study compounds for a given study
         :param study_uid:
@@ -458,7 +458,7 @@ class StudyCompoundDosingRepository:
 
     def get_selection_uid_by_compound_dose_and_frequency(
         self, study_compound_dosing: StudyCompoundDosingVO
-    ) -> Optional[str]:
+    ) -> str | None:
         query = """
             MATCH (:StudyRoot {uid: $study_uid})-[:LATEST]->(:StudyValue)-[rel:HAS_STUDY_COMPOUND_DOSING]->
                     (scd:StudyCompoundDosing)-[HAS_DOSE_FREQUENCY]->(dfr:CTTermRoot {uid: $dose_frequency_uid})

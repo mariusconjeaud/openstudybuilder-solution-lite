@@ -77,6 +77,7 @@
         color="primary"
         @click.stop="showForm = true"
         :title="$t('StudyElements.add_element')"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
       >
         <v-icon>
           mdi-plus
@@ -89,6 +90,20 @@
     @close="closeForm"
     :metadata="activeElement"
     />
+  <v-dialog
+    v-model="showElementHistory"
+    @keydown.esc="closeElementHistory"
+    persistent
+    :max-width="globalHistoryDialogMaxWidth"
+    :fullscreen="globalHistoryDialogFullscreen"
+    >
+    <history-table
+      :title="studyElementHistoryTitle"
+      @close="closeElementHistory"
+      :headers="headers"
+      :items="elementHistoryItems"
+      />
+  </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
 </div>
 </template>
@@ -104,13 +119,17 @@ import arms from '@/api/arms'
 import terms from '@/api/controlledTerminology/terms'
 import draggable from 'vuedraggable'
 import filteringParameters from '@/utils/filteringParameters'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
+import HistoryTable from '@/components/tools/HistoryTable'
 
 export default {
+  mixins: [accessGuard],
   components: {
     ConfirmDialog,
     NNTable,
     StudyElementsForm,
     ActionsMenu,
+    HistoryTable,
     draggable
   },
   computed: {
@@ -134,15 +153,17 @@ export default {
       actions: [
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
-          click: this.editStudyElement
+          click: this.editStudyElement,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
-          click: this.deleteStudyElement
+          click: this.deleteStudyElement,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.history'),

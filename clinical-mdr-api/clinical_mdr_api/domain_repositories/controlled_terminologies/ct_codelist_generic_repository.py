@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
-from typing import Iterable, Optional, Sequence, cast
+from typing import Iterable, Sequence, cast
 
 from neomodel import db
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -108,7 +109,7 @@ class CTCodelistGenericRepository(
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: ControlledTerminology,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: ControlledTerminology,
     ) -> _AggregateRootType:
@@ -131,14 +132,14 @@ class CTCodelistGenericRepository(
 
     def find_all(
         self,
-        catalogue_name: Optional[str] = None,
-        library: Optional[str] = None,
-        package: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        catalogue_name: str | None = None,
+        library: str | None = None,
+        package: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[_AggregateRootType]:
         """
@@ -160,9 +161,8 @@ class CTCodelistGenericRepository(
         :return GenericFilteringReturn[_AggregateRootType]:
         """
         if self.relationship_from_root not in vars(CTCodelistRoot):
-            raise ValueError(
-                f"The relationship of type {self.relationship_from_root} "
-                f"was not found in CTCodelistRoot object"
+            raise exceptions.BusinessLogicException(
+                f"The relationship of type {self.relationship_from_root} was not found in CTCodelistRoot object"
             )
 
         # Build match_clause
@@ -201,27 +201,25 @@ class CTCodelistGenericRepository(
             result_array, attributes_names
         )
 
-        _total_count = 0
+        total = 0
         if total_count:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
             if len(count_result) > 0:
-                _total_count = count_result[0][0]
+                total = count_result[0][0]
 
-        return GenericFilteringReturn.create(
-            items=extracted_items, total_count=_total_count
-        )
+        return GenericFilteringReturn.create(items=extracted_items, total=total)
 
     def get_distinct_headers(
         self,
         field_name: str,
-        search_string: Optional[str] = "",
+        search_string: str | None = "",
         catalogue_name: str = None,
-        library: Optional[str] = None,
-        package: Optional[str] = None,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        library: str | None = None,
+        package: str | None = None,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence:
         """
@@ -284,7 +282,7 @@ class CTCodelistGenericRepository(
 
     def _generate_generic_match_clause(
         self,
-        package: Optional[str] = None,
+        package: str | None = None,
     ):
         if package:
             if self.is_repository_related_to_attributes():
@@ -331,11 +329,11 @@ class CTCodelistGenericRepository(
     def find_by_uid(
         self,
         codelist_uid: str,
-        version: Optional[str] = None,
-        status: Optional[LibraryItemStatus] = None,
-        at_specific_date: Optional[datetime] = None,
+        version: str | None = None,
+        status: LibraryItemStatus | None = None,
+        at_specific_date: datetime | None = None,
         for_update: bool = False,
-    ) -> Optional[_AggregateRootType]:
+    ) -> _AggregateRootType | None:
         ct_codelist_root: CTCodelistRoot = CTCodelistRoot.nodes.get_or_none(
             uid=codelist_uid
         )
@@ -359,7 +357,7 @@ class CTCodelistGenericRepository(
             self.relationship_from_root
         ).single()
         codelist_ar = self.find_by_uid_2(
-            uid=str(ct_codelist_name_root_node.id),
+            uid=str(ct_codelist_name_root_node.element_id),
             version=version,
             status=status,
             at_specific_date=at_specific_date,
@@ -370,7 +368,7 @@ class CTCodelistGenericRepository(
 
     def get_all_versions(
         self, codelist_uid: str
-    ) -> Optional[Iterable[_AggregateRootType]]:
+    ) -> Iterable[_AggregateRootType] | None:
         ct_codelist_root: CTCodelistRoot = CTCodelistRoot.nodes.get_or_none(
             uid=codelist_uid
         )
@@ -379,7 +377,9 @@ class CTCodelistGenericRepository(
             ct_codelist_name_root_node = ct_codelist_root.__getattribute__(
                 self.relationship_from_root
             ).single()
-            versions = self.get_all_versions_2(str(ct_codelist_name_root_node.id))
+            versions = self.get_all_versions_2(
+                str(ct_codelist_name_root_node.element_id)
+            )
             return versions
         return None
 
@@ -423,17 +423,19 @@ class CTCodelistGenericRepository(
         """
         ct_codelist_node = CTCodelistRoot.nodes.get_or_none(uid=codelist_uid)
         if ct_codelist_node is None:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"The codelist identified by {codelist_uid} was not found."
             )
 
         ct_term_node = CTTermRoot.nodes.get_or_none(uid=term_uid)
         if ct_term_node is None:
-            raise ValueError(f"The term identified by {term_uid} was not found.")
+            raise exceptions.ValidationException(
+                f"The term identified by {term_uid} was not found."
+            )
 
         for ct_term_end_node in ct_codelist_node.has_term.all():
             if ct_term_end_node.uid == term_uid:
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"The codelist identified by {codelist_uid} "
                     f"already has a term identified by {term_uid}"
                 )
@@ -489,13 +491,15 @@ class CTCodelistGenericRepository(
         """
         ct_codelist_node = CTCodelistRoot.nodes.get_or_none(uid=codelist_uid)
         if ct_codelist_node is None:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"The codelist identified by {codelist_uid} was not found."
             )
 
         ct_term_node = CTTermRoot.nodes.get_or_none(uid=term_uid)
         if ct_term_node is None:
-            raise ValueError(f"The term identified by {term_uid} was not found.")
+            raise exceptions.ValidationException(
+                f"The term identified by {term_uid} was not found."
+            )
 
         for ct_term_end_node in ct_codelist_node.has_term.all():
             if ct_term_end_node.uid == term_uid:
@@ -536,7 +540,7 @@ class CTCodelistGenericRepository(
                 db.cypher_query(query, {"codelist_uid": codelist_uid})
                 break
         else:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"The codelist identified by {codelist_uid} doesn't have a term identified by {term_uid}"
             )
 

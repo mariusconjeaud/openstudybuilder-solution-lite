@@ -1,3 +1,5 @@
+from typing import Sequence
+
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
     _AggregateRootType,
@@ -17,6 +19,9 @@ from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
+)
+from clinical_mdr_api.domain_repositories.models.standard_data_model import (
+    VariableClass,
 )
 from clinical_mdr_api.domain_repositories.neomodel_ext_item_repository import (
     NeomodelExtBaseRepository,
@@ -48,6 +53,7 @@ class ActivityItemClassRepository(
             )
             .fetch_optional_relations_and_collect(
                 "has_activity_instance_class__has_latest_value",
+                "maps_variable_class",
             )
             .fetch_optional_single_relation_of_type(
                 {
@@ -125,6 +131,7 @@ class ActivityItemClassRepository(
         ]
         role_term = value.has_role.get()
         data_type_term = value.has_data_type.get()
+        variable_class_uids = [node.uid for node in root.maps_variable_class.all()]
         return ActivityItemClassAR.from_repository_values(
             uid=root.uid,
             activity_item_class_vo=ActivityItemClassVO.from_repository_values(
@@ -138,6 +145,7 @@ class ActivityItemClassRepository(
                 data_type_name=data_type_term.has_name_root.get()
                 .has_latest_value.get()
                 .name,
+                variable_class_uids=variable_class_uids,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -145,6 +153,13 @@ class ActivityItemClassRepository(
             ),
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
+
+    def patch_mappings(self, uid: str, variable_class_uids: Sequence[str]) -> None:
+        root = ActivityItemClassRoot.nodes.get(uid=uid)
+        root.maps_variable_class.disconnect_all()
+        for variable_class in variable_class_uids:
+            variable_class = VariableClass.nodes.get(uid=variable_class)
+            root.maps_variable_class.connect(variable_class)
 
     def _maintain_parameters(
         self,

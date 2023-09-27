@@ -1,304 +1,304 @@
 ## Installed packages
 
-- aenum==3.1.12
+- aenum==3.1.15
+- asyncache==0.3.1
+└── cachetools [required: >=5.2.0,<6.0.0, installed: 5.3.1]
 - Authlib==1.1.0
-  - cryptography [required: >=3.2, installed: 40.0.2]
-    - cffi [required: >=1.12, installed: 1.15.1]
-      - pycparser [required: Any, installed: 2.21]
+└── cryptography [required: >=3.2, installed: 41.0.3]
+    └── cffi [required: >=1.12, installed: 1.15.1]
+        └── pycparser [required: Any, installed: 2.21]
 - autopep8==1.7.0
-  - pycodestyle [required: >=2.9.1, installed: 2.9.1]
-  - toml [required: Any, installed: 0.10.2]
+├── pycodestyle [required: >=2.9.1, installed: 2.9.1]
+└── toml [required: Any, installed: 0.10.2]
 - beautifulsoup4==4.11.2
-  - soupsieve [required: >1.2, installed: 2.4.1]
+└── soupsieve [required: >1.2, installed: 2.4.1]
 - black==23.3.0
-  - click [required: >=8.0.0, installed: 8.1.3]
-  - mypy-extensions [required: >=0.4.3, installed: 1.0.0]
-  - packaging [required: >=22.0, installed: 23.1]
-  - pathspec [required: >=0.9.0, installed: 0.11.1]
-  - platformdirs [required: >=2, installed: 3.5.1]
+├── click [required: >=8.0.0, installed: 8.1.6]
+├── mypy-extensions [required: >=0.4.3, installed: 1.0.0]
+├── packaging [required: >=22.0, installed: 23.1]
+├── pathspec [required: >=0.9.0, installed: 0.11.2]
+└── platformdirs [required: >=2, installed: 3.10.0]
 - Brotli==1.0.9
-- cached-property==1.5.2
 - colour==0.1.5
 - deepdiff==6.2.3
-  - ordered-set [required: >=4.0.2,<4.2.0, installed: 4.1.0]
-  - orjson [required: Any, installed: 3.8.12]
-- Deprecated==1.2.13
-  - wrapt [required: >=1.10,<2, installed: 1.15.0]
+├── ordered-set [required: >=4.0.2,<4.2.0, installed: 4.1.0]
+└── orjson [required: Any, installed: 3.9.4]
+- Deprecated==1.2.14
+└── wrapt [required: >=1.10,<2, installed: 1.15.0]
 - dict2xml==1.7.3
 - fastapi==0.92.0
-  - pydantic [required: >=1.6.2,<2.0.0,!=1.8.1,!=1.8,!=1.7.3,!=1.7.2,!=1.7.1,!=1.7, installed: 1.10.7]
-    - typing-extensions [required: >=4.2.0, installed: 4.5.0]
-  - starlette [required: >=0.25.0,<0.26.0, installed: 0.25.0]
-    - anyio [required: >=3.4.0,<5, installed: 3.6.2]
-      - idna [required: >=2.8, installed: 3.4]
-      - sniffio [required: >=1.1, installed: 1.3.0]
+├── pydantic [required: >=1.6.2,<2.0.0,!=1.8.1,!=1.8,!=1.7.3,!=1.7.2,!=1.7.1,!=1.7, installed: 1.10.12]
+│   └── typing-extensions [required: >=4.2.0, installed: 4.7.1]
+└── starlette [required: >=0.25.0,<0.26.0, installed: 0.25.0]
+    └── anyio [required: >=3.4.0,<5, installed: 3.7.1]
+        ├── idna [required: >=2.8, installed: 3.4]
+        └── sniffio [required: >=1.1, installed: 1.3.0]
 - flake8==5.0.4
-  - mccabe [required: >=0.7.0,<0.8.0, installed: 0.7.0]
-  - pycodestyle [required: >=2.9.0,<2.10.0, installed: 2.9.1]
-  - pyflakes [required: >=2.5.0,<2.6.0, installed: 2.5.0]
-- GitPython==3.1.31
-  - gitdb [required: >=4.0.1,<5, installed: 4.0.10]
-    - smmap [required: >=3.0.1,<6, installed: 5.0.0]
+├── mccabe [required: >=0.7.0,<0.8.0, installed: 0.7.0]
+├── pycodestyle [required: >=2.9.0,<2.10.0, installed: 2.9.1]
+└── pyflakes [required: >=2.5.0,<2.6.0, installed: 2.5.0]
+- GitPython==3.1.32
+└── gitdb [required: >=4.0.1,<5, installed: 4.0.10]
+    └── smmap [required: >=3.0.1,<6, installed: 5.0.0]
 - Jinja2==3.1.2
-  - MarkupSafe [required: >=2.0, installed: 2.1.2]
+└── MarkupSafe [required: >=2.0, installed: 2.1.3]
 - mypy==0.991
-  - mypy-extensions [required: >=0.4.3, installed: 1.0.0]
-  - typing-extensions [required: >=3.10, installed: 4.5.0]
-- neomodel==5.0.0
-  - neo4j-driver [required: ==4.4.10, installed: 4.4.10]
-    - pytz [required: Any, installed: 2023.3]
-  - neobolt [required: ==1.7.17, installed: 1.7.17]
-  - pytz [required: >=2021.1, installed: 2023.3]
-  - six [required: ==1.16.0, installed: 1.16.0]
+├── mypy-extensions [required: >=0.4.3, installed: 1.0.0]
+└── typing-extensions [required: >=3.10, installed: 4.7.1]
+- neomodel==5.1.0
+├── neo4j [required: ==5.10.0, installed: 5.10.0]
+│   └── pytz [required: Any, installed: 2023.3]
+├── neobolt [required: ==1.7.17, installed: 1.7.17]
+├── pytz [required: >=2021.1, installed: 2023.3]
+└── six [required: ==1.16.0, installed: 1.16.0]
 - opencensus-ext-azure==1.1.9
-  - azure-core [required: >=1.12.0,<2.0.0, installed: 1.26.4]
-    - requests [required: >=2.18.4, installed: 2.28.2]
-      - certifi [required: >=2017.4.17, installed: 2023.5.7]
-      - charset-normalizer [required: >=2,<4, installed: 3.1.0]
-      - idna [required: >=2.5,<4, installed: 3.4]
-      - urllib3 [required: >=1.21.1,<1.27, installed: 1.26.15]
-    - six [required: >=1.11.0, installed: 1.16.0]
-    - typing-extensions [required: >=4.3.0, installed: 4.5.0]
-  - azure-identity [required: >=1.5.0,<2.0.0, installed: 1.13.0]
-    - azure-core [required: >=1.11.0,<2.0.0, installed: 1.26.4]
-      - requests [required: >=2.18.4, installed: 2.28.2]
-        - certifi [required: >=2017.4.17, installed: 2023.5.7]
-        - charset-normalizer [required: >=2,<4, installed: 3.1.0]
-        - idna [required: >=2.5,<4, installed: 3.4]
-        - urllib3 [required: >=1.21.1,<1.27, installed: 1.26.15]
-      - six [required: >=1.11.0, installed: 1.16.0]
-      - typing-extensions [required: >=4.3.0, installed: 4.5.0]
-    - cryptography [required: >=2.5, installed: 40.0.2]
-      - cffi [required: >=1.12, installed: 1.15.1]
-        - pycparser [required: Any, installed: 2.21]
-    - msal [required: >=1.20.0,<2.0.0, installed: 1.22.0]
-      - cryptography [required: >=0.6,<43, installed: 40.0.2]
-        - cffi [required: >=1.12, installed: 1.15.1]
-          - pycparser [required: Any, installed: 2.21]
-      - PyJWT [required: >=1.0.0,<3, installed: 2.7.0]
-      - requests [required: >=2.0.0,<3, installed: 2.28.2]
-        - certifi [required: >=2017.4.17, installed: 2023.5.7]
-        - charset-normalizer [required: >=2,<4, installed: 3.1.0]
-        - idna [required: >=2.5,<4, installed: 3.4]
-        - urllib3 [required: >=1.21.1,<1.27, installed: 1.26.15]
-    - msal-extensions [required: >=0.3.0,<2.0.0, installed: 1.0.0]
-      - msal [required: >=0.4.1,<2.0.0, installed: 1.22.0]
-        - cryptography [required: >=0.6,<43, installed: 40.0.2]
-          - cffi [required: >=1.12, installed: 1.15.1]
-            - pycparser [required: Any, installed: 2.21]
-        - PyJWT [required: >=1.0.0,<3, installed: 2.7.0]
-        - requests [required: >=2.0.0,<3, installed: 2.28.2]
-          - certifi [required: >=2017.4.17, installed: 2023.5.7]
-          - charset-normalizer [required: >=2,<4, installed: 3.1.0]
-          - idna [required: >=2.5,<4, installed: 3.4]
-          - urllib3 [required: >=1.21.1,<1.27, installed: 1.26.15]
-      - portalocker [required: >=1.0,<3, installed: 2.7.0]
-    - six [required: >=1.12.0, installed: 1.16.0]
-  - opencensus [required: >=0.11.2,<1.0.0, installed: 0.11.2]
-    - google-api-core [required: >=1.0.0,<3.0.0, installed: 2.11.0]
-      - google-auth [required: >=2.14.1,<3.0dev, installed: 2.18.0]
-        - cachetools [required: >=2.0.0,<6.0, installed: 5.3.0]
-        - pyasn1-modules [required: >=0.2.1, installed: 0.3.0]
-          - pyasn1 [required: >=0.4.6,<0.6.0, installed: 0.5.0]
-        - rsa [required: >=3.1.4,<5, installed: 4.9]
-          - pyasn1 [required: >=0.1.3, installed: 0.5.0]
-        - six [required: >=1.9.0, installed: 1.16.0]
-        - urllib3 [required: <2.0, installed: 1.26.15]
-      - googleapis-common-protos [required: >=1.56.2,<2.0dev, installed: 1.59.0]
-        - protobuf [required: >=3.19.5,<5.0.0dev,!=4.21.5,!=4.21.4,!=4.21.3,!=4.21.2,!=4.21.1,!=3.20.1,!=3.20.0, installed: 4.23.0]
-      - protobuf [required: >=3.19.5,<5.0.0dev,!=4.21.5,!=4.21.4,!=4.21.3,!=4.21.2,!=4.21.1,!=4.21.0,!=3.20.1,!=3.20.0, installed: 4.23.0]
-      - requests [required: >=2.18.0,<3.0.0dev, installed: 2.28.2]
-        - certifi [required: >=2017.4.17, installed: 2023.5.7]
-        - charset-normalizer [required: >=2,<4, installed: 3.1.0]
-        - idna [required: >=2.5,<4, installed: 3.4]
-        - urllib3 [required: >=1.21.1,<1.27, installed: 1.26.15]
-    - opencensus-context [required: >=0.1.3, installed: 0.1.3]
-  - psutil [required: >=5.6.3, installed: 5.9.5]
-  - requests [required: >=2.19.0, installed: 2.28.2]
-    - certifi [required: >=2017.4.17, installed: 2023.5.7]
-    - charset-normalizer [required: >=2,<4, installed: 3.1.0]
-    - idna [required: >=2.5,<4, installed: 3.4]
-    - urllib3 [required: >=1.21.1,<1.27, installed: 1.26.15]
+├── azure-core [required: >=1.12.0,<2.0.0, installed: 1.29.1]
+│   ├── requests [required: >=2.18.4, installed: 2.28.2]
+│   │   ├── certifi [required: >=2017.4.17, installed: 2023.7.22]
+│   │   ├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+│   │   ├── idna [required: >=2.5,<4, installed: 3.4]
+│   │   └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.16]
+│   ├── six [required: >=1.11.0, installed: 1.16.0]
+│   └── typing-extensions [required: >=4.3.0, installed: 4.7.1]
+├── azure-identity [required: >=1.5.0,<2.0.0, installed: 1.14.0]
+│   ├── azure-core [required: >=1.11.0,<2.0.0, installed: 1.29.1]
+│   │   ├── requests [required: >=2.18.4, installed: 2.28.2]
+│   │   │   ├── certifi [required: >=2017.4.17, installed: 2023.7.22]
+│   │   │   ├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+│   │   │   ├── idna [required: >=2.5,<4, installed: 3.4]
+│   │   │   └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.16]
+│   │   ├── six [required: >=1.11.0, installed: 1.16.0]
+│   │   └── typing-extensions [required: >=4.3.0, installed: 4.7.1]
+│   ├── cryptography [required: >=2.5, installed: 41.0.3]
+│   │   └── cffi [required: >=1.12, installed: 1.15.1]
+│   │       └── pycparser [required: Any, installed: 2.21]
+│   ├── msal [required: >=1.20.0,<2.0.0, installed: 1.23.0]
+│   │   ├── cryptography [required: >=0.6,<44, installed: 41.0.3]
+│   │   │   └── cffi [required: >=1.12, installed: 1.15.1]
+│   │   │       └── pycparser [required: Any, installed: 2.21]
+│   │   ├── PyJWT [required: >=1.0.0,<3, installed: 2.8.0]
+│   │   └── requests [required: >=2.0.0,<3, installed: 2.28.2]
+│   │       ├── certifi [required: >=2017.4.17, installed: 2023.7.22]
+│   │       ├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+│   │       ├── idna [required: >=2.5,<4, installed: 3.4]
+│   │       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.16]
+│   └── msal-extensions [required: >=0.3.0,<2.0.0, installed: 1.0.0]
+│       ├── msal [required: >=0.4.1,<2.0.0, installed: 1.23.0]
+│       │   ├── cryptography [required: >=0.6,<44, installed: 41.0.3]
+│       │   │   └── cffi [required: >=1.12, installed: 1.15.1]
+│       │   │       └── pycparser [required: Any, installed: 2.21]
+│       │   ├── PyJWT [required: >=1.0.0,<3, installed: 2.8.0]
+│       │   └── requests [required: >=2.0.0,<3, installed: 2.28.2]
+│       │       ├── certifi [required: >=2017.4.17, installed: 2023.7.22]
+│       │       ├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+│       │       ├── idna [required: >=2.5,<4, installed: 3.4]
+│       │       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.16]
+│       └── portalocker [required: >=1.0,<3, installed: 2.7.0]
+├── opencensus [required: >=0.11.2,<1.0.0, installed: 0.11.2]
+│   ├── google-api-core [required: >=1.0.0,<3.0.0, installed: 2.11.1]
+│   │   ├── google-auth [required: >=2.14.1,<3.0.dev0, installed: 2.22.0]
+│   │   │   ├── cachetools [required: >=2.0.0,<6.0, installed: 5.3.1]
+│   │   │   ├── pyasn1-modules [required: >=0.2.1, installed: 0.3.0]
+│   │   │   │   └── pyasn1 [required: >=0.4.6,<0.6.0, installed: 0.5.0]
+│   │   │   ├── rsa [required: >=3.1.4,<5, installed: 4.9]
+│   │   │   │   └── pyasn1 [required: >=0.1.3, installed: 0.5.0]
+│   │   │   ├── six [required: >=1.9.0, installed: 1.16.0]
+│   │   │   └── urllib3 [required: <2.0, installed: 1.26.16]
+│   │   ├── googleapis-common-protos [required: >=1.56.2,<2.0.dev0, installed: 1.60.0]
+│   │   │   └── protobuf [required: >=3.19.5,<5.0.0.dev0,!=4.21.5,!=4.21.4,!=4.21.3,!=4.21.2,!=4.21.1,!=3.20.1,!=3.20.0, installed: 4.24.0]
+│   │   ├── protobuf [required: >=3.19.5,<5.0.0.dev0,!=4.21.5,!=4.21.4,!=4.21.3,!=4.21.2,!=4.21.1,!=4.21.0,!=3.20.1,!=3.20.0, installed: 4.24.0]
+│   │   └── requests [required: >=2.18.0,<3.0.0.dev0, installed: 2.28.2]
+│   │       ├── certifi [required: >=2017.4.17, installed: 2023.7.22]
+│   │       ├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+│   │       ├── idna [required: >=2.5,<4, installed: 3.4]
+│   │       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.16]
+│   └── opencensus-context [required: >=0.1.3, installed: 0.1.3]
+├── psutil [required: >=5.6.3, installed: 5.9.5]
+└── requests [required: >=2.19.0, installed: 2.28.2]
+    ├── certifi [required: >=2017.4.17, installed: 2023.7.22]
+    ├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+    ├── idna [required: >=2.5,<4, installed: 3.4]
+    └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.16]
 - openpyxl==3.0.10
-  - et-xmlfile [required: Any, installed: 1.1.0]
+└── et-xmlfile [required: Any, installed: 1.1.0]
 - parameterized==0.8.1
 - pbr==5.10.0
 - pep8==1.7.1
-- pylint==2.17.4
-  - astroid [required: >=2.15.4,<=2.17.0-dev0, installed: 2.15.5]
-    - lazy-object-proxy [required: >=1.4.0, installed: 1.9.0]
-    - wrapt [required: >=1.14,<2, installed: 1.15.0]
-  - dill [required: >=0.3.6, installed: 0.3.6]
-  - isort [required: >=4.2.5,<6, installed: 5.11.5]
-  - mccabe [required: >=0.6,<0.8, installed: 0.7.0]
-  - platformdirs [required: >=2.2.0, installed: 3.5.1]
-  - tomlkit [required: >=0.10.1, installed: 0.11.8]
+- pylint==2.17.5
+├── astroid [required: >=2.15.6,<=2.17.0-dev0, installed: 2.15.6]
+│   ├── lazy-object-proxy [required: >=1.4.0, installed: 1.9.0]
+│   └── wrapt [required: >=1.14,<2, installed: 1.15.0]
+├── dill [required: >=0.3.6, installed: 0.3.7]
+├── isort [required: >=4.2.5,<6, installed: 5.11.5]
+├── mccabe [required: >=0.6,<0.8, installed: 0.7.0]
+├── platformdirs [required: >=2.2.0, installed: 3.10.0]
+└── tomlkit [required: >=0.10.1, installed: 0.12.1]
 - pytest-asyncio==0.19.0
-  - pytest [required: >=6.1.0, installed: 7.1.3]
-    - attrs [required: >=19.2.0, installed: 23.1.0]
-    - iniconfig [required: Any, installed: 2.0.0]
-    - packaging [required: Any, installed: 23.1]
-    - pluggy [required: >=0.12,<2.0, installed: 1.0.0]
-    - py [required: >=1.8.2, installed: 1.11.0]
-    - tomli [required: >=1.0.0, installed: 2.0.1]
+└── pytest [required: >=6.1.0, installed: 7.1.3]
+    ├── attrs [required: >=19.2.0, installed: 23.1.0]
+    ├── iniconfig [required: Any, installed: 2.0.0]
+    ├── packaging [required: Any, installed: 23.1]
+    ├── pluggy [required: >=0.12,<2.0, installed: 1.2.0]
+    ├── py [required: >=1.8.2, installed: 1.11.0]
+    └── tomli [required: >=1.0.0, installed: 2.0.1]
 - pytest-bdd==6.0.1
-  - glob2 [required: Any, installed: 0.7]
-  - Mako [required: Any, installed: 1.2.4]
-    - MarkupSafe [required: >=0.9.2, installed: 2.1.2]
-  - parse [required: Any, installed: 1.19.0]
-  - parse-type [required: Any, installed: 0.6.0]
-    - parse [required: >=1.18.0, installed: 1.19.0]
-    - six [required: >=1.11, installed: 1.16.0]
-  - py [required: Any, installed: 1.11.0]
-  - pytest [required: >=5.0, installed: 7.1.3]
-    - attrs [required: >=19.2.0, installed: 23.1.0]
-    - iniconfig [required: Any, installed: 2.0.0]
-    - packaging [required: Any, installed: 23.1]
-    - pluggy [required: >=0.12,<2.0, installed: 1.0.0]
-    - py [required: >=1.8.2, installed: 1.11.0]
-    - tomli [required: >=1.0.0, installed: 2.0.1]
+├── glob2 [required: Any, installed: 0.7]
+├── Mako [required: Any, installed: 1.2.4]
+│   └── MarkupSafe [required: >=0.9.2, installed: 2.1.3]
+├── parse [required: Any, installed: 1.19.1]
+├── parse-type [required: Any, installed: 0.6.2]
+│   ├── parse [required: >=1.18.0, installed: 1.19.1]
+│   └── six [required: >=1.15, installed: 1.16.0]
+├── py [required: Any, installed: 1.11.0]
+└── pytest [required: >=5.0, installed: 7.1.3]
+    ├── attrs [required: >=19.2.0, installed: 23.1.0]
+    ├── iniconfig [required: Any, installed: 2.0.0]
+    ├── packaging [required: Any, installed: 23.1]
+    ├── pluggy [required: >=0.12,<2.0, installed: 1.2.0]
+    ├── py [required: >=1.8.2, installed: 1.11.0]
+    └── tomli [required: >=1.0.0, installed: 2.0.1]
 - pytest-cov==3.0.0
-  - coverage [required: >=5.2.1, installed: 7.2.5]
-  - pytest [required: >=4.6, installed: 7.1.3]
-    - attrs [required: >=19.2.0, installed: 23.1.0]
-    - iniconfig [required: Any, installed: 2.0.0]
-    - packaging [required: Any, installed: 23.1]
-    - pluggy [required: >=0.12,<2.0, installed: 1.0.0]
-    - py [required: >=1.8.2, installed: 1.11.0]
-    - tomli [required: >=1.0.0, installed: 2.0.1]
+├── coverage [required: >=5.2.1, installed: 7.2.7]
+└── pytest [required: >=4.6, installed: 7.1.3]
+    ├── attrs [required: >=19.2.0, installed: 23.1.0]
+    ├── iniconfig [required: Any, installed: 2.0.0]
+    ├── packaging [required: Any, installed: 23.1]
+    ├── pluggy [required: >=0.12,<2.0, installed: 1.2.0]
+    ├── py [required: >=1.8.2, installed: 1.11.0]
+    └── tomli [required: >=1.0.0, installed: 2.0.1]
 - pytest-xdist==2.5.0
-  - execnet [required: >=1.1, installed: 1.9.0]
-  - pytest [required: >=6.2.0, installed: 7.1.3]
-    - attrs [required: >=19.2.0, installed: 23.1.0]
-    - iniconfig [required: Any, installed: 2.0.0]
-    - packaging [required: Any, installed: 23.1]
-    - pluggy [required: >=0.12,<2.0, installed: 1.0.0]
-    - py [required: >=1.8.2, installed: 1.11.0]
-    - tomli [required: >=1.0.0, installed: 2.0.1]
-  - pytest-forked [required: Any, installed: 1.4.0]
-    - py [required: Any, installed: 1.11.0]
-    - pytest [required: >=3.10, installed: 7.1.3]
-      - attrs [required: >=19.2.0, installed: 23.1.0]
-      - iniconfig [required: Any, installed: 2.0.0]
-      - packaging [required: Any, installed: 23.1]
-      - pluggy [required: >=0.12,<2.0, installed: 1.0.0]
-      - py [required: >=1.8.2, installed: 1.11.0]
-      - tomli [required: >=1.0.0, installed: 2.0.1]
+├── execnet [required: >=1.1, installed: 2.0.2]
+├── pytest [required: >=6.2.0, installed: 7.1.3]
+│   ├── attrs [required: >=19.2.0, installed: 23.1.0]
+│   ├── iniconfig [required: Any, installed: 2.0.0]
+│   ├── packaging [required: Any, installed: 23.1]
+│   ├── pluggy [required: >=0.12,<2.0, installed: 1.2.0]
+│   ├── py [required: >=1.8.2, installed: 1.11.0]
+│   └── tomli [required: >=1.0.0, installed: 2.0.1]
+└── pytest-forked [required: Any, installed: 1.4.0]
+    ├── py [required: Any, installed: 1.11.0]
+    └── pytest [required: >=3.10, installed: 7.1.3]
+        ├── attrs [required: >=19.2.0, installed: 23.1.0]
+        ├── iniconfig [required: Any, installed: 2.0.0]
+        ├── packaging [required: Any, installed: 23.1]
+        ├── pluggy [required: >=0.12,<2.0, installed: 1.2.0]
+        ├── py [required: >=1.8.2, installed: 1.11.0]
+        └── tomli [required: >=1.0.0, installed: 2.0.1]
 - python-dateutil==2.8.2
-  - six [required: >=1.5, installed: 1.16.0]
+└── six [required: >=1.5, installed: 1.16.0]
 - python-docx==0.8.11
-  - lxml [required: >=2.3.2, installed: 4.9.2]
+└── lxml [required: >=2.3.2, installed: 4.9.3]
 - python-jose==3.3.0
-  - ecdsa [required: !=0.15, installed: 0.18.0]
-    - six [required: >=1.9.0, installed: 1.16.0]
-  - pyasn1 [required: Any, installed: 0.5.0]
-  - rsa [required: Any, installed: 4.9]
-    - pyasn1 [required: >=0.1.3, installed: 0.5.0]
+├── ecdsa [required: !=0.15, installed: 0.18.0]
+│   └── six [required: >=1.9.0, installed: 1.16.0]
+├── pyasn1 [required: Any, installed: 0.5.0]
+└── rsa [required: Any, installed: 4.9]
+    └── pyasn1 [required: >=0.1.3, installed: 0.5.0]
 - python-multipart==0.0.6
 - rope==1.3.0
-  - pytoolconfig [required: >=1.1.2, installed: 1.2.5]
-    - packaging [required: >=22.0, installed: 23.1]
+└── pytoolconfig [required: >=1.1.2, installed: 1.2.5]
+    └── packaging [required: >=22.0, installed: 23.1]
 - schemathesis==3.17.5
-  - attrs [required: >=22.1.0,<23.0.0, installed: 23.1.0]
-  - backoff [required: >=2.1.2,<3.0.0, installed: 2.2.1]
-  - click [required: >=7.0,<9.0, installed: 8.1.3]
-  - colorama [required: >=0.4,<0.5, installed: 0.4.6]
-  - curlify [required: >=2.2.1,<3.0.0, installed: 2.2.1]
-    - requests [required: Any, installed: 2.28.2]
-      - certifi [required: >=2017.4.17, installed: 2023.5.7]
-      - charset-normalizer [required: >=2,<4, installed: 3.1.0]
-      - idna [required: >=2.5,<4, installed: 3.4]
-      - urllib3 [required: >=1.21.1,<1.27, installed: 1.26.15]
-  - httpx [required: >=0.22.0, installed: 0.23.3]
-    - certifi [required: Any, installed: 2023.5.7]
-    - httpcore [required: >=0.15.0,<0.17.0, installed: 0.16.3]
-      - anyio [required: >=3.0,<5.0, installed: 3.6.2]
-        - idna [required: >=2.8, installed: 3.4]
-        - sniffio [required: >=1.1, installed: 1.3.0]
-      - certifi [required: Any, installed: 2023.5.7]
-      - h11 [required: >=0.13,<0.15, installed: 0.14.0]
-      - sniffio [required: ==1.*, installed: 1.3.0]
-    - rfc3986 [required: >=1.3,<2, installed: 1.5.0]
-    - sniffio [required: Any, installed: 1.3.0]
-  - hypothesis [required: >=6.13.3,<7.0.0, installed: 6.54.6]
-    - attrs [required: >=19.2.0, installed: 23.1.0]
-    - sortedcontainers [required: >=2.1.0,<3.0.0, installed: 2.4.0]
-  - hypothesis-graphql [required: >=0.9.0,<0.10.0, installed: 0.9.2]
-    - attrs [required: >20.3.0,<=22.1.0, installed: 23.1.0]
-    - graphql-core [required: >=3.1.0,<3.3.0, installed: 3.2.3]
-    - hypothesis [required: >=5.8.0,<7.0, installed: 6.54.6]
-      - attrs [required: >=19.2.0, installed: 23.1.0]
-      - sortedcontainers [required: >=2.1.0,<3.0.0, installed: 2.4.0]
-  - hypothesis-jsonschema [required: >=0.22.0,<0.23.0, installed: 0.22.1]
-    - hypothesis [required: >=6.31.6, installed: 6.54.6]
-      - attrs [required: >=19.2.0, installed: 23.1.0]
-      - sortedcontainers [required: >=2.1.0,<3.0.0, installed: 2.4.0]
-    - jsonschema [required: >=4.0.0, installed: 4.17.3]
-      - attrs [required: >=17.4.0, installed: 23.1.0]
-      - pyrsistent [required: >=0.14.0,!=0.17.2,!=0.17.1,!=0.17.0, installed: 0.19.3]
-  - jsonschema [required: >=4.3.2,<5.0.0, installed: 4.17.3]
-    - attrs [required: >=17.4.0, installed: 23.1.0]
-    - pyrsistent [required: >=0.14.0,!=0.17.2,!=0.17.1,!=0.17.0, installed: 0.19.3]
-  - junit-xml [required: >=1.9,<2.0, installed: 1.9]
-    - six [required: Any, installed: 1.16.0]
-  - pytest [required: >4.6.4,<8, installed: 7.1.3]
-    - attrs [required: >=19.2.0, installed: 23.1.0]
-    - iniconfig [required: Any, installed: 2.0.0]
-    - packaging [required: Any, installed: 23.1]
-    - pluggy [required: >=0.12,<2.0, installed: 1.0.0]
-    - py [required: >=1.8.2, installed: 1.11.0]
-    - tomli [required: >=1.0.0, installed: 2.0.1]
-  - pytest-subtests [required: >=0.2.1,<0.8.0, installed: 0.7.0]
-    - pytest [required: >=7.0, installed: 7.1.3]
-      - attrs [required: >=19.2.0, installed: 23.1.0]
-      - iniconfig [required: Any, installed: 2.0.0]
-      - packaging [required: Any, installed: 23.1]
-      - pluggy [required: >=0.12,<2.0, installed: 1.0.0]
-      - py [required: >=1.8.2, installed: 1.11.0]
-      - tomli [required: >=1.0.0, installed: 2.0.1]
-  - PyYAML [required: >=5.1,<7.0, installed: 6.0]
-  - requests [required: >=2.22,<=2.28.1, installed: 2.28.2]
-    - certifi [required: >=2017.4.17, installed: 2023.5.7]
-    - charset-normalizer [required: >=2,<4, installed: 3.1.0]
-    - idna [required: >=2.5,<4, installed: 3.4]
-    - urllib3 [required: >=1.21.1,<1.27, installed: 1.26.15]
-  - starlette [required: >=0.13,<1, installed: 0.25.0]
-    - anyio [required: >=3.4.0,<5, installed: 3.6.2]
-      - idna [required: >=2.8, installed: 3.4]
-      - sniffio [required: >=1.1, installed: 1.3.0]
-  - tomli [required: >=2.0.1,<3.0.0, installed: 2.0.1]
-  - tomli-w [required: >=1.0.0,<2.0.0, installed: 1.0.0]
-  - typing-extensions [required: >=3.7,<5, installed: 4.5.0]
-  - werkzeug [required: >=0.16.0,<=2.2.2, installed: 2.2.2]
-    - MarkupSafe [required: >=2.1.1, installed: 2.1.2]
-  - yarl [required: >=1.5,<2.0, installed: 1.9.2]
-    - idna [required: >=2.0, installed: 3.4]
-    - multidict [required: >=4.0, installed: 6.0.4]
+├── attrs [required: >=22.1.0,<23.0.0, installed: 23.1.0]
+├── backoff [required: >=2.1.2,<3.0.0, installed: 2.2.1]
+├── click [required: >=7.0,<9.0, installed: 8.1.6]
+├── colorama [required: >=0.4,<0.5, installed: 0.4.6]
+├── curlify [required: >=2.2.1,<3.0.0, installed: 2.2.1]
+│   └── requests [required: Any, installed: 2.28.2]
+│       ├── certifi [required: >=2017.4.17, installed: 2023.7.22]
+│       ├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+│       ├── idna [required: >=2.5,<4, installed: 3.4]
+│       └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.16]
+├── httpx [required: >=0.22.0, installed: 0.23.3]
+│   ├── certifi [required: Any, installed: 2023.7.22]
+│   ├── httpcore [required: >=0.15.0,<0.17.0, installed: 0.16.3]
+│   │   ├── anyio [required: >=3.0,<5.0, installed: 3.7.1]
+│   │   │   ├── idna [required: >=2.8, installed: 3.4]
+│   │   │   └── sniffio [required: >=1.1, installed: 1.3.0]
+│   │   ├── certifi [required: Any, installed: 2023.7.22]
+│   │   ├── h11 [required: >=0.13,<0.15, installed: 0.14.0]
+│   │   └── sniffio [required: ==1.*, installed: 1.3.0]
+│   ├── rfc3986 [required: >=1.3,<2, installed: 1.5.0]
+│   └── sniffio [required: Any, installed: 1.3.0]
+├── hypothesis [required: >=6.13.3,<7.0.0, installed: 6.54.6]
+│   ├── attrs [required: >=19.2.0, installed: 23.1.0]
+│   └── sortedcontainers [required: >=2.1.0,<3.0.0, installed: 2.4.0]
+├── hypothesis-graphql [required: >=0.9.0,<0.10.0, installed: 0.9.2]
+│   ├── attrs [required: >20.3.0,<=22.1.0, installed: 23.1.0]
+│   ├── graphql-core [required: >=3.1.0,<3.3.0, installed: 3.2.3]
+│   └── hypothesis [required: >=5.8.0,<7.0, installed: 6.54.6]
+│       ├── attrs [required: >=19.2.0, installed: 23.1.0]
+│       └── sortedcontainers [required: >=2.1.0,<3.0.0, installed: 2.4.0]
+├── hypothesis-jsonschema [required: >=0.22.0,<0.23.0, installed: 0.22.1]
+│   ├── hypothesis [required: >=6.31.6, installed: 6.54.6]
+│   │   ├── attrs [required: >=19.2.0, installed: 23.1.0]
+│   │   └── sortedcontainers [required: >=2.1.0,<3.0.0, installed: 2.4.0]
+│   └── jsonschema [required: >=4.0.0, installed: 4.17.3]
+│       ├── attrs [required: >=17.4.0, installed: 23.1.0]
+│       └── pyrsistent [required: >=0.14.0,!=0.17.2,!=0.17.1,!=0.17.0, installed: 0.19.3]
+├── jsonschema [required: >=4.3.2,<5.0.0, installed: 4.17.3]
+│   ├── attrs [required: >=17.4.0, installed: 23.1.0]
+│   └── pyrsistent [required: >=0.14.0,!=0.17.2,!=0.17.1,!=0.17.0, installed: 0.19.3]
+├── junit-xml [required: >=1.9,<2.0, installed: 1.9]
+│   └── six [required: Any, installed: 1.16.0]
+├── pytest [required: >4.6.4,<8, installed: 7.1.3]
+│   ├── attrs [required: >=19.2.0, installed: 23.1.0]
+│   ├── iniconfig [required: Any, installed: 2.0.0]
+│   ├── packaging [required: Any, installed: 23.1]
+│   ├── pluggy [required: >=0.12,<2.0, installed: 1.2.0]
+│   ├── py [required: >=1.8.2, installed: 1.11.0]
+│   └── tomli [required: >=1.0.0, installed: 2.0.1]
+├── pytest-subtests [required: >=0.2.1,<0.8.0, installed: 0.7.0]
+│   └── pytest [required: >=7.0, installed: 7.1.3]
+│       ├── attrs [required: >=19.2.0, installed: 23.1.0]
+│       ├── iniconfig [required: Any, installed: 2.0.0]
+│       ├── packaging [required: Any, installed: 23.1]
+│       ├── pluggy [required: >=0.12,<2.0, installed: 1.2.0]
+│       ├── py [required: >=1.8.2, installed: 1.11.0]
+│       └── tomli [required: >=1.0.0, installed: 2.0.1]
+├── PyYAML [required: >=5.1,<7.0, installed: 6.0.1]
+├── requests [required: >=2.22,<=2.28.1, installed: 2.28.2]
+│   ├── certifi [required: >=2017.4.17, installed: 2023.7.22]
+│   ├── charset-normalizer [required: >=2,<4, installed: 3.2.0]
+│   ├── idna [required: >=2.5,<4, installed: 3.4]
+│   └── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.16]
+├── starlette [required: >=0.13,<1, installed: 0.25.0]
+│   └── anyio [required: >=3.4.0,<5, installed: 3.7.1]
+│       ├── idna [required: >=2.8, installed: 3.4]
+│       └── sniffio [required: >=1.1, installed: 1.3.0]
+├── tomli [required: >=2.0.1,<3.0.0, installed: 2.0.1]
+├── tomli-w [required: >=1.0.0,<2.0.0, installed: 1.0.0]
+├── typing-extensions [required: >=3.7,<5, installed: 4.7.1]
+├── werkzeug [required: >=0.16.0,<=2.2.2, installed: 2.2.2]
+│   └── MarkupSafe [required: >=2.1.1, installed: 2.1.3]
+└── yarl [required: >=1.5,<2.0, installed: 1.9.2]
+    ├── idna [required: >=2.0, installed: 3.4]
+    └── multidict [required: >=4.0, installed: 6.0.4]
 - starlette-context==0.3.4
-  - starlette [required: Any, installed: 0.25.0]
-    - anyio [required: >=3.4.0,<5, installed: 3.6.2]
-      - idna [required: >=2.8, installed: 3.4]
-      - sniffio [required: >=1.1, installed: 1.3.0]
+└── starlette [required: Any, installed: 0.25.0]
+    └── anyio [required: >=3.4.0,<5, installed: 3.7.1]
+        ├── idna [required: >=2.8, installed: 3.4]
+        └── sniffio [required: >=1.1, installed: 1.3.0]
 - uvicorn==0.17.6
-  - asgiref [required: >=3.4.0, installed: 3.6.0]
-  - click [required: >=7.0, installed: 8.1.3]
-  - h11 [required: >=0.8, installed: 0.14.0]
+├── asgiref [required: >=3.4.0, installed: 3.7.2]
+├── click [required: >=7.0, installed: 8.1.6]
+└── h11 [required: >=0.8, installed: 0.14.0]
 - weasyprint==57.2
-  - cffi [required: >=0.6, installed: 1.15.1]
-    - pycparser [required: Any, installed: 2.21]
-  - cssselect2 [required: >=0.1, installed: 0.7.0]
-    - tinycss2 [required: Any, installed: 1.2.1]
-      - webencodings [required: >=0.4, installed: 0.5.1]
-    - webencodings [required: Any, installed: 0.5.1]
-  - fonttools [required: >=4.0.0, installed: 4.39.4]
-  - html5lib [required: >=1.1, installed: 1.1]
-    - six [required: >=1.9, installed: 1.16.0]
-    - webencodings [required: Any, installed: 0.5.1]
-  - Pillow [required: >=9.1.0, installed: 9.3.0]
-  - pydyf [required: >=0.5.0, installed: 0.6.0]
-  - Pyphen [required: >=0.9.1, installed: 0.14.0]
-  - tinycss2 [required: >=1.0.0, installed: 1.2.1]
-    - webencodings [required: >=0.4, installed: 0.5.1]
+├── cffi [required: >=0.6, installed: 1.15.1]
+│   └── pycparser [required: Any, installed: 2.21]
+├── cssselect2 [required: >=0.1, installed: 0.7.0]
+│   ├── tinycss2 [required: Any, installed: 1.2.1]
+│   │   └── webencodings [required: >=0.4, installed: 0.5.1]
+│   └── webencodings [required: Any, installed: 0.5.1]
+├── fonttools [required: >=4.0.0, installed: 4.42.0]
+├── html5lib [required: >=1.1, installed: 1.1]
+│   ├── six [required: >=1.9, installed: 1.16.0]
+│   └── webencodings [required: Any, installed: 0.5.1]
+├── Pillow [required: >=9.1.0, installed: 9.3.0]
+├── pydyf [required: >=0.5.0, installed: 0.7.0]
+├── Pyphen [required: >=0.9.1, installed: 0.14.0]
+└── tinycss2 [required: >=1.0.0, installed: 1.2.1]
+    └── webencodings [required: >=0.4, installed: 0.5.1]
 - xsdata==22.9
 - yattag==1.14.0
 - zopfli==0.2.2
@@ -920,6 +920,33 @@ That's all there is to it!
 
 ---
 
+### License for 3rd party library asyncache
+
+MIT License
+
+Copyright (c) 2018 hephex
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+---
+
 ### License for 3rd party library attrs
 
 The MIT License (MIT)
@@ -1374,24 +1401,6 @@ THE SOFTWARE.
 
 ---
 
-### License for 3rd party library cached-property
-
-Copyright (c) 2015, Daniel Greenfeld
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-
-* Neither the name of cached-property nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
----
-
 ### License for 3rd party library cachetools
 
 The MIT License (MIT)
@@ -1811,47 +1820,6 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
 ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-1. This LICENSE AGREEMENT is between the Python Software Foundation ("PSF"), and
-   the Individual or Organization ("Licensee") accessing and otherwise using Python
-   2.7.12 software in source or binary form and its associated documentation.
-
-2. Subject to the terms and conditions of this License Agreement, PSF hereby
-   grants Licensee a nonexclusive, royalty-free, world-wide license to reproduce,
-   analyze, test, perform and/or display publicly, prepare derivative works,
-   distribute, and otherwise use Python 2.7.12 alone or in any derivative
-   version, provided, however, that PSF's License Agreement and PSF's notice of
-   copyright, i.e., "Copyright © 2001-2016 Python Software Foundation; All Rights
-   Reserved" are retained in Python 2.7.12 alone or in any derivative version
-   prepared by Licensee.
-
-3. In the event Licensee prepares a derivative work that is based on or
-   incorporates Python 2.7.12 or any part thereof, and wants to make the
-   derivative work available to others as provided herein, then Licensee hereby
-   agrees to include in any such work a brief summary of the changes made to Python
-   2.7.12.
-
-4. PSF is making Python 2.7.12 available to Licensee on an "AS IS" basis.
-   PSF MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED.  BY WAY OF
-   EXAMPLE, BUT NOT LIMITATION, PSF MAKES NO AND DISCLAIMS ANY REPRESENTATION OR
-   WARRANTY OF MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR PURPOSE OR THAT THE
-   USE OF PYTHON 2.7.12 WILL NOT INFRINGE ANY THIRD PARTY RIGHTS.
-
-5. PSF SHALL NOT BE LIABLE TO LICENSEE OR ANY OTHER USERS OF PYTHON 2.7.12
-   FOR ANY INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES OR LOSS AS A RESULT OF
-   MODIFYING, DISTRIBUTING, OR OTHERWISE USING PYTHON 2.7.12, OR ANY DERIVATIVE
-   THEREOF, EVEN IF ADVISED OF THE POSSIBILITY THEREOF.
-
-6. This License Agreement will automatically terminate upon a material breach of
-   its terms and conditions.
-
-7. Nothing in this License Agreement shall be deemed to create any relationship
-   of agency, partnership, or joint venture between PSF and Licensee.  This License
-   Agreement does not grant permission to use PSF trademarks or trade name in a
-   trademark sense to endorse or promote products or services of Licensee, or any
-   third party.
-
-8. By copying, installing or otherwise using Python 2.7.12, Licensee agrees
-   to be bound by the terms and conditions of this License Agreement.
 
                                  Apache License
                            Version 2.0, January 2004
@@ -2058,9 +2026,6 @@ This software is made available under the terms of *either* of the licenses
 found in LICENSE.APACHE or LICENSE.BSD. Contributions to cryptography are made
 under the terms of *both* these licenses.
 
-The code used in the OS random engine is derived from CPython, and is licensed
-under the terms of the PSF License Agreement.
-
 
 ---
 
@@ -2212,7 +2177,7 @@ THE SOFTWARE.
 ### License for 3rd party library dill
 
 Copyright (c) 2004-2016 California Institute of Technology.
-Copyright (c) 2016-2022 The Uncertainty Quantification Foundation.
+Copyright (c) 2016-2023 The Uncertainty Quantification Foundation.
 All rights reserved.
 
 This software is available subject to the conditions and terms laid
@@ -2221,14 +2186,14 @@ to the following conditions.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions
-are met::
+are met:
 
-    - Redistribution of source code must retain the above copyright
+    - Redistributions of source code must retain the above copyright
       notice, this list of conditions and the following disclaimer.
 
-    - Redistribution in binary form must reproduce the above copyright
+    - Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-      documentations and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
 
     - Neither the names of the copyright holders nor the names of any of
       the contributors may be used to endorse or promote products derived
@@ -5046,12 +5011,68 @@ DEALINGS IN THE SOFTWARE.
 
 ---
 
-### License for 3rd party library neo4j-driver
+### License for 3rd party library neo4j
 
+Python software and documentation are licensed under the
+Python Software Foundation License Version 2.
+
+Starting with Python 3.8.6, examples, recipes, and other code in
+the documentation are dual licensed under the PSF License Version 2
+and the Zero-Clause BSD license.
+
+
+PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2
+--------------------------------------------
+
+1. This LICENSE AGREEMENT is between the Python Software Foundation
+("PSF"), and the Individual or Organization ("Licensee") accessing and
+otherwise using this software ("Python") in source or binary form and
+its associated documentation.
+
+2. Subject to the terms and conditions of this License Agreement, PSF hereby
+grants Licensee a nonexclusive, royalty-free, world-wide license to reproduce,
+analyze, test, perform and/or display publicly, prepare derivative works,
+distribute, and otherwise use Python alone or in any derivative version,
+provided, however, that PSF's License Agreement and PSF's notice of copyright,
+i.e., "Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
+2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022 Python Software Foundation;
+All Rights Reserved" are retained in Python alone or in any derivative version
+prepared by Licensee.
+
+3. In the event Licensee prepares a derivative work that is based on
+or incorporates Python or any part thereof, and wants to make
+the derivative work available to others as provided herein, then
+Licensee hereby agrees to include in any such work a brief summary of
+the changes made to Python.
+
+4. PSF is making Python available to Licensee on an "AS IS"
+basis.  PSF MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR
+IMPLIED.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, PSF MAKES NO AND
+DISCLAIMS ANY REPRESENTATION OR WARRANTY OF MERCHANTABILITY OR FITNESS
+FOR ANY PARTICULAR PURPOSE OR THAT THE USE OF PYTHON WILL NOT
+INFRINGE ANY THIRD PARTY RIGHTS.
+
+5. PSF SHALL NOT BE LIABLE TO LICENSEE OR ANY OTHER USERS OF PYTHON
+FOR ANY INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES OR LOSS AS
+A RESULT OF MODIFYING, DISTRIBUTING, OR OTHERWISE USING PYTHON,
+OR ANY DERIVATIVE THEREOF, EVEN IF ADVISED OF THE POSSIBILITY THEREOF.
+
+6. This License Agreement will automatically terminate upon a material
+breach of its terms and conditions.
+
+7. Nothing in this License Agreement shall be deemed to create any
+relationship of agency, partnership, or joint venture between PSF and
+Licensee.  This License Agreement does not grant permission to use PSF
+trademarks or trade name in a trademark sense to endorse or promote
+products or services of Licensee, or any third party.
+
+8. By copying, installing or otherwise using Python, Licensee
+agrees to be bound by the terms and conditions of this License
+Agreement.
 
                                  Apache License
                            Version 2.0, January 2004
-                        http://www.apache.org/licenses/
+                        https://www.apache.org/licenses/
 
    TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
 
@@ -5243,13 +5264,19 @@ DEALINGS IN THE SOFTWARE.
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+       https://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+Unless stated otherwise, this software is distributed under the terms of the Apache License 2.0.
+See the LICENSE.APACHE2.txt file for the full license text.
+
+Parts of this software is distributed under the terms of the Python Software Foundation License Version 2.
+See the LICENSE.PYTHON.txt file for the full license text.
+The pieces of code covered by the Python Software Foundation License Version 2 are marked as such.
 
 
 ---
@@ -6246,33 +6273,27 @@ SOFTWARE.
 
 ### License for 3rd party library parse-type
 
-Copyright (c) 2013-2019, jenisys
-All rights reserved.
+MIT License
 
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
+Copyright (c) 2013-2023 jenisys
 
-  Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-  Redistributions in binary form must reproduce the above copyright notice, this
-  list of conditions and the following disclaimer in the documentation and/or
-  other materials provided with the distribution.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-  Neither the name of the {organization} nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 
 ---
@@ -6863,6 +6884,37 @@ DAMAGE.
       incurred by, or claims asserted against, such Contributor by reason
       of your accepting any such warranty or additional liability.
 
+
+
+---
+
+### License for 3rd party library pep8
+
+Copyright © 2006-2009 Johann C. Rocholl <johann@rocholl.net>
+Copyright © 2009-2014 Florent Xicluna <florent.xicluna@gmail.com>
+Copyright © 2014-2016 Ian Lee <IanLee1521@gmail.com>
+
+Licensed under the terms of the Expat License
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation files
+(the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 
 ---
@@ -10899,8 +10951,6 @@ SOFTWARE.
 
 ### License for 3rd party library setuptools
 
-Copyright Jason R. Coombs
-
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to
 deal in the Software without restriction, including without limitation the
@@ -11493,12 +11543,12 @@ A. HISTORY OF THE SOFTWARE
 ==========================
 
 Python was created in the early 1990s by Guido van Rossum at Stichting
-Mathematisch Centrum (CWI, see http://www.cwi.nl) in the Netherlands
+Mathematisch Centrum (CWI, see https://www.cwi.nl) in the Netherlands
 as a successor of a language called ABC.  Guido remains Python's
 principal author, although it includes many contributions from others.
 
 In 1995, Guido continued his work on Python at the Corporation for
-National Research Initiatives (CNRI, see http://www.cnri.reston.va.us)
+National Research Initiatives (CNRI, see https://www.cnri.reston.va.us)
 in Reston, Virginia where he released several versions of the
 software.
 
@@ -11510,7 +11560,7 @@ https://www.python.org/psf/) was formed, a non-profit organization
 created specifically to own Python-related Intellectual Property.
 Zope Corporation was a sponsoring member of the PSF.
 
-All Python releases are Open Source (see http://www.opensource.org for
+All Python releases are Open Source (see https://opensource.org for
 the Open Source Definition).  Historically, most, but not all, Python
 releases have also been GPL-compatible; the table below summarizes
 the various releases.
@@ -11550,6 +11600,17 @@ direction to make these releases possible.
 B. TERMS AND CONDITIONS FOR ACCESSING OR OTHERWISE USING PYTHON
 ===============================================================
 
+Python software and documentation are licensed under the
+Python Software Foundation License Version 2.
+
+Starting with Python 3.8.6, examples, recipes, and other code in
+the documentation are dual licensed under the PSF License Version 2
+and the Zero-Clause BSD license.
+
+Some software incorporated into Python is under different licenses.
+The licenses are listed with code falling under that license.
+
+
 PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2
 --------------------------------------------
 
@@ -11564,7 +11625,7 @@ analyze, test, perform and/or display publicly, prepare derivative works,
 distribute, and otherwise use Python alone or in any derivative version,
 provided, however, that PSF's License Agreement and PSF's notice of copyright,
 i.e., "Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022 Python Software Foundation;
+2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023 Python Software Foundation;
 All Rights Reserved" are retained in Python alone or in any derivative version
 prepared by Licensee.
 
@@ -11744,6 +11805,20 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+ZERO-CLAUSE BSD LICENSE FOR CODE IN THE PYTHON DOCUMENTATION
+----------------------------------------------------------------------
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+
 
 ---
 
@@ -11837,6 +11912,43 @@ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
 SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+---
+
+### License for 3rd party library webencodings
+
+Copyright (c) 2012 by Simon Sapin.
+
+Some rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+
+    * Redistributions in binary form must reproduce the above
+      copyright notice, this list of conditions and the following
+      disclaimer in the documentation and/or other materials provided
+      with the distribution.
+
+    * The names of the contributors may not be used to endorse or
+      promote products derived from this software without specific
+      prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 

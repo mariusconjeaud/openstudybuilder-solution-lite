@@ -12,7 +12,6 @@ Tests for endpoint-templates endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -37,7 +36,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-endpoint_pre_instances: List[EndpointPreInstance]
+endpoint_pre_instances: list[EndpointPreInstance]
 endpoint_template: EndpointTemplate
 dictionary_term_indication: models.DictionaryTerm
 ct_term_category: models.CTTerm
@@ -279,7 +278,7 @@ def test_get_endpointz(api_client):
         assert res[key] is not None
 
     assert res["uid"] == endpoint_pre_instances[0].uid
-    assert res["sequence_id"] == "ET1P1"
+    assert res["sequence_id"] == "E1P1"
     assert res["name"] == f"Default name with [{text_value_1.name_sentence_case}]"
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value_1.name_sentence_case
@@ -400,7 +399,7 @@ def test_get_versions_of_endpoint_pre_instance(api_client):
 
     assert len(res) == 2
     assert res[0]["uid"] == endpoint_pre_instances[1].uid
-    assert res[0]["sequence_id"] == "ET1P2"
+    assert res[0]["sequence_id"] == "E1P2"
     assert res[0]["template_uid"] == endpoint_template.uid
     assert res[0]["template_name"] == endpoint_template.name
     assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
@@ -424,7 +423,7 @@ def test_get_versions_of_endpoint_pre_instance(api_client):
     assert res[0]["status"] == "Final"
     assert res[0]["possible_actions"] == ["inactivate", "new_version"]
     assert res[1]["uid"] == endpoint_pre_instances[1].uid
-    assert res[1]["sequence_id"] == "ET1P2"
+    assert res[1]["sequence_id"] == "E1P2"
     assert res[1]["template_uid"] == endpoint_template.uid
     assert res[1]["template_name"] == endpoint_template.name
     assert res[1]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
@@ -667,7 +666,7 @@ def test_approve_endpoint_pre_instance(api_client):
 
     assert response.status_code == 201
     assert res["uid"] == endpoint_pre_instances[4].uid
-    assert res["sequence_id"] == "ET1P5"
+    assert res["sequence_id"] == "E1P5"
     assert res["template_uid"] == endpoint_template.uid
     assert res["template_name"] == endpoint_template.name
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
@@ -694,7 +693,7 @@ def test_inactivate_endpoint_pre_instance(api_client):
 
     assert response.status_code == 200
     assert res["uid"] == endpoint_pre_instances[4].uid
-    assert res["sequence_id"] == "ET1P5"
+    assert res["sequence_id"] == "E1P5"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res["indications"][0]["dictionary_id"]
@@ -719,7 +718,7 @@ def test_reactivate_endpoint_pre_instance(api_client):
 
     assert response.status_code == 200
     assert res["uid"] == endpoint_pre_instances[4].uid
-    assert res["sequence_id"] == "ET1P5"
+    assert res["sequence_id"] == "E1P5"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res["indications"][0]["dictionary_id"]
@@ -800,3 +799,142 @@ def test_endpoint_pre_instance_audit_trail(api_client):
     ]
     actual_uids = [item["uid"] for item in res["items"]]
     assert actual_uids == expected_uids
+
+
+def test_create_pre_instance_endpoint_template(api_client):
+    data = {
+        "library_name": "Sponsor",
+        "parameter_terms": [
+            {
+                "position": 1,
+                "conjunction": "",
+                "terms": [
+                    {
+                        "index": 1,
+                        "name": text_value_2.name_sentence_case,
+                        "uid": text_value_2.uid,
+                        "type": "TextValue",
+                    }
+                ],
+            }
+        ],
+        "indication_uids": [dictionary_term_indication.term_uid],
+        "category_uids": [ct_term_category.term_uid],
+        "sub_category_uids": [ct_term_subcategory.term_uid],
+    }
+    response = api_client.post(
+        f"endpoint-templates/{endpoint_template.uid}/pre-instances", json=data
+    )
+    res = response.json()
+    log.info("Created Endpoint Pre-Instance: %s", res)
+
+    assert response.status_code == 201
+    assert "PreInstance" in res["uid"]
+    assert res["sequence_id"]
+    assert res["template_uid"] == endpoint_template.uid
+    assert res["name"] == f"Default name with [{text_value_2.name_sentence_case}]"
+    assert (
+        res["parameter_terms"][0]["position"] == data["parameter_terms"][0]["position"]
+    )
+    assert (
+        res["parameter_terms"][0]["conjunction"]
+        == data["parameter_terms"][0]["conjunction"]
+    )
+    assert res["parameter_terms"][0]["terms"] == data["parameter_terms"][0]["terms"]
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert (
+        res["indications"][0]["dictionary_id"]
+        == dictionary_term_indication.dictionary_id
+    )
+    assert res["indications"][0]["name"] == dictionary_term_indication.name
+    assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
+    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
+    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert res["sub_categories"][0]["term_uid"] == ct_term_subcategory.term_uid
+    assert (
+        res["sub_categories"][0]["catalogue_name"] == ct_term_subcategory.catalogue_name
+    )
+    assert res["sub_categories"][0]["codelist_uid"] == ct_term_subcategory.codelist_uid
+    assert res["version"] == "0.1"
+    assert res["status"] == "Draft"
+
+
+def test_endpoint_pre_instance_sequence_id_generation(api_client):
+    template = TestUtils.create_endpoint_template(
+        name="Default [TextValue]",
+        guidance_text="Default guidance text",
+        study_uid=None,
+        library_name="Sponsor",
+        default_parameter_terms=[
+            MultiTemplateParameterTerm(
+                position=1,
+                conjunction="",
+                terms=[
+                    IndexedTemplateParameterTerm(
+                        index=1,
+                        name=text_value_1.name,
+                        uid=text_value_1.uid,
+                        type="TextValue",
+                    )
+                ],
+            )
+        ],
+        indication_uids=[dictionary_term_indication.term_uid],
+        category_uids=[ct_term_category.term_uid],
+        sub_category_uids=[ct_term_subcategory.term_uid],
+    )
+    data = {
+        "library_name": "Sponsor",
+        "parameter_terms": [
+            {
+                "position": 1,
+                "conjunction": "",
+                "terms": [
+                    {
+                        "index": 1,
+                        "name": text_value_1.name_sentence_case,
+                        "uid": text_value_1.uid,
+                        "type": "TextValue",
+                    }
+                ],
+            }
+        ],
+        "indication_uids": [dictionary_term_indication.term_uid],
+        "category_uids": [ct_term_category.term_uid],
+        "sub_category_uids": [ct_term_subcategory.term_uid],
+    }
+    response = api_client.post(
+        f"endpoint-templates/{template.uid}/pre-instances", json=data
+    )
+    res = response.json()
+    log.info("Created Endpoint Pre-Instance: %s", res)
+
+    assert response.status_code == 201
+    assert "PreInstance" in res["uid"]
+    assert res["sequence_id"] == "E2P1"
+    assert res["template_uid"] == template.uid
+    assert res["name"] == f"Default [{text_value_1.name_sentence_case}]"
+    assert (
+        res["parameter_terms"][0]["position"] == data["parameter_terms"][0]["position"]
+    )
+    assert (
+        res["parameter_terms"][0]["conjunction"]
+        == data["parameter_terms"][0]["conjunction"]
+    )
+    assert res["parameter_terms"][0]["terms"] == data["parameter_terms"][0]["terms"]
+    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
+    assert (
+        res["indications"][0]["dictionary_id"]
+        == dictionary_term_indication.dictionary_id
+    )
+    assert res["indications"][0]["name"] == dictionary_term_indication.name
+    assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
+    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
+    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
+    assert res["sub_categories"][0]["term_uid"] == ct_term_subcategory.term_uid
+    assert (
+        res["sub_categories"][0]["catalogue_name"] == ct_term_subcategory.catalogue_name
+    )
+    assert res["sub_categories"][0]["codelist_uid"] == ct_term_subcategory.codelist_uid
+    assert res["version"] == "0.1"
+    assert res["status"] == "Draft"

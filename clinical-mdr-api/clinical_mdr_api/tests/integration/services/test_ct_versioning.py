@@ -30,8 +30,8 @@ def test_data(request: FixtureRequest):
     log.debug("%s() fixture: setup complete", request.fixturename)
     yield db
 
-    log.debug("%s() fixture: teardown: deleting database", request.fixturename)
-    db.cypher_query("CREATE OR REPLACE DATABASE $db", {"db": db_name})
+    # log.debug("%s() fixture: teardown: deleting database", request.fixturename)
+    # db.cypher_query("CREATE OR REPLACE DATABASE $db", {"db": db_name})
 
 
 def test_version_sequence(test_data):

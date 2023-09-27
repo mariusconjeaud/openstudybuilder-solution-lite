@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Optional, Sequence, Tuple
+from typing import Callable, Self, Sequence
 
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
     CTTermAttributesAR,
@@ -20,22 +20,22 @@ class EndpointPreInstanceAR(PreInstanceAR):
     Implementation of EndpointPreInstanceAR. Solely based on Parametrized Template.
     """
 
-    _indications: Optional[Sequence[DictionaryTermAR]] = None
+    _indications: Sequence[DictionaryTermAR] | None = None
 
-    _categories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None
+    _categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
 
-    _subcategories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None
+    _subcategories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None
 
     @property
     def indications(self) -> Sequence[DictionaryTermAR]:
         return self._indications
 
     @property
-    def categories(self) -> Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def categories(self) -> Sequence[tuple[CTTermNameAR, CTTermAttributesAR]]:
         return self._categories
 
     @property
-    def sub_categories(self) -> Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]:
+    def sub_categories(self) -> Sequence[tuple[CTTermNameAR, CTTermAttributesAR]]:
         return self._subcategories
 
     @classmethod
@@ -47,12 +47,10 @@ class EndpointPreInstanceAR(PreInstanceAR):
         item_metadata: LibraryItemMetadataVO,
         sequence_id: str,
         study_count: int = 0,
-        indications: Optional[Sequence[DictionaryTermAR]] = None,
-        categories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None,
-        sub_categories: Optional[
-            Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]
-        ] = None,
-    ) -> "EndpointPreInstanceAR":
+        indications: Sequence[DictionaryTermAR] | None = None,
+        categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        sub_categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+    ) -> Self:
         ar = cls(
             _uid=uid,
             _sequence_id=sequence_id,
@@ -73,25 +71,21 @@ class EndpointPreInstanceAR(PreInstanceAR):
         author: str,
         library: LibraryVO,
         template: ParametrizedTemplateVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        generate_seq_id_callback: Callable[[str, str, str], Optional[str]] = (
-            lambda x, y: None
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        next_available_sequence_id_callback: Callable[[str], str | None] = (
+            lambda _: None
         ),
-        indications: Optional[Sequence[DictionaryTermAR]] = None,
-        categories: Optional[Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]] = None,
-        sub_categories: Optional[
-            Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]]
-        ] = None,
-    ) -> "EndpointPreInstanceAR":
+        indications: Sequence[DictionaryTermAR] | None = None,
+        categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+        sub_categories: Sequence[tuple[CTTermNameAR, CTTermAttributesAR]] | None = None,
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
         generated_uid = generate_uid_callback()
 
         ar = cls(
             _uid=generated_uid,
-            _sequence_id=generate_seq_id_callback(
-                generated_uid, template.template_sequence_id, "P"
-            ),
+            _sequence_id=next_available_sequence_id_callback(template.template_uid),
             _library=library,
             _template=template,
             _item_metadata=item_metadata,

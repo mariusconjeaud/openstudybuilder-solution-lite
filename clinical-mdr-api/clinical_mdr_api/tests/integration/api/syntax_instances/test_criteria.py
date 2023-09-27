@@ -12,7 +12,6 @@ Tests for criteria endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -41,7 +40,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-criteria: List[Criteria]
+criteria: list[Criteria]
 criteria_template: CriteriaTemplate
 ct_term_inclusion: models.CTTerm
 dictionary_term_indication: models.DictionaryTerm
@@ -269,7 +268,8 @@ def test_get_criteria(api_client):
     assert res["uid"] == criteria[0].uid
     assert res["name"] == f"Default name with [{text_value_1.name_sentence_case}]"
     assert res["criteria_template"]["uid"] == criteria_template.uid
-    assert res["criteria_template"]["sequence_id"] == "CIT1"
+    assert res["criteria_template"]["guidance_text"] == criteria_template.guidance_text
+    assert res["criteria_template"]["sequence_id"] == "CI1"
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value_1.uid
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value_1.name_sentence_case
@@ -518,7 +518,8 @@ def test_create_criteria(api_client):
     assert res["uid"]
     assert res["name"] == f"Default name with [{text_value.name_sentence_case}]"
     assert res["criteria_template"]["uid"] == criteria_template.uid
-    assert res["criteria_template"]["sequence_id"] == "CIT1"
+    assert res["criteria_template"]["guidance_text"] == criteria_template.guidance_text
+    assert res["criteria_template"]["sequence_id"] == "CI1"
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value.uid
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value.name_sentence_case
@@ -557,7 +558,8 @@ def test_update_criteria(api_client):
     assert res["uid"]
     assert res["name"] == f"Default name with [{text_value_2.name_sentence_case}]"
     assert res["criteria_template"]["uid"] == criteria_template.uid
-    assert res["criteria_template"]["sequence_id"] == "CIT1"
+    assert res["criteria_template"]["guidance_text"] == criteria_template.guidance_text
+    assert res["criteria_template"]["sequence_id"] == "CI1"
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value_2.uid
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value_2.name_sentence_case
@@ -635,7 +637,8 @@ def test_preview_criteria(api_client):
     assert res["uid"]
     assert res["name"] == f"Default name with [{text_value.name_sentence_case}]"
     assert res["criteria_template"]["uid"] == criteria_template.uid
-    assert res["criteria_template"]["sequence_id"] == "CIT1"
+    assert res["criteria_template"]["guidance_text"] == criteria_template.guidance_text
+    assert res["criteria_template"]["sequence_id"] == "CI1"
     assert res["parameter_terms"][0]["terms"][0]["uid"] == text_value.uid
     assert (
         res["parameter_terms"][0]["terms"][0]["name"] == text_value.name_sentence_case
@@ -808,7 +811,7 @@ def test_cannot_add_wrong_parameters(
     res = response.json()
     log.info("Didn't change Criteria parameters: %s", res)
 
-    assert response.status_code == 500
+    assert response.status_code == 400
     assert (
         res["message"]
         == "One or more of the specified template parameters can not be found."

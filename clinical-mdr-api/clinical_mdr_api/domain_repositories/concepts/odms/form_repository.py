@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -45,7 +43,7 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> OdmFormAR:
@@ -56,8 +54,8 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
                 name=value.name,
                 sdtm_version=value.sdtm_version,
                 repeating=value.repeating,
-                scope_uid=root.has_scope.get_or_none().uid
-                if root.has_scope.get_or_none()
+                scope_uid=scope.uid
+                if (scope := root.has_scope.get_or_none())
                 else None,
                 description_uids=[
                     description.uid for description in root.has_description.all()
@@ -132,7 +130,7 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
         return odm_form_ar
 
     def specific_alias_clause(
-        self, only_specific_status: Optional[List[str]] = None
+        self, only_specific_status: list[str] | None = None
     ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]
@@ -203,9 +201,7 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
 
         root = OdmFormRoot.nodes.get_or_none(uid=ar.uid)
 
-        scope_uid = (
-            root.has_scope.get_or_none().uid if root.has_scope.get_or_none() else None
-        )
+        scope_uid = scope.uid if (scope := root.has_scope.get_or_none()) else None
         description_uids = {
             description.uid for description in root.has_description.all()
         }

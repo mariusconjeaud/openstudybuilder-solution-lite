@@ -24,11 +24,11 @@
         data-cy="add-sponsor-codelist"
         v-if="!readOnly"
         fab
-        dark
         small
         color="primary"
         @click.stop="showCreationForm = true"
         :title="$t('CodelistCreationForm.title')"
+        :disabled="!checkPermission($roles.LIBRARY_WRITE)"
         >
         <v-icon dark>
           mdi-plus
@@ -40,17 +40,18 @@
         v-model="selectedTerms"
         :label="$t('CodelistTable.search_with_terms')"
         :items="terms"
-        item-text="name.sponsor_preferred_name"
+        item-text="sponsor_preferred_name"
         item-value="term_uid"
         dense
         class="mt-5 max-width-300"
         clearable
         return-object
         :search-input.sync="search"
-        multiple>
+        multiple
+        :loading="loading">
         <template v-slot:selection="{index}">
           <div v-if="index === 0">
-            <span class="items-font-size">{{ selectedTerms[0].name.sponsor_preferred_name.substring(0, 12) }}</span>
+            <span class="items-font-size">{{ selectedTerms[0].sponsor_preferred_name.substring(0, 12) }}</span>
           </div>
           <span
             v-if="index === 1"
@@ -128,8 +129,10 @@ import HistoryTable from '@/components/tools/HistoryTable'
 import NNTable from '@/components/tools/NNTable'
 import StatusChip from '@/components/tools/StatusChip'
 import filteringParameters from '@/utils/filteringParameters'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   props: {
     catalogue: {
       type: String,
@@ -140,6 +143,14 @@ export default {
       required: false
     },
     readOnly: {
+      type: Boolean,
+      default: false
+    },
+    terms: {
+      type: Array,
+      default: () => []
+    },
+    loading: {
       type: Boolean,
       default: false
     },
@@ -182,14 +193,15 @@ export default {
       actions: [
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
           condition: (item) => !this.readOnly,
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.openCodelistDetail
         },
         {
           label: this.$t('CodelistTable.show_terms'),
-          icon: 'mdi-dots-horizontal-circle',
+          icon: 'mdi-dots-horizontal-circle-outline',
           click: this.openCodelistTerms
         },
         {
@@ -229,7 +241,6 @@ export default {
       selectedCodelist: null,
       total: 0,
       filters: '',
-      terms: [],
       selectedTerms: [],
       search: '',
       operators: ['or', 'and'],
@@ -238,7 +249,7 @@ export default {
   },
   methods: {
     getPackageObject () {
-      return { package: this.package }
+      return { catalogue_name: this.catalogue, package: this.package }
     },
     fetchCodelists (filters, sort, filtersUpdated) {
       if (!filters && this.filters) {
@@ -262,18 +273,6 @@ export default {
       controlledTerminology.getCodelists(params).then(resp => {
         this.codelists = resp.data.items
         this.total = resp.data.total
-      })
-    },
-    fetchTerms  () {
-      const params = {
-        filters: {
-          'name.sponsor_preferred_name':
-          { v: [this.search ? this.search : ''], op: 'co' }
-        },
-        page_size: 20
-      }
-      controlledTerminology.getCodelistTerms(params).then(resp => {
-        this.terms = [...resp.data.items, ...this.selectedTerms]
       })
     },
     goToCodelist (codelist) {
@@ -317,9 +316,6 @@ export default {
         this.fetchCodelists()
       },
       deep: true
-    },
-    search () {
-      this.fetchTerms()
     },
     selectedTerms () {
       this.fetchCodelists()

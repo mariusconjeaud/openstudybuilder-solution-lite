@@ -152,45 +152,13 @@
         }
     },
     {
-        "name": "Test cannot create a new ODM Condition with existing name",
+        "name": "Test cannot create a new ODM Condition with existing name and oid",
         "request": {
             "headers": {},
             "method": "POST",
             "request": {
                 "library_name": "Sponsor",
                 "name": "name1",
-                "oid": "oid2",
-                "formal_expressions": [],
-                "descriptions": [
-                    "odm_description3"
-                ],
-                "alias_uids": []
-            },
-            "url": "concepts/odms/conditions"
-        },
-        "response": {
-            "code": 400,
-            "headers": {
-                "content-length": "459",
-                "content-type": "application/json"
-            },
-            "result": {
-                "message": "ODM Condition with name (name1) already exists.",
-                "time": "2022-03-07T12: 14: 18.116363",
-                "path": "http://testserver/concepts/odms/conditions",
-                "method": "POST",
-                "type": "BusinessLogicException"
-            }
-        }
-    },
-    {
-        "name": "Test cannot create a new ODM Condition with existing oid",
-        "request": {
-            "headers": {},
-            "method": "POST",
-            "request": {
-                "library_name": "Sponsor",
-                "name": "name2",
                 "oid": "oid1",
                 "formal_expressions": [],
                 "descriptions": [
@@ -207,7 +175,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Condition with OID (oid1) already exists.",
+                "message": "ODM Condition with ['name: name1', 'OID: oid1'] already exists.",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/conditions",
                 "method": "POST",
@@ -239,7 +207,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Condition tried to connect to non existing ODM Formal Expression identified by uid (wrong_uid).",
+                "message": "ODM Condition tried to connect to non existing concepts [('Concept Name: ODM Formal Expression', \"uids: {'wrong_uid'}\")].",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/conditions",
                 "method": "POST",
@@ -271,7 +239,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Condition tried to connect to non existing ODM Description identified by uid (wrong_uid).",
+                "message": "ODM Condition tried to connect to non existing concepts [('Concept Name: ODM Description', \"uids: {'wrong_uid'}\")].",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/conditions",
                 "method": "POST",
@@ -305,7 +273,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Condition tried to connect to non existing ODM Alias identified by uid (wrong_uid).",
+                "message": "ODM Condition tried to connect to non existing concepts [('Concept Name: ODM Alias', \"uids: {'wrong_uid'}\")].",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/conditions",
                 "method": "POST",

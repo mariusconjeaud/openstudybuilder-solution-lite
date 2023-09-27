@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from fastapi import UploadFile
 
 from clinical_mdr_api import exceptions
@@ -44,9 +42,9 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
     ct_codelist_service: CTCodelistService
     ct_term_service: CTTermService
 
-    db_ct_codelist_attributes: List[CTCodelistAttributes]
+    db_ct_codelist_attributes: list[CTCodelistAttributes]
 
-    def __init__(self, xml_file: UploadFile, mapper_file: Optional[UploadFile]):
+    def __init__(self, xml_file: UploadFile, mapper_file: UploadFile | None):
         self.ct_term_name_service = CTTermNameService()
         self.ct_codelist_attributes_service = CTCodelistAttributesService()
         self.ct_codelist_name_service = CTCodelistNameService()

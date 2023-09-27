@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import Field
 
@@ -25,7 +24,7 @@ class DataModelIG(BaseModel):
         title="name_sentence_case",
         description="",
     )
-    implemented_data_model: Optional[SimpleDataModel] = Field(
+    implemented_data_model: SimpleDataModel | None = Field(
         None, title="implemented_data_model", description="", nullable=True
     )
     version_number: str = Field(

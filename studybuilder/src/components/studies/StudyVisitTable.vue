@@ -105,17 +105,18 @@
         :title="$t('GroupStudyVisits.title')"
         v-show="!loading && showSelectBoxes"
         @click="groupSelectedVisits(selected)"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon>mdi-arrow-expand-horizontal</v-icon>
       </v-btn>
       <v-btn
         fab
-        dark
         small
         color="primary"
         @click.stop="openForm"
         v-show="!loading"
         :title="$t('NNTableTooltips.add_content')"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         data-cy="add-visit"
         >
         <v-icon dark>
@@ -131,9 +132,10 @@
         data-cy="edit-study-visits"
         class="ml-2"
         v-if="!editMode && !loading"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon dark>
-          mdi-pencil
+          mdi-pencil-outline
         </v-icon>
       </v-btn>
       <v-progress-circular
@@ -326,7 +328,7 @@
         color="success"
         @click="saveVisit(item)"
         >
-        <v-icon>mdi-content-save</v-icon>
+        <v-icon>mdi-content-save-outline</v-icon>
       </v-btn>
       <v-btn
         v-if="itemsDisabled && !item.disabled"
@@ -355,6 +357,20 @@
       @close="closeForm"
       @refresh="fetchStudyVisits"
       class="fullscreen-dialog"
+      />
+  </v-dialog>
+  <v-dialog
+    v-model="showVisitHistory"
+    @keydown.esc="closeVisitHistory"
+    persistent
+    :max-width="globalHistoryDialogMaxWidth"
+    :fullscreen="globalHistoryDialogFullscreen"
+    >
+    <history-table
+      :title="studyVisitHistoryTitle"
+      @close="closeVisitHistory"
+      :headers="headers"
+      :items="visitHistoryItems"
       />
   </v-dialog>
   <v-dialog
@@ -392,8 +408,11 @@ import StudyVisitsDuplicateForm from './StudyVisitsDuplicateForm'
 import unitConstants from '@/constants/units'
 import studyEpochs from '@/api/studyEpochs'
 import dataFormating from '@/utils/dataFormating'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
+import HistoryTable from '@/components/tools/HistoryTable'
 
 export default {
+  mixins: [accessGuard],
   components: {
     ConfirmDialog,
     CollapsibleVisitGroupForm,
@@ -402,6 +421,7 @@ export default {
     StudyVisitForm,
     HorizontalBarChart,
     BubbleChart,
+    HistoryTable,
     StudyVisitsDuplicateForm
   },
   computed: {
@@ -444,23 +464,26 @@ export default {
       actions: [
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'edit') && !this.editMode,
-          click: this.editVisit
+          click: this.editVisit,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
           condition: (item) => item.possible_actions.find(action => action === 'delete') && !this.editMode,
-          click: this.deleteVisit
+          click: this.deleteVisit,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('StudyVisitTable.duplicate'),
           icon: 'mdi-plus-box-multiple-outline',
           iconColor: 'primary',
-          click: this.openDuplicateForm
+          click: this.openDuplicateForm,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.history'),
@@ -484,8 +507,8 @@ export default {
         { text: this.$t('StudyVisitForm.unique_visit_number'), value: 'unique_visit_number' },
         { text: this.$t('StudyVisitForm.visit_name'), value: 'visit_name' },
         { text: this.$t('StudyVisitForm.visit_short_name'), value: 'visit_short_name' },
-        { text: this.$t('StudyVisitForm.study_day_label'), value: 'study_day_label' },
-        { text: this.$t('StudyVisitForm.study_week_label'), value: 'study_week_label' },
+        { text: this.$t('StudyVisitForm.study_duration_days'), value: 'study_duration_days_label' },
+        { text: this.$t('StudyVisitForm.study_duration_weeks'), value: 'study_duration_weeks_label' },
         { text: this.$t('StudyVisitForm.visit_window'), value: 'visit_window' },
         { text: this.$t('StudyVisitForm.collapsible_visit'), value: 'consecutive_visit_group' },
         { text: this.$t('StudyVisitForm.show_wisit'), value: 'show_visit' },
@@ -493,10 +516,10 @@ export default {
         { text: this.$t('StudyVisitForm.epoch_allocation'), value: 'epoch_allocation_name' },
         { text: this.$t('StudyVisitForm.visit_start_rule'), value: 'start_rule' },
         { text: this.$t('StudyVisitForm.visit_stop_rule'), value: 'end_rule' },
+        { text: this.$t('StudyVisitForm.study_day_label'), value: 'study_day_label' },
+        { text: this.$t('StudyVisitForm.study_week_label'), value: 'study_week_label' },
         { text: this.$t('_global.modified'), value: 'start_date' },
-        { text: this.$t('StudyVisitForm.modified_user'), value: 'user_initials' },
-        { text: this.$t('StudyVisitForm.study_duration_days'), value: 'study_duration_days_label' },
-        { text: this.$t('StudyVisitForm.study_duration_weeks'), value: 'study_duration_weeks_label' }
+        { text: this.$t('StudyVisitForm.modified_user'), value: 'user_initials' }
       ],
       defaultColumns: [
         { text: '', value: 'actions', width: '5%' },
@@ -513,8 +536,8 @@ export default {
         { text: this.$t('StudyVisitForm.unique_visit_number'), value: 'unique_visit_number' },
         { text: this.$t('StudyVisitForm.visit_name'), value: 'visit_name' },
         { text: this.$t('StudyVisitForm.visit_short_name'), value: 'visit_short_name' },
-        { text: this.$t('StudyVisitForm.study_day_label'), value: 'study_day_label' },
-        { text: this.$t('StudyVisitForm.study_week_label'), value: 'study_week_label' },
+        { text: this.$t('StudyVisitForm.study_duration_days'), value: 'study_duration_days_label' },
+        { text: this.$t('StudyVisitForm.study_duration_weeks'), value: 'study_duration_weeks_label' },
         { text: this.$t('StudyVisitForm.visit_window'), value: 'visit_window' },
         { text: this.$t('StudyVisitForm.collapsible_visit'), value: 'consecutive_visit_group' },
         { text: this.$t('StudyVisitForm.show_wisit'), value: 'show_visit' },
@@ -522,10 +545,10 @@ export default {
         { text: this.$t('StudyVisitForm.epoch_allocation'), value: 'epoch_allocation_name' },
         { text: this.$t('StudyVisitForm.visit_start_rule'), value: 'start_rule' },
         { text: this.$t('StudyVisitForm.visit_stop_rule'), value: 'end_rule' },
+        { text: this.$t('StudyVisitForm.study_day_label'), value: 'study_day_label' },
+        { text: this.$t('StudyVisitForm.study_week_label'), value: 'study_week_label' },
         { text: this.$t('_global.modified'), value: 'start_date' },
-        { text: this.$t('StudyVisitForm.modified_user'), value: 'user_initials' },
-        { text: this.$t('StudyVisitForm.study_duration_days'), value: 'study_duration_days_label' },
-        { text: this.$t('StudyVisitForm.study_duration_weeks'), value: 'study_duration_weeks_label' }
+        { text: this.$t('StudyVisitForm.modified_user'), value: 'user_initials' }
       ],
       editHeaders: [
         { text: '', value: 'actions', width: '5%' },

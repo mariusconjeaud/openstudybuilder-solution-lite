@@ -1,4 +1,4 @@
-from typing import Collection, Optional, Sequence
+from typing import Collection, Sequence
 
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
@@ -44,7 +44,7 @@ class ClinicalProgrammeRepository:
         )
 
     @cached(cache=cache_store_item_by_uid, key=get_hashkey)
-    def find_by_uid(self, uid: str) -> Optional[ClinicalProgrammeAR]:
+    def find_by_uid(self, uid: str) -> ClinicalProgrammeAR | None:
         clinical_programme = ClinicalProgramme.nodes.get_or_none(uid=uid)
         if clinical_programme is not None:
             clinical_programme = ClinicalProgrammeAR.from_input_values(

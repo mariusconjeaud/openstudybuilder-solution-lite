@@ -5,6 +5,7 @@
     <help-button :help-text="$t('_help.RegistryIdentifiersTable.general')" />
   </div>
   <registry-identifiers-summary />
+  <comment-thread-list :topicPath="'/studies/' + selectedStudy.uid + '/registry_identifiers'" :isTransparent="false"></comment-thread-list>
 </div>
 </template>
 
@@ -12,11 +13,13 @@
 import { studySelectedNavigationGuard } from '@/mixins/studies'
 import RegistryIdentifiersSummary from '@/components/studies/RegistryIdentifiersSummary'
 import HelpButton from '@/components/tools/HelpButton'
+import CommentThreadList from '@/components/tools/CommentThreadList'
 
 export default {
   mixins: [studySelectedNavigationGuard],
   components: {
     RegistryIdentifiersSummary,
+    CommentThreadList,
     HelpButton
   }
 }

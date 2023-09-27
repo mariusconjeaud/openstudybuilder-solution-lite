@@ -15,6 +15,8 @@
     <v-data-table
       :headers="cleanedHeaders"
       :items="items"
+      :options.sync="options"
+      :server-items-length="itemsTotal"
       dense
       >
       <template v-slot:item="{ item }">
@@ -68,6 +70,7 @@ export default {
       required: false
     },
     items: Array,
+    itemsTotal: Number,
     title: String,
     withExport: {
       type: Boolean,
@@ -89,13 +92,22 @@ export default {
       type: String,
       default: 'end_date'
     },
-    changeTypeHeader: {
+    changeField: {
       type: String,
       default: 'change_type'
+    },
+    changeFieldLabel: {
+      type: String,
+      required: false
     },
     simpleStyling: {
       type: Boolean,
       default: false
+    }
+  },
+  data () {
+    return {
+      options: {}
     }
   },
   computed: {
@@ -116,8 +128,8 @@ export default {
         return !excludedHeaders.includes(item.value)
       })
       result.push({
-        text: this.$t('HistoryTable.change_type'),
-        value: this.changeTypeHeader
+        text: this.changeFieldLabel ? this.changeFieldLabel : this.$t('HistoryTable.change_type'),
+        value: this.changeField
       })
       result.push({
         text: this.$t('_global.user'),
@@ -196,6 +208,11 @@ export default {
         }
         return value
       }
+    }
+  },
+  watch: {
+    options (value) {
+      this.$emit('refresh', value)
     }
   }
 }

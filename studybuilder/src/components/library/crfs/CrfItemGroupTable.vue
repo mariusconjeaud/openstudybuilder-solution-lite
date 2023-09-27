@@ -18,12 +18,12 @@
       <v-btn
         class="ml-2"
         fab
-        dark
         small
         color="primary"
         @click.stop="openForm"
         :title="$t('CRFItemGroups.add_group')"
         data-cy="add-crf-item-group"
+        :disabled="!checkPermission($roles.LIBRARY_WRITE)"
         >
         <v-icon dark>
           mdi-plus
@@ -136,8 +136,10 @@ import crfTypes from '@/constants/crfTypes'
 import parameters from '@/constants/parameters'
 import { mapGetters } from 'vuex'
 import _isEmpty from 'lodash/isEmpty'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     NNTable,
     StatusChip,
@@ -173,13 +175,15 @@ export default {
           icon: 'mdi-check-decagram',
           iconColor: 'success',
           condition: (item) => item.possible_actions.find(action => action === 'approve'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.approve
         },
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'edit'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.edit
         },
         {
@@ -194,6 +198,7 @@ export default {
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'new_version'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.newVersion
         },
         {
@@ -201,6 +206,7 @@ export default {
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.inactivate
         },
         {
@@ -208,13 +214,15 @@ export default {
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.reactivate
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
           condition: (item) => item.possible_actions.find(action => action === 'delete'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.delete
         },
         {
@@ -222,6 +230,7 @@ export default {
           icon: 'mdi-plus',
           iconColor: 'primary',
           condition: (item) => item.status === constants.DRAFT,
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.openLinkForm
         },
         {

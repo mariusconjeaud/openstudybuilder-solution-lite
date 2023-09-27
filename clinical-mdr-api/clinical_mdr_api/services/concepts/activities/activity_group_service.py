@@ -39,7 +39,7 @@ class ActivityGroupService(ConceptGenericService[ActivityGroupAR]):
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
-            activity_group_exists_by_name_callback=self._repos.activity_group_repository.concept_exists_by_name,
+            concept_exists_by_callback=self._repos.activity_group_repository.exists_by,
         )
 
     def _edit_aggregate(
@@ -54,6 +54,6 @@ class ActivityGroupService(ConceptGenericService[ActivityGroupAR]):
                 definition=concept_edit_input.definition,
                 abbreviation=concept_edit_input.abbreviation,
             ),
-            concept_exists_by_name_callback=self._repos.activity_group_repository.concept_exists_by_name,
+            concept_exists_by_callback=self._repos.activity_group_repository.exists_by,
         )
         return item

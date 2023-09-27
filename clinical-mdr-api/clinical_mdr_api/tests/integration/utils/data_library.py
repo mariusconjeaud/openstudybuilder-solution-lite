@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from neomodel.core import db
@@ -1145,7 +1143,8 @@ abbreviation:"abbv",
 topic_code:"topic_code1",
 adam_param_code:"adam_param_code1",
 legacy_description:"legacy_description1"
-})-[:IN_HIERARCHY]->(activity_hierarchy_value1)
+})-[:HAS_ACTIVITY]-(activity_grouping:ActivityGrouping {uid:"ActivityGrouping_000001"})
+MERGE (activity_grouping)<-[:HAS_GROUPING]-(activity_hierarchy_value1)
 MERGE (activity_instance_root1)-[latest_final1:LATEST_FINAL]->(activity_instance_value1)
 MERGE (activity_instance_root1)-[has_version1:HAS_VERSION]->(activity_instance_value1)
 SET has_version1 = final_properties
@@ -1171,7 +1170,8 @@ abbreviation:"abbv",
 topic_code:"topic_code2",
 adam_param_code:"adam_param_code2",
 legacy_description:"legacy_description2"
-})-[:IN_HIERARCHY]->(activity_hierarchy_value2)
+})-[:HAS_ACTIVITY]->(activity_grouping2:ActivityGrouping {uid:"ActivityGrouping_000002"})
+MERGE (activity_grouping2)<-[:HAS_GROUPING]-(activity_hierarchy_value2)
 MERGE (activity_instance_root2)-[latest_draft2:LATEST_DRAFT]->(activity_instance_value2)
 MERGE (activity_instance_root2)-[has_version2:HAS_VERSION]->(activity_instance_value2)
 SET has_version2 = draft_properties
@@ -1227,7 +1227,8 @@ adam_param_code:"adam_param_code1",
 legacy_description:"legacy_description1",
 molecular_weight:1.0,
 value_sas_display_format:"string"
-})-[:IN_HIERARCHY]->(activity_value1)
+})-[:HAS_ACTIVITY]->(activity_grouping:ActivityGrouping {uid:"ActivityGrouping_000001"})
+MERGE (activity_grouping)<-[:HAS_GROUPING]-(activity_value1)
 MERGE (activity_instance_root1)-[latest_final2:LATEST_FINAL]->(new_activity_instance_value1)
 MERGE (activity_instance_root1)-[hv2:HAS_VERSION]->(new_activity_instance_value1)
 SET hv2 = final2_properties
@@ -1235,7 +1236,7 @@ SET hv2 = final2_properties
 MERGE (activity_instance_root1)-[hv3a:HAS_VERSION]->(activity_instance_value1:ConceptValue:
 ActivityInstanceValue:FindingValue:NumericFindingValue {
 name:"name1"})
-MERGE (activity_instance_value1)-[:IN_HIERARCHY]->(activity_value1)
+MERGE (activity_instance_value1)-[:HAS_ACTIVITY]->(activity_grouping)
 SET activity_instance_value1=new_activity_instance_value1
 SET activity_instance_value1.molecular_weight = 0.0
 SET activity_instance_value1.name="name1"
@@ -1256,11 +1257,11 @@ abbreviation:"abbv",
 topic_code:"topic_code2",
 adam_param_code:"adam_param_code2",
 legacy_description:"legacy_description2"
-})-[:IN_HIERARCHY]->(activity_value2)
+})-[:HAS_ACTIVITY]->(activity_grouping2:ActivityGrouping {uid:"ActivityGrouping_000002"})
+MERGE (activity_grouping2)<-[:HAS_GROUPING]-(activity_value2)
 MERGE (activity_instance_root2)-[latest_final3:LATEST_FINAL]->(activity_instance_value2)
 MERGE (activity_instance_root2)-[hv5:HAS_VERSION]->(activity_instance_value2)
 SET hv5 = final2_properties
-
 """
 
 STARTUP_ACTIVITY_GROUPS = """
@@ -1300,6 +1301,7 @@ definition:"definition2",
 abbreviation:"abbv"
 })
 MERGE (activity_group_root2)-[latest_draft2:LATEST_DRAFT]->(activity_group_value2)
+MERGE (activity_group_root2)-[:LATEST_FINAL]->(activity_group_value2)
 MERGE (activity_group_root2)-[has_version2:HAS_VERSION]->(activity_group_value2)
 SET has_version2 = draft_properties
 
@@ -1343,10 +1345,12 @@ abbreviation:"abbv"
 MERGE (activity_subgroup_root1)-[latest_final1:LATEST_FINAL]->(activity_subgroup_value1)
 MERGE (activity_subgroup_root1)-[has_version1:HAS_VERSION]->(activity_subgroup_value1)
 SET has_version1 = final_properties
-
+WITH *
 MERGE (activity_group_root1:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root1"})
 -[:LATEST]->(activity_group_value1:ConceptValue:ActivityGroupValue)
-MERGE (activity_subgroup_value1)-[:IN_GROUP]->(activity_group_value1)
+MERGE (avf1:ActivityValidGroup {uid:"ActivityValidGroup_000001"})
+MERGE (avf1)-[:IN_GROUP]->(activity_group_value1)
+MERGE (activity_subgroup_value1)-[:HAS_GROUP]->(avf1)
 MERGE (activity_group_root1)-[:HAS_VERSION]->(activity_group_value1)
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_subgroup_root2:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root2"})
@@ -1360,10 +1364,13 @@ MERGE (activity_subgroup_root2)-[latest_draft2:LATEST_DRAFT]->(activity_subgroup
 MERGE (activity_subgroup_root2)-[has_version2:HAS_VERSION]->(activity_subgroup_value2)
 SET has_version2 = draft_properties
 
+WITH *
 MERGE (activity_group_root2:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root2"})
 -[:LATEST]->(activity_group_value2:ConceptValue:ActivityGroupValue)
 MERGE (activity_group_root2)-[:HAS_VERSION]->(activity_group_value2)
-MERGE (activity_subgroup_value2)-[:IN_GROUP]->(activity_group_value2)
+MERGE (avf2:ActivityValidGroup {uid:"ActivityValidGroup_000002"})
+MERGE (avf2)-[:IN_GROUP]->(activity_group_value2)
+MERGE (activity_subgroup_value2)-[:HAS_GROUP]->(avf2)
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_subgroup_root3:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root3"})
 -[:LATEST]->(activity_subgroup_value3:ConceptValue:ActivitySubGroupValue {
@@ -1375,11 +1382,14 @@ abbreviation:"abbv"
 MERGE (activity_subgroup_root3)-[latest_final3:LATEST_FINAL]->(activity_subgroup_value3)
 MERGE (activity_subgroup_root3)-[has_version3:HAS_VERSION]->(activity_subgroup_value3)
 SET has_version3 = final_properties
-
+WITH *
 MERGE (activity_group_root3:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root3"})
 -[:LATEST]->(activity_group_value3:ConceptValue:ActivityGroupValue)
 MERGE (activity_group_root3)-[:HAS_VERSION]->(activity_group_value3)
-MERGE (activity_subgroup_value3)-[:IN_GROUP]->(activity_group_value3)
+MERGE (avf3:ActivityValidGroup {uid:"ActivityValidGroup_000003"})
+MERGE (avf3)-[:IN_GROUP]->(activity_group_value3)
+MERGE (activity_subgroup_value3)-[:HAS_GROUP]->(avf3)
+MERGE (:Counter:ActivityValidGroupCounter {count: 3, counterId:'ActivityValidGroupCounter'})
 """
 
 STARTUP_ACTIVITIES = """
@@ -1412,8 +1422,20 @@ MERGE (activity_root1)-[has_version1:HAS_VERSION]->(activity_value1)
 SET has_version1 = final_properties
 MERGE (activity_subgroup_root1:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root1"})
 -[:LATEST]->(activity_subgroup_value1:ConceptValue:ActivitySubGroupValue)
-MERGE (activity_subgroup_root1)-[:HAS_VERSION]->(activity_subgroup_value1)
-MERGE (activity_value1)-[:IN_SUB_GROUP]->(activity_subgroup_value1)
+MERGE (activity_subgroup_root1)-[hvs1:HAS_VERSION]->(activity_subgroup_value1)
+SET hvs1 = final_properties
+MERGE (activity_subgroup_root1)-[:LATEST_FINAL]->(activity_subgroup_value1)
+MERGE (activity_value1)-[:HAS_GROUPING]->(activity_grouping:ActivityGrouping {uid:"ActivityGrouping_000001"})
+WITH *
+MERGE (activity_valid_group:ActivityValidGroup {uid:"ActivityValidGroup_000001"})
+MERGE (activity_grouping)-[:IN_SUBGROUP]->(activity_valid_group)
+MERGE (activity_valid_group)<-[:HAS_GROUP]-(activity_subgroup_value1)
+WITH *
+MERGE (activity_group_root:ActivityGroupRoot:ConceptRoot {uid:"activity_group_root1"})-[:LATEST]->(activity_group_value:ActivityGroupValue:ConceptValue)
+MERGE (activity_group_root)-[hvg1:HAS_VERSION]->(activity_group_value)
+SET hvg1 = final_properties
+MERGE (activity_group_root)-[:LATEST_FINAL]->(activity_group_value)
+MERGE (activity_valid_group)-[:IN_GROUP]->(activity_group_value)
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_root2:ConceptRoot:ActivityRoot {uid:"activity_root2"})
 -[:LATEST]->(activity_value2:ConceptValue:ActivityValue {
@@ -1428,7 +1450,15 @@ SET has_version2 = draft_properties
 MERGE (activity_subgroup_root2:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root2"})
 -[:LATEST]->(activity_subgroup_value2:ConceptValue:ActivitySubGroupValue)
 MERGE (activity_subgroup_root2)-[:HAS_VERSION]->(activity_subgroup_value2)
-MERGE (activity_value2)-[:IN_SUB_GROUP]->(activity_subgroup_value2)
+MERGE (activity_value2)-[:HAS_GROUPING]->(activity_grouping2:ActivityGrouping {uid:"ActivityGrouping_000002"})
+WITH *
+MERGE (activity_valid_group2:ActivityValidGroup {uid:"ActivityValidGroup_000002"})
+MERGE (activity_grouping2)-[:IN_SUBGROUP]->(activity_valid_group2)
+MERGE (activity_valid_group2)<-[:HAS_GROUP]-(activity_subgroup_value2)
+WITH *
+MERGE (activity_group_root2:ActivityGroupRoot:ConceptRoot {uid:"activity_group_root2"})-[:LATEST]->(activity_group_value2:ActivityGroupValue:ConceptValue)
+MERGE (activity_group_root2)-[:HAS_VERSION]->(activity_group_value2)
+MERGE (activity_valid_group2)-[:IN_GROUP]->(activity_group_value2)
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_root3:ConceptRoot:ActivityRoot {uid:"activity_root3"})
 -[:LATEST]->(activity_value3:ConceptValue:ActivityValue {
@@ -1442,8 +1472,22 @@ MERGE (activity_root3)-[has_version3:HAS_VERSION]->(activity_value3)
 SET has_version3 = final_properties
 MERGE (activity_subgroup_root3:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root3"})
 -[:LATEST]->(activity_subgroup_value3:ConceptValue:ActivitySubGroupValue)
-MERGE (activity_subgroup_root3)-[:HAS_VERSION]->(activity_subgroup_value3)
-MERGE (activity_value3)-[:IN_SUB_GROUP]->(activity_subgroup_value3)
+MERGE (activity_subgroup_root3)-[hvs3:HAS_VERSION]->(activity_subgroup_value3)
+SET hvs3 = final_properties
+MERGE (activity_subgroup_root3)-[:LATEST_FINAL]->(activity_subgroup_value3)
+MERGE (activity_value3)-[:HAS_GROUPING]->(activity_grouping3:ActivityGrouping {uid:"ActivityGrouping_000003"})
+WITH *
+MERGE (activity_valid_group3:ActivityValidGroup {uid:"ActivityValidGroup_000003"})
+MERGE (activity_grouping3)-[:IN_SUBGROUP]->(activity_valid_group3)
+MERGE (activity_valid_group3)<-[:HAS_GROUP]-(activity_subgroup_value3)
+WITH *
+MERGE (activity_group_root3:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root3"})-[:LATEST]->(activity_group_value3:ConceptValue:ActivityGroupValue)
+MERGE (activity_group_root3)-[hvg3:HAS_VERSION]->(activity_group_value3)
+SET hvg3 = final_properties
+MERGE (activity_group_root3)-[:LATEST_FINAL]->(activity_group_value3)
+MERGE (activity_valid_group3)-[:IN_GROUP]->(activity_group_value3)
+MERGE (:Counter:ActivityValidGroupCounter {count: 3, counterId:'ActivityValidGroupCounter'})
+MERGE (:Counter:ActivityGroupingCounter {count: 3, counterId:'ActivityGroupingCounter'})
 """
 
 STARTUP_DICTIONARY_CODELISTS_CYPHER = """
@@ -1664,7 +1708,7 @@ change_description: "Approved version",
 start_date: datetime("2020-06-26T00:00:00"),
 status: "Final",
 user_initials: "TODO initials",
-version: "1.0"
+version: "2.0"
 } AS new_props
 MERGE (catalogue:CTCatalogue {name:"catalogue"})-[:CONTAINS_PACKAGE]->(old_package:CTPackage{
 uid:"old_package_uid",
@@ -1692,11 +1736,9 @@ user_initials:"initials"
 })
 
 MERGE (old_package)-[:CONTAINS_CODELIST]->(package_codelist1:CTPackageCodelist)-[:CONTAINS_ATTRIBUTES]->(codelist_attr_value_to_update:CTCodelistAttributesValue 
-{name:"old_name", extensible:false})<-[final1:LATEST_FINAL]-(codelist_attr_root_to_update:CTCodelistAttributesRoot)
+{name:"old_name", extensible:false})<-[final1hv:HAS_VERSION]-(codelist_attr_root_to_update:CTCodelistAttributesRoot)
 <-[:HAS_ATTRIBUTES_ROOT]-(codelist_to_update:CTCodelistRoot {uid:"updated_codelist_uid"})
-MERGE (codelist_attr_value_to_update)-[final1hv:HAS_VERSION]->(codelist_attr_root_to_update)
 SET final1hv = old_props
-MERGE (codelist_attr_root_to_update)-[:LATEST]->(codelist_attr_value_to_update)
 MERGE (codelist_to_update)-[:HAS_NAME_ROOT]->(codelist_name_root_to_update:CTCodelistNameRoot)-[final2:LATEST_FINAL]->(codelist_name_value_to_update:CTCodelistNameValue)
 MERGE (codelist_name_root_to_update)-[:LATEST]->(codelist_name_value_to_update)
 MERGE (codelist_name_root_to_update)-[final2hv:HAS_VERSION]->(codelist_name_value_to_update)
@@ -1729,6 +1771,7 @@ MERGE (new_package)-[:CONTAINS_CODELIST]->(package_codelist4:CTPackageCodelist)-
 {name:"new_name", definition:"codelist_added"})<-[final8:LATEST_FINAL]-(attr_root8:CTCodelistAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-(codelist_to_add:CTCodelistRoot {uid:"added_codelist_uid"})
 MERGE (attr_root8)-[final8hv:HAS_VERSION]->(attr_val8)
 SET final8hv = new_props
+MERGE (attr_root8)-[:LATEST]->(attr_val8)
 MERGE (package_codelist3)-[:CONTAINS_TERM]->(package_term3:CTPackageTerm)-[:CONTAINS_ATTRIBUTES]->(attr_val9:CTTermAttributesValue 
 {name_submission_value:"new_submission_value", definition:"new_definition"})<-[final9:LATEST_FINAL]-(term_attr_root_to_update)
 MERGE (term_attr_root_to_update)-[final9hv:HAS_VERSION]->(attr_val9)
@@ -2360,16 +2403,16 @@ SET p.description = "Description ABC",
 CREATE (c)-[:HOLDS_PROJECT]->(p)
 MERGE (sr:StudyRoot {uid: "study_root"})-[:LATEST]->(sv:StudyValue{study_id_prefix: "some_id", study_number:0})
 MERGE (p)-[:HAS_FIELD]->(:StudyField:StudyProjectField)<-[:HAS_PROJECT]-(sv)
-MERGE (ot:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot)-[relt:LATEST_FINAL]->(otv:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"objective_1", name_plain : "objective_1"})
+MERGE (ot:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid:"ObjectiveTemplate_000001", sequence_id: "O1"})-[relt:LATEST_FINAL]->(otv:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"objective_1", name_plain : "objective_1"})
 MERGE (ot)-[relthv:HAS_VERSION]->(otv)
 MERGE (ot)-[:LATEST]->(otv)
-MERGE (ot2:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot)-[relt2:LATEST_FINAL]->(otv2:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"objective_2", name_plain : "objective_2"})
+MERGE (ot2:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid:"ObjectiveTemplate_0000022", sequence_id: "O22"})-[relt2:LATEST_FINAL]->(otv2:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"objective_2", name_plain : "objective_2"})
 MERGE (ot2)-[relt2hv:HAS_VERSION]->(otv2)
 MERGE (ot2)-[:LATEST]->(otv2)
-MERGE (ot3:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot)-[relt3:LATEST_FINAL]->(otv3:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"objective_3", name_plain : "objective_3"})
+MERGE (ot3:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid:"ObjectiveTemplate_000003", sequence_id: "O3"})-[relt3:LATEST_FINAL]->(otv3:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"objective_3", name_plain : "objective_3"})
 MERGE (ot3)-[relt3hv:HAS_VERSION]->(otv3)
 MERGE (ot3)-[:LATEST]->(otv3)
-MERGE (ot4:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot)-[relt4:LATEST_FINAL]->(otv4:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"objective_4", name_plain : "objective_4"})
+MERGE (ot4:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid:"ObjectiveTemplate_000004", sequence_id: "O4"})-[relt4:LATEST_FINAL]->(otv4:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"objective_4", name_plain : "objective_4"})
 MERGE (ot4)-[relt4hv:HAS_VERSION]->(otv4)
 MERGE (ot4)-[:LATEST]->(otv4)
 MERGE (or:ObjectiveRoot:SyntaxInstanceRoot:SyntaxIndexingInstanceRoot)-[rel:LATEST_FINAL]->(ov:ObjectiveValue:SyntaxInstanceValue:SyntaxIndexingInstanceValue {name :"objective_1", name_plain : "objective_1"})
@@ -2385,16 +2428,18 @@ MERGE (or4:ObjectiveRoot:SyntaxInstanceRoot:SyntaxIndexingInstanceRoot)-[rel4:LA
 MERGE (or4)-[rel4hv:HAS_VERSION]->(ov4)
 MERGE (or4)-[:LATEST]->(ov4)
 MERGE (lib:Library{name:"Sponsor", is_editable:true})
-MERGE (lib)-[:CONTAINS_SYNTAX_INSTANCE]->(or) 
+MERGE (lib)-[:CONTAINS_SYNTAX_TEMPLATE]->(ot)
+MERGE (lib)-[:CONTAINS_SYNTAX_TEMPLATE]->(ot2)
+MERGE (lib)-[:CONTAINS_SYNTAX_TEMPLATE]->(ot3)
+MERGE (lib)-[:CONTAINS_SYNTAX_TEMPLATE]->(ot4)
+MERGE (lib)-[:CONTAINS_SYNTAX_INSTANCE]->(or)
+MERGE (lib)-[:CONTAINS_SYNTAX_INSTANCE]->(or2)
+MERGE (lib)-[:CONTAINS_SYNTAX_INSTANCE]->(or3)
+MERGE (lib)-[:CONTAINS_SYNTAX_INSTANCE]->(or4)
 MERGE (ot)-[:HAS_OBJECTIVE]->(or)
 MERGE (ot2)-[:HAS_OBJECTIVE]->(or2)
 MERGE (ot3)-[:HAS_OBJECTIVE]->(or3)
 MERGE (ot4)-[:HAS_OBJECTIVE]->(or4)
-MERGE (lib)-[:CONTAINS_SYNTAX_TEMPLATE]->(ot)
-MERGE (lib)-[:CONTAINS_SYNTAX_TEMPLATE]->(ot4)
-MERGE (lib)-[:CONTAINS_SYNTAX_INSTANCE]->(or2)
-MERGE (lib)-[:CONTAINS_SYNTAX_INSTANCE]->(or3)
-MERGE (lib)-[:CONTAINS_SYNTAX_INSTANCE]->(or4)
 set relthv.change_description="Approved version"
 set relthv.start_date= datetime()
 set relthv.status = "Final"
@@ -2481,7 +2526,7 @@ set hv.user_initials = "TODO Initials"
 set hv2 = hv
 set ld = hv
 
-MERGE (ot:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot)-[relt:LATEST_FINAL]->(otv:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"objective_1", name_plain : "objective_1"})
+MERGE (ot:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid:"ObjectiveTemplate_000001", sequence_id: "O1"})-[relt:LATEST_FINAL]->(otv:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"objective_1", name_plain : "objective_1"})
 MERGE (or:ObjectiveRoot:SyntaxInstanceRoot:SyntaxIndexingInstanceRoot)-[rel:LATEST_FINAL]->(ov:ObjectiveValue:SyntaxInstanceValue:SyntaxIndexingInstanceValue {name : "objective_1", name_plain : "objective_1"})
 MERGE (ot)-[relthv:HAS_VERSION]->(otv)
 MERGE (or)-[relhv:HAS_VERSION]->(ov)
@@ -2505,7 +2550,7 @@ set sa.user_initials = "TODO user initials"
 // Set counter for study objective UID 
 MERGE (:Counter:StudyObjectiveCounter {count: 1, counterId:'StudyObjectiveCounter'})
 
-MERGE (et:EndpointTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot)-[end_relt:LATEST_FINAL]->(etv:EndpointTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "endpoint_1", name_plain : "endpoint_1"})
+MERGE (et:EndpointTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid:"EndpointTemplate_000001", sequence_id: "E1"})-[end_relt:LATEST_FINAL]->(etv:EndpointTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "endpoint_1", name_plain : "endpoint_1"})
 MERGE (er:EndpointRoot:SyntaxInstanceRoot:SyntaxIndexingInstanceRoot)-[end_rel:LATEST_FINAL]->(ev:EndpointValue:SyntaxInstanceValue:SyntaxIndexingInstanceValue {name : "endpoint_1", name_plain : "endpoint_1"})
 MERGE (er)-[:LATEST]->(ev)
 MERGE (et)-[:LATEST]->(etv)
@@ -2517,13 +2562,13 @@ MERGE (lib)-[:CONTAINS_SYNTAX_TEMPLATE]->(et)
 set end_relt_hv = final_properties
 set end_rel_hv = final_properties
 
-MERGE (et2:EndpointTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot)-[end_relt2:LATEST_FINAL]->(etv2:EndpointTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "endpoint_template_2", name_plain : "endpoint_template_2"})
+MERGE (et2:EndpointTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid:"EndpointTemplate_000022", sequence_id: "E22"})-[end_relt2:LATEST_FINAL]->(etv2:EndpointTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "endpoint_template_2", name_plain : "endpoint_template_2"})
 MERGE (et2)-[:LATEST]->(etv2)
 MERGE (et2)-[end_relt2_hv:HAS_VERSION]->(etv2)
 MERGE (lib)-[:CONTAINS_SYNTAX_TEMPLATE]->(et2)
 set end_relt2_hv = final_properties
 
-MERGE (tt:TimeframeTemplateRoot:SyntaxTemplateRoot)-[tim_relt:LATEST_FINAL]->(ttv:TimeframeTemplateValue:SyntaxTemplateValue {name : "timeframe_1", name_plain : "timeframe_1"})
+MERGE (tt:TimeframeTemplateRoot:SyntaxTemplateRoot {uid:"TimeframeTemplate_000011", sequence_id: "T11"})-[tim_relt:LATEST_FINAL]->(ttv:TimeframeTemplateValue:SyntaxTemplateValue {name : "timeframe_1", name_plain : "timeframe_1"})
 MERGE (tr:TimeframeRoot:SyntaxInstanceRoot)-[tim_rel:LATEST_FINAL]->(tv:TimeframeValue:SyntaxInstanceValue {name : "timeframe_1", name_plain : "timeframe_1"})
 MERGE (tr)-[:LATEST]->(tv)
 MERGE (tt)-[:LATEST]->(ttv)
@@ -2556,7 +2601,7 @@ set hv.start_date = datetime()
 set hv.user_initials = "TODO Initials"
 set ld = hv
 
-MERGE (ot:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot)-[relt:LATEST_FINAL]->(otv:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "objective_1", name_plain : "objective_1"})
+MERGE (ot:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid:"ObjectiveTemplate_000001", sequence_id: "O1"})-[relt:LATEST_FINAL]->(otv:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "objective_1", name_plain : "objective_1"})
 MERGE (or:ObjectiveRoot:SyntaxInstanceRoot:SyntaxIndexingInstanceRoot)-[rel:LATEST_FINAL]->(ov:ObjectiveValue:SyntaxInstanceValue:SyntaxIndexingInstanceValue {name : "objective_1", name_plain : "objective_1"})
 MERGE (or)-[:LATEST]->(ov)
 MERGE (ot)-[:LATEST]->(otv)
@@ -3017,7 +3062,7 @@ set hv.user_initials = "TODO Initials"
 set ld = hv
 
 
-MERGE (ot:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot)-[relt:LATEST_FINAL]->(otv:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "objective_1", name_plain : "objective_1"})
+MERGE (ot:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid:"ObjectiveTemplate_000001", sequence_id: "O1"})-[relt:LATEST_FINAL]->(otv:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "objective_1", name_plain : "objective_1"})
 MERGE (or:ObjectiveRoot:SyntaxInstanceRoot:SyntaxIndexingInstanceRoot)-[rel:LATEST_FINAL]->(ov:ObjectiveValue:SyntaxInstanceValue:SyntaxIndexingInstanceValue {name : "objective_1", name_plain : "objective_1"})
 MERGE (or)-[:LATEST]->(ov)
 MERGE (ot)-[:LATEST]->(otv)
@@ -3121,8 +3166,7 @@ set hv.start_date = datetime()
 set hv.user_initials = "TODO Initials"
 set ld = hv
 
-
-MERGE (ot:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot)-[relt:LATEST_FINAL]->(otv:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "objective_1", name_plain : "objective_1"})
+MERGE (ot:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid:"ObjectiveTemplate_000001", sequence_id: "O1"})-[relt:LATEST_FINAL]->(otv:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "objective_1", name_plain : "objective_1"})
 MERGE (or:ObjectiveRoot:SyntaxInstanceRoot:SyntaxIndexingInstanceRoot)-[rel:LATEST_FINAL]->(ov:ObjectiveValue:SyntaxInstanceValue:SyntaxIndexingInstanceValue {name : "objective_1", name_plain : "objective_1"})
 MERGE (or)-[:LATEST]->(ov)
 MERGE (ot)-[:LATEST]->(otv)
@@ -3282,6 +3326,8 @@ def is_specific(path):
             "{codelist_uid}",
             "{term_uid}",
             "{study_number}",
+            "{thread_uid}",
+            "{reply_uid}",
         )
     ):
         return True
@@ -3290,17 +3336,17 @@ def is_specific(path):
 
 def create_stub(path, methods):
     if is_specific(path):
-        patel = path.split("/")
+        path = path.replace("{uid}", "1")
         path = path.replace("{codelist_uid}", "1")
         path = path.replace("{catalogue_name}", "1")
         path = path.replace("{term_uid}", "1")
         path = path.replace("{study_number}", "1")
-        if patel[-1] != "{uid}":
-            pass
+        path = path.replace("{thread_uid}", "1")
+        path = path.replace("{reply_uid}", "1")
         retval = {
             "id": 1,
             "path_spec": path,
-            "path_ready": path.replace("{uid}", "1"),
+            "path_ready": path,
             "is_specific": True,
             "methods": methods,
         }
@@ -3317,7 +3363,7 @@ def create_paths():
     return _create_paths(app)
 
 
-def _create_paths(app: FastAPI, path_prefix="") -> List[Dict[str, any]]:
+def _create_paths(app: FastAPI, path_prefix="") -> list[dict[str, any]]:
     paths = []
     for route in app.routes:
         if isinstance(route, APIRoute):

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import AbstractSet, Callable, Optional
+from typing import AbstractSet, Callable, Self
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
     LibraryItemMetadataVO,
@@ -18,23 +19,23 @@ class ActivityItemVO:
 
     name: str
     activity_item_class_uid: str
-    activity_item_class_name: Optional[str]
-    ct_term_uid: Optional[str]
-    ct_term_name: Optional[str]
-    unit_definition_uid: Optional[str]
-    unit_definition_name: Optional[str]
+    activity_item_class_name: str | None
+    ct_term_uid: str | None
+    ct_term_name: str | None
+    unit_definition_uid: str | None
+    unit_definition_name: str | None
 
     @classmethod
     def from_repository_values(
         cls,
         name: str,
         activity_item_class_uid: str,
-        activity_item_class_name: Optional[str],
-        ct_term_uid: Optional[str],
-        ct_term_name: Optional[str],
-        unit_definition_uid: Optional[str],
-        unit_definition_name: Optional[str],
-    ) -> "ActivityItemVO":
+        activity_item_class_name: str | None,
+        ct_term_uid: str | None,
+        ct_term_name: str | None,
+        unit_definition_uid: str | None,
+        unit_definition_name: str | None,
+    ) -> Self:
         activity_item_vo = cls(
             name=name,
             activity_item_class_uid=activity_item_class_uid,
@@ -53,25 +54,27 @@ class ActivityItemVO:
         activity_item_class_exists: Callable[[str], bool],
         ct_term_exists: Callable[[str], bool],
         unit_definition_exists: Callable[[str], bool],
-        previous_name: Optional[str] = None,
+        previous_name: str | None = None,
     ) -> None:
         if (
             activity_item_exists_by_name_callback(self.name)
             and previous_name != self.name
         ):
-            raise ValueError(f"ActivityItemVO with name ({self.name}) already exists.")
+            raise exceptions.ValidationException(
+                f"ActivityItemVO with name ({self.name}) already exists."
+            )
         if not activity_item_class_exists(self.activity_item_class_uid):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"ActivityItemVO tried to connect to non existing ActivityItemClass ({self.activity_item_class_uid})."
             )
         if self.ct_term_uid and not ct_term_exists(self.ct_term_uid):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"ActivityItemVO tried to connect to non existing CTTerm ({self.ct_term_uid})."
             )
         if self.unit_definition_uid and not unit_definition_exists(
             self.unit_definition_uid
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"ActivityItemVO tried to connect to non existing UnitDefinition ({self.unit_definition_uid})."
             )
 
@@ -101,9 +104,9 @@ class ActivityItemAR(LibraryItemAggregateRootBase):
         cls,
         uid: str,
         activity_item_vo: ActivityItemVO,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> "ActivityItemAR":
+    ) -> Self:
         activity_item_class_ar = cls(
             _uid=uid,
             _activity_item_vo=activity_item_vo,
@@ -123,11 +126,11 @@ class ActivityItemAR(LibraryItemAggregateRootBase):
         activity_item_class_exists: Callable[[str], bool],
         ct_term_exists: Callable[[str], bool],
         unit_definition_exists: Callable[[str], bool],
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-    ) -> "ActivityItemAR":
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
         if not library.is_editable:
-            raise ValueError(
+            raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
         activity_item_vo.validate(
@@ -147,7 +150,7 @@ class ActivityItemAR(LibraryItemAggregateRootBase):
     def edit_draft(
         self,
         author: str,
-        change_description: Optional[str],
+        change_description: str | None,
         activity_item_vo: ActivityItemVO,
         activity_item_class_exists: Callable[[str], bool],
         activity_item_exists_by_name_callback: Callable[[str], bool],

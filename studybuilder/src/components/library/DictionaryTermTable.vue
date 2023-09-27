@@ -2,10 +2,10 @@
 <div>
   <n-n-table
     :headers="actualHeaders"
-    export-object-label="Snomed"
+    :export-object-label="dictionaryName"
     :export-data-url="columnDataResource"
     :export-data-url-params="exportUrlParams"
-    item-key="uid"
+    item-key="term_uid"
     :server-items-length="total"
     :options.sync="options"
     has-api
@@ -17,11 +17,11 @@
     <template v-slot:actions="">
       <v-btn
         fab
-        dark
         small
         color="primary"
         @click="createTerm()"
         :title="$t('DictionaryTermTable.add_title')"
+        :disabled="!checkPermission($roles.LIBRARY_WRITE)"
         >
         <v-icon dark>
           mdi-plus
@@ -35,7 +35,7 @@
       {{ item.start_date | date }}
     </template>
     <template v-slot:item.actions="{ item }">
-      <actions-menu :actions="actions" :item="item" />
+      <actions-menu :actions="actions" :item="item"/>
     </template>
   </n-n-table>
   <slot name="termForm" :closeForm="closeForm" :open="showTermForm">
@@ -58,8 +58,10 @@ import DictionaryTermForm from '@/components/library/DictionaryTermForm'
 import NNTable from '@/components/tools/NNTable'
 import StatusChip from '@/components/tools/StatusChip'
 import filteringParameters from '@/utils/filteringParameters'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     ActionsMenu,
     DictionaryTermForm,
@@ -74,13 +76,15 @@ export default {
           icon: 'mdi-check-decagram',
           iconColor: 'success',
           condition: (item) => item.possible_actions.find(action => action === 'approve'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.approveTerm
         },
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'edit'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.editTerm
         },
         {
@@ -88,6 +92,7 @@ export default {
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'new_version'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.newTermVersion
         },
         {
@@ -95,6 +100,7 @@ export default {
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'inactivate'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.inactivateTerm
         },
         {
@@ -102,13 +108,15 @@ export default {
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === 'reactivate'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.reactivateTerm
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
           condition: (item) => item.possible_actions.find(action => action === 'delete'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.deleteTerm
         }
       ],
@@ -118,7 +126,6 @@ export default {
         { text: this.$t('_global.name'), value: 'name' },
         { text: this.$t('DictionaryTermTable.lower_case_name'), value: 'name_sentence_case' },
         { text: this.$t('DictionaryTermTable.abbreviation'), value: 'abbreviation' },
-        { text: this.$t('_global.definition'), value: 'definition' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' },
         { text: this.$t('_global.modified'), value: 'start_date' }

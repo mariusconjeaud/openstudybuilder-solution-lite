@@ -12,7 +12,7 @@
         class="ml-3"
         :disabled="Boolean(loadingMessage)"
       >
-        {{ $t('StudyProtocolElementsView.download') }}
+        {{ $t('_global.download_docx') }}
       </v-btn>
     </div>
   </div>

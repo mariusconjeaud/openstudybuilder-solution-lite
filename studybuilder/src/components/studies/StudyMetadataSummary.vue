@@ -22,6 +22,7 @@
         small
         @click.stop="openCopyForm"
         :title="$t('NNTableTooltips.copy_from_study')"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon>mdi-content-copy</v-icon>
       </v-btn>
@@ -32,10 +33,11 @@
         color="primary"
         @click.stop="openForm"
         :title="$t('NNTableTooltips.edit_content')"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         data-cy="edit-content"
         >
         <v-icon>
-          mdi-pencil
+          mdi-pencil-outline
         </v-icon>
       </v-btn>
       <v-btn
@@ -88,8 +90,10 @@ import HistoryTable from '@/components/tools/HistoryTable'
 import { mapGetters } from 'vuex'
 import NNTable from '@/components/tools/NNTable'
 import study from '@/api/study'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     HistoryTable,
     NNTable,

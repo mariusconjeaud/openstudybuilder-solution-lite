@@ -19,7 +19,7 @@
         @click.stop="deleteStudy"
         :title="$t('_global.delete')"
         >
-        <v-icon>mdi-trash-can</v-icon>
+        <v-icon>mdi-delete-outline</v-icon>
       </v-btn>
     </template>
     <template v-slot:form="{ closeHandler, openHandler }">

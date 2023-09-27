@@ -1,4 +1,4 @@
-from typing import Any, Optional, TypeVar
+from typing import Any, TypeVar
 
 from neomodel import db
 
@@ -38,7 +38,7 @@ class DictionaryTermSubstanceService(
     version_class = DictionaryTermVersion
     repository_interface = DictionaryTermSubstanceRepository
     _repos: MetaRepository
-    user_initials: Optional[str]
+    user_initials: str | None
 
     @property
     def repository(self) -> DictionaryTermSubstanceRepository:
@@ -97,15 +97,15 @@ class DictionaryTermSubstanceService(
     def get_all_dictionary_terms(
         self,
         codelist_uid: str = None,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
         codelist_name: str = "",
     ) -> GenericFilteringReturn[DictionaryTermSubstance]:
-        items, total_count = self.repository.find_all(
+        items, total = self.repository.find_all(
             codelist_name=codelist_name,
             sort_by=sort_by,
             filter_by=filter_by,
@@ -115,7 +115,7 @@ class DictionaryTermSubstanceService(
             total_count=total_count,
         )
 
-        all_dictionary_terms = GenericFilteringReturn.create(items, total_count)
+        all_dictionary_terms = GenericFilteringReturn.create(items, total)
         all_dictionary_terms.items = [
             self._transform_aggregate_root_to_pydantic_model(dictionary_term_ar)
             for dictionary_term_ar in all_dictionary_terms.items

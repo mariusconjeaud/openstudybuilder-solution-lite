@@ -1,5 +1,4 @@
 """System models."""
-from typing import Optional
 
 from pydantic import Field
 
@@ -25,12 +24,12 @@ class SystemInformation(BaseModel):
         title="Build identifier",
         description="The Build.BuildNumber identifier from the pipeline run",
     )
-    commit_id: Optional[str] = Field(
+    commit_id: str | None = Field(
         None,
         title="VCS commit identifier",
         description="The reference to the repository state: the id of the last commit to the branch at build",
     )
-    branch_name: Optional[str] = Field(
+    branch_name: str | None = Field(
         None,
         title="Repository branch name",
         description="Name of the VCS repository branch the app was built from",

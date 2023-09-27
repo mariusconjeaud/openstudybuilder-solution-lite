@@ -2,6 +2,7 @@ import unittest
 
 from neomodel import db
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot
 from clinical_mdr_api.models.study_selections.study_epoch import (
     StudyEpoch,
@@ -261,6 +262,7 @@ class TestStudyEpochManagement(unittest.TestCase):
             change_description="rules change",
         )
         edited_epoch = epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -283,6 +285,7 @@ class TestStudyEpochManagement(unittest.TestCase):
             change_description="color change",
         )
         edited_epoch = epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -304,6 +307,7 @@ class TestStudyEpochManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -335,6 +339,7 @@ class TestStudyEpochManagement(unittest.TestCase):
             change_description="rules change",
         )
         epoch_service.edit(
+            study_uid=epoch.study_uid,
             study_epoch_uid=epoch.uid,
             study_epoch_input=edit_input,
         )
@@ -406,5 +411,5 @@ class TestStudyEpochManagement(unittest.TestCase):
         epoch_subtype_uid = "Basic_uid"
         create_study_epoch(epoch_subtype_uid=epoch_subtype_uid)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(exceptions.ValidationException):
             create_study_epoch(epoch_subtype_uid=epoch_subtype_uid)

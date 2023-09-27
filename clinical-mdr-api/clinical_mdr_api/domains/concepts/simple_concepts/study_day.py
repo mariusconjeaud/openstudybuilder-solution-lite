@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Self
 
 from clinical_mdr_api.domains.concepts.simple_concepts.numeric_value import (
     NumericValueAR,
@@ -13,10 +13,10 @@ class StudyDayVO(NumericValueVO):
     def from_input_values(
         cls,
         value: float,
-        definition: Optional[str],
-        abbreviation: Optional[str],
+        definition: str | None,
+        abbreviation: str | None,
         is_template_parameter: bool,
-    ) -> "StudyDayVO":
+    ) -> Self:
         value = cls.derive_value_property(value=value)
         simple_concept_vo = cls(
             name=f"Day {str(value)}",

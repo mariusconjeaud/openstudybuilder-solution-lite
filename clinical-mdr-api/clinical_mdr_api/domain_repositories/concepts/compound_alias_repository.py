@@ -1,4 +1,4 @@
-from typing import List, Optional, Sequence
+from typing import Sequence
 
 from neomodel import db
 
@@ -93,7 +93,7 @@ class CompoundAliasRepository(ConceptGenericRepository):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> CompoundAliasAR:
@@ -132,7 +132,7 @@ class CompoundAliasRepository(ConceptGenericRepository):
         result, _ = db.cypher_query(query, {"compound_uid": compound_uid})
         return result[0] if len(result) else []
 
-    def get_compound_uid_by_alias_uid(self, compound_alias_uid: str) -> Optional[str]:
+    def get_compound_uid_by_alias_uid(self, compound_alias_uid: str) -> str | None:
         query = """
             MATCH (concept_root:CompoundAliasRoot {uid:$compound_alias_uid})-[:LATEST]->
                 (concept_value:CompoundAliasValue)-[IS_COMPOUND]->
@@ -144,7 +144,7 @@ class CompoundAliasRepository(ConceptGenericRepository):
             return result[0][0]
         return None
 
-    def get_aliases_by_compound_uid(self, compound_uid: str) -> List[str]:
+    def get_aliases_by_compound_uid(self, compound_uid: str) -> list[str]:
         query = """
             MATCH (concept_root:CompoundAliasRoot)-[:LATEST]->
                 (concept_value:CompoundAliasValue)-[IS_COMPOUND]->

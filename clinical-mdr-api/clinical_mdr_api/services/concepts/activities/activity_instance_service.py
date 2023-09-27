@@ -3,6 +3,7 @@ from clinical_mdr_api.domain_repositories.concepts.activities.activity_instance_
 )
 from clinical_mdr_api.domains.concepts.activities.activity_instance import (
     ActivityInstanceAR,
+    ActivityInstanceGroupingVO,
     ActivityInstanceVO,
     SimpleActivityItemVO,
 )
@@ -49,7 +50,16 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                 topic_code=concept_input.topic_code,
                 adam_param_code=concept_input.adam_param_code,
                 legacy_description=concept_input.legacy_description,
-                activity_uids=concept_input.activities,
+                activity_groupings=[
+                    ActivityInstanceGroupingVO(
+                        activity_uid=activity_grouping.activity_uid,
+                        activity_group_uid=activity_grouping.activity_group_uid,
+                        activity_subgroup_uid=activity_grouping.activity_subgroup_uid,
+                    )
+                    for activity_grouping in concept_input.activity_groupings
+                ]
+                if concept_input.activity_groupings
+                else [],
                 activity_instance_class_uid=concept_input.activity_instance_class_uid,
                 activity_instance_class_name=None,
                 activity_items=[
@@ -62,13 +72,15 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                     for activity_item_uid in concept_input.activity_item_uids
                 ]
                 if concept_input.activity_item_uids
-                else None,
+                else [],
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
-            concept_exists_by_name_callback=self.repository.concept_exists_by_name,
+            concept_exists_by_callback=self.repository.exists_by,
             activity_instance_class_exists_by_uid_callback=self._repos.activity_instance_class_repository.check_exists_final_version,
             activity_hierarchy_exists_by_uid_callback=self._repos.activity_repository.final_concept_exists,
+            activity_group_exists=self._repos.activity_group_repository.final_concept_exists,
+            activity_subgroup_exists=self._repos.activity_subgroup_repository.final_concept_exists,
             activity_item_exists_by_uid_callback=self._repos.activity_item_repository.check_exists_final_version,
         )
 
@@ -86,7 +98,16 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                 topic_code=concept_edit_input.topic_code,
                 adam_param_code=concept_edit_input.adam_param_code,
                 legacy_description=concept_edit_input.legacy_description,
-                activity_uids=concept_edit_input.activities,
+                activity_groupings=[
+                    ActivityInstanceGroupingVO(
+                        activity_uid=activity_grouping.activity_uid,
+                        activity_group_uid=activity_grouping.activity_group_uid,
+                        activity_subgroup_uid=activity_grouping.activity_subgroup_uid,
+                    )
+                    for activity_grouping in concept_edit_input.activity_groupings
+                ]
+                if concept_edit_input.activity_groupings
+                else [],
                 activity_instance_class_uid=concept_edit_input.activity_instance_class_uid,
                 activity_instance_class_name=None,
                 activity_items=[
@@ -101,9 +122,11 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                 if concept_edit_input.activity_item_uids
                 else [],
             ),
-            concept_exists_by_name_callback=self.repository.concept_exists_by_name,
+            concept_exists_by_callback=self.repository.exists_by,
             activity_instance_class_exists_by_uid_callback=self._repos.activity_instance_class_repository.check_exists_final_version,
             activity_hierarchy_exists_by_uid_callback=self._repos.activity_repository.final_concept_exists,
+            activity_group_exists=self._repos.activity_group_repository.final_concept_exists,
+            activity_subgroup_exists=self._repos.activity_subgroup_repository.final_concept_exists,
             activity_item_exists_by_uid_callback=self._repos.activity_item_repository.check_exists_final_version,
         )
         return item

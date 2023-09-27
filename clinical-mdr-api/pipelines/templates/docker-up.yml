@@ -4,6 +4,19 @@ parameters:
   - name: SERVICE_CONN
     type: string
     default: IaCAgent-ClinicalMDR-DEV
+  - name: OAUTH_ENABLED
+    type: string
+    default: false
+  - name: OIDC_METADATA_DOCUMENT
+    type: string
+  - name: OAUTH_APP_ID
+    type: string
+  - name: OAUTH_APP_SECRET
+    type: string
+  - name: MS_GRAPH_INTEGRATION_ENABLED
+    type: string
+  - name: MS_GRAPH_GROUPS_QUERY
+    type: string
 
 steps:
 
@@ -41,3 +54,10 @@ steps:
       docker compose up --detach --renew-anon-volumes --wait database
       docker compose up --detach --wait api
     displayName: "Start docker services"
+    env:
+      OAUTH_ENABLED: "${{parameters.OAUTH_ENABLED}}"
+      OIDC_METADATA_DOCUMENT: "${{parameters.OIDC_METADATA_DOCUMENT}}"
+      OAUTH_APP_ID: "${{parameters.OAUTH_APP_ID}}"
+      OAUTH_APP_SECRET: "${{parameters.OAUTH_APP_SECRET}}"
+      MS_GRAPH_INTEGRATION_ENABLED: "${{parameters.MS_GRAPH_INTEGRATION_ENABLED}}"
+      MS_GRAPH_GROUPS_QUERY: "${{parameters.MS_GRAPH_GROUPS_QUERY}}"

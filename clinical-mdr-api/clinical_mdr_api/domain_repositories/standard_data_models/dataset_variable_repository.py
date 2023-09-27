@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 from clinical_mdr_api.domain_repositories.models.standard_data_model import (
     DatasetVariable,
     DatasetVariableInstance,
@@ -20,7 +18,7 @@ class DatasetVariableRepository(StandardDataModelRepository):
 
     # pylint: disable=unused-argument
     def generic_match_clause(
-        self, versioning_relationship: str, uid: Optional[str] = None
+        self, versioning_relationship: str, uid: str | None = None
     ):
         standard_data_model_label = self.root_class.__label__
         standard_data_model_value_label = self.value_class.__label__
@@ -32,12 +30,34 @@ class DatasetVariableRepository(StandardDataModelRepository):
                 (dataset_value:DatasetInstance)<-[:HAS_DATASET]-(data_model_ig_value:DataModelIGValue)
                 <-[:HAS_VERSION]-(data_model_ig_root:DataModelIGRoot)"""
 
-    def create_query_filter_statement(self, **kwargs) -> Tuple[str, dict]:
+    def union_match_clause(
+        self, filter_query_parameters: dict | None = None
+    ) -> str | None:
+        filter_query_parameters = filter_query_parameters or {}
+
+        if "dataset_scenario_uid" in filter_query_parameters:
+            standard_data_model_label = self.root_class.__label__
+            standard_data_model_value_label = self.value_class.__label__
+            return f"""
+                    MATCH (data_model_ig_root:DataModelIGRoot)-[:HAS_VERSION]->(data_model_ig_value:DataModelIGValue)-
+                    [:HAS_DATASET]->(dataset_value:DatasetInstance)
+                    MATCH (scenario_root:DatasetScenario {{uid: $dataset_scenario_uid}})-[:HAS_INSTANCE]->(scenario_value)
+                    MATCH (dataset_value)-[:HAS_DATASET_SCENARIO]->(scenario_value:DatasetScenarioInstance)
+                    -[has_dataset_variable_rel:HAS_DATASET_VARIABLE]->
+                    (standard_value:{standard_data_model_value_label})<-[:HAS_INSTANCE]-(standard_root:{standard_data_model_label})"""
+        return None
+
+    def create_query_filter_statement(self, **kwargs) -> tuple[str, dict]:
         (
             filter_statements_from_standard,
             filter_query_parameters,
         ) = super().create_query_filter_statement()
         filter_parameters = []
+        if kwargs.get("dataset_scenario_uid"):
+            filter_query_parameters["dataset_scenario_uid"] = kwargs.get(
+                "dataset_scenario_uid"
+            )
+
         if kwargs.get("data_model_ig_name") and kwargs.get("data_model_ig_version"):
             data_model_ig_name = kwargs.get("data_model_ig_name")
             data_model_ig_version = kwargs.get("data_model_ig_version")
@@ -77,12 +97,19 @@ class DatasetVariableRepository(StandardDataModelRepository):
             )
         return filter_statements_to_return, filter_query_parameters
 
-    def sort_by(self) -> Optional[dict]:
+    def sort_by(self) -> dict | None:
         return {"dataset.ordinal": True}
 
     def specific_alias_clause(self) -> str:
         return """
-        WITH *,
+        WITH 
+            standard_root,
+            uid,
+            name,
+            description,
+            standard_value,
+            has_dataset_variable_rel, 
+            dataset_value,
             standard_value.label AS label,
             standard_value.title AS title,
             standard_value.core AS core,
@@ -93,6 +120,8 @@ class DatasetVariableRepository(StandardDataModelRepository):
             standard_value.completion_instructions AS completion_instructions,
             standard_value.implementation_notes AS implementation_notes,
             standard_value.mapping_instructions AS mapping_instructions,
+            standard_value.described_value_domain AS described_value_domain,
+            standard_value.value_list AS value_list,
             apoc.coll.toSet([(standard_value)<-[:HAS_DATASET_VARIABLE]-
                 (:DatasetInstance)<-[:HAS_DATASET]-(data_model_ig_value:DataModelIGValue) 
                 | data_model_ig_value.name]) AS data_model_ig_names,

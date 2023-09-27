@@ -1,5 +1,5 @@
 import abc
-from typing import Optional, Sequence, TypeVar, cast
+from typing import Callable, Sequence, TypeVar
 
 from neomodel import core, db
 from pydantic import BaseModel
@@ -11,8 +11,7 @@ from clinical_mdr_api.domain_repositories.models.syntax import SyntaxTemplateRoo
 from clinical_mdr_api.domain_repositories.syntax_instances.template_parameters_repository import (
     TemplateParameterRepository,
 )
-from clinical_mdr_api.domains._utils import extract_parameters, generate_seq_id
-from clinical_mdr_api.domains.libraries.library_ar import LibraryAR
+from clinical_mdr_api.domains._utils import extract_parameters
 from clinical_mdr_api.domains.libraries.object import (
     ParametrizedTemplateARBase,
     ParametrizedTemplateVO,
@@ -29,16 +28,15 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
     VersioningException,
 )
-from clinical_mdr_api.exceptions import (
-    BusinessLogicException,
-    NotFoundException,
-    ValidationException,
-)
+from clinical_mdr_api.exceptions import BusinessLogicException, NotFoundException
 from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
-from clinical_mdr_api.services._utils import process_complex_parameters
+from clinical_mdr_api.services._utils import (
+    is_library_editable,
+    process_complex_parameters,
+)
 from clinical_mdr_api.services.generic_syntax_service import GenericSyntaxService
 from clinical_mdr_api.services.studies.study import StudyService
 
@@ -88,10 +86,12 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
         self,
         template,
         generate_uid_callback=None,
-        generate_seq_id_callback=None,
-        study_uid: Optional[str] = None,
-        template_uid: Optional[str] = None,
-        include_study_endpoints: Optional[bool] = False,
+        next_available_sequence_id_callback: Callable[[str], str | None] = (
+            lambda _: None
+        ),
+        study_uid: str | None = None,
+        template_uid: str | None = None,
+        include_study_endpoints: bool | None = False,
     ) -> _AggregateRootType:
         parameter_terms = self._create_parameter_entries(
             template,
@@ -108,25 +108,13 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
             template_sequence_id=getattr(template_root, "sequence_id", None),
             parameter_terms=parameter_terms,
             get_final_template_vo_by_template_uid_callback=self._get_template_vo_by_template_uid,
+            library_name=template.library_name,
         )
 
-        try:
-            library_vo = LibraryVO.from_input_values_2(
-                library_name=template.library_name,
-                is_library_editable_callback=(
-                    lambda name: (
-                        cast(
-                            LibraryAR, self._repos.library_repository.find_by_name(name)
-                        ).is_editable
-                        if self._repos.library_repository.find_by_name(name) is not None
-                        else None
-                    )
-                ),
-            )
-        except ValueError as exc:
-            raise NotFoundException(
-                f"The library with the name='{template.library_name}' could not be found."
-            ) from exc
+        library_vo = LibraryVO.from_input_values_2(
+            library_name=template.library_name,
+            is_library_editable_callback=is_library_editable,
+        )
 
         item = self.aggregate_class.from_input_values(
             author=self.user_initials,
@@ -135,14 +123,12 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
             generate_uid_callback=self.repository.generate_uid_callback
             if generate_uid_callback is None
             else generate_uid_callback,
-            generate_seq_id_callback=generate_seq_id
-            if generate_seq_id_callback is None
-            else generate_seq_id_callback,
+            next_available_sequence_id_callback=next_available_sequence_id_callback,
         )
         return item
 
     def create(
-        self, template: BaseModel, preview=False, template_uid: Optional[str] = None
+        self, template: BaseModel, preview=False, template_uid: str | None = None
     ) -> BaseModel:
         """
         Supports create object action.
@@ -155,12 +141,13 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                 item = self.create_ar_from_input_values(
                     template, template_uid=template_uid
                 )
-                rep = self.repository
-
-                if rep.check_exists_by_name(item.name):
-                    raise BusinessLogicException("The specified object already exists.")
 
                 if not preview:
+                    if self.repository.check_exists_by_name(item.name):
+                        raise BusinessLogicException(
+                            "The specified object already exists."
+                        )
+
                     self.repository.save(item)
 
             return self._transform_aggregate_root_to_pydantic_model(item_ar=item)
@@ -168,12 +155,8 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
             raise NotFoundException(
                 f"The library with the name='{template.library_name}' could not be found."
             ) from exc
-        except ValueError as e:
-            raise ValidationException(e.args[0]) from e
 
-    def _get_template_vo_by_template_uid(
-        self, template_uid: str
-    ) -> Optional[TemplateVO]:
+    def _get_template_vo_by_template_uid(self, template_uid: str) -> TemplateVO | None:
         """
         Helper function getting template for given template uid.
         """
@@ -200,15 +183,13 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                 template, template_uid=item.template_uid
             )
 
-            try:
-                template_vo = self.parametrized_template_vo_class.from_input_values_2(
-                    template_uid=item.template_uid,
-                    template_sequence_id=item.template_sequence_id,
-                    parameter_terms=parameter_terms,
-                    get_final_template_vo_by_template_uid_callback=self._get_template_vo_by_template_uid,
-                )
-            except ValueError as e:
-                raise ValidationException(e.args[0]) from e
+            template_vo = self.parametrized_template_vo_class.from_input_values_2(
+                template_uid=item.template_uid,
+                template_sequence_id=item.template_sequence_id,
+                parameter_terms=parameter_terms,
+                get_final_template_vo_by_template_uid_callback=self._get_template_vo_by_template_uid,
+                library_name=item.template_library_name,
+            )
             item.edit_draft(
                 author=self.user_initials,
                 change_description=template.change_description,
@@ -232,8 +213,8 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
     def get_parameters(
         self,
         uid: str,
-        study_uid: Optional[str] = None,
-        include_study_endpoints: Optional[bool] = False,
+        study_uid: str | None = None,
+        include_study_endpoints: bool | None = False,
     ):
         try:
             parameter_repository = TemplateParameterRepository()
@@ -252,9 +233,9 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
     def _create_parameter_entries(
         self,
         template,
-        template_uid: Optional[str] = None,
-        study_uid: Optional[str] = None,
-        include_study_endpoints: Optional[bool] = False,
+        template_uid: str | None = None,
+        study_uid: str | None = None,
+        include_study_endpoints: bool | None = False,
     ) -> Sequence[ParameterTermEntryVO]:
         """
         Creates sequence of Parameter Term Entries that is used in aggregate. These contain:
@@ -298,6 +279,9 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                     )
                 )
             else:
+                if not template.parameter_terms:
+                    continue
+
                 parameter = template.parameter_terms[idx]
                 uids = []
 
@@ -352,7 +336,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
 
     @db.transaction
     def get_referencing_studies(
-        self, uid: str, node_type: core.NodeMeta, fields: Optional[str] = ""
+        self, uid: str, node_type: core.NodeMeta, fields: str | None = ""
     ) -> Sequence[Study]:
         studies = self.study_repository.find_all_by_library_item_uid(
             uid=uid, library_item_type=node_type, sort_by={"uid": True}

@@ -12,7 +12,6 @@ Tests for /standards/data-models endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -30,7 +29,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-data_model_igs_all: List[DataModelIG]
+data_model_igs_all: list[DataModelIG]
 implemented_data_model: DataModel
 
 

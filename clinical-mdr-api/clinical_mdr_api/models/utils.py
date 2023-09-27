@@ -1,7 +1,7 @@
 import json
 import re
 from copy import copy
-from typing import Any, Callable, Dict, Generic, Iterable, Sequence, Type, TypeVar
+from typing import Any, Callable, Generic, Iterable, Self, Sequence, Type, TypeVar
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import conint, create_model
@@ -13,7 +13,11 @@ from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     UnitDefinitionAR,
 )
 
-EXCLUDE_PROPERTY_ATTRIBUTES_FROM_SCHEMA = {"remove_from_wildcard", "source"}
+EXCLUDE_PROPERTY_ATTRIBUTES_FROM_SCHEMA = {
+    "remove_from_wildcard",
+    "source",
+    "exclude_from_orm",
+}
 
 BASIC_TYPE_MAP = {
     "StringProperty": str,
@@ -154,23 +158,28 @@ class BaseModel(PydanticBaseModel):
             if issubclass(field.type_, BaseModel):
                 value = field.type_.from_orm(node._relations[source])
             # if obtained value is a list and field type is not List
-            # it means that we are building some List[BaseModel] but its fields are not of List type
+            # it means that we are building some list[BaseModel] but its fields are not of list type
+
             if isinstance(value, list) and not field.sub_fields:
                 # if ret array is not instantiated
-                # it means that the first property out of the whole List[BaseModel] is being instantiated
+                # it means that the first property out of the whole list [BaseModel] is being instantiated
                 if not ret:
                     for val in value:
                         temp_obj = copy(obj)
                         setattr(temp_obj, name, val)
                         ret.append(temp_obj)
-                # if ret exists it means that some properties out of whole List[BaseModel] are already instantiated
+                # if ret exists it means that some properties out of whole list [BaseModel] are already instantiated
                 else:
                     for val, item in zip(value, ret):
                         setattr(item, name, val)
             else:
                 setattr(obj, name, value)
-
-        if not ret:
+        # Nothing to return and the value returned by the query
+        # is an empty list => return an empty list
+        if not ret and isinstance(value, list):
+            return []
+        # Returning single BaseModel
+        if not ret and not isinstance(value, list):
             return super().from_orm(obj)
         # if ret exists it means that the list of BaseModels is being returned
         objs_to_return = []
@@ -182,14 +191,14 @@ class BaseModel(PydanticBaseModel):
         # Configuration applies to all our models #
 
         @staticmethod
-        def schema_extra(schema: Dict[str, Any], _: Type) -> None:
+        def schema_extra(schema: dict[str, Any], _: Type) -> None:
             """Exclude some custom internal attributes of Fields (properties) from the schema definitions"""
             for prop in schema.get("properties", {}).values():
                 for attr in EXCLUDE_PROPERTY_ATTRIBUTES_FROM_SCHEMA:
                     prop.pop(attr, None)
 
 
-def strtobool(value: str) -> int:
+def strtobool(value: str, default: int | None = None) -> int | None:
     """Convert a string representation of truth to integer 1 (true) or 0 (false).
 
     Returns 1 for True values: 'y', 'yes', 't', 'true', 'on', '1'.
@@ -197,8 +206,15 @@ def strtobool(value: str) -> int:
     Otherwise raises ValueError.
 
     Reimplemented because of deprecation https://peps.python.org/pep-0632/#migration-advice
-    Returns int to remain compatible with Python 3.7 distutils.util.strtobool()
+
+    Returns int to remain compatible with Python 3.7 distutils.util.strtobool().
+    However, a new parameter `default` has been introduced to the reimplementation.
+    If `value` evaluates to False then value of `default` will be returned.
     """
+
+    if not value:
+        return default
+
     val = value.lower()
     if val in ("y", "yes", "t", "true", "on", "1"):
         return 1
@@ -207,37 +223,39 @@ def strtobool(value: str) -> int:
     raise ValueError(f"invalid truth value {value:r}")
 
 
-def booltostr(b: bool, true_format: str = "Yes"):
+def booltostr(b: bool | str, true_format: str = "Yes") -> str:
     """
-    Convert a boolean to a string representation of truth.
+    Converts a boolean value to a string representation.
     True values are 'y', 'Yes', 'yes', 't', 'true', 'on', and '1';
     False values are 'n', 'No', 'no', 'f', 'false', 'off', and '0'.
-    Raises ValueError if 'true_format' is anything else than True values.
 
-    b: boolean value to convert to string.
-    true_format: format of the string representation of truth. Only True values allowed.
+    Args:
+        b (bool | str): The boolean value to convert. If a string is passed, it will be converted to a boolean.
+        true_format (str, optional): The string representation of the True value. Defaults to "Yes".
+
+    Returns:
+        str: The string representation of the boolean value.
+
+    Raises:
+        ValueError: If the true_format argument is invalid.
     """
-
     if isinstance(b, str):
         b = bool(strtobool(b))
 
-    if true_format in ("y", "Yes", "yes", "t", "true", "on", "1"):
+    mapping = {
+        "y": "n",
+        "Yes": "No",
+        "yes": "no",
+        "t": "f",
+        "true": "false",
+        "on": "off",
+        "1": "0",
+    }
+
+    if true_format in mapping:
         if b:
             return true_format
-        if true_format == "Yes":
-            return "No"
-        if true_format == "yes":
-            return "no"
-        if true_format == "y":
-            return "n"
-        if true_format == "true":
-            return "false"
-        if true_format == "t":
-            return "f"
-        if true_format == "on":
-            return "off"
-        if true_format == "1":
-            return "0"
+        return mapping[true_format]
     raise ValueError(f"Invalid true format {true_format}")
 
 
@@ -306,68 +324,41 @@ T = TypeVar("T")
 
 
 class CustomPage(GenericModel, Generic[T]):
+    """
+    A generic class used as a return type for paginated queries.
+
+    Attributes:
+        items (Sequence[T]): The items returned by the query.
+        total (int): The total number of items that match the query.
+        page (int): The number of the current page.
+        size (int): The maximum number of items per page.
+    """
+
     items: Sequence[T]
-    total: conint(ge=0)  # type: ignore
-    page: conint(ge=0)  # type: ignore
-    size: conint(ge=0)  # type: ignore
+    total: conint(ge=0)
+    page: conint(ge=0)
+    size: conint(ge=0)
 
     @classmethod
-    def create(
-        cls, items: Sequence[T], total: int, page: int, size: int
-    ) -> "CustomPage":
+    def create(cls, items: Sequence[T], total: int, page: int, size: int) -> Self:
         return cls(total=total, items=items, page=page, size=size)
 
 
 class GenericFilteringReturn(GenericModel, Generic[T]):
+    """
+    A generic class used as a return type for filtered queries.
+
+    Attributes:
+        items (Sequence[T]): The items returned by the query.
+        total (int): The total number of items that match the query.
+    """
+
     items: Sequence[T]
-    total_count: conint(ge=0)  # type: ignore
+    total: conint(ge=0)
 
     @classmethod
-    def create(cls, items: Sequence[T], total_count: int) -> "GenericFilteringReturn":
-        return cls(items=items, total_count=total_count)
-
-
-class InfiniteIntegerField(int):
-    """
-    Integer field allowing a 'inf' and '-inf' literals to describe plus and minus infinity.
-    Additionally accepts 'n/a' literal to describe null value.
-    """
-
-    INF_LITERAL = "inf"
-    NEG_INF_LITERAL = "-inf"
-    NOT_APPLICABLE_LITERAL = "n/a"
-
-    def __init__(self, v):
-        if isinstance(v, str):
-            self.string_value = v
-        elif isinstance(v, int):
-            self.string_value = str(v)
-            super().__init__(v)
-        else:
-            raise TypeError("Invalid value")
-
-    @classmethod
-    def __get_validators__(cls):
-        # one or more validators may be yielded which will be called in the
-        # order to validate the input, each validator will receive as an input
-        # the value returned from the previous validator
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, v):
-        if isinstance(v, str):
-            if v == cls.INF_LITERAL:
-                return float("inf")
-            if v == cls.NEG_INF_LITERAL:
-                return float("-inf")
-            if v == cls.NOT_APPLICABLE_LITERAL:
-                return ""
-            return int(v)
-        if isinstance(v, int):
-            return v
-        if v is None:
-            return v
-        raise ValueError("Unknown Type")
+    def create(cls, items: Sequence[T], total: int) -> Self:
+        return cls(items=items, total=total)
 
 
 class PrettyJSONResponse(Response):

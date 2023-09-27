@@ -97,7 +97,7 @@ function loadParameterValues (parameterValues, parameters) {
     if (item.terms.length) {
       item.terms.forEach(value => {
         if (value.type === pconstants.NUM_VALUE || value.type === pconstants.TEXT_VALUE) {
-          Object.assign(parameters[index], { selectedSeparator: '', selectedValues: value.name })
+          Vue.set(parameters, index, { name: value.type, selectedSeparator: '', selectedValues: value.name })
         } else {
           Vue.set(parameters[index], 'selectedSeparator', getSeparator(item.conjunction))
           if (parameters[index].selectedValues) {

@@ -7,7 +7,6 @@
     @close="close"
     @save="submit"
     :form-observer-getter="getObserver"
-    :editable="studyEndpoint !== undefined && studyEndpoint !== null"
     :extra-step-validation="extraStepValidation"
     :helpItems="helpItems"
     :editData="form"
@@ -16,8 +15,8 @@
       <v-radio-group
         v-model="creationMode"
         >
-        <v-radio :label="$t('StudyEndpointForm.select_mode')" value="studies" />
         <v-radio :label="$t('StudyEndpointForm.template_mode')" value="template" />
+        <v-radio :label="$t('StudyEndpointForm.select_mode')" value="studies" />
         <v-radio :label="$t('StudyEndpointForm.scratch_mode')" value="scratch" />
       </v-radio-group>
     </template>
@@ -57,7 +56,7 @@
             color="red"
             @click="unselectStudyEndpoint(item)"
             >
-            <v-icon>mdi-delete</v-icon>
+            <v-icon>mdi-delete-outline</v-icon>
           </v-btn>
         </template>
       </v-data-table>
@@ -142,11 +141,26 @@
     </template>
 
     <template v-slot:step.selectEndpointTemplate>
-      <v-card flat class="parameterBackground">
-        <v-card-text>
-          <n-n-parameter-highlighter :name="selectedEndpointTemplateName" default-color="orange" />
-        </v-card-text>
-      </v-card>
+      <v-data-table
+        :headers="templateSelectionHeaders"
+        :items="selectedTemplates"
+        >
+        <template v-slot:item.name="{ item }">
+          <n-n-parameter-highlighter
+            :name="item.name"
+            default-color="orange"
+            />
+        </template>
+        <template v-slot:item.actions="{ item }">
+          <v-btn
+            icon
+            color="red"
+            @click="unselectEndpointTemplate(item)"
+            >
+            <v-icon>mdi-delete-outline</v-icon>
+          </v-btn>
+        </template>
+      </v-data-table>
     </template>
 
     <template v-slot:step.selectEndpointTemplate.after>
@@ -172,7 +186,7 @@
           has-api
           :column-data-resource="`endpoint-templates`"
           @filter="getEndpointTemplates"
-          show-filter-bar-by-default
+          :default-filters="defaultTplFilters"
           >
           <template v-slot:item.categories="{ item }">
             <template v-if="item.categories">
@@ -419,7 +433,6 @@ import NNTemplateInputField from '@/components/tools/NNTemplateInputField'
 import ParameterValueSelector from '@/components/tools/ParameterValueSelector'
 import StudySelectionTable from './StudySelectionTable'
 import templatePreInstances from '@/api/templatePreInstances'
-import _isEqual from 'lodash/isEqual'
 import filteringParameters from '@/utils/filteringParameters'
 import constants from '@/constants/libraries'
 
@@ -434,11 +447,6 @@ export default {
     StudySelectionTable
   },
   props: {
-    studyEndpoint: Object,
-    cloneMode: {
-      type: Boolean,
-      default: false
-    },
     currentStudyEndpoints: Array
   },
   computed: {
@@ -449,9 +457,6 @@ export default {
       units: 'studiesGeneral/allUnits'
     }),
     title () {
-      if (this.studyEndpoint) {
-        return this.$t('StudyEndpointForm.edit_title')
-      }
       return this.$t('StudyEndpointForm.add_title')
     },
     studyObjectiveLevel () {
@@ -513,6 +518,7 @@ export default {
       preInstanceMode: true,
       selectLater: false,
       selectTimeFrameLater: false,
+      selectedTemplates: [],
       separators: ['and', 'or', ','],
       steps: [],
       studiesSteps: [
@@ -522,11 +528,7 @@ export default {
       ],
       templateSteps: [
         { name: 'creationMode', title: this.$t('StudyEndpointForm.creation_mode_title') },
-        { name: 'objective', title: this.$t('StudyEndpointForm.select_objective_title') },
-        { name: 'selectEndpointTemplate', title: this.$t('StudyEndpointForm.step2_title') },
-        { name: 'selectTimeframe', title: this.$t('StudyEndpointForm.select_timeframe_title') },
-        { name: 'endpointDetails', title: this.$t('StudyEndpointForm.step3_title') },
-        { name: 'level', title: this.$t('StudyEndpointForm.endpoint_level_title') }
+        { name: 'selectEndpointTemplate', title: this.$t('StudyEndpointForm.step2_title') }
       ],
       scratchSteps: [
         { name: 'creationMode', title: this.$t('StudyEndpointForm.creation_mode_title') },
@@ -536,15 +538,9 @@ export default {
         { name: 'endpointDetails', title: this.$t('StudyEndpointForm.step3_title') },
         { name: 'level', title: this.$t('StudyEndpointForm.endpoint_level_title') }
       ],
-      editSteps: [
-        { name: 'objective', title: this.$t('StudyEndpointForm.select_objective_title') },
-        { name: 'selectTimeframe', title: this.$t('StudyEndpointForm.select_timeframe_title') },
-        { name: 'endpointDetails', title: this.$t('StudyEndpointForm.step3_title') },
-        { name: 'level', title: this.$t('StudyEndpointForm.endpoint_level_title') }
-      ],
-      cloneModeSteps: [
-        { name: 'createEndpointTemplate', title: this.$t('StudyEndpointForm.edit_tpl_title') },
-        { name: 'endpointDetails', title: this.$t('StudyEndpointForm.step3_title') }
+      templateSelectionHeaders: [
+        { text: '', value: 'actions', width: '5%' },
+        { text: this.$t('_global.template'), value: 'name', class: 'text-center' }
       ],
       selectedStudies: [],
       selectedEndpointHeaders: [
@@ -560,11 +556,14 @@ export default {
       timeframeTemplateParameters: [],
       tplHeaders: [
         { text: '', value: 'actions', width: '5%' },
-        { text: this.$t('_global.sequence_number'), value: 'sequence_id' },
+        { text: this.$t('_global.sequence_number_short'), value: 'sequence_id', width: '5%' },
+        { text: this.$t('_global.template'), value: 'name', filteringName: 'name_plain' }
+      ],
+      defaultTplFilters: [
+        { text: this.$t('_global.sequence_number_short'), value: 'sequence_id' },
         { text: this.$t('_global.indications'), value: 'indications', filteringName: 'indications.name' },
-        { text: this.$t('EndpointTemplateTable.endpoint_cat'), value: 'categories' },
-        { text: this.$t('EndpointTemplateTable.endpoint_sub_cat'), value: 'sub_categories' },
-        { text: this.$t('_global.template'), value: 'name', width: '30%' }
+        { text: this.$t('EndpointTemplateTable.endpoint_cat'), value: 'categories.name.sponsor_preferred_name' },
+        { text: this.$t('EndpointTemplateTable.endpoint_sub_cat'), value: 'sub_categories.name.sponsor_preferred_name' }
       ],
       options: {},
       total: 0,
@@ -610,40 +609,10 @@ export default {
     getObserver (step) {
       return this.$refs[`observer_${step}`]
     },
-    initFromStudyEndpoint (studyEndpoint) {
-      this.form = JSON.parse(JSON.stringify(studyEndpoint))
-      if (!this.cloneMode) {
-        this.steps = this.editSteps
-        if (!studyEndpoint.study_objective) {
-          this.selectLater = true
-        }
-        if (!studyEndpoint.timeframe) {
-          this.selectTimeFrameLater = true
-        }
-      } else {
-        this.creationMode = 'clone'
-        this.steps = this.cloneModeSteps
-        this.endpointTemplateForm = { ...studyEndpoint.endpoint.endpoint_template }
-      }
-    },
     async loadEndpointTemplateParameters (template) {
       if (template) {
-        if (this.cloneMode) {
-          if (template.parameters.length === this.endpointTemplateParameters.length) {
-            let differ = false
-            for (let index = 0; index < this.endpointTemplateParameters.length; index++) {
-              if (template.parameters[index].name !== this.endpointTemplateParameters[index].name) {
-                differ = true
-                break
-              }
-            }
-            if (!differ) {
-              return
-            }
-          }
-        }
         this.loadingEndpointParameters = true
-        const templateUid = (this.creationMode !== 'scratch' && this.preInstanceMode && !this.studyEndpoint) ? template.template_uid : template.uid
+        const templateUid = (this.creationMode !== 'scratch' && this.preInstanceMode) ? template.template_uid : template.uid
         const resp = await endpointTemplates.getParameters(templateUid)
         this.endpointTemplateParameters = resp.data
         this.loadingEndpointParameters = false
@@ -672,92 +641,43 @@ export default {
     },
     async submit () {
       let args = null
-      let action = null
-      let notification = null
 
-      if (!this.studyEndpoint) {
-        if (this.creationMode !== 'studies') {
-          const data = JSON.parse(JSON.stringify(this.form))
-          if (this.preInstanceMode && this.creationMode !== 'scratch') {
-            data.endpoint_template.uid = data.endpoint_template.template_uid
-          }
-          args = {
-            studyUid: this.selectedStudy.uid,
-            data,
-            endpointParameters: this.endpointTemplateParameters,
-            timeframeParameters: this.timeframeTemplateParameters
-          }
-          action = 'studyEndpoints/addStudyEndpoint'
-          notification = 'endpoint_added'
-        } else {
-          for (const item of this.selectedStudyEndpoints) {
-            args = {
-              studyUid: this.selectedStudy.uid,
-              studyEndpoint: item
-            }
-            await this.$store.dispatch('studyEndpoints/selectFromStudyEndpoint', args)
-          }
-          bus.$emit('notification', { msg: this.$t('StudyEndpointForm.endpoint_added') })
-          this.close()
+      if (this.creationMode === 'template') {
+        if (!this.selectedTemplates.length) {
+          bus.$emit('notification', { msg: this.$t('EligibilityCriteriaForm.no_template_error'), type: 'error' })
+          this.$refs.stepper.loading = false
           return
         }
-      } else {
-        if (!this.cloneMode) {
-          args = {
-            studyUid: this.selectedStudy.uid,
-            studyEndpointUid: this.studyEndpoint.study_endpoint_uid,
-            form: JSON.parse(JSON.stringify(this.form))
-          }
-          const namePreview = await this.getStudyEndpointNamePreview()
-          if (this.studyEndpoint.endpoint.name !== namePreview) {
-            args.form.endpoint_parameters = this.endpointTemplateParameters
-          }
-          if (
-            this.$refs.timeframeParamSelector && (
-              !this.studyEndpoint.timeframe ||
-              (this.studyEndpoint.timeframe && (this.studyEndpoint.timeframe.name !== this.$refs.timeframeParamSelector.namePreview))
-            )
-          ) {
-            args.form.timeframe_parameters = this.timeframeTemplateParameters
-            args.form.timeframe_name_preview = this.$refs.timeframeParamSelector.namePreview
-          }
-          action = 'studyEndpoints/updateStudyEndpoint'
-          notification = 'endpoint_updated'
-        } else {
-          this.$store.dispatch('studyEndpoints/addStudyEndpoint', {
-            studyUid: this.selectedStudy.uid,
-            data: JSON.parse(JSON.stringify(this.form)),
-            endpointParameters: this.endpointTemplateParameters,
-            timeframeParameters: this.timeframeTemplateParameters
+        const data = []
+        for (const template of this.selectedTemplates) {
+          data.push({
+            endpoint_template_uid: this.preInstanceMode ? template.template_uid : template.uid,
+            parameter_terms: this.preInstanceMode ? template.parameter_terms : [],
+            library_name: template.library.name
           })
-          action = 'studyEndpoints/deleteStudyEndpoint'
+        }
+        await study.batchCreateStudyEndpoints(this.selectedStudy.uid, data)
+      } else if (this.creationMode === 'scratch') {
+        const data = JSON.parse(JSON.stringify(this.form))
+        args = {
+          studyUid: this.selectedStudy.uid,
+          data,
+          endpointParameters: this.endpointTemplateParameters,
+          timeframeParameters: this.timeframeTemplateParameters
+        }
+        await this.$store.dispatch('studyEndpoints/addStudyEndpoint', args)
+      } else {
+        for (const item of this.selectedStudyEndpoints) {
           args = {
             studyUid: this.selectedStudy.uid,
-            studyEndpointUid: this.studyEndpoint.study_endpoint_uid
+            studyEndpoint: item
           }
-          notification = 'endpoint_updated'
+          await this.$store.dispatch('studyEndpoints/selectFromStudyEndpoint', args)
         }
       }
-      if (this.studyEndpoint && !this.cloneMode) {
-        const endpointLevelChanged = !_isEqual(this.form.endpoint_level, this.studyEndpoint.endpoint_level)
-        const unitsChanged = !_isEqual(this.form.endpoint_units, this.studyEndpoint.endpoint_units)
-        const objectiveDefined = !this.studyObjective && this.form.study_objective !== undefined && this.form.study_objective !== null
-        if (_isEqual(this.form, args.form) && !endpointLevelChanged && !unitsChanged && !objectiveDefined) {
-          bus.$emit('notification', { msg: this.$t('_global.no_changes'), type: 'info' })
-          this.close()
-          return
-        }
-      }
-      this.$store.dispatch(action, args).then(resp => {
-        bus.$emit('notification', { msg: this.$t(`StudyEndpointForm.${notification}`) })
-        if (action !== 'studyEndpoints/updateStudyEndpoint') {
-          this.$emit('created')
-        }
-        this.close()
-      }).catch((error) => {
-        console.log(error)
-        this.$refs.stepper.loading = false
-      })
+      this.$emit('added')
+      bus.$emit('notification', { msg: this.$t('StudyEndpointForm.endpoint_added') })
+      this.close()
     },
     loadEndpointTemplate () {
       if (!this.form.endpoint && !this.form.endpoint_template) {
@@ -799,11 +719,10 @@ export default {
       }
     },
     async selectEndpointTemplate (template) {
-      this.$set(this.form, 'endpoint_template', template)
-      await this.loadEndpointTemplateParameters(template)
-      if (this.preInstanceMode) {
-        instances.loadParameterValues(template.parameter_terms, this.endpointTemplateParameters)
-      }
+      this.selectedTemplates.push(template)
+    },
+    unselectEndpointTemplate (template) {
+      this.selectedTemplates = this.selectedTemplates.filter(item => item.name !== template.name)
     },
     selectStudyEndpoint (studyEndpoint) {
       this.selectedStudyEndpoints.push(studyEndpoint)
@@ -816,7 +735,7 @@ export default {
     isStudyEndpointSelected (studyEndpoint) {
       let selected = this.selectedStudyEndpoints.find(item => item.endpoint.uid === studyEndpoint.endpoint.uid)
       if (!selected && this.currentStudyEndpoints.length) {
-        selected = this.currentStudyEndpoints.find(item => item.endpoint.uid === studyEndpoint.endpoint.uid)
+        selected = this.currentStudyEndpoints.find(item => item.endpoint && item.endpoint.uid === studyEndpoint.endpoint.uid)
       }
       return selected !== undefined
     },
@@ -833,7 +752,7 @@ export default {
         let resp
         try {
           resp = await endpointTemplates.create(data)
-          await endpointTemplates.approve(resp.data.uid)
+          if (resp.data.status === statuses.DRAFT) await endpointTemplates.approve(resp.data.uid)
           this.$set(this.form, 'endpoint_template', resp.data)
         } catch (error) {
           return false
@@ -841,20 +760,12 @@ export default {
         await this.loadEndpointTemplateParameters(resp.data)
         return true
       }
-      if (this.creationMode !== 'studies') {
-        if ((!this.studyEndpoint && step === 2) || (this.studyEndpoint && step === 1)) {
-          if (this.selectLater || this.form.study_objective) {
-            return true
-          }
-          bus.$emit('notification', { type: 'error', msg: this.$t('StudyEndpointForm.select_objective') })
-          return false
+      if (this.creationMode === 'scratch' && step === 2) {
+        if (this.selectLater || this.form.study_objective) {
+          return true
         }
-        if (step === 3) {
-          if (!this.form.endpoint_template) {
-            bus.$emit('notification', { type: 'error', msg: this.$t('StudyEndpointForm.no_endpoint_template') })
-            return false
-          }
-        }
+        bus.$emit('notification', { type: 'error', msg: this.$t('StudyEndpointForm.select_objective') })
+        return false
       }
       return true
     },
@@ -955,6 +866,7 @@ export default {
     preInstanceMode (value) {
       this.api = value ? this.preInstanceApi : endpointTemplates
       this.getEndpointTemplates()
+      this.selectedTemplates = []
     }
   }
 }

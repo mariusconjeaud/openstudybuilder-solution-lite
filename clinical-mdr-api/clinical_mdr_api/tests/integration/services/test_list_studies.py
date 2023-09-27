@@ -79,7 +79,10 @@ class TestListStudies(unittest.TestCase):
         StudyActivitySelectionService("AZNG").make_selection(
             "study_root",
             models.StudySelectionActivityCreateInput(
-                flowchart_group_uid="term_root_final", activity_uid="activity_root1"
+                flowchart_group_uid="term_root_final",
+                activity_uid="activity_root1",
+                activity_subgroup_uid="activity_subgroup_root1",
+                activity_group_uid="activity_group_root1",
             ),
         )
 

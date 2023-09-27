@@ -1,11 +1,10 @@
 import unittest
 import uuid
-from typing import List
 from unittest import mock
 
 from parameterized import parameterized
-from pydantic.main import BaseModel
 
+from clinical_mdr_api.models.utils import BaseModel
 from clinical_mdr_api.repositories._utils import ComparisonOperator, FilterOperator
 from clinical_mdr_api.services import _utils
 
@@ -14,13 +13,13 @@ class BaseTestObject(BaseModel):
     uid: str = str(uuid.uuid4())
     k1: str = ""
     k2: str = ""
-    k3: List[str] = []
+    k3: list[str] = []
 
     def __eq__(self, other):
         return self.k1 == other.k1 and self.k2 == other.k2 and self.k3 == other.k3
 
     @staticmethod
-    def get_all_items() -> List["BaseTestObject"]:
+    def get_all_items() -> list["BaseTestObject"]:
         return [
             BaseTestObject(
                 k1=f"k1.row{index}", k2=f"k2.row{index}", uid=str(uuid.uuid4())
@@ -71,15 +70,6 @@ class TestServiceUtils(unittest.TestCase):
                 self.b = b
 
         assert _utils.to_dict(A(x="a", b=B(y="b"))) == {"b": {"y": "b"}, "x": "a"}
-
-    @parameterized.expand(
-        [
-            ("OdmItemGroupRoot", "Root", "OdmItemGroup"),
-            ("OdmItemGroupRooot", "Root", "OdmItemGroupRooot"),
-        ]
-    )
-    def test_strip_suffix(self, string, suffix, expected):
-        assert _utils.strip_suffix(string, suffix) == expected
 
     @parameterized.expand(
         [
@@ -206,7 +196,7 @@ class TestServiceUtils(unittest.TestCase):
             page_size,
         )
         assert out.items == expected
-        assert out.total_count == len(expected)
+        assert out.total == len(expected)
 
     @parameterized.expand(
         [

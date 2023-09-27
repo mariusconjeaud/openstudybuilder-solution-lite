@@ -334,17 +334,14 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
                     )
                 )
                 assert selection_aggregate is not None
-                try:
-                    selection_aggregate.add_branch_arm_selection(
-                        study_branch_arm_selection=new_selection,
-                        study_branch_arm_study_arm_update_conflict_callback=(
-                            repos.study_branch_arm_repository.branch_arm_arm_update_conflict
-                        ),
-                        study_arm_exists_callback=self._repos.study_arm_repository.arm_specific_exists_by_uid,
-                        branch_arm_exists_callback_by=repos.study_branch_arm_repository.branch_arm_exists_by,
-                    )
-                except ValueError as value_error:
-                    raise exceptions.ValidationException(value_error.args[0])
+                selection_aggregate.add_branch_arm_selection(
+                    study_branch_arm_selection=new_selection,
+                    study_branch_arm_study_arm_update_conflict_callback=(
+                        repos.study_branch_arm_repository.branch_arm_arm_update_conflict
+                    ),
+                    study_arm_exists_callback=self._repos.study_arm_repository.arm_specific_exists_by_uid,
+                    branch_arm_exists_callback_by=repos.study_branch_arm_repository.branch_arm_exists_by,
+                )
 
                 # sync with DB and save the update
                 repos.study_branch_arm_repository.save(selection_aggregate, self.author)
@@ -435,12 +432,9 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
             assert selection_aggregate is not None
 
             # Load the current VO for updates
-            try:
-                current_vo, order = selection_aggregate.get_specific_object_selection(
-                    study_selection_uid=selection_update_input.branch_arm_uid
-                )
-            except ValueError as value_error:
-                raise exceptions.NotFoundException(value_error.args[0])
+            current_vo, order = selection_aggregate.get_specific_object_selection(
+                study_selection_uid=selection_update_input.branch_arm_uid
+            )
 
             # merge current with updates
             updated_selection = self._patch_prepare_new_study_branch_arm(
@@ -448,16 +442,13 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
                 current_study_branch_arm=current_vo,
             )
 
-            try:
-                # let the aggregate update the value object
-                selection_aggregate.update_selection(
-                    updated_study_branch_arm_selection=updated_selection,
-                    study_branch_arm_study_arm_update_conflict_callback=repos.study_branch_arm_repository.branch_arm_arm_update_conflict,
-                    study_arm_exists_callback=self._repos.study_arm_repository.arm_specific_exists_by_uid,
-                    branch_arm_exists_callback_by=repos.study_branch_arm_repository.branch_arm_exists_by,
-                )
-            except ValueError as value_error:
-                raise exceptions.ValidationException(value_error.args[0])
+            # let the aggregate update the value object
+            selection_aggregate.update_selection(
+                updated_study_branch_arm_selection=updated_selection,
+                study_branch_arm_study_arm_update_conflict_callback=repos.study_branch_arm_repository.branch_arm_arm_update_conflict,
+                study_arm_exists_callback=self._repos.study_arm_repository.arm_specific_exists_by_uid,
+                branch_arm_exists_callback_by=repos.study_branch_arm_repository.branch_arm_exists_by,
+            )
             # sync with DB and save the update
             repos.study_branch_arm_repository.save(selection_aggregate, self.author)
 

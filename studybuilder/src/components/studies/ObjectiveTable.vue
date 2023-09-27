@@ -34,6 +34,7 @@
         color="primary"
         @click.stop="showForm = true"
         :title="$t('StudyObjectiveForm.add_title')"
+        :disabled="!checkPermission($roles.STUDY_WRITE)"
         >
         <v-icon>
           mdi-plus
@@ -53,7 +54,7 @@
           >
           <td v-if="props.showSelectBoxes">
             <v-checkbox
-              :value="item.objective.name"
+              :value="item.objective ? item.objective.name : item.objective_template.name"
               hide-details
               @change="props.select(!props.isSelected(item))"
               />
@@ -74,6 +75,12 @@
           <td v-else></td>
           <td>
             <n-n-parameter-highlighter
+              v-if="item.objective_template"
+              :name="item.objective_template.name"
+              default-color="orange"
+              />
+            <n-n-parameter-highlighter
+              v-else
               :name="item.objective.name"
               :show-prefix-and-postfix="false"
               />
@@ -84,8 +91,14 @@
         </tr>
       </draggable>
     </template>
-    <template v-slot:item.objective.name="{ item }">
+    <template v-slot:item.name="{ item }">
       <n-n-parameter-highlighter
+        v-if="item.objective_template"
+        :name="item.objective_template.name"
+        default-color="orange"
+        />
+      <n-n-parameter-highlighter
+        v-else
         :name="item.objective.name"
         :show-prefix-and-postfix="false"
         />
@@ -110,22 +123,36 @@
       @close="closeForm"
       :current-study-objectives="studyObjectives"
       :study-objective="selectedObjective"
-      :clone-mode="cloneMode"
       class="fullscreen-dialog"
+      @added="fetchObjectives"
       />
   </v-dialog>
   <objective-edit-form
     :open="showEditForm"
     @close="closeEditForm"
     :study-objective="selectedObjective"
+    @updated="fetchObjectives"
     />
+  <v-dialog v-model="showHistory"
+            @keydown.esc="closeHistory"
+            persistent
+            :max-width="globalHistoryDialogMaxWidth"
+            :fullscreen="globalHistoryDialogFullscreen">
+    <history-table
+      :title="studyObjectiveHistoryTitle"
+      @close="closeHistory"
+      :headers="headers"
+      :items="objectiveHistoryItems"
+      :html-fields="historyHtmlFields"
+      />
+  </v-dialog>
   <confirm-dialog ref="confirm" :text-cols="6" :action-cols="5" />
   <v-snackbar
     v-model="snackbar"
     color="error"
     top
     >
-    <v-icon class="mr-2">mdi-alert</v-icon>
+    <v-icon class="mr-2">mdi-alert-outline</v-icon>
     {{ $t('StudyObjectivesTable.sort_help_msg') }}
   </v-snackbar>
 </div>
@@ -141,24 +168,29 @@ import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter'
 import NNTable from '@/components/tools/NNTable'
 import ObjectiveEditForm from '@/components/studies/ObjectiveEditForm'
 import ObjectiveForm from '@/components/studies/ObjectiveForm'
+import HistoryTable from '@/components/tools/HistoryTable'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import statuses from '@/constants/statuses'
 import filteringParameters from '@/utils/filteringParameters'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     ActionsMenu,
     draggable,
     NNParameterHighlighter,
     ObjectiveEditForm,
     ObjectiveForm,
+    HistoryTable,
     NNTable,
     ConfirmDialog
   },
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy',
-      studyObjectives: 'studyObjectives/studyObjectives'
+      studyObjectives: 'studyObjectives/studyObjectives',
+      total: 'studyObjectives/total'
     }),
     exportDataUrl () {
       return `studies/${this.selectedStudy.uid}/study-objectives`
@@ -177,28 +209,32 @@ export default {
       actions: [
         {
           label: this.$t('StudyObjectivesTable.update_version_retired_tooltip'),
-          icon: 'mdi-alert',
+          icon: 'mdi-alert-outline',
           iconColor: 'orange',
-          condition: (item) => this.isLatestRetired(item)
+          condition: (item) => this.isLatestRetired(item),
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('StudyObjectivesTable.update_version_tooltip'),
-          icon: 'mdi-bell-ring',
+          icon: 'mdi-bell-ring-outline',
           iconColorFunc: this.objectiveUpdateAborted,
           condition: this.needUpdate,
-          click: this.updateVersion
+          click: this.updateVersion,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
-          click: this.editObjective
+          click: this.editObjective,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
-          click: this.deleteStudyObjective
+          click: this.deleteStudyObjective,
+          accessRole: this.$roles.STUDY_WRITE
         },
         {
           label: this.$t('_global.history'),
@@ -206,7 +242,6 @@ export default {
           click: this.openHistory
         }
       ],
-      cloneMode: false,
       headers: [
         { text: '', value: 'actions', width: '5%' },
         { text: this.$t('StudyObjectivesTable.order'), value: 'order', width: '3%' },
@@ -214,7 +249,7 @@ export default {
           text: this.$t('StudyObjectivesTable.objective_level'),
           value: 'objective_level.sponsor_preferred_name'
         },
-        { text: this.$t('_global.objective'), value: 'objective.name', width: '30%' },
+        { text: this.$t('_global.objective'), value: 'name', width: '30%' },
         { text: this.$t('StudyObjectivesTable.endpoint_count'), value: 'endpoint_count' },
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.modified_by'), value: 'user_initials' }
@@ -232,8 +267,7 @@ export default {
       sortDesc: false,
       sortMode: false,
       abortConfirm: false,
-      options: {},
-      total: 0
+      options: {}
     }
   },
   methods: {
@@ -241,9 +275,7 @@ export default {
       const params = filteringParameters.prepareParameters(
         this.options, filters, sort, filtersUpdated)
       params.studyUid = this.selectedStudy.uid
-      this.$store.dispatch('studyObjectives/fetchStudyObjectives', params).then(resp => {
-        this.total = resp.data.total
-      })
+      this.$store.dispatch('studyObjectives/fetchStudyObjectives', params)
     },
     async fetchObjectivesHistory () {
       const resp = await study.getStudyObjectivesAuditTrail(this.selectedStudy.uid)
@@ -261,7 +293,13 @@ export default {
       if (this.needUpdate(item)) {
         return {
           color: 'error',
-          icon: 'mdi-bell'
+          icon: 'mdi-bell-outline'
+        }
+      }
+      if (!item.objective && item.objective_template.parameters.length > 0) {
+        return {
+          color: 'error',
+          icon: 'mdi-exclamation'
         }
       }
       return null
@@ -309,7 +347,6 @@ export default {
     },
     closeForm () {
       this.showForm = false
-      this.cloneMode = false
       this.selectedObjective = null
     },
     closeEditForm () {
@@ -325,6 +362,7 @@ export default {
           studyUid: this.selectedStudy.uid,
           studyObjectiveUid: studyObjective.study_objective_uid
         }).then(resp => {
+          this.fetchObjectives()
           bus.$emit('notification', { msg: this.$t('StudyObjectivesTable.delete_objective_success') })
         })
       }
@@ -356,10 +394,8 @@ export default {
     onOrderChange (event) {
       const studyObjective = event.moved.element
       const replacedStudyObjective = this.studyObjectives[event.moved.newIndex]
-      study.updateStudyObjectiveOrder(studyObjective.study_uid, studyObjective.study_objective_uid, replacedStudyObjective.order).then(resp => {
-        this.$store.dispatch('studyObjectives/fetchStudyObjectives', { studyUid: this.selectedStudy.uid }).then(() => {
-          this.sortStudyObjectives()
-        })
+      study.updateStudyObjectiveOrder(studyObjective.study_uid, studyObjective.study_objective_uid, replacedStudyObjective.order).then(() => {
+        this.fetchObjectives()
       })
     },
     sortStudyObjectives () {

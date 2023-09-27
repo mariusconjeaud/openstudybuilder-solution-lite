@@ -19,7 +19,7 @@
       :data-cy="$t('StudyTitleView.edit_title')"
       >
       <v-icon>
-        mdi-pencil
+        mdi-pencil-outline
       </v-icon>
     </v-btn>
   </div>
@@ -45,6 +45,7 @@
       @updated="fetchStudyDescription"
       @close="showForm = false" />
   </v-dialog>
+  <comment-thread-list :topicPath="'/studies/' + selectedStudy.uid + '/study_title'" :isTransparent="true"></comment-thread-list>
 </div>
 </template>
 
@@ -53,12 +54,14 @@ import study from '@/api/study'
 import { studySelectedNavigationGuard } from '@/mixins/studies'
 import StudyTitleForm from '@/components/studies/StudyTitleForm'
 import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels'
+import CommentThreadList from '@/components/tools/CommentThreadList'
 
 export default {
   mixins: [studySelectedNavigationGuard],
   components: {
     StudyTitleForm,
-    HelpButtonWithPanels
+    HelpButtonWithPanels,
+    CommentThreadList
   },
   data () {
     return {

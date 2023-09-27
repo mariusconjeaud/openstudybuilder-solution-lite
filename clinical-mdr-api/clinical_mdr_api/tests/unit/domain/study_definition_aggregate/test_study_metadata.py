@@ -2,7 +2,7 @@ import random
 import string
 import unittest
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Iterable, List, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Iterable, Mapping, Sequence
 
 import pytest
 
@@ -613,8 +613,8 @@ class TestStudyPopulation(unittest.TestCase):
 
 def random_valid_id_metadata(
     *,
-    condition: Optional[Callable[[StudyIdentificationMetadataVO], bool]] = None,
-    fixed_values: Optional[Mapping[str, Any]] = None,
+    condition: Callable[[StudyIdentificationMetadataVO], bool] | None = None,
+    fixed_values: Mapping[str, Any] | None = None,
     max_tries: int = 100,
 ) -> StudyIdentificationMetadataVO:
     if fixed_values is None:
@@ -664,7 +664,7 @@ def random_valid_id_metadata(
 def random_valid_id_metadata_sequence(
     count: int,
     *,
-    condition: Optional[Callable[[StudyIdentificationMetadataVO], bool]] = None,
+    condition: Callable[[StudyIdentificationMetadataVO], bool] | None = None,
     max_tries: int = 100,
 ) -> Sequence[StudyIdentificationMetadataVO]:
     return [
@@ -844,7 +844,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
 def random_valid_high_level_study_design(
     *,
     condition: Callable[[HighLevelStudyDesignVO], bool] = (lambda _: True),
-    fixed_values: Optional[Mapping[str, Any]] = None,
+    fixed_values: Mapping[str, Any] | None = None,
     max_tries: int = 100,
 ) -> HighLevelStudyDesignVO:
     if fixed_values is None:
@@ -997,7 +997,7 @@ def random_valid_high_level_study_design(
 def random_valid_high_level_study_design_sequence(
     count: int,
     condition: Callable[[HighLevelStudyDesignVO], bool] = (lambda _: True),
-    generators: Optional[Mapping[str, Any]] = None,
+    generators: Mapping[str, Any] | None = None,
     max_tries: int = 100,
 ) -> Iterable[HighLevelStudyDesignVO]:
     if generators is None:
@@ -1486,12 +1486,12 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
 
     def test__init__with_mutable_iterables__changed_to_tuples(self):
         # given
-        study_type_code: Optional[str] = random_str()
+        study_type_code: str | None = random_str()
         trial_type_codes: Iterable[str] = [random_str(), random_str()]
-        trial_phase_code: Optional[str] = random_str()
-        is_extension_trial: Optional[bool] = None
-        is_adaptive_design: Optional[bool] = None
-        study_stop_rules: Optional[str] = "some rules"
+        trial_phase_code: str | None = random_str()
+        is_extension_trial: bool | None = None
+        is_adaptive_design: bool | None = None
+        study_stop_rules: str | None = "some rules"
         confirmed_response = random_str()
 
         # when
@@ -1583,7 +1583,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
 
 
 def random_ver_metadata(
-    condition: Optional[Callable[[StudyVersionMetadataVO], bool]] = None,
+    condition: Callable[[StudyVersionMetadataVO], bool] | None = None,
     max_tries: int = 100,
 ) -> StudyVersionMetadataVO:
     count: int = 0
@@ -1614,14 +1614,14 @@ def random_ver_metadata(
 
 def random_ver_metadata_sequence(
     count: int,
-    condition: Optional[Callable[[StudyVersionMetadataVO], bool]] = None,
+    condition: Callable[[StudyVersionMetadataVO], bool] | None = None,
     max_tries: int = 100,
 ) -> Sequence[StudyVersionMetadataVO]:
     return [random_ver_metadata(condition, max_tries) for _ in range(0, count)]
 
 
 def random_study_metadata(
-    condition: Optional[Callable[[StudyMetadataVO], bool]] = None, max_tries: int = 100
+    condition: Callable[[StudyMetadataVO], bool] | None = None, max_tries: int = 100
 ) -> StudyMetadataVO:
     count: int = 0
     while True:
@@ -1644,7 +1644,7 @@ def random_study_metadata(
 
 def random_study_metadata_sequence(
     count: int,
-    condition: Optional[Callable[[StudyMetadataVO], bool]] = None,
+    condition: Callable[[StudyMetadataVO], bool] | None = None,
     max_tries: int = 1000,
 ) -> Sequence[StudyMetadataVO]:
     return [random_study_metadata(condition, max_tries) for _ in range(0, count)]
@@ -1825,11 +1825,9 @@ class TestStudyMetadataVO(unittest.TestCase):
 
     def test__validate__some_components_invalid__failure(self):
         def is_valid(
-            _: Union[
-                StudyIdentificationMetadataVO,
-                StudyVersionMetadataVO,
-                HighLevelStudyDesignVO,
-            ]
+            _: StudyIdentificationMetadataVO
+            | StudyVersionMetadataVO
+            | HighLevelStudyDesignVO,
         ) -> bool:
             try:
                 _.validate()
@@ -1860,7 +1858,7 @@ class TestStudyMetadataVO(unittest.TestCase):
                 for i in range(0, len(id_metadata_sequence))
             ]
 
-        test_sequence: List[StudyMetadataVO] = []
+        test_sequence: list[StudyMetadataVO] = []
         valid_id_metadata_sequence = random_valid_id_metadata_sequence(count=10)
         invalid_id_metadata_sequence = [
             _.fix_some_values(study_number=None, study_acronym=None)

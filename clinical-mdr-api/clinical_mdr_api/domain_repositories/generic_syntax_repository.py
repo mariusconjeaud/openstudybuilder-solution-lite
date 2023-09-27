@@ -1,5 +1,5 @@
 import abc
-from typing import Dict, Optional, Sequence, TypeVar
+from typing import Sequence, TypeVar
 
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
@@ -32,6 +32,7 @@ from clinical_mdr_api.domains.libraries.parameter_term import (
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
 )
+from clinical_mdr_api.exceptions import NotFoundException
 
 _AggregateRootType = TypeVar("_AggregateRootType", bound=LibraryItemAggregateRootBase)
 
@@ -77,11 +78,11 @@ class GenericSyntaxRepository(
                 param_uid = r
             tptr = TemplateParameterTermRoot.nodes.get(uid=param_uid)
             complex_value.uses_parameter.connect(tptr, {"position": i + 1})
-        return root.id
+        return root.element_id
 
     def _parse_parameter_terms(
         self, instance_parameters
-    ) -> Dict[int, Sequence[ParameterTermEntryVO]]:
+    ) -> dict[int, Sequence[ParameterTermEntryVO]]:
         # Note that this method is used both by templates for default values and instances for values
         # Hence the checks we have to make on the existence of the set_number property
         parameter_strings = []
@@ -227,6 +228,29 @@ class GenericSyntaxRepository(
         )
         return pv
 
+    def get_template_type_uid(self, template_uid: str) -> str:
+        """
+        Get the UID of the type associated with a given Syntax Template.
+
+        Args:
+            template_uid (str): The UID of the Syntax Template to get the type for.
+
+        Returns:
+            str: The UID of the type associated with the given Syntax Template.
+
+        Raises:
+            NotFoundException: If a Syntax Template does not exist.
+        """
+
+        if not (root := self.root_class.nodes.get_or_none(uid=template_uid)):
+            raise NotFoundException(
+                f"Syntax Template with uid {template_uid} does not exist"
+            )
+
+        ct_term = root.has_type.get_or_none()
+
+        return ct_term.uid if ct_term else None
+
     def _get_indication(self, uid: str) -> DictionaryTermRoot:
         # Finds indication in database based on root node uid
         return DictionaryTermRoot.nodes.get(uid=uid)
@@ -247,8 +271,8 @@ class GenericSyntaxRepository(
         # Finds activity sub group in database based on root node uid
         return ActivitySubGroupRoot.nodes.get(uid=uid)
 
-    def _get_criteria_type(self, uid: str) -> CTTermRoot:
-        # Finds criteria type in database based on root node uid
+    def _get_template_type(self, uid: str) -> CTTermRoot:
+        # Finds template type in database based on root node uid
         return CTTermRoot.nodes.get(uid=uid)
 
     def patch_indications(self, uid: str, indication_uids: Sequence[str]) -> None:
@@ -298,7 +322,7 @@ class GenericSyntaxRepository(
             root.has_activity_subgroup.connect(sub_group)
 
     def patch_is_confirmatory_testing(
-        self, uid: str, is_confirmatory_testing: Optional[bool] = None
+        self, uid: str, is_confirmatory_testing: bool | None = None
     ) -> None:
         root = self.root_class.nodes.get(uid=uid)
         if is_confirmatory_testing is None and root.is_confirmatory_testing is not None:

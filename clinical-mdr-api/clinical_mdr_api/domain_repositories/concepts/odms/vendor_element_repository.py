@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
@@ -45,7 +43,7 @@ class VendorElementRepository(OdmGenericRepository[OdmVendorElementAR]):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> OdmVendorElementAR:
@@ -53,8 +51,8 @@ class VendorElementRepository(OdmGenericRepository[OdmVendorElementAR]):
             uid=root.uid,
             concept_vo=OdmVendorElementVO.from_repository_values(
                 name=value.name,
-                vendor_namespace_uid=root.belongs_to_vendor_namespace.get_or_none().uid
-                if root.belongs_to_vendor_namespace.get_or_none()
+                vendor_namespace_uid=vendor_namespace.uid
+                if (vendor_namespace := root.belongs_to_vendor_namespace.get_or_none())
                 else None,
                 vendor_attribute_uids=[
                     vendor_attribute.uid
@@ -99,7 +97,7 @@ class VendorElementRepository(OdmGenericRepository[OdmVendorElementAR]):
         return odm_vendor_element_ar
 
     def specific_alias_clause(
-        self, only_specific_status: Optional[List[str]] = None
+        self, only_specific_status: list[str] | None = None
     ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]
@@ -138,8 +136,8 @@ class VendorElementRepository(OdmGenericRepository[OdmVendorElementAR]):
         root = OdmVendorElementRoot.nodes.get_or_none(uid=ar.uid)
 
         vendor_namespace_uid = (
-            root.belongs_to_vendor_namespace.get_or_none().uid
-            if root.belongs_to_vendor_namespace.get_or_none()
+            vendor_namespace.uid
+            if (vendor_namespace := root.belongs_to_vendor_namespace.get_or_none())
             else None
         )
 

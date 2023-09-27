@@ -1,6 +1,6 @@
 """CTTermNames router."""
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Response
 from fastapi import status as fast_api_status
@@ -10,13 +10,14 @@ from clinical_mdr_api import config, models
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.controlled_terminologies.ct_term_name import (
     CTTermNameService,
 )
 
+# Prefixed with "/ct"
 router = APIRouter()
 
 CTTermUID = Path(None, description="The unique id of the CTTermNames")
@@ -24,8 +25,9 @@ CTTermUID = Path(None, description="The unique id of the CTTermNames")
 
 @router.get(
     "/terms/names",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all terms names.",
-    response_model=CustomPage[models.CTTermName],
+    response_model=CustomPage[models.CTTermName | models.CTTermNameSimple],
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,
@@ -33,37 +35,46 @@ CTTermUID = Path(None, description="The unique id of the CTTermNames")
     },
 )
 def get_terms(
-    codelist_uid: Optional[str] = Query(
+    codelist_uid: str
+    | None = Query(
         None, description="If specified, only terms from given codelist are returned."
     ),
-    codelist_name: Optional[str] = Query(
+    codelist_name: str
+    | None = Query(
         None, description="If specified, only terms from given codelist are returned."
     ),
-    library: Optional[str] = Query(
+    library: str
+    | None = Query(
         None, description="If specified, only terms from given library are returned."
     ),
-    package: Optional[str] = Query(
+    package: str
+    | None = Query(
         None, description="If specified, only terms from given package are returned."
     ),
-    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
+    compact_response: bool
+    | None = Query(
+        False,
+        description="If true, only `term_uid` and `sponsor_prefered_name` fields are returned for each item.",
     ),
-    page_size: Optional[int] = Query(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
     ct_term_name_service = CTTermNameService(user=current_user_id)
@@ -79,17 +90,29 @@ def get_terms(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
+
+    if compact_response:
+        results.items = list(
+            map(
+                lambda x: models.CTTermNameSimple(
+                    term_uid=x.term_uid, sponsor_preferred_name=x.sponsor_preferred_name
+                ),
+                results.items,
+            )
+        )
+
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/terms/names/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possibles values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=List[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -101,31 +124,34 @@ def get_terms(
 )
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
-    codelist_uid: Optional[str] = Query(
+    codelist_uid: str
+    | None = Query(
         None, description="If specified, only terms from given codelist are returned."
     ),
-    codelist_name: Optional[str] = Query(
+    codelist_name: str
+    | None = Query(
         None, description="If specified, only terms from given codelist are returned."
     ),
-    library: Optional[str] = Query(
+    library: str
+    | None = Query(
         None, description="If specified, only terms from given library are returned."
     ),
-    package: Optional[str] = Query(
+    package: str
+    | None = Query(
         None, description="If specified, only terms from given package are returned."
     ),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     ct_term_service = CTTermNameService(user=current_user_id)
     return ct_term_service.get_distinct_values_for_header(
@@ -143,6 +169,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/terms/{term_uid}/names",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the latest/newest version of a specific ct term identified by 'term_uid'",
     response_model=models.CTTermName,
     status_code=200,
@@ -153,7 +180,8 @@ def get_distinct_values_for_header(
 )
 def get_term_names(
     term_uid: str = CTTermUID,
-    at_specified_date_time: Optional[datetime] = Query(
+    at_specified_date_time: datetime
+    | None = Query(
         None,
         description="If specified then the latest/newest representation of the "
         "CTTermNameValue at this point in time is returned.\n"
@@ -161,13 +189,15 @@ def get_term_names(
         "e.g.: '2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. "
         "If the timezone is omitted, UTC±0 is assumed.",
     ),
-    status: Optional[LibraryItemStatus] = Query(
+    status: LibraryItemStatus
+    | None = Query(
         None,
         description="If specified then the representation of the CTTermNameValue "
         "in that status is returned (if existent).\n_this is useful if the"
         " CTTermNameValue has a status 'Draft' and a status 'Final'.",
     ),
-    version: Optional[str] = Query(
+    version: str
+    | None = Query(
         None,
         description="If specified then the latest/newest representation of the "
         "for CTTermNameValue in that version is returned.\n"
@@ -187,10 +217,11 @@ def get_term_names(
 
 @router.get(
     "/terms/{term_uid}/names/versions",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the version history of a specific CTTermName identified by 'term_uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
-    response_model=List[models.CTTermNameVersion],
+    response_model=list[models.CTTermNameVersion],
     status_code=200,
     responses={
         404: {
@@ -209,6 +240,7 @@ def get_versions(
 
 @router.patch(
     "/terms/{term_uid}/names",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Updates the term identified by 'term_uid'.",
     description="""This request is only valid if the term
 * is in 'Draft' status and
@@ -249,6 +281,7 @@ def edit(
 
 @router.post(
     "/terms/{term_uid}/names/versions",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new term in 'Draft' status.",
     description="""This request is only valid if
 * the specified term is in 'Final' status and
@@ -286,6 +319,7 @@ def create(
 
 @router.post(
     "/terms/{term_uid}/names/approvals",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Approves the term identified by 'term_uid'.",
     description="""This request is only valid if the term
 * is in 'Draft' status and
@@ -322,6 +356,7 @@ def approve(
 
 @router.delete(
     "/terms/{term_uid}/names/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Inactivates/deactivates the term identified by 'term_uid'.",
     description="""This request is only valid if the term
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -356,6 +391,7 @@ def inactivate(
 
 @router.post(
     "/terms/{term_uid}/names/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivates the term identified by 'term_uid'.",
     description="""This request is only valid if the term
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -390,6 +426,7 @@ def reactivate(
 
 @router.delete(
     "/terms/{term_uid}/names",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Deletes the term identified by 'term_uid'.",
     description="""This request is only valid if \n
 * the term is in 'Draft' status and

@@ -55,23 +55,19 @@ class ActivityInstructionPreInstanceRepository(
         """
         root, item = super()._create(item)
 
-        if item.indications:
-            for indication in item.indications:
-                if indication:
-                    root.has_indication.connect(self._get_indication(indication.uid))
-        if item.activities:
-            for activity in item.activities:
-                if activity:
-                    root.has_activity.connect(self._get_activity(activity.uid))
-        if item.activity_groups:
-            for group in item.activity_groups:
-                if group:
-                    root.has_activity_group.connect(self._get_activity_group(group.uid))
-        if item.activity_subgroups:
-            for group in item.activity_subgroups:
-                if group:
-                    root.has_activity_subgroup.connect(
-                        self._get_activity_subgroup(group.uid)
-                    )
+        for indication in item.indications or []:
+            if indication:
+                root.has_indication.connect(self._get_indication(indication.uid))
+        for activity in item.activities or []:
+            if activity:
+                root.has_activity.connect(self._get_activity(activity.uid))
+        for group in item.activity_groups or []:
+            if group:
+                root.has_activity_group.connect(self._get_activity_group(group.uid))
+        for group in item.activity_subgroups or []:
+            if group:
+                root.has_activity_subgroup.connect(
+                    self._get_activity_subgroup(group.uid)
+                )
 
         return item

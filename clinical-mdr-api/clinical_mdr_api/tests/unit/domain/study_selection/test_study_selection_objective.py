@@ -3,6 +3,7 @@ import random
 import unittest
 from copy import copy
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.study_selections.study_selection_objective import (
     StudySelectionObjectivesAR,
     StudySelectionObjectiveVO,
@@ -87,7 +88,7 @@ class TestStudySelectionObjectiveVO(unittest.TestCase):
                     user_initials=test_tuple[4],
                     objective_version=test_tuple[3],
                 )
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     study_selection_objective.validate(
                         _check_uid_exists_callback, _check_uid_exists_callback
                     )
@@ -168,7 +169,7 @@ class TestStudySelectionObjectivesAR(unittest.TestCase):
                 )
                 self.assertEqual(new_vo, selection)
                 self.assertEqual(len(test_tuple[1]) + 1, order)
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.NotFoundException):
                     study_selection_objective_ar.get_specific_objective_selection(
                         "wrong uid"
                     )
@@ -214,7 +215,7 @@ class TestStudySelectionObjectivesAR(unittest.TestCase):
                 )
 
                 # assert that it is no longer in the AR
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.NotFoundException):
                     study_selection_objective_ar.get_specific_objective_selection(
                         new_vo.study_selection_uid
                     )
@@ -479,6 +480,6 @@ class TestStudySelectionObjectivesAR(unittest.TestCase):
                 study_selection_objective_ar.add_objective_selection(new_vo)
 
                 # validate we cannot add the same v0 again
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     study_selection_objective_ar.add_objective_selection(new_vo)
                     study_selection_objective_ar.validate()

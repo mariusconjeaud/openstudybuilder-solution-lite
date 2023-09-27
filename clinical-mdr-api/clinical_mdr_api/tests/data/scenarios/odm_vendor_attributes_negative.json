@@ -228,7 +228,7 @@
                             "body",
                             "value_regex"
                         ],
-                        "msg": "Provided regex is invalid.",
+                        "msg": "Provided regex value ((*'*(!') for field 'value_regex' is invalid.",
                         "type": "value_error"
                     }
                 ]
@@ -258,7 +258,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Vendor Attribute with name (nameOne) already exists.",
+                "message": "ODM Vendor Attribute with ['name: nameOne'] already exists.",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/vendor-attributes",
                 "method": "POST",
@@ -287,7 +287,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Vendor Attribute with name (nameOne) already exists.",
+                "message": "ODM Vendor Attribute with ['name: nameOne'] already exists.",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/vendor-attributes",
                 "method": "POST",

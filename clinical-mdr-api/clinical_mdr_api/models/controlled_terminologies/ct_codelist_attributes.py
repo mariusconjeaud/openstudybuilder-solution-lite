@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Dict, List, Optional, Sequence
+from typing import Callable, Self, Sequence
 
 from pydantic import Field
 
@@ -12,9 +12,7 @@ from clinical_mdr_api.models.utils import BaseModel
 
 class CTCodelistAttributes(BaseModel):
     @classmethod
-    def from_ct_codelist_ar(
-        cls, ct_codelist_ar: CTCodelistAttributesAR
-    ) -> "CTCodelistAttributes":
+    def from_ct_codelist_ar(cls, ct_codelist_ar: CTCodelistAttributesAR) -> Self:
         return cls(
             catalogue_name=ct_codelist_ar.ct_codelist_vo.catalogue_name,
             codelist_uid=ct_codelist_ar.uid,
@@ -40,7 +38,7 @@ class CTCodelistAttributes(BaseModel):
     @classmethod
     def from_ct_codelist_ar_without_common_codelist_fields(
         cls, ct_codelist_ar: CTCodelistAttributesAR
-    ) -> "CTCodelistAttributes":
+    ) -> Self:
         return cls(
             name=ct_codelist_ar.name,
             submission_value=ct_codelist_ar.ct_codelist_vo.submission_value,
@@ -58,15 +56,15 @@ class CTCodelistAttributes(BaseModel):
             ),
         )
 
-    catalogue_name: Optional[str] = Field(
+    catalogue_name: str | None = Field(
         None, title="catalogue_name", description="", nullable=True
     )
 
-    codelist_uid: Optional[str] = Field(
+    codelist_uid: str | None = Field(
         None, title="codelist_uid", description="", nullable=True
     )
 
-    parent_codelist_uid: Optional[str] = Field(
+    parent_codelist_uid: str | None = Field(
         None,
         title="parent_codelist_uid",
         description="",
@@ -108,14 +106,14 @@ class CTCodelistAttributes(BaseModel):
         description="",
     )
 
-    library_name: Optional[str] = Field(None, nullable=True)
-    start_date: Optional[datetime] = Field(None, nullable=True)
-    end_date: Optional[datetime] = Field(None, nullable=True)
-    status: Optional[str] = Field(None, nullable=True)
-    version: Optional[str] = Field(None, nullable=True)
-    change_description: Optional[str] = Field(None, nullable=True)
-    user_initials: Optional[str] = Field(None, nullable=True)
-    possible_actions: List[str] = Field(
+    library_name: str | None = Field(None, nullable=True)
+    start_date: datetime | None = Field(None, nullable=True)
+    end_date: datetime | None = Field(None, nullable=True)
+    status: str | None = Field(None, nullable=True)
+    version: str | None = Field(None, nullable=True)
+    change_description: str | None = Field(None, nullable=True)
+    user_initials: str | None = Field(None, nullable=True)
+    possible_actions: list[str] = Field(
         [],
         description=(
             "Holds those actions that can be performed on the CTCodelistAttributes. "
@@ -130,9 +128,9 @@ class CTCodelistAttributesSimpleModel(BaseModel):
         cls,
         uid: str,
         find_codelist_attribute_by_codelist_uid: Callable[
-            [str], Optional[CTCodelistAttributesAR]
+            [str], CTCodelistAttributesAR | None
         ],
-    ) -> Optional["CTCodelistAttributesSimpleModel"]:
+    ) -> Self | None:
         if uid is not None:
             codelist_attribute = find_codelist_attribute_by_codelist_uid(uid)
 
@@ -155,11 +153,9 @@ class CTCodelistAttributesSimpleModel(BaseModel):
         return simple_codelist_attribute_model
 
     uid: str = Field(..., title="uid", description="")
-    name: Optional[str] = Field(None, title="name", description="")
-    submission_value: Optional[str] = Field(
-        None, title="submission_value", description=""
-    )
-    preferred_term: Optional[str] = Field(None, title="preferred_term", description="")
+    name: str | None = Field(None, title="name", description="")
+    submission_value: str | None = Field(None, title="submission_value", description="")
+    preferred_term: str | None = Field(None, title="preferred_term", description="")
 
 
 class CTCodelistAttributesVersion(CTCodelistAttributes):
@@ -167,7 +163,7 @@ class CTCodelistAttributesVersion(CTCodelistAttributes):
     Class for storing CTCodelistAttributes and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
@@ -178,31 +174,31 @@ class CTCodelistAttributesVersion(CTCodelistAttributes):
 
 
 class CTCodelistAttributesInput(BaseModel):
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         title="name",
         description="",
     )
 
-    submission_value: Optional[str] = Field(
+    submission_value: str | None = Field(
         None,
         title="submission_value",
         description="",
     )
 
-    nci_preferred_name: Optional[str] = Field(
+    nci_preferred_name: str | None = Field(
         None,
         title="nci_preferred_name",
         description="",
     )
 
-    definition: Optional[str] = Field(
+    definition: str | None = Field(
         None,
         title="definition",
         description="",
     )
 
-    extensible: Optional[bool] = Field(
+    extensible: bool | None = Field(
         None,
         title="extensible",
         description="",

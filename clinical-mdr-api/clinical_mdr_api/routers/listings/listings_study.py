@@ -3,16 +3,19 @@ from fastapi import APIRouter, Path
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.listings.listings_study import StudyMetadataListingModel
 from clinical_mdr_api.models.utils import PrettyJSONResponse
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.listings.listings_study import (
     StudyMetadataListingService,
 )
 
+# Prefixed with "/listings"
 router = APIRouter()
 
 
 @router.get(
     "/studies/{study_number}/study-metadata",
+    dependencies=[rbac.STUDY_READ],
     summary="Retrieve study metadata from a given study number",
     response_model=StudyMetadataListingModel,
     response_class=PrettyJSONResponse,

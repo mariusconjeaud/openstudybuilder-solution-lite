@@ -1,9 +1,7 @@
-from typing import Optional, Sequence, Tuple
+from typing import Sequence
 
 from neomodel import db
-from pydantic.main import BaseModel
 
-from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.models.syntax import (
     ActivityInstructionTemplateRoot,
 )
@@ -16,7 +14,6 @@ from clinical_mdr_api.domain_repositories.syntax_pre_instances.activity_instruct
 from clinical_mdr_api.domain_repositories.syntax_templates.activity_instruction_template_repository import (
     ActivityInstructionTemplateRepository,
 )
-from clinical_mdr_api.domains._utils import generate_seq_id
 from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR
 from clinical_mdr_api.domains.concepts.activities.activity_group import ActivityGroupAR
 from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
@@ -40,7 +37,7 @@ from clinical_mdr_api.models.syntax_templates.activity_instruction_template impo
     ActivityInstructionTemplateVersion,
     ActivityInstructionTemplateWithCount,
 )
-from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.models.utils import BaseModel, GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._utils import (
     raise_404_if_none,
@@ -80,13 +77,13 @@ class ActivityInstructionTemplateService(
 
     def get_all(
         self,
-        status: Optional[str] = None,
+        status: str | None = None,
         return_study_count: bool = True,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[ActivityInstructionTemplate]:
         all_items = super().get_all(status, return_study_count)
@@ -126,25 +123,17 @@ class ActivityInstructionTemplateService(
         ) = self._get_indexings(template)
 
         # Process item to save
-        try:
-            item = ActivityInstructionTemplateAR.from_input_values(
-                template_value_exists_callback=(
-                    lambda _template_vo: self.repository.check_exists_by_name(
-                        _template_vo.name
-                    )
-                ),
-                author=self.user_initials,
-                template=template_vo,
-                library=library_vo,
-                generate_uid_callback=self.repository.generate_uid_callback,
-                generate_seq_id_callback=generate_seq_id,
-                indications=indications,
-                activities=activities,
-                activity_groups=activity_groups,
-                activity_subgroups=activity_subgroups,
-            )
-        except ValueError as e:
-            raise exceptions.ValidationException(e.args[0])
+        item = ActivityInstructionTemplateAR.from_input_values(
+            author=self.user_initials,
+            template=template_vo,
+            library=library_vo,
+            generate_uid_callback=self.repository.generate_uid_callback,
+            next_available_sequence_id_callback=self.repository.next_available_sequence_id,
+            indications=indications,
+            activities=activities,
+            activity_groups=activity_groups,
+            activity_subgroups=activity_subgroups,
+        )
 
         return item
 
@@ -271,7 +260,7 @@ class ActivityInstructionTemplateService(
 
     def _get_indexings(
         self, template: BaseModel
-    ) -> Tuple[
+    ) -> tuple[
         Sequence[DictionaryTermAR],
         Sequence[ActivityAR],
         Sequence[ActivityGroupAR],
@@ -282,7 +271,7 @@ class ActivityInstructionTemplateService(
         activity_groups: Sequence[ActivityGroupAR] = []
         activity_subgroups: Sequence[ActivitySubGroupAR] = []
 
-        if template.indication_uids and len(template.indication_uids) > 0:
+        if template.indication_uids:
             for uid in template.indication_uids:
                 indication = self._repos.dictionary_term_generic_repository.find_by_uid(
                     term_uid=uid
@@ -293,35 +282,32 @@ class ActivityInstructionTemplateService(
                 )
                 indications.append(indication)
 
-        if template.activity_uids and len(template.activity_uids) > 0:
-            for uid in template.activity_uids:
-                activity = self._repos.activity_repository.find_by_uid_2(uid=uid)
-                raise_404_if_none(
-                    activity,
-                    f"Activity with uid '{uid}' does not exist.",
-                )
-                activities.append(activity)
+        for uid in template.activity_uids or []:
+            activity = self._repos.activity_repository.find_by_uid_2(uid=uid)
+            raise_404_if_none(
+                activity,
+                f"Activity with uid '{uid}' does not exist.",
+            )
+            activities.append(activity)
 
-        if template.activity_group_uids and len(template.activity_group_uids) > 0:
-            for uid in template.activity_group_uids:
-                activity_group = self._repos.activity_group_repository.find_by_uid_2(
-                    uid=uid
-                )
-                raise_404_if_none(
-                    activity_group,
-                    f"Activity group with uid '{uid}' does not exist.",
-                )
-                activity_groups.append(activity_group)
+        for uid in template.activity_group_uids or []:
+            activity_group = self._repos.activity_group_repository.find_by_uid_2(
+                uid=uid
+            )
+            raise_404_if_none(
+                activity_group,
+                f"Activity group with uid '{uid}' does not exist.",
+            )
+            activity_groups.append(activity_group)
 
-        if template.activity_subgroup_uids and len(template.activity_subgroup_uids) > 0:
-            for uid in template.activity_subgroup_uids:
-                activity_subgroup = (
-                    self._repos.activity_subgroup_repository.find_by_uid_2(uid=uid)
-                )
-                raise_404_if_none(
-                    activity_subgroup,
-                    f"Activity subgroup with uid '{uid}' does not exist.",
-                )
-                activity_subgroups.append(activity_subgroup)
+        for uid in template.activity_subgroup_uids or []:
+            activity_subgroup = self._repos.activity_subgroup_repository.find_by_uid_2(
+                uid=uid
+            )
+            raise_404_if_none(
+                activity_subgroup,
+                f"Activity subgroup with uid '{uid}' does not exist.",
+            )
+            activity_subgroups.append(activity_subgroup)
 
         return indications, activities, activity_groups, activity_subgroups

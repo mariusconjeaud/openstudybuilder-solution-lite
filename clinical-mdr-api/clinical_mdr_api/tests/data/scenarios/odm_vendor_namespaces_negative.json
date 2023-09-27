@@ -41,7 +41,7 @@
         }
     },
     {
-        "name": "Test cannot create a new ODM Vendor Namespace with existing name",
+        "name": "Test cannot create a new ODM Vendor Namespace with existing name, prefix and url",
         "request": {
             "headers": {},
             "method": "POST",
@@ -60,63 +60,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Vendor Namespace with name (name1) already exists.",
-                "time": "2022-03-07T12: 14: 18.116363",
-                "path": "http://testserver/concepts/odms/vendor-namespaces",
-                "method": "POST",
-                "type": "BusinessLogicException"
-            }
-        }
-    },
-    {
-        "name": "Test cannot create a new ODM Vendor Namespace with existing prefix",
-        "request": {
-            "headers": {},
-            "method": "POST",
-            "request": {
-                "library_name": "Sponsor",
-                "name": "a name",
-                "prefix": "prefix",
-                "url": "a namespace"
-            },
-            "url": "concepts/odms/vendor-namespaces"
-        },
-        "response": {
-            "code": 400,
-            "headers": {
-                "content-length": "459",
-                "content-type": "application/json"
-            },
-            "result": {
-                "message": "ODM Vendor Namespace with prefix (prefix) already exists.",
-                "time": "2022-03-07T12: 14: 18.116363",
-                "path": "http://testserver/concepts/odms/vendor-namespaces",
-                "method": "POST",
-                "type": "BusinessLogicException"
-            }
-        }
-    },
-    {
-        "name": "Test cannot create a new ODM Vendor Namespace with existing namespace",
-        "request": {
-            "headers": {},
-            "method": "POST",
-            "request": {
-                "library_name": "Sponsor",
-                "name": "a name",
-                "prefix": "newPrefix",
-                "url": "url1"
-            },
-            "url": "concepts/odms/vendor-namespaces"
-        },
-        "response": {
-            "code": 400,
-            "headers": {
-                "content-length": "459",
-                "content-type": "application/json"
-            },
-            "result": {
-                "message": "ODM Vendor Namespace with url (url1) already exists.",
+                "message": "ODM Vendor Namespace with ['name: name1', 'prefix: prefix', 'url: url1'] already exists.",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/vendor-namespaces",
                 "method": "POST",

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Sequence, Tuple
+from typing import Sequence
 
 from neomodel import db
 
@@ -49,7 +49,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> _AggregateRootType:
@@ -63,7 +63,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         :return str:
         """
 
-    def specific_header_match_clause(self) -> Optional[str]:
+    def specific_header_match_clause(self) -> str | None:
         return None
 
     def _create_new_value_node(self, ar: _AggregateRootType) -> VersionValue:
@@ -131,8 +131,8 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         """
 
     def create_query_filter_statement(
-        self, library: Optional[str] = None, **kwargs
-    ) -> Tuple[str, dict]:
+        self, library: str | None = None, **kwargs
+    ) -> tuple[str, dict]:
         # pylint: disable=unused-argument
         filter_parameters = []
         filter_query_parameters = {}
@@ -149,15 +149,15 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
 
     def find_all(
         self,
-        library: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        library: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
         **kwargs,
-    ) -> Tuple[Sequence[_AggregateRootType], int]:
+    ) -> tuple[Sequence[_AggregateRootType], int]:
         """
         Method runs a cypher query to fetch all needed data to create objects of type AggregateRootType.
         In the case of the following repository it will be some Concept aggregates.
@@ -236,10 +236,10 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
     def get_distinct_headers(
         self,
         field_name: str,
-        search_string: Optional[str] = "",
-        library: Optional[str] = None,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        library: str | None = None,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
         **kwargs,
     ) -> Sequence:
@@ -345,9 +345,6 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
             """
         result, _ = db.cypher_query(query, {"name": name})
         return len(result) > 0 and len(result[0]) > 0
-
-    def concept_exists_by_name(self, name: str) -> bool:
-        return self.exists_by("name", name)
 
     def _is_new_version_necessary(self, ar: ConceptARBase, value: VersionValue) -> bool:
         return self._has_data_changed(ar, value)

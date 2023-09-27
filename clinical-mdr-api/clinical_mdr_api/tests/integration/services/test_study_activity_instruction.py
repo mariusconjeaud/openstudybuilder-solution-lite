@@ -1,6 +1,5 @@
 import unittest
 
-import pydantic
 from neomodel import db
 
 import clinical_mdr_api.services.libraries.libraries as library_service
@@ -53,13 +52,17 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
                     content=models.StudySelectionActivityCreateInput(
                         flowchart_group_uid="term_root_final",
                         activity_uid="activity_root1",
+                        activity_subgroup_uid="activity_subgroup_root1",
+                        activity_group_uid="activity_group_root1",
                     ),
                 ),
                 models.StudySelectionActivityBatchInput(
                     method="POST",
                     content=models.StudySelectionActivityCreateInput(
                         flowchart_group_uid="term_root_final",
-                        activity_uid="activity_root2",
+                        activity_uid="activity_root3",
+                        activity_subgroup_uid="activity_subgroup_root3",
+                        activity_group_uid="activity_group_root3",
                     ),
                 ),
             ],
@@ -92,7 +95,7 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
         )
 
     def test_create_validation_error(self):
-        with self.assertRaises(pydantic.ValidationError):
+        with self.assertRaises(ValueError):
             self.service.create(
                 "study_root",
                 models.StudyActivityInstructionCreateInput(
@@ -124,6 +127,14 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
 
     def test_delete(self):
         self._create_study_activity_instruction()
+        service = StudyActivitySelectionService("AZNG")
+        service.patch_selection(
+            "study_root",
+            "StudyActivity_000001",
+            models.StudySelectionActivityInput(
+                show_activity_in_protocol_flowchart=False
+            ),
+        )
         self.service.delete("study_root", "StudyActivityInstruction_000001")
         study_activity_instructions = self.service.get_all_instructions("study_root")
         self.assertEqual(len(study_activity_instructions), 0)

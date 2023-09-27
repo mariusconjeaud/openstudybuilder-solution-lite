@@ -2336,6 +2336,7 @@
             "epoch_name": "Epoch Subtype",
             "epoch_subtype_name": "Epoch Subtype",
             "epoch_type": "EpochType_0001",
+            "epoch_type_name": "Epoch Type",
             "start_day": null,
             "end_day": null,
             "start_week": null,

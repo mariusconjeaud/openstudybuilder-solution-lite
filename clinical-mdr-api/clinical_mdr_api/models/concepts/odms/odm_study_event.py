@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Self
 
 from pydantic import BaseModel, Field
 
@@ -14,22 +14,22 @@ from clinical_mdr_api.models.concepts.odms.odm_form import OdmFormRefModel
 
 
 class OdmStudyEvent(ConceptModel):
-    oid: Optional[str] = Field(None, nullable=True)
-    effective_date: Optional[date] = Field(None, nullable=True)
-    retired_date: Optional[date] = Field(None, nullable=True)
-    description: Optional[str] = Field(None, nullable=True)
+    oid: str | None = Field(None, nullable=True)
+    effective_date: date | None = Field(None, nullable=True)
+    retired_date: date | None = Field(None, nullable=True)
+    description: str | None = Field(None, nullable=True)
     display_in_tree: bool = True
-    forms: List[OdmFormRefModel]
-    possible_actions: List[str]
+    forms: list[OdmFormRefModel]
+    possible_actions: list[str]
 
     @classmethod
     def from_odm_study_event_ar(
         cls,
         odm_study_event_ar: OdmStudyEventAR,
         find_odm_form_by_uid_with_study_event_relation: Callable[
-            [str, str], Optional[OdmFormRefVO]
+            [str, str], OdmFormRefVO | None
         ],
-    ) -> "OdmStudyEvent":
+    ) -> Self:
         return cls(
             uid=odm_study_event_ar._uid,
             name=odm_study_event_ar.concept_vo.name,
@@ -63,18 +63,18 @@ class OdmStudyEvent(ConceptModel):
 
 
 class OdmStudyEventPostInput(ConceptPostInput):
-    oid: Optional[str]
-    effective_date: Optional[date] = None
-    retired_date: Optional[date] = None
-    description: Optional[str] = None
+    oid: str | None
+    effective_date: date | None = None
+    retired_date: date | None = None
+    description: str | None = None
     display_in_tree: bool = True
 
 
 class OdmStudyEventPatchInput(ConceptPatchInput):
-    oid: Optional[str]
-    effective_date: Optional[date]
-    retired_date: Optional[date]
-    description: Optional[str]
+    oid: str | None
+    effective_date: date | None
+    retired_date: date | None
+    description: str | None
     display_in_tree: bool = True
 
 
@@ -83,7 +83,7 @@ class OdmStudyEventFormPostInput(BaseModel):
     order_number: int
     mandatory: str
     locked: str = "No"
-    collection_exception_condition_oid: Optional[str] = None
+    collection_exception_condition_oid: str | None = None
 
 
 class OdmStudyEventVersion(OdmStudyEvent):
@@ -91,7 +91,7 @@ class OdmStudyEventVersion(OdmStudyEvent):
     Class for storing OdmStudyEvents and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

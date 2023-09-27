@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import Callable, Optional, Sequence
+from typing import Callable, Self, Sequence
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase, ConceptVO
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
@@ -14,21 +15,21 @@ class CompoundVO(ConceptVO):
     The CompoundVO acts as the single value object for CompoundAR aggregate.
     """
 
-    analyte_number: Optional[str]
-    nnc_short_number: Optional[str]
-    nnc_long_number: Optional[str]
+    analyte_number: str | None
+    nnc_short_number: str | None
+    nnc_long_number: str | None
     substance_terms_uids: Sequence[str]
-    dose_values_uids: Optional[Sequence[str]]
-    strength_values_uids: Optional[Sequence[str]]
-    lag_time_uids: Optional[Sequence[str]]
-    delivery_devices_uids: Optional[Sequence[str]]
-    dispensers_uids: Optional[Sequence[str]]
-    dose_frequency_uids: Optional[Sequence[str]]
-    dosage_form_uids: Optional[Sequence[str]]
-    route_of_administration_uids: Optional[Sequence[str]]
-    half_life_uid: Optional[str]
-    projects_uids: Optional[Sequence[str]]
-    brands_uids: Optional[Sequence[str]]
+    dose_values_uids: Sequence[str] | None
+    strength_values_uids: Sequence[str] | None
+    lag_time_uids: Sequence[str] | None
+    delivery_devices_uids: Sequence[str] | None
+    dispensers_uids: Sequence[str] | None
+    dose_frequency_uids: Sequence[str] | None
+    dosage_form_uids: Sequence[str] | None
+    route_of_administration_uids: Sequence[str] | None
+    half_life_uid: str | None
+    projects_uids: Sequence[str] | None
+    brands_uids: Sequence[str] | None
     is_sponsor_compound: bool = True
     is_name_inn: bool = True
 
@@ -36,27 +37,27 @@ class CompoundVO(ConceptVO):
     def from_repository_values(
         cls,
         name: str,
-        name_sentence_case: Optional[str],
-        definition: Optional[str],
-        abbreviation: Optional[str],
-        dose_frequency_uids: Optional[Sequence[str]],
-        dosage_form_uids: Optional[Sequence[str]],
-        route_of_administration_uids: Optional[Sequence[str]],
-        analyte_number: Optional[str],
-        nnc_short_number: Optional[str],
-        nnc_long_number: Optional[str],
+        name_sentence_case: str | None,
+        definition: str | None,
+        abbreviation: str | None,
+        dose_frequency_uids: Sequence[str] | None,
+        dosage_form_uids: Sequence[str] | None,
+        route_of_administration_uids: Sequence[str] | None,
+        analyte_number: str | None,
+        nnc_short_number: str | None,
+        nnc_long_number: str | None,
         is_sponsor_compound: bool,
         is_name_inn: bool,
         substance_terms_uids: Sequence[str],
-        dose_values_uids: Optional[Sequence[str]],
-        strength_values_uids: Optional[Sequence[str]],
-        lag_time_uids: Optional[Sequence[str]],
-        delivery_devices_uids: Optional[Sequence[str]],
-        dispensers_uids: Optional[Sequence[str]],
-        half_life_uid: Optional[str],
-        projects_uids: Optional[Sequence[str]],
-        brands_uids: Optional[Sequence[str]],
-    ) -> "CompoundVO":
+        dose_values_uids: Sequence[str] | None,
+        strength_values_uids: Sequence[str] | None,
+        lag_time_uids: Sequence[str] | None,
+        delivery_devices_uids: Sequence[str] | None,
+        dispensers_uids: Sequence[str] | None,
+        half_life_uid: str | None,
+        projects_uids: Sequence[str] | None,
+        brands_uids: Sequence[str] | None,
+    ) -> Self:
         compound_vo = cls(
             name=name,
             name_sentence_case=name_sentence_case,
@@ -86,7 +87,7 @@ class CompoundVO(ConceptVO):
 
     def validate(
         self,
-        uid: Optional[str],
+        uid: str | None,
         compound_uid_by_property_value_callback: Callable[[str, str], str],
         ct_term_exists_callback: Callable[[str], bool],
         dictionary_term_exists_callback: Callable[[str], bool],
@@ -137,75 +138,75 @@ class CompoundVO(ConceptVO):
 
         for term_uid in self.substance_terms_uids:
             if not dictionary_term_exists_callback(term_uid):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"{type(self).__name__} tried to connect to non existing substance identified by uid ({term_uid})"
                 )
 
         for dose_frequency_uid in self.dose_frequency_uids:
             if not ct_term_exists_callback(dose_frequency_uid):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"{type(self).__name__} tried to connect to non existing dose frequency identified by uid ({dose_frequency_uid})"
                 )
 
         for dosage_form_uid in self.dosage_form_uids:
             if not ct_term_exists_callback(dosage_form_uid):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"{type(self).__name__} tried to connect to non existing dosage form identified by uid ({dosage_form_uid})"
                 )
 
         for route_of_administration_uid in self.route_of_administration_uids:
             if not ct_term_exists_callback(route_of_administration_uid):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"{type(self).__name__} tried to connect to non existing "
                     f"route of administration identified by uid ({route_of_administration_uid})"
                 )
 
         for dose_values_uid in self.dose_values_uids:
             if not numeric_value_exists_callback(dose_values_uid):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"{type(self).__name__} tried to connect to non existing dose value identified by uid ({dose_values_uid})"
                 )
 
         for strength_values_uid in self.strength_values_uids:
             if not numeric_value_exists_callback(strength_values_uid):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"{type(self).__name__} tried to connect to non existing strength value identified by uid ({strength_values_uid})"
                 )
 
         for lag_time_uid in self.lag_time_uids:
             if not lag_time_exists_callback(lag_time_uid):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"{type(self).__name__} tried to connect to non existing lag-time identified by uid ({lag_time_uid})"
                 )
 
         for delivery_devices_uid in self.delivery_devices_uids:
             if not ct_term_exists_callback(delivery_devices_uid):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"{type(self).__name__} tried to connect to non existing delivery device identified by uid ({delivery_devices_uid})"
                 )
 
         for dispensers_uid in self.dispensers_uids:
             if not ct_term_exists_callback(dispensers_uid):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"{type(self).__name__} tried to connect to non existing dispenser identified by uid ({dispensers_uid})"
                 )
 
         for projects_uid in self.projects_uids:
             if not project_exists_callback(projects_uid):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"{type(self).__name__} tried to connect to non existing project identified by uid ({projects_uid})"
                 )
 
         for brands_uid in self.brands_uids:
             if not brand_exists_callback(brands_uid):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"{type(self).__name__} tried to connect to non existing brand identified by uid ({brands_uid})"
                 )
 
         if self.half_life_uid is not None and not numeric_value_exists_callback(
             self.half_life_uid
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"{type(self).__name__} tried to connect to non existing half life value identified by uid ({self.half_life_uid})"
             )
 
@@ -234,13 +235,13 @@ class CompoundAR(ConceptARBase):
         lag_time_exists_callback: Callable[[str], bool],
         project_exists_callback: Callable[[str], bool],
         brand_exists_callback: Callable[[str], bool],
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-    ) -> "CompoundAR":
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
         uid = generate_uid_callback()
 
         if not library.is_editable:
-            raise ValueError(
+            raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
 
@@ -266,9 +267,9 @@ class CompoundAR(ConceptARBase):
     def edit_draft(
         self,
         author: str,
-        change_description: Optional[str],
+        change_description: str | None,
         concept_vo: CompoundVO,
-        concept_exists_by_name_callback: Callable[[str], bool] = None,
+        concept_exists_by_callback: Callable[[str, str, bool], bool] = None,
         compound_uid_by_property_value_callback: Callable[[str, str], str] = None,
         ct_term_exists_callback: Callable[[str], bool] = None,
         numeric_value_exists_callback: Callable[[str], bool] = None,

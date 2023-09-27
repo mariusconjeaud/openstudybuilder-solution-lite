@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Self
 
 from pydantic import Field
 
@@ -18,7 +18,7 @@ class DictionaryTerm(BaseModel):
     @classmethod
     def from_dictionary_term_ar(
         cls, dictionary_term_ar: DictionaryTermAR
-    ) -> "DictionaryTerm":
+    ) -> Self | None:
         if not dictionary_term_ar:
             return None
         return cls(
@@ -44,10 +44,10 @@ class DictionaryTerm(BaseModel):
     dictionary_id: str
     name: str
     name_sentence_case: str
-    abbreviation: Optional[str]
-    definition: Optional[str]
+    abbreviation: str | None
+    definition: str | None
 
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         ...,
         description=(
             "Holds those actions that can be performed on the DictionaryTerm. "
@@ -56,42 +56,42 @@ class DictionaryTerm(BaseModel):
     )
 
     library_name: str
-    start_date: Optional[datetime] = Field(None, nullable=True)
-    end_date: Optional[datetime] = Field(None, nullable=True)
-    status: Optional[str] = Field(None, nullable=True)
-    version: Optional[str] = Field(None, nullable=True)
-    change_description: Optional[str] = Field(None, nullable=True)
-    user_initials: Optional[str] = Field(None, nullable=True)
+    start_date: datetime | None = Field(None, nullable=True)
+    end_date: datetime | None = Field(None, nullable=True)
+    status: str | None = Field(None, nullable=True)
+    version: str | None = Field(None, nullable=True)
+    change_description: str | None = Field(None, nullable=True)
+    user_initials: str | None = Field(None, nullable=True)
 
 
 class DictionaryTermEditInput(BaseModel):
-    dictionary_id: Optional[str] = None
-    name: Optional[str] = None
-    name_sentence_case: Optional[str] = None
-    abbreviation: Optional[str] = None
-    definition: Optional[str] = None
+    dictionary_id: str | None = None
+    name: str | None = None
+    name_sentence_case: str | None = None
+    abbreviation: str | None = None
+    definition: str | None = None
     change_description: str = Field(None, title="change_description", description="")
 
 
 class DictionaryTermCreateInput(BaseModel):
     dictionary_id: str
     name: str
-    name_sentence_case: Optional[str] = None
-    abbreviation: Optional[str] = None
-    definition: Optional[str] = None
+    name_sentence_case: str | None = None
+    abbreviation: str | None = None
+    definition: str | None = None
     codelist_uid: str = Field(..., title="codelist_uid", description="")
     library_name: str
 
 
 class DictionaryTermSubstance(DictionaryTerm):
-    pclass: Optional[SimpleDictionaryTermModel]
+    pclass: SimpleDictionaryTermModel | None
 
     @classmethod
     def from_dictionary_term_ar(
         cls,
         dictionary_term_ar: DictionaryTermSubstanceAR,
-        find_dictionary_term_by_uid: Callable[[str], Optional[DictionaryTermAR]],
-    ) -> "DictionaryTermSubstance":
+        find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
+    ) -> Self | None:
         if not dictionary_term_ar:
             return None
         return cls(
@@ -122,17 +122,17 @@ class CompoundSubstance(BaseModel):
     substance_term_uid: str
     substance_name: str
     substance_unii: str
-    pclass_term_uid: Optional[str]
-    pclass_name: Optional[str]
-    pclass_id: Optional[str]
+    pclass_term_uid: str | None
+    pclass_name: str | None
+    pclass_id: str | None
 
     @classmethod
     def from_term_uid(
         cls,
         uid: str,
-        find_term_by_uid: Callable[[str], Optional[Any]],
-        find_substance_by_uid: Callable[[str], Optional[Any]],
-    ) -> Optional["DictionaryTermSubstance"]:
+        find_term_by_uid: Callable[[str], Any | None],
+        find_substance_by_uid: Callable[[str], Any | None],
+    ) -> Self | None:
         substance = None
         if uid is not None:
             substance_term: DictionaryTermSubstanceAR = find_substance_by_uid(uid)
@@ -158,11 +158,11 @@ class CompoundSubstance(BaseModel):
 
 
 class DictionaryTermSubstanceCreateInput(DictionaryTermCreateInput):
-    pclass_uid: Optional[str] = None
+    pclass_uid: str | None = None
 
 
 class DictionaryTermSubstanceEditInput(DictionaryTermEditInput):
-    pclass_uid: Optional[str] = None
+    pclass_uid: str | None = None
 
 
 class DictionaryTermVersion(DictionaryTerm):
@@ -170,7 +170,7 @@ class DictionaryTermVersion(DictionaryTerm):
     Class for storing DictionaryTerm and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

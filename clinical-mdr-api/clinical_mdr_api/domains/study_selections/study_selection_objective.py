@@ -1,7 +1,8 @@
 import datetime
 from dataclasses import dataclass, field, replace
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple
+from typing import Any, Callable, Iterable, Self, Sequence
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
 
 
@@ -12,14 +13,15 @@ class StudySelectionObjectiveVO:
     """
 
     study_selection_uid: str
-    study_uid: Optional[str]
-    objective_uid: Optional[str]
-    objective_version: Optional[str]
-    objective_level_uid: Optional[str]
-    objective_level_order: Optional[int]
+    study_uid: str | None
+    objective_uid: str | None
+    objective_version: str | None
+    objective_level_uid: str | None
+    objective_level_order: int | None
+    is_instance: bool
     # Study selection Versioning
     start_date: datetime.datetime
-    user_initials: Optional[str]
+    user_initials: str | None
     accepted_version: bool = False
 
     @classmethod
@@ -27,12 +29,13 @@ class StudySelectionObjectiveVO:
         cls,
         objective_uid: str,
         objective_version: str,
-        objective_level_uid: Optional[str],
-        objective_level_order: Optional[int],
+        objective_level_uid: str | None,
+        objective_level_order: int | None,
         user_initials: str,
-        study_uid: Optional[str] = None,
-        study_selection_uid: Optional[str] = None,
-        start_date: Optional[datetime.datetime] = None,
+        study_uid: str | None = None,
+        study_selection_uid: str | None = None,
+        is_instance: bool = True,
+        start_date: datetime.datetime | None = None,
         generate_uid_callback: Callable[[], str] = None,
         accepted_version: bool = False,
     ):
@@ -49,6 +52,7 @@ class StudySelectionObjectiveVO:
             study_uid=study_uid,
             objective_uid=normalize_string(objective_uid),
             objective_version=objective_version,
+            is_instance=is_instance,
             start_date=start_date,
             study_selection_uid=normalize_string(study_selection_uid),
             objective_level_uid=normalize_string(objective_level_uid),
@@ -64,14 +68,14 @@ class StudySelectionObjectiveVO:
     ) -> None:
         # Checks if there exists a objective which is approved with objective_uid
         if not objective_exist_callback(normalize_string(self.objective_uid)):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no approved objective identified by provided uid ({self.objective_uid})"
             )
         if (
             not ct_term_level_exist_callback(self.objective_level_uid)
             and self.objective_level_uid
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no approved objective level identified by provided term uid ({self.objective_level_uid})"
             )
 
@@ -94,7 +98,7 @@ class StudySelectionObjectivesAR:
     """
 
     _study_uid: str
-    _study_objectives_selection: Tuple
+    _study_objectives_selection: tuple
     repository_closure_data: Any = field(
         init=False, compare=False, repr=True, default=None
     )
@@ -109,12 +113,12 @@ class StudySelectionObjectivesAR:
 
     def get_specific_objective_selection(
         self, study_selection_uid: str
-    ) -> Tuple[StudySelectionObjectiveVO, int]:
+    ) -> tuple[StudySelectionObjectiveVO, int]:
         for order, selection in enumerate(self.study_objectives_selection, start=1):
             if selection.study_selection_uid == study_selection_uid:
                 return selection, order
-        raise ValueError(
-            f"The study objective uid does not exist ({study_selection_uid})"
+        raise exceptions.NotFoundException(
+            f"The study objective with uid ({study_selection_uid}) does not exist"
         )
 
     def add_objective_selection(
@@ -153,7 +157,7 @@ class StudySelectionObjectivesAR:
         cls,
         study_uid: str,
         study_objectives_selection: Iterable[StudySelectionObjectiveVO],
-    ) -> "StudySelectionObjectivesAR":
+    ) -> Self:
         return cls(
             _study_uid=normalize_string(study_uid),
             _study_objectives_selection=tuple(study_objectives_selection),
@@ -288,7 +292,7 @@ class StudySelectionObjectivesAR:
         objectives = []
         for selection in self.study_objectives_selection:
             if selection.objective_uid in objectives:
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"There is already a study selection to that objective ({selection.objective_uid})"
                 )
             objectives.append(selection.objective_uid)

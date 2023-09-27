@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from pydantic import Field
 
@@ -12,44 +11,44 @@ class StudyEpochCreateInput(BaseModel):
         title="study_uid",
         description="The uid of the study",
     )
-    start_rule: Optional[str] = Field(
+    start_rule: str | None = Field(
         None, title="Start Description", description="Study Epoch Start description"
     )
 
-    end_rule: Optional[str] = Field(
+    end_rule: str | None = Field(
         None, title="End Description", description="Study Epoch end description"
     )
 
-    epoch: Optional[str] = Field(None, title="Epoch", description="Study Epoch epoch")
+    epoch: str | None = Field(None, title="Epoch", description="Study Epoch epoch")
 
     epoch_subtype: str = Field(
         ..., title="Epoch Sub Type", description="Study Epoch sub type"
     )
 
-    duration_unit: Optional[str] = Field(
+    duration_unit: str | None = Field(
         None, title="Duration Unit", description="Study Epoch duration preferred unit"
     )
 
-    order: Optional[int] = Field(
+    order: int | None = Field(
         None,
         title="order",
         description="The ordering of the selection",
     )
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None, title="Description", description="Epoch description"
     )
 
-    duration: Optional[int] = Field(
+    duration: int | None = Field(
         None, title="Epoch Duration", description="Calculated epoch duration"
     )
-    color_hash: Optional[str] = Field(
+    color_hash: str | None = Field(
         "#FFFFFF", title="Epoch Color Hash", description="Epoch Color for display"
     )
 
 
 class StudyEpochEditInput(StudyEpochCreateInput):
     # Override epoch from Create Input to make it Optional
-    epoch_subtype: Optional[str] = Field(
+    epoch_subtype: str | None = Field(
         None, title="Epoch Sub Type", description="Study Epoch sub type"
     )
     change_description: str = Field(
@@ -58,9 +57,6 @@ class StudyEpochEditInput(StudyEpochCreateInput):
 
 
 class StudyEpochOGM(BaseModel):
-    # status = StudyStatus(epoch_neomodel.status),
-    # version = epoch_neomodel.version,
-
     class Config:
         orm_mode = True
 
@@ -86,21 +82,21 @@ class StudyEpochOGM(BaseModel):
     epoch_type: str = Field(
         ..., title="Type", description="Study Epoch type", source="has_epoch_type.uid"
     )
-    duration_unit: Optional[str] = Field(
+    duration_unit: str | None = Field(
         None,
         title="Duration Unit",
         description="Study Epoch duration preferred unit",
         source="has_duration_unit.uid",
     )
 
-    order: Optional[int] = Field(
+    order: int | None = Field(
         None,
         title="order",
         description="The ordering of the selection",
         source="order",
         nullable=True,
     )
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None,
         title="Description",
         description="Epoch description",
@@ -108,14 +104,14 @@ class StudyEpochOGM(BaseModel):
         nullable=True,
     )
 
-    color_hash: Optional[str] = Field(
+    color_hash: str | None = Field(
         None,
         title="Epoch Color Hash",
         description="Epoch Color for display",
         source="color_hash",
         nullable=True,
     )
-    start_rule: Optional[str] = Field(
+    start_rule: str | None = Field(
         None,
         title="Start Description",
         description="Study Epoch Start description",
@@ -123,7 +119,7 @@ class StudyEpochOGM(BaseModel):
         nullable=True,
     )
 
-    end_rule: Optional[str] = Field(
+    end_rule: str | None = Field(
         None,
         title="End Description",
         description="Study Epoch end description",
@@ -161,7 +157,7 @@ class StudyEpochOGMVer(StudyEpochOGM):
         description="type of action",
         source="has_after.__label__",
     )
-    end_date: Optional[datetime] = Field(
+    end_date: datetime | None = Field(
         None,
         title="end_date",
         description="The last point in time when the study epoch was edited."
@@ -177,24 +173,25 @@ class StudyEpoch(StudyEpochCreateInput):
         description="Uid of the Epoch",
     )
     epoch_name: str = Field(
-        ..., title="Epoch name", description="Name of the epoch based on CT term"
+        ..., title="Study epoch name", description="Name of the epoch based on CT term"
     )
     epoch_subtype_name: str = Field(
         ...,
-        title="Epoch sub type name",
+        title="Study Epoch subtype name",
         description="Name of the epoch sub type based on CT term",
     )
-    epoch_type: str = Field(..., title="Type", description="Study Epoch type")
-    start_day: Optional[int] = Field(
+    epoch_type: str = Field(..., title="Type", description="Study Epoch type uid")
+    epoch_type_name: str = Field(..., title="Type", description="Study Epoch type name")
+    start_day: int | None = Field(
         None, title="Start Day", description="Study Epoch start day"
     )
-    end_day: Optional[int] = Field(
+    end_day: int | None = Field(
         None, title="End Day", description="Study Epoch end day"
     )
-    start_week: Optional[int] = Field(
+    start_week: int | None = Field(
         None, title="Start Week", description="Study Epoch start week"
     )
-    end_week: Optional[int] = Field(
+    end_week: int | None = Field(
         None, title="End Week", description="Study Epoch end week"
     )
     start_date: str = Field(
@@ -202,7 +199,7 @@ class StudyEpoch(StudyEpochCreateInput):
         title="Modification date",
         description="Study Epoch initial modification date",
     )
-    end_date: Optional[str] = Field(
+    end_date: str | None = Field(
         None,
         title="Modification date",
         description="Study Epoch last modification date",
@@ -213,20 +210,20 @@ class StudyEpoch(StudyEpochCreateInput):
         title="User Initials",
         description="Initials of user that created last modification",
     )
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         ..., title="Possible actions", description="List of actions to perform on item"
     )
-    change_description: Optional[str] = Field(
+    change_description: str | None = Field(
         "", title="Change Description", description="Description of change reasons"
     )
-    study_visit_count: Optional[int] = Field(
-        None, description="Count of Study Visits assigned to Study Epoch"
+    study_visit_count: int = Field(
+        ..., description="Count of Study Visits assigned to Study Epoch"
     )
-    change_type: Optional[str] = Field(None, description="Type of Action")
+    change_type: str | None = Field(None, description="Type of Action")
 
 
 class StudyEpochVersion(StudyEpoch):
-    changes: Dict
+    changes: dict
 
 
 class StudyEpochTypes(BaseModel):

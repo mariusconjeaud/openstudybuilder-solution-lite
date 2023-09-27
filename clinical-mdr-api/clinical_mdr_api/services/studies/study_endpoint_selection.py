@@ -1,4 +1,4 @@
-from typing import List, Optional, Sequence
+from typing import Sequence
 
 from neomodel import db
 
@@ -13,9 +13,12 @@ from clinical_mdr_api.domains.syntax_instances.timeframe import TimeframeAR
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.study_selections.study_selection import (
     EndpointUnitsInput,
+    StudySelectionEndpoint,
     StudySelectionEndpointCreateInput,
     StudySelectionEndpointInput,
+    StudySelectionEndpointTemplateSelectInput,
 )
+from clinical_mdr_api.models.syntax_instances.endpoint import EndpointCreateInput
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
@@ -40,13 +43,10 @@ class StudyEndpointSelectionService(StudySelectionMixin):
     ) -> models.StudySelectionObjective:
         repos = self._repos
         selection_aggregate = repos.study_objective_repository.find_by_study(study_uid)
-        try:
-            assert selection_aggregate is not None
-            _, order = selection_aggregate.get_specific_objective_selection(
-                study_selection_uid
-            )
-        except ValueError as value_error:
-            raise exceptions.NotFoundException(value_error.args[0])
+        assert selection_aggregate is not None
+        _, order = selection_aggregate.get_specific_objective_selection(
+            study_selection_uid
+        )
         result = models.StudySelectionObjective.from_study_selection_objectives_ar_and_order(
             study_selection_objectives_ar=selection_aggregate,
             order=order,
@@ -87,19 +87,34 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         get_latest_endpoint_by_uid=None,
         get_endpoint_by_uid_and_version=None,
     ) -> models.StudySelectionEndpoint:
-        return models.study_selections.study_selection.StudySelectionEndpoint.from_study_selection_endpoint(
-            study_selection=study_selection,
-            study_uid=study_uid,
-            get_endpoint_by_uid_and_version=(
+        if study_selection.is_instance:
+            get_endpoint_by_uid_and_version = (
                 self._transform_endpoint_model
                 if get_endpoint_by_uid_and_version is None
                 else get_endpoint_by_uid_and_version
-            ),
-            get_latest_endpoint_by_uid=(
+            )
+            get_latest_endpoint_by_uid = (
                 self._transform_latest_endpoint_model
                 if get_latest_endpoint_by_uid is None
                 else get_latest_endpoint_by_uid
-            ),
+            )
+        else:
+            get_endpoint_by_uid_and_version = (
+                self._transform_endpoint_template_model
+                if get_endpoint_by_uid_and_version is None
+                else get_endpoint_by_uid_and_version
+            )
+            get_latest_endpoint_by_uid = (
+                self._transform_latest_endpoint_template_model
+                if get_latest_endpoint_by_uid is None
+                else get_endpoint_by_uid_and_version
+            )
+
+        return models.study_selections.study_selection.StudySelectionEndpoint.from_study_selection_endpoint(
+            study_selection=study_selection,
+            study_uid=study_uid,
+            get_endpoint_by_uid_and_version=get_endpoint_by_uid_and_version,
+            get_latest_endpoint_by_uid=get_latest_endpoint_by_uid,
             get_timeframe_by_uid_and_version=self._transform_timeframe_model,
             get_latest_timeframe=self._transform_latest_timeframe_model,
             get_ct_term_objective_level=self._find_by_uid_or_raise_not_found,
@@ -204,18 +219,15 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             )
 
             # add VO to aggregate
-            try:
-                selection_aggregate.add_endpoint_selection(
-                    study_endpoint_selection=new_selection,
-                    study_objective_exist_callback=repos.study_objective_repository.study_objective_exists,
-                    endpoint_exist_callback=endpoint_repo.check_exists_final_version,
-                    timeframe_exist_callback=timeframe_repo.check_exists_final_version,
-                    ct_term_exists_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
-                    unit_definition_exists_callback=repos.unit_definition_repository.check_exists_final_version,
-                )
-                selection_aggregate.validate()
-            except ValueError as value_error:
-                raise exceptions.ValidationException(value_error.args[0])
+            selection_aggregate.add_endpoint_selection(
+                study_endpoint_selection=new_selection,
+                study_objective_exist_callback=repos.study_objective_repository.study_objective_exists,
+                endpoint_exist_callback=endpoint_repo.check_exists_final_version,
+                timeframe_exist_callback=timeframe_repo.check_exists_final_version,
+                ct_term_exists_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
+                unit_definition_exists_callback=repos.unit_definition_repository.check_exists_final_version,
+            )
+            selection_aggregate.validate()
 
             # sync with DB and save the update
             repos.study_endpoint_repository.save(selection_aggregate, self.author)
@@ -231,135 +243,256 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         finally:
             repos.close()
 
-    def make_selection_create_endpoint(
+    def non_transactional_make_selection_create_endpoint(
         self, study_uid: str, selection_create_input: StudySelectionEndpointCreateInput
     ) -> models.StudySelectionEndpoint:
         repos = self._repos
         try:
-            # Load aggregate
-            with db.transaction:
-                # check if name exists
-                endpoint_service = EndpointService()
-                endpoint_ar = endpoint_service.create_ar_from_input_values(
-                    selection_create_input.endpoint_data
+            # check if name exists
+            endpoint_service = EndpointService()
+            endpoint_ar = endpoint_service.create_ar_from_input_values(
+                selection_create_input.endpoint_data
+            )
+
+            endpoint_uid = endpoint_ar.uid
+            if not endpoint_service.repository.check_exists_by_name(endpoint_ar.name):
+                endpoint_service.repository.save(endpoint_ar)
+            else:
+                endpoint_uid = endpoint_service.repository.find_uid_by_name(
+                    name=endpoint_ar.name
+                )
+            endpoint_ar = endpoint_service.repository.find_by_uid_2(
+                endpoint_uid, for_update=True
+            )
+
+            # getting selection aggregate
+            selection_aggregate = repos.study_endpoint_repository.find_by_study(
+                study_uid=study_uid, for_update=True
+            )
+
+            # if in draft status - approve
+            if endpoint_ar.item_metadata.status == LibraryItemStatus.DRAFT:
+                endpoint_ar.approve(self.author)
+                endpoint_service.repository.save(endpoint_ar)
+            elif endpoint_ar.item_metadata.status == LibraryItemStatus.RETIRED:
+                raise exceptions.BusinessLogicException(
+                    f"There is no approved objective identified by provided uid ({endpoint_uid})"
                 )
 
-                endpoint_uid = endpoint_ar.uid
-                if not endpoint_service.repository.check_exists_by_name(
-                    endpoint_ar.name
-                ):
-                    endpoint_service.repository.save(endpoint_ar)
-                else:
-                    endpoint_uid = endpoint_service.repository.find_uid_by_name(
-                        name=endpoint_ar.name
-                    )
-                endpoint_ar = endpoint_service.repository.find_by_uid_2(
-                    endpoint_uid, for_update=True
+            if selection_create_input.timeframe_uid:
+                timeframe_ar: TimeframeAR = repos.timeframe_repository.find_by_uid_2(
+                    selection_create_input.timeframe_uid, for_update=True
                 )
-
-                # getting selection aggregate
-                selection_aggregate = repos.study_endpoint_repository.find_by_study(
-                    study_uid=study_uid, for_update=True
-                )
-
-                # if in draft status - approve
-                if endpoint_ar.item_metadata.status == LibraryItemStatus.DRAFT:
-                    endpoint_ar.approve(self.author)
-                    endpoint_service.repository.save(endpoint_ar)
-                elif endpoint_ar.item_metadata.status == LibraryItemStatus.RETIRED:
+                if timeframe_ar is None:
                     raise exceptions.BusinessLogicException(
-                        f"There is no approved objective identified by provided uid ({endpoint_uid})"
+                        f"There is no approved timeframe identified by provided uid ({selection_create_input.timeframe_uid})"
                     )
-
-                if selection_create_input.timeframe_uid:
-                    timeframe_ar: TimeframeAR = (
-                        repos.timeframe_repository.find_by_uid_2(
-                            selection_create_input.timeframe_uid, for_update=True
-                        )
+                # if in draft status - approve
+                if timeframe_ar.item_metadata.status == LibraryItemStatus.DRAFT:
+                    timeframe_ar.approve(self.author)
+                    repos.timeframe_repository.save(timeframe_ar)
+                # if in retired then we return a error
+                elif timeframe_ar.item_metadata.status == LibraryItemStatus.RETIRED:
+                    raise exceptions.BusinessLogicException(
+                        f"There is no approved timeframe identified by provided uid ({selection_create_input.timeframe_uid})"
                     )
-                    if timeframe_ar is None:
-                        raise exceptions.BusinessLogicException(
-                            f"There is no approved timeframe identified by provided uid ({selection_create_input.timeframe_uid})"
-                        )
-                    # if in draft status - approve
-                    if timeframe_ar.item_metadata.status == LibraryItemStatus.DRAFT:
-                        timeframe_ar.approve(self.author)
-                        repos.timeframe_repository.save(timeframe_ar)
-                    # if in retired then we return a error
-                    elif timeframe_ar.item_metadata.status == LibraryItemStatus.RETIRED:
-                        raise exceptions.BusinessLogicException(
-                            f"There is no approved timeframe identified by provided uid ({selection_create_input.timeframe_uid})"
-                        )
-                else:
-                    timeframe_ar = None
+            else:
+                timeframe_ar = None
 
-                if selection_create_input.endpoint_units:
-                    units = tuple(
-                        {"uid": unit}
-                        for unit in selection_create_input.endpoint_units.units
-                    )
-                    separator = selection_create_input.endpoint_units.separator
-
-                else:
-                    units = None
-                    separator = None
-
-                # get order from the Objective level CT term
-                if selection_create_input.endpoint_level_uid is not None:
-                    endpoint_level_order = (
-                        self._repos.ct_term_name_repository.term_specific_order_by_uid(
-                            uid=selection_create_input.endpoint_level_uid
-                        )
-                    )
-                else:
-                    endpoint_level_order = None
-
-                # create new VO to add
-                new_selection = StudySelectionEndpointVO.from_input_values(
-                    endpoint_uid=endpoint_uid,
-                    endpoint_version=endpoint_ar.item_metadata.version,
-                    endpoint_level_uid=selection_create_input.endpoint_level_uid,
-                    endpoint_sublevel_uid=selection_create_input.endpoint_sublevel_uid,
-                    endpoint_units=units,
-                    unit_separator=separator,
-                    timeframe_uid=selection_create_input.timeframe_uid,
-                    timeframe_version=timeframe_ar.item_metadata.version
-                    if timeframe_ar
-                    else None,
-                    study_objective_uid=selection_create_input.study_objective_uid,
-                    generate_uid_callback=repos.study_endpoint_repository.generate_uid,
-                    user_initials=self.author,
-                    endpoint_level_order=endpoint_level_order,
+            if selection_create_input.endpoint_units:
+                units = tuple(
+                    {"uid": unit}
+                    for unit in selection_create_input.endpoint_units.units
                 )
-                # add VO to aggregate
-                try:
-                    endpoint_repo = repos.endpoint_repository
-                    assert selection_aggregate is not None
-                    selection_aggregate.add_endpoint_selection(
-                        study_endpoint_selection=new_selection,
-                        endpoint_exist_callback=endpoint_repo.check_exists_final_version,
-                        study_objective_exist_callback=repos.study_objective_repository.study_objective_exists,
-                        timeframe_exist_callback=repos.timeframe_repository.check_exists_final_version,
-                        ct_term_exists_callback=repos.ct_term_name_repository.term_specific_exists_by_uid,
-                        unit_definition_exists_callback=repos.unit_definition_repository.check_exists_final_version,
+                separator = selection_create_input.endpoint_units.separator
+
+            else:
+                units = None
+                separator = None
+
+            # get order from the Objective level CT term
+            if selection_create_input.endpoint_level_uid is not None:
+                endpoint_level_order = (
+                    self._repos.ct_term_name_repository.term_specific_order_by_uid(
+                        uid=selection_create_input.endpoint_level_uid
                     )
-                    selection_aggregate.validate()
-                except ValueError as value_error:
-                    raise exceptions.ValidationException(value_error.args[0])
-
-                # sync with DB and save the update
-                repos.study_endpoint_repository.save(selection_aggregate, self.author)
-
-                # Fetch the new selection which was just added
-                (
-                    new_selection,
-                    order,
-                ) = selection_aggregate.get_specific_endpoint_selection(
-                    new_selection.study_selection_uid
                 )
-                return self._transform_single_to_response_model(
-                    new_selection, order, study_uid
-                )
+            else:
+                endpoint_level_order = None
+
+            # create new VO to add
+            new_selection = StudySelectionEndpointVO.from_input_values(
+                endpoint_uid=endpoint_uid,
+                endpoint_version=endpoint_ar.item_metadata.version,
+                endpoint_level_uid=selection_create_input.endpoint_level_uid,
+                endpoint_sublevel_uid=selection_create_input.endpoint_sublevel_uid,
+                endpoint_units=units,
+                unit_separator=separator,
+                timeframe_uid=selection_create_input.timeframe_uid,
+                timeframe_version=timeframe_ar.item_metadata.version
+                if timeframe_ar
+                else None,
+                study_objective_uid=selection_create_input.study_objective_uid,
+                generate_uid_callback=repos.study_endpoint_repository.generate_uid,
+                user_initials=self.author,
+                endpoint_level_order=endpoint_level_order,
+            )
+            # add VO to aggregate
+            endpoint_repo = repos.endpoint_repository
+            assert selection_aggregate is not None
+            selection_aggregate.add_endpoint_selection(
+                study_endpoint_selection=new_selection,
+                endpoint_exist_callback=endpoint_repo.check_exists_final_version,
+                study_objective_exist_callback=repos.study_objective_repository.study_objective_exists,
+                timeframe_exist_callback=repos.timeframe_repository.check_exists_final_version,
+                ct_term_exists_callback=repos.ct_term_name_repository.term_specific_exists_by_uid,
+                unit_definition_exists_callback=repos.unit_definition_repository.check_exists_final_version,
+            )
+            selection_aggregate.validate()
+
+            # sync with DB and save the update
+            repos.study_endpoint_repository.save(selection_aggregate, self.author)
+
+            # Fetch the new selection which was just added
+            (
+                new_selection,
+                order,
+            ) = selection_aggregate.get_specific_endpoint_selection(
+                new_selection.study_selection_uid
+            )
+            return self._transform_single_to_response_model(
+                new_selection, order, study_uid
+            )
+        finally:
+            repos.close()
+
+    @db.transaction
+    def make_selection_create_endpoint(
+        self, study_uid: str, selection_create_input: StudySelectionEndpointCreateInput
+    ) -> models.StudySelectionEndpoint:
+        return self.non_transactional_make_selection_create_endpoint(
+            study_uid, selection_create_input
+        )
+
+    def batch_select_endpoint_template(
+        self,
+        study_uid: str,
+        selection_create_input: Sequence[StudySelectionEndpointTemplateSelectInput],
+    ) -> Sequence[StudySelectionEndpoint]:
+        """
+        Select multiple endpoint templates as a batch.
+
+        This will only select the templates and not create instances,
+        except for templates that have no parameters and endpoint input
+        containing parameter values (coming from pre-instances).
+
+        Args:
+            study_uid (str)
+            selection_create_input (StudySelectionEndpointBatchSelectInput): [description]
+
+        Returns:
+            Sequence[StudySelectionEndpoint]
+        """
+        repos = self._repos
+        try:
+            with db.transaction:
+                endpoint_template_repo = repos.endpoint_template_repository
+                selections = []
+                for template_input in selection_create_input:
+                    # Get endpoint template
+                    endpoint_template = endpoint_template_repo.find_by_uid_2(
+                        uid=template_input.endpoint_template_uid
+                    )
+                    if endpoint_template is None:
+                        raise exceptions.NotFoundException(
+                            f"Endpoint template with uid {template_input.endpoint_template_uid} does not exist"
+                        )
+
+                    if (
+                        endpoint_template.template_value.parameter_names is not None
+                        and len(endpoint_template.template_value.parameter_names) > 0
+                        and (
+                            template_input.parameter_terms is None
+                            or len(template_input.parameter_terms) == 0
+                        )
+                    ):
+                        # Get selection aggregate
+                        selection_aggregate = (
+                            repos.study_endpoint_repository.find_by_study(
+                                study_uid=study_uid, for_update=True
+                            )
+                        )
+
+                        # Create new VO to add
+                        new_selection = StudySelectionEndpointVO.from_input_values(
+                            user_initials=self.author,
+                            is_instance=False,
+                            endpoint_uid=endpoint_template.uid,
+                            endpoint_version=endpoint_template.item_metadata.version,
+                            endpoint_level_uid=None,
+                            endpoint_sublevel_uid=None,
+                            unit_separator=None,
+                            study_objective_uid=template_input.study_objective_uid,
+                            timeframe_uid=None,
+                            timeframe_version=None,
+                            endpoint_units=None,
+                            endpoint_level_order=None,
+                            generate_uid_callback=repos.study_endpoint_repository.generate_uid,
+                        )
+
+                        # Add template to selection
+                        try:
+                            assert selection_aggregate is not None
+                            selection_aggregate.add_endpoint_selection(
+                                new_selection,
+                                endpoint_exist_callback=endpoint_template_repo.check_exists_final_version,
+                                ct_term_exists_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
+                            )
+                        except ValueError as value_error:
+                            raise exceptions.ValidationException(value_error.args[0])
+
+                        # Sync with DB and save the update
+                        repos.study_endpoint_repository.save(
+                            selection_aggregate, self.author
+                        )
+
+                        # Fetch the new selection which was just added
+                        (
+                            new_selection,
+                            order,
+                        ) = selection_aggregate.get_specific_endpoint_selection(
+                            study_selection_uid=new_selection.study_selection_uid
+                        )
+
+                        # add the endpoint and return
+                        selections.append(
+                            models.StudySelectionEndpoint.from_study_selection_endpoint_template_ar_and_order(
+                                study_selection_endpoint_ar=selection_aggregate,
+                                order=order,
+                                get_endpoint_template_by_uid_callback=self._transform_latest_endpoint_template_model,
+                                get_endpoint_template_by_uid_version_callback=self._transform_endpoint_template_model,
+                                get_study_objective_by_uid=self._transform_single_study_objective_to_model,
+                                find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
+                            )
+                        )
+                    else:
+                        parameter_terms = (
+                            template_input.parameter_terms
+                            if template_input.parameter_terms is not None
+                            else []
+                        )
+                        new_selection = self.non_transactional_make_selection_create_endpoint(
+                            study_uid=study_uid,
+                            selection_create_input=StudySelectionEndpointCreateInput(
+                                endpoint_data=EndpointCreateInput(
+                                    endpoint_template_uid=template_input.endpoint_template_uid,
+                                    parameter_terms=parameter_terms,
+                                    library_name=template_input.library_name,
+                                )
+                            ),
+                        )
+                        selections.append(new_selection)
+                return selections
         finally:
             repos.close()
 
@@ -460,13 +593,13 @@ class StudyEndpointSelectionService(StudySelectionMixin):
     def get_all_selections_for_all_studies(
         self,
         no_brackets: bool,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.StudySelectionEndpoint]:
         repos = self._repos
@@ -501,12 +634,12 @@ class StudyEndpointSelectionService(StudySelectionMixin):
     def get_distinct_values_for_header(
         self,
         field_name: str,
-        study_uid: Optional[str] = None,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        study_uid: str | None = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ):
         repos = self._repos
@@ -561,8 +694,8 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         self,
         study_uid: str,
         no_brackets: bool,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         page_number: int = 1,
         page_size: int = 0,
         total_count: bool = False,
@@ -597,15 +730,10 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             selection_aggregate = repos.study_endpoint_repository.find_by_study(
                 study_uid, for_update
             )
-            try:
-                (
-                    new_selection,
-                    order,
-                ) = selection_aggregate.get_specific_endpoint_selection(
-                    study_selection_uid
-                )
-            except ValueError as value_error:
-                raise exceptions.NotFoundException(value_error.args[0])
+            (
+                new_selection,
+                order,
+            ) = selection_aggregate.get_specific_endpoint_selection(study_selection_uid)
             return self._transform_single_to_response_model(
                 new_selection, order, study_uid
             )
@@ -700,6 +828,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         transformed_current = StudySelectionEndpointInput(
             endpoint_uid=current_study_endpoint.endpoint_uid,
             endpoint_level_uid=current_study_endpoint.endpoint_level_uid,
+            endpoint_sublevel_uid=current_study_endpoint.endpoint_sublevel_uid,
             endpoint_units=EndpointUnitsInput(
                 units=[unit["uid"] for unit in current_study_endpoint.endpoint_units],
                 separator=current_study_endpoint.unit_separator,
@@ -765,12 +894,9 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             )
 
             # Load the current VO for updates
-            try:
-                current_vo, order = selection_aggregate.get_specific_endpoint_selection(
-                    study_selection_uid=study_selection_uid
-                )
-            except ValueError as value_error:
-                raise exceptions.NotFoundException(value_error.args[0])
+            current_vo, order = selection_aggregate.get_specific_endpoint_selection(
+                study_selection_uid=study_selection_uid
+            )
 
             # merge current with updates
             updated_selection = self._patch_prepare_new_study_endpoint(
@@ -778,21 +904,18 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 current_study_endpoint=current_vo,
             )
 
-            try:
-                endpoint_repo = self._repos.endpoint_repository
-                timeframe_repo = self._repos.timeframe_repository
-                # let the aggregate update the value object
-                selection_aggregate.update_selection(
-                    updated_study_endpoint_selection=updated_selection,
-                    study_objective_exist_callback=repos.study_objective_repository.study_objective_exists,
-                    endpoint_exist_callback=endpoint_repo.check_exists_final_version,
-                    timeframe_exist_callback=timeframe_repo.check_exists_final_version,
-                    ct_term_exists_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
-                    unit_definition_exists_callback=repos.unit_definition_repository.check_exists_final_version,
-                )
-                selection_aggregate.validate()
-            except ValueError as value_error:
-                raise exceptions.BusinessLogicException(value_error.args[0])
+            endpoint_repo = self._repos.endpoint_repository
+            timeframe_repo = self._repos.timeframe_repository
+            # let the aggregate update the value object
+            selection_aggregate.update_selection(
+                updated_study_endpoint_selection=updated_selection,
+                study_objective_exist_callback=repos.study_objective_repository.study_objective_exists,
+                endpoint_exist_callback=endpoint_repo.check_exists_final_version,
+                timeframe_exist_callback=timeframe_repo.check_exists_final_version,
+                ct_term_exists_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
+                unit_definition_exists_callback=repos.unit_definition_repository.check_exists_final_version,
+            )
+            selection_aggregate.validate()
 
             # sync with DB and save the update
             repos.study_endpoint_repository.save(selection_aggregate, self.author)
@@ -888,7 +1011,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
 
     def _transform_history_to_response_model(
         self,
-        study_selection_history: List[StudyEndpointSelectionHistory],
+        study_selection_history: list[StudyEndpointSelectionHistory],
         study_uid: str,
     ) -> Sequence[models.StudySelectionEndpoint]:
         result = []

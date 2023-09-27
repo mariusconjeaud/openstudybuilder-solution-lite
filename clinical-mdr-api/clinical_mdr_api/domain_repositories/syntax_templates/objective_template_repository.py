@@ -69,13 +69,11 @@ class ObjectiveTemplateRepository(GenericSyntaxTemplateRepository[ObjectiveTempl
         root.is_confirmatory_testing = item.is_confirmatory_testing
         self._db_save_node(root)
 
-        if item.indications:
-            for indication in item.indications:
-                if indication:
-                    root.has_indication.connect(self._get_indication(indication.uid))
-        if item.categories:
-            for category in item.categories:
-                if category and category[0]:
-                    root.has_category.connect(self._get_category(category[0].uid))
+        for indication in item.indications or []:
+            if indication:
+                root.has_indication.connect(self._get_indication(indication.uid))
+        for category in item.categories or []:
+            if category and category[0]:
+                root.has_category.connect(self._get_category(category[0].uid))
 
         return item

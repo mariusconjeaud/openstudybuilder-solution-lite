@@ -1,4 +1,4 @@
-from typing import VT, Callable, Iterator, Optional, Sequence
+from typing import VT, Callable, Iterator, Sequence
 
 from pydantic import Field
 
@@ -12,7 +12,7 @@ class TableDimension(dict):
     def __init__(
         self,
         default_factory: Callable[..., VT] = None,
-        values: Optional[Sequence[VT]] = None,
+        values: Sequence[VT] | None = None,
     ) -> None:
         self.default_factory = default_factory
         if values:
@@ -63,7 +63,7 @@ class TableDimension(dict):
         for i in range(self.size):
             yield self[i]
 
-    def keys(self) -> Iterator[int]:
+    def keys(self) -> range:
         """Iterate over the imaginary series of keys (indexes), as this is a loosely populated series"""
         return range(self.size)
 
@@ -71,7 +71,7 @@ class TableDimension(dict):
 class TableCellMetadata(BaseModel):
     col_span: int = 0
     row_span: int = 0
-    klass: Optional[str] = None
+    klass: str | None = None
 
 
 class Table(BaseModel):
@@ -86,12 +86,12 @@ class Table(BaseModel):
         description="Metadata for each cell as dict.",
     )
 
-    num_header_rows: Optional[int] = Field(
+    num_header_rows: int | None = Field(
         0,
         title="Number of header rows",
         description="Number of rows from the beginning of the table used as column headers",
     )
-    num_header_columns: Optional[int] = Field(
+    num_header_columns: int | None = Field(
         0,
         title="Number of header columns",
         description="Number of columns from the beginning of each row used as row headers",

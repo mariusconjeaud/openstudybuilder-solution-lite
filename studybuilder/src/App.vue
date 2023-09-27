@@ -88,6 +88,11 @@ export default {
       this.$store.dispatch('auth/initialize')
       this.$store.commit('auth/SET_WELCOME_MSG_FLAG', true)
     })
+    bus.$on('backToRoot', () => {
+      this.$store.commit('app/RESET_BREADCRUMBS')
+      this.$store.commit('app/SET_SECTION', '')
+      this.$router.push('/')
+    })
   },
 
   computed: {
@@ -103,16 +108,16 @@ export default {
     },
     notificationIcon () {
       if (this.notificationColor === 'green' || this.notificationColor === 'success') {
-        return 'mdi-check-circle'
+        return 'mdi-check-circle-outline'
       }
       if (this.notificationColor === 'info') {
-        return 'mdi-information'
+        return 'mdi-information-outline'
       }
       if (this.notificationColor === 'warning') {
-        return 'mdi-alert'
+        return 'mdi-alert-outline'
       }
       if (this.notificationColor === 'error' || this.notificationColor === '#E6553F') {
-        return 'mdi-alert-octagon'
+        return 'mdi-alert-octagon-outline'
       }
       return ''
     }

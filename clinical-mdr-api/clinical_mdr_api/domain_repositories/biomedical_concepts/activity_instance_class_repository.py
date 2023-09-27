@@ -1,3 +1,5 @@
+from typing import Sequence
+
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
     _AggregateRootType,
@@ -14,6 +16,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
 )
+from clinical_mdr_api.domain_repositories.models.standard_data_model import DatasetClass
 from clinical_mdr_api.domain_repositories.neomodel_ext_item_repository import (
     NeomodelExtBaseRepository,
 )
@@ -40,6 +43,7 @@ class ActivityInstanceClassRepository(
                 "has_latest_value", "has_library"
             )
             .fetch_optional_relations("parent_class__has_latest_value")
+            .fetch_optional_relations_and_collect("maps_dataset_class")
             .fetch_optional_single_relation_of_type(
                 {
                     "has_version": ("latest_version", LATEST_VERSION_ORDER_BY),
@@ -103,6 +107,7 @@ class ActivityInstanceClassRepository(
         value: ActivityInstanceClassValue,
     ) -> ActivityInstanceClassAR:
         parent_class = root.parent_class.get_or_none()
+        dataset_class_uids = [node.uid for node in root.maps_dataset_class.all()]
         return ActivityInstanceClassAR.from_repository_values(
             uid=root.uid,
             activity_instance_class_vo=ActivityInstanceClassVO.from_repository_values(
@@ -111,6 +116,7 @@ class ActivityInstanceClassRepository(
                 definition=value.definition,
                 is_domain_specific=value.is_domain_specific,
                 parent_uid=parent_class.uid if parent_class else None,
+                dataset_class_uids=dataset_class_uids,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -118,6 +124,13 @@ class ActivityInstanceClassRepository(
             ),
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
+
+    def patch_mappings(self, uid: str, dataset_class_uids: Sequence[str]) -> None:
+        root = ActivityInstanceClassRoot.nodes.get(uid=uid)
+        root.maps_dataset_class.disconnect_all()
+        for dataset_class in dataset_class_uids:
+            dataset_class = DatasetClass.nodes.get(uid=dataset_class)
+            root.maps_dataset_class.connect(dataset_class)
 
     def _maintain_parameters(
         self,

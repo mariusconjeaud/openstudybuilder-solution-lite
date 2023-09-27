@@ -5,7 +5,7 @@
   >
   <template v-slot:templateIndexFields>
     <not-applicable-field
-      :checked="template && !template.categories"
+      :checked="template && (!template.categories || !template.categories.length)"
       :clean-function="(value) => cleanObjectiveCategories(form, value)"
       >
       <template v-slot:mainField="{ notApplicable }">

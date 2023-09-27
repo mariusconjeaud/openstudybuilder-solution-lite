@@ -1,5 +1,3 @@
-from typing import Optional
-
 from clinical_mdr_api.domains.study_definition_aggregates.registry_identifiers import (
     RegistryIdentifiersVO,
 )
@@ -159,9 +157,8 @@ def generate_study_patch_request() -> StudyPatchRequestJsonModel:
 
 
 def registry_identifiers_json_model_to_vo(
-    json_model: Optional[
-        RegistryIdentifiersJsonModel
-    ] = generate_registry_identifiers_json_model(),
+    json_model: RegistryIdentifiersJsonModel
+    | None = generate_registry_identifiers_json_model(),
 ):
     return RegistryIdentifiersVO.from_input_values(
         ct_gov_id=json_model.ct_gov_id,
@@ -178,9 +175,8 @@ def registry_identifiers_json_model_to_vo(
 
 
 def high_level_study_design_json_model_to_vo(
-    json_model: Optional[
-        HighLevelStudyDesignJsonModel
-    ] = generate_high_level_study_design_json_model(),
+    json_model: HighLevelStudyDesignJsonModel
+    | None = generate_high_level_study_design_json_model(),
 ):
     return HighLevelStudyDesignVO.from_input_values(
         study_type_code=json_model.study_type_code,
@@ -203,9 +199,8 @@ def high_level_study_design_json_model_to_vo(
 
 
 def study_population_json_model_to_vo(
-    json_model: Optional[
-        StudyPopulationJsonModel
-    ] = generate_study_population_json_model(),
+    json_model: StudyPopulationJsonModel
+    | None = generate_study_population_json_model(),
 ):
     return StudyPopulationVO.from_input_values(
         therapeutic_area_codes=json_model.therapeutic_area_codes,
@@ -240,9 +235,8 @@ def study_population_json_model_to_vo(
 
 
 def study_intervention_json_model_to_vo(
-    json_model: Optional[
-        StudyInterventionJsonModel
-    ] = generate_study_intervention_json_model(),
+    json_model: StudyInterventionJsonModel
+    | None = generate_study_intervention_json_model(),
 ):
     return StudyInterventionVO.from_input_values(
         intervention_type_code=json_model.intervention_type_code,

@@ -1,5 +1,3 @@
-from typing import List
-
 from neomodel import db
 
 from clinical_mdr_api import exceptions
@@ -81,7 +79,7 @@ class OdmStudyEventService(OdmGenericService[OdmStudyEventAR]):
     def add_forms(
         self,
         uid: str,
-        odm_study_event_form_post_input: List[OdmStudyEventFormPostInput],
+        odm_study_event_form_post_input: list[OdmStudyEventFormPostInput],
         override: bool = False,
     ) -> OdmStudyEvent:
         odm_study_event_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
@@ -97,21 +95,18 @@ class OdmStudyEventService(OdmGenericService[OdmStudyEventAR]):
                 disconnect_all=True,
             )
 
-        try:
-            for form in odm_study_event_form_post_input:
-                self._repos.odm_study_event_repository.add_relation(
-                    uid=uid,
-                    relation_uid=form.uid,
-                    relationship_type=RelationType.FORM,
-                    parameters={
-                        "order_number": form.order_number,
-                        "mandatory": strtobool(form.mandatory),
-                        "locked": strtobool(form.locked),
-                        "collection_exception_condition_oid": form.collection_exception_condition_oid,
-                    },
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        for form in odm_study_event_form_post_input:
+            self._repos.odm_study_event_repository.add_relation(
+                uid=uid,
+                relation_uid=form.uid,
+                relationship_type=RelationType.FORM,
+                parameters={
+                    "order_number": form.order_number,
+                    "mandatory": strtobool(form.mandatory),
+                    "locked": strtobool(form.locked),
+                    "collection_exception_condition_oid": form.collection_exception_condition_oid,
+                },
+            )
 
         odm_study_event_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 

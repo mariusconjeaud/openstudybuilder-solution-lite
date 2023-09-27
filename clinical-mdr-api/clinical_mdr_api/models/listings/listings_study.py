@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional, Sequence, Union
+from typing import Any, Callable, Self, Sequence
 
 from pydantic import Field
 
@@ -67,8 +67,8 @@ from clinical_mdr_api.models.utils import BaseModel
 class SimpleListingCTModel(BaseModel):
     @classmethod
     def from_ct_code(
-        cls, ct_uid: str, find_term_by_uid: Callable[[str], Optional[Any]]
-    ) -> Optional["SimpleListingCTModel"]:
+        cls, ct_uid: str, find_term_by_uid: Callable[[str], Any | None]
+    ) -> Self | None:
         simple_listing_ct_model = None
         if ct_uid is not None:
             term = find_term_by_uid(ct_uid)
@@ -90,20 +90,20 @@ class SimpleListingCTModel(BaseModel):
             simple_listing_ct_model = None
         return simple_listing_ct_model
 
-    id: Optional[str] = Field(
+    id: str | None = Field(
         None,
         title="concept id: c code for CDISC CT, dictionary id for dictionary codes",
         description="",
     )
 
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         title="name: submission name for CDISC CT, name for dictionary codes",
         description="",
     )
 
 
-def ct_term_uid_to_str(ct_uid: str, find_term_by_uid: Callable[[str], Optional[Any]]):
+def ct_term_uid_to_str(ct_uid: str, find_term_by_uid: Callable[[str], Any | None]):
     if ct_uid is not None:
         term = find_term_by_uid(ct_uid)
         if term is not None:
@@ -125,24 +125,22 @@ class RegistryIdentifiersListingModel(RegistryIdentifiersJsonModel):
         title = "Registry identifiers model for listing"
         description = "Registry identifiers model for listing."
 
-    ct_gov_id_null_value_code: Optional[str] = Field(None, nullable=True)
-    eudract_id_null_value_code: Optional[str] = Field(None, nullable=True)
-    universal_trial_number_utn_null_value_code: Optional[str] = Field(
+    ct_gov_id_null_value_code: str | None = Field(None, nullable=True)
+    eudract_id_null_value_code: str | None = Field(None, nullable=True)
+    universal_trial_number_utn_null_value_code: str | None = Field(None, nullable=True)
+    japanese_trial_registry_id_japic_null_value_code: str | None = Field(
         None, nullable=True
     )
-    japanese_trial_registry_id_japic_null_value_code: Optional[str] = Field(
+    investigational_new_drug_application_number_ind_null_value_code: str | None = Field(
         None, nullable=True
     )
-    investigational_new_drug_application_number_ind_null_value_code: Optional[
-        str
-    ] = Field(None, nullable=True)
 
     @classmethod
     def from_study_registry_identifiers_vo(
         cls,
         registry_identifiers_vo: RegistryIdentifiersVO,
-        find_term_by_uid: Callable[[str], Optional[str]],
-    ) -> "RegistryIdentifiersListingModel":
+        find_term_by_uid: Callable[[str], str | None],
+    ) -> Self | None:
         if registry_identifiers_vo is None:
             return None
         return cls(
@@ -183,39 +181,37 @@ class StudyTypeListingModel(HighLevelStudyDesignJsonModel):
         title = "Study type model for listing"
         description = "Study type model for listing"
 
-    study_type_code: Optional[str] = Field(None, nullable=True)
-    study_type_null_value_code: Optional[str] = Field(None, nullable=True)
+    study_type_code: str | None = Field(None, nullable=True)
+    study_type_null_value_code: str | None = Field(None, nullable=True)
 
-    trial_type_codes: Optional[Sequence[SimpleListingCTModel]] = Field(
+    trial_type_codes: Sequence[SimpleListingCTModel] | None = Field(None, nullable=True)
+    trial_type_null_value_code: str | None = Field(None, nullable=True)
+
+    trial_phase_code: str | None = Field(None, nullable=True)
+    trial_phase_null_value_code: str | None = Field(None, nullable=True)
+
+    is_extension_trial: str | bool | None = Field(None, nullable=True)
+    is_extension_trial_null_value_code: str | None = Field(None, nullable=True)
+
+    is_adaptive_design: str | bool | None = Field(None, nullable=True)
+    is_adaptive_design_null_value_code: str | None = Field(None, nullable=True)
+
+    study_stop_rules_null_value_code: str | None = Field(None, nullable=True)
+
+    confirmed_response_minimum_duration: str | None = Field(None, nullable=True)
+    confirmed_response_minimum_duration_null_value_code: str | None = Field(
         None, nullable=True
     )
-    trial_type_null_value_code: Optional[str] = Field(None, nullable=True)
 
-    trial_phase_code: Optional[str] = Field(None, nullable=True)
-    trial_phase_null_value_code: Optional[str] = Field(None, nullable=True)
-
-    is_extension_trial: Optional[Union[str, bool]] = Field(None, nullable=True)
-    is_extension_trial_null_value_code: Optional[str] = Field(None, nullable=True)
-
-    is_adaptive_design: Optional[Union[str, bool]] = Field(None, nullable=True)
-    is_adaptive_design_null_value_code: Optional[str] = Field(None, nullable=True)
-
-    study_stop_rules_null_value_code: Optional[str] = Field(None, nullable=True)
-
-    confirmed_response_minimum_duration: Optional[str] = Field(None, nullable=True)
-    confirmed_response_minimum_duration_null_value_code: Optional[str] = Field(
-        None, nullable=True
-    )
-
-    post_auth_indicator: Optional[str] = Field(None, nullable=True)
-    post_auth_indicator_null_value_code: Optional[str] = Field(None, nullable=True)
+    post_auth_indicator: str | None = Field(None, nullable=True)
+    post_auth_indicator_null_value_code: str | None = Field(None, nullable=True)
 
     @classmethod
     def from_high_level_study_design_vo(
         cls,
-        high_level_study_design_vo: Optional[HighLevelStudyDesignVO],
-        find_term_by_uid: Callable[[str], Optional[CTTermAttributesAR]],
-    ) -> Optional["StudyTypeListingModel"]:
+        high_level_study_design_vo: HighLevelStudyDesignVO | None,
+        find_term_by_uid: Callable[[str], CTTermAttributesAR | None],
+    ) -> Self | None:
         if high_level_study_design_vo is None:
             return None
         return cls(
@@ -288,81 +284,73 @@ class StudyPopulationListingModel(StudyPopulationJsonModel):
         title = "Study population model for listing"
         description = "Study population model for listing"
 
-    therapeutic_area_codes: Optional[Sequence[SimpleListingCTModel]] = Field(
+    therapeutic_area_codes: Sequence[SimpleListingCTModel] | None = Field(
         None, nullable=True
     )
-    therapeutic_area_null_value_code: Optional[str] = Field(None, nullable=True)
+    therapeutic_area_null_value_code: str | None = Field(None, nullable=True)
 
-    disease_condition_or_indication_codes: Optional[
-        Sequence[SimpleListingCTModel]
-    ] = Field(None, nullable=True)
-    disease_condition_or_indication_null_value_code: Optional[str] = Field(
-        None, nullable=True
-    )
-
-    diagnosis_group_codes: Optional[Sequence[SimpleListingCTModel]] = Field(
-        None, nullable=True
-    )
-    diagnosis_group_null_value_code: Optional[str] = Field(None, nullable=True)
-
-    sex_of_participants_code: Optional[str] = Field(None, nullable=True)
-    sex_of_participants_null_value_code: Optional[str] = Field(None, nullable=True)
-
-    rare_disease_indicator: Optional[Union[str, bool]] = Field(None, nullable=True)
-    rare_disease_indicator_null_value_code: Optional[str] = Field(None, nullable=True)
-
-    healthy_subject_indicator: Optional[Union[str, bool]] = Field(None, nullable=True)
-    healthy_subject_indicator_null_value_code: Optional[str] = Field(
+    disease_condition_or_indication_codes: Sequence[
+        SimpleListingCTModel
+    ] | None = Field(None, nullable=True)
+    disease_condition_or_indication_null_value_code: str | None = Field(
         None, nullable=True
     )
 
-    planned_minimum_age_of_subjects: Optional[str] = Field(None, nullable=True)
-    planned_minimum_age_of_subjects_null_value_code: Optional[str] = Field(
+    diagnosis_group_codes: Sequence[SimpleListingCTModel] | None = Field(
+        None, nullable=True
+    )
+    diagnosis_group_null_value_code: str | None = Field(None, nullable=True)
+
+    sex_of_participants_code: str | None = Field(None, nullable=True)
+    sex_of_participants_null_value_code: str | None = Field(None, nullable=True)
+
+    rare_disease_indicator: str | bool | None = Field(None, nullable=True)
+    rare_disease_indicator_null_value_code: str | None = Field(None, nullable=True)
+
+    healthy_subject_indicator: str | bool | None = Field(None, nullable=True)
+    healthy_subject_indicator_null_value_code: str | None = Field(None, nullable=True)
+
+    planned_minimum_age_of_subjects: str | None = Field(None, nullable=True)
+    planned_minimum_age_of_subjects_null_value_code: str | None = Field(
         None, nullable=True
     )
 
-    planned_maximum_age_of_subjects: Optional[str] = Field(None, nullable=True)
-    planned_maximum_age_of_subjects_null_value_code: Optional[str] = Field(
+    planned_maximum_age_of_subjects: str | None = Field(None, nullable=True)
+    planned_maximum_age_of_subjects_null_value_code: str | None = Field(
         None, nullable=True
     )
 
-    stable_disease_minimum_duration: Optional[str] = Field(None, nullable=True)
-    stable_disease_minimum_duration_null_value_code: Optional[str] = Field(
+    stable_disease_minimum_duration: str | None = Field(None, nullable=True)
+    stable_disease_minimum_duration_null_value_code: str | None = Field(
         None, nullable=True
     )
 
-    pediatric_study_indicator: Optional[Union[str, bool]] = Field(None, nullable=True)
-    pediatric_study_indicator_null_value_code: Optional[str] = Field(
+    pediatric_study_indicator: str | bool | None = Field(None, nullable=True)
+    pediatric_study_indicator_null_value_code: str | None = Field(None, nullable=True)
+
+    pediatric_postmarket_study_indicator: str | bool | None = Field(None, nullable=True)
+    pediatric_postmarket_study_indicator_null_value_code: str | None = Field(
         None, nullable=True
     )
 
-    pediatric_postmarket_study_indicator: Optional[Union[str, bool]] = Field(
+    pediatric_investigation_plan_indicator: str | bool | None = Field(
         None, nullable=True
     )
-    pediatric_postmarket_study_indicator_null_value_code: Optional[str] = Field(
-        None, nullable=True
-    )
-
-    pediatric_investigation_plan_indicator: Optional[Union[str, bool]] = Field(
-        None, nullable=True
-    )
-    pediatric_investigation_plan_indicator_null_value_code: Optional[str] = Field(
+    pediatric_investigation_plan_indicator_null_value_code: str | None = Field(
         None, nullable=True
     )
 
-    relapse_criteria_null_value_code: Optional[str] = Field(None, nullable=True)
+    relapse_criteria_null_value_code: str | None = Field(None, nullable=True)
 
-    number_of_expected_subjects_null_value_code: Optional[str] = Field(
-        None, nullable=True
-    )
+    number_of_expected_subjects_null_value_code: str | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_population_vo(
         cls,
-        study_population_vo: Optional[StudyPopulationVO],
-        find_term_by_uid: Callable[[str], Optional[CTTermAttributesAR]],
-        find_dictionary_term_by_uid: Callable[[str], Optional[DictionaryTermAR]],
-    ) -> Optional["StudyPopulationListingModel"]:
+        study_population_vo: StudyPopulationVO | None,
+        find_term_by_uid: Callable[[str], CTTermAttributesAR | None],
+        find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
+    ) -> Self | None:
         if study_population_vo is None:
             return None
         return cls(
@@ -483,44 +471,42 @@ class StudyAttributesListingModel(StudyInterventionJsonModel):
         title = "study attributes model for listing"
         description = "Study attributes model for listing"
 
-    intervention_type_code: Optional[str] = Field(None, nullable=True)
-    intervention_type_null_value_code: Optional[str] = Field(None, nullable=True)
+    intervention_type_code: str | None = Field(None, nullable=True)
+    intervention_type_null_value_code: str | None = Field(None, nullable=True)
 
-    add_on_to_existing_treatments: Optional[Union[str, bool]] = Field(
+    add_on_to_existing_treatments: str | bool | None = Field(None, nullable=True)
+    add_on_to_existing_treatments_null_value_code: str | None = Field(
         None, nullable=True
     )
-    add_on_to_existing_treatments_null_value_code: Optional[str] = Field(
+
+    control_type_code: str | None = Field(None, nullable=True)
+    control_type_null_value_code: str | None = Field(None, nullable=True)
+
+    intervention_model_code: str | None = Field(None, nullable=True)
+    intervention_model_null_value_code: str | None = Field(None, nullable=True)
+
+    is_trial_randomised: str | bool | None = Field(None, nullable=True)
+    is_trial_randomised_null_value_code: str | None = Field(None, nullable=True)
+
+    stratification_factor_null_value_code: str | None = Field(None, nullable=True)
+
+    trial_blinding_schema_code: str | None = Field(None, nullable=True)
+    trial_blinding_schema_null_value_code: str | None = Field(None, nullable=True)
+
+    planned_study_length: str | None = Field(None, nullable=True)
+    planned_study_length_null_value_code: str | None = Field(None, nullable=True)
+
+    trial_intent_types_codes: Sequence[SimpleListingCTModel] | None = Field(
         None, nullable=True
     )
-
-    control_type_code: Optional[str] = Field(None, nullable=True)
-    control_type_null_value_code: Optional[str] = Field(None, nullable=True)
-
-    intervention_model_code: Optional[str] = Field(None, nullable=True)
-    intervention_model_null_value_code: Optional[str] = Field(None, nullable=True)
-
-    is_trial_randomised: Optional[Union[str, bool]] = Field(None, nullable=True)
-    is_trial_randomised_null_value_code: Optional[str] = Field(None, nullable=True)
-
-    stratification_factor_null_value_code: Optional[str] = Field(None, nullable=True)
-
-    trial_blinding_schema_code: Optional[str] = Field(None, nullable=True)
-    trial_blinding_schema_null_value_code: Optional[str] = Field(None, nullable=True)
-
-    planned_study_length: Optional[str] = Field(None, nullable=True)
-    planned_study_length_null_value_code: Optional[str] = Field(None, nullable=True)
-
-    trial_intent_types_codes: Optional[Sequence[SimpleListingCTModel]] = Field(
-        None, nullable=True
-    )
-    trial_intent_types_null_value_code: Optional[str] = Field(None, nullable=True)
+    trial_intent_types_null_value_code: str | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_intervention_vo(
         cls,
-        study_intervention_vo: Optional[StudyInterventionVO],
-        find_term_by_uid: Callable[[str], Optional[CTTermAttributesAR]],
-    ) -> Optional["StudyAttributesListingModel"]:
+        study_intervention_vo: StudyInterventionVO | None,
+        find_term_by_uid: Callable[[str], CTTermAttributesAR | None],
+    ) -> Self | None:
         if study_intervention_vo is None:
             return None
         return cls(
@@ -601,9 +587,9 @@ class StudySelctionListingModel(BaseModel):
     uid: str
     name: str
     short_name: str
-    code: Optional[str] = Field(None, nullable=True)
-    number_of_subjects: Optional[int] = Field(None, nullable=True)
-    description: Optional[str] = Field(None, nullable=True)
+    code: str | None = Field(None, nullable=True)
+    number_of_subjects: int | None = Field(None, nullable=True)
+    description: str | None = Field(None, nullable=True)
 
 
 class StudyBranchArmListingModel(StudySelctionListingModel):
@@ -611,13 +597,13 @@ class StudyBranchArmListingModel(StudySelctionListingModel):
         title = "Study Branch Arm model for listing"
         description = "Study Branch Arm model for listing."
 
-    randomization_group: Optional[str]
+    randomization_group: str | None
 
     @classmethod
     def from_study_selection_branch_arm_vo(
         cls,
         study_selection_branch_arm_vo: StudySelectionBranchArmVO,
-    ) -> Optional["StudyBranchArmListingModel"]:
+    ) -> Self | None:
         return cls(
             uid=study_selection_branch_arm_vo.study_selection_uid,
             name=none_to_empty_str(study_selection_branch_arm_vo.name),
@@ -650,9 +636,9 @@ class StudyArmListingModel(StudySelctionListingModel):
         description = "Study Arm model for listing."
 
     uid: str
-    randomization_group: Optional[str]
+    randomization_group: str | None
     arm_type: str
-    connected_branches: Optional[Sequence[StudyBranchArmListingModel]] = None
+    connected_branches: Sequence[StudyBranchArmListingModel] | None = None
 
     @classmethod
     def from_study_selection_arm_vo(
@@ -661,7 +647,7 @@ class StudyArmListingModel(StudySelctionListingModel):
         study_selection_arm_vo: StudySelectionArmVO,
         find_simple_term_arm_type_by_term_uid: Callable,
         find_multiple_connected_branch_arm: Callable,
-    ) -> Optional["StudyArmListingModel"]:
+    ) -> Self | None:
         return cls(
             uid=study_selection_arm_vo.study_selection_uid,
             arm_type=ct_term_uid_to_str(
@@ -709,14 +695,14 @@ class StudyCohortListingModel(StudySelctionListingModel):
         title = "study attributes model for listing"
         description = "Study attributes model for listing"
 
-    arm_uid: Optional[Sequence[str]] = Field(None, nullable=True)
-    branch_arm_uid: Optional[Sequence[str]] = Field(None, nullable=True)
+    arm_uid: Sequence[str] | None = Field(None, nullable=True)
+    branch_arm_uid: Sequence[str] | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_selection_cohort_vo(
         cls,
         study_selection_cohort_vo: StudySelectionCohortVO,
-    ) -> Optional["StudyCohortListingModel"]:
+    ) -> Self | None:
         return cls(
             uid=study_selection_cohort_vo.study_selection_uid,
             name=none_to_empty_str(study_selection_cohort_vo.name),
@@ -731,7 +717,7 @@ class StudyCohortListingModel(StudySelctionListingModel):
     @staticmethod
     def from_study_selection_cohort_ar(
         study_selection_cohort_ar: StudySelectionCohortAR,
-    ) -> Optional[Sequence["StudyCohortListingModel"]]:
+    ) -> Sequence["StudyCohortListingModel"] | None:
         cohorts = []
         for selection in study_selection_cohort_ar.study_cohorts_selection:
             cohorts.append(
@@ -747,16 +733,16 @@ class StudyEpochListingModel(BaseModel):
     name: str
     type: str
     subtype: str
-    start_rule: Optional[str] = Field(None, nullable=True)
-    end_rule: Optional[str] = Field(None, nullable=True)
-    description: Optional[str] = Field(None, nullable=True)
+    start_rule: str | None = Field(None, nullable=True)
+    end_rule: str | None = Field(None, nullable=True)
+    description: str | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_epoch(
         cls,
         study_epoch: StudyEpoch,
         find_term_by_uid: Callable,
-    ) -> Optional["StudyEpochListingModel"]:
+    ) -> Self | None:
         return cls(
             uid=study_epoch.uid,
             name=none_to_empty_str(study_epoch.epoch_name),
@@ -775,7 +761,7 @@ class StudyEpochListingModel(BaseModel):
     def from_all_study_epochs(
         all_study_epochs: Sequence[StudyEpoch],
         find_term_by_uid: Callable,
-    ) -> Optional[Sequence["StudyEpochListingModel"]]:
+    ) -> Sequence["StudyEpochListingModel"] | None:
         epochs = []
         for epoch in all_study_epochs:
             epochs.append(
@@ -793,17 +779,17 @@ class StudyElementListingModel(BaseModel):
     short_name: str
     type: str
     subtype: str
-    start_rule: Optional[str] = Field(None, nullable=True)
-    end_rule: Optional[str] = Field(None, nullable=True)
-    planned_duration: Optional[str] = Field(None, nullable=True)
-    description: Optional[str] = Field(None, nullable=True)
+    start_rule: str | None = Field(None, nullable=True)
+    end_rule: str | None = Field(None, nullable=True)
+    planned_duration: str | None = Field(None, nullable=True)
+    description: str | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_element_vo(
         cls,
         study_element_vo: StudySelectionElementVO,
         find_term_by_uid: Callable,
-    ) -> Optional["StudyElementListingModel"]:
+    ) -> Self | None:
         return cls(
             uid=study_element_vo.study_selection_uid,
             name=none_to_empty_str(study_element_vo.name),
@@ -824,7 +810,7 @@ class StudyElementListingModel(BaseModel):
     def from_study_element_ar(
         study_element_ar: StudySelectionElementAR,
         find_term_by_uid: Callable,
-    ) -> Optional[Sequence["StudyEpochListingModel"]]:
+    ) -> Sequence["StudyEpochListingModel"] | None:
         elements = []
         for element in study_element_ar.study_elements_selection:
             elements.append(
@@ -837,16 +823,16 @@ class StudyElementListingModel(BaseModel):
 
 
 class StudyDesignMatrixListingModel(BaseModel):
-    arm_uid: Optional[str]
-    branch_arm_uid: Optional[str]
+    arm_uid: str | None
+    branch_arm_uid: str | None
     epoch_uid: str
-    element_uid: Optional[str]
+    element_uid: str | None
 
     @classmethod
     def from_study_design_cell_vo(
         cls,
         design_cell_vo: StudyDesignCellVO,
-    ) -> "StudyDesignMatrixListingModel":
+    ) -> Self:
         return cls(
             arm_uid=none_to_empty_str(design_cell_vo.study_arm_uid),
             branch_arm_uid=none_to_empty_str(design_cell_vo.study_branch_arm_uid),
@@ -857,7 +843,7 @@ class StudyDesignMatrixListingModel(BaseModel):
     @staticmethod
     def from_all_study_design_cells(
         all_design_cells: Sequence[StudyDesignCellVO],
-    ) -> Optional[Sequence["StudyDesignMatrixListingModel"]]:
+    ) -> Sequence["StudyDesignMatrixListingModel"] | None:
         design_cells = []
         for design_cell in all_design_cells:
             design_cells.append(
@@ -876,20 +862,20 @@ class StudyVisitListingModel(BaseModel):
     unique_visit_number: str
     name: str
     short_name: str
-    study_day_number: Optional[int] = Field(None, nullable=True)
-    visit_window_min: Optional[int] = Field(None, nullable=True)
-    visit_window_max: Optional[int] = Field(None, nullable=True)
-    window_unit: Optional[str] = Field(None, nullable=True)
-    description: Optional[str] = Field(None, nullable=True)
-    epoch_allocation: Optional[str] = Field(None, nullable=True)
-    start_rule: Optional[str] = Field(None, nullable=True)
-    end_rule: Optional[str] = Field(None, nullable=True)
+    study_day_number: int | None = Field(None, nullable=True)
+    visit_window_min: int | None = Field(None, nullable=True)
+    visit_window_max: int | None = Field(None, nullable=True)
+    window_unit: str | None = Field(None, nullable=True)
+    description: str | None = Field(None, nullable=True)
+    epoch_allocation: str | None = Field(None, nullable=True)
+    start_rule: str | None = Field(None, nullable=True)
+    end_rule: str | None = Field(None, nullable=True)
 
     @classmethod
     def from_study_visit_vo(
         cls,
         study_visit_vo: StudyVisitVO,
-    ) -> "StudyVisitListingModel":
+    ) -> Self:
         return cls(
             epoch_uid=study_visit_vo.epoch_uid,
             epoch_name=study_visit_vo.epoch.epoch.value,
@@ -917,7 +903,7 @@ class StudyVisitListingModel(BaseModel):
     @staticmethod
     def from_all_study_visits(
         all_study_visits: Sequence[StudyVisitVO],
-    ) -> Optional[Sequence["StudyVisitListingModel"]]:
+    ) -> Sequence["StudyVisitListingModel"] | None:
         study_visits = []
         for study_visit in all_study_visits:
             study_visits.append(
@@ -930,15 +916,15 @@ class StudyVisitListingModel(BaseModel):
 
 class StudyCriteriaListingModel(BaseModel):
     type: str
-    text: Optional[str]
+    text: str | None
 
     @classmethod
     def from_study_criteria_vo(
         cls,
         study_criteria_vo: StudySelectionCriteriaVO,
-        find_term_by_uid: Callable[[str], Optional[CTTermAttributesAR]],
-        find_criteria_by_uid: Callable[[str], Optional[Criteria]],
-    ) -> "StudyCriteriaListingModel":
+        find_term_by_uid: Callable[[str], CTTermAttributesAR | None],
+        find_criteria_by_uid: Callable[[str], Criteria | None],
+    ) -> Self:
         return cls(
             type=ct_term_uid_to_str(
                 ct_uid=study_criteria_vo.criteria_type_uid,
@@ -954,9 +940,9 @@ class StudyCriteriaListingModel(BaseModel):
     @staticmethod
     def from_study_criteria_ar(
         study_criteria_ar: StudySelectionCriteriaAR,
-        find_term_by_uid: Callable[[str], Optional[CTTermAttributesAR]],
-        find_criteria_by_uid: Callable[[str], Optional[Criteria]],
-    ) -> Optional[Sequence["StudyCriteriaListingModel"]]:
+        find_term_by_uid: Callable[[str], CTTermAttributesAR | None],
+        find_criteria_by_uid: Callable[[str], Criteria | None],
+    ) -> Sequence["StudyCriteriaListingModel"] | None:
         study_criterias = []
         for study_criteria in study_criteria_ar.study_criteria_selection:
             if study_criteria.is_instance:
@@ -973,15 +959,15 @@ class StudyCriteriaListingModel(BaseModel):
 class StudyObjectiveListingModel(BaseModel):
     uid: str
     type: str
-    text: Optional[str]
+    text: str | None
 
     @classmethod
     def from_study_objective_vo(
         cls,
         study_objective_vo: StudySelectionObjectiveVO,
-        find_term_by_uid: Callable[[str], Optional[CTTermAttributesAR]],
-        find_objective_by_uid: Callable[[str], Optional[Objective]],
-    ) -> "StudyObjectiveListingModel":
+        find_term_by_uid: Callable[[str], CTTermAttributesAR | None],
+        find_objective_by_uid: Callable[[str], Objective | None],
+    ) -> Self:
         return cls(
             uid=study_objective_vo.study_selection_uid,
             type=ct_term_uid_to_str(
@@ -998,9 +984,9 @@ class StudyObjectiveListingModel(BaseModel):
     @staticmethod
     def from_study_objective_ar(
         study_objective_ar: StudySelectionObjectivesAR,
-        find_term_by_uid: Callable[[str], Optional[CTTermAttributesAR]],
-        find_objective_by_uid: Callable[[str], Optional[Objective]],
-    ) -> Optional[Sequence["StudyObjectiveListingModel"]]:
+        find_term_by_uid: Callable[[str], CTTermAttributesAR | None],
+        find_objective_by_uid: Callable[[str], Objective | None],
+    ) -> Sequence["StudyObjectiveListingModel"] | None:
         study_objectives = []
         for study_objective in study_objective_ar.study_objectives_selection:
             study_objectives.append(
@@ -1016,20 +1002,20 @@ class StudyObjectiveListingModel(BaseModel):
 class StudyEndpointListingModel(BaseModel):
     uid: str
     type: str
-    sub_type: Optional[str]
-    text: Optional[str]
-    connected_objective: Optional[str]
-    timeframe: Optional[str]
-    endpoint_units: Optional[Union[str, EndpointUnits]]
+    sub_type: str | None
+    text: str | None
+    connected_objective: str | None
+    timeframe: str | None
+    endpoint_units: str | EndpointUnits | None
 
     @classmethod
     def from_study_endpoint_vo(
         cls,
         study_endpoint_vo: StudySelectionEndpointVO,
-        find_term_by_uid: Callable[[str], Optional[CTTermAttributesAR]],
-        find_endpoint_by_uid: Callable[[str], Optional[Endpoint]],
-        find_timeframe_by_uid: Callable[[str], Optional[Timeframe]],
-    ) -> "StudyEndpointListingModel":
+        find_term_by_uid: Callable[[str], CTTermAttributesAR | None],
+        find_endpoint_by_uid: Callable[[str], Endpoint | None],
+        find_timeframe_by_uid: Callable[[str], Timeframe | None],
+    ) -> Self:
         return cls(
             uid=study_endpoint_vo.study_selection_uid,
             type=ct_term_uid_to_str(
@@ -1060,10 +1046,10 @@ class StudyEndpointListingModel(BaseModel):
     @staticmethod
     def from_study_endpoint_ar(
         study_endpoint_ar: StudySelectionEndpointsAR,
-        find_term_by_uid: Callable[[str], Optional[CTTermAttributesAR]],
-        find_endpoint_by_uid: Callable[[str], Optional[Endpoint]],
-        find_timeframe_by_uid: Callable[[str], Optional[Timeframe]],
-    ) -> Optional[Sequence["StudyEndpointListingModel"]]:
+        find_term_by_uid: Callable[[str], CTTermAttributesAR | None],
+        find_endpoint_by_uid: Callable[[str], Endpoint | None],
+        find_timeframe_by_uid: Callable[[str], Timeframe | None],
+    ) -> Sequence["StudyEndpointListingModel"] | None:
         study_endpoints = []
         for study_endpoint in study_endpoint_ar.study_endpoints_selection:
             study_endpoints.append(
@@ -1082,36 +1068,30 @@ class StudyMetadataListingModel(BaseModel):
         title = "Study Metadata model for listing"
         description = "Study Metadata model for listing."
 
-    study_title: Optional[StudyDescriptionJsonModel] = Field(None, nullable=True)
-    registry_identifiers: Optional[RegistryIdentifiersListingModel] = Field(
+    study_title: StudyDescriptionJsonModel | None = Field(None, nullable=True)
+    registry_identifiers: RegistryIdentifiersListingModel | None = Field(
         None, nullable=True
     )
-    study_type: Optional[StudyTypeListingModel] = Field(None, nullable=True)
-    study_attributes: Optional[StudyAttributesListingModel] = Field(None, nullable=True)
-    study_population: Optional[StudyPopulationListingModel] = Field(None, nullable=True)
-    study_arms: Optional[Sequence[StudyArmListingModel]] = Field(None, nullable=True)
-    study_cohorts: Optional[Sequence[StudyCohortListingModel]] = Field(
+    study_type: StudyTypeListingModel | None = Field(None, nullable=True)
+    study_attributes: StudyAttributesListingModel | None = Field(None, nullable=True)
+    study_population: StudyPopulationListingModel | None = Field(None, nullable=True)
+    study_arms: Sequence[StudyArmListingModel] | None = Field(None, nullable=True)
+    study_cohorts: Sequence[StudyCohortListingModel] | None = Field(None, nullable=True)
+    study_epochs: Sequence[StudyEpochListingModel] | None = Field(None, nullable=True)
+    study_elements: Sequence[StudyElementListingModel] | None = Field(
         None, nullable=True
     )
-    study_epochs: Optional[Sequence[StudyEpochListingModel]] = Field(
+    study_design_matrix: Sequence[StudyDesignMatrixListingModel] | None = Field(
         None, nullable=True
     )
-    study_elements: Optional[Sequence[StudyElementListingModel]] = Field(
+    study_visits: Sequence[StudyVisitListingModel] | None = Field(None, nullable=True)
+    study_criterias: Sequence[StudyCriteriaListingModel] | None = Field(
         None, nullable=True
     )
-    study_design_matrix: Optional[Sequence[StudyDesignMatrixListingModel]] = Field(
+    study_objectives: Sequence[StudyObjectiveListingModel] | None = Field(
         None, nullable=True
     )
-    study_visits: Optional[Sequence[StudyVisitListingModel]] = Field(
-        None, nullable=True
-    )
-    study_criterias: Optional[Sequence[StudyCriteriaListingModel]] = Field(
-        None, nullable=True
-    )
-    study_objectives: Optional[Sequence[StudyObjectiveListingModel]] = Field(
-        None, nullable=True
-    )
-    study_endpoints: Optional[Sequence[StudyEndpointListingModel]] = Field(
+    study_endpoints: Sequence[StudyEndpointListingModel] | None = Field(
         None, nullable=True
     )
 
@@ -1129,14 +1109,14 @@ class StudyMetadataListingModel(BaseModel):
         study_criteria_ar: StudySelectionCriteriaAR,
         study_objective_ar: StudySelectionObjectivesAR,
         study_endpoint_ar: StudySelectionEndpointsAR,
-        find_term_by_uid: Callable[[str], Optional[CTTermAttributesAR]],
-        find_dictionary_term_by_uid: Callable[[str], Optional[DictionaryTermAR]],
+        find_term_by_uid: Callable[[str], CTTermAttributesAR | None],
+        find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
         find_multiple_connected_branch_arm: Callable,
-        find_criteria_by_uid: Callable[[str], Optional[Criteria]],
-        find_objective_by_uid: Callable[[str], Optional[Objective]],
-        find_endpoint_by_uid: Callable[[str], Optional[Endpoint]],
-        find_timeframe_by_uid: Callable[[str], Optional[Timeframe]],
-    ) -> "StudyMetadataListingModel":
+        find_criteria_by_uid: Callable[[str], Criteria | None],
+        find_objective_by_uid: Callable[[str], Objective | None],
+        find_endpoint_by_uid: Callable[[str], Endpoint | None],
+        find_timeframe_by_uid: Callable[[str], Timeframe | None],
+    ) -> Self | None:
         if study_metadata_vo is None:
             return None
         return cls(

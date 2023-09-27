@@ -1,6 +1,5 @@
 from neomodel import (
     BooleanProperty,
-    IntegerProperty,
     RelationshipFrom,
     RelationshipTo,
     StringProperty,
@@ -15,12 +14,7 @@ from clinical_mdr_api.domain_repositories.models.study import StudyValue
 from clinical_mdr_api.domain_repositories.models.study_selections import StudySelection
 
 
-class OrderedStudySelectionDiseaseMilestone(StudySelection):
-    accepted_version = BooleanProperty()
-    order = IntegerProperty()
-
-
-class StudyDiseaseMilestone(OrderedStudySelectionDiseaseMilestone):
+class StudyDiseaseMilestone(StudySelection):
     study_value = RelationshipFrom(
         StudyValue, "HAS_STUDY_DISEASE_MILESTONE", cardinality=ZeroOrOne
     )

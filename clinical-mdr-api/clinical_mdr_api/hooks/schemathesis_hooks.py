@@ -12,7 +12,16 @@ def is_in_range(val):
     return all(0x20 <= ord(char) <= 0xFFFF for char in val)
 
 
-def is_desired_header(headers):
+def is_desired_header(headers: dict) -> bool:
+    """
+    Returns True if all headers are within range.
+
+    Args:
+        headers (dict): The headers to check.
+
+    Returns:
+        bool: True if all headers are within range, False otherwise.
+    """
     if headers:
         for name, value in headers.items():
             if not is_in_range(name) or not is_in_range(value):

@@ -18,7 +18,7 @@ def create_random_activity_subgroup_vo() -> ActivitySubGroupVO:
         name_sentence_case=random_str(),
         definition=random_str(),
         abbreviation=random_str(),
-        activity_group=random_str(),
+        activity_groups=[random_str(), random_str()],
     )
     return random_activity_subgroup_vo
 
@@ -36,7 +36,7 @@ def create_random_activity_subgroup_ar(
             library_name=library, is_editable=is_editable
         ),
         author="TODO Initials",
-        activity_subgroup_exists_by_name_callback=lambda _: False,
+        concept_exists_by_callback=lambda x, y, z: False,
         activity_group_exists=lambda _: True,
     )
 
@@ -71,7 +71,7 @@ class TestActivitySubGroup(unittest.TestCase):
             author="TODO",
             change_description="Test",
             concept_vo=activity_vo,
-            concept_exists_by_name_callback=lambda _: False,
+            concept_exists_by_callback=lambda x, y, z: False,
             activity_group_exists=lambda _: True,
         )
 
@@ -92,8 +92,9 @@ class TestActivitySubGroup(unittest.TestCase):
         self.assertEqual(
             activity_subgroup_ar.concept_vo.definition, activity_vo.definition
         )
-        self.assertIn(
-            activity_vo.activity_group, activity_subgroup_ar.concept_vo.activity_group
+        self.assertEqual(
+            set(activity_subgroup_ar.concept_vo.activity_groups),
+            set(activity_vo.activity_groups),
         )
 
     def test__approve__version_created(self):

@@ -7,9 +7,16 @@ from deepdiff import DeepDiff
 def compare_versions(version1: str, version2: str) -> int:
     """
     Compares two version identifiers in `major.minor.patch` format and returns:
-        - `0` if versions are equal
-        - `1` if version1 is newer than version2
-        - `-1` if version1 is older than version2
+    - `0` if versions are equal
+    - `1` if version1 is newer than version2
+    - `-1` if version1 is older than version2
+
+    Args:
+        version1 (str): The first version identifier.
+        version2 (str): The second version identifier.
+
+    Returns:
+        int: The result of the comparison.
     """
     # Split the version strings into their components
     v1 = version1.split(".")

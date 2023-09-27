@@ -109,7 +109,7 @@ export default {
         },
         {
           label: this.$t('InstanceTable.show_studies', { type: this.type }),
-          icon: 'mdi-dots-horizontal-circle',
+          icon: 'mdi-dots-horizontal-circle-outline',
           click: this.showInstanceStudies
         }
       ],

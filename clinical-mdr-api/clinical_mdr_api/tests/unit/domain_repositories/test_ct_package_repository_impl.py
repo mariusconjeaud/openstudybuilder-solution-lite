@@ -1,6 +1,6 @@
 import datetime
 import unittest
-from typing import Collection, List
+from typing import Collection
 from unittest.mock import Mock, patch
 
 from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_package_repository import (
@@ -45,7 +45,7 @@ class TestCTPackageRepositoryImpl(unittest.TestCase):
     def test__find_all_mocked_ct_package_exist(self, ct_package_mock):
         # given
         repo = CTPackageRepository()
-        ct_packages: List[List[CTPackage]] = [
+        ct_packages: list[list[CTPackage]] = [
             [create_random_ct_package_node(random_str())] for _ in range(10)
         ]
         ct_package_mock.cypher_query.return_value = ct_packages, ()
@@ -80,7 +80,7 @@ class TestCTPackageRepositoryImpl(unittest.TestCase):
     def test__find_all_mocked_ct_package_not_exist(self, ct_package_mock):
         # given
         repo = CTPackageRepository()
-        ct_packages: List[List[CTPackage]] = []
+        ct_packages: list[list[CTPackage]] = []
         ct_package_mock.cypher_query.return_value = ct_packages, ()
 
         # when

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Self
 
 from pydantic import Field
 
@@ -25,7 +25,7 @@ class TimeframeTemplateName(BaseModel):
         ...,
         description="The plain text version of the name property, stripped of HTML tags",
     )
-    guidance_text: Optional[str] = Field(
+    guidance_text: str | None = Field(
         None,
         description="Optional guidance text for using the template.",
         nullable=True,
@@ -34,11 +34,15 @@ class TimeframeTemplateName(BaseModel):
 
 class TimeframeTemplateNameUid(TimeframeTemplateName):
     uid: str = Field(..., description="The unique id of the timeframe template.")
-    sequence_id: Optional[str] = Field(None, nullable=True)
+    sequence_id: str | None = Field(None, nullable=True)
+
+
+class TimeframeTemplateNameUidLibrary(TimeframeTemplateNameUid):
+    library_name: str = Field(...)
 
 
 class TimeframeTemplate(TimeframeTemplateNameUid):
-    start_date: Optional[datetime] = Field(
+    start_date: datetime | None = Field(
         default_factory=datetime.utcnow,
         description="""
             Part of the metadata: The point in time when the
@@ -47,47 +51,45 @@ class TimeframeTemplate(TimeframeTemplateNameUid):
             for October 31, 2020 at 6pm in UTC+2 timezone.
             """,
     )
-    end_date: Optional[datetime] = Field(
+    end_date: datetime | None = Field(
         default_factory=datetime.utcnow,
         description="Part of the metadata: The point in time when the version of the timeframe template was closed (and a new one was created). "
         "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
         nullable=True,
     )
-    status: Optional[str] = Field(
+    status: str | None = Field(
         None,
         description="The status in which the (version of the) timeframe template is in. "
         "Possible values are: 'Final', 'Draft' or 'Retired'.",
         nullable=True,
     )
-    version: Optional[str] = Field(
+    version: str | None = Field(
         None,
         description="The version number of the (version of the) timeframe template. "
         "The format is: <major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0', ...",
         nullable=True,
     )
-    change_description: Optional[str] = Field(
+    change_description: str | None = Field(
         None,
         description="A short description about what has changed compared to the previous version.",
         nullable=True,
     )
-    user_initials: Optional[str] = Field(
+    user_initials: str | None = Field(
         None,
         description="The initials of the user that triggered the change of the timeframe template.",
         nullable=True,
     )
-
-    # TODO use the standard _link/name approach
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         [],
         description=(
             "Holds those actions that can be performed on the timeframe template. "
             "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
         ),
     )
-    parameters: List[TemplateParameter] = Field(
+    parameters: list[TemplateParameter] = Field(
         [], description="Those parameters that are used by the timeframe template."
     )
-    library: Optional[Library] = Field(
+    library: Library | None = Field(
         None,
         description="The library to which the timeframe template belongs.",
         nullable=True,
@@ -96,7 +98,7 @@ class TimeframeTemplate(TimeframeTemplateNameUid):
     @classmethod
     def from_timeframe_template_ar(
         cls, timeframe_template_ar: TimeframeTemplateAR
-    ) -> "TimeframeTemplate":
+    ) -> Self:
         return cls(
             uid=timeframe_template_ar.uid,
             sequence_id=timeframe_template_ar.sequence_id,
@@ -121,14 +123,14 @@ class TimeframeTemplate(TimeframeTemplateNameUid):
 
 
 class TimeframeTemplateWithCount(TimeframeTemplate):
-    counts: Optional[ItemCounts] = Field(
+    counts: ItemCounts | None = Field(
         None, description="Optional counts of objective instantiations"
     )
 
     @classmethod
     def from_timeframe_template_ar(
         cls, timeframe_template_ar: TimeframeTemplateAR
-    ) -> "TimeframeTemplateWithCount":
+    ) -> Self:
         ot = super().from_timeframe_template_ar(timeframe_template_ar)
         if timeframe_template_ar.counts is not None:
             ot.counts = ItemCounts(
@@ -145,7 +147,7 @@ class TimeframeTemplateVersion(TimeframeTemplate):
     Class for storing Timeframe Templates and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
@@ -161,13 +163,13 @@ class TimeframeTemplateNameInput(BaseModel):
         description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
         min_length=1,
     )
-    guidance_text: Optional[str] = Field(
+    guidance_text: str | None = Field(
         None, description="Optional guidance text for using the template."
     )
 
 
 class TimeframeTemplateCreateInput(TimeframeTemplateNameInput):
-    library_name: Optional[str] = Field(
+    library_name: str | None = Field(
         "Sponsor",
         description="If specified: The name of the library to which the timeframe template will be linked. The following rules apply: \n"
         "* The library needs to be present, it will not be created with this request. The *[GET] /libraries* endpoint can help. And \n"

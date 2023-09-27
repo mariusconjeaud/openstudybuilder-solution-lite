@@ -1,5 +1,3 @@
-from typing import Optional, Union
-
 from clinical_mdr_api.domain_repositories.syntax_instances.criteria_repository import (
     CriteriaRepository,
 )
@@ -24,9 +22,7 @@ from clinical_mdr_api.services.syntax_instances.generic_syntax_instance_service 
 )
 
 
-class CriteriaService(
-    GenericSyntaxInstanceService[Union[CriteriaAR, _AggregateRootType]]
-):
+class CriteriaService(GenericSyntaxInstanceService[CriteriaAR | _AggregateRootType]):
     aggregate_class = CriteriaAR
     repository_interface = CriteriaRepository
     template_repository_interface = CriteriaTemplateRepository
@@ -40,19 +36,20 @@ class CriteriaService(
     ) -> Criteria:
         return CriteriaWithType.from_criteria_ar(
             item_ar,
-            get_criteria_type_name=self._repos.ct_term_name_repository.get_syntax_criteria_type,
-            get_criteria_type_attributes=self._repos.ct_term_attributes_repository.get_syntax_criteria_type,
+            get_criteria_type_name=self._repos.ct_term_name_repository.get_syntax_template_type,
+            get_criteria_type_attributes=self._repos.ct_term_attributes_repository.get_syntax_template_type,
         )
 
+    # pylint: disable=unused-argument
     def get_all(
         self,
-        status: Optional[str] = None,
+        status: str | None = None,
         return_study_count: bool = True,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[Criteria]:
         all_items = super().get_releases_referenced_by_any_study()

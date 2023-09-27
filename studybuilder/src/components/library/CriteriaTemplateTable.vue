@@ -11,6 +11,7 @@
   :column-data-parameters="columnDataParameters"
   fullscreen-form
   :history-formating-func="formatHistoryItem"
+  :history-excluded-headers="historyExcludedHeaders"
   :export-data-url-params="columnDataParameters"
   double-breadcrumb
   :prepare-duplicate-payload-func="prepareDuplicatePayload"
@@ -121,6 +122,11 @@ export default {
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
+      ],
+      historyExcludedHeaders: [
+        'indications.name',
+        'categories.name.sponsor_preferred_name',
+        'sub_categories.name.sponsor_preferred_name'
       ],
       types: [],
       urlPrefix: '/criteria-templates'

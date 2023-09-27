@@ -69,7 +69,8 @@
             "name": "To investigate [Indication]",
             "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001",
-            "sequence_id": "OT1"
+            "sequence_id": "O1",
+          "library_name": "Test library"
           },
           "parameter_terms": [
             {
@@ -169,7 +170,8 @@
             "name": "To investigate [Indication]",
             "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001",
-            "sequence_id": "OT1"
+            "sequence_id": "O1",
+          "library_name": "Test library"
           },
           "parameter_terms": [
             {
@@ -282,7 +284,8 @@
             "name": "To investigate [Indication]",
             "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001",
-            "sequence_id": "OT1"
+            "sequence_id": "O1",
+          "library_name": "Test library"
           },
           "parameter_terms": [
             {
@@ -407,7 +410,8 @@
             "name": "To investigate [Indication]",
             "name_plain": "To investigate [Indication]",
             "uid": "ObjectiveTemplate_000001",
-            "sequence_id": "OT1"
+            "sequence_id": "O1",
+          "library_name": "Test library"
           },
           "parameter_terms": [
             {

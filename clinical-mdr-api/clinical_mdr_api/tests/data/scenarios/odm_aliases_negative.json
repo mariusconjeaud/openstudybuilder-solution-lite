@@ -55,7 +55,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Alias with name (Variable) already exists.",
+                "message": "ODM Alias with ['name: Variable'] already exists.",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/aliases",
                 "method": "POST",

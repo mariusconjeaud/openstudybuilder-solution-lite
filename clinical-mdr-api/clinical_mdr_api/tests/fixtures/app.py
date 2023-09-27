@@ -3,9 +3,10 @@
 import logging
 
 import pytest
+from fastapi.openapi.utils import get_openapi
 from starlette.testclient import TestClient
 
-__all__ = ["app_client", "main_app"]
+__all__ = ["app_client", "main_app", "openapi_schema"]
 
 log = logging.getLogger(__name__)
 
@@ -29,3 +30,9 @@ def main_app(request):
 def app_client(main_app, request):
     log.debug("%s fixture: creating shared TestClient", request.fixturename)
     return TestClient(main_app)
+
+
+@pytest.fixture(scope="session")
+def openapi_schema(main_app):
+    schema = get_openapi(title="test", version="test", routes=main_app.routes)
+    return schema

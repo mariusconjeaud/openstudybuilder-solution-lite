@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Sequence
+from typing import Any, Sequence
 
 from fastapi import Body, Depends, Path, Query
 from pydantic.types import Json
@@ -11,7 +11,7 @@ from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study_selections import study_epoch
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers import study_router as router
@@ -24,6 +24,7 @@ from clinical_mdr_api.services.studies.study_visit import StudyVisitService
 
 @router.get(
     "/studies/{uid}/study-visits",
+    dependencies=[rbac.STUDY_READ],
     summary="List all study visits currently defined for the study",
     description=f"""
 State before:
@@ -95,24 +96,24 @@ def get_all(
     request: Request,  # request is actually required by the allow_exports decorator,
     uid: str = studyUID,
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ) -> CustomPage[clinical_mdr_api.models.study_selections.study_visit.StudyVisit]:
     service = StudyVisitService(current_user_id)
@@ -126,16 +127,17 @@ def get_all(
         filter_operator=FilterOperator.from_str(operator),
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/studies/{uid}/study-visits/headers",
+    dependencies=[rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=List[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -149,18 +151,17 @@ def get_distinct_values_for_header(
     uid: str = studyUID,
     current_user_id: str = Depends(get_current_user_id),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     return StudyVisitService(current_user_id).get_distinct_values_for_header(
         study_uid=uid,
@@ -174,6 +175,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/studies/{uid}/study-visits-references",
+    dependencies=[rbac.STUDY_READ],
     summary="Returns all study visit references for study currently selected",
     response_model=Sequence[
         clinical_mdr_api.models.study_selections.study_visit.StudyVisit
@@ -194,6 +196,7 @@ def get_all_references(
 
 @router.post(
     "/studies/{uid}/study-visits",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Add a study visit to a study",
     description="""
 
@@ -277,6 +280,7 @@ def post_new_visit_create(
 
 @router.post(
     "/studies/{uid}/study-visits/preview",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Preview a study visit",
     response_model=clinical_mdr_api.models.study_selections.study_visit.StudyVisit,
     response_model_exclude_unset=True,
@@ -303,6 +307,7 @@ def post_preview_visit(
 
 @router.get(
     "/studies/{uid}/study-visits/allowed-visit-types",
+    dependencies=[rbac.STUDY_READ],
     summary="Returns all allowed Visit Types for specified epoch type",
     response_model=Sequence[
         clinical_mdr_api.models.study_selections.study_visit.AllowedVisitTypesForEpochType
@@ -333,6 +338,7 @@ def get_allowed_visit_types_for_epoch_type(
 
 @router.get(
     "/studies/{uid}/study-visits/allowed-time-references",
+    dependencies=[rbac.STUDY_READ],
     summary="Returns all allowed time references for a study visit",
     response_model=Sequence[
         clinical_mdr_api.models.study_selections.study_visit.AllowedTimeReferences
@@ -356,6 +362,7 @@ def get_allowed_time_references_for_given_study(
 
 @router.patch(
     "/studies/{uid}/study-visits/{study_visit_uid}",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study visit",
     description="""
 State before:
@@ -399,6 +406,7 @@ def patch_update_visit(
 
 @router.delete(
     "/studies/{uid}/study-visits/{study_visit_uid}",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study visit",
     description=""""
 State before:
@@ -441,6 +449,7 @@ def delete_study_visit(
 
 @router.get(
     "/studies/{uid}/study-visits/{study_visit_uid}/audit-trail",
+    dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study visit.",
     description="""
 State before:
@@ -481,6 +490,7 @@ def get_study_visit_audit_trail(
 
 @router.get(
     "/studies/{uid}/study-visit/audit-trail",
+    dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of all study visits within the specified study-uid.",
     description="""
 State before:
@@ -519,6 +529,7 @@ def get_study_visits_all_audit_trail(
 
 @router.get(
     "/studies/{uid}/study-visits/{study_visit_uid}",
+    dependencies=[rbac.STUDY_READ],
     summary="List all definitions for a specific study visit",
     description="""
 State before:
@@ -561,6 +572,7 @@ def get_study_visit(
 
 @router.get(
     "/studies/{uid}/get-amount-of-visits-in-epoch/{study_epoch_uid}",
+    dependencies=[rbac.STUDY_READ],
     summary="Counts amount of visits in a specified study epoch",
     description="""
 State before:
@@ -597,6 +609,7 @@ def get_amount_of_visits_in_given_epoch(
 
 @router.get(
     "/studies/{uid}/global-anchor-visit",
+    dependencies=[rbac.STUDY_READ],
     summary="List global anchor visit study visits for selected study referenced by 'uid' ",
     description="""
 State before:
@@ -611,9 +624,8 @@ State after:
 Possible errors:
  - Invalid study-uid.
     """,
-    response_model=Optional[
-        clinical_mdr_api.models.study_selections.study_visit.SimpleStudyVisit
-    ],
+    response_model=clinical_mdr_api.models.study_selections.study_visit.SimpleStudyVisit
+    | None,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -623,13 +635,14 @@ Possible errors:
 )
 def get_global_anchor_visit(
     uid: str = studyUID, current_user_id: str = Depends(get_current_user_id)
-) -> Optional[clinical_mdr_api.models.study_selections.study_visit.SimpleStudyVisit]:
+) -> clinical_mdr_api.models.study_selections.study_visit.SimpleStudyVisit | None:
     service = StudyVisitService(current_user_id)
     return service.get_global_anchor_visit(study_uid=uid)
 
 
 @router.get(
     "/studies/{uid}/anchor-visits-in-group-of-subvisits",
+    dependencies=[rbac.STUDY_READ],
     summary="List all anchor visits for group of subvisits for selected study referenced by 'uid' ",
     description="""
 State before:
@@ -663,6 +676,7 @@ def get_anchor_visits_in_group_of_subvisits(
 
 @router.get(
     "/studies/{uid}/anchor-visits-for-special-visit",
+    dependencies=[rbac.STUDY_READ],
     summary="List all visits that can be anchor visits for special visit for a selected study referenced by 'uid' ",
     description="""
 State before:
@@ -696,6 +710,7 @@ def get_anchor_visits_for_special_visit(
 
 @router.post(
     "/studies/{uid}/consecutive-visit-groups",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Assign consecutive visit groups for specific study visits for a selected study referenced by 'uid' ",
     description="""
 State before:
@@ -738,6 +753,7 @@ def assign_consecutive_visit_group_for_selected_study_visit(
 
 @router.delete(
     "/studies/{uid}/consecutive-visit-groups/{consecutive_visit_group_name}",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Remove consecutive visit group specified by consecutive-visit-group-name for a selected study referenced by 'uid' ",
     description="""
 State before:

@@ -99,7 +99,7 @@ export default {
     },
     selectedItems () {
       if (this.section && Object.prototype.hasOwnProperty.call(this.menuItems, this.section)) {
-        return this.menuItems[this.section].items
+        return this.menuItems[this.section].items.filter(b => !b.children || (b.children = b.children.filter(c => !c.hidden)).length > 0)
       }
       return []
     },

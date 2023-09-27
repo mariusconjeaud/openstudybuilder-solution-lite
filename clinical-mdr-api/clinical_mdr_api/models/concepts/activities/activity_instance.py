@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Dict, List, Optional, Sequence
+from typing import Callable, Self, Sequence
 
 from pydantic import Field
 
@@ -17,8 +17,10 @@ from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import 
 )
 from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityBase,
+    ActivityGrouping,
     ActivityHierarchySimpleModel,
     SimpleActivityGroup,
+    SimpleActivityGrouping,
     SimpleActivityInstance,
     SimpleActivityInstanceClass,
     SimpleActivitySubGroup,
@@ -29,9 +31,19 @@ from clinical_mdr_api.models.utils import BaseModel
 
 class SimpleActivityItem(BaseModel):
     uid: str
-    name: Optional[str] = None
-    activity_item_class_uid: Optional[str] = None
-    activity_item_class_name: Optional[str] = None
+    name: str | None = None
+    activity_item_class_uid: str | None = None
+    activity_item_class_name: str | None = None
+
+
+class ActivityInstanceHierarchySimpleModel(BaseModel):
+    activity: ActivityHierarchySimpleModel
+    activity_subgroup: ActivityHierarchySimpleModel
+    activity_group: ActivityHierarchySimpleModel
+
+
+class ActivityInstanceGrouping(ActivityGrouping):
+    activity_uid: str
 
 
 class ActivityInstance(ActivityBase):
@@ -39,19 +51,10 @@ class ActivityInstance(ActivityBase):
     def from_activity_ar(
         cls,
         activity_ar: ActivityInstanceAR,
-        find_activity_hierarchy_by_uid: Callable[[str], Optional[ActivityAR]],
-        find_activity_subgroup_by_uid: Callable[[str], Optional[ActivitySubGroupAR]],
-        find_activity_group_by_uid: Callable[[str], Optional[ActivityGroupAR]],
-    ) -> "ActivityInstance":
-        activity_subgroup_uids = [
-            find_activity_hierarchy_by_uid(activity_uid).concept_vo.activity_subgroup
-            for activity_uid in activity_ar.concept_vo.activity_uids
-        ]
-        activity_group_uids = [
-            find_activity_subgroup_by_uid(subgroup_uid).concept_vo.activity_group
-            for subgroup_uid in activity_subgroup_uids
-        ]
-
+        find_activity_hierarchy_by_uid: Callable[[str], ActivityAR | None],
+        find_activity_subgroup_by_uid: Callable[[str], ActivitySubGroupAR | None],
+        find_activity_group_by_uid: Callable[[str], ActivityGroupAR | None],
+    ) -> Self:
         return cls(
             uid=activity_ar.uid,
             name=activity_ar.name,
@@ -61,36 +64,23 @@ class ActivityInstance(ActivityBase):
             topic_code=activity_ar.concept_vo.topic_code,
             adam_param_code=activity_ar.concept_vo.adam_param_code,
             legacy_description=activity_ar.concept_vo.legacy_description,
-            activities=sorted(
-                [
-                    ActivityHierarchySimpleModel.from_activity_uid(
-                        uid=activity,
-                        find_activity_by_uid=find_activity_hierarchy_by_uid,
-                    )
-                    for activity in activity_ar.concept_vo.activity_uids
-                ],
-                key=lambda item: item.name,
-            ),
-            activity_subgroups=sorted(
-                [
-                    ActivityHierarchySimpleModel.from_activity_uid(
-                        uid=activity_subgroup,
-                        find_activity_by_uid=find_activity_subgroup_by_uid,
-                    )
-                    for activity_subgroup in activity_subgroup_uids
-                ],
-                key=lambda item: item.name,
-            ),
-            activity_groups=sorted(
-                [
-                    ActivityHierarchySimpleModel.from_activity_uid(
-                        uid=activity_group,
+            activity_groupings=[
+                ActivityInstanceHierarchySimpleModel(
+                    activity_group=ActivityHierarchySimpleModel.from_activity_uid(
+                        uid=activity_grouping.activity_group_uid,
                         find_activity_by_uid=find_activity_group_by_uid,
-                    )
-                    for activity_group in activity_group_uids
-                ],
-                key=lambda item: item.name,
-            ),
+                    ),
+                    activity_subgroup=ActivityHierarchySimpleModel.from_activity_uid(
+                        uid=activity_grouping.activity_subgroup_uid,
+                        find_activity_by_uid=find_activity_subgroup_by_uid,
+                    ),
+                    activity=ActivityHierarchySimpleModel.from_activity_uid(
+                        uid=activity_grouping.activity_uid,
+                        find_activity_by_uid=find_activity_hierarchy_by_uid,
+                    ),
+                )
+                for activity_grouping in activity_ar.concept_vo.activity_groupings
+            ],
             activity_instance_class=CompactActivityInstanceClass(
                 uid=activity_ar.concept_vo.activity_instance_class_uid,
                 name=activity_ar.concept_vo.activity_instance_class_name,
@@ -116,35 +106,24 @@ class ActivityInstance(ActivityBase):
             ),
         )
 
-    topic_code: Optional[str] = Field(
+    topic_code: str | None = Field(
         None,
         title="topic_code",
         description="",
     )
-    adam_param_code: Optional[str] = Field(
+    adam_param_code: str | None = Field(
         None,
         title="adam_param_code",
         description="",
     )
-    legacy_description: Optional[str] = Field(
+    legacy_description: str | None = Field(
         None,
         title="legacy_description",
         description="",
     )
-    activities: Sequence[ActivityHierarchySimpleModel] = Field(
+    activity_groupings: Sequence[ActivityInstanceHierarchySimpleModel] = Field(
         ...,
-        title="activities",
-        description="List of activity unique identifiers",
-    )
-    activity_subgroups: Sequence[ActivityHierarchySimpleModel] = Field(
-        ...,
-        title="activity_subgroups",
-        description="List of activity sub group unique identifiers",
-    )
-    activity_groups: Sequence[ActivityHierarchySimpleModel] = Field(
-        ...,
-        title="activity_groups",
-        description="List of activity group unique identifiers",
+        title="activity_groupings",
     )
     activity_instance_class: CompactActivityInstanceClass = Field(
         ...,
@@ -157,12 +136,12 @@ class ActivityInstance(ActivityBase):
         description="List of activity items",
     )
     start_date: datetime
-    end_date: Optional[datetime] = Field(None, nullable=True)
+    end_date: datetime | None = Field(None, nullable=True)
     status: str
     version: str
     change_description: str
     user_initials: str
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         ...,
         description=(
             "Holds those actions that can be performed on the ActivityInstances. "
@@ -177,29 +156,29 @@ class ActivityInstanceCreateInput(ConceptInput):
         title="name",
         description="The name or the actual value. E.g. 'Systolic Blood Pressure', 'Body Temperature', 'Metformin', ...",
     )
-    name_sentence_case: Optional[str] = Field(
+    name_sentence_case: str | None = Field(
         None,
         title="name_sentence_case",
         description="",
     )
-    topic_code: Optional[str] = Field(
+    topic_code: str | None = Field(
         None,
         title="topic_code",
         description="",
     )
-    adam_param_code: Optional[str] = Field(
+    adam_param_code: str | None = Field(
         None,
         title="adam_param_code",
         description="",
     )
-    legacy_description: Optional[str] = Field(
+    legacy_description: str | None = Field(
         None,
         title="legacy_description",
         description="",
     )
-    activities: Optional[Sequence[str]] = Field(
+    activity_groupings: list[ActivityInstanceGrouping] | None = Field(
         None,
-        title="activity",
+        title="activity_groupings",
         description="",
     )
     activity_instance_class_uid: str = Field(
@@ -207,7 +186,7 @@ class ActivityInstanceCreateInput(ConceptInput):
         title="activity_instance_class_uid",
         description="",
     )
-    activity_item_uids: Optional[Sequence[str]] = Field(
+    activity_item_uids: Sequence[str] | None = Field(
         None,
         title="activity_item_uids",
         description="",
@@ -216,42 +195,42 @@ class ActivityInstanceCreateInput(ConceptInput):
 
 
 class ActivityInstanceEditInput(ConceptInput):
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         title="name",
         description="The name or the actual value. E.g. 'Systolic Blood Pressure', 'Body Temperature', 'Metformin', ...",
     )
-    name_sentence_case: Optional[str] = Field(
+    name_sentence_case: str | None = Field(
         None,
         title="name_sentence_case",
         description="",
     )
-    topic_code: Optional[str] = Field(
+    topic_code: str | None = Field(
         None,
         title="topic_code",
         description="",
     )
-    adam_param_code: Optional[str] = Field(
+    adam_param_code: str | None = Field(
         None,
         title="adam_param_code",
         description="",
     )
-    legacy_description: Optional[str] = Field(
+    legacy_description: str | None = Field(
         None,
         title="legacy_description",
         description="",
     )
-    activity_instance_class_uid: Optional[str] = Field(
+    activity_instance_class_uid: str | None = Field(
         None,
         title="activity_instance_class_uid",
         description="",
     )
-    activities: Optional[Sequence[str]] = Field(
+    activity_groupings: list[ActivityInstanceGrouping] | None = Field(
         None,
-        title="activity",
+        title="activity_groupings",
         description="",
     )
-    activity_item_uids: Optional[Sequence[str]] = Field(
+    activity_item_uids: list[str] | None = Field(
         None,
         title="activity_item_uids",
         description="",
@@ -264,7 +243,7 @@ class ActivityInstanceVersion(ActivityInstance):
     Class for storing ActivityInstance and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
@@ -275,17 +254,17 @@ class ActivityInstanceVersion(ActivityInstance):
 
 
 class SimpleActivity(BaseModel):
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         title="name",
         description="",
     )
-    definition: Optional[str] = Field(
+    definition: str | None = Field(
         None,
         title="name",
         description="",
     )
-    library_name: Optional[str] = Field(
+    library_name: str | None = Field(
         None,
         title="name",
         description="",
@@ -302,41 +281,48 @@ class SimpleActivityItemClass(BaseModel):
 
 class SimplifiedActivityItem(BaseModel):
     name: str = Field(..., title="name", description="")
-    ct_term_name: Optional[str] = Field(None, title="name", description="")
-    unit_definition_name: Optional[str] = Field(None, title="name", description="")
+    ct_term_name: str | None = Field(None, title="name", description="")
+    unit_definition_name: str | None = Field(None, title="name", description="")
     activity_item_class: SimpleActivityItemClass = Field(...)
 
 
-class ActivityInstanceOverview(BaseModel):
+class SimpleActivityInstanceGrouping(SimpleActivityGrouping):
     activity: SimpleActivity = Field(...)
-    activity_subgroups: List[SimpleActivitySubGroup] = Field(...)
-    activity_groups: List[SimpleActivityGroup] = Field(...)
+
+
+class ActivityInstanceOverview(BaseModel):
+    activity_groupings: list[SimpleActivityInstanceGrouping] = Field(...)
     activity_instance: SimpleActivityInstance = Field(...)
-    activity_items: List[SimplifiedActivityItem] = Field(...)
+    activity_items: list[SimplifiedActivityItem] = Field(...)
 
     @classmethod
     def from_repository_input(cls, overview: dict):
         return cls(
-            activity=SimpleActivity(
-                name=overview.get("activity_value").get("name"),
-                definition=overview.get("activity_value").get("definition"),
-                library_name=overview.get("activity_library_name"),
-            ),
-            activity_subgroups=[
-                SimpleActivitySubGroup(
-                    name=subgroup.get("activity_subgroup_value").get("name"),
-                    definition=subgroup.get("activity_subgroup_value").get(
-                        "definition"
+            activity_groupings=[
+                SimpleActivityInstanceGrouping(
+                    activity=SimpleActivity(
+                        name=activity_grouping.get("activity_value").get("name"),
+                        definition=activity_grouping.get("activity_value").get(
+                            "definition"
+                        ),
+                        library_name=activity_grouping.get("activity_library_name"),
+                    ),
+                    activity_group=SimpleActivityGroup(
+                        name=activity_grouping.get("activity_group_value").get("name"),
+                        definition=activity_grouping.get("activity_group_value").get(
+                            "definition"
+                        ),
+                    ),
+                    activity_subgroup=SimpleActivitySubGroup(
+                        name=activity_grouping.get("activity_subgroup_value").get(
+                            "name"
+                        ),
+                        definition=activity_grouping.get("activity_subgroup_value").get(
+                            "definition"
+                        ),
                     ),
                 )
-                for subgroup in overview.get("hierarchy")
-            ],
-            activity_groups=[
-                SimpleActivityGroup(
-                    name=group.get("activity_group_value").get("name"),
-                    definition=group.get("activity_group_value").get("definition"),
-                )
-                for group in overview.get("hierarchy")
+                for activity_grouping in overview.get("hierarchy")
             ],
             activity_instance=SimpleActivityInstance(
                 name=overview.get("activity_instance_value").get("name"),

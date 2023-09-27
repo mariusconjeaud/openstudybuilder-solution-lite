@@ -1,5 +1,27 @@
 # OpenStudyBuilder Commits changelog
 
+##  V 0.6
+
+### Fixes and Enhancements
+- Syntax template refactorting includes 
+    - Audit trial settings
+    - API endpoints to retrieve Acitivity template instances
+    - UI/UX improvements for study selections of syntax templates under study criteria
+    - Study purpose and study activities, refinement of sequence numbering
+    - Updates to 'edit' function for Objectives and Criterias
+    - A number of improvements to both parent and pre-instance templates including display of history on both row and page level.
+
+- Support multiple groupings and sub-groupings can be defined for activity concepts for both studies and libraries.
+
+### New Features
+- Under Study Activities sections, menu items and breadcrumbs where 'Flowchart' renamed to 'SoA' (Schedule of Activities), 'List of Study activities'renamed to 'Study Activities', 'Detailed Flowchart' renamed to 'Detailed SoA' and 'Protocol flowchart' renamed to 'Protocol SoA' in accordance with TransCelerate Common Protocol Template and ICH M11 terminology.
+- SoA Footnotes implemented under Activities tab for Studies Module which helps the user can decide if the Activity Group or Subgroup is to be displayed or hidden in the Protocol SoA.
+
+### Technical updates
+- Renaming of 'data-import' repository to 'studybuilder-import'
+- DDF adaptor repo changes from 'DDF-translator-lib' to 'studybuilder-ddf-api-adaptor'
+- Neo4j DB version upgrade from V.4.4 to V.5.10, which includes Cypher changes (new syntax updates) and Management changes (changes to neo4j-admin, new command options, new backup file format and Custom procedures declaration updates). The versions precisely as neo4j DB version 5.10.0 and APOC version 5.10.1.
+
 ##  V 0.5
 
 ### Fixes and Enhancements

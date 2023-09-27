@@ -1,147 +1,113 @@
 <template>
-<div>
-  <horizontal-stepper-form
-    ref="stepper"
-    :title="$t('EligibilityCriteriaEditForm.title')"
-    :steps="steps"
-    @close="close"
-    @save="submit"
-    :form-observer-getter="getObserver"
-    editable
-    :helpText="$t('_help.StudyObjectiveTable.general')"
-    >
-    <template v-slot:step.editCriteria="{ step }">
-      <validation-observer :ref="`observer_${step}`">
-        <parameter-value-selector
-          :value="parameters"
-          :template="template.name"
-          color="white"
-          preview-text=" "
+<study-selection-edit-form
+  v-if="studyCriteria"
+  ref="form"
+  :title="$t('EligibilityCriteriaEditForm.title')"
+  :study-selection="studyCriteria"
+  :template="template"
+  :library-name="library.name"
+  object-type="criteria"
+  :open="open"
+  :get-object-from-selection="selection => selection.criteria"
+  @initForm="initForm"
+  @submit="submit"
+  @close="$emit('close')"
+  :prepare-template-payload-func="prepareTemplatePayload"
+  >
+  <template v-slot:formFields="{ editTemplate, form }">
+    <p class="mt-6 secondary--text text-h6">
+      {{ $t('EligibilityCriteriaEditForm.key_criteria') }}
+    </p>
+    <v-row>
+      <v-col cols="11">
+        <yes-no-field
+          v-model="form.key_criteria"
+          :disabled="editTemplate"
           />
-      </validation-observer>
-    </template>
-  </horizontal-stepper-form>
-</div>
+      </v-col>
+    </v-row>
+  </template>
+</study-selection-edit-form>
 </template>
 
 <script>
+// import _isEmpty from 'lodash/isEmpty'
 import { bus } from '@/main'
-import criteria from '@/api/criteria'
-import criteriaTemplates from '@/api/criteriaTemplates'
+// import formUtils from '@/utils/forms'
 import instances from '@/utils/instances'
-import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm'
 import { mapGetters } from 'vuex'
-import { objectManagerMixin } from '@/mixins/objectManager'
-import ParameterValueSelector from '@/components/tools/ParameterValueSelector'
 import study from '@/api/study'
+import StudySelectionEditForm from './StudySelectionEditForm'
+import YesNoField from '@/components/tools/YesNoField'
 
 export default {
-  mixins: [objectManagerMixin],
   props: {
-    studyCriteria: Object
+    studyCriteria: Object,
+    open: Boolean
   },
   components: {
-    ParameterValueSelector,
-    HorizontalStepperForm
+    StudySelectionEditForm,
+    YesNoField
   },
   computed: {
     ...mapGetters({
       selectedStudy: 'studiesGeneral/selectedStudy'
     }),
     template () {
-      if (this.studyCriteria.criteria_template) {
-        return this.studyCriteria.criteria_template
-      }
-      return this.studyCriteria.criteria.criteria_template
+      return this.studyCriteria.criteria ? this.studyCriteria.criteria.criteria_template : this.studyCriteria.criteria_template
     },
     library () {
-      if (this.studyCriteria.criteria_template) {
-        return this.studyCriteria.criteria_template.library
-      }
-      return this.studyCriteria.criteria.library
-    }
-  },
-  data () {
-    return {
-      apiEndpoint: criteria,
-      helpItems: [],
-      loadingParameters: false,
-      parameters: [],
-      steps: [
-        { name: 'editCriteria', title: this.$t('EligibilityCriteriaEditForm.step_title') }
-      ]
+      return this.studyCriteria.criteria ? this.studyCriteria.criteria.library : this.studyCriteria.criteria_template.library
     }
   },
   methods: {
-    close () {
-      this.$refs.observer_1.reset()
-      this.working = false
-      this.$refs.stepper.loading = false
-      this.$emit('close')
+    initForm (form) {
+      this.$set(form, 'key_criteria', this.studyCriteria.key_criteria)
+      this.originalForm = JSON.parse(JSON.stringify(form))
     },
-    getObserver (step) {
-      return this.$refs[`observer_${step}`]
+    prepareTemplatePayload (data) {
+      data.type_uid = this.studyCriteria.criteria_type.term_uid
     },
-    loadTemplateParameters () {
-      this.parameters = []
-      this.loadingParameters = true
-      criteriaTemplates.getParameters(this.template.uid).then(resp => {
-        this.parameters = resp.data
-        this.loadingParameters = false
-        if (this.studyCriteria.criteria) {
-          this.showParametersFromObject(this.studyCriteria.criteria)
-        }
-      })
-    },
-    async getStudyCriteriaNamePreview () {
+    async getStudyCriteriaNamePreview (parameters) {
       const criteriaData = {
         criteria_template_uid: this.studyCriteria.criteria.criteria_template.uid,
-        parameter_terms: await instances.formatParameterValues(this.parameters),
+        parameter_terms: await instances.formatParameterValues(parameters),
         library_name: this.studyCriteria.criteria.library.name
       }
       const resp = await study.getStudyCriteriaPreview(this.selectedStudy.uid, { criteria_data: criteriaData })
       return resp.data.criteria.name
     },
-    async submit () {
-      const valid = await this.$refs.observer_1.validate()
-      if (!valid) {
-        return
-      }
-      if (this.studyCriteria.criteria) {
-        const namePreview = await this.getStudyCriteriaNamePreview()
-        if (namePreview === this.studyCriteria.criteria.name) {
-          bus.$emit('notification', { msg: this.$t('_global.no_changes'), type: 'info' })
-          this.close()
-          return
-        }
-      }
-      const parameterValues = await instances.formatParameterValues(this.parameters)
-      const data = {
-        criteria_template_uid: this.template.uid,
-        parameter_terms: parameterValues,
-        library_name: this.library.name
-      }
-      await study.patchStudyCriteria(this.selectedStudy.uid, this.studyCriteria.study_criteria_uid, data)
+    async submit (newTemplate, form, parameters) {
+      const payload = { ...form }
+      // FIXME:
+      // The PATCH endpoint does not behave properly since it expects a complete payload...
+      // It's going to be fixed in the API but I don't know when so, for now, I commented
+      // out the following lines.
+      //
+      // const payload = formUtils.getDifferences(this.originalForm, form)
+      // if (!this.studyCriteria.criteria) {
+      //   payload.parameters = parameters
+      // } else {
+      //   const namePreview = await this.getStudyCriteriaNamePreview(parameters)
+      //   if (namePreview !== this.studyCriteria.criteria.name) {
+      //     payload.parameters = parameters
+      //   }
+      // }
+      // if (_isEmpty(payload)) {
+      //   bus.$emit('notification', { msg: this.$t('_global.no_changes'), type: 'info' })
+      //   this.$refs.form.close()
+      //   return
+      // }
+      // if (payload.parameters) {
+      payload.parameter_terms = await instances.formatParameterValues(parameters)
+      payload.criteria_template_uid = newTemplate ? newTemplate.uid : this.template.uid
+      payload.library_name = this.library.name
+      //   delete payload.parameters
+      // }
+      await study.patchStudyCriteria(this.selectedStudy.uid, this.studyCriteria.study_criteria_uid, payload)
       bus.$emit('notification', { msg: this.$t('EligibilityCriteriaEditForm.update_success') })
       this.$emit('updated')
-      this.close()
-    }
-  },
-  mounted () {
-    this.loadTemplateParameters()
-  },
-  watch: {
-    studyCriteria (value) {
-      if (value) {
-        this.loadTemplateParameters()
-      }
-    },
-    parameters () {
-      this.parameters.forEach(el => {
-        if (el.name === 'TextValue' && el.selected_values && el.selected_values.length) {
-          this.parameters[this.parameters.indexOf(el)].selected_values = el.selected_values[0].name
-        }
-      })
+      this.$refs.form.close()
     }
   }
 }

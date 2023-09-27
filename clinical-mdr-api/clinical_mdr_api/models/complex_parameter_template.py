@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Self
 
 from pydantic import Field
 
@@ -12,7 +12,7 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class ComplexParameterTemplateName(BaseModel):
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         description="""
             The actual value/content. It may include parameters
@@ -26,7 +26,7 @@ class ComplexParameterTemplateNameUid(ComplexParameterTemplateName):
 
 
 class ComplexParameterTemplate(ComplexParameterTemplateNameUid):
-    start_date: Optional[datetime] = Field(
+    start_date: datetime | None = Field(
         default_factory=datetime.utcnow,
         description="""
             Part of the metadata: The point in time when the
@@ -35,56 +35,52 @@ class ComplexParameterTemplate(ComplexParameterTemplateNameUid):
             for October 31, 2020 at 6pm in UTC+2 timezone.
             """,
     )
-    end_date: Optional[datetime] = Field(
+    end_date: datetime | None = Field(
         default_factory=datetime.utcnow,
         description="Part of the metadata: The point in time when the version of the timeframe template was closed (and a new one was created). "
         "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
         nullable=True,
     )
-    status: Optional[str] = Field(
+    status: str | None = Field(
         None,
         description="The status in which the (version of the) timeframe template is in. "
         "Possible values are: 'Final', 'Draft' or 'Retired'.",
         nullable=True,
     )
-    version: Optional[str] = Field(
+    version: str | None = Field(
         None,
         description="The version number of the (version of the) timeframe template. "
         "The format is: <major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0', ...",
         nullable=True,
     )
-    change_description: Optional[str] = Field(
+    change_description: str | None = Field(
         None,
         description="A short description about what has changed compared to the previous version.",
         nullable=True,
     )
-    user_initials: Optional[str] = Field(
+    user_initials: str | None = Field(
         None,
         description="The initials of the user that triggered the change of the timeframe template.",
         nullable=True,
     )
-
-    # TODO use the standard _link/name approach
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         [],
         description=(
             "Holds those actions that can be performed on the timeframe template. "
             "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
         ),
     )
-    parameters: List[TemplateParameter] = Field(
+    parameters: list[TemplateParameter] = Field(
         [], description="Those parameters that are used by the timeframe template."
     )
-    library: Optional[Library] = Field(
+    library: Library | None = Field(
         None,
         description="The library to which the timeframe template belongs.",
         nullable=True,
     )
 
     @classmethod
-    def from_parameter_template_ar(
-        cls, template_ar: ParameterTemplateAR
-    ) -> "ComplexParameterTemplate":
+    def from_parameter_template_ar(cls, template_ar: ParameterTemplateAR) -> Self:
         return cls(
             uid=template_ar.uid,
             name=template_ar.name,
@@ -105,7 +101,7 @@ class ComplexParameterTemplate(ComplexParameterTemplateNameUid):
 
 
 class ComplexParameterTemplateWithCount(ComplexParameterTemplate):
-    counts: Optional[ItemCounts] = Field(
+    counts: ItemCounts | None = Field(
         None, description="Optional counts of objective instantiations"
     )
 
@@ -115,7 +111,7 @@ class ComplexParameterTemplateVersion(ComplexParameterTemplate):
     Class for storing ComplexParameter Templates and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
@@ -139,7 +135,7 @@ class ComplexParameterTemplateCreateInput(BaseModel):
         "* The library needs to allow the creation: The 'is_editable' property of the library needs to be true.",
     )
 
-    library_name: Optional[str] = Field(
+    library_name: str | None = Field(
         "Sponsor",
         description="If specified: The name of the library to which the timeframe template will be linked. The following rules apply: \n"
         "* The library needs to be present, it will not be created with this request. The *[GET] /libraries* endpoint can help. And \n"

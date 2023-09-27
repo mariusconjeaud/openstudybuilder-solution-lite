@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import Sequence
 
 from neomodel import db
 
@@ -73,13 +73,13 @@ class StudyArmSelectionService(StudySelectionMixin):
     @db.transaction
     def get_all_selections_for_all_studies(
         self,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.StudySelectionArmWithConnectedBranchArms]:
         repos = self._repos
@@ -112,12 +112,12 @@ class StudyArmSelectionService(StudySelectionMixin):
     def get_distinct_values_for_header(
         self,
         field_name: str,
-        study_uid: Optional[str] = None,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        study_uid: str | None = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ):
         repos = self._repos
@@ -165,11 +165,11 @@ class StudyArmSelectionService(StudySelectionMixin):
     def get_all_selection(
         self,
         study_uid: str,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.StudySelectionArmWithConnectedBranchArms]:
         repos = MetaRepository()
@@ -510,13 +510,10 @@ class StudyArmSelectionService(StudySelectionMixin):
     ) -> models.StudySelectionObjective:
         repos = self._repos
         selection_aggregate = repos.study_objective_repository.find_by_study(study_uid)
-        try:
-            assert selection_aggregate is not None
-            _, order = selection_aggregate.get_specific_objective_selection(
-                study_selection_uid
-            )
-        except ValueError as value_error:
-            raise exceptions.NotFoundException(value_error.args[0])
+        assert selection_aggregate is not None
+        _, order = selection_aggregate.get_specific_objective_selection(
+            study_selection_uid
+        )
         result = models.StudySelectionObjective.from_study_selection_objectives_ar_and_order(
             study_selection_objectives_ar=selection_aggregate,
             order=order,
@@ -575,9 +572,6 @@ class StudyArmSelectionService(StudySelectionMixin):
                         calculate_diffs(versions, models.StudySelectionArmVersion)
                     )
             return data
-            # return self._transform_history_to_response_model(
-            #     selection_history, study_uid
-            # )
         finally:
             repos.close()
 
@@ -636,14 +630,11 @@ class StudyArmSelectionService(StudySelectionMixin):
                     )
                 )
                 assert selection_aggregate is not None
-                try:
-                    selection_aggregate.add_arm_selection(
-                        new_selection,
-                        self._repos.ct_term_name_repository.term_specific_exists_by_uid,
-                        arm_exists_callback_by=repos.study_arm_repository.arm_exists_by,
-                    )
-                except ValueError as value_error:
-                    raise exceptions.ValidationException(value_error.args[0])
+                selection_aggregate.add_arm_selection(
+                    new_selection,
+                    self._repos.ct_term_name_repository.term_specific_exists_by_uid,
+                    arm_exists_callback_by=repos.study_arm_repository.arm_exists_by,
+                )
 
                 # sync with DB and save the update
                 repos.study_arm_repository.save(selection_aggregate, self.author)
@@ -721,27 +712,22 @@ class StudyArmSelectionService(StudySelectionMixin):
             assert selection_aggregate is not None
 
             # Load the current VO for updates
-            try:
-                current_vo, order = selection_aggregate.get_specific_object_selection(
-                    study_selection_uid=study_selection_uid
-                )
-            except ValueError as value_error:
-                raise exceptions.NotFoundException(value_error.args[0])
+            current_vo, order = selection_aggregate.get_specific_object_selection(
+                study_selection_uid=study_selection_uid
+            )
 
             # merge current with updates
             updated_selection = self._patch_prepare_new_study_arm(
                 request_study_arm=selection_update_input, current_study_arm=current_vo
             )
 
-            try:
-                # let the aggregate update the value object
-                selection_aggregate.update_selection(
-                    updated_study_arm_selection=updated_selection,
-                    ct_term_exists_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
-                    arm_exists_callback_by=repos.study_arm_repository.arm_exists_by,
-                )
-            except ValueError as value_error:
-                raise exceptions.ValidationException(value_error.args[0])
+            # let the aggregate update the value object
+            selection_aggregate.update_selection(
+                updated_study_arm_selection=updated_selection,
+                ct_term_exists_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
+                arm_exists_callback_by=repos.study_arm_repository.arm_exists_by,
+            )
+
             # sync with DB and save the update
             repos.study_arm_repository.save(selection_aggregate, self.author)
 

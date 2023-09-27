@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Self
 
 from pydantic import Field
 
@@ -15,24 +15,24 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     TemplateParameterComplexValue,
 )
 from clinical_mdr_api.models.syntax_templates.timeframe_template import (
-    TimeframeTemplateNameUid,
+    TimeframeTemplateNameUidLibrary,
 )
 from clinical_mdr_api.models.utils import BaseModel
 
 
 class Timeframe(BaseModel):
     uid: str
-    name: Optional[str] = Field(None, nullable=True)
-    name_plain: Optional[str] = Field(None, nullable=True)
+    name: str | None = Field(None, nullable=True)
+    name_plain: str | None = Field(None, nullable=True)
 
-    start_date: Optional[datetime] = Field(None, nullable=True)
-    end_date: Optional[datetime] = Field(None, nullable=True)
-    status: Optional[str] = Field(None, nullable=True)
-    version: Optional[str] = Field(None, nullable=True)
-    change_description: Optional[str] = Field(None, nullable=True)
-    user_initials: Optional[str] = Field(None, nullable=True)
+    start_date: datetime | None = Field(None, nullable=True)
+    end_date: datetime | None = Field(None, nullable=True)
+    status: str | None = Field(None, nullable=True)
+    version: str | None = Field(None, nullable=True)
+    change_description: str | None = Field(None, nullable=True)
+    user_initials: str | None = Field(None, nullable=True)
 
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         [],
         description=(
             "Holds those actions that can be performed on the timeframe. "
@@ -40,19 +40,19 @@ class Timeframe(BaseModel):
         ),
     )
 
-    timeframe_template: Optional[TimeframeTemplateNameUid]
-    parameter_terms: List[MultiTemplateParameterTerm] = Field(
+    timeframe_template: TimeframeTemplateNameUidLibrary | None
+    parameter_terms: list[MultiTemplateParameterTerm] = Field(
         [],
         description="Holds the parameter terms that are used within the timeframe. The terms are ordered as they occur in the timeframe name.",
     )
-    library: Optional[Library] = Field(None, nullable=True)
+    library: Library | None = Field(None, nullable=True)
     study_count: int = Field(0, description="Count of studies referencing endpoint")
 
     @classmethod
-    def from_timeframe_ar(cls, timeframe_ar: TimeframeAR) -> "Timeframe":
-        parameter_terms: List[MultiTemplateParameterTerm] = []
+    def from_timeframe_ar(cls, timeframe_ar: TimeframeAR) -> Self:
+        parameter_terms: list[MultiTemplateParameterTerm] = []
         for position, parameter in enumerate(timeframe_ar.get_parameters()):
-            terms: List[IndexedTemplateParameterTerm] = []
+            terms: list[IndexedTemplateParameterTerm] = []
             if (
                 hasattr(parameter, "parameter_template")
                 and parameter.parameter_template is not None
@@ -108,11 +108,12 @@ class Timeframe(BaseModel):
             possible_actions=sorted(
                 {_.value for _ in timeframe_ar.get_possible_actions()}
             ),
-            timeframe_template=TimeframeTemplateNameUid(
+            timeframe_template=TimeframeTemplateNameUidLibrary(
                 name=timeframe_ar.template_name,
                 name_plain=timeframe_ar.template_name_plain,
                 uid=timeframe_ar.template_uid,
                 sequence_id=timeframe_ar.template_sequence_id,
+                library_name=timeframe_ar.template_library_name,
             ),
             library=Library.from_library_vo(timeframe_ar.library),
             parameter_terms=parameter_terms,
@@ -125,7 +126,7 @@ class TimeframeVersion(Timeframe):
     Class for storing Timeframes and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
@@ -136,7 +137,7 @@ class TimeframeVersion(Timeframe):
 
 
 class TimeframeParameterInput(BaseModel):
-    parameter_terms: List[TemplateParameterMultiSelectInput] = Field(
+    parameter_terms: list[TemplateParameterMultiSelectInput] = Field(
         None,
         title="parameter_terms",
         description="An ordered list of selected parameter terms that are used to replace the parameters of the timeframe template.",

@@ -135,15 +135,15 @@ def test_strtobool(value, result):
 @pytest.mark.parametrize(
     "value, exception_type",
     [
-        ("", ValueError),
+        ("", None),
         (True, AttributeError),
-        (False, AttributeError),
-        (None, AttributeError),
-        (0, AttributeError),
+        (False, None),
+        (None, None),
+        (0, None),
         (1, AttributeError),
         (-1, AttributeError),
         (0.1, AttributeError),
-        (dict(), AttributeError),
+        (dict(), None),
         ([1, 2], AttributeError),
         ("foo", ValueError),
         ("BAR", ValueError),
@@ -155,5 +155,8 @@ def test_strtobool(value, result):
     ],
 )
 def test_strtobool_raises_exception(value, exception_type):
-    with pytest.raises(exception_type):
-        utils.strtobool(value)
+    if exception_type:
+        with pytest.raises(exception_type):
+            utils.strtobool(value)
+    else:
+        assert utils.strtobool(value) is None

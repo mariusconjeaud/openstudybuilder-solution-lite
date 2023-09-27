@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional, Sequence
+from typing import Sequence
 
 from aenum import extend_enum
 from neomodel import db
@@ -95,34 +95,31 @@ class StudyDiseaseMilestoneService:
     def get_all_disease_milestones(
         self,
         study_uid: str,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
+        filter_by: dict | None = None,
         filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         **kwargs,
     ) -> GenericFilteringReturn[StudyDiseaseMilestone]:
-        try:
-            items, total_count = self.repo.find_all_disease_milestone(
-                study_uid=study_uid,
-                sort_by=sort_by,
-                page_number=page_number,
-                page_size=page_size,
-                filter_by=filter_by,
-                filter_operator=filter_operator,
-                total_count=total_count,
-                **kwargs,
-            )
+        items, total = self.repo.find_all_disease_milestone(
+            study_uid=study_uid,
+            sort_by=sort_by,
+            page_number=page_number,
+            page_size=page_size,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            total_count=total_count,
+            **kwargs,
+        )
 
-            all_items = [
-                self._transform_all_to_response_model(disease_milestone)
-                for disease_milestone in items
-            ]
-        except ValueError as e:
-            raise exceptions.ValidationException(e)
+        all_items = [
+            self._transform_all_to_response_model(disease_milestone)
+            for disease_milestone in items
+        ]
 
-        study_disease_milestones = GenericFilteringReturn.create(all_items, total_count)
+        study_disease_milestones = GenericFilteringReturn.create(all_items, total)
         return study_disease_milestones
 
     @db.transaction
@@ -147,13 +144,15 @@ class StudyDiseaseMilestoneService:
             for disease_milestone in all_disease_milestones
         ]
         if disease_milestone_input.disease_milestone_type in used_types:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f'Value "{disease_milestone_input.disease_milestone_type}" in field Type is not unique for the study'
             )
         if disease_milestone_input.disease_milestone_type not in [
             i.name for i in StudyDiseaseMilestoneType
         ]:
-            raise ValueError("Invalid value for study Disease Milestone type")
+            raise exceptions.ValidationException(
+                "Invalid value for study Disease Milestone type"
+            )
 
     def _validate_update(
         self,
@@ -172,7 +171,7 @@ class StudyDiseaseMilestoneService:
                 for disease_milestone in all_disease_milestones
             ]
             if disease_milestone_input.disease_milestone_type in used_types:
-                raise ValueError(
+                raise exceptions.ValidationException(
                     "There can exist only one Study DiseaseMilestone for type."
                 )
 
@@ -181,7 +180,9 @@ class StudyDiseaseMilestoneService:
             and disease_milestone_input.disease_milestone_type
             not in [i.name for i in StudyDiseaseMilestoneType]
         ):
-            raise ValueError("Invalid value for study disease_milestone type")
+            raise exceptions.ValidationException(
+                "Invalid value for study disease_milestone type"
+            )
 
     def _from_input_values(
         self,
@@ -213,7 +214,7 @@ class StudyDiseaseMilestoneService:
         study_disease_milestone_to_edit: StudyDiseaseMilestoneVO,
         study_disease_milestone_edit_input: StudyDiseaseMilestoneEditInput,
     ) -> StudyDiseaseMilestoneVO:
-        dm_type: Optional[StudyDiseaseMilestoneType] = None
+        dm_type: StudyDiseaseMilestoneType | None = None
         if (
             study_disease_milestone_to_edit.disease_milestone_type
             != study_disease_milestone_edit_input.disease_milestone_type
@@ -246,9 +247,9 @@ class StudyDiseaseMilestoneService:
 
         if study_disease_milestone_input.order:
             if len(all_disease_milestones) + 1 < created_study_disease_milestone.order:
-                raise ValueError("Order is too big.")
+                raise exceptions.ValidationException("Order is too big.")
             if created_study_disease_milestone.order < 1:
-                raise ValueError("Order must be greater than 0.")
+                raise exceptions.ValidationException("Order must be greater than 0.")
 
             for disease_milestone in all_disease_milestones[
                 created_study_disease_milestone.order - 1 :
@@ -297,9 +298,9 @@ class StudyDiseaseMilestoneService:
                 disease_milestone = disease_milestone_checked
 
         if new_order < 0:
-            raise ValueError("New order cannot be lesser than 1")
+            raise exceptions.ValidationException("New order cannot be lesser than 1")
         if new_order > len(study_disease_milestones) - 1:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"New order cannot be greater than {len(study_disease_milestones)}"
             )
         if new_order > old_order:
@@ -316,9 +317,7 @@ class StudyDiseaseMilestoneService:
             self.repo.save(replaced_disease_milestone)
         disease_milestone.set_order(new_order + 1)
         self.repo.save(disease_milestone)
-        study_disease_milestones = self.repo.find_all_disease_milestones_by_study(
-            disease_milestone.study_uid
-        )
+
         return self._transform_all_to_response_model(disease_milestone)
 
     @db.transaction
@@ -369,9 +368,9 @@ class StudyDiseaseMilestoneService:
     def get_distinct_values_for_header(
         self,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
         **kwargs,
     ) -> Sequence:

@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Callable, Optional
+from typing import Callable, Self
 
-from clinical_mdr_api.domains.concepts.concept_base import _AggregateRootType
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.concepts.simple_concepts.numeric_value import (
     NumericValueAR,
     NumericValueVO,
@@ -32,11 +32,11 @@ class NumericValueWithUnitVO(NumericValueVO):
     def from_repository_values(
         cls,
         value: float,
-        definition: Optional[str],
-        abbreviation: Optional[str],
+        definition: str | None,
+        abbreviation: str | None,
         is_template_parameter: bool,
         unit_definition_uid: str,
-    ) -> "NumericValueWithUnitVO":
+    ) -> Self:
         value = cls.derive_value_property(value=value)
         simple_concept_vo = cls(
             name=str(value),
@@ -54,15 +54,15 @@ class NumericValueWithUnitVO(NumericValueVO):
     def from_input_values(
         cls,
         value: float,
-        definition: Optional[str],
-        abbreviation: Optional[str],
+        definition: str | None,
+        abbreviation: str | None,
         is_template_parameter: bool,
         find_unit_definition_by_uid: Callable[[str], UnitDefinitionAR],
         unit_definition_uid: str,
-    ) -> "NumericValueWithUnitVO":
+    ) -> Self:
         unit_definition = find_unit_definition_by_uid(unit_definition_uid)
         if unit_definition is None:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"{cls.__name__} tried to connect to non existing unit definition identified by uid ({unit_definition_uid})"
             )
         value = cls.derive_value_property(value=value)
@@ -93,12 +93,12 @@ class NumericValueWithUnitAR(NumericValueAR):
         author: str,
         simple_concept_vo: SimpleConceptVO,
         library: LibraryVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        find_uid_by_name_callback: Callable[[str], Optional[str]] = (lambda _: None),
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        find_uid_by_name_callback: Callable[[str], str | None] = (lambda _: None),
         find_uid_by_value_and_unit_callback: Callable[
-            [str, Optional[str]], Optional[str]
+            [str, str | None], str | None
         ] = None,
-    ) -> _AggregateRootType:
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO(
             _change_description="Initial version",
             _status=LibraryItemStatus.FINAL,
@@ -110,7 +110,7 @@ class NumericValueWithUnitAR(NumericValueAR):
         )
 
         if not library.is_editable:
-            raise ValueError(
+            raise exceptions.BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
 

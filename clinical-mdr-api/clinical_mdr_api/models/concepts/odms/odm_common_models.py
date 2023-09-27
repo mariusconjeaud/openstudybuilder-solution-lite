@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional
+from typing import Callable, Self
 
 from pydantic import BaseModel, Field
 
@@ -9,7 +9,7 @@ from clinical_mdr_api.domains.concepts.odms.vendor_attribute import OdmVendorAtt
 class OdmElementWithParentUid(BaseModel):
     uid: str
     name: str
-    parent_uids: List[str]
+    parent_uids: list[str]
 
 
 class OdmVendorRelationPostInput(BaseModel):
@@ -18,13 +18,13 @@ class OdmVendorRelationPostInput(BaseModel):
 
 
 class OdmVendorsPostInput(BaseModel):
-    elements: List[OdmVendorRelationPostInput]
-    element_attributes: List[OdmVendorRelationPostInput]
-    attributes: List[OdmVendorRelationPostInput]
+    elements: list[OdmVendorRelationPostInput]
+    element_attributes: list[OdmVendorRelationPostInput]
+    attributes: list[OdmVendorRelationPostInput]
 
 
 class OdmRefVendorPostInput(BaseModel):
-    attributes: List[OdmVendorRelationPostInput]
+    attributes: list[OdmVendorRelationPostInput]
 
 
 class OdmRefVendorAttributeModel(BaseModel):
@@ -33,10 +33,8 @@ class OdmRefVendorAttributeModel(BaseModel):
         cls,
         uid: str,
         value: str,
-        find_odm_vendor_attribute_by_uid: Callable[
-            [str], Optional[OdmVendorAttributeAR]
-        ],
-    ) -> Optional["OdmRefVendorAttributeModel"]:
+        find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
+    ) -> Self | None:
         if uid is not None:
             odm_vendor_attribute_ar = find_odm_vendor_attribute_by_uid(uid)
             if odm_vendor_attribute_ar is not None:
@@ -62,17 +60,17 @@ class OdmRefVendorAttributeModel(BaseModel):
         return odm_vendor_element_ref_model
 
     uid: str = Field(..., title="uid", description="")
-    name: Optional[str] = Field(None, title="name", description="")
-    data_type: Optional[str] = Field(None, title="data_type", description="")
-    value_regex: Optional[str] = Field(None, title="value_regex", description="")
-    value: Optional[str] = Field(None, title="value", description="")
-    vendor_namespace_uid: Optional[str] = Field(
+    name: str | None = Field(None, title="name", description="")
+    data_type: str | None = Field(None, title="data_type", description="")
+    value_regex: str | None = Field(None, title="value_regex", description="")
+    value: str | None = Field(None, title="value", description="")
+    vendor_namespace_uid: str | None = Field(
         None, title="vendor_namespace_uid", description=""
     )
 
 
 class OdmRefVendor(BaseModel):
-    attributes: List[OdmRefVendorAttributeModel]
+    attributes: list[OdmRefVendorAttributeModel]
 
 
 class OdmVendorNamespaceSimpleModel(BaseModel):
@@ -80,8 +78,8 @@ class OdmVendorNamespaceSimpleModel(BaseModel):
     def from_odm_vendor_namespace_uid(
         cls,
         uid: str,
-        find_odm_vendor_namespace_by_uid: Callable[[str], Optional[ConceptARBase]],
-    ) -> Optional["OdmVendorNamespaceSimpleModel"]:
+        find_odm_vendor_namespace_by_uid: Callable[[str], ConceptARBase | None],
+    ) -> Self | None:
         if uid is not None:
             odm_vendor_namespace = find_odm_vendor_namespace_by_uid(uid)
 
@@ -112,12 +110,12 @@ class OdmVendorNamespaceSimpleModel(BaseModel):
         return simple_odm_vendor_namespace_model
 
     uid: str = Field(..., title="uid", description="")
-    name: Optional[str] = Field(None, title="name", description="")
-    prefix: Optional[str] = Field(None, title="prefix", description="")
-    url: Optional[str] = Field(None, title="url", description="")
-    status: Optional[str] = Field(None, title="status", description="")
-    version: Optional[str] = Field(None, title="version", description="")
-    possible_actions: List[str] = Field(None, title="possible_actions", description="")
+    name: str | None = Field(None, title="name", description="")
+    prefix: str | None = Field(None, title="prefix", description="")
+    url: str | None = Field(None, title="url", description="")
+    status: str | None = Field(None, title="status", description="")
+    version: str | None = Field(None, title="version", description="")
+    possible_actions: list[str] = Field(None, title="possible_actions", description="")
 
 
 class OdmVendorAttributeSimpleModel(BaseModel):
@@ -125,8 +123,8 @@ class OdmVendorAttributeSimpleModel(BaseModel):
     def from_odm_vendor_attribute_uid(
         cls,
         uid: str,
-        find_odm_vendor_attribute_by_uid: Callable[[str], Optional[ConceptARBase]],
-    ) -> Optional["OdmVendorAttributeSimpleModel"]:
+        find_odm_vendor_attribute_by_uid: Callable[[str], ConceptARBase | None],
+    ) -> Self | None:
         if uid is not None:
             odm_vendor_attribute = find_odm_vendor_attribute_by_uid(uid)
 
@@ -149,10 +147,10 @@ class OdmVendorAttributeSimpleModel(BaseModel):
         return simple_odm_vendor_attribute_model
 
     uid: str = Field(..., title="uid", description="")
-    name: Optional[str] = Field(None, title="name", description="")
-    status: Optional[str] = Field(None, title="status", description="")
-    version: Optional[str] = Field(None, title="version", description="")
-    possible_actions: List[str] = Field(None, title="possible_actions", description="")
+    name: str | None = Field(None, title="name", description="")
+    status: str | None = Field(None, title="status", description="")
+    version: str | None = Field(None, title="version", description="")
+    possible_actions: list[str] = Field(None, title="possible_actions", description="")
 
 
 class OdmVendorElementSimpleModel(BaseModel):
@@ -160,8 +158,8 @@ class OdmVendorElementSimpleModel(BaseModel):
     def from_odm_vendor_element_uid(
         cls,
         uid: str,
-        find_odm_vendor_element_by_uid: Callable[[str], Optional[ConceptARBase]],
-    ) -> Optional["OdmVendorElementSimpleModel"]:
+        find_odm_vendor_element_by_uid: Callable[[str], ConceptARBase | None],
+    ) -> Self | None:
         if uid is not None:
             odm_vendor_element = find_odm_vendor_element_by_uid(uid)
 
@@ -184,7 +182,7 @@ class OdmVendorElementSimpleModel(BaseModel):
         return simple_odm_vendor_element_model
 
     uid: str = Field(..., title="uid", description="")
-    name: Optional[str] = Field(None, title="name", description="")
-    status: Optional[str] = Field(None, title="status", description="")
-    version: Optional[str] = Field(None, title="version", description="")
-    possible_actions: List[str] = Field(None, title="possible_actions", description="")
+    name: str | None = Field(None, title="name", description="")
+    status: str | None = Field(None, title="status", description="")
+    version: str | None = Field(None, title="version", description="")
+    possible_actions: list[str] = Field(None, title="possible_actions", description="")

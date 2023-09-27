@@ -14,7 +14,7 @@
         v-bind="attrs"
         v-on="on"
         color="primary">
-        <v-icon>mdi-help-circle</v-icon>
+        <v-icon>mdi-help-circle-outline</v-icon>
       </v-btn>
     </div>
   </template>

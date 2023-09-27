@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Optional
+from typing import Callable
 
 from neomodel import db
 
@@ -7,7 +7,6 @@ from clinical_mdr_api import models
 from clinical_mdr_api.listings.query_service import QueryService
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
-from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
     service_level_generic_filtering,
     service_level_generic_header_filtering,
@@ -15,21 +14,18 @@ from clinical_mdr_api.services._utils import (
 
 
 class ListingsService:
-    _repos: MetaRepository
-
     def __init__(self):
-        # self._repos = MetaRepository()
         self._query_service = QueryService()
 
     @db.transaction
     def list_topic_cd(
         self,
-        at_specified_datetime: Optional[datetime] = None,
-        sort_by: Optional[dict] = None,
+        at_specified_datetime: datetime | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.listings.listings.TopicCdDef]:
         data = self._query_service.get_topic_codes(
@@ -50,12 +46,12 @@ class ListingsService:
     @db.transaction
     def list_metadata(
         self,
-        dataset_name: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        dataset_name: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.listings.listings.MetaData]:
         data = self._query_service.get_metadata(dataset_name=dataset_name)
@@ -76,13 +72,13 @@ class ListingsService:
     @db.transaction
     def list_cdisc_ct_ver(
         self,
-        catalogue_name: Optional[str] = None,
-        after_date: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        catalogue_name: str | None = None,
+        after_date: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.listings.listings.CDISCCTList]:
         data = self._query_service.get_cdisc_ct_ver(
@@ -104,13 +100,13 @@ class ListingsService:
     @db.transaction
     def list_cdisc_ct_pkg(
         self,
-        catalogue_name: Optional[str] = None,
-        after_date: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        catalogue_name: str | None = None,
+        after_date: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.listings.listings.CDISCCTList]:
         data = self._query_service.get_cdisc_ct_pkg(
@@ -132,14 +128,14 @@ class ListingsService:
     @db.transaction
     def list_cdisc_ct_list(
         self,
-        catalogue_name: Optional[str] = None,
-        package: Optional[str] = None,
-        after_date: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        catalogue_name: str | None = None,
+        package: str | None = None,
+        after_date: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.listings.listings.CDISCCTList]:
         data = self._query_service.get_cdisc_ct_list(
@@ -163,14 +159,14 @@ class ListingsService:
     @db.transaction
     def list_cdisc_ct_val(
         self,
-        catalogue_name: Optional[str] = None,
-        package: Optional[str] = None,
-        after_date: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        catalogue_name: str | None = None,
+        package: str | None = None,
+        after_date: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.listings.listings.CDISCCTVal]:
         data = self._query_service.get_cdisc_ct_val(
@@ -194,9 +190,9 @@ class ListingsService:
         self,
         action: Callable,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ):
         all_items = action()

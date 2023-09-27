@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from typing import List, Optional, Sequence, Tuple
+from typing import Sequence
 
 from neomodel import db
 
@@ -32,23 +32,23 @@ class SelectionHistoryBranchArm:
     """Class for selection history items"""
 
     study_selection_uid: str
-    study_uid: Optional[str]
-    branch_arm_name: Optional[str]
-    branch_arm_short_name: Optional[str]
-    branch_arm_code: Optional[str]
-    branch_arm_description: Optional[str]
-    branch_arm_colour_code: Optional[str]
-    branch_arm_randomization_group: Optional[str]
-    branch_arm_number_of_subjects: Optional[int]
-    arm_root: Optional[str]
+    study_uid: str | None
+    branch_arm_name: str | None
+    branch_arm_short_name: str | None
+    branch_arm_code: str | None
+    branch_arm_description: str | None
+    branch_arm_colour_code: str | None
+    branch_arm_randomization_group: str | None
+    branch_arm_number_of_subjects: int | None
+    arm_root: str | None
     # Study selection Versioning
     start_date: datetime.datetime
-    user_initials: Optional[str]
+    user_initials: str | None
     change_type: str
-    end_date: Optional[datetime.datetime]
+    end_date: datetime.datetime | None
     order: int
-    status: Optional[str]
-    accepted_version: Optional[bool]
+    status: str | None
+    accepted_version: bool | None
 
 
 class StudySelectionBranchArmRepository:
@@ -65,9 +65,9 @@ class StudySelectionBranchArmRepository:
 
     def _retrieves_all_data(
         self,
-        study_uid: Optional[str] = None,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
+        study_uid: str | None = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
     ) -> Sequence[StudySelectionBranchArmVO]:
         query = ""
         query_parameters = {}
@@ -147,9 +147,9 @@ class StudySelectionBranchArmRepository:
     def _retrieves_all_data_within_arm(
         self,
         study_arm_uid: str = None,
-        study_uid: Optional[str] = None,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
+        study_uid: str | None = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
     ) -> Sequence[StudySelectionBranchArmVO]:
         query = ""
         query_parameters = {}
@@ -233,7 +233,7 @@ class StudySelectionBranchArmRepository:
 
     def find_by_study(
         self, study_uid: str, for_update: bool = False
-    ) -> Optional[StudySelectionBranchArmAR]:
+    ) -> StudySelectionBranchArmAR | None:
         """
         Finds all the selected study branch arms for a given study
         :param study_uid:
@@ -252,7 +252,7 @@ class StudySelectionBranchArmRepository:
 
     def find_by_arm(
         self, study_uid: str, study_arm_uid: str, for_update: bool = False
-    ) -> Optional[StudySelectionBranchArmAR]:
+    ) -> StudySelectionBranchArmAR | None:
         """
         Finds all the selected study branch arms for a given study_arm
         :param study_uid:
@@ -272,7 +272,7 @@ class StudySelectionBranchArmRepository:
 
     def find_by_arm_nested_info(
         self, study_uid: str, study_arm_uid: str, user_initials: str
-    ) -> Optional[Tuple[StudySelectionBranchArmVO, int]]:
+    ) -> tuple[StudySelectionBranchArmVO, int] | None:
         """
         Return StudySelectionBranchArmVO's connected to the specified StudyArmUid
         :param study_uid: str
@@ -289,7 +289,7 @@ class StudySelectionBranchArmRepository:
         sba_nodes = [i_sa_nodes[0] for i_sa_nodes in sa_nodes]
         sba_nodes = sorted(sba_nodes, key=lambda sba_node: sba_node.order)
         # Tuple for the StudySelectionBranchArmVO and the order
-        study_branch_arms: List[Tuple[StudySelectionBranchArmVO, int]] = []
+        study_branch_arms: list[tuple[StudySelectionBranchArmVO, int]] = []
         if sba_nodes != []:
             for i_sdc_node in sba_nodes:
                 study_branch_arms.append(
@@ -580,7 +580,7 @@ class StudySelectionBranchArmRepository:
         audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
-        study_selection_node.has_before.connect(audit_node)
+        audit_node.has_before.connect(study_selection_node)
         study_root_node.audit_trail.connect(audit_node)
         return audit_node
 
@@ -661,7 +661,7 @@ class StudySelectionBranchArmRepository:
                 study_branch_arm_selection_node
             )
         # Connect new node with audit trail
-        study_branch_arm_selection_node.has_after.connect(audit_node)
+        audit_node.has_after.connect(study_branch_arm_selection_node)
 
         if before_node is not None:
             design_cells = before_node.has_design_cell.all()
@@ -774,7 +774,7 @@ class StudySelectionBranchArmRepository:
 
     def find_selection_history(
         self, study_uid: str, study_selection_uid: str = None
-    ) -> List[SelectionHistoryBranchArm]:
+    ) -> list[SelectionHistoryBranchArm]:
         """
         Simple method to return all versions of a study objectives for a study.
         Optionally a specific selection uid is given to see only the response for a specific selection.

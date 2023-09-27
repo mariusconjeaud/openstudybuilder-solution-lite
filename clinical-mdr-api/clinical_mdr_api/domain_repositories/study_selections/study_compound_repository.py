@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Sequence, Set, Tuple
+from typing import Sequence
 
 from neomodel import db
 
@@ -44,22 +44,22 @@ class StudyCompoundSelectionHistory:
     """Class for selection history items"""
 
     study_selection_uid: str
-    compound_uid: Optional[str]
-    compound_alias_uid: Optional[str]
-    type_of_treatment_uid: Optional[str]
-    reason_for_missing_value_uid: Optional[str]
-    dispensed_in_uid: Optional[str]
-    route_of_administration_uid: Optional[str]
-    strength_value_uid: Optional[str]
-    dosage_form_uid: Optional[str]
-    device_uid: Optional[str]
-    formulation_uid: Optional[str]
-    other_info: Optional[str]
+    compound_uid: str | None
+    compound_alias_uid: str | None
+    type_of_treatment_uid: str | None
+    reason_for_missing_value_uid: str | None
+    dispensed_in_uid: str | None
+    route_of_administration_uid: str | None
+    strength_value_uid: str | None
+    dosage_form_uid: str | None
+    device_uid: str | None
+    formulation_uid: str | None
+    other_info: str | None
     start_date: datetime.datetime
-    status: Optional[str]
+    status: str | None
     user_initials: str
     change_type: str
-    end_date: Optional[datetime.datetime]
+    end_date: datetime.datetime | None
     order: int
 
 
@@ -77,10 +77,10 @@ class StudySelectionCompoundRepository:
 
     def _retrieves_all_data(
         self,
-        study_uid: Optional[str] = None,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-        type_of_treatment: Optional[str] = None,
+        study_uid: str | None = None,
+        project_name: str | None = None,
+        project_number: str | None = None,
+        type_of_treatment: str | None = None,
     ) -> Sequence[StudySelectionCompoundVO]:
         query = ""
         query_parameters = {}
@@ -180,10 +180,10 @@ class StudySelectionCompoundRepository:
 
     def find_all(
         self,
-        project_name: Optional[str] = None,
-        project_number: Optional[str] = None,
-        type_of_treatment: Optional[str] = None,
-    ) -> Optional[Sequence[StudySelectionCompoundsAR]]:
+        project_name: str | None = None,
+        project_number: str | None = None,
+        type_of_treatment: str | None = None,
+    ) -> Sequence[StudySelectionCompoundsAR] | None:
         """
         Finds all the selected study compounds for all studies, and create the aggregate
         :return: List of StudySelectionCompoundsAR, potentially empty
@@ -212,7 +212,7 @@ class StudySelectionCompoundRepository:
 
     def find_by_study(
         self, study_uid: str, for_update: bool = False, **filters
-    ) -> Optional[StudySelectionCompoundsAR]:
+    ) -> StudySelectionCompoundsAR | None:
         """
         Finds all the selected study compounds for a given study, and creates the aggregate
         :param study_uid:
@@ -231,7 +231,7 @@ class StudySelectionCompoundRepository:
 
     def find_by_uid(
         self, study_uid: str, study_compound_uid: str
-    ) -> Tuple[StudySelectionCompoundVO, int]:
+    ) -> tuple[StudySelectionCompoundVO, int]:
         """Find a study compound by its UID."""
         query_parameters = {
             "study_uid": study_uid,
@@ -432,6 +432,7 @@ class StudySelectionCompoundRepository:
             },
         )
 
+    # TODO FIX StudyObjectiveSelection
     @staticmethod
     def _set_before_audit_info(
         audit_node: StudyAction,
@@ -443,7 +444,7 @@ class StudySelectionCompoundRepository:
         audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
-        study_objective_selection_node.has_before.connect(audit_node)
+        audit_node.has_before.connect(study_objective_selection_node)
         study_root_node.audit_trail.connect(audit_node)
         return audit_node
 
@@ -469,7 +470,7 @@ class StudySelectionCompoundRepository:
                 study_compound_selection_node
             )
         # Connect new node with audit trail
-        study_compound_selection_node.has_after.connect(audit_node)
+        audit_node.has_after.connect(study_compound_selection_node)
         # check if compound alias is set
         if selection.compound_alias_uid:
             # find the compound alias value
@@ -679,7 +680,7 @@ class StudySelectionCompoundRepository:
 
     def find_selection_history(
         self, study_uid: str, study_selection_uid: str = None
-    ) -> List[Optional[dict]]:
+    ) -> list[dict | None]:
         """
         Simple method to return all versions of a study objectives for a study.
         Optionally a specific selection uid is given to see only the response for a specific selection.
@@ -695,7 +696,7 @@ class StudySelectionCompoundRepository:
 
     def get_selection_uid_by_details(
         self, study_compound: StudySelectionCompoundVO
-    ) -> Optional[str]:
+    ) -> str | None:
         query = """
             MATCH (:StudyRoot {uid: $study_uid})-[:LATEST]->(:StudyValue)-[rel:HAS_STUDY_COMPOUND]->
                     (sc:StudyCompound)-[HAS_SELECTED_COMPOUND]->(cav:CompoundAliasValue)<-[:LATEST]-(car:CompoundAliasRoot {uid: $compound_alias_uid})
@@ -728,7 +729,7 @@ class StudySelectionCompoundRepository:
         return None
 
     @staticmethod
-    def get_compound_uid_to_arm_uids_mapping(study_uid: str) -> Dict[str, Set[str]]:
+    def get_compound_uid_to_arm_uids_mapping(study_uid: str) -> dict[str, set[str]]:
         results = to_relation_trees(
             StudyRoot.nodes.fetch_optional_relations_and_collect(
                 "latest_value__has_study_compound__has_compound_dosing__study_element__has_design_cell__study_arm"

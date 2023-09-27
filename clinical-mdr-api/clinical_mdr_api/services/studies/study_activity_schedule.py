@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Sequence
+from typing import Sequence
 
 from fastapi import status
 from neomodel import db
@@ -28,7 +28,6 @@ class StudyActivityScheduleService(StudySelectionMixin):
         self._repos = MetaRepository()
         self.author = author
 
-    @db.transaction
     def get_all_schedules(
         self, study_uid: str
     ) -> Sequence[models.StudyActivitySchedule]:
@@ -39,8 +38,12 @@ class StudyActivityScheduleService(StudySelectionMixin):
                     "has_after",
                     "study_visit__has_visit_name__has_latest_value",
                     "study_activity__has_selected_activity",
-                ).filter(study_value__study_root__uid=study_uid)
-            )
+                ).filter(
+                    study_value__study_root__uid=study_uid,
+                    study_visit__has_study_visit__study_root__uid=study_uid,
+                    study_activity__has_study_activity__study_root__uid=study_uid,
+                )
+            ).distinct()
         ]
 
     def get_all_schedules_for_specific_visit(
@@ -56,8 +59,10 @@ class StudyActivityScheduleService(StudySelectionMixin):
                 ).filter(
                     study_value__study_root__uid=study_uid,
                     study_visit__uid=study_visit_uid,
+                    study_visit__has_study_visit__study_root__uid=study_uid,
+                    study_activity__has_study_activity__study_root__uid=study_uid,
                 )
-            )
+            ).distinct()
         ]
 
     def get_all_schedules_for_specific_activity(
@@ -74,8 +79,10 @@ class StudyActivityScheduleService(StudySelectionMixin):
                 ).filter(
                     study_value__study_root__uid=study_uid,
                     study_activity__uid=study_activity_uid,
+                    study_visit__has_study_visit__study_root__uid=study_uid,
+                    study_activity__has_study_activity__study_root__uid=study_uid,
                 )
-            )
+            ).distinct()
         ]
 
     @db.transaction
@@ -85,7 +92,12 @@ class StudyActivityScheduleService(StudySelectionMixin):
         sas_node = to_relation_trees(
             StudyActivityScheduleNeoModel.nodes.fetch_relations(
                 "study_activity", "study_visit", "has_after"
-            ).filter(study_value__study_root__uid=study_uid, uid=schedule_uid)
+            ).filter(
+                study_value__study_root__uid=study_uid,
+                uid=schedule_uid,
+                study_visit__has_study_visit__study_root__uid=study_uid,
+                study_activity__has_study_activity__study_root__uid=study_uid,
+            )
         )
         if sas_node is None or len(sas_node) == 0:
             raise exceptions.NotFoundException(
@@ -102,7 +114,6 @@ class StudyActivityScheduleService(StudySelectionMixin):
             study_activity_name=None,
             study_visit_uid=schedule_input.study_visit_uid,
             study_visit_name=None,
-            note=schedule_input.note,
             user_initials=self.author,
             start_date=datetime.datetime.now(datetime.timezone.utc),
         )
@@ -126,7 +137,7 @@ class StudyActivityScheduleService(StudySelectionMixin):
             self._repos.close()
 
     def _transform_history_to_response_model(
-        self, study_selection_history: List[SelectionHistory], study_uid: str
+        self, study_selection_history: list[SelectionHistory], study_uid: str
     ) -> Sequence[models.StudyActivitySchedule]:
         result = []
         for history in study_selection_history:
@@ -136,7 +147,6 @@ class StudyActivityScheduleService(StudySelectionMixin):
                     study_activity_schedule_uid=history.study_selection_uid,
                     study_activity_uid=history.study_activity_uid,
                     study_visit_uid=history.study_visit_uid,
-                    note=history.note,
                     modified=history.start_date,
                 )
             )

@@ -1,5 +1,4 @@
 import unittest
-from typing import Dict
 
 from clinical_mdr_api.domain_repositories.clinical_programmes.clinical_programme_repository import (
     ClinicalProgrammeRepository,
@@ -140,7 +139,7 @@ class TestProjectRepository(unittest.TestCase):
         # then
         # we check if all test_projects are in all_projects_in_db
         # to achieve this we build a dictionary first
-        db_projects: Dict[str, ProjectAR] = {}
+        db_projects: dict[str, ProjectAR] = {}
         for _project in all_projects_in_db:
             db_projects[_project.uid] = _project
 

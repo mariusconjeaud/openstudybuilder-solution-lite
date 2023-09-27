@@ -1,7 +1,7 @@
 <template>
 <v-menu
   offset-y
-  v-if="item">
+  v-if="item && checkActionsPermissions">
   <template v-slot:activator="{ on, attrs }">
     <div>
       <v-btn
@@ -39,6 +39,7 @@
         v-if="action.condition === undefined || action.condition(item)"
         @click="action.click(item, source)"
         :key="index"
+        :disabled="action.accessRole && !checkPermission(action.accessRole)"
         >
         <v-list-item-icon>
           <v-icon v-if="action.iconColor" :color="action.iconColor">{{ action.icon }}</v-icon>
@@ -55,7 +56,10 @@
 </template>
 
 <script>
+import { accessGuard } from '@/mixins/accessRoleVerifier'
+
 export default {
+  mixins: [accessGuard],
   props: {
     actions: Array,
     item: Object,
@@ -63,6 +67,12 @@ export default {
     badge: {
       type: Object,
       required: false
+    },
+    accessRole: String
+  },
+  computed: {
+    checkActionsPermissions () {
+      return this.accessRole ? this.checkPermission(this.accessRole) : true
     }
   }
 }

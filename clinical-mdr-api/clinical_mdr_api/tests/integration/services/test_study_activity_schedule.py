@@ -76,7 +76,12 @@ class StudyActivityScheduleTestCase(unittest.TestCase):
             time_unit_uid=self.DAYUID,
         )
         sa1 = create_study_activity("study_root")
-        sa2 = create_study_activity("study_root", activity_uid="activity_root2")
+        sa2 = create_study_activity(
+            "study_root",
+            activity_uid="activity_root3",
+            activity_subgroup_uid="activity_subgroup_root3",
+            activity_group_uid="activity_group_root3",
+        )
         service = StudyActivityScheduleService("test")
         service.handle_batch_operations(
             "study_root",

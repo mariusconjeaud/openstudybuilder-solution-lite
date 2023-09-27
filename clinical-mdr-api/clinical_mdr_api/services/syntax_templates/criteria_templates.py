@@ -1,8 +1,8 @@
-from typing import Optional, Sequence, Tuple
+from typing import Sequence
 
 from neomodel import db
-from pydantic.main import BaseModel
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.models.syntax import CriteriaTemplateRoot
 from clinical_mdr_api.domain_repositories.syntax_instances.criteria_repository import (
     CriteriaRepository,
@@ -13,7 +13,6 @@ from clinical_mdr_api.domain_repositories.syntax_pre_instances.criteria_pre_inst
 from clinical_mdr_api.domain_repositories.syntax_templates.criteria_template_repository import (
     CriteriaTemplateRepository,
 )
-from clinical_mdr_api.domains._utils import generate_seq_id
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
     CTTermAttributesAR,
 )
@@ -24,7 +23,7 @@ from clinical_mdr_api.domains.syntax_templates.criteria_template import (
 )
 from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
 from clinical_mdr_api.domains.versioned_object_aggregate import VersioningException
-from clinical_mdr_api.exceptions import BusinessLogicException, ValidationException
+from clinical_mdr_api.exceptions import BusinessLogicException
 from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     CTTermNameAndAttributes,
 )
@@ -35,7 +34,7 @@ from clinical_mdr_api.models.syntax_templates.criteria_template import (
     CriteriaTemplateVersion,
     CriteriaTemplateWithCount,
 )
-from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.models.utils import BaseModel, GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._utils import (
     raise_404_if_none,
@@ -67,13 +66,13 @@ class CriteriaTemplateService(GenericSyntaxTemplateService[CriteriaTemplateAR]):
 
     def get_all(
         self,
-        status: Optional[str] = None,
+        status: str | None = None,
         return_study_count: bool = True,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[CriteriaTemplate]:
         all_items = super().get_all(status, return_study_count)
@@ -110,32 +109,19 @@ class CriteriaTemplateService(GenericSyntaxTemplateService[CriteriaTemplateAR]):
         )
 
         # Process item to save
-        try:
-            item = CriteriaTemplateAR.from_input_values(
-                template_value_exists_callback=self.get_check_exists_callback(
-                    template=template
-                ),
-                author=self.user_initials,
-                template=template_vo,
-                library=library_vo,
-                generate_uid_callback=self.repository.generate_uid_callback,
-                generate_seq_id_callback=generate_seq_id,
-                indications=indications,
-                criteria_type=criteria_type,
-                categories=categories,
-                sub_categories=sub_categories,
-            )
-        except ValueError as e:
-            raise ValidationException(e.args[0]) from e
+        item = CriteriaTemplateAR.from_input_values(
+            author=self.user_initials,
+            template=template_vo,
+            library=library_vo,
+            generate_uid_callback=self.repository.generate_uid_callback,
+            next_available_sequence_id_callback=self.repository.next_available_sequence_id,
+            indications=indications,
+            criteria_type=criteria_type,
+            categories=categories,
+            sub_categories=sub_categories,
+        )
 
         return item
-
-    def get_check_exists_callback(self, template: BaseModel):
-        return lambda _template_vo: self.repository.check_exists_by_name_and_type_in_library(
-            name=_template_vo.name,
-            library=template.library_name,
-            type_uid=template.type_uid,
-        )
 
     @db.transaction
     def edit_draft(
@@ -145,20 +131,20 @@ class CriteriaTemplateService(GenericSyntaxTemplateService[CriteriaTemplateAR]):
             item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
 
             if (
-                self.repository.check_exists_by_name_and_type_in_library(
+                self.repository.check_exists_by_name_in_library(
                     name=template.name,
                     library=item.library.name,
-                    type_uid=self.repository.get_criteria_type_uid(uid),
+                    type_uid=self.repository.get_template_type_uid(uid),
                 )
                 and template.name != item.name
             ):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"Duplicate templates not allowed - template exists: {template.name}"
                 )
 
             template_vo = TemplateVO.from_input_values_2(
                 template_name=template.name,
-                template_guidance_text=template.guidance_text,
+                guidance_text=template.guidance_text,
                 parameter_name_exists_callback=self._parameter_name_exists,
             )
 
@@ -213,12 +199,12 @@ class CriteriaTemplateService(GenericSyntaxTemplateService[CriteriaTemplateAR]):
 
         # Get type
         criteria_type_name = (
-            self._repos.ct_term_name_repository.get_syntax_criteria_type(
+            self._repos.ct_term_name_repository.get_syntax_template_type(
                 self.root_node_class, item.uid
             )
         )
         criteria_type_attributes = (
-            self._repos.ct_term_attributes_repository.get_syntax_criteria_type(
+            self._repos.ct_term_attributes_repository.get_syntax_template_type(
                 self.root_node_class, item.uid
             )
         )
@@ -231,18 +217,18 @@ class CriteriaTemplateService(GenericSyntaxTemplateService[CriteriaTemplateAR]):
         return super()._set_indexings(item)
 
     def _get_indexings(
-        self, template: BaseModel, template_uid: Optional[str] = None
-    ) -> Tuple[
-        Optional[Tuple[CTTermNameAR, CTTermAttributesAR]],
+        self, template: BaseModel, template_uid: str | None = None
+    ) -> tuple[
+        tuple[CTTermNameAR, CTTermAttributesAR] | None,
         Sequence[DictionaryTermAR],
-        Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]],
-        Sequence[Tuple[CTTermNameAR, CTTermAttributesAR]],
+        Sequence[tuple[CTTermNameAR, CTTermAttributesAR]],
+        Sequence[tuple[CTTermNameAR, CTTermAttributesAR]],
     ]:
-        criteria_type: Optional[Tuple[CTTermNameAR, CTTermAttributesAR]] = None
+        criteria_type: tuple[CTTermNameAR, CTTermAttributesAR] | None = None
 
         criteria_type_term_uid = getattr(
             template, "type_uid", None
-        ) or self._repos.criteria_template_repository.get_criteria_type_uid(
+        ) or self._repos.criteria_template_repository.get_template_type_uid(
             template_uid
         )
 

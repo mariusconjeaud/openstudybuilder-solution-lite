@@ -16,6 +16,7 @@
     "@lhncbc/ucum-lhc": "4.1.4",
     "@microsoft/applicationinsights-web": "*",
     "axios": "0.21.1",
+    "buffer": "^6.0.3",
     "chart.js": "2.9.4",
     "core-js": "~3.25.0",
     "exceljs": "4.2.1",

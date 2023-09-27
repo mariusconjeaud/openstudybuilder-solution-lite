@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Self
 
 from pydantic import Field
 
@@ -22,14 +22,14 @@ class Timepoint(BaseModel):
     uid: str
     name: str
 
-    start_date: Optional[datetime] = Field(None, nullable=True)
-    end_date: Optional[datetime] = Field(None, nullable=True)
-    status: Optional[str] = Field(None, nullable=True)
-    version: Optional[str] = Field(None, nullable=True)
-    change_description: Optional[str] = Field(None, nullable=True)
-    user_initials: Optional[str] = Field(None, nullable=True)
+    start_date: datetime | None = Field(None, nullable=True)
+    end_date: datetime | None = Field(None, nullable=True)
+    status: str | None = Field(None, nullable=True)
+    version: str | None = Field(None, nullable=True)
+    change_description: str | None = Field(None, nullable=True)
+    user_initials: str | None = Field(None, nullable=True)
 
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         [],
         description=(
             "Holds those actions that can be performed on the timeframe. "
@@ -37,17 +37,17 @@ class Timepoint(BaseModel):
         ),
     )
 
-    parameter_terms: List[TemplateParameterComplexValue] = Field(
+    parameter_terms: list[TemplateParameterComplexValue] = Field(
         [],
         description="Holds the parameter terms that are used within the timeframe. The terms are ordered as they occur in the timeframe name.",
     )
-    library: Optional[Library] = Field(None, nullable=True)
+    library: Library | None = Field(None, nullable=True)
 
     @classmethod
-    def from_timepoint_ar(cls, timepoint_ar: TimepointAR) -> "Timepoint":
-        parameter_terms: List[MultiTemplateParameterTerm] = []
+    def from_timepoint_ar(cls, timepoint_ar: TimepointAR) -> Self:
+        parameter_terms: list[MultiTemplateParameterTerm] = []
         for position, parameter in enumerate(timepoint_ar.get_parameters()):
-            terms: List[IndexedTemplateParameterTerm] = []
+            terms: list[IndexedTemplateParameterTerm] = []
             if isinstance(parameter, ComplexParameterTerm):
                 param_names = extract_parameters(parameter.parameter_template)
                 param_list = []
@@ -105,7 +105,7 @@ class TimepointVersion(Timepoint):
     Class for storing Timepoints and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
@@ -116,7 +116,7 @@ class TimepointVersion(Timepoint):
 
 
 class TimepointParameterInput(BaseModel):
-    parameter_terms: List[TemplateParameterMultiSelectInput] = Field(
+    parameter_terms: list[TemplateParameterMultiSelectInput] = Field(
         None,
         title="parameter_terms",
         description="An ordered list of selected parameter terms that are used to replace the parameters of the timeframe template.",

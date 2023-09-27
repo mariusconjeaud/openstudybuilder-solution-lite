@@ -18,12 +18,12 @@
       <v-btn
         class="ml-2"
         fab
-        dark
         small
         color="primary"
         @click.stop="showForm = true"
         data-cy="add-unit"
         :title="$t('UnitForm.add_title')"
+        :disabled="!checkPermission($roles.LIBRARY_WRITE)"
         >
         <v-icon dark>
           mdi-plus
@@ -71,7 +71,7 @@
       </v-edit-dialog>
     </template>
     <template v-slot:item.actions="{ item }">
-      <actions-menu :actions="actions" :item="item" />
+      <actions-menu :actions="actions" :item="item"/>
     </template>
   </n-n-table>
   <unit-form
@@ -88,8 +88,10 @@ import UnitForm from '@/components/library/UnitForm'
 import ActionsMenu from '@/components/tools/ActionsMenu'
 import StudybuilderUCUMField from '@/components/tools/StudybuilderUCUMField'
 import units from '@/api/units'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     NNTable,
     StatusChip,
@@ -122,16 +124,18 @@ export default {
       actions: [
         {
           label: this.$t('_global.edit'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
           condition: (item) => item.status === 'Draft',
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.editUnit
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
           condition: (item) => (item.status === 'Draft' && parseFloat(item.version) < 1),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.deleteUnit
         },
         {
@@ -139,6 +143,7 @@ export default {
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
           condition: (item) => item.status === 'Final',
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.newUnitVersion
         },
         {
@@ -146,6 +151,7 @@ export default {
           icon: 'mdi-check-decagram',
           iconColor: 'success',
           condition: (item) => item.status === 'Draft',
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.approveUnit
         },
         {
@@ -153,6 +159,7 @@ export default {
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
           condition: (item) => item.status === 'Final',
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.inactivateUnit
         },
         {
@@ -160,6 +167,7 @@ export default {
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
           condition: (item) => item.status === 'Retired',
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.reactivateUnit
         }
       ],

@@ -35,13 +35,17 @@ class StudyActivitySelectionTestCase(unittest.TestCase):
                     content=models.StudySelectionActivityCreateInput(
                         flowchart_group_uid="term_root_final",
                         activity_uid="activity_root1",
+                        activity_subgroup_uid="activity_subgroup_root1",
+                        activity_group_uid="activity_group_root1",
                     ),
                 ),
                 models.StudySelectionActivityBatchInput(
                     method="POST",
                     content=models.StudySelectionActivityCreateInput(
                         flowchart_group_uid="term_root_final",
-                        activity_uid="activity_root2",
+                        activity_uid="activity_root3",
+                        activity_subgroup_uid="activity_subgroup_root3",
+                        activity_group_uid="activity_group_root3",
                     ),
                 ),
             ],
@@ -58,7 +62,7 @@ class StudyActivitySelectionTestCase(unittest.TestCase):
                     content=models.StudySelectionActivityBatchUpdateInput(
                         study_activity_uid=study_activities[0].study_activity_uid,
                         content=models.StudySelectionActivityInput(
-                            note="Test note", show_activity_in_protocol_flowchart=True
+                            show_activity_in_protocol_flowchart=True
                         ),
                     ),
                 ),
@@ -80,6 +84,16 @@ class StudyActivitySelectionTestCase(unittest.TestCase):
         assert len(study_activities) == 1
 
     def test_make_seleciton_duplicated_activity(self):
-        create_study_activity("study_root", activity_uid="activity_root1")
+        create_study_activity(
+            "study_root",
+            activity_uid="activity_root1",
+            activity_subgroup_uid="activity_subgroup_root1",
+            activity_group_uid="activity_group_root1",
+        )
         with self.assertRaises(ValidationException):
-            create_study_activity("study_root", activity_uid="activity_root1")
+            create_study_activity(
+                "study_root",
+                activity_uid="activity_root1",
+                activity_subgroup_uid="activity_subgroup_root1",
+                activity_group_uid="activity_group_root1",
+            )

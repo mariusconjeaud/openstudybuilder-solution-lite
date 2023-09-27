@@ -2,7 +2,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 
 import store from '@/store'
-
+import study from '@/api/study'
 import Home from '../views/Home.vue'
 
 Vue.use(VueRouter)
@@ -274,6 +274,14 @@ const routes = [
     }
   },
   {
+    path: '/library/footnote_templates/:tab?',
+    name: 'FootnoteTemplates',
+    component: () => import('../views/library/FootnoteTemplates.vue'),
+    meta: {
+      authRequired: true
+    }
+  },
+  {
     path: '/library/project_templates',
     name: 'ProjectTemplates',
     component: () => import('../views/library/ProjectTemplates.vue'),
@@ -397,9 +405,25 @@ const routes = [
     }
   },
   {
+    path: '/library/activity_instruction_instances',
+    name: 'ActivityInstructions',
+    component: () => import('../views/library/ActivityInstructions.vue'),
+    meta: {
+      authRequired: true
+    }
+  },
+  {
     path: '/library/criteria_instances',
     name: 'CriteriaInstances',
     component: () => import('../views/library/CriteriaInstances.vue'),
+    meta: {
+      authRequired: true
+    }
+  },
+  {
+    path: '/library/footnote_instances',
+    name: 'FootnoteInstances',
+    component: () => import('../views/library/Footnotes.vue'),
     meta: {
       authRequired: true
     }
@@ -422,7 +446,7 @@ const routes = [
     }
   },
   {
-    path: '/studies/study_status/:tab?',
+    path: '/studies/:study_id/study_status/:tab?',
     name: 'StudyStatus',
     component: () => import('../views/studies/StudyStatus.vue'),
     meta: {
@@ -431,7 +455,7 @@ const routes = [
     }
   },
   {
-    path: '/studies/specification_dashboard',
+    path: '/studies/:study_id/specification_dashboard',
     name: 'SpecificationDashboard',
     component: () => import('../views/studies/SpecificationDashboard.vue'),
     meta: {
@@ -440,7 +464,7 @@ const routes = [
     }
   },
   {
-    path: '/studies/study_title',
+    path: '/studies/:study_id/study_title',
     name: 'StudyTitle',
     component: () => import('../views/studies/StudyTitle.vue'),
     meta: {
@@ -465,7 +489,7 @@ const routes = [
     }
   },
   {
-    path: '/studies/study_purpose/:tab?',
+    path: '/studies/:study_id/study_purpose/:tab?',
     name: 'StudyPurpose',
     component: () => import('../views/studies/StudyPurpose.vue'),
     meta: {
@@ -474,7 +498,7 @@ const routes = [
     }
   },
   {
-    path: '/studies/activities/:tab?',
+    path: '/studies/:study_id/activities/:tab?',
     name: 'StudyActivities',
     component: () => import('../views/studies/Activities.vue'),
     meta: {
@@ -483,7 +507,7 @@ const routes = [
     }
   },
   {
-    path: '/studies/selection_criteria/:tab?',
+    path: '/studies/:study_id/selection_criteria/:tab?',
     name: 'StudySelectionCriteria',
     component: () => import('../views/studies/StudyCriteria.vue'),
     meta: {
@@ -492,7 +516,7 @@ const routes = [
     }
   },
   {
-    path: '/studies/study_interventions/:tab?',
+    path: '/studies/:study_id/study_interventions/:tab?',
     name: 'StudyInterventions',
     component: () => import('../views/studies/Interventions.vue'),
     meta: {
@@ -509,7 +533,7 @@ const routes = [
     }
   },
   {
-    path: '/studies/protocol_elements',
+    path: '/studies/:study_id/protocol_elements',
     name: 'ProtocolElements',
     component: () => import('../views/studies/ProtocolElements.vue'),
     meta: {
@@ -526,7 +550,7 @@ const routes = [
     }
   },
   {
-    path: '/studies/study_properties/:tab?',
+    path: '/studies/:study_id/study_properties/:tab?',
     name: 'StudyProperties',
     component: () => import('../views/studies/StudyProperties.vue'),
     meta: {
@@ -535,7 +559,7 @@ const routes = [
     }
   },
   {
-    path: '/studies/study_structure/:tab?',
+    path: '/studies/:study_id/study_structure/:tab?',
     name: 'StudyStructure',
     component: () => import('../views/studies/StudyStructure.vue'),
     meta: {
@@ -640,7 +664,7 @@ const routes = [
     }
   },
   {
-    path: '/studies/registry_identifiers',
+    path: '/studies/:study_id/registry_identifiers',
     name: 'StudyRegistryIdentifiers',
     component: () => import('../views/studies/RegistryIdentifiers.vue'),
     meta: {
@@ -649,7 +673,7 @@ const routes = [
     }
   },
   {
-    path: '/studies/population',
+    path: '/studies/:study_id/population',
     name: 'StudyPopulation',
     component: () => import('../views/studies/Population.vue'),
     meta: {
@@ -753,7 +777,8 @@ const routes = [
   {
     path: '/logout',
     name: 'Logout',
-    component: () => import('../views/Logout.vue')
+    component: () => import('../views/Logout.vue'),
+    meta: {}
   },
   {
     path: '*',
@@ -778,7 +803,25 @@ const router = new VueRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+async function saveStudyUid (studyUid) {
+  const currentlySelectedStudy = JSON.parse(localStorage.getItem('selectedStudy'))
+  if (!currentlySelectedStudy || (currentlySelectedStudy && currentlySelectedStudy.uid !== studyUid)) {
+    try {
+      const resp = await study.getStudy(studyUid)
+      store.commit('studiesGeneral/SELECT_STUDY', { studyObj: resp.data })
+    } catch (_err) {
+      store.commit('studiesGeneral/UNSELECT_STUDY')
+      store.studyId = null
+      router.push('/studies')
+    }
+  }
+}
+
+router.beforeEach(async (to, from, next) => {
+  if (to.params.study_id && to.params.study_id !== '*') {
+    await saveStudyUid(to.params.study_id)
+  }
+
   if (Vue.prototype.$config.AUTH_ENABLED === '1' && to.matched.some(record => record.meta.authRequired)) {
     Vue.prototype.$auth.validateAccess(to, from, next)
   } else {
@@ -804,7 +847,7 @@ router.beforeEach((to, from, next) => {
     const basePath = '/' + to.path.split('/')[1]
     const baseRoute = router.resolve(basePath)
     const section = baseRoute.route.name
-    if (section) {
+    if (section && section !== 'Logout') {
       store.commit('app/SET_SECTION', section)
       const currentRoute = router.resolve(to.path)
       for (const item of store.getters['app/menuItems'][section].items) {

@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Optional, Sequence
+from typing import Self, Sequence
 
 from pydantic import Field
 
@@ -10,7 +10,7 @@ from clinical_mdr_api.models.utils import BaseModel, snake_case_data
 
 class CTPackage(BaseModel):
     @classmethod
-    def from_ct_package_ar(cls, ct_package_ar: CTPackageAR) -> "CTPackage":
+    def from_ct_package_ar(cls, ct_package_ar: CTPackageAR) -> Self:
         return cls(
             uid=ct_package_ar.uid,
             catalogue_name=ct_package_ar.catalogue_name,
@@ -41,15 +41,15 @@ class CTPackage(BaseModel):
         title="name",
         description="",
     )
-    label: Optional[str] = Field(None, title="label", description="", nullable=True)
-    description: Optional[str] = Field(
+    label: str | None = Field(None, title="label", description="", nullable=True)
+    description: str | None = Field(
         None, title="description", description="", nullable=True
     )
-    href: Optional[str] = Field(None, title="href", description="", nullable=True)
-    registration_status: Optional[str] = Field(
+    href: str | None = Field(None, title="href", description="", nullable=True)
+    registration_status: str | None = Field(
         None, title="registration_status", description="", nullable=True
     )
-    source: Optional[str] = Field(None, title="source", description="", nullable=True)
+    source: str | None = Field(None, title="source", description="", nullable=True)
     import_date: datetime = Field(
         ...,
         title="import_date",
@@ -74,7 +74,7 @@ class CodelistChangeItem(BaseModel):
     is_change_of_codelist: bool
 
     @classmethod
-    def from_repository_output(cls, query_output) -> "CodelistChangeItem":
+    def from_repository_output(cls, query_output) -> Self:
         return cls(
             uid=query_output["uid"],
             value_node=snake_case_data(query_output["value_node"]),
@@ -90,7 +90,7 @@ class TermChangeItem(BaseModel):
     codelists: Sequence
 
     @classmethod
-    def from_repository_output(cls, query_output) -> "TermChangeItem":
+    def from_repository_output(cls, query_output) -> Self:
         return cls(
             uid=query_output["uid"],
             value_node=snake_case_data(query_output["value_node"]),
@@ -113,7 +113,7 @@ class CTPackageChanges(BaseModel):
     @classmethod
     def from_repository_output(
         cls, old_package_name: str, new_package_name: str, query_output
-    ) -> "CTPackageChanges":
+    ) -> Self:
         return cls(
             from_package=old_package_name,
             to_package=new_package_name,
@@ -150,7 +150,7 @@ class CTPackageChangesSpecificCodelist(CTPackageChanges):
     @classmethod
     def from_repository_output(
         cls, old_package_name: str, new_package_name: str, query_output
-    ) -> "CTPackageChangesSpecificCodelist":
+    ) -> Self:
         return cls(
             from_package=old_package_name,
             to_package=new_package_name,
@@ -189,7 +189,7 @@ class CTPackageDates(BaseModel):
     @classmethod
     def from_repository_output(
         cls, catalogue_name: str, effective_dates: Sequence[date]
-    ) -> "CTPackageDates":
+    ) -> Self:
         return cls(catalogue_name=catalogue_name, effective_dates=effective_dates)
 
     catalogue_name: str = Field(

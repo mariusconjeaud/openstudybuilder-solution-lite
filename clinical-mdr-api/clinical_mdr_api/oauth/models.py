@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from pydantic import BaseModel, validator
 
 AUTHORIZATION_ERROR_CODES = {
@@ -24,14 +22,14 @@ class JWTTokenClaims(BaseModel):
     # RFC-7519 defines them optional, but mandated by OpenID Connect Core 1.0 for id-tokens (except nbf and jti)
     iss: str
     sub: str
-    aud: List[str]
+    aud: list[str]
     exp: int
-    nbf: Optional[int]
+    nbf: int | None
     iat: int
-    jti: Optional[str]
+    jti: str | None
 
     # RFC-8693 #4.2 common for both id and access token
-    scp: Optional[List[str]] = None
+    scp: list[str] | None = None
 
     @validator("aud", "scp", pre=True)
     # pylint:disable=no-self-argument
@@ -42,42 +40,61 @@ class JWTTokenClaims(BaseModel):
         return v
 
 
+class AccessTokenClaims(JWTTokenClaims):
+    """Access token claims"""
+
+    roles: set[str] | None = None
+
+    # OpenID Connect Core 1.0 Standard Claims
+    name: str | None = None
+    preferred_username: str | None = None
+    email: str | None = None
+    email_verified: bool | None = None
+
+    # Seen in Active Directory tokens
+    username: str | None = None
+    oid: str | None = None
+    tid: str | None = None
+
+    azp: str | None
+
+
 class IdTokenClaims(JWTTokenClaims):
     """ID Token claims -- as per OpenID Connect 1.0 specification"""
 
     # Optional by OpenID Connect Core 1.0
-    auth_time: Optional[int]
-    nonce: Optional[str]
-    acr: Optional[str]
-    amr: Optional[str]
-    azp: Optional[str]
+    auth_time: int | None
+    nonce: str | None
+    acr: str | None
+    amr: str | None
+    azp: str | None
 
     # OpenID Connect Core 1.0 Standard Claims
-    name: Optional[str] = None
-    given_name: Optional[str] = None
-    family_name: Optional[str] = None
-    middle_name: Optional[str] = None
-    nickname: Optional[str] = None
-    preferred_username: Optional[str] = None
-    profile: Optional[str] = None
-    picture: Optional[str] = None
-    website: Optional[str] = None
-    email: Optional[str] = None
-    email_verified: Optional[str] = None
-    gender: Optional[str] = None
-    birthdate: Optional[str] = None
-    zoneinfo: Optional[str] = None
-    locale: Optional[str] = None
-    phone_number: Optional[str] = None
-    phone_number_verified: Optional[str] = None
-    address: Optional[str] = None
-    updated_at: Optional[str] = None
+    name: str | None = None
+    given_name: str | None = None
+    family_name: str | None = None
+    middle_name: str | None = None
+    nickname: str | None = None
+    preferred_username: str | None = None
+    profile: str | None = None
+    picture: str | None = None
+    website: str | None = None
+    email: str | None = None
+    email_verified: bool | None = None
+    gender: str | None = None
+    birthdate: str | None = None
+    zoneinfo: str | None = None
+    locale: str | None = None
+    phone_number: str | None = None
+    phone_number_verified: str | None = None
+    address: str | None = None
+    updated_at: str | None = None
 
-    # Seen in Microsoft tokens
-    username: Optional[str] = None
-    idtyp: Optional[str] = None
-    oid: Optional[str] = None
-    tid: Optional[str] = None
+    # Seen in Active Directory tokens
+    username: str | None = None
+    idtyp: str | None = None
+    oid: str | None = None
+    tid: str | None = None
 
 
 class UserInfo(BaseModel):
@@ -88,3 +105,4 @@ class UserInfo(BaseModel):
     username: str
     email: str
     initials: str
+    roles: set[str]

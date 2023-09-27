@@ -59,6 +59,7 @@ export default {
     fetchActiveStudies (filters, sort, filtersUpdated) {
       const params = filteringParameters.prepareParameters(
         this.activeOptions, filters, sort, filtersUpdated)
+      params.sort_by = { 'current_metadata.identification_metadata.study_id': true }
       api.get(params).then(resp => {
         this.activeStudies = resp.data.items
         this.totalActiveStudies = resp.data.total

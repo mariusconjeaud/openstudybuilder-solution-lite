@@ -1,11 +1,13 @@
 """System router."""
+import os
 
 from fastapi import APIRouter
-from starlette.responses import PlainTextResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 
-from clinical_mdr_api import models
+from clinical_mdr_api import config, models
 from clinical_mdr_api.services import system as service
 
+# Mounted under "/system" path as a sub-application, endpoints do not require authentication.
 router = APIRouter()
 
 
@@ -37,3 +39,27 @@ def get_build_id() -> str:
 )
 def healthcheck():
     return "OK"
+
+
+@router.get(
+    "/information/sbom.md",
+    summary="Returns SBOM as markdown text",
+    response_class=PlainTextResponse,
+    status_code=200,
+)
+def get_sbom_md() -> str:
+    filename = "sbom.md"
+    filepath = os.path.join(config.APP_ROOT_DIR, filename)
+    return FileResponse(path=filepath, media_type="text/markdown", filename=filename)
+
+
+@router.get(
+    "/information/license.md",
+    summary="Returns license as markdown text",
+    response_class=PlainTextResponse,
+    status_code=200,
+)
+def get_license_md() -> str:
+    filename = "LICENSE.md"
+    filepath = os.path.join(config.APP_ROOT_DIR, filename)
+    return FileResponse(path=filepath, media_type="text/markdown", filename=filename)

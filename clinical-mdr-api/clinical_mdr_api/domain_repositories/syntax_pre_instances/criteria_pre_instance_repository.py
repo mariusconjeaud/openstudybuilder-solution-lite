@@ -35,6 +35,7 @@ class CriteriaPreInstanceRepository(
         return CriteriaPreInstanceAR.from_repository_values(
             uid=root.uid,
             sequence_id=root.sequence_id,
+            guidance_text=getattr(value, "guidance_text", None),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
                 is_library_editable_callback=(lambda _: library.is_editable),
@@ -54,17 +55,14 @@ class CriteriaPreInstanceRepository(
         """
         root, item = super()._create(item)
 
-        if item.indications:
-            for indication in item.indications:
-                if indication:
-                    root.has_indication.connect(self._get_indication(indication.uid))
-        if item.categories:
-            for category in item.categories:
-                if category and category[0]:
-                    root.has_category.connect(self._get_category(category[0].uid))
-        if item.sub_categories:
-            for category in item.sub_categories:
-                if category and category[0]:
-                    root.has_subcategory.connect(self._get_category(category[0].uid))
+        for indication in item.indications or []:
+            if indication:
+                root.has_indication.connect(self._get_indication(indication.uid))
+        for category in item.categories or []:
+            if category and category[0]:
+                root.has_category.connect(self._get_category(category[0].uid))
+        for category in item.sub_categories or []:
+            if category and category[0]:
+                root.has_subcategory.connect(self._get_category(category[0].uid))
 
         return item

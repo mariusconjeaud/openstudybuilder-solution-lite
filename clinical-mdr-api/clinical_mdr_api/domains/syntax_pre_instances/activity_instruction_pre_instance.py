@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Optional, Sequence
+from typing import Callable, Self, Sequence
 
 from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR
 from clinical_mdr_api.domains.concepts.activities.activity_group import ActivityGroupAR
@@ -21,13 +21,13 @@ class ActivityInstructionPreInstanceAR(PreInstanceAR):
     Implementation of ActivityInstructionPreInstanceAR. Solely based on Parametrized Template.
     """
 
-    _indications: Optional[Sequence[DictionaryTermAR]] = None
+    _indications: Sequence[DictionaryTermAR] | None = None
 
-    _activities: Optional[Sequence[ActivityAR]] = None
+    _activities: Sequence[ActivityAR] | None = None
 
-    _activity_groups: Optional[Sequence[ActivityGroupAR]] = None
+    _activity_groups: Sequence[ActivityGroupAR] | None = None
 
-    _activity_subgroups: Optional[Sequence[ActivitySubGroupAR]] = None
+    _activity_subgroups: Sequence[ActivitySubGroupAR] | None = None
 
     @property
     def indications(self) -> Sequence[DictionaryTermAR]:
@@ -54,11 +54,11 @@ class ActivityInstructionPreInstanceAR(PreInstanceAR):
         item_metadata: LibraryItemMetadataVO,
         sequence_id: str,
         study_count: int = 0,
-        indications: Optional[Sequence[DictionaryTermAR]] = None,
-        activities: Optional[Sequence[ActivityAR]] = None,
-        activity_groups: Optional[Sequence[ActivityGroupAR]] = None,
-        activity_subgroups: Optional[Sequence[ActivitySubGroupAR]] = None,
-    ) -> "ActivityInstructionPreInstanceAR":
+        indications: Sequence[DictionaryTermAR] | None = None,
+        activities: Sequence[ActivityAR] | None = None,
+        activity_groups: Sequence[ActivityGroupAR] | None = None,
+        activity_subgroups: Sequence[ActivitySubGroupAR] | None = None,
+    ) -> Self:
         ar = cls(
             _uid=uid,
             _sequence_id=sequence_id,
@@ -80,24 +80,22 @@ class ActivityInstructionPreInstanceAR(PreInstanceAR):
         author: str,
         library: LibraryVO,
         template: ParametrizedTemplateVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-        generate_seq_id_callback: Callable[[str, str, str], Optional[str]] = (
-            lambda x, y: None
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        next_available_sequence_id_callback: Callable[[str], str | None] = (
+            lambda _: None
         ),
-        indications: Optional[Sequence[DictionaryTermAR]] = None,
-        activities: Optional[Sequence[ActivityAR]] = None,
-        activity_groups: Optional[Sequence[ActivityGroupAR]] = None,
-        activity_subgroups: Optional[Sequence[ActivitySubGroupAR]] = None,
-    ) -> "ActivityInstructionPreInstanceAR":
+        indications: Sequence[DictionaryTermAR] | None = None,
+        activities: Sequence[ActivityAR] | None = None,
+        activity_groups: Sequence[ActivityGroupAR] | None = None,
+        activity_subgroups: Sequence[ActivitySubGroupAR] | None = None,
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
         generated_uid = generate_uid_callback()
 
         ar = cls(
             _uid=generated_uid,
-            _sequence_id=generate_seq_id_callback(
-                generated_uid, template.template_sequence_id, "P"
-            ),
+            _sequence_id=next_available_sequence_id_callback(template.template_uid),
             _library=library,
             _template=template,
             _item_metadata=item_metadata,

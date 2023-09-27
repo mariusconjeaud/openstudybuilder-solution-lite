@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 from clinical_mdr_api.domain_repositories.models.standard_data_model import (
     VariableClass,
     VariableClassInstance,
@@ -20,7 +18,7 @@ class VariableClassRepository(StandardDataModelRepository):
 
     # pylint: disable=unused-argument
     def generic_match_clause(
-        self, versioning_relationship: str, uid: Optional[str] = None
+        self, versioning_relationship: str, uid: str | None = None
     ):
         standard_data_model_label = self.root_class.__label__
         standard_data_model_value_label = self.value_class.__label__
@@ -32,12 +30,21 @@ class VariableClassRepository(StandardDataModelRepository):
                 (dataset_class_value:DatasetClassInstance)<-[:HAS_DATASET_CLASS]-(data_model_value:DataModelValue)
                 <-[:HAS_VERSION]-(data_model_root:DataModelRoot)"""
 
-    def create_query_filter_statement(self, **kwargs) -> Tuple[str, dict]:
+    def create_query_filter_statement(self, **kwargs) -> tuple[str, dict]:
         (
             filter_statements_from_standard,
             filter_query_parameters,
         ) = super().create_query_filter_statement()
         filter_parameters = []
+        if kwargs.get("dataset_class_name"):
+            dataset_class_name = kwargs.get("dataset_class_name")
+            filter_by_dataset_class_name = (
+                "$dataset_class_name IN [(dataset_class_value)<-[:HAS_PARENT_CLASS*0..5]-(dataset_class) "
+                "| dataset_class.label] "
+            )
+            filter_parameters.append(filter_by_dataset_class_name)
+            filter_query_parameters["dataset_class_name"] = dataset_class_name
+
         if kwargs.get("data_model_name") and kwargs.get("data_model_version"):
             data_model_name = kwargs.get("data_model_name")
             data_model_version = kwargs.get("data_model_version")
@@ -77,7 +84,7 @@ class VariableClassRepository(StandardDataModelRepository):
             )
         return filter_statements_to_return, filter_query_parameters
 
-    def sort_by(self) -> Optional[dict]:
+    def sort_by(self) -> dict | None:
         return {"dataset_class.ordinal": True}
 
     def specific_alias_clause(self) -> str:
@@ -93,6 +100,12 @@ class VariableClassRepository(StandardDataModelRepository):
             standard_value.question_text AS question_text,
             standard_value.simple_datatype AS simple_datatype,
             standard_value.role AS role,
+            standard_value.described_value_domain AS described_value_domain,
+            standard_value.notes AS notes,
+            standard_value.usage_restrictions AS usage_restrictions,
+            standard_value.examples AS examples,
+            head([(standard_value)-[:QUALIFIES_VARIABLE {catalogue:$data_model_name, version_number:$data_model_version}]->(qualified_variable:VariableClassInstance)<-[:HAS_INSTANCE]-(qualified_variable_root) | {
+                uid:qualified_variable_root.uid, name:qualified_variable.label }]) AS qualifies_variable,
             {dataset_class_name:dataset_class_value.label, ordinal:toInteger(has_class_variable_rel.ordinal)} AS dataset_class,
             head([(standard_value)<-[:IMPLEMENTS_VARIABLE]-(dataset_variable_value:DatasetVariableInstance) | 
                 dataset_variable_value.label]) AS dataset_variable_name,

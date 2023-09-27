@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Iterable, Optional
+from typing import Callable, Iterable
 
 from clinical_mdr_api import exceptions
 
@@ -54,7 +54,7 @@ def call_default_init(obj, *args, **kwargs) -> None:
     getattr(obj, "__default_init__")(*args, **kwargs)
 
 
-def make_frozenset(iterable: Optional[Iterable]) -> frozenset:
+def make_frozenset(iterable: Iterable | None) -> frozenset:
     if iterable is None:
         return frozenset()
     if isinstance(iterable, frozenset):

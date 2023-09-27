@@ -8,6 +8,7 @@
     base-url="/criteria"
     export-object-label="Criteria"
     column-data-resource="criteria"
+    :server-items-length="total"
     />
 </div>
 </template>
@@ -25,7 +26,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      criteria: 'criteria/criteria'
+      criteria: 'criteria/criteria',
+      total: 'criteria/total'
     }),
     extraFilters () {
       return {

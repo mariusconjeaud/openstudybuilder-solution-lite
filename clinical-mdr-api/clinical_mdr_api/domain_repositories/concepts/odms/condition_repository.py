@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
@@ -43,7 +41,7 @@ class ConditionRepository(OdmGenericRepository[OdmConditionAR]):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> OdmConditionAR:
@@ -101,7 +99,7 @@ class ConditionRepository(OdmGenericRepository[OdmConditionAR]):
         return odm_condition_ar
 
     def specific_alias_clause(
-        self, only_specific_status: Optional[List[str]] = None
+        self, only_specific_status: list[str] | None = None
     ) -> str:
         if not only_specific_status:
             only_specific_status = ["LATEST"]

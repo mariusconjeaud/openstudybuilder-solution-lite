@@ -51,6 +51,7 @@ class CriteriaRepository(GenericSyntaxInstanceRepository[CriteriaAR]):
             template_sequence_id=template_object.sequence_id,
             guidance_text=template_value_object.guidance_text,
             parameter_terms=parameter_terms,
+            library_name=template_object.has_library.get().name,
         )
         return template
 

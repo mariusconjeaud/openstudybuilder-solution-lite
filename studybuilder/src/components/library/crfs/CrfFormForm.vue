@@ -360,6 +360,7 @@ export default {
           icon: 'mdi-check-decagram',
           iconColor: 'success',
           condition: (item) => !this.readOnly,
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.approve
         },
         {
@@ -367,13 +368,15 @@ export default {
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
           condition: (item) => this.readOnly,
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.newVersion
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
           condition: (item) => item.possible_actions ? item.possible_actions.find(action => action === actions.DELETE) : false,
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.delete
         },
         {
@@ -381,6 +384,7 @@ export default {
           icon: 'mdi-plus',
           iconColor: 'primary',
           condition: (item) => this.readOnly,
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.openLinkForm
         }
       ]

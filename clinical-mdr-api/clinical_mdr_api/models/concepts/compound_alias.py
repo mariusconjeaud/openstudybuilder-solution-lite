@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Self
 
 from pydantic import Field
 
@@ -10,7 +10,7 @@ from clinical_mdr_api.models.concepts.concept import Concept, ConceptInput
 
 
 class CompoundAlias(Concept):
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         ...,
         description=(
             "Holds those actions that can be performed on CompoundAliass. "
@@ -25,8 +25,8 @@ class CompoundAlias(Concept):
     def from_ar(
         cls,
         ar: CompoundAliasAR,
-        find_compound_by_uid: Callable[[str], Optional[CompoundAR]],
-    ) -> "CompoundAlias":
+        find_compound_by_uid: Callable[[str], CompoundAR | None],
+    ) -> Self:
         return cls(
             uid=ar.uid,
             name=ar.name,
@@ -62,7 +62,7 @@ class CompoundAliasEditInput(ConceptInput):
 
 
 class CompoundAliasVersion(CompoundAlias):
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

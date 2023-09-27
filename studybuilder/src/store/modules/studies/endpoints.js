@@ -6,16 +6,19 @@ import instances from '@/utils/instances'
 import utils from '@/store/utils'
 
 const state = {
-  studyEndpoints: []
+  studyEndpoints: [],
+  total: 0
 }
 
 const getters = {
-  studyEndpoints: state => state.studyEndpoints
+  studyEndpoints: state => state.studyEndpoints,
+  total: state => state.total
 }
 
 const mutations = {
   SET_STUDY_ENDPOINTS (state, studyEndpoints) {
-    state.studyEndpoints = studyEndpoints
+    state.studyEndpoints = studyEndpoints.items
+    state.total = studyEndpoints.total
   },
   ADD_STUDY_ENDPOINT (state, studyEndpoint) {
     state.studyEndpoints.unshift(studyEndpoint)
@@ -39,7 +42,7 @@ const actions = {
     const studyUid = data.studyUid
     delete data.studyUid
     return study.getStudyEndpoints(studyUid, data).then(resp => {
-      commit('SET_STUDY_ENDPOINTS', resp.data.items)
+      commit('SET_STUDY_ENDPOINTS', resp.data)
       return resp
     })
   },
@@ -101,10 +104,7 @@ const actions = {
       delete data.endpoint_sublevel
     }
 
-    return study.createStudyEndpoint(studyUid, data).then(resp => {
-      // Fetch complete list of endpoints to be sure orders are updated
-      dispatch('fetchStudyEndpoints', { studyUid })
-    })
+    return study.createStudyEndpoint(studyUid, data)
   },
   selectFromStudyEndpoint ({ commit }, { studyUid, studyEndpoint }) {
     const data = {
@@ -123,25 +123,33 @@ const actions = {
     if (studyEndpoint.endpoint_sublevel) {
       data.endpoint_sublevel_uid = studyEndpoint.endpoint_sublevel.term_uid
     }
-    return study.selectStudyEndpoint(studyUid, data).then(resp => {
-      commit('ADD_STUDY_ENDPOINT', resp.data)
-    })
+    return study.selectStudyEndpoint(studyUid, data)
   },
   async updateStudyEndpoint ({ commit, dispatch }, { studyUid, studyEndpointUid, form }) {
-    const data = {
-      endpoint_units: form.endpoint_units
+    const data = {}
+    if (form.endpoint_units) {
+      data.endpoint_units = { units: form.endpoint_units.units.map(unit => unit.uid) }
     }
-    data.endpoint_units.units = data.endpoint_units.units.map(unit => unit.uid)
-    if (form.study_objective) {
-      data.study_objective_uid = form.study_objective.study_objective_uid
-    } else {
-      data.study_objective_uid = null
+    if (form.study_objective !== undefined) {
+      if (form.study_objective === null) {
+        data.study_objective_uid = null
+      } else {
+        data.study_objective_uid = form.study_objective.study_objective_uid
+      }
     }
-    if (form.endpoint_level) {
-      data.endpoint_level_uid = form.endpoint_level.term_uid
+    if (form.endpoint_level !== undefined) {
+      if (form.endpoint_level === null) {
+        data.endpoint_level_uid = null
+      } else {
+        data.endpoint_level_uid = form.endpoint_level.term_uid
+      }
     }
-    if (form.endpoint_sublevel) {
-      data.endpoint_sublevel_uid = form.endpoint_sublevel.term_uid
+    if (form.endpoint_sublevel !== undefined) {
+      if (form.endpoint_sublevel === null) {
+        data.endpoint_sublevel_uid = null
+      } else {
+        data.endpoint_sublevel_uid = form.endpoint_sublevel.term_uid
+      }
     }
     if (form.endpoint_parameters !== undefined) {
       try {
@@ -191,9 +199,7 @@ const actions = {
         }
       }
     }
-    return study.updateStudyEndpoint(studyUid, studyEndpointUid, data).then(resp => {
-      dispatch('fetchStudyEndpoints', { studyUid })
-    })
+    return study.updateStudyEndpoint(studyUid, studyEndpointUid, data)
   },
   async updateStudyEndpointEndpointLatestVersion ({ commit }, { studyUid, studyEndpointUid }) {
     const resp = await study.updateStudyEndpointEndpointLatestVersion(

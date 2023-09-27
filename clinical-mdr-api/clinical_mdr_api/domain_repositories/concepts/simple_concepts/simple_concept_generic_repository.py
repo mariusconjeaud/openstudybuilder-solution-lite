@@ -4,11 +4,6 @@ from typing import TypeVar
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
 )
-from clinical_mdr_api.domain_repositories.models.generic import (
-    VersionRoot,
-    VersionValue,
-)
-from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemMetadataVO
 
 _AggregateRootType = TypeVar("_AggregateRootType")
@@ -24,7 +19,8 @@ class SimpleConceptGenericRepository(ConceptGenericRepository[_AggregateRootType
             root = self.root_class(uid=item.uid)
             self._db_save_node(root)
 
-            value = self._get_or_create_value(root=root, ar=item)
+            value = self._create_new_value_node(ar=item)
+            self._db_save_node(value)
 
             library = self._get_library(item.library.name)
 
@@ -44,14 +40,3 @@ class SimpleConceptGenericRepository(ConceptGenericRepository[_AggregateRootType
             self._maintain_parameters(item, root, value)
 
         return item
-
-    def _get_or_create_value(
-        self, root: VersionRoot, ar: ConceptARBase
-    ) -> VersionValue:
-        # try to find an existing simple concept value with given name
-        value_node = self.value_class.nodes.get_or_none(name=ar.name)
-        if value_node is not None:
-            return value_node
-        new_value = self._create_new_value_node(ar=ar)
-        self._db_save_node(new_value)
-        return new_value

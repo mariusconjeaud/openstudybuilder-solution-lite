@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Sequence
+from typing import Callable, Sequence
 
 from neomodel import db
 
@@ -186,13 +186,10 @@ class StudyElementSelectionService(
                     )
                 )
                 assert selection_aggregate is not None
-                try:
-                    selection_aggregate.add_element_selection(
-                        new_selection,
-                        self._repos.ct_term_name_repository.term_specific_exists_by_uid,
-                    )
-                except ValueError as value_error:
-                    raise exceptions.ValidationException(value_error.args[0])
+                selection_aggregate.add_element_selection(
+                    new_selection,
+                    self._repos.ct_term_name_repository.term_specific_exists_by_uid,
+                )
 
                 ## sync with DB and save the update
                 repos.study_element_repository.save(selection_aggregate, self.author)
@@ -221,11 +218,11 @@ class StudyElementSelectionService(
     def get_all_selection(
         self,
         study_uid: str,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[models.StudySelectionElement]:
         repos = MetaRepository()
@@ -324,7 +321,7 @@ class StudyElementSelectionService(
         self,
         request_study_element: models.StudySelectionElementInput,
         current_study_element: StudySelectionElementVO,
-        find_duration_name_by_code: Callable[[str], Optional[CTTermNameAR]],
+        find_duration_name_by_code: Callable[[str], CTTermNameAR | None],
     ) -> StudySelectionElementVO:
         # transform current to input model
         transformed_current = models.StudySelectionElementInput.from_study_selection_element(
@@ -383,12 +380,9 @@ class StudyElementSelectionService(
             assert selection_aggregate is not None
 
             # Load the current VO for updates
-            try:
-                current_vo, order = selection_aggregate.get_specific_object_selection(
-                    study_selection_uid=study_selection_uid
-                )
-            except ValueError as value_error:
-                raise exceptions.NotFoundException(value_error.args[0])
+            current_vo, order = selection_aggregate.get_specific_object_selection(
+                study_selection_uid=study_selection_uid
+            )
 
             # merge current with updates
             updated_selection = self._patch_prepare_new_study_element(
@@ -397,14 +391,11 @@ class StudyElementSelectionService(
                 find_duration_name_by_code=self._repos.unit_definition_repository.find_by_uid_2,
             )
 
-            try:
-                # let the aggregate update the value object
-                selection_aggregate.update_selection(
-                    updated_study_element_selection=updated_selection,
-                    ct_term_exists_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
-                )
-            except ValueError as value_error:
-                raise exceptions.ValidationException(value_error.args[0])
+            # let the aggregate update the value object
+            selection_aggregate.update_selection(
+                updated_study_element_selection=updated_selection,
+                ct_term_exists_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
+            )
             # sync with DB and save the update
             repos.study_element_repository.save(selection_aggregate, self.author)
 
@@ -472,10 +463,10 @@ class StudyElementSelectionService(
     def get_distinct_values_for_header(
         self,
         field_name: str,
-        study_uid: Optional[str] = None,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        study_uid: str | None = None,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ):
         all_items = self.get_all_selection(study_uid=study_uid)

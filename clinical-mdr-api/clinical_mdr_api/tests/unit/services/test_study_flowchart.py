@@ -10,7 +10,11 @@ from clinical_mdr_api.models import (
     StudyVisit,
 )
 from clinical_mdr_api.models.concepts.activities.activity import (
-    ActivityHierarchySimpleModel,
+    ActivityGroupingHierarchySimpleModel,
+)
+from clinical_mdr_api.models.study_selections.study_selection import (
+    SimpleStudyActivityGroup,
+    SimpleStudyActivitySubGroup,
 )
 from clinical_mdr_api.models.study_selections.table_with_headers import (
     TableHeader,
@@ -43,7 +47,6 @@ STUDY_VISITS = GenericFilteringReturn.create(
             description=None,
             start_rule=None,
             end_rule=None,
-            note=None,
             visit_contact_mode_uid="CTTerm_000080",
             epoch_allocation_uid=None,
             visit_class="SINGLE_VISIT",
@@ -101,7 +104,6 @@ STUDY_VISITS = GenericFilteringReturn.create(
             description=None,
             start_rule=None,
             end_rule=None,
-            note=None,
             visit_contact_mode_uid="CTTerm_000080",
             epoch_allocation_uid=None,
             visit_class="SINGLE_VISIT",
@@ -159,7 +161,6 @@ STUDY_VISITS = GenericFilteringReturn.create(
             description=None,
             start_rule=None,
             end_rule=None,
-            note=None,
             visit_contact_mode_uid="CTTerm_000080",
             epoch_allocation_uid=None,
             visit_class="SINGLE_VISIT",
@@ -217,7 +218,6 @@ STUDY_VISITS = GenericFilteringReturn.create(
             description=None,
             start_rule=None,
             end_rule=None,
-            note=None,
             visit_contact_mode_uid="CTTerm_000080",
             epoch_allocation_uid=None,
             visit_class="SINGLE_VISIT",
@@ -275,7 +275,6 @@ STUDY_VISITS = GenericFilteringReturn.create(
             description=None,
             start_rule=None,
             end_rule=None,
-            note=None,
             visit_contact_mode_uid="CTTerm_000080",
             epoch_allocation_uid=None,
             visit_class="SINGLE_VISIT",
@@ -333,7 +332,6 @@ STUDY_VISITS = GenericFilteringReturn.create(
             description=None,
             start_rule=None,
             end_rule=None,
-            note=None,
             visit_contact_mode_uid="CTTerm_000080",
             epoch_allocation_uid=None,
             visit_class="SINGLE_VISIT",
@@ -391,7 +389,6 @@ STUDY_VISITS = GenericFilteringReturn.create(
             description=None,
             start_rule=None,
             end_rule=None,
-            note=None,
             visit_contact_mode_uid="CTTerm_000080",
             epoch_allocation_uid=None,
             visit_class="SINGLE_VISIT",
@@ -449,7 +446,6 @@ STUDY_VISITS = GenericFilteringReturn.create(
             description=None,
             start_rule=None,
             end_rule=None,
-            note=None,
             visit_contact_mode_uid="CTTerm_000080",
             epoch_allocation_uid=None,
             visit_class="SINGLE_VISIT",
@@ -507,7 +503,6 @@ STUDY_VISITS = GenericFilteringReturn.create(
             description=None,
             start_rule=None,
             end_rule=None,
-            note=None,
             visit_contact_mode_uid="CTTerm_000080",
             epoch_allocation_uid=None,
             visit_class="SINGLE_VISIT",
@@ -565,7 +560,6 @@ STUDY_VISITS = GenericFilteringReturn.create(
             description=None,
             start_rule=None,
             end_rule=None,
-            note=None,
             visit_contact_mode_uid="CTTerm_000080",
             epoch_allocation_uid=None,
             visit_class="SINGLE_VISIT",
@@ -623,7 +617,6 @@ STUDY_VISITS = GenericFilteringReturn.create(
             description=None,
             start_rule=None,
             end_rule=None,
-            note=None,
             visit_contact_mode_uid="CTTerm_000080",
             epoch_allocation_uid=None,
             visit_class="SINGLE_VISIT",
@@ -681,7 +674,6 @@ STUDY_VISITS = GenericFilteringReturn.create(
             description=None,
             start_rule=None,
             end_rule=None,
-            note=None,
             visit_contact_mode_uid="CTTerm_000080",
             epoch_allocation_uid=None,
             visit_class="SINGLE_VISIT",
@@ -739,7 +731,6 @@ STUDY_VISITS = GenericFilteringReturn.create(
             description=None,
             start_rule=None,
             end_rule=None,
-            note=None,
             visit_contact_mode_uid="CTTerm_000079",
             epoch_allocation_uid=None,
             visit_class="SINGLE_VISIT",
@@ -778,7 +769,7 @@ STUDY_VISITS = GenericFilteringReturn.create(
             study_activity_count=0,
         ),
     ],
-    total_count=0,
+    total=0,
 )
 
 EPOCH_TERMS = {
@@ -1113,8 +1104,7 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 change_description="Approved version",
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
-                activity_subgroup=None,
-                activity_group=None,
+                activity_groupings=[],
             ),
             flowchart_group=CTTermName(
                 term_uid="CTTerm_000074",
@@ -1132,7 +1122,16 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
             ),
-            note=None,
+            study_activity_subgroup=SimpleStudyActivitySubGroup(
+                study_activity_subgroup_uid=None,
+                activity_subgroup_uid=None,
+                activity_subgroup_name=None,
+            ),
+            study_activity_group=SimpleStudyActivityGroup(
+                study_activity_group_uid=None,
+                activity_group_uid=None,
+                activity_group_name=None,
+            ),
             start_date=datetime.datetime(2022, 7, 22, 9, 57, 12, 818790),
             user_initials="unknown-user",
             end_date=None,
@@ -1164,8 +1163,17 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 change_description="Approved version",
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
-                activity_subgroup=None,
-                activity_group=None,
+                activity_groupings=[],
+            ),
+            study_activity_subgroup=SimpleStudyActivitySubGroup(
+                study_activity_subgroup_uid=None,
+                activity_subgroup_uid=None,
+                activity_subgroup_name=None,
+            ),
+            study_activity_group=SimpleStudyActivityGroup(
+                study_activity_group_uid=None,
+                activity_group_uid=None,
+                activity_group_name=None,
             ),
             flowchart_group=CTTermName(
                 term_uid="CTTerm_000074",
@@ -1183,7 +1191,6 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
             ),
-            note=None,
             start_date=datetime.datetime(2022, 7, 22, 9, 57, 13, 751986),
             user_initials="unknown-user",
             end_date=None,
@@ -1215,12 +1222,24 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 change_description="Approved version",
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
-                activity_subgroup=ActivityHierarchySimpleModel(
-                    uid="ActivitySubGroup_000040", name="Physical Examination"
-                ),
-                activity_group=ActivityHierarchySimpleModel(
-                    uid="ActivityGroup_000005", name="Examinations"
-                ),
+                activity_groupings=[
+                    ActivityGroupingHierarchySimpleModel(
+                        activity_group_uid="ActivityGroup_000005",
+                        activity_group_name="Examinations",
+                        activity_subgroup_uid="ActivitySubGroup_000040",
+                        activity_subgroup_name="Physical Examination",
+                    )
+                ],
+            ),
+            study_activity_subgroup=SimpleStudyActivitySubGroup(
+                study_activity_subgroup_uid="StudyActivitySubGroup_000001",
+                activity_subgroup_uid="ActivitySubGroup_000040",
+                activity_subgroup_name="Physical Examination",
+            ),
+            study_activity_group=SimpleStudyActivityGroup(
+                study_activity_group_uid="StudyActivityGroup_000001",
+                activity_group_uid="ActivityGroup_000005",
+                activity_group_name="Examinations",
             ),
             flowchart_group=CTTermName(
                 term_uid="CTTerm_000074",
@@ -1238,7 +1257,6 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
             ),
-            note=None,
             start_date=datetime.datetime(2022, 7, 22, 9, 57, 14, 660394),
             user_initials="unknown-user",
             end_date=None,
@@ -1270,8 +1288,17 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 change_description="Approved version",
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
-                activity_subgroup=None,
-                activity_group=None,
+                activity_groupings=[],
+            ),
+            study_activity_subgroup=SimpleStudyActivitySubGroup(
+                study_activity_subgroup_uid=None,
+                activity_subgroup_uid=None,
+                activity_subgroup_name=None,
+            ),
+            study_activity_group=SimpleStudyActivityGroup(
+                study_activity_group_uid=None,
+                activity_group_uid=None,
+                activity_group_name=None,
             ),
             flowchart_group=CTTermName(
                 term_uid="CTTerm_000074",
@@ -1289,7 +1316,6 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
             ),
-            note=None,
             start_date=datetime.datetime(2022, 7, 22, 9, 57, 15, 486565),
             user_initials="unknown-user",
             end_date=None,
@@ -1321,8 +1347,17 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 change_description="Approved version",
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
-                activity_subgroup=None,
-                activity_group=None,
+                activity_groupings=[],
+            ),
+            study_activity_subgroup=SimpleStudyActivitySubGroup(
+                study_activity_subgroup_uid=None,
+                activity_subgroup_uid=None,
+                activity_subgroup_name=None,
+            ),
+            study_activity_group=SimpleStudyActivityGroup(
+                study_activity_group_uid=None,
+                activity_group_uid=None,
+                activity_group_name=None,
             ),
             flowchart_group=CTTermName(
                 term_uid="CTTerm_000074",
@@ -1340,7 +1375,6 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
             ),
-            note=None,
             start_date=datetime.datetime(2022, 7, 22, 9, 57, 16, 48140),
             user_initials="unknown-user",
             end_date=None,
@@ -1372,8 +1406,17 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 change_description="Approved version",
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
-                activity_subgroup=None,
-                activity_group=None,
+                activity_groupings=[],
+            ),
+            study_activity_subgroup=SimpleStudyActivitySubGroup(
+                study_activity_subgroup_uid=None,
+                activity_subgroup_uid=None,
+                activity_subgroup_name=None,
+            ),
+            study_activity_group=SimpleStudyActivityGroup(
+                study_activity_group_uid=None,
+                activity_group_uid=None,
+                activity_group_name=None,
             ),
             flowchart_group=CTTermName(
                 term_uid="CTTerm_000074",
@@ -1391,7 +1434,6 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
             ),
-            note=None,
             start_date=datetime.datetime(2022, 7, 22, 9, 57, 16, 646715),
             user_initials="unknown-user",
             end_date=None,
@@ -1423,8 +1465,17 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 change_description="Approved version",
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
-                activity_subgroup=None,
-                activity_group=None,
+                activity_groupings=[],
+            ),
+            study_activity_subgroup=SimpleStudyActivitySubGroup(
+                study_activity_subgroup_uid=None,
+                activity_subgroup_uid=None,
+                activity_subgroup_name=None,
+            ),
+            study_activity_group=SimpleStudyActivityGroup(
+                study_activity_group_uid=None,
+                activity_group_uid=None,
+                activity_group_name=None,
             ),
             flowchart_group=CTTermName(
                 term_uid="CTTerm_000074",
@@ -1442,7 +1493,6 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
             ),
-            note=None,
             start_date=datetime.datetime(2022, 7, 22, 9, 57, 17, 261574),
             user_initials="unknown-user",
             end_date=None,
@@ -1474,8 +1524,17 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 change_description="Approved version",
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
-                activity_subgroup=None,
-                activity_group=None,
+                activity_groupings=[],
+            ),
+            study_activity_subgroup=SimpleStudyActivitySubGroup(
+                study_activity_subgroup_uid=None,
+                activity_subgroup_uid=None,
+                activity_subgroup_name=None,
+            ),
+            study_activity_group=SimpleStudyActivityGroup(
+                study_activity_group_uid=None,
+                activity_group_uid=None,
+                activity_group_name=None,
             ),
             flowchart_group=CTTermName(
                 term_uid="CTTerm_000074",
@@ -1493,7 +1552,6 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
             ),
-            note=None,
             start_date=datetime.datetime(2022, 7, 22, 9, 57, 17, 884257),
             user_initials="unknown-user",
             end_date=None,
@@ -1525,8 +1583,17 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 change_description="Approved version",
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
-                activity_subgroup=None,
-                activity_group=None,
+                activity_groupings=[],
+            ),
+            study_activity_subgroup=SimpleStudyActivitySubGroup(
+                study_activity_subgroup_uid=None,
+                activity_subgroup_uid=None,
+                activity_subgroup_name=None,
+            ),
+            study_activity_group=SimpleStudyActivityGroup(
+                study_activity_group_uid=None,
+                activity_group_uid=None,
+                activity_group_name=None,
             ),
             flowchart_group=CTTermName(
                 term_uid="CTTerm_000074",
@@ -1544,7 +1611,6 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
             ),
-            note=None,
             start_date=datetime.datetime(2022, 7, 22, 9, 57, 18, 501300),
             user_initials="unknown-user",
             end_date=None,
@@ -1576,12 +1642,24 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 change_description="Approved version",
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
-                activity_subgroup=ActivityHierarchySimpleModel(
-                    uid="ActivitySubGroup_000038", name="Body Measurements"
-                ),
-                activity_group=ActivityHierarchySimpleModel(
-                    uid="ActivityGroup_000005", name="Examinations"
-                ),
+                activity_groupings=[
+                    ActivityGroupingHierarchySimpleModel(
+                        activity_group_uid="ActivityGroup_000005",
+                        activity_group_name="Examinations",
+                        activity_subgroup_uid="ActivitySubGroup_000038",
+                        activity_subgroup_name="Body Measurements",
+                    )
+                ],
+            ),
+            study_activity_subgroup=SimpleStudyActivitySubGroup(
+                study_activity_subgroup_uid="StudyActivitySubGroup_000002",
+                activity_subgroup_uid="ActivitySubGroup_000038",
+                activity_subgroup_name="Body Measurements",
+            ),
+            study_activity_group=SimpleStudyActivityGroup(
+                study_activity_group_uid="StudyActivityGroup_000002",
+                activity_group_uid="ActivityGroup_000005",
+                activity_group_name="Examinations",
             ),
             flowchart_group=CTTermName(
                 term_uid="CTTerm_000065",
@@ -1599,7 +1677,6 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
             ),
-            note=None,
             start_date=datetime.datetime(2022, 7, 22, 9, 57, 19, 539906),
             user_initials="unknown-user",
             end_date=None,
@@ -1631,12 +1708,24 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 change_description="Approved version",
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
-                activity_subgroup=ActivityHierarchySimpleModel(
-                    uid="ActivitySubGroup_000038", name="Body Measurements"
-                ),
-                activity_group=ActivityHierarchySimpleModel(
-                    uid="ActivityGroup_000005", name="Examinations"
-                ),
+                activity_groupings=[
+                    ActivityGroupingHierarchySimpleModel(
+                        activity_group_uid="ActivityGroup_000005",
+                        activity_group_name="Examinations",
+                        activity_subgroup_uid="ActivitySubGroup_000038",
+                        activity_subgroup_name="Body Measurements",
+                    )
+                ],
+            ),
+            study_activity_subgroup=SimpleStudyActivitySubGroup(
+                study_activity_subgroup_uid="StudyActivitySubGroup_000003",
+                activity_subgroup_uid="ActivitySubGroup_000038",
+                activity_subgroup_name="Body Measurements",
+            ),
+            study_activity_group=SimpleStudyActivityGroup(
+                study_activity_group_uid="StudyActivityGroup_000003",
+                activity_group_uid="ActivityGroup_000005",
+                activity_group_name="Examinations",
             ),
             flowchart_group=CTTermName(
                 term_uid="CTTerm_000065",
@@ -1654,7 +1743,6 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
             ),
-            note=None,
             start_date=datetime.datetime(2022, 7, 22, 9, 57, 20, 327068),
             user_initials="unknown-user",
             end_date=None,
@@ -1686,8 +1774,17 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 change_description="Approved version",
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
-                activity_subgroup=None,
-                activity_group=None,
+                activity_groupings=[],
+            ),
+            study_activity_subgroup=SimpleStudyActivitySubGroup(
+                study_activity_subgroup_uid=None,
+                activity_subgroup_uid=None,
+                activity_subgroup_name=None,
+            ),
+            study_activity_group=SimpleStudyActivityGroup(
+                study_activity_group_uid=None,
+                activity_group_uid=None,
+                activity_group_name=None,
             ),
             flowchart_group=CTTermName(
                 term_uid="CTTerm_000067",
@@ -1705,7 +1802,6 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
             ),
-            note=None,
             start_date=datetime.datetime(2022, 7, 22, 9, 57, 21, 444306),
             user_initials="unknown-user",
             end_date=None,
@@ -1737,12 +1833,24 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 change_description="Approved version",
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
-                activity_subgroup=ActivityHierarchySimpleModel(
-                    uid="ActivitySubGroup_000038", name="Body Measurements"
-                ),
-                activity_group=ActivityHierarchySimpleModel(
-                    uid="ActivityGroup_000005", name="Examinations"
-                ),
+                activity_groupings=[
+                    ActivityGroupingHierarchySimpleModel(
+                        activity_group_uid="ActivityGroup_000005",
+                        activity_group_name="Examinations",
+                        activity_subgroup_uid="ActivitySubGroup_000038",
+                        activity_subgroup_name="Body Measurements",
+                    )
+                ],
+            ),
+            study_activity_subgroup=SimpleStudyActivitySubGroup(
+                study_activity_subgroup_uid="StudyActivitySubGroup_000004",
+                activity_subgroup_uid="ActivitySubGroup_000038",
+                activity_subgroup_name="Body Measurements",
+            ),
+            study_activity_group=SimpleStudyActivityGroup(
+                study_activity_group_uid="StudyActivityGroup_000004",
+                activity_group_uid="ActivityGroup_000005",
+                activity_group_name="Examinations",
             ),
             flowchart_group=CTTermName(
                 term_uid="CTTerm_000074",
@@ -1760,7 +1868,6 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
                 user_initials="unknown-user",
                 possible_actions=["inactivate", "new_version"],
             ),
-            note=None,
             start_date=datetime.datetime(2022, 7, 22, 9, 57, 20, 327068),
             user_initials="unknown-user",
             end_date=None,
@@ -1770,7 +1877,7 @@ STUDY_ACTIVITIES = GenericFilteringReturn.create(
             accepted_version=False,
         ),
     ],
-    total_count=0,
+    total=0,
 )
 
 TABLE = TableWithHeaders(

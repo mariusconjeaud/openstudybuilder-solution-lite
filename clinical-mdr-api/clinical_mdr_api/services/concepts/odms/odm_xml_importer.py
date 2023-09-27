@@ -1,5 +1,4 @@
 from time import time
-from typing import Dict, List, Optional, Union
 from xml.dom import minicompat, minidom
 
 from fastapi import UploadFile
@@ -67,7 +66,7 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term_attributes import 
 from clinical_mdr_api.models.utils import strtobool
 from clinical_mdr_api.oauth import get_current_user_id
 from clinical_mdr_api.services._meta_repository import MetaRepository
-from clinical_mdr_api.services._utils import normalize_string
+from clinical_mdr_api.services._utils import is_library_editable, normalize_string
 from clinical_mdr_api.services.concepts.odms.odm_conditions import OdmConditionService
 from clinical_mdr_api.services.concepts.odms.odm_descriptions import (
     OdmDescriptionService,
@@ -125,23 +124,23 @@ class OdmXmlImporterService:
     codelists: minicompat.NodeList
     measurement_units: minicompat.NodeList
 
-    namespace_prefixes: Dict[str, str]
+    namespace_prefixes: dict[str, str]
 
-    db_vendor_namespaces: List[OdmVendorNamespace]
-    db_vendor_attributes: List[OdmVendorAttribute]
-    db_vendor_elements: List[OdmVendorElement]
-    db_study_events: List[OdmStudyEvent]
-    db_forms: List[OdmForm]
-    db_item_groups: List[OdmItemGroup]
-    db_items: List[OdmItem]
-    db_conditions: List[OdmCondition]
-    db_methods: List[OdmMethod]
-    db_ct_term_attributes: List[CTTermAttributes]
-    db_unit_definitions: List[UnitDefinitionModel]
-    unit_definition_uids_by: Dict[str, str]
-    measurement_unit_names_by_oid: Dict[str, str]
+    db_vendor_namespaces: list[OdmVendorNamespace]
+    db_vendor_attributes: list[OdmVendorAttribute]
+    db_vendor_elements: list[OdmVendorElement]
+    db_study_events: list[OdmStudyEvent]
+    db_forms: list[OdmForm]
+    db_item_groups: list[OdmItemGroup]
+    db_items: list[OdmItem]
+    db_conditions: list[OdmCondition]
+    db_methods: list[OdmMethod]
+    db_ct_term_attributes: list[CTTermAttributes]
+    db_unit_definitions: list[UnitDefinitionModel]
+    unit_definition_uids_by: dict[str, str]
+    measurement_unit_names_by_oid: dict[str, str]
 
-    mapper_file: Optional[UploadFile] = None
+    mapper_file: UploadFile | None = None
 
     OSB_PREFIX = "osb"
     EXCLUDED_OSB_VENDOR_ATTRIBUTES = [
@@ -154,7 +153,7 @@ class OdmXmlImporterService:
     OSB_INSTRUCTION = f"{OSB_PREFIX}:instruction"
     OSB_SPONSOR_INSTRUCTION = f"{OSB_PREFIX}:sponsorInstruction"
 
-    def __init__(self, xml_file: UploadFile, mapper_file: Optional[UploadFile]):
+    def __init__(self, xml_file: UploadFile, mapper_file: UploadFile | None):
         if xml_file.content_type not in ["application/xml", "text/xml"]:
             raise exceptions.BusinessLogicException("Only XML format is supported.")
 
@@ -442,7 +441,7 @@ class OdmXmlImporterService:
         uid: str,
         def_element: minidom.Element,
         repo: OdmGenericRepository,
-        compatible_type: Optional[VendorCompatibleType] = None,
+        compatible_type: VendorCompatibleType | None = None,
     ):
         self._create_relationship_with_vendor_attributes(
             uid, def_element.attributes.values(), repo, compatible_type
@@ -459,9 +458,9 @@ class OdmXmlImporterService:
         uid: str,
         elm_attributes,
         repository: OdmGenericRepository,
-        compatible_type: Optional[VendorCompatibleType] = None,
+        compatible_type: VendorCompatibleType | None = None,
     ):
-        odm_vendor_relations: List[OdmVendorRelationPostInput] = []
+        odm_vendor_relations: list[OdmVendorRelationPostInput] = []
         for elm_attribute in elm_attributes:
             if (
                 not isinstance(elm_attribute, minidom.Attr)
@@ -505,16 +504,13 @@ class OdmXmlImporterService:
                 odm_vendor_relations, compatible_type
             )
 
-        try:
-            for odm_vendor_relation in odm_vendor_relations:
-                repository.add_relation(
-                    uid=uid,
-                    relation_uid=odm_vendor_relation.uid,
-                    relationship_type=RelationType.VENDOR_ATTRIBUTE,
-                    parameters={"value": odm_vendor_relation.value},
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        for odm_vendor_relation in odm_vendor_relations:
+            repository.add_relation(
+                uid=uid,
+                relation_uid=odm_vendor_relation.uid,
+                relationship_type=RelationType.VENDOR_ATTRIBUTE,
+                parameters={"value": odm_vendor_relation.value},
+            )
 
     def _create_relationship_with_vendor_elements(
         self,
@@ -522,7 +518,7 @@ class OdmXmlImporterService:
         child_elements: minicompat.NodeList,
         repository: OdmGenericRepository,
     ):
-        odm_vendor_relations: List[OdmVendorRelationPostInput] = []
+        odm_vendor_relations: list[OdmVendorRelationPostInput] = []
         for child_element in child_elements:
             if (
                 not isinstance(child_element, minidom.Element)
@@ -554,16 +550,13 @@ class OdmXmlImporterService:
                 )
             )
 
-        try:
-            for odm_vendor_relation in odm_vendor_relations:
-                repository.add_relation(
-                    uid=uid,
-                    relation_uid=odm_vendor_relation.uid,
-                    relationship_type=RelationType.VENDOR_ELEMENT,
-                    parameters={"value": odm_vendor_relation.value},
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        for odm_vendor_relation in odm_vendor_relations:
+            repository.add_relation(
+                uid=uid,
+                relation_uid=odm_vendor_relation.uid,
+                relationship_type=RelationType.VENDOR_ELEMENT,
+                parameters={"value": odm_vendor_relation.value},
+            )
 
     def _create_relationship_with_vendor_element_attributes(
         self,
@@ -582,7 +575,7 @@ class OdmXmlImporterService:
             ):
                 continue
 
-            odm_vendor_relations: List[OdmVendorRelationPostInput] = []
+            odm_vendor_relations: list[OdmVendorRelationPostInput] = []
             for child_element_attribute in child_element.attributes.values():
                 if (
                     not isinstance(child_element_attribute, minidom.Attr)
@@ -621,16 +614,13 @@ class OdmXmlImporterService:
                     )
                 )
 
-            try:
-                for odm_vendor_relation in odm_vendor_relations:
-                    repository.add_relation(
-                        uid=uid,
-                        relation_uid=odm_vendor_relation.uid,
-                        relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
-                        parameters={"value": odm_vendor_relation.value},
-                    )
-            except ValueError as exception:
-                raise exceptions.ValidationException(exception.args[0])
+            for odm_vendor_relation in odm_vendor_relations:
+                repository.add_relation(
+                    uid=uid,
+                    relation_uid=odm_vendor_relation.uid,
+                    relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
+                    parameters={"value": odm_vendor_relation.value},
+                )
 
     def _vendor_attribute_exists(self, prefix, vendor_attribute_name):
         if (
@@ -882,7 +872,7 @@ class OdmXmlImporterService:
                 VendorCompatibleType.ITEM_GROUP_DEF,
             )
 
-            odm_item_group_items: List[OdmItemGroupItemPostInput] = []
+            odm_item_group_items: list[OdmItemGroupItemPostInput] = []
             for item_ref in item_group_def.getElementsByTagName("ItemRef"):
                 self._create_missing_vendor_attributes(item_ref.attributes.values())
 
@@ -939,7 +929,7 @@ class OdmXmlImporterService:
                 self._repos.odm_form_repository,
                 VendorCompatibleType.FORM_DEF,
             )
-            odm_form_item_groups: List[OdmFormItemGroupPostInput] = []
+            odm_form_item_groups: list[OdmFormItemGroupPostInput] = []
             for item_group_ref in form_def.getElementsByTagName("ItemGroupRef"):
                 self._create_missing_vendor_attributes(
                     item_group_ref.attributes.values()
@@ -1001,21 +991,18 @@ class OdmXmlImporterService:
                 )
             )
 
-        try:
-            for odm_study_event_form in odm_study_event_forms:
-                self._repos.odm_study_event_repository.add_relation(
-                    uid=rs.uid,
-                    relation_uid=odm_study_event_form.uid,
-                    relationship_type=RelationType.FORM,
-                    parameters={
-                        "order_number": odm_study_event_form.order_number,
-                        "mandatory": strtobool(odm_study_event_form.mandatory),
-                        "locked": strtobool(odm_study_event_form.locked),
-                        "collection_exception_condition_oid": odm_study_event_form.collection_exception_condition_oid,
-                    },
-                )
-        except ValueError as exception:
-            raise exceptions.ValidationException(exception.args[0])
+        for odm_study_event_form in odm_study_event_forms:
+            self._repos.odm_study_event_repository.add_relation(
+                uid=rs.uid,
+                relation_uid=odm_study_event_form.uid,
+                relationship_type=RelationType.FORM,
+                parameters={
+                    "order_number": odm_study_event_form.order_number,
+                    "mandatory": strtobool(odm_study_event_form.mandatory),
+                    "locked": strtobool(odm_study_event_form.locked),
+                    "collection_exception_condition_oid": odm_study_event_form.collection_exception_condition_oid,
+                },
+            )
 
         self._approve(
             self._repos.odm_study_event_repository, self.odm_study_event_service, rs
@@ -1023,11 +1010,11 @@ class OdmXmlImporterService:
 
     def _create_description(
         self,
-        name: Union[str, minidom.Text],
+        name: str | minidom.Text,
         lang: str = ENG_LANGUAGE,
-        description: Optional[str] = None,
-        instruction: Optional[str] = None,
-        sponsor_instruction: Optional[str] = None,
+        description: str | None = None,
+        instruction: str | None = None,
+        sponsor_instruction: str | None = None,
     ):
         if isinstance(name, minidom.Text):
             name = name.nodeValue
@@ -1051,21 +1038,18 @@ class OdmXmlImporterService:
 
         library_vo = self._get_library(concept_input)
 
-        try:
-            concept_ar = self.odm_description_service._create_aggregate_root(
-                concept_input=concept_input, library=library_vo
-            )
-            self._repos.odm_description_repository.save(concept_ar)
-            self._approve(
-                self._repos.odm_description_repository,
-                self.odm_description_service,
-                concept_ar,
-            )
-            return self.odm_description_service._transform_aggregate_root_to_pydantic_model(
-                concept_ar
-            )
-        except ValueError as value_error:
-            raise exceptions.ValidationException(value_error.args[0])
+        concept_ar = self.odm_description_service._create_aggregate_root(
+            concept_input=concept_input, library=library_vo
+        )
+        self._repos.odm_description_repository.save(concept_ar)
+        self._approve(
+            self._repos.odm_description_repository,
+            self.odm_description_service,
+            concept_ar,
+        )
+        return self.odm_description_service._transform_aggregate_root_to_pydantic_model(
+            concept_ar
+        )
 
     def _extract_descriptions(self, elm):
         description_element = elm.getElementsByTagName("Description")
@@ -1118,29 +1102,26 @@ class OdmXmlImporterService:
         if elm.tagName in {"ConditionDef", "MethodDef"} and not any(
             description["lang"] == ENG_LANGUAGE for description in descriptions
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"An English OdmDescription must be provided for {elm.tagName} identified by OID ({elm.getAttribute('OID')})."
             )
 
         return descriptions
 
     def _get_newly_created_vendor_namespaces(self):
-        try:
-            rs, _ = self._repos.odm_vendor_namespace_repository.find_all(
-                filter_by={
-                    "uid": {
-                        "v": [
-                            vendor_namespace.uid
-                            for vendor_namespace in self.db_vendor_namespaces
-                        ],
-                        "op": "eq",
-                    }
-                },
-            )
+        rs, _ = self._repos.odm_vendor_namespace_repository.find_all(
+            filter_by={
+                "uid": {
+                    "v": [
+                        vendor_namespace.uid
+                        for vendor_namespace in self.db_vendor_namespaces
+                    ],
+                    "op": "eq",
+                }
+            },
+        )
 
-            rs = sorted(rs, key=lambda elm: elm.name)
-        except ValueError as e:
-            raise exceptions.ValidationException(e)
+        rs = sorted(rs, key=lambda elm: elm.name)
 
         return [
             self.odm_vendor_namespace_service._transform_aggregate_root_to_pydantic_model(
@@ -1150,22 +1131,19 @@ class OdmXmlImporterService:
         ]
 
     def _get_newly_created_vendor_attributes(self):
-        try:
-            rs, _ = self._repos.odm_vendor_attribute_repository.find_all(
-                filter_by={
-                    "uid": {
-                        "v": [
-                            vendor_attribute.uid
-                            for vendor_attribute in self.db_vendor_attributes
-                        ],
-                        "op": "eq",
-                    }
-                },
-            )
+        rs, _ = self._repos.odm_vendor_attribute_repository.find_all(
+            filter_by={
+                "uid": {
+                    "v": [
+                        vendor_attribute.uid
+                        for vendor_attribute in self.db_vendor_attributes
+                    ],
+                    "op": "eq",
+                }
+            },
+        )
 
-            rs = sorted(rs, key=lambda elm: elm.name)
-        except ValueError as e:
-            raise exceptions.ValidationException(e)
+        rs = sorted(rs, key=lambda elm: elm.name)
 
         return [
             self.odm_vendor_attribute_service._transform_aggregate_root_to_pydantic_model(
@@ -1175,22 +1153,18 @@ class OdmXmlImporterService:
         ]
 
     def _get_newly_created_vendor_elements(self):
-        try:
-            rs, _ = self._repos.odm_vendor_element_repository.find_all(
-                filter_by={
-                    "uid": {
-                        "v": [
-                            vendor_element.uid
-                            for vendor_element in self.db_vendor_elements
-                        ],
-                        "op": "eq",
-                    }
-                },
-            )
+        rs, _ = self._repos.odm_vendor_element_repository.find_all(
+            filter_by={
+                "uid": {
+                    "v": [
+                        vendor_element.uid for vendor_element in self.db_vendor_elements
+                    ],
+                    "op": "eq",
+                }
+            },
+        )
 
-            rs = sorted(rs, key=lambda elm: elm.name)
-        except ValueError as e:
-            raise exceptions.ValidationException(e)
+        rs = sorted(rs, key=lambda elm: elm.name)
 
         return [
             self.odm_vendor_element_service._transform_aggregate_root_to_pydantic_model(
@@ -1200,19 +1174,16 @@ class OdmXmlImporterService:
         ]
 
     def _get_newly_created_study_events(self):
-        try:
-            rs, _ = self._repos.odm_study_event_repository.find_all(
-                filter_by={
-                    "uid": {
-                        "v": [study_event.uid for study_event in self.db_study_events],
-                        "op": "eq",
-                    }
-                },
-            )
+        rs, _ = self._repos.odm_study_event_repository.find_all(
+            filter_by={
+                "uid": {
+                    "v": [study_event.uid for study_event in self.db_study_events],
+                    "op": "eq",
+                }
+            },
+        )
 
-            rs = sorted(rs, key=lambda elm: elm.name)
-        except ValueError as e:
-            raise exceptions.ValidationException(e)
+        rs = sorted(rs, key=lambda elm: elm.name)
 
         return [
             self.odm_study_event_service._transform_aggregate_root_to_pydantic_model(
@@ -1222,19 +1193,16 @@ class OdmXmlImporterService:
         ]
 
     def _get_newly_created_forms(self):
-        try:
-            rs, _ = self._repos.odm_form_repository.find_all(
-                filter_by={
-                    "uid": {
-                        "v": [form.uid for form in self.db_forms],
-                        "op": "eq",
-                    }
-                },
-            )
+        rs, _ = self._repos.odm_form_repository.find_all(
+            filter_by={
+                "uid": {
+                    "v": [form.uid for form in self.db_forms],
+                    "op": "eq",
+                }
+            },
+        )
 
-            rs = sorted(rs, key=lambda elm: elm.name)
-        except ValueError as e:
-            raise exceptions.ValidationException(e)
+        rs = sorted(rs, key=lambda elm: elm.name)
 
         return [
             self.odm_form_service._transform_aggregate_root_to_pydantic_model(
@@ -1244,19 +1212,16 @@ class OdmXmlImporterService:
         ]
 
     def _get_newly_created_item_groups(self):
-        try:
-            rs, _ = self._repos.odm_item_group_repository.find_all(
-                filter_by={
-                    "uid": {
-                        "v": [item_group.uid for item_group in self.db_item_groups],
-                        "op": "eq",
-                    }
+        rs, _ = self._repos.odm_item_group_repository.find_all(
+            filter_by={
+                "uid": {
+                    "v": [item_group.uid for item_group in self.db_item_groups],
+                    "op": "eq",
                 }
-            )
+            }
+        )
 
-            rs = sorted(rs, key=lambda elm: elm.name)
-        except ValueError as e:
-            raise exceptions.ValidationException(e)
+        rs = sorted(rs, key=lambda elm: elm.name)
 
         return [
             self.odm_item_group_service._transform_aggregate_root_to_pydantic_model(
@@ -1266,19 +1231,16 @@ class OdmXmlImporterService:
         ]
 
     def _get_newly_created_conditions(self):
-        try:
-            rs, _ = self._repos.odm_condition_repository.find_all(
-                filter_by={
-                    "uid": {
-                        "v": [condition.uid for condition in self.db_conditions],
-                        "op": "eq",
-                    }
+        rs, _ = self._repos.odm_condition_repository.find_all(
+            filter_by={
+                "uid": {
+                    "v": [condition.uid for condition in self.db_conditions],
+                    "op": "eq",
                 }
-            )
+            }
+        )
 
-            rs = sorted(rs, key=lambda elm: elm.name)
-        except ValueError as e:
-            raise exceptions.ValidationException(e)
+        rs = sorted(rs, key=lambda elm: elm.name)
 
         return [
             self.odm_condition_service._transform_aggregate_root_to_pydantic_model(
@@ -1288,19 +1250,16 @@ class OdmXmlImporterService:
         ]
 
     def _get_newly_created_methods(self):
-        try:
-            rs, _ = self._repos.odm_method_repository.find_all(
-                filter_by={
-                    "uid": {
-                        "v": [method.uid for method in self.db_methods],
-                        "op": "eq",
-                    }
+        rs, _ = self._repos.odm_method_repository.find_all(
+            filter_by={
+                "uid": {
+                    "v": [method.uid for method in self.db_methods],
+                    "op": "eq",
                 }
-            )
+            }
+        )
 
-            rs = sorted(rs, key=lambda elm: elm.name)
-        except ValueError as e:
-            raise exceptions.ValidationException(e)
+        rs = sorted(rs, key=lambda elm: elm.name)
 
         return [
             self.odm_method_service._transform_aggregate_root_to_pydantic_model(
@@ -1310,19 +1269,16 @@ class OdmXmlImporterService:
         ]
 
     def _get_newly_created_items(self):
-        try:
-            rs, _ = self._repos.odm_item_repository.find_all(
-                filter_by={
-                    "uid": {
-                        "v": [item.uid for item in self.db_items],
-                        "op": "eq",
-                    }
+        rs, _ = self._repos.odm_item_repository.find_all(
+            filter_by={
+                "uid": {
+                    "v": [item.uid for item in self.db_items],
+                    "op": "eq",
                 }
-            )
+            }
+        )
 
-            rs = sorted(rs, key=lambda elm: elm.name)
-        except ValueError as e:
-            raise exceptions.ValidationException(e)
+        rs = sorted(rs, key=lambda elm: elm.name)
 
         return [
             self.odm_item_service._transform_aggregate_root_to_pydantic_model(
@@ -1341,13 +1297,7 @@ class OdmXmlImporterService:
 
         return LibraryVO.from_input_values_2(
             library_name=concept_input.library_name,
-            is_library_editable_callback=(
-                lambda name: self._repos.library_repository.find_by_name(
-                    name
-                ).is_editable
-                if self._repos.library_repository.find_by_name(name) is not None
-                else None
-            ),
+            is_library_editable_callback=is_library_editable,
         )
 
     def _get_odm_item_post_input(self, item_def):
@@ -1511,16 +1461,13 @@ class OdmXmlImporterService:
     def _create(self, repository, service, save_to, concept_input):
         library_vo = self._get_library(concept_input)
 
-        try:
-            concept_ar = service._create_aggregate_root(
-                concept_input=concept_input, library=library_vo
-            )
-            repository.save(concept_ar)
-            item = service._transform_aggregate_root_to_pydantic_model(concept_ar)
-            save_to.append(item)
-            return item
-        except ValueError as e:
-            raise exceptions.ValidationException(e.args[0])
+        concept_ar = service._create_aggregate_root(
+            concept_input=concept_input, library=library_vo
+        )
+        repository.save(concept_ar)
+        item = service._transform_aggregate_root_to_pydantic_model(concept_ar)
+        save_to.append(item)
+        return item
 
     def _approve(self, repository, service, item):
         try:

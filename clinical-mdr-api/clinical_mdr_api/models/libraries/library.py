@@ -1,3 +1,5 @@
+from typing import Self
+
 from pydantic import Field
 
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
@@ -17,7 +19,7 @@ class Library(BaseModel):
     )
 
     @classmethod
-    def from_library_vo(cls, library_vo: LibraryVO) -> "Library":
+    def from_library_vo(cls, library_vo: LibraryVO) -> Self:
         return cls(name=library_vo.name, is_editable=library_vo.is_editable)
 
 

@@ -192,7 +192,7 @@ Populating the database consists of two steps that must be performed in order:
 
    This creates all needed codelists in the sponsor library. 
    It also includes a set of mockup data to create example projects, studies etc.
-   Follow the instructions in the `data-import` repository.
+   Follow the instructions in the `studybuilder-import` repository.
    This step performs the import by calling the StudyBuilder api,
    and thus the backend must be running.
    See the instructions in the `clinical-mdr-api` repository.
@@ -202,22 +202,24 @@ Populating the database consists of two steps that must be performed in order:
 # Exporting a database backup
 
 The script `export_db_backup.sh` can be used to back the contents of a database.
-For example, connect to the container `neo4j_local` and export the database `neo4j` to the file `./my_backup.tar.gz`.
+
+For example, this connects to the container `neo4j_local` and exports the database `neo4j` to the file `./db_backups/neo4j-{timestamp}.backup`.
 ```sh
 $ export $(grep -v '^#' .env | xargs)
-$ ./export_db_backup.sh neo4j_local neo4j my_backup.tar.gz
+$ ./export_db_backup.sh neo4j_local neo4j
 ```
-This creates the file `./my_backup.tar.gz` in the current folder.
+
 
 # Importing a database backup
 
 The script `import_backup_db.sh` can be used to import a backup into a database.
-For example, connect to the container `neo4j_local` and import the file `./my_backup.tar.gz` into the database `neo4j`.
+
+For example, this connects to the container `neo4j_local` and imports the file `./db_backups/neo4j-{timestamp}.backup` into the database `neo4j`.
 ```sh
 $ export $(grep -v '^#' .env | xargs)
-$ ./import_db_backup.sh neo4j_local neo4j my_backup.tar.gz
+$ ./import_db_backup.sh neo4j_local neo4j neo4j-{timestamp}.backup
 ```
-This replaces any existing content in the database `neo4j` with the backup in the file `./my_backup.tar.gz`.
+This replaces any existing content in the database `neo4j` with the data stored in the file `./db_backups/neo4j-{timestamp}.backup`.
 
 ---
 

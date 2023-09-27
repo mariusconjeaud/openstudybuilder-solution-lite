@@ -3,7 +3,7 @@ import logging
 import os
 from functools import reduce
 from itertools import zip_longest
-from typing import List, Mapping, Optional, Sequence
+from typing import Mapping, Sequence
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 from docx import Document
@@ -28,9 +28,9 @@ class DocxBuilder:
 
     def __init__(
         self,
-        styles: Optional[Mapping] = None,
-        landscape: Optional[bool] = False,
-        margins: Optional[Sequence[float]] = None,
+        styles: Mapping | None = None,
+        landscape: bool | None = False,
+        margins: Sequence[float] | None = None,
     ):
         template_filename = os.path.join(
             os.path.dirname(__file__), self.TEMPLATE_FILENAME
@@ -95,7 +95,7 @@ class DocxBuilder:
         return table
 
     @staticmethod
-    def add_row(table: Table, cell_text_content: List[Optional[str]]) -> _Row:
+    def add_row(table: Table, cell_text_content: list[str | None]) -> _Row:
         """Adds a row to the table and fills the cells text content"""
         row = table.add_row()
         for i, t in enumerate(cell_text_content):
@@ -104,7 +104,7 @@ class DocxBuilder:
         return row
 
     @staticmethod
-    def format_row(row: _Row, styles: Optional[Sequence[str]] = None, **kwargs):
+    def format_row(row: _Row, styles: Sequence[str] | None = None, **kwargs):
         """Applies styles on each cell of a table row, and sets paragraph formattings from kwargs"""
         for cell, style in zip_longest(row.cells, styles or []):
             paragraph = cell.paragraphs[0]
@@ -135,7 +135,7 @@ class DocxBuilder:
         tc_pr.append(text_direction)
 
     @staticmethod
-    def merge_cells(cells: List[_Cell]) -> _Cell:
+    def merge_cells(cells: list[_Cell]) -> _Cell:
         return reduce(lambda c1, c2: c1.merge(c2), cells)
 
     def get_document_stream(self) -> io.BytesIO:
@@ -154,7 +154,7 @@ class DocxBuilder:
         self,
         container: BlockItemContainer,
         markup: str,
-        default_style: Optional[str] = None,
+        default_style: str | None = None,
     ) -> None:
         style_map = self.styles.copy()
         style_map["p"] = style_map[default_style]
@@ -210,7 +210,7 @@ class DocxBuilder:
         )
 
     def replace_content(
-        self, container: BlockItemContainer, text: str, style: Optional[str] = None
+        self, container: BlockItemContainer, text: str, style: str | None = None
     ):
         style = self.styles.get(style, (None,))[0]
         container.add_paragraph(text, style=style)

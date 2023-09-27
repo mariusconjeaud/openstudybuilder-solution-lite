@@ -1,5 +1,3 @@
-from typing import Optional
-
 import pytest
 from pydantic import BaseModel
 
@@ -44,7 +42,7 @@ from clinical_mdr_api.services._utils import (
     ],
 )
 def test__field_directive__is_field_included__results(
-    query_param: Optional[str], field_path: str, expected_should_include: bool
+    query_param: str | None, field_path: str, expected_should_include: bool
 ):
     # given
     field_directive: FieldsDirective = FieldsDirective.from_fields_query_parameter(
@@ -62,7 +60,7 @@ def test__field_directive__is_field_included__results(
 @pytest.mark.parametrize("before_dot_part", ["f1", "f2", "f3", "f5678"])
 @pytest.mark.parametrize("after_dot_part", ["f1", "f2", "f3", "f5678", "nested"])
 def test__field_directive__is_field_included_and_get_fields_directive_for_children_of_field__consistent_results(
-    query_param: Optional[str], before_dot_part: str, after_dot_part: str
+    query_param: str | None, before_dot_part: str, after_dot_part: str
 ):
     # given
     field_directive: FieldsDirective = FieldsDirective.from_fields_query_parameter(
@@ -85,12 +83,12 @@ def test__field_directive__is_field_included_and_get_fields_directive_for_childr
 
 
 class ChildBaseModel(BaseModel):
-    child_field: Optional[str] = None
+    child_field: str | None = None
 
 
 class ParentBaseModel(BaseModel):
-    parent_field: Optional[str] = None
-    child: Optional[ChildBaseModel] = None
+    parent_field: str | None = None
+    child: ChildBaseModel | None = None
 
 
 @pytest.mark.parametrize(
@@ -104,9 +102,9 @@ class ParentBaseModel(BaseModel):
     ],
 )
 def test__filter_base_model_using_fields_directive__consistency_with_directive(
-    given_parent_field: Optional[str],
-    given_child_field: Optional[str],
-    query_fields_param: Optional[str],
+    given_parent_field: str | None,
+    given_child_field: str | None,
+    query_fields_param: str | None,
 ):
     # given
     field_directive: FieldsDirective = FieldsDirective.from_fields_query_parameter(

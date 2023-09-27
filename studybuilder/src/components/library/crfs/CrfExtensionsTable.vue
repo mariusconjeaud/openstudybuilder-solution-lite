@@ -17,11 +17,11 @@
       <v-btn
         class="ml-2"
         fab
-        dark
         small
         color="primary"
         @click.stop="openCreateForm"
         :title="$t('CrfExtensions.new_namespace')"
+        :disabled="!checkPermission($roles.LIBRARY_WRITE)"
         >
         <v-icon dark>
           mdi-plus
@@ -29,7 +29,7 @@
       </v-btn>
     </template>
     <template v-slot:item.actions="{ item }">
-      <actions-menu :actions="actions" :item="item" />
+      <actions-menu :actions="actions" :item="item"/>
     </template>
     <template v-slot:item.status="{ item }">
       <status-chip :status="item.status" />
@@ -58,8 +58,10 @@ import StatusChip from '@/components/tools/StatusChip'
 import CrfExtensionsCreateForm from '@/components/library/crfs/CrfExtensionsCreateForm'
 import CrfExtensionsEditForm from '@/components/library/crfs/CrfExtensionsEditForm'
 import actions from '@/constants/actions'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default {
+  mixins: [accessGuard],
   components: {
     NNTable,
     ActionsMenu,
@@ -72,16 +74,18 @@ export default {
       actions: [
         {
           label: this.$t('CrfExtensions.edit_extension'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === actions.EDIT),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.openEditForm
         },
         {
           label: this.$t('CrfExtensions.edit_namespace'),
-          icon: 'mdi-pencil',
+          icon: 'mdi-pencil-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === actions.EDIT),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.openCreateForm
         },
         {
@@ -89,6 +93,7 @@ export default {
           icon: 'mdi-check-decagram',
           iconColor: 'success',
           condition: (item) => item.possible_actions.find(action => action === actions.APPROVE),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.approve
         },
         {
@@ -96,6 +101,7 @@ export default {
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === actions.NEW_VERSION),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.newVersion
         },
         {
@@ -103,6 +109,7 @@ export default {
           icon: 'mdi-close-octagon-outline',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === actions.INACTIVATE),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.inactivate
         },
         {
@@ -110,13 +117,15 @@ export default {
           icon: 'mdi-undo-variant',
           iconColor: 'primary',
           condition: (item) => item.possible_actions.find(action => action === actions.REACTIVATE),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.reactivate
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
           condition: (item) => item.possible_actions.find(action => action === 'delete'),
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.delete
         }
       ],

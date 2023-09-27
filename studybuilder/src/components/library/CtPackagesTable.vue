@@ -13,6 +13,8 @@
       read-only
       @openCodelistTerms="openCodelistTerms"
       column-data-resource="ct/codelists"
+      :terms="terms"
+      :loading="loading"
       >
       <template v-slot:extraActions>
         <v-btn
@@ -33,12 +35,19 @@
 <script>
 import CodelistTable from './CodelistTable'
 import PackageTimeline from './PackageTimeline'
+import controlledTerminology from '@/api/controlledTerminology'
 
 export default {
   props: ['catalogueName', 'packageName'],
   components: {
     CodelistTable,
     PackageTimeline
+  },
+  data () {
+    return {
+      terms: [],
+      loading: false
+    }
   },
   methods: {
     openCodelistTerms ({ codelist, catalogueName, packageName }) {
@@ -62,7 +71,21 @@ export default {
         name: 'CtPackagesHistory',
         params: { catalogue_name: catalogueName }
       })
+    },
+    fetchTerms  () {
+      this.loading = true
+      const params = {
+        page_size: 0,
+        compact_response: true
+      }
+      controlledTerminology.getCodelistTermsNames(params).then(resp => {
+        this.terms = resp.data.items
+        this.loading = false
+      })
     }
+  },
+  mounted () {
+    this.fetchTerms()
   }
 }
 </script>

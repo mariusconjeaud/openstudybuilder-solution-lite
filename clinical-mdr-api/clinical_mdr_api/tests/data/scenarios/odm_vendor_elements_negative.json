@@ -90,7 +90,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Vendor Element tried to connect to non existing ODM Vendor Namespace identified by uid (wrong_uid).",
+                "message": "ODM Vendor Element tried to connect to non existing concepts [('Concept Name: ODM Vendor Namespace', \"uids: {'wrong_uid'}\")].",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/vendor-elements",
                 "method": "POST",
@@ -117,7 +117,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Vendor Element with name (nameTwo) already exists.",
+                "message": "ODM Vendor Element with ['name: nameTwo'] already exists.",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/vendor-elements",
                 "method": "POST",

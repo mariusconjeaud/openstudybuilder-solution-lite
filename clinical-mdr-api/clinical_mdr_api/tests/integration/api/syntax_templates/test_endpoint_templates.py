@@ -12,7 +12,6 @@ Tests for endpoint-templates endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -34,7 +33,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-endpoint_templates: List[EndpointTemplate]
+endpoint_templates: list[EndpointTemplate]
 ct_term_inclusion: models.CTTerm
 dictionary_term_indication: models.DictionaryTerm
 ct_term_category: models.CTTerm
@@ -267,7 +266,7 @@ def test_get_endpoint_template(api_client):
         assert res[key] is not None
 
     assert res["uid"] == endpoint_templates[1].uid
-    assert res["sequence_id"] == "ET2"
+    assert res["sequence_id"] == "E2"
     assert res["name"] == "Default-AAA name with [TextValue]"
     assert res["guidance_text"] == "Default-AAA guidance text"
     assert res["parameters"][0]["name"] == "TextValue"
@@ -397,7 +396,7 @@ def test_get_versions_of_endpoint_template(api_client):
 
     assert len(res) == 2
     assert res[0]["uid"] == endpoint_templates[1].uid
-    assert res[0]["sequence_id"] == "ET2"
+    assert res[0]["sequence_id"] == "E2"
     assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res[0]["indications"][0]["dictionary_id"]
@@ -418,7 +417,7 @@ def test_get_versions_of_endpoint_template(api_client):
     assert res[0]["version"] == "1.0"
     assert res[0]["status"] == "Final"
     assert res[1]["uid"] == endpoint_templates[1].uid
-    assert res[1]["sequence_id"] == "ET2"
+    assert res[1]["sequence_id"] == "E2"
     assert res[1]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res[1]["indications"][0]["dictionary_id"]
@@ -448,7 +447,7 @@ def test_get_all_final_versions_of_endpoint_template(api_client):
 
     assert len(res) == 1
     assert res[0]["uid"] == endpoint_templates[1].uid
-    assert res[0]["sequence_id"] == "ET2"
+    assert res[0]["sequence_id"] == "E2"
     assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res[0]["indications"][0]["dictionary_id"]
@@ -669,7 +668,7 @@ def test_get_specific_version_of_endpoint_template(api_client):
     assert response.status_code == 200
 
     assert res["uid"] == endpoint_templates[4].uid
-    assert res["sequence_id"] == "ET5"
+    assert res["sequence_id"] == "E5"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res["indications"][0]["dictionary_id"]
@@ -889,7 +888,7 @@ def test_approve_endpoint_template(api_client):
 
     assert response.status_code == 201
     assert res["uid"] == endpoint_templates[3].uid
-    assert res["sequence_id"] == "ET4"
+    assert res["sequence_id"] == "E4"
     assert res["name"] == "Default-XXX name with [TextValue]"
     assert res["guidance_text"] == "Default-XXX guidance text"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
@@ -956,7 +955,7 @@ def test_cascade_approve_endpoint_template(api_client):
 
     assert response.status_code == 201
     assert res["uid"] == endpoint_templates[5].uid
-    assert res["sequence_id"] == "ET6"
+    assert res["sequence_id"] == "E6"
     assert res["name"] == "cascade check [TextValue]"
     assert res["guidance_text"] == "Default-AAA-0 guidance text"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
@@ -999,7 +998,7 @@ def test_inactivate_endpoint_template(api_client):
 
     assert response.status_code == 200
     assert res["uid"] == endpoint_templates[5].uid
-    assert res["sequence_id"] == "ET6"
+    assert res["sequence_id"] == "E6"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res["indications"][0]["dictionary_id"]
@@ -1032,7 +1031,7 @@ def test_reactivate_endpoint_template(api_client):
 
     assert response.status_code == 200
     assert res["uid"] == endpoint_templates[5].uid
-    assert res["sequence_id"] == "ET6"
+    assert res["sequence_id"] == "E6"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res["indications"][0]["dictionary_id"]
@@ -1127,64 +1126,6 @@ def test_endpoint_template_audit_trail(api_client):
     assert actual_uids == expected_uids
 
 
-def test_create_pre_instance_endpoint_template(api_client):
-    data = {
-        "library_name": "Sponsor",
-        "parameter_terms": [
-            {
-                "position": 1,
-                "conjunction": "",
-                "terms": [
-                    {
-                        "index": 1,
-                        "name": text_value_1.name_sentence_case,
-                        "uid": text_value_1.uid,
-                        "type": "TextValue",
-                    }
-                ],
-            }
-        ],
-        "indication_uids": [dictionary_term_indication.term_uid],
-        "category_uids": [ct_term_category.term_uid],
-        "sub_category_uids": [ct_term_subcategory.term_uid],
-    }
-    response = api_client.post(
-        f"{URL}/{endpoint_templates[0].uid}/pre-instances", json=data
-    )
-    res = response.json()
-    log.info("Created Endpoint Pre-Instance: %s", res)
-
-    assert response.status_code == 201
-    assert "PreInstance" in res["uid"]
-    assert res["sequence_id"]
-    assert res["template_uid"] == endpoint_templates[0].uid
-    assert res["name"] == f"Default name with [{text_value_1.name_sentence_case}]"
-    assert (
-        res["parameter_terms"][0]["position"] == data["parameter_terms"][0]["position"]
-    )
-    assert (
-        res["parameter_terms"][0]["conjunction"]
-        == data["parameter_terms"][0]["conjunction"]
-    )
-    assert res["parameter_terms"][0]["terms"] == data["parameter_terms"][0]["terms"]
-    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
-    assert res["indications"][0]["name"] == dictionary_term_indication.name
-    assert res["categories"][0]["term_uid"] == ct_term_category.term_uid
-    assert res["categories"][0]["catalogue_name"] == ct_term_category.catalogue_name
-    assert res["categories"][0]["codelist_uid"] == ct_term_category.codelist_uid
-    assert res["sub_categories"][0]["term_uid"] == ct_term_subcategory.term_uid
-    assert (
-        res["sub_categories"][0]["catalogue_name"] == ct_term_subcategory.catalogue_name
-    )
-    assert res["sub_categories"][0]["codelist_uid"] == ct_term_subcategory.codelist_uid
-    assert res["version"] == "0.1"
-    assert res["status"] == "Draft"
-
-
 def test_cannot_create_endpoint_template_with_existing_name(api_client):
     data = {
         "name": "Default name with [TextValue]",
@@ -1215,7 +1156,7 @@ def test_cannot_update_endpoint_template_to_an_existing_name(api_client):
     res = response.json()
     log.info("Didn't Update Endpoint Template: %s", res)
 
-    assert response.status_code == 500
+    assert response.status_code == 400
     assert (
         res["message"]
         == f"Duplicate templates not allowed - template exists: {data['name']}"

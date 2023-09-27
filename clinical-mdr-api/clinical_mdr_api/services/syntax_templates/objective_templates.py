@@ -1,5 +1,3 @@
-from typing import Optional
-
 from clinical_mdr_api.domain_repositories.models.syntax import ObjectiveTemplateRoot
 from clinical_mdr_api.domain_repositories.syntax_instances.objective_repository import (
     ObjectiveRepository,
@@ -10,12 +8,10 @@ from clinical_mdr_api.domain_repositories.syntax_pre_instances.objective_pre_ins
 from clinical_mdr_api.domain_repositories.syntax_templates.objective_template_repository import (
     ObjectiveTemplateRepository,
 )
-from clinical_mdr_api.domains._utils import generate_seq_id
 from clinical_mdr_api.domains.syntax_templates.objective_template import (
     ObjectiveTemplateAR,
 )
 from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
-from clinical_mdr_api.exceptions import ValidationException
 from clinical_mdr_api.models.syntax_templates.objective_template import (
     ObjectiveTemplate,
     ObjectiveTemplateCreateInput,
@@ -49,13 +45,13 @@ class ObjectiveTemplateService(GenericSyntaxTemplateService[ObjectiveTemplateAR]
 
     def get_all(
         self,
-        status: Optional[str] = None,
+        status: str | None = None,
         return_study_count: bool = True,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[ObjectiveTemplate]:
         all_items = super().get_all(status, return_study_count)
@@ -90,22 +86,16 @@ class ObjectiveTemplateService(GenericSyntaxTemplateService[ObjectiveTemplateAR]
         indications, categories, _ = self._get_indexings(template)
 
         # Process item to save
-        try:
-            item = ObjectiveTemplateAR.from_input_values(
-                template_value_exists_callback=self.get_check_exists_callback(
-                    template=template
-                ),
-                author=self.user_initials,
-                template=template_vo,
-                library=library_vo,
-                generate_uid_callback=self.repository.generate_uid_callback,
-                generate_seq_id_callback=generate_seq_id,
-                is_confirmatory_testing=template.is_confirmatory_testing,
-                indications=indications,
-                categories=categories,
-            )
-        except ValueError as e:
-            raise ValidationException(e.args[0]) from e
+        item = ObjectiveTemplateAR.from_input_values(
+            author=self.user_initials,
+            template=template_vo,
+            library=library_vo,
+            generate_uid_callback=self.repository.generate_uid_callback,
+            next_available_sequence_id_callback=self.repository.next_available_sequence_id,
+            is_confirmatory_testing=template.is_confirmatory_testing,
+            indications=indications,
+            categories=categories,
+        )
 
         return item
 

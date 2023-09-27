@@ -52,14 +52,6 @@
             />
         </validation-provider>
       </validation-observer>
-      <v-textarea
-        v-model="form.note"
-        :label="$t('StudyActivity.footnote')"
-        data-cy="footnote"
-        rows="1"
-        clearable
-        auto-grow
-        />
     </div>
   </v-card-text>
   <v-card-actions class="pr-6 pb-6">

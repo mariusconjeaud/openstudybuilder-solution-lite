@@ -2,12 +2,13 @@
 
 import logging
 import time
-from typing import Iterable, Mapping, Optional, Union
+from typing import Iterable, Mapping
 
 import authlib.jose.errors
 import pytest
 from authlib.jose import JsonWebKey, Key, jwt
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.oauth.jwk_service import JWKService
 
 # Random-generated with `uuidgen -r`
@@ -134,11 +135,11 @@ class MockOauthClient:
 
 
 def mk_claims(
-    now: Optional[Union[int, float]] = None,
-    exp: Optional[Union[int, float]] = 300,
-    audience: Optional[str] = GOOD_AUDIENCE,
-    issuer: Optional[str] = ISSUER,
-    scopes: Optional[Iterable] = SCOPES,
+    now: int | float | None = None,
+    exp: int | float | None = 300,
+    audience: str | None = GOOD_AUDIENCE,
+    issuer: str | None = ISSUER,
+    scopes: Iterable | None = SCOPES,
 ) -> dict:
     if now is None:
         now = time.time()
@@ -198,8 +199,8 @@ async def test_good_signing_key(jwk_service, jwk_good_key):
 async def test_wrong_signing_key(jwk_service, jwk_wrong_key):
     claims = mk_claims()
     token = mk_jwt(claims, jwk_wrong_key)
-    with pytest.raises(ValueError):
-        # Expected to raise ValueError exception
+    with pytest.raises(exceptions.ValidationException):
+        # Expected to raise ValidationException exception
         await jwk_service.validate_jwt(token)
 
 

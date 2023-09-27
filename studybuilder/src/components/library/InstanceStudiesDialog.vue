@@ -92,8 +92,9 @@ export default {
       this.$emit('close')
     },
     goToStudy (study) {
-      this.$store.dispatch('studiesGeneral/selectStudy', study)
-      this.$router.push({ name: 'StudyPurpose' })
+      this.$store.dispatch('studiesGeneral/selectStudy', { studyObj: study })
+      this.$router.push({ name: 'StudyPurpose', params: { study_id: study.uid, tab: this.type + 's' } })
+      this.$router.go()
     }
   }
 }

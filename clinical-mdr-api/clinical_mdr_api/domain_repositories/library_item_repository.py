@@ -1,17 +1,7 @@
 import abc
 import copy
 from datetime import datetime
-from typing import (
-    Any,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Any, Iterable, Mapping, Sequence, TypeVar
 
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
@@ -67,7 +57,7 @@ class LibraryItemRepositoryImplBase(
         relationship: VersionRelationship,
         value: VersionValue,
         study_count: int = 0,
-        counts: Optional[InstantiationCountsVO] = None,
+        counts: InstantiationCountsVO | None = None,
     ) -> _AggregateRootType:
         raise NotImplementedError
 
@@ -84,6 +74,17 @@ class LibraryItemRepositoryImplBase(
     root_class: type
 
     def exists_by(self, property_name: str, value: str, on_root: bool = False) -> bool:
+        """
+        Checks whether a node exists in the graph database by a given property name and its value.
+
+        Args:
+            property_name (str): The name of the property to match.
+            value (str): The value of the property to match.
+            on_root (bool, optional): A flag indicating whether to search on the root node. Defaults to False.
+
+        Returns:
+            bool: True if a node is found by the given property name and value. False otherwise.
+        """
         if not on_root:
             query = f"""
                 MATCH (or:{self.root_class.__label__})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED|LATEST]->(:{self.value_class.__label__} {{{property_name}: ${property_name}}})
@@ -98,9 +99,7 @@ class LibraryItemRepositoryImplBase(
         result, _ = db.cypher_query(query, {property_name: value})
         return len(result) > 0 and len(result[0]) > 0
 
-    def get_uid_by_property_value(
-        self, property_name: str, value: str
-    ) -> Optional[str]:
+    def get_uid_by_property_value(self, property_name: str, value: str) -> str | None:
         query = f"""
             MATCH (or:{self.root_class.__label__})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED|LATEST]->(:{self.value_class.__label__} {{{property_name}: ${property_name}}})
             RETURN or
@@ -113,7 +112,7 @@ class LibraryItemRepositoryImplBase(
     def check_exists_by_name(self, name: str) -> bool:
         return self.exists_by("name", name)
 
-    def find_uid_by_name(self, name: str) -> Optional[str]:
+    def find_uid_by_name(self, name: str) -> str | None:
         cypher_query = f"""
             MATCH (or:{self.root_class.__label__})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED]->(ov:{self.value_class.__label__} {{name: $name }})
             RETURN or.uid
@@ -131,8 +130,8 @@ class LibraryItemRepositoryImplBase(
             itm = self.root_class.nodes.get_or_none(uid=uid)
         else:
             result, _ = db.cypher_query(
-                "MATCH (node) WHERE ID(node)=$id RETURN node",
-                {"id": int(uid)},
+                "MATCH (node) WHERE elementId(node)=$id RETURN node",
+                {"id": uid},
                 resolve_objects=True,
             )
             itm = result[0][0]
@@ -164,12 +163,14 @@ class LibraryItemRepositoryImplBase(
         if latest_retired and not self._has_data_changed(ar, latest_retired):
             return latest_retired
 
+        additional_props = {}
+
         if hasattr(ar, "name_plain"):
-            new_value = self.value_class(
-                name=ar.name, name_plain=convert_to_plain(ar.name)
-            )
-        else:
-            new_value = self.value_class(name=ar.name)
+            additional_props["name_plain"] = convert_to_plain(ar.name)
+        if hasattr(ar, "guidance_text"):
+            additional_props["guidance_text"] = ar.guidance_text
+
+        new_value = self.value_class(name=ar.name, **additional_props)
         self._db_save_node(new_value)
         return new_value
 
@@ -341,7 +342,7 @@ class LibraryItemRepositoryImplBase(
 
     def retrieve_audit_trail(
         self, page_number: int = 1, page_size: int = 0, total_count: bool = False
-    ) -> Iterable[_AggregateRootType]:
+    ) -> tuple[list[_AggregateRootType], int]:
         """
         Retrieves an audit trail of the given node type from the database.
 
@@ -350,24 +351,27 @@ class LibraryItemRepositoryImplBase(
         Optionally, it can also return the total count of audit trail entries.
 
         Args:
-            page_number (int, optional): The page number of the results to retrieve. Each page contains a subset of the audit trail.
-                Defaults to 1.
-            page_size (int, optional): The number of results per page. If set to 0, all results will be retrieved.
-                Defaults to 0.
-            total_count (bool, optional): Flag indicating whether to include the total count of audit trail entries.
-                Defaults to False.
+            page_number (int, optional): The page number of the results to retrieve. Each page contains a subset of the audit trail. Defaults to 1.
+            page_size (int, optional): The number of results per page. If set to 0, all results will be retrieved. Defaults to 0.
+            total_count (bool, optional): Flag indicating whether to include the total count of audit trail entries. Defaults to False.
 
         Returns:
-            Tuple[List[_AggregateRootType], int]: A tuple containing a list of retrieved audit trail entries and the total count of entries.
+            tuple[list[_AggregateRootType], int]: A tuple containing a list of retrieved audit trail entries and the total count of entries.
                 The audit trail entries are instances of the _AggregateRootType class.
         """
         validate_max_skip_clause(page_number=page_number, page_size=page_size)
-        result = db.cypher_query(
-            query=f"""MATCH (root:{self.root_class.__name__})-[rel:HAS_VERSION]->(value:{self.value_class.__name__})
+
+        query = f"""
+            MATCH (root:{self.root_class.__name__})-[rel:HAS_VERSION]->(value:{self.value_class.__name__})
             RETURN root, rel, value
             ORDER BY rel.start_date DESC
-            SKIP $page_number * $page_size
-            LIMIT $page_size""",
+        """
+
+        if page_size:
+            query += "SKIP $page_number * $page_size LIMIT $page_size"
+
+        result = db.cypher_query(
+            query,
             params={
                 "page_number": page_number - 1,
                 "page_size": page_size,
@@ -399,9 +403,9 @@ class LibraryItemRepositoryImplBase(
     def find_all(
         self,
         *,
-        status: Optional[LibraryItemStatus] = None,
-        library_name: Optional[str] = None,
-        return_study_count: Optional[bool] = False,
+        status: LibraryItemStatus | None = None,
+        library_name: str | None = None,
+        return_study_count: bool | None = False,
     ) -> Iterable[_AggregateRootType]:
         """
         GetAll implementation - gets all objects. Ignores versions.
@@ -529,10 +533,10 @@ class LibraryItemRepositoryImplBase(
     def _get_item_versions(
         self,
         root: VersionRoot,
-    ) -> Tuple[
-        Sequence[Tuple[Mapping, VersionValue, VersionRelationship]],
-        Optional[VersionRelationship],
-        Optional[VersionRelationship],
+    ) -> tuple[
+        Sequence[tuple[Mapping, VersionValue, VersionRelationship]],
+        VersionRelationship | None,
+        VersionRelationship | None,
     ]:
         """
         Following code recreates full versioning information based on
@@ -551,16 +555,16 @@ class LibraryItemRepositoryImplBase(
         ) = self._get_version_relation_keys(root)
         latest_final = None
         latest_draft = None
-        latest_draft_object: Optional[VersionValue] = latest_draft_rel.single()
+        latest_draft_object: VersionValue | None = latest_draft_rel.single()
         if latest_draft_object is not None:
             latest_draft = latest_draft_rel.relationship(latest_draft_object)
 
-        latest_final_object: Optional[VersionValue] = latest_final_rel.single()
+        latest_final_object: VersionValue | None = latest_final_rel.single()
         if latest_final_object is not None:
             latest_final = latest_final_rel.relationship(latest_final_object)
 
-        managed: List[VersionValue] = []
-        versions: List[Tuple[Mapping, VersionValue, VersionRelationship]] = []
+        managed: list[VersionValue] = []
+        versions: list[tuple[Mapping, VersionValue, VersionRelationship]] = []
         traversal = Traversal(
             root,
             root.__label__,
@@ -592,9 +596,9 @@ class LibraryItemRepositoryImplBase(
         return versions, latest_draft, latest_final
 
     def get_all_versions_2(
-        self, uid: str, return_study_count: Optional[bool] = False
+        self, uid: str, return_study_count: bool | None = False
     ) -> Iterable[_AggregateRootType]:
-        library: Library = None
+        library: Library | None = None
         # condition added because ControlledTerminology items are versioned slightly different than other library items:
         # we have two root nodes - the 'main' root called for instance CTCodelistRoot that contains uid
         # and also contains relationships to nodes called CTCodelistAttributesRoot or CTCodelistNameRoot
@@ -602,7 +606,7 @@ class LibraryItemRepositoryImplBase(
         # Connection to the Library node is attached to the 'main' root not the root that owns versioned relationships
         # this is why we need the following condition
         if not self._is_repository_related_to_ct():
-            root: Optional[VersionRoot] = self.root_class.nodes.get_or_none(uid=uid)
+            root: VersionRoot | None = self.root_class.nodes.get_or_none(uid=uid)
             if root is not None:
                 if self.has_library:
                     library: Library = root.has_library.get()
@@ -611,8 +615,8 @@ class LibraryItemRepositoryImplBase(
         else:
             # ControlledTerminology version root items don't contain uid - then we have to get object by it's id
             result, _ = db.cypher_query(
-                "MATCH (node) WHERE ID(node)=$id RETURN node",
-                {"id": int(uid)},
+                "MATCH (node) WHERE elementId(node)=$id RETURN node",
+                {"id": uid},
                 resolve_objects=True,
             )
             root = result[0][0]
@@ -629,7 +633,7 @@ class LibraryItemRepositoryImplBase(
             else:
                 assert library is None
             all_version_nodes_and_relationships: Sequence[
-                Tuple[VersionValue, VersionRelationship]
+                tuple[VersionValue, VersionRelationship]
             ]
             all_version_nodes_and_relationships = [
                 (_[1], _[2]) for _ in self._get_item_versions(root)[0]
@@ -657,12 +661,12 @@ class LibraryItemRepositoryImplBase(
         return result
 
     def find_releases(
-        self, uid: str, return_study_count: Optional[bool] = True
+        self, uid: str, return_study_count: bool | None = True
     ) -> Iterable[_AggregateRootType]:
         """
         Get releases implementation - gets all releases for library object identified by 'uid'
         """
-        root: Optional[VersionRoot] = self.root_class.nodes.get_or_none(uid=uid)
+        root: VersionRoot | None = self.root_class.nodes.get_or_none(uid=uid)
 
         if not root:
             raise exceptions.NotFoundException(
@@ -671,7 +675,7 @@ class LibraryItemRepositoryImplBase(
         return self._find_releases(root, return_study_count)
 
     def _find_releases(
-        self, root: VersionRoot, return_study_count: Optional[bool] = True
+        self, root: VersionRoot, return_study_count: bool | None = True
     ) -> Iterable[_AggregateRootType]:
         """
         Get all releases for provided version root node
@@ -696,13 +700,12 @@ class LibraryItemRepositoryImplBase(
 
         deduped_releases = []
         for release in releases:
-            id_list = [_v.id for _v in deduped_releases]
-            if release.id not in id_list:
+            id_list = [_v.element_id for _v in deduped_releases]
+            if release.element_id not in id_list:
                 deduped_releases.append(release)
 
         aggregates = []
         for release in deduped_releases:
-            latest_final = latest_final_rel.relationship(release)
             latest_version = next(
                 filter(
                     lambda v: v.status == LibraryItemStatus.FINAL.value,
@@ -734,11 +737,11 @@ class LibraryItemRepositoryImplBase(
         self,
         uid: str,
         *,
-        version: Optional[str] = None,
-        status: Optional[LibraryItemStatus] = None,
-        at_specific_date: Optional[datetime] = None,
+        version: str | None = None,
+        status: LibraryItemStatus | None = None,
+        at_specific_date: datetime | None = None,
         for_update: bool = False,
-        return_study_count: Optional[bool] = False,
+        return_study_count: bool | None = False,
         return_instantiation_counts: bool = False,
     ):
         """
@@ -765,13 +768,13 @@ class LibraryItemRepositoryImplBase(
         self,
         uid: str,
         *,
-        version: Optional[str] = None,
-        status: Optional[LibraryItemStatus] = None,
-        at_specific_date: Optional[datetime] = None,
+        version: str | None = None,
+        status: LibraryItemStatus | None = None,
+        at_specific_date: datetime | None = None,
         for_update: bool = False,
-        return_study_count: Optional[bool] = False,
+        return_study_count: bool | None = False,
         return_instantiation_counts: bool = False,
-    ) -> Optional[_AggregateRootType]:
+    ) -> _AggregateRootType | None:
         if for_update and (
             version is not None or status is not None or at_specific_date is not None
         ):
@@ -784,7 +787,7 @@ class LibraryItemRepositoryImplBase(
 
         if not self._is_repository_related_to_ct():
             try:
-                root: Optional[VersionRoot] = self.root_class.nodes.get_or_none(uid=uid)
+                root: VersionRoot | None = self.root_class.nodes.get_or_none(uid=uid)
             except NodeClassNotDefined as exc:
                 raise VersioningException(
                     "Object labels were changed - likely the object was deleted in a concurrent transaction."
@@ -797,8 +800,8 @@ class LibraryItemRepositoryImplBase(
                 library = None
         else:
             result, _ = db.cypher_query(
-                "MATCH (node) WHERE ID(node)=$id RETURN node",
-                {"id": int(uid)},
+                "MATCH (node) WHERE elementId(node)=$id RETURN node",
+                {"id": uid},
                 resolve_objects=True,
             )
             root = result[0][0]
@@ -810,7 +813,7 @@ class LibraryItemRepositoryImplBase(
             else:
                 library = None
 
-        value: Optional[VersionValue]
+        value: VersionValue | None
         (
             has_version_rel,
             has_latest_value_rel,
@@ -874,8 +877,8 @@ class LibraryItemRepositoryImplBase(
                 matching_values: Sequence[VersionValue] = has_version_rel.match(
                     start_date__lte=at_specific_date
                 )
-                latest_matching_relationship: Optional[VersionRelationship] = None
-                latest_matching_value: Optional[VersionValue] = None
+                latest_matching_relationship: VersionRelationship | None = None
+                latest_matching_value: VersionValue | None = None
                 for matching_value in matching_values:
                     relationships: Sequence[
                         VersionRelationship
@@ -890,8 +893,8 @@ class LibraryItemRepositoryImplBase(
                             latest_matching_value = matching_value
 
             else:
-                relationship_for_retrieve: Optional[VersionRelationship] = None
-                value_for_retrieve: Optional[VersionValue] = None
+                relationship_for_retrieve: VersionRelationship | None = None
+                value_for_retrieve: VersionValue | None = None
                 relationship_manager_to_use: RelationshipManager = latest_retired_rel
                 if status == LibraryItemStatus.FINAL:
                     relationship_manager_to_use = latest_final_rel
@@ -935,8 +938,8 @@ class LibraryItemRepositoryImplBase(
                 return result
         else:
             matching_value = root.get_value_for_version(version)
-            latest_matching_relationship: Optional[VersionRelationship] = None
-            latest_matching_value: Optional[VersionValue] = None
+            latest_matching_relationship: VersionRelationship | None = None
+            latest_matching_value: VersionValue | None = None
             if matching_value is not None:
                 latest_matching_relationship = root.get_relation_for_version(version)
                 latest_matching_value = matching_value
@@ -970,7 +973,7 @@ class LibraryItemRepositoryImplBase(
             return result
         return None
 
-    def _get_counts(self, item: VersionRoot) -> Tuple[int, int, int]:
+    def _get_counts(self, item: VersionRoot) -> tuple[int, int, int]:
         finals: int
         drafts: int
         retired: int
@@ -979,10 +982,10 @@ class LibraryItemRepositoryImplBase(
 
     def _get_version_data_from_db(
         self,
-        item: Union[VersionRoot, ControlledTerminology],
-        value: Union[VersionValue, ControlledTerminology],
+        item: VersionRoot | ControlledTerminology,
+        value: VersionValue | ControlledTerminology,
         relation: VersionRelationship,
-    ) -> Tuple[Mapping, VersionValue, VersionRelationship]:
+    ) -> tuple[Mapping, VersionValue, VersionRelationship]:
         if not self.has_library:
             library = None
         elif not self._is_repository_related_to_ct():

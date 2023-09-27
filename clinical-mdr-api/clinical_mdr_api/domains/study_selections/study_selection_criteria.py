@@ -1,7 +1,8 @@
 import datetime
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple
+from typing import Any, Callable, Iterable, Self, Sequence
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
 
 
@@ -12,16 +13,16 @@ class StudySelectionCriteriaVO:
     """
 
     study_selection_uid: str
-    study_uid: Optional[str]
-    syntax_object_uid: Optional[str]
-    syntax_object_version: Optional[str]
-    criteria_type_uid: Optional[str]
-    criteria_type_order: Optional[int]
+    study_uid: str | None
+    syntax_object_uid: str | None
+    syntax_object_version: str | None
+    criteria_type_uid: str | None
+    criteria_type_order: int | None
     is_instance: bool
     key_criteria: bool
     # Study selection Versioning
     start_date: datetime.datetime
-    user_initials: Optional[str]
+    user_initials: str | None
     accepted_version: bool = False
 
     @classmethod
@@ -30,13 +31,13 @@ class StudySelectionCriteriaVO:
         syntax_object_uid: str,
         syntax_object_version: str,
         user_initials: str,
-        criteria_type_uid: Optional[str],
-        criteria_type_order: Optional[int] = 0,
+        criteria_type_uid: str | None,
+        criteria_type_order: int | None = 0,
         is_instance: bool = True,
         key_criteria: bool = False,
-        study_uid: Optional[str] = None,
-        study_selection_uid: Optional[str] = None,
-        start_date: Optional[datetime.datetime] = None,
+        study_uid: str | None = None,
+        study_selection_uid: str | None = None,
+        start_date: datetime.datetime | None = None,
         generate_uid_callback: Callable[[], str] = None,
         accepted_version: bool = False,
     ):
@@ -67,14 +68,14 @@ class StudySelectionCriteriaVO:
     ) -> None:
         # Checks if there exists a criteria which is approved with criteria_uid
         if not criteria_exist_callback(normalize_string(self.syntax_object_uid)):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no approved criteria identified by provided uid ({self.syntax_object_uid})"
             )
         if (
             not ct_term_criteria_type_exist_callback(self.criteria_type_uid)
             and self.criteria_type_uid
         ):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no approved criteria type identified by provided term uid ({self.criteria_type_uid})"
             )
 
@@ -91,7 +92,7 @@ class StudySelectionCriteriaAR:
     """
 
     _study_uid: str
-    _study_criteria_selection: Tuple
+    _study_criteria_selection: tuple
     repository_closure_data: Any = field(
         init=False, compare=False, repr=True, default=None
     )
@@ -105,8 +106,8 @@ class StudySelectionCriteriaAR:
         return self._study_criteria_selection
 
     def get_specific_criteria_selection(
-        self, study_criteria_uid: str, criteria_type_uid: Optional[str] = None
-    ) -> Optional[Tuple[StudySelectionCriteriaVO, int]]:
+        self, study_criteria_uid: str, criteria_type_uid: str | None = None
+    ) -> tuple[StudySelectionCriteriaVO, int] | None:
         # First, filter on criteria selection with the same criteria type
         # to get the order in the context of the criteria type
         # The criteria type might not be known by some caller methods
@@ -131,8 +132,8 @@ class StudySelectionCriteriaAR:
         for order, selection in enumerate(study_criteria_selection_with_type, start=1):
             if selection.study_selection_uid == study_criteria_uid:
                 return selection, order
-        raise ValueError(
-            f"The study criteria with provided uid does not exist ({study_criteria_uid})"
+        raise exceptions.NotFoundException(
+            f"The study criteria with uid '{study_criteria_uid}' does not exist"
         )
 
     def add_criteria_selection(
@@ -163,7 +164,7 @@ class StudySelectionCriteriaAR:
         cls,
         study_uid: str,
         study_criteria_selection: Iterable[StudySelectionCriteriaVO],
-    ) -> "StudySelectionCriteriaAR":
+    ) -> Self:
         return cls(
             _study_uid=normalize_string(study_uid),
             _study_criteria_selection=tuple(study_criteria_selection),
@@ -249,7 +250,7 @@ class StudySelectionCriteriaAR:
         criteria = []
         for selection in self.study_criteria_selection:
             if selection.syntax_object_uid in criteria:
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"There is already a study selection to that criteria ({selection.syntax_object_uid})"
                 )
             criteria.append(selection.syntax_object_uid)

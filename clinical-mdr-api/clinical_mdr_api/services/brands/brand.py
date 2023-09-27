@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import Sequence
 
 from neomodel import db  # type: ignore
 
@@ -9,7 +9,7 @@ from clinical_mdr_api.services._meta_repository import MetaRepository  # type: i
 
 
 class BrandService:
-    def __init__(self, user_id: Optional[str] = None):
+    def __init__(self, user_id: str | None = None):
         self.user_id = user_id if user_id is not None else "-Unknown-"
         self.repos = MetaRepository()
 
@@ -36,13 +36,10 @@ class BrandService:
     @db.transaction
     def create(self, brand_create_input: BrandCreateInput) -> models.Brand:
         try:
-            try:
-                brand_ar = BrandAR.from_input_values(
-                    name=brand_create_input.name,
-                    generate_uid_callback=self.repos.brand_repository.generate_uid,
-                )
-            except ValueError as value_error:
-                raise exceptions.ValidationException(value_error.args[0])
+            brand_ar = BrandAR.from_input_values(
+                name=brand_create_input.name,
+                generate_uid_callback=self.repos.brand_repository.generate_uid,
+            )
 
             # Try to retrieve brand with the same name, and return it if found
             existing_brand = self.repos.brand_repository.find_by_brand_name(

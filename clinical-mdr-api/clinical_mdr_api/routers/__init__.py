@@ -1,3 +1,4 @@
+import clinical_mdr_api.routers.integrations
 from clinical_mdr_api.routers.admin import router as admin_router
 from clinical_mdr_api.routers.biomedical_concepts.activity_instance_classes import (
     router as activity_instance_classes_router,
@@ -12,6 +13,7 @@ from clinical_mdr_api.routers.brands.brands import router as brands_router
 from clinical_mdr_api.routers.clinical_programmes.clinical_programmes import (
     router as clinical_programmes_router,
 )
+from clinical_mdr_api.routers.comments.comments import router as comments_router
 from clinical_mdr_api.routers.complex_template_parameter_templates import (
     router as complex_template_parameter_router,
 )
@@ -138,20 +140,29 @@ from clinical_mdr_api.routers.standard_data_models.data_models import (
 from clinical_mdr_api.routers.standard_data_models.dataset_classes import (
     router as dataset_classes_router,
 )
+from clinical_mdr_api.routers.standard_data_models.dataset_scenarios import (
+    router as dataset_scenarios_router,
+)
 from clinical_mdr_api.routers.standard_data_models.dataset_variables import (
     router as dataset_variables_router,
 )
 from clinical_mdr_api.routers.standard_data_models.datasets import (
     router as datasets_router,
 )
-from clinical_mdr_api.routers.standard_data_models.master_model_datasets import (
-    router as master_model_datasets_router,
+from clinical_mdr_api.routers.standard_data_models.sponsor_model_dataset_classes import (
+    router as sponsor_model_dataset_classes_router,
 )
-from clinical_mdr_api.routers.standard_data_models.master_model_variables import (
-    router as master_model_variables_router,
+from clinical_mdr_api.routers.standard_data_models.sponsor_model_dataset_variables import (
+    router as sponsor_model_dataset_variables_router,
 )
-from clinical_mdr_api.routers.standard_data_models.master_models import (
-    router as master_models_router,
+from clinical_mdr_api.routers.standard_data_models.sponsor_model_datasets import (
+    router as sponsor_model_datasets_router,
+)
+from clinical_mdr_api.routers.standard_data_models.sponsor_model_variable_classes import (
+    router as sponsor_model_variable_classes_router,
+)
+from clinical_mdr_api.routers.standard_data_models.sponsor_models import (
+    router as sponsor_models_router,
 )
 from clinical_mdr_api.routers.standard_data_models.variable_classes import (
     router as class_variables_router,
@@ -190,11 +201,20 @@ from clinical_mdr_api.routers.studies.study_flowchart import (
 from clinical_mdr_api.routers.studies.study_interventions import (
     router as study_interventions_router,
 )
+from clinical_mdr_api.routers.studies.study_soa_footnotes import (
+    router as study_soa_footnotes_router,
+)
 from clinical_mdr_api.routers.studies.study_visits import router as study_visit_router
 from clinical_mdr_api.routers.studies.study_weeks import router as study_weeks_router
+from clinical_mdr_api.routers.syntax_instances.activity_instructions import (
+    router as activity_instructions_router,
+)
 from clinical_mdr_api.routers.syntax_instances.criteria import router as criteria_router
 from clinical_mdr_api.routers.syntax_instances.endpoints import (
     router as endpoints_router,
+)
+from clinical_mdr_api.routers.syntax_instances.footnotes import (
+    router as footnote_router,
 )
 from clinical_mdr_api.routers.syntax_instances.objectives import (
     router as objectives_router,
@@ -211,6 +231,9 @@ from clinical_mdr_api.routers.syntax_pre_instances.criteria_pre_instances import
 from clinical_mdr_api.routers.syntax_pre_instances.endpoint_pre_instances import (
     router as endpoint_pre_instances_router,
 )
+from clinical_mdr_api.routers.syntax_pre_instances.footnote_pre_instances import (
+    router as footnote_pre_instances_router,
+)
 from clinical_mdr_api.routers.syntax_pre_instances.objective_pre_instances import (
     router as objective_pre_instances_router,
 )
@@ -222,6 +245,9 @@ from clinical_mdr_api.routers.syntax_templates.criteria_templates import (
 )
 from clinical_mdr_api.routers.syntax_templates.endpoint_templates import (
     router as endpoint_templates_router,
+)
+from clinical_mdr_api.routers.syntax_templates.footnote_templates import (
+    router as footnote_templates_router,
 )
 from clinical_mdr_api.routers.syntax_templates.objective_templates import (
     router as objective_templates_router,
@@ -275,11 +301,15 @@ __all__ = [
     "ctr_xml_router",
     "dictionary_codelists_router",
     "dictionary_terms_router",
+    "activity_instructions_router",
     "activity_instruction_pre_instances_router",
+    "footnote_pre_instances_router",
     "criteria_pre_instances_router",
     "endpoint_pre_instances_router",
     "objective_pre_instances_router",
     "activity_instruction_templates_router",
+    "footnote_templates_router",
+    "footnote_router",
     "criteria_templates_router",
     "criteria_router",
     "objective_templates_router",
@@ -289,6 +319,7 @@ __all__ = [
     "endpoints_router",
     "projects_router",
     "brands_router",
+    "comments_router",
     "admin_router",
     "clinical_programmes_router",
     "studies_router",
@@ -301,6 +332,7 @@ __all__ = [
     "study_visit_router",
     "study_activity_instructions_router",
     "study_activity_schedule_router",
+    "study_soa_footnotes_router",
     "study_design_cell_router",
     "study_duration_days_router",
     "study_duration_weeks_router",
@@ -321,10 +353,13 @@ __all__ = [
     "visit_names_router",
     "data_models_router",
     "data_model_igs_router",
-    "master_models_router",
-    "master_model_datasets_router",
-    "master_model_variables_router",
+    "sponsor_models_router",
+    "sponsor_model_dataset_classes_router",
+    "sponsor_model_variable_classes_router",
+    "sponsor_model_datasets_router",
+    "sponsor_model_dataset_variables_router",
     "datasets_router",
+    "dataset_scenarios_router",
     "dataset_classes_router",
     "class_variables_router",
     "dataset_variables_router",

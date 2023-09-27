@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Self
 
 from pydantic import Field, validator
 
@@ -20,8 +20,8 @@ from clinical_mdr_api.models.utils import BaseModel
 class ActivityHierarchySimpleModel(BaseModel):
     @classmethod
     def from_activity_uid(
-        cls, uid: str, find_activity_by_uid: Callable[[str], Optional[ConceptARBase]]
-    ) -> Optional["ActivityHierarchySimpleModel"]:
+        cls, uid: str, find_activity_by_uid: Callable[[str], ConceptARBase | None]
+    ) -> Self | None:
         if uid is not None:
             activity = find_activity_by_uid(uid)
 
@@ -38,44 +38,41 @@ class ActivityHierarchySimpleModel(BaseModel):
         title="uid",
         description="",
     )
-    name: Optional[str] = Field(None, title="name", description="")
+    name: str | None = Field(None, title="name", description="")
 
 
-class ActivitySubGroupSimpleModel(ActivityHierarchySimpleModel):
+class ActivityGroupingHierarchySimpleModel(BaseModel):
     class Config:
         orm_mode = True
 
-    uid: Optional[str] = Field(
-        None,
+    activity_group_uid: str = Field(
+        ...,
         title="uid",
         description="",
-        source="has_latest_value.in_subgroup.has_latest_value.uid",
+        source="has_latest_value.has_grouping.in_subgroup.in_group.has_version.uid",
     )
-    name: Optional[str] = Field(
-        None, title="name", description="", source="has_latest_value.in_subgroup.name"
-    )
-
-
-class ActivityGroupSimpleModel(ActivityHierarchySimpleModel):
-    class Config:
-        orm_mode = True
-
-    uid: Optional[str] = Field(
-        None,
-        title="uid",
-        description="",
-        source="has_latest_value.in_subgroup.in_group.has_latest_value.uid",
-    )
-    name: Optional[str] = Field(
-        None,
+    activity_group_name: str = Field(
+        ...,
         title="name",
         description="",
-        source="has_latest_value.in_subgroup.in_group.name",
+        source="has_latest_value.has_grouping.in_subgroup.in_group.name",
+    )
+    activity_subgroup_uid: str = Field(
+        ...,
+        title="uid",
+        description="",
+        source="has_latest_value.has_grouping.in_subgroup.has_group.has_version.uid",
+    )
+    activity_subgroup_name: str = Field(
+        ...,
+        title="uid",
+        description="",
+        source="has_latest_value.has_grouping.in_subgroup.has_group.name",
     )
 
 
 class ActivityBase(Concept):
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         ...,
         description=(
             "Holds those actions that can be performed on the ActivityInstances. "
@@ -111,33 +108,37 @@ class Activity(ActivityBase):
     def from_activity_ar(
         cls,
         activity_ar: ActivityAR,
-        find_activity_subgroup_by_uid: Callable[[str], Optional[ActivitySubGroupAR]],
-        find_activity_group_by_uid: Callable[[str], Optional[ActivityGroupAR]],
-    ) -> "Activity":
-        contains_subgroup = False
-        if activity_ar.concept_vo.activity_subgroup:
-            activity_group_uid = find_activity_subgroup_by_uid(
-                activity_ar.concept_vo.activity_subgroup
-            ).concept_vo.activity_group
-            contains_subgroup = True
+        find_activity_subgroup_by_uid: Callable[[str], ActivitySubGroupAR | None],
+        find_activity_group_by_uid: Callable[[str], ActivityGroupAR | None],
+    ) -> Self:
+        activity_groupings = []
+        for activity_grouping in activity_ar.concept_vo.activity_groupings:
+            activity_group = ActivityHierarchySimpleModel.from_activity_uid(
+                uid=activity_grouping.activity_group_uid,
+                find_activity_by_uid=find_activity_group_by_uid,
+            )
+            activity_subgroup = ActivityHierarchySimpleModel.from_activity_uid(
+                uid=activity_grouping.activity_subgroup_uid,
+                find_activity_by_uid=find_activity_subgroup_by_uid,
+            )
+            activity_groupings.append(
+                ActivityGroupingHierarchySimpleModel(
+                    activity_group_uid=activity_group.uid,
+                    activity_group_name=activity_group.name,
+                    activity_subgroup_uid=activity_subgroup.uid,
+                    activity_subgroup_name=activity_subgroup.name,
+                )
+            )
         return cls(
             uid=activity_ar.uid,
             name=activity_ar.name,
             name_sentence_case=activity_ar.concept_vo.name_sentence_case,
             definition=activity_ar.concept_vo.definition,
             abbreviation=activity_ar.concept_vo.abbreviation,
-            activity_subgroup=ActivityHierarchySimpleModel.from_activity_uid(
-                uid=activity_ar.concept_vo.activity_subgroup,
-                find_activity_by_uid=find_activity_subgroup_by_uid,
-            )
-            if contains_subgroup
-            else None,
-            activity_group=ActivityHierarchySimpleModel.from_activity_uid(
-                uid=activity_group_uid,
-                find_activity_by_uid=find_activity_group_by_uid,
-            )
-            if contains_subgroup
-            else None,
+            activity_groupings=sorted(
+                activity_groupings,
+                key=lambda item: (item.activity_subgroup_uid, item.activity_group_uid),
+            ),
             library_name=Library.from_library_vo(activity_ar.library).name,
             start_date=activity_ar.item_metadata.start_date,
             end_date=activity_ar.item_metadata.end_date,
@@ -152,25 +153,19 @@ class Activity(ActivityBase):
             replaced_by_activity=activity_ar.concept_vo.replaced_by_activity,
         )
 
-    activity_subgroup: Optional[ActivityHierarchySimpleModel] = Field(
-        None,
-        title="Activity Sub Group",
-        description="Activity Sub Group",
+    activity_groupings: list[ActivityGroupingHierarchySimpleModel] = Field(
+        [],
+        title="Activity Groupings",
+        description="Activity Groupings",
     )
-
-    activity_group: Optional[ActivityHierarchySimpleModel] = Field(
-        None,
-        title="Activity Sub Group",
-        description="Activity Sub Group",
-    )
-    request_rationale: Optional[str] = Field(
+    request_rationale: str | None = Field(
         None,
         title="The rationale of the activity request",
         description="The rationale of the activity request",
         nullable=True,
         remove_from_wildcard=True,
     )
-    replaced_by_activity: Optional[str] = Field(
+    replaced_by_activity: str | None = Field(
         None,
         title="The uid of the replacing Activity",
         description="The uid of the replacing Activity",
@@ -183,25 +178,15 @@ class ActivityORM(Activity):
     class Config:
         orm_mode = True
 
-    activity_subgroup: Optional[ActivitySubGroupSimpleModel] = Field(
-        None,
-        title="Activity Sub Group",
-        description="Activity Sub Group",
-    )
-
-    activity_group: Optional[ActivityGroupSimpleModel] = Field(
-        None,
-        title="Activity Sub Group",
-        description="Activity Sub Group",
-    )
-    request_rationale: Optional[str] = Field(
+    activity_groupings: list[ActivityGroupingHierarchySimpleModel] = Field(...)
+    request_rationale: str | None = Field(
         None,
         title="The rationale of the activity request",
         description="The rationale of the activity request",
         source="has_latest_value.request_rationale",
         nullable=True,
     )
-    replaced_by_activity: Optional[str] = Field(
+    replaced_by_activity: str | None = Field(
         None,
         title="The uid of the replacing Activity",
         description="The uid of the replacing Activity",
@@ -211,21 +196,26 @@ class ActivityORM(Activity):
 
 
 class ActivityCommonInput(ConceptInput):
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         title="name",
         description="The name or the actual value. E.g. 'Systolic Blood Pressure', 'Body Temperature', 'Metformin', ...",
     )
-    name_sentence_case: Optional[str] = Field(
+    name_sentence_case: str | None = Field(
         None,
         title="name_sentence_case",
         description="",
     )
 
 
+class ActivityGrouping(BaseModel):
+    activity_group_uid: str
+    activity_subgroup_uid: str
+
+
 class ActivityInput(ActivityCommonInput):
-    activity_subgroup: Optional[str] = None
-    request_rationale: Optional[str] = None
+    activity_groupings: list[ActivityGrouping] | None = None
+    request_rationale: str | None = None
 
 
 class ActivityEditInput(ActivityInput):
@@ -245,7 +235,7 @@ class ActivityVersion(Activity):
     Class for storing Activity and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
@@ -256,27 +246,27 @@ class ActivityVersion(Activity):
 
 
 class SimpleActivity(BaseModel):
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         title="name",
         description="",
     )
-    name_sentence_case: Optional[str] = Field(
+    name_sentence_case: str | None = Field(
         None,
         title="name_sentence_case",
         description="",
     )
-    definition: Optional[str] = Field(
+    definition: str | None = Field(
         None,
         title="definition",
         description="",
     )
-    abbreviation: Optional[str] = Field(
+    abbreviation: str | None = Field(
         None,
         title="abbreviation",
         description="",
     )
-    library_name: Optional[str] = Field(
+    library_name: str | None = Field(
         None,
         title="library_name",
         description="",
@@ -284,13 +274,18 @@ class SimpleActivity(BaseModel):
 
 
 class SimpleActivitySubGroup(BaseModel):
-    name: Optional[str] = Field(None, title="name", description="")
-    definition: Optional[str] = Field(None, title="name", description="")
+    name: str | None = Field(None, title="name", description="")
+    definition: str | None = Field(None, title="name", description="")
 
 
 class SimpleActivityGroup(BaseModel):
-    name: Optional[str] = Field(None, title="name", description="")
-    definition: Optional[str] = Field(None, title="name", description="")
+    name: str | None = Field(None, title="name", description="")
+    definition: str | None = Field(None, title="name", description="")
+
+
+class SimpleActivityGrouping(BaseModel):
+    activity_group: SimpleActivityGroup
+    activity_subgroup: SimpleActivitySubGroup
 
 
 class SimpleActivityInstanceClass(BaseModel):
@@ -299,20 +294,19 @@ class SimpleActivityInstanceClass(BaseModel):
 
 class SimpleActivityInstance(BaseModel):
     name: str = Field(..., title="name", description="")
-    name_sentence_case: Optional[str] = Field(None, title="name", description="")
-    abbreviation: Optional[str] = Field(None, title="name", description="")
-    definition: Optional[str] = Field(None, title="name", description="")
-    adam_param_code: Optional[str] = Field(None, title="name", description="")
-    topic_code: Optional[str] = Field(None, title="name", description="")
+    name_sentence_case: str | None = Field(None, title="name", description="")
+    abbreviation: str | None = Field(None, title="name", description="")
+    definition: str | None = Field(None, title="name", description="")
+    adam_param_code: str | None = Field(None, title="name", description="")
+    topic_code: str | None = Field(None, title="name", description="")
     library_name: str = Field(..., title="name", description="")
     activity_instance_class: SimpleActivityInstanceClass = Field(...)
 
 
 class ActivityOverview(BaseModel):
     activity: SimpleActivity = Field(...)
-    activity_subgroups: List[SimpleActivitySubGroup] = Field(...)
-    activity_groups: List[SimpleActivityGroup] = Field(...)
-    activity_instances: List[SimpleActivityInstance] = Field(...)
+    activity_groupings: list[SimpleActivityGrouping] = Field(...)
+    activity_instances: list[SimpleActivityInstance] = Field(...)
 
     @classmethod
     def from_repository_input(cls, overview: dict):
@@ -326,40 +320,33 @@ class ActivityOverview(BaseModel):
                 abbreviation=overview.get("activity_value").get("abbreviation"),
                 library_name=overview.get("activity_library_name"),
             ),
-            activity_subgroups=[
-                SimpleActivitySubGroup(
-                    name=subgroup.get("activity_subgroup_value").get("name"),
-                    definition=subgroup.get("activity_subgroup_value").get(
-                        "definition"
+            activity_groupings=[
+                SimpleActivityGrouping(
+                    activity_group=SimpleActivityGroup(
+                        name=activity_grouping.get("activity_group_value").get("name"),
+                        definition=activity_grouping.get("activity_group_value").get(
+                            "definition"
+                        ),
+                    ),
+                    activity_subgroup=SimpleActivitySubGroup(
+                        name=activity_grouping.get("activity_subgroup_value").get(
+                            "name"
+                        ),
+                        definition=activity_grouping.get("activity_subgroup_value").get(
+                            "definition"
+                        ),
                     ),
                 )
-                for subgroup in overview.get("hierarchy")
-            ],
-            activity_groups=[
-                SimpleActivityGroup(
-                    name=group.get("activity_group_value").get("name"),
-                    definition=group.get("activity_group_value").get("definition"),
-                )
-                for group in overview.get("hierarchy")
+                for activity_grouping in overview.get("hierarchy")
             ],
             activity_instances=[
                 SimpleActivityInstance(
-                    name=activity_instance.get("activity_instance_data").get("name"),
-                    name_sentence_case=activity_instance.get(
-                        "activity_instance_data"
-                    ).get("name_sentence_case"),
-                    abbreviation=activity_instance.get("activity_instance_data").get(
-                        "abbreviation"
-                    ),
-                    definition=activity_instance.get("activity_instance_data").get(
-                        "definition"
-                    ),
-                    adam_param_code=activity_instance.get("activity_instance_data").get(
-                        "adam_param_code"
-                    ),
-                    topic_code=activity_instance.get("activity_instance_data").get(
-                        "topic_code"
-                    ),
+                    name=activity_instance.get("name"),
+                    name_sentence_case=activity_instance.get("name_sentence_case"),
+                    abbreviation=activity_instance.get("abbreviation"),
+                    definition=activity_instance.get("definition"),
+                    adam_param_code=activity_instance.get("adam_param_code"),
+                    topic_code=activity_instance.get("topic_code"),
                     library_name=activity_instance.get(
                         "activity_instance_library_name"
                     ),

@@ -16,17 +16,23 @@
     :column-data-resource="urlPrefix"
     :column-data-parameters="extendedColumnDataParameters"
     @filter="filter"
+    :history-title="$t('_global.audit_trail')"
+    :history-data-fetcher="fetchGlobalAuditTrail"
+    :history-html-fields="['name', 'guidance_text']"
+    history-change-field="change_description"
+    :history-change-field-label="$t('_global.change_description')"
+    :history-excluded-headers="historyExcludedHeaders"
     >
     <template v-slot:actions="">
       <v-btn
         v-if="!preInstanceMode"
         fab
-        dark
         small
         color="primary"
         data-cy="add-template"
         @click="createTemplate()"
         :title="$t(`${translationType}.add`)"
+        :disabled="!checkPermission($roles.LIBRARY_WRITE)"
         >
         <v-icon dark>
           mdi-plus
@@ -53,7 +59,8 @@
     <template v-slot:item.name="{ item }">
       <n-n-parameter-highlighter
         :name="item.name"
-        default-color="orange"
+        default-color="green"
+        :show-prefix-and-postfix="false"
         />
     </template>
     <template v-slot:item.start_date="{ item }">
@@ -100,6 +107,7 @@
       :headers="headers"
       :items="historyItems"
       :html-fields="historyHtmlFields"
+      :excluded-headers="historyExcludedHeaders"
       />
   </v-dialog>
   <confirm-dialog ref="confirm" :action-cols="5" :text-cols="6" />
@@ -144,8 +152,10 @@ import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import StatusChip from '@/components/tools/StatusChip'
 import statuses from '@/constants/statuses'
 import filteringParameters from '@/utils/filteringParameters'
+import { accessGuard } from '@/mixins/accessRoleVerifier'
 
 export default Vue.extend({
+  mixins: [accessGuard],
   name: 'studybuilder-template-table',
   props: {
     urlPrefix: {
@@ -207,6 +217,10 @@ export default Vue.extend({
       type: Function,
       required: false
     },
+    historyExcludedHeaders: {
+      type: Array,
+      required: false
+    },
     exportObjectLabel: {
       type: String,
       required: false
@@ -243,7 +257,7 @@ export default Vue.extend({
       },
       {
         label: this.$t('_global.edit'),
-        icon: 'mdi-pencil',
+        icon: 'mdi-pencil-outline',
         iconColor: 'primary',
         condition: (item) => item.possible_actions.find(action => action === 'edit'),
         click: this.editTemplate
@@ -285,7 +299,7 @@ export default Vue.extend({
       },
       {
         label: this.$t('_global.delete'),
-        icon: 'mdi-delete',
+        icon: 'mdi-delete-outline',
         iconColor: 'error',
         condition: (item) => item.possible_actions.find(action => action === 'delete'),
         click: this.deleteTemplate
@@ -299,7 +313,7 @@ export default Vue.extend({
     if (this.withIndexingProperties) {
       actions.unshift({
         label: this.$t('_global.edit_indexing'),
-        icon: 'mdi-pencil',
+        icon: 'mdi-pencil-outline',
         iconColor: 'primary',
         condition: (item) => item.status === statuses.FINAL,
         click: this.editTemplateIndexing
@@ -419,6 +433,15 @@ export default Vue.extend({
     editTemplateIndexing (template) {
       this.selectedObject = template
       this.showIndexingForm = true
+    },
+    async fetchGlobalAuditTrail (options) {
+      const resp = await this.api.getAuditTrail(options)
+      if (this.historyFormatingFunc) {
+        for (const item of resp.data.items) {
+          this.historyFormatingFunc(item)
+        }
+      }
+      return resp.data
     },
     async openTemplateHistory (template) {
       this.selectedObject = template

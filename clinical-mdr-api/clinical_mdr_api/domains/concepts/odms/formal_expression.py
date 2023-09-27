@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Callable, Self
 
 from clinical_mdr_api.domains.concepts.concept_base import ConceptVO
 from clinical_mdr_api.domains.concepts.odms.odm_ar_base import OdmARBase
@@ -19,7 +19,7 @@ class OdmFormalExpressionVO(ConceptVO):
         cls,
         context: str,
         expression: str,
-    ) -> "OdmFormalExpressionVO":
+    ) -> Self:
         return cls(
             context=context,
             expression=expression,
@@ -48,9 +48,9 @@ class OdmFormalExpressionAR(OdmARBase):
         cls,
         uid: str,
         concept_vo: OdmFormalExpressionVO,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> "OdmFormalExpressionAR":
+    ) -> Self:
         return cls(
             _uid=uid,
             _concept_vo=concept_vo,
@@ -64,8 +64,8 @@ class OdmFormalExpressionAR(OdmARBase):
         author: str,
         concept_vo: OdmFormalExpressionVO,
         library: LibraryVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-    ) -> "OdmFormalExpressionAR":
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
         return cls(
@@ -78,9 +78,11 @@ class OdmFormalExpressionAR(OdmARBase):
     def edit_draft(
         self,
         author: str,
-        change_description: Optional[str],
+        change_description: str | None,
         concept_vo: OdmFormalExpressionVO,
-        concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
+        concept_exists_by_callback: Callable[
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
     ) -> None:
         """
         Creates a new draft version for the object.

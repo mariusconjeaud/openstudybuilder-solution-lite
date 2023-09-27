@@ -19,7 +19,6 @@
 
 <script>
 import ActivityTemplateIndexingForm from './ActivityTemplateIndexingForm'
-import activities from '@/api/activities'
 import BaseTemplateForm from './BaseTemplateForm'
 
 export default {
@@ -44,13 +43,6 @@ export default {
     }
   },
   methods: {
-    setSubGroups (group) {
-      if (group) {
-        activities.getSubGroups(group.uid).then(resp => {
-          this.subGroups = resp.data.items
-        })
-      }
-    },
     preparePayload (data) {
       Object.assign(data, this.$refs.indexingForm.preparePayload(data))
     }

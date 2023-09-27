@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Tuple
+from typing import Sequence
 
 from neomodel import db
 
@@ -85,7 +85,7 @@ class DictionaryTermSubstanceRepository(
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> DictionaryTermSubstanceAR:
@@ -128,14 +128,14 @@ class DictionaryTermSubstanceRepository(
     def find_all(
         self,
         codelist_uid: str = None,
-        sort_by: Optional[dict] = None,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        sort_by: dict | None = None,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         page_number: int = 1,
         page_size: int = 0,
         total_count: bool = False,
         codelist_name: str = None,
-    ) -> Tuple[Sequence[DictionaryTermSubstanceAR], int]:
+    ) -> tuple[Sequence[DictionaryTermSubstanceAR], int]:
         """
         Method runs a cypher query to fetch all needed data to create objects of type AggregateRootType.
         In the case of the following repository it will be some Terms aggregates.

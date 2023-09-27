@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Callable, Self
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.concepts.simple_concepts.numeric_value import (
     NumericValueAR,
 )
@@ -24,14 +25,14 @@ class TimePointVO(SimpleConceptVO):
     def from_repository_values(
         cls,
         name: str,
-        name_sentence_case: Optional[str],
-        definition: Optional[str],
-        abbreviation: Optional[str],
+        name_sentence_case: str | None,
+        definition: str | None,
+        abbreviation: str | None,
         is_template_parameter: bool,
         unit_definition_uid: str,
         numeric_value_uid: str,
         time_reference_uid: str,
-    ) -> "TimePointVO":
+    ) -> Self:
         simple_concept_vo = cls(
             name=name,
             name_sentence_case=name_sentence_case,
@@ -48,9 +49,9 @@ class TimePointVO(SimpleConceptVO):
     @classmethod
     def from_input_values(
         cls,
-        name_sentence_case: Optional[str],
-        definition: Optional[str],
-        abbreviation: Optional[str],
+        name_sentence_case: str | None,
+        definition: str | None,
+        abbreviation: str | None,
         is_template_parameter: bool,
         unit_definition_uid: str,
         numeric_value_uid: str,
@@ -58,22 +59,22 @@ class TimePointVO(SimpleConceptVO):
         find_numeric_value_by_uid: Callable[[str], NumericValueAR],
         find_unit_definition_by_uid: Callable[[str], UnitDefinitionAR],
         find_time_reference_by_uid: Callable[[str], CTTermNameAR],
-    ) -> "TimePointVO":
+    ) -> Self:
         numeric_value = find_numeric_value_by_uid(numeric_value_uid)
         if numeric_value is None:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"{cls.__name__} tried to connect to non existing numeric value identified by uid ({numeric_value_uid})"
             )
 
         unit_definition = find_unit_definition_by_uid(unit_definition_uid)
         if unit_definition is None:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"{cls.__name__} tried to connect to non existing unit definition identified by uid ({unit_definition_uid})"
             )
 
         time_reference = find_time_reference_by_uid(time_reference_uid)
         if time_reference is None:
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"{cls.__name__} tried to connect to non existing CTTermRoot identified by uid ({time_reference_uid})"
             )
 

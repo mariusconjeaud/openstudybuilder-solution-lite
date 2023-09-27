@@ -2,16 +2,7 @@ import collections.abc
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from threading import Lock
-from typing import (
-    Collection,
-    Dict,
-    Generic,
-    Iterable,
-    Mapping,
-    MutableMapping,
-    Optional,
-    TypeVar,
-)
+from typing import Collection, Generic, Iterable, Mapping, MutableMapping, TypeVar
 
 Key = TypeVar("Key")
 Entity = TypeVar("Entity")
@@ -81,9 +72,9 @@ class GenericLightDictionaryRepoBase(Generic[Key, Entity], ABC):
         """
         return False
 
-    __cache: Optional[MutableMapping] = None
-    __cache_refresh_date: Optional[datetime] = None
-    __cache_lock: Optional[Lock] = None
+    __cache: MutableMapping | None = None
+    __cache_refresh_date: datetime | None = None
+    __cache_lock: "Lock | None" = None
     __lock_creation_lock: Lock = Lock()
 
     @classmethod
@@ -105,7 +96,7 @@ class GenericLightDictionaryRepoBase(Generic[Key, Entity], ABC):
         return cls.__cache
 
     @classmethod
-    def __get_cache_refresh_date(cls) -> Optional[datetime]:
+    def __get_cache_refresh_date(cls) -> datetime | None:
         return cls.__cache_refresh_date
 
     # for testing rather then use (however works as expected)
@@ -173,7 +164,7 @@ class GenericLightDictionaryRepoBase(Generic[Key, Entity], ABC):
             # NOTE: we build a new cache as local variable, hence the current cache
             # remains intact and can be safely used by other threads. That's wy we do not need to block other threads
             # while we are refreshing (besides the case when cache has never been refreshed)
-            new_cache: Dict[
+            new_cache: dict[
                 Key, Entity
             ] = {}  # this is going to be our new cache content
 
@@ -204,11 +195,11 @@ class GenericLightDictionaryRepoBase(Generic[Key, Entity], ABC):
         self._refresh_if_needed()
         return frozenset(self.__get_cache().values())
 
-    def _find_by_key(self, key: Key) -> Optional[Entity]:
+    def _find_by_key(self, key: Key) -> Entity | None:
         """
         Finds the Entity by given Key (or returns None if there is none)
         :param key: Key
-        :return: Optional[Entity] (i.e. None if does not exists)
+        :return: Entity | None
         """
         self._refresh_if_needed()
         result = self.__get_cache().get(key)

@@ -34,11 +34,11 @@
         "response": {
             "code": 400,
             "result": {
-                "message": "ActivityGroup with name (name1) already exists.",
+                "message": "Activity Group with ['name: name1'] already exists.",
                 "method": "POST",
                 "path": "http://testserver/concepts/activities/activity-groups",
                 "time": "2020-11-10T01:51:17.884429",
-                "type": "ValidationException"
+                "type": "BusinessLogicException"
             }
         }
     },
@@ -56,11 +56,11 @@
         "response": {
             "code": 400,
             "result": {
-                "message": "ActivityGroup with name (name1) already exists.",
+                "message": "Activity Group with ['name: name1'] already exists.",
                 "method": "PATCH",
                 "path": "http://testserver/concepts/activities/activity-groups/activity_group_root2",
                 "time": "2020-11-10T01:51:17.884429",
-                "type": "ValidationException"
+                "type": "BusinessLogicException"
             }
         }
     },

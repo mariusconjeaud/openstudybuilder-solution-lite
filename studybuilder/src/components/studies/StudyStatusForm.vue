@@ -96,7 +96,7 @@ export default {
           bus.$emit('notification', { msg: this.$t('StudyStatusForm.release_success'), type: 'success' })
         } else {
           const resp = await api.lockStudy(this.selectedStudy.uid, this.form)
-          this.$store.commit('studiesGeneral/SELECT_STUDY', resp.data)
+          this.$store.commit('studiesGeneral/SELECT_STUDY', { studyObj: resp.data })
           bus.$emit('notification', { msg: this.$t('StudyStatusForm.lock_success'), type: 'success' })
         }
         this.$emit('statusChanged')

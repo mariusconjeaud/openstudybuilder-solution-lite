@@ -3,6 +3,7 @@
 from fastapi import Path, Query
 from fastapi.responses import Response
 
+from clinical_mdr_api.oauth import rbac
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.routers import studies_router as router
 from clinical_mdr_api.services.studies.study import StudyService
@@ -25,6 +26,7 @@ class SVGResponse(Response):
 
 @router.get(
     "/{uid}/design.svg",
+    dependencies=[rbac.STUDY_READ],
     summary="Builds and returns a Study Design visualization image in SVG format",
     status_code=200,
     responses={

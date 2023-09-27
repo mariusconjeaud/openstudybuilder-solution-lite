@@ -1,12 +1,18 @@
 """Database related helper functions."""
 
-from typing import List
-
 from neomodel import db
 
 
-def db_result_to_list(result) -> List[dict]:
-    """Convert a cypher_query() result to a list of dictionaries."""
+def db_result_to_list(result) -> list[dict]:
+    """
+    Converts a Cypher query result to a list of dictionaries.
+
+    Args:
+        result: The result of a Cypher query.
+
+    Returns:
+        list[dict]: A list of dictionaries representing the result.
+    """
     data = []
     for row in result[0]:
         new_item = {}

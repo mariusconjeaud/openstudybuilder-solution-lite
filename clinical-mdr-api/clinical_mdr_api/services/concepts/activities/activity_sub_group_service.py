@@ -39,11 +39,11 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
                 name_sentence_case=concept_input.name_sentence_case,
                 definition=concept_input.definition,
                 abbreviation=concept_input.abbreviation,
-                activity_group=concept_input.activity_group,
+                activity_groups=concept_input.activity_groups,
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
-            activity_subgroup_exists_by_name_callback=self._repos.activity_subgroup_repository.concept_exists_by_name,
+            concept_exists_by_callback=self._repos.activity_subgroup_repository.exists_by,
             activity_group_exists=self._repos.activity_group_repository.final_concept_exists,
         )
 
@@ -60,9 +60,9 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
                 name_sentence_case=concept_edit_input.name_sentence_case,
                 definition=concept_edit_input.definition,
                 abbreviation=concept_edit_input.abbreviation,
-                activity_group=concept_edit_input.activity_group,
+                activity_groups=concept_edit_input.activity_groups,
             ),
-            concept_exists_by_name_callback=self._repos.activity_subgroup_repository.concept_exists_by_name,
+            concept_exists_by_callback=self._repos.activity_subgroup_repository.exists_by,
             activity_group_exists=self._repos.activity_group_repository.final_concept_exists,
         )
         return item

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Generic, Optional, Sequence, TypeVar
+from typing import Any, Generic, Sequence, TypeVar
 
 from neomodel import db
 from pydantic import BaseModel
@@ -21,7 +21,11 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermM
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
-from clinical_mdr_api.services._utils import calculate_diffs, normalize_string
+from clinical_mdr_api.services._utils import (
+    calculate_diffs,
+    is_library_editable,
+    normalize_string,
+)
 
 _AggregateRootType = TypeVar("_AggregateRootType")
 _VOType = TypeVar("_VOType")
@@ -32,9 +36,9 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
     version_class: type
     repository_interface: type
     _repos: MetaRepository
-    user_initials: Optional[str]
+    user_initials: str | None
 
-    def __init__(self, user: Optional[str] = None):
+    def __init__(self, user: str | None = None):
         self.user_initials = user if user is not None else "TODO user initials"
         self._repos = MetaRepository(self.user_initials)
 
@@ -144,14 +148,14 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
     @db.transaction
     def get_all_concepts(
         self,
-        library: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        library: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-        only_specific_status: Optional[Sequence[str]] = None,
+        only_specific_status: Sequence[str] | None = None,
         **kwargs,
     ) -> GenericFilteringReturn[BaseModel]:
         return self.non_transactional_get_all_concepts(
@@ -168,34 +172,31 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
 
     def non_transactional_get_all_concepts(
         self,
-        library: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        library: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-        only_specific_status: Optional[Sequence[str]] = None,
+        only_specific_status: Sequence[str] | None = None,
         **kwargs,
     ) -> GenericFilteringReturn[BaseModel]:
         self.enforce_library(library)
 
-        try:
-            items, total_count = self.repository.find_all(
-                library=library,
-                total_count=total_count,
-                sort_by=sort_by,
-                filter_by=filter_by,
-                filter_operator=filter_operator,
-                page_number=page_number,
-                page_size=page_size,
-                only_specific_status=only_specific_status,
-                **kwargs,
-            )
-        except ValueError as e:
-            raise exceptions.ValidationException(e)
+        items, total = self.repository.find_all(
+            library=library,
+            total_count=total_count,
+            sort_by=sort_by,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            page_number=page_number,
+            page_size=page_size,
+            only_specific_status=only_specific_status,
+            **kwargs,
+        )
 
-        all_concepts = GenericFilteringReturn.create(items, total_count)
+        all_concepts = GenericFilteringReturn.create(items, total)
         all_concepts.items = [
             self._transform_aggregate_root_to_pydantic_model(concept_ar)
             for concept_ar in all_concepts.items
@@ -205,11 +206,11 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
 
     def get_distinct_values_for_header(
         self,
-        library: Optional[str],
+        library: str | None,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
         **kwargs,
     ) -> Sequence:
@@ -231,9 +232,9 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
     def get_by_uid(
         self,
         uid: str,
-        version: Optional[str] = None,
-        at_specific_date: Optional[datetime] = None,
-        status: Optional[str] = None,
+        version: str | None = None,
+        at_specific_date: datetime | None = None,
+        status: str | None = None,
     ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(
             uid=uid, version=version, at_specific_date=at_specific_date, status=status
@@ -243,21 +244,19 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
     def _find_by_uid_or_raise_not_found(
         self,
         uid: str,
-        version: Optional[str] = None,
-        at_specific_date: Optional[datetime] = None,
-        status: Optional[LibraryItemStatus] = None,
-        for_update: Optional[bool] = False,
+        version: str | None = None,
+        at_specific_date: datetime | None = None,
+        status: LibraryItemStatus | None = None,
+        for_update: bool | None = False,
     ) -> _AggregateRootType:
-        try:
-            item = self.repository.find_by_uid_2(
-                uid=uid,
-                at_specific_date=at_specific_date,
-                version=version,
-                status=status,
-                for_update=for_update,
-            )
-        except ValueError as e:
-            raise exceptions.ValidationException(e)
+        item = self.repository.find_by_uid_2(
+            uid=uid,
+            at_specific_date=at_specific_date,
+            version=version,
+            status=status,
+            for_update=for_update,
+        )
+
         if item is None:
             raise exceptions.NotFoundException(
                 f"{self.aggregate_class.__name__} with uid {uid} does not exist or there's no version with requested status or version number."
@@ -267,10 +266,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
     @db.transaction
     def get_version_history(self, uid: str) -> Sequence[BaseModel]:
         if self.version_class is not None:
-            try:
-                all_versions = self.repository.get_all_versions_2(uid=uid)
-            except ValueError as e:
-                raise exceptions.ValidationException(e)
+            all_versions = self.repository.get_all_versions_2(uid=uid)
             if all_versions is None:
                 raise exceptions.NotFoundException(
                     f"{self.aggregate_class.__name__} with uid {uid} does not exist."
@@ -314,8 +310,6 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             return self._transform_aggregate_root_to_pydantic_model(item)
         except VersioningException as e:
             raise exceptions.BusinessLogicException(e.msg)
-        except ValueError as e:
-            raise exceptions.ValidationException(e)
 
     @db.transaction
     def create(self, concept_input: BaseModel) -> BaseModel:
@@ -331,22 +325,14 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
 
         library_vo = LibraryVO.from_input_values_2(
             library_name=concept_input.library_name,
-            is_library_editable_callback=(
-                lambda name: self._repos.library_repository.find_by_name(
-                    name
-                ).is_editable
-                if self._repos.library_repository.find_by_name(name) is not None
-                else None
-            ),
+            is_library_editable_callback=is_library_editable,
         )
-        try:
-            concept_ar = self._create_aggregate_root(
-                concept_input=concept_input, library=library_vo
-            )
-            self.repository.save(concept_ar)
-            return self._transform_aggregate_root_to_pydantic_model(concept_ar)
-        except ValueError as value_error:
-            raise exceptions.ValidationException(value_error.args[0])
+
+        concept_ar = self._create_aggregate_root(
+            concept_input=concept_input, library=library_vo
+        )
+        self.repository.save(concept_ar)
+        return self._transform_aggregate_root_to_pydantic_model(concept_ar)
 
     @db.transaction
     def approve(self, uid: str) -> BaseModel:
@@ -387,7 +373,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         except VersioningException as e:
             raise exceptions.BusinessLogicException(e.msg)
 
-    def enforce_library(self, library: Optional[str]):
+    def enforce_library(self, library: str | None):
         if library is not None and not self._repos.library_repository.library_exists(
             normalize_string(library)
         ):

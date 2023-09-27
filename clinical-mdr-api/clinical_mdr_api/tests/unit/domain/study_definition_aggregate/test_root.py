@@ -2,7 +2,7 @@ import random
 import unittest
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any, Callable, Mapping, Optional, Sequence
+from typing import Any, Callable, Mapping, Sequence
 from unittest.mock import patch
 
 from clinical_mdr_api import exceptions
@@ -53,11 +53,11 @@ def create_random_study(
     new_id_metadata_condition: Callable[
         [StudyIdentificationMetadataVO], bool
     ] = lambda _: True,
-    new_id_metadata_fixed_values: Optional[Mapping[str, Any]] = None,
+    new_id_metadata_fixed_values: Mapping[str, Any] | None = None,
     new_high_level_study_design_condition: Callable[
         [HighLevelStudyDesignVO], bool
     ] = lambda _: True,
-    new_high_level_study_design_fixed_values: Optional[Mapping[str, Any]] = None,
+    new_high_level_study_design_fixed_values: Mapping[str, Any] | None = None,
     new_study_population_condition: Callable[
         [StudyPopulationVO], bool
     ] = lambda _: True,
@@ -66,7 +66,7 @@ def create_random_study(
     ] = lambda _: True,
     max_tries: int = 100,
     is_study_after_create: bool = False,
-    author: Optional[str] = None,
+    author: str | None = None,
 ) -> StudyDefinitionAR:
     if new_id_metadata_fixed_values is None:
         new_id_metadata_fixed_values = _dict()
@@ -136,11 +136,11 @@ def make_random_study_metadata_edit(
     new_id_metadata_condition: Callable[[StudyIdentificationMetadataVO], bool] = (
         lambda _: True
     ),
-    new_id_metadata_fixed_values: Optional[Mapping[str, Any]] = None,
+    new_id_metadata_fixed_values: Mapping[str, Any] | None = None,
     new_high_level_study_design_condition: Callable[
         [HighLevelStudyDesignVO], bool
     ] = lambda _: True,
-    new_high_level_study_design_fixed_values: Optional[Mapping[str, Any]] = None,
+    new_high_level_study_design_fixed_values: Mapping[str, Any] | None = None,
     new_study_population_condition: Callable[
         [StudyPopulationVO], bool
     ] = lambda _: True,
@@ -148,7 +148,7 @@ def make_random_study_metadata_edit(
         [StudyInterventionVO], bool
     ] = lambda _: True,
     max_tries: int = 100,
-    author: Optional[str] = None,
+    author: str | None = None,
 ):
     if new_id_metadata_fixed_values is None:
         new_id_metadata_fixed_values = _dict()

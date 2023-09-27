@@ -1,12 +1,14 @@
-from typing import Optional
-
 from neomodel import db
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.concepts.activities.activity_repository import (
     ActivityRepository,
 )
-from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR, ActivityVO
+from clinical_mdr_api.domains.concepts.activities.activity import (
+    ActivityAR,
+    ActivityGroupingVO,
+    ActivityVO,
+)
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
@@ -17,13 +19,10 @@ from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityEditInput,
     ActivityFromRequestInput,
     ActivityInput,
-    ActivityORM,
     ActivityOverview,
     ActivityVersion,
 )
-from clinical_mdr_api.models.utils import GenericFilteringReturn
-from clinical_mdr_api.repositories._utils import FilterOperator
-from clinical_mdr_api.services._utils import normalize_string
+from clinical_mdr_api.services._utils import is_library_editable, normalize_string
 from clinical_mdr_api.services.concepts.concept_generic_service import (
     ConceptGenericService,
     _AggregateRootType,
@@ -54,13 +53,22 @@ class ActivityService(ConceptGenericService[ActivityAR]):
                 name_sentence_case=concept_input.name_sentence_case,
                 definition=concept_input.definition,
                 abbreviation=concept_input.abbreviation,
-                activity_subgroup=concept_input.activity_subgroup,
+                activity_groupings=[
+                    ActivityGroupingVO(
+                        activity_group_uid=activity_grouping.activity_group_uid,
+                        activity_subgroup_uid=activity_grouping.activity_subgroup_uid,
+                    )
+                    for activity_grouping in concept_input.activity_groupings
+                ]
+                if concept_input.activity_groupings
+                else [],
                 request_rationale=concept_input.request_rationale,
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
             concept_exists_by_name_callback=self._repos.activity_repository.final_concept_exists_by_name,
             activity_subgroup_exists=self._repos.activity_subgroup_repository.final_concept_exists,
+            activity_group_exists=self._repos.activity_group_repository.final_concept_exists,
         )
 
     def _edit_aggregate(
@@ -74,46 +82,22 @@ class ActivityService(ConceptGenericService[ActivityAR]):
                 name_sentence_case=concept_edit_input.name_sentence_case,
                 definition=concept_edit_input.definition,
                 abbreviation=concept_edit_input.abbreviation,
-                activity_subgroup=concept_edit_input.activity_subgroup,
+                activity_groupings=[
+                    ActivityGroupingVO(
+                        activity_group_uid=activity_grouping.activity_group_uid,
+                        activity_subgroup_uid=activity_grouping.activity_subgroup_uid,
+                    )
+                    for activity_grouping in concept_edit_input.activity_groupings
+                ]
+                if concept_edit_input.activity_groupings
+                else [],
                 request_rationale=concept_edit_input.request_rationale,
             ),
-            concept_exists_by_name_callback=self._repos.activity_repository.concept_exists_by_name,
+            concept_exists_by_name_callback=self._repos.activity_repository.check_exists_by_name,
             activity_subgroup_exists=self._repos.activity_subgroup_repository.final_concept_exists,
+            activity_group_exists=self._repos.activity_group_repository.final_concept_exists,
         )
         return item
-
-    @db.transaction
-    def get_all_concepts(
-        self,
-        library: Optional[str] = None,
-        sort_by: Optional[dict] = None,
-        page_number: int = 1,
-        page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
-        total_count: bool = False,
-        only_specific_status: list = None,
-        **kwargs,
-    ) -> GenericFilteringReturn[ActivityORM]:
-        self.enforce_library(library)
-        try:
-            items, total_count = self.repository.find_all_activities(
-                library=library,
-                total_count=total_count,
-                sort_by=sort_by,
-                filter_by=filter_by,
-                filter_operator=filter_operator,
-                page_number=page_number,
-                page_size=page_size,
-                only_specific_status=only_specific_status,
-                **kwargs,
-            )
-        except ValueError as e:
-            raise exceptions.ValidationException(e)
-
-        all_concepts = GenericFilteringReturn.create(items, total_count)
-
-        return all_concepts
 
     @db.transaction
     def replace_requested_activity_with_sponsor(
@@ -128,44 +112,36 @@ class ActivityService(ConceptGenericService[ActivityAR]):
 
         library_vo = LibraryVO.from_input_values_2(
             library_name=sponsor_activity_input.library_name,
-            is_library_editable_callback=(
-                lambda name: self._repos.library_repository.find_by_name(
-                    name
-                ).is_editable
-                if self._repos.library_repository.find_by_name(name) is not None
-                else None
-            ),
+            is_library_editable_callback=is_library_editable,
         )
-        try:
-            # retire Requested Activity first to not conflict the Sponsor Activity name
-            activity_request_ar = self.repository.find_by_uid_2(
-                uid=sponsor_activity_input.activity_request_uid, for_update=True
-            )
-            if activity_request_ar.item_metadata.status != LibraryItemStatus.FINAL:
-                raise exceptions.BusinessLogicException(
-                    f"To update the following Activity Request {activity_request_ar.name} to Sponsor Activity it should be in Final state"
-                )
-            activity_request_ar.inactivate(
-                author=self.user_initials,
-                change_description="Inactivate Requested Activity as Sponsor Activity was created",
-            )
-            self.repository.save(activity_request_ar)
 
-            concept_ar = self._create_aggregate_root(
-                concept_input=sponsor_activity_input, library=library_vo
+        # retire Requested Activity first to not conflict the Sponsor Activity name
+        activity_request_ar = self.repository.find_by_uid_2(
+            uid=sponsor_activity_input.activity_request_uid, for_update=True
+        )
+        if activity_request_ar.item_metadata.status != LibraryItemStatus.FINAL:
+            raise exceptions.BusinessLogicException(
+                f"To update the following Activity Request {activity_request_ar.name} to Sponsor Activity it should be in Final state"
             )
-            concept_ar.approve(
-                author=self.user_initials,
-                change_description="Approve Sponsor Activity created from Requested Activity",
-            )
-            self.repository.save(concept_ar)
-            self.repository.replace_request_with_sponsor_activity(
-                activity_request_uid=sponsor_activity_input.activity_request_uid,
-                sponsor_activity_uid=concept_ar.uid,
-            )
-            return self._transform_aggregate_root_to_pydantic_model(concept_ar)
-        except ValueError as value_error:
-            raise exceptions.ValidationException(value_error.args[0])
+        activity_request_ar.inactivate(
+            author=self.user_initials,
+            change_description="Inactivate Requested Activity as Sponsor Activity was created",
+        )
+        self.repository.save(activity_request_ar)
+
+        concept_ar = self._create_aggregate_root(
+            concept_input=sponsor_activity_input, library=library_vo
+        )
+        concept_ar.approve(
+            author=self.user_initials,
+            change_description="Approve Sponsor Activity created from Requested Activity",
+        )
+        self.repository.save(concept_ar)
+        self.repository.replace_request_with_sponsor_activity(
+            activity_request_uid=sponsor_activity_input.activity_request_uid,
+            sponsor_activity_uid=concept_ar.uid,
+        )
+        return self._transform_aggregate_root_to_pydantic_model(concept_ar)
 
     def get_activity_overview(self, activity_uid: str) -> ActivityOverview:
         if not self.repository.exists_by("uid", activity_uid, True):

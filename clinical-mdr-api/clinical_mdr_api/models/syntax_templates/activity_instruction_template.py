@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Self
 
 from pydantic import Field, conlist
 
@@ -36,7 +36,7 @@ class ActivityInstructionTemplateName(BaseModel):
         ...,
         description="The plain text version of the name property, stripped of HTML tags",
     )
-    guidance_text: Optional[str] = Field(
+    guidance_text: str | None = Field(
         None,
         description="Optional guidance text for using the template.",
         nullable=True,
@@ -47,83 +47,83 @@ class ActivityInstructionTemplateNameUid(ActivityInstructionTemplateName):
     uid: str = Field(
         ..., description="The unique id of the activity instruction template."
     )
-    sequence_id: Optional[str] = Field(None, nullable=True)
+    sequence_id: str | None = Field(None, nullable=True)
+
+
+class ActivityInstructionTemplateNameUidLibrary(ActivityInstructionTemplateNameUid):
+    library_name: str = Field(...)
 
 
 class ActivityInstructionTemplate(ActivityInstructionTemplateNameUid):
-    start_date: Optional[datetime] = Field(
+    start_date: datetime | None = Field(
         default_factory=datetime.utcnow,
         description="Part of the metadata: The point in time when the (version of the) activity instruction template was created. "
         "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
     )
-    end_date: Optional[datetime] = Field(
+    end_date: datetime | None = Field(
         default_factory=datetime.utcnow,
         description="""Part of the metadata: The point in time when the version of
         the activity instruction template was closed (and a new one was created). """
         "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
         nullable=True,
     )
-    status: Optional[str] = Field(
+    status: str | None = Field(
         None,
         description="The status in which the (version of the) activity instruction template is in. "
         "Possible values are: 'Final', 'Draft' or 'Retired'.",
         nullable=True,
     )
-    version: Optional[str] = Field(
+    version: str | None = Field(
         None,
         description="The version number of the (version of the) activity instruction template. "
         "The format is: <major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0', ...",
         nullable=True,
     )
-    change_description: Optional[str] = Field(
+    change_description: str | None = Field(
         None,
         description="A short description about what has changed compared to the previous version.",
         nullable=True,
     )
-    user_initials: Optional[str] = Field(
+    user_initials: str | None = Field(
         None,
         description="The initials of the user that triggered the change of the activity instruction template.",
         nullable=True,
     )
-
-    # TODO use the standard _link/name approach
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         [],
         description=(
             "Holds those actions that can be performed on the activity instruction template. "
             "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
         ),
     )
-    parameters: List[TemplateParameter] = Field(
+    parameters: list[TemplateParameter] = Field(
         [],
         description="Those parameters that are used by the activity instruction template.",
     )
-    default_parameter_terms: Optional[
-        Dict[int, List[MultiTemplateParameterTerm]]
-    ] = Field(
+    default_parameter_terms: dict[int, list[MultiTemplateParameterTerm]] | None = Field(
         None,
         description="""Holds the default terms for the parameters that are used
         within the template. The terms are ordered as they occur in the template's name.""",
         nullable=True,
     )
-    library: Optional[Library] = Field(
+    library: Library | None = Field(
         None,
         description="The library to which the activity instruction template belongs.",
         nullable=True,
     )
 
     # Template indexings
-    indications: List[DictionaryTerm] = Field(
+    indications: list[DictionaryTerm] = Field(
         [],
         description="The study indications, conditions, diseases or disorders in scope for the template.",
     )
-    activities: List[Activity] = Field(
+    activities: list[Activity] = Field(
         [], description="The activities in scope for the template"
     )
-    activity_groups: List[ActivityGroup] = Field(
+    activity_groups: list[ActivityGroup] = Field(
         [], description="The activity groups in scope for the template"
     )
-    activity_subgroups: List[ActivitySubGroup] = Field(
+    activity_subgroups: list[ActivitySubGroup] = Field(
         [], description="The activity sub groups in scope for the template"
     )
 
@@ -133,10 +133,10 @@ class ActivityInstructionTemplate(ActivityInstructionTemplateNameUid):
     def from_activity_instruction_template_ar(
         cls,
         activity_instruction_template_ar: ActivityInstructionTemplateAR,
-        find_activity_subgroup_by_uid: Callable[[str], Optional[ActivitySubGroupAR]],
-        find_activity_group_by_uid: Callable[[str], Optional[ActivityGroupAR]],
-    ) -> "ActivityInstructionTemplate":
-        default_parameter_terms: Dict[int, List[MultiTemplateParameterTerm]] = {}
+        find_activity_subgroup_by_uid: Callable[[str], ActivitySubGroupAR | None],
+        find_activity_group_by_uid: Callable[[str], ActivityGroupAR | None],
+    ) -> Self:
+        default_parameter_terms: dict[int, list[MultiTemplateParameterTerm]] = {}
         if (
             activity_instruction_template_ar.template_value.default_parameter_terms
             is not None
@@ -149,7 +149,7 @@ class ActivityInstructionTemplate(ActivityInstructionTemplateNameUid):
             ):
                 term_list = []
                 for position, parameter in enumerate(term_set):
-                    terms: List[IndexedTemplateParameterTerm] = [
+                    terms: list[IndexedTemplateParameterTerm] = [
                         IndexedTemplateParameterTerm(
                             index=index + 1,
                             uid=parameter_term.uid,
@@ -225,14 +225,14 @@ class ActivityInstructionTemplate(ActivityInstructionTemplateNameUid):
 
 
 class ActivityInstructionTemplateWithCount(ActivityInstructionTemplate):
-    counts: Optional[ItemCounts] = Field(
+    counts: ItemCounts | None = Field(
         None, description="Optional counts of activity instruction instantiations"
     )
 
     @classmethod
     def from_activity_instruction_template_ar(
         cls, activity_instruction_template_ar: ActivityInstructionTemplateAR, **kwargs
-    ) -> "ActivityInstructionTemplate":
+    ) -> Self:
         ot = super().from_activity_instruction_template_ar(
             activity_instruction_template_ar, **kwargs
         )
@@ -251,7 +251,7 @@ class ActivityInstructionTemplateVersion(ActivityInstructionTemplate):
     Class for storing Activity Instruction Templates and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
@@ -267,27 +267,27 @@ class ActivityInstructionTemplateNameInput(BaseModel):
         description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
         min_length=1,
     )
-    guidance_text: Optional[str] = Field(
+    guidance_text: str | None = Field(
         None, description="Optional guidance text for using the template."
     )
 
 
 class ActivityInstructionTemplateCreateInput(ActivityInstructionTemplateNameInput):
-    library_name: Optional[str] = Field(
+    library_name: str | None = Field(
         "Sponsor",
         description="If specified: The name of the library to which the activity instruction template will be linked. The following rules apply: \n"
         "* The library needs to be present, it will not be created with this request. The *[GET] /libraries* endpoint can help. And \n"
         "* The library needs to allow the creation: The 'is_editable' property of the library needs to be true.",
     )
-    default_parameter_terms: Optional[List[MultiTemplateParameterTerm]] = Field(
+    default_parameter_terms: list[MultiTemplateParameterTerm] | None = Field(
         None,
         description="Holds the parameter terms to be used as default for this template. The terms are ordered as they occur in the template name.",
     )
-    indication_uids: Optional[List[str]] = Field(
+    indication_uids: list[str] | None = Field(
         None,
         description="A list of UID of the study indications, conditions, diseases or disorders to attach the template to.",
     )
-    activity_uids: Optional[List[str]] = Field(
+    activity_uids: list[str] | None = Field(
         None, description="A list of UID of the activities to attach the template to."
     )
     activity_group_uids: conlist(
@@ -308,18 +308,18 @@ class ActivityInstructionTemplateEditInput(ActivityInstructionTemplateNameInput)
 
 
 class ActivityInstructionTemplateEditIndexingsInput(BaseModel):
-    indication_uids: Optional[List[str]] = Field(
+    indication_uids: list[str] | None = Field(
         None,
         description="A list of UID of the study indications, conditions, diseases or disorders to attach the template to.",
     )
-    activity_uids: Optional[List[str]] = Field(
+    activity_uids: list[str] | None = Field(
         None, description="A list of UID of the activities to attach the template to."
     )
-    activity_group_uids: Optional[List[str]] = Field(
+    activity_group_uids: list[str] | None = Field(
         None,
         description="A list of UID of the activity groups to attach the template to.",
     )
-    activity_subgroup_uids: Optional[List[str]] = Field(
+    activity_subgroup_uids: list[str] | None = Field(
         None,
         description="A list of UID of the activity sub groups to attach the template to.",
     )

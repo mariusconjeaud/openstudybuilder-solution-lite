@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Tuple
+from typing import Sequence
 
 from neomodel import db
 
@@ -88,7 +88,7 @@ class CTTermAggregatedRepository:
 
     def _create_term_aggregate_instances_from_cypher_result(
         self, term_dict: dict
-    ) -> Tuple[CTTermNameAR, CTTermAttributesAR]:
+    ) -> tuple[CTTermNameAR, CTTermAttributesAR]:
         """
         Method creates a tuple of CTTermNameAR and CTTermAttributesAR objects for one CTTermRoot node.
         The term_dict is a find_all_aggregated_result method result for one CTTermRoot node.
@@ -109,17 +109,17 @@ class CTTermAggregatedRepository:
 
     def find_all_aggregated_result(
         self,
-        codelist_uid: Optional[str] = None,
-        codelist_name: Optional[str] = None,
-        library: Optional[str] = None,
-        package: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        codelist_uid: str | None = None,
+        codelist_name: str | None = None,
+        library: str | None = None,
+        package: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-    ) -> GenericFilteringReturn[Tuple[CTTermNameAR, CTTermAttributesAR]]:
+    ) -> GenericFilteringReturn[tuple[CTTermNameAR, CTTermAttributesAR]]:
         """
         Method runs a cypher query to fetch all data related to the CTTermName* and CTTermAttributes*.
         It allows to filter the query output by codelist_uid, codelist_name, library and package.
@@ -138,7 +138,7 @@ class CTTermAggregatedRepository:
         :param filter_by:
         :param filter_operator:
         :param total_count:
-        :return GenericFilteringReturn[Tuple[CTTermNameAR, CTTermAttributesAR]]:
+        :return GenericFilteringReturn[tuple[CTTermNameAR, CTTermAttributesAR]]:
         """
         # Build match_clause
         match_clause, filter_query_parameters = self._generate_generic_match_clause(
@@ -179,26 +179,26 @@ class CTTermAggregatedRepository:
                 )
             )
 
-        _total_count = 0
+        total = 0
         if total_count:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
             if len(count_result) > 0:
-                _total_count = count_result[0][0]
+                total = count_result[0][0]
 
-        return GenericFilteringReturn.create(items=terms_ars, total_count=_total_count)
+        return GenericFilteringReturn.create(items=terms_ars, total=total)
 
     def get_distinct_headers(
         self,
         field_name: str,
-        codelist_uid: Optional[str] = None,
-        codelist_name: Optional[str] = None,
-        library: Optional[str] = None,
-        package: Optional[str] = None,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        codelist_uid: str | None = None,
+        codelist_name: str | None = None,
+        library: str | None = None,
+        package: str | None = None,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence:
         """
@@ -262,11 +262,11 @@ class CTTermAggregatedRepository:
 
     def _generate_generic_match_clause(
         self,
-        codelist_uid: Optional[str] = None,
-        codelist_name: Optional[str] = None,
-        library: Optional[str] = None,
-        package: Optional[str] = None,
-    ) -> Tuple[str, dict]:
+        codelist_uid: str | None = None,
+        codelist_name: str | None = None,
+        library: str | None = None,
+        package: str | None = None,
+    ) -> tuple[str, dict]:
         if package:
             match_clause = """
             MATCH (package:CTPackage)-[:CONTAINS_CODELIST]->(:CTPackageCodelist)-[:CONTAINS_TERM]->(:CTPackageTerm)-

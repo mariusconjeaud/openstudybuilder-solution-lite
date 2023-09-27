@@ -1,7 +1,8 @@
 import datetime
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Callable
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains._utils import normalize_string
 from clinical_mdr_api.domains.study_selections import study_selection_base
 
@@ -14,19 +15,23 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
     """
 
     study_selection_uid: str
+    study_activity_subgroup_uid: str | None
+    activity_subgroup_uid: str | None
+    study_activity_group_uid: str | None
+    activity_group_uid: str | None
     study_uid: str
     activity_uid: str
-    activity_version: Optional[str]
+    activity_version: str | None
     flowchart_group_uid: str
-    activity_order: Optional[int]
+    activity_order: int | None
+    show_activity_in_protocol_flowchart: bool
     show_activity_group_in_protocol_flowchart: bool
     show_activity_subgroup_in_protocol_flowchart: bool
-    show_activity_in_protocol_flowchart: bool
-    note: Optional[str]
     # Study selection Versioning
     start_date: datetime.datetime
-    user_initials: Optional[str]
+    user_initials: str | None
     accepted_version: bool = False
+    activity_name: str | None = None
 
     @classmethod
     def from_input_values(
@@ -36,14 +41,18 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
         activity_version: str,
         flowchart_group_uid: str,
         user_initials: str,
-        show_activity_group_in_protocol_flowchart: Optional[bool] = True,
-        show_activity_subgroup_in_protocol_flowchart: Optional[bool] = True,
-        show_activity_in_protocol_flowchart: Optional[bool] = False,
-        note: Optional[str] = None,
-        activity_order: Optional[int] = 0,
-        study_selection_uid: Optional[str] = None,
-        start_date: Optional[datetime.datetime] = None,
+        study_activity_subgroup_uid: str | None = None,
+        activity_subgroup_uid: str | None = None,
+        study_activity_group_uid: str | None = None,
+        activity_group_uid: str | None = None,
+        show_activity_in_protocol_flowchart: bool | None = False,
+        show_activity_group_in_protocol_flowchart: bool | None = True,
+        show_activity_subgroup_in_protocol_flowchart: bool | None = True,
+        activity_order: int | None = 0,
+        study_selection_uid: str | None = None,
+        start_date: datetime.datetime | None = None,
         accepted_version: bool = False,
+        activity_name: str | None = None,
         generate_uid_callback: Callable[[], str] = None,
     ):
         if study_selection_uid is None:
@@ -55,14 +64,18 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
         return cls(
             study_uid=normalize_string(study_uid),
             activity_uid=normalize_string(activity_uid),
+            activity_name=normalize_string(activity_name),
             activity_version=activity_version,
             flowchart_group_uid=normalize_string(flowchart_group_uid),
+            show_activity_in_protocol_flowchart=show_activity_in_protocol_flowchart,
             show_activity_group_in_protocol_flowchart=show_activity_group_in_protocol_flowchart,
             show_activity_subgroup_in_protocol_flowchart=show_activity_subgroup_in_protocol_flowchart,
-            show_activity_in_protocol_flowchart=show_activity_in_protocol_flowchart,
-            note=note,
             start_date=start_date,
             study_selection_uid=normalize_string(study_selection_uid),
+            study_activity_subgroup_uid=normalize_string(study_activity_subgroup_uid),
+            activity_subgroup_uid=normalize_string(activity_subgroup_uid),
+            study_activity_group_uid=normalize_string(study_activity_group_uid),
+            activity_group_uid=normalize_string(activity_group_uid),
             activity_order=activity_order,
             user_initials=normalize_string(user_initials),
             accepted_version=accepted_version,
@@ -75,11 +88,11 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
     ) -> None:
         # Checks if there exists an activity which is approved with activity_uid
         if not object_exist_callback(normalize_string(self.activity_uid)):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no approved activity identified by provided uid ({self.activity_uid})"
             )
         if not ct_term_level_exist_callback(self.flowchart_group_uid):
-            raise ValueError(
+            raise exceptions.ValidationException(
                 f"There is no approved flowchart group identified by provided term uid ({self.flowchart_group_uid})"
             )
 
@@ -100,4 +113,5 @@ class StudySelectionActivityAR(study_selection_base.StudySelectionBaseAR):
 
     _object_type = "activity"
     _object_uid_field = "activity_uid"
+    _object_name_field = "activity_name"
     _order_field_name = "activity_order"

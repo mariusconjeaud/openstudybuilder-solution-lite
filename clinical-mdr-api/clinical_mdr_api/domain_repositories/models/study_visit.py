@@ -18,14 +18,13 @@ from clinical_mdr_api.domain_repositories.models.concepts import (
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
-from clinical_mdr_api.domain_repositories.models.generic import (
-    ClinicalMdrRel,
-    ConjunctionRelation,
-)
+from clinical_mdr_api.domain_repositories.models.generic import ClinicalMdrRel
 from clinical_mdr_api.domain_repositories.models.study import StudyValue
-from clinical_mdr_api.domain_repositories.models.study_audit_trail import StudyAction
 from clinical_mdr_api.domain_repositories.models.study_epoch import StudyEpoch
-from clinical_mdr_api.domain_repositories.models.study_selections import StudySelection
+from clinical_mdr_api.domain_repositories.models.study_selections import (
+    StudyActivitySchedule,
+    StudySelection,
+)
 
 
 class StudyVisit(StudySelection):
@@ -65,7 +64,6 @@ class StudyVisit(StudySelection):
     description = StringProperty()
     start_rule = StringProperty()
     end_rule = StringProperty()
-    note = StringProperty()
     has_visit_contact_mode = RelationshipTo(
         CTTermRoot, "HAS_VISIT_CONTACT_MODE", model=ClinicalMdrRel
     )
@@ -92,5 +90,6 @@ class StudyVisit(StudySelection):
         VisitNameRoot, "HAS_VISIT_NAME", model=ClinicalMdrRel
     )
 
-    has_before = RelationshipFrom(StudyAction, "BEFORE", model=ConjunctionRelation)
-    has_after = RelationshipFrom(StudyAction, "AFTER", model=ConjunctionRelation)
+    has_study_activity_schedule = RelationshipTo(
+        StudyActivitySchedule, "STUDY_VISIT_HAS_SCHEDULE", model=ClinicalMdrRel
+    )

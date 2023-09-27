@@ -1,6 +1,6 @@
 """Objective templates router."""
 
-from typing import Optional, Sequence
+from typing import Sequence
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request
 
@@ -17,12 +17,13 @@ from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.syntax_templates.template_parameter import (
     ComplexTemplateParameter,
 )
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.syntax_templates.parameter_templates import (
     ComplexParameterTemplateService,
 )
 
+# Prefixed with "/parameter-templates"
 router = APIRouter()
 
 Service = ComplexParameterTemplateService
@@ -53,6 +54,7 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
 
 @router.get(
     "",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all parameter templates in their latest/newest version.",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=Sequence[ComplexParameterTemplate],
@@ -101,7 +103,8 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
 # pylint: disable=unused-argument
 def get_parameter_templates(
     request: Request,  # request is actually required by the allow_exports decorator
-    status: Optional[LibraryItemStatus] = Query(
+    status: LibraryItemStatus
+    | None = Query(
         None,
         description="If specified, only those parameter templates will be returned that are currently in the specified status. "
         "This may be particularly useful if the parameter template has "
@@ -118,6 +121,7 @@ def get_parameter_templates(
 
 @router.get(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the latest/newest version of a specific parameter template identified by 'uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
@@ -133,7 +137,8 @@ def get_parameter_templates(
 )
 def get_parameter_template(
     uid: str = ComplexParameterTemplateUID,
-    return_instantiation_counts: Optional[bool] = Query(
+    return_instantiation_counts: bool
+    | None = Query(
         None, description="if specified counts data will be returned along object"
     ),
     current_user_id: str = Depends(get_current_user_id),
@@ -145,6 +150,7 @@ def get_parameter_template(
 
 @router.get(
     "/{uid}/versions",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the version history of a specific parameter template identified by 'uid'.",
     description=f"""
 The returned versions are ordered by `start_date` descending (newest entries first)
@@ -208,6 +214,7 @@ def get_parameter_template_versions(
 
 @router.get(
     "/{uid}/versions/{version}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns a specific version of a specific parameter template identified by 'uid' and 'version'.",
     description="**Multiple versions**:\n\n"
     "Technically, there can be multiple versions of the parameter template with the same version number. "
@@ -239,6 +246,7 @@ def get_parameter_template_version(
 
 @router.post(
     "",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new parameter template in 'Draft' status.",
     description="""This request is only valid if the parameter template
 * belongs to a library that allows creating (the 'is_editable' property of the library needs to be true).
@@ -282,6 +290,7 @@ def create_parameter_template(
 
 @router.patch(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Updates the parameter template identified by 'uid'.",
     description="""This request is only valid if the parameter template
 * is in 'Draft' status and
@@ -327,6 +336,7 @@ def edit(
 
 @router.post(
     "/{uid}/versions",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new version of the parameter template identified by 'uid'.",
     description="""This request is only valid if the parameter template
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
@@ -370,6 +380,7 @@ def create_new_version(
 
 @router.post(
     "/{uid}/approvals",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Approves the parameter template identified by 'uid'.",
     description="""This request is only valid if the parameter template
 * is in 'Draft' status and
@@ -415,6 +426,7 @@ def approve(
 
 @router.delete(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Inactivates/deactivates the parameter template identified by 'uid'.",
     description="""This request is only valid if the parameter template
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -450,6 +462,7 @@ def inactivate(
 
 @router.post(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivates the parameter template identified by 'uid'.",
     description="""This request is only valid if the parameter template
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -485,6 +498,7 @@ def reactivate(
 
 @router.delete(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Deletes the parameter template identified by 'uid'.",
     description="""This request is only valid if \n
 * the parameter template is in 'Draft' status and
@@ -522,6 +536,7 @@ def delete_parameter_template(
 #       however: check if that is ok with regard to the data volume we expect in the future. is paging needed?
 @router.get(
     "/{uid}/parameters",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all parameters used in the parameter template identified by 'uid'. Includes the available values per parameter.",
     description="""The returned parameters are ordered
 0. as they occur in the parameter template
@@ -548,6 +563,7 @@ def get_parameters(
 
 @router.post(
     "/pre-validate",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Validates the content of an parameter template without actually processing it.",
     description="""Be aware that - even if this request is accepted - there is no guarantee that
 a following request to e.g. *[POST] /parameter-templates* or *[PATCH] /complex-parameter-templates/{uid}*

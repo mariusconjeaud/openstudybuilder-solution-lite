@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Optional, Sequence, Tuple
+from typing import Sequence
 
 from neomodel import db
 
@@ -102,7 +102,7 @@ class DictionaryCodelistGenericRepository(
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
     ) -> DictionaryCodelistAR:
@@ -192,13 +192,13 @@ class DictionaryCodelistGenericRepository(
     def find_all(
         self,
         library: DictionaryType = None,
-        sort_by: Optional[dict] = None,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        sort_by: dict | None = None,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         page_number: int = 1,
         page_size: int = 0,
         total_count: bool = False,
-    ) -> Tuple[Sequence[DictionaryCodelistAR], int]:
+    ) -> tuple[Sequence[DictionaryCodelistAR], int]:
         """
         Method runs a cypher query to fetch all needed data to create objects of type AggregateRootType.
         In the case of the following repository it will be some Codelists aggregates.
@@ -269,9 +269,9 @@ class DictionaryCodelistGenericRepository(
         self,
         library: DictionaryType,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence[str]:
         # Match clause

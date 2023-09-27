@@ -98,9 +98,9 @@ export default {
         return
       }
       if (this.studyById) {
-        this.$store.dispatch('studiesGeneral/selectStudy', this.studyById)
+        this.$store.dispatch('studiesGeneral/selectStudy', { studyObj: this.studyById })
       } else {
-        this.$store.dispatch('studiesGeneral/selectStudy', this.studyByAcronym)
+        this.$store.dispatch('studiesGeneral/selectStudy', { studyObj: this.studyByAcronym })
       }
       this.$emit('selected')
       this.close()
@@ -117,7 +117,11 @@ export default {
     }
   },
   mounted () {
-    study.getAll().then(resp => {
+    const params = {
+      sort_by: { 'current_metadata.identification_metadata.study_id': true },
+      page_size: 0
+    }
+    study.get(params).then(resp => {
       this.studies = resp.data.items
     })
   }

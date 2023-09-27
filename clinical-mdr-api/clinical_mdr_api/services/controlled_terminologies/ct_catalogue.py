@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Sequence
+from typing import Sequence
 
 from clinical_mdr_api import exceptions, models
 from clinical_mdr_api.domains._utils import normalize_string
@@ -15,7 +15,7 @@ from clinical_mdr_api.services._meta_repository import MetaRepository  # type: i
 class CTCatalogueService:
     _repos: MetaRepository
 
-    def __init__(self, user: Optional[str] = None):
+    def __init__(self, user: str | None = None):
         self.user_initials = user if user is not None else "TODO user initials"
         self._repos = MetaRepository(self.user_initials)
 
@@ -31,7 +31,7 @@ class CTCatalogueService:
         )
 
     def get_all_ct_catalogues(
-        self, library_name: Optional[str]
+        self, library_name: str | None
     ) -> Sequence[models.CTCatalogue]:
         if (
             library_name is not None
@@ -55,8 +55,8 @@ class CTCatalogueService:
 
     def get_ct_catalogues_changes(
         self,
-        library_name: Optional[str],
-        catalogue_name: Optional[str],
+        library_name: str | None,
+        catalogue_name: str | None,
         comparison_type: str,
         start_datetime: datetime,
         end_datetime: datetime,

@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import AbstractSet, Callable, Optional, TypeVar
+from typing import AbstractSet, Callable, Self, TypeVar
 
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
@@ -9,6 +9,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
     ObjectAction,
 )
+from clinical_mdr_api.exceptions import BusinessLogicException, ValidationException
 
 
 @dataclass(frozen=True)
@@ -18,9 +19,9 @@ class ConceptVO:
     """
 
     name: str
-    name_sentence_case: Optional[str]
-    definition: Optional[str]
-    abbreviation: Optional[str]
+    name_sentence_case: str | None
+    definition: str | None
+    abbreviation: str | None
     is_template_parameter: bool
 
     def validate_uniqueness(
@@ -33,7 +34,104 @@ class ConceptVO:
     ):
         existing_node_uid = lookup_callback(property_name, value)
         if existing_node_uid and existing_node_uid != uid:
-            raise ValueError(error_message)
+            raise ValidationException(error_message)
+
+    @classmethod
+    def duplication_check(
+        cls,
+        property_data_list: list[tuple[str, str, str | None]],
+        exists_by_callback: Callable[[str, str, bool], bool],
+        object_name: str = "Object",
+        on_root: bool = False,
+    ):
+        """
+        Checks for object duplicates based on property data and raises an exception if any duplicates are found.
+
+        Args:
+            property_data_list (list[tuple[str, str, str | None]]): A list of tuples containing property data. Each tuple contains three elements:
+                elm1 (str): property_name: A string representing the name of the property.
+                elm2 (str): property_value: A string representing the value of the property.
+                elm3 (str | None): property_previous_value: A string representing the previous value of the property or None.
+            exists_by_callback (Callable[[str, str, bool], bool]): A callback function that takes a property name, property value,
+            and on_root flag as arguments and returns a boolean value indicating whether the property value already exists.
+            object_name: (str, optional) A string representing the name of the object being checked for duplicates. Defaults to "Object".
+            on_root: (bool, optional) A boolean flag indicating whether to perform the existence check on the root node. Defaults to False.
+
+        Returns:
+            None: This method does not return a value directly, but it raises an exception if duplicates are found.
+
+        Raises:
+            BusinessLogicException: If duplicates are found in the property data list, an exception is raised with
+            a message indicating the object name and the properties with duplicate values.
+        """
+        duplicates = []
+
+        for (
+            property_name,
+            property_value,
+            property_previous_value,
+        ) in property_data_list:
+            if (
+                exists_by_callback(property_name.lower(), property_value, on_root)
+                and property_previous_value != property_value
+            ):
+                duplicates.append(f"{property_name}: {property_value}")
+
+        if duplicates:
+            raise BusinessLogicException(
+                f"""{object_name} with {duplicates} already exists."""
+            )
+
+    def check_concepts_exist(
+        self,
+        concept_data_list: list[
+            tuple[list[str], str, Callable[[str, str, bool], bool]]
+        ],
+        object_name: str = "Object",
+        property_name: str = "uid",
+        on_root: bool = True,
+    ):
+        """
+        Checks if the provided concept values exist based on the concept data list and raises an exception if any do not exist.
+
+        Args:
+            concept_data_list (list[tuple[list[str], str, Callable[[str, str, bool], bool]]]): A list of tuples containing concept data.
+            Each tuple contains three elements:
+                elm1 (list[str]): A list of strings representing the property values to check for existence.
+                elm2 (str): A string representing the name of the concept being checked.
+                elm3 (Callable[[str, str, bool], bool]): A callback function that takes a property name,
+                concept value, and on_root flag as arguments and returns a boolean value indicating whether the concept value exists.
+            object_name: (str, optional) A string representing the name of the object performing the concept existence check. Defaults to "Object".
+            property_name: (str, optional) A string representing the name of the property used to identify the concept. Defaults to "uid".
+            on_root: (bool, optional) A boolean flag indicating whether to perform the concept existence check on the root object. Defaults to True.
+
+        Returns:
+            None: This method does not return a value directly, but it raises an exception if non-existing concept values are found.
+
+        Raises:
+            BusinessLogicException: If any of the provided concept values do not exist based on the concept data list, an exception is raised with
+            a message indicating the object name, concept name, property name, and the non-existing concept values.
+        """
+        errors = []
+
+        for values, concept_name, callback in concept_data_list:
+            non_existing_values = set()
+            for value in values:
+                if not callback(property_name, value, on_root):
+                    non_existing_values.add(value)
+
+            if non_existing_values:
+                errors.append(
+                    (
+                        f"Concept Name: {concept_name}",
+                        f"{property_name}s: {non_existing_values}",
+                    )
+                )
+
+        if errors:
+            raise BusinessLogicException(
+                f"{object_name} tried to connect to non existing concepts {errors}."
+            )
 
 
 _ConceptVOType = TypeVar("_ConceptVOType", bound=ConceptVO)
@@ -62,9 +160,9 @@ class ConceptARBase(LibraryItemAggregateRootBase):
         cls,
         uid: str,
         concept_vo: _ConceptVOType,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> _AggregateRootType:
+    ) -> Self:
         concept_ar = cls(
             _uid=uid,
             _concept_vo=concept_vo,
@@ -80,18 +178,19 @@ class ConceptARBase(LibraryItemAggregateRootBase):
         author: str,
         concept_vo: _ConceptVOType,
         library: LibraryVO,
-        concept_exists_by_name_callback: Callable[[str], bool],
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-    ) -> _AggregateRootType:
+        concept_exists_by_callback: Callable[
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
         if not library.is_editable:
-            raise ValueError(
+            raise BusinessLogicException(
                 f"The library with the name='{library.name}' does not allow to create objects."
             )
-        if concept_exists_by_name_callback(concept_vo.name):
-            raise ValueError(
-                f"{cls.__name__} with name ({concept_vo.name}) already exists."
-            )
+        ConceptVO.duplication_check(
+            [("name", concept_vo.name, None)], concept_exists_by_callback
+        )
         concept_ar = cls(
             _uid=generate_uid_callback(),
             _item_metadata=item_metadata,
@@ -103,20 +202,18 @@ class ConceptARBase(LibraryItemAggregateRootBase):
     def edit_draft(
         self,
         author: str,
-        change_description: Optional[str],
+        change_description: str | None,
         concept_vo: _ConceptVOType,
-        concept_exists_by_name_callback: Callable[[str], bool],
+        concept_exists_by_callback: Callable[
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
     ) -> None:
         """
         Creates a new draft version for the object.
         """
-        if (
-            concept_exists_by_name_callback(concept_vo.name)
-            and self.name != concept_vo.name
-        ):
-            raise ValueError(
-                f"{type(self).__name__} with name ({concept_vo.name}) already exists."
-            )
+        ConceptVO.duplication_check(
+            [("name", concept_vo.name, self.name)], concept_exists_by_callback
+        )
         if self._concept_vo != concept_vo:
             super()._edit_draft(change_description=change_description, author=author)
             self.concept_vo = concept_vo

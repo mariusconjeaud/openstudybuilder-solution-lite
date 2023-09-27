@@ -1,0 +1,74 @@
+trigger:
+  batch: true # Whether to batch changes per branch.
+  branches:
+    include:
+    - main
+    - release/*
+
+pool:
+  name: "clinical-mdr-dev-vmss"
+
+parameters:
+
+  - name: PYTHON_VERSION
+    type: string
+    default: "3"
+    displayName: Python version to use
+
+stages:
+
+  - stage: build
+    displayName: 'Build'
+    jobs:
+
+    - job: build_sbom
+      displayName: "Build SBOM"
+      timeoutInMinutes: 10
+      continueOnError: false
+
+      steps:
+
+        - checkout: self
+          persistCredentials: true
+
+        - task: UsePythonVersion@0
+          inputs:
+            versionSpec: ${{parameters.PYTHON_VERSION}}
+            addToPath: true
+            architecture: "x64"
+
+        - script: |
+            set -ex
+            pip install --upgrade pip pipenv wheel
+          displayName: "Install pipenv"
+
+        - script: >-
+            pipenv sync
+          displayName: "Install Python packages"
+
+        - script: >-
+            pipenv run build-sbom > sbom.md
+          displayName: "Build sbom.md"
+          env:
+            FALLBACK_LICENSE_DIR:
+
+        - script: |
+            set -ex
+            
+            if [[ '$(Build.Reason)' == 'PullRequest' ]] && ! git diff --exit-code --quiet sbom.md ; then
+              git config --global user.email 'pipeline@studybuilder.com'
+              git config --global user.name 'Pipeline $(Build.BuildNumber)'
+            
+              if [[ '$(Build.SourceBranchName)' != 'main' ]] ; then
+                # Post a comment on pull-request that the SBOM has been changed #
+                pwsh -NoLogo -NonInteractive -File pipeline/scripts/make-sbom-comment-on-pr.ps1 -token '$(System.AccessToken)' -pullRequestId '$(System.PullRequest.PullRequestId)' -projectName '$(System.TeamProject)' -repositoryName '$(Build.Repository.Name)'
+              fi
+            
+              # Commit changes #
+              git add sbom.md
+              git commit sbom.md -m "Pipeline $(Build.BuildNumber) committed changes to SBOM"
+              gitbranch='$(System.PullRequest.SourceBranch)'
+              gitbranch="${gitbranch#refs/heads/}"
+              git push 'https://$(System.AccessToken)@dev.azure.com/novonordiskit/Clinical-MDR/_git/clinical-mdr-api' "$gitbranch"          
+            fi
+          displayName: "Commit sbom.md"

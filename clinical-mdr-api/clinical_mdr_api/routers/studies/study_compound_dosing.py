@@ -1,4 +1,4 @@
-from typing import Any, Optional, Sequence
+from typing import Any, Sequence
 
 from fastapi import Body, Depends, Query, Request, Response, status
 from pydantic.types import Json
@@ -6,7 +6,7 @@ from pydantic.types import Json
 from clinical_mdr_api import config, models
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers import study_router as router
@@ -19,6 +19,7 @@ from clinical_mdr_api.services.studies.study_compound_dosing_selection import (
 
 @router.get(
     "/studies/{uid}/study-compound-dosings",
+    dependencies=[rbac.STUDY_READ],
     summary="List all study compound dosings currently defined for the study",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=CustomPage[models.StudyCompoundDosing],
@@ -57,24 +58,24 @@ def get_all_selected_compound_dosings(
     request: Request,  # request is actually required by the allow_exports decorator
     uid: str = utils.studyUID,
     current_user_id: str = Depends(get_current_user_id),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
 ):
     service = StudyCompoundDosingSelectionService(author=current_user_id)
     all_items = service.get_all_compound_dosings(
@@ -88,7 +89,7 @@ def get_all_selected_compound_dosings(
 
     return CustomPage.create(
         items=all_items.items,
-        total=all_items.total_count,
+        total=all_items.total,
         page=page_number,
         size=page_size,
     )
@@ -96,6 +97,7 @@ def get_all_selected_compound_dosings(
 
 @router.get(
     "/studies/{uid}/study-compound-dosings/headers",
+    dependencies=[rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
@@ -112,18 +114,17 @@ def get_all_selected_compound_dosings(
 def get_distinct_values_for_header(
     uid: str = utils.studyUID,
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
     service = StudyCompoundDosingSelectionService(author=current_user_id)
@@ -139,6 +140,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/study-compound-dosings/headers",
+    dependencies=[rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
@@ -154,18 +156,17 @@ def get_distinct_values_for_header(
 )
 def get_distinct_compound_dosings_values_for_header(
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
     service = StudyCompoundDosingSelectionService(author=current_user_id)
@@ -180,6 +181,7 @@ def get_distinct_compound_dosings_values_for_header(
 
 @router.get(
     "/studies/{uid}/study-compound-dosings/audit-trail",
+    dependencies=[rbac.STUDY_READ],
     summary="List full audit trail related to definition of all study compound dosings.",
     description="""
 Parameters:
@@ -220,6 +222,7 @@ def get_all_compound_dosings_audit_trail(
 
 @router.get(
     "/studies/{uid}/study-compound-dosings/{study_compound_dosing_uid}/audit-trail",
+    dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study compound dosing.",
     description="""
 Parameters:
@@ -268,6 +271,7 @@ def get_compound_dosing_audit_trail(
 
 @router.post(
     "/studies/{uid}/study-compound-dosings",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Add a study compound dosing to a study",
     response_model=models.StudyCompoundDosing,
     response_model_exclude_unset=True,
@@ -297,6 +301,7 @@ def create_study_compound_dosing(
 
 @router.delete(
     "/studies/{uid}/study-compound-dosings/{study_compound_dosing_uid}",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study compound dosing",
     response_model=None,
     status_code=204,
@@ -324,6 +329,7 @@ def delete_compound_dosing(
 
 @router.patch(
     "/studies/{uid}/study-compound-dosings/{study_compound_dosing_uid}",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Edit or replace a study compound dosing",
     description="""
 State before:

@@ -3,7 +3,6 @@ import json
 import os
 import re
 import time
-from typing import Optional
 from unittest import TestCase
 from urllib.parse import urljoin
 
@@ -30,20 +29,31 @@ def inject_and_clear_db(db_name):
     db.set_connection(full_dsn)
     db.cypher_query("CREATE OR REPLACE DATABASE $db", {"db": db_name})
 
-    full_dsn = urljoin(config.settings.neo4j_dsn, f"/{db_name}")
-    neoconfig.DATABASE_URL = full_dsn
-    db.set_connection(full_dsn)
-
     try_cnt = 1
     db_exists = False
     while try_cnt < 10 and not db_exists:
         try:
+            # Database creation can take a couple of seconds
+            # db.set_connection will return a ClientError if the database isn't ready
+            # This allows for retrying after a small pause
+            full_dsn = urljoin(config.settings.neo4j_dsn, f"/{db_name}")
+            neoconfig.DATABASE_URL = full_dsn
+            db.set_connection(full_dsn)
+
+            # AuraDB workaround for not supporting multiple db's:
+            # Use the main db for tests and remove all nodes
+            # db.set_connection(os.environ["NEO4J_DSN"])
+            # db.cypher_query("MATCH (n) DETACH DELETE n")
+
             try_cnt = try_cnt + 1
             db.cypher_query(
-                "CREATE CONSTRAINT IF NOT EXISTS ON (c:Counter) ASSERT (c.counterId) IS NODE KEY"
+                "CREATE CONSTRAINT IF NOT EXISTS FOR (c:Counter) REQUIRE (c.counterId) IS NODE KEY"
             )
             db_exists = True
-        except neo4j.exceptions.ClientError as exc:
+        except (
+            neo4j.exceptions.ClientError,
+            neo4j.exceptions.DatabaseUnavailable,
+        ) as exc:
             print(
                 f"Database {db_name} still not reachable, {exc.code}, pausing for 2 seconds"
             )
@@ -372,7 +382,7 @@ class APITest(TestCase):
         test_client: TestClient,
         path_root: str,
         filter_field_name: str,
-        wildcard_filter_field_name: Optional[str] = "test",
+        wildcard_filter_field_name: str | None = "test",
     ):
         """Generic method to test filtering.
         Tests both filter on a specific field, and wildcard filtering.
@@ -381,7 +391,7 @@ class APITest(TestCase):
             test_client (TestClient): Pass test client from the test main module.
             filter_field_name (str): Field name to filter on.
             path_root (str): Path root of the endpoint. E.g. /objective-templates
-            wildcard_filter_field_name (Optional[str], optional): Optionally, pass a specificvalue to test for wildcard filtering.
+            wildcard_filter_field_name (str | None, optional): Optionally, pass a specificvalue to test for wildcard filtering.
                 Advice : pass a stirng that is only contained in a nested object. This will allow to test filtering on nested objects.
                 E.g. : the name of the library for templates.
                 Defaults to "test".

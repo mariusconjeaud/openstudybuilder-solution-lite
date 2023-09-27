@@ -1,5 +1,5 @@
 """Activity hierarchies router."""
-from typing import Any, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Response, status
 from pydantic.types import Json
@@ -15,13 +15,14 @@ from clinical_mdr_api.models.concepts.activities.activity import (
 )
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.concepts.activities.activity_service import (
     ActivityService,
 )
 
+# Prefixed with "/concepts/activities"
 router = APIRouter()
 
 ActivityUID = Path(None, description="The unique id of the Activity")
@@ -29,6 +30,7 @@ ActivityUID = Path(None, description="The unique id of the Activity")
 
 @router.get(
     "/activities",
+    dependencies=[rbac.LIBRARY_READ],
     summary="List all activities (for a given library)",
     description=f"""
 State before:
@@ -75,45 +77,49 @@ Possible errors:
 # pylint: disable=unused-argument
 def get_activities(
     request: Request,  # request is actually required by the allow_exports decorator
-    library: Optional[str] = Query(None, description="The library name"),
-    activity_subgroup_uid: Optional[str] = Query(
+    library: str | None = Query(None, description="The library name"),
+    activity_subgroup_uid: str
+    | None = Query(
         None,
         description="The unique id of the activity sub group to use as a specific filter",
     ),
-    activity_names: Optional[List[str]] = Query(
+    activity_names: list[str]
+    | None = Query(
         None,
         description="A list of activity names to use as a specific filter",
         alias="activity_names[]",
     ),
-    activity_subgroup_names: Optional[List[str]] = Query(
+    activity_subgroup_names: list[str]
+    | None = Query(
         None,
         description="A list of activity sub group names to use as a specific filter",
         alias="activity_subgroup_names[]",
     ),
-    activity_group_names: Optional[List[str]] = Query(
+    activity_group_names: list[str]
+    | None = Query(
         None,
         description="A list of activity group names to use as a specific filter",
         alias="activity_group_names[]",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
     activity_service = ActivityService(user=current_user_id)
@@ -131,16 +137,17 @@ def get_activities(
         activity_group_names=activity_group_names,
     )
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/activities/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=List[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -152,35 +159,37 @@ def get_activities(
 )
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
-    library: Optional[str] = Query(None, description="The library name"),
+    library: str | None = Query(None, description="The library name"),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    activity_names: Optional[List[str]] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    activity_names: list[str]
+    | None = Query(
         None,
         description="A list of activity names to use as a specific filter",
         alias="activity_names[]",
     ),
-    activity_subgroup_names: Optional[List[str]] = Query(
+    activity_subgroup_names: list[str]
+    | None = Query(
         None,
         description="A list of activity sub group names to use as a specific filter",
         alias="activity_subgroup_names[]",
     ),
-    activity_group_names: Optional[List[str]] = Query(
+    activity_group_names: list[str]
+    | None = Query(
         None,
         description="A list of activity group names to use as a specific filter",
         alias="activity_group_names[]",
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     activity_service = ActivityService(user=current_user_id)
     return activity_service.get_distinct_values_for_header(
@@ -198,6 +207,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/activities/{uid}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific activity (in a specific version)",
     description="""
 State before:
@@ -231,6 +241,7 @@ def get_activity(
 
 @router.get(
     "/activities/{uid}/overview",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Get detailed overview a specific activity",
     description="""
 Returns detailed description about activity, including information about:
@@ -281,6 +292,7 @@ def get_activity_overview(
 
 @router.get(
     "/activities/{uid}/versions",
+    dependencies=[rbac.LIBRARY_READ],
     summary="List version history for activities",
     description="""
 State before:
@@ -296,7 +308,7 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=List[Activity],
+    response_model=list[Activity],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -316,6 +328,7 @@ def get_versions(
 
 @router.post(
     "/activities",
+    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Creates new activity.",
     description="""
 State before:
@@ -362,6 +375,7 @@ def create(
 
 @router.post(
     "/activities/sponsor-activities",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates new sponsor activity and retires activity request.",
     description="""
 State before:
@@ -410,6 +424,7 @@ def create_sponsor_activity_from_activity_request(
 
 @router.patch(
     "/activities/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Update activity",
     description="""
 State before:
@@ -459,6 +474,7 @@ def edit(
 
 @router.post(
     "/activities/{uid}/versions",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of activity",
     description="""
 State before:
@@ -502,6 +518,7 @@ def new_version(
 
 @router.post(
     "/activities/{uid}/approvals",
+    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Approve draft version of activity",
     description="""
 State before:
@@ -547,6 +564,7 @@ def approve(
 
 @router.delete(
     "/activities/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of activity",
     description="""
 State before:
@@ -591,6 +609,7 @@ def inactivate(
 
 @router.post(
     "/activities/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a activity",
     description="""
 State before:
@@ -635,6 +654,7 @@ def reactivate(
 
 @router.delete(
     "/activities/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of activity",
     description="""
 State before:

@@ -2,7 +2,6 @@ import datetime
 from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyStatus,
@@ -33,7 +32,7 @@ class StudyDiseaseMilestoneVO:
     disease_milestone_type_definition: str
     disease_milestone_type_named: str
     accepted_version: bool = False
-    uid: Optional[str] = None
+    uid: str | None = None
 
     @property
     def dm_type(self):
@@ -59,5 +58,5 @@ class StudyDiseaseMilestoneVO:
 
 @dataclass
 class StudyDiseaseMilestoneHistoryVO(StudyDiseaseMilestoneVO):
-    change_type: Optional[str] = None
-    end_date: Optional[datetime.datetime] = None
+    change_type: str | None = None
+    end_date: datetime.datetime | None = None

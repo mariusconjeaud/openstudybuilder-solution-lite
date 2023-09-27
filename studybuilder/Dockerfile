@@ -27,6 +27,8 @@ RUN yarn build
 FROM $NGINX_IMAGE as prod-stage
 
 COPY --from=build-stage /app/dist /usr/share/nginx/html
+COPY --from=build-stage /app/sbom.md /usr/share/nginx/html
+COPY --from=build-stage /app/LICENSE.md /usr/share/nginx/html/license.md
 COPY ./config/nginx/default.conf /etc/nginx/conf.d/default.conf
 
 ARG PORT=5005

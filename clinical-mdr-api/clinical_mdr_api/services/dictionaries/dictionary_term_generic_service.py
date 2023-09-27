@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, Generic, Optional, Sequence, TypeVar
+from typing import Any, Generic, Sequence, TypeVar
 
 from neomodel import db
 from pydantic import BaseModel
@@ -23,6 +23,7 @@ from clinical_mdr_api.services._meta_repository import MetaRepository  # type: i
 from clinical_mdr_api.services._utils import (
     calculate_diffs,
     fill_missing_values_in_base_model_from_reference_base_model,
+    is_library_editable,
     normalize_string,
 )
 
@@ -40,9 +41,9 @@ class DictionaryTermGenericService(Generic[_AggregateRootType], ABC):
     version_class = DictionaryTermVersion
     repository_interface = DictionaryTermGenericRepository
     _repos: MetaRepository
-    user_initials: Optional[str]
+    user_initials: str | None
 
-    def __init__(self, user: Optional[str] = None):
+    def __init__(self, user: str | None = None):
         self.user_initials = user if user is not None else "TODO user initials"
         self._repos = MetaRepository(self.user_initials)
 
@@ -99,14 +100,14 @@ class DictionaryTermGenericService(Generic[_AggregateRootType], ABC):
     def get_all_dictionary_terms(
         self,
         codelist_uid: str,
-        sort_by: Optional[dict] = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[DictionaryTerm]:
-        items, total_count = self.repository.find_all(
+        items, total = self.repository.find_all(
             codelist_uid=codelist_uid,
             sort_by=sort_by,
             filter_by=filter_by,
@@ -116,7 +117,7 @@ class DictionaryTermGenericService(Generic[_AggregateRootType], ABC):
             total_count=total_count,
         )
 
-        all_dictionary_terms = GenericFilteringReturn.create(items, total_count)
+        all_dictionary_terms = GenericFilteringReturn.create(items, total)
         all_dictionary_terms.items = [
             self._transform_aggregate_root_to_pydantic_model(dictionary_term_ar)
             for dictionary_term_ar in all_dictionary_terms.items
@@ -128,9 +129,9 @@ class DictionaryTermGenericService(Generic[_AggregateRootType], ABC):
         self,
         codelist_uid: str,
         field_name: str,
-        search_string: Optional[str] = "",
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        search_string: str | None = "",
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         result_count: int = 10,
     ) -> Sequence[str]:
         # First, check that attributes provided for filtering exist in the return class
@@ -158,7 +159,7 @@ class DictionaryTermGenericService(Generic[_AggregateRootType], ABC):
         return self._transform_aggregate_root_to_pydantic_model(item)
 
     def _find_by_uid_or_raise_not_found(
-        self, term_uid: str, for_update: Optional[bool] = False
+        self, term_uid: str, for_update: bool | None = False
     ) -> _AggregateRootType:
         item = self.repository.find_by_uid_2(uid=term_uid, for_update=for_update)
         if item is None:
@@ -202,22 +203,12 @@ class DictionaryTermGenericService(Generic[_AggregateRootType], ABC):
 
         library_vo = LibraryVO.from_input_values_2(
             library_name=term_input.library_name,
-            is_library_editable_callback=(
-                lambda name: self._repos.library_repository.find_by_name(
-                    name
-                ).is_editable
-                if self._repos.library_repository.find_by_name(name) is not None
-                else None
-            ),
+            is_library_editable_callback=is_library_editable,
         )
-        try:
-            dictionary_term_ar = self._create_aggregate_root(
-                term_input=term_input, library=library_vo
-            )
-            self.repository.save(dictionary_term_ar)
-
-        except ValueError as value_error:
-            raise exceptions.ValidationException(value_error.args[0])
+        dictionary_term_ar = self._create_aggregate_root(
+            term_input=term_input, library=library_vo
+        )
+        self.repository.save(dictionary_term_ar)
 
         return self._transform_aggregate_root_to_pydantic_model(dictionary_term_ar)
 
@@ -250,8 +241,6 @@ class DictionaryTermGenericService(Generic[_AggregateRootType], ABC):
             return self._transform_aggregate_root_to_pydantic_model(item)
         except VersioningException as e:
             raise exceptions.BusinessLogicException(e.msg)
-        except ValueError as e:
-            raise exceptions.ValidationException(e)
 
     @db.transaction
     def approve(self, term_uid: str) -> BaseModel:

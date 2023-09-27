@@ -4,13 +4,16 @@ This document describe the design specification for access control, authenticati
 
 ## Access control
 
-### Front-end access
+### Front-end and API access
 
-Cuurently we have not implemented access groups for the front-end application. So if a user have access to the StudyBuilder system the user can use all functionalities.
+Currently the StudyBuilder system support simple role-based access groups for the front-end application as well as for calling the API directly. These are defined as a set of End User Roles as described in the System Data Flows corresponding to a set of System User Roles linked to the Microsoft Identity Platform aka. Azure Active Directory used by the AIP.
 
-### API access
+| End User Role | System User Role | Description |
+|-----|-----|----------|
+| Standards Developer | Library.Write, Library.Read, Study.Read | Standards Developer can maintain all data within the Library menu in the front end app and then view the rest. This corespond to almost any API endpoints not starting with '/studies/...' and ability to call GET enpoints for the '/studies/...' endpoints. |
+| Study Setup User | Study.Write, Library.Read, Study.Read | Study Setup user can maintain all data within the Library menu in the front end app and then view the rest. This corespond to all API endpoints starting with '/studies/...' as well as a number of the library endpoints when creating user defined elements and ability to call all other GET enpoints. |
+| Read Only User | Study.Read, Library.Read | Read Only User can view all data within the StudyBuilder app and call all GET endpoints. |
 
-Cuurently we have not implemented access groups for the API service. So if a user have access to the StudyBuilder system the user can use all API endpoints.
 
 ### Database access
 

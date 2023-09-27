@@ -1,5 +1,3 @@
-from typing import Optional
-
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
@@ -60,19 +58,26 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: CTTermNameRoot,
-        library: Optional[Library],
+        library: Library | None,
         relationship: VersionRelationship,
         value: CTTermNameValue,
     ) -> CTTermNameAR:
         ct_term_root_node = root.has_root.single()
         ct_codelist_root_node = ct_term_root_node.has_term.single()
         if ct_codelist_root_node is None:
-            raise BusinessLogicException(
-                f"The term  with name '{value.name}' has no current version."
-            )
+            ct_codelist_root_node = ct_term_root_node.had_term.single()
+            if ct_codelist_root_node is None:
+                raise BusinessLogicException(
+                    f"The term  with name '{value.name}' has no current or retired version."
+                )
         has_term_relationship: CodelistTermRelationship = (
             ct_codelist_root_node.has_term.relationship(ct_term_root_node)
         )
+        had_term_relationship: CodelistTermRelationship | None = None
+        if has_term_relationship is None:
+            had_term_relationship: CodelistTermRelationship = (
+                ct_codelist_root_node.had_term.relationship(ct_term_root_node)
+            )
 
         return CTTermNameAR.from_repository_values(
             uid=ct_term_root_node.uid,
@@ -80,7 +85,9 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
                 codelist_uid=ct_codelist_root_node.uid,
                 name=value.name,
                 name_sentence_case=value.name_sentence_case,
-                order=has_term_relationship.order,
+                order=has_term_relationship.order
+                if has_term_relationship
+                else had_term_relationship,
                 catalogue_name=ct_codelist_root_node.has_codelist.single().name,
             ),
             library=LibraryVO.from_input_values_2(

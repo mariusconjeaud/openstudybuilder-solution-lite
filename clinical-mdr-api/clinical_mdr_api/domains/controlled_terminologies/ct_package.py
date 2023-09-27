@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Optional
 
 
 @dataclass
@@ -8,11 +7,11 @@ class CTPackageAR:
     _uid: str
     catalogue_name: str
     name: str
-    label: Optional[str]
-    description: Optional[str]
-    href: Optional[str]
-    registration_status: Optional[str]
-    source: Optional[str]
+    label: str | None
+    description: str | None
+    href: str | None
+    registration_status: str | None
+    source: str | None
     import_date: datetime
     effective_date: date
     user_initials: str
@@ -26,11 +25,11 @@ class CTPackageAR:
         uid: str,
         catalogue_name: str,
         name: str,
-        label: Optional[str],
-        description: Optional[str],
-        href: Optional[str],
-        registration_status: Optional[str],
-        source: Optional[str],
+        label: str | None,
+        description: str | None,
+        href: str | None,
+        registration_status: str | None,
+        source: str | None,
         import_date: datetime,
         effective_date: date,
         user_initials: str,

@@ -1,10 +1,13 @@
 import logging
 import time
-from typing import Any, List, Mapping, Sequence, Union
+import uuid
+from typing import Any, Mapping, Sequence
 
 from authlib.integrations.base_client import OAuth2Mixin
-from authlib.jose import JsonWebKey, Key, KeySet, jwt
+from authlib.jose import JsonWebKey, JWTClaims, Key, KeySet, jwt
 from httpx import AsyncClient
+
+from clinical_mdr_api import exceptions
 
 log = logging.getLogger(__name__)
 
@@ -18,8 +21,8 @@ class JWKService(KeySet):
     def __init__(
         self,
         oauth_client: OAuth2Mixin,
-        audience: Union[str, List[str]],
-        leeway_seconds: Union[int, float] = 15,
+        audience: str | list[str],
+        leeway_seconds: int | float = 15,
     ):
         self.oauth_client = oauth_client
         self.audience = audience
@@ -69,7 +72,7 @@ class JWKService(KeySet):
             return self.keys[kid]
         except KeyError as exc:
             # KeySet interface
-            raise ValueError(f"Unknown key id: {kid!s}") from exc
+            raise exceptions.ValidationException(f"Unknown key id: {kid!s}") from exc
 
     async def fetch_jwk_set(self) -> Mapping[str, Key]:
         log.debug("Fetching JWKs: %s", self.jwks_uri)
@@ -84,7 +87,7 @@ class JWKService(KeySet):
         return keys_dict
 
     def update_keys(
-        self, keys: Sequence[Mapping[str, Union[str, Sequence[str]]]]
+        self, keys: Sequence[Mapping[str, str | Sequence[str]]]
     ) -> Mapping[str, Key]:
         keys_dict = {}
 
@@ -97,6 +100,25 @@ class JWKService(KeySet):
         self._keys_updated = time.time()
 
         return keys_dict
+
+    def generate_key(
+        self, kty="RSA", crv_or_size=2048, options=None, is_private=True
+    ) -> Key:
+        """Generate a Key, useful for testing with self-signed tokens"""
+
+        if options is None:
+            options = {}
+        if "kid" not in options:
+            options["kid"] = uuid.uuid4().hex
+
+        key = JsonWebKey.generate_key(
+            kty=kty, crv_or_size=crv_or_size, options=options, is_private=is_private
+        )
+
+        self.keys[key.kid] = key
+        self._keys_updated = time.time()
+
+        return key
 
     async def refresh_jwk_set(self) -> bool:
         """Update keys only if cooldown seconds has elapsed"""
@@ -113,7 +135,7 @@ class JWKService(KeySet):
         resp.raise_for_status()
         return resp.json()
 
-    async def validate_jwt(self, token: Union[str, bytes]):
+    async def validate_jwt(self, token: str | bytes) -> JWTClaims:
         """Validates JWT, fetching JWKs, checking signature and iss & aud claims (if init), then returns claims."""
         await self.init()
 

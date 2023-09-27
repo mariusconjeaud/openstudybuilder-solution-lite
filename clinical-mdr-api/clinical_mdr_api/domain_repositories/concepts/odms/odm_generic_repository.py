@@ -1,5 +1,4 @@
 from abc import ABC
-from typing import Dict, List, Optional, Tuple
 
 from neomodel import db
 
@@ -36,11 +35,10 @@ from clinical_mdr_api.repositories._utils import (
     FilterOperator,
     sb_clear_cache,
 )
-from clinical_mdr_api.services._utils import strip_suffix
 
 
 class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
-    def generic_match_clause(self, only_specific_status: Optional[List[str]] = None):
+    def generic_match_clause(self, only_specific_status: list[str] | None = None):
         if not only_specific_status:
             return super().generic_match_clause()
 
@@ -51,16 +49,16 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
 
     def find_all(
         self,
-        library: Optional[str] = None,
-        sort_by: Optional[dict] = None,
+        library: str | None = None,
+        sort_by: dict | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: Optional[dict] = None,
-        filter_operator: Optional[FilterOperator] = FilterOperator.AND,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
-        only_specific_status: Optional[List[str]] = None,
+        only_specific_status: list[str] | None = None,
         **kwargs,
-    ) -> Tuple[List[_AggregateRootType], int]:
+    ) -> tuple[list[_AggregateRootType], int]:
         """
         Method runs a cypher query to fetch all needed data to create objects of type AggregateRootType.
         In the case of the following repository it will be some Concept aggregates.
@@ -117,52 +115,45 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
 
     @classmethod
     def _get_origin_and_relation_node(
-        cls, uid: str, relation_uid: Optional[str], relationship_type: RelationType
+        cls, uid: str, relation_uid: str | None, relationship_type: RelationType
     ):
         root_class_node = cls.root_class.nodes.get_or_none(uid=uid)
 
-        if relationship_type == RelationType.ACTIVITY_GROUP:
-            relation_node = ActivityGroupRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.has_activity_group
-        elif relationship_type == RelationType.ACTIVITY_SUB_GROUP:
-            relation_node = ActivitySubGroupRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.has_activity_subgroup
-        elif relationship_type == RelationType.ACTIVITY:
-            relation_node = ActivityRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.has_activity
-        elif relationship_type == RelationType.ITEM_GROUP:
-            relation_node = OdmItemGroupRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.item_group_ref
-        elif relationship_type == RelationType.ITEM:
-            relation_node = OdmItemRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.item_ref
-        elif relationship_type == RelationType.FORM:
-            relation_node = OdmFormRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.form_ref
-        elif relationship_type == RelationType.TERM:
-            relation_node = CTTermRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.has_codelist_term
-        elif relationship_type == RelationType.UNIT_DEFINITION:
-            relation_node = UnitDefinitionRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.has_unit_definition
-        elif relationship_type == RelationType.VENDOR_ELEMENT:
-            relation_node = OdmVendorElementRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.has_vendor_element
-        elif relationship_type == RelationType.VENDOR_ATTRIBUTE:
-            relation_node = OdmVendorAttributeRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.has_vendor_attribute
-        elif relationship_type == RelationType.VENDOR_ELEMENT_ATTRIBUTE:
-            relation_node = OdmVendorAttributeRoot.nodes.get_or_none(uid=relation_uid)
-            origin = root_class_node.has_vendor_element_attribute
-        else:
+        relation_mapping = {
+            RelationType.ACTIVITY_GROUP: (ActivityGroupRoot, "has_activity_group"),
+            RelationType.ACTIVITY_SUB_GROUP: (
+                ActivitySubGroupRoot,
+                "has_activity_subgroup",
+            ),
+            RelationType.ACTIVITY: (ActivityRoot, "has_activity"),
+            RelationType.ITEM_GROUP: (OdmItemGroupRoot, "item_group_ref"),
+            RelationType.ITEM: (OdmItemRoot, "item_ref"),
+            RelationType.FORM: (OdmFormRoot, "form_ref"),
+            RelationType.TERM: (CTTermRoot, "has_codelist_term"),
+            RelationType.UNIT_DEFINITION: (UnitDefinitionRoot, "has_unit_definition"),
+            RelationType.VENDOR_ELEMENT: (OdmVendorElementRoot, "has_vendor_element"),
+            RelationType.VENDOR_ATTRIBUTE: (
+                OdmVendorAttributeRoot,
+                "has_vendor_attribute",
+            ),
+            RelationType.VENDOR_ELEMENT_ATTRIBUTE: (
+                OdmVendorAttributeRoot,
+                "has_vendor_element_attribute",
+            ),
+        }
+
+        if relationship_type not in relation_mapping:
             raise BusinessLogicException("Invalid relation type.")
+
+        relation_node_cls, origin_label = relation_mapping[relationship_type]
+        relation_node = relation_node_cls.nodes.get_or_none(uid=relation_uid)
 
         if not relation_node and relation_uid:
             raise BusinessLogicException(
                 f"The object with uid ({relation_uid}) does not exist."
             )
 
-        return origin, relation_node
+        return getattr(root_class_node, origin_label), relation_node
 
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def add_relation(
@@ -170,7 +161,7 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
         uid: str,
         relation_uid: str,
         relationship_type: RelationType,
-        parameters: Optional[dict] = None,
+        parameters: dict | None = None,
     ) -> None:
         origin, relation_node = self.__class__._get_origin_and_relation_node(
             uid, relation_uid, relationship_type
@@ -187,7 +178,7 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
     def remove_relation(
         self,
         uid: str,
-        relation_uid: Optional[str],
+        relation_uid: str | None,
         relationship_type: RelationType,
         disconnect_all: bool = False,
     ) -> None:
@@ -230,7 +221,7 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
 
     def get_active_relationships(
         self, uid: str, relationships: list
-    ) -> Dict[str, List[str]]:
+    ) -> dict[str, list[str]]:
         """
         Returns a key-pair value of target node's name and a list of uids of nodes connected to source node.
 
@@ -241,12 +232,14 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
         source_node = self.root_class.nodes.get_or_none(uid=uid)
 
         try:
-            rs: dict[str, List[str]] = {}
+            rs: dict[str, list[str]] = {}
             for relationship in relationships:
                 rel = getattr(source_node, relationship)
                 if rel:
                     for target_node in rel.all():
-                        target_node_without_suffix = strip_suffix(target_node.__label__)
+                        target_node_without_suffix = target_node.__label__.removesuffix(
+                            "Root"
+                        )
                         if target_node_without_suffix not in rs:
                             rs[target_node_without_suffix] = [target_node.uid]
                         else:

@@ -51,12 +51,21 @@ export default {
   },
   mounted () {
     this.tab = this.$route.params.tab
-    const tabName = this.tab ? this.tabs.find(el => el.tab.substring(1) === this.tab).name : this.tabs[0].name
+    let tabName = this.tab ? this.tabs.find(el => el.tab.substring(1) === this.tab) : this.tabs[0].name
+    if (!tabName) {
+      tabName = this.tab ? this.tabs.find(el => el.name === this.tab).name : this.tabs[0].name
+    } else {
+      tabName = typeof tabName !== 'string' ? tabName.name : tabName
+    }
     setTimeout(() => {
       this.addBreadcrumbsLevel({
         text: tabName,
-        to: { name: 'StudyProperties', params: { tab: tabName } },
+        to: { name: 'Activities', params: { tab: tabName } },
         index: 3,
+        replace: true
+      })
+      this.addBreadcrumbsLevel({
+        index: 4,
         replace: true
       })
     }, 100)
@@ -72,9 +81,15 @@ export default {
         name: 'Activities',
         params: { tab: newValue }
       })
-      const tabName = newValue ? this.tabs.find(el => el.tab.substring(1) === newValue).name : this.tabs[0].name
+      let tabName = newValue ? this.tabs.find(el => el.tab.substring(1) === newValue) : this.tabs[0].name
+      if (!tabName) {
+        tabName = newValue ? this.tabs.find(el => el.name === newValue).name : this.tabs[0].name
+      } else {
+        tabName = tabName.name
+      }
       this.addBreadcrumbsLevel({
         text: tabName,
+        to: { name: 'Activities', params: { tab: tabName } },
         index: 3,
         replace: true
       })

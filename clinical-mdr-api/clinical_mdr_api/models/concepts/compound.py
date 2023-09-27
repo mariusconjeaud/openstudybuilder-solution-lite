@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Sequence
+from typing import Callable, Self, Sequence
 
 from pydantic import Field
 
@@ -34,7 +34,7 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class Compound(Concept):
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         ...,
         description=(
             "Holds those actions that can be performed on Compounds. "
@@ -42,40 +42,38 @@ class Compound(Concept):
         ),
     )
 
-    analyte_number: Optional[str] = Field(None, nullable=True)
-    nnc_short_number: Optional[str] = Field(None, nullable=True)
-    nnc_long_number: Optional[str] = Field(None, nullable=True)
-    is_sponsor_compound: Optional[bool] = True
-    is_name_inn: Optional[bool] = True
-    substances: Optional[Sequence[CompoundSubstance]]
-    dose_values: Optional[Sequence[SimpleNumericValueWithUnit]]
-    strength_values: Optional[Sequence[SimpleNumericValueWithUnit]]
-    lag_times: Optional[Sequence[SimpleLagTime]]
-    delivery_devices: Optional[Sequence[SimpleTermModel]]
-    dispensers: Optional[Sequence[SimpleTermModel]]
-    projects: Optional[Sequence[Project]]
-    brands: Optional[Sequence[Brand]]
-    half_life: Optional[SimpleNumericValueWithUnit]
-    dose_frequencies: Optional[Sequence[SimpleTermModel]]
-    dosage_forms: Optional[Sequence[SimpleTermModel]]
-    routes_of_administration: Optional[Sequence[SimpleTermModel]]
+    analyte_number: str | None = Field(None, nullable=True)
+    nnc_short_number: str | None = Field(None, nullable=True)
+    nnc_long_number: str | None = Field(None, nullable=True)
+    is_sponsor_compound: bool | None = True
+    is_name_inn: bool | None = True
+    substances: Sequence[CompoundSubstance] | None
+    dose_values: Sequence[SimpleNumericValueWithUnit] | None
+    strength_values: Sequence[SimpleNumericValueWithUnit] | None
+    lag_times: Sequence[SimpleLagTime] | None
+    delivery_devices: Sequence[SimpleTermModel] | None
+    dispensers: Sequence[SimpleTermModel] | None
+    projects: Sequence[Project] | None
+    brands: Sequence[Brand] | None
+    half_life: SimpleNumericValueWithUnit | None
+    dose_frequencies: Sequence[SimpleTermModel] | None
+    dosage_forms: Sequence[SimpleTermModel] | None
+    routes_of_administration: Sequence[SimpleTermModel] | None
 
     @classmethod
     def from_compound_ar(
         cls,
         compound_ar: CompoundAR,
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
-        find_dictionary_term_by_uid: Callable[[str], Optional[DictionaryTermAR]],
-        find_substance_term_by_uid: Callable[
-            [str], Optional[DictionaryTermSubstanceAR]
-        ],
-        find_numeric_value_by_uid: Callable[[str], Optional[NumericValueAR]],
-        find_lag_time_by_uid: Callable[[str], Optional[LagTimeAR]],
-        find_unit_by_uid: Callable[[str], Optional[UnitDefinitionAR]],
-        find_project_by_uid: Callable[[str], Optional[ProjectAR]],
-        find_brand_by_uid: Callable[[str], Optional[BrandAR]],
-        find_clinical_programme_by_uid: Callable[[str], Optional[ClinicalProgrammeAR]],
-    ) -> "Compound":
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
+        find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
+        find_substance_term_by_uid: Callable[[str], DictionaryTermSubstanceAR | None],
+        find_numeric_value_by_uid: Callable[[str], NumericValueAR | None],
+        find_lag_time_by_uid: Callable[[str], LagTimeAR | None],
+        find_unit_by_uid: Callable[[str], UnitDefinitionAR | None],
+        find_project_by_uid: Callable[[str], ProjectAR | None],
+        find_brand_by_uid: Callable[[str], BrandAR | None],
+        find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR | None],
+    ) -> Self:
         return cls(
             uid=compound_ar.uid,
             name=compound_ar.name,
@@ -224,8 +222,8 @@ class Compound(Concept):
 class SimpleCompound(BaseModel):
     @classmethod
     def from_uid(
-        cls, uid: str, find_by_uid: Callable[[str], Optional[CompoundAR]]
-    ) -> Optional["SimpleCompound"]:
+        cls, uid: str, find_by_uid: Callable[[str], CompoundAR | None]
+    ) -> Self | None:
         simple_compound_model = None
         if uid is not None:
             compound_ar: CompoundAR = find_by_uid(uid)
@@ -238,7 +236,7 @@ class SimpleCompound(BaseModel):
     name: str = Field(..., title="name", description="")
 
     @classmethod
-    def from_compound_ar(cls, compound_ar: CompoundAR) -> "SimpleCompound":
+    def from_compound_ar(cls, compound_ar: CompoundAR) -> Self:
         return cls(
             uid=compound_ar.uid,
             name=compound_ar.name,
@@ -246,12 +244,12 @@ class SimpleCompound(BaseModel):
 
 
 class CompoundCreateInput(ConceptInput):
-    analyte_number: Optional[str] = None
-    nnc_short_number: Optional[str] = None
-    nnc_long_number: Optional[str] = None
+    analyte_number: str | None = None
+    nnc_short_number: str | None = None
+    nnc_long_number: str | None = None
     is_sponsor_compound: bool = True
     is_name_inn: bool = True
-    substance_terms_uids: Optional[Sequence[str]] = []
+    substance_terms_uids: Sequence[str] | None = []
     dose_values_uids: Sequence[str] = []
     strength_values_uids: Sequence[str] = []
     lag_times_uids: Sequence[str] = []
@@ -262,32 +260,32 @@ class CompoundCreateInput(ConceptInput):
     dose_frequency_uids: Sequence[str] = []
     dosage_form_uids: Sequence[str] = []
     route_of_administration_uids: Sequence[str] = []
-    half_life_uid: Optional[str] = None
+    half_life_uid: str | None = None
 
 
 class CompoundEditInput(ConceptInput):
-    analyte_number: Optional[str]
-    nnc_short_number: Optional[str]
-    nnc_long_number: Optional[str]
-    is_sponsor_compound: Optional[bool]
-    is_name_inn: Optional[bool]
-    substance_terms_uids: Optional[Sequence[str]] = []
-    dose_values_uids: Optional[Sequence[str]] = []
-    strength_values_uids: Optional[Sequence[str]] = []
-    lag_times_uids: Optional[Sequence[str]] = []
-    delivery_devices_uids: Optional[Sequence[str]] = []
-    dispensers_uids: Optional[Sequence[str]] = []
-    projects_uids: Optional[Sequence[str]] = []
-    brands_uids: Optional[Sequence[str]] = []
-    half_life_uid: Optional[str]
-    dose_frequency_uids: Optional[Sequence[str]] = []
-    dosage_form_uids: Optional[Sequence[str]] = []
-    route_of_administration_uids: Optional[Sequence[str]] = []
+    analyte_number: str | None
+    nnc_short_number: str | None
+    nnc_long_number: str | None
+    is_sponsor_compound: bool | None
+    is_name_inn: bool | None
+    substance_terms_uids: Sequence[str] | None = []
+    dose_values_uids: Sequence[str] | None = []
+    strength_values_uids: Sequence[str] | None = []
+    lag_times_uids: Sequence[str] | None = []
+    delivery_devices_uids: Sequence[str] | None = []
+    dispensers_uids: Sequence[str] | None = []
+    projects_uids: Sequence[str] | None = []
+    brands_uids: Sequence[str] | None = []
+    half_life_uid: str | None
+    dose_frequency_uids: Sequence[str] | None = []
+    dosage_form_uids: Sequence[str] | None = []
+    route_of_administration_uids: Sequence[str] | None = []
     change_description: str
 
 
 class CompoundVersion(Compound):
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

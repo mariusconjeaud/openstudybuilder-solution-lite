@@ -81,14 +81,19 @@ class SyntaxTemplateValue(VersionValue):
         model=ConjunctionRelation,
     )
 
-    def get_study_count(self, template_rel, study_selection_rel, study_rel) -> int:
+    def get_study_count(
+        self,
+        template_rel: str | None = None,
+        study_selection_rel: str | None = None,
+        study_rel: str | None = None,
+    ) -> int:
         cypher_query = f"""
         MATCH (n)<--(:SyntaxTemplateRoot)-[:{template_rel}]->(:SyntaxInstanceRoot)-->(:SyntaxInstanceValue)<-[:{study_selection_rel}]-(:StudySelection)<-[:{study_rel}]-(:StudyValue)<-[:HAS_VERSION|LATEST_DRAFT|LATEST_FINAL|LATEST_RETIRED]-(sr:StudyRoot)
-        WHERE id(n)={self.id}
+        WHERE elementId(n)=$element_id
         RETURN count(DISTINCT sr)
         """
 
-        count, _ = db.cypher_query(cypher_query)
+        count, _ = db.cypher_query(cypher_query, {"element_id": self.element_id})
         return count[0][0]
 
 
@@ -139,7 +144,12 @@ class SyntaxIndexingTemplateRoot(SyntaxTemplateRoot):
 
 
 class CriteriaTemplateValue(SyntaxIndexingTemplateValue):
-    def get_study_count(self) -> int:
+    def get_study_count(
+        self,
+        template_rel: str | None = None,
+        study_selection_rel: str | None = None,
+        study_rel: str | None = None,
+    ) -> int:
         return super().get_study_count(
             CriteriaTemplateRoot.TEMPLATE_REL_LABEL,
             "HAS_SELECTED_CRITERIA",
@@ -154,8 +164,43 @@ class CriteriaTemplateRoot(SyntaxIndexingTemplateRoot):
     has_type = RelationshipTo(CTTermRoot, "HAS_TYPE")
 
 
+class FootnoteTemplateValue(SyntaxTemplateValue):
+    def get_study_count(
+        self,
+        template_rel: str | None = None,
+        study_selection_rel: str | None = None,
+        study_rel: str | None = None,
+    ) -> int:
+        return super().get_study_count(
+            FootnoteTemplateRoot.TEMPLATE_REL_LABEL,
+            "HAS_SELECTED_FOOTNOTE",
+            "HAS_STUDY_FOOTNOTE",
+        )
+
+    has_version = RelationshipFrom(
+        "FootnoteTemplateRoot", "HAS_VERSION", model=VersionRelationship
+    )
+
+
+class FootnoteTemplateRoot(SyntaxTemplateRoot):
+    TEMPLATE_REL_LABEL = "HAS_FOOTNOTE"
+
+    has_template = RelationshipTo("FootnoteRoot", TEMPLATE_REL_LABEL)
+    has_type = RelationshipTo(CTTermRoot, "HAS_TYPE")
+    has_activity = RelationshipTo(ActivityRoot, "HAS_ACTIVITY")
+    has_activity_group = RelationshipTo(ActivityGroupRoot, "HAS_ACTIVITY_GROUP")
+    has_activity_subgroup = RelationshipTo(
+        ActivitySubGroupRoot, "HAS_ACTIVITY_SUBGROUP"
+    )
+
+
 class EndpointTemplateValue(SyntaxIndexingTemplateValue):
-    def get_study_count(self) -> int:
+    def get_study_count(
+        self,
+        template_rel: str | None = None,
+        study_selection_rel: str | None = None,
+        study_rel: str | None = None,
+    ) -> int:
         return super().get_study_count(
             EndpointTemplateRoot.TEMPLATE_REL_LABEL,
             "HAS_SELECTED_ENDPOINT",
@@ -170,7 +215,12 @@ class EndpointTemplateRoot(SyntaxIndexingTemplateRoot):
 
 
 class ObjectiveTemplateValue(SyntaxIndexingTemplateValue):
-    def get_study_count(self) -> int:
+    def get_study_count(
+        self,
+        template_rel: str | None = None,
+        study_selection_rel: str | None = None,
+        study_rel: str | None = None,
+    ) -> int:
         return super().get_study_count(
             ObjectiveTemplateRoot.TEMPLATE_REL_LABEL,
             "HAS_SELECTED_OBJECTIVE",
@@ -187,7 +237,12 @@ class ObjectiveTemplateRoot(SyntaxIndexingTemplateRoot):
 
 
 class ActivityInstructionTemplateValue(SyntaxTemplateValue):
-    def get_study_count(self) -> int:
+    def get_study_count(
+        self,
+        template_rel: str | None = None,
+        study_selection_rel: str | None = None,
+        study_rel: str | None = None,
+    ) -> int:
         return super().get_study_count(
             ActivityInstructionTemplateRoot.TEMPLATE_REL_LABEL,
             "HAS_SELECTED_ACTIVITY_INSTRUCTION",
@@ -207,7 +262,12 @@ class ActivityInstructionTemplateRoot(SyntaxTemplateRoot):
 
 
 class TimeframeTemplateValue(SyntaxTemplateValue):
-    def get_study_count(self):
+    def get_study_count(
+        self,
+        template_rel: str | None = None,
+        study_selection_rel: str | None = None,
+        study_rel: str | None = None,
+    ):
         ...
 
 
@@ -271,24 +331,29 @@ class SyntaxPreInstanceRoot(VersionRoot):
         SyntaxPreInstanceValue, "LATEST_RETIRED", model=VersionRelationship
     )
 
-    @classmethod
-    def generate_sequence_ids_if_not_present(cls) -> None:
-        super().generate_sequence_ids_if_not_present(
-            f"""
-            MATCH (n:{cls.__name__})
-            MATCH (n)-[:CREATED_FROM]->(p)
-            RETURN n.uid as uid, p.sequence_id as parent_sequence_id
-            """
-        )
-
 
 class CriteriaPreInstanceValue(SyntaxPreInstanceValue):
+    guidance_text = StringProperty()
+
     def get_study_count(self):
         ...
 
 
 class CriteriaPreInstanceRoot(SyntaxPreInstanceRoot):
     ...
+
+
+class FootnotePreInstanceValue(SyntaxPreInstanceValue):
+    def get_study_count(self):
+        ...
+
+
+class FootnotePreInstanceRoot(SyntaxPreInstanceRoot):
+    has_activity = RelationshipTo(ActivityRoot, "HAS_ACTIVITY")
+    has_activity_group = RelationshipTo(ActivityGroupRoot, "HAS_ACTIVITY_GROUP")
+    has_activity_subgroup = RelationshipTo(
+        ActivitySubGroupRoot, "HAS_ACTIVITY_SUBGROUP"
+    )
 
 
 class EndpointPreInstanceValue(SyntaxPreInstanceValue):
@@ -388,6 +453,22 @@ class CriteriaRoot(SyntaxIndexingInstanceRoot):
     has_template = RelationshipFrom(CriteriaTemplateRoot, TEMPLATE_REL_LABEL)
 
 
+class FootnoteValue(SyntaxIndexingInstanceValue):
+    ROOT_NODE_LABEL = "FootnoteRoot"
+    VALUE_NODE_LABEL = "FootnoteValue"
+    STUDY_SELECTION_REL_LABEL = "HAS_SELECTED_FOOTNOTE"
+    STUDY_VALUE_REL_LABEL = "HAS_STUDY_FOOTNOTE"
+    has_version = RelationshipFrom(
+        "FootnoteRoot", "HAS_VERSION", model=VersionRelationship
+    )
+
+
+class FootnoteRoot(SyntaxIndexingInstanceRoot):
+    TEMPLATE_REL_LABEL = "HAS_FOOTNOTE"
+
+    has_template = RelationshipFrom(FootnoteTemplateRoot, TEMPLATE_REL_LABEL)
+
+
 class EndpointValue(SyntaxIndexingInstanceValue):
     ROOT_NODE_LABEL = "EndpointRoot"
     VALUE_NODE_LABEL = "EndpointValue"
@@ -438,11 +519,11 @@ class TimeframeValue(SyntaxInstanceValue):
     def get_study_count(self) -> int:
         cypher_query = f"""
         MATCH (n)<-[:{self.STUDY_SELECTION_REL_LABEL}]-(:StudyEndpoint)<-[:{EndpointValue.STUDY_VALUE_REL_LABEL}]-(:StudyValue)<--(sr:StudyRoot)
-        WHERE id(n)={self.id}
+        WHERE elementId(n)=$elementId
         RETURN count(DISTINCT sr)
         """
 
-        count, _ = db.cypher_query(cypher_query)
+        count, _ = db.cypher_query(cypher_query, {"elementId": self.element_id})
         return count[0][0]
 
 

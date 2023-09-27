@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from time import time
-from typing import Dict, List, Optional, Union
+from typing import Any
 from xml.dom.minidom import Document
 
 from fastapi import UploadFile
@@ -59,12 +59,12 @@ class OdmXmlExporterService:
     odm_data_extractor: OdmDataExtractor
     xml_document: Document
     odm: ODM
-    used_vendor_namespaces: Dict[str, dict]
-    allowed_namespaces: List[str]
-    pdf: Optional[bool]
-    stylesheet: Optional[str]
+    used_vendor_namespaces: dict[str, dict]
+    allowed_namespaces: list[str]
+    pdf: bool | None
+    stylesheet: str | None
 
-    mapper_file: Optional[UploadFile] = None
+    mapper_file: UploadFile | None = None
 
     XML_LANG = "xml:lang"
     OSB_VERSION = "osb:version"
@@ -76,13 +76,29 @@ class OdmXmlExporterService:
         self,
         target_uid: str,
         target_type: TargetType,
-        status: List[ObjectStatus],
-        allowed_namespaces: List[str],
-        pdf: Optional[bool],
-        stylesheet: Optional[str],
-        mapper_file: Optional[UploadFile],
+        status: list[ObjectStatus],
+        allowed_namespaces: list[str],
+        pdf: bool | None,
+        stylesheet: str | None,
+        mapper_file: UploadFile | None,
         unit_definition_service,
     ):
+        """
+        Initializes a new instance of the `OdmXmlGenerator` class.
+
+        Args:
+            target_uid (str): The UID of the ODM element to generate XML for.
+            target_type (TargetType): The type of the ODM element to generate XML for.
+            status (list[ObjectStatus]): A list of statuses of the ODM elements to generate XML for.
+            allowed_namespaces (list[str]): A list of allowed vendor namespace prefixes.
+            pdf (bool | None): A flag indicating whether to generate a PDF.
+            stylesheet (str | None): The name of the stylesheet to include as the XML stylesheet.
+            mapper_file (UploadFile | None): The mapper file to use for the XML generation.
+            unit_definition_service: The service that provides functionality for unit definitions.
+
+        Returns:
+            None
+        """
         self.odm_data_extractor = OdmDataExtractor(
             target_uid,
             target_type,
@@ -113,6 +129,15 @@ class OdmXmlExporterService:
             )
 
     def get_odm_document(self):
+        """
+        Gets an ODM XML document and applies a mapper file to it.
+
+        Returns:
+            Any: The generated document as a pretty-printed XML string, or as a PDF if `self.pdf` is True.
+
+        Raises:
+            BusinessLogicException: If an error occurs while generating the PDF.
+        """
         doc = self._generate_odm_xml(self.odm, self.xml_document)
 
         map_xml(self.xml_document, self.mapper_file)
@@ -139,6 +164,16 @@ class OdmXmlExporterService:
         return rs
 
     def _generate_odm_xml(self, odm_element, current_xml_element):
+        """
+        Generates an ODM XML document from an ODM element.
+
+        Args:
+            odm_element: The ODM element to generate the XML document from.
+            current_xml_element: The current XML element in the document.
+
+        Returns:
+            Document: The generated XML document.
+        """
         if hasattr(odm_element, "_custom_element_name") and isinstance(
             odm_element._custom_element_name, str
         ):
@@ -180,7 +215,19 @@ class OdmXmlExporterService:
 
         return self.xml_document
 
-    def _get_vendor_attributes_or_empty_dict(self, elements: Dict[str, Attribute]):
+    def _get_vendor_attributes_or_empty_dict(
+        self, elements: dict[str, Attribute] | Any
+    ):
+        """
+        Returns a dictionary of vendor attributes that have a namespace that is allowed by `self.allowed_namespaces`.
+        If `self.allowed_namespaces` is not specified all namespaces are allowed.
+
+        Args:
+            elements (dict[str, Attribute] | Any): The elements to extract vendor attributes from.
+
+        Returns:
+            dict[str, Attribute]: A dictionary of vendor attributes.
+        """
         if not isinstance(elements, dict):
             return {}
 
@@ -191,7 +238,19 @@ class OdmXmlExporterService:
                 rs[name] = elm
         return rs
 
-    def _get_vendor_elements_or_empty_list(self, elements: List[Dict[str, Attribute]]):
+    def _get_vendor_elements_or_empty_list(
+        self, elements: list[dict[str, Attribute]] | Any
+    ):
+        """
+        Returns a list of vendor elements that have a namespace that is allowed by `self.allowed_namespaces`.
+        If `self.allowed_namespaces` is not specified all namespaces are allowed.
+
+        Args:
+            elements (list[dict[str, Attribute]] | Any): The elements to extract vendor elements from.
+
+        Returns:
+            list[dict[str, Attribute]]: A list of vendor elements.
+        """
         if not isinstance(elements, list):
             return []
 
@@ -206,8 +265,19 @@ class OdmXmlExporterService:
         return rs
 
     def _create_vendor_attributes_of(
-        self, target: Union[OdmForm, OdmItemGroup, OdmItem]
-    ) -> Dict[str, Attribute]:
+        self, target: OdmForm | OdmItemGroup | OdmItem
+    ) -> dict[str, Attribute]:
+        """
+        Returns a dictionary of vendor attributes for the given ODM element.
+        Vendor attributes are included in the dictionary if their namespace is allowed by `self.allowed_namespaces`.
+        If `self.allowed_namespaces` is not specified all namespaces are allowed.
+
+        Args:
+            target (OdmForm | OdmItemGroup | OdmItem): The ODM element to extract vendor attributes from.
+
+        Returns:
+            dict[str, Attribute]: A dictionary of vendor attributes.
+        """
         attributes = {}
 
         for vendor_attribute in target.vendor_attributes:
@@ -225,8 +295,19 @@ class OdmXmlExporterService:
         return attributes
 
     def _create_vendor_elements_of(
-        self, target: Union[OdmForm, OdmItemGroup, OdmItem]
-    ) -> Dict[str, Element]:
+        self, target: OdmForm | OdmItemGroup | OdmItem
+    ) -> dict[str, Element]:
+        """
+        Returns a dictionary of vendor elements for the given ODM element.
+        Vendor elements are included in the dictionary if their namespace is allowed by `self.allowed_namespaces`.
+        If `self.allowed_namespaces` is not specified all namespaces are allowed.
+
+        Args:
+            target (OdmForm | OdmItemGroup | OdmItem): The ODM element to extract vendor elements from.
+
+        Returns:
+            dict[str, Element]: A dictionary of vendor elements.
+        """
         elements = {}
 
         for vendor_element in target.vendor_elements:
@@ -254,7 +335,16 @@ class OdmXmlExporterService:
 
         return elements
 
-    def _get_dict_of_attributes(self, attributes: List[OdmRefVendorAttributeModel]):
+    def _get_dict_of_attributes(self, attributes: list[OdmRefVendorAttributeModel]):
+        """
+        Returns a dictionary of vendor attributes based on the given list of reference vendor attribute models.
+
+        Args:
+            attributes (list[OdmRefVendorAttributeModel]): The list of reference vendor attribute models.
+
+        Returns:
+            dict[str, Attribute]: A dictionary of vendor attributes.
+        """
         rs = {}
         for attribute in attributes:
             vendor_attribute = next(

@@ -12,7 +12,6 @@ Tests for activity-instruction-templates endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -36,7 +35,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-activity_instruction_templates: List[ActivityInstructionTemplate]
+activity_instruction_templates: list[ActivityInstructionTemplate]
 ct_term_inclusion: models.CTTerm
 dictionary_term_indication: models.DictionaryTerm
 activity: models.Activity
@@ -77,10 +76,15 @@ def test_data():
     # Create Template Parameter
     TestUtils.create_template_parameter("TextValue")
 
-    activity = TestUtils.create_activity(name="test activity", library_name="Sponsor")
     activity_group = TestUtils.create_activity_group(name="test activity group")
     activity_subgroup = TestUtils.create_activity_subgroup(
-        name="test activity subgroup", activity_group=activity_group.uid
+        name="test activity subgroup", activity_groups=[activity_group.uid]
+    )
+    activity = TestUtils.create_activity(
+        name="test activity",
+        library_name="Sponsor",
+        activity_groups=[activity_group.uid],
+        activity_subgroups=[activity_subgroup.uid],
     )
 
     text_value_1 = TestUtils.create_text_value()
@@ -276,7 +280,7 @@ def test_get_activity_instruction_template(api_client):
         assert res[key] is not None
 
     assert res["uid"] == activity_instruction_templates[1].uid
-    assert res["sequence_id"] == "AIT2"
+    assert res["sequence_id"] == "AI2"
     assert res["name"] == "Default-AAA name with [TextValue]"
     assert res["guidance_text"] == "Default-AAA guidance text"
     assert res["parameters"][0]["name"] == "TextValue"
@@ -404,7 +408,7 @@ def test_get_versions_of_activity_instruction_template(api_client):
 
     assert len(res) == 2
     assert res[0]["uid"] == activity_instruction_templates[1].uid
-    assert res[0]["sequence_id"] == "AIT2"
+    assert res[0]["sequence_id"] == "AI2"
     assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res[0]["indications"][0]["dictionary_id"]
@@ -420,7 +424,7 @@ def test_get_versions_of_activity_instruction_template(api_client):
     assert res[0]["version"] == "1.0"
     assert res[0]["status"] == "Final"
     assert res[1]["uid"] == activity_instruction_templates[1].uid
-    assert res[1]["sequence_id"] == "AIT2"
+    assert res[1]["sequence_id"] == "AI2"
     assert res[1]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res[1]["indications"][0]["dictionary_id"]
@@ -445,7 +449,7 @@ def test_get_all_final_versions_of_activity_instruction_template(api_client):
 
     assert len(res) == 1
     assert res[0]["uid"] == activity_instruction_templates[1].uid
-    assert res[0]["sequence_id"] == "AIT2"
+    assert res[0]["sequence_id"] == "AI2"
     assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res[0]["indications"][0]["dictionary_id"]
@@ -662,7 +666,7 @@ def test_get_specific_version_of_activity_instruction_template(api_client):
     assert response.status_code == 200
 
     assert res["uid"] == activity_instruction_templates[4].uid
-    assert res["sequence_id"] == "AIT5"
+    assert res["sequence_id"] == "AI5"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res["indications"][0]["dictionary_id"]
@@ -804,10 +808,14 @@ def test_change_activity_instruction_template_indexings(api_client):
         codelist_uid=indications_codelist.codelist_uid,
         library_name=indications_library_name,
     )
-    _activity = TestUtils.create_activity(name="new activity")
     _activity_group = TestUtils.create_activity_group(name="new activity group")
     _activity_subgroup = TestUtils.create_activity_subgroup(
-        name="new activity subgroup", activity_group=_activity_group.uid
+        name="new activity subgroup", activity_groups=[_activity_group.uid]
+    )
+    _activity = TestUtils.create_activity(
+        name="new activity",
+        activity_subgroups=[_activity_subgroup.uid],
+        activity_groups=[_activity_group.uid],
     )
 
     data = {
@@ -879,7 +887,7 @@ def test_approve_activity_instruction_template(api_client):
 
     assert response.status_code == 201
     assert res["uid"] == activity_instruction_templates[3].uid
-    assert res["sequence_id"] == "AIT4"
+    assert res["sequence_id"] == "AI4"
     assert res["name"] == "Default-XXX name with [TextValue]"
     assert res["guidance_text"] == "Default-XXX guidance text"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
@@ -943,7 +951,7 @@ def test_cascade_approve_activity_instruction_template(api_client):
 
     assert response.status_code == 201
     assert res["uid"] == activity_instruction_templates[5].uid
-    assert res["sequence_id"] == "AIT6"
+    assert res["sequence_id"] == "AI6"
     assert res["name"] == "cascade check [TextValue]"
     assert res["guidance_text"] == "Default-AAA-0 guidance text"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
@@ -980,7 +988,7 @@ def test_inactivate_activity_instruction_template(api_client):
 
     assert response.status_code == 200
     assert res["uid"] == activity_instruction_templates[5].uid
-    assert res["sequence_id"] == "AIT6"
+    assert res["sequence_id"] == "AI6"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res["indications"][0]["dictionary_id"]
@@ -1015,7 +1023,7 @@ def test_reactivate_activity_instruction_template(api_client):
 
     assert response.status_code == 200
     assert res["uid"] == activity_instruction_templates[5].uid
-    assert res["sequence_id"] == "AIT6"
+    assert res["sequence_id"] == "AI6"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res["indications"][0]["dictionary_id"]
@@ -1110,63 +1118,6 @@ def test_activity_instruction_template_audit_trail(api_client):
     assert actual_uids == expected_uids
 
 
-def test_create_pre_instance_activity_instruction_template(api_client):
-    data = {
-        "library_name": "Sponsor",
-        "parameter_terms": [
-            {
-                "position": 1,
-                "conjunction": "",
-                "terms": [
-                    {
-                        "index": 1,
-                        "name": text_value_1.name_sentence_case,
-                        "uid": text_value_1.uid,
-                        "type": "TextValue",
-                    }
-                ],
-            }
-        ],
-        "indication_uids": [dictionary_term_indication.term_uid],
-        "activity_uids": [activity.uid],
-        "activity_group_uids": [activity_group.uid],
-        "activity_subgroup_uids": [activity_subgroup.uid],
-    }
-    response = api_client.post(
-        f"{URL}/{activity_instruction_templates[0].uid}/pre-instances", json=data
-    )
-    res = response.json()
-    log.info("Created Criteria Pre-Instance: %s", res)
-
-    assert response.status_code == 201
-    assert "PreInstance" in res["uid"]
-    assert res["sequence_id"]
-    assert res["template_uid"] == activity_instruction_templates[0].uid
-    assert res["name"] == f"Default name with [{text_value_1.name_sentence_case}]"
-    assert (
-        res["parameter_terms"][0]["position"] == data["parameter_terms"][0]["position"]
-    )
-    assert (
-        res["parameter_terms"][0]["conjunction"]
-        == data["parameter_terms"][0]["conjunction"]
-    )
-    assert res["parameter_terms"][0]["terms"] == data["parameter_terms"][0]["terms"]
-    assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
-    assert (
-        res["indications"][0]["dictionary_id"]
-        == dictionary_term_indication.dictionary_id
-    )
-    assert res["indications"][0]["name"] == dictionary_term_indication.name
-    assert res["activities"][0]["uid"] == activity.uid
-    assert res["activities"][0]["name"] == activity.name
-    assert res["activity_groups"][0]["uid"] == activity_group.uid
-    assert res["activity_groups"][0]["name"] == activity_group.name
-    assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
-    assert res["version"] == "0.1"
-    assert res["status"] == "Draft"
-
-
 def test_cannot_create_activity_instruction_template_with_existing_name(api_client):
     data = {
         "name": "Default name with [TextValue]",
@@ -1199,7 +1150,7 @@ def test_cannot_update_activity_instruction_template_to_an_existing_name(api_cli
     res = response.json()
     log.info("Didn't Update Activity Instruction Template: %s", res)
 
-    assert response.status_code == 500
+    assert response.status_code == 400
     assert (
         res["message"]
         == f"Duplicate templates not allowed - template exists: {data['name']}"

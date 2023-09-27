@@ -1,11 +1,11 @@
-from typing import Any, List, Optional, Sequence
+from typing import Any, Sequence
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Response
 from fastapi import status as response_status
 from pydantic.types import Json
 from starlette.requests import Request
 
-from clinical_mdr_api import config
+from clinical_mdr_api import config, exceptions
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyComponentEnum,
     StudyStatus,
@@ -23,11 +23,12 @@ from clinical_mdr_api.models.study_selections.study import (
     StudyProtocolTitle,
 )
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.studies.study import StudyService
 
+# Prefixed with "/studies"
 router = APIRouter()
 
 StudyUID = Path(None, description="The unique id of the study.")
@@ -35,6 +36,7 @@ StudyUID = Path(None, description="The unique id of the study.")
 
 @router.get(
     "",
+    dependencies=[rbac.STUDY_READ],
     summary="Returns all studies in their latest/newest version.",
     description=f"""
 Allowed parameters include : filter on fields, sort by field name with sort direction, pagination
@@ -75,45 +77,50 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
 # pylint: disable=unused-argument
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
-    has_study_objective: Optional[bool] = Query(
+    has_study_objective: bool
+    | None = Query(
         default=None,
         description="Optionaly, filter studies based on the existence of related study objectives or not",
     ),
-    has_study_endpoint: Optional[bool] = Query(
+    has_study_endpoint: bool
+    | None = Query(
         default=None,
         description="Optionaly, filter studies based on the existence of related study endpoints or not",
     ),
-    has_study_criteria: Optional[bool] = Query(
+    has_study_criteria: bool
+    | None = Query(
         default=None,
         description="Optionaly, filter studies based on the existence of related study criteria or not",
     ),
-    has_study_activity: Optional[bool] = Query(
+    has_study_activity: bool
+    | None = Query(
         default=None,
         description="Optionaly, filter studies based on the existence of related study activities or not",
     ),
-    has_study_activity_instruction: Optional[bool] = Query(
+    has_study_activity_instruction: bool
+    | None = Query(
         default=None,
         description="Optionaly, filter studies based on the existence of related study activity instruction or not",
     ),
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     deleted: bool = Query(
         default=False,
         description="Indicates whether to return 'Active' Studies or 'Deleted' ones.",
@@ -137,16 +144,17 @@ def get_all(
     )
 
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/headers",
+    dependencies=[rbac.STUDY_READ],
     summary="Returns possibles values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=List[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -159,18 +167,17 @@ def get_all(
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     study_service = StudyService(user=current_user_id)
     return study_service.get_distinct_values_for_header(
@@ -184,6 +191,7 @@ def get_distinct_values_for_header(
 
 @router.post(
     "/{uid}/lock",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Locks a Study with specified uid",
     description="The Study is locked, which means that the LATEST_LOCKED relationship in the database is created."
     "The first locked version obtains number '1' and each next locked version "
@@ -218,6 +226,7 @@ def lock(
 
 @router.post(
     "/{uid}/unlock",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Unlocks a Study with specified uid",
     description="The Study is unlocked, which means that the new DRAFT version of a Study is created"
     " and the Study exists in the DRAFT state.",
@@ -245,6 +254,7 @@ def unlock(
 
 @router.post(
     "/{uid}/release",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Releases a Study with specified uid",
     description="The Study is released, which means that 'snapshot' of the Study is created in the database"
     "and the LATEST_RELEASED relationship is created that points to the created snapshot."
@@ -278,6 +288,7 @@ def release(
 
 @router.delete(
     "/{uid}",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Deletes a Study",
     description="""
 State before:
@@ -318,6 +329,7 @@ def delete_activity(
 
 @router.patch(
     "/{uid}",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Request to change some aspects (parts) of a specific study definition identified by 'uid'.",
     description="The request to change (some aspect) of the state of current aggregate. "
     "There are some special cases and considerations:\n"
@@ -359,16 +371,16 @@ def patch(
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> Study:
-    # study_service = StudyService(user="auth-not-implemented")
     study_service = StudyService(user=current_user_id)
     if study_patch_request is None:
-        raise ValueError("No data to patch was provided.")
+        raise exceptions.ValidationException("No data to patch was provided.")
     response = study_service.patch(uid, dry, study_patch_request)
     return response
 
 
 @router.get(
     "/{uid}",
+    dependencies=[rbac.STUDY_READ],
     summary="Returns the current state of a specific study definition identified by 'uid'.",
     description="If multiple request query parameters are used, then they need to match all at the same time"
     " (they are combined with the AND operation).",
@@ -386,7 +398,8 @@ def patch(
 )
 def get(
     uid: str = StudyUID,  # ,
-    fields: Optional[str] = Query(
+    fields: str
+    | None = Query(
         default=None,
         description="Parameter specifies which parts of the whole Study Definition representation to retrieve. In"
         " the form of comma separated name of the fields prefixed by (optional) `+` "
@@ -402,7 +415,7 @@ def get(
         " , `current_metadata.study_description`.",
     ),
     current_user_id: str = Depends(get_current_user_id),
-    # at_specified_date_time: Optional[datetime] = Query(
+    # at_specified_date_time: datetime | None = Query(
     #     None,
     #     description="If specified, the latest/newest representation of the study at"
     #     " this point in time is returned.\n"
@@ -410,12 +423,14 @@ def get(
     #     "'2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. "
     #     "If the timezone is omitted, UTC±0 is assumed.",
     # ),
-    status: Optional[StudyStatus] = Query(
+    status: StudyStatus
+    | None = Query(
         None,
         description="If specified, the last representation of the study in that status is returned (if existent)."
         "Valid values are: 'Released', 'Draft' or 'Locked'.",
     ),
-    version: Optional[str] = Query(
+    version: str
+    | None = Query(
         None,
         description=r"If specified, the latest/newest representation of the study in that version is returned. "
         r"Only exact matches are considered. "
@@ -436,6 +451,7 @@ def get(
 
 @router.get(
     "/{uid}/snapshot-history",
+    dependencies=[rbac.STUDY_READ],
     summary="Returns the history of study snapshot definitions",
     description="It returns the history of changes made to the specified Study Definition Snapshot."
     "The returned history should reflect HAS_VERSION relationships in the database between StudyRoot and StudyValue nodes",
@@ -454,24 +470,24 @@ def get(
 def get_snapshot_history(
     uid: str = StudyUID,  # ,
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
     study_service = StudyService(user=current_user_id)
@@ -486,7 +502,7 @@ def get_snapshot_history(
     )
     return CustomPage.create(
         items=snapshot_history.items,
-        total=snapshot_history.total_count,
+        total=snapshot_history.total,
         page=page_number,
         size=page_size,
     )
@@ -494,6 +510,7 @@ def get_snapshot_history(
 
 @router.get(
     "/{uid}/fields-audit-trail",
+    dependencies=[rbac.STUDY_READ],
     summary="Returns the audit trail for the fields of a specific study definition identified by 'uid'.",
     description="Actions on the study are grouped by date of edit."
     "Optionally select which subset of fields should be reflected in the audit trail.",
@@ -510,7 +527,8 @@ def get_snapshot_history(
 )
 def get_fields_audit_trail(
     uid: str = StudyUID,  # ,
-    sections: Optional[str] = Query(
+    sections: str
+    | None = Query(
         default=None,
         description="""
 Optionally specify a list of sections to filter the audit trail by. 
@@ -542,6 +560,7 @@ If no filters are specified, the entire audit trail is returned.
 
 @router.post(
     "",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Creates a new Study Definition.",
     description="""
 If the request succeeds new DRAFT Study Definition will be with initial identification data as provided in 
@@ -566,13 +585,13 @@ def create(
     ),
     current_user_id: str = Depends(get_current_user_id),
 ) -> Study:
-    # study_service = StudyService(user="auth-not-implemented")
     study_service = StudyService(user=current_user_id)
     return study_service.create(study_create_input)
 
 
 @router.get(
     "/{uid}/protocol-title",
+    dependencies=[rbac.STUDY_READ],
     summary="Retrieve all information related to Protocol Title",
     description="""
 State before:
@@ -605,6 +624,7 @@ def get_protocol_title(
 
 @router.patch(
     "/{uid}/copy-component",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Copy study form from another study",
     description="""
 State before:
@@ -656,6 +676,7 @@ def copy_simple_form_from_another_study(
 
 @router.get(
     "/{uid}/time-units",
+    dependencies=[rbac.STUDY_READ],
     summary="Gets a study preferred time unit",
     response_model=StudyPreferredTimeUnit,
     status_code=200,
@@ -680,6 +701,7 @@ def get_preferred_time_unit(
 
 @router.patch(
     "/{uid}/time-units",
+    dependencies=[rbac.STUDY_WRITE],
     summary="Edits a study preferred time unit",
     response_model=StudyPreferredTimeUnit,
     status_code=200,

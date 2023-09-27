@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Self
 
 from pydantic import Field
 
@@ -29,52 +29,52 @@ from clinical_mdr_api.models.utils import BaseModel
 
 class ActivityInstructionPreInstance(BaseModel):
     uid: str
-    sequence_id: Optional[str] = Field(None, nullable=True)
+    sequence_id: str | None = Field(None, nullable=True)
     template_uid: str
     template_name: str
-    name: Optional[str] = Field(None, nullable=True)
-    name_plain: Optional[str] = Field(None, nullable=True)
-    start_date: Optional[datetime] = Field(None, nullable=True)
-    end_date: Optional[datetime] = Field(None, nullable=True)
-    status: Optional[str] = Field(None, nullable=True)
-    version: Optional[str] = Field(None, nullable=True)
-    change_description: Optional[str] = Field(None, nullable=True)
-    user_initials: Optional[str] = Field(None, nullable=True)
-    parameter_terms: List[MultiTemplateParameterTerm] = Field(
+    name: str | None = Field(None, nullable=True)
+    name_plain: str | None = Field(None, nullable=True)
+    start_date: datetime | None = Field(None, nullable=True)
+    end_date: datetime | None = Field(None, nullable=True)
+    status: str | None = Field(None, nullable=True)
+    version: str | None = Field(None, nullable=True)
+    change_description: str | None = Field(None, nullable=True)
+    user_initials: str | None = Field(None, nullable=True)
+    parameter_terms: list[MultiTemplateParameterTerm] = Field(
         [],
         description=(
             """Holds the parameter terms that are used within the activity instruction.
             The terms are ordered as they occur in the activity instruction name."""
         ),
     )
-    indications: List[DictionaryTerm] = Field(
+    indications: list[DictionaryTerm] = Field(
         [],
         description="The study indications, conditions, diseases or disorders in scope for the pre-instance.",
     )
-    activities: List[Activity] = Field(
+    activities: list[Activity] = Field(
         [], description="The activities in scope for the pre-instance"
     )
-    activity_groups: List[ActivityGroup] = Field(
+    activity_groups: list[ActivityGroup] = Field(
         [], description="The activity groups in scope for the pre-instance"
     )
-    activity_subgroups: List[ActivitySubGroup] = Field(
+    activity_subgroups: list[ActivitySubGroup] = Field(
         [], description="The activity sub groups in scope for the pre-instance"
     )
-    library: Optional[Library] = None
-    possible_actions: List[str] = Field([])
+    library: Library | None = None
+    possible_actions: list[str] = Field([])
 
     @classmethod
     def from_activity_instruction_pre_instance_ar(
         cls,
         activity_instruction_pre_instance_ar: ActivityInstructionPreInstanceAR,
-        find_activity_subgroup_by_uid: Callable[[str], Optional[ActivitySubGroupAR]],
-        find_activity_group_by_uid: Callable[[str], Optional[ActivityGroupAR]],
-    ) -> "ActivityInstructionPreInstance":
-        parameter_terms: List[MultiTemplateParameterTerm] = []
+        find_activity_subgroup_by_uid: Callable[[str], ActivitySubGroupAR | None],
+        find_activity_group_by_uid: Callable[[str], ActivityGroupAR | None],
+    ) -> Self:
+        parameter_terms: list[MultiTemplateParameterTerm] = []
         for position, parameter in enumerate(
             activity_instruction_pre_instance_ar.get_parameters()
         ):
-            terms: List[IndexedTemplateParameterTerm] = []
+            terms: list[IndexedTemplateParameterTerm] = []
             for index, parameter_term in enumerate(parameter.parameters):
                 pv = IndexedTemplateParameterTerm(
                     index=index + 1,
@@ -157,10 +157,10 @@ class ActivityInstructionPreInstance(BaseModel):
 
 
 class ActivityInstructionPreInstanceCreateInput(PreInstanceInput):
-    indication_uids: List[str]
-    activity_uids: List[str]
-    activity_group_uids: List[str]
-    activity_subgroup_uids: List[str]
+    indication_uids: list[str]
+    activity_uids: list[str]
+    activity_group_uids: list[str]
+    activity_subgroup_uids: list[str]
 
 
 class ActivityInstructionPreInstanceEditInput(PreInstanceInput):
@@ -171,19 +171,19 @@ class ActivityInstructionPreInstanceEditInput(PreInstanceInput):
 
 
 class ActivityInstructionPreInstanceIndexingsInput(BaseModel):
-    indication_uids: Optional[List[str]] = Field(
+    indication_uids: list[str] | None = Field(
         None,
         description="A list of UID of the study indications, conditions, diseases or disorders to attach the pre-instance to.",
     )
-    activity_uids: Optional[List[str]] = Field(
+    activity_uids: list[str] | None = Field(
         None,
         description="A list of UID of the activities to attach the pre-instance to.",
     )
-    activity_group_uids: Optional[List[str]] = Field(
+    activity_group_uids: list[str] | None = Field(
         None,
         description="A list of UID of the activity groups to attach the pre-instance to.",
     )
-    activity_subgroup_uids: Optional[List[str]] = Field(
+    activity_subgroup_uids: list[str] | None = Field(
         None,
         description="A list of UID of the activity subgroups to attach the pre-instance to.",
     )
@@ -194,7 +194,7 @@ class ActivityInstructionPreInstanceVersion(ActivityInstructionPreInstance):
     Class for storing ActivityInstruction Pre-Instances and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "

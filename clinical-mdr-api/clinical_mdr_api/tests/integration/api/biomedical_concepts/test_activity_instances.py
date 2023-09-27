@@ -4,7 +4,6 @@ Tests for /concepts/activities/activity-instances endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 import yaml
@@ -44,14 +43,14 @@ from clinical_mdr_api.tests.integration.utils.utils import LIBRARY_NAME, TestUti
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-activity_instances_all: List[ActivityInstance]
+activity_instances_all: list[ActivityInstance]
 activity_group: ActivityGroup
 activity_subgroup: ActivitySubGroup
-activities: List[Activity]
-activity_instance_classes: List[ActivityInstanceClass]
-activity_items: List[ActivityItem]
-activity_item_classes: List[ActivityItemClass]
-ct_terms: List[CTTerm]
+activities: list[Activity]
+activity_instance_classes: list[ActivityInstanceClass]
+activity_items: list[ActivityItem]
+activity_item_classes: list[ActivityItemClass]
+ct_terms: list[CTTerm]
 role_term: CTTerm
 data_type_term: CTTerm
 
@@ -75,15 +74,19 @@ def test_data():
 
     global activity_subgroup
     activity_subgroup = TestUtils.create_activity_subgroup(
-        name="activity_subgroup", activity_group=activity_group.uid
+        name="activity_subgroup", activity_groups=[activity_group.uid]
     )
     global activities
     activities = [
         TestUtils.create_activity(
-            name="Activity", activity_subgroup=activity_subgroup.uid
+            name="Activity",
+            activity_subgroups=[activity_subgroup.uid],
+            activity_groups=[activity_group.uid],
         ),
         TestUtils.create_activity(
-            name="Second activity", activity_subgroup=activity_subgroup.uid
+            name="Second activity",
+            activity_subgroups=[activity_subgroup.uid],
+            activity_groups=[activity_group.uid],
         ),
     ]
 
@@ -150,6 +153,8 @@ def test_data():
             name_sentence_case="name A",
             topic_code="topic code A",
             activities=[activities[0].uid],
+            activity_subgroups=[activity_subgroup.uid],
+            activity_groups=[activity_group.uid],
             activity_item_uids=[activity_items[0].uid],
         ),
         TestUtils.create_activity_instance(
@@ -158,6 +163,8 @@ def test_data():
             name_sentence_case="name-AAA",
             topic_code="topic code-AAA",
             activities=[activities[0].uid],
+            activity_subgroups=[activity_subgroup.uid],
+            activity_groups=[activity_group.uid],
             activity_item_uids=[activity_items[0].uid],
         ),
         TestUtils.create_activity_instance(
@@ -166,6 +173,8 @@ def test_data():
             name_sentence_case="name-BBB",
             topic_code="topic code-BBB",
             activities=[activities[0].uid],
+            activity_subgroups=[activity_subgroup.uid],
+            activity_groups=[activity_group.uid],
             activity_item_uids=[activity_items[0].uid],
         ),
         TestUtils.create_activity_instance(
@@ -174,6 +183,8 @@ def test_data():
             name_sentence_case="name XXX",
             topic_code="topic code XXX",
             activities=[activities[0].uid],
+            activity_subgroups=[activity_subgroup.uid],
+            activity_groups=[activity_group.uid],
             activity_item_uids=[activity_items[0].uid, activity_items[1].uid],
         ),
         TestUtils.create_activity_instance(
@@ -182,6 +193,8 @@ def test_data():
             name_sentence_case="name YYY",
             topic_code="topic code YYY",
             activities=[activities[0].uid],
+            activity_subgroups=[activity_subgroup.uid],
+            activity_groups=[activity_group.uid],
             activity_item_uids=[activity_items[0].uid, activity_items[1].uid],
         ),
     ]
@@ -194,6 +207,8 @@ def test_data():
                 name_sentence_case=f"name-AAA-{index}",
                 topic_code=f"topic code-AAA-{index}",
                 activities=[activities[1].uid],
+                activity_subgroups=[activity_subgroup.uid],
+                activity_groups=[activity_group.uid],
                 activity_item_uids=[activity_items[1].uid],
             )
         )
@@ -204,6 +219,8 @@ def test_data():
                 name_sentence_case=f"name-BBB-{index}",
                 topic_code=f"topic code-BBB-{index}",
                 activities=[activities[1].uid],
+                activity_subgroups=[activity_subgroup.uid],
+                activity_groups=[activity_group.uid],
                 activity_item_uids=[activity_items[1].uid],
             )
         )
@@ -214,6 +231,8 @@ def test_data():
                 name_sentence_case=f"name-XXX-{index}",
                 topic_code=f"topic code-XXX-{index}",
                 activities=[activities[1].uid],
+                activity_subgroups=[activity_subgroup.uid],
+                activity_groups=[activity_group.uid],
                 activity_item_uids=[activity_items[1].uid],
             )
         )
@@ -224,6 +243,8 @@ def test_data():
                 name_sentence_case=f"name-YYY-{index}",
                 topic_code=f"topic code-YYY-{index}",
                 activities=[activities[1].uid],
+                activity_subgroups=[activity_subgroup.uid],
+                activity_groups=[activity_group.uid],
                 activity_item_uids=[activity_items[1].uid],
             )
         )
@@ -242,9 +263,7 @@ ACTIVITY_INSTANCES_FIELDS_ALL = [
     "topic_code",
     "adam_param_code",
     "legacy_description",
-    "activities",
-    "activity_subgroups",
-    "activity_groups",
+    "activity_groupings",
     "activity_instance_class",
     "activity_items",
     "library_name",
@@ -281,13 +300,19 @@ def test_get_activity_instance(api_client):
     assert res["name"] == "name A"
     assert res["name_sentence_case"] == "name A"
     assert res["topic_code"] == "topic code A"
-    assert len(res["activities"]) == 1
-    assert res["activities"][0]["uid"] == activities[0].uid
-    assert res["activities"][0]["name"] == activities[0].name
-    assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
-    assert res["activity_groups"][0]["uid"] == activity_group.uid
-    assert res["activity_groups"][0]["name"] == activity_group.name
+    assert len(res["activity_groupings"]) == 1
+    assert res["activity_groupings"][0]["activity"]["uid"] == activities[0].uid
+    assert res["activity_groupings"][0]["activity"]["name"] == activities[0].name
+    assert (
+        res["activity_groupings"][0]["activity_subgroup"]["uid"]
+        == activity_subgroup.uid
+    )
+    assert (
+        res["activity_groupings"][0]["activity_subgroup"]["name"]
+        == activity_subgroup.name
+    )
+    assert res["activity_groupings"][0]["activity_group"]["uid"] == activity_group.uid
+    assert res["activity_groupings"][0]["activity_group"]["name"] == activity_group.name
     assert res["activity_instance_class"]["uid"] == activity_instance_classes[0].uid
     assert res["activity_instance_class"]["name"] == activity_instance_classes[0].name
     assert len(res["activity_items"]) == 1
@@ -530,6 +555,8 @@ def test_edit_activity_instance(api_client):
         name_sentence_case="activity instance",
         topic_code="activity instance tc",
         activities=[activities[0].uid],
+        activity_subgroups=[activity_subgroup.uid],
+        activity_groups=[activity_group.uid],
         approve=False,
     )
     response = api_client.get(
@@ -540,12 +567,19 @@ def test_edit_activity_instance(api_client):
     assert res["name"] == "Activity Instance"
     assert res["name_sentence_case"] == "activity instance"
     assert res["topic_code"] == "activity instance tc"
-    assert res["activities"][0]["uid"] == activities[0].uid
-    assert res["activities"][0]["name"] == activities[0].name
-    assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
-    assert res["activity_groups"][0]["uid"] == activity_group.uid
-    assert res["activity_groups"][0]["name"] == activity_group.name
+    assert len(res["activity_groupings"]) == 1
+    assert res["activity_groupings"][0]["activity"]["uid"] == activities[0].uid
+    assert res["activity_groupings"][0]["activity"]["name"] == activities[0].name
+    assert (
+        res["activity_groupings"][0]["activity_subgroup"]["uid"]
+        == activity_subgroup.uid
+    )
+    assert (
+        res["activity_groupings"][0]["activity_subgroup"]["name"]
+        == activity_subgroup.name
+    )
+    assert res["activity_groupings"][0]["activity_group"]["uid"] == activity_group.uid
+    assert res["activity_groupings"][0]["activity_group"]["name"] == activity_group.name
     assert res["activity_instance_class"]["uid"] == activity_instance_classes[0].uid
     assert len(res["activity_items"]) == 0
     assert res["version"] == "0.1"
@@ -556,7 +590,13 @@ def test_edit_activity_instance(api_client):
         f"/concepts/activities/activity-instances/{activity_instance.uid}",
         json={
             "name": "new name",
-            "activities": [activities[1].uid],
+            "activity_groupings": [
+                {
+                    "activity_uid": activities[1].uid,
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                    "activity_group_uid": activity_group.uid,
+                }
+            ],
             "activity_instance_class_uid": activity_instance_classes[1].uid,
             "activity_item_uids": [activity_items[0].uid, activity_items[1].uid],
             "change_description": "modifying activity instance",
@@ -567,12 +607,19 @@ def test_edit_activity_instance(api_client):
     assert res["name"] == "new name"
     assert res["name_sentence_case"] == "activity instance"
     assert res["topic_code"] == "activity instance tc"
-    assert res["activities"][0]["uid"] == activities[1].uid
-    assert res["activities"][0]["name"] == activities[1].name
-    assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
-    assert res["activity_groups"][0]["uid"] == activity_group.uid
-    assert res["activity_groups"][0]["name"] == activity_group.name
+    assert len(res["activity_groupings"]) == 1
+    assert res["activity_groupings"][0]["activity"]["uid"] == activities[1].uid
+    assert res["activity_groupings"][0]["activity"]["name"] == activities[1].name
+    assert (
+        res["activity_groupings"][0]["activity_subgroup"]["uid"]
+        == activity_subgroup.uid
+    )
+    assert (
+        res["activity_groupings"][0]["activity_subgroup"]["name"]
+        == activity_subgroup.name
+    )
+    assert res["activity_groupings"][0]["activity_group"]["uid"] == activity_group.uid
+    assert res["activity_groupings"][0]["activity_group"]["name"] == activity_group.name
     assert res["activity_instance_class"]["uid"] == activity_instance_classes[1].uid
     assert len(res["activity_items"]) == 2
     assert res["activity_items"][0]["uid"] == activity_items[0].uid
@@ -587,7 +634,13 @@ def test_post_activity_instance(api_client):
         "/concepts/activities/activity-instances",
         json={
             "name": "activity instance name",
-            "activities": [activities[0].uid],
+            "activity_groupings": [
+                {
+                    "activity_uid": activities[0].uid,
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                    "activity_group_uid": activity_group.uid,
+                }
+            ],
             "activity_instance_class_uid": activity_instance_classes[0].uid,
             "activity_item_uids": [activity_items[1].uid],
             "library_name": "Sponsor",
@@ -596,12 +649,19 @@ def test_post_activity_instance(api_client):
     assert response.status_code == 201
     res = response.json()
     assert res["name"] == "activity instance name"
-    assert res["activities"][0]["uid"] == activities[0].uid
-    assert res["activities"][0]["name"] == activities[0].name
-    assert res["activity_subgroups"][0]["uid"] == activity_subgroup.uid
-    assert res["activity_subgroups"][0]["name"] == activity_subgroup.name
-    assert res["activity_groups"][0]["uid"] == activity_group.uid
-    assert res["activity_groups"][0]["name"] == activity_group.name
+    assert len(res["activity_groupings"]) == 1
+    assert res["activity_groupings"][0]["activity"]["uid"] == activities[0].uid
+    assert res["activity_groupings"][0]["activity"]["name"] == activities[0].name
+    assert (
+        res["activity_groupings"][0]["activity_subgroup"]["uid"]
+        == activity_subgroup.uid
+    )
+    assert (
+        res["activity_groupings"][0]["activity_subgroup"]["name"]
+        == activity_subgroup.name
+    )
+    assert res["activity_groupings"][0]["activity_group"]["uid"] == activity_group.uid
+    assert res["activity_groupings"][0]["activity_group"]["name"] == activity_group.name
     assert res["activity_instance_class"]["uid"] == activity_instance_classes[0].uid
     assert len(res["activity_items"]) == 1
     assert res["activity_items"][0]["uid"] == activity_items[1].uid
@@ -619,7 +679,13 @@ def test_activity_instance_versioning(api_client):
         "/concepts/activities/activity-instances",
         json={
             "name": "ac name",
-            "activities": [activities[0].uid],
+            "activity_groupings": [
+                {
+                    "activity_uid": activities[0].uid,
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                    "activity_group_uid": activity_group.uid,
+                }
+            ],
             "activity_instance_class_uid": activity_instance_classes[0].uid,
             "library_name": "Sponsor",
         },
@@ -680,18 +746,21 @@ def test_activity_instance_overview(api_client):
 
 
 def verify_instance_overview_content(res: dict):
+    assert len(res["activity_groupings"]) == 1
     # activity
-    assert res["activity"]["name"] == "Activity"
-    assert res["activity"]["definition"] is None
-    assert res["activity"]["library_name"] == LIBRARY_NAME
+    assert res["activity_groupings"][0]["activity"]["name"] == "Activity"
+    assert res["activity_groupings"][0]["activity"]["definition"] is None
+    assert res["activity_groupings"][0]["activity"]["library_name"] == LIBRARY_NAME
 
     # activity subgroups
-    assert res["activity_subgroups"][0]["name"] == "activity_subgroup"
-    assert res["activity_subgroups"][0]["definition"] is None
+    assert (
+        res["activity_groupings"][0]["activity_subgroup"]["name"] == "activity_subgroup"
+    )
+    assert res["activity_groupings"][0]["activity_subgroup"]["definition"] is None
 
     # activity groups
-    assert res["activity_groups"][0]["name"] == "activity_group"
-    assert res["activity_groups"][0]["definition"] is None
+    assert res["activity_groupings"][0]["activity_group"]["name"] == "activity_group"
+    assert res["activity_groupings"][0]["activity_group"]["definition"] is None
 
     # activity instance
     assert res["activity_instance"]["name"] == "name XXX"
@@ -768,16 +837,19 @@ def verify_activity_overview_content(res: dict):
     assert res["activity"]["abbreviation"] is None
     assert res["activity"]["library_name"] == LIBRARY_NAME
 
+    assert len(res["activity_groupings"]) == 1
+
     # activity subgroups
-    assert res["activity_subgroups"][0]["name"] == "activity_subgroup"
-    assert res["activity_subgroups"][0]["definition"] is None
+    assert (
+        res["activity_groupings"][0]["activity_subgroup"]["name"] == "activity_subgroup"
+    )
+    assert res["activity_groupings"][0]["activity_subgroup"]["definition"] is None
 
     # activity groups
-    assert res["activity_groups"][0]["name"] == "activity_group"
-    assert res["activity_groups"][0]["definition"] is None
+    assert res["activity_groupings"][0]["activity_group"]["name"] == "activity_group"
+    assert res["activity_groupings"][0]["activity_subgroup"]["definition"] is None
 
     # activity instances
-    assert len(res["activity_instances"]) == 21
     assert res["activity_instances"][0]["name"] == "name-AAA-0"
     assert res["activity_instances"][0]["name_sentence_case"] == "name-AAA-0"
     assert res["activity_instances"][0]["abbreviation"] is None

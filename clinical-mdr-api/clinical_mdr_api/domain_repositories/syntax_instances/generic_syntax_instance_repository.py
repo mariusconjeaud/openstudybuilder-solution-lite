@@ -1,9 +1,11 @@
 import abc
+import re
 from datetime import datetime
 from typing import Iterable, TypeVar
 
 from neomodel import db
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.generic_syntax_repository import (
     GenericSyntaxRepository,
 )
@@ -26,6 +28,23 @@ class GenericSyntaxInstanceRepository(
     GenericSyntaxRepository[_AggregateRootType], abc.ABC
 ):
     template_class: type
+
+    def next_available_sequence_id(self, uid: str) -> str | None:
+        rs = db.cypher_query(
+            f"""
+            MATCH (r:SyntaxTemplateRoot {{uid: "{uid}"}})
+            OPTIONAL MATCH (pr:{self.root_class.__name__})-[:CREATED_FROM]->(r)
+            RETURN pr.sequence_id, r.sequence_id
+            """
+        )
+
+        if rs[0][0][0]:
+            rs[0].sort(key=lambda x: int(x[0].split("P")[1]), reverse=True)
+
+            prefix, number = re.search("(.*P)(\\d*)", rs[0][0][0]).groups()
+            return prefix + str(int(number) + 1)
+
+        return rs[0][0][1] + "P1"
 
     def find_instance_uids_by_template_uid(self, template_uid: str) -> Iterable[str]:
         template_root: VersionRoot = self.template_class.nodes.get_or_none(
@@ -61,7 +80,7 @@ class GenericSyntaxInstanceRepository(
                 )
                 cypher_query = f"""
                     MATCH (siv:SyntaxInstanceValue), (pt:TemplateParameterTermRoot)
-                    WHERE ID(siv) = $value_id and ID(pt) = $root_id
+                    WHERE elementId(siv) = $value_id and elementId(pt) = $root_id
                     CREATE (siv)-[r:{value.PARAMETERS_LABEL} {{position: $position, index: $index}}]->(pt)
                     """
                 db.cypher_query(
@@ -70,7 +89,7 @@ class GenericSyntaxInstanceRepository(
                         "root_id": root_id,
                         "position": position,
                         "index": 1,
-                        "value_id": value.id,
+                        "value_id": value.element_id,
                     },
                 )
             else:
@@ -99,7 +118,7 @@ class GenericSyntaxInstanceRepository(
         # Double check that we actually performed a valid connection to the template that isn't retired.
         # this needs to be done after connecting, as there might be concurrent transactions retiring the template.
         if template.latest_retired.get_or_none() is not None:
-            raise ValueError(
+            raise exceptions.BusinessLogicException(
                 root.uid + " cannot be added to " + template.uid + ", as it is retired."
             )
 
@@ -111,13 +130,13 @@ class GenericSyntaxInstanceRepository(
             # syntax instance root and TemplateParameterTermRoot to value to value.
             cypher_query = f"""
                 MATCH (spiv:SyntaxPreInstanceValue), (tp:TemplateParameterTermRoot {{uid: $parameter_uid}})-[:LATEST]->(tpv:TemplateParameterTermValue)
-                WHERE ID(spiv) = $value_id
+                WHERE elementId(spiv) = $value_id
                 CREATE (spiv)-[r:{value.PARAMETERS_LABEL} {{position: $position, index: $index}}]->(tpv)
                 """
         else:
             cypher_query = f"""
                 MATCH (siv:SyntaxInstanceValue), (tp:TemplateParameterTermRoot {{uid: $parameter_uid}})
-                WHERE ID(siv) = $value_id
+                WHERE elementId(siv) = $value_id
                 CREATE (siv)-[r:{value.PARAMETERS_LABEL} {{position: $position, index: $index}}]->(tp)
                 """
         db.cypher_query(
@@ -126,7 +145,7 @@ class GenericSyntaxInstanceRepository(
                 "parameter_uid": parameter_uid,
                 "position": position,
                 "index": index,
-                "value_id": value.id,
+                "value_id": value.element_id,
             },
         )
 
@@ -193,7 +212,7 @@ class GenericSyntaxInstanceRepository(
         else:
             cypher_query = f"""
         MATCH  (param:TemplateParameter)<-[u:USES_PARAMETER]-
-              (:SyntaxTemplateRoot)-[:HAS_OBJECTIVE|HAS_ENDPOINT|HAS_TIMEFRAME|HAS_CRITERIA|HAS_ACTIVITY_INSTRUCTION]->
+              (:SyntaxTemplateRoot)-[:HAS_OBJECTIVE|HAS_ENDPOINT|HAS_TIMEFRAME|HAS_CRITERIA|HAS_FOOTNOTE|HAS_ACTIVITY_INSTRUCTION]->
               (vt:{root.__label__})-[:LATEST_DRAFT|LATEST_FINAL|LATEST_RETIRED|HAS_VERSION]->
               (vv:{value.__label__})
         WHERE vt.uid=$root_uid AND vv.name=$value_name
@@ -284,6 +303,8 @@ class GenericSyntaxInstanceRepository(
             template_uid=template_object.uid,
             template_sequence_id=template_object.sequence_id,
             parameter_terms=parameter_terms,
+            guidance_text=template_value_object.guidance_text,
+            library_name=template_object.has_library.get().name,
         )
         return template
 

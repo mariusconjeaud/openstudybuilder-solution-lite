@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi import status as fast_api_status
@@ -10,11 +10,12 @@ from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatu
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.models.utils import CustomPage
-from clinical_mdr_api.oauth import get_current_user_id
+from clinical_mdr_api.oauth import get_current_user_id, rbac
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.syntax_instances.endpoints import EndpointService
 
+# Prefixed with "/endpoints"
 router = APIRouter()
 
 Service = EndpointService
@@ -25,6 +26,7 @@ EndpointUID = Path(None, description="The unique id of the endpoint.")
 
 @router.get(
     "",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all final versions of endpoints referenced by any study.",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=CustomPage[models.Endpoint],
@@ -93,28 +95,27 @@ EndpointUID = Path(None, description="The unique id of the endpoint.")
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    filters: Optional[Json] = Query(
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
     all_items = EndpointService(current_user_id).get_all(
-        return_study_count=True,
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
@@ -125,7 +126,7 @@ def get_all(
 
     return CustomPage.create(
         items=all_items.items,
-        total=all_items.total_count,
+        total=all_items.total,
         page=page_number,
         size=page_size,
     )
@@ -133,10 +134,11 @@ def get_all(
 
 @router.get(
     "/headers",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=List[Any],
+    response_model=list[Any],
     status_code=200,
     responses={
         404: {
@@ -148,7 +150,8 @@ def get_all(
 )
 def get_distinct_values_for_header(
     current_user_id: str = Depends(get_current_user_id),
-    status: Optional[LibraryItemStatus] = Query(
+    status: LibraryItemStatus
+    | None = Query(
         None,
         description="If specified, only those objective templates will be returned that are currently in the specified status. "
         "This may be particularly useful if the objective template has "
@@ -158,18 +161,17 @@ def get_distinct_values_for_header(
         "Valid values are: 'Final', 'Draft' or 'Retired'.",
     ),
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
-    search_string: Optional[str] = Query(
-        "", description=_generic_descriptions.HEADER_SEARCH_STRING
-    ),
-    filters: Optional[Json] = Query(
+    search_string: str
+    | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
+    filters: Json
+    | None = Query(
         None,
         description=_generic_descriptions.FILTERS,
         example=_generic_descriptions.FILTERS_EXAMPLE,
     ),
-    operator: Optional[str] = Query("and", description=_generic_descriptions.OPERATOR),
-    result_count: Optional[int] = Query(
-        10, description=_generic_descriptions.HEADER_RESULT_COUNT
-    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    result_count: int
+    | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
 ):
     return Service(current_user_id).get_distinct_values_for_header(
         status=status,
@@ -183,6 +185,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/audit-trail",
+    dependencies=[rbac.LIBRARY_READ],
     summary="",
     description="",
     response_model=CustomPage[models.Endpoint],
@@ -193,18 +196,17 @@ def get_distinct_values_for_header(
     },
 )
 def retrieve_audit_trail(
-    page_number: Optional[int] = Query(
-        1, ge=1, description=_generic_descriptions.PAGE_NUMBER
-    ),
-    page_size: Optional[int] = Query(
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
         config.DEFAULT_PAGE_SIZE,
         ge=0,
         le=config.MAX_PAGE_SIZE,
         description=_generic_descriptions.PAGE_SIZE,
     ),
-    total_count: Optional[bool] = Query(
-        False, description=_generic_descriptions.TOTAL_COUNT
-    ),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     current_user_id: str = Depends(get_current_user_id),
 ):
     results = Service(current_user_id).retrieve_audit_trail(
@@ -212,16 +214,17 @@ def retrieve_audit_trail(
     )
 
     return CustomPage.create(
-        items=results.items, total=results.total_count, page=page_number, size=page_size
+        items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the latest/newest version of a specific endpoint identified by 'uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
-    response_model=Optional[models.Endpoint],
+    response_model=models.Endpoint | None,
     status_code=200,
     responses={
         404: {
@@ -240,13 +243,14 @@ def get(
 
 @router.get(
     "/{uid}/versions",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns the version history of a specific endpoint identified by 'uid'.",
     description=f"""
 The returned versions are ordered by `start_date` descending (newest entries first).
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=List[models.EndpointVersion],
+    response_model=list[models.EndpointVersion],
     status_code=200,
     responses={
         200: {
@@ -343,9 +347,10 @@ def get_versions(
 
 @router.get(
     "/{uid}/studies",
+    dependencies=[rbac.STUDY_READ],
     summary="",
     description="",
-    response_model=List[Study],
+    response_model=list[Study],
     status_code=200,
     responses={
         404: {
@@ -358,7 +363,8 @@ def get_versions(
 def get_studies(
     uid: str = EndpointUID,
     current_user_id: str = Depends(get_current_user_id),
-    fields: Optional[str] = Query(
+    fields: str
+    | None = Query(
         default=None,
         description="Parameter specifies which parts of the whole Study Definition representation to retrieve. In"
         " the form of comma separated name of the fields prefixed by (optional) `+` "
@@ -380,6 +386,7 @@ def get_studies(
 
 @router.post(
     "",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new endpoint in 'Draft' status.",
     description="""This request is only valid if
 * the specified endpoint template is in 'Final' status and
@@ -424,6 +431,7 @@ def create(
 
 @router.post(
     "/preview",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Previews the creation of a new endpoint.",
     description="""This request is only valid if
 * the specified endpoint template is in 'Final' status and
@@ -464,6 +472,7 @@ def preview(
 
 @router.patch(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Updates the endpoint identified by 'uid'.",
     description="""This request is only valid if the endpoint
 * is in 'Draft' status and
@@ -506,6 +515,7 @@ def edit(
 
 @router.post(
     "/{uid}/approvals",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Approves the endpoint identified by 'uid'.",
     description="""This request is only valid if the endpoint
 * is in 'Draft' status and
@@ -541,6 +551,7 @@ def approve(
 
 @router.delete(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Inactivates/deactivates the endpoint identified by 'uid'.",
     description="""This request is only valid if the endpoint
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -575,6 +586,7 @@ def inactivate(
 # TODO check if * there is no other endpoint with the same name (it may be that one had been created after inactivating this one here)
 @router.post(
     "/{uid}/activations",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivates the endpoint identified by 'uid'.",
     description="""This request is only valid if the endpoint
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -608,6 +620,7 @@ def reactivate(
 
 @router.delete(
     "/{uid}",
+    dependencies=[rbac.LIBRARY_WRITE],
     summary="Deletes the endpoint identified by 'uid'.",
     description="""This request is only valid if \n
 * the endpoint is in 'Draft' status and
@@ -639,6 +652,7 @@ def delete(uid: str = EndpointUID, current_user_id: str = Depends(get_current_us
 #       however: check if that is ok with regard to the data volume we expect in the future. is paging needed?
 @router.get(
     "/{uid}/parameters",
+    dependencies=[rbac.LIBRARY_READ],
     summary="Returns all template parameters available for the endpoint identified by 'uid'. Includes the available values per parameter.",
     description="""Returns all template parameters used in the endpoint template
 that is the basis for the endpoint identified by 'uid'. 
@@ -653,7 +667,7 @@ Per parameter, the parameter.values are ordered by
 Note that parameters may be used multiple times in templates.
 In that case, the same parameter (with the same values) is included multiple times in the response.
     """,
-    response_model=List[models.TemplateParameter],
+    response_model=list[models.TemplateParameter],
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,

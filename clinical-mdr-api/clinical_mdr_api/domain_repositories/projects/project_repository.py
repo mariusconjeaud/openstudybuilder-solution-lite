@@ -1,4 +1,4 @@
-from typing import Collection, Optional, Sequence
+from typing import Collection, Sequence
 
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
@@ -49,7 +49,7 @@ class ProjectRepository:
         )
 
     @cached(cache=cache_store_item_by_uid, key=get_hashkey)
-    def find_by_uid(self, uid: str) -> Optional[ProjectAR]:
+    def find_by_uid(self, uid: str) -> ProjectAR | None:
         project = Project.nodes.get_or_none(uid=uid)
         if project is not None:
             project = ProjectAR.from_input_values(
@@ -64,7 +64,7 @@ class ProjectRepository:
         return None
 
     @cached(cache=cache_store_item_by_project_number, key=get_hashkey)
-    def find_by_project_number(self, project_number: str) -> Optional[ProjectAR]:
+    def find_by_project_number(self, project_number: str) -> ProjectAR | None:
         project = Project.nodes.first_or_none(project_number=project_number)
         if project is not None:
             project = ProjectAR.from_input_values(
@@ -149,7 +149,7 @@ class ProjectRepository:
                 name=p.name,
                 clinical_programme_uid=p.holds_project.single().uid,
                 description=p.description,
-                generate_uid_callback=lambda: p.uid,
+                generate_uid_callback=lambda x=p: x.uid,
                 clinical_programme_exists_callback=lambda _: True,
             )
             for p in projects

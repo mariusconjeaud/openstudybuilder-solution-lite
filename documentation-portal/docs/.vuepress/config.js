@@ -32,6 +32,7 @@ module.exports = {
 						'architecture/system_component_architecture',
 						'architecture/integration_architecture',
                         'architecture/system_data_flows',
+						'architecture/system_workflows',
 						'architecture/cloud_architecture',
 						'architecture/application_architecture_api',
 						'architecture/mdr_api_architecture',

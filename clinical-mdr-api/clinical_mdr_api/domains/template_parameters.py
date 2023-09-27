@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import AbstractSet
+from typing import AbstractSet, Self
 
 from clinical_mdr_api.domains.syntax_templates.template import TemplateVO
 from clinical_mdr_api.domains.versioned_object_aggregate import (
@@ -38,7 +38,7 @@ class ParameterTemplateAR(LibraryItemAggregateRootBase):
         parameter_name: str,
         library: LibraryVO,
         **kwargs,
-    ) -> "ParameterTemplateAR":
+    ) -> Self:
         # noinspection PyArgumentList
         return cls(
             _uid=None,
@@ -61,7 +61,7 @@ class ParameterTemplateAR(LibraryItemAggregateRootBase):
         parameter_name: str,
         item_metadata: LibraryItemMetadataVO,
         **kwargs,
-    ) -> "ParameterTemplateAR":
+    ) -> Self:
         # noinspection PyArgumentList
         return cls(
             _uid=uid,

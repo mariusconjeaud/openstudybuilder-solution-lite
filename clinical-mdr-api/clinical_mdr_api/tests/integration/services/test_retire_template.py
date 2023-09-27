@@ -139,4 +139,4 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
 
         objectives = self.objective_service.get_all(total_count=True)
         print(objectives)
-        self.assertEqual(objectives.total_count, 1)
+        self.assertEqual(objectives.total, 1)

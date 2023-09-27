@@ -1,12 +1,12 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Self
 
 from pydantic import Field
 
 from clinical_mdr_api.domains.syntax_instances.objective import ObjectiveAR
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.syntax_templates.objective_template import (
-    ObjectiveTemplateNameUid,
+    ObjectiveTemplateNameUidLibrary,
 )
 from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
@@ -20,17 +20,17 @@ from clinical_mdr_api.models.utils import BaseModel
 
 class Objective(BaseModel):
     uid: str
-    name: Optional[str] = Field(None, nullable=True)
-    name_plain: Optional[str] = Field(None, nullable=True)
+    name: str | None = Field(None, nullable=True)
+    name_plain: str | None = Field(None, nullable=True)
 
-    start_date: Optional[datetime] = Field(None, nullable=True)
-    end_date: Optional[datetime] = Field(None, nullable=True)
-    status: Optional[str] = Field(None, nullable=True)
-    version: Optional[str] = Field(None, nullable=True)
-    change_description: Optional[str] = Field(None, nullable=True)
-    user_initials: Optional[str] = Field(None, nullable=True)
+    start_date: datetime | None = Field(None, nullable=True)
+    end_date: datetime | None = Field(None, nullable=True)
+    status: str | None = Field(None, nullable=True)
+    version: str | None = Field(None, nullable=True)
+    change_description: str | None = Field(None, nullable=True)
+    user_initials: str | None = Field(None, nullable=True)
 
-    possible_actions: List[str] = Field(
+    possible_actions: list[str] = Field(
         [],
         description=(
             "Holds those actions that can be performed on the objective. "
@@ -38,20 +38,20 @@ class Objective(BaseModel):
         ),
     )
 
-    objective_template: Optional[ObjectiveTemplateNameUid]
-    parameter_terms: List[MultiTemplateParameterTerm] = Field(
+    objective_template: ObjectiveTemplateNameUidLibrary | None
+    parameter_terms: list[MultiTemplateParameterTerm] = Field(
         [],
         description="Holds the parameter terms that are used within the objective. The terms are ordered as they occur in the objective name.",
     )
-    library: Optional[Library] = Field(None, nullable=True)
+    library: Library | None = Field(None, nullable=True)
 
     study_count: int = Field(0, description="Count of studies referencing objective")
 
     @classmethod
-    def from_objective_ar(cls, objective_ar: ObjectiveAR) -> "Objective":
-        parameter_terms: List[MultiTemplateParameterTerm] = []
+    def from_objective_ar(cls, objective_ar: ObjectiveAR) -> Self:
+        parameter_terms: list[MultiTemplateParameterTerm] = []
         for position, parameter in enumerate(objective_ar.get_parameters()):
-            terms: List[IndexedTemplateParameterTerm] = []
+            terms: list[IndexedTemplateParameterTerm] = []
             for index, parameter_term in enumerate(parameter.parameters):
                 pv = IndexedTemplateParameterTerm(
                     index=index + 1,
@@ -80,11 +80,12 @@ class Objective(BaseModel):
             possible_actions=sorted(
                 {_.value for _ in objective_ar.get_possible_actions()}
             ),
-            objective_template=ObjectiveTemplateNameUid(
+            objective_template=ObjectiveTemplateNameUidLibrary(
                 name=objective_ar.template_name,
                 name_plain=objective_ar.template_name_plain,
                 uid=objective_ar.template_uid,
                 sequence_id=objective_ar.template_sequence_id,
+                library_name=objective_ar.template_library_name,
             ),
             library=Library.from_library_vo(objective_ar.library),
             study_count=objective_ar.study_count,
@@ -97,7 +98,7 @@ class ObjectiveVersion(Objective):
     Class for storing Objectives and calculation of differences
     """
 
-    changes: Optional[Dict[str, bool]] = Field(
+    changes: dict[str, bool] | None = Field(
         None,
         description=(
             "Denotes whether or not there was a change in a specific field/property compared to the previous version. "
@@ -108,7 +109,7 @@ class ObjectiveVersion(Objective):
 
 
 class ObjectiveParameterInput(BaseModel):
-    parameter_terms: List[TemplateParameterMultiSelectInput] = Field(
+    parameter_terms: list[TemplateParameterMultiSelectInput] = Field(
         None,
         title="parameter_terms",
         description="An ordered list of selected parameter terms that are used to replace the parameters of the objective template.",

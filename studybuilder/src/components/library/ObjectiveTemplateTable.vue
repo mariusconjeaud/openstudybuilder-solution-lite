@@ -8,6 +8,7 @@
   has-api
   column-data-resource="objective-templates"
   :history-formating-func="formatHistoryItem"
+  :history-excluded-headers="historyExcludedHeaders"
   fullscreen-form
   :prepare-duplicate-payload-func="prepareDuplicatePayload"
   @refresh="refreshTable"
@@ -105,6 +106,11 @@ export default {
         { text: this.$t('_global.modified'), value: 'start_date' },
         { text: this.$t('_global.status'), value: 'status' },
         { text: this.$t('_global.version'), value: 'version' }
+      ],
+      historyExcludedHeaders: [
+        'indications.name',
+        'categories.name.sponsor_preferred_name',
+        'is_confirmatory_testing'
       ],
       urlPrefix: '/objective-templates'
     }

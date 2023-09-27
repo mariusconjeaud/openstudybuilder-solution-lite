@@ -1,17 +1,17 @@
 import abc
-from typing import Optional, Sequence, Tuple, TypeVar, cast
+from typing import Sequence, TypeVar
 
 from neomodel import core, db
 from pydantic import BaseModel
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.syntax_instances.generic_syntax_instance_repository import (
     GenericSyntaxInstanceRepository,
 )
 from clinical_mdr_api.domain_repositories.template_parameters.complex_parameter import (
     ComplexTemplateParameterRepository,
 )
-from clinical_mdr_api.domains._utils import extract_parameters, generate_seq_id
-from clinical_mdr_api.domains.libraries.library_ar import LibraryAR
+from clinical_mdr_api.domains._utils import extract_parameters
 from clinical_mdr_api.domains.libraries.parameter_term import (
     ParameterTermEntryVO,
     SimpleParameterTermVO,
@@ -25,11 +25,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
     VersioningException,
 )
-from clinical_mdr_api.exceptions import (
-    BusinessLogicException,
-    NotFoundException,
-    ValidationException,
-)
+from clinical_mdr_api.exceptions import BusinessLogicException, NotFoundException
 from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
@@ -38,6 +34,7 @@ from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
 )
 from clinical_mdr_api.services._utils import (
     fill_missing_values_in_base_model_from_reference_base_model,
+    is_library_editable,
     process_complex_parameters,
 )
 from clinical_mdr_api.services.generic_syntax_service import GenericSyntaxService
@@ -47,28 +44,17 @@ _AggregateRootType = TypeVar("_AggregateRootType")
 
 class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc.ABC):
     instance_repository_interface: type
-    pre_instance_repository_interface: Optional[type]
+    pre_instance_repository_interface: type | None
 
     @property
     def instance_repository(self) -> GenericSyntaxInstanceRepository:
         return self.instance_repository_interface()
 
     @property
-    def pre_instance_repository(self) -> Optional[GenericSyntaxInstanceRepository]:
+    def pre_instance_repository(self) -> GenericSyntaxInstanceRepository | None:
         if self.pre_instance_repository_interface:
             return self.pre_instance_repository_interface()
         return None
-
-    def get_check_exists_callback(self, template: BaseModel):
-        study_uid = getattr(template, "study_uid", None)
-        if study_uid:
-            return lambda _template_vo: self.repository.check_exists_by_name_in_study(
-                name=_template_vo.name, study_uid=study_uid
-            )
-
-        return lambda _template_vo: self.repository.check_exists_by_name_in_library(
-            name=_template_vo.name, library=template.library_name
-        )
 
     def _create_ar_from_input_values(
         self, template: BaseModel
@@ -76,19 +62,13 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
         template_vo, library_vo = self._create_template_vo(template)
 
         # Process item to save
-        try:
-            item = TemplateAggregateRootBase.from_input_values(
-                template_value_exists_callback=self.get_check_exists_callback(
-                    template=template
-                ),
-                author=self.user_initials,
-                template=template_vo,
-                library=library_vo,
-                generate_uid_callback=self.repository.generate_uid_callback,
-                generate_seq_id_callback=generate_seq_id,
-            )
-        except ValueError as e:
-            raise ValidationException(e.args[0]) from e
+        item = TemplateAggregateRootBase.from_input_values(
+            author=self.user_initials,
+            template=template_vo,
+            library=library_vo,
+            generate_uid_callback=self.repository.generate_uid_callback,
+            next_available_sequence_id_callback=self.repository.next_available_sequence_id,
+        )
 
         return item
 
@@ -98,6 +78,20 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
         try:
             # Transaction that is performing initial save
             with db.transaction:
+                if existing_template := self.repository.get_by_name_in_library(
+                    name=template.name,
+                    library=template.library_name,
+                    type_uid=getattr(template, "type_uid", None),
+                ):
+                    if existing_template.library.name == "User Defined":
+                        return self._transform_aggregate_root_to_pydantic_model(
+                            existing_template
+                        )
+
+                    raise exceptions.ValidationException(
+                        f"Duplicate templates not allowed - template exists: {template.name}"
+                    )
+
                 item = self._create_ar_from_input_values(template)
 
                 # Save item
@@ -114,34 +108,21 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
     def _create_template_vo(
         self,
         template: BaseModel,
-        default_parameter_terms: Optional[Sequence[ParameterTermEntryVO]] = None,
-    ) -> Tuple[TemplateVO, LibraryVO]:
+        default_parameter_terms: Sequence[ParameterTermEntryVO] | None = None,
+    ) -> tuple[TemplateVO, LibraryVO]:
         # Create TemplateVO
         template_vo = TemplateVO.from_input_values_2(
             template_name=template.name,
-            template_guidance_text=getattr(template, "guidance_text", None),
+            guidance_text=getattr(template, "guidance_text", None),
             parameter_name_exists_callback=self._parameter_name_exists,
             default_parameter_terms=default_parameter_terms,
         )
 
         # Fetch library
-        try:
-            library_vo = LibraryVO.from_input_values_2(
-                library_name=template.library_name,
-                is_library_editable_callback=(
-                    lambda name: (
-                        cast(
-                            LibraryAR, self._repos.library_repository.find_by_name(name)
-                        ).is_editable
-                        if self._repos.library_repository.find_by_name(name) is not None
-                        else None
-                    )
-                ),
-            )
-        except ValueError as exc:
-            raise NotFoundException(
-                f"The library with the name='{template.library_name}' could not be found."
-            ) from exc
+        library_vo = LibraryVO.from_input_values_2(
+            library_name=template.library_name,
+            is_library_editable_callback=is_library_editable,
+        )
 
         return template_vo, library_vo
 
@@ -171,7 +152,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
     def _create_default_parameter_entries(
         self,
         template_name: str,
-        default_parameter_terms: Optional[Sequence[MultiTemplateParameterTerm]],
+        default_parameter_terms: Sequence[MultiTemplateParameterTerm] | None,
     ) -> Sequence[ParameterTermEntryVO]:
         """
         Creates sequence of Parameter Term Entries that is used in aggregate. These contain:
@@ -187,7 +168,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
             parameter_name = ""
 
             # Find default term for parameter using the "position" property
-            parameter: Optional[TemplateParameterMultiSelectInput] = None
+            parameter: TemplateParameterMultiSelectInput | None = None
             if default_parameter_terms is not None and len(default_parameter_terms) > 0:
                 parameter = next(
                     filter(
@@ -243,7 +224,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
 
             template_vo = TemplateVO.from_input_values_2(
                 template_name=template.name,
-                template_guidance_text=template.guidance_text,
+                guidance_text=getattr(template, "guidance_text", None),
                 parameter_name_exists_callback=self._parameter_name_exists,
             )
 
@@ -384,10 +365,13 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
                 uid, for_update=True, return_study_count=True
             )
 
-            if self.repository.check_exists_by_name_in_library(
-                name=template.name, library=item.library.name
+            if (
+                self.repository.check_exists_by_name_in_library(
+                    name=template.name, library=item.library.name
+                )
+                and template.name != item.name
             ):
-                raise ValueError(
+                raise exceptions.ValidationException(
                     f"Duplicate templates not allowed - template exists: {template.name}"
                 )
 
@@ -405,8 +389,8 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
     def get_parameters(
         self,
         uid: str,
-        study_uid: Optional[str] = None,
-        include_study_endpoints: Optional[bool] = False,
+        study_uid: str | None = None,
+        include_study_endpoints: bool | None = False,
     ):
         try:
             parameter_repository_2 = ComplexTemplateParameterRepository()
@@ -424,10 +408,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
 
     @db.transaction
     def validate_template_syntax(self, template_name_to_validate: str) -> None:
-        try:
-            TemplateVO.from_input_values_2(
-                template_name=template_name_to_validate,
-                parameter_name_exists_callback=self._parameter_name_exists,
-            )
-        except ValueError as exc:
-            raise ValidationException(exc.args[0]) from exc
+        TemplateVO.from_input_values_2(
+            template_name=template_name_to_validate,
+            parameter_name_exists_callback=self._parameter_name_exists,
+        )

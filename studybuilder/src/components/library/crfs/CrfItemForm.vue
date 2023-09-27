@@ -314,7 +314,7 @@
             @click="removeCodelist(item)"
             :disabled="readOnly">
             <v-icon dark>
-              mdi-trash-can
+              mdi-delete-outline
             </v-icon>
           </v-btn>
         </template>
@@ -406,7 +406,7 @@
             @click="removeTerm(item)"
             :disabled="readOnly">
             <v-icon dark>
-              mdi-trash-can
+              mdi-delete-outline
             </v-icon>
           </v-btn>
         </template>
@@ -419,6 +419,8 @@
         :headers="termsHeaders"
         item-key="uid"
         :items="terms"
+        :server-items-length="totalTerms"
+        :options.sync="optionsTerms"
         hide-export-button
         only-text-search
         hide-default-switches
@@ -450,7 +452,6 @@
             <v-btn
               class="ml-2"
               fab
-              dark
               small
               color="primary"
               @click.stop="addUnit"
@@ -490,7 +491,7 @@
                 @click="removeUnit(index)"
                 :disabled="readOnly">
                 <v-icon dark>
-                    mdi-trash-can
+                  mdi-delete-outline
                 </v-icon>
               </v-btn>
           </template>
@@ -689,6 +690,7 @@ export default {
           icon: 'mdi-check-decagram',
           iconColor: 'success',
           condition: (item) => !this.readOnly,
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.approve
         },
         {
@@ -696,13 +698,15 @@ export default {
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
           condition: (item) => this.readOnly,
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.newVersion
         },
         {
           label: this.$t('_global.delete'),
-          icon: 'mdi-delete',
+          icon: 'mdi-delete-outline',
           iconColor: 'error',
           condition: (item) => item.possible_actions ? item.possible_actions.find(action => action === actions.DELETE) : false,
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.delete
         },
         {
@@ -710,6 +714,7 @@ export default {
           icon: 'mdi-plus',
           iconColor: 'primary',
           condition: (item) => this.readOnly,
+          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.openLinkForm
         }
       ],
@@ -720,7 +725,9 @@ export default {
       selectedFilteringTerms: [],
       search: '',
       operators: ['or', 'and'],
-      termsFilterOperator: 'or'
+      termsFilterOperator: 'or',
+      totalTerms: 0,
+      optionsTerms: {}
     }
   },
   mounted () {
@@ -911,7 +918,13 @@ export default {
     },
     getCodeListTerms (item) {
       if (item) {
-        terms.getTermsByCodelistUid(item.codelist_uid).then(resp => {
+        const params = {
+          codelist_uid: item.codelist_uid,
+          page_number: (this.optionsTerms.page),
+          page_size: this.optionsTerms.itemsPerPage,
+          total_count: true
+        }
+        terms.getTermsByCodelistUid(params).then(resp => {
           this.terms = resp.data.items
           if (this.form.terms) {
             this.form.terms.forEach((el, index) => {
@@ -923,6 +936,7 @@ export default {
             })
           }
           this.terms = this.terms.filter(ar => !this.selectedTerms.find(rm => (rm.term_uid === ar.term_uid)))
+          this.totalTerms = resp.data.total
         })
       } else {
         this.terms = []
@@ -1195,6 +1209,12 @@ export default {
     options: {
       handler () {
         this.fetchCodelists()
+      },
+      deep: true
+    },
+    optionsTerms: {
+      handler () {
+        this.getCodeListTerms(this.selectedCodelists[0])
       },
       deep: true
     },

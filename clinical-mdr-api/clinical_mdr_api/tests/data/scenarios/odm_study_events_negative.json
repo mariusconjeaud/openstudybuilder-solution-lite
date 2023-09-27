@@ -66,37 +66,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Study Event with name (name1) already exists.",
-                "time": "2022-03-07T12: 14: 18.116363",
-                "path": "http://testserver/concepts/odms/study-events",
-                "method": "POST",
-                "type": "BusinessLogicException"
-            }
-        }
-    },
-    {
-        "name": "Test cannot create a new ODM Study Event with existing oid",
-        "request": {
-            "headers": {},
-            "method": "POST",
-            "request": {
-                "library_name": "Sponsor",
-                "name": "name2",
-                "oid": "oid1",
-                "effective_date": "2022-04-21",
-                "retired_date": "2022-04-21",
-                "form_uids": []
-            },
-            "url": "concepts/odms/study-events"
-        },
-        "response": {
-            "code": 400,
-            "headers": {
-                "content-length": "459",
-                "content-type": "application/json"
-            },
-            "result": {
-                "message": "ODM Study Event with OID (oid1) already exists.",
+                "message": "ODM Study Event with ['name: name1', 'OID: oid1'] already exists.",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/study-events",
                 "method": "POST",

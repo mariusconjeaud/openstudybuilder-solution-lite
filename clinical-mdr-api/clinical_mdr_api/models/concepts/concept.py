@@ -1,6 +1,6 @@
 from abc import ABC
 from datetime import datetime
-from typing import Callable, Optional
+from typing import Callable, Self
 
 from pydantic import Field
 
@@ -29,7 +29,7 @@ class NoLibraryConceptModelNoName(BaseModel, ABC):
         description=_generic_descriptions.START_DATE,
         source="latest_version|start_date",
     )
-    end_date: Optional[datetime] = Field(
+    end_date: datetime | None = Field(
         None,
         title="endDate",
         description=_generic_descriptions.END_DATE,
@@ -61,46 +61,46 @@ class ConceptPostInput(NoLibraryConceptPostInput):
 
 class ConceptPatchInput(BaseModel, ABC):
     change_description: str
-    name: Optional[str] = None
+    name: str | None = None
 
 
 class VersionProperties(BaseModel):
-    start_date: Optional[datetime] = Field(
+    start_date: datetime | None = Field(
         None,
         title="startDate",
         description=_generic_descriptions.START_DATE,
         source="latest_version|start_date",
         nullable=True,
     )
-    end_date: Optional[datetime] = Field(
+    end_date: datetime | None = Field(
         None,
         title="endDate",
         description=_generic_descriptions.END_DATE,
         source="latest_version|end_date",
         nullable=True,
     )
-    status: Optional[str] = Field(
+    status: str | None = Field(
         None,
         title="status",
         description="",
         source="latest_version|status",
         nullable=True,
     )
-    version: Optional[str] = Field(
+    version: str | None = Field(
         None,
         title="version",
         description="",
         source="latest_version|version",
         nullable=True,
     )
-    change_description: Optional[str] = Field(
+    change_description: str | None = Field(
         None,
         title="changeDescription",
         description="",
         source="latest_version|change_description",
         nullable=True,
     )
-    user_initials: Optional[str] = Field(
+    user_initials: str | None = Field(
         None,
         title="userInitials",
         description="",
@@ -120,21 +120,21 @@ class Concept(VersionProperties):
         description="The name or the actual value. E.g. 'Systolic Blood Pressure', 'Body Temperature', 'Metformin', ...",
         source="has_latest_value.name",
     )
-    name_sentence_case: Optional[str] = Field(
+    name_sentence_case: str | None = Field(
         None,
         title="name_sentence_case",
         description="",
         source="has_latest_value.name_sentence_case",
         nullable=True,
     )
-    definition: Optional[str] = Field(
+    definition: str | None = Field(
         None,
         title="definition",
         description="",
         source="has_latest_value.definition",
         nullable=True,
     )
-    abbreviation: Optional[str] = Field(
+    abbreviation: str | None = Field(
         None,
         title="abbreviation",
         description="",
@@ -143,7 +143,7 @@ class Concept(VersionProperties):
     )
     library_name: str = Field(
         ...,
-        title="libraryName",
+        title="library_name",
         description="",
         source="has_library.name",
     )
@@ -155,18 +155,18 @@ class ConceptInput(BaseModel):
         title="name",
         description="The name or the actual value. E.g. 'Systolic Blood Pressure', 'Body Temperature', 'Metformin', ...",
     )
-    name_sentence_case: Optional[str] = Field(
+    name_sentence_case: str | None = Field(
         None,
         title="name_sentence_case",
         description="",
     )
-    definition: Optional[str] = Field(
+    definition: str | None = Field(
         None,
         title="definition",
         description="",
     )
-    abbreviation: Optional[str] = None
-    library_name: Optional[str] = None
+    abbreviation: str | None = None
+    library_name: str | None = None
 
 
 class SimpleConcept(Concept):
@@ -174,12 +174,12 @@ class SimpleConcept(Concept):
 
 
 class SimpleConceptInput(ConceptInput):
-    template_parameter: Optional[bool] = False
+    template_parameter: bool | None = False
 
 
 class TextValue(SimpleConcept):
     @classmethod
-    def from_concept_ar(cls, text_value: TextValueAR) -> "TextValue":
+    def from_concept_ar(cls, text_value: TextValueAR) -> Self:
         return cls(
             uid=text_value.uid,
             library_name=Library.from_library_vo(text_value.library).name,
@@ -193,7 +193,7 @@ class TextValue(SimpleConcept):
 
 class TextValueInput(SimpleConceptInput):
     name: str
-    name_sentence_case: Optional[str] = None
+    name_sentence_case: str | None = None
 
 
 class VisitName(TextValue):
@@ -209,7 +209,7 @@ class NumericValue(SimpleConcept):
     value: float
 
     @classmethod
-    def from_concept_ar(cls, numeric_value: NumericValueAR) -> "NumericValue":
+    def from_concept_ar(cls, numeric_value: NumericValueAR) -> Self:
         return cls(
             uid=numeric_value.uid,
             library_name=Library.from_library_vo(numeric_value.library).name,
@@ -230,9 +230,7 @@ class NumericValueWithUnit(NumericValue):
     unit_definition_uid: str
 
     @classmethod
-    def from_concept_ar(
-        cls, numeric_value: NumericValueWithUnitAR
-    ) -> "NumericValueWithUnit":
+    def from_concept_ar(cls, numeric_value: NumericValueWithUnitAR) -> Self:
         return cls(
             uid=numeric_value.uid,
             library_name=Library.from_library_vo(numeric_value.library).name,
@@ -260,9 +258,9 @@ class SimpleNumericValueWithUnit(BaseModel):
     def from_concept_uid(
         cls,
         uid: str,
-        find_unit_by_uid: Callable[[str], Optional[UnitDefinitionAR]],
-        find_numeric_value_by_uid: Callable[[str], Optional[NumericValueWithUnitAR]],
-    ) -> Optional["SimpleNumericValueWithUnit"]:
+        find_unit_by_uid: Callable[[str], UnitDefinitionAR | None],
+        find_numeric_value_by_uid: Callable[[str], NumericValueWithUnitAR | None],
+    ) -> Self | None:
         concept = None
         if uid is not None:
             val: NumericValueWithUnitAR = find_numeric_value_by_uid(uid)
@@ -286,7 +284,7 @@ class LagTime(NumericValueWithUnit):
     sdtm_domain_uid: str
 
     @classmethod
-    def from_concept_ar(cls, numeric_value: LagTimeAR) -> "LagTime":
+    def from_concept_ar(cls, numeric_value: LagTimeAR) -> Self:
         return cls(
             uid=numeric_value.uid,
             library_name=Library.from_library_vo(numeric_value.library).name,
@@ -316,10 +314,10 @@ class SimpleLagTime(BaseModel):
     def from_concept_uid(
         cls,
         uid: str,
-        find_unit_by_uid: Callable[[str], Optional[UnitDefinitionAR]],
-        find_term_by_uid: Callable[[str], Optional[CTTermNameAR]],
-        find_lag_time_by_uid: Callable[[str], Optional[LagTimeAR]],
-    ) -> Optional["SimpleLagTime"]:
+        find_unit_by_uid: Callable[[str], UnitDefinitionAR | None],
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
+        find_lag_time_by_uid: Callable[[str], LagTimeAR | None],
+    ) -> Self | None:
         concept = None
         if uid is not None:
             val: LagTimeAR = find_lag_time_by_uid(uid)
@@ -350,7 +348,7 @@ class TimePoint(SimpleConcept):
     time_reference_uid: str
 
     @classmethod
-    def from_concept_ar(cls, time_point: TimePointAR) -> "TimePoint":
+    def from_concept_ar(cls, time_point: TimePointAR) -> Self:
         return cls(
             uid=time_point.uid,
             library_name=Library.from_library_vo(time_point.library).name,
@@ -366,7 +364,7 @@ class TimePoint(SimpleConcept):
 
 
 class TimePointInput(SimpleConceptInput):
-    name_sentence_case: Optional[str] = Field(
+    name_sentence_case: str | None = Field(
         None,
         title="name_sentence_case",
         description="",

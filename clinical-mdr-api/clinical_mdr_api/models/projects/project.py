@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, Self
 
 from pydantic import Field
 
@@ -19,7 +19,7 @@ class Project(BaseModel):
         description="The unique id of the Project.",
     )
 
-    project_number: Optional[str] = Field(
+    project_number: str | None = Field(
         ...,
         title="project_number",
         description="",
@@ -31,13 +31,13 @@ class Project(BaseModel):
         description="",
     )
 
-    name: Optional[str] = Field(
+    name: str | None = Field(
         ...,
         title="name",
         description="",
     )
 
-    description: Optional[str] = Field(
+    description: str | None = Field(
         ...,
         title="description",
         description="",
@@ -47,9 +47,9 @@ class Project(BaseModel):
     def from_uid(
         cls,
         uid: str,
-        find_by_uid: Callable[[str], Optional[ProjectAR]],
+        find_by_uid: Callable[[str], ProjectAR | None],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
-    ) -> Optional["Project"]:
+    ) -> Self | None:
         project = None
         if uid is not None:
             project_ar: ProjectAR = find_by_uid(uid)
@@ -64,7 +64,7 @@ class Project(BaseModel):
         cls,
         project_ar: ProjectAR,
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
-    ) -> "Project":
+    ) -> Self:
         return Project(
             uid=project_ar.uid,
             project_number=project_ar.project_number,
@@ -80,19 +80,19 @@ class Project(BaseModel):
 
 
 class ProjectCreateInput(BaseModel):
-    project_number: Optional[str] = Field(
+    project_number: str | None = Field(
         ...,
         title="project_number",
         description="",
     )
 
-    name: Optional[str] = Field(
+    name: str | None = Field(
         ...,
         title="name",
         description="",
     )
 
-    description: Optional[str] = Field(
+    description: str | None = Field(
         ...,
         title="description",
         description="",

@@ -35,6 +35,7 @@
 import { mapActions, mapGetters } from 'vuex'
 import ConfirmDialog from '@/components/tools/ConfirmDialog'
 import StudyQuickSelectForm from '@/components/studies/StudyQuickSelectForm'
+import generalUtils from '@/utils/generalUtils'
 
 export default {
   computed: {
@@ -101,8 +102,9 @@ export default {
       this.$router.push({ name: 'SelectOrAddStudy' })
     },
     goToNextUrl () {
-      this.$router.push(this.nextUrl)
-      this.nextUrl = null
+      this.nextUrl.params = { study_id: generalUtils.extractStudyUidFromLocalStorage() }
+      const resolved = this.$router.resolve(this.nextUrl)
+      document.location.href = resolved.href
     }
   },
   watch: {

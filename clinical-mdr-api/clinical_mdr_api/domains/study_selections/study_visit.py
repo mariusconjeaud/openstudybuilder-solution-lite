@@ -1,8 +1,9 @@
 import datetime
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Self
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.config import GLOBAL_ANCHOR_VISIT_NAME
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyStatus,
@@ -84,14 +85,13 @@ class TextValue:
 @dataclass
 class StudyVisitVO:
     consecutive_visit_group: str
-    visit_window_min: Optional[int]
-    visit_window_max: Optional[int]
-    window_unit_uid: Optional[str]
+    visit_window_min: int | None
+    visit_window_max: int | None
+    window_unit_uid: str | None
 
     description: str
     start_rule: str  # Free text
     end_rule: str  # Free text
-    note: str
     visit_contact_mode: StudyVisitContactMode  # CT Codelist Visit Contact Mode
     visit_type: StudyVisitType  # CT Codelist VISIT_TYPE -
 
@@ -105,38 +105,38 @@ class StudyVisitVO:
     visit_number: int
     visit_order: int
     show_visit: bool
-    epoch_allocation: Optional[StudyVisitEpochAllocation] = None
-    timepoint: Optional[TimePoint] = None
-    study_day: Optional[NumericValue] = None
-    study_duration_days: Optional[NumericValue] = None
-    study_week: Optional[NumericValue] = None
-    study_duration_weeks: Optional[NumericValue] = None
+    epoch_allocation: StudyVisitEpochAllocation | None = None
+    timepoint: TimePoint | None = None
+    study_day: NumericValue | None = None
+    study_duration_days: NumericValue | None = None
+    study_week: NumericValue | None = None
+    study_duration_weeks: NumericValue | None = None
 
-    visit_name_sc: TextValue = None
+    visit_name_sc: TextValue | None = None
 
-    legacy_visit_id: Optional[str] = None
-    legacy_visit_type_alias: Optional[str] = None
-    legacy_name: Optional[str] = None
-    legacy_subname: Optional[str] = None
+    legacy_visit_id: str | None = None
+    legacy_visit_type_alias: str | None = None
+    legacy_name: str | None = None
+    legacy_subname: str | None = None
 
-    subvisit_number: Optional[int] = None
-    subvisit_anchor: Optional["StudyVisitVO"] = None
-    time_unit_object: Optional[TimeUnit] = None
-    window_unit_object: Optional[TimeUnit] = None
+    subvisit_number: int | None = None
+    subvisit_anchor: Self | None = None
+    time_unit_object: TimeUnit | None = None
+    window_unit_object: TimeUnit | None = None
 
     epoch_connector: Any = None
     anchor_visit = None
     is_deleted: bool = False
-    uid: Optional[str] = None
+    uid: str | None = None
 
-    day_unit_object: Optional[TimeUnit] = None
-    week_unit_object: Optional[TimeUnit] = None
+    day_unit_object: TimeUnit | None = None
+    week_unit_object: TimeUnit | None = None
 
-    visit_sublabel: Optional[str] = None  # label for subvisit
-    visit_sublabel_reference: Optional[
-        str
-    ] = None  # reference (uid) of the first subvisit in subvisit stream
-    visit_sublabel_uid: Optional[str] = None  # uid of subvisit label from Codelist
+    visit_sublabel: str | None = None  # label for subvisit
+    visit_sublabel_reference: str | None = (
+        None  # reference (uid) of the first subvisit in subvisit stream
+    )
+    visit_sublabel_uid: str | None = None  # uid of subvisit label from Codelist
 
     @property
     def visit_name_label(self):
@@ -158,7 +158,9 @@ class StudyVisitVO:
         elif "virtual visit" in self.visit_contact_mode.value.lower():
             visit_prefix = "O"
         else:
-            raise ValueError("Unrecognized visit contact mode passed.")
+            raise exceptions.ValidationException(
+                "Unrecognized visit contact mode passed."
+            )
         visit_short_name = f"{visit_prefix}{self.visit_number}"
         if self.visit_subclass == VisitSubclass.ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV:
             return (
@@ -242,7 +244,7 @@ class StudyVisitVO:
             return self.study_week.value
         return None
 
-    def derive_study_day_number(self, relative_duration=False) -> Optional[int]:
+    def derive_study_day_number(self, relative_duration=False) -> int | None:
         if not relative_duration:
             duration = self.get_absolute_duration()
         else:
@@ -254,13 +256,13 @@ class StudyVisitVO:
             return days + 1
         return None
 
-    def derive_study_duration_days_number(self) -> Optional[int]:
+    def derive_study_duration_days_number(self) -> int | None:
         derived_study_day_number = self.derive_study_day_number()
         if derived_study_day_number is None:
             return None
         return derived_study_day_number - 1
 
-    def derive_study_week_number(self) -> Optional[int]:
+    def derive_study_week_number(self) -> int | None:
         duration = self.get_absolute_duration()
         if self.week_unit_object and duration is not None:
             weeks = int(duration / self.week_unit_object.conversion_factor_to_master)
@@ -269,7 +271,7 @@ class StudyVisitVO:
             return weeks + 1
         return None
 
-    def derive_study_duration_weeks_number(self) -> Optional[int]:
+    def derive_study_duration_weeks_number(self) -> int | None:
         derived_study_week_number = self.derive_study_week_number()
         if derived_study_week_number is None:
             return None
@@ -314,7 +316,7 @@ class StudyVisitVO:
     def get_absolute_days(self):
         return self.get_absolute_duration() / DURATION_DIVIDER
 
-    def get_absolute_duration(self) -> Optional[int]:
+    def get_absolute_duration(self) -> int | None:
         # Special visit doesn't have a timing but we want to place it
         # after the anchor visit for the special visit hence we derive timing based on the anchor visit
         if self.visit_class == VisitClass.SPECIAL_VISIT and self.subvisit_anchor:
@@ -385,7 +387,6 @@ class StudyVisitVO:
             == other_visit.timepoint.visit_timereference
             and self.visit_window_min == other_visit.visit_window_min
             and self.visit_window_max == other_visit.visit_window_max
-            and self.note == other_visit.note
         )
 
     def copy_cons_group_visit_properties(
@@ -398,10 +399,9 @@ class StudyVisitVO:
         self.timepoint.visit_timereference = other_visit.timepoint.visit_timereference
         self.visit_window_min = other_visit.visit_window_min
         self.visit_window_max = other_visit.visit_window_max
-        self.note = other_visit.note
 
 
 @dataclass
 class StudyVisitHistoryVO(StudyVisitVO):
-    change_type: Optional[str] = None
-    end_date: Optional[datetime.datetime] = None
+    change_type: str | None = None
+    end_date: datetime.datetime | None = None

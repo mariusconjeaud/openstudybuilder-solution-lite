@@ -12,7 +12,6 @@ Tests for criteria-templates endpoints
 import json
 import logging
 from functools import reduce
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -34,7 +33,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
-criteria_templates: List[CriteriaTemplate]
+criteria_templates: list[CriteriaTemplate]
 ct_term_inclusion: models.CTTerm
 dictionary_term_indication: models.DictionaryTerm
 ct_term_category: models.CTTerm
@@ -277,7 +276,7 @@ def test_get_criteria_template(api_client):
         assert res[key] is not None
 
     assert res["uid"] == criteria_templates[1].uid
-    assert res["sequence_id"] == "CIT2"
+    assert res["sequence_id"] == "CI2"
     assert res["name"] == "Default-AAA name with [TextValue]"
     assert res["guidance_text"] == "Default-AAA guidance text"
     assert res["parameters"][0]["name"] == "TextValue"
@@ -411,7 +410,8 @@ def test_get_versions_of_criteria_template(api_client):
 
     assert len(res) == 2
     assert res[0]["uid"] == criteria_templates[1].uid
-    assert res[0]["sequence_id"] == "CIT2"
+    assert res[0]["guidance_text"] == criteria_templates[1].guidance_text
+    assert res[0]["sequence_id"] == "CI2"
     assert res[0]["type"]["term_uid"] == ct_term_inclusion.term_uid
     assert res[0]["type"]["codelist_uid"] == ct_term_inclusion.codelist_uid
     assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
@@ -434,7 +434,8 @@ def test_get_versions_of_criteria_template(api_client):
     assert res[0]["version"] == "1.0"
     assert res[0]["status"] == "Final"
     assert res[1]["uid"] == criteria_templates[1].uid
-    assert res[1]["sequence_id"] == "CIT2"
+    assert res[1]["guidance_text"] == criteria_templates[1].guidance_text
+    assert res[1]["sequence_id"] == "CI2"
     assert res[1]["type"]["term_uid"] == ct_term_inclusion.term_uid
     assert res[1]["type"]["codelist_uid"] == ct_term_inclusion.codelist_uid
     assert res[1]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
@@ -466,7 +467,8 @@ def test_get_all_final_versions_of_criteria_template(api_client):
 
     assert len(res) == 1
     assert res[0]["uid"] == criteria_templates[1].uid
-    assert res[0]["sequence_id"] == "CIT2"
+    assert res[0]["guidance_text"] == criteria_templates[1].guidance_text
+    assert res[0]["sequence_id"] == "CI2"
     assert res[0]["type"]["term_uid"] == ct_term_inclusion.term_uid
     assert res[0]["type"]["codelist_uid"] == ct_term_inclusion.codelist_uid
     assert res[0]["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
@@ -694,7 +696,9 @@ def test_get_specific_version_of_criteria_template(api_client):
     assert response.status_code == 200
 
     assert res["uid"] == criteria_templates[4].uid
-    assert res["sequence_id"] == "CIT5"
+    assert res["sequence_id"] == "CI5"
+    assert res["name"] == "new test name"
+    assert res["guidance_text"] == "new test guidance text"
     assert res["type"]["term_uid"] == ct_term_inclusion.term_uid
     assert res["type"]["codelist_uid"] == ct_term_inclusion.codelist_uid
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
@@ -917,7 +921,7 @@ def test_approve_criteria_template(api_client):
 
     assert response.status_code == 201
     assert res["uid"] == criteria_templates[3].uid
-    assert res["sequence_id"] == "CIT4"
+    assert res["sequence_id"] == "CI4"
     assert res["type"]["term_uid"] == ct_term_inclusion.term_uid
     assert res["type"]["codelist_uid"] == ct_term_inclusion.codelist_uid
     assert res["name"] == "Default-XXX name with [TextValue]"
@@ -986,7 +990,7 @@ def test_cascade_approve_criteria_template(api_client):
 
     assert response.status_code == 201
     assert res["uid"] == criteria_templates[5].uid
-    assert res["sequence_id"] == "CIT6"
+    assert res["sequence_id"] == "CI6"
     assert res["name"] == "cascade check [TextValue]"
     assert res["guidance_text"] == "Default-AAA-0 guidance text"
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
@@ -1029,7 +1033,7 @@ def test_inactivate_criteria_template(api_client):
 
     assert response.status_code == 200
     assert res["uid"] == criteria_templates[5].uid
-    assert res["sequence_id"] == "CIT6"
+    assert res["sequence_id"] == "CI6"
     assert res["type"]["term_uid"] == ct_term_inclusion.term_uid
     assert res["type"]["codelist_uid"] == ct_term_inclusion.codelist_uid
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
@@ -1064,7 +1068,7 @@ def test_reactivate_criteria_template(api_client):
 
     assert response.status_code == 200
     assert res["uid"] == criteria_templates[5].uid
-    assert res["sequence_id"] == "CIT6"
+    assert res["sequence_id"] == "CI6"
     assert res["type"]["term_uid"] == ct_term_inclusion.term_uid
     assert res["type"]["codelist_uid"] == ct_term_inclusion.codelist_uid
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
@@ -1161,46 +1165,33 @@ def test_criteria_template_audit_trail(api_client):
     assert actual_uids == expected_uids
 
 
-def test_create_pre_instance_criteria_template(api_client):
+def test_criteria_template_sequence_id_generation(api_client):
+    ct_term = TestUtils.create_ct_term(sponsor_preferred_name="EXCLUSION CRITERIA")
     data = {
+        "name": "default_name [TextValue]",
+        "guidance_text": "default_guidance_text",
         "library_name": "Sponsor",
-        "parameter_terms": [
-            {
-                "position": 1,
-                "conjunction": "",
-                "terms": [
-                    {
-                        "index": 1,
-                        "name": text_value_1.name_sentence_case,
-                        "uid": text_value_1.uid,
-                        "type": "TextValue",
-                    }
-                ],
-            }
-        ],
+        "default_parameter_terms": [],
+        "type_uid": ct_term.term_uid,
         "indication_uids": [dictionary_term_indication.term_uid],
         "category_uids": [ct_term_category.term_uid],
         "sub_category_uids": [ct_term_subcategory.term_uid],
     }
-    response = api_client.post(
-        f"{URL}/{criteria_templates[0].uid}/pre-instances", json=data
-    )
+    response = api_client.post(URL, json=data)
     res = response.json()
-    log.info("Created Criteria Pre-Instance: %s", res)
+    log.info("Created Criteria Template: %s", res)
 
     assert response.status_code == 201
-    assert "PreInstance" in res["uid"]
-    assert res["sequence_id"]
-    assert res["template_uid"] == criteria_templates[0].uid
-    assert res["name"] == f"Default name with [{text_value_1.name_sentence_case}]"
-    assert (
-        res["parameter_terms"][0]["position"] == data["parameter_terms"][0]["position"]
-    )
-    assert (
-        res["parameter_terms"][0]["conjunction"]
-        == data["parameter_terms"][0]["conjunction"]
-    )
-    assert res["parameter_terms"][0]["terms"] == data["parameter_terms"][0]["terms"]
+    assert res["uid"]
+    assert res["sequence_id"] == "CE1"
+    assert res["name"] == "default_name [TextValue]"
+    assert res["guidance_text"] == "default_guidance_text"
+    assert res["parameters"][0]["name"] == "TextValue"
+    assert res["parameters"][0]["terms"] == []
+    assert res["type"]["term_uid"] == ct_term.term_uid
+    assert res["type"]["codelist_uid"] == ct_term.codelist_uid
+    assert res["type"]["catalogue_name"] == ct_term.catalogue_name
+    assert res["type"]["codelist_uid"] == ct_term.codelist_uid
     assert res["indications"][0]["term_uid"] == dictionary_term_indication.term_uid
     assert (
         res["indications"][0]["dictionary_id"]
@@ -1217,6 +1208,9 @@ def test_create_pre_instance_criteria_template(api_client):
     assert res["sub_categories"][0]["codelist_uid"] == ct_term_subcategory.codelist_uid
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
+    assert set(list(res.keys())) == set(CRITERIA_TEMPLATE_FIELDS_ALL)
+    for key in CRITERIA_TEMPLATE_FIELDS_NOT_NULL:
+        assert res[key] is not None
 
 
 def test_cannot_create_criteria_template_with_existing_name(api_client):
@@ -1250,7 +1244,7 @@ def test_cannot_update_criteria_template_to_an_existing_name(api_client):
     res = response.json()
     log.info("Didn't Update Criteria Template: %s", res)
 
-    assert response.status_code == 500
+    assert response.status_code == 400
     assert (
         res["message"]
         == f"Duplicate templates not allowed - template exists: {data['name']}"

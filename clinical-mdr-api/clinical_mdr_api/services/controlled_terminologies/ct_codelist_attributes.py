@@ -1,5 +1,4 @@
 from neomodel import db
-from pydantic.main import BaseModel
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
@@ -11,6 +10,7 @@ from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_attributes im
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import VersioningException
 from clinical_mdr_api.models import CTCodelistAttributes, CTCodelistAttributesVersion
+from clinical_mdr_api.models.utils import BaseModel
 from clinical_mdr_api.services.controlled_terminologies.ct_codelist_generic_service import (
     CTCodelistGenericService,
 )
@@ -67,5 +67,3 @@ class CTCodelistAttributesService(CTCodelistGenericService[CTCodelistAttributesA
             return self._transform_aggregate_root_to_pydantic_model(item)
         except VersioningException as e:
             raise exceptions.BusinessLogicException(e.msg)
-        except ValueError as e:
-            raise exceptions.ValidationException(e)

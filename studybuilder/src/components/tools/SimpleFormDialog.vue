@@ -8,7 +8,7 @@
     :max-width="maxWidth">
     <v-card data-cy="form-body" elevation="0">
       <v-card-title>
-        <span>{{ title }}</span>
+        <span class="dialog-title">{{ title }}</span>
         <help-button-with-panels
           :title="$t('_global.help')"
           :help-text="helpText"
@@ -39,9 +39,11 @@
         <v-btn
           data-cy="cancel-button"
           class="secondary-btn"
-          color="white"
           @click="cancel"
           :disabled="actionDisabled"
+          outlined
+          elevation="2"
+          width="120px"
           >
           {{ $t('_global.cancel') }}
         </v-btn>
@@ -52,6 +54,8 @@
           :loading="working"
           :disabled="actionDisabled"
           v-if="!noSaving"
+          elevation="2"
+          width="120px"
           >
           {{ $t('_global.save') }}
         </v-btn>

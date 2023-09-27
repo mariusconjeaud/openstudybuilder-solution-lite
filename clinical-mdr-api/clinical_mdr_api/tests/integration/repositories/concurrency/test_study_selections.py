@@ -1,5 +1,5 @@
 import unittest
-from typing import Optional, Sequence
+from typing import Sequence
 
 from neomodel import db
 
@@ -92,7 +92,7 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
     ct_term_name_ar: CTTermNameAR
     parameterized_template_vo: ParametrizedTemplateVO
     object_ar: ObjectiveAR
-    study_ar: Optional[StudyDefinitionAR]
+    study_ar: StudyDefinitionAR | None
 
     # These are set as part of the test for [Objective, Endpoint, Timeframe]
     template_uid = None
@@ -109,7 +109,7 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
         db.cypher_query("MATCH (n) DETACH DELETE n")
         db.cypher_query(STARTUP_STUDY_FIELD_CYPHER)
         db.cypher_query(STARTUP_CT_TERM_ATTRIBUTES_CYPHER)
-        db.cypher_query("CREATE CONSTRAINT ON (n:CTTermRoot) ASSERT n.uid IS UNIQUE;")
+        db.cypher_query("CREATE CONSTRAINT FOR (n:CTTermRoot) REQUIRE n.uid IS UNIQUE;")
 
         self.study_title_repository = self._repos.study_title_repository
         self.studies_repository = self._repos.study_definition_repository
@@ -257,7 +257,6 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
             author=self.user_initials,
             template=template_vo,
             library=library_vo,
-            template_value_exists_callback=(lambda _: False),
             generate_uid_callback=(lambda: self.template_uid),
         )
         # Create template
@@ -275,6 +274,7 @@ class StudySelectionsConcurrencyTests(unittest.TestCase):
                 name=self.template_name,
                 template_uid=self.template_uid,
                 parameter_terms=self.parameter_terms,
+                library_name=objective_template_ar.library.name,
             )
         )
         library_vo = LibraryVO.from_input_values_2(

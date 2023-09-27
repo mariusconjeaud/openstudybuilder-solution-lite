@@ -1,9 +1,9 @@
 import unittest
-from typing import Union
 
 import pytest
 from parameterized import parameterized
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains import _utils
 
 
@@ -57,7 +57,11 @@ class TestServiceUtils(unittest.TestCase):
             KeyError, _utils.get_iso_lang_data, "ak", "639-1", "NonExistingKey"
         )
         self.assertRaises(
-            ValueError, _utils.get_iso_lang_data, "ak", "NonExistingKey", "639-3"
+            exceptions.ValidationException,
+            _utils.get_iso_lang_data,
+            "ak",
+            "NonExistingKey",
+            "639-3",
         )
         self.assertRaises(
             KeyError, _utils.get_iso_lang_data, "NonExistingValue", "639-1", "639-3"
@@ -161,7 +165,7 @@ class TestServiceUtils(unittest.TestCase):
         pytest.param(None, None),
     ],
 )
-def test_normalize_string(inpt: Union[str, None], result: Union[str, None]):
+def test_normalize_string(inpt: str | None, result: str | None):
     assert _utils.normalize_string(inpt) == result
 
 
@@ -173,6 +177,6 @@ def test_normalize_string(inpt: Union[str, None], result: Union[str, None]):
         pytest.param(True, AttributeError),
     ],
 )
-def test_normalize_string_exceptions(inpt: Union[str, None], exception_class):
+def test_normalize_string_exceptions(inpt: str | None, exception_class):
     with pytest.raises(exception_class):
         _utils.normalize_string(inpt)

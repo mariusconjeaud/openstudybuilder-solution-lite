@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Callable, Self
 
 from clinical_mdr_api.domains.concepts.concept_base import ConceptVO
 from clinical_mdr_api.domains.concepts.odms.odm_ar_base import OdmARBase
@@ -12,19 +12,19 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 @dataclass(frozen=True)
 class OdmDescriptionVO(ConceptVO):
     language: str
-    description: Optional[str]
-    instruction: Optional[str]
-    sponsor_instruction: Optional[str]
+    description: str | None
+    instruction: str | None
+    sponsor_instruction: str | None
 
     @classmethod
     def from_repository_values(
         cls,
         name: str,
         language: str,
-        description: Optional[str],
-        instruction: Optional[str],
-        sponsor_instruction: Optional[str],
-    ) -> "OdmDescriptionVO":
+        description: str | None,
+        instruction: str | None,
+        sponsor_instruction: str | None,
+    ) -> Self:
         return cls(
             name=name,
             language=language,
@@ -55,9 +55,9 @@ class OdmDescriptionAR(OdmARBase):
         cls,
         uid: str,
         concept_vo: OdmDescriptionVO,
-        library: Optional[LibraryVO],
+        library: LibraryVO | None,
         item_metadata: LibraryItemMetadataVO,
-    ) -> "OdmDescriptionAR":
+    ) -> Self:
         return cls(
             _uid=uid,
             _concept_vo=concept_vo,
@@ -71,8 +71,8 @@ class OdmDescriptionAR(OdmARBase):
         author: str,
         concept_vo: OdmDescriptionVO,
         library: LibraryVO,
-        generate_uid_callback: Callable[[], Optional[str]] = (lambda: None),
-    ) -> "OdmDescriptionAR":
+        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+    ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
         return cls(
@@ -85,9 +85,11 @@ class OdmDescriptionAR(OdmARBase):
     def edit_draft(
         self,
         author: str,
-        change_description: Optional[str],
+        change_description: str | None,
         concept_vo: OdmDescriptionVO,
-        concept_exists_by_name_callback: Callable[[str], bool] = lambda _: True,
+        concept_exists_by_callback: Callable[
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
     ) -> None:
         """
         Creates a new draft version for the object.

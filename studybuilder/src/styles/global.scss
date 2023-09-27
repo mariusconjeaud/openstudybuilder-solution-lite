@@ -47,7 +47,7 @@ thead.v-data-table-header {
 
 // Fixed table header
 .theme--light.v-data-table > .v-data-table__wrapper > table > thead > tr:last-child > th {
-    background: #E5E5E5;
+    background: var(--v-tableGray-base);
 }
 
 .theme--light.v-sheet.v-stepper {

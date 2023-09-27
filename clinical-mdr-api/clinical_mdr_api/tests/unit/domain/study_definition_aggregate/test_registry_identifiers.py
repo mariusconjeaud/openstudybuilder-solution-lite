@@ -1,5 +1,6 @@
 import unittest
 
+from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.study_definition_aggregates.registry_identifiers import (
     RegistryIdentifiersVO,
 )
@@ -96,5 +97,5 @@ class TestRegistryIdentifiers(unittest.TestCase):
                         5
                     ],
                 )
-                with self.assertRaises(ValueError):
+                with self.assertRaises(exceptions.ValidationException):
                     registry_identifier.validate()

@@ -105,7 +105,10 @@ venv.bak/
 
 # Neo4j database artifacts
 data/
+data_v5/
 plugins/
+neo_extract
+db_backups/
 
 # cdisc offline data
 cdisc_data/

@@ -97,49 +97,64 @@ def get_codelists(tx, effective_date):
     )
     return result.data()
 
-
-def merge_version_independent_data(tx, codelists_data):
+def merge_codelist_version_independent_data(tx, codelist_data):
     tx.run(
         """
         MERGE (library:Library{name: 'CDISC'})
-        WITH library
-        // for each codelist
-        UNWIND $codelists_data AS data
-            MERGE (cl_root:CTCodelistRoot{uid: data.codelist.concept_id})
-            MERGE (library)-[:CONTAINS_CODELIST]->(cl_root)
-            MERGE (cl_root)-[:HAS_ATTRIBUTES_ROOT]->(:CTCodelistAttributesRoot)
-            MERGE (cl_root)-[:HAS_NAME_ROOT]->(:CTCodelistNameRoot)
-            
-            WITH library, data, cl_root
-            // for each catalogue that has this codelist 
-            FOREACH (package IN data.packages |
-                MERGE (ct_package:CTPackage{uid: package.name})
-                MERGE (catalogue:CTCatalogue{name: package.catalogue_name})
-                MERGE (catalogue)-[:HAS_CODELIST]->(cl_root)
-                MERGE (package_codelist:CTPackageCodelist{uid: package.name + '_' + data.codelist.concept_id})
-                MERGE (ct_package)-[:CONTAINS_CODELIST]->(package_codelist)
-            )
-            
-            WITH library, data, cl_root
-            // for each term of the codelist
-            //UNWIND data.terms AS term
-            FOREACH (term_data IN data.terms_data |
-                MERGE (t_root:CTTermRoot{uid: term_data.term.uid})
-                SET t_root.concept_id = term_data.term.concept_id
-                MERGE (library)-[:CONTAINS_TERM]->(t_root)
-                MERGE (t_root)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)
-                MERGE (t_root)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)
-                FOREACH (package IN term_data.packages |
-                    MERGE (package_codelist:CTPackageCodelist{uid: package.name + '_' + data.codelist.concept_id})
-                    MERGE (package_term:CTPackageTerm{uid: package.name + "_" + term_data.term.uid})
-                    MERGE (package_codelist)-[:CONTAINS_TERM]->(package_term)
-                )
-            )
+        WITH library, $codelist_data as data
+        MERGE (cl_root:CTCodelistRoot{uid: data.codelist.concept_id})
+        MERGE (library)-[:CONTAINS_CODELIST]->(cl_root)
+        MERGE (cl_root)-[:HAS_ATTRIBUTES_ROOT]->(:CTCodelistAttributesRoot)
+        MERGE (cl_root)-[:HAS_NAME_ROOT]->(:CTCodelistNameRoot)
         """,
-        codelists_data=codelists_data,
+        codelist_data=codelist_data,
         user_initials=USER_INITIALS,
     )
 
+def merge_codelist_packages_version_independent_data(tx, codelist_data):
+    tx.run(
+        """
+        WITH $codelist_data as data
+        MATCH (library:Library{name: 'CDISC'})-[:CONTAINS_CODELIST]->(cl_root:CTCodelistRoot{uid: data.codelist.concept_id})
+
+        WITH library, data, cl_root
+        // for each catalogue that has this codelist
+        FOREACH (package IN data.packages |
+            MERGE (ct_package:CTPackage{uid: package.name})
+            MERGE (catalogue:CTCatalogue{name: package.catalogue_name})
+            MERGE (catalogue)-[:HAS_CODELIST]->(cl_root)
+            MERGE (package_codelist:CTPackageCodelist{uid: package.name + '_' + data.codelist.concept_id})
+            MERGE (ct_package)-[:CONTAINS_CODELIST]->(package_codelist)
+        )
+        """,
+        codelist_data=codelist_data,
+        user_initials=USER_INITIALS,
+    )
+
+def merge_codelist_terms_version_independent_data(tx, codelist_data):
+    tx.run(
+        """
+        WITH $codelist_data as data
+        MATCH (library:Library{name: 'CDISC'})-[:CONTAINS_CODELIST]->(cl_root:CTCodelistRoot{uid: data.codelist.concept_id})
+
+        WITH library, data, cl_root
+        // for each term of the codelist
+        FOREACH (term_data IN data.terms_data |
+            MERGE (t_root:CTTermRoot{uid: term_data.term.uid})
+            SET t_root.concept_id = term_data.term.concept_id
+            MERGE (library)-[:CONTAINS_TERM]->(t_root)
+            MERGE (t_root)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)
+            MERGE (t_root)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)
+            FOREACH (package IN term_data.packages |
+                MERGE (package_codelist:CTPackageCodelist{uid: package.name + '_' + data.codelist.concept_id})
+                MERGE (package_term:CTPackageTerm{uid: package.name + "_" + term_data.term.uid})
+                MERGE (package_codelist)-[:CONTAINS_TERM]->(package_term)
+            )
+        )
+        """,
+        codelist_data=codelist_data,
+        user_initials=USER_INITIALS,
+    )
 
 def update_has_term_and_had_term_relationships(tx, codelists_data, effective_date):
     nbr_added_terms = 0
@@ -229,13 +244,6 @@ def delete_contains_term_relationships(tx):
     ).single()
 
     return result.get("term_concept_ids_that_have_been_removed", [])
-
-
-def merge_structure_nodes_and_relationships(
-    tx, packages_data, codelists_data, effective_date
-):
-    merge_catalogues_and_packages(tx, packages_data, effective_date)
-    merge_version_independent_data(tx, codelists_data)
 
 
 def merge_catalogues_and_packages(tx, packages_data, effective_date):
@@ -862,8 +870,20 @@ def use_existing_term_attributes_value(tx, term, packages):
 
 
 def create_ct_stats_update_job(tx):
+    # TODO #1
+    # These two jobs start 10 minutes apart after a 2-hour sleep.
+    # This prevents them from starting while the import is still running,
+    # which helps to avoid very high RAM usage.
+    # This should be broken out so that these jobs are started manually once
+    # the import has finished.
+    # TODO #2
+    # Instead of using repeat(),
+    # the update should either be triggered by a nightly pipeline,
+    # or some hooks should be implemented to directly update the stats when
+    # terms are updated.
     codelists_stats_query = """
-    CALL apoc.periodic.repeat("codelists_stats", "MATCH (pack:CTPackage)--(cat:CTCatalogue)
+    CALL apoc.periodic.repeat("codelists_stats", "CALL apoc.util.sleep(7200000)
+    MATCH (pack:CTPackage)--(cat:CTCatalogue)
     WITH cat, pack
     ORDER BY pack.effective_date
     WITH cat, collect(pack) AS packages
@@ -914,11 +934,11 @@ def create_ct_stats_update_job(tx):
         ELSE added_items
         END AS added_item
     
-        WITH old_items_map, new_items_map,
+        WITH *, old_items_map, new_items_map,
         CASE WHEN added_items <> [] THEN
         collect(apoc.map.merge(apoc.map.fromValues(['uid',added_item]), new_items_map[added_item])) 
         ELSE collect(added_item) 
-        END AS added_items, 
+        END AS added_items,
         deleted_items, common_items
     
         // The following section unwinds list with uids of deleted items to filter out deleted items from the map that contains
@@ -928,7 +948,7 @@ def create_ct_stats_update_job(tx):
         ELSE deleted_items
         END as deleted_item
     
-        WITH old_items_map, new_items_map, added_items, 
+        WITH *, old_items_map, new_items_map, added_items,
         CASE WHEN deleted_items <> [] THEN 
             collect(apoc.map.merge(apoc.map.fromValues(['uid', deleted_item]), old_items_map[deleted_item]))
             ELSE collect(deleted_item) END 
@@ -965,7 +985,8 @@ def create_ct_stats_update_job(tx):
     """
 
     terms_stats_query = """
-    CALL apoc.periodic.repeat("terms_stats", "CALL apoc.periodic.iterate('
+    CALL apoc.periodic.repeat("terms_stats", "CALL apoc.util.sleep(7800000)
+    CALL apoc.periodic.iterate('
     MATCH (pack:CTPackage)--(cat:CTCatalogue)
     WITH cat, pack
     ORDER BY pack.effective_date
@@ -1029,7 +1050,7 @@ def create_ct_stats_update_job(tx):
         ELSE added_items
         END AS added_item
         
-        WITH old_items_map, new_items_map,
+        WITH *, old_items_map, new_items_map,
         CASE WHEN added_items <> [] THEN
         collect(apoc.map.merge(apoc.map.fromValues([\\"uid\\",added_item]), new_items_map[added_item]))
         ELSE collect(added_item)
@@ -1043,7 +1064,7 @@ def create_ct_stats_update_job(tx):
         ELSE removed_items
         END as removed_item
     
-        WITH old_items_map, new_items_map, added_items,
+        WITH *, old_items_map, new_items_map, added_items,
         CASE WHEN removed_items <> [] THEN
             collect(apoc.map.merge(apoc.map.fromValues([\\"uid\\", removed_item]), old_items_map[removed_item]))
             ELSE collect(removed_item) END
@@ -1079,7 +1100,7 @@ def create_ct_stats_update_job(tx):
     MERGE (p1)-[rel:NEXT_PACKAGE]->(p2)
     SET rel.added_terms=added, rel.deleted_terms=deleted, rel.updated_terms=updated, rel.last_refresh=datetime()
     ',
-    {batchSize:1})", 86400)
+    {batchSize:1}) YIELD total RETURN total", 86400)
     """
 
     tx.run("CALL apoc.periodic.cancel('codelists_stats')")
@@ -1268,12 +1289,30 @@ def import_from_cdisc_db_into_mdr(
 
         print("==  * Merging structure nodes and relationships.")
         session.write_transaction(
-            merge_structure_nodes_and_relationships,
+            merge_catalogues_and_packages,
             packages_data,
-            codelists_data,
             effective_date,
         )
+        session.close()
+    print("==  * Merging version independant codelist data.")
+    with mdr_neo4j_driver.session(database=mdr_db_name) as session:
+        for data in codelists_data:
+            # This is split into three separate transactions to reduce ram footprint
+            session.write_transaction(
+                merge_codelist_version_independent_data,
+                data,
+            )
+            session.write_transaction(
+                merge_codelist_packages_version_independent_data,
+                data,
+            )
+            session.write_transaction(
+                merge_codelist_terms_version_independent_data,
+                data,
+            )
+        session.close()
 
+    with mdr_neo4j_driver.session(database=mdr_db_name) as session:
         print("==  * Updating HAS_TERM and HAD_TERM relationships.")
         added_terms, removed_terms, unchanged_terms = session.write_transaction(
             update_has_term_and_had_term_relationships, codelists_data, effective_date
@@ -1281,7 +1320,9 @@ def import_from_cdisc_db_into_mdr(
         print(f"==      Terms added to codelists:     {added_terms:6}")
         print(f"==      Terms removed from codelists: {removed_terms:6}")
         print(f"==      Unchanged terms in codelists: {unchanged_terms:6}")
+        session.close()
 
+    with mdr_neo4j_driver.session(database=mdr_db_name) as session:
         print("==  * Updating attributes.")
         summary = session.write_transaction(update_attributes, codelists_data, effective_date)
         print(f"==      New codelists:       {summary['new_codelists']:6}")

@@ -7,6 +7,7 @@
     base-url="/timeframes"
     export-object-label="Timeframes"
     column-data-resource="timeframes"
+    :server-items-length="total"
     />
 </div>
 </template>
@@ -21,7 +22,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      timeframes: 'timeframes/timeframes'
+      timeframes: 'timeframes/timeframes',
+      total: 'timeframes/total'
     })
   }
 }

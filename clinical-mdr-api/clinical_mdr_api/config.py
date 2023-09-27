@@ -2,10 +2,12 @@
 import os
 import urllib.parse
 from os import environ
-from typing import Optional
 
 from neomodel import config
 from pydantic import BaseSettings
+
+_UPPERCASE_FALSE_STRINGS = ("", "FALSE", "0", "OFF", "NO")
+
 
 # Teach urljoin that Neo4j DSN URLs like bolt:// and neo4j:// semantically similar to http://
 for scheme in ("bolt", "bolt+s", "neo4j", "neo4j+s"):
@@ -21,11 +23,13 @@ if db_name:
 
 class Settings(BaseSettings):
     app_name: str = "Clinical MDR API"
-    neo4j_dsn: Optional[str]
+    neo4j_dsn: str | None
     neo4j_database: str = environ.get("NEO4J_DATABASE", "neo4j")
 
 
 settings = Settings()
+
+NUMBER_OF_UID_DIGITS = 6
 
 CACHE_MAX_SIZE = 1000
 CACHE_TTL = 3600
@@ -90,3 +94,8 @@ TRACING_DISABLED = environ.get("TRACING_DISABLED", "false").lower() == "true"
 
 # Absolute path of application root directory
 APP_ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
+
+MS_GRAPH_GROUPS_QUERY = environ.get("MS_GRAPH_GROUPS_QUERY")
+MS_GRAPH_INTEGRATION_ENABLED = environ.get(
+    "MS_GRAPH_INTEGRATION_ENABLED", ""
+).upper().strip() not in (_UPPERCASE_FALSE_STRINGS)
